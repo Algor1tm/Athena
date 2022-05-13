@@ -1,13 +1,22 @@
+#include <Athena.h>
 
-namespace Athena
+
+class SandBox: public Athena::Application
 {
-	__declspec(dllimport) void Print();
-}
+public:
+	SandBox() 
+	{
+
+	}
+
+	~SandBox()
+	{
+
+	}
+};
 
 
-int main()
+Athena::Application* Athena::CreateApplication()
 {
-	Athena::Print();
-
-	return 1;
+	return new SandBox();
 }

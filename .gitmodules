@@ -1,0 +1,3 @@
+[submodule "Athena/vendor/spdlog"]
+	path = Athena/vendor/spdlog
+	url = https://github.com/gabime/spdlog

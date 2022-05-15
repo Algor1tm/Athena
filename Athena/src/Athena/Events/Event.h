@@ -1,9 +1,7 @@
 #pragma once
 
-#include <string>
-#include <functional>
-
-#include "../Core.h"
+#include "atnpch.h"
+#include "Athena/Core.h"
 
 
 namespace Athena

@@ -26,8 +26,12 @@ project "Athena"
 
 	includedirs 
 	{
+		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include" 
 	}
+
+	pchheader  "atnpch.h"
+	pchsource  "Athena/src/atnpch.cpp"
 
 	filter "system:windows"
 		cppdialect "C++17"

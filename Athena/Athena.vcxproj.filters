@@ -4,6 +4,9 @@
     <Filter Include="Athena">
       <UniqueIdentifier>{B633ECA7-A2D5-167E-8B90-2AD277D19DCE}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\Events">
+      <UniqueIdentifier>{DAD617E6-4697-931C-0FD2-DC997B51D8F8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Athena.h" />
@@ -16,14 +19,25 @@
     <ClInclude Include="src\Athena\EntryPoint.h">
       <Filter>Athena</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\Events\ApplicationEvent.h">
+      <Filter>Athena\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Events\Event.h">
+      <Filter>Athena\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Events\KeyEvent.h">
+      <Filter>Athena\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Events\MouseEvent.h">
+      <Filter>Athena\Events</Filter>
+    </ClInclude>
     <ClInclude Include="src\Athena\Log.h">
       <Filter>Athena</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
-    <ClInclude Include="src\Athena\Events\Event.h" />
-    <ClInclude Include="src\Athena\Events\KeyEvent.h" />
-    <ClInclude Include="src\Athena\Events\MouseEvent.h" />
-    <ClInclude Include="src\Athena\MouseCodes.h" />
+    <ClInclude Include="src\Athena\MouseCodes.h">
+      <Filter>Athena</Filter>
+    </ClInclude>
+    <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -32,5 +46,6 @@
     <ClCompile Include="src\Athena\Log.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
+    <ClCompile Include="src\atnpch.cpp" />
   </ItemGroup>
 </Project>

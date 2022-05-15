@@ -19,6 +19,11 @@
     <ClInclude Include="src\Athena\Log.h">
       <Filter>Athena</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
+    <ClInclude Include="src\Athena\Events\Event.h" />
+    <ClInclude Include="src\Athena\Events\KeyEvent.h" />
+    <ClInclude Include="src\Athena\Events\MouseEvent.h" />
+    <ClInclude Include="src\Athena\MouseCodes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">

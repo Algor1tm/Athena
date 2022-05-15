@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 {
 	Athena::Log::Init();
 	ATN_CORE_WARN("Initialized core logger");
-	ATN_FATAL("Initialized client logger");
+	ATN_INFO("Initialized client logger");
 
 	Athena::Application* app = Athena::CreateApplication();
 	app->Run();

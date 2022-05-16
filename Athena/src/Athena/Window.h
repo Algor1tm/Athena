@@ -11,9 +11,10 @@ namespace Athena
 	{
 		using EventCallbackFn = std::function<void(Event&)>;
 
-		unsigned int Width, Height;
-		bool VSync;
-		std::string Title;
+		unsigned int Width = 1280; 
+		unsigned int Height = 720;
+		bool VSync = true;
+		std::string Title = "Athena Engine";
 
 		EventCallbackFn EventCallback;
 	};

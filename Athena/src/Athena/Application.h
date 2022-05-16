@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Window.h"
+#include "Events/ApplicationEvent.h"
 
 
 namespace Athena
@@ -14,7 +15,10 @@ namespace Athena
 
 		void Run();
 
+		void OnEvent(Event& event);
 	private:
+		bool OnWindowClose(const WindowCloseEvent& event);
+
 		std::unique_ptr<Window> m_Window;
 		bool m_Running;
 	};

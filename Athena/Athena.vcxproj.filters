@@ -38,6 +38,8 @@
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
+    <ClInclude Include="src\Athena\Window.h" />
+    <ClInclude Include="src\Athena\Platform\WindowsWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -47,5 +49,6 @@
       <Filter>Athena</Filter>
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
+    <ClCompile Include="src\Athena\Platform\WindowsWindow.cpp" />
   </ItemGroup>
 </Project>

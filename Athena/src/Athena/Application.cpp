@@ -7,8 +7,15 @@
 namespace Athena
 {
 	Athena::Application::Application()
+		: m_Running(true)
 	{
+		WindowDesc wdesc;
+		wdesc.Width = 1280;
+		wdesc.Height = 720;
+		wdesc.Title = "Athena Engine";
+		wdesc.VSync = true;
 
+		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
 	}
 
 
@@ -20,9 +27,9 @@ namespace Athena
 
 	void Athena::Application::Run()
 	{
-		WindowResizeEvent event(1280, 720);
-		ATN_FATAL("Created event");
-
-		while (true);
+		while (m_Running)
+		{
+			m_Window->OnUpdate();
+		}
 	}
 }

@@ -10,13 +10,23 @@ workspace "Athena"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+
+IncludeDir = {}
+IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
+
+include "Athena/vendor/GLFW"
+
+
 project "Athena"
 	location "Athena"	
 	kind "SharedLib"
 	language "C++"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir    ("bin-ints/" .. outputdir .. "/%{prj.name}")
+	objdir    ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	pchheader  "atnpch.h"
+	pchsource  "Athena/src/atnpch.cpp"
 
 	files
 	{
@@ -27,11 +37,15 @@ project "Athena"
 	includedirs 
 	{
 		"%{prj.name}/src",
-		"%{prj.name}/vendor/spdlog/include" 
+		"%{prj.name}/vendor/spdlog/include",
+		"%{IncludeDir.GLFW}"
 	}
-
-	pchheader  "atnpch.h"
-	pchsource  "Athena/src/atnpch.cpp"
+	
+	links
+	{
+		"GLFW",
+		"opengl32.lib"
+	}
 
 	filter "system:windows"
 		cppdialect "C++17"
@@ -69,7 +83,7 @@ project "SandBox"
 	language "C++"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-ints/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{

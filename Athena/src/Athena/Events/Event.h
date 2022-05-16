@@ -1,6 +1,5 @@
 #pragma once
 
-#include "atnpch.h"
 #include "Athena/Core.h"
 
 
@@ -83,8 +82,8 @@ namespace Athena
 	};
 
 
-	//inline std::ostream& operator<<(std::ostream& os, const Event& event)
-	//{
-	//	return os << event.ToString();
-	//}
+	inline std::ostream& operator<<(std::ostream& os, const Event& event)
+	{
+		return os << event.ToString();
+	}
 }

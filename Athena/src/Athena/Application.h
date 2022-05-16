@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Window.h"
+#include "LayerStack.h"
 #include "Events/ApplicationEvent.h"
 
 
@@ -16,6 +17,9 @@ namespace Athena
 		void Run();
 
 		void OnEvent(Event& event);
+
+		void PushLayer(Layer* layer);
+		void PopLayer(Layer* layer);
 	private:
 		bool OnWindowClose(const WindowCloseEvent& event);
 
@@ -25,5 +29,6 @@ namespace Athena
 
 	// Defined by user
 	Application* CreateApplication();
+	LayerStack m_LayerStack;
 }
 

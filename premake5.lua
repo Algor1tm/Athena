@@ -66,14 +66,17 @@ project "Athena"
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "ATN_RELEASE"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "ATN_DIST"
+		buildoptions "/MD"
 		optimize "On"
 	
 
@@ -114,12 +117,15 @@ project "SandBox"
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "ATN_RELEASE"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "ATN_DIST"
+		buildoptions "/MD"
 		optimize "On"

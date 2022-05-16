@@ -7,6 +7,9 @@
     <Filter Include="Athena\Events">
       <UniqueIdentifier>{DAD617E6-4697-931C-0FD2-DC997B51D8F8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\Platform">
+      <UniqueIdentifier>{CAFC86E7-3688-F4AB-3F99-77A0ABA350AC}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Athena.h" />
@@ -31,24 +34,39 @@
     <ClInclude Include="src\Athena\Events\MouseEvent.h">
       <Filter>Athena\Events</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\Layer.h">
+      <Filter>Athena</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\LayerStack.h">
+      <Filter>Athena</Filter>
+    </ClInclude>
     <ClInclude Include="src\Athena\Log.h">
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\MouseCodes.h">
       <Filter>Athena</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\Platform\WindowsWindow.h">
+      <Filter>Athena\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Window.h">
+      <Filter>Athena</Filter>
+    </ClInclude>
     <ClInclude Include="src\atnpch.h" />
-    <ClInclude Include="src\Athena\Window.h" />
-    <ClInclude Include="src\Athena\Platform\WindowsWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
+    <ClCompile Include="src\Athena\LayerStack.cpp">
+      <Filter>Athena</Filter>
+    </ClCompile>
     <ClCompile Include="src\Athena\Log.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
+    <ClCompile Include="src\Athena\Platform\WindowsWindow.cpp">
+      <Filter>Athena\Platform</Filter>
+    </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
-    <ClCompile Include="src\Athena\Platform\WindowsWindow.cpp" />
   </ItemGroup>
 </Project>

@@ -29,6 +29,13 @@ namespace Athena
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
 
 		ATN_CORE_INFO(event.ToString());
+
+		for (LayerStack::iterator it = m_LayerStack.end(); it != m_LayerStack.begin();)
+		{
+			(*--it)->OnEvent(event);
+			if (event.Handled)
+				break;
+		}
 	}
 
 
@@ -37,7 +44,22 @@ namespace Athena
 		while (m_Running)
 		{
 			m_Window->OnUpdate();
+
+			for (LayerStack::value_type layer: m_LayerStack)
+				layer->OnUpdate();
 		}
+	}
+
+
+	void Application::PushLayer(Layer* layer)
+	{
+		m_LayerStack.PushLayer(layer);
+	}
+
+
+	void Application::PopLayer(Layer* layer)
+	{
+		m_LayerStack.PopLayer(layer);
 	}
 
 

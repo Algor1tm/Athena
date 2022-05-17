@@ -1,4 +1,6 @@
 #include "atnpch.h"
+#include <glad/glad.h>
+
 #include "WindowsWindow.h"
 #include "Athena/Log.h"
 
@@ -54,6 +56,8 @@ namespace Athena
 									nullptr);
 
 		glfwMakeContextCurrent(m_Window);
+		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+		ATN_CORE_ASSERT(status, "Failed to initialize Glad");
 		glfwSetWindowUserPointer(m_Window, &m_Desc);
 		if (m_Desc.VSync)
 			glfwSwapInterval(1);	// VSync is disabled by default

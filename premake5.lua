@@ -13,8 +13,10 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
+IncludeDir["Glad"] = "Athena/vendor/Glad/include"
 
 include "Athena/vendor/GLFW"
+include "Athena/vendor/Glad"
 
 
 project "Athena"
@@ -38,12 +40,14 @@ project "Athena"
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
-		"%{IncludeDir.GLFW}"
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.Glad}"
 	}
 	
 	links
 	{
 		"GLFW",
+		"Glad",
 		"opengl32.lib"
 	}
 
@@ -55,7 +59,8 @@ project "Athena"
 		defines 
 		{
 			"ATN_PLATFORM_WINDOWS",
-			"ATN_BUILD_DLL"
+			"ATN_BUILD_DLL",
+			"GLFW_INCLUDE_NONE"
 		}
 
 		postbuildcommands

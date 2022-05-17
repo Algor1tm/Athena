@@ -14,15 +14,18 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
 IncludeDir["Glad"] = "Athena/vendor/Glad/include"
+IncludeDir["ImGui"] = "Athena/vendor/ImGui/include"
 
 include "Athena/vendor/GLFW"
 include "Athena/vendor/Glad"
+include "Athena/vendor/ImGui"
 
 
 project "Athena"
 	location "Athena"	
 	kind "SharedLib"
 	language "C++"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir    ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -41,13 +44,15 @@ project "Athena"
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.Glad}"
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.ImGui}"
 	}
 	
 	links
 	{
 		"GLFW",
 		"Glad",
+		"ImGui",
 		"opengl32.lib"
 	}
 
@@ -71,17 +76,17 @@ project "Athena"
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"
-		buildoptions "/MDd"
+	    runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "ATN_RELEASE"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "ATN_DIST"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 	
 

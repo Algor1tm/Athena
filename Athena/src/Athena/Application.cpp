@@ -7,9 +7,14 @@ namespace Athena
 {
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
+	Application* Application::s_Instance = nullptr;
+
 	Application::Application()
 		: m_Running(true)
 	{
+		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
+		s_Instance = this;
+
 		WindowDesc wdesc;
 
 		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
@@ -57,9 +62,9 @@ namespace Athena
 	}
 
 
-	void Application::PopLayer(Layer* layer)
+	void Application::PushOverlay(Layer* layer)
 	{
-		m_LayerStack.PopLayer(layer);
+		m_LayerStack.PushOverlay(layer);
 	}
 
 

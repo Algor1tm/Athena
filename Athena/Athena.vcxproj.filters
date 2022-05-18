@@ -7,6 +7,9 @@
     <Filter Include="Athena\Events">
       <UniqueIdentifier>{DAD617E6-4697-931C-0FD2-DC997B51D8F8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\ImGui">
+      <UniqueIdentifier>{6019F6EF-4C7C-8594-F501-BE4AE1435117}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Athena\Platform">
       <UniqueIdentifier>{CAFC86E7-3688-F4AB-3F99-77A0ABA350AC}</UniqueIdentifier>
     </Filter>
@@ -34,6 +37,9 @@
     <ClInclude Include="src\Athena\Events\MouseEvent.h">
       <Filter>Athena\Events</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h">
+      <Filter>Athena\ImGui</Filter>
+    </ClInclude>
     <ClInclude Include="src\Athena\Layer.h">
       <Filter>Athena</Filter>
     </ClInclude>
@@ -46,17 +52,23 @@
     <ClInclude Include="src\Athena\MouseCodes.h">
       <Filter>Athena</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Platform\WindowsWindow.h">
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h">
       <Filter>Athena\Platform</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Window.h">
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_glfw.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
       <Filter>Athena</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp">
+      <Filter>Athena\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="src\Athena\LayerStack.cpp">
       <Filter>Athena</Filter>
@@ -64,9 +76,11 @@
     <ClCompile Include="src\Athena\Log.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
-    <ClCompile Include="src\Athena\Platform\WindowsWindow.cpp">
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp">
       <Filter>Athena\Platform</Filter>
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_glfw.cpp" />
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp" />
   </ItemGroup>
 </Project>

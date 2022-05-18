@@ -157,32 +157,39 @@
     <ClInclude Include="src\Athena\Events\Event.h" />
     <ClInclude Include="src\Athena\Events\KeyEvent.h" />
     <ClInclude Include="src\Athena\Events\MouseEvent.h" />
+    <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_glfw.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.h" />
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="src\Athena\Layer.h" />
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
     <ClInclude Include="src\Athena\MouseCodes.h" />
-    <ClInclude Include="src\Athena\Platform\WindowsWindow.h" />
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Athena\Window.h" />
     <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp" />
+    <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_glfw.cpp" />
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\Athena\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Log.cpp" />
-    <ClCompile Include="src\Athena\Platform\WindowsWindow.cpp" />
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\atnpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">
-      <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
-    </ProjectReference>
     <ProjectReference Include="vendor\Glad\Glad.vcxproj">
       <Project>{BDD6857C-A90D-870D-52FA-6C103E10030F}</Project>
     </ProjectReference>
+    <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">
+      <Project>{154b857c-0182-860d-aa6e-6c109684020f}</Project>
+    </ProjectReference>
     <ProjectReference Include="vendor\ImGui\ImGui.vcxproj">
-      <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
+      <Project>{c0ff640d-2c14-8dbe-f595-301e616989ef}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

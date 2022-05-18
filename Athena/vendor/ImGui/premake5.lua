@@ -19,23 +19,12 @@ project "ImGui"
         "include/imstb_rectpack.h",
         "include/imstb_textedit.h",
         "include/imstb_truetype.h",
-        "include/imgui_impl_opengl3_loader.h",
-        "include/imgui_impl_opengl3.cpp",
-        "include/imgui_impl_opengl3.h",
-        "include/imgui_impl_glfw.cpp",
-        "include/imgui_impl_glfw.h"
     }
 
     includedirs
 	{
 		"include",
-        "include/glfw/include"
 	}
-
-    links
-    {
-        "include/glfw/lib-vc2010-64/glfw3.lib"
-    }
 
     filter "system:windows"
         systemversion "latest"

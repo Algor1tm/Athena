@@ -4,6 +4,7 @@
 
 #include "Athena/Application.h"
 #include "Athena/Layer.h"
+#include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Log.h"
 
 // ---Entry Point---------------------

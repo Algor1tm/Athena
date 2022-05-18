@@ -3,4 +3,4 @@
 	url = https://github.com/gabime/spdlog
 [submodule "Athena/vendor/GLFW"]
 	path = Athena/vendor/GLFW
-	url = https://github.com/TheCherno/GLFW
+	url = https://github.com/TheCherno/glfw.git

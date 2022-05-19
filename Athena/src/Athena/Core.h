@@ -11,6 +11,10 @@
 	#error Athena only supports Windows!
 #endif
 
+#ifdef ATN_DEBUG
+#define ATN_ASSERTS
+#endif
+
 #ifdef ATN_ASSERTS
 	#define ATN_ASSERT(x, ...)	{ if(!(x)) { ATN_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
 	#define ATN_CORE_ASSERT(x, ...)  { if(!(x)) { ATN_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }

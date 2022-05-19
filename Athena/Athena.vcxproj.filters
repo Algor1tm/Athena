@@ -10,8 +10,14 @@
     <Filter Include="Athena\ImGui">
       <UniqueIdentifier>{6019F6EF-4C7C-8594-F501-BE4AE1435117}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\ImGui\Impl">
+      <UniqueIdentifier>{415B198E-AD71-1724-F6E8-A245623EE8AB}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Athena\Platform">
       <UniqueIdentifier>{CAFC86E7-3688-F4AB-3F99-77A0ABA350AC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Athena\Platform\Windows">
+      <UniqueIdentifier>{04D101FD-7008-4A94-7912-AEB7E5C8708D}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +46,15 @@
     <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h">
       <Filter>Athena\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_glfw.h">
+      <Filter>Athena\ImGui\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.h">
+      <Filter>Athena\ImGui\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3_loader.h">
+      <Filter>Athena\ImGui\Impl</Filter>
+    </ClInclude>
     <ClInclude Include="src\Athena\Layer.h">
       <Filter>Athena</Filter>
     </ClInclude>
@@ -53,15 +68,12 @@
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h">
-      <Filter>Athena\Platform</Filter>
+      <Filter>Athena\Platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Window.h">
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
-    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_glfw.h" />
-    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.h" />
-    <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -70,6 +82,12 @@
     <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp">
       <Filter>Athena\ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_glfw.cpp">
+      <Filter>Athena\ImGui\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp">
+      <Filter>Athena\ImGui\Impl</Filter>
+    </ClCompile>
     <ClCompile Include="src\Athena\LayerStack.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
@@ -77,10 +95,8 @@
       <Filter>Athena</Filter>
     </ClCompile>
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp">
-      <Filter>Athena\Platform</Filter>
+      <Filter>Athena\Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
-    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_glfw.cpp" />
-    <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp" />
   </ItemGroup>
 </Project>

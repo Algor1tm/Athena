@@ -1,5 +1,6 @@
 workspace "Athena"
 	architecture "x64"
+	startproject "SandBox"
 
 	configurations
 	{ 
@@ -8,18 +9,20 @@ workspace "Athena"
 		"Dist"
 	}
 
-outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
 IncludeDir["Glad"] = "Athena/vendor/Glad/include"
 IncludeDir["ImGui"] = "Athena/vendor/ImGui/include"
 
-include "Athena/vendor/GLFW"
-include "Athena/vendor/Glad"
-include "Athena/vendor/ImGui"
+group "Dependencies"
+	include "Athena/vendor/GLFW"
+	include "Athena/vendor/Glad"
+	include "Athena/vendor/ImGui"
 
+group ""
 
 project "Athena"
 	location "Athena"	
@@ -58,7 +61,6 @@ project "Athena"
 
 	filter "system:windows"
 		cppdialect "C++17"
-		staticruntime "On"
 		systemversion "latest"
 
 		defines 
@@ -70,6 +72,7 @@ project "Athena"
 
 		postbuildcommands
 		{
+			("IF NOT EXIST ../bin/" .. outputdir .. "/SandBox mkdir ../bin/" .. outputdir .. "/SandBox/"),
 			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/SandBox")
 		}
 
@@ -94,6 +97,7 @@ project "SandBox"
 	location "SandBox"
 	kind "ConsoleApp"
 	language "C++"
+	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -127,15 +131,15 @@ project "SandBox"
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"
-		buildoptions "/MDd"
+		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "ATN_RELEASE"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "ATN_DIST"
-		buildoptions "/MD"
+		runtime "Release"
 		optimize "On"

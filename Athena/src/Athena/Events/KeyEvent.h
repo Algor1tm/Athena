@@ -54,4 +54,21 @@ namespace Athena
 
 		EVENT_CLASS_TYPE(KeyReleased)
 	};
+
+
+	class ATHENA_API KeyTypedEvent : public KeyEvent
+	{
+	public:
+		KeyTypedEvent(int keycode)
+			: KeyEvent(keycode) {}
+
+
+		std::string ToString() const override
+		{
+			std::string result = "KeyTypedEvent: " + std::to_string(m_KeyCode);
+			return result;
+		}
+
+		EVENT_CLASS_TYPE(KeyTyped)
+	};
 }

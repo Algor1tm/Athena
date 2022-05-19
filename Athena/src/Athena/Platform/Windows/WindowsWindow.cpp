@@ -68,7 +68,7 @@ namespace Athena
 				data.Width = width;
 				data.Height = height;
 
-				WindowResizeEvent event(width, height);	
+				WindowResizedEvent event(width, height);	
 				data.EventCallback(event);
 			});
 
@@ -105,6 +105,14 @@ namespace Athena
 						break;
 					}
 				}
+			});
+		
+		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int character) 
+			{
+				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+
+				KeyTypedEvent event(character);
+				data.EventCallback(event);
 			});
 
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int modes)

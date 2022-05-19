@@ -2,10 +2,11 @@
 #include "Application.h"
 #include "Log.h"
 
+#include "glad/glad.h"
+
 
 namespace Athena
 {
-#define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
 	Application* Application::s_Instance = nullptr;
 
@@ -18,7 +19,7 @@ namespace Athena
 		WindowDesc wdesc;
 
 		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
-		m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
+		m_Window->SetEventCallback(BIND_MEMBER_EVENT_FN(Application::OnEvent));
 	}
 
 
@@ -31,7 +32,7 @@ namespace Athena
 	void Application::OnEvent(Event& event)
 	{
 		EventDispatcher dispatcher(event);
-		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+		dispatcher.Dispatch<WindowCloseEvent>(BIND_MEMBER_EVENT_FN(Application::OnWindowClose));
 
 		ATN_CORE_INFO(event.ToString());
 
@@ -48,10 +49,13 @@ namespace Athena
 	{
 		while (m_Running)
 		{
-			m_Window->OnUpdate();
+			glClearColor(0, 1, 1, 1);
+			glClear(GL_COLOR_BUFFER_BIT);
 
 			for (LayerStack::value_type layer: m_LayerStack)
 				layer->OnUpdate();
+
+			m_Window->OnUpdate();
 		}
 	}
 

@@ -17,7 +17,7 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "MouseMovedevent: x = " + std::to_string(m_MouseX) + 
+			std::string result = "MouseMovedEvent: x = " + std::to_string(m_MouseX) + 
 												", y = " + std::to_string(m_MouseY);
 			return result;
 		}
@@ -32,7 +32,7 @@ namespace Athena
 	class MouseScrolledEvent : public Event
 	{
 	public:
-		MouseScrolledEvent(const float xOffset, const float yOffset)
+		MouseScrolledEvent(float xOffset, float yOffset)
 			: m_XOffset(xOffset), m_YOffset(yOffset) {}
 
 		inline float GetXOffset() const { return m_XOffset; }
@@ -59,7 +59,7 @@ namespace Athena
 
 		EVENT_CLASS_CATEGORY(EventCategoryMouse | EventCategoryInput | EventCategoryMouseButton)
 	protected:
-		MouseButtonEvent(const MouseCode button)
+		MouseButtonEvent(MouseCode button)
 			: m_Button(button) {}
 
 		MouseCode m_Button;
@@ -69,7 +69,7 @@ namespace Athena
 	class MouseButtonPressedEvent : public MouseButtonEvent
 	{
 	public:
-		MouseButtonPressedEvent(const MouseCode button)
+		MouseButtonPressedEvent(MouseCode button)
 			: MouseButtonEvent(button) {}
 
 		std::string ToString() const override
@@ -85,7 +85,7 @@ namespace Athena
 	class MouseButtonReleasedEvent : public MouseButtonEvent
 	{
 	public:
-		MouseButtonReleasedEvent(const MouseCode button)
+		MouseButtonReleasedEvent(MouseCode button)
 			: MouseButtonEvent(button) {}
 
 		std::string ToString() const override

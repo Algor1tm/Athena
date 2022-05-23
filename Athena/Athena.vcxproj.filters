@@ -74,6 +74,10 @@
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
+    <ClInclude Include="src\Athena\Input.h" />
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
+    <ClInclude Include="src\Athena\KeyCodes.h" />
+    <ClInclude Include="src\Athena\Math\Vector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -98,5 +102,6 @@
       <Filter>Athena\Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
   </ItemGroup>
 </Project>

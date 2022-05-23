@@ -26,7 +26,7 @@ namespace Athena
 		void SetVSync(bool enabled) override;
 		inline bool IsVSync() const override { return m_Desc.VSync; }
 
-		virtual void* GetNativeWindow() const { return m_Window; }
+		inline void* GetNativeWindow() override { return m_Window; }
 
 	private:
 		virtual void Init();

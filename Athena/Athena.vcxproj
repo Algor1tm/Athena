@@ -164,10 +164,14 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_glfw.h" />
     <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.h" />
     <ClInclude Include="src\Athena\ImGui\Impl\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="src\Athena\Input.h" />
+    <ClInclude Include="src\Athena\KeyCodes.h" />
     <ClInclude Include="src\Athena\Layer.h" />
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
+    <ClInclude Include="src\Athena\Math\Vector.h" />
     <ClInclude Include="src\Athena\MouseCodes.h" />
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Athena\Window.h" />
     <ClInclude Include="src\atnpch.h" />
@@ -179,6 +183,7 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\Athena\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Log.cpp" />
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\atnpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

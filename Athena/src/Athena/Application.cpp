@@ -3,6 +3,7 @@
 #include "Log.h"
 
 #include "glad/glad.h"
+#include "Input.h"
 
 
 namespace Athena
@@ -42,6 +43,8 @@ namespace Athena
 			if (event.Handled)
 				break;
 		}
+
+		ATN_CORE_TRACE("x: {0}, y: {1}", Input::GetMouseX(), Input::GetMouseY());
 	}
 
 

@@ -78,6 +78,9 @@
     <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
     <ClInclude Include="src\Athena\KeyCodes.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
+    <ClInclude Include="src\Athena\Math\Vector2.h" />
+    <ClInclude Include="src\Athena\Math\Vector3.h" />
+    <ClInclude Include="src\Athena\Math\Vector4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">

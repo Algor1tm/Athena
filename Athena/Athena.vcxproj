@@ -170,6 +170,9 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
+    <ClInclude Include="src\Athena\Math\Vector2.h" />
+    <ClInclude Include="src\Athena\Math\Vector3.h" />
+    <ClInclude Include="src\Athena\Math\Vector4.h" />
     <ClInclude Include="src\Athena\MouseCodes.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />

@@ -86,4 +86,9 @@ namespace Athena
 	{
 		return os << event.ToString();
 	}
+
+	inline std::string ToString(const Event& event)
+	{
+		return event.ToString();
+	}
 }

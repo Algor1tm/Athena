@@ -8,6 +8,7 @@
 #include <numeric>
 #include <functional>
 #include <utility>
+#include <math.h>
 #include <algorithm>
 
 #include <iostream>

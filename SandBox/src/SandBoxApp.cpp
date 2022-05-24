@@ -10,9 +10,10 @@ public:
 		Athena::Vector<float, 1> v{1900};
 		Athena::Vector2i vec;
 		Athena::Vector<int, 1> t(std::move(v));
-		ATN_INFO(Athena::ToString(t));
+		Athena::Vector4 vec4 = Athena::Vector3::forward;
+		ATN_INFO(Athena::ToString(vec4));
 	}
-
+	 
 	~SandBox()
 	{
 

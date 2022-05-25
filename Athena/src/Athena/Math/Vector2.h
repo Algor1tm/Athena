@@ -100,12 +100,12 @@ namespace Athena
 			return &x;
 		}
 
-		constexpr Ty GetSqrLength(const Vector& vec) const noexcept
+		constexpr Ty GetSqrLength() const noexcept
 		{
 			return x * x + y * y;
 		}
 
-		constexpr float GetLength(const Vector& vec) const noexcept
+		constexpr float GetLength() const noexcept
 		{
 			return std::sqrt(static_cast<float>(GetSqrLength()));
 		}
@@ -194,6 +194,16 @@ namespace Athena
 		constexpr Vector operator-() const noexcept
 		{
 			return Vector(-x, -y);
+		}
+
+		constexpr bool operator==(const Vector& other) const noexcept
+		{
+			return x == other.x && y == other.y;
+		}
+
+		constexpr bool operator!=(const Vector& other) const noexcept
+		{
+			return !(*this == other);
 		}
 
 	public:

@@ -169,6 +169,7 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClInclude Include="src\Athena\Layer.h" />
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
+    <ClInclude Include="src\Athena\Math\Matrix.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
     <ClInclude Include="src\Athena\Math\Vector2.h" />
     <ClInclude Include="src\Athena\Math\Vector3.h" />

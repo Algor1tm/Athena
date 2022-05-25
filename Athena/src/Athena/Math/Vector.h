@@ -51,8 +51,8 @@ namespace Athena
 
 		constexpr VectorConstIterator& operator--()
 		{
-			ATN_CORE_ASSERT(m_Ptr, "cannot decrement value-initialized array iterator");
-			ATN_CORE_ASSERT(m_Idx != 0, "cannot decrement array iterator before begin");
+			ATN_CORE_ASSERT(m_Ptr, "Cannot decrement value-initialized array iterator");
+			ATN_CORE_ASSERT(m_Idx != 0, "Cannot decrement vector iterator before begin");
 			--m_Idx;
 			return *this;
 		}
@@ -266,7 +266,7 @@ namespace Athena
 	public:
 		constexpr Vector(Ty value = static_cast<Ty>(0))
 		{
-			m_Array.fill(value);
+			Fill(value);
 		}
 
 		constexpr Vector(const std::initializer_list<Ty>& values)
@@ -310,7 +310,8 @@ namespace Athena
 
 		constexpr void Fill(Ty value)
 		{
-			m_Array.fill(value);
+			for (size_t i = 0; i < Size; ++i)
+				m_Array[i] = value;
 		}
 
 		constexpr Ty operator[](size_t idx) const
@@ -360,15 +361,15 @@ namespace Athena
 			return const_iterator(m_Array, Size);
 		}
 
-		constexpr Ty GetSqrLength(const Vector& vec) const noexcept
+		constexpr Ty GetSqrLength() const noexcept
 		{
 			Ty out;
 			for (size_t i = 0; i < Size; ++i)
-				out += vec[i] * vec[i];
+				out += m_Array[i] * m_Array[i];
 			return out;
 		}
 
-		constexpr float GetLength(const Vector& vec) const noexcept
+		constexpr float GetLength() const noexcept
 		{
 			return std::sqrt(static_cast<float>(GetSqrLength()));
 		}
@@ -383,14 +384,14 @@ namespace Athena
 		constexpr Vector& operator+=(const Vector& other) noexcept
 		{
 			for (size_t i = 0; i < Size; ++i)
-				m_Array[i] += other[i];
+				m_Array[i] += other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator-=(const Vector& other) noexcept
 		{
 			for (size_t i = 0; i < Size; ++i)
-				m_Array[i] -= other[i];
+				m_Array[i] -= other.m_Array[i];
 			return *this;
 		}
 
@@ -440,12 +441,12 @@ namespace Athena
 
 		constexpr Vector operator-(Ty scalar) const noexcept
 		{
-			return Vector(*this) -= other;
+			return Vector(*this) -= scalar;
 		}
 
 		constexpr Vector operator*(Ty scalar) const noexcept
 		{
-			return Vector(*this) *= other;
+			return Vector(*this) *= scalar;
 		}
 
 		constexpr Vector operator/(Ty scalar) const
@@ -458,8 +459,21 @@ namespace Athena
 		{
 			Vector out(*this);
 			for (size_t i = 0; i < Size; ++i)
-				out[i] = -out[i];
+				out.m_Array[i] = -out.m_Array[i];
 			return out;
+		}
+
+		constexpr bool operator==(const Vector& other) const noexcept
+		{
+			bool out = true;
+			for (size_t i = 0; i < Size; ++i)
+				out = out && m_Array[i] == other.m_Array[i];
+			return out;
+		}
+
+		constexpr bool operator!=(const Vector& other) const noexcept
+		{
+			return !(*this == other);
 		}
 
 	private:

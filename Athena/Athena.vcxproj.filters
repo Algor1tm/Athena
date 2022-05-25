@@ -81,6 +81,7 @@
     <ClInclude Include="src\Athena\Math\Vector2.h" />
     <ClInclude Include="src\Athena\Math\Vector3.h" />
     <ClInclude Include="src\Athena\Math\Vector4.h" />
+    <ClInclude Include="src\Athena\Math\Matrix.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">

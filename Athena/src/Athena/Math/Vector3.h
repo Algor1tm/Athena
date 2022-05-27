@@ -70,37 +70,37 @@ namespace Athena
 			return *(&x + idx);
 		}
 
-		constexpr size_t GetSize() const noexcept
+		constexpr size_t GetSize() const 
 		{
 			return 3;
 		}
 
-		constexpr Ty* Data() noexcept
+		constexpr Ty* Data() 
 		{
 			return &x;
 		}
 
-		constexpr Ty* Data() const noexcept
+		constexpr Ty* Data() const 
 		{
 			return &x;
 		}
 
-		constexpr iterator begin() noexcept
+		constexpr iterator begin() 
 		{
 			return iterator(&x, 0);
 		}
 
-		constexpr iterator end() noexcept
+		constexpr iterator end() 
 		{
 			return iterator(&x, Size3);
 		}
 
-		constexpr const_iterator cbegin() const noexcept
+		constexpr const_iterator cbegin() const 
 		{
 			return const_iterator(&x, 0);
 		}
 
-		constexpr const_iterator cend() const noexcept
+		constexpr const_iterator cend() const 
 		{
 			return const_iterator(&x, Size3);
 		}
@@ -113,12 +113,12 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Ty GetSqrLength() const noexcept
+		constexpr Ty GetSqrLength() const 
 		{
 			return x * x + y * y + z * z;
 		}
 
-		constexpr float GetLength() const noexcept
+		constexpr float GetLength() const 
 		{
 			return std::sqrt(static_cast<float>(GetSqrLength()));
 		}
@@ -136,7 +136,7 @@ namespace Athena
 		}
 
 	public:
-		constexpr Vector& operator+=(const Vector& other) noexcept
+		constexpr Vector& operator+=(const Vector& other) 
 		{
 			x += other.x;
 			y += other.y;
@@ -144,7 +144,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector& operator-=(const Vector& other) noexcept
+		constexpr Vector& operator-=(const Vector& other) 
 		{
 			x -= other.x;
 			y -= other.y;
@@ -152,7 +152,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector& operator+=(Ty scalar) noexcept
+		constexpr Vector& operator+=(Ty scalar) 
 		{
 			x += scalar;
 			y += scalar;
@@ -160,7 +160,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector& operator-=(Ty scalar) noexcept
+		constexpr Vector& operator-=(Ty scalar) 
 		{
 			x -= scalar;
 			y -= scalar;
@@ -168,7 +168,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector& operator*=(Ty scalar) noexcept
+		constexpr Vector& operator*=(Ty scalar) 
 		{
 			x *= scalar;
 			y *= scalar;
@@ -185,27 +185,27 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector operator+(const Vector& other) const noexcept
+		constexpr Vector operator+(const Vector& other) const 
 		{
 			return Vector(x + other.x, y + other.y, z + other.z);
 		}
 
-		constexpr Vector operator-(const Vector& other) const noexcept
+		constexpr Vector operator-(const Vector& other) const 
 		{
 			return Vector(x - other.x, y - other.y, z - other.z);
 		}
 
-		constexpr Vector operator+(Ty scalar) const noexcept
+		constexpr Vector operator+(Ty scalar) const 
 		{
 			return Vector(x + scalar, y + scalar, z + scalar);
 		}
 
-		constexpr Vector operator-(Ty scalar) const noexcept
+		constexpr Vector operator-(Ty scalar) const 
 		{
 			return Vector(x - scalar, y - scalar, z - scalar);
 		}
 
-		constexpr Vector operator*(Ty scalar) const noexcept
+		constexpr Vector operator*(Ty scalar) const 
 		{
 			return Vector(x * scalar, y * scalar, z * scalar);
 		}
@@ -216,17 +216,17 @@ namespace Athena
 			return Vector(x / scalar, y / scalar, z / scalar);
 		}
 
-		constexpr Vector operator-() const noexcept
+		constexpr Vector operator-() const 
 		{
 			return Vector(-x, -y, -z);
 		}
 
-		constexpr bool operator==(const Vector& other) const noexcept
+		constexpr bool operator==(const Vector& other) const 
 		{
 			return x == other.x && y == other.y && z == other.z;
 		}
 
-		constexpr bool operator!=(const Vector& other) const noexcept
+		constexpr bool operator!=(const Vector& other) const 
 		{
 			return !(*this == other);
 		}
@@ -244,13 +244,13 @@ namespace Athena
 	};
 
 	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, Size3>& Left, const Vector<Ty, Size3>& Right)  noexcept
+	constexpr Ty Dot(const Vector<Ty, Size3>& Left, const Vector<Ty, Size3>& Right)  
 	{
 		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z;
 	}
 
 	template <typename Ty>
-	constexpr Vector<Ty, Size3> Cross(const Vector<Ty, Size3>& Left, const Vector<Ty, Size3>& Right) noexcept
+	constexpr Vector<Ty, Size3> Cross(const Vector<Ty, Size3>& Left, const Vector<Ty, Size3>& Right) 
 	{
 		Vector3 out;
 		out.x = Left.y * Right.z - Left.z * Right.y;
@@ -260,7 +260,7 @@ namespace Athena
 	}
 
 	template <typename Ty>
-	constexpr Vector<Ty, Size3> Reflect(const Vector<Ty, Size3>& From, const Vector<Ty, Size3>& To) noexcept
+	constexpr Vector<Ty, Size3> Reflect(const Vector<Ty, Size3>& From, const Vector<Ty, Size3>& To) 
 	{
 		Vector<Ty, Size3> out = To;
 		Ty projection = Dot(From, To) / From.GetSqrLength();

@@ -328,37 +328,37 @@ namespace Athena
 			return m_Array[idx];
 		}
 
-		constexpr size_t GetSize() const noexcept
+		constexpr size_t GetSize() const 
 		{
 			return Size;
 		}
 
-		constexpr Ty* Data() noexcept
+		constexpr Ty* Data() 
 		{
 			return m_Array;
 		}
 
-		constexpr Ty* Data() const noexcept
+		constexpr Ty* Data() const 
 		{
 			return m_Array;
 		}
 
-		constexpr iterator begin() noexcept
+		constexpr iterator begin() 
 		{
 			return iterator(m_Array, 0);
 		}
 
-		constexpr iterator end() noexcept
+		constexpr iterator end() 
 		{
 			return iterator(m_Array, Size);
 		}
 
-		constexpr const_iterator cbegin() const noexcept
+		constexpr const_iterator cbegin() const 
 		{
 			return const_iterator(m_Array, 0);
 		}
 
-		constexpr const_iterator cend() const noexcept
+		constexpr const_iterator cend() const 
 		{
 			return const_iterator(m_Array, Size);
 		}
@@ -370,7 +370,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Ty GetSqrLength() const noexcept
+		constexpr Ty GetSqrLength() const 
 		{
 			Ty out;
 			for (size_t i = 0; i < Size; ++i)
@@ -378,7 +378,7 @@ namespace Athena
 			return out;
 		}
 
-		constexpr float GetLength() const noexcept
+		constexpr float GetLength() const 
 		{
 			return std::sqrt(static_cast<float>(GetSqrLength()));
 		}
@@ -396,35 +396,35 @@ namespace Athena
 		}
 
 	public:
-		constexpr Vector& operator+=(const Vector& other) noexcept
+		constexpr Vector& operator+=(const Vector& other) 
 		{
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] += other.m_Array[i];
 			return *this;
 		}
 
-		constexpr Vector& operator-=(const Vector& other) noexcept
+		constexpr Vector& operator-=(const Vector& other) 
 		{
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] -= other.m_Array[i];
 			return *this;
 		}
 
-		constexpr Vector& operator+=(Ty scalar) noexcept
+		constexpr Vector& operator+=(Ty scalar) 
 		{
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator-=(Ty scalar) noexcept
+		constexpr Vector& operator-=(Ty scalar) 
 		{
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator*=(Ty scalar) noexcept
+		constexpr Vector& operator*=(Ty scalar) 
 		{
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] *= scalar;
@@ -439,27 +439,27 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector operator+(const Vector& other) const noexcept
+		constexpr Vector operator+(const Vector& other) const 
 		{
 			return Vector(*this) += other;
 		}
 
-		constexpr Vector operator-(const Vector& other) const noexcept
+		constexpr Vector operator-(const Vector& other) const 
 		{
 			return Vector(*this) -= other;
 		}
 
-		constexpr Vector operator+(Ty scalar) const noexcept
+		constexpr Vector operator+(Ty scalar) const 
 		{
 			return Vector(*this) += scalar;
 		}
 
-		constexpr Vector operator-(Ty scalar) const noexcept
+		constexpr Vector operator-(Ty scalar) const 
 		{
 			return Vector(*this) -= scalar;
 		}
 
-		constexpr Vector operator*(Ty scalar) const noexcept
+		constexpr Vector operator*(Ty scalar) const 
 		{
 			return Vector(*this) *= scalar;
 		}
@@ -470,7 +470,7 @@ namespace Athena
 			return Vector(*this) /= scalar;
 		}
 
-		constexpr Vector operator-() const noexcept
+		constexpr Vector operator-() const 
 		{
 			Vector out(*this);
 			for (size_t i = 0; i < Size; ++i)
@@ -478,7 +478,7 @@ namespace Athena
 			return out;
 		}
 
-		constexpr bool operator==(const Vector& other) const noexcept
+		constexpr bool operator==(const Vector& other) const 
 		{
 			bool out = true;
 			for (size_t i = 0; i < Size; ++i)
@@ -486,7 +486,7 @@ namespace Athena
 			return out;
 		}
 
-		constexpr bool operator!=(const Vector& other) const noexcept
+		constexpr bool operator!=(const Vector& other) const 
 		{
 			return !(*this == other);
 		}
@@ -503,13 +503,13 @@ namespace Athena
 	}
 
     template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> operator*(Ty scalar, const Vector<Ty, Size>& vec) noexcept
+	constexpr Vector<Ty, Size> operator*(Ty scalar, const Vector<Ty, Size>& vec) 
 	{
 		return vec * scalar;
 	}
 
 	template <typename Ty, size_t Size>
-	constexpr Ty Dot(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)  noexcept
+	constexpr Ty Dot(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)  
 	{
 		Ty out;
 		for (size_t i = 0; i < Size; ++i)

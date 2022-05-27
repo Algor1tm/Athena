@@ -15,7 +15,9 @@ namespace Athena
 		using const_iterator = VectorConstIterator<Ty, Size2>;
 
 	public:
-		constexpr Vector(Ty value = static_cast<Ty>(0))
+		constexpr Vector() = default;
+
+		constexpr Vector(Ty value)
 			: x(value), y(value) {}
 
 		constexpr Vector(Ty X, Ty Y)
@@ -53,7 +55,7 @@ namespace Athena
 			y = value;
 		}
 
-		constexpr Ty operator[](size_t idx) const
+		constexpr const Ty& operator[](size_t idx) const
 		{
 			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
 			return *(&x + idx);
@@ -71,6 +73,11 @@ namespace Athena
 		}
 
 		constexpr Ty* Data() noexcept
+		{
+			return &x;
+		}
+
+		constexpr const Ty* Data() const noexcept
 		{
 			return &x;
 		}
@@ -95,9 +102,11 @@ namespace Athena
 			return const_iterator(&x, Size2);
 		}
 
-		constexpr Ty* Data() const noexcept
+		constexpr Vector& Apply(Ty (*func)(Ty))
 		{
-			return &x;
+			x = func(x);
+			y = func(y);
+			return *this;
 		}
 
 		constexpr Ty GetSqrLength() const noexcept
@@ -114,6 +123,12 @@ namespace Athena
 		{
 			float length = GetLength();
 			return length == 0 ? *this : *this /= static_cast<Ty>(length);
+		}
+
+		constexpr Vector GetNormalized() const
+		{
+			float length = GetLength();
+			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 
 	public:
@@ -154,7 +169,7 @@ namespace Athena
 
 		constexpr Vector& operator/=(Ty scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector2 error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			x /= scalar;
 			y /= scalar;
 			return *this;
@@ -187,7 +202,7 @@ namespace Athena
 
 		constexpr Vector operator/(Ty scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector2 error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(x / scalar, y / scalar);
 		}
 
@@ -217,21 +232,21 @@ namespace Athena
 	};
 
 	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, Size2>& first, const Vector<Ty, 2>& second)  noexcept
+	constexpr Ty Dot(const Vector<Ty, Size2>& Left, const Vector<Ty, Size2>& Right)  noexcept
 	{
-		return first.x * second.x + first.y * second.y;
+		return Left.x * Right.x + Left.y * Right.y;
 	}
 
 	template <typename Ty>
-	constexpr Ty Cross(const Vector<Ty, Size2>& first, const Vector<Ty, 2>& second) noexcept
+	constexpr Ty Cross(const Vector<Ty, Size2>& Left, const Vector<Ty, Size2>& Right) noexcept
 	{
-		return first.x * second.y - first.y * second.x;
+		return Left.x * Right.y - Left.y * Right.x;
 	}
 
 	template <typename Ty>
-	constexpr Vector<Ty, 2> Reflect(const Vector<Ty, Size2>& From, const Vector<Ty, 2>& To) noexcept
+	constexpr Vector<Ty, Size2> Reflect(const Vector<Ty, Size2>& From, const Vector<Ty, Size2>& To) noexcept
 	{
-		Vector<Ty, 2> out = To;
+		Vector<Ty, Size2> out = To;
 		Ty projection = Dot(From, To) / From.GetSqrLength();
 		out -= 2 * projection * From;
 		return out;
@@ -256,6 +271,7 @@ namespace Athena
 
 
 	typedef Vector<float, Size2> Vector2;
+	typedef Vector<unsigned int, Size2> Vector2u;
 	typedef Vector<int, Size2> Vector2i;
 	typedef Vector<double, Size2> Vector2d;
 }

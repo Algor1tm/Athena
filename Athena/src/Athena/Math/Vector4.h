@@ -8,14 +8,16 @@ namespace Athena
 	static constexpr size_t Size4 = 4;
 
 	template <typename Ty>
-	class Vector<Ty, 4>
+	class Vector<Ty, Size4>
 	{
 	public:
 		using iterator = VectorIterator<Ty, Size4>;
 		using const_iterator = VectorConstIterator<Ty, Size4>;
 
 	public:
-		constexpr Vector(Ty value = static_cast<Ty>(0))
+		constexpr Vector() = default;
+
+		constexpr Vector(Ty value)
 			: x(value), y(value), z(value), t(value) {}
 
 		constexpr Vector(Ty X, Ty Y, Ty Z, Ty T)
@@ -74,7 +76,7 @@ namespace Athena
 			t = value;
 		}
 
-		constexpr Ty operator[](size_t idx) const
+		constexpr const Ty& operator[](size_t idx) const
 		{
 			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
@@ -88,7 +90,7 @@ namespace Athena
 
 		constexpr size_t GetSize() const noexcept
 		{
-			return 4;
+			return Size4;
 		}
 
 		constexpr Ty* Data() noexcept
@@ -121,6 +123,15 @@ namespace Athena
 			return const_iterator(&x, Size4);
 		}
 
+		constexpr Vector& Apply(Ty (*func)(Ty))
+		{
+			x = func(x);
+			y = func(y);
+			z = func(z);
+			t = func(t);
+			return *this;
+		}
+
 		constexpr Ty GetSqrLength() const noexcept
 		{
 			return x * x + y * y + z * z + t * t;
@@ -135,6 +146,12 @@ namespace Athena
 		{
 			float length = GetLength();
 			return length == 0 ? *this : *this /= static_cast<Ty>(length);
+		}
+
+		constexpr Vector GetNormalized() const
+		{
+			float length = GetLength();
+			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 
 	public:
@@ -185,7 +202,7 @@ namespace Athena
 
 		constexpr Vector& operator/=(Ty scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector4 error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			x /= scalar;
 			y /= scalar;
 			z /= scalar;
@@ -220,7 +237,7 @@ namespace Athena
 
 		constexpr Vector operator/(Ty scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector4 error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(x / scalar, y / scalar, z / scalar, t / scalar);
 		}
 
@@ -245,13 +262,14 @@ namespace Athena
 
 
 	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, Size4>& first, const Vector<Ty, Size4>& second) noexcept
+	constexpr Ty Dot(const Vector<Ty, Size4>& Left, const Vector<Ty, Size4>& Right) noexcept
 	{
-		return first.x * second.x + first.y * second.y + first.z * second.z + first.t * second.t;
+		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z + Left.t * Right.t;
 	}
 
 
 	typedef Vector<float, Size4> Vector4;
+	typedef Vector<unsigned int, Size4> Vector4u;
 	typedef Vector<int, Size4> Vector4i;
 	typedef Vector<double, Size4> Vector4d;
 }

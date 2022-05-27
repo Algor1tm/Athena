@@ -164,7 +164,7 @@ namespace Athena
 
 
 	template <class Ty, size_t Size>
-	class VectorIterator : public VectorConstIterator<Ty, Size>
+	class VectorIterator: public VectorConstIterator<Ty, Size>
 	{
 	public:
 		using Base = VectorConstIterator<Ty, Size>;
@@ -250,9 +250,9 @@ namespace Athena
 
 	template <class _Ty, size_t _Size>
 	constexpr VectorIterator<_Ty, _Size> operator+(
-		const ptrdiff_t _Off, VectorIterator<_Ty, _Size> _Next)
+		const ptrdiff_t Off, VectorIterator<_Ty, _Size> Next)
 	{
-		return _Next += _Off;
+		return Next += Off;
 	}
 
 
@@ -264,15 +264,17 @@ namespace Athena
 		using const_iterator = VectorConstIterator<Ty, Size>;
 
 	public:
-		constexpr Vector(Ty value = static_cast<Ty>(0))
+		constexpr Vector() = default;
+
+		constexpr Vector(Ty value)
 		{
 			Fill(value);
 		}
 
 		constexpr Vector(const std::initializer_list<Ty>& values)
 		{
-			ATN_CORE_ASSERT(values.size() == Size,
-				"Vector initialization error: size of initializer list must be equal to vector size");
+			ATN_CORE_ASSERT(values.size() == Size, 
+				"Cannot initialize vector with initializer list");
 
 			size_t iter = 0;
 			for (auto val : values)
@@ -314,7 +316,7 @@ namespace Athena
 				m_Array[i] = value;
 		}
 
-		constexpr Ty operator[](size_t idx) const
+		constexpr const Ty& operator[](size_t idx) const
 		{
 			ATN_CORE_ASSERT(idx < Size, "Vector subscript out of range");
 			return m_Array[idx];
@@ -361,6 +363,13 @@ namespace Athena
 			return const_iterator(m_Array, Size);
 		}
 
+		constexpr Vector& Apply(Ty (*func)(Ty))
+		{
+			for (size_t i = 0; i < Size; ++i)
+				m_Array[i] = func(m_Array[i]);
+			return *this;
+		}
+
 		constexpr Ty GetSqrLength() const noexcept
 		{
 			Ty out;
@@ -378,6 +387,12 @@ namespace Athena
 		{
 			float length = GetLength();
 			return length == 0 ? *this : *this /= static_cast<Ty>(length);
+		}
+
+		constexpr Vector GetNormalized() const
+		{
+			float length = GetLength();
+			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 
 	public:
@@ -418,7 +433,7 @@ namespace Athena
 
 		constexpr Vector& operator/=(Ty scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			for (size_t i = 0; i < Size; ++i)
 				m_Array[i] /= scalar;
 			return *this;
@@ -451,7 +466,7 @@ namespace Athena
 
 		constexpr Vector operator/(Ty scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector error: dividing by zero");
+			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(*this) /= scalar;
 		}
 
@@ -481,6 +496,12 @@ namespace Athena
 	};
 
 
+	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> operator+(Ty scalar, const Vector<Ty, Size>& vec)
+	{
+		return vec + scalar;
+	}
+
     template <typename Ty, size_t Size>
 	constexpr Vector<Ty, Size> operator*(Ty scalar, const Vector<Ty, Size>& vec) noexcept
 	{
@@ -488,33 +509,25 @@ namespace Athena
 	}
 
 	template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> operator/(Ty scalar, const Vector<Ty, Size>& vec)
-	{
-		ATN_CORE_ASSERT(scalar != 0, "Vector4 error: dividing by zero");
-		return vec * scalar;
-	}
-
-
-	template <typename Ty, size_t Size>
-	constexpr Ty Dot(const Vector<Ty, Size>& first, const Vector<Ty, Size>& second)  noexcept
+	constexpr Ty Dot(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)  noexcept
 	{
 		Ty out;
 		for (size_t i = 0; i < Size; ++i)
-			out += first[i] * second[i];
+			out += Left[i] * Right[i];
 		return out;
 	}
 
 	template <typename Ty, size_t Size>
-	constexpr float Distance(const Vector<Ty, Size>& first, const Vector<Ty, Size>& second)
+	constexpr float Distance(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)
 	{
-		return (first - second).GetLength();
+		return (Left - Right).GetLength();
 	}
 
 	template <typename Ty, size_t Size>
-	constexpr void Swap(Vector<Ty, Size>& first, Vector<Ty, Size>& second)
+	constexpr void Swap(Vector<Ty, Size>& Left, Vector<Ty, Size>& Right)
 	{
 		for (size_t i = 0; i < Size; ++i)
-			std::swap(first[i], second[i]);
+			std::swap(Left[i], Right[i]);
 	}
 
 

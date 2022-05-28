@@ -82,6 +82,7 @@
     <ClInclude Include="src\Athena\Math\Vector3.h" />
     <ClInclude Include="src\Athena\Math\Vector4.h" />
     <ClInclude Include="src\Athena\Math\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -107,5 +108,6 @@
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
+    <ClCompile Include="src\Athena\Math\Utils.cpp" />
   </ItemGroup>
 </Project>

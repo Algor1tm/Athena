@@ -43,8 +43,6 @@ namespace Athena
 			if (event.Handled)
 				break;
 		}
-
-		ATN_CORE_TRACE("x: {0}, y: {1}", Input::GetMouseX(), Input::GetMouseY());
 	}
 
 

@@ -26,21 +26,11 @@ namespace Athena
 	}
 
 
-	float WindowsInput::GetMouseXImpl()
+	Vector2 WindowsInput::GetMouseImpl()
 	{
 		auto window = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
 		double x, y;
 		glfwGetCursorPos(window, &x, &y);
-		return (float)x;
-	}
-
-
-	float WindowsInput::GetMouseYImpl()
-	{
-		auto window = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
-		double x, y;
-		glfwGetCursorPos(window, &x, &y);
-		return (float)y;
+		return Vector2((float)x, float(y));
 	}
 }
-

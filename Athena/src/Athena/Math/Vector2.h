@@ -243,13 +243,12 @@ namespace Athena
 		return Left.x * Right.y - Left.y * Right.x;
 	}
 
+	/// <param name="Normal">: Must be normalized</param>
 	template <typename Ty>
-	constexpr Vector<Ty, Size2> Reflect(const Vector<Ty, Size2>& From, const Vector<Ty, Size2>& To) 
+	constexpr Vector<Ty, Size2> Reflect(
+		const Vector<Ty, Size2>& Direction, const Vector<Ty, Size2>& Normal) 
 	{
-		Vector<Ty, Size2> out = To;
-		Ty projection = Dot(From, To) / From.GetSqrLength();
-		out -= 2 * projection * From;
-		return out;
+		return Direction - 2 * Normal * Dot(Direction, Normal);
 	}
 
 

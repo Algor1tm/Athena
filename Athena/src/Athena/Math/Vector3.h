@@ -80,7 +80,7 @@ namespace Athena
 			return &x;
 		}
 
-		constexpr Ty* Data() const 
+		constexpr const Ty* Data() const 
 		{
 			return &x;
 		}
@@ -259,13 +259,12 @@ namespace Athena
 		return out;
 	}
 
+	/// <param name="Normal">: Must be normalized</param>
 	template <typename Ty>
-	constexpr Vector<Ty, Size3> Reflect(const Vector<Ty, Size3>& From, const Vector<Ty, Size3>& To) 
+	constexpr Vector<Ty, Size3> Reflect(
+		const Vector<Ty, Size3>& Direction, const Vector<Ty, Size3>& Normal)
 	{
-		Vector<Ty, Size3> out = To;
-		Ty projection = Dot(From, To) / From.GetSqrLength();
-		out -= 2 * projection * From;
-		return out;
+		return Direction - 2 * Normal * Dot(Direction, Normal);
 	}
 
 

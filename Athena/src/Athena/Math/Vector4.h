@@ -98,7 +98,7 @@ namespace Athena
 			return &x;
 		}
 
-		constexpr Ty* Data() const
+		constexpr const Ty* Data() const
 		{
 			return &x;
 		}

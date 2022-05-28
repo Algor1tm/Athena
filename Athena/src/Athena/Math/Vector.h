@@ -2,6 +2,7 @@
 
 #include "atnpch.h"
 #include "Athena/Core.h"
+#include "Athena/Math/Utils.h"
 
 
 namespace Athena
@@ -338,7 +339,7 @@ namespace Athena
 			return m_Array;
 		}
 
-		constexpr Ty* Data() const 
+		constexpr const Ty* Data() const 
 		{
 			return m_Array;
 		}
@@ -524,12 +525,27 @@ namespace Athena
 	}
 
 	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> Project(const Vector<Ty, Size>& vec, const Vector<Ty, Size>& on)
+	{
+		return on * Dot(vec, on) / on.GetSqrLength();
+	}
+
+	template <typename Ty, size_t Size>
 	constexpr void Swap(Vector<Ty, Size>& Left, Vector<Ty, Size>& Right)
 	{
 		for (size_t i = 0; i < Size; ++i)
 			std::swap(Left[i], Right[i]);
 	}
 
+	// Does not validate input values
+	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> Lerp(
+		const Vector<Ty, Size>& min, const Vector<Ty, Size>& max, Ty mid)
+	{
+		Vector<Ty, Size> out;
+		for (size_t i = 0; i < Size; ++i)
+			out[i] = Lerp(min[i], max[i], mid);
+	}
 
 	template <typename Ty, size_t Size>
 	constexpr std::string ToString(const Vector<Ty, Size>& vec)

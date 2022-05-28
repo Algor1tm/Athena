@@ -18,7 +18,7 @@ public:
 
 		Athena::Matrix<float, 1, 4> mat(0);
 		Athena::Matrix<int, 5, 5> m(-1);
-		for(auto t: m)
+		for(auto& t: m)
 			ATN_INFO(Athena::ToString(t));
 	}
 	

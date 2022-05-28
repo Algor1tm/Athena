@@ -170,6 +170,7 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
     <ClInclude Include="src\Athena\Math\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\Utils.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
     <ClInclude Include="src\Athena\Math\Vector2.h" />
     <ClInclude Include="src\Athena\Math\Vector3.h" />
@@ -187,6 +188,7 @@ IF EXIST ..\bin\Dist-windows-x86_64\Athena\Athena.dll\ (xcopy /Q /E /Y /I ..\bin
     <ClCompile Include="src\Athena\ImGui\Impl\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\Athena\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Log.cpp" />
+    <ClCompile Include="src\Athena\Math\Utils.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\atnpch.cpp">

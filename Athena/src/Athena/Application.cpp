@@ -18,9 +18,14 @@ namespace Athena
 		s_Instance = this;
 
 		WindowDesc wdesc;
+		wdesc.Width = 800;
+		wdesc.Height = 600;
 
 		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
 		m_Window->SetEventCallback(BIND_MEMBER_EVENT_FN(Application::OnEvent));
+
+		m_ImGuiLayer = new ImGuiLayer();
+		PushOverlay(m_ImGuiLayer);
 	}
 
 
@@ -53,8 +58,13 @@ namespace Athena
 			glClearColor(0, 1, 1, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			for (LayerStack::value_type layer: m_LayerStack)
+			for (Layer* layer: m_LayerStack)
 				layer->OnUpdate();
+
+			m_ImGuiLayer->Begin();
+			for (Layer* layer: m_LayerStack)
+				layer->OnImGuiRender();
+			m_ImGuiLayer->End();
 
 			m_Window->OnUpdate();
 		}

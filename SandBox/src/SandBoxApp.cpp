@@ -6,7 +6,6 @@ class SandBox: public Athena::Application
 public:
 	SandBox() 
 	{
-		PushOverlay(new Athena::ImGuiLayer());
 		Athena::Vector<float, 1> v{1900};
 		Athena::Vector2i vec(0);
 		Athena::Vector<int, 1> t(std::move(v));

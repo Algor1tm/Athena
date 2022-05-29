@@ -5,6 +5,8 @@
 #include "LayerStack.h"
 #include "Events/ApplicationEvent.h"
 
+#include "Athena/ImGui/ImGuiLayer.h"
+
 
 namespace Athena
 {
@@ -29,6 +31,7 @@ namespace Athena
 		bool OnWindowClose(const WindowCloseEvent& event);
 
 		std::unique_ptr<Window> m_Window;
+		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running;
 		LayerStack m_LayerStack;
 

@@ -15,7 +15,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
 IncludeDir["Glad"] = "Athena/vendor/Glad/include"
-IncludeDir["ImGui"] = "Athena/vendor/ImGui/include"
+IncludeDir["ImGui"] = "Athena/vendor/ImGui"
 
 group "Dependencies"
 	include "Athena/vendor/GLFW"

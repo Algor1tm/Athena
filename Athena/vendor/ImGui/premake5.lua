@@ -8,23 +8,18 @@ project "ImGui"
     
     files
     {
-        "include/imconfig.h",
-        "include/imgui.cpp",
-        "include/imgui.h",
-        "include/imgui_demo.cpp",
-        "include/imgui_draw.cpp",
-        "include/imgui_internal.h",
-        "include/imgui_tables.cpp",
-        "include/imgui_widgets.cpp",
-        "include/imstb_rectpack.h",
-        "include/imstb_textedit.h",
-        "include/imstb_truetype.h",
+        "imconfig.h",
+        "imgui.cpp",
+        "imgui.h",
+        "imgui_demo.cpp",
+        "imgui_draw.cpp",
+        "imgui_internal.h",
+        "imgui_tables.cpp",
+        "imgui_widgets.cpp",
+        "imstb_rectpack.h",
+        "imstb_textedit.h",
+        "imstb_truetype.h",
     }
-
-    includedirs
-	{
-		"include",
-	}
 
     filter "system:windows"
         systemversion "latest"

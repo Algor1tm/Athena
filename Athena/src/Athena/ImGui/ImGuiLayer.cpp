@@ -1,6 +1,6 @@
 #include "atnpch.h"
 
-#include "Impl/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_opengl3.h"
 
 #include "ImGuiLayer.h"
 #include "Athena/Application.h"

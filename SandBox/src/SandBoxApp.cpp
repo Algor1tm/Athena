@@ -19,6 +19,8 @@ public:
 		Athena::Matrix<int, 5, 5> m(-1);
 		for(auto& t: m)
 			ATN_INFO(Athena::ToString(t));
+
+		Athena::RadToDegree(10.f);
 	}
 	
 	~SandBox()

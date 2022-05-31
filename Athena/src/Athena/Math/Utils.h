@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Athena/Core.h"
+
+
 #define M_PI 3.14159265358979323846
 #define M_PIf 3.14159265358979323846f
 
@@ -7,11 +10,11 @@
 namespace Athena
 {
 
-	constexpr float DegreeToRad(float degree);
-	constexpr double DegreeToRad(double degree);
+	constexpr float ATHENA_API DegreeToRad(float degree);
+	constexpr double ATHENA_API DegreeToRad(double degree);
 
-	constexpr float RadToDegree(float radians);
-	constexpr double RadToDegree(double radians);
+	constexpr float ATHENA_API RadToDegree(float radians);
+	constexpr double ATHENA_API RadToDegree(double radians);
 	 
 
 	// Does not validate input values

@@ -92,6 +92,8 @@
       <Filter>Athena</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
+    <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -116,5 +118,6 @@
       <Filter>Athena\Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
   </ItemGroup>
 </Project>

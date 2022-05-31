@@ -161,8 +161,10 @@
     <ClInclude Include="src\Athena\Math\Vector3.h" />
     <ClInclude Include="src\Athena\Math\Vector4.h" />
     <ClInclude Include="src\Athena\MouseCodes.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
     <ClInclude Include="src\Athena\Window.h" />
     <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
@@ -172,6 +174,7 @@
     <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="src\Athena\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Log.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\atnpch.cpp">

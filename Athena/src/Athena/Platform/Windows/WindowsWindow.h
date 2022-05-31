@@ -1,8 +1,9 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-
 #include "Athena/Window.h"
+#include "Athena/Renderer/GraphicsContext.h"
+
+struct GLFWwindow;
 
 
 namespace Athena
@@ -35,5 +36,6 @@ namespace Athena
 	private:
 		GLFWwindow* m_Window;
 		WindowDesc m_Desc;
+		GraphicsContext* m_Context;
 	};
 }

@@ -1,12 +1,14 @@
 #include "atnpch.h"
-#include <glad/glad.h>
 
 #include "WindowsWindow.h"
+#include "Athena/Platform/OpenGL/OpenGLGraphicsContext.h"
 #include "Athena/Log.h"
 
 #include "Athena/Events/ApplicationEvent.h"
 #include "Athena/Events/KeyEvent.h"
 #include "Athena/Events/MouseEvent.h"
+
+#include <GLFW/glfw3.h>
 
 
 namespace Athena
@@ -33,6 +35,7 @@ namespace Athena
 
 	WindowsWindow::~WindowsWindow()
 	{
+		delete m_Context;
 		Shutdown();
 	}
 
@@ -55,9 +58,9 @@ namespace Athena
 									nullptr, 
 									nullptr);
 
-		glfwMakeContextCurrent(m_Window);
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		ATN_CORE_ASSERT(status, "Failed to initialize Glad");
+		m_Context = new OpenGLGraphicsContext(m_Window);
+		m_Context->Init();
+
 		glfwSetWindowUserPointer(m_Window, &m_Desc);
 		if (m_Desc.VSync)
 			glfwSwapInterval(1);	// VSync is disabled by default
@@ -164,7 +167,7 @@ namespace Athena
 	void WindowsWindow::OnUpdate()
 	{
 		glfwPollEvents();
-		glfwSwapBuffers(m_Window);
+		m_Context->SwapBuffers();
 	}
 
 

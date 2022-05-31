@@ -2,10 +2,14 @@
 
 
 #ifdef ATN_PLATFORM_WINDOWS
-	#ifdef ATN_BUILD_DLL
-		#define ATHENA_API __declspec(dllexport)
+	#ifdef ATN_DYNAMIC_LINK
+		#ifdef ATN_BUILD_DLL
+			#define ATHENA_API __declspec(dllexport)
+		#else
+			#define  ATHENA_API __declspec(dllimport)
+		#endif
 	#else
-		#define  ATHENA_API __declspec(dllimport)
+		#define ATHENA_API
 	#endif
 #else
 	#error Athena only supports Windows!

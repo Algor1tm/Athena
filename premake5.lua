@@ -26,9 +26,10 @@ group ""
 
 project "Athena"
 	location "Athena"	
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
-	staticruntime "off"
+	cppdialect "C++17"
+	staticruntime "On"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir    ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -40,6 +41,11 @@ project "Athena"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
+	}
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	includedirs 
@@ -60,7 +66,6 @@ project "Athena"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines 
@@ -68,12 +73,6 @@ project "Athena"
 			"ATN_PLATFORM_WINDOWS",
 			"ATN_BUILD_DLL",
 			"GLFW_INCLUDE_NONE"
-		}
-
-		postbuildcommands
-		{
-			("IF NOT EXIST ../bin/" .. outputdir .. "/SandBox mkdir ../bin/" .. outputdir .. "/SandBox/"),
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/SandBox")
 		}
 
 
@@ -97,6 +96,7 @@ project "SandBox"
 	location "SandBox"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++17"
 	staticruntime "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -111,7 +111,8 @@ project "SandBox"
 	includedirs
 	{
 		"Athena/vendor/spdlog/include",
-		"Athena/src"
+		"Athena/src",
+		"Athena/vendor"
 	}
 
 	links 
@@ -120,7 +121,6 @@ project "SandBox"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		staticruntime "On"
 		systemversion "latest"
 

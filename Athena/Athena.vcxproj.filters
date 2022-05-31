@@ -109,9 +109,6 @@
     <ClCompile Include="src\Athena\Log.cpp">
       <Filter>Athena</Filter>
     </ClCompile>
-    <ClCompile Include="src\Athena\Math\Utils.cpp">
-      <Filter>Athena\Math</Filter>
-    </ClCompile>
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp">
       <Filter>Athena\Platform\Windows</Filter>
     </ClCompile>

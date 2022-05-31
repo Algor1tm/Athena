@@ -4,6 +4,7 @@
 
 #include "glad/glad.h"
 #include "Input.h"
+#include "Math/Utils.h"
 
 
 namespace Athena
@@ -53,6 +54,7 @@ namespace Athena
 
 	void Application::Run()
 	{
+		RadToDegree(10.f);
 		while (m_Running)
 		{
 			glClearColor(0, 1, 1, 1);

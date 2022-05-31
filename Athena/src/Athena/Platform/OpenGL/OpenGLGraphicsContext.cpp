@@ -20,6 +20,9 @@ namespace Athena
 		glfwMakeContextCurrent(m_WindowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		ATN_CORE_ASSERT(status, "Failed to initialize Glad");
+
+		ATN_CORE_INFO("OpenGL version: {0}", glGetString(GL_VERSION));
+		ATN_CORE_INFO("Graphics Card: {0}", glGetString(GL_RENDERER));
 	}
 
 	void OpenGLGraphicsContext::SwapBuffers()

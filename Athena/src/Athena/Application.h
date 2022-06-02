@@ -3,8 +3,8 @@
 #include "Core.h"
 #include "Window.h"
 #include "LayerStack.h"
+#include "Athena/Renderer/Shader.h"
 #include "Events/ApplicationEvent.h"
-
 #include "Athena/ImGui/ImGuiLayer.h"
 
 
@@ -36,6 +36,7 @@ namespace Athena
 		LayerStack m_LayerStack;
 
 		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+		std::unique_ptr<Shader> m_Shader;
 	private:
 		static Application* s_Instance;
 	};

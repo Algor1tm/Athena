@@ -165,6 +165,7 @@
     <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
+    <ClInclude Include="src\Athena\Renderer\Shader.h" />
     <ClInclude Include="src\Athena\Window.h" />
     <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
@@ -177,6 +178,7 @@
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Shader.cpp" />
     <ClCompile Include="src\atnpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

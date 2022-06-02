@@ -33,15 +33,18 @@ namespace Athena
 		glGenBuffers(1, &m_VertexBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
 
-		float vertices[9] = {
-			-0.5, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.0f, 0.5f, 0.0f
+		float vertices[18] = {
+			-0.5, -0.5f, 0.0f, 1, 0, 0,
+			0.5f, -0.5f, 0.0f, 0, 1, 0,
+			0.0f, 0.5f, 0.0f, 0, 0, 1
 		};
 
-		glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(vertices), vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+		glEnableVertexAttribArray(1);
+		unsigned int offset = 3 * sizeof(float);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)offset);
 
 		glGenBuffers(1, &m_IndexBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
@@ -49,6 +52,34 @@ namespace Athena
 		unsigned int indices[3] = { 0, 1, 2 };
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+		std::string vertexSrc = R"(
+			#version 330 core
+
+			layout (location = 0) in vec3 m_Position;
+			layout (location = 1) in vec3 m_Color;
+			
+			out vec4 Color;
+			
+			void main()
+			{
+				Color = vec4(m_Color, 1);
+				gl_Position = vec4(m_Position, 1);
+			}
+		)";
+
+		std::string fragmentSrc = R"(
+			#version 330 core
+			
+			in vec4 Color;
+			layout(location = 0) out vec4 out_Color;
+
+			void main()
+			{
+				out_Color = Color;
+			}
+		)";
+
+		m_Shader = std::make_unique<Shader>(vertexSrc, fragmentSrc);
 	}
 
 
@@ -74,12 +105,12 @@ namespace Athena
 
 	void Application::Run()
 	{
-		RadToDegree(10.f);
 		while (m_Running)
 		{
 			glClearColor(0.1f, 0.1f, 0.1f, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
+			m_Shader->Bind();
 			glBindVertexArray(m_VertexArray);
 			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 

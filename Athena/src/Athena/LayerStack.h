@@ -10,9 +10,8 @@ namespace Athena
 	{
 	public:
 		using value_type = Layer*;
-		using container = std::vector<value_type>;
-		using iterator = container::iterator;
-		using const_iterator = container::const_iterator;
+		using iterator = std::vector<value_type>::iterator;
+		using const_iterator = std::vector<value_type>::const_iterator;
 
 	public:
 		LayerStack() = default;
@@ -29,7 +28,7 @@ namespace Athena
 		inline const_iterator end()   const { return m_Layers.end();   }
 
 	private:
-		container m_Layers;
+		std::vector<value_type> m_Layers;
 		unsigned int m_LayerInsertIndex = 0;
 	};
 }

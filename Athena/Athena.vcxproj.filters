@@ -95,6 +95,9 @@
     <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
     <ClInclude Include="src\Athena\Renderer\Shader.h" />
+    <ClInclude Include="src\Athena\Renderer\Buffer.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h" />
+    <ClInclude Include="src\Athena\Renderer\Renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -121,5 +124,8 @@
     <ClCompile Include="src\atnpch.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
     <ClCompile Include="src\Athena\Renderer\Shader.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Buffer.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
   </ItemGroup>
 </Project>

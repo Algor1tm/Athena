@@ -11,6 +11,27 @@ namespace Athena
 {
 	Application* Application::s_Instance = nullptr;
 
+	static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
+	{
+		switch (type)
+		{
+			case ShaderDataType::Float:  return GL_FLOAT;
+			case ShaderDataType::Float2: return GL_FLOAT;
+			case ShaderDataType::Float3: return GL_FLOAT;
+			case ShaderDataType::Float4: return GL_FLOAT;
+			case ShaderDataType::Mat3:	 return GL_FLOAT;
+			case ShaderDataType::Mat4:   return GL_FLOAT;
+			case ShaderDataType::Int:    return GL_INT;
+			case ShaderDataType::Int2:   return GL_INT;
+			case ShaderDataType::Int3:   return GL_INT;
+			case ShaderDataType::Int4:   return GL_INT;
+			case ShaderDataType::Bool:   return GL_BOOL;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		return 0;
+	}
+
 	Application::Application()
 		: m_Running(true)
 	{
@@ -30,40 +51,47 @@ namespace Athena
 		glGenVertexArrays(1, &m_VertexArray);
 		glBindVertexArray(m_VertexArray);
 
-		glGenBuffers(1, &m_VertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
-
 		float vertices[18] = {
 			-0.5, -0.5f, 0.0f, 1, 0, 0,
 			0.5f, -0.5f, 0.0f, 0, 1, 0,
 			0.0f, 0.5f, 0.0f, 0, 0, 1
 		};
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
-		glEnableVertexAttribArray(1);
-		unsigned int offset = 3 * sizeof(float);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)offset);
-
-		glGenBuffers(1, &m_IndexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+		m_VertexBuffer.reset(VertexBuffer::Create(vertices, (uint32_t)std::size(vertices)));
 
 		unsigned int indices[3] = { 0, 1, 2 };
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		m_IndexBuffer.reset(IndexBuffer::Create(indices, (uint32_t)std::size(indices)));
+
+		BufferLayout layout = { { ShaderDataType::Float3, "a_Position"}, 
+								{ ShaderDataType::Float3, "a_Color"} };
+
+		uint32_t index = 0;
+		for (const auto& elem : layout)
+		{
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+			glEnableVertexAttribArray(index);
+			glVertexAttribPointer(index, 
+				elem.GetComponentCount(),
+				ShaderDataTypeToOpenGLBaseType(elem.Type), 
+				elem.Normalized ? GL_TRUE : GL_FALSE, 
+				layout.GetStride(), 
+				reinterpret_cast<void*>((uint64_t)elem.Offset));
+
+			++index;
+		}
 
 		std::string vertexSrc = R"(
 			#version 330 core
 
-			layout (location = 0) in vec3 m_Position;
-			layout (location = 1) in vec3 m_Color;
+			layout (location = 0) in vec3 a_Position;
+			layout (location = 1) in vec3 a_Color;
 			
 			out vec4 Color;
 			
 			void main()
 			{
-				Color = vec4(m_Color, 1);
-				gl_Position = vec4(m_Position, 1);
+				Color = vec4(a_Color, 1);
+				gl_Position = vec4(a_Position, 1);
 			}
 		)";
 
@@ -112,7 +140,7 @@ namespace Athena
 
 			m_Shader->Bind();
 			glBindVertexArray(m_VertexArray);
-			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+			glDrawElements(GL_TRIANGLES, m_IndexBuffer->GetCount(), GL_UNSIGNED_INT, nullptr);
 
 			for (Layer* layer: m_LayerStack)
 				layer->OnUpdate();

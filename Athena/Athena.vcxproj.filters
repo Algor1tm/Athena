@@ -98,6 +98,8 @@
     <ClInclude Include="src\Athena\Renderer\Buffer.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h" />
     <ClInclude Include="src\Athena\Renderer\Renderer.h" />
+    <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -127,5 +129,7 @@
     <ClCompile Include="src\Athena\Renderer\Buffer.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Athena\Renderer\VertexArray.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.cpp" />
   </ItemGroup>
 </Project>

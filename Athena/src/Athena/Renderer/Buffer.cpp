@@ -19,6 +19,7 @@ namespace Athena
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); 
 		}
 
+		ATN_CORE_ASSERT(false, "Unknown renderer API!");
 		return nullptr;
 	}
 
@@ -34,6 +35,7 @@ namespace Athena
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
+		ATN_CORE_ASSERT(false, "Unknown renderer API!");
 		return nullptr;
 	}
 }

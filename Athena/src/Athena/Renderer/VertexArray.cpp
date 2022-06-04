@@ -10,11 +10,11 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::OpenGL:
+		case RendererAPI::API::OpenGL:
 			return new OpenGLVertexArray(); break;
-		case RendererAPI::Direct3D:
+		case RendererAPI::API::Direct3D:
 			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
-		case RendererAPI::None:
+		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 

@@ -81,12 +81,6 @@ namespace Athena
 		Event& m_Event;
 	};
 
-
-	inline std::ostream& operator<<(std::ostream& os, const Event& event)
-	{
-		return os << event.ToString();
-	}
-
 	inline std::string ToString(const Event& event)
 	{
 		return event.ToString();

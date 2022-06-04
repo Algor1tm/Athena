@@ -1,10 +1,9 @@
 #include "atnpch.h"
 #include "Application.h"
 #include "Log.h"
+#include "Athena/Renderer/Renderer.h"
 
-#include "glad/glad.h"
 #include "Input.h"
-#include "Math/Utils.h"
 
 
 namespace Athena
@@ -104,12 +103,14 @@ namespace Athena
 	{
 		while (m_Running)
 		{
-			glClearColor(0.1f, 0.1f, 0.1f, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
+			RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+
+			Renderer::BeginScene();
 
 			m_Shader->Bind();
-			m_VertexArray->Bind();
-			glDrawElements(GL_TRIANGLES, m_VertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+			Renderer::Submit(m_VertexArray);
+
+			Renderer::EndScene();
 
 			for (Layer* layer: m_LayerStack)
 				layer->OnUpdate();
@@ -120,6 +121,8 @@ namespace Athena
 			m_ImGuiLayer->End();
 
 			m_Window->OnUpdate();
+
+
 		}
 	}
 

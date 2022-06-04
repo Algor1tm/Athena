@@ -100,6 +100,10 @@
     <ClInclude Include="src\Athena\Renderer\Renderer.h" />
     <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.h" />
+    <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
+    <ClInclude Include="src\Athena\Renderer\Color.h" />
+    <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -131,5 +135,9 @@
     <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Athena\Renderer\VertexArray.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Color.cpp" />
+    <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp" />
+    <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
   </ItemGroup>
 </Project>

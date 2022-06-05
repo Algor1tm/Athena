@@ -99,4 +99,10 @@ namespace Athena
 	{
 		glUseProgram(0);
 	}
+
+	void Shader::UploadUniformMat4(const std::string& name, const Matrix4& mat4)
+	{
+		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		glUniformMatrix4fv(location, 1, GL_TRUE, mat4.Data());
+	}
 }

@@ -104,6 +104,8 @@
     <ClInclude Include="src\Athena\Renderer\Color.h" />
     <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
+    <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
+    <ClInclude Include="src\Athena\Math\MatrixTransforms.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">
@@ -139,5 +141,7 @@
     <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp" />
     <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
+    <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp" />
+    <ClCompile Include="src\Athena\Math\MatrixTransforms.cpp" />
   </ItemGroup>
 </Project>

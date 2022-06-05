@@ -18,8 +18,16 @@ namespace Athena
 		using const_iterator = VectorConstIterator<Vector<Ty, Row>, Column>;
 
 	public:
-		constexpr Matrix() = default;
+		// Identity Matrix
+		constexpr Matrix()
+			: Matrix(static_cast<Ty>(0))
+		{
+			size_t min = min(Column, Row);
+			for (size_t i = 0; i < min; ++i)
+				m_Array[i][i] = static_cast<Ty>(1);
+		}
 
+		// No default initialization
 		constexpr Matrix(Ty value)
 		{
 			for (size_t i = 0; i < Column; ++i)
@@ -242,16 +250,16 @@ namespace Athena
 		}
 
 		template <size_t OtherRow>
-		constexpr Matrix<Ty, Column, OtherRow> operator*(const Matrix<Ty, Row, OtherRow>& other) const
+		constexpr Matrix<Ty, OtherRow, Column> operator*(const Matrix<Ty, Row, OtherRow>& other) const
 		{
-			Matrix<Ty, Column, OtherRow> out(0);
+			Matrix<Ty, Column, OtherRow> out(static_cast<Ty>(0));
 
 			for (size_t i = 0; i < Column; i++)
 			{
 				for (size_t j = 0; j < OtherRow; j++)
 				{
 					for (size_t k = 0; k < Row; ++k)
-						out[i][j] += m_Array[i][k] * other[k][j];
+						out[j][i] += m_Array[i][k] * other[k][j];
 				}
 			}
 			return out;
@@ -333,4 +341,6 @@ namespace Athena
 	typedef Matrix<float, 2, 2> Matrix2;
 	typedef Matrix<float, 3, 3> Matrix3;
 	typedef Matrix<float, 4, 4> Matrix4;
+
+
 }

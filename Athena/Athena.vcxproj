@@ -155,6 +155,7 @@
     <ClInclude Include="src\Athena\LayerStack.h" />
     <ClInclude Include="src\Athena\Log.h" />
     <ClInclude Include="src\Athena\Math\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\MatrixTransforms.h" />
     <ClInclude Include="src\Athena\Math\Utils.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
     <ClInclude Include="src\Athena\Math\Vector2.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="src\Athena\Renderer\Buffer.h" />
     <ClInclude Include="src\Athena\Renderer\Color.h" />
     <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
+    <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
     <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
     <ClInclude Include="src\Athena\Renderer\Renderer.h" />
     <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
@@ -184,6 +186,7 @@
     <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="src\Athena\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Log.cpp" />
+    <ClCompile Include="src\Athena\Math\MatrixTransforms.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
@@ -192,6 +195,7 @@
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Athena\Renderer\Buffer.cpp" />
     <ClCompile Include="src\Athena\Renderer\Color.cpp" />
+    <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp" />
     <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
     <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp" />

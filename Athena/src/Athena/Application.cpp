@@ -1,6 +1,7 @@
 #include "atnpch.h"
 #include "Application.h"
 #include "Log.h"
+
 #include "Athena/Renderer/Renderer.h"
 
 #include "Input.h"
@@ -11,7 +12,7 @@ namespace Athena
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application()
-		: m_Running(true)
+		: m_Running(true), m_Camera(-1.333f, 1.333f, -1, 1)
 	{
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
@@ -54,12 +55,14 @@ namespace Athena
 			layout (location = 0) in vec3 a_Position;
 			layout (location = 1) in vec3 a_Color;
 			
+			uniform mat4 u_ViewProjectionMatrix;
+
 			out vec4 Color;
 			
 			void main()
 			{
 				Color = vec4(a_Color, 1);
-				gl_Position = vec4(a_Position, 1);
+				gl_Position = u_ViewProjectionMatrix * vec4(a_Position, 1);
 			}
 		)";
 
@@ -101,16 +104,22 @@ namespace Athena
 
 	void Application::Run()
 	{
+		static float rotation = 0.f;
+
 		while (m_Running)
 		{
 			RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-			Renderer::BeginScene();
+			rotation += 0.5f;
+			m_Camera.SetRotation(rotation);
+			m_Camera.SetPosition({0.5f, 0.5f, 0});
 
-			m_Shader->Bind();
-			Renderer::Submit(m_VertexArray);
+			Renderer::BeginScene(m_Camera);
+			
+			Renderer::Submit(m_Shader, m_VertexArray);
 
 			Renderer::EndScene();
+
 
 			for (Layer* layer: m_LayerStack)
 				layer->OnUpdate();

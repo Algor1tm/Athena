@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RenderCommand.h"
+#include "OrthographicCamera.h"
+#include "Shader.h"
 
 
 namespace Athena
@@ -8,11 +10,21 @@ namespace Athena
 	class ATHENA_API Renderer
 	{
 	public:
-		static void BeginScene();
+		Renderer() = delete;
+
+		static void BeginScene(OrthographicCamera& Camera);
 		static void EndScene();
 
-		static void Submit(const std::shared_ptr<VertexArray>& vertexArray);
+		static void Submit(const std::shared_ptr<Shader>& shader, const std::shared_ptr<VertexArray>& vertexArray);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+
+	private:
+		struct SceneData
+		{
+			Matrix4 ViewProjectionMatrix;
+		};
+
+		static SceneData* m_SceneData;
 	};
 }

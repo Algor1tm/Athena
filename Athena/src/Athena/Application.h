@@ -8,6 +8,7 @@
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Buffer.h"
 #include "Athena/Renderer/VertexArray.h"
+#include "Athena/Renderer/OrthographicCamera.h"
 
 #include "Athena/ImGui/ImGuiLayer.h"
 
@@ -41,6 +42,8 @@ namespace Athena
 
 		std::shared_ptr<Shader> m_Shader;
 		std::shared_ptr<VertexArray> m_VertexArray;
+
+		OrthographicCamera m_Camera;
 	private:
 		static Application* s_Instance;
 	};

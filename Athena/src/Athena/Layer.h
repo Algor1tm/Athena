@@ -2,6 +2,7 @@
 
 #include "Core.h"
 #include "Athena/Events/Event.h"
+#include "Athena/Core/Time.h"
 
 
 namespace Athena
@@ -16,7 +17,7 @@ namespace Athena
 
 		virtual void OnAttach() {}
 		virtual void OnDetach() {}
-		virtual void OnUpdate() {}
+		virtual void OnUpdate(Time frameTime) {}
 		virtual void OnImGuiRender() {}
 		virtual void OnEvent(Event& event) {}
 

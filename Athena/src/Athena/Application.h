@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "LayerStack.h"
 #include "Events/ApplicationEvent.h"
+#include "Athena/Core/Time.h"
 
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Buffer.h"
@@ -33,17 +34,16 @@ namespace Athena
 
 		inline static Application& Get() { return *s_Instance; }
 	private:
-		bool OnWindowClose(const WindowCloseEvent& event);
+		bool OnWindowClose(WindowCloseEvent& event);
 
 		std::unique_ptr<Window> m_Window;
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running;
 		LayerStack m_LayerStack;
 
-		std::shared_ptr<Shader> m_Shader;
-		std::shared_ptr<VertexArray> m_VertexArray;
+		Timer m_Timer;
+		Time m_LastTime;
 
-		OrthographicCamera m_Camera;
 	private:
 		static Application* s_Instance;
 	};

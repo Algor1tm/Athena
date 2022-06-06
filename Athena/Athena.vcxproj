@@ -143,6 +143,7 @@
     <ClInclude Include="src\Athena.h" />
     <ClInclude Include="src\Athena\Application.h" />
     <ClInclude Include="src\Athena\Core.h" />
+    <ClInclude Include="src\Athena\Core\Time.h" />
     <ClInclude Include="src\Athena\EntryPoint.h" />
     <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
     <ClInclude Include="src\Athena\Events\Event.h" />

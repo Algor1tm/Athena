@@ -106,6 +106,7 @@
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
     <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
     <ClInclude Include="src\Athena\Math\MatrixTransforms.h" />
+    <ClInclude Include="src\Athena\Core\Time.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Application.cpp">

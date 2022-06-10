@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Math/Matrix.h"
+#include "Athena/Math/Vector4.h"
 
 
 namespace Athena
@@ -8,14 +9,12 @@ namespace Athena
 	class ATHENA_API Shader
 	{
 	public:
-		Shader(const std::string& vertexSrc, const std::string& fragmentSrc);
-		~Shader();
+		virtual ~Shader() = default;
 
-		void Bind() const;
-		void UnBind() const;
+		virtual void Bind() const = 0;
+		virtual void UnBind() const = 0;
 
-		void UploadUniformMat4(const std::string& name, const Matrix4& mat4);
-
+		static Shader* Create(const std::string& vertexSrc, const std::string& fragmentSrc);
 	private:
 		uint32_t m_RendererID;
 	};

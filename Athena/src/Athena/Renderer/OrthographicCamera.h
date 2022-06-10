@@ -11,9 +11,9 @@ namespace Athena
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
 
-		const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
-		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
-		const Matrix4& GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
+		inline const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
+		inline const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
+		inline const Matrix4& GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
 
 		inline const Vector3& GetPosition() const { return m_Position; }
 		inline float GetRotation() const { return m_Rotation; }
@@ -21,7 +21,7 @@ namespace Athena
 		inline void SetPosition(const Vector3& position) { m_Position = position; RecalculateViewMatrix(); }
 		inline void SetRotation(float rotation) { m_Rotation = rotation; RecalculateViewMatrix(); }
 
-	public:
+	private:
 		void RecalculateViewMatrix();
 
 	private:

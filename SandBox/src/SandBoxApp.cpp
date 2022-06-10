@@ -1,11 +1,16 @@
 #include <Athena.h>
 
+#include "Athena/Platform/OpenGL/OpenGLShader.h"
+
+#include "ImGui/imgui.h"
+
 
 class ExampleLayer : public Athena::Layer
 {
 public:
 	ExampleLayer()
-		: Layer("Example"), m_Camera(-1.333f, 1.333f, -1, 1), m_CameraPosition(0.f)
+		: Layer("Example"), m_Camera(-1.6f, 1.6f, -0.9f, 0.9f), 
+		  m_CameraPosition(0.f), m_SquareScale(0.1f)
 	{
 		float vertices[24] = {
 			-0.5, -0.5f, 0.0f, 1.f, 0.2f, 0.2f,
@@ -36,58 +41,84 @@ public:
 			layout (location = 0) in vec3 a_Position;
 			layout (location = 1) in vec3 a_Color;
 			
-			uniform mat4 u_ViewProjectionMatrix;
-
-			out vec4 Color;
+			uniform mat4 u_ViewProjection;
+			uniform mat4 u_Transform;
 			
 			void main()
 			{
-				Color = vec4(a_Color, 1);
-				gl_Position = u_ViewProjectionMatrix * vec4(a_Position, 1);
+				gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1);
 			}
 		)";
 
 		std::string fragmentSrc = R"(
 			#version 330 core
 			
-			in vec4 Color;
 			layout(location = 0) out vec4 out_Color;
+			uniform vec3 u_Color;
 
 			void main()
 			{
-				out_Color = Color;
+				out_Color = vec4(u_Color, 1);
 			}
 		)";
 
-		m_Shader = std::make_unique<Athena::Shader>(vertexSrc, fragmentSrc);
+		m_Shader.reset(Athena::Shader::Create(vertexSrc, fragmentSrc));
 	}
 
 	void OnUpdate(Athena::Time frameTime) override
 	{
+		float seconds = frameTime.AsSeconds();
+
 		if (Athena::Input::IsKeyPressed(Athena::Key::A))
-			m_CameraPosition.x -= m_CameraSpeed * frameTime.AsSeconds();
+			m_CameraPosition.x -= m_CameraSpeed * seconds;
 		else if (Athena::Input::IsKeyPressed(Athena::Key::D))
-			m_CameraPosition.x += m_CameraSpeed * frameTime.AsSeconds();
+			m_CameraPosition.x += m_CameraSpeed * seconds;
 		else if (Athena::Input::IsKeyPressed(Athena::Key::W))
-			m_CameraPosition.y += m_CameraSpeed * frameTime.AsSeconds();
+			m_CameraPosition.y += m_CameraSpeed * seconds;
 		else if (Athena::Input::IsKeyPressed(Athena::Key::S ))
-			m_CameraPosition.y -= m_CameraSpeed * frameTime.AsSeconds();
+			m_CameraPosition.y -= m_CameraSpeed * seconds;
+
+		else if (Athena::Input::IsKeyPressed(Athena::Key::Q))
+			m_CameraRotation += m_CameraRotationSpeed * seconds;
+		else if (Athena::Input::IsKeyPressed(Athena::Key::E))
+			m_CameraRotation -= m_CameraRotationSpeed * seconds;
+
+		else if (Athena::Input::IsKeyPressed(Athena::Key::Z))
+			m_SquareScale += m_ScaleSpeed * seconds;
+		else if (Athena::Input::IsKeyPressed(Athena::Key::C))
+			m_SquareScale -= m_ScaleSpeed * seconds;
 
 		Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-		m_CameraRotation += 0.5f;
 		m_Camera.SetRotation(m_CameraRotation);
 		m_Camera.SetPosition(m_CameraPosition);
 
 		Athena::Renderer::BeginScene(m_Camera);
 
-		Athena::Renderer::Submit(m_Shader, m_VertexArray);
+		Athena::Matrix4 scale = Athena::Scale(m_SquareScale);
+
+		m_Shader->Bind();
+		std::dynamic_pointer_cast<Athena::OpenGLShader>(m_Shader)->UploadUniformFloat3("u_Color", m_SquareColor);
+		for (int x = -5; x < 5; ++x)
+		{
+			for (int y = -5; y < 5; ++y)
+			{
+				Athena::Vector3 position = { x * 0.11f, y * 0.11f, 0.f };
+				Athena::Matrix4 transform = scale * Athena::Translate(position);
+				Athena::Renderer::Submit(m_Shader, m_VertexArray, transform);
+			}
+		}
 
 		Athena::Renderer::EndScene();
 	}
 
 	void OnImGuiRender() override
 	{
+		ImGui::Begin("Settings");
+
+		ImGui::ColorEdit3("Square Color", m_SquareColor.Data());
+
+		ImGui::End();
 
 	}
 
@@ -101,9 +132,17 @@ private:
 	std::shared_ptr<Athena::VertexArray> m_VertexArray;
 
 	Athena::OrthographicCamera m_Camera;
+
 	Athena::Vector3 m_CameraPosition;
-	float m_CameraRotation = 0;
 	float m_CameraSpeed = 2.f;
+
+	float m_CameraRotation = 0;
+	float m_CameraRotationSpeed = 50.f;
+
+	Athena::Vector3 m_SquareScale;
+	float m_ScaleSpeed = 0.08f;
+
+	Athena::Vector3 m_SquareColor = { 0.2f, 0.3f, 0.8f };
 };
 
 

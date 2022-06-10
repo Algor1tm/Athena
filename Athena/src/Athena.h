@@ -29,6 +29,7 @@
 #include "Athena/Math/Vector3.h"
 #include "Athena/Math/Vector4.h"
 #include "Athena/Math/Matrix.h"
+#include "Athena/Math/MatrixTransforms.h"
 #include "Athena/Math/Utils.h"
 
 

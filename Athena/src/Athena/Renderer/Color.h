@@ -22,8 +22,8 @@ namespace Athena
 		Color& operator=(const Vector4& vec4);
 		Color& operator=(const Vector3& vec3);
 
-		explicit operator Vector4() const;
-		explicit operator Vector3() const;
+		operator Vector4() const;
+		operator Vector3() const;
 
 		float operator[](uint32_t idx) const;
 		float& operator[](uint32_t idx);

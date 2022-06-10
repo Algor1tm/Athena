@@ -14,6 +14,7 @@ namespace Athena
 		using vRow = Vector<Ty, Row>;
 		using vColumn = Vector<Ty, Column>;
 
+	public:
 		using iterator = VectorIterator<Vector<Ty, Row>, Column>;
 		using const_iterator = VectorConstIterator<Vector<Ty, Row>, Column>;
 
@@ -249,17 +250,18 @@ namespace Athena
 			return Matrix(*this) -= other;
 		}
 
-		template <size_t OtherRow>
-		constexpr Matrix<Ty, OtherRow, Column> operator*(const Matrix<Ty, Row, OtherRow>& other) const
+		template <size_t OtherColumn, size_t OtherRow>
+		constexpr Matrix<Ty, Column, OtherRow> operator*(const Matrix<Ty, OtherColumn, OtherRow>& other) const
 		{
-			Matrix<Ty, Column, OtherRow> out(static_cast<Ty>(0));
+			static_assert(Row == OtherColumn, "Invalid Matrix multiplication");
 
+			Matrix<Ty, Column, OtherRow> out(static_cast<Ty>(0));
 			for (size_t i = 0; i < Column; i++)
 			{
 				for (size_t j = 0; j < OtherRow; j++)
 				{
 					for (size_t k = 0; k < Row; ++k)
-						out[j][i] += m_Array[i][k] * other[k][j];
+						out[i][j] += m_Array[i][k] * other[k][j];
 				}
 			}
 			return out;
@@ -290,19 +292,19 @@ namespace Athena
 	};
 
 
-	template <typename Ty, size_t Column, size_t Row>
+	template <typename Ty, size_t vecRow, size_t Column, size_t Row>
 	constexpr Vector<Ty, Row> operator*(
-		const Vector<Ty, Column>& vec, const Matrix<Ty, Column, Row>& mat)
+		const Vector<Ty, vecRow>& vec, const Matrix<Ty, Column, Row>& mat)
 	{
-		Vector<Ty, Row> out(0);
+		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
 
+		Vector<Ty, Row> out(static_cast<Ty>(0));
 		for (size_t i = 0; i < Row; i++)
 		{
 			for (size_t j = 0; j < Column; ++j)
 			{
 				out[i] += vec[j] * mat[j][i];
 			}
-
 		}
 		return out;
 	}
@@ -341,6 +343,4 @@ namespace Athena
 	typedef Matrix<float, 2, 2> Matrix2;
 	typedef Matrix<float, 3, 3> Matrix3;
 	typedef Matrix<float, 4, 4> Matrix4;
-
-
 }

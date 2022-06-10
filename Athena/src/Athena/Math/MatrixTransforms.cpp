@@ -11,9 +11,9 @@ namespace Athena
 		out[0][0] = 2.f / (right - left);
 		out[1][1] = 2.f / (top - bottom);
 		out[2][2] = 1.f / (zFar - zNear);
-		out[0][3] = -(right + left) / (right - left);
-		out[1][3] = -(top + bottom) / (top - bottom);
-		out[2][3] = -zNear / (zFar - zNear);
+		out[3][0] = -(right + left) / (right - left);
+		out[3][1] = -(top + bottom) / (top - bottom);
+		out[3][2] = -zNear / (zFar - zNear);
 		out[3][3] = 1.f;
 
 		return out;
@@ -22,9 +22,9 @@ namespace Athena
 	Matrix4 Translate(const Vector3& vec3)
 	{
 		Matrix4 out;
-		out[0][3] = vec3.x;
-		out[1][3] = vec3.y;
-		out[2][3] = vec3.z;
+		out[3][0] = vec3.x;
+		out[3][1] = vec3.y;
+		out[3][2] = vec3.z;
 		return out;
 	}
 
@@ -41,10 +41,10 @@ namespace Athena
 		float cosz = cosf(angle * vec3.z);
 
 
-		Matrix4 out = { { cosy*cosz, sinx*siny*cosz - cosx*sinz, cosx*siny*cosz + sinx*sinz, 0.f },
-						{ cosy*sinz, sinx*siny*sinz + cosx*cosz, cosx*siny*sinz - sinx*cosz, 0.f },
-						{ -siny,     sinx*cosy,                  cosx*cosy,                  0.f },
-						{ 0.f,       0.f,                        0.f,                        1.f } };
+		Matrix4 out = { { cosy*cosz,					cosy*sinz,				      -siny,     0.f },
+						{ sinx*siny*cosz - cosx * sinz, sinx*siny*sinz + cosx*cosz,   sinx*cosy, 0.f },
+						{ cosx*siny*cosz + sinx*sinz,   cosx*siny*sinz - sinx * cosz, cosx*cosy, 0.f },
+						{ 0.f,                          0.f,                          0.f,       1.f } };
 
 		return out;
 	}
@@ -55,6 +55,29 @@ namespace Athena
 		out[0][0] = vec3.x;
 		out[1][1] = vec3.y;
 		out[2][2] = vec3.z;
+		return out;
+	}
+
+	Matrix4 Translate(const Matrix4& mat4, const Vector3& vec3)
+	{
+		Matrix4 out(mat4);
+		out[3][0] += vec3.x;
+		out[3][1] += vec3.y;
+		out[3][2] += vec3.z;
+		return out;
+	}
+	
+	Matrix4 Rotate(const Matrix4& mat4, float degrees, const Vector3& vec3)
+	{
+		return Rotate(degrees, vec3) * mat4;
+	}
+
+	Matrix4 Scale(const Matrix4& mat4, const Vector3& vec3)
+	{
+		Matrix4 out(mat4);
+		out[0][0] *= vec3.x;
+		out[1][1] *= vec3.y;
+		out[2][2] *= vec3.z;
 		return out;
 	}
 

@@ -19,7 +19,7 @@ public:
 			-0.5f, 0.5f, 0.0f,  0.8f, 0, 0.8f
 		};
 
-		std::shared_ptr<Athena::VertexBuffer> vertexBuffer;
+		Athena::Ref<Athena::VertexBuffer> vertexBuffer;
 		vertexBuffer.reset(Athena::VertexBuffer::Create(vertices, (uint32_t)std::size(vertices)));
 
 		Athena::BufferLayout layout = { { Athena::ShaderDataType::Float3, "a_Position"},
@@ -27,7 +27,7 @@ public:
 		vertexBuffer->SetLayout(layout);
 
 
-		std::shared_ptr<Athena::IndexBuffer> indexBuffer;
+		Athena::Ref<Athena::IndexBuffer> indexBuffer;
 		unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
 		indexBuffer.reset(Athena::IndexBuffer::Create(indices, (uint32_t)std::size(indices)));
 
@@ -128,8 +128,8 @@ public:
 	}
 
 private:
-	std::shared_ptr<Athena::Shader> m_Shader;
-	std::shared_ptr<Athena::VertexArray> m_VertexArray;
+	Athena::Ref<Athena::Shader> m_Shader;
+	Athena::Ref<Athena::VertexArray> m_VertexArray;
 
 	Athena::OrthographicCamera m_Camera;
 

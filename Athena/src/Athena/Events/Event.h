@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Core.h"
+#include "Athena/Core/Core.h"
 
 
 namespace Athena

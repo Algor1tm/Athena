@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Athena/Core.h"
-#include "Athena/Input.h"
+#include "Athena/Core/Core.h"
+#include "Athena/Core/Input.h"
 
 
 namespace Athena

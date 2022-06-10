@@ -2,7 +2,7 @@
 
 #include "atnpch.h"
 #include "Core.h"
-#include "Events/Event.h"
+#include "Athena/Events/Event.h"
 
 
 namespace Athena

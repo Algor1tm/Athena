@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Athena/Window.h"
+#include "Athena/Core/Window.h"
 #include "Athena/Renderer/GraphicsContext.h"
 
-struct GLFWwindow;
 
+struct GLFWwindow;
 
 namespace Athena
 {

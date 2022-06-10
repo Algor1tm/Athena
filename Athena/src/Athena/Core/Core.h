@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 
 #ifdef ATN_PLATFORM_WINDOWS
 	#ifdef ATN_DYNAMIC_LINK
@@ -31,3 +33,12 @@
 
 #define ATN_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
+
+namespace Athena
+{
+	template <typename T>
+	using Scope = std::unique_ptr<T>;
+
+	template <typename T>
+	using Ref = std::shared_ptr<T>;
+}

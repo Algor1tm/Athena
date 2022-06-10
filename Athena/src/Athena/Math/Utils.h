@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Core.h"
+#include "Athena/Core/Core.h"
 
 
 #define M_PI 3.14159265358979323846

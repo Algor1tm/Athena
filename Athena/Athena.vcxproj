@@ -141,20 +141,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Athena.h" />
-    <ClInclude Include="src\Athena\Application.h" />
-    <ClInclude Include="src\Athena\Core.h" />
+    <ClInclude Include="src\Athena\Core\Application.h" />
+    <ClInclude Include="src\Athena\Core\Core.h" />
     <ClInclude Include="src\Athena\Core\Time.h" />
-    <ClInclude Include="src\Athena\EntryPoint.h" />
+    <ClInclude Include="src\Athena\Core\EntryPoint.h" />
     <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
     <ClInclude Include="src\Athena\Events\Event.h" />
     <ClInclude Include="src\Athena\Events\KeyEvent.h" />
     <ClInclude Include="src\Athena\Events\MouseEvent.h" />
     <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h" />
-    <ClInclude Include="src\Athena\Input.h" />
-    <ClInclude Include="src\Athena\KeyCodes.h" />
-    <ClInclude Include="src\Athena\Layer.h" />
-    <ClInclude Include="src\Athena\LayerStack.h" />
-    <ClInclude Include="src\Athena\Log.h" />
+    <ClInclude Include="src\Athena\Core\Input.h" />
+    <ClInclude Include="src\Athena\Core\KeyCodes.h" />
+    <ClInclude Include="src\Athena\Core\Layer.h" />
+    <ClInclude Include="src\Athena\Core\LayerStack.h" />
+    <ClInclude Include="src\Athena\Core\Log.h" />
     <ClInclude Include="src\Athena\Math\Matrix.h" />
     <ClInclude Include="src\Athena\Math\MatrixTransforms.h" />
     <ClInclude Include="src\Athena\Math\Utils.h" />
@@ -162,7 +162,7 @@
     <ClInclude Include="src\Athena\Math\Vector2.h" />
     <ClInclude Include="src\Athena\Math\Vector3.h" />
     <ClInclude Include="src\Athena\Math\Vector4.h" />
-    <ClInclude Include="src\Athena\MouseCodes.h" />
+    <ClInclude Include="src\Athena\Core\MouseCodes.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
@@ -179,15 +179,15 @@
     <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
     <ClInclude Include="src\Athena\Renderer\Shader.h" />
     <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
-    <ClInclude Include="src\Athena\Window.h" />
+    <ClInclude Include="src\Athena\Core\Window.h" />
     <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Athena\Application.cpp" />
+    <ClCompile Include="src\Athena\Core\Application.cpp" />
     <ClCompile Include="src\Athena\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
-    <ClCompile Include="src\Athena\LayerStack.cpp" />
-    <ClCompile Include="src\Athena\Log.cpp" />
+    <ClCompile Include="src\Athena\Core\LayerStack.cpp" />
+    <ClCompile Include="src\Athena\Core\Log.cpp" />
     <ClCompile Include="src\Athena\Math\MatrixTransforms.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />

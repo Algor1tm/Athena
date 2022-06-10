@@ -2,16 +2,16 @@
 
 // For use by Athena applications
 
-#include "Athena/Application.h"
-#include "Athena/Layer.h"
+#include "Athena/Core/Application.h"
+#include "Athena/Core/Layer.h"
 #include "Athena/ImGui/ImGuiLayer.h"
-#include "Athena/Log.h"
+#include "Athena/Core/Log.h"
 
 #include "Athena/Core/Time.h"
 
-#include "Athena/Input.h"
-#include "Athena/KeyCodes.h"
-#include "Athena/MouseCodes.h"
+#include "Athena/Core/Input.h"
+#include "Athena/Core/KeyCodes.h"
+#include "Athena/Core/MouseCodes.h"
 
 // ---Renderer--------------------
 #include "Athena/Renderer/Renderer.h"
@@ -35,5 +35,5 @@
 
 
 // ---Entry Point---------------------
-#include "Athena/EntryPoint.h"
+#include "Athena/Core/EntryPoint.h"
 // -----------------------------------

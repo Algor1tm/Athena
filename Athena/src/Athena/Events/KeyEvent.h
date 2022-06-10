@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Event.h"
-#include "Athena/KeyCodes.h"
+#include "Athena/Core/KeyCodes.h"
 
 
 namespace Athena

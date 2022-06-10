@@ -2,7 +2,6 @@
 
 #include "WindowsWindow.h"
 #include "Athena/Platform/OpenGL/OpenGLGraphicsContext.h"
-#include "Athena/Log.h"
 
 #include "Athena/Events/ApplicationEvent.h"
 #include "Athena/Events/KeyEvent.h"

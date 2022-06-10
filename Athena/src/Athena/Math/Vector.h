@@ -1,7 +1,7 @@
 #pragma once
 
 #include "atnpch.h"
-#include "Athena/Core.h"
+#include "Athena/Core/Core.h"
 #include "Athena/Math/Utils.h"
 
 

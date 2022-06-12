@@ -11,6 +11,7 @@
 #include <functional>
 #include <utility>
 #include <chrono>
+#include <xmmintrin.h>
 
 #include <iostream>
 #include <sstream>

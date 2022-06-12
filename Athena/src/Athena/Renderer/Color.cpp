@@ -17,7 +17,7 @@ namespace Athena
 	}
 
 	Color::Color(const Vector4& vec4)
-		: Color(vec4.x, vec4.y, vec4.z, vec4.t)
+		: Color(vec4.x, vec4.y, vec4.z, vec4.w)
 	{
 
 	}
@@ -33,7 +33,7 @@ namespace Athena
 		r = vec4.x;
 		g = vec4.y;
 		b = vec4.z;
-		a = vec4.t;
+		a = vec4.w;
 		return *this;
 	}
 

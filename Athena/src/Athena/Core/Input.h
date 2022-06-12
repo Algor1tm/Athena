@@ -3,7 +3,7 @@
 #include "Core.h"
 #include "KeyCodes.h"
 #include "MouseCodes.h"
-#include "Athena/Math/Vector2.h"
+#include "Athena/Math/Vector.h"
 
 
 namespace Athena

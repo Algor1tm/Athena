@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Math/Matrix.h"
-#include "Athena/Math/Vector3.h"
+#include "Athena/Math/Vector.h"
 
 
 namespace Athena

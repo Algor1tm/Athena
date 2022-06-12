@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Athena/Math/Vector4.h"
-#include "Athena/Math/Vector3.h"
+#include "Athena/Math/Vector.h"
 #include "Athena/Math/Utils.h"
 
 

@@ -25,11 +25,8 @@
 #include "Athena/Renderer/Buffer.h"
 
 // ---Math--------------------
-#include "Athena/Math/Vector2.h"
-#include "Athena/Math/Vector3.h"
-#include "Athena/Math/Vector4.h"
+#include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
-#include "Athena/Math/MatrixTransforms.h"
 #include "Athena/Math/Utils.h"
 
 

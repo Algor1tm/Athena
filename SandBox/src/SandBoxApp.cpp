@@ -94,7 +94,7 @@ public:
 		m_Camera.SetPosition(m_CameraPosition);
 
 		Athena::Renderer::BeginScene(m_Camera);
-
+		
 		Athena::Matrix4 scale = Athena::Scale(m_SquareScale);
 
 		m_Shader->Bind();

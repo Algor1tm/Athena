@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Athena/Math/Matrix.h"
-#include "Athena/Math/Vector4.h"
-
 
 namespace Athena
 {

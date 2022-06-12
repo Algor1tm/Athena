@@ -127,7 +127,7 @@ namespace Athena
 	void OpenGLShader::UploadUniformFloat4(const std::string& name, const Vector4& vec4)
 	{
 		GLint location = glGetUniformLocation(m_RendererID, name.data());
-		glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.t);
+		glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 	}
 
 	void OpenGLShader::UploadUniformMat3(const std::string& name, const Matrix3& mat3)

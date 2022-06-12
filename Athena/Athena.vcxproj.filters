@@ -61,22 +61,22 @@
     <ClInclude Include="src\Athena\Core\Log.h">
       <Filter>Athena</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Matrix.h">
+    <ClInclude Include="src\Athena\Math\Source\Matrix.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Utils.h">
+    <ClInclude Include="src\Athena\Math\Source\Utils.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Vector.h">
+    <ClInclude Include="src\Athena\Math\Source\Vector.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Vector2.h">
+    <ClInclude Include="src\Athena\Math\Source\Vector2.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Vector3.h">
+    <ClInclude Include="src\Athena\Math\Source\Vector3.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Math\Vector4.h">
+    <ClInclude Include="src\Athena\Math\Source\Vector4.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Core\MouseCodes.h">
@@ -105,9 +105,15 @@
     <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
     <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
-    <ClInclude Include="src\Athena\Math\MatrixTransforms.h" />
+    <ClInclude Include="src\Athena\Math\Source\MatrixTransforms.h" />
     <ClInclude Include="src\Athena\Core\Time.h" />
     <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLShader.h" />
+    <ClInclude Include="src\Athena\Math\Source\Matrix4_float.h" />
+    <ClInclude Include="src\Athena\Math\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\Vector.h" />
+    <ClInclude Include="src\Athena\Math\Utils.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector4_float.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector_Funcs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Core\Application.cpp">
@@ -144,7 +150,7 @@
     <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
     <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp" />
-    <ClCompile Include="src\Athena\Math\MatrixTransforms.cpp" />
+    <ClCompile Include="src\Athena\Math\Source\MatrixTransforms.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLShader.cpp" />
   </ItemGroup>
 </Project>

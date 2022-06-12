@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Matrix.h"
+#include "Athena/Math/Source/Matrix.h"
 #include "Vector3.h"
 
 
 namespace Athena
 {
+	typedef Matrix<float, 4, 4> Matrix4;
+
 	Matrix4 Ortho(float left, float right, float bottom, float top, float zNear, float zFar);
 
 	Matrix4 Translate(const Vector3& vec3);

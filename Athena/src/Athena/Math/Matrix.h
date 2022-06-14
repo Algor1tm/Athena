@@ -2,7 +2,8 @@
 
 
 #include "Source/Matrix.h"
-#include "Source/Matrix4_float.h"
+#include "Source/MatrixFuncs.h"
+#include "SIMD/MatrixFuncs_simd.h"
 #include "Source/MatrixTransforms.h"
 
 

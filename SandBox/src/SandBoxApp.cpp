@@ -119,12 +119,12 @@ public:
 		ImGui::ColorEdit3("Square Color", m_SquareColor.Data());
 
 		ImGui::End();
-
 	}
 
 	void OnEvent(Athena::Event& event) override
 	{
-
+		using namespace Athena;
+		
 	}
 
 private:

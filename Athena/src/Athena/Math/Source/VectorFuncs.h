@@ -1,11 +1,38 @@
 #pragma once
 
 #include "Vector.h"
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
 #include "Utils.h"
 
 
 namespace Athena
 {
+	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> operator+(Ty scalar, const Vector<Ty, Size>& vec)
+	{
+		return vec + scalar;
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> operator*(Ty scalar, const Vector<Ty, Size>& vec)
+	{
+		return vec * scalar;
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr void Fill(Vector<Ty, Size>& vec)
+	{
+		vec.Fill();
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr Ty* Data(const Vector<Ty, Size>& vec)
+	{
+		return vec.Data();
+	}
+
 	template <typename Ty, size_t Size>
 	constexpr float Distance(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)
 	{
@@ -30,12 +57,6 @@ namespace Athena
 		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z + Left.w * Right.w;
 	}
 
-	template <>
-	constexpr float Dot(const Vector<float, 4>& Left, const Vector<float, 4>& Right)
-	{
-		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z + Left.w * Right.w;
-	}
-
 	template <typename Ty, size_t Size>
 	constexpr Ty Dot(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)
 	{
@@ -43,6 +64,25 @@ namespace Athena
 		for (size_t i = 0; i < Size; ++i)
 			out += Left[i] * Right[i];
 		return out;
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr Ty SqrLength(const Vector<Ty, Size>& vec)
+	{
+		return Dot(vec, vec);
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr float Length(const Vector<Ty, Size>& vec)
+	{
+		return std::sqrt(static_cast<float>(SqrLength(vec)));
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr Vector<Ty, Size>& Normalize(Vector<Ty, Size>& vec)
+	{
+		float length = Length(vec);
+		return length == 0 ? vec : vec /= static_cast<Ty>(length);
 	}
 
 	template <typename Ty>
@@ -98,9 +138,9 @@ namespace Athena
 	constexpr std::string ToString(const Vector<Ty, Size>& vec)
 	{
 		std::string out = "Vector" + std::to_string(vec.GetSize()) + "(";
-		for (size_t i = 0; i < vec.GetSize() - 1; ++i)
+		for (size_t i = 0; i < vec.Size() - 1; ++i)
 			out += std::to_string(vec[i]) + ", ";
-		out += std::to_string(vec[vec.GetSize() - 1]) + ")";
+		out += std::to_string(vec[vec.Size() - 1]) + ")";
 		return out;
 	}
 }

@@ -89,7 +89,7 @@ namespace Athena
 			return *(&x + idx);
 		}
 
-		constexpr size_t GetSize() const
+		constexpr size_t Size() const
 		{
 			return Size4;
 		}

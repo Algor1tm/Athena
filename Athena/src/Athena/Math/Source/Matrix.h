@@ -19,16 +19,8 @@ namespace Athena
 		using const_iterator = VectorConstIterator<Vector<Ty, Row>, Column>;
 
 	public:
-		// Identity Matrix
-		constexpr Matrix()
-			: Matrix(static_cast<Ty>(0))
-		{
-			size_t min = min(Column, Row);
-			for (size_t i = 0; i < min; ++i)
-				m_Array[i][i] = static_cast<Ty>(1);
-		}
+		constexpr Matrix() = default;
 
-		// No default initialization
 		constexpr Matrix(Ty value)
 		{
 			for (size_t i = 0; i < Column; ++i)
@@ -94,6 +86,17 @@ namespace Athena
 				for (size_t j = 0; j < Row; ++j)
 					m_Array[i][j] = static_cast<Ty>(other[i][j]);
 			}
+		}
+
+		static constexpr Matrix<Ty, Column, Row> Identity()
+		{
+			Matrix out(static_cast<Ty>(0));
+
+			constexpr size_t min = min(Column, Row);
+			for (size_t i = 0; i < min; ++i)
+				out[i][i] = static_cast<Ty>(1);
+
+			return out;
 		}
 
 		constexpr Ty* Data()
@@ -169,30 +172,6 @@ namespace Athena
 			for (size_t i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
 			return *this;
-		}
-
-		constexpr Matrix& Transpose()
-		{
-			static_assert(Row == Column, "Cannot transpose matrix with different dimensions");
-
-			Matrix tmp(*this);
-			for (size_t i = 0; i < Column; ++i)
-			{
-				for (size_t j = 0; j < Row; ++j)
-					m_Array[j][i] = tmp[i][j];
-			}
-			return *this;
-		}
-
-		constexpr Matrix<Ty, Row, Column> GetTransposed() const
-		{
-			Matrix<Ty, Row, Column> out;
-			for (size_t i = 0; i < Column; ++i)
-			{
-				for (size_t j = 0; j < Row; ++j)
-					out[j][i] = m_Array[i][j];
-			}
-			return out;
 		}
 
 	public:
@@ -290,52 +269,4 @@ namespace Athena
 	private:
 		vRow m_Array[Column];
 	};
-
-
-	template <typename Ty, size_t vecRow, size_t Column, size_t Row>
-	constexpr Vector<Ty, Row> operator*(
-		const Vector<Ty, vecRow>& vec, const Matrix<Ty, Column, Row>& mat)
-	{
-		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
-
-		Vector<Ty, Row> out(static_cast<Ty>(0));
-		for (size_t i = 0; i < Row; i++)
-		{
-			for (size_t j = 0; j < Column; ++j)
-			{
-				out[i] += vec[j] * mat[j][i];
-			}
-		}
-		return out;
-	}
-
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Matrix<Ty, Column, Row> operator+(float scalar, const Matrix<Ty, Column, Row>& mat)
-	{
-		return mat + scalar;
-	}
-
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Matrix<Ty, Column, Row> operator*(float scalar, const Matrix<Ty, Column, Row>& mat)
-	{
-		return mat * scalar;
-	}
-
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr std::string ToString(const Matrix<Ty, Column, Row>& mat)
-	{
-		std::string out = "Matrix(";
-		for (size_t i = 0; i < Column; ++i)
-		{
-			for (size_t j = 0; j < Row; ++j)
-			{
-				out += std::to_string(mat[i][j]) + ", ";
-			}
-			if (i == Column - 1)
-				out += "height = " + std::to_string(Column) + ", width = " + std::to_string(Row) + ")";
-			else
-				out += "\n                       ";
-		}
-		return out;
-	}
 }

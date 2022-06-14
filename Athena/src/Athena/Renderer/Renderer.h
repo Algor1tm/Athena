@@ -17,14 +17,14 @@ namespace Athena
 
 		static void Submit(const Ref<Shader>& shader,
 			const Ref<VertexArray>& vertexArray,
-			const Matrix4& transform = Matrix4());
+			const Matrix4& transform = Matrix4::Identity());
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 
 	private:
 		struct SceneData
 		{
-			Matrix4 ViewProjectionMatrix;
+			Matrix4 ViewProjectionMatrix = Matrix4::Identity();
 		};
 
 		static SceneData* m_SceneData;

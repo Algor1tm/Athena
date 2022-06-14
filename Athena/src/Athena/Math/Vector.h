@@ -5,8 +5,10 @@
 #include "Source/Vector2.h"
 #include "Source/Vector3.h"
 #include "Source/Vector4.h"
-#include "Source/Vector4_float.h"
-#include "Source/Vector_Funcs.h"
+#include "SIMD/Vector4_float.h"
+
+#include "Source/VectorFuncs.h"
+#include "SIMD/VectorFuncs_simd.h"
 
 
 namespace Athena

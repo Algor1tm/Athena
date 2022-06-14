@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Vector4.h"
+#include "Athena/Math/Source/Vector.h"
 
 
 namespace Athena
 {
 #define Size4 4
 
-	constexpr float Dot(const Vector<float, Size4>& Left, const Vector<float, Size4>& Right);
+	float Dot(const Vector<float, 4>& Left, const Vector<float, 4>& Right);
 
 #pragma pack(push, 1)
 	template <>
@@ -21,15 +21,15 @@ namespace Athena
 		Vector() = default;
 
 		inline Vector(float value)
-			: _xmm(_mm_set_ps(value, value, value, value)){}
+			: _xmm(_mm_set_ps1(value)) {}
 
 		inline Vector(float X, float Y, float Z, float W)
-			: _xmm(_mm_set_ps(W, Z, Y, X)){}
+			: _xmm(_mm_set_ps(W, Z, Y, X)) {}
 
 		constexpr Vector(__m128 data)
 			: _xmm(data) {}
 
-		constexpr Vector(const Vector<float, 4>& other)
+		constexpr Vector(const Vector<float, Size4>& other)
 			: _xmm(other._xmm) {}
 
 		inline Vector(const Vector<float, 3>& other)
@@ -78,7 +78,7 @@ namespace Athena
 
 		inline void Fill(float value)
 		{
-			_xmm = _mm_set_ps(value, value, value, value);
+			_xmm = _mm_set_ps1(value);
 		}
 
 		constexpr const float& operator[](size_t idx) const
@@ -93,7 +93,7 @@ namespace Athena
 			return *(&x + idx);
 		}
 
-		constexpr size_t GetSize() const
+		constexpr size_t Size() const
 		{
 			return Size4;
 		}
@@ -134,7 +134,7 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr float GetSqrLength() const
+		inline float GetSqrLength() const
 		{
 			return Dot(*this, *this);
 		}
@@ -147,7 +147,7 @@ namespace Athena
 		inline Vector& Normalize()
 		{
 			float length = GetLength();
-			return length == 0 ? *this : *this /= static_cast<float>(length);
+			return length == 0 ? *this : *this /= length;
 		}
 
 		inline Vector GetNormalized() const
@@ -171,26 +171,26 @@ namespace Athena
 
 		inline Vector& operator+=(float scalar)
 		{
-			_xmm = _mm_add_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar));
+			_xmm = _mm_add_ps(_xmm, _mm_set_ps1(scalar));
 			return *this;
 		}
 
 		inline Vector& operator-=(float scalar)
 		{
-			_xmm = _mm_sub_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar));
+			_xmm = _mm_sub_ps(_xmm, _mm_set_ps1(scalar));
 			return *this;
 		}
 
 		inline Vector& operator*=(float scalar)
 		{
-			_xmm = _mm_mul_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar));
+			_xmm = _mm_mul_ps(_xmm, _mm_set_ps1(scalar));
 			return *this;
 		}
 
 		inline Vector& operator/=(float scalar)
 		{
 			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
-			_xmm = _mm_div_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar));
+			_xmm = _mm_div_ps(_xmm, _mm_set_ps1(scalar));
 			return *this;
 		}
 
@@ -206,23 +206,23 @@ namespace Athena
 
 		constexpr Vector operator+(float scalar) const
 		{
-			return Vector(_mm_add_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar)));
+			return Vector(_mm_add_ps(_xmm, _mm_set_ps1(scalar)));
 		}
 
 		constexpr Vector operator-(float scalar) const
 		{
-			return Vector(_mm_sub_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar)));
+			return Vector(_mm_sub_ps(_xmm, _mm_set_ps1(scalar)));
 		}
 
 		constexpr Vector operator*(float scalar) const
 		{
-			return Vector(_mm_mul_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar)));
+			return Vector(_mm_mul_ps(_xmm, _mm_set_ps1(scalar)));
 		}
 
 		constexpr Vector operator/(float scalar) const
 		{
 			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
-			return Vector(_mm_div_ps(_xmm, _mm_set_ps(scalar, scalar, scalar, scalar)));
+			return Vector(_mm_div_ps(_xmm, _mm_set_ps1(scalar)));
 		}
 
 		constexpr Vector operator-() const
@@ -251,19 +251,6 @@ namespace Athena
 		};
 	};
 #pragma pack(pop)
-
-
-	template <>
-	constexpr Vector<float, Size4> operator+(float scalar, const Vector<float, Size4>& vec)
-	{
-		return vec + scalar;
-	}
-
-	template <>
-	constexpr Vector<float, Size4> operator*(float scalar, const Vector<float, Size4>& vec)
-	{
-		return vec * scalar;
-	}
 
 #undef Size4
 }

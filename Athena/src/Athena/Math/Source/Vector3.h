@@ -72,9 +72,9 @@ namespace Athena
 			return *(&x + idx);
 		}
 
-		constexpr size_t GetSize() const 
+		constexpr size_t Size() const
 		{
-			return 3;
+			return Size3;
 		}
 
 		constexpr Ty* Data() 
@@ -245,7 +245,6 @@ namespace Athena
 		Ty x, y, z;
 	};
 #pragma pack(pop)
-
 
 	template<typename Ty>
 	const Vector<Ty, Size3> Vector<Ty, Size3>::up =

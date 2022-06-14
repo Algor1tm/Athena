@@ -47,4 +47,20 @@ namespace Athena
 	{
 		return (lerp - min) / (max - min);
 	}
+
+
+	enum class Orienation
+	{
+		Collinear = 0, ClockWise, CounterClockWise
+	};
+
+	template <typename Ty>
+	constexpr Orienation Orientate(const Vector<Ty, 2>& p, const Vector<Ty, 2>& q, const Vector<Ty, 2>& r)
+	{
+		Ty val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+
+		if (val == 0) return Orienation::Collinear;
+		return (val > 0) ? Orienation::ClockWise : Orienation::CounterClockWise;
+	}
+
 }

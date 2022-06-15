@@ -1,0 +1,3 @@
+[submodule "Athena/vendor/GLFW"]
+	path = Athena/vendor/GLFW
+	url = https://github.com/TheCherno/glfw.git

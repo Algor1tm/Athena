@@ -1,0 +1,235 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Dist|x64">
+      <Configuration>Dist</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B633ECA7-A2D5-167E-8B90-2AD277D19DCE}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Athena</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>..\bin\Debug-windows-x86_64\Athena\</OutDir>
+    <IntDir>..\bin-int\Debug-windows-x86_64\Athena\</IntDir>
+    <TargetName>Athena</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\bin\Release-windows-x86_64\Athena\</OutDir>
+    <IntDir>..\bin-int\Release-windows-x86_64\Athena\</IntDir>
+    <TargetName>Athena</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <OutDir>..\bin\Dist-windows-x86_64\Athena\</OutDir>
+    <IntDir>..\bin-int\Dist-windows-x86_64\Athena\</IntDir>
+    <TargetName>Athena</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>atnpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ATN_PLATFORM_WINDOWS;ATN_BUILD_DLL;GLFW_INCLUDE_NONE;ATN_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\GLFW\include;vendor\Glad\include;vendor\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>atnpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ATN_PLATFORM_WINDOWS;ATN_BUILD_DLL;GLFW_INCLUDE_NONE;ATN_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\GLFW\include;vendor\Glad\include;vendor\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>atnpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ATN_PLATFORM_WINDOWS;ATN_BUILD_DLL;GLFW_INCLUDE_NONE;ATN_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\GLFW\include;vendor\Glad\include;vendor\ImGui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Athena.h" />
+    <ClInclude Include="src\Athena\Core\Application.h" />
+    <ClInclude Include="src\Athena\Core\Core.h" />
+    <ClInclude Include="src\Athena\Core\EntryPoint.h" />
+    <ClInclude Include="src\Athena\Core\Input.h" />
+    <ClInclude Include="src\Athena\Core\KeyCodes.h" />
+    <ClInclude Include="src\Athena\Core\Layer.h" />
+    <ClInclude Include="src\Athena\Core\LayerStack.h" />
+    <ClInclude Include="src\Athena\Core\Log.h" />
+    <ClInclude Include="src\Athena\Core\MouseCodes.h" />
+    <ClInclude Include="src\Athena\Core\Time.h" />
+    <ClInclude Include="src\Athena\Core\Window.h" />
+    <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
+    <ClInclude Include="src\Athena\Events\Event.h" />
+    <ClInclude Include="src\Athena\Events\KeyEvent.h" />
+    <ClInclude Include="src\Athena\Events\MouseEvent.h" />
+    <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h" />
+    <ClInclude Include="src\Athena\Math\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\SIMD\MatrixFuncs_simd.h" />
+    <ClInclude Include="src\Athena\Math\SIMD\Vector4_float.h" />
+    <ClInclude Include="src\Athena\Math\SIMD\VectorFuncs_simd.h" />
+    <ClInclude Include="src\Athena\Math\Source\Matrix.h" />
+    <ClInclude Include="src\Athena\Math\Source\MatrixFuncs.h" />
+    <ClInclude Include="src\Athena\Math\Source\MatrixTransforms.h" />
+    <ClInclude Include="src\Athena\Math\Source\Utils.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector2.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector3.h" />
+    <ClInclude Include="src\Athena\Math\Source\Vector4.h" />
+    <ClInclude Include="src\Athena\Math\Source\VectorFuncs.h" />
+    <ClInclude Include="src\Athena\Math\Utils.h" />
+    <ClInclude Include="src\Athena\Math\Vector.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLShader.h" />
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.h" />
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h" />
+    <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="src\Athena\Renderer\Buffer.h" />
+    <ClInclude Include="src\Athena\Renderer\Color.h" />
+    <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
+    <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
+    <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
+    <ClInclude Include="src\Athena\Renderer\Renderer.h" />
+    <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
+    <ClInclude Include="src\Athena\Renderer\Shader.h" />
+    <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
+    <ClInclude Include="src\atnpch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Athena\Core\Application.cpp" />
+    <ClCompile Include="src\Athena\Core\LayerStack.cpp" />
+    <ClCompile Include="src\Athena\Core\Log.cpp" />
+    <ClCompile Include="src\Athena\ImGui\ImGuiBuild.cpp" />
+    <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLShader.cpp" />
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.cpp" />
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp" />
+    <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Buffer.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Color.cpp" />
+    <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp" />
+    <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp" />
+    <ClCompile Include="src\Athena\Renderer\Shader.cpp" />
+    <ClCompile Include="src\Athena\Renderer\VertexArray.cpp" />
+    <ClCompile Include="src\atnpch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="vendor\spdlog\spdlog.vcxproj">
+      <Project>{8EAD431C-7A4F-6EF2-630A-82464F4BF542}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">
+      <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vendor\Glad\Glad.vcxproj">
+      <Project>{BDD6857C-A90D-870D-52FA-6C103E10030F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vendor\ImGui\ImGui.vcxproj">
+      <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -13,11 +13,13 @@ workspace "Athena"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
+IncludeDir["spdlog"] = "Athena/vendor/spdlog/include"
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
 IncludeDir["Glad"] = "Athena/vendor/Glad/include"
 IncludeDir["ImGui"] = "Athena/vendor/ImGui"
 
 group "Dependencies"
+	include "Athena/vendor/spdlog"
 	include "Athena/vendor/GLFW"
 	include "Athena/vendor/Glad"
 	include "Athena/vendor/ImGui"
@@ -51,7 +53,7 @@ project "Athena"
 	includedirs 
 	{
 		"%{prj.name}/src",
-		"%{prj.name}/vendor/spdlog/include",
+		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}"
@@ -59,6 +61,7 @@ project "Athena"
 	
 	links
 	{
+		"spdlog",
 		"GLFW",
 		"Glad",
 		"ImGui",

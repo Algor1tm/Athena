@@ -143,20 +143,23 @@
     <ClInclude Include="src\Athena.h" />
     <ClInclude Include="src\Athena\Core\Application.h" />
     <ClInclude Include="src\Athena\Core\Core.h" />
-    <ClInclude Include="src\Athena\Core\Time.h" />
     <ClInclude Include="src\Athena\Core\EntryPoint.h" />
-    <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
-    <ClInclude Include="src\Athena\Events\Event.h" />
-    <ClInclude Include="src\Athena\Events\KeyEvent.h" />
-    <ClInclude Include="src\Athena\Events\MouseEvent.h" />
-    <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h" />
     <ClInclude Include="src\Athena\Core\Input.h" />
     <ClInclude Include="src\Athena\Core\KeyCodes.h" />
     <ClInclude Include="src\Athena\Core\Layer.h" />
     <ClInclude Include="src\Athena\Core\LayerStack.h" />
     <ClInclude Include="src\Athena\Core\Log.h" />
+    <ClInclude Include="src\Athena\Core\MouseCodes.h" />
+    <ClInclude Include="src\Athena\Core\Time.h" />
+    <ClInclude Include="src\Athena\Core\Window.h" />
+    <ClInclude Include="src\Athena\Events\ApplicationEvent.h" />
+    <ClInclude Include="src\Athena\Events\Event.h" />
+    <ClInclude Include="src\Athena\Events\KeyEvent.h" />
+    <ClInclude Include="src\Athena\Events\MouseEvent.h" />
+    <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h" />
     <ClInclude Include="src\Athena\Math\Matrix.h" />
     <ClInclude Include="src\Athena\Math\SIMD\MatrixFuncs_simd.h" />
+    <ClInclude Include="src\Athena\Math\SIMD\Vector4_float.h" />
     <ClInclude Include="src\Athena\Math\SIMD\VectorFuncs_simd.h" />
     <ClInclude Include="src\Athena\Math\Source\Matrix.h" />
     <ClInclude Include="src\Athena\Math\Source\MatrixFuncs.h" />
@@ -166,8 +169,6 @@
     <ClInclude Include="src\Athena\Math\Source\Vector2.h" />
     <ClInclude Include="src\Athena\Math\Source\Vector3.h" />
     <ClInclude Include="src\Athena\Math\Source\Vector4.h" />
-    <ClInclude Include="src\Athena\Core\MouseCodes.h" />
-    <ClInclude Include="src\Athena\Math\SIMD\Vector4_float.h" />
     <ClInclude Include="src\Athena\Math\Source\VectorFuncs.h" />
     <ClInclude Include="src\Athena\Math\Utils.h" />
     <ClInclude Include="src\Athena\Math\Vector.h" />
@@ -187,15 +188,14 @@
     <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
     <ClInclude Include="src\Athena\Renderer\Shader.h" />
     <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
-    <ClInclude Include="src\Athena\Core\Window.h" />
     <ClInclude Include="src\atnpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Core\Application.cpp" />
-    <ClCompile Include="src\Athena\ImGui\ImGuiBuild.cpp" />
-    <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="src\Athena\Core\LayerStack.cpp" />
     <ClCompile Include="src\Athena\Core\Log.cpp" />
+    <ClCompile Include="src\Athena\ImGui\ImGuiBuild.cpp" />
+    <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
     <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
@@ -216,6 +216,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="vendor\spdlog\spdlog.vcxproj">
+      <Project>{8EAD431C-7A4F-6EF2-630A-82464F4BF542}</Project>
+    </ProjectReference>
     <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">
       <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
     </ProjectReference>

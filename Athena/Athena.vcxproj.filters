@@ -4,6 +4,9 @@
     <Filter Include="Athena">
       <UniqueIdentifier>{B633ECA7-A2D5-167E-8B90-2AD277D19DCE}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\Core">
+      <UniqueIdentifier>{CE19881E-3ACF-0014-C3C3-FAEA2F78F717}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Athena\Events">
       <UniqueIdentifier>{DAD617E6-4697-931C-0FD2-DC997B51D8F8}</UniqueIdentifier>
     </Filter>
@@ -13,23 +16,59 @@
     <Filter Include="Athena\Math">
       <UniqueIdentifier>{4F5A8D1E-BB0F-0614-4404-00EBB0B8FC17}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\Math\SIMD">
+      <UniqueIdentifier>{8B67BEEA-7760-DD3C-A092-C2C18CEABC48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Athena\Math\Source">
+      <UniqueIdentifier>{6FD9BC96-5BBD-7DEC-C41D-783FB020686E}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Athena\Platform">
       <UniqueIdentifier>{CAFC86E7-3688-F4AB-3F99-77A0ABA350AC}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Athena\Platform\OpenGL">
+      <UniqueIdentifier>{BE1EA290-AA18-CBE2-9385-61F37F1E314F}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Athena\Platform\Windows">
       <UniqueIdentifier>{04D101FD-7008-4A94-7912-AEB7E5C8708D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Athena\Renderer">
+      <UniqueIdentifier>{1C0464C2-888F-D186-91A0-547BFDAA2D87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Athena.h" />
     <ClInclude Include="src\Athena\Core\Application.h">
-      <Filter>Athena</Filter>
+      <Filter>Athena\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Core\Core.h">
-      <Filter>Athena</Filter>
+      <Filter>Athena\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Core\EntryPoint.h">
-      <Filter>Athena</Filter>
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\Input.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\KeyCodes.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\Layer.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\LayerStack.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\Log.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\MouseCodes.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\Time.h">
+      <Filter>Athena\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Core\Window.h">
+      <Filter>Athena\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Events\ApplicationEvent.h">
       <Filter>Athena\Events</Filter>
@@ -46,41 +85,65 @@
     <ClInclude Include="src\Athena\ImGui\ImGuiLayer.h">
       <Filter>Athena\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\Input.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Math\Matrix.h">
+      <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\KeyCodes.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Math\SIMD\MatrixFuncs_simd.h">
+      <Filter>Athena\Math\SIMD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\Layer.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Math\SIMD\Vector4_float.h">
+      <Filter>Athena\Math\SIMD</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\LayerStack.h">
-      <Filter>Athena</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Athena\Core\Log.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Math\SIMD\VectorFuncs_simd.h">
+      <Filter>Athena\Math\SIMD</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Matrix.h">
-      <Filter>Athena\Math</Filter>
+      <Filter>Athena\Math\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Math\Source\MatrixFuncs.h">
+      <Filter>Athena\Math\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Math\Source\MatrixTransforms.h">
+      <Filter>Athena\Math\Source</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Utils.h">
-      <Filter>Athena\Math</Filter>
+      <Filter>Athena\Math\Source</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Vector.h">
-      <Filter>Athena\Math</Filter>
+      <Filter>Athena\Math\Source</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Vector2.h">
-      <Filter>Athena\Math</Filter>
+      <Filter>Athena\Math\Source</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Vector3.h">
-      <Filter>Athena\Math</Filter>
+      <Filter>Athena\Math\Source</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Math\Source\Vector4.h">
+      <Filter>Athena\Math\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Math\Source\VectorFuncs.h">
+      <Filter>Athena\Math\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Math\Utils.h">
       <Filter>Athena\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\MouseCodes.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Math\Vector.h">
+      <Filter>Athena\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLShader.h">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.h">
+      <Filter>Athena\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Athena\Platform\Windows\WindowsInput.h">
       <Filter>Athena\Platform\Windows</Filter>
@@ -88,38 +151,44 @@
     <ClInclude Include="src\Athena\Platform\Windows\WindowsWindow.h">
       <Filter>Athena\Platform\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\Athena\Core\Window.h">
-      <Filter>Athena</Filter>
+    <ClInclude Include="src\Athena\Renderer\Buffer.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\Color.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\GraphicsContext.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\RenderCommand.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\Renderer.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\RendererAPI.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\Shader.h">
+      <Filter>Athena\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Athena\Renderer\VertexArray.h">
+      <Filter>Athena\Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\atnpch.h" />
-    <ClInclude Include="src\Athena\Renderer\GraphicsContext.h" />
-    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.h" />
-    <ClInclude Include="src\Athena\Renderer\Shader.h" />
-    <ClInclude Include="src\Athena\Renderer\Buffer.h" />
-    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLBuffer.h" />
-    <ClInclude Include="src\Athena\Renderer\Renderer.h" />
-    <ClInclude Include="src\Athena\Renderer\VertexArray.h" />
-    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.h" />
-    <ClInclude Include="src\Athena\Renderer\RendererAPI.h" />
-    <ClInclude Include="src\Athena\Renderer\Color.h" />
-    <ClInclude Include="src\Athena\Renderer\RenderCommand.h" />
-    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.h" />
-    <ClInclude Include="src\Athena\Renderer\OrthographicCamera.h" />
-    <ClInclude Include="src\Athena\Math\Source\MatrixTransforms.h" />
-    <ClInclude Include="src\Athena\Core\Time.h" />
-    <ClInclude Include="src\Athena\Platform\OpenGL\OpenGLShader.h" />
-    <ClInclude Include="src\Athena\Math\Matrix.h" />
-    <ClInclude Include="src\Athena\Math\Vector.h" />
-    <ClInclude Include="src\Athena\Math\Utils.h" />
-    <ClInclude Include="src\Athena\Math\SIMD\Vector4_float.h" />
-    <ClInclude Include="src\Athena\Math\Source\VectorFuncs.h" />
-    <ClInclude Include="src\Athena\Math\Source\MatrixFuncs.h" />
-    <ClInclude Include="src\Athena\Math\SIMD\MatrixFuncs_simd.h" />
-    <ClInclude Include="src\Athena\Math\SIMD\VectorFuncs_simd.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Athena\Core\Application.cpp">
-      <Filter>Athena</Filter>
+      <Filter>Athena\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Core\LayerStack.cpp">
+      <Filter>Athena\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Core\Log.cpp">
+      <Filter>Athena\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Athena\ImGui\ImGuiBuild.cpp">
       <Filter>Athena\ImGui</Filter>
@@ -127,11 +196,20 @@
     <ClCompile Include="src\Athena\ImGui\ImGuiLayer.cpp">
       <Filter>Athena\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Athena\Core\LayerStack.cpp">
-      <Filter>Athena</Filter>
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp">
+      <Filter>Athena\Platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="src\Athena\Core\Log.cpp">
-      <Filter>Athena</Filter>
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLShader.cpp">
+      <Filter>Athena\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.cpp">
+      <Filter>Athena\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Athena\Platform\Windows\WindowsInput.cpp">
       <Filter>Athena\Platform\Windows</Filter>
@@ -139,19 +217,30 @@
     <ClCompile Include="src\Athena\Platform\Windows\WindowsWindow.cpp">
       <Filter>Athena\Platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\Buffer.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\Color.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\Renderer.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\Shader.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Athena\Renderer\VertexArray.cpp">
+      <Filter>Athena\Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="src\atnpch.cpp" />
-    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLGraphicsContext.cpp" />
-    <ClCompile Include="src\Athena\Renderer\Shader.cpp" />
-    <ClCompile Include="src\Athena\Renderer\Buffer.cpp" />
-    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLBuffer.cpp" />
-    <ClCompile Include="src\Athena\Renderer\Renderer.cpp" />
-    <ClCompile Include="src\Athena\Renderer\VertexArray.cpp" />
-    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLVertexArray.cpp" />
-    <ClCompile Include="src\Athena\Renderer\Color.cpp" />
-    <ClCompile Include="src\Athena\Renderer\RendererAPI.cpp" />
-    <ClCompile Include="src\Athena\Renderer\RenderCommand.cpp" />
-    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLRendererAPI.cpp" />
-    <ClCompile Include="src\Athena\Renderer\OrthographicCamera.cpp" />
-    <ClCompile Include="src\Athena\Platform\OpenGL\OpenGLShader.cpp" />
   </ItemGroup>
 </Project>

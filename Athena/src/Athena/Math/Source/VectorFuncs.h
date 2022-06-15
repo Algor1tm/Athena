@@ -22,13 +22,19 @@ namespace Athena
 	}
 
 	template <typename Ty, size_t Size>
-	constexpr void Fill(Vector<Ty, Size>& vec)
+	constexpr void Fill(Vector<Ty, Size>& vec, Ty value)
 	{
-		vec.Fill();
+		vec.Fill(value);
 	}
 
 	template <typename Ty, size_t Size>
 	constexpr Ty* Data(const Vector<Ty, Size>& vec)
+	{
+		return vec.Data();
+	}
+
+	template <typename Ty, size_t Size>
+	constexpr Ty* Data(Vector<Ty, Size>& vec)
 	{
 		return vec.Data();
 	}

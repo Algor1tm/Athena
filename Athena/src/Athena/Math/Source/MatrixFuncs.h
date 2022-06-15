@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Matrix.h"
-
+#include "VectorFuncs.h"
 
 
 namespace Athena
@@ -36,6 +36,24 @@ namespace Athena
 	}
 
 	template <typename Ty, size_t Column, size_t Row>
+	constexpr void Fill(Matrix<Ty, Column, Row>& mat, Ty value)
+	{
+		mat.Fill(value);
+	}
+
+	template <typename Ty, size_t Column, size_t Row>
+	constexpr Ty* Data(const Matrix<Ty, Column, Row>& mat)
+	{
+		return mat.Data();
+	}
+
+	template <typename Ty, size_t Column, size_t Row>
+	constexpr Ty* Data(Matrix<Ty, Column, Row>& mat)
+	{
+		return mat.Data();
+	}
+
+	template <typename Ty, size_t Column, size_t Row>
 	constexpr Matrix<Ty, Row, Column> Transpose(const Matrix<Ty, Column, Row>& mat)
 	{
 		Matrix<Ty, Row, Column> out;
@@ -61,6 +79,13 @@ namespace Athena
 		out[3][3] = 1;
 
 		return out;
+	}
+
+	template <typename Ty, size_t Column, size_t Row>
+	constexpr void Swap(const Matrix<Ty, Column, Row>& Left, const Matrix<Ty, Column, Row>& Right)
+	{
+		for (size_t i = 0; i < Column; ++i)
+			Swap(Left[i], Right[i]);
 	}
 
 	template <typename Ty, size_t Column, size_t Row>

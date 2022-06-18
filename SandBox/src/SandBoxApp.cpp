@@ -38,38 +38,7 @@ public:
 			m_GridVertexArray->AddVertexBuffer(vertexBuffer);
 			m_GridVertexArray->SetIndexBuffer(indexBuffer);
 
-			std::string vertexSrc = R"(
-			#version 330 core
-
-			layout (location = 0) in vec3 a_Position;
-			layout (location = 2) in vec2 a_TexCoord;
-			
-			out vec2 v_TexCoord;
-
-			uniform mat4 u_ViewProjection;
-			uniform mat4 u_Transform;
-			
-			void main()
-			{
-				v_TexCoord = a_TexCoord;
-				gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1);
-			}
-		)";
-
-			std::string fragmentSrc = R"(
-			#version 330 core
-			
-			layout(location = 0) out vec4 out_Color;
-			in vec2 v_TexCoord;
-			uniform sampler2D u_Texture;
-
-			void main()
-			{
-				out_Color = texture(u_Texture, v_TexCoord);
-			}
-		)";
-
-			m_GridShader.reset(Athena::Shader::Create(vertexSrc, fragmentSrc));
+			m_GridShader = Athena::Shader::Create("assets/shaders/Grid.glsl");
 			m_Texture = Athena::Texture2D::Create("assets/textures/KomodoHype.png");
 
 			std::dynamic_pointer_cast<Athena::OpenGLShader>(m_GridShader)->Bind();
@@ -113,7 +82,7 @@ public:
 			}
 		)";
 
-			m_SquareShader.reset(Athena::Shader::Create(vertexSrc, fragmentSrc));
+			m_SquareShader = Athena::Shader::Create(vertexSrc, fragmentSrc);
 		}
 	}
 

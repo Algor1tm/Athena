@@ -11,6 +11,7 @@ namespace Athena
 	{
 	public:
 		Renderer() = delete;
+		static void Init();
 
 		static void BeginScene(OrthographicCamera& Camera);
 		static void EndScene();

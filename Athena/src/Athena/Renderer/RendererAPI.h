@@ -15,6 +15,7 @@ namespace Athena
 		};
 
 	public:
+		virtual void Init() = 0;
 		virtual void Clear(const Color& color) = 0;
 		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray) = 0;
 

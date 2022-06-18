@@ -59,7 +59,7 @@ namespace Athena
 		constexpr VectorConstIterator operator--(int)
 		{
 			VectorConstIterator tmp = *this;
-			--* this;
+			--*this;
 			return tmp;
 		}
 

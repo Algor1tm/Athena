@@ -17,6 +17,7 @@ IncludeDir["spdlog"] = "Athena/vendor/spdlog/include"
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
 IncludeDir["Glad"] = "Athena/vendor/Glad/include"
 IncludeDir["ImGui"] = "Athena/vendor/ImGui"
+IncludeDir["stb_image"] = "Athena/vendor/stb_image"
 
 group "Dependencies"
 	include "Athena/vendor/spdlog"
@@ -42,7 +43,9 @@ project "Athena"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/stb_image/**.h",
+		"%{prj.name}/vendor/stb_image/**.cpp",
 	}
 
 	defines
@@ -56,7 +59,8 @@ project "Athena"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
-		"%{IncludeDir.ImGui}"
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.stb_image}"
 	}
 	
 	links

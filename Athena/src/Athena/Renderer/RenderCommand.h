@@ -8,6 +8,11 @@ namespace Athena
 	class RenderCommand
 	{
 	public:
+		static inline void Init() 
+		{
+			s_RendererAPI->Init();
+		}
+
 		static inline void Clear(const Color& color) 
 		{ 
 			s_RendererAPI->Clear(color); 

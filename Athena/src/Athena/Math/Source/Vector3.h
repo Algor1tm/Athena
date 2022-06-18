@@ -115,25 +115,25 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Ty GetSqrLength() const 
+		constexpr Ty SqrLength() const 
 		{
 			return x * x + y * y + z * z;
 		}
 
-		constexpr float GetLength() const 
+		constexpr float Length() const 
 		{
-			return std::sqrt(static_cast<float>(GetSqrLength()));
+			return std::sqrt(static_cast<float>(SqrLength()));
 		}
 
 		constexpr Vector& Normalize()
 		{
-			float length = GetLength();
+			float length = Length();
 			return length == 0 ? *this : *this /= static_cast<Ty>(length);
 		}
 
 		constexpr Vector GetNormalized() const
 		{
-			float length = GetLength();
+			float length = Length();
 			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 

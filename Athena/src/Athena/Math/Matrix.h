@@ -3,9 +3,11 @@
 
 #include "Source/Matrix.h"
 #include "Source/MatrixFuncs.h"
-#include "SIMD/MatrixFuncs_simd.h"
 #include "Source/MatrixTransforms.h"
 
+#ifndef NO_SEE2
+#include "SIMD/MatrixFuncs_simd.h"
+#endif
 
 namespace Athena
 {

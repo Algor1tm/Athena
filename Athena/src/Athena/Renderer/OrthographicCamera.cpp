@@ -15,7 +15,7 @@ namespace Athena
 	{
 		Matrix4 transform = Rotate(m_Rotation, { 0, 0, 1 }) * Translate(m_Position);
 		
-		m_ViewMatrix = QuickInverse(transform);
+		m_ViewMatrix = AffineInverse(transform);
 		m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;
 	}
 }

@@ -158,7 +158,6 @@ public:
 				Athena::Renderer::Submit(m_GridShader, m_GridVertexArray, transform);
 			}
 		}
-		
 
 		std::dynamic_pointer_cast<Athena::OpenGLShader>(m_SquareShader)->Bind();
 		std::dynamic_pointer_cast<Athena::OpenGLShader>(m_SquareShader)->UploadUniformFloat3("u_Color", m_SquareColor);
@@ -192,7 +191,6 @@ private:
 
 	Athena::Ref<Athena::Shader> m_SquareShader;
 	Athena::Ref<Athena::VertexArray> m_SquareVertexArray;
-	Athena::Ref<Athena::Shader> m_TextureShader;
 
 	Athena::OrthographicCamera m_Camera;
 

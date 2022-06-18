@@ -64,8 +64,10 @@ namespace Athena
 		}
 		return out;
 	}
-
-	inline Matrix<float, 4, 4> QuickInverse(const Matrix<float, 4, 4>& mat)
+	
+#ifdef NO_SEE2
+	// For Transformation Matrices
+	inline Matrix<float, 4, 4> AffineInverse(const Matrix<float, 4, 4>& mat)
 	{
 		Matrix<float, 4, 4> out;
 
@@ -80,6 +82,7 @@ namespace Athena
 
 		return out;
 	}
+#endif
 
 	template <typename Ty, size_t Column, size_t Row>
 	constexpr void Swap(const Matrix<Ty, Column, Row>& Left, const Matrix<Ty, Column, Row>& Right)

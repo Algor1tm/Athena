@@ -46,4 +46,30 @@ namespace Athena
 
 		return out;
 	}
+
+	inline Matrix<float, 4, 4> AffineInverse(const Matrix<float, 4, 4>& mat)
+	{
+		Matrix<float, 4, 4> out;
+		
+		// Transpose 3x3 matrix
+		__m128 tmp1 = _mm_shuffle_ps(mat[0]._xmm, mat[1]._xmm, _MM_SHUFFLE(1, 0, 1, 0));
+		__m128 tmp2 = _mm_shuffle_ps(mat[0]._xmm, mat[1]._xmm, _MM_SHUFFLE(3, 2, 3, 2));
+		out[0]._xmm = _mm_shuffle_ps(tmp1, mat[2]._xmm, _MM_SHUFFLE(3, 0, 2, 0));
+		out[1]._xmm = _mm_shuffle_ps(tmp1, mat[2]._xmm, _MM_SHUFFLE(3, 1, 3, 1));
+		out[2]._xmm = _mm_shuffle_ps(tmp2, mat[2]._xmm, _MM_SHUFFLE(3, 2, 2, 0));
+
+		// mat[3][0]
+		__m128 tmp = _mm_shuffle_ps(mat[3]._xmm, mat[3]._xmm, _MM_SHUFFLE(0, 0, 0, 0));
+		__m128 row3 = _mm_mul_ps(out[0]._xmm, tmp);
+		// mat[3][1]
+		tmp = _mm_shuffle_ps(mat[3]._xmm, mat[3]._xmm, _MM_SHUFFLE(1, 1, 1, 1));
+		row3 = _mm_add_ps(row3, _mm_mul_ps(out[0]._xmm, tmp));
+		// mat[3][2]
+		tmp = _mm_shuffle_ps(mat[3]._xmm, mat[3]._xmm, _MM_SHUFFLE(2, 2, 2, 2));
+		row3 = _mm_add_ps(row3, _mm_mul_ps(out[0]._xmm, tmp));
+
+		out[3]._xmm = _mm_sub_ps(_mm_set_ps(1, 0, 0, 0), row3);
+
+		return out;
+	}
 }

@@ -134,25 +134,25 @@ namespace Athena
 			return *this;
 		}
 
-		inline float GetSqrLength() const
+		inline float SqrLength() const
 		{
 			return Dot(*this, *this);
 		}
 
-		inline float GetLength() const
+		inline float Length() const
 		{
-			return std::sqrt(GetSqrLength());
+			return std::sqrt(SqrLength());
 		}
 
 		inline Vector& Normalize()
 		{
-			float length = GetLength();
+			float length = Length();
 			return length == 0 ? *this : *this /= length;
 		}
 
 		inline Vector GetNormalized() const
 		{
-			float length = GetLength();
+			float length = Length();
 			return length == 0 ? Vector(*this) : *this / length;
 		}
 

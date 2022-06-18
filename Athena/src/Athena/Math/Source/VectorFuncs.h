@@ -75,20 +75,19 @@ namespace Athena
 	template <typename Ty, size_t Size>
 	constexpr Ty SqrLength(const Vector<Ty, Size>& vec)
 	{
-		return Dot(vec, vec);
+		return vec.SqrLength();
 	}
 
 	template <typename Ty, size_t Size>
 	constexpr float Length(const Vector<Ty, Size>& vec)
 	{
-		return std::sqrt(static_cast<float>(SqrLength(vec)));
+		return vec.Length();
 	}
 
 	template <typename Ty, size_t Size>
 	constexpr Vector<Ty, Size>& Normalize(Vector<Ty, Size>& vec)
 	{
-		float length = Length(vec);
-		return length == 0 ? vec : vec /= static_cast<Ty>(length);
+		return vec.Normalize();
 	}
 
 	template <typename Ty>

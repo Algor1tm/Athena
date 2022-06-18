@@ -5,10 +5,12 @@
 #include "Source/Vector2.h"
 #include "Source/Vector3.h"
 #include "Source/Vector4.h"
-#include "SIMD/Vector4_float.h"
-
 #include "Source/VectorFuncs.h"
+
+#ifndef NO_SEE2
+#include "SIMD/Vector4_float.h"
 #include "SIMD/VectorFuncs_simd.h"
+#endif
 
 
 namespace Athena

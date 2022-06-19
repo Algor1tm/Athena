@@ -10,6 +10,7 @@ namespace Athena
 	{
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
+		void SetProjection(float left, float right, float bottom, float top);
 
 		inline const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		inline const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
@@ -32,4 +33,7 @@ namespace Athena
 		Vector3 m_Position;
 		float m_Rotation;
 	};
+
+
+
 }

@@ -18,6 +18,7 @@
 #include "Athena/Renderer/RenderCommand.h"
 
 #include "Athena/Renderer/OrthographicCamera.h"
+#include "Athena/Core/OrthographicCameraController.h"
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Shader.h"

@@ -9,8 +9,7 @@ class ExampleLayer : public Athena::Layer
 {
 public:
 	ExampleLayer()
-		: Layer("Example"), m_Camera(-1.6f, 1.6f, -0.9f, 0.9f), 
-		  m_CameraPosition(0.f), m_GridScale(0.1f)
+		: Layer("Example"), m_CameraController(16.f / 9.f),  m_GridScale(0.1f)
 	{
 		float vertices[] = {
 			-0.5, -0.5f, 0.0f,    1.f, 0.f, 0.f,    0.0f, 0.0f,
@@ -88,33 +87,20 @@ public:
 
 	void OnUpdate(Athena::Time frameTime) override
 	{
+		// OnUpdate
+		m_CameraController.OnUpdate(frameTime);
+
 		float seconds = frameTime.AsSeconds();
 
-		if (Athena::Input::IsKeyPressed(Athena::Key::A))
-			m_CameraPosition.x -= m_CameraSpeed * seconds;
-		else if (Athena::Input::IsKeyPressed(Athena::Key::D))
-			m_CameraPosition.x += m_CameraSpeed * seconds;
-		else if (Athena::Input::IsKeyPressed(Athena::Key::W))
-			m_CameraPosition.y += m_CameraSpeed * seconds;
-		else if (Athena::Input::IsKeyPressed(Athena::Key::S ))
-			m_CameraPosition.y -= m_CameraSpeed * seconds;
-
-		else if (Athena::Input::IsKeyPressed(Athena::Key::Q))
-			m_CameraRotation += m_CameraRotationSpeed * seconds;
-		else if (Athena::Input::IsKeyPressed(Athena::Key::E))
-			m_CameraRotation -= m_CameraRotationSpeed * seconds;
-
-		else if (Athena::Input::IsKeyPressed(Athena::Key::Z))
+		if (Athena::Input::IsKeyPressed(Athena::Key::Z))
 			m_GridScale += m_GridSpeed * seconds;
 		else if (Athena::Input::IsKeyPressed(Athena::Key::C))
 			m_GridScale -= m_GridSpeed * seconds;
 
+		//Render
 		Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-		m_Camera.SetRotation(m_CameraRotation);
-		m_Camera.SetPosition(m_CameraPosition);
-
-		Athena::Renderer::BeginScene(m_Camera);
+		Athena::Renderer::BeginScene(m_CameraController.GetCamera());
 		
 		Athena::Matrix4 scale = Athena::Scale(m_GridScale);
 
@@ -151,7 +137,7 @@ public:
 	void OnEvent(Athena::Event& event) override
 	{
 		using namespace Athena;
-		
+		m_CameraController.OnEvent(event);
 	}
 
 private:
@@ -163,13 +149,7 @@ private:
 	Athena::Ref<Athena::Shader> m_SquareShader;
 	Athena::Ref<Athena::VertexArray> m_SquareVertexArray;
 
-	Athena::OrthographicCamera m_Camera;
-
-	Athena::Vector3 m_CameraPosition;
-	float m_CameraSpeed = 2.f;
-
-	float m_CameraRotation = 0;
-	float m_CameraRotationSpeed = 50.f;
+	Athena::OrthographicCameraController m_CameraController;
 
 	Athena::Vector3 m_GridScale;
 	float m_GridSpeed = 0.08f;

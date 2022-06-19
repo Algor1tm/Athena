@@ -64,10 +64,10 @@ namespace Athena
 		__m128 row3 = _mm_mul_ps(out[0]._xmm, tmp);
 		// mat[3][1]
 		tmp = _mm_shuffle_ps(mat[3]._xmm, mat[3]._xmm, _MM_SHUFFLE(1, 1, 1, 1));
-		row3 = _mm_add_ps(row3, _mm_mul_ps(out[0]._xmm, tmp));
+		row3 = _mm_add_ps(row3, _mm_mul_ps(out[1]._xmm, tmp));
 		// mat[3][2]
 		tmp = _mm_shuffle_ps(mat[3]._xmm, mat[3]._xmm, _MM_SHUFFLE(2, 2, 2, 2));
-		row3 = _mm_add_ps(row3, _mm_mul_ps(out[0]._xmm, tmp));
+		row3 = _mm_add_ps(row3, _mm_mul_ps(out[2]._xmm, tmp));
 
 		out[3]._xmm = _mm_sub_ps(_mm_set_ps(1, 0, 0, 0), row3);
 

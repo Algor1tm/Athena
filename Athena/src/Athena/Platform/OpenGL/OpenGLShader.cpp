@@ -20,14 +20,23 @@ namespace Athena
 		std::string result = ReadFile(filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
+
+		// assets/shaders/Grid.glsl -> m_Name = Grid
+		size_t lastSlash = filepath.find_last_of("/\\");
+		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
+		size_t lastDot = filepath.rfind('.');
+		size_t count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
+		m_Name = filepath.substr(lastSlash, count);
 	}
 
-	OpenGLShader::OpenGLShader(const std::string& vertexSrc, const std::string& fragmentSrc)
+	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
 	{
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertexSrc;
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
 		Compile(sources);
+
+		m_Name = name;
 	}
 
 	OpenGLShader::~OpenGLShader()
@@ -83,7 +92,10 @@ namespace Athena
 	void OpenGLShader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
 	{
 		GLuint program = glCreateProgram();
-		std::vector<GLenum> shaderIDs(shaderSources.size());
+
+		ATN_CORE_ASSERT(shaderSources.size() < 3, "Engine supports only up to 2 shaders");
+		std::array<GLenum, 2> shaderIDs;
+		int shaderIDIndex = 0;
 
 		for (auto&& [glType, sourceString] : shaderSources)
 		{
@@ -112,7 +124,7 @@ namespace Athena
 			}
 
 			glAttachShader(program, shader);
-			shaderIDs.push_back(shader);
+			shaderIDs[shaderIDIndex++] = shader;
 		}
 
 		m_RendererID = program;

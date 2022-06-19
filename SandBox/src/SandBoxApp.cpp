@@ -38,11 +38,11 @@ public:
 			m_GridVertexArray->AddVertexBuffer(vertexBuffer);
 			m_GridVertexArray->SetIndexBuffer(indexBuffer);
 
-			m_GridShader = Athena::Shader::Create("assets/shaders/Grid.glsl");
+			auto gridShader = m_ShaderLibrary.Load("assets/shaders/Grid.glsl");
 			m_Texture = Athena::Texture2D::Create("assets/textures/KomodoHype.png");
 
-			std::dynamic_pointer_cast<Athena::OpenGLShader>(m_GridShader)->Bind();
-			std::dynamic_pointer_cast<Athena::OpenGLShader>(m_GridShader)->UploadUniformInt("u_Texture", 0);
+			std::dynamic_pointer_cast<Athena::OpenGLShader>(gridShader)->Bind();
+			std::dynamic_pointer_cast<Athena::OpenGLShader>(gridShader)->UploadUniformInt("u_Texture", 0);
 		}
 
 		// Square
@@ -82,7 +82,7 @@ public:
 			}
 		)";
 
-			m_SquareShader = Athena::Shader::Create(vertexSrc, fragmentSrc);
+			m_SquareShader = Athena::Shader::Create("CustomColorSquare", vertexSrc, fragmentSrc);
 		}
 	}
 
@@ -118,13 +118,14 @@ public:
 		
 		Athena::Matrix4 scale = Athena::Scale(m_GridScale);
 
+		const auto gridShader = m_ShaderLibrary.Get("Grid");
 		for (int x = 0; x < 10; ++x)
 		{
 			for (int y = -5; y < 5; ++y)
 			{
 				Athena::Vector3 position = { x * 0.11f, y * 0.11f, 0.f };
 				Athena::Matrix4 transform = scale * Athena::Translate(position);
-				Athena::Renderer::Submit(m_GridShader, m_GridVertexArray, transform);
+				Athena::Renderer::Submit(gridShader, m_GridVertexArray, transform);
 			}
 		}
 
@@ -154,7 +155,8 @@ public:
 	}
 
 private:
-	Athena::Ref<Athena::Shader> m_GridShader;
+	Athena::ShaderLibrary m_ShaderLibrary;
+
 	Athena::Ref<Athena::VertexArray> m_GridVertexArray;
 	Athena::Ref<Athena::Texture2D> m_Texture;
 

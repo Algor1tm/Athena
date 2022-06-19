@@ -47,6 +47,7 @@ namespace Athena
 		return out;
 	}
 
+	// For Transformation Matrices
 	inline Matrix<float, 4, 4> AffineInverse(const Matrix<float, 4, 4>& mat)
 	{
 		Matrix<float, 4, 4> out;

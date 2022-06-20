@@ -1,7 +1,6 @@
 #include "atnpch.h"
 #include "Renderer.h"
 
-#include "Athena/Platform/OpenGL/OpenGLShader.h"
 #include "Athena/Renderer/Renderer2D.h"
 
 
@@ -35,8 +34,8 @@ namespace Athena
 		const Matrix4& transform)
 	{
 		shader->Bind();
-		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
-		std::dynamic_pointer_cast<OpenGLShader>(shader)->UploadUniformMat4("u_Transform", transform);
+		shader->SetMat4("u_ViewProjection", m_SceneData->ViewProjectionMatrix);
+		shader->SetMat4("u_Transform", transform);
 
 		vertexArray->Bind();
 		RenderCommand::DrawIndexed(vertexArray);

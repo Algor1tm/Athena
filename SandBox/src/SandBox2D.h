@@ -17,6 +17,7 @@ public:
 
 private:
 	Athena::Color m_SquareColor;
+	Athena::Ref<Athena::Texture2D> m_CheckerBoard;
 
 	Athena::OrthographicCameraController m_CameraController;
 };

@@ -40,7 +40,7 @@ public:
 			m_GridVertexArray->AddVertexBuffer(vertexBuffer);
 			m_GridVertexArray->SetIndexBuffer(indexBuffer);
 
-			auto gridShader = m_ShaderLibrary.Load("assets/shaders/Grid.glsl");
+			auto gridShader = m_ShaderLibrary.Load("assets/shaders/Texture.glsl");
 			m_Texture = Athena::Texture2D::Create("assets/textures/KomodoHype.png");
 
 			std::dynamic_pointer_cast<Athena::OpenGLShader>(gridShader)->Bind();
@@ -107,7 +107,7 @@ public:
 		
 		Athena::Matrix4 scale = Athena::Scale(m_GridScale);
 
-		const auto gridShader = m_ShaderLibrary.Get("Grid");
+		const auto gridShader = m_ShaderLibrary.Get("Texture");
 		for (int x = 0; x < 10; ++x)
 		{
 			for (int y = -5; y < 5; ++y)

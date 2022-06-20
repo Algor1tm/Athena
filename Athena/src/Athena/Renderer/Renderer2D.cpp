@@ -4,8 +4,6 @@
 #include "RenderCommand.h"
 #include "Shader.h"
 
-#include "Athena/Platform/OpenGL/OpenGLShader.h"
-
 
 namespace Athena
 {
@@ -13,6 +11,7 @@ namespace Athena
 	{
 		Ref<VertexArray> QuadVertexArray;
 		Ref<Shader> FlatColorShader;
+		Ref<Shader> TextureShader;
 	};
 
 	static Renderer2DStorage* s_Data;
@@ -22,16 +21,17 @@ namespace Athena
 		s_Data = new Renderer2DStorage();
 
 		float vertices[] = {
-			-0.5, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.5f, 0.5f, 0.0f,
-			-0.5f, 0.5f, 0.0f
+			-0.5, -0.5f, 0.0f,   0.0f, 0.0f,
+			0.5f, -0.5f, 0.0f,   1.f, 0.f,
+			0.5f, 0.5f, 0.0f,    1.f, 1.f, 
+			-0.5f, 0.5f, 0.0f,   0.f, 1.f
 		};
 
 		Ref<VertexBuffer> vertexBuffer;
 		vertexBuffer = VertexBuffer::Create(vertices, (uint32_t)std::size(vertices));
 
-		BufferLayout layout = { {ShaderDataType::Float3, "a_Position"}, };
+		BufferLayout layout = { {ShaderDataType::Float3, "a_Position"},
+								{ShaderDataType::Float2, "a_TexCoord"} };
 		vertexBuffer->SetLayout(layout);
 
 
@@ -44,6 +44,9 @@ namespace Athena
 		s_Data->QuadVertexArray->SetIndexBuffer(indexBuffer);
 			  
 		s_Data->FlatColorShader = Shader::Create("assets/shaders/FlatColor.glsl");
+		s_Data->TextureShader = Shader::Create("assets/shaders/Texture.glsl");
+		s_Data->TextureShader->Bind();
+		s_Data->TextureShader->SetInt("u_Texture", 0);
 	}
 
 	void Renderer2D::Shutdown()
@@ -53,11 +56,11 @@ namespace Athena
 
 	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
-		std::dynamic_pointer_cast<OpenGLShader>(s_Data->FlatColorShader)->Bind();
-		std::dynamic_pointer_cast<OpenGLShader>(s_Data->FlatColorShader)->UploadUniformMat4(
-			"u_ViewProjection", camera.GetViewProjectionMatrix());
-		std::dynamic_pointer_cast<OpenGLShader>(s_Data->FlatColorShader)->UploadUniformMat4(
-			"u_Transform", Matrix4::Identity());
+		s_Data->FlatColorShader->Bind();
+		s_Data->FlatColorShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
+
+		s_Data->TextureShader->Bind();
+		s_Data->TextureShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
 	}
 
 	void Renderer2D::EndScene()
@@ -72,9 +75,29 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Color& color)
 	{
-		std::dynamic_pointer_cast<OpenGLShader>(s_Data->FlatColorShader)->Bind();
-		std::dynamic_pointer_cast<Athena::OpenGLShader>(s_Data->FlatColorShader)->UploadUniformFloat4(
-			"u_Color", color);
+		s_Data->FlatColorShader->Bind();
+		s_Data->FlatColorShader->SetFloat4("u_Color", color);
+
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		s_Data->FlatColorShader->SetMat4("u_Transform", transform);
+
+		s_Data->QuadVertexArray->Bind();
+		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
+	}
+
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture)
+	{
+		DrawQuad({ position.x, position.y, 0.f }, size, texture);
+	}
+
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture)
+	{
+		s_Data->TextureShader->Bind();
+
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		s_Data->TextureShader->SetMat4("u_Transform", transform);
+
+		texture->Bind();
 
 		s_Data->QuadVertexArray->Bind();
 		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);

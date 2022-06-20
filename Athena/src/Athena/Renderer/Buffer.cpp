@@ -12,7 +12,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return std::make_shared<OpenGLVertexBuffer>(vertices, count); break;
+			return CreateRef<OpenGLVertexBuffer>(vertices, count); break;
 		case RendererAPI::API::Direct3D:
 			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
 		case RendererAPI::API::None:
@@ -28,7 +28,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return std::make_shared<OpenGLIndexBuffer>(vertices, count); break;
+			return CreateRef<OpenGLIndexBuffer>(vertices, count); break;
 		case RendererAPI::API::Direct3D:
 			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
 		case RendererAPI::API::None:

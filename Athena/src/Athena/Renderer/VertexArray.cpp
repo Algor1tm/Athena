@@ -11,7 +11,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return std::make_shared<OpenGLVertexArray>(); break;
+			return CreateRef<OpenGLVertexArray>(); break;
 		case RendererAPI::API::Direct3D:
 			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
 		case RendererAPI::API::None:

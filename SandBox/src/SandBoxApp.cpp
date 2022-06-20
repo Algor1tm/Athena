@@ -136,7 +136,6 @@ public:
 
 	void OnEvent(Athena::Event& event) override
 	{
-		using namespace Athena;
 		m_CameraController.OnEvent(event);
 	}
 

@@ -12,6 +12,7 @@ namespace Athena
 	public:
 		Renderer() = delete;
 		static void Init();
+		static void OnWindowResized(uint32_t width, uint32_t height);
 
 		static void BeginScene(OrthographicCamera& Camera);
 		static void EndScene();

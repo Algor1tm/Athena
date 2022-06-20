@@ -15,6 +15,7 @@
 
 // ---Renderer--------------------
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/RenderCommand.h"
 
 #include "Athena/Renderer/OrthographicCamera.h"
@@ -30,9 +31,3 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Utils.h"
-
-
-
-// ---Entry Point---------------------
-#include "Athena/Core/EntryPoint.h"
-// -----------------------------------

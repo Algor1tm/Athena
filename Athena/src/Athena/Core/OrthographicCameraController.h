@@ -36,7 +36,7 @@ namespace Athena
 		Vector3 m_CameraPosition = { 0.f, 0.f, 0.f };
 		float m_CameraRotation = 0.f;
 
-		float m_CameraSpeed = 4.f;
+		float m_CameraSpeed = 3.f;
 		float m_CameraRotationSpeed = 100.f;
 	};
 }

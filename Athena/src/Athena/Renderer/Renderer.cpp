@@ -2,6 +2,7 @@
 #include "Renderer.h"
 
 #include "Athena/Platform/OpenGL/OpenGLShader.h"
+#include "Athena/Renderer/Renderer2D.h"
 
 
 namespace Athena
@@ -11,6 +12,7 @@ namespace Athena
 	void Renderer::Init()
 	{
 		RenderCommand::Init();
+		Renderer2D::Init();
 	}
 
 	void Renderer::OnWindowResized(uint32_t width, uint32_t height)

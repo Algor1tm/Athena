@@ -56,6 +56,16 @@ namespace Athena
 		return Vector3(r, g, b);
 	}
 
+	float* Color::Data()
+	{
+		return &r;
+	}
+
+	const float* Color::Data() const
+	{
+		return &r;
+	}
+
 	float Color::operator[](uint32_t idx) const
 	{
 		ATN_CORE_ASSERT(idx < 4, "Color subscript out of range");

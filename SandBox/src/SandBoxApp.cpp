@@ -1,8 +1,11 @@
 #include <Athena.h>
+#include <Athena/Core/EntryPoint.h>
 
 #include "Athena/Platform/OpenGL/OpenGLShader.h"
 
 #include "ImGui/imgui.h"
+
+#include "SandBox2D.h"
 
 
 class ExampleLayer : public Athena::Layer
@@ -161,7 +164,8 @@ class SandBox: public Athena::Application
 public:
 	SandBox() 
 	{
-		PushLayer(new ExampleLayer());
+		//PushLayer(new ExampleLayer());
+		PushLayer(new SandBox2D());
 	}
 	
 	~SandBox()

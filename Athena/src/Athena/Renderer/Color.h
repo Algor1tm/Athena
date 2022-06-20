@@ -6,6 +6,7 @@
 
 namespace Athena
 {
+#pragma pack(push, 1)
 	class ATHENA_API Color
 	{
 	public:
@@ -23,6 +24,9 @@ namespace Athena
 
 		operator Vector4() const;
 		operator Vector3() const;
+
+		float* Data();
+		const float* Data() const;
 
 		float operator[](uint32_t idx) const;
 		float& operator[](uint32_t idx);
@@ -50,6 +54,7 @@ namespace Athena
 	public:
 		float r, g, b, a;
 	};
+#pragma pack(pop)
 
 
 	Color Lerp(const Color& min, const Color& max, float mid);

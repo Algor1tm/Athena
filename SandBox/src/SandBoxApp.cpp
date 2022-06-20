@@ -19,7 +19,7 @@ public:
 		};
 
 		Athena::Ref<Athena::VertexBuffer> vertexBuffer;
-		vertexBuffer.reset(Athena::VertexBuffer::Create(vertices, (uint32_t)std::size(vertices)));
+		vertexBuffer = Athena::VertexBuffer::Create(vertices, (uint32_t)std::size(vertices));
 
 		Athena::BufferLayout layout = { { Athena::ShaderDataType::Float3, "a_Position"},
 										{ Athena::ShaderDataType::Float3, "a_Color"},
@@ -29,11 +29,11 @@ public:
 
 		Athena::Ref<Athena::IndexBuffer> indexBuffer;
 		unsigned int indices[6] = { 0, 1, 2, 2, 3, 0 };
-		indexBuffer.reset(Athena::IndexBuffer::Create(indices, (uint32_t)std::size(indices)));
+		indexBuffer = Athena::IndexBuffer::Create(indices, (uint32_t)std::size(indices));
 
 		// Grid
 		{
-			m_GridVertexArray.reset(Athena::VertexArray::Create());
+			m_GridVertexArray = Athena::VertexArray::Create();
 			m_GridVertexArray->AddVertexBuffer(vertexBuffer);
 			m_GridVertexArray->SetIndexBuffer(indexBuffer);
 
@@ -46,7 +46,7 @@ public:
 
 		// Square
 		{
-			m_SquareVertexArray.reset(Athena::VertexArray::Create());
+			m_SquareVertexArray = Athena::VertexArray::Create();
 			m_SquareVertexArray->AddVertexBuffer(vertexBuffer);
 			m_SquareVertexArray->SetIndexBuffer(indexBuffer);
 

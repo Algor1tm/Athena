@@ -6,12 +6,12 @@
 
 namespace Athena
 {
-	VertexArray* VertexArray::Create()
+	Ref<VertexArray> VertexArray::Create()
 	{
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return new OpenGLVertexArray(); break;
+			return std::make_shared<OpenGLVertexArray>(); break;
 		case RendererAPI::API::Direct3D:
 			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
 		case RendererAPI::API::None:

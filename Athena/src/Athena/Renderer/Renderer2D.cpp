@@ -18,6 +18,8 @@ namespace Athena
 
 	void Renderer2D::Init()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		s_Data = new Renderer2DStorage();
 
 		float vertices[] = {
@@ -54,18 +56,22 @@ namespace Athena
 
 	void Renderer2D::Shutdown()
 	{
+		ATN_PROFILE_FUNCTION();
 
+		delete s_Data;
 	}
 
 	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		s_Data->TextureShader->Bind();
 		s_Data->TextureShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
 	}
 
 	void Renderer2D::EndScene()
 	{
-
+		ATN_PROFILE_FUNCTION();
 	}
 
 	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Color& color)
@@ -75,6 +81,8 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Color& color)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		s_Data->TextureShader->SetFloat4("u_Color", color);
 		s_Data->WhiteTexture->Bind();
 
@@ -92,6 +100,8 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		s_Data->TextureShader->SetFloat4("u_Color", Vector4(1));
 		texture->Bind();
 

@@ -11,33 +11,43 @@ SandBox2D::SandBox2D()
 
 void SandBox2D::OnAttach()
 {
+	ATN_PROFILE_FUNCTION();
+
 	m_CheckerBoard = Athena::Texture2D::Create("assets/textures/CheckerBoard.png");
 }
 
 void SandBox2D::OnDetach()
 {
-
+	ATN_PROFILE_FUNCTION();
 }
 
 void SandBox2D::OnUpdate(Athena::Time frameTime)
 {
+	ATN_PROFILE_FUNCTION();
+
 	m_CameraController.OnUpdate(frameTime);
 
-	Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+	{
+		ATN_PROFILE_SCOPE("Renderer Clear");
+		Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+	}
 
-	Athena::Renderer2D::BeginScene(m_CameraController.GetCamera());
-	Athena::Renderer2D::DrawQuad({ -1.f, 0.f }, { 0.8f, 0.8f }, m_SquareColor);
-	Athena::Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.3f, 0.9f, 0.4f });
-	Athena::Renderer2D::DrawQuad({ 0.0f, 0.0f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard);
-	Athena::Renderer2D::EndScene();
+	{
+		ATN_PROFILE_SCOPE("Renderer Draw");
+		Athena::Renderer2D::BeginScene(m_CameraController.GetCamera());
+		Athena::Renderer2D::DrawQuad({ -1.f, 0.f }, { 0.8f, 0.8f }, m_SquareColor);
+		Athena::Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.3f, 0.9f, 0.4f });
+		Athena::Renderer2D::DrawQuad({ 0.0f, 0.0f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard);
+		Athena::Renderer2D::EndScene();
+	}
 }
 
 void SandBox2D::OnImGuiRender()
 {
+	ATN_PROFILE_FUNCTION();
+
 	ImGui::Begin("Settings");
-
 	ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
-
 	ImGui::End();
 }
 

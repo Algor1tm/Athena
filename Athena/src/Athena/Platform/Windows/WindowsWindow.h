@@ -36,6 +36,6 @@ namespace Athena
 	private:
 		GLFWwindow* m_Window;
 		WindowDesc m_Desc;
-		GraphicsContext* m_Context;
+		Scope<GraphicsContext> m_Context;
 	};
 }

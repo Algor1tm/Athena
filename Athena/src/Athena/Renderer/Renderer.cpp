@@ -10,8 +10,15 @@ namespace Athena
 
 	void Renderer::Init()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		RenderCommand::Init();
 		Renderer2D::Init();
+	}
+
+	void Renderer::Shutdown()
+	{
+		Renderer2D::Shutdown();
 	}
 
 	void Renderer::OnWindowResized(uint32_t width, uint32_t height)

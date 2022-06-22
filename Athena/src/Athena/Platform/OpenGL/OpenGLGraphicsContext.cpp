@@ -10,11 +10,13 @@ namespace Athena
 	OpenGLGraphicsContext::OpenGLGraphicsContext(GLFWwindow* windowHandle)
 		: m_WindowHandle(windowHandle)
 	{
-
+		ATN_CORE_ASSERT(windowHandle, "Window handle is null");
 	}
 
 	void OpenGLGraphicsContext::Init()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glfwMakeContextCurrent(m_WindowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		ATN_CORE_ASSERT(status, "Failed to initialize Glad");
@@ -25,6 +27,8 @@ namespace Athena
 
 	void OpenGLGraphicsContext::SwapBuffers()
 	{
+		ATN_PROFILE_FUNCTION();	
+
 		glfwSwapBuffers(m_WindowHandle);
 	}
 }

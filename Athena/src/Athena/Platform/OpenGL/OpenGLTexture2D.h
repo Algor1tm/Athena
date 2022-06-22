@@ -20,6 +20,7 @@ namespace Athena
 		void SetData(void* data, uint32_t size) override;
 
 		void Bind(uint32_t slot = 0) const override;
+		void UnBind() const override;
 
 	private:
 		uint32_t m_RendererID;

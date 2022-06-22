@@ -62,5 +62,4 @@ namespace Athena
 		if (val == 0) return Orienation::Collinear;
 		return (val > 0) ? Orienation::ClockWise : Orienation::CounterClockWise;
 	}
-
 }

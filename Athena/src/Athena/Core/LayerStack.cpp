@@ -19,7 +19,6 @@ namespace Athena
 	void LayerStack::PushLayer(value_type layer)
 	{
 		m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
-		layer->OnAttach();
 		++m_LayerInsertIndex;
 	}
 
@@ -27,7 +26,6 @@ namespace Athena
 	void LayerStack::PushOverlay(value_type overlay)
 	{
 		m_Layers.emplace_back(overlay);
-		overlay->OnAttach();
 	}
 
 

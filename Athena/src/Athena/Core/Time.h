@@ -6,22 +6,34 @@ namespace Athena
 	class Time
 	{
 	public:
-		Time(float milliSeconds = 0)
-			: m_Time(milliSeconds) {}
+		using duration_type = std::chrono::duration<float, std::micro>;
+
+	public:
+		Time(float seconds = 0)
+			: m_Time(std::chrono::duration<float>(seconds)) {}
+
+		template <typename Rep, typename Period>
+		Time(std::chrono::duration<Rep, Period> duration)
+			: m_Time(std::chrono::duration_cast<duration_type>(duration)) {}
 
 		inline operator float() const
 		{
-			return m_Time;
+			return m_Time.count();
 		}
 
 		inline float AsSeconds() const
 		{
-			return m_Time * 0.001f;
+			return m_Time.count() * 0.000001f;
 		}
 
 		inline float AsMilliseconds() const
 		{
-			return m_Time;
+			return m_Time.count() * 0.001f;
+		}
+
+		inline float AsMicroseconds() const
+		{
+			return m_Time.count();
 		}
 
 		inline Time operator-(Time other) const
@@ -31,17 +43,21 @@ namespace Athena
 
 		static inline Time Seconds(float seconds)
 		{
-			return Time(seconds * 1000);
+			return Time(seconds);
 		}
 
 		static inline Time Milliseconds(float milliseconds)
 		{
-			return Time(milliseconds);
+			return Time(std::chrono::duration<float, std::milli>(milliseconds));
+		}
+
+		static inline Time Microseconds(float microseconds)
+		{
+			return Time(std::chrono::duration<float, std::micro>(microseconds));
 		}
 
 	private:
-		// Milliseconds
-		float m_Time;
+		duration_type m_Time;
 	};
 
 
@@ -58,13 +74,14 @@ namespace Athena
 			m_Start = std::chrono::high_resolution_clock::now();
 		}
 
-		inline Time GetElapsedTime()
+		inline Time ElapsedTime()
 		{
-			return Time::Milliseconds((float)std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::high_resolution_clock::now() - m_Start).count());
+			auto end = std::chrono::high_resolution_clock::now();
+			return Time(end - m_Start);
 		}
 
 	private:
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
 	};
+
 }

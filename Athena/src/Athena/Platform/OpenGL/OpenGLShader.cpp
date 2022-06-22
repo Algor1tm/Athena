@@ -17,6 +17,8 @@ namespace Athena
 
 	OpenGLShader::OpenGLShader(const std::string& filepath)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		std::string result = ReadFile(filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
@@ -31,6 +33,8 @@ namespace Athena
 
 	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		std::unordered_map<GLenum, std::string> sources;
 		sources[GL_VERTEX_SHADER] = vertexSrc;
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
@@ -41,11 +45,15 @@ namespace Athena
 
 	OpenGLShader::~OpenGLShader()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glDeleteProgram(m_RendererID);
 	}
 
 	std::string OpenGLShader::ReadFile(const std::string& filepath)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		std::string result;
 		std::ifstream in(filepath, std::ios::in | std::ios::binary);
 		if (in)
@@ -64,7 +72,9 @@ namespace Athena
 	}
 
 	std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::string& source)
-	{ 
+	{
+		ATN_PROFILE_FUNCTION();
+
 		std::unordered_map<GLenum, std::string> shaderSources;
 
 		const char* typeToken = "#type";
@@ -91,6 +101,8 @@ namespace Athena
 
 	void OpenGLShader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		GLuint program = glCreateProgram();
 
 		ATN_CORE_ASSERT(shaderSources.size() < 3, "Engine supports only up to 2 shaders");
@@ -154,31 +166,43 @@ namespace Athena
 
 	void OpenGLShader::Bind() const
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glUseProgram(m_RendererID);
 	}
 
 	void OpenGLShader::UnBind() const
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glUseProgram(0);
 	}
 
 	void OpenGLShader::SetInt(const std::string& name, int value)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		UploadUniformInt(name, value);
 	}
 
 	void OpenGLShader::SetFloat3(const std::string& name, const Vector3& vec3)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		UploadUniformFloat3(name, vec3);
 	}
 
 	void OpenGLShader::SetFloat4(const std::string& name, const Vector4& vec4)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		UploadUniformFloat4(name, vec4);
 	}
 
 	void OpenGLShader::SetMat4(const std::string& name, const Matrix4& mat4)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		UploadUniformMat4(name, mat4);
 	}
 

@@ -12,43 +12,47 @@
 
 namespace Athena
 {
-	static bool s_GLFWInitialized = false;
+	static uint8_t s_GLFWWindowCount = 0;
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{
 		ATN_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Window* Window::Create(const WindowDesc& desc)
+	Scope<Window> Window::Create(const WindowDesc& desc)
 	{
-		return new WindowsWindow(desc);
+		return CreateScope<WindowsWindow>(desc);
 	}
 
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
 		: m_Desc(desc)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		Init();
 	}
 
 
 	WindowsWindow::~WindowsWindow()
-	{
-		delete m_Context;
+	{ 
+		ATN_PROFILE_FUNCTION();
+
 		Shutdown();
 	}
 
 
 	void WindowsWindow::Init()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		ATN_CORE_INFO("Creating Window {0} ({1}, {2})", m_Desc.Title, m_Desc.Width, m_Desc.Height);
 
-		if (!s_GLFWInitialized)
+		if (s_GLFWWindowCount == 0)
 		{
 			int success = glfwInit();
 			ATN_CORE_ASSERT(success, "Could not intialize GLFW");
 			glfwSetErrorCallback(GLFWErrorCallback);
-			s_GLFWInitialized = true;
 		}
 			
 		m_Window = glfwCreateWindow((int)m_Desc.Width, 
@@ -56,8 +60,9 @@ namespace Athena
 									m_Desc.Title.c_str(), 
 									nullptr, 
 									nullptr);
+		s_GLFWWindowCount++;
 
-		m_Context = new OpenGLGraphicsContext(m_Window);
+		m_Context = CreateScope<OpenGLGraphicsContext>(m_Window);
 		m_Context->Init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Desc);
@@ -159,12 +164,20 @@ namespace Athena
 
 	void WindowsWindow::Shutdown()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glfwDestroyWindow(m_Window);
+		--s_GLFWWindowCount;
+
+		if (s_GLFWWindowCount == 0)
+			glfwTerminate();
 	}
 
 
 	void WindowsWindow::OnUpdate()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glfwPollEvents();
 		m_Context->SwapBuffers();
 	}

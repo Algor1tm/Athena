@@ -5,12 +5,15 @@
 #endif
 
 #include <memory>
-#include <numeric>
-#include <math.h>
 #include <algorithm>
 #include <functional>
 #include <utility>
 #include <chrono>
+#include <iomanip>
+#include <thread>
+
+#include <numeric>
+#include <math.h>
 #include <xmmintrin.h>
 
 #include <iostream>
@@ -24,3 +27,4 @@
 #include <unordered_set>
 
 #include "Athena/Core/Log.h"
+#include "Athena/Debug/Instrumentor.h"

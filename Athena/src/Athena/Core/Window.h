@@ -37,7 +37,7 @@ namespace Athena
 
 		virtual void* GetNativeWindow() = 0;
 
-		static Window* Create(const WindowDesc& desc = WindowDesc());
+		static Scope<Window> Create(const WindowDesc& desc = WindowDesc());
 	};
 }
 

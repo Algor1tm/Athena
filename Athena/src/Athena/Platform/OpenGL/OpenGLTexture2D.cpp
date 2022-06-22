@@ -9,6 +9,8 @@ namespace Athena
 	OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height)
 		: m_Width(width), m_Height(height)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		m_InternalFormat = GL_RGBA8;
 		m_DataFormat = GL_RGBA;
 
@@ -28,9 +30,17 @@ namespace Athena
 	OpenGLTexture2D::OpenGLTexture2D(const std::string& path)
 		: m_Path(path)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
-		unsigned char* data = stbi_load(path.data(), &width, &height, &channels, 0);
+
+		unsigned char* data;
+		{
+			ATN_PROFILE_SCOPE("stbi_load - OpenGLTexture2D::OpenGLTexture2D(const std::string& path)");
+			data = stbi_load(path.data(), &width, &height, &channels, 0);
+		}
+
 		ATN_CORE_ASSERT(data, "Failed to load image for Texture2D!");
 		m_Width = width;
 		m_Height = height;
@@ -69,21 +79,34 @@ namespace Athena
 
 	OpenGLTexture2D::~OpenGLTexture2D()
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glDeleteTextures(1, &m_RendererID);
 	}
 
 	void OpenGLTexture2D::Bind(uint32_t slot) const
 	{
+		ATN_PROFILE_FUNCTION();
+
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 	}
 
 	void OpenGLTexture2D::SetData(void* data, uint32_t size)
 	{
+		ATN_PROFILE_FUNCTION();
+
 		uint32_t bpp = m_DataFormat == GL_RGBA ? 4 : 3;
 		ATN_CORE_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
 
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 		glTexImage2D(GL_TEXTURE_2D, 0, m_InternalFormat, m_Width, m_Height, 0, m_DataFormat, GL_UNSIGNED_BYTE, data);
+	}
+
+	void OpenGLTexture2D::UnBind() const
+	{
+		ATN_PROFILE_FUNCTION();
+
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }

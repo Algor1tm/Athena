@@ -32,17 +32,15 @@ namespace Athena
 		return out;
 	}
 
-	inline Matrix4 Rotate(float degrees, const Vector3& vec3)
+	inline Matrix4 Rotate(float radians, const Vector3& vec3)
 	{
-		float angle = DegreeToRad(degrees);
+		float sinx = sinf(radians * vec3.x);
+		float siny = sinf(radians * vec3.y);
+		float sinz = sinf(radians * vec3.z);
 
-		float sinx = sinf(angle * vec3.x);
-		float siny = sinf(angle * vec3.y);
-		float sinz = sinf(angle * vec3.z);
-
-		float cosx = cosf(angle * vec3.x);
-		float cosy = cosf(angle * vec3.y);
-		float cosz = cosf(angle * vec3.z);
+		float cosx = cosf(radians * vec3.x);
+		float cosy = cosf(radians * vec3.y);
+		float cosz = cosf(radians * vec3.z);
 
 		Matrix4 out = { { cosy * cosz,					cosy * sinz,				      -siny,     0.f },
 						{ sinx * siny * cosz - cosx * sinz, sinx * siny * sinz + cosx * cosz,   sinx * cosy, 0.f },
@@ -70,9 +68,9 @@ namespace Athena
 		return out;
 	}
 
-	inline Matrix4 Rotate(const Matrix4& mat4, float degrees, const Vector3& vec3)
+	inline Matrix4 Rotate(const Matrix4& mat4, float radians, const Vector3& vec3)
 	{
-		return Rotate(degrees, vec3) * mat4;
+		return Rotate(radians, vec3) * mat4;
 	}
 
 	inline Matrix4 Scale(const Matrix4& mat4, const Vector3& vec3)

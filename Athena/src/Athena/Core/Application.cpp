@@ -83,7 +83,7 @@ namespace Athena
 
 			m_ImGuiLayer->Begin();
 			{
-				ATN_PROFILE_FUNCTION("LayerStack OnImGuiRender");
+				ATN_PROFILE_SCOPE("LayerStack OnImGuiRender");
 
 				for (Layer* layer : m_LayerStack)
 					layer->OnImGuiRender();

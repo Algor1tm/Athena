@@ -35,9 +35,9 @@ bin-int/
 mono_crash.*
 
 # Build results
-[Dd]ebug/
+Debug-windows-x86_64/
 [Dd]ebugPublic/
-[Rr]elease/
+Release-windows-x86_64/
 [Rr]eleases/
 x64/
 x86/

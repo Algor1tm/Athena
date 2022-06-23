@@ -24,7 +24,6 @@ layout(location = 0) out vec4 out_Color;
 in vec2 v_TexCoord;
 
 uniform vec4 u_Color;
-uniform float u_TilingFactor;
 uniform sampler2D u_Texture;
 
 void main()

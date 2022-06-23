@@ -23,7 +23,6 @@ namespace Athena
 		const std::string& GetName() const override { return m_Name; };
 
 		void SetInt(const std::string& name, int value) override;
-		void SetFloat(const std::string& name, float value) override;
 		void SetFloat3(const std::string& name, const Vector3& vec3) override;
 		void SetFloat4(const std::string& name, const Vector4& vec4) override;
 		void SetMat4(const std::string& name, const Matrix4& mat4) override;

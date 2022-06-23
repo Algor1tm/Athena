@@ -37,6 +37,6 @@ namespace Athena
 		float m_CameraRotation = 0.f;
 
 		float m_CameraSpeed = 3.f;
-		float m_CameraRotationSpeed = 1.f;
+		float m_CameraRotationSpeed = 100.f;
 	};
 }

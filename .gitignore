@@ -8,6 +8,9 @@
 bin/
 bin-int/
 
+SandBox/AthenaProfile-Runtime.json
+SandBox/AthenaProfile-Shutdown.json
+SandBox/AthenaProfile-Startup.json
 
 # ImGui
 *.ini

@@ -26,6 +26,7 @@ namespace Athena
 			: x(X), y(Y), z(Z) {}
 
 		constexpr Vector(const Vector& other) = default;
+		constexpr Vector& operator=(const Vector& other) = default;
 
 		template <typename U>
 		constexpr Vector<Ty, Size3>(const Vector<U, Size3>& other)
@@ -38,10 +39,56 @@ namespace Athena
 			z = static_cast<Ty>(other.z);
 		}
 
-		constexpr Vector& operator=(const Vector& other) = default;
-
 		template <typename U>
 		constexpr Vector<Ty, Size3>& operator=(const Vector<U, Size3>& other)
+		{
+			static_assert(std::is_convertible<U, Ty>::value,
+				"Vector assignment error: Vectors are not convertible");
+
+			x = static_cast<Ty>(other.x);
+			y = static_cast<Ty>(other.y);
+			z = static_cast<Ty>(other.z);
+
+			return *this;
+		}
+
+		template <typename U>
+		constexpr Vector<Ty, Size3>(const Vector<U, 2>& other)
+		{
+			static_assert(std::is_convertible<U, Ty>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			x = static_cast<Ty>(other.x);
+			y = static_cast<Ty>(other.y);
+			z = static_cast<Ty>(1);
+		}
+
+		template <typename U>
+		constexpr Vector<Ty, Size3>& operator=(const Vector<U, 2>& other)
+		{
+			static_assert(std::is_convertible<U, Ty>::value,
+				"Vector assignment error: Vectors are not convertible");
+
+			x = static_cast<Ty>(other.x);
+			y = static_cast<Ty>(other.y);
+			z = static_cast<Ty>(1);
+
+			return *this;
+		}
+
+		template <typename U>
+		constexpr Vector<Ty, Size3>(const Vector<U, 4>& other)
+		{
+			static_assert(std::is_convertible<U, Ty>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			x = static_cast<Ty>(other.x);
+			y = static_cast<Ty>(other.y);
+			z = static_cast<Ty>(1);
+		}
+
+		template <typename U>
+		constexpr Vector<Ty, Size3>& operator=(const Vector<U, 4>& other)
 		{
 			static_assert(std::is_convertible<U, Ty>::value,
 				"Vector assignment error: Vectors are not convertible");

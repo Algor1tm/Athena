@@ -32,7 +32,17 @@ namespace Athena
 	{
 		return radians * 180. / M_PI;
 	}
-	 
+	
+
+	template <typename T>
+	constexpr T Clamp(T value, T min, T max)
+	{
+		if (value < min)
+			return min;
+		else if (value > max)
+			return max;
+		return value;
+	}
 
 	// Does not validate input values
 	template <typename T>

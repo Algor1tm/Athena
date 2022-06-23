@@ -32,19 +32,11 @@ namespace Athena
 		constexpr Vector(const Vector<float, Size4>& other)
 			: _xmm(other._xmm) {}
 
-		inline Vector(const Vector<float, 3>& other)
-			: _xmm(_mm_set_ps(1.f, other.z, other.y, other.x)) {}
-
-		template <typename U>
-		constexpr Vector(const Vector<U, 3>& other)
+		constexpr Vector& operator=(const Vector<float, Size4>& other)
 		{
-			static_assert(std::is_convertible<U, float>::value,
-				"Vector initialization error: Vectors are not convertible");
-
-			_xmm = _mm_set_ps(1.f, 
-				static_cast<float>(other.z), 
-				static_cast<float>(other.y), 
-				static_cast<float>(other.x));
+			if (other != *this)
+				_xmm = other._xmm;
+			return *this;
 		}
 
 		template <typename U>
@@ -59,13 +51,6 @@ namespace Athena
 				static_cast<float>(other.x));
 		}
 
-		constexpr Vector& operator=(const Vector& other)
-		{
-			if (*this != other)
-				_xmm = other._xmm;
-			return *this;
-		}
-
 		template <typename U>
 		constexpr Vector<float, Size4>& operator=(const Vector<U, Size4>& other)
 		{
@@ -73,6 +58,58 @@ namespace Athena
 				"Vector assignment error: Vectors are not convertible");
 
 			_xmm = other._xmm;
+			return *this;
+		}
+
+		template <typename U>
+		constexpr Vector(const Vector<U, 3>& other)
+		{
+			static_assert(std::is_convertible<U, float>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			_xmm = _mm_set_ps(1.f,
+				static_cast<float>(other.z),
+				static_cast<float>(other.y),
+				static_cast<float>(other.x));
+		}
+
+		template <typename U>
+		constexpr Vector& operator=(const Vector<U, 3>& other)
+		{
+			static_assert(std::is_convertible<U, float>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			_xmm = _mm_set_ps(1.f,
+				static_cast<float>(other.z),
+				static_cast<float>(other.y),
+				static_cast<float>(other.x));
+
+			return *this;
+		}
+
+		template <typename U>
+		constexpr Vector(const Vector<U, 2>& other)
+		{
+			static_assert(std::is_convertible<U, float>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			_xmm = _mm_set_ps(1.f,
+				1.f,
+				static_cast<float>(other.y),
+				static_cast<float>(other.x));
+		}
+
+		template <typename U>
+		constexpr Vector& operator=(const Vector<U, 2>& other)
+		{
+			static_assert(std::is_convertible<U, float>::value,
+				"Vector initialization error: Vectors are not convertible");
+
+			_xmm = _mm_set_ps(1.f,
+				1.f,
+				static_cast<float>(other.y),
+				static_cast<float>(other.x));
+
 			return *this;
 		}
 

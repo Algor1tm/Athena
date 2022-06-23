@@ -93,19 +93,63 @@ namespace Athena
 		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
 	{
-		DrawQuad({ position.x, position.y, 0.f }, size, texture);
+		DrawQuad({ position.x, position.y, 0.f }, size, texture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		s_Data->TextureShader->SetFloat4("u_Color", Vector4(1));
+		s_Data->TextureShader->SetFloat4("u_Color", tint);
+		s_Data->TextureShader->SetFloat("u_tilingFactor", tilingFactor);
 		texture->Bind();
 
 		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		s_Data->TextureShader->SetMat4("u_Transform", transform);
+
+		s_Data->QuadVertexArray->Bind();
+		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
+	}
+
+
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Color& color)
+	{
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, color);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Color& color)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		s_Data->TextureShader->SetFloat4("u_Color", color);
+		s_Data->WhiteTexture->Bind();
+
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * 
+			Rotate(rotation, { 0.f, 0.f, 1.f }) * 
+			Translate(position);
+		s_Data->TextureShader->SetMat4("u_Transform", transform);
+
+		s_Data->QuadVertexArray->Bind();
+		RenderCommand::DrawIndexed(s_Data->QuadVertexArray);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	{
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
+	}
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		s_Data->TextureShader->SetFloat4("u_Color", tint);
+		s_Data->TextureShader->SetFloat("u_tilingFactor", tilingFactor);
+		texture->Bind();
+
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * 
+			Rotate(rotation, { 0.f, 0.f, 1.f }) *
+			Translate(position);
 		s_Data->TextureShader->SetMat4("u_Transform", transform);
 
 		s_Data->QuadVertexArray->Bind();

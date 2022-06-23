@@ -185,6 +185,13 @@ namespace Athena
 		UploadUniformInt(name, value);
 	}
 
+	void OpenGLShader::SetFloat(const std::string& name, float value)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		UploadUniformFloat(name, value);
+	}
+
 	void OpenGLShader::SetFloat3(const std::string& name, const Vector3& vec3)
 	{
 		ATN_PROFILE_FUNCTION();

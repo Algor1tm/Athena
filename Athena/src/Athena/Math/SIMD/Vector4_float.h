@@ -9,7 +9,6 @@ namespace Athena
 
 	float Dot(const Vector<float, 4>& Left, const Vector<float, 4>& Right);
 
-#pragma pack(push, 1)
 	template <>
 	class Vector <float, Size4>
 	{
@@ -287,7 +286,6 @@ namespace Athena
 			};
 		};
 	};
-#pragma pack(pop)
 
 #undef Size4
 }

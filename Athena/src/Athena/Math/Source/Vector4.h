@@ -7,7 +7,6 @@ namespace Athena
 {
 #define Size4 4
 
-#pragma pack(push, 1)
 	template <typename Ty>
 	class Vector<Ty, Size4>
 	{
@@ -297,6 +296,6 @@ namespace Athena
 	public:
 		Ty x, y, z, w;
 	};
-#pragma pack(pop)
+
 #undef Size4
 }

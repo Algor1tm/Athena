@@ -66,7 +66,6 @@ namespace Athena
 		const auto& layout = vertexBuffer->GetLayout();
 		ATN_CORE_ASSERT(layout.GetElements().size(), "Vertex Buffer has no layout");
 
-
 		uint32_t index = 0;
 		for (const auto& elem : layout)
 		{

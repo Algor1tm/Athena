@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Vector2.h"
 
 #define M_PI 3.14159265358979323846
 #define M_PIf 3.14159265358979323846f
@@ -72,4 +73,25 @@ namespace Athena
 		if (val == 0) return Orienation::Collinear;
 		return (val > 0) ? Orienation::ClockWise : Orienation::CounterClockWise;
 	}
+
+
+#undef max
+	class Random
+	{
+	public:
+		static void Init()
+		{
+			s_RandomEngine.seed(std::random_device()());
+		}
+
+		static float Float()
+		{
+			return (float)s_Distribution(s_RandomEngine) / (float)std::numeric_limits<uint32_t>::max();
+		}
+
+	private:
+		static std::mt19937 s_RandomEngine;
+		static std::uniform_int_distribution<std::mt19937::result_type> s_Distribution;
+	};
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 }

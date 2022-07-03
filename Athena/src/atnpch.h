@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <thread>
 
+#include <limits>
+#include <random>
 #include <numeric>
 #include <math.h>
 #include <xmmintrin.h>

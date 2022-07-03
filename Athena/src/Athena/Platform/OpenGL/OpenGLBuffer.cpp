@@ -8,13 +8,22 @@ namespace Athena
 {
 	///////////////////// VertexBuffer /////////////////////
 
-	OpenGLVertexBuffer::OpenGLVertexBuffer(float* vertices, uint32_t count)
+	OpenGLVertexBuffer::OpenGLVertexBuffer(float* vertices, uint32_t size)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		glGenBuffers(1, &m_RendererID);
+		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
+		glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+	}
+
+	OpenGLVertexBuffer::OpenGLVertexBuffer(uint32_t size)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
-		glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	OpenGLVertexBuffer::~OpenGLVertexBuffer()
@@ -23,7 +32,6 @@ namespace Athena
 
 		glDeleteBuffers(1, &m_RendererID);
 	}
-
 
 	void OpenGLVertexBuffer::Bind() const
 	{
@@ -38,6 +46,15 @@ namespace Athena
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
+
+	void OpenGLVertexBuffer::SetData(const void* data, uint32_t size)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+	}
+
 
 	///////////////////// IndexBuffer /////////////////////
 

@@ -8,7 +8,6 @@ namespace Athena
 #define Size2 2
 
 	template <typename Ty>
-#pragma pack(push, 1)
 	class Vector<Ty, Size2>
 	{
 	public:
@@ -274,7 +273,6 @@ namespace Athena
 	public:
 		Ty x, y;
 	};
-#pragma pack(pop)
 
 	template<typename Ty>
 	const Vector<Ty, Size2> Vector<Ty, Size2>::up = 

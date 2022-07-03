@@ -22,7 +22,7 @@ public:
 		};
 
 		Athena::Ref<Athena::VertexBuffer> vertexBuffer;
-		vertexBuffer = Athena::VertexBuffer::Create(vertices, (uint32_t)std::size(vertices));
+		vertexBuffer = Athena::VertexBuffer::Create(vertices, (uint32_t)std::size(vertices) * sizeof(float));
 
 		Athena::BufferLayout layout = { { Athena::ShaderDataType::Float3, "a_Position"},
 										{ Athena::ShaderDataType::Float3, "a_Color"},

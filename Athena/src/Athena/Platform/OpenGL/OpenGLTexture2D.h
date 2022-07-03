@@ -22,6 +22,7 @@ namespace Athena
 		void Bind(uint32_t slot = 0) const override;
 		void UnBind() const override;
 
+		bool operator==(const Texture2D& other) const override;
 	private:
 		uint32_t m_RendererID;
 

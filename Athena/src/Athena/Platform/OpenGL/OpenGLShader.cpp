@@ -185,6 +185,13 @@ namespace Athena
 		UploadUniformInt(name, value);
 	}
 
+	void OpenGLShader::SetIntArray(const std::string& name, int* value, uint32_t count)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		UploadUniformIntArray(name, value, count);
+	}
+
 	void OpenGLShader::SetFloat(const std::string& name, float value)
 	{
 		ATN_PROFILE_FUNCTION();
@@ -217,6 +224,12 @@ namespace Athena
 	{
 		GLint location = glGetUniformLocation(m_RendererID, name.data());
 		glUniform1i(location, value);
+	}
+
+	void OpenGLShader::UploadUniformIntArray(const std::string& name, int* value, uint32_t count)
+	{
+		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		glUniform1iv(location, count, value);
 	}
 
 	void OpenGLShader::UploadUniformFloat(const std::string& name, float value)

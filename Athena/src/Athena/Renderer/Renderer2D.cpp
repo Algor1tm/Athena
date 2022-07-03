@@ -34,6 +34,8 @@ namespace Athena
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
 		uint32_t TextureSlotIndex = 1; // 0 - white texture
+
+		Vector4 QuadVertexPositions[4];
 	};
 
 	static Renderer2DData s_Data;
@@ -89,6 +91,11 @@ namespace Athena
 		s_Data.TextureShader->SetIntArray("u_Texture", samplers, s_Data.MaxTextureSlots);
 
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
+
+		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
+		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };
+		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
+		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 	}
 
 	void Renderer2D::Shutdown()
@@ -140,34 +147,36 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		constexpr float texIndex = 0.f; // White Texture
+		constexpr float textureIndex = 0.f; // White Texture
 		constexpr float tilingFactor = 1.f;
 
-		s_Data.QuadVertexBufferPointer->Position = position;
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[0] * transform;
 		s_Data.QuadVertexBufferPointer->Color = color;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 0.f };
-		s_Data.QuadVertexBufferPointer->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x + size.x, position.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[1] * transform;
 		s_Data.QuadVertexBufferPointer->Color = color;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 0.f };
-		s_Data.QuadVertexBufferPointer->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x + size.x, position.y + size.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[2] * transform;
 		s_Data.QuadVertexBufferPointer->Color = color;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 1.f };
-		s_Data.QuadVertexBufferPointer->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x, position.y + size.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[3] * transform;
 		s_Data.QuadVertexBufferPointer->Color = color;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 1.f };
-		s_Data.QuadVertexBufferPointer->TexIndex = texIndex;
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
@@ -200,28 +209,30 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		s_Data.QuadVertexBufferPointer->Position = position;
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[0] * transform;
 		s_Data.QuadVertexBufferPointer->Color = tint;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 0.f };
 		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x + size.x, position.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[1] * transform;
 		s_Data.QuadVertexBufferPointer->Color = tint;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 0.f };
 		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x + size.x, position.y + size.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[2] * transform;
 		s_Data.QuadVertexBufferPointer->Color = tint;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 1.f };
 		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 		s_Data.QuadVertexBufferPointer++;
 
-		s_Data.QuadVertexBufferPointer->Position = { position.x, position.y + size.y, 0.f };
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[3] * transform;
 		s_Data.QuadVertexBufferPointer->Color = tint;
 		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 1.f };
 		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
@@ -250,16 +261,43 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		s_Data.TextureShader->SetFloat4("u_Color", color);
-		s_Data.WhiteTexture->Bind();
+		constexpr float textureIndex = 0.f; // White Texture
+		constexpr float tilingFactor = 1.f;
 
-		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * 
-			Rotate(rotation, { 0.f, 0.f, 1.f }) * 
+		Matrix4 transform =
+			Scale({ size.x, size.y, 1.f }) *
+			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);
-		s_Data.TextureShader->SetMat4("u_Transform", transform);
 
-		s_Data.QuadVertexArray->Bind();
-		RenderCommand::DrawIndexed(s_Data.QuadVertexArray);
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[0] * transform;
+		s_Data.QuadVertexBufferPointer->Color = color;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 0.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[1] * transform;
+		s_Data.QuadVertexBufferPointer->Color = color;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 0.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[2] * transform;
+		s_Data.QuadVertexBufferPointer->Color = color;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 1.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[3] * transform;
+		s_Data.QuadVertexBufferPointer->Color = color;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 1.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadIndexCount += 6;
 	}
 
 	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
@@ -270,17 +308,57 @@ namespace Athena
 	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
 	{
 		ATN_PROFILE_FUNCTION();
+		float textureIndex = 0.0f;
 
-		s_Data.TextureShader->SetFloat4("u_Color", tint);
-		s_Data.TextureShader->SetFloat("u_tilingFactor", tilingFactor);
-		texture->Bind();
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		{
+			if (*s_Data.TextureSlots[i] == *texture)
+			{
+				textureIndex = 0;
+				break;
+			}
+		}
 
-		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * 
+		if (textureIndex == 0.0f)
+		{
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
+
+		Matrix4 transform = 
+			Scale({ size.x, size.y, 1.f }) *
 			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);
-		s_Data.TextureShader->SetMat4("u_Transform", transform);
 
-		s_Data.QuadVertexArray->Bind();
-		RenderCommand::DrawIndexed(s_Data.QuadVertexArray);
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[0] * transform;
+		s_Data.QuadVertexBufferPointer->Color = tint;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 0.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[1] * transform;
+		s_Data.QuadVertexBufferPointer->Color = tint;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 0.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[2] * transform;
+		s_Data.QuadVertexBufferPointer->Color = tint;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 1.f, 1.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[3] * transform;
+		s_Data.QuadVertexBufferPointer->Color = tint;
+		s_Data.QuadVertexBufferPointer->TexCoord = { 0.f, 1.f };
+		s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		s_Data.QuadVertexBufferPointer++;
+
+		s_Data.QuadIndexCount += 6;
 	}
 }

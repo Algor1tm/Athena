@@ -43,8 +43,11 @@ namespace Athena
 		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);
 		void Compile(const std::unordered_map<GLenum, std::string>& shaderSources);
 
+		int GetUniformLocation(const std::string& name);
+
 	private:
 		uint32_t m_RendererID;
 		std::string m_Name;
+		std::unordered_map<std::string, int> m_UniformLocationCache;
 	};
 }

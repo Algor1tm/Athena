@@ -178,6 +178,18 @@ namespace Athena
 		glUseProgram(0);
 	}
 
+	int OpenGLShader::GetUniformLocation(const std::string& name)
+	{
+		if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
+			return m_UniformLocationCache[name];
+
+		int location = glGetUniformLocation(m_RendererID, name.c_str());
+		ATN_ASSERT(location != -1, "Uniform name does not exist!");
+		m_UniformLocationCache[name] = location;
+
+		return location;
+	}
+
 	void OpenGLShader::SetInt(const std::string& name, int value)
 	{
 		ATN_PROFILE_FUNCTION();
@@ -222,49 +234,49 @@ namespace Athena
 
 	void OpenGLShader::UploadUniformInt(const std::string& name, int value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform1i(location, value);
 	}
 
 	void OpenGLShader::UploadUniformIntArray(const std::string& name, int* value, uint32_t count)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform1iv(location, count, value);
 	}
 
 	void OpenGLShader::UploadUniformFloat(const std::string& name, float value)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform1f(location, value);
 	}
 
 	void OpenGLShader::UploadUniformFloat2(const std::string& name, const Vector2& vec2)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform2f(location, vec2.x, vec2.y);
 	}
 
 	void OpenGLShader::UploadUniformFloat3(const std::string& name, const Vector3& vec3)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform3f(location, vec3.x, vec3.y, vec3.z);
 	}
 
 	void OpenGLShader::UploadUniformFloat4(const std::string& name, const Vector4& vec4)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 	}
 
 	void OpenGLShader::UploadUniformMat3(const std::string& name, const Matrix3& mat3)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniformMatrix3fv(location, 1, GL_FALSE, mat3.Data());
 	}
 
 	void OpenGLShader::UploadUniformMat4(const std::string& name, const Matrix4& mat4)
 	{
-		GLint location = glGetUniformLocation(m_RendererID, name.data());
+		GLint location = GetUniformLocation(name.data());
 		glUniformMatrix4fv(location, 1, GL_FALSE, mat4.Data());
 	}
 }

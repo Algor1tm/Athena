@@ -28,5 +28,23 @@ namespace Athena
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Color& color);
 		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const Color& tint = Color::White);
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const Color& tint = Color::White);
+
+
+		// Stats
+		struct Statistics
+		{
+			uint32_t DrawCalls = 0;
+			uint32_t QuadCount = 0;
+
+			uint32_t GetTotalVertexCount() { return QuadCount * 4; }
+			uint32_t GetTotalIndexCount() { return QuadCount * 6; }
+		};
+
+		static void ResetStats();
+		static Statistics GetStats();
+
+	private:
+		static void StartBatch();
+		static void NextBatch();
 	};
 }

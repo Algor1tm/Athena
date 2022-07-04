@@ -33,6 +33,7 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 	}
 
+	Athena::Renderer2D::ResetStats();
 	{
 		static float rotation = 0.0f;
 
@@ -55,7 +56,16 @@ void SandBox2D::OnImGuiRender()
 	ATN_PROFILE_FUNCTION();
 
 	ImGui::Begin("Settings");
+
+	auto stats = Athena::Renderer2D::GetStats();
+	ImGui::Text("Renderer2D Stats: ");
+	ImGui::Text("Draw Calls: %d", stats.DrawCalls);
+	ImGui::Text("Quads: %d", stats.QuadCount);
+	ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
+	ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+
 	ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
+
 	ImGui::End();
 }
 

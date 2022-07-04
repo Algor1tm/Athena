@@ -167,7 +167,7 @@ namespace Athena
 	};
 }
 
-#define ATN_PROFILE 1
+#define ATN_PROFILE 0
 
 #if ATN_PROFILE
 	#define ATN_PROFILE_BEGIN_SESSION(name, filepath) ::Athena::Instrumentor::Get().BeginSession(name, filepath);
@@ -176,8 +176,8 @@ namespace Athena
 	#define ATN_PROFILE_FUNCTION()	ATN_PROFILE_SCOPE(__FUNCSIG__);
 
 #else
-	#define ATN_PROFILE_BEGIN_SESSION()
+	#define ATN_PROFILE_BEGIN_SESSION(name, filepath)
 	#define ATN_PROFILE_END_SESSION()
-	#define ATN_PROFILE_SCOPE()
+	#define ATN_PROFILE_SCOPE(name)
 	#define ATN_PROFILE_FUNCTION()
 #endif

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RenderCommand.h"
-#include "OrthographicCamera.h"
+#include "Camera.h"
 #include "Shader.h"
 
 
@@ -16,7 +16,7 @@ namespace Athena
 
 		static void OnWindowResized(uint32_t width, uint32_t height);
 
-		static void BeginScene(OrthographicCamera& Camera);
+		static void BeginScene(const Camera& Camera);
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader,

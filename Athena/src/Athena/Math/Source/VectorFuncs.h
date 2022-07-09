@@ -132,11 +132,11 @@ namespace Athena
 	// Does not validate input values
 	template <typename Ty, size_t Size>
 	constexpr Vector<Ty, Size> Lerp(
-		const Vector<Ty, Size>& min, const Vector<Ty, Size>& max, Ty mid)
+		const Vector<Ty, Size>& a, const Vector<Ty, Size>& b, Ty t)
 	{
 		Vector<Ty, Size> out;
 		for (size_t i = 0; i < Size; ++i)
-			out[i] = Lerp(min[i], max[i], mid);
+			out[i] = Lerp(a[i], b[i], t);
 	}
 
 	template <typename Ty, size_t Size>

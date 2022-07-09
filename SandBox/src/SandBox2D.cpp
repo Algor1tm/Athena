@@ -1,6 +1,6 @@
 #include "SandBox2D.h"
 
-#include "ImGui/imgui.h"
+#include <ImGui/imgui.h>
 
 
 SandBox2D::SandBox2D()
@@ -36,6 +36,7 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 	Athena::Renderer2D::ResetStats();
 	{
 		static float rotation = 0.0f;
+		rotation += frameTime.AsSeconds() * 1.f;
 
 		ATN_PROFILE_SCOPE("Renderer Draw");
 		Athena::Renderer2D::BeginScene(m_CameraController.GetCamera());
@@ -47,7 +48,6 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		Athena::Renderer2D::DrawRotatedQuad({ -0.7f, -0.7f }, { 1.f, 1.f }, Athena::DegreeToRad(45), m_KomodoHype);
 
 		Athena::Renderer2D::EndScene();
-		rotation += frameTime.AsSeconds() * 1.f;
 	}
 }
 

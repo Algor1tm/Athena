@@ -47,16 +47,16 @@ namespace Athena
 
 	// Does not validate input values
 	template <typename T>
-	constexpr T Lerp(T min, T max, T mid)
+	constexpr T Lerp(T a, T b, T t)
 	{
-		return min + (max - min) * mid;
+		return a + (b - a) * t;
 	}
 
 	// Does not validate input values
 	template <typename T>
-	constexpr T InverseLerp(T lerp, T min, T max)
+	constexpr T InverseLerp(T lerp, T a, T b)
 	{
-		return (lerp - min) / (max - min);
+		return (lerp - a) / (b - a);
 	}
 
 

@@ -120,13 +120,13 @@ namespace Athena
 	const Color Color::Transparent = Color(0, 0, 0, 0);
 
 
-	Color Lerp(const Color& min, const Color& max, float mid)
+	Color Lerp(const Color& a, const Color& b, float t)
 	{
 		return Color(
-			Lerp(min.r, max.r, mid), 
-			Lerp(min.g, max.g, mid), 
-			Lerp(min.b, max.b, mid), 
-			Lerp(min.a, max.a, mid));
+			Lerp(a.r, b.r, t), 
+			Lerp(a.g, b.g, t), 
+			Lerp(a.b, b.b, t), 
+			Lerp(a.a, b.a, t));
 	}
 
 	std::string ToString(const Color& color)

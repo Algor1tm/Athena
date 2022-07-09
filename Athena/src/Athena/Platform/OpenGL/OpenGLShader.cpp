@@ -183,7 +183,8 @@ namespace Athena
 			return m_UniformLocationCache[name];
 
 		int location = glGetUniformLocation(m_RendererID, name.c_str());
-		ATN_ASSERT(location != -1, "Uniform name does not exist!");
+		if (location == -1)
+			ATN_CORE_WARN("Uniform name: '{0}' does not exist!", name.c_str());
 		m_UniformLocationCache[name] = location;
 
 		return location;

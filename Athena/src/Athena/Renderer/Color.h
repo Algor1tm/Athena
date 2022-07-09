@@ -57,6 +57,6 @@ namespace Athena
 #pragma pack(pop)
 
 
-	Color Lerp(const Color& min, const Color& max, float mid);
+	Color Lerp(const Color& a, const Color& b, float t);
 	std::string ToString(const Color& color);
 }

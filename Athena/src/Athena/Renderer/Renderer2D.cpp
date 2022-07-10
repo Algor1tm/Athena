@@ -219,6 +219,55 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
+		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+
+		for (size_t i = 0; i < QuadVertexCount; ++i)
+		{
+			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
+			s_Data.QuadVertexBufferPointer->Color = tint;
+			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
+			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+			s_Data.QuadVertexBufferPointer++;
+		}
+
+		s_Data.QuadIndexCount += 6;
+
+		s_Data.Stats.QuadCount++;
+	}
+
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	{
+		DrawQuad({ position.x, position.y, 0.f }, size, subtexture, tilingFactor, tint);
+	}
+
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+			NextBatch();
+
+		constexpr size_t QuadVertexCount = 4;
+		const Vector2* textureCoords = subtexture->GetTexCoords();
+		float textureIndex = 0.0f;
+		const Ref<Texture2D>& texture = subtexture->GetTexture();
+
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		{
+			if (*s_Data.TextureSlots[i] == *texture)
+			{
+				textureIndex = 0;
+				break;
+			}
+		}
+
+		if (textureIndex == 0.0f)
+		{
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
 
 		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
 
@@ -307,6 +356,59 @@ namespace Athena
 		}
 
 		Matrix4 transform = 
+			Scale({ size.x, size.y, 1.f }) *
+			Rotate(rotation, { 0.f, 0.f, 1.f }) *
+			Translate(position);
+
+		for (size_t i = 0; i < QuadVertexCount; ++i)
+		{
+			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
+			s_Data.QuadVertexBufferPointer->Color = tint;
+			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
+			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+			s_Data.QuadVertexBufferPointer++;
+		}
+
+		s_Data.QuadIndexCount += 6;
+
+		s_Data.Stats.QuadCount++;
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	{
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, subtexture, tilingFactor, tint);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+			NextBatch();
+
+		constexpr size_t QuadVertexCount = 4;
+		const Vector2* textureCoords = subtexture->GetTexCoords();
+		float textureIndex = 0.0f;
+		const Ref<Texture2D>& texture = subtexture->GetTexture();
+
+		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		{
+			if (*s_Data.TextureSlots[i] == *texture)
+			{
+				textureIndex = 0;
+				break;
+			}
+		}
+
+		if (textureIndex == 0.0f)
+		{
+			textureIndex = (float)s_Data.TextureSlotIndex;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlotIndex++;
+		}
+
+		Matrix4 transform =
 			Scale({ size.x, size.y, 1.f }) *
 			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);

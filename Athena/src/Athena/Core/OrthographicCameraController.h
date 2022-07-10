@@ -21,9 +21,11 @@ namespace Athena
 		inline OrthographicCamera& GetCamera() { return m_Camera; };
 		inline const OrthographicCamera& GetCamera() const { return m_Camera; };
 
-		inline void SetZoomLevel(float level) { m_ZoomLevel = level; }
+		inline void SetZoomLevel(float level) { m_ZoomLevel = level; RecalculateView(); }
 		inline float GetZoomLevel() const { return m_ZoomLevel; }
 	private:
+		void RecalculateView();
+
 		bool OnMouseScrolled(MouseScrolledEvent& event);
 		bool OnWindowResized(WindowResizedEvent& event);
 

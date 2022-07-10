@@ -207,13 +207,16 @@ namespace Athena
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
-				textureIndex = 0;
+				textureIndex = (float)i;
 				break;
 			}
 		}
 
 		if (textureIndex == 0.0f)
 		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
 			textureIndex = (float)s_Data.TextureSlotIndex;
 			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			s_Data.TextureSlotIndex++;
@@ -257,13 +260,16 @@ namespace Athena
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
-				textureIndex = 0;
+				textureIndex = (float)i;
 				break;
 			}
 		}
 
 		if (textureIndex == 0.0f)
 		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
 			textureIndex = (float)s_Data.TextureSlotIndex;
 			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			s_Data.TextureSlotIndex++;
@@ -343,13 +349,16 @@ namespace Athena
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
-				textureIndex = 0;
+				textureIndex = (float)i;
 				break;
 			}
 		}
 
 		if (textureIndex == 0.0f)
 		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
 			textureIndex = (float)s_Data.TextureSlotIndex;
 			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			s_Data.TextureSlotIndex++;
@@ -396,13 +405,16 @@ namespace Athena
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
-				textureIndex = 0;
+				textureIndex = (float)i;
 				break;
 			}
 		}
 
 		if (textureIndex == 0.0f)
 		{
+			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+				NextBatch();
+
 			textureIndex = (float)s_Data.TextureSlotIndex;
 			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
 			s_Data.TextureSlotIndex++;

@@ -2,11 +2,11 @@
 
 
 #include "Source/Matrix.h"
-#include "Source/MatrixFuncs.h"
+#include "Source/MatrixRelational.h"
 #include "Source/MatrixTransforms.h"
 
 #ifndef NO_SEE2
-#include "SIMD/MatrixFuncs_simd.h"
+#include "SIMD/MatrixRelational_simd.h"
 #endif
 
 namespace Athena

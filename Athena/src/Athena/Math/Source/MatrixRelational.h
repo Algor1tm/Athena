@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Matrix.h"
-#include "VectorFuncs.h"
+#include "VectorRelational.h"
 
 
 namespace Athena

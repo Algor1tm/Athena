@@ -14,102 +14,78 @@ namespace Athena
 		using iterator = VectorIterator<Ty, Size2>;
 		using const_iterator = VectorConstIterator<Ty, Size2>;
 
+	// Constructors
 	public:
-		Vector() = default;
+		constexpr Vector() = default;
 
 		constexpr Vector(Ty value)
-			: x(value), y(value) {}
+			: x(value), 
+			  y(value) {}
 
-		constexpr Vector(Ty X, Ty Y)
-			: x(X), y(Y) {}
+		constexpr Vector(Ty _x, Ty _y)
+			: x(_x), 
+			  y(_y) {}
+
+
+		template<typename X, typename Y>
+		constexpr Vector(X _x, Y _y)
+			: x(static_cast<Ty>(_x)), 
+			  y(static_cast<Ty>(_y)) {}
+
 
 		constexpr Vector(const Vector& other) = default;
 		constexpr Vector& operator=(const Vector& other) = default;
 
+
 		template <typename U>
 		constexpr Vector<Ty, Size2>(const Vector<U, Size2>& other)
-		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector initialization error: Vectors are not convertible");
+			: x(static_cast<Ty>(other.x)),
+		      y(static_cast<Ty>(other.y)) {}
 
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
-		}
 
 		template <typename U>
 		constexpr Vector<Ty, Size2>& operator=(const Vector<U, Size2>& other)
 		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector assignment error: Vectors are not convertible");
-
 			x = static_cast<Ty>(other.x);
 			y = static_cast<Ty>(other.y);
 
 			return *this;
 		}
 
-		template <typename U>
-		constexpr Vector<Ty, Size2>(const Vector<U, 3>& other)
-		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector initialization error: Vectors are not convertible");
-
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
-		}
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 3>& other)
-		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector assignment error: Vectors are not convertible");
+		constexpr Vector<Ty, Size2>(const Vector<U, 3>& _xy)
+			: x(static_cast<Ty>(_xy.x)),
+			  y(static_cast<Ty>(_xy.y)) {}
 
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
+
+		template <typename U>
+		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 3>& _xy)
+		{
+			x = static_cast<Ty>(_xy.x);
+			y = static_cast<Ty>(_xy.y);
 
 			return *this;
 		}
 
-		template <typename U>
-		constexpr Vector<Ty, Size2>(const Vector<U, 4>& other)
-		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector initialization error: Vectors are not convertible");
-
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
-		}
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 4>& other)
-		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector assignment error: Vectors are not convertible");
+		constexpr Vector<Ty, Size2>(const Vector<U, 4>& _xy)
+			: x(static_cast<Ty>(_xy.x)),
+			  y(static_cast<Ty>(_xy.y)) {}
 
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
+
+		template <typename U>
+		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 4>& _xy)
+		{
+			x = static_cast<Ty>(_xy.x);
+			y = static_cast<Ty>(_xy.y);
 
 			return *this;
 		}
 
-		constexpr void Fill(Ty value)
-		{
-			x = value;
-			y = value;
-		}
-
-		constexpr const Ty& operator[](size_t idx) const
-		{
-			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
-			return *(&x + idx);
-		}
-
-		constexpr Ty& operator[](size_t idx)
-		{
-			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
-			return *(&x + idx);
-		}
-
+	// Public Methods
+	public:
 		constexpr size_t Size() const
 		{
 			return Size2;
@@ -145,6 +121,12 @@ namespace Athena
 			return const_iterator(&x, Size2);
 		}
 
+		constexpr void Fill(Ty value)
+		{
+			x = value;
+			y = value;
+		}
+
 		constexpr Vector& Apply(Ty (*func)(Ty))
 		{
 			x = func(x);
@@ -174,7 +156,20 @@ namespace Athena
 			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 
+	// Operators
 	public:
+		constexpr const Ty& operator[](size_t idx) const
+		{
+			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
+			return *(&x + idx);
+		}
+
+		constexpr Ty& operator[](size_t idx)
+		{
+			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
+			return *(&x + idx);
+		}
+
 		constexpr Vector& operator+=(const Vector& other) 
 		{
 			x += other.x;
@@ -264,31 +259,31 @@ namespace Athena
 			return !(*this == other);
 		}
 
+	// Static Methods
 	public:
-		static const Vector<Ty, Size2> up;
-		static const Vector<Ty, Size2> down;
-		static const Vector<Ty, Size2> left;
-		static const Vector<Ty, Size2> right;
+		static Vector up()
+		{
+			return Vector(static_cast<Ty>(0), static_cast<Ty>(1));
+		}
+
+		static Vector down()
+		{
+			return Vector(static_cast<Ty>(0), static_cast<Ty>(-1));
+		}
+
+		static Vector left()
+		{
+			return Vector(static_cast<Ty>(-1), static_cast<Ty>(0));
+		}
+
+		static Vector right()
+		{
+			return Vector(static_cast<Ty>(1), static_cast<Ty>(0));
+		}
 
 	public:
 		Ty x, y;
 	};
-
-	template<typename Ty>
-	const Vector<Ty, Size2> Vector<Ty, Size2>::up = 
-		Vector<Ty, Size2>(static_cast<Ty>(0), static_cast<Ty>(-1));
-
-	template<typename Ty>
-	const Vector<Ty, Size2> Vector<Ty, Size2>::down = 
-		Vector<Ty, Size2>(static_cast<Ty>(0), static_cast<Ty>(1));
-
-	template<typename Ty>
-	const Vector<Ty, Size2> Vector<Ty, Size2>::left = 
-		Vector<Ty, Size2>(static_cast<Ty>(-1), static_cast<Ty>(0));
-
-	template<typename Ty>
-	const Vector<Ty, Size2> Vector<Ty, Size2>::right = 
-		Vector<Ty, Size2>(static_cast<Ty>(1), static_cast<Ty>(0));
 
 #undef Size2
 }

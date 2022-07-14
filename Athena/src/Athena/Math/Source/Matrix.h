@@ -7,17 +7,20 @@
 namespace Athena
 {
 	// ROW-MAJOR
+	// Column - size of column
+	// Row - size of row
 	template <typename Ty, size_t Column, size_t Row>
 	class Matrix
 	{
-	private:
-		using vRow = Vector<Ty, Row>;
-		using vColumn = Vector<Ty, Column>;
+	public:
+		using RowType = Vector<Ty, Row>;
+		using ColumnType = Vector<Ty, Column>;
 
 	public:
 		using iterator = VectorIterator<Vector<Ty, Row>, Column>;
 		using const_iterator = VectorConstIterator<Vector<Ty, Row>, Column>;
 
+	// Constructors
 	public:
 		constexpr Matrix() = default;
 
@@ -27,7 +30,7 @@ namespace Athena
 				m_Array[i].Fill(value);
 		}
 
-		constexpr Matrix(const std::initializer_list<vRow>& values)
+		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
 			ATN_CORE_ASSERT(values.size() == Column, 
 				"Cannot initialize matrix with initializer list");
@@ -39,7 +42,10 @@ namespace Athena
 			}
 		}
 
-		constexpr Matrix(const vRow& vec)
+		constexpr Matrix(const Matrix& other) = default;
+		constexpr Matrix& operator=(const Matrix& other) = default;
+
+		constexpr Matrix(const RowType& vec)
 		{
 			static_assert(Column == 1, "Cannot initialize matrix with vector");
 			m_Array[0] = vec;
@@ -54,65 +60,41 @@ namespace Athena
 		template <typename U>
 		constexpr Matrix(const Vector<U, Row>& vec)
 		{
-			static_assert(std::is_convertible<U, Ty>::value, 
-				"Matrix and vector are not convertible");
 			static_assert(Column == 1, "Cannot initialize matrix with vector");
 			m_Array[0] = vec;
 		}
 
-		constexpr Matrix(const Matrix& other) = default;
-
 		template <typename U>
 		constexpr Matrix(const Matrix<U, Column, Row>& other)
 		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Matrix and vector are not convertible");
 			for (size_t i = 0; i < Column; ++i)
-			{
-				for (size_t j = 0; j < Row; ++j)
-					m_Array[i][j] = static_cast<Ty>(other[i][j]);
-			}
+				m_Array[i] = other[i];
 		}
 
-		constexpr Matrix& operator=(const Matrix& other) = default;
 
 		template <typename U>
 		constexpr Matrix<Ty, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
 		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Matrix and vector are not convertible");
 			for (size_t i = 0; i < Column; ++i)
-			{
-				for (size_t j = 0; j < Row; ++j)
-					m_Array[i][j] = static_cast<Ty>(other[i][j]);
-			}
+				m_Array[i] = other[i];
 		}
 
-		static constexpr Matrix<Ty, Column, Row> Identity()
-		{
-			Matrix out(static_cast<Ty>(0));
-
-			constexpr size_t min = min(Column, Row);
-			for (size_t i = 0; i < min; ++i)
-				out[i][i] = static_cast<Ty>(1);
-
-			return out;
-		}
-
+	// Public Methods
+	public:
 		constexpr Ty* Data()
 		{
-			return &m_Array[0][0];
+			return &(m_Array[0][0]);
 		}
 
 		constexpr const Ty* Data() const
 		{
-			return &m_Array[0][0];
+			return &(m_Array[0][0]);
 		}
 
-		constexpr vColumn GetColumn(size_t idx) const
+		constexpr ColumnType GetColumn(size_t idx) const
 		{
 			ATN_CORE_ASSERT(idx < Row, "Matrix subscript out of range");
-			vColumn out;
+			ColumnType out;
 			for (size_t i = 0; i < Column; ++i)
 				out[i] = m_Array[i][idx];
 			return out;
@@ -147,26 +129,7 @@ namespace Athena
 		{
 			return const_iterator(m_Array, Column);
 		}
-
-		constexpr const vRow& operator[](size_t idx) const
-		{
-			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
-			return m_Array[idx];
-		}
-
-		constexpr vRow& operator[](size_t idx)
-		{
-			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
-			return m_Array[idx];
-		}
 		
-		constexpr Matrix& Apply(Ty(*func)(Ty))
-		{
-			for (size_t i = 0; i < Column; ++i)
-				m_Array[i].Apply(func);
-			return *this;
-		}
-
 		constexpr Matrix& Fill(Ty value)
 		{
 			for (size_t i = 0; i < Column; ++i)
@@ -174,7 +137,27 @@ namespace Athena
 			return *this;
 		}
 
+		constexpr Matrix& Apply(Ty(*func)(Ty))
+		{
+			for (size_t i = 0; i < Column; ++i)
+				m_Array[i].Apply(func);
+			return *this;
+		}
+
+	// Operators
 	public:
+		constexpr const RowType& operator[](size_t idx) const
+		{
+			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
+			return m_Array[idx];
+		}
+
+		constexpr RowType& operator[](size_t idx)
+		{
+			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
+			return m_Array[idx];
+		}
+
 		constexpr Matrix& operator+=(const Matrix& other)
 		{
 			for (size_t i = 0; i < Column; ++i)
@@ -266,7 +249,20 @@ namespace Athena
 			return Matrix(*this) /= scalar;
 		}
 
+	// Static Methods
+	public:
+		static constexpr Matrix<Ty, Column, Row> Identity()
+		{
+			Matrix out(static_cast<Ty>(0));
+
+			constexpr size_t min = min(Column, Row);
+			for (size_t i = 0; i < min; ++i)
+				out[i][i] = static_cast<Ty>(1);
+
+			return out;
+		}
+
 	private:
-		vRow m_Array[Column];
+		RowType m_Array[Column];
 	};
 }

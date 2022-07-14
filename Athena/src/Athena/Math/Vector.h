@@ -5,11 +5,11 @@
 #include "Source/Vector2.h"
 #include "Source/Vector3.h"
 #include "Source/Vector4.h"
-#include "Source/VectorFuncs.h"
+#include "Source/VectorRelational.h"
 
 #ifndef NO_SEE2
 #include "SIMD/Vector4_float.h"
-#include "SIMD/VectorFuncs_simd.h"
+#include "SIMD/VectorRelational_simd.h"
 #endif
 
 

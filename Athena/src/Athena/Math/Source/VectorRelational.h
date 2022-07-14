@@ -137,12 +137,24 @@ namespace Athena
 		Vector<Ty, Size> out;
 		for (size_t i = 0; i < Size; ++i)
 			out[i] = Lerp(a[i], b[i], t);
+
+		return out;
+	}
+
+	template<typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> Clamp(const Vector<Ty, Size>& vec, Ty min, Ty max)
+	{
+		Vector<Ty, Size> out;
+		for (size_t i = 0; i < Size; ++i)
+			out[i] = Clamp(vec[i], min, max);
+
+		return out;
 	}
 
 	template <typename Ty, size_t Size>
 	constexpr std::string ToString(const Vector<Ty, Size>& vec)
 	{
-		std::string out = "Vector" + std::to_string(vec.GetSize()) + "(";
+		std::string out = "Vector" + std::to_string(vec.Size()) + "(";
 		for (size_t i = 0; i < vec.Size() - 1; ++i)
 			out += std::to_string(vec[i]) + ", ";
 		out += std::to_string(vec[vec.Size() - 1]) + ")";

@@ -5,6 +5,7 @@
 
 namespace Athena
 {
+
 	template <typename Ty, size_t Size>
 	class VectorConstIterator
 	{
@@ -262,8 +263,9 @@ namespace Athena
 		using iterator = VectorIterator<Ty, _Size>;
 		using const_iterator = VectorConstIterator<Ty, _Size>;
 
+	// Constructors
 	public:
-		Vector() = default;
+		constexpr Vector() = default;
 
 		constexpr Vector(Ty value)
 		{
@@ -283,50 +285,30 @@ namespace Athena
 			}
 		}
 
+
 		constexpr Vector(const Vector& other) = default;
+		constexpr Vector& operator=(const Vector& other) = default;
+
 
 		template <typename U>
 		constexpr Vector<Ty, _Size>(const Vector<U, _Size>& other)
 		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector initialization error: Vectors are not convertible");
-
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<Ty>(other[i]);
 		}
 
-		constexpr Vector& operator=(const Vector& other) = default;
 
 		template <typename U>
 		constexpr Vector<Ty, _Size>& operator=(const Vector<U, _Size>& other)
 		{
-			static_assert(std::is_convertible<U, Ty>::value,
-				"Vector assignment error: Vectors are not convertible");
-
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<Ty>(other[i]);
 
 			return *this;
 		}
 
-		constexpr void Fill(Ty value)
-		{
-			for (size_t i = 0; i < _Size; ++i)
-				m_Array[i] = value;
-		}
-
-		constexpr const Ty& operator[](size_t idx) const
-		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
-			return m_Array[idx];
-		}
-
-		constexpr Ty& operator[](size_t idx)
-		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
-			return m_Array[idx];
-		}
-
+	// Public Methods
+	public:
 		constexpr size_t Size() const 
 		{
 			return _Size;
@@ -362,6 +344,12 @@ namespace Athena
 			return const_iterator(m_Array, _Size);
 		}
 
+		constexpr void Fill(Ty value)
+		{
+			for (size_t i = 0; i < _Size; ++i)
+				m_Array[i] = value;
+		}
+
 		constexpr Vector& Apply(Ty (*func)(Ty))
 		{
 			for (size_t i = 0; i < _Size; ++i)
@@ -394,7 +382,20 @@ namespace Athena
 			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
 		}
 
+	// Operators
 	public:
+		constexpr const Ty& operator[](size_t idx) const
+		{
+			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
+			return m_Array[idx];
+		}
+
+		constexpr Ty& operator[](size_t idx)
+		{
+			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
+			return m_Array[idx];
+		}
+
 		constexpr Vector& operator+=(const Vector& other) 
 		{
 			for (size_t i = 0; i < _Size; ++i)

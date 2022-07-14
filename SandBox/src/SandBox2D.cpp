@@ -98,10 +98,9 @@ void SandBox2D::OnImGuiRender()
 {
 	ATN_PROFILE_FUNCTION();
 
-	ImGui::Begin("Settings");
+	ImGui::Begin("Renderer2D Stats");
 
 	auto stats = Athena::Renderer2D::GetStats();
-	ImGui::Text("Renderer2D Stats: ");
 	ImGui::Text("Draw Calls: %d", stats.DrawCalls);
 	ImGui::Text("Quads: %d", stats.QuadCount);
 	ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());

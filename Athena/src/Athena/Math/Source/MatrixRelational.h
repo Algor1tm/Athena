@@ -3,6 +3,8 @@
 #include "Matrix.h"
 #include "VectorRelational.h"
 
+#include <string>
+
 
 namespace Athena
 {

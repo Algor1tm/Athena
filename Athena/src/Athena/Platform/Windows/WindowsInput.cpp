@@ -1,6 +1,6 @@
 #include "atnpch.h"
 
-#include "GLFW/glfw3.h"
+#include <GLFW/glfw3.h>
 
 #include "WindowsInput.h"
 #include "Athena/Core/Application.h"

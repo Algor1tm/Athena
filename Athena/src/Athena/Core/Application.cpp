@@ -60,16 +60,16 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		Timer m_Timer;
-		Time m_LastTime;
+		Timer Timer;
+		Time LastTime;
 
 		while (m_Running)
 		{
 			ATN_PROFILE_SCOPE("Run Loop");
 
-			Time now = m_Timer.ElapsedTime();
-			Time frameTime = now - m_LastTime;
-			m_LastTime = now;
+				Time now = Timer.ElapsedTime();
+				Time frameTime = now - LastTime;
+				LastTime = now;
 
 			if (m_Minimized == false)
 			{

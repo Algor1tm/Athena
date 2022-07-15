@@ -6,6 +6,8 @@
 #include "Vector4.h"
 #include "Utils.h"
 
+#include <string>
+
 
 namespace Athena
 {

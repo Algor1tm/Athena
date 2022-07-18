@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Vector2.h"
+#include "Vector3.h"
+#include "Athena/Math/SIMD/Vector4_float.h"
 
 #define M_PI 3.14159265358979323846
 #define M_PIf 3.14159265358979323846f
@@ -8,40 +10,58 @@
 
 namespace Athena
 {
+	template <typename T>
+	constexpr T PI()
+	{
+		return static_cast<T>(M_PIf);
+	}
+
+	template<>
+	constexpr float PI<float>()
+	{
+		return M_PIf;
+	}
+
+	template <>
+	constexpr double PI<double>()
+	{
+		return M_PI;
+	}
+
 	constexpr float DegreeToRad(int degree)
 	{
-		return float(degree) * M_PIf / 180.f;
+		return float(degree) * PI<float>() / 180.f;
 	}
 
 	constexpr float DegreeToRad(float degree)
 	{
-		return degree * M_PIf / 180.f;
+		return degree * PI<float>() / 180.f;
 	}
 
 	constexpr double DegreeToRad(double degree)
 	{
-		return degree * M_PI / 180.;
+		return degree * PI<double>() / 180.;
 	}
 
 
 	constexpr float RadToDegree(float radians)
 	{
-		return radians * 180.f / M_PIf;
+		return radians * 180.f / PI<float>();
 	}
 
 	constexpr double RadToDegree(double radians)
 	{
-		return radians * 180. / M_PI;
+		return radians * 180. / PI<double>();
 	}
 	
 
-	template <typename T>
-	constexpr T Clamp(T value, T min, T max)
+	template <typename X, typename Y, typename Z>
+	constexpr X Clamp(X value, Y min, Z max)
 	{
-		if (value < min)
-			return min;
-		else if (value > max)
-			return max;
+		if (value < static_cast<X>(min))
+			return static_cast<X>(min);
+		else if (value > static_cast<X>(max))
+			return static_cast<X>(max);
 		return value;
 	}
 
@@ -87,6 +107,51 @@ namespace Athena
 		static float Float()
 		{
 			return (float)s_Distribution(s_RandomEngine) / (float)std::numeric_limits<uint32_t>::max();
+		}
+
+		static float Float(float min, float max)
+		{
+			return Lerp(min, max, Float());
+		}
+
+		static uint32_t UInt()
+		{
+			return s_Distribution(s_RandomEngine);
+		}
+
+		static uint32_t UInt(uint32_t min, uint32_t max)
+		{
+			return min + (s_Distribution(s_RandomEngine) % (max - min + 1));
+		}
+
+		static Vector<float, 2> Vector2()
+		{
+			return Vector<float, 2>(Float(), Float());
+		}
+
+		static Vector<float, 3> Vector3()
+		{
+			return Vector<float, 3>(Float(), Float(), Float());
+		}
+
+		static Vector<float, 4> Vector4()
+		{
+			return Vector<float, 4>(Float(), Float(), Float(), Float());
+		}
+
+		static Vector<float, 2> Vector2(float min, float max)
+		{
+			return Vector<float, 2>(Float(min, max), Float(min, max));
+		}
+
+		static Vector<float, 3> Vector3(float min, float max)
+		{
+			return Vector<float, 3>(Float(min, max), Float(min, max), Float(min, max));
+		}
+
+		static Vector<float, 4> Vector4(float min, float max)
+		{
+			return Vector<float, 4>(Float(min, max), Float(min, max), Float(min, max), Float(min, max));
 		}
 
 	private:

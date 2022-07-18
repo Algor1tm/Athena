@@ -27,12 +27,10 @@ namespace Athena
 		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
 
 		Vector<Ty, Row> out(static_cast<Ty>(0));
-		for (size_t i = 0; i < Row; i++)
+		for (size_t i = 0; i < Column; i++)
 		{
-			for (size_t j = 0; j < Column; ++j)
-			{
-				out[i] += vec[j] * mat[j][i];
-			}
+			for (size_t j = 0; j < Row; ++j)
+				out[j] += vec[i] * mat[i][j];
 		}
 		return out;
 	}

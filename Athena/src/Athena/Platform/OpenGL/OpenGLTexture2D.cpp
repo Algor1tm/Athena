@@ -92,7 +92,7 @@ namespace Athena
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 	}
 
-	void OpenGLTexture2D::SetData(void* data, uint32_t size)
+	void OpenGLTexture2D::SetData(const void* data, uint32_t size)
 	{
 		ATN_PROFILE_FUNCTION();
 

@@ -294,32 +294,32 @@ namespace Athena
 
 	// Static Methods
 	public:
-		static Vector up()
+		static constexpr Vector up()
 		{
 			return Vector(static_cast<Ty>(0), static_cast<Ty>(1), static_cast<Ty>(0));
 		}
 
-		static Vector down()
+		static constexpr Vector down()
 		{
 			return Vector(static_cast<Ty>(0), static_cast<Ty>(-1), static_cast<Ty>(0));
 		}
 
-		static Vector left()
+		static constexpr Vector left()
 		{
 			return Vector(static_cast<Ty>(-1), static_cast<Ty>(0), static_cast<Ty>(0));
 		}
 
-		static Vector right()
+		static constexpr Vector right()
 		{
 			return Vector(static_cast<Ty>(1), static_cast<Ty>(0), static_cast<Ty>(0));
 		}
 
-		static Vector forward()
+		static constexpr Vector forward()
 		{
 			return Vector(static_cast<Ty>(0), static_cast<Ty>(0), static_cast<Ty>(-1));
 		}
 
-		static Vector back()
+		static constexpr Vector back()
 		{
 			return Vector(static_cast<Ty>(0), static_cast<Ty>(0), static_cast<Ty>(1));
 		}

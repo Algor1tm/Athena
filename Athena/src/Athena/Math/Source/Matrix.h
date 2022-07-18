@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
+#include "Athena/Math/SIMD/Vector4_float.h"
 
 
 namespace Athena

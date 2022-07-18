@@ -143,12 +143,22 @@ namespace Athena
 		return out;
 	}
 
-	template<typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> Clamp(const Vector<Ty, Size>& vec, Ty min, Ty max)
+	template<typename X, size_t Size, typename Y, typename Z>
+	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)
 	{
 		Vector<Ty, Size> out;
 		for (size_t i = 0; i < Size; ++i)
-			out[i] = Clamp(vec[i], min, max);
+			out[i] = Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
+
+		return out;
+	}
+
+	template<typename Ty, size_t Size>
+	constexpr Vector<Ty, Size> Clamp(const Vector<Ty, Size>& vec, const Vector<Ty, Size>& min, const Vector<Ty, Size>& max)
+	{
+		Vector<Ty, Size> out;
+		for (size_t i = 0; i < Size; ++i)
+			out[i] = Clamp(vec[i], min[i], max[i]);
 
 		return out;
 	}

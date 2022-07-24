@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	class Renderer2D
+	class ATHENA_API Renderer2D
 	{
 	public:
 		Renderer2D() = delete;

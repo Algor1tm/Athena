@@ -129,6 +129,15 @@ namespace Athena
 			Lerp(a.a, b.a, t));
 	}
 
+	Color Clamp(const Color& clr, float min, float max)
+	{
+		return Color(
+			Clamp(clr.r, min, max),
+			Clamp(clr.g, min, max),
+			Clamp(clr.b, min, max),
+			Clamp(clr.a, min, max));
+	}
+
 	std::string ToString(const Color& color)
 	{
 		std::string out = "Color(";

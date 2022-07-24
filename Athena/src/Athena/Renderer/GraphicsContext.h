@@ -3,7 +3,7 @@
 
 namespace Athena
 {
-	class GraphicsContext
+	class ATHENA_API GraphicsContext
 	{
 	public:
 		virtual void Init() = 0;

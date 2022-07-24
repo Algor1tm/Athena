@@ -57,6 +57,7 @@ namespace Athena
 #pragma pack(pop)
 
 
-	Color Lerp(const Color& a, const Color& b, float t);
-	std::string ToString(const Color& color);
+	ATHENA_API Color Lerp(const Color& a, const Color& b, float t);
+	ATHENA_API Color Clamp(const Color& clr, float min, float max);
+	ATHENA_API std::string ToString(const Color& color);
 }

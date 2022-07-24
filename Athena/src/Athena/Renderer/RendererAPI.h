@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class RendererAPI
+	class ATHENA_API RendererAPI
 	{
 	public:
 		enum class API

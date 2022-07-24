@@ -8,7 +8,7 @@ struct GLFWwindow;
 
 namespace Athena
 {
-	class OpenGLGraphicsContext : public GraphicsContext
+	class ATHENA_API OpenGLGraphicsContext : public GraphicsContext
 	{
 	public:
 		OpenGLGraphicsContext(GLFWwindow* windowHandle);

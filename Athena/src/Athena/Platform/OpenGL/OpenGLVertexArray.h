@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class OpenGLVertexArray : public VertexArray
+	class ATHENA_API OpenGLVertexArray : public VertexArray
 	{
 	public:
 		OpenGLVertexArray();

@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class OrthographicCamera: public Camera
+	class ATHENA_API OrthographicCamera: public Camera
 	{
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);

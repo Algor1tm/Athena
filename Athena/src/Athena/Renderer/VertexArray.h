@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class VertexArray
+	class ATHENA_API VertexArray
 	{
 	public:
 		virtual ~VertexArray() = default;

@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class SubTexture2D
+	class ATHENA_API SubTexture2D
 	{
 	public:
 		SubTexture2D(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);

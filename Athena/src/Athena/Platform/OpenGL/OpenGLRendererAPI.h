@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class OpenGLRendererAPI : public RendererAPI
+	class ATHENA_API OpenGLRendererAPI : public RendererAPI
 	{
 	public:
 		void Init() override;

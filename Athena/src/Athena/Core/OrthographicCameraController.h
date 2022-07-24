@@ -10,7 +10,7 @@
 
 namespace Athena
 {
-	class OrthographicCameraController
+	class ATHENA_API OrthographicCameraController
 	{
 	public:
 		OrthographicCameraController(float aspectRatio, bool rotation = true);

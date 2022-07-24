@@ -29,7 +29,7 @@ namespace Athena
 	};
 
 
-	class MouseScrolledEvent : public Event
+	class ATHENA_API MouseScrolledEvent : public Event
 	{
 	public:
 		MouseScrolledEvent(float xOffset, float yOffset)
@@ -52,7 +52,7 @@ namespace Athena
 	};
 
 
-	class MouseButtonEvent : public Event
+	class ATHENA_API MouseButtonEvent : public Event
 	{
 	public:
 		MouseCode GetMouseButton() const { return m_Button; }
@@ -66,7 +66,7 @@ namespace Athena
 	};
 
 
-	class MouseButtonPressedEvent : public MouseButtonEvent
+	class ATHENA_API MouseButtonPressedEvent : public MouseButtonEvent
 	{
 	public:
 		MouseButtonPressedEvent(MouseCode button)
@@ -82,7 +82,7 @@ namespace Athena
 	};
 
 
-	class MouseButtonReleasedEvent : public MouseButtonEvent
+	class ATHENA_API MouseButtonReleasedEvent : public MouseButtonEvent
 	{
 	public:
 		MouseButtonReleasedEvent(MouseCode button)

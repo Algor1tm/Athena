@@ -8,7 +8,7 @@ struct GLFWwindow;
 
 namespace Athena
 {
-	class WindowsWindow : public Window
+	class ATHENA_API WindowsWindow : public Window
 	{
 	public:
 		WindowsWindow(const WindowDesc& desc);

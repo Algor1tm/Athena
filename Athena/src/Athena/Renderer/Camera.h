@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class Camera
+	class ATHENA_API Camera
 	{
 	public:
 		virtual const Matrix4& GetViewProjectionMatrix() const = 0;

@@ -29,7 +29,7 @@ namespace Athena
 		uint32_t m_RendererID;
 	};
 
-	class ShaderLibrary
+	class ATHENA_API ShaderLibrary
 	{
 	public:
 		void Add(const Ref<Shader>& shader);

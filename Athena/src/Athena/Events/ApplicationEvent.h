@@ -5,7 +5,7 @@
 
 namespace Athena 
 {
-	class WindowResizedEvent : public Event
+	class ATHENA_API WindowResizedEvent : public Event
 	{
 	public:
 		WindowResizedEvent(unsigned int width, unsigned int height)
@@ -28,7 +28,7 @@ namespace Athena
 	};
 
 
-	class WindowCloseEvent : public Event
+	class ATHENA_API WindowCloseEvent : public Event
 	{
 	public:
 		WindowCloseEvent() = default;
@@ -38,17 +38,17 @@ namespace Athena
 	};
 
 
-	class AppTickEvent : public Event
+	class ATHENA_API AppTickEvent : public Event
 	{
 	public:
 		AppTickEvent() = default;
 
 		EVENT_CLASS_TYPE(AppTick)
-			EVENT_CLASS_CATEGORY(EventCategoryApplication)
+		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 	};
 
 
-	class AppUpdateEvent : public Event
+	class ATHENA_API AppUpdateEvent : public Event
 	{
 	public:
 		AppUpdateEvent() = default;
@@ -58,7 +58,7 @@ namespace Athena
 	};
 
 
-	class AppRenderEvent : public Event
+	class ATHENA_API AppRenderEvent : public Event
 	{
 	public:
 		AppRenderEvent() = default;

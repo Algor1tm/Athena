@@ -1,0 +1,10 @@
+[submodule "Athena/vendor/GLFW/GLFW"]
+	path = Athena/vendor/GLFW/GLFW
+	url = https://github.com/glfw/glfw.git
+[submodule "Athena/vendor/spdlog/spdlog"]
+	path = Athena/vendor/spdlog/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "Athena/vendor/ImGui/ImGui"]
+	path = Athena/vendor/ImGui/ImGui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

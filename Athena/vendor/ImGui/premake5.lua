@@ -9,17 +9,22 @@ project "ImGui"
     
     files
     {
-        "imconfig.h",
-        "imgui.cpp",
-        "imgui.h",
-        "imgui_demo.cpp",
-        "imgui_draw.cpp",
-        "imgui_internal.h",
-        "imgui_tables.cpp",
-        "imgui_widgets.cpp",
-        "imstb_rectpack.h",
-        "imstb_textedit.h",
-        "imstb_truetype.h",
+        "ImGui/imconfig.h",
+        "ImGui/imgui.cpp",
+        "ImGui/imgui.h",
+        "ImGui/imgui_demo.cpp",
+        "ImGui/imgui_draw.cpp",
+        "ImGui/imgui_internal.h",
+        "ImGui/imgui_tables.cpp",
+        "ImGui/imgui_widgets.cpp",
+        "ImGui/imstb_rectpack.h",
+        "ImGui/imstb_textedit.h",
+        "ImGui/imstb_truetype.h",
+    }
+
+    defines
+    {
+        "_CRT_SECURE_NO_WARNINGS"
     }
 
     filter "system:windows"

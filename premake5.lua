@@ -13,17 +13,17 @@ workspace "Athena"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["spdlog"] = "Athena/vendor/spdlog/include"
-IncludeDir["GLFW"] = "Athena/vendor/GLFW/include"
-IncludeDir["Glad"] = "Athena/vendor/Glad/include"
-IncludeDir["ImGui"] = "Athena/vendor/ImGui"
+IncludeDir["glad"] = "Athena/vendor/glad/glad/include"
+IncludeDir["GLFW"] = "Athena/vendor/GLFW/GLFW/include"
+IncludeDir["ImGui"] = "Athena/vendor/ImGui/ImGui"
+IncludeDir["spdlog"] = "Athena/vendor/spdlog/spdlog/include"
 IncludeDir["stb_image"] = "Athena/vendor/stb_image"
 
 group "Dependencies"
-	include "Athena/vendor/spdlog"
+	include "Athena/vendor/glad"
 	include "Athena/vendor/GLFW"
-	include "Athena/vendor/Glad"
 	include "Athena/vendor/ImGui"
+	include "Athena/vendor/spdlog"
 
 group ""
 
@@ -44,32 +44,34 @@ project "Athena"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
-		"%{prj.name}/vendor/stb_image/**.h",
-		"%{prj.name}/vendor/stb_image/**.cpp",
-	}
-
-	defines
-	{
-		"_CRT_SECURE_NO_WARNINGS"
+		"%{prj.name}/vendor/stb_image/stb_image.h",
+		"%{prj.name}/vendor/stb_image/stb_image.cpp",
 	}
 
 	includedirs 
 	{
 		"%{prj.name}/src",
-		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.glad}",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.stb_image}"
 	}
 	
 	links
 	{
-		"spdlog",
+		"glad",
 		"GLFW",
-		"Glad",
 		"ImGui",
+		"spdlog",
 		"opengl32.lib"
+	}
+
+	defines 
+	{
+		"_CRT_SECURE_NO_WARNINGS",
+		"ATN_BUILD_DLL",
+		"GLFW_INCLUDE_NONE"
 	}
 
 	filter "system:windows"
@@ -77,9 +79,7 @@ project "Athena"
 
 		defines 
 		{
-			"ATN_PLATFORM_WINDOWS",
-			"ATN_BUILD_DLL",
-			"GLFW_INCLUDE_NONE"
+			"ATN_PLATFORM_WINDOWS"
 		}
 
 
@@ -117,9 +117,12 @@ project "SandBox"
 
 	includedirs
 	{
-		"Athena/vendor/spdlog/include",
 		"Athena/src",
-		"Athena/vendor"
+		"%{IncludeDir.glad}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.stb_image}"
 	}
 
 	links 

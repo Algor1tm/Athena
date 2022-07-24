@@ -8,14 +8,19 @@ project "Glad"
 
 	files
 	{
-		"include/glad/glad.h",
-		"include/KHR/khrplatform.h",
-		"src/glad.c"
+		"glad/include/glad/glad.h",
+		"glad/include/KHR/khrplatform.h",
+		"glad/src/glad.c"
 	}
 
 	includedirs
 	{
-		"include"
+		"glad/include"
+	}
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	filter "system:windows"

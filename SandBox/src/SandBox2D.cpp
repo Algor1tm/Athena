@@ -1,6 +1,6 @@
 #include "SandBox2D.h"
 
-#include <ImGui/imgui.h>
+#include <imgui.h>
 
 
 static const uint32_t s_MapWidth = 24;

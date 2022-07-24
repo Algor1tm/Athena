@@ -10,18 +10,19 @@ project "spdlog"
 
 	files
 	{
-		"include/spdlog/**.h",
-		"src/**.cpp",
+		"spdlog/include/spdlog/**.h",
+		"spdlog/src/**.cpp"
 	}
 
 	defines
 	{
-		"SPDLOG_COMPILED_LIB"
+		"SPDLOG_COMPILED_LIB",
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	includedirs
 	{
-		"include"
+		"spdlog/include"
 	}
 
 	filter "system:windows"

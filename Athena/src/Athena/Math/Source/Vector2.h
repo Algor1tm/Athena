@@ -7,30 +7,30 @@ namespace Athena
 {
 #define Size2 2
 
-	template <typename Ty>
-	class Vector<Ty, Size2>
+	template <typename T>
+	class Vector<T, Size2>
 	{
 	public:
-		using iterator = VectorIterator<Ty, Size2>;
-		using const_iterator = VectorConstIterator<Ty, Size2>;
+		using iterator = VectorIterator<T, Size2>;
+		using const_iterator = VectorConstIterator<T, Size2>;
 
 	// Constructors
 	public:
 		constexpr Vector() = default;
 
-		constexpr Vector(Ty value)
+		constexpr Vector(T value)
 			: x(value), 
 			  y(value) {}
 
-		constexpr Vector(Ty _x, Ty _y)
+		constexpr Vector(T _x, T _y)
 			: x(_x), 
 			  y(_y) {}
 
 
 		template<typename X, typename Y>
 		constexpr Vector(X _x, Y _y)
-			: x(static_cast<Ty>(_x)), 
-			  y(static_cast<Ty>(_y)) {}
+			: x(static_cast<T>(_x)), 
+			  y(static_cast<T>(_y)) {}
 
 
 		constexpr Vector(const Vector& other) = default;
@@ -38,48 +38,48 @@ namespace Athena
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>(const Vector<U, Size2>& other)
-			: x(static_cast<Ty>(other.x)),
-		      y(static_cast<Ty>(other.y)) {}
+		constexpr Vector<T, Size2>(const Vector<U, Size2>& other)
+			: x(static_cast<T>(other.x)),
+		      y(static_cast<T>(other.y)) {}
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>& operator=(const Vector<U, Size2>& other)
+		constexpr Vector<T, Size2>& operator=(const Vector<U, Size2>& other)
 		{
-			x = static_cast<Ty>(other.x);
-			y = static_cast<Ty>(other.y);
+			x = static_cast<T>(other.x);
+			y = static_cast<T>(other.y);
 
 			return *this;
 		}
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>(const Vector<U, 3>& _xy)
-			: x(static_cast<Ty>(_xy.x)),
-			  y(static_cast<Ty>(_xy.y)) {}
+		constexpr Vector<T, Size2>(const Vector<U, 3>& _xy)
+			: x(static_cast<T>(_xy.x)),
+			  y(static_cast<T>(_xy.y)) {}
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 3>& _xy)
+		constexpr Vector<T, Size2>& operator=(const Vector<U, 3>& _xy)
 		{
-			x = static_cast<Ty>(_xy.x);
-			y = static_cast<Ty>(_xy.y);
+			x = static_cast<T>(_xy.x);
+			y = static_cast<T>(_xy.y);
 
 			return *this;
 		}
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>(const Vector<U, 4>& _xy)
-			: x(static_cast<Ty>(_xy.x)),
-			  y(static_cast<Ty>(_xy.y)) {}
+		constexpr Vector<T, Size2>(const Vector<U, 4>& _xy)
+			: x(static_cast<T>(_xy.x)),
+			  y(static_cast<T>(_xy.y)) {}
 
 
 		template <typename U>
-		constexpr Vector<Ty, Size2>& operator=(const Vector<U, 4>& _xy)
+		constexpr Vector<T, Size2>& operator=(const Vector<U, 4>& _xy)
 		{
-			x = static_cast<Ty>(_xy.x);
-			y = static_cast<Ty>(_xy.y);
+			x = static_cast<T>(_xy.x);
+			y = static_cast<T>(_xy.y);
 
 			return *this;
 		}
@@ -91,12 +91,12 @@ namespace Athena
 			return Size2;
 		}
 
-		constexpr Ty* Data() 
+		constexpr T* Data() 
 		{
 			return &x;
 		}
 
-		constexpr const Ty* Data() const 
+		constexpr const T* Data() const 
 		{
 			return &x;
 		}
@@ -121,20 +121,20 @@ namespace Athena
 			return const_iterator(&x, Size2);
 		}
 
-		constexpr void Fill(Ty value)
+		constexpr void Fill(T value)
 		{
 			x = value;
 			y = value;
 		}
 
-		constexpr Vector& Apply(Ty (*func)(Ty))
+		constexpr Vector& Apply(T (*func)(T))
 		{
 			x = func(x);
 			y = func(y);
 			return *this;
 		}
 
-		constexpr Ty SqrLength() const 
+		constexpr T SqrLength() const 
 		{
 			return x * x + y * y;
 		}
@@ -147,26 +147,24 @@ namespace Athena
 		constexpr Vector& Normalize()
 		{
 			float length = Length();
-			return length == 0 ? *this : *this /= static_cast<Ty>(length);
+			return length == 0 ? *this : *this /= static_cast<T>(length);
 		}
 
 		constexpr Vector GetNormalized() const
 		{
 			float length = Length();
-			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
+			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<T>(length);
 		}
 
 	// Operators
 	public:
-		constexpr const Ty& operator[](size_t idx) const
+		constexpr const T& operator[](size_t idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
-		constexpr Ty& operator[](size_t idx)
+		constexpr T& operator[](size_t idx)
 		{
-			ATN_CORE_ASSERT(idx < Size2, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
@@ -184,30 +182,43 @@ namespace Athena
 			return *this;
 		}
 
-		constexpr Vector& operator+=(Ty scalar) 
+		constexpr Vector& operator*=(const Vector& other)
+		{
+			x *= other.x;
+			y *= other.y;
+			return *this;
+		}
+
+		constexpr Vector& operator/=(const Vector& other)
+		{
+			x /= other.x;
+			y /= other.y;
+			return *this;
+		}
+
+		constexpr Vector& operator+=(T scalar) 
 		{
 			x += scalar;
 			y += scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator-=(Ty scalar) 
+		constexpr Vector& operator-=(T scalar) 
 		{
 			x -= scalar;
 			y -= scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator*=(Ty scalar) 
+		constexpr Vector& operator*=(T scalar) 
 		{
 			x *= scalar;
 			y *= scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator/=(Ty scalar)
+		constexpr Vector& operator/=(T scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			x /= scalar;
 			y /= scalar;
 			return *this;
@@ -223,24 +234,33 @@ namespace Athena
 			return Vector(x - other.x, y - other.y);
 		}
 
-		constexpr Vector operator+(Ty scalar) const 
+		constexpr Vector operator*(const Vector& other) const
+		{
+			return Vector(x * other.x, y * other.y);
+		}
+
+		constexpr Vector operator/(const Vector& other) const
+		{
+			return Vector(x / other.x, y / other.y);
+		}
+
+		constexpr Vector operator+(T scalar) const 
 		{
 			return Vector(x + scalar, y + scalar);
 		}
 
-		constexpr Vector operator-(Ty scalar) const 
+		constexpr Vector operator-(T scalar) const 
 		{
 			return Vector(x - scalar, y - scalar);
 		}
 
-		constexpr Vector operator*(Ty scalar) const 
+		constexpr Vector operator*(T scalar) const 
 		{
 			return Vector(x * scalar, y * scalar);
 		}
 
-		constexpr Vector operator/(Ty scalar) const
+		constexpr Vector operator/(T scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(x / scalar, y / scalar);
 		}
 
@@ -263,26 +283,26 @@ namespace Athena
 	public:
 		static  Vector up()
 		{
-			return Vector(static_cast<Ty>(0), static_cast<Ty>(1));
+			return Vector(static_cast<T>(0), static_cast<T>(1));
 		}
 
 		static constexpr Vector down()
 		{
-			return Vector(static_cast<Ty>(0), static_cast<Ty>(-1));
+			return Vector(static_cast<T>(0), static_cast<T>(-1));
 		}
 
 		static constexpr Vector left()
 		{
-			return Vector(static_cast<Ty>(-1), static_cast<Ty>(0));
+			return Vector(static_cast<T>(-1), static_cast<T>(0));
 		}
 
 		static constexpr Vector right()
 		{
-			return Vector(static_cast<Ty>(1), static_cast<Ty>(0));
+			return Vector(static_cast<T>(1), static_cast<T>(0));
 		}
 
 	public:
-		Ty x, y;
+		T x, y;
 	};
 
 #undef Size2

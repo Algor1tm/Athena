@@ -10,22 +10,22 @@ namespace Athena
 	// ROW-MAJOR
 	// Column - size of column
 	// Row - size of row
-	template <typename Ty, size_t Column, size_t Row>
+	template <typename T, size_t Column, size_t Row>
 	class Matrix
 	{
 	public:
-		using RowType = Vector<Ty, Row>;
-		using ColumnType = Vector<Ty, Column>;
+		using RowType = Vector<T, Row>;
+		using ColumnType = Vector<T, Column>;
 
 	public:
-		using iterator = VectorIterator<Vector<Ty, Row>, Column>;
-		using const_iterator = VectorConstIterator<Vector<Ty, Row>, Column>;
+		using iterator = VectorIterator<Vector<T, Row>, Column>;
+		using const_iterator = VectorConstIterator<Vector<T, Row>, Column>;
 
 	// Constructors
 	public:
 		constexpr Matrix() = default;
 
-		constexpr Matrix(Ty value)
+		constexpr Matrix(T value)
 		{
 			for (size_t i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
@@ -52,7 +52,7 @@ namespace Athena
 			m_Array[0] = vec;
 		}
 
-		constexpr explicit operator Vector<Ty, Row>() const
+		constexpr explicit operator Vector<T, Row>() const
 		{
 			static_assert(Column == 1, "Cannot convert matrix to vector");
 			return m_Array[0];
@@ -74,7 +74,7 @@ namespace Athena
 
 
 		template <typename U>
-		constexpr Matrix<Ty, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
+		constexpr Matrix<T, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
 		{
 			for (size_t i = 0; i < Column; ++i)
 				m_Array[i] = other[i];
@@ -82,12 +82,12 @@ namespace Athena
 
 	// Public Methods
 	public:
-		constexpr Ty* Data()
+		constexpr T* Data()
 		{
 			return &(m_Array[0][0]);
 		}
 
-		constexpr const Ty* Data() const
+		constexpr const T* Data() const
 		{
 			return &(m_Array[0][0]);
 		}
@@ -131,14 +131,14 @@ namespace Athena
 			return const_iterator(m_Array, Column);
 		}
 		
-		constexpr Matrix& Fill(Ty value)
+		constexpr Matrix& Fill(T value)
 		{
 			for (size_t i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
 			return *this;
 		}
 
-		constexpr Matrix& Apply(Ty(*func)(Ty))
+		constexpr Matrix& Apply(T(*func)(T))
 		{
 			for (size_t i = 0; i < Column; ++i)
 				m_Array[i].Apply(func);
@@ -214,11 +214,11 @@ namespace Athena
 		}
 
 		template <size_t OtherColumn, size_t OtherRow>
-		constexpr Matrix<Ty, Column, OtherRow> operator*(const Matrix<Ty, OtherColumn, OtherRow>& other) const
+		constexpr Matrix<T, Column, OtherRow> operator*(const Matrix<T, OtherColumn, OtherRow>& other) const
 		{
 			static_assert(Row == OtherColumn, "Invalid Matrix multiplication");
 
-			Matrix<Ty, Column, OtherRow> out(static_cast<Ty>(0));
+			Matrix<T, Column, OtherRow> out(static_cast<T>(0));
 			for (size_t i = 0; i < Column; i++)
 			{
 				for (size_t j = 0; j < OtherRow; j++)
@@ -252,13 +252,13 @@ namespace Athena
 
 	// Static Methods
 	public:
-		static constexpr Matrix<Ty, Column, Row> Identity()
+		static constexpr Matrix<T, Column, Row> Identity()
 		{
-			Matrix out(static_cast<Ty>(0));
+			Matrix out(static_cast<T>(0));
 
 			constexpr size_t min = min(Column, Row);
 			for (size_t i = 0; i < min; ++i)
-				out[i][i] = static_cast<Ty>(1);
+				out[i][i] = static_cast<T>(1);
 
 			return out;
 		}

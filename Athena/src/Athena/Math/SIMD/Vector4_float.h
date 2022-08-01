@@ -224,13 +224,11 @@ namespace Athena
 	public:
 		constexpr const float& operator[](size_t idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
 		constexpr float& operator[](size_t idx)
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
@@ -243,6 +241,18 @@ namespace Athena
 		inline Vector& operator-=(const Vector& other)
 		{
 			_xmm = _mm_sub_ps(_xmm, other._xmm);
+			return *this;
+		}
+
+		inline Vector& operator*=(const Vector& other)
+		{
+			_xmm = _mm_mul_ps(_xmm, other._xmm);
+			return *this;
+		}
+
+		inline Vector& operator/=(const Vector& other)
+		{
+			_xmm = _mm_div_ps(_xmm, other._xmm);
 			return *this;
 		}
 
@@ -266,7 +276,6 @@ namespace Athena
 
 		inline Vector& operator/=(float scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			_xmm = _mm_div_ps(_xmm, _mm_set_ps1(scalar));
 			return *this;
 		}
@@ -279,6 +288,16 @@ namespace Athena
 		constexpr Vector operator-(const Vector& other) const
 		{
 			return Vector(_mm_sub_ps(_xmm, other._xmm));
+		}
+
+		constexpr Vector operator*(const Vector& other) const
+		{
+			return Vector(_mm_mul_ps(_xmm, other._xmm));
+		}
+
+		constexpr Vector operator/(const Vector& other) const
+		{
+			return Vector(_mm_div_ps(_xmm, other._xmm));
 		}
 
 		constexpr Vector operator+(float scalar) const
@@ -298,7 +317,6 @@ namespace Athena
 
 		constexpr Vector operator/(float scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(_mm_div_ps(_xmm, _mm_set_ps1(scalar)));
 		}
 

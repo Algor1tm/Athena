@@ -11,95 +11,95 @@
 
 namespace Athena
 {
-	template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> operator+(Ty scalar, const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr Vector<T, Size> operator+(T scalar, const Vector<T, Size>& vec)
 	{
 		return vec + scalar;
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> operator*(Ty scalar, const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr Vector<T, Size> operator*(T scalar, const Vector<T, Size>& vec)
 	{
 		return vec * scalar;
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr void Fill(Vector<Ty, Size>& vec, Ty value)
+	template <typename T, size_t Size>
+	constexpr void Fill(Vector<T, Size>& vec, T value)
 	{
 		vec.Fill(value);
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Ty* Data(const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr T* Data(const Vector<T, Size>& vec)
 	{
 		return vec.Data();
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Ty* Data(Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr const T* Data(Vector<T, Size>& vec)
 	{
 		return vec.Data();
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr float Distance(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)
+	template <typename T, size_t Size>
+	constexpr float Distance(const Vector<T, Size>& Left, const Vector<T, Size>& Right)
 	{
 		return (Left - Right).GetLength();
 	}
 
-	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, 2>& Left, const Vector<Ty, 2>& Right)
+	template <typename T>
+	constexpr T Dot(const Vector<T, 2>& Left, const Vector<T, 2>& Right)
 	{
 		return Left.x * Right.x + Left.y * Right.y;
 	}
 
-	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, 3>& Left, const Vector<Ty, 3>& Right)
+	template <typename T>
+	constexpr T Dot(const Vector<T, 3>& Left, const Vector<T, 3>& Right)
 	{
 		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z;
 	}
 
-	template <typename Ty>
-	constexpr Ty Dot(const Vector<Ty, 4>& Left, const Vector<Ty, 4>& Right)
+	template <typename T>
+	constexpr T Dot(const Vector<T, 4>& Left, const Vector<T, 4>& Right)
 	{
 		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z + Left.w * Right.w;
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Ty Dot(const Vector<Ty, Size>& Left, const Vector<Ty, Size>& Right)
+	template <typename T, size_t Size>
+	constexpr T Dot(const Vector<T, Size>& Left, const Vector<T, Size>& Right)
 	{
-		Ty out;
+		T out;
 		for (size_t i = 0; i < Size; ++i)
 			out += Left[i] * Right[i];
 		return out;
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Ty SqrLength(const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr T SqrLength(const Vector<T, Size>& vec)
 	{
 		return vec.SqrLength();
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr float Length(const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr float Length(const Vector<T, Size>& vec)
 	{
 		return vec.Length();
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size>& Normalize(Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr Vector<T, Size>& Normalize(Vector<T, Size>& vec)
 	{
 		return vec.Normalize();
 	}
 
-	template <typename Ty>
-	constexpr Ty Cross(const Vector<Ty, 2>& Left, const Vector<Ty, 2>& Right)
+	template <typename T>
+	constexpr T Cross(const Vector<T, 2>& Left, const Vector<T, 2>& Right)
 	{
 		return Left.x * Right.y - Left.y * Right.x;
 	}
 
-	template <typename Ty>
-	constexpr Vector<Ty, 3> Cross(const Vector<Ty, 3>& Left, const Vector<Ty, 3>& Right)
+	template <typename T>
+	constexpr Vector<T, 3> Cross(const Vector<T, 3>& Left, const Vector<T, 3>& Right)
 	{
 		Vector3 out;
 		out.x = Left.y * Right.z - Left.z * Right.y;
@@ -109,34 +109,34 @@ namespace Athena
 	}
 
 	/// <param name="Normal">: Must be normalized</param>
-	template <typename Ty>
-	constexpr Vector<Ty, 2> Reflect(
-		const Vector<Ty, 2>& Direction, const Vector<Ty, 2>& Normal)
+	template <typename T>
+	constexpr Vector<T, 2> Reflect(
+		const Vector<T, 2>& Direction, const Vector<T, 2>& Normal)
 	{
 		return Direction - 2 * Normal * Dot(Direction, Normal);
 	}
 
 	/// <param name="Normal">: Must be normalized</param>
-	template <typename Ty>
-	constexpr Vector<Ty, 3> Reflect(
-		const Vector<Ty, 3>& Direction, const Vector<Ty, 3>& Normal)
+	template <typename T>
+	constexpr Vector<T, 3> Reflect(
+		const Vector<T, 3>& Direction, const Vector<T, 3>& Normal)
 	{
 		return Direction - 2 * Normal * Dot(Direction, Normal);
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr void Swap(Vector<Ty, Size>& Left, Vector<Ty, Size>& Right)
+	template <typename T, size_t Size>
+	constexpr void Swap(Vector<T, Size>& Left, Vector<T, Size>& Right)
 	{
 		for (size_t i = 0; i < Size; ++i)
 			std::swap(Left[i], Right[i]);
 	}
 
 	// Does not validate input values
-	template <typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> Lerp(
-		const Vector<Ty, Size>& a, const Vector<Ty, Size>& b, Ty t)
+	template <typename T, size_t Size>
+	constexpr Vector<T, Size> Lerp(
+		const Vector<T, Size>& a, const Vector<T, Size>& b, T t)
 	{
-		Vector<Ty, Size> out;
+		Vector<T, Size> out;
 		for (size_t i = 0; i < Size; ++i)
 			out[i] = Lerp(a[i], b[i], t);
 
@@ -146,25 +146,25 @@ namespace Athena
 	template<typename X, size_t Size, typename Y, typename Z>
 	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)
 	{
-		Vector<Ty, Size> out;
+		Vector<T, Size> out;
 		for (size_t i = 0; i < Size; ++i)
 			out[i] = Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
 
 		return out;
 	}
 
-	template<typename Ty, size_t Size>
-	constexpr Vector<Ty, Size> Clamp(const Vector<Ty, Size>& vec, const Vector<Ty, Size>& min, const Vector<Ty, Size>& max)
+	template<typename T, size_t Size>
+	constexpr Vector<T, Size> Clamp(const Vector<T, Size>& vec, const Vector<T, Size>& min, const Vector<T, Size>& max)
 	{
-		Vector<Ty, Size> out;
+		Vector<T, Size> out;
 		for (size_t i = 0; i < Size; ++i)
 			out[i] = Clamp(vec[i], min[i], max[i]);
 
 		return out;
 	}
 
-	template <typename Ty, size_t Size>
-	constexpr std::string ToString(const Vector<Ty, Size>& vec)
+	template <typename T, size_t Size>
+	constexpr std::string ToString(const Vector<T, Size>& vec)
 	{
 		std::string out = "Vector" + std::to_string(vec.Size()) + "(";
 		for (size_t i = 0; i < vec.Size() - 1; ++i)

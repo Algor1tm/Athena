@@ -6,14 +6,14 @@
 namespace Athena
 {
 
-	template <typename Ty, size_t Size>
+	template <typename T, size_t Size>
 	class VectorConstIterator
 	{
 	public:
 		using iterator_category = std::random_access_iterator_tag;
 		using difference_type = ptrdiff_t;
-		using pointer = const Ty*;
-		using reference = const Ty&;
+		using pointer = const T*;
+		using reference = const T&;
 
 	public:
 		constexpr VectorConstIterator()
@@ -155,24 +155,24 @@ namespace Athena
 	};
 
 
-	template <class Ty, size_t Size>
-	constexpr VectorConstIterator<Ty, Size> operator+(
-		const ptrdiff_t Off, VectorConstIterator<Ty, Size> Iter)
+	template <class T, size_t Size>
+	constexpr VectorConstIterator<T, Size> operator+(
+		const ptrdiff_t Off, VectorConstIterator<T, Size> Iter)
 	{
 		return Iter += Off;
 	}
 
 
-	template <class Ty, size_t Size>
-	class VectorIterator: public VectorConstIterator<Ty, Size>
+	template <class T, size_t Size>
+	class VectorIterator: public VectorConstIterator<T, Size>
 	{
 	public:
-		using Base = VectorConstIterator<Ty, Size>;
+		using Base = VectorConstIterator<T, Size>;
 
 		using iterator_category = std::random_access_iterator_tag;
 		using difference_type = ptrdiff_t;
-		using pointer = Ty*;
-		using reference = Ty&;
+		using pointer = T*;
+		using reference = T&;
 
 	public:
 		constexpr VectorIterator() = default;
@@ -248,31 +248,31 @@ namespace Athena
 		}
 	};
 
-	template <class Ty, size_t Size>
-	constexpr VectorIterator<Ty, Size> operator+(
-		const ptrdiff_t Off, VectorIterator<Ty, Size> Next)
+	template <class T, size_t Size>
+	constexpr VectorIterator<T, Size> operator+(
+		const ptrdiff_t Off, VectorIterator<T, Size> Next)
 	{
 		return Next += Off;
 	}
 
 
-	template <typename Ty, size_t _Size>
+	template <typename T, size_t _Size>
 	class Vector
 	{
 	public:
-		using iterator = VectorIterator<Ty, _Size>;
-		using const_iterator = VectorConstIterator<Ty, _Size>;
+		using iterator = VectorIterator<T, _Size>;
+		using const_iterator = VectorConstIterator<T, _Size>;
 
-	// Constructors
+		// Constructors
 	public:
 		constexpr Vector() = default;
 
-		constexpr Vector(Ty value)
+		constexpr Vector(T value)
 		{
 			Fill(value);
 		}
 
-		constexpr Vector(const std::initializer_list<Ty>& values)
+		constexpr Vector(const std::initializer_list<T>& values)
 		{
 			ATN_CORE_ASSERT(values.size() == _Size,
 				"Cannot initialize vector with initializer list");
@@ -291,81 +291,81 @@ namespace Athena
 
 
 		template <typename U>
-		constexpr Vector<Ty, _Size>(const Vector<U, _Size>& other)
+		constexpr Vector<T, _Size>(const Vector<U, _Size>& other)
 		{
 			for (size_t i = 0; i < _Size; ++i)
-				m_Array[i] = static_cast<Ty>(other[i]);
+				m_Array[i] = static_cast<T>(other[i]);
 		}
 
 
 		template <typename U>
-		constexpr Vector<Ty, _Size>& operator=(const Vector<U, _Size>& other)
+		constexpr Vector<T, _Size>& operator=(const Vector<U, _Size>& other)
 		{
 			for (size_t i = 0; i < _Size; ++i)
-				m_Array[i] = static_cast<Ty>(other[i]);
+				m_Array[i] = static_cast<T>(other[i]);
 
 			return *this;
 		}
 
-	// Public Methods
+		// Public Methods
 	public:
-		constexpr size_t Size() const 
+		constexpr size_t Size() const
 		{
 			return _Size;
 		}
 
-		constexpr Ty* Data() 
+		constexpr T* Data()
 		{
 			return m_Array;
 		}
 
-		constexpr const Ty* Data() const 
+		constexpr const T* Data() const
 		{
 			return m_Array;
 		}
 
-		constexpr iterator begin() 
+		constexpr iterator begin()
 		{
 			return iterator(m_Array, 0);
 		}
 
-		constexpr iterator end() 
+		constexpr iterator end()
 		{
 			return iterator(m_Array, _Size);
 		}
 
-		constexpr const_iterator cbegin() const 
+		constexpr const_iterator cbegin() const
 		{
 			return const_iterator(m_Array, 0);
 		}
 
-		constexpr const_iterator cend() const 
+		constexpr const_iterator cend() const
 		{
 			return const_iterator(m_Array, _Size);
 		}
 
-		constexpr void Fill(Ty value)
+		constexpr void Fill(T value)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] = value;
 		}
 
-		constexpr Vector& Apply(Ty (*func)(Ty))
+		constexpr Vector& Apply(T(*func)(T))
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] = func(m_Array[i]);
 			return *this;
 		}
 
-		constexpr Ty SqrLength() const 
+		constexpr T SqrLength() const
 		{
-			Ty out;
+			T out;
 			for (size_t i = 0; i < _Size; ++i)
 				out += m_Array[i] * m_Array[i];
 			return out;
 		}
 
-		constexpr float Length() const 
+		constexpr float Length() const
 		{
 			return std::sqrt(static_cast<float>(SqrLength()));
 		}
@@ -373,100 +373,120 @@ namespace Athena
 		constexpr Vector& Normalize()
 		{
 			float length = Length();
-			return length == 0 ? *this : *this /= static_cast<Ty>(length);
+			return length == 0 ? *this : *this /= static_cast<T>(length);
 		}
 
 		constexpr Vector GetNormalized() const
 		{
 			float length = Length();
-			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<Ty>(length);
+			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<T>(length);
 		}
 
-	// Operators
+		// Operators
 	public:
-		constexpr const Ty& operator[](size_t idx) const
+		constexpr const T& operator[](size_t idx) const
 		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr Ty& operator[](size_t idx)
+		constexpr T& operator[](size_t idx)
 		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr Vector& operator+=(const Vector& other) 
+		constexpr Vector& operator+=(const Vector& other)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] += other.m_Array[i];
 			return *this;
 		}
 
-		constexpr Vector& operator-=(const Vector& other) 
+		constexpr Vector& operator-=(const Vector& other)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] -= other.m_Array[i];
 			return *this;
 		}
 
-		constexpr Vector& operator+=(Ty scalar) 
+		constexpr Vector& operator*=(const Vector& other)
+		{
+			for (size_t i = 0; i < _Size; ++i)
+				m_Array[i] *= other.m_Array[i];
+			return *this;
+		}
+
+		constexpr Vector& operator/=(const Vector& other)
+		{
+			for (size_t i = 0; i < _Size; ++i)
+				m_Array[i] /= other.m_Array[i];
+			return *this;
+		}
+
+		constexpr Vector& operator+=(T scalar)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator-=(Ty scalar) 
+		constexpr Vector& operator-=(T scalar)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator*=(Ty scalar) 
+		constexpr Vector& operator*=(T scalar)
 		{
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] *= scalar;
 			return *this;
 		}
 
-		constexpr Vector& operator/=(Ty scalar)
+		constexpr Vector& operator/=(T scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			for (size_t i = 0; i < _Size; ++i)
 				m_Array[i] /= scalar;
 			return *this;
 		}
 
-		constexpr Vector operator+(const Vector& other) const 
+		constexpr Vector operator+(const Vector& other) const
 		{
 			return Vector(*this) += other;
 		}
 
-		constexpr Vector operator-(const Vector& other) const 
+		constexpr Vector operator-(const Vector& other) const
 		{
 			return Vector(*this) -= other;
 		}
 
-		constexpr Vector operator+(Ty scalar) const 
+		constexpr Vector operator*(const Vector& other) const
+		{
+			return Vector(*this) *= other;
+		}
+
+		constexpr Vector operator/(const Vector& other) const
+		{
+			return Vector(*this) /= other;
+		}
+
+		constexpr Vector operator+(T scalar) const 
 		{
 			return Vector(*this) += scalar;
 		}
 
-		constexpr Vector operator-(Ty scalar) const 
+		constexpr Vector operator-(T scalar) const 
 		{
 			return Vector(*this) -= scalar;
 		}
 
-		constexpr Vector operator*(Ty scalar) const 
+		constexpr Vector operator*(T scalar) const 
 		{
 			return Vector(*this) *= scalar;
 		}
 
-		constexpr Vector operator/(Ty scalar) const
+		constexpr Vector operator/(T scalar) const
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Vector operation error: dividing by zero");
 			return Vector(*this) /= scalar;
 		}
 
@@ -492,6 +512,6 @@ namespace Athena
 		}
 
 	private:
-		Ty m_Array[_Size];
+		T m_Array[_Size];
 	};
 }

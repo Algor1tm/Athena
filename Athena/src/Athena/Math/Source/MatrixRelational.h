@@ -8,25 +8,25 @@
 
 namespace Athena
 {
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Matrix<Ty, Column, Row> operator+(float scalar, const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr Matrix<T, Column, Row> operator+(float scalar, const Matrix<T, Column, Row>& mat)
 	{
 		return mat + scalar;
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Matrix<Ty, Column, Row> operator*(float scalar, const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr Matrix<T, Column, Row> operator*(float scalar, const Matrix<T, Column, Row>& mat)
 	{
 		return mat * scalar;
 	}
 
-	template <typename Ty, size_t vecRow, size_t Column, size_t Row>
-	constexpr Vector<Ty, Row> operator*(
-		const Vector<Ty, vecRow>& vec, const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t vecRow, size_t Column, size_t Row>
+	constexpr Vector<T, Row> operator*(
+		const Vector<T, vecRow>& vec, const Matrix<T, Column, Row>& mat)
 	{
 		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
 
-		Vector<Ty, Row> out(static_cast<Ty>(0));
+		Vector<T, Row> out(static_cast<T>(0));
 		for (size_t i = 0; i < Column; i++)
 		{
 			for (size_t j = 0; j < Row; ++j)
@@ -35,28 +35,28 @@ namespace Athena
 		return out;
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr void Fill(Matrix<Ty, Column, Row>& mat, Ty value)
+	template <typename T, size_t Column, size_t Row>
+	constexpr void Fill(Matrix<T, Column, Row>& mat, T value)
 	{
 		mat.Fill(value);
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Ty* Data(const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr T* Data(const Matrix<T, Column, Row>& mat)
 	{
 		return mat.Data();
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Ty* Data(Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr T* Data(Matrix<T, Column, Row>& mat)
 	{
 		return mat.Data();
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr Matrix<Ty, Row, Column> Transpose(const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr Matrix<T, Row, Column> Transpose(const Matrix<T, Column, Row>& mat)
 	{
-		Matrix<Ty, Row, Column> out;
+		Matrix<T, Row, Column> out;
 		for (size_t i = 0; i < Column; ++i)
 		{
 			for (size_t j = 0; j < Row; ++j)
@@ -84,15 +84,15 @@ namespace Athena
 	}
 #endif
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr void Swap(const Matrix<Ty, Column, Row>& Left, const Matrix<Ty, Column, Row>& Right)
+	template <typename T, size_t Column, size_t Row>
+	constexpr void Swap(const Matrix<T, Column, Row>& Left, const Matrix<T, Column, Row>& Right)
 	{
 		for (size_t i = 0; i < Column; ++i)
 			Swap(Left[i], Right[i]);
 	}
 
-	template <typename Ty, size_t Column, size_t Row>
-	constexpr std::string ToString(const Matrix<Ty, Column, Row>& mat)
+	template <typename T, size_t Column, size_t Row>
+	constexpr std::string ToString(const Matrix<T, Column, Row>& mat)
 	{
 		std::string out = "Matrix(";
 		for (size_t i = 0; i < Column; ++i)

@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class ATHENA_API Time
+	class Time
 	{
 	public:
 		using duration_type = std::chrono::duration<float, std::micro>;
@@ -63,7 +63,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Timer
+	class Timer
 	{
 	public:
 		Timer()

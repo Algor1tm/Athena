@@ -30,6 +30,13 @@ void SandBox2D::OnAttach()
 {
 	ATN_PROFILE_FUNCTION();
 
+    Athena::FramebufferDesc fbDesc;
+    fbDesc.Width = 1280;
+    fbDesc.Height = 720;
+
+    m_Framebuffer = Athena::Framebuffer::Create(fbDesc);
+
+
 	m_CheckerBoard = Athena::Texture2D::Create("assets/textures/CheckerBoard.png");
 	m_KomodoHype = Athena::Texture2D::Create("assets/textures/KomodoHype.png");
 	m_SpriteSheet = Athena::Texture2D::Create("assets/game/textures/SpriteSheet.png");
@@ -51,14 +58,15 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 
 	m_CameraController.OnUpdate(frameTime);
 
+    Athena::Renderer2D::ResetStats();
 	{
 		ATN_PROFILE_SCOPE("Renderer Clear");
+        m_Framebuffer->Bind();
 		Athena::RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 	}
 
-	Athena::Renderer2D::ResetStats();
-	{
-#if 0
+    {
+#if 1
 		static float rotation = 0.0f;
 		rotation += frameTime.AsSeconds() * 1.f;
 
@@ -69,10 +77,10 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		Athena::Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
 		Athena::Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
 		Athena::Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, Athena::Color(1.f, 0.95f, 0.95f));
-		Athena::Renderer2D::DrawRotatedQuad({ -0.7f, -0.7f }, { 1.f, 1.f }, Athena::DegreeToRad(45), m_KomodoHype);
+		Athena::Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Athena::DegreeToRad(45), m_KomodoHype);
 
 		Athena::Renderer2D::EndScene();
-#endif
+#else
 
 		Athena::Renderer2D::BeginScene(m_CameraController.GetCamera());
 		
@@ -91,6 +99,9 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		}
 
 		Athena::Renderer2D::EndScene();
+#endif
+
+        m_Framebuffer->UnBind();
 	}
 }
 
@@ -98,17 +109,88 @@ void SandBox2D::OnImGuiRender()
 {
 	ATN_PROFILE_FUNCTION();
 
-	ImGui::Begin("Renderer2D Stats");
+    static bool dockSpaceOpen = true;
+    
+    static bool opt_fullscreen = true;
+    static bool opt_padding = false;
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-	auto stats = Athena::Renderer2D::GetStats();
-	ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-	ImGui::Text("Quads: %d", stats.QuadCount);
-	ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
-	ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+    // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+    // because it would be confusing to have two docking targets within each others.
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    if (opt_fullscreen)
+    {
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    }
+    else
+    {
+        dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+    }
 
-	ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+    // and handle the pass-thru hole, so we ask Begin() to not render a background.
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        window_flags |= ImGuiWindowFlags_NoBackground;
 
-	ImGui::End();
+    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+    // all active windows docked into it will lose their parent and become undocked.
+    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+    if (!opt_padding)
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
+    if (!opt_padding)
+        ImGui::PopStyleVar();
+
+    if (opt_fullscreen)
+        ImGui::PopStyleVar(2);
+
+    // Submit the DockSpace
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+    {
+        ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+        ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    }
+
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Close", NULL, false))
+            {
+                dockSpaceOpen = false;
+                Athena::Application::Get().Close();
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenuBar();
+    }
+
+    ImGui::Begin("Renderer2D Stats");
+
+    auto stats = Athena::Renderer2D::GetStats();
+    ImGui::Text("Draw Calls: %d", stats.DrawCalls);
+    ImGui::Text("Quads: %d", stats.QuadCount);
+    ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
+    ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+
+    ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
+
+    uint32_t texID = m_Framebuffer->GetColorAttachmentRendererID();
+    ImGui::Image((void*)(uint64_t)texID, ImVec2(1280.f, 720.f), { 0, 1 }, { 1, 0 });
+
+    ImGui::End();
+
+    ImGui::End();
 }
 
 void SandBox2D::OnEvent(Athena::Event& event)

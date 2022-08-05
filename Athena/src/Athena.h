@@ -24,6 +24,7 @@
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Framebuffer.h"
 #include "Athena/Renderer/VertexArray.h"
 #include "Athena/Renderer/Buffer.h"
 

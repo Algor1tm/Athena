@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Athena/Renderer/Camera.h"
+#include "Athena/Math/Matrix.h"
 #include "Athena/Math/Vector.h"
 
 
 namespace Athena
 {
-	class ATHENA_API OrthographicCamera: public Camera
+	class ATHENA_API OrthographicCamera
 	{
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
@@ -14,8 +14,7 @@ namespace Athena
 
 		inline const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		inline const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
-
-		inline const Matrix4& GetViewProjectionMatrix() const override { return m_ViewProjectionMatrix; }
+		inline const Matrix4& GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
 
 		inline const Vector3& GetPosition() const { return m_Position; }
 		inline float GetRotation() const { return m_Rotation; }

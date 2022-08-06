@@ -46,7 +46,7 @@ namespace Athena
 		int GetUniformLocation(const std::string& name);
 
 	private:
-		uint32_t m_RendererID;
+		RendererID m_RendererID = 0;
 		std::string m_Name;
 		std::unordered_map<std::string, int> m_UniformLocationCache;
 	};

@@ -24,7 +24,7 @@ namespace Athena
 
 		bool operator==(const Texture2D& other) const override;
 	private:
-		uint32_t m_RendererID;
+		RendererID m_RendererID = 0;
 
 		std::string m_Path;
 		uint32_t m_Width, m_Height;

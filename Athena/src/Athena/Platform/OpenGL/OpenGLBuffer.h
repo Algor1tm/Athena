@@ -20,7 +20,7 @@ namespace Athena
 		inline void SetLayout(const BufferLayout& layout) override { m_Layout = layout; }
 		inline const BufferLayout& GetLayout() const override { return m_Layout; }
 	private:
-		uint32_t m_RendererID;
+		RendererID m_RendererID = 0;
 		BufferLayout m_Layout;
 	};
 
@@ -36,7 +36,7 @@ namespace Athena
 
 		inline uint32_t GetCount() const override { return m_Count; };
 	private:
-		uint32_t m_RendererID;
+		RendererID m_RendererID = 0;
 		uint32_t m_Count;
 	};
 }

@@ -19,9 +19,7 @@ namespace Athena
 	class ATHENA_API Application
 	{
 	public:
-		Application();
-		Application(Application&) = delete;
-		Application(Application&&) = delete;
+		Application(const WindowDesc& wdesc = WindowDesc());
 		virtual ~Application();
 
 		void Run();

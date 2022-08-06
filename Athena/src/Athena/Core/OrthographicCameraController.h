@@ -18,11 +18,14 @@ namespace Athena
 		void OnUpdate(Time frameTime);
 		void OnEvent(Event& event);
 
+		void Resize(uint32_t width, uint32_t height);
+
 		inline OrthographicCamera& GetCamera() { return m_Camera; };
 		inline const OrthographicCamera& GetCamera() const { return m_Camera; };
 
 		inline void SetZoomLevel(float level) { m_ZoomLevel = level; RecalculateView(); }
 		inline float GetZoomLevel() const { return m_ZoomLevel; }
+
 	private:
 		void RecalculateView();
 

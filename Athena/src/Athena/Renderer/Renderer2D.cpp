@@ -108,7 +108,7 @@ namespace Athena
 		delete[] s_Data.QuadVertexBufferBase;
 	}
 
-	void Renderer2D::BeginScene(const Camera& camera)
+	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
 		ATN_PROFILE_FUNCTION();
 

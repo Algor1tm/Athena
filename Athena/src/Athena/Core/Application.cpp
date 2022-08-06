@@ -11,15 +11,13 @@ namespace Athena
 {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application()
+	Application::Application(const WindowDesc& wdesc)
 		: m_Running(true), m_Minimized(false)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
-
-		WindowDesc wdesc;
 
 		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));

@@ -7,14 +7,14 @@
 
 namespace Athena
 {
-	struct ATHENA_API WindowDesc
+	struct WindowDesc
 	{
 		using EventCallbackFn = std::function<void(Event&)>;
 
-		unsigned int Width = 1280; 
-		unsigned int Height = 720;
+		uint32_t Width = 1280; 
+		uint32_t Height = 720;
 		bool VSync = true;
-		std::string Title = "Athena Engine";
+		std::string Title = "Athena App";
 
 		EventCallbackFn EventCallback;
 	};
@@ -37,7 +37,7 @@ namespace Athena
 
 		virtual void* GetNativeWindow() = 0;
 
-		static Scope<Window> Create(const WindowDesc& desc = WindowDesc());
+		static Scope<Window> Create(const WindowDesc& desc);
 	};
 }
 

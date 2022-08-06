@@ -2,7 +2,7 @@
 
 #include <memory>
 
-
+// Athena currently not supporting dynamic linking
 #ifdef ATN_PLATFORM_WINDOWS
 	#ifdef ATN_DYNAMIC_LINK
 		#ifdef ATN_BUILD_DLL
@@ -18,12 +18,22 @@
 #endif
 
 #ifdef ATN_DEBUG
-#define ATN_ASSERTS
+	#if defined(ATN_PLATFORM_WINDOWS)
+		#define ATN_DEBUGBREAK() __debugbreak()
+	#elif defined(ATN_PLATFORM_LINUX)
+		#include <signal.h>
+		#define ATN_DEBUGBREAK() raise(SIGTRAP)
+	#else
+		#error "Platform doesn't support debugbreak yet!"
+	#endif
+
+	#define ATN_ASSERTS
 #endif
 
+
 #ifdef ATN_ASSERTS
-	#define ATN_ASSERT(x, ...)	{ if(!(x)) { ATN_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
-	#define ATN_CORE_ASSERT(x, ...)  { if(!(x)) { ATN_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); __debugbreak(); } }
+	#define ATN_ASSERT(x, ...)	{ if(!(x)) { ATN_ERROR("Assertion Failed: {0}", __VA_ARGS__); ATN_DEBUGBREAK(); } }
+	#define ATN_CORE_ASSERT(x, ...)  { if(!(x)) { ATN_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); ATN_DEBUGBREAK(); } }
 #else
 	#define ATN_ASSERT(x, ...) 
 	#define ATN_CORE_ASSERT(x, ...)
@@ -31,11 +41,14 @@
 
 #define BIT(x) (1 << x)
 
-#define ATN_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
+#define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 
 
 namespace Athena
 {
+	using RendererID = uint32_t;
+
+
 	template <typename T>
 	using Scope = std::unique_ptr<T>;
 	template<typename T, typename... Args>

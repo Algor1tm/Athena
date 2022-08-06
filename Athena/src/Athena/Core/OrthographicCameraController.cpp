@@ -50,6 +50,12 @@ namespace Athena
 		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
 	}
 	
+	void OrthographicCameraController::Resize(uint32_t width, uint32_t height)
+	{
+		m_AspectRatio = (float)width / (float)height;
+		RecalculateView();
+	}
+
 	void OrthographicCameraController::RecalculateView()
 	{
 		m_Camera.SetProjection(-m_ZoomLevel * m_AspectRatio, m_ZoomLevel * m_AspectRatio, -m_ZoomLevel, m_ZoomLevel);
@@ -72,8 +78,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		m_AspectRatio = (float)event.GetWidth() / (float)event.GetHeight();
-		RecalculateView();
+		Resize(event.GetWidth(), event.GetHeight());
 
 		return false;
 	}

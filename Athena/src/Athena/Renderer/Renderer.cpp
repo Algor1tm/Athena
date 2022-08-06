@@ -26,7 +26,7 @@ namespace Athena
 		RenderCommand::SetViewport(0, 0, width, height);
 	}
 
-	void Renderer::BeginScene(const Camera& Camera)
+	void Renderer::BeginScene(const OrthographicCamera& Camera)
 	{
 		m_SceneData->ViewProjectionMatrix = Camera.GetViewProjectionMatrix();
 	}

@@ -1,12 +1,17 @@
 workspace "Athena"
 	architecture "x64"
-	startproject "SandBox"
+	startproject "Athena-Editor"
 
 	configurations
 	{ 
 		"Debug",
 		"Release",
 		"Dist"
+	}
+
+	flags
+	{
+		"MultiProcessorCompile"
 	}
 
 
@@ -99,12 +104,68 @@ project "Athena"
 		optimize "On"
 	
 
+project "Athena-Editor"
+	location "Athena-Editor"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++17"
+	staticruntime "on"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
+	}
+
+	includedirs
+	{
+		"Athena/src",
+		"%{IncludeDir.glad}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.stb_image}"
+	}
+
+	links 
+	{
+		"Athena"
+	}
+
+	filter "system:windows"
+		staticruntime "On"
+		systemversion "latest"
+
+		defines 
+		{
+			"ATN_PLATFORM_WINDOWS"
+		}
+
+	filter "configurations:Debug"
+		defines "ATN_DEBUG"
+		runtime "Debug"
+		symbols "On"
+
+	filter "configurations:Release"
+		defines "ATN_RELEASE"
+		runtime "Release"
+		optimize "On"
+
+	filter "configurations:Dist"
+		defines "ATN_DIST"
+		runtime "Release"
+		optimize "On"
+
+
 project "SandBox"
 	location "SandBox"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "off"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")

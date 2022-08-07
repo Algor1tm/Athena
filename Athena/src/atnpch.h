@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef ATN_PLATFORM_WINDOWS
-	#include "Windows.h"
-#endif
-
 #include <memory>
 #include <algorithm>
 #include <functional>
@@ -28,5 +24,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
 #include "Athena/Debug/Instrumentor.h"
+
+#ifdef ATN_PLATFORM_WINDOWS
+	#include <Windows.h>
+#endif

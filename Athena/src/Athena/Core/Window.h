@@ -23,7 +23,7 @@ namespace Athena
 	class ATHENA_API Window
 	{
 	public:
-		virtual ~Window() {}
+		virtual ~Window() = default;
 		
 		virtual void OnUpdate() = 0;
 

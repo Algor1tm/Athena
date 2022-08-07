@@ -27,6 +27,7 @@ namespace Athena
 		Vector2 m_ViewportSize = { 0, 0 };
 		Ref<Framebuffer> m_Framebuffer;
 
+		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		OrthographicCameraController m_CameraController;
 
 		std::unordered_map<char, Ref<SubTexture2D>> m_TextureMap;

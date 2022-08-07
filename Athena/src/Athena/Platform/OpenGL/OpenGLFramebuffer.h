@@ -9,7 +9,7 @@ namespace Athena
 	{
 	public:
 		OpenGLFramebuffer(const FramebufferDesc& desc);
-		virtual ~OpenGLFramebuffer();
+		~OpenGLFramebuffer();
 
 		void Recreate();
 

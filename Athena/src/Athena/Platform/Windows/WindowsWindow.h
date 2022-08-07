@@ -12,7 +12,7 @@ namespace Athena
 	{
 	public:
 		WindowsWindow(const WindowDesc& desc);
-		virtual ~WindowsWindow();
+		~WindowsWindow();
 
 		void OnUpdate() override;
 

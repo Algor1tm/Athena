@@ -80,12 +80,8 @@ project "Athena"
 	}
 
 	filter "system:windows"
+		staticruntime "On"
 		systemversion "latest"
-
-		defines 
-		{
-			"ATN_PLATFORM_WINDOWS"
-		}
 
 
 	filter "configurations:Debug"
@@ -139,10 +135,6 @@ project "Athena-Editor"
 		staticruntime "On"
 		systemversion "latest"
 
-		defines 
-		{
-			"ATN_PLATFORM_WINDOWS"
-		}
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"
@@ -195,10 +187,6 @@ project "SandBox"
 		staticruntime "On"
 		systemversion "latest"
 
-		defines 
-		{
-			"ATN_PLATFORM_WINDOWS"
-		}
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"

@@ -1,11 +1,13 @@
 #include "atnpch.h"
 #include "OpenGLFramebuffer.h"
 
-#include "glad/glad.h"
+#include <glad/glad.h>
 
 
 namespace Athena
 {
+	static uint32_t s_MaxFramebufferSize = 8192;
+
 	OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferDesc& desc)
 		: m_Description(desc)
 	{
@@ -52,6 +54,12 @@ namespace Athena
 
 	void OpenGLFramebuffer::Resize(uint32_t width, uint32_t height)
 	{
+		if (width == 0 || height == 0 || width > s_MaxFramebufferSize || height > s_MaxFramebufferSize)
+		{
+			ATN_CORE_WARN("Attempted to resize Framebuffer to invalid size ({0}, {1})", width, height);
+			return;
+		}
+
 		m_Description.Width = width;
 		m_Description.Height = height;
 

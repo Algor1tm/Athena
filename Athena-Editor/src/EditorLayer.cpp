@@ -59,7 +59,8 @@ namespace Athena
     {
         ATN_PROFILE_FUNCTION();
 
-        m_CameraController.OnUpdate(frameTime);
+        if(m_ViewportHovered)
+            m_CameraController.OnUpdate(frameTime);
 
         Renderer2D::ResetStats();
         {
@@ -69,7 +70,7 @@ namespace Athena
         }
 
         {
-#if 1
+#if 0
             static float rotation = 0.0f;
             rotation += frameTime.AsSeconds() * 1.f;
 
@@ -192,6 +193,10 @@ namespace Athena
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         ImGui::Begin("Viewport");
+
+        m_ViewportFocused = ImGui::IsWindowFocused();
+        m_ViewportHovered = ImGui::IsWindowHovered();    
+        Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
 
         ImVec2 tmpViewportSize = ImGui::GetContentRegionAvail();
         if (m_ViewportSize.x != tmpViewportSize.x || m_ViewportSize.y != tmpViewportSize.y)

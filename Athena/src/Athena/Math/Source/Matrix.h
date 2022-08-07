@@ -256,7 +256,7 @@ namespace Athena
 		{
 			Matrix out(static_cast<T>(0));
 
-			constexpr size_t min = min(Column, Row);
+			constexpr size_t min = std::min(Column, Row);
 			for (size_t i = 0; i < min; ++i)
 				out[i][i] = static_cast<T>(1);
 

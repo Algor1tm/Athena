@@ -6,13 +6,14 @@
 namespace Athena
 {
 	template <typename X, typename Y, typename Z>
-	constexpr X Clamp(X value, Y min, Z max)
+	constexpr X Clamp(X scalar, Y min, Z max)
 	{
-		if (value < static_cast<X>(min))
+		if (scalar < static_cast<X>(min))
 			return static_cast<X>(min);
-		else if (value > static_cast<X>(max))
+		else if (scalar > static_cast<X>(max))
 			return static_cast<X>(max);
-		return value;
+
+		return scalar;
 	}
 
 	template <typename T>
@@ -30,52 +31,96 @@ namespace Athena
 
 
 	template <typename T>
-	constexpr T Abs(T value)
+	constexpr T Abs(T scalar)
 	{
-		return value >= 0 ? value : -value;
+		return scalar >= 0 ? scalar : -scalar;
 	}
 
 	template <typename T>
-	constexpr T Sign(T value)
+	constexpr T Sign(T scalar)
 	{
-		if (value > 0)
+		if (scalar > 0)
 			return static_cast<T>(1);
-		else if (value < 0)
+		else if (scalar < 0)
 			return static_cast<T>(-1);
+
 		return static_cast<T>(0);
 	}
 
-
-
 	template <typename T>
-	constexpr T Round(T value)
+	constexpr bool All(T left, T right)
 	{
-		return std::round(value);
+		return (left != static_cast<T>(0) && right != static_cast<T>(0)) ? true : false;
+	}
+
+	template <typename T, typename... Args>
+	constexpr bool All(T left, T right, Args... others)
+	{
+		if (left != 0)
+			return All(right, std::forward<Args>(others)...);
+		else
+			return false;
 	}
 
 	template <typename T>
-	constexpr T Floor(T value)
+	constexpr bool Any(T left, T right)
 	{
-		return std::floor(value);
+		return (left != static_cast<T>(0) || right != static_cast<T>(0)) ? true : false;
+	}
+
+	template <typename T, typename... Args>
+	constexpr bool Any(T left, T right, Args... others)
+	{
+		if (left == 0)
+			return Any(right, std::forward<Args>(others)...);
+		else
+			return true;
+	}
+
+
+
+	template <typename T>
+	constexpr T Round(T scalar)
+	{
+		return std::round(scalar);
 	}
 
 	template <typename T>
-	constexpr T Ceil(T value)
+	constexpr T Floor(T scalar)
 	{
-		return std::ceil(value);
+		return std::floor(scalar);
 	}
 
 	template <typename T>
-	constexpr T Trunc(T value)
+	constexpr T Ceil(T scalar)
 	{
-		return std::trunc(value);
+		return std::ceil(scalar);
 	}
 
 	template <typename T>
-	constexpr T Fract(T value)
+	constexpr T Trunc(T scalar)
 	{
-		return Abs(value - std::trunc(value));
+		return std::trunc(scalar);
 	}
+
+	template <typename T>
+	constexpr T Fract(T scalar)
+	{
+		return scalar - Trunc(scalar);
+	}
+
+	template <typename T>
+	constexpr T Mod(T left, T right)
+	{
+		return left - right * Floor(left / right);
+	}
+
+	template <typename T>
+	constexpr T Modf(T scalar, T& intpart)
+	{
+		return std::modf(scalar, &intpart);
+	}
+
 
 
 	template <typename T>
@@ -106,5 +151,11 @@ namespace Athena
 			return Min(val1, std::forward<Args>(others)...);
 
 		return Min(val2, std::forward<Args>(others)...);
+	}
+
+	template <typename T>
+	constexpr void Swap(T& left, T& right)
+	{
+		std::swap(left, right);
 	}
 }

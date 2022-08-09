@@ -85,13 +85,6 @@ namespace Athena
 #endif
 
 	template <typename T, SIZE_T Column, SIZE_T Row>
-	constexpr void Swap(const Matrix<T, Column, Row>& Left, const Matrix<T, Column, Row>& Right)
-	{
-		for (SIZE_T i = 0; i < Column; ++i)
-			Swap(Left[i], Right[i]);
-	}
-
-	template <typename T, SIZE_T Column, SIZE_T Row>
 	constexpr std::string ToString(const Matrix<T, Column, Row>& mat)
 	{
 		std::string out = "Matrix(";

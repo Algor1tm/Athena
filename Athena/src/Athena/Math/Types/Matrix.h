@@ -25,16 +25,15 @@ namespace Athena
 	public:
 		constexpr Matrix() = default;
 
-		constexpr Matrix(T value)
+		template <typename X>
+		explicit constexpr Matrix(X scalar)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
-				m_Array[i].Fill(value);
+			Fill(static_cast<T>(scalar));
 		}
 
 		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
-			ATN_CORE_ASSERT(values.size() == Column, 
-				"Cannot initialize matrix with initializer list");
+			ATN_CORE_ASSERT(values.size() == Column, "Invalid initializer list");
 			SIZE_T idx = 0;
 			for (auto& row : values)
 			{
@@ -196,7 +195,6 @@ namespace Athena
 
 		constexpr Matrix& operator/=(float scalar)
 		{
-			ATN_CORE_ASSERT(scalar != 0, "Matrix operation error: dividing by zero");
 			for (SIZE_T i = 0; i < Column; ++i)
 				for (SIZE_T j = 0; j < Row; ++j)
 					m_Array[i][j] /= scalar;

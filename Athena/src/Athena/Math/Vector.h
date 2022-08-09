@@ -6,6 +6,9 @@
 #include "Types/Vector3.h"
 #include "Types/Vector4.h"
 #include "Types/VectorRelational.h"
+#include "Utils/VectorCommon.h"
+#include "Utils/VectorTrigonometric.h"
+#include "Utils/VectorExponential.h"
 
 #ifndef NO_SEE2
 #include "SIMD/Types/Vector4_float.h"
@@ -15,21 +18,21 @@
 
 namespace Athena
 {
-	typedef Vector<float, 2> Vector2;
-	typedef Vector<float, 2> Vector2f;
-	typedef Vector<unsigned int, 2> Vector2u;
-	typedef Vector<int, 2> Vector2i;
-	typedef Vector<double, 2> Vector2d;
+	using Vector2 = Vector<float, 2>;
+	using Vector2f = Vector<float, 2>;
+	using Vector2u = Vector<unsigned int, 2>;
+	using Vector2i = Vector<int, 2>;
+	using Vector2d = Vector<double, 2>;
 
-	typedef Vector<float, 3> Vector3;
-	typedef Vector<float, 3> Vector3f;
-	typedef Vector<unsigned int, 3> Vector3u;
-	typedef Vector<int, 3> Vector3i;
-	typedef Vector<double, 3> Vector3d;
+	using Vector3 = Vector<float, 3>;
+	using Vector3f = Vector<float, 3>;
+	using Vector3u = Vector<unsigned int, 3>;
+	using Vector3i = Vector<int, 3>;
+	using Vector3d = Vector<double, 3>;
 
-	typedef Vector<float, 4> Vector4;
-	typedef Vector<float, 4> Vector4f;
-	typedef Vector<unsigned int, 4> Vector4u;
-	typedef Vector<int, 4> Vector4i;
-	typedef Vector<double, 4> Vector4d;
+	using Vector4 = Vector<float, 4>;
+	using Vector4f = Vector<float, 4>;
+	using Vector4u = Vector<unsigned int, 4>;
+	using Vector4i = Vector<int, 4>;
+	using Vector4d = Vector<double, 4>;
 }

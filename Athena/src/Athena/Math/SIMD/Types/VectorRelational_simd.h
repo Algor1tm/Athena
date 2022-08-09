@@ -5,9 +5,9 @@
 
 namespace Athena
 {
-	inline float Dot(const Vector<float, 4>& Left, const Vector<float, 4>& Right)
+	inline float Dot(const Vector<float, 4>& left, const Vector<float, 4>& right)
 	{
-		__m128 mul = _mm_mul_ps(Left._xmm, Right._xmm);
+		__m128 mul = _mm_mul_ps(left._xmm, right._xmm);
 		__m128 swp0 = _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2, 3, 0, 1));
 		__m128 halfsum = _mm_add_ps(mul, swp0);
 		__m128 swp1 = _mm_shuffle_ps(halfsum, halfsum, _MM_SHUFFLE(0, 1, 2, 3));

@@ -4,7 +4,6 @@
 #include "Vector2.h"
 #include "Vector3.h"
 #include "Vector4.h"
-#include "Athena/Math/Utils.h"
 
 #include <string>
 
@@ -42,35 +41,35 @@ namespace Athena
 	}
 
 	template <typename T, SIZE_T Size>
-	constexpr float Distance(const Vector<T, Size>& Left, const Vector<T, Size>& Right)
+	constexpr float Distance(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
-		return (Left - Right).GetLength();
+		return (left - right).GetLength();
 	}
 
 	template <typename T>
-	constexpr T Dot(const Vector<T, 2>& Left, const Vector<T, 2>& Right)
+	constexpr T Dot(const Vector<T, 2>& left, const Vector<T, 2>& right)
 	{
-		return Left.x * Right.x + Left.y * Right.y;
+		return left.x * right.x + left.y * right.y;
 	}
 
 	template <typename T>
-	constexpr T Dot(const Vector<T, 3>& Left, const Vector<T, 3>& Right)
+	constexpr T Dot(const Vector<T, 3>& left, const Vector<T, 3>& right)
 	{
-		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z;
+		return left.x * right.x + left.y * right.y + left.z * right.z;
 	}
 
 	template <typename T>
-	constexpr T Dot(const Vector<T, 4>& Left, const Vector<T, 4>& Right)
+	constexpr T Dot(const Vector<T, 4>& left, const Vector<T, 4>& right)
 	{
-		return Left.x * Right.x + Left.y * Right.y + Left.z * Right.z + Left.w * Right.w;
+		return left.x * right.x + left.y * right.y + left.z * right.z + left.w * right.w;
 	}
 
 	template <typename T, SIZE_T Size>
-	constexpr T Dot(const Vector<T, Size>& Left, const Vector<T, Size>& Right)
+	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
 		T out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out += Left[i] * Right[i];
+			out += left[i] * right[i];
 		return out;
 	}
 
@@ -93,74 +92,35 @@ namespace Athena
 	}
 
 	template <typename T>
-	constexpr T Cross(const Vector<T, 2>& Left, const Vector<T, 2>& Right)
+	constexpr T Cross(const Vector<T, 2>& left, const Vector<T, 2>& right)
 	{
-		return Left.x * Right.y - Left.y * Right.x;
+		return left.x * right.y - left.y * right.x;
 	}
 
 	template <typename T>
-	constexpr Vector<T, 3> Cross(const Vector<T, 3>& Left, const Vector<T, 3>& Right)
+	constexpr Vector<T, 3> Cross(const Vector<T, 3>& left, const Vector<T, 3>& right)
 	{
 		Vector3 out;
-		out.x = Left.y * Right.z - Left.z * Right.y;
-		out.y = -Left.x * Right.z + Left.z * Right.x;
-		out.z = Left.x * Right.y - Left.y * Right.x;
+		out.x = left.y * right.z - left.z * right.y;
+		out.y = -left.x * right.z + left.z * right.x;
+		out.z = left.x * right.y - left.y * right.x;
 		return out;
 	}
 
 	/// <param name="Normal">: Must be normalized</param>
 	template <typename T>
 	constexpr Vector<T, 2> Reflect(
-		const Vector<T, 2>& Direction, const Vector<T, 2>& Normal)
+		const Vector<T, 2>& direction, const Vector<T, 2>& normal)
 	{
-		return Direction - 2 * Normal * Dot(Direction, Normal);
+		return direction - 2 * normal * Dot(direction, normal);
 	}
 
 	/// <param name="Normal">: Must be normalized</param>
 	template <typename T>
 	constexpr Vector<T, 3> Reflect(
-		const Vector<T, 3>& Direction, const Vector<T, 3>& Normal)
+		const Vector<T, 3>& direction, const Vector<T, 3>& normal)
 	{
-		return Direction - 2 * Normal * Dot(Direction, Normal);
-	}
-
-	template <typename T, SIZE_T Size>
-	constexpr void Swap(Vector<T, Size>& Left, Vector<T, Size>& Right)
-	{
-		for (SIZE_T i = 0; i < Size; ++i)
-			std::swap(Left[i], Right[i]);
-	}
-
-	// Does not validate input values
-	template <typename T, SIZE_T Size>
-	constexpr Vector<T, Size> Lerp(
-		const Vector<T, Size>& a, const Vector<T, Size>& b, T t)
-	{
-		Vector<T, Size> out;
-		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Lerp(a[i], b[i], t);
-
-		return out;
-	}
-
-	template<typename X, SIZE_T Size, typename Y, typename Z>
-	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)
-	{
-		Vector<T, Size> out;
-		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
-
-		return out;
-	}
-
-	template<typename T, SIZE_T Size>
-	constexpr Vector<T, Size> Clamp(const Vector<T, Size>& vec, const Vector<T, Size>& min, const Vector<T, Size>& max)
-	{
-		Vector<T, Size> out;
-		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Clamp(vec[i], min[i], max[i]);
-
-		return out;
+		return direction - 2 * normal * Dot(direction, normal);
 	}
 
 	template <typename T, SIZE_T Size>

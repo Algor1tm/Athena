@@ -267,9 +267,10 @@ namespace Athena
 	public:
 		constexpr Vector() = default;
 
-		constexpr Vector(T value)
+		template<typename X>
+		explicit constexpr Vector(X scalar)
 		{
-			Fill(value);
+			Fill(static_cast<T>(scalar));
 		}
 
 		constexpr Vector(const std::initializer_list<T>& values)
@@ -386,11 +387,13 @@ namespace Athena
 	public:
 		constexpr const T& operator[](SIZE_T idx) const
 		{
+			ATN_CORE_ASSERT(idx < Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
 		constexpr T& operator[](SIZE_T idx)
 		{
+			ATN_CORE_ASSERT(idx < Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 

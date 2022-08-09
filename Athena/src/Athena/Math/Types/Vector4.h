@@ -18,18 +18,12 @@ namespace Athena
 	public:
 		constexpr Vector() = default;
 
-		constexpr Vector(T value)
-			: x(value), 
-			  y(value), 
-			  z(value), 
-			  w(value) {}
-
-
-		constexpr Vector(T _x, T _y, T _z, T _w)
-			: x(_x), 
-			  y(_y), 
-			  z(_z), 
-			  w(_w) {}
+		template <typename X>
+		explicit constexpr Vector(X scalar)
+			: x(static_cast<T>(scalar)),
+			  y(static_cast<T>(scalar)),
+			  z(static_cast<T>(scalar)),
+			  w(static_cast<T>(scalar)) {}
 
 
 		template<typename X, typename Y, typename Z, typename W>
@@ -221,11 +215,13 @@ namespace Athena
 	public:
 		constexpr const T& operator[](SIZE_T idx) const
 		{
+			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
 		constexpr T& operator[](SIZE_T idx)
 		{
+			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 

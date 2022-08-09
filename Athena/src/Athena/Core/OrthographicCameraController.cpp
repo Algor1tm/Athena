@@ -66,7 +66,7 @@ namespace Athena
 		ATN_PROFILE_FUNCTION();
 
 		m_ZoomLevel -= event.GetYOffset() * 0.4f;
-		m_ZoomLevel = max(m_ZoomLevel, 0.2f);
+		m_ZoomLevel = Max(m_ZoomLevel, 0.2f);
 		m_CameraSpeed = m_ZoomLevel * 1.5f;
 
 		RecalculateView();

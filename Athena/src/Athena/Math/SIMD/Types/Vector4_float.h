@@ -22,16 +22,13 @@ namespace Athena
 	public:
 		inline Vector() = default;
 
-		inline Vector(float value)
-			: _xmm(_mm_set_ps1(value)) {}
+		template <typename X>
+		explicit inline Vector(X scalar)
+			: _xmm(_mm_set_ps1(static_cast<float>(scalar))) {}
 		
 
 		constexpr Vector(__m128 data)
 			: _xmm(data) {}
-
-
-		inline Vector(float _x, float _y, float _z, float _w)
-			: _xmm(_mm_set_ps(_w, _z, _y, _x)) {}
 
 
 		template<typename X, typename Y, typename Z, typename W>
@@ -224,11 +221,13 @@ namespace Athena
 	public:
 		constexpr const float& operator[](SIZE_T idx) const
 		{
+			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
 		constexpr float& operator[](SIZE_T idx)
 		{
+			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 

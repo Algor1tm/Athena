@@ -18,6 +18,7 @@ workspace "Athena"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
+IncludeDir["entt"] = "Athena/vendor/entt"
 IncludeDir["glad"] = "Athena/vendor/glad/glad/include"
 IncludeDir["GLFW"] = "Athena/vendor/GLFW/GLFW/include"
 IncludeDir["ImGui"] = "Athena/vendor/ImGui/ImGui"
@@ -49,13 +50,15 @@ project "Athena"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/entt/entt.h",
 		"%{prj.name}/vendor/stb_image/stb_image.h",
-		"%{prj.name}/vendor/stb_image/stb_image.cpp",
+		"%{prj.name}/vendor/stb_image/stb_image.cpp"
 	}
 
 	includedirs 
 	{
 		"%{prj.name}/src",
+		"%{IncludeDir.entt}",
 		"%{IncludeDir.glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
@@ -118,12 +121,10 @@ project "Athena-Editor"
 
 	includedirs
 	{
+		"Athena/vendor/spdlog/include",
 		"Athena/src",
-		"%{IncludeDir.glad}",
-		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.stb_image}"
+		"Athena/vendor",
+		"%{IncludeDir.entt}"
 	}
 
 	links 
@@ -170,12 +171,10 @@ project "SandBox"
 
 	includedirs
 	{
+		"Athena/vendor/spdlog/include",
 		"Athena/src",
-		"%{IncludeDir.glad}",
-		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.stb_image}"
+		"Athena/vendor",
+		"%{IncludeDir.entt}"
 	}
 
 	links 

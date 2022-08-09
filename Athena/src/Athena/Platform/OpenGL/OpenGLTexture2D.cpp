@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height)
+	OpenGLTexture2D::OpenGLTexture2D(uint32 width, uint32 height)
 		: m_Width(width), m_Height(height)
 	{
 		ATN_PROFILE_FUNCTION();
@@ -84,7 +84,7 @@ namespace Athena
 		glDeleteTextures(1, &m_RendererID);
 	}
 
-	void OpenGLTexture2D::Bind(uint32_t slot) const
+	void OpenGLTexture2D::Bind(uint32 slot) const
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -92,11 +92,11 @@ namespace Athena
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 	}
 
-	void OpenGLTexture2D::SetData(const void* data, uint32_t size)
+	void OpenGLTexture2D::SetData(const void* data, uint32 size)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		uint32_t bpp = m_DataFormat == GL_RGBA ? 4 : 3;
+		uint32 bpp = m_DataFormat == GL_RGBA ? 4 : 3;
 		ATN_CORE_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
 
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);

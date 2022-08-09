@@ -66,13 +66,13 @@ namespace Athena
 		return &r;
 	}
 
-	float Color::operator[](uint32_t idx) const
+	float Color::operator[](uint32 idx) const
 	{
 		ATN_CORE_ASSERT(idx < 4, "Color subscript out of range");
 		return *(&r + idx);
 	}
 
-	float& Color::operator[](uint32_t idx)
+	float& Color::operator[](uint32 idx)
 	{
 		ATN_CORE_ASSERT(idx < 4, "Color subscript out of range");
 		return *(&r + idx);

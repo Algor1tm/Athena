@@ -13,10 +13,10 @@ namespace Athena
 
 		void Recreate();
 
-		void Resize(uint32_t width, uint32_t height) override;
+		void Resize(uint32 width, uint32 height) override;
 
 		virtual const FramebufferDesc& GetDescription() const override { return m_Description; }
-		virtual uint32_t GetColorAttachmentRendererID() const override { return m_ColorAttachment; }
+		virtual uint32 GetColorAttachmentRendererID() const override { return m_ColorAttachment; }
 
 		virtual void Bind() const override;
 		virtual void UnBind() const override;

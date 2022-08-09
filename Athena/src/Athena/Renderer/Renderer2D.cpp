@@ -18,22 +18,22 @@ namespace Athena
 
 	struct Renderer2DData
 	{
-		static const uint32_t MaxQuads = 500;
-		static const uint32_t MaxVertices = MaxQuads * 4;
-		static const uint32_t MaxIndices = MaxQuads * 6;
-		static const uint32_t MaxTextureSlots = 32;   // TODO: RenderCaps
+		static const uint32 MaxQuads = 500;
+		static const uint32 MaxVertices = MaxQuads * 4;
+		static const uint32 MaxIndices = MaxQuads * 6;
+		static const uint32 MaxTextureSlots = 32;   // TODO: RenderCaps
 
 		Ref<VertexArray> QuadVertexArray;
 		Ref<VertexBuffer> QuadVertexBuffer;
 		Ref<Shader> TextureShader;
 		Ref<Texture2D> WhiteTexture;
 
-		uint32_t QuadIndexCount = 0;
+		uint32 QuadIndexCount = 0;
 		QuadVertex* QuadVertexBufferBase = nullptr;
 		QuadVertex* QuadVertexBufferPointer = nullptr;
 
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
-		uint32_t TextureSlotIndex = 1; // 0 - white texture
+		uint32 TextureSlotIndex = 1; // 0 - white texture
 
 		Vector4 QuadVertexPositions[4];
 
@@ -61,10 +61,10 @@ namespace Athena
 
 		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxVertices];
 
-		uint32_t* quadIndices = new uint32_t[Renderer2DData::MaxIndices];
+		uint32* quadIndices = new uint32[Renderer2DData::MaxIndices];
 
-		uint32_t offset = 0;
-		for (uint32_t i = 0; i < Renderer2DData::MaxIndices; i += 6)
+		uint32 offset = 0;
+		for (uint32 i = 0; i < Renderer2DData::MaxIndices; i += 6)
 		{
 			quadIndices[i + 0] = offset + 0;
 			quadIndices[i + 1] = offset + 1;
@@ -82,11 +82,11 @@ namespace Athena
 		delete[] quadIndices;
 
 		s_Data.WhiteTexture = Texture2D::Create(1, 1);
-		uint32_t whiteTextureData = 0xffffffff;
-		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32_t));
+		uint32 whiteTextureData = 0xffffffff;
+		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
 
-		int32_t samplers[Renderer2DData::MaxTextureSlots];
-		for (int32_t i = 0; i < std::size(samplers); ++i)
+		int32 samplers[Renderer2DData::MaxTextureSlots];
+		for (int32 i = 0; i < std::size(samplers); ++i)
 			samplers[i] = i;
 
 		s_Data.TextureShader = Shader::Create("assets/shaders/Texture.glsl");
@@ -122,8 +122,8 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		uint64_t dataSize = (uint8_t*)s_Data.QuadVertexBufferPointer - (uint8_t*)s_Data.QuadVertexBufferBase;
-		s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32_t)dataSize);
+		uint64 dataSize = (uint8*)s_Data.QuadVertexBufferPointer - (uint8*)s_Data.QuadVertexBufferBase;
+		s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
 
 		Flush();
 	}
@@ -132,7 +132,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; ++i)
+		for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
 			s_Data.TextureSlots[i]->Bind(i);
 
 		RenderCommand::DrawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
@@ -165,14 +165,14 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 		
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		constexpr float textureIndex = 0.f; // White Texture
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
 
 		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = color;
@@ -199,11 +199,11 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		float textureIndex = 0.0f;
 
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
@@ -224,7 +224,7 @@ namespace Athena
 
 		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
@@ -251,12 +251,12 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		const Vector2* textureCoords = subtexture->GetTexCoords();
 		float textureIndex = 0.0f;
 		const Ref<Texture2D>& texture = subtexture->GetTexture();
 
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
@@ -277,7 +277,7 @@ namespace Athena
 
 		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
@@ -304,7 +304,7 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		constexpr float textureIndex = 0.f; // White Texture
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
@@ -314,7 +314,7 @@ namespace Athena
 			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = color;
@@ -341,11 +341,11 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		float textureIndex = 0.0f;
 
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
@@ -369,7 +369,7 @@ namespace Athena
 			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
@@ -396,12 +396,12 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr size_t QuadVertexCount = 4;
+		constexpr SIZE_T QuadVertexCount = 4;
 		const Vector2* textureCoords = subtexture->GetTexCoords();
 		float textureIndex = 0.0f;
 		const Ref<Texture2D>& texture = subtexture->GetTexture();
 
-		for (uint32_t i = 1; i < s_Data.TextureSlotIndex; ++i)
+		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
 			if (*s_Data.TextureSlots[i] == *texture)
 			{
@@ -425,7 +425,7 @@ namespace Athena
 			Rotate(rotation, { 0.f, 0.f, 1.f }) *
 			Translate(position);
 
-		for (size_t i = 0; i < QuadVertexCount; ++i)
+		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;

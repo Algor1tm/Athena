@@ -50,7 +50,7 @@ namespace Athena
 		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
 	}
 	
-	void OrthographicCameraController::Resize(uint32_t width, uint32_t height)
+	void OrthographicCameraController::Resize(uint32 width, uint32 height)
 	{
 		m_AspectRatio = (float)width / (float)height;
 		RecalculateView();

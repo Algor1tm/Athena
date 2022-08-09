@@ -106,7 +106,7 @@ namespace Athena
 
 		static float Float()
 		{
-			return (float)s_Distribution(s_RandomEngine) / (float)std::numeric_limits<uint32_t>::max();
+			return (float)s_Distribution(s_RandomEngine) / (float)std::numeric_limits<uint32>::max();
 		}
 
 		static float Float(float min, float max)
@@ -114,12 +114,12 @@ namespace Athena
 			return Lerp(min, max, Float());
 		}
 
-		static uint32_t UInt()
+		static uint32 UInt()
 		{
 			return s_Distribution(s_RandomEngine);
 		}
 
-		static uint32_t UInt(uint32_t min, uint32_t max)
+		static uint32 UInt(uint32 min, uint32 max)
 		{
 			return min + (s_Distribution(s_RandomEngine) % (max - min + 1));
 		}

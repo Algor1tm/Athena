@@ -13,7 +13,7 @@ namespace Athena
 			s_RendererAPI->Init();
 		}
 
-		static inline void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+		static inline void SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)
 		{
 			s_RendererAPI->SetViewport(x, y, width, height);
 		}
@@ -23,7 +23,7 @@ namespace Athena
 			s_RendererAPI->Clear(color); 
 		}
 
-		static inline void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0)
+		static inline void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0)
 		{
 			s_RendererAPI->DrawIndexed(vertexArray, indexCount);
 		}

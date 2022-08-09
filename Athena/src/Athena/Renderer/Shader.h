@@ -15,7 +15,7 @@ namespace Athena
 		virtual void UnBind() const = 0;
 
 		virtual void SetInt(const std::string& name, int value) = 0;
-		virtual void SetIntArray(const std::string& name, int* value, uint32_t count) = 0;
+		virtual void SetIntArray(const std::string& name, int* value, uint32 count) = 0;
 		virtual void SetFloat(const std::string& name, float value) = 0;
 		virtual void SetFloat3(const std::string& name, const Vector3& vec3) = 0;
 		virtual void SetFloat4(const std::string& name, const Vector4& vec4) = 0;
@@ -26,7 +26,7 @@ namespace Athena
 		static Ref<Shader> Create(const std::string& filepath);
 		static Ref<Shader> Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
 	private:
-		uint32_t m_RendererID;
+		uint32 m_RendererID;
 	};
 
 	class ATHENA_API ShaderLibrary

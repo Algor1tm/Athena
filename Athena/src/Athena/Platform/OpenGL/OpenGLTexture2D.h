@@ -10,16 +10,16 @@ namespace Athena
 	class ATHENA_API OpenGLTexture2D: public Texture2D
 	{
 	public:
-		OpenGLTexture2D(uint32_t width, uint32_t height);
+		OpenGLTexture2D(uint32 width, uint32 height);
 		OpenGLTexture2D(const std::string& path);
 		~OpenGLTexture2D();
 
-		inline uint32_t GetWidth() const override { return m_Width; }
-		inline uint32_t GetHeight() const override { return m_Height; }
+		inline uint32 GetWidth() const override { return m_Width; }
+		inline uint32 GetHeight() const override { return m_Height; }
 
-		void SetData(const void* data, uint32_t size) override;
+		void SetData(const void* data, uint32 size) override;
 
-		void Bind(uint32_t slot = 0) const override;
+		void Bind(uint32 slot = 0) const override;
 		void UnBind() const override;
 
 		bool operator==(const Texture2D& other) const override;
@@ -27,7 +27,7 @@ namespace Athena
 		RendererID m_RendererID = 0;
 
 		std::string m_Path;
-		uint32_t m_Width, m_Height;
+		uint32 m_Width, m_Height;
 		GLenum m_InternalFormat, m_DataFormat;
 	};
 }

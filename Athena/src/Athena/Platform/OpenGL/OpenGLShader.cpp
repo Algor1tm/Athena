@@ -24,10 +24,10 @@ namespace Athena
 		Compile(shaderSources);
 
 		// assets/shaders/Grid.glsl -> m_Name = Grid
-		size_t lastSlash = filepath.find_last_of("/\\");
+		SIZE_T lastSlash = filepath.find_last_of("/\\");
 		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
-		size_t lastDot = filepath.rfind('.');
-		size_t count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
+		SIZE_T lastDot = filepath.rfind('.');
+		SIZE_T count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
 		m_Name = filepath.substr(lastSlash, count);
 	}
 
@@ -78,18 +78,18 @@ namespace Athena
 		std::unordered_map<GLenum, std::string> shaderSources;
 
 		const char* typeToken = "#type";
-		size_t typeTokenLength = strlen(typeToken);
-		size_t pos = source.find(typeToken, 0);
+		SIZE_T typeTokenLength = strlen(typeToken);
+		SIZE_T pos = source.find(typeToken, 0);
 		while (pos != std::string::npos)
 		{
-			size_t eol = source.find_first_of("\r\n", pos);
+			SIZE_T eol = source.find_first_of("\r\n", pos);
 			ATN_CORE_ASSERT(eol != std::string::npos, "Syntax Error");
-			size_t begin = pos + typeTokenLength + 1;
+			SIZE_T begin = pos + typeTokenLength + 1;
 			std::string type = source.substr(begin, eol - begin);
 			ATN_CORE_ASSERT(type == "VERTEX_SHADER" || type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER", 
 				"Invalid Shader Type specifier");
 
-			size_t nextLinePos = source.find_first_not_of("\r,\n", eol);
+			SIZE_T nextLinePos = source.find_first_not_of("\r,\n", eol);
 			pos = source.find(typeToken, nextLinePos);
 			shaderSources[ShaderTypeFromString(type)] = 
 				source.substr(nextLinePos, pos - (nextLinePos == std::string::npos ? source.size() - 1: nextLinePos));
@@ -197,7 +197,7 @@ namespace Athena
 		UploadUniformInt(name, value);
 	}
 
-	void OpenGLShader::SetIntArray(const std::string& name, int* value, uint32_t count)
+	void OpenGLShader::SetIntArray(const std::string& name, int* value, uint32 count)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -238,7 +238,7 @@ namespace Athena
 		glUniform1i(location, value);
 	}
 
-	void OpenGLShader::UploadUniformIntArray(const std::string& name, int* value, uint32_t count)
+	void OpenGLShader::UploadUniformIntArray(const std::string& name, int* value, uint32 count)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform1iv(location, count, value);

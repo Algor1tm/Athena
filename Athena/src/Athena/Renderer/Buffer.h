@@ -3,12 +3,12 @@
 
 namespace Athena
 {
-	enum class ShaderDataType : uint8_t
+	enum class ShaderDataType : uint8
 	{
 		None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
 	};
 
-	constexpr uint32_t ShaderDataTypeSize(ShaderDataType type)
+	constexpr uint32 ShaderDataTypeSize(ShaderDataType type)
 	{
 		switch (type)
 		{
@@ -34,15 +34,15 @@ namespace Athena
 	{
 		std::string Name;
 		ShaderDataType Type;
-		uint32_t Size;
-		uint32_t Offset;
+		uint32 Size;
+		uint32 Offset;
 		bool Normalized;
 
 		BufferElement() = default;
 		BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
-		uint32_t GetComponentCount() const
+		uint32 GetComponentCount() const
 		{
 			switch (Type)
 			{
@@ -79,7 +79,7 @@ namespace Athena
 			CalculateOffsetAndStride();
 		}
 
-		inline uint32_t GetStride() const { return m_Stride; }
+		inline uint32 GetStride() const { return m_Stride; }
 		inline const std::vector<BufferElement>& GetElements() const { return m_Elements; }
 
 		inline iterator		  begin()	    { return m_Elements.begin(); }
@@ -90,8 +90,8 @@ namespace Athena
 	private:
 		void CalculateOffsetAndStride()
 		{
-			uint32_t stride = 0;
-			uint32_t offset = 0;
+			uint32 stride = 0;
+			uint32 offset = 0;
 
 			for (auto& elem : m_Elements)
 			{
@@ -103,7 +103,7 @@ namespace Athena
 
 	private:
 		std::vector<BufferElement> m_Elements;
-		uint32_t m_Stride = 0;
+		uint32 m_Stride = 0;
 	};
 
 	
@@ -118,10 +118,10 @@ namespace Athena
 		virtual void SetLayout(const BufferLayout& layout) = 0;
 		virtual const BufferLayout& GetLayout() const = 0;
 
-		virtual void SetData(const void* data, uint32_t size) = 0;
+		virtual void SetData(const void* data, uint32 size) = 0;
 
-		static Ref<VertexBuffer> Create(float* vertices, uint32_t size);
-		static Ref<VertexBuffer> Create(uint32_t size);
+		static Ref<VertexBuffer> Create(float* vertices, uint32 size);
+		static Ref<VertexBuffer> Create(uint32 size);
 	};
 
 	class ATHENA_API IndexBuffer
@@ -132,8 +132,8 @@ namespace Athena
 		virtual void Bind() const = 0;
 		virtual void UnBind() const = 0;
 
-		virtual uint32_t GetCount() const = 0;
+		virtual uint32 GetCount() const = 0;
 
-		static Ref<IndexBuffer> Create(uint32_t* indices, uint32_t ñount);
+		static Ref<IndexBuffer> Create(uint32* indices, uint32 ñount);
 	};
 }

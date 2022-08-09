@@ -1,10 +1,9 @@
 #pragma once
-#include "atnpch.h"
 
 
 namespace Athena
 {
-	using KeyCode = std::uint16_t;
+	using KeyCode = uint16;
 
 	namespace Key
 	{

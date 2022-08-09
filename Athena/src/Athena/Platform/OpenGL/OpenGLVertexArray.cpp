@@ -66,7 +66,7 @@ namespace Athena
 		const auto& layout = vertexBuffer->GetLayout();
 		ATN_CORE_ASSERT(layout.GetElements().size(), "Vertex Buffer has no layout");
 
-		uint32_t index = 0;
+		uint32 index = 0;
 		for (const auto& elem : layout)
 		{
 			glEnableVertexAttribArray(index);
@@ -75,7 +75,7 @@ namespace Athena
 				ShaderDataTypeToOpenGLBaseType(elem.Type),
 				elem.Normalized ? GL_TRUE : GL_FALSE,
 				layout.GetStride(),
-				reinterpret_cast<const void*>((uint64_t)elem.Offset));
+				reinterpret_cast<const void*>((uint64)elem.Offset));
 
 			++index;
 		}

@@ -93,7 +93,19 @@
 
 namespace Athena
 {
-	using RendererID = uint32_t;
+	using int8 = ::std::int8_t; // 8-bit int
+	using int16 = ::std::int16_t; // 16-bit int
+	using int32 = ::std::int32_t; // 32-bit int
+	using int64 = ::std::int64_t; // 64-bit int
+
+	using uint8 = ::std::uint8_t; // 8-bit unsigned int
+	using uint16 = ::std::uint16_t; // 16-bit unsigned int
+	using uint32 = ::std::uint32_t; // 32-bit unsigned int
+	using uint64 = ::std::uint64_t; // 64-bit unsigned int
+	 
+	using SIZE_T = uint64; // size type, same size as a pointer
+
+	using RendererID = uint32; // type for Renderer IDs
 
 
 	template <typename T>

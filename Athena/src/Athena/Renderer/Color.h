@@ -28,8 +28,8 @@ namespace Athena
 		float* Data();
 		const float* Data() const;
 
-		float operator[](uint32_t idx) const;
-		float& operator[](uint32_t idx);
+		float operator[](uint32 idx) const;
+		float& operator[](uint32 idx);
 
 		iterator begin();
 		iterator end();

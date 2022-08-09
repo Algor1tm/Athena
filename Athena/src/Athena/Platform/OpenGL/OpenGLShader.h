@@ -23,14 +23,14 @@ namespace Athena
 		const std::string& GetName() const override { return m_Name; };
 
 		void SetInt(const std::string& name, int value) override;
-		void SetIntArray(const std::string& name, int* value, uint32_t count) override;
+		void SetIntArray(const std::string& name, int* value, uint32 count) override;
 		void SetFloat(const std::string& name, float value) override;
 		void SetFloat3(const std::string& name, const Vector3& vec3) override;
 		void SetFloat4(const std::string& name, const Vector4& vec4) override;
 		void SetMat4(const std::string& name, const Matrix4& mat4) override;
 
 		void UploadUniformInt(const std::string& name, int value);
-		void UploadUniformIntArray(const std::string& name, int* value, uint32_t count);
+		void UploadUniformIntArray(const std::string& name, int* value, uint32 count);
 		void UploadUniformFloat(const std::string& name, float value);
 		void UploadUniformFloat2(const std::string& name, const Vector2& vec2);
 		void UploadUniformFloat3(const std::string& name, const Vector3& vec3);

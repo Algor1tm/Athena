@@ -10,7 +10,7 @@ namespace Athena
 	// ROW-MAJOR
 	// Column - size of column
 	// Row - size of row
-	template <typename T, size_t Column, size_t Row>
+	template <typename T, SIZE_T Column, SIZE_T Row>
 	class Matrix
 	{
 	public:
@@ -27,7 +27,7 @@ namespace Athena
 
 		constexpr Matrix(T value)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
 		}
 
@@ -35,7 +35,7 @@ namespace Athena
 		{
 			ATN_CORE_ASSERT(values.size() == Column, 
 				"Cannot initialize matrix with initializer list");
-			size_t idx = 0;
+			SIZE_T idx = 0;
 			for (auto& row : values)
 			{
 				m_Array[idx] = row;
@@ -68,7 +68,7 @@ namespace Athena
 		template <typename U>
 		constexpr Matrix(const Matrix<U, Column, Row>& other)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] = other[i];
 		}
 
@@ -76,7 +76,7 @@ namespace Athena
 		template <typename U>
 		constexpr Matrix<T, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] = other[i];
 		}
 
@@ -92,21 +92,21 @@ namespace Athena
 			return &(m_Array[0][0]);
 		}
 
-		constexpr ColumnType GetColumn(size_t idx) const
+		constexpr ColumnType GetColumn(SIZE_T idx) const
 		{
 			ATN_CORE_ASSERT(idx < Row, "Matrix subscript out of range");
 			ColumnType out;
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				out[i] = m_Array[i][idx];
 			return out;
 		}
 
-		constexpr size_t SizeOfRow() const
+		constexpr SIZE_T SizeOfRow() const
 		{
 			return Row;
 		}
 
-		constexpr size_t SizeOfColumn() const
+		constexpr SIZE_T SizeOfColumn() const
 		{
 			return Column;
 		}
@@ -133,27 +133,27 @@ namespace Athena
 		
 		constexpr Matrix& Fill(T value)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
 			return *this;
 		}
 
 		constexpr Matrix& Apply(T(*func)(T))
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i].Apply(func);
 			return *this;
 		}
 
 	// Operators
 	public:
-		constexpr const RowType& operator[](size_t idx) const
+		constexpr const RowType& operator[](SIZE_T idx) const
 		{
 			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr RowType& operator[](size_t idx)
+		constexpr RowType& operator[](SIZE_T idx)
 		{
 			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
@@ -161,35 +161,35 @@ namespace Athena
 
 		constexpr Matrix& operator+=(const Matrix& other)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] += other[i];
 			return *this;
 		}
 
 		constexpr Matrix& operator-=(const Matrix& other)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] -= other[i];
 			return *this;
 		}
 
 		constexpr Matrix& operator+=(float scalar)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
 		constexpr Matrix& operator-=(float scalar)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
 		constexpr Matrix& operator*=(float scalar)
 		{
-			for (size_t i = 0; i < Column; ++i)
+			for (SIZE_T i = 0; i < Column; ++i)
 				m_Array[i] *= scalar;
 			return *this;
 		}
@@ -197,8 +197,8 @@ namespace Athena
 		constexpr Matrix& operator/=(float scalar)
 		{
 			ATN_CORE_ASSERT(scalar != 0, "Matrix operation error: dividing by zero");
-			for (size_t i = 0; i < Column; ++i)
-				for (size_t j = 0; j < Row; ++j)
+			for (SIZE_T i = 0; i < Column; ++i)
+				for (SIZE_T j = 0; j < Row; ++j)
 					m_Array[i][j] /= scalar;
 			return *this;
 		}
@@ -213,17 +213,17 @@ namespace Athena
 			return Matrix(*this) -= other;
 		}
 
-		template <size_t OtherColumn, size_t OtherRow>
+		template <SIZE_T OtherColumn, SIZE_T OtherRow>
 		constexpr Matrix<T, Column, OtherRow> operator*(const Matrix<T, OtherColumn, OtherRow>& other) const
 		{
 			static_assert(Row == OtherColumn, "Invalid Matrix multiplication");
 
 			Matrix<T, Column, OtherRow> out(static_cast<T>(0));
-			for (size_t i = 0; i < Column; i++)
+			for (SIZE_T i = 0; i < Column; i++)
 			{
-				for (size_t j = 0; j < OtherRow; j++)
+				for (SIZE_T j = 0; j < OtherRow; j++)
 				{
-					for (size_t k = 0; k < Row; ++k)
+					for (SIZE_T k = 0; k < Row; ++k)
 						out[i][j] += m_Array[i][k] * other[k][j];
 				}
 			}
@@ -256,8 +256,8 @@ namespace Athena
 		{
 			Matrix out(static_cast<T>(0));
 
-			constexpr size_t min = std::min(Column, Row);
-			for (size_t i = 0; i < min; ++i)
+			constexpr SIZE_T min = std::min(Column, Row);
+			for (SIZE_T i = 0; i < min; ++i)
 				out[i][i] = static_cast<T>(1);
 
 			return out;

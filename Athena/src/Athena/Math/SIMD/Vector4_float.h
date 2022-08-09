@@ -152,7 +152,7 @@ namespace Athena
 
 	// Public Methods
 	public:
-		constexpr size_t Size() const
+		constexpr SIZE_T Size() const
 		{
 			return Size4;
 		}
@@ -222,12 +222,12 @@ namespace Athena
 	
 	// Operators
 	public:
-		constexpr const float& operator[](size_t idx) const
+		constexpr const float& operator[](SIZE_T idx) const
 		{
 			return *(&x + idx);
 		}
 
-		constexpr float& operator[](size_t idx)
+		constexpr float& operator[](SIZE_T idx)
 		{
 			return *(&x + idx);
 		}

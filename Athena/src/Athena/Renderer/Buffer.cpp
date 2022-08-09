@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32_t size)
+	Ref<VertexBuffer> VertexBuffer::Create(float* vertices, uint32 size)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -23,7 +23,7 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<VertexBuffer> VertexBuffer::Create(uint32_t size)
+	Ref<VertexBuffer> VertexBuffer::Create(uint32 size)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -39,7 +39,7 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<IndexBuffer> IndexBuffer::Create(uint32_t* vertices, uint32_t count)
+	Ref<IndexBuffer> IndexBuffer::Create(uint32* vertices, uint32 count)
 	{
 		ATN_PROFILE_FUNCTION();
 

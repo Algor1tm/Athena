@@ -14,7 +14,7 @@ namespace Athena
 		static void Init();
 		static void Shutdown();
 
-		static void OnWindowResized(uint32_t width, uint32_t height);
+		static void OnWindowResized(uint32 width, uint32 height);
 
 		static void BeginScene(const OrthographicCamera& Camera);
 		static void EndScene();

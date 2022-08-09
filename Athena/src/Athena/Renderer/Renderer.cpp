@@ -21,7 +21,7 @@ namespace Athena
 		Renderer2D::Shutdown();
 	}
 
-	void Renderer::OnWindowResized(uint32_t width, uint32_t height)
+	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
 		RenderCommand::SetViewport(0, 0, width, height);
 	}

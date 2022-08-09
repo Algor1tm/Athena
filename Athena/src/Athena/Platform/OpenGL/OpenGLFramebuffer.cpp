@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	static uint32_t s_MaxFramebufferSize = 8192;
+	static uint32 s_MaxFramebufferSize = 8192;
 
 	OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferDesc& desc)
 		: m_Description(desc)
@@ -52,7 +52,7 @@ namespace Athena
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void OpenGLFramebuffer::Resize(uint32_t width, uint32_t height)
+	void OpenGLFramebuffer::Resize(uint32 width, uint32 height)
 	{
 		if (width == 0 || height == 0 || width > s_MaxFramebufferSize || height > s_MaxFramebufferSize)
 		{

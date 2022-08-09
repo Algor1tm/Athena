@@ -8,14 +8,14 @@ namespace Athena
 	class ATHENA_API OpenGLVertexBuffer: public VertexBuffer
 	{
 	public:
-		OpenGLVertexBuffer(float* vertices, uint32_t size);
-		OpenGLVertexBuffer(uint32_t size);
+		OpenGLVertexBuffer(float* vertices, uint32 size);
+		OpenGLVertexBuffer(uint32 size);
 		~OpenGLVertexBuffer();
 
 		void Bind() const override;
 		void UnBind() const override;
 
-		void SetData(const void* data, uint32_t size) override;
+		void SetData(const void* data, uint32 size) override;
 
 		inline void SetLayout(const BufferLayout& layout) override { m_Layout = layout; }
 		inline const BufferLayout& GetLayout() const override { return m_Layout; }
@@ -28,15 +28,15 @@ namespace Athena
 	class ATHENA_API OpenGLIndexBuffer : public IndexBuffer
 	{
 	public:
-		OpenGLIndexBuffer(uint32_t* indices, uint32_t ñount);
+		OpenGLIndexBuffer(uint32* indices, uint32 ñount);
 		~OpenGLIndexBuffer();
 
 		void Bind() const override;
 		void UnBind() const override;
 
-		inline uint32_t GetCount() const override { return m_Count; };
+		inline uint32 GetCount() const override { return m_Count; };
 	private:
 		RendererID m_RendererID = 0;
-		uint32_t m_Count;
+		uint32 m_Count;
 	};
 }

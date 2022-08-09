@@ -3,7 +3,7 @@
 
 namespace Athena
 {
-	using MouseCode = std::uint16_t;
+	using MouseCode = uint16;
 
 	namespace Mouse
 	{

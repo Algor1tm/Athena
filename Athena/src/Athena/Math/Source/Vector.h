@@ -6,7 +6,7 @@
 namespace Athena
 {
 
-	template <typename T, size_t Size>
+	template <typename T, SIZE_T Size>
 	class VectorConstIterator
 	{
 	public:
@@ -19,7 +19,7 @@ namespace Athena
 		constexpr VectorConstIterator()
 			: m_Ptr(nullptr), m_Idx(0) {}
 
-		constexpr explicit VectorConstIterator(pointer Ptr, size_t Off = 0)
+		constexpr explicit VectorConstIterator(pointer Ptr, SIZE_T Off = 0)
 			: m_Ptr(Ptr), m_Idx(Off) {}
 
 		constexpr reference operator*() const
@@ -67,7 +67,7 @@ namespace Athena
 		constexpr VectorConstIterator& operator+=(const ptrdiff_t Off)
 		{
 			VerifyOffset(Off);
-			m_Idx += static_cast<size_t>(Off);
+			m_Idx += static_cast<SIZE_T>(Off);
 			return *this;
 		}
 
@@ -143,19 +143,19 @@ namespace Athena
 				ATN_CORE_ASSERT(m_Ptr, "Cannot seek value-initialized vector iterator");
 
 			if (Off < 0)
-				ATN_CORE_ASSERT(m_Idx >= size_t{ 0 } - static_cast<size_t>(Off), "Cannot seek vector iterator before begin");
+				ATN_CORE_ASSERT(m_Idx >= SIZE_T{ 0 } - static_cast<SIZE_T>(Off), "Cannot seek vector iterator before begin");
 
 			if (Off > 0)
-				ATN_CORE_ASSERT(Size - m_Idx >= static_cast<size_t>(Off), "Cannot seek vector iterator after end");
+				ATN_CORE_ASSERT(Size - m_Idx >= static_cast<SIZE_T>(Off), "Cannot seek vector iterator after end");
 		}
 
 	private:
 		pointer m_Ptr;
-		size_t m_Idx;
+		SIZE_T m_Idx;
 	};
 
 
-	template <class T, size_t Size>
+	template <class T, SIZE_T Size>
 	constexpr VectorConstIterator<T, Size> operator+(
 		const ptrdiff_t Off, VectorConstIterator<T, Size> Iter)
 	{
@@ -163,7 +163,7 @@ namespace Athena
 	}
 
 
-	template <class T, size_t Size>
+	template <class T, SIZE_T Size>
 	class VectorIterator: public VectorConstIterator<T, Size>
 	{
 	public:
@@ -177,7 +177,7 @@ namespace Athena
 	public:
 		constexpr VectorIterator() = default;
 
-		constexpr explicit VectorIterator(pointer Ptr, size_t Off = 0)
+		constexpr explicit VectorIterator(pointer Ptr, SIZE_T Off = 0)
 			: Base(Ptr, Off) {}
 
 		constexpr reference operator*() const
@@ -248,7 +248,7 @@ namespace Athena
 		}
 	};
 
-	template <class T, size_t Size>
+	template <class T, SIZE_T Size>
 	constexpr VectorIterator<T, Size> operator+(
 		const ptrdiff_t Off, VectorIterator<T, Size> Next)
 	{
@@ -256,7 +256,7 @@ namespace Athena
 	}
 
 
-	template <typename T, size_t _Size>
+	template <typename T, SIZE_T _Size>
 	class Vector
 	{
 	public:
@@ -277,7 +277,7 @@ namespace Athena
 			ATN_CORE_ASSERT(values.size() == _Size,
 				"Cannot initialize vector with initializer list");
 
-			size_t iter = 0;
+			SIZE_T iter = 0;
 			for (auto val : values)
 			{
 				m_Array[iter] = val;
@@ -293,7 +293,7 @@ namespace Athena
 		template <typename U>
 		constexpr Vector<T, _Size>(const Vector<U, _Size>& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -301,7 +301,7 @@ namespace Athena
 		template <typename U>
 		constexpr Vector<T, _Size>& operator=(const Vector<U, _Size>& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 
 			return *this;
@@ -309,7 +309,7 @@ namespace Athena
 
 		// Public Methods
 	public:
-		constexpr size_t Size() const
+		constexpr SIZE_T Size() const
 		{
 			return _Size;
 		}
@@ -346,13 +346,13 @@ namespace Athena
 
 		constexpr void Fill(T value)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] = value;
 		}
 
 		constexpr Vector& Apply(T(*func)(T))
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] = func(m_Array[i]);
 			return *this;
 		}
@@ -360,7 +360,7 @@ namespace Athena
 		constexpr T SqrLength() const
 		{
 			T out;
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				out += m_Array[i] * m_Array[i];
 			return out;
 		}
@@ -384,68 +384,68 @@ namespace Athena
 
 		// Operators
 	public:
-		constexpr const T& operator[](size_t idx) const
+		constexpr const T& operator[](SIZE_T idx) const
 		{
 			return m_Array[idx];
 		}
 
-		constexpr T& operator[](size_t idx)
+		constexpr T& operator[](SIZE_T idx)
 		{
 			return m_Array[idx];
 		}
 
 		constexpr Vector& operator+=(const Vector& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] += other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator-=(const Vector& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] -= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator*=(const Vector& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] *= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator/=(const Vector& other)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] /= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator+=(T scalar)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator-=(T scalar)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator*=(T scalar)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] *= scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator/=(T scalar)
 		{
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				m_Array[i] /= scalar;
 			return *this;
 		}
@@ -493,7 +493,7 @@ namespace Athena
 		constexpr Vector operator-() const 
 		{
 			Vector out(*this);
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				out.m_Array[i] = -out.m_Array[i];
 			return out;
 		}
@@ -501,7 +501,7 @@ namespace Athena
 		constexpr bool operator==(const Vector& other) const 
 		{
 			bool out = true;
-			for (size_t i = 0; i < _Size; ++i)
+			for (SIZE_T i = 0; i < _Size; ++i)
 				out = out && m_Array[i] == other.m_Array[i];
 			return out;
 		}

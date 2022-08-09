@@ -169,22 +169,22 @@ namespace Athena
 
 	namespace InstrumentorUtils 
 	{
-		template <size_t N>
+		template <SIZE_T N>
 		struct ChangeResult
 		{
 			char Data[N];
 		};
 
-		template <size_t N, size_t K>
+		template <SIZE_T N, SIZE_T K>
 		constexpr auto CleanupOutputString(const char(&expr)[N], const char(&remove)[K])
 		{
 			ChangeResult<N> result = {};
 
-			size_t srcIndex = 0;
-			size_t dstIndex = 0;
+			SIZE_T srcIndex = 0;
+			SIZE_T dstIndex = 0;
 			while (srcIndex < N)
 			{
-				size_t matchIndex = 0;
+				SIZE_T matchIndex = 0;
 				while (matchIndex < K - 1 && srcIndex + matchIndex < N - 1 && expr[srcIndex + matchIndex] == remove[matchIndex])
 					matchIndex++;
 				if (matchIndex == K - 1)

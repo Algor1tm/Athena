@@ -1,8 +1,15 @@
 #include "atnpch.h"
 #include "Log.h"
 
+#if defined(_MSC_VER)
+	#pragma warning (push, 0)
+#endif
+
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#if defined(_MSC_VER)
+	#pragma warning( pop)
+#endif
 
 namespace Athena
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Math/Source/Vector.h"
+#include "Athena/Math/Types/Vector.h"
 
 #include <xmmintrin.h>
 
@@ -20,7 +20,7 @@ namespace Athena
 
 	// Constructors
 	public:
-		Vector() = default;
+		inline Vector() = default;
 
 		inline Vector(float value)
 			: _xmm(_mm_set_ps1(value)) {}

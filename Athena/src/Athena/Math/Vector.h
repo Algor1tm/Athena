@@ -1,15 +1,15 @@
 #pragma once
 
 
-#include "Source/Vector.h"
-#include "Source/Vector2.h"
-#include "Source/Vector3.h"
-#include "Source/Vector4.h"
-#include "Source/VectorRelational.h"
+#include "Types/Vector.h"
+#include "Types/Vector2.h"
+#include "Types/Vector3.h"
+#include "Types/Vector4.h"
+#include "Types/VectorRelational.h"
 
 #ifndef NO_SEE2
-#include "SIMD/Vector4_float.h"
-#include "SIMD/VectorRelational_simd.h"
+#include "SIMD/Types/Vector4_float.h"
+#include "SIMD/Types/VectorRelational_simd.h"
 #endif
 
 

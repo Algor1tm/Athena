@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Athena/Math/Source/Matrix.h"
-#include "Vector4_float.h"
+#include "Athena/Math/Types/Matrix.h"
 
 
 namespace Athena

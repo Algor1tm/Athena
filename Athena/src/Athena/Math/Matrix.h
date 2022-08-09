@@ -1,12 +1,12 @@
 #pragma once
 
 
-#include "Source/Matrix.h"
-#include "Source/MatrixRelational.h"
-#include "Source/MatrixTransforms.h"
+#include "Types/Matrix.h"
+#include "Types/MatrixRelational.h"
+#include "Types/MatrixTransforms.h"
 
 #ifndef NO_SEE2
-#include "SIMD/MatrixRelational_simd.h"
+#include "SIMD/Types/MatrixRelational_simd.h"
 #endif
 
 namespace Athena

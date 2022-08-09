@@ -121,10 +121,11 @@ project "Athena-Editor"
 
 	includedirs
 	{
-		"Athena/vendor/spdlog/include",
 		"Athena/src",
 		"Athena/vendor",
-		"%{IncludeDir.entt}"
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.spdlog}"
 	}
 
 	links 
@@ -171,10 +172,11 @@ project "SandBox"
 
 	includedirs
 	{
-		"Athena/vendor/spdlog/include",
 		"Athena/src",
 		"Athena/vendor",
-		"%{IncludeDir.entt}"
+		"%{IncludeDir.entt}",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.spdlog}"
 	}
 
 	links 

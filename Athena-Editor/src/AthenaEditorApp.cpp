@@ -31,4 +31,3 @@ namespace Athena
 		return new AthenaEditor(wdesc);
 	}
 }
-

@@ -7,8 +7,10 @@
 #include "Utils/MatrixProjection.h"
 #include "Utils/MatrixCommon.h"
 
-#ifndef NO_SEE2
-#include "SIMD/Types/MatrixRelational_simd.h"
+#include "SIMD/Platform.h"
+
+#ifdef ATN_SSE
+	#include "SIMD/Types/MatrixRelational_simd.h"
 #endif
 
 namespace Athena

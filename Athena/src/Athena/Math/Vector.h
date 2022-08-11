@@ -10,9 +10,11 @@
 #include "Utils/VectorTrigonometric.h"
 #include "Utils/VectorExponential.h"
 
-#ifndef NO_SEE2
-#include "SIMD/Types/Vector4_float.h"
-#include "SIMD/Types/VectorRelational_simd.h"
+#include "SIMD/Platform.h"
+
+#ifdef ATN_SSE
+	#include "SIMD/Types/Vector4_float.h"
+	#include "SIMD/Types/VectorRelational_simd.h"
 #endif
 
 

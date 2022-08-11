@@ -13,8 +13,10 @@ namespace Athena
 			: Application(wdesc)
 		{
 			PushLayer(new EditorLayer());
-			Vector4 v(1.f, 2.f, 0.5f, 0.001f);
-			ATN_WARN(Log2(16.f));
+
+			Vector4 v1(1);
+			Vector4 v2(1, 2, 3, 4);
+			ATN_WARN(ToString(Clamp(v2, 1.5f, 3)));
 		}
 
 		~AthenaEditor()

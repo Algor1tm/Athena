@@ -8,10 +8,8 @@
 #include "Utils/MatrixCommon.h"
 
 #include "SIMD/Platform.h"
+#include "SIMD/Types/MatrixRelational_simd.h"
 
-#ifdef ATN_SSE
-	#include "SIMD/Types/MatrixRelational_simd.h"
-#endif
 
 namespace Athena
 {

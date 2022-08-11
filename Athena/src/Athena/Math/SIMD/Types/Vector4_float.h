@@ -1,15 +1,20 @@
 #pragma once
 
+
+#include "Athena/Math/SIMD/Platform.h"
+
+
+#ifdef ATN_SSE
+
 #include "Athena/Math/Types/Vector.h"
-
-#include <xmmintrin.h>
-
 
 namespace Athena
 {
 #define Size4 4
 
-	float Dot(const Vector<float, 4>& Left, const Vector<float, 4>& Right);
+	// Forward declaration (VectorRelational_simd.h)
+	inline float Dot(const Vector<float, 4>& left, const Vector<float, 4>& right);
+
 
 	template <>
 	class Vector <float, Size4>
@@ -202,7 +207,7 @@ namespace Athena
 
 		inline float Length() const
 		{
-			return std::sqrt(SqrLength());
+			return Sqrt(SqrLength());
 		}
 
 		inline Vector& Normalize()
@@ -347,3 +352,5 @@ namespace Athena
 
 #undef Size4
 }
+
+#endif // ATN_SSE

@@ -2,9 +2,18 @@
 
 #include "Athena/Core/Core.h"
 
+#include "Athena/Math/Utils/Common.h"
+
 
 namespace Athena
 {
+	template <typename T, SIZE_T _Size>
+	class Vector;
+
+	// Forward declaration (VectorRelational.h)
+	template <typename T, SIZE_T Size>
+	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right);
+
 
 	template <typename T, SIZE_T Size>
 	class VectorConstIterator
@@ -360,15 +369,12 @@ namespace Athena
 
 		constexpr T SqrLength() const
 		{
-			T out;
-			for (SIZE_T i = 0; i < _Size; ++i)
-				out += m_Array[i] * m_Array[i];
-			return out;
+			return Dot(*this, *this);
 		}
 
 		constexpr float Length() const
 		{
-			return std::sqrt(static_cast<float>(SqrLength()));
+			return Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

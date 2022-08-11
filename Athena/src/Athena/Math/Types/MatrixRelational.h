@@ -65,11 +65,10 @@ namespace Athena
 		return out;
 	}
 	
-#ifdef NO_SEE2
-	// For Transformation Matrices
-	inline Matrix<float, 4, 4> AffineInverse(const Matrix<float, 4, 4>& mat)
+	template<typename T>
+	constexpr Matrix<T, 4, 4> AffineInverse(const Matrix<T, 4, 4>& mat)
 	{
-		Matrix<float, 4, 4> out;
+		Matrix<T, 4, 4> out;
 
 		out[0][0] = mat[0][0]; out[0][1] = mat[1][0]; out[0][2] = mat[2][0]; out[0][3] = 0;
 		out[1][0] = mat[0][1]; out[1][1] = mat[1][1]; out[1][2] = mat[2][1]; out[1][3] = 0;
@@ -82,7 +81,7 @@ namespace Athena
 
 		return out;
 	}
-#endif
+
 
 	template <typename T, SIZE_T Column, SIZE_T Row>
 	constexpr std::string ToString(const Matrix<T, Column, Row>& mat)

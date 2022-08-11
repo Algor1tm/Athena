@@ -11,11 +11,10 @@
 #include "Utils/VectorExponential.h"
 
 #include "SIMD/Platform.h"
-
-#ifdef ATN_SSE
-	#include "SIMD/Types/Vector4_float.h"
-	#include "SIMD/Types/VectorRelational_simd.h"
-#endif
+#include "SIMD/Types/Vector4_float.h"
+#include "SIMD/Types/VectorRelational_simd.h"
+#include "SIMD/Utils/VectorCommon_simd.h"
+#include "SIMD/Utils/VectorExponential_simd.h"
 
 
 namespace Athena

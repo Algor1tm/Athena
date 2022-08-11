@@ -133,12 +133,12 @@ namespace Athena
 
 		constexpr T SqrLength() const 
 		{
-			return x * x + y * y;
+			return Dot(*this, *this);
 		}
 
 		constexpr float Length() const 
 		{
-			return std::sqrt(static_cast<float>(SqrLength()));
+			return Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

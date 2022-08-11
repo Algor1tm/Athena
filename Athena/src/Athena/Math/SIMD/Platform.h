@@ -1,6 +1,7 @@
 #pragma once
 
-#ifdef ATN_SIMD
+// Currently does not support ARM NEON
+#if defined(ATN_SIMD) && !defined(__ARM_NEON)
 	// Visual C++
 	#ifdef _MSC_VER
 		// SSE
@@ -25,5 +26,10 @@
 			#define ATN_AVX
 		#endif 
 	#endif
+	
+#ifdef ATN_SSE
+	#include <xmmintrin.h>
+	#include <immintrin.h>
+#endif
 
 #endif

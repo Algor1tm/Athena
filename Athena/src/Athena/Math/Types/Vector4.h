@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 #include "Vector.h"
 
@@ -191,12 +191,12 @@ namespace Athena
 
 		constexpr T SqrLength() const 
 		{
-			return x * x + y * y + z * z + w * w;
+			return Dot(*this, *this);
 		}
 
 		constexpr float Length() const 
 		{
-			return std::sqrt(static_cast<float>(SqrLength()));
+			return Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

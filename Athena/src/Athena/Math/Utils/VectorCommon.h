@@ -6,17 +6,6 @@
 
 namespace Athena
 {
-	template <typename T, SIZE_T Size>
-	constexpr Vector<T, Size> Lerp(
-		const Vector<T, Size>& a, const Vector<T, Size>& b, T t)
-	{
-		Vector<T, Size> out;
-		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Lerp(a[i], b[i], t);
-
-		return out;
-	}
-
 	template<typename X, SIZE_T Size, typename Y, typename Z>
 	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)
 	{
@@ -36,6 +25,18 @@ namespace Athena
 
 		return out;
 	}
+
+	template <typename T, SIZE_T Size>
+	constexpr Vector<T, Size> Lerp(
+		const Vector<T, Size>& a, const Vector<T, Size>& b, T t)
+	{
+		Vector<T, Size> out;
+		for (SIZE_T i = 0; i < Size; ++i)
+			out[i] = Lerp(a[i], b[i], t);
+
+		return out;
+	}
+
 
 
 
@@ -166,6 +167,7 @@ namespace Athena
 			if (result < vec[i])
 				result = vec[i];
 		}
+
 		return result;
 	}
 
@@ -178,6 +180,7 @@ namespace Athena
 			if (result > vec[i])
 				result = vec[i];
 		}
+
 		return result;
 	}
 

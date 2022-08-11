@@ -1,7 +1,12 @@
 #pragma once
 
-#include "Athena/Math/Types/Matrix.h"
+#include "Athena/Math/SIMD/Platform.h"
 
+
+#ifdef ATN_SSE
+
+#include "Athena/Math/Types/Matrix.h"
+#include "Athena/Math/SIMD/Types/Vector4_float.h"
 
 namespace Athena
 {
@@ -73,3 +78,5 @@ namespace Athena
 		return out;
 	}
 }
+
+#endif // ATN_SSE

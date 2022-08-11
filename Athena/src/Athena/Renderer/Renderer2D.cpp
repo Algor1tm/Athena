@@ -10,7 +10,7 @@ namespace Athena
 	struct QuadVertex
 	{
 		Vector3 Position;
-		Color Color;	// Vector<4, float> has issues with allignment
+		LinearColor Color;	// Vector<4, float> has issues with allignment
 		Vector2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
@@ -153,12 +153,12 @@ namespace Athena
 		StartBatch();
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Color& color)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Color& color)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -187,12 +187,12 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -239,12 +239,12 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, subtexture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -292,12 +292,12 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Color& color)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Color& color)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -329,12 +329,12 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -384,12 +384,12 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, subtexture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const Color& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 

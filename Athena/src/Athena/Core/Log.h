@@ -2,6 +2,9 @@
 
 #include "Core.h"
 
+#include <sstream>
+
+
 #if defined(_MSC_VER)
 	#pragma warning (push)
 	#pragma warning( disable: 4996 )
@@ -15,6 +18,7 @@
 #endif
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 #if defined(_MSC_VER)
 	#pragma warning( pop)
@@ -36,7 +40,22 @@ namespace Athena
 		static Ref<spdlog::logger> s_CoreLogger;
 		static Ref<spdlog::logger> s_ClientLogger;
 	};
+
+
+	template <typename T>
+	std::string ToString(const T& x)
+	{
+		return "Unknown type!";
+	}
 }
+
+
+//template <typename OStream, typename T>
+//inline OStream& operator<<(OStream& os, const T& x)
+//{
+//	return os << Athena::ToString(x);
+//}
+
 
 //Core log macros
 #define ATN_CORE_TRACE(...)   ::Athena::Log::GetCoreLogger()->trace(__VA_ARGS__)

@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "Athena/Core/KeyCodes.h"
 
+#include <sstream>
 
 namespace Athena
 {
@@ -30,9 +31,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "KeyPressedEvent: " + std::to_string(m_KeyCode) + " (" + 
-								  std::to_string(m_RepeatCount) + "repeats)";
-			return result;
+			std::stringstream stream;
+			stream << "KeyPressedEvent: " << m_KeyCode << " (" << m_RepeatCount << "repeats)";
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(KeyPressed)
@@ -49,8 +50,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "KeyReleasedEvent: " + std::to_string(m_KeyCode);
-			return result;
+			std::stringstream stream;
+			stream << "KeyReleasedEvent: " << m_KeyCode;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(KeyReleased)
@@ -66,8 +68,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "KeyTypedEvent: " + std::to_string(m_KeyCode);
-			return result;
+			std::stringstream stream;
+			stream << "KeyTypedEvent: " << m_KeyCode;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(KeyTyped)

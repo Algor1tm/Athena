@@ -391,15 +391,15 @@ namespace Athena
 
 		// Operators
 	public:
-		constexpr const T& operator[](SIZE_T idx) const
+		constexpr T operator[](SIZE_T idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size, "Vector subscript out of range");
+			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
 		constexpr T& operator[](SIZE_T idx)
 		{
-			ATN_CORE_ASSERT(idx < Size, "Vector subscript out of range");
+			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 

@@ -18,7 +18,7 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
-		Color m_SquareColor;
+		LinearColor m_SquareColor;
 		Ref<Texture2D> m_CheckerBoard;
 		Ref<Texture2D> m_KomodoHype;
 		Ref<Texture2D> m_SpriteSheet;

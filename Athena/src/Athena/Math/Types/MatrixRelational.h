@@ -3,7 +3,7 @@
 #include "Matrix.h"
 #include "VectorRelational.h"
 
-#include <string>
+#include <sstream>
 
 
 namespace Athena
@@ -84,20 +84,21 @@ namespace Athena
 
 
 	template <typename T, SIZE_T Column, SIZE_T Row>
-	constexpr std::string ToString(const Matrix<T, Column, Row>& mat)
+	inline std::string ToString(const Matrix<T, Column, Row>& mat)
 	{
-		std::string out = "Matrix(";
+		std::stringstream stream;
+		stream << "Matrix(";
 		for (SIZE_T i = 0; i < Column; ++i)
 		{
 			for (SIZE_T j = 0; j < Row; ++j)
 			{
-				out += std::to_string(mat[i][j]) + ", ";
+				stream << mat[i][j] << ", ";
 			}
 			if (i == Column - 1)
-				out += "height = " + std::to_string(Column) + ", width = " + std::to_string(Row) + ")";
+				stream << "Column = " << Column << ", Row = " << Row << ")";
 			else
-				out += "\n                       ";
+				stream << "\n       ";
 		}
-		return out;
+		return stream.str();
 	}
 }

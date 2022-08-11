@@ -21,7 +21,7 @@ namespace Athena
 		glViewport(x, y, width, height);
 	}
 
-	void OpenGLRendererAPI::Clear(const Color& color)
+	void OpenGLRendererAPI::Clear(const LinearColor& color)
 	{
 		glClearColor(color.r, color.g, color.g, color.a);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

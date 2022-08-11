@@ -2,10 +2,12 @@
 
 // For use by Athena applications
 
+// ---Core--------------------
 #include "Athena/Core/Application.h"
 #include "Athena/Core/Layer.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Core/Log.h"
+#include "Athena/Core/Color.h"
 
 #include "Athena/Core/Time.h"
 
@@ -21,7 +23,6 @@
 #include "Athena/Renderer/OrthographicCamera.h"
 #include "Athena/Core/OrthographicCameraController.h"
 
-#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Framebuffer.h"

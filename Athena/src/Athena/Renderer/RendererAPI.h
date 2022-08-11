@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Color.h"
+#include "Athena/Core/Color.h"
 #include "VertexArray.h"
 
 
@@ -19,7 +19,7 @@ namespace Athena
 
 		virtual void Init() = 0;
 		virtual void SetViewport(uint32 x, uint32 y, uint32 width, uint32 height) = 0;
-		virtual void Clear(const Color& color) = 0;
+		virtual void Clear(const LinearColor& color) = 0;
 
 		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0) = 0;
 

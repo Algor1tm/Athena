@@ -12,11 +12,10 @@ namespace Athena
 		AthenaEditor(const WindowDesc& wdesc)
 			: Application(wdesc)
 		{
-			PushLayer(new EditorLayer());
+			PushLayer(new EditorLayer);
 
-			Vector4 v1(1);
-			Vector4 v2(1, 2, 3, 4);
-			ATN_WARN(ToString(Clamp(v2, 1.5f, 3)));
+			HEXColor color;
+			ATN_WARN(ToString(color));
 		}
 
 		~AthenaEditor()

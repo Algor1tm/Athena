@@ -2,6 +2,8 @@
 
 #include "Event.h"
 
+#include <sstream>
+
 
 namespace Athena 
 {
@@ -16,9 +18,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "WindowResizeEvent: width = " + std::to_string(m_Width) + 
-											      ", height = " + std::to_string(m_Height);
-			return result;
+			std::stringstream stream;
+			stream << "WindowResizedEvent: width = " << m_Width << ", height = " << m_Height;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(WindowResized)

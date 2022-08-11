@@ -116,6 +116,12 @@ namespace Athena
 	}
 
 	template <typename T>
+	constexpr T FMod(T left, T right)
+	{
+		return left - right * Trunc(left / right);
+	}
+
+	template <typename T>
 	constexpr T Modf(T scalar, T& intpart)
 	{
 		return std::modf(scalar, &intpart);

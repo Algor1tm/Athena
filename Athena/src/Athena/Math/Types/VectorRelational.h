@@ -5,7 +5,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 
-#include <string>
+#include <sstream>
 
 
 namespace Athena
@@ -124,12 +124,13 @@ namespace Athena
 	}
 
 	template <typename T, SIZE_T Size>
-	constexpr std::string ToString(const Vector<T, Size>& vec)
+	inline std::string ToString(const Vector<T, Size>& vec)
 	{
-		std::string out = "Vector" + std::to_string(vec.Size()) + "(";
+		std::stringstream stream;
+		stream << "Vector" << vec.Size() << "(";
 		for (SIZE_T i = 0; i < vec.Size() - 1; ++i)
-			out += std::to_string(vec[i]) + ", ";
-		out += std::to_string(vec[vec.Size() - 1]) + ")";
-		return out;
+			stream << vec[i] << ", ";
+		stream << vec[vec.Size() - 1] << ")";
+		return stream.str();
 	}
 }

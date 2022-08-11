@@ -3,6 +3,8 @@
 #include "Event.h"
 #include "Athena/Core/MouseCodes.h"
 
+#include <sstream>
+
 
 namespace Athena
 {
@@ -17,9 +19,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "MouseMovedEvent: x = " + std::to_string(m_MouseX) + 
-												", y = " + std::to_string(m_MouseY);
-			return result;
+			std::stringstream stream;
+			stream <<"MouseMovedEvent: x = " << m_MouseX << ", y = " << m_MouseY;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(MouseMoved)
@@ -40,9 +42,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "MouseScrolledEvent: Xoffset = " + std::to_string(m_XOffset) + 
-												   ", Yoffset = " + std::to_string(m_YOffset);
-			return result;
+			std::stringstream stream;
+			stream << "MouseScrolledEvent: Xoffset = " << m_XOffset << ", Yoffset = " << m_YOffset;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(MouseScrolled)
@@ -74,8 +76,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result =  "MouseButtonPressedEvent: " + std::to_string(m_Button);
-			return result;
+			std::stringstream stream;
+			stream << "MouseButtonPressedEvent:" << m_Button;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(MouseButtonPressed)
@@ -90,8 +93,9 @@ namespace Athena
 
 		std::string ToString() const override
 		{
-			std::string result = "MouseButtonReleasedEvent: " + std::to_string(m_Button);
-			return result;
+			std::stringstream stream;
+			stream << "MouseButtonReleasedEvent:" << m_Button;
+			return stream.str();
 		}
 
 		EVENT_CLASS_TYPE(MouseButtonReleased)

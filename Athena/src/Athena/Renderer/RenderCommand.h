@@ -18,7 +18,7 @@ namespace Athena
 			s_RendererAPI->SetViewport(x, y, width, height);
 		}
 
-		static inline void Clear(const Color& color) 
+		static inline void Clear(const LinearColor& color) 
 		{ 
 			s_RendererAPI->Clear(color); 
 		}

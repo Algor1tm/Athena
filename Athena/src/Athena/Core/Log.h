@@ -2,8 +2,6 @@
 
 #include "Core.h"
 
-#include <sstream>
-
 
 #if defined(_MSC_VER)
 	#pragma warning (push)
@@ -47,14 +45,20 @@ namespace Athena
 	{
 		return "Unknown type!";
 	}
+
+	std::string ToString(const std::string& x);
+	const char* ToString(const char* x);
 }
 
 
-//template <typename OStream, typename T>
-//inline OStream& operator<<(OStream& os, const T& x)
-//{
-//	return os << Athena::ToString(x);
-//}
+namespace fmt
+{
+	template <typename OStream, typename T>
+	inline OStream& operator<<(OStream& os, const T& x)
+	{
+		return os << ::Athena::ToString(x);
+	}
+}
 
 
 //Core log macros

@@ -15,7 +15,7 @@ namespace Athena
 			PushLayer(new EditorLayer);
 
 			HEXColor color;
-			ATN_WARN(ToString(color));
+			ATN_WARN("{0}", color);
 		}
 
 		~AthenaEditor()

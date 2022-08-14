@@ -24,7 +24,7 @@ namespace Athena
 		using iterator = VectorIterator<float, Size4>;
 		using const_iterator = VectorConstIterator<float, Size4>;
 
-	// Constructors
+// -------------Constructors-------------------------------------
 	public:
 		inline Vector() = default;
 
@@ -52,6 +52,7 @@ namespace Athena
 		{
 			if (other != *this)
 				_xmm = other._xmm;
+
 			return *this;
 		}
 
@@ -152,7 +153,7 @@ namespace Athena
 				static_cast<float>(_yzw.x),
 				static_cast<float>(_x))) {}
 
-	// Public Methods
+// -------------Public Methods-------------------------------------
 	public:
 		constexpr SIZE_T Size() const
 		{
@@ -222,7 +223,7 @@ namespace Athena
 			return length == 0 ? Vector(*this) : *this / length;
 		}
 	
-	// Operators
+// -------------Operators-------------------------------------
 	public:
 		constexpr const float& operator[](SIZE_T idx) const
 		{

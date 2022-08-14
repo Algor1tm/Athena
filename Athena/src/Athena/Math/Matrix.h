@@ -2,6 +2,7 @@
 
 
 #include "Types/Matrix.h"
+#include "Types/Matrix4.h"
 #include "Types/MatrixRelational.h"
 #include "Utils/MatrixTransforms.h"
 #include "Utils/MatrixProjection.h"

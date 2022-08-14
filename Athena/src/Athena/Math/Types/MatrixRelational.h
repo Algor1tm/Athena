@@ -66,7 +66,7 @@ namespace Athena
 
 
 	template <typename T, SIZE_T Column, SIZE_T Row>
-	inline std::string ToString(const Matrix<T, Column, Row>& mat)
+	inline String ToString(const Matrix<T, Column, Row>& mat)
 	{
 		std::stringstream stream;
 		stream << "Matrix(";

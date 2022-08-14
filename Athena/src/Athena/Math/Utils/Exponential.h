@@ -8,7 +8,7 @@ namespace Athena
 	template <typename T>
 	inline T Sqrt(T scalar)
 	{
-		return std::sqrt(scalar);
+		return static_cast<T>(std::sqrt(scalar));
 	}
 
 	template <typename T>

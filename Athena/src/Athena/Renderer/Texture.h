@@ -20,7 +20,7 @@ namespace Athena
 	{
 	public:
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
-		static Ref<Texture2D> Create(const std::string& path);
+		static Ref<Texture2D> Create(const String& path);
 
 		virtual bool operator==(const Texture2D& other) const = 0;
 	};

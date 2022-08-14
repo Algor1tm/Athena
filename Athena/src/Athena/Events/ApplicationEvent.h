@@ -16,7 +16,7 @@ namespace Athena
 		unsigned int GetWidth() const { return m_Width; }
 		unsigned int GetHeight() const { return m_Height; }
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "WindowResizedEvent: width = " << m_Width << ", height = " << m_Height;

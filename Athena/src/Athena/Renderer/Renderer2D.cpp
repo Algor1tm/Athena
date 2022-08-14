@@ -170,7 +170,7 @@ namespace Athena
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
 
-		Matrix4 transform = Scale(Vector3( size.x, size.y, 1.f )) * Translate(position);
+		Matrix4 transform = ScaleMatrix(Vector3( size.x, size.y, 1.f )) * TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -222,7 +222,7 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		Matrix4 transform = Scale(Vector3(size.x, size.y, 1.f )) * Translate(position);
+		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )) * TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -275,7 +275,7 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		Matrix4 transform = Scale(Vector3(size.x, size.y, 1.f)) * Translate(position);
+		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)) * TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -310,9 +310,9 @@ namespace Athena
 		constexpr float tilingFactor = 1.f;
 
 		Matrix4 transform =
-			Scale(Vector3(size.x, size.y, 1.f)) *
-			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
-			Translate(position);
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
+			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
+			TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -365,9 +365,9 @@ namespace Athena
 		}
 
 		Matrix4 transform = 
-			Scale(Vector3(size.x, size.y, 1.f)) *
-			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
-			Translate(position);
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
+			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
+			TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -421,9 +421,9 @@ namespace Athena
 		}
 
 		Matrix4 transform =
-			Scale(Vector3(size.x, size.y, 1.f)) *
-			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
-			Translate(position);
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
+			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
+			TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{

@@ -118,14 +118,14 @@ namespace Athena
 	}
 
 
-	std::string ToString(const HSVColor& color)
+	String ToString(const HSVColor& color)
 	{
 		std::stringstream stream;
 		stream << "HSVColor(H = " << color.H << ", S = " << color.S << ", V = " << color.V << ")";
 		return stream.str();
 	}
 
-	std::string ToString(const HEXColor& color)
+	String ToString(const HEXColor& color)
 	{
 		std::stringstream stream;
 		stream << "HEXColor: #" << std::hex << color.Value;
@@ -341,7 +341,7 @@ namespace Athena
 			Clamp(clr.a, min, max));
 	}
 
-	std::string ToString(const LinearColor& color)
+	String ToString(const LinearColor& color)
 	{
 		std::stringstream stream;
 		stream << "LinearColor(" << color.r << ", " << color.g << ", " << color.b << ", " << color.a << ")";
@@ -510,7 +510,7 @@ namespace Athena
 		return out;
 	}
 
-	std::string ToString(const IntegerColor& color)
+	String ToString(const IntegerColor& color)
 	{
 		std::stringstream stream;
 		stream << "IntegerColor(" << 

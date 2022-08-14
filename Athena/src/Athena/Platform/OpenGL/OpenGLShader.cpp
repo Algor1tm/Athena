@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	static GLenum ShaderTypeFromString(const std::string& type)
+	static GLenum ShaderTypeFromString(const String& type)
 	{
 		if (type == "VERTEX_SHADER") return GL_VERTEX_SHADER;
 		if (type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER") return GL_FRAGMENT_SHADER;
@@ -15,11 +15,11 @@ namespace Athena
 		return 0;
 	}
 
-	OpenGLShader::OpenGLShader(const std::string& filepath)
+	OpenGLShader::OpenGLShader(const String& filepath)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		std::string result = ReadFile(filepath);
+		String result = ReadFile(filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 
@@ -31,11 +31,11 @@ namespace Athena
 		m_Name = filepath.substr(lastSlash, count);
 	}
 
-	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
+	OpenGLShader::OpenGLShader(const String& name, const String& vertexSrc, const String& fragmentSrc)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		std::unordered_map<GLenum, std::string> sources;
+		std::unordered_map<GLenum, String> sources;
 		sources[GL_VERTEX_SHADER] = vertexSrc;
 		sources[GL_FRAGMENT_SHADER] = fragmentSrc;
 		Compile(sources);
@@ -50,11 +50,11 @@ namespace Athena
 		glDeleteProgram(m_RendererID);
 	}
 
-	std::string OpenGLShader::ReadFile(const std::string& filepath)
+	String OpenGLShader::ReadFile(const String& filepath)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		std::string result;
+		String result;
 		std::ifstream in(filepath, std::ios::in | std::ios::binary);
 		if (in)
 		{
@@ -71,11 +71,11 @@ namespace Athena
 		return result;
 	}
 
-	std::unordered_map<GLenum, std::string> OpenGLShader::PreProcess(const std::string& source)
+	std::unordered_map<GLenum, String> OpenGLShader::PreProcess(const String& source)
 	{
 		ATN_PROFILE_FUNCTION();
 
-		std::unordered_map<GLenum, std::string> shaderSources;
+		std::unordered_map<GLenum, String> shaderSources;
 
 		const char* typeToken = "#type";
 		SIZE_T typeTokenLength = strlen(typeToken);
@@ -85,7 +85,7 @@ namespace Athena
 			SIZE_T eol = source.find_first_of("\r\n", pos);
 			ATN_CORE_ASSERT(eol != std::string::npos, "Syntax Error");
 			SIZE_T begin = pos + typeTokenLength + 1;
-			std::string type = source.substr(begin, eol - begin);
+			String type = source.substr(begin, eol - begin);
 			ATN_CORE_ASSERT(type == "VERTEX_SHADER" || type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER", 
 				"Invalid Shader Type specifier");
 
@@ -98,7 +98,7 @@ namespace Athena
 		return shaderSources;
 	}
 
-	void OpenGLShader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
+	void OpenGLShader::Compile(const std::unordered_map<GLenum, String>& shaderSources)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -177,7 +177,7 @@ namespace Athena
 		glUseProgram(0);
 	}
 
-	int OpenGLShader::GetUniformLocation(const std::string& name)
+	int OpenGLShader::GetUniformLocation(const String& name)
 	{
 		if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
 			return m_UniformLocationCache[name];
@@ -190,91 +190,91 @@ namespace Athena
 		return location;
 	}
 
-	void OpenGLShader::SetInt(const std::string& name, int value)
+	void OpenGLShader::SetInt(const String& name, int value)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformInt(name, value);
 	}
 
-	void OpenGLShader::SetIntArray(const std::string& name, int* value, uint32 count)
+	void OpenGLShader::SetIntArray(const String& name, int* value, uint32 count)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformIntArray(name, value, count);
 	}
 
-	void OpenGLShader::SetFloat(const std::string& name, float value)
+	void OpenGLShader::SetFloat(const String& name, float value)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformFloat(name, value);
 	}
 
-	void OpenGLShader::SetFloat3(const std::string& name, const Vector3& vec3)
+	void OpenGLShader::SetFloat3(const String& name, const Vector3& vec3)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformFloat3(name, vec3);
 	}
 
-	void OpenGLShader::SetFloat4(const std::string& name, const Vector4& vec4)
+	void OpenGLShader::SetFloat4(const String& name, const Vector4& vec4)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformFloat4(name, vec4);
 	}
 
-	void OpenGLShader::SetMat4(const std::string& name, const Matrix4& mat4)
+	void OpenGLShader::SetMat4(const String& name, const Matrix4& mat4)
 	{
 		ATN_PROFILE_FUNCTION();
 
 		UploadUniformMat4(name, mat4);
 	}
 
-	void OpenGLShader::UploadUniformInt(const std::string& name, int value)
+	void OpenGLShader::UploadUniformInt(const String& name, int value)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform1i(location, value);
 	}
 
-	void OpenGLShader::UploadUniformIntArray(const std::string& name, int* value, uint32 count)
+	void OpenGLShader::UploadUniformIntArray(const String& name, int* value, uint32 count)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform1iv(location, count, value);
 	}
 
-	void OpenGLShader::UploadUniformFloat(const std::string& name, float value)
+	void OpenGLShader::UploadUniformFloat(const String& name, float value)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform1f(location, value);
 	}
 
-	void OpenGLShader::UploadUniformFloat2(const std::string& name, const Vector2& vec2)
+	void OpenGLShader::UploadUniformFloat2(const String& name, const Vector2& vec2)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform2f(location, vec2.x, vec2.y);
 	}
 
-	void OpenGLShader::UploadUniformFloat3(const std::string& name, const Vector3& vec3)
+	void OpenGLShader::UploadUniformFloat3(const String& name, const Vector3& vec3)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform3f(location, vec3.x, vec3.y, vec3.z);
 	}
 
-	void OpenGLShader::UploadUniformFloat4(const std::string& name, const Vector4& vec4)
+	void OpenGLShader::UploadUniformFloat4(const String& name, const Vector4& vec4)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniform4f(location, vec4.x, vec4.y, vec4.z, vec4.w);
 	}
 
-	void OpenGLShader::UploadUniformMat3(const std::string& name, const Matrix3& mat3)
+	void OpenGLShader::UploadUniformMat3(const String& name, const Matrix3& mat3)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniformMatrix3fv(location, 1, GL_FALSE, mat3.Data());
 	}
 
-	void OpenGLShader::UploadUniformMat4(const std::string& name, const Matrix4& mat4)
+	void OpenGLShader::UploadUniformMat4(const String& name, const Matrix4& mat4)
 	{
 		GLint location = GetUniformLocation(name.data());
 		glUniformMatrix4fv(location, 1, GL_FALSE, mat4.Data());

@@ -17,7 +17,7 @@ namespace Athena
 		inline float GetX() const { return m_MouseX; }
 		inline float GetY() const { return m_MouseY; }
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream <<"MouseMovedEvent: x = " << m_MouseX << ", y = " << m_MouseY;
@@ -40,7 +40,7 @@ namespace Athena
 		inline float GetXOffset() const { return m_XOffset; }
 		inline float GetYOffset() const { return m_YOffset; }
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "MouseScrolledEvent: Xoffset = " << m_XOffset << ", Yoffset = " << m_YOffset;
@@ -74,7 +74,7 @@ namespace Athena
 		MouseButtonPressedEvent(MouseCode button)
 			: MouseButtonEvent(button) {}
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "MouseButtonPressedEvent:" << m_Button;
@@ -91,7 +91,7 @@ namespace Athena
 		MouseButtonReleasedEvent(MouseCode button)
 			: MouseButtonEvent(button) {}
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "MouseButtonReleasedEvent:" << m_Button;

@@ -14,8 +14,10 @@ namespace Athena
 		{
 			PushLayer(new EditorLayer);
 
-			Quat quat(1, 0, 0, 0);
-			ATN_WARN("\n{0}", Matrix4(quat));
+			Quat quat = RotateQuat(Radians(45.f), Vector3(0, 0, 1.f));
+			Matrix4 mat = RotateMatrix(Radians(45.f), Vector3(0, 0, 1.f));
+			ATN_WARN("{0}", mat);
+			ATN_WARN("{0}", Matrix4(quat));
 		}
 
 		~AthenaEditor()

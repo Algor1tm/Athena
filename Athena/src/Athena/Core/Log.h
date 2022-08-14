@@ -46,7 +46,7 @@ namespace Athena
 		return "Unknown type!";
 	}
 
-	constexpr const std::string& ToString(const std::string& x)
+	constexpr const String& ToString(const String& x)
 	{
 		return x;
 	}

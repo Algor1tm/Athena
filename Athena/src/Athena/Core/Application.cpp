@@ -19,7 +19,7 @@ namespace Athena
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
-		m_Window = std::unique_ptr<Window>(Window::Create(wdesc));
+		m_Window = Window::Create(wdesc);
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
 
 		Renderer::Init();

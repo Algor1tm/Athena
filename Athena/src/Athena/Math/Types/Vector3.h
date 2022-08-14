@@ -15,7 +15,7 @@ namespace Athena
 		using iterator = VectorIterator<T, Size3>;
 		using const_iterator = VectorConstIterator<T, Size3>;
 
-	// Constructors
+// -------------Constructors-------------------------------------
 	public:
 		constexpr Vector() = default;
 
@@ -30,10 +30,6 @@ namespace Athena
 			: x(static_cast<T>(_x)),
 			y(static_cast<T>(_y)),
 			z(static_cast<T>(_z)) {}
-
-
-		constexpr Vector(const Vector& other) = default;
-		constexpr Vector& operator=(const Vector& other) = default;
 
 
 		template <typename U>
@@ -103,7 +99,7 @@ namespace Athena
 			return *this;
 		}
 
-	// Public Methods
+// -------------Public Methods-------------------------------------
 	public:
 		constexpr SIZE_T Size() const
 		{
@@ -177,7 +173,7 @@ namespace Athena
 			return length == 0 ? Vector(*this) : Vector(*this) /= static_cast<T>(length);
 		}
 
-	// Operators
+// -------------Operators-------------------------------------
 	public:
 		constexpr const T& operator[](SIZE_T idx) const
 		{
@@ -310,7 +306,7 @@ namespace Athena
 			return x != other.x || y != other.y || z != other.z;
 		}
 
-	// Static Methods
+// -------------Static Methods-------------------------------------
 	public:
 		static constexpr Vector up()
 		{

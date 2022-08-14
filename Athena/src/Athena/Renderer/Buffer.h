@@ -32,14 +32,14 @@ namespace Athena
 
 	struct ATHENA_API BufferElement
 	{
-		std::string Name;
+		String Name;
 		ShaderDataType Type;
 		uint32 Size;
 		uint32 Offset;
 		bool Normalized;
 
 		BufferElement() = default;
-		BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
+		BufferElement(ShaderDataType type, const String& name, bool normalized = false)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
 		uint32 GetComponentCount() const

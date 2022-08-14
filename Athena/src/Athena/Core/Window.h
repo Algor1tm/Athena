@@ -14,7 +14,7 @@ namespace Athena
 		uint32 Width = 1280; 
 		uint32 Height = 720;
 		bool VSync = true;
-		std::string Title = "Athena App";
+		String Title = "Athena App";
 
 		EventCallbackFn EventCallback;
 	};

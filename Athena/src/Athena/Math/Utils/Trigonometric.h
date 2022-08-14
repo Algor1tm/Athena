@@ -1,19 +1,12 @@
 #pragma once
 
-#include <cmath>
+#include "Constants.h"
 
-#define M_PI 3.14159265358979323846
-#define M_PIf 3.14159265358979323846f
+#include <cmath>
 
 
 namespace Athena
 {
-	template <typename T>
-	constexpr T PI()
-	{
-		return static_cast<T>(M_PI);
-	}
-
 	template<typename T>
 	constexpr T Radians(T degrees)
 	{

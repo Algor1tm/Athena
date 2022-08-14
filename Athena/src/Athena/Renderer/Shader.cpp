@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	Ref<Shader> Shader::Create(const std::string& filepath)
+	Ref<Shader> Shader::Create(const String& filepath)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -23,7 +23,7 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Shader> Shader::Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
+	Ref<Shader> Shader::Create(const String& name, const String& vertexSrc, const String& fragmentSrc)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -40,7 +40,7 @@ namespace Athena
 	}
 	
 
-	void ShaderLibrary::Add(const std::string& name, const Ref<Shader>& shader)
+	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
 	{
 		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
 		m_Shaders[name] = shader;
@@ -48,31 +48,31 @@ namespace Athena
 
 	void ShaderLibrary::Add(const Ref<Shader>& shader)
 	{
-		const std::string& name = shader->GetName();
+		const String& name = shader->GetName();
 		Add(name, shader);
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const std::string& filepath)
+	Ref<Shader> ShaderLibrary::Load(const String& filepath)
 	{
 		auto shader = Shader::Create(filepath);
 		Add(shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const std::string& name, const std::string& filepath)
+	Ref<Shader> ShaderLibrary::Load(const String& name, const String& filepath)
 	{
 		auto shader = Shader::Create(filepath);
 		Add(shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Get(const std::string& name)
+	Ref<Shader> ShaderLibrary::Get(const String& name)
 	{
 		ATN_CORE_ASSERT(Exists(name), "Shader not found!");
 		return m_Shaders.at(name);
 	}
 
-	bool ShaderLibrary::Exists(const std::string& name)
+	bool ShaderLibrary::Exists(const String& name)
 	{
 		return m_Shaders.find(name) != m_Shaders.end();
 	}

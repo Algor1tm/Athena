@@ -16,7 +16,7 @@ namespace Athena
 		float H = 0, S = 0, V = 100;
 	};
 
-	ATHENA_API std::string ToString(const HSVColor& color);
+	ATHENA_API String ToString(const HSVColor& color);
 
 	struct HEXColor
 	{
@@ -28,7 +28,7 @@ namespace Athena
 		bool Inverse = false;
 	};
 
-	ATHENA_API std::string ToString(const HEXColor& color);
+	ATHENA_API String ToString(const HEXColor& color);
 
 	class IntegerColor;
 
@@ -101,7 +101,7 @@ namespace Athena
 
 	ATHENA_API LinearColor Lerp(const LinearColor& a, const LinearColor& b, float t);
 	ATHENA_API LinearColor Clamp(const LinearColor& clr, float min, float max);
-	ATHENA_API std::string ToString(const LinearColor& color);
+	ATHENA_API String ToString(const LinearColor& color);
 
 
 
@@ -163,5 +163,5 @@ namespace Athena
 
 	ATHENA_API IntegerColor Lerp(const IntegerColor& a, const IntegerColor& b, float t);
 	ATHENA_API IntegerColor Clamp(const IntegerColor& clr, uint8 min, uint8 max);
-	ATHENA_API std::string ToString(const IntegerColor& color);
+	ATHENA_API String ToString(const IntegerColor& color);
 }

@@ -3,6 +3,7 @@
 
 #include "Types/Quaternion.h"
 #include "Types/QuaternionRelational.h"
+#include "Utils/QuaternionTransforms.h"
 #include "Utils/QuaternionCommon.h"
 
 

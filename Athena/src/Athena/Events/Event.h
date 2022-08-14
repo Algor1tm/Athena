@@ -49,7 +49,7 @@ namespace Athena
 		virtual EventType GetEventType() const = 0;
 		virtual const char* GetName() const = 0;
 		virtual int GetCategoryFlags() const = 0;
-		virtual std::string ToString() const { return GetName(); }
+		virtual String ToString() const { return GetName(); }
 
 		inline bool IsInCategory(EventCategory category)
 		{
@@ -86,7 +86,7 @@ namespace Athena
 		Event& m_Event;
 	};
 
-	inline std::string ToString(const Event& event)
+	inline String ToString(const Event& event)
 	{
 		return event.ToString();
 	}

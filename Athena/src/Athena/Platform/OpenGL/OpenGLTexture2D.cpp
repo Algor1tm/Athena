@@ -27,7 +27,7 @@ namespace Athena
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	OpenGLTexture2D::OpenGLTexture2D(const std::string& path)
+	OpenGLTexture2D::OpenGLTexture2D(const String& path)
 		: m_Path(path)
 	{
 		ATN_PROFILE_FUNCTION();
@@ -37,7 +37,7 @@ namespace Athena
 
 		unsigned char* data;
 		{
-			ATN_PROFILE_SCOPE("stbi_load - OpenGLTexture2D::OpenGLTexture2D(const std::string& path)");
+			ATN_PROFILE_SCOPE("stbi_load - OpenGLTexture2D::OpenGLTexture2D(const String& path)");
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 		}
 

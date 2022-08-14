@@ -11,7 +11,7 @@ namespace Athena
 	{
 	public:
 		OpenGLTexture2D(uint32 width, uint32 height);
-		OpenGLTexture2D(const std::string& path);
+		OpenGLTexture2D(const String& path);
 		~OpenGLTexture2D();
 
 		inline uint32 GetWidth() const override { return m_Width; }
@@ -26,7 +26,7 @@ namespace Athena
 	private:
 		RendererID m_RendererID = 0;
 
-		std::string m_Path;
+		String m_Path;
 		uint32 m_Width, m_Height;
 		GLenum m_InternalFormat, m_DataFormat;
 	};

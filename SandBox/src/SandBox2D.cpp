@@ -68,7 +68,7 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		Athena::Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
 		Athena::Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
 		Athena::Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
-		Athena::Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, Athena::Color(1.f, 0.95f, 0.95f));
+		Athena::Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, Athena::LinearColor(1.f, 0.95f, 0.95f));
 		Athena::Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Athena::Radians(45.f), m_KomodoHype);
 
 		Athena::Renderer2D::EndScene();

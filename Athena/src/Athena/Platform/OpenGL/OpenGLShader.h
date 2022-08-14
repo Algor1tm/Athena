@@ -14,40 +14,40 @@ namespace Athena
 	class ATHENA_API OpenGLShader: public Shader
 	{
 	public:
-		OpenGLShader(const std::string& filepath);
-		OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
+		OpenGLShader(const String& filepath);
+		OpenGLShader(const String& name, const String& vertexSrc, const String& fragmentSrc);
 		~OpenGLShader();
 
 		void Bind() const override;
 		void UnBind() const override;
-		const std::string& GetName() const override { return m_Name; };
+		const String& GetName() const override { return m_Name; };
 
-		void SetInt(const std::string& name, int value) override;
-		void SetIntArray(const std::string& name, int* value, uint32 count) override;
-		void SetFloat(const std::string& name, float value) override;
-		void SetFloat3(const std::string& name, const Vector3& vec3) override;
-		void SetFloat4(const std::string& name, const Vector4& vec4) override;
-		void SetMat4(const std::string& name, const Matrix4& mat4) override;
+		void SetInt(const String& name, int value) override;
+		void SetIntArray(const String& name, int* value, uint32 count) override;
+		void SetFloat(const String& name, float value) override;
+		void SetFloat3(const String& name, const Vector3& vec3) override;
+		void SetFloat4(const String& name, const Vector4& vec4) override;
+		void SetMat4(const String& name, const Matrix4& mat4) override;
 
-		void UploadUniformInt(const std::string& name, int value);
-		void UploadUniformIntArray(const std::string& name, int* value, uint32 count);
-		void UploadUniformFloat(const std::string& name, float value);
-		void UploadUniformFloat2(const std::string& name, const Vector2& vec2);
-		void UploadUniformFloat3(const std::string& name, const Vector3& vec3);
-		void UploadUniformFloat4(const std::string& name, const Vector4& vec4);
-		void UploadUniformMat3(const std::string& name, const Matrix3& mat3);
-		void UploadUniformMat4(const std::string& name, const Matrix4& mat4);
+		void UploadUniformInt(const String& name, int value);
+		void UploadUniformIntArray(const String& name, int* value, uint32 count);
+		void UploadUniformFloat(const String& name, float value);
+		void UploadUniformFloat2(const String& name, const Vector2& vec2);
+		void UploadUniformFloat3(const String& name, const Vector3& vec3);
+		void UploadUniformFloat4(const String& name, const Vector4& vec4);
+		void UploadUniformMat3(const String& name, const Matrix3& mat3);
+		void UploadUniformMat4(const String& name, const Matrix4& mat4);
 
 	private:
-		std::string ReadFile(const std::string& filepath);	
-		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);
-		void Compile(const std::unordered_map<GLenum, std::string>& shaderSources);
+		String ReadFile(const String& filepath);	
+		std::unordered_map<GLenum, String> PreProcess(const String& source);
+		void Compile(const std::unordered_map<GLenum, String>& shaderSources);
 
-		int GetUniformLocation(const std::string& name);
+		int GetUniformLocation(const String& name);
 
 	private:
 		RendererID m_RendererID = 0;
-		std::string m_Name;
-		std::unordered_map<std::string, int> m_UniformLocationCache;
+		String m_Name;
+		std::unordered_map<String, int> m_UniformLocationCache;
 	};
 }

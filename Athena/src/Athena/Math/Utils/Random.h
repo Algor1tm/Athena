@@ -2,13 +2,13 @@
 
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
+#include "Limits.h"
 
 #include <random>
 
 
 namespace Athena
 {
-#undef max
 	class Random
 	{
 	public:
@@ -19,7 +19,7 @@ namespace Athena
 
 		static float Float()
 		{
-			return (float)s_Distribution(s_RandomEngine) / (float)std::numeric_limits<uint32>::max();
+			return (float)s_Distribution(s_RandomEngine) / (float)MaxValue<uint32>();
 		}
 
 		static float Float(float min, float max)
@@ -71,5 +71,4 @@ namespace Athena
 		static std::mt19937 s_RandomEngine;
 		static std::uniform_int_distribution<std::mt19937::result_type> s_Distribution;
 	};
-#define max(a, b) (((a) > (b)) ? (a) : (b))
 }

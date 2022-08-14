@@ -30,7 +30,7 @@ namespace Athena
 	}
 
 	template <typename T>
-	inline std::string ToString(const Quaternion<T>& quat)
+	inline String ToString(const Quaternion<T>& quat)
 	{
 		std::stringstream stream;
 		stream << "Quaternion(" << quat.w << ", " << quat.x << ", " << quat.y << ", " << quat.z << ")";

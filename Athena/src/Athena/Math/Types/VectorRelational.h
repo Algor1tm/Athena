@@ -88,7 +88,7 @@ namespace Athena
 	}
 
 	template <typename T, SIZE_T Size>
-	inline std::string ToString(const Vector<T, Size>& vec)
+	inline String ToString(const Vector<T, Size>& vec)
 	{
 		std::stringstream stream;
 		stream << "Vector" << vec.Size() << "(";

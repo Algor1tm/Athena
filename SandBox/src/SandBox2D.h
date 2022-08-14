@@ -16,7 +16,7 @@ public:
 	void OnEvent(Athena::Event& event) override;
 
 private:
-	Athena::Color m_SquareColor;
+	Athena::LinearColor m_SquareColor;
 	Athena::Ref<Athena::Texture2D> m_CheckerBoard;
 	Athena::Ref<Athena::Texture2D> m_KomodoHype;
 	Athena::Ref<Athena::Texture2D> m_SpriteSheet;

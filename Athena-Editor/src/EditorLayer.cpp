@@ -70,7 +70,7 @@ namespace Athena
         }
 
         {
-#if 0
+#if 1
             static float rotation = 0.0f;
             rotation += frameTime.AsSeconds() * 1.f;
 
@@ -80,8 +80,8 @@ namespace Athena
             Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
             Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
             Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
-            Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, Color(1.f, 0.95f, 0.95f));
-            Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, DegreeToRad(45), m_KomodoHype);
+            Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, LinearColor(1.f, 0.95f, 0.95f));
+            Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Radians(45), m_KomodoHype);
 
             Renderer2D::EndScene();
 #else

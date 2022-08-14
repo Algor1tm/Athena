@@ -29,7 +29,7 @@ namespace Athena
 
 		inline int GetRepeatCount() const { return m_RepeatCount; }
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyPressedEvent: " << m_KeyCode << " (" << m_RepeatCount << "repeats)";
@@ -48,7 +48,7 @@ namespace Athena
 		KeyReleasedEvent(KeyCode keycode)
 			: KeyEvent(keycode) {}
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyReleasedEvent: " << m_KeyCode;
@@ -66,7 +66,7 @@ namespace Athena
 			: KeyEvent(keycode) {}
 
 
-		std::string ToString() const override
+		String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyTypedEvent: " << m_KeyCode;

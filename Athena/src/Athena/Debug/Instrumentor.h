@@ -10,7 +10,7 @@ namespace Athena
 {
 	struct ProfileResult
 	{
-		std::string Name;
+		String Name;
 
 		std::chrono::duration<double, std::micro> Start;
 		std::chrono::microseconds ElapsedTime;
@@ -19,7 +19,7 @@ namespace Athena
 
 	struct InstrumentationSession
 	{
-		std::string Name;
+		String Name;
 	};
 
 	class Instrumentor
@@ -28,7 +28,7 @@ namespace Athena
 		Instrumentor(const Instrumentor&) = delete;
 		Instrumentor(Instrumentor&&) = delete;
 
-		void BeginSession(const std::string& name, const std::string& filepath = "results.json")
+		void BeginSession(const String& name, const String& filepath = "results.json")
 		{
 			std::lock_guard lock(m_Mutex);
 			if (m_CurrentSession)

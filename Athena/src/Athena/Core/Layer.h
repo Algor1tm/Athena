@@ -10,7 +10,7 @@ namespace Athena
 	class ATHENA_API Layer
 	{
 	public:
-		Layer(const std::string& name = "Layer")
+		Layer(const String& name = "Layer")
 			: m_Name(name) {}
 
 		virtual ~Layer() = default;
@@ -21,9 +21,9 @@ namespace Athena
 		virtual void OnImGuiRender() {}
 		virtual void OnEvent(Event& event) {}
 
-		inline const std::string& GetName() const { return m_Name; }
+		inline const String& GetName() const { return m_Name; }
 
 	protected:
-		std::string m_Name;
+		String m_Name;
 	};
 }

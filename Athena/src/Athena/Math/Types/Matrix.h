@@ -21,7 +21,7 @@ namespace Athena
 		using iterator = VectorIterator<Vector<T, Row>, Column>;
 		using const_iterator = VectorConstIterator<Vector<T, Row>, Column>;
 
-	// Constructors
+// -------------Constructors-------------------------------------
 	public:
 		constexpr Matrix() = default;
 
@@ -41,23 +41,7 @@ namespace Athena
 			}
 		}
 
-		constexpr Matrix(const Matrix& other) = default;
-		constexpr Matrix& operator=(const Matrix& other) = default;
-
 		constexpr Matrix(const RowType& vec)
-		{
-			static_assert(Column == 1, "Cannot initialize matrix with vector");
-			m_Array[0] = vec;
-		}
-
-		constexpr explicit operator Vector<T, Row>() const
-		{
-			static_assert(Column == 1, "Cannot convert matrix to vector");
-			return m_Array[0];
-		}
-
-		template <typename U>
-		constexpr Matrix(const Vector<U, Row>& vec)
 		{
 			static_assert(Column == 1, "Cannot initialize matrix with vector");
 			m_Array[0] = vec;
@@ -67,7 +51,7 @@ namespace Athena
 		constexpr Matrix(const Matrix<U, Column, Row>& other)
 		{
 			for (SIZE_T i = 0; i < Column; ++i)
-				m_Array[i] = other[i];
+				m_Array[i] = static_cast<T>(other[i]);
 		}
 
 
@@ -75,10 +59,19 @@ namespace Athena
 		constexpr Matrix<T, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
 		{
 			for (SIZE_T i = 0; i < Column; ++i)
-				m_Array[i] = other[i];
+				m_Array[i] = static_cast<T>(other[i]);
 		}
 
-	// Public Methods
+// -------------Type Casts-------------------------------------
+	public:
+		constexpr explicit operator Vector<T, Row>() const
+		{
+			static_assert(Column == 1, "Cannot convert matrix to vector");
+			return m_Array[0];
+		}
+
+
+// -------------Public Methods-------------------------------------
 	public:
 		constexpr T* Data()
 		{
@@ -143,7 +136,7 @@ namespace Athena
 			return *this;
 		}
 
-	// Operators
+// -------------Operators-------------------------------------
 	public:
 		constexpr const RowType& operator[](SIZE_T idx) const
 		{
@@ -246,13 +239,13 @@ namespace Athena
 			return Matrix(*this) /= scalar;
 		}
 
-	// Static Methods
+// -------------Static Methods-------------------------------------
 	public:
-		static constexpr Matrix<T, Column, Row> Identity()
+		static constexpr Matrix Identity()
 		{
 			Matrix out(static_cast<T>(0));
 
-			constexpr SIZE_T min = std::min(Column, Row);
+			constexpr SIZE_T min = Min(Column, Row);
 			for (SIZE_T i = 0; i < min; ++i)
 				out[i][i] = static_cast<T>(1);
 

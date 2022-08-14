@@ -14,8 +14,8 @@ namespace Athena
 		{
 			PushLayer(new EditorLayer);
 
-			HEXColor color;
-			ATN_WARN("{0}", color);
+			Quat quat(1, 0, 0, 0);
+			ATN_WARN("\n{0}", Matrix4(quat));
 		}
 
 		~AthenaEditor()

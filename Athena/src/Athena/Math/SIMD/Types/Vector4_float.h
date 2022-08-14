@@ -7,6 +7,7 @@
 #ifdef ATN_SSE
 
 #include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/Utils/Exponential.h"
 
 namespace Athena
 {
@@ -27,9 +28,8 @@ namespace Athena
 	public:
 		inline Vector() = default;
 
-		template <typename X>
-		explicit inline Vector(X scalar)
-			: _xmm(_mm_set_ps1(static_cast<float>(scalar))) {}
+		explicit inline Vector(float scalar)
+			: _xmm(_mm_set_ps1(scalar)) {}
 		
 
 		constexpr Vector(__m128 data)
@@ -336,7 +336,7 @@ namespace Athena
 
 		constexpr bool operator!=(const Vector& other) const
 		{
-			return !(*this == other);
+			return x != other.x || y != other.y || z != other.z || w != other.w;
 		}
 
 	public:

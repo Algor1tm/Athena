@@ -276,10 +276,9 @@ namespace Athena
 	public:
 		constexpr Vector() = default;
 
-		template<typename X>
-		explicit constexpr Vector(X scalar)
+		explicit constexpr Vector(T scalar)
 		{
-			Fill(static_cast<T>(scalar));
+			Fill(scalar);
 		}
 
 		constexpr Vector(const std::initializer_list<T>& values)

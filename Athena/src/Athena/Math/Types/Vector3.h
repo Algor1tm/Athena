@@ -19,11 +19,10 @@ namespace Athena
 	public:
 		constexpr Vector() = default;
 
-		template <typename X>
-		explicit constexpr Vector(X scalar)
-			: x(static_cast<T>(scalar)),
-			y(static_cast<T>(scalar)),
-			z(static_cast<T>(scalar)) {}
+		explicit constexpr Vector(T scalar)
+			: x(scalar),
+			y(scalar),
+			z(scalar) {}
 
 
 		template<typename X, typename Y, typename Z>
@@ -308,7 +307,7 @@ namespace Athena
 
 		constexpr bool operator!=(const Vector& other) const
 		{
-			return !(*this == other);
+			return x != other.x || y != other.y || z != other.z;
 		}
 
 	// Static Methods

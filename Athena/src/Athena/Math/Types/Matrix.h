@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Math/Vector.h"
+#include "Vector.h"
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
 
 
@@ -25,10 +25,9 @@ namespace Athena
 	public:
 		constexpr Matrix() = default;
 
-		template <typename X>
-		explicit constexpr Matrix(X scalar)
+		explicit constexpr Matrix(T scalar)
 		{
-			Fill(static_cast<T>(scalar));
+			Fill(scalar);
 		}
 
 		constexpr Matrix(const std::initializer_list<RowType>& values)
@@ -196,8 +195,7 @@ namespace Athena
 		constexpr Matrix& operator/=(float scalar)
 		{
 			for (SIZE_T i = 0; i < Column; ++i)
-				for (SIZE_T j = 0; j < Row; ++j)
-					m_Array[i][j] /= scalar;
+				m_Array[i] /= scalar;
 			return *this;
 		}
 

@@ -41,13 +41,20 @@ namespace Athena
 
 
 	template <typename T>
-	std::string ToString(const T& x)
+	constexpr const char* ToString(const T& x)
 	{
 		return "Unknown type!";
 	}
 
-	std::string ToString(const std::string& x);
-	const char* ToString(const char* x);
+	constexpr const std::string& ToString(const std::string& x)
+	{
+		return x;
+	}
+
+	constexpr const char* ToString(const char* x)
+	{
+		return x;
+	}
 }
 
 

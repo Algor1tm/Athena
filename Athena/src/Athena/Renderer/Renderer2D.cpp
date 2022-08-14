@@ -170,7 +170,7 @@ namespace Athena
 		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
 
-		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		Matrix4 transform = Scale(Vector3( size.x, size.y, 1.f )) * Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -222,7 +222,7 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		Matrix4 transform = Scale(Vector3(size.x, size.y, 1.f )) * Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -275,7 +275,7 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		Matrix4 transform = Scale({ size.x, size.y, 1.f }) * Translate(position);
+		Matrix4 transform = Scale(Vector3(size.x, size.y, 1.f)) * Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -310,8 +310,8 @@ namespace Athena
 		constexpr float tilingFactor = 1.f;
 
 		Matrix4 transform =
-			Scale({ size.x, size.y, 1.f }) *
-			Rotate(rotation, { 0.f, 0.f, 1.f }) *
+			Scale(Vector3(size.x, size.y, 1.f)) *
+			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
 			Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
@@ -365,8 +365,8 @@ namespace Athena
 		}
 
 		Matrix4 transform = 
-			Scale({ size.x, size.y, 1.f }) *
-			Rotate(rotation, { 0.f, 0.f, 1.f }) *
+			Scale(Vector3(size.x, size.y, 1.f)) *
+			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
 			Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
@@ -421,8 +421,8 @@ namespace Athena
 		}
 
 		Matrix4 transform =
-			Scale({ size.x, size.y, 1.f }) *
-			Rotate(rotation, { 0.f, 0.f, 1.f }) *
+			Scale(Vector3(size.x, size.y, 1.f)) *
+			Rotate(rotation, Vector3(0.f, 0.f, 1.f)) *
 			Translate(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)

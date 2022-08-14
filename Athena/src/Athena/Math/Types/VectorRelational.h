@@ -23,24 +23,6 @@ namespace Athena
 	}
 
 	template <typename T, SIZE_T Size>
-	constexpr void Fill(Vector<T, Size>& vec, T value)
-	{
-		vec.Fill(value);
-	}
-
-	template <typename T, SIZE_T Size>
-	constexpr T* Data(const Vector<T, Size>& vec)
-	{
-		return vec.Data();
-	}
-
-	template <typename T, SIZE_T Size>
-	constexpr const T* Data(Vector<T, Size>& vec)
-	{
-		return vec.Data();
-	}
-
-	template <typename T, SIZE_T Size>
 	constexpr float Distance(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
 		return (left - right).GetLength();
@@ -73,24 +55,6 @@ namespace Athena
 		return out;
 	}
 
-	template <typename T, SIZE_T Size>
-	constexpr T SqrLength(const Vector<T, Size>& vec)
-	{
-		return vec.SqrLength();
-	}
-
-	template <typename T, SIZE_T Size>
-	constexpr float Length(const Vector<T, Size>& vec)
-	{
-		return vec.Length();
-	}
-
-	template <typename T, SIZE_T Size>
-	constexpr Vector<T, Size>& Normalize(Vector<T, Size>& vec)
-	{
-		return vec.Normalize();
-	}
-
 	template <typename T>
 	constexpr T Cross(const Vector<T, 2>& left, const Vector<T, 2>& right)
 	{
@@ -107,7 +71,7 @@ namespace Athena
 		return out;
 	}
 
-	/// <param name="Normal">: Must be normalized</param>
+	/// <param name="Normal">: Expected to be normalized</param>
 	template <typename T>
 	constexpr Vector<T, 2> Reflect(
 		const Vector<T, 2>& direction, const Vector<T, 2>& normal)
@@ -115,7 +79,7 @@ namespace Athena
 		return direction - 2 * normal * Dot(direction, normal);
 	}
 
-	/// <param name="Normal">: Must be normalized</param>
+	/// <param name="Normal">: Expected to be normalized</param>
 	template <typename T>
 	constexpr Vector<T, 3> Reflect(
 		const Vector<T, 3>& direction, const Vector<T, 3>& normal)
@@ -134,3 +98,8 @@ namespace Athena
 		return stream.str();
 	}
 }
+
+
+#ifdef ATN_SIMD
+#include "Athena/Math/SIMD/Types/VectorRelational_simd.h"
+#endif

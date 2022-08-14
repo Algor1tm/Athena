@@ -36,24 +36,6 @@ namespace Athena
 	}
 
 	template <typename T, SIZE_T Column, SIZE_T Row>
-	constexpr void Fill(Matrix<T, Column, Row>& mat, T value)
-	{
-		mat.Fill(value);
-	}
-
-	template <typename T, SIZE_T Column, SIZE_T Row>
-	constexpr T* Data(const Matrix<T, Column, Row>& mat)
-	{
-		return mat.Data();
-	}
-
-	template <typename T, SIZE_T Column, SIZE_T Row>
-	constexpr T* Data(Matrix<T, Column, Row>& mat)
-	{
-		return mat.Data();
-	}
-
-	template <typename T, SIZE_T Column, SIZE_T Row>
 	constexpr Matrix<T, Row, Column> Transpose(const Matrix<T, Column, Row>& mat)
 	{
 		Matrix<T, Row, Column> out;
@@ -65,7 +47,7 @@ namespace Athena
 		return out;
 	}
 	
-	template<typename T>
+	template <typename T>
 	constexpr Matrix<T, 4, 4> AffineInverse(const Matrix<T, 4, 4>& mat)
 	{
 		Matrix<T, 4, 4> out;
@@ -102,3 +84,7 @@ namespace Athena
 		return stream.str();
 	}
 }
+
+#ifdef ATN_SIMD
+#include "Athena/Math/SIMD/Types/MatrixRelational_simd.h"
+#endif

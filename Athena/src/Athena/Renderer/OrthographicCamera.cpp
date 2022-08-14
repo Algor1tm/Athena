@@ -25,7 +25,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		Matrix4 transform = Rotate(m_Rotation, { 0, 0, 1 }) * Translate(m_Position);
+		Matrix4 transform = Rotate(m_Rotation, Vector3(0, 0, 1)) * Translate(m_Position);
 		
 		m_ViewMatrix = AffineInverse(transform);
 		m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;

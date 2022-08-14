@@ -188,6 +188,11 @@ namespace Athena
 	constexpr void Swap(Vector<T, Size>& left, Vector<T, Size>& right)
 	{
 		for (SIZE_T i = 0; i < Size; ++i)
-			std::swap(left[i], right[i]);
+			Swap(left[i], right[i]);
 	}
 }
+
+
+#ifdef ATN_SIMD
+#include "Athena/Math/SIMD/Utils/VectorCommon_simd.h"
+#endif

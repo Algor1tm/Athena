@@ -15,6 +15,13 @@
 #include "Athena/Core/KeyCodes.h"
 #include "Athena/Core/MouseCodes.h"
 
+
+// ---Scene--------------------
+#include "Athena/Scene/Entity.h"
+#include "Athena/Scene/Scene.h"
+#include "Athena/Scene/Components.h"
+
+
 // ---Renderer--------------------
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Renderer2D.h"

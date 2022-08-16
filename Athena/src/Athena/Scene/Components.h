@@ -1,19 +1,36 @@
 #pragma once
 
 #include "Athena/Math/Matrix.h"
-#include "Athena/Renderer/Color.h"
+#include "Athena/Core/Color.h"
 
 
 namespace Athena
 {
+	struct TagComponent
+	{
+		std::string_view Tag;
+
+		TagComponent(std::string_view tag)
+			: Tag(tag) {}
+	};
+
 	struct TransformComponent
 	{
 		Matrix4 Transform;
 
-		TransformComponent(const Matrix4& transform)
+		TransformComponent(const Matrix4& transform = Matrix4::Identity())
 			: Transform(transform) {}
 
 		operator Matrix4& () { return Transform; }
 		operator const Matrix4& () const { return Transform; }
 	};
+
+	struct SpriteRendererComponent
+	{
+		LinearColor Color;
+
+		SpriteRendererComponent(const LinearColor& color = LinearColor::White)
+			: Color(color) {}
+	};
 }
+ 

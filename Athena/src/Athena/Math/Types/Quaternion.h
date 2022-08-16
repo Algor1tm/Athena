@@ -20,7 +20,7 @@ namespace Athena
 	template <typename T>
 	class Quaternion
 	{
-	// Constructors
+// -------------Constructors-------------------------------------
 	public:
 		constexpr Quaternion() = default;
 
@@ -103,7 +103,7 @@ namespace Athena
 			return Quaternion(mat3);
 		}
 
-	// Type Casts
+// -------------Type Casts-------------------------------------
 	public:
 		explicit constexpr operator Matrix<float, 3, 3>() const
 		{
@@ -144,7 +144,7 @@ namespace Athena
 			return out;
 		}
 
-	// Public Methods
+// -------------Public Methods-------------------------------------
 	public:
 		constexpr SIZE_T Size() const
 		{
@@ -199,7 +199,7 @@ namespace Athena
 			return conj / sqrLength;
 		}
 
-		constexpr Quaternion& Conjugate() const
+		constexpr Quaternion& Conjugate()
 		{
 			x = -x;
 			y = -y;
@@ -233,7 +233,7 @@ namespace Athena
 			return Quaternion(*this).Rotate(angle, axis);
 		}
 
-	// Operators
+// -------------Operators-------------------------------------
 	public:
 		constexpr const T& operator[](SIZE_T idx) const
 		{
@@ -338,7 +338,7 @@ namespace Athena
 			return w != other.w || x != other.x || y != other.y || z != other.z;
 		}
 
-	// Static Methods
+// -------------Static Methods-------------------------------------
 	public:
 		static constexpr Quaternion Identity()
 		{

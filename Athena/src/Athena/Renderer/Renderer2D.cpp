@@ -122,7 +122,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		uint64 dataSize = (uint8*)s_Data.QuadVertexBufferPointer - (uint8*)s_Data.QuadVertexBufferBase;
+		uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
 		s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
 
 		Flush();
@@ -160,31 +160,9 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
 	{
-		ATN_PROFILE_FUNCTION();
+		Matrix4 transform = ScaleMatrix(Vector3( size.x, size.y, 1.f )).Translate(position);
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
-		
-		constexpr SIZE_T QuadVertexCount = 4;
-		constexpr float textureIndex = 0.f; // White Texture
-		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
-		constexpr float tilingFactor = 1.f;
-
-		Matrix4 transform = ScaleMatrix(Vector3( size.x, size.y, 1.f )) * TranslateMatrix(position);
-
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
-		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
-			s_Data.QuadVertexBufferPointer->Color = color;
-			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
-			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPointer++;
-		}
-
-		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
+		DrawQuad(transform, color);
 	}
 
 	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
@@ -194,49 +172,9 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
 	{
-		ATN_PROFILE_FUNCTION();
-
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
-
-		constexpr SIZE_T QuadVertexCount = 4;
-		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
-		float textureIndex = 0.0f;
-
-		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
-		{
-			if (*s_Data.TextureSlots[i] == *texture)
-			{
-				textureIndex = (float)i;
-				break;
-			}
-		}
-
-		if (textureIndex == 0.0f)
-		{
-			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
-				NextBatch();
-
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
-			s_Data.TextureSlotIndex++;
-		}
-
-		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )) * TranslateMatrix(position);
-
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
-		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
-			s_Data.QuadVertexBufferPointer->Color = tint;
-			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
-			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPointer++;
-		}
-
-		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
+		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )).Translate(position);
+		
+		DrawQuad(transform, texture, tilingFactor, tint);
 	}
 
 	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
@@ -246,50 +184,12 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
 	{
-		ATN_PROFILE_FUNCTION();
-
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
-
-		constexpr SIZE_T QuadVertexCount = 4;
-		const Vector2* textureCoords = subtexture->GetTexCoords();
-		float textureIndex = 0.0f;
+		const Vector2* texCoords = subtexture->GetTexCoords();
 		const Ref<Texture2D>& texture = subtexture->GetTexture();
 
-		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
-		{
-			if (*s_Data.TextureSlots[i] == *texture)
-			{
-				textureIndex = (float)i;
-				break;
-			}
-		}
+		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
-		if (textureIndex == 0.0f)
-		{
-			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
-				NextBatch();
-
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
-			s_Data.TextureSlotIndex++;
-		}
-
-		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)) * TranslateMatrix(position);
-
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
-		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
-			s_Data.QuadVertexBufferPointer->Color = tint;
-			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
-			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPointer++;
-		}
-
-		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
+		DrawQuad(transform, texture, tilingFactor, tint, texCoords);
 	}
 
 	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
@@ -299,6 +199,43 @@ namespace Athena
 
 	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
+		Matrix4 transform =
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
+
+		DrawQuad(transform, color);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	{
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	{
+		Matrix4 transform = 
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
+
+		DrawQuad(transform, texture, tilingFactor, tint);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
+	{
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, subtexture, tilingFactor, tint);
+	}
+
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
+	{
+		const Ref<Texture2D>& texture = subtexture->GetTexture();
+		const Vector2* texCoords = subtexture->GetTexCoords();
+
+		Matrix4 transform =
+			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
+
+		DrawQuad(transform, texture, tilingFactor, tint, texCoords);
+	}
+
+	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
+	{
 		ATN_PROFILE_FUNCTION();
 
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
@@ -306,13 +243,8 @@ namespace Athena
 
 		constexpr SIZE_T QuadVertexCount = 4;
 		constexpr float textureIndex = 0.f; // White Texture
-		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+		constexpr Vector2 textureCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
-
-		Matrix4 transform =
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
-			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
-			TranslateMatrix(position);
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
@@ -329,12 +261,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
-	{
-		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint, const Vector2* texCoords)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -342,7 +269,11 @@ namespace Athena
 			NextBatch();
 
 		constexpr SIZE_T QuadVertexCount = 4;
-		constexpr Vector2 textureCoords[] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+		constexpr Vector2 defaultTexCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+
+		if (texCoords == nullptr)
+			texCoords = defaultTexCoords;
+
 		float textureIndex = 0.0f;
 
 		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
@@ -364,16 +295,11 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		Matrix4 transform = 
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
-			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
-			TranslateMatrix(position);
-
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
-			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
+			s_Data.QuadVertexBufferPointer->TexCoord = texCoords[i];
 			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
 			s_Data.QuadVertexBufferPointer++;
@@ -384,61 +310,6 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, subtexture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		ATN_PROFILE_FUNCTION();
-
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
-
-		constexpr SIZE_T QuadVertexCount = 4;
-		const Vector2* textureCoords = subtexture->GetTexCoords();
-		float textureIndex = 0.0f;
-		const Ref<Texture2D>& texture = subtexture->GetTexture();
-
-		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
-		{
-			if (*s_Data.TextureSlots[i] == *texture)
-			{
-				textureIndex = (float)i;
-				break;
-			}
-		}
-
-		if (textureIndex == 0.0f)
-		{
-			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
-				NextBatch();
-
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
-			s_Data.TextureSlotIndex++;
-		}
-
-		Matrix4 transform =
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)) *
-			RotateMatrix(rotation, Vector3(0.f, 0.f, 1.f)) *
-			TranslateMatrix(position);
-
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
-		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
-			s_Data.QuadVertexBufferPointer->Color = tint;
-			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
-			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPointer++;
-		}
-
-		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
-	}
 
 	void Renderer2D::ResetStats()
 	{

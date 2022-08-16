@@ -104,6 +104,7 @@ namespace Athena
 	using uint32 = ::std::uint32_t; // 32-bit unsigned int
 	using uint64 = ::std::uint64_t; // 64-bit unsigned int
 	 
+	using byte = ::std::byte; // type of size 1 byte
 	using String = std::string; // string type
 	using SIZE_T = uint64; // size type, same size as a pointer
 

@@ -20,20 +20,22 @@ namespace Athena
 		static void EndScene();
 		static void Flush();
 
-		static void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color);
-		static void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color);
+		static void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color = LinearColor::White);
+		static void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		static void DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 
-		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color);
-		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color);
+		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
+		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
 		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White);
 
+		static void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White);
+		static void DrawQuad(const Matrix4& transform, const Ref<Texture2D>& texture, float tilingFactor = 1.f, const LinearColor& tint = LinearColor::White, const Vector2* texCoords = nullptr);
 
 		// Stats
 		struct Statistics

@@ -3,23 +3,6 @@
 #include <imgui.h>
 
 
-static const uint32_t s_MapWidth = 24;
-static const char s_MapTiles[] =
-"WWWWWWWWWWWWWWWWWWWWWWWW"
-"WWWWWWWWWWWWWWWWWWWWWWWW"
-"WWWWWWWWWDDDDDWWWWWWWWWW"
-"WWWWWDDDDDDDDDDDDDWWWWWW"
-"WWWWDDDDDDDWWDDDDDDDWWWW"
-"WWDDDDDDDDDDDDDDDDDDDWWW"
-"WWDDDDDDDDDDDDDDDDDDDWWW"
-"WWDDDDDDDDDDDDDDDDDDDWWW"
-"WWDDDDDDDDDDDDDDDDDDDWWW"
-"WWWDDDDWDDDDDDDDDDDDWWWW"
-"WWWWWDDDDDDDDDDDDDWWWWWW"
-"WWWWWWWWWDDDDDWWWWWWWWWW"
-"WWWWWWWWWWWWWWWWWWWWWWWW";
-
-
 namespace Athena
 {
     EditorLayer::EditorLayer()
@@ -32,22 +15,21 @@ namespace Athena
     {
         ATN_PROFILE_FUNCTION();
 
+        m_CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
+        m_KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
+
+        m_CameraController.SetZoomLevel(1.f);
+
         FramebufferDesc fbDesc;
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
-
         m_Framebuffer = Framebuffer::Create(fbDesc);
-        
         m_ViewportSize = { fbDesc.Width, fbDesc.Height };
 
-        m_CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
-        m_KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
-        m_SpriteSheet = Texture2D::Create("assets/game/textures/SpriteSheet.png");
-        m_TextureMap['D'] = SubTexture2D::CreateFromCoords(m_SpriteSheet, { 6, 11 }, { 128, 128 });
-        m_TextureMap['W'] = SubTexture2D::CreateFromCoords(m_SpriteSheet, { 11, 11 }, { 128, 128 });
-        m_Barrel = SubTexture2D::CreateFromCoords(m_SpriteSheet, { 9, 0 }, { 128, 128 });
+        m_ActiveScene = CreateRef<Scene>();
 
-        m_CameraController.SetZoomLevel(5.f);
+        m_SquareEntity = m_ActiveScene->CreateEntity("Square");
+        m_SquareEntity.AddComponent<SpriteRendererComponent>();
     }
 
     void EditorLayer::OnDetach()
@@ -63,50 +45,27 @@ namespace Athena
             m_CameraController.OnUpdate(frameTime);
 
         Renderer2D::ResetStats();
-        {
-            ATN_PROFILE_SCOPE("Renderer Clear");
-            m_Framebuffer->Bind();
-            RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
-        }
 
-        {
-#if 1
-            static float rotation = 0.0f;
-            rotation += frameTime.AsSeconds() * 1.f;
+        m_Framebuffer->Bind();
+        RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-            ATN_PROFILE_SCOPE("Renderer Draw");
-            Renderer2D::BeginScene(m_CameraController.GetCamera());
 
-            Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
-            Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
-            Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
-            Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, LinearColor(1.f, 0.95f, 0.95f));
-            Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Radians(45), m_KomodoHype);
+        static float rotation = 0.0f;
+        rotation += frameTime.AsSeconds() * 1.f;
 
-            Renderer2D::EndScene();
-#else
+        Renderer2D::BeginScene(m_CameraController.GetCamera());
 
-            Renderer2D::BeginScene(m_CameraController.GetCamera());
+        m_ActiveScene->OnUpdate(frameTime);
 
-            uint32_t mapHeight = (uint32_t)strlen(s_MapTiles) / s_MapWidth;
-            for (uint32_t y = 0; y < mapHeight; ++y)
-            {
-                for (uint32_t x = 0; x < s_MapWidth; ++x)
-                {
-                    char tileType = s_MapTiles[x + y * s_MapWidth];
-                    Ref<SubTexture2D> texture = m_Barrel;
-                    if (m_TextureMap.find(tileType) != m_TextureMap.end())
-                        texture = m_TextureMap[tileType];
+        //Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
+        //Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
+        //Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
+        //Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, LinearColor(1.f, 0.95f, 0.95f));
+        //Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Radians(45), m_KomodoHype);
 
-                    Renderer2D::DrawQuad({ (float)x - (float)s_MapWidth / 2.f, (float)y - (float)mapHeight / 2.f }, { 1, 1 }, texture);
-                }
-            }
+        Renderer2D::EndScene();
 
-            Renderer2D::EndScene();
-#endif
-
-            m_Framebuffer->UnBind();
-        }
+        m_Framebuffer->UnBind();
     }
 
     void EditorLayer::OnImGuiRender()
@@ -179,6 +138,11 @@ namespace Athena
             ImGui::EndMenuBar();
         }
 
+        ImGui::Begin("GameObjects");
+        ImGui::Text("%s", m_SquareEntity.GetComponent<TagComponent>().Tag.data());
+        ImGui::End();
+
+
         ImGui::Begin("Renderer2D Stats");
 
         auto stats = Renderer2D::GetStats();
@@ -188,6 +152,7 @@ namespace Athena
         ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
 
         ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
+        m_SquareEntity.GetComponent<SpriteRendererComponent>().Color = m_SquareColor;
 
         ImGui::End();
 

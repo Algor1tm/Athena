@@ -2,6 +2,7 @@
 
 #include "Athena/Math/Matrix.h"
 #include "Athena/Core/Color.h"
+#include "Athena/Scene/SceneCamera.h"
 
 
 namespace Athena
@@ -32,5 +33,11 @@ namespace Athena
 		SpriteRendererComponent(const LinearColor& color = LinearColor::White)
 			: Color(color) {}
 	};
+
+	struct CameraComponent
+	{
+		SceneCamera Camera;
+		bool Primary = true;
+		bool FixedAspectRatio = false;
+	};
 }
- 

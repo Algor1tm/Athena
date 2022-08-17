@@ -108,6 +108,18 @@ namespace Athena
 		delete[] s_Data.QuadVertexBufferBase;
 	}
 
+	void Renderer2D::BeginScene(const Camera& camera, const Matrix4& transform)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		Matrix4 viewProj = AffineInverse(transform) * camera.GetProjection();
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->SetMat4("u_ViewProjection", viewProj);
+
+		StartBatch();
+	}
+
 	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
 		ATN_PROFILE_FUNCTION();

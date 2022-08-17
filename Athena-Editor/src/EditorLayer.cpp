@@ -30,6 +30,9 @@ namespace Athena
 
         m_SquareEntity = m_ActiveScene->CreateEntity("Square");
         m_SquareEntity.AddComponent<SpriteRendererComponent>();
+
+        m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
+        m_CameraEntity.AddComponent<CameraComponent>();
     }
 
     void EditorLayer::OnDetach()
@@ -41,29 +44,33 @@ namespace Athena
     {
         ATN_PROFILE_FUNCTION();
 
+        const auto& desc = m_Framebuffer->GetDescription();
+        if (m_ViewportSize.x > 0 && m_ViewportSize.y > 0 &&
+            (desc.Width != m_ViewportSize.x || desc.Height != m_ViewportSize.y)) 
+        {
+            m_Framebuffer->Resize(m_ViewportSize.x, m_ViewportSize.y);
+            m_CameraController.Resize(m_ViewportSize.x, m_ViewportSize.y);
+
+            m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        }
+
         if(m_ViewportHovered)
             m_CameraController.OnUpdate(frameTime);
 
         Renderer2D::ResetStats();
-
         m_Framebuffer->Bind();
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-
-        static float rotation = 0.0f;
-        rotation += frameTime.AsSeconds() * 1.f;
-
-        Renderer2D::BeginScene(m_CameraController.GetCamera());
-
         m_ActiveScene->OnUpdate(frameTime);
+
+        //static float rotation = 0.0f;
+        //rotation += frameTime.AsSeconds() * 1.f;
 
         //Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
         //Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
         //Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
         //Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, LinearColor(1.f, 0.95f, 0.95f));
         //Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Radians(45), m_KomodoHype);
-
-        Renderer2D::EndScene();
 
         m_Framebuffer->UnBind();
     }
@@ -163,23 +170,15 @@ namespace Athena
         m_ViewportHovered = ImGui::IsWindowHovered();    
         Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
 
-        ImVec2 tmpViewportSize = ImGui::GetContentRegionAvail();
-        if (m_ViewportSize.x != tmpViewportSize.x || m_ViewportSize.y != tmpViewportSize.y)
-        {
-            m_ViewportSize = { tmpViewportSize.x, tmpViewportSize.y };
-            m_Framebuffer->Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
+        auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
+        m_ViewportSize = { viewportX, viewportY };
 
-            m_CameraController.Resize((uint32_t)m_ViewportSize.x, (uint32_t)m_ViewportSize.y);
-        }
-        else
-        {
-            uint32_t texID = m_Framebuffer->GetColorAttachmentRendererID();
-            ImGui::Image((void*)(uint64_t)texID, ImVec2(m_ViewportSize.x, m_ViewportSize.y), { 0, 1 }, { 1, 0 });
-        }
+        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID();
+        ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
 
         ImGui::End();
         ImGui::PopStyleVar();
-
+        
         ImGui::End();
     }
 

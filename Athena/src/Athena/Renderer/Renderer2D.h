@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Renderer/OrthographicCamera.h"
+#include "Athena/Renderer/Camera.h"
 #include "Athena/Core/Color.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/SubTexture2D.h"
@@ -16,6 +17,7 @@ namespace Athena
 		static void Init();
 		static void Shutdown();
 
+		static void BeginScene(const Camera& camera, const Matrix4& transform);
 		static void BeginScene(const OrthographicCamera& camera);
 		static void EndScene();
 		static void Flush();

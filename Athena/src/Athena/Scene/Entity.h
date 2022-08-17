@@ -18,7 +18,7 @@ namespace Athena
 		template <typename T, typename... Args>
 		inline T& AddComponent(Args&&... args)
 		{
-			ATN_CORE_ASSERT(!HasComponent<T>(), "Enity already has this component!");
+			ATN_CORE_ASSERT(!HasComponent<T>(), "Entity already has this component!");
 
 			return m_Scene->m_Registry.emplace<T>(m_EntityHandle, std::forward<Args>(args)...);
 		}
@@ -26,7 +26,7 @@ namespace Athena
 		template <typename T>
 		inline void RemoveComponent()
 		{
-			ATN_CORE_ASSERT(HasComponent<T>(), "Enity does not have this component!");
+			ATN_CORE_ASSERT(HasComponent<T>(), "Entity does not have this component!");
 
 			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
@@ -34,7 +34,7 @@ namespace Athena
 		template <typename T>
 		inline T& GetComponent()
 		{
-			ATN_CORE_ASSERT(HasComponent<T>(), "Enity does not have this component!");
+			ATN_CORE_ASSERT(HasComponent<T>(), "Entity does not have this component!");
 
 			return m_Scene->m_Registry.get<T>(m_EntityHandle);
 		}

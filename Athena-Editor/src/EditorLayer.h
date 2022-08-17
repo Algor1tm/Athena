@@ -22,11 +22,12 @@ namespace Athena
 		Ref<Texture2D> m_CheckerBoard;
 		Ref<Texture2D> m_KomodoHype;
 
-		Vector2 m_ViewportSize = { 0, 0 };
+		Vector2u m_ViewportSize = { 0, 0 };
 		Ref<Framebuffer> m_Framebuffer;
 
 		Ref<Scene> m_ActiveScene;
 		Entity m_SquareEntity;
+		Entity m_CameraEntity;
 
 		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		OrthographicCameraController m_CameraController;

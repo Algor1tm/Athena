@@ -16,7 +16,7 @@ namespace Athena
 		Scene();
 		~Scene();
 
-		Entity CreateEntity(std::string_view name = "UnNamed");
+		Entity CreateEntity(const String& name = "UnNamed");
 
 		void OnUpdate(Time frameTime);
 		void OnViewportResize(uint32 width, uint32 height);

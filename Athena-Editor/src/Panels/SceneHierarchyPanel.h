@@ -19,6 +19,7 @@ namespace Athena
 
 	private:
 		void DrawEntityNode(Entity entity);
+		void DrawComponents(Entity entity);
 
 	private:
 		Ref<Scene> m_Context;

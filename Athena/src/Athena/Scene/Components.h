@@ -12,9 +12,9 @@ namespace Athena
 {
 	struct TagComponent
 	{
-		std::string_view Tag;
+		String Tag;
 
-		TagComponent(std::string_view tag)
+		TagComponent(const String& tag)
 			: Tag(tag) {}
 	};
 

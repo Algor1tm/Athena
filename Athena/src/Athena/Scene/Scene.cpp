@@ -19,7 +19,7 @@ namespace Athena
 
 	}
 
-	Entity Scene::CreateEntity(std::string_view name)
+	Entity Scene::CreateEntity(const String& name)
 	{
 		Entity entity(m_Registry.create(), this);
 		entity.AddComponent<TransformComponent>();

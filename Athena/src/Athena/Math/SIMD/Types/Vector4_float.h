@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "Athena/Math/SIMD/Platform.h"
 
 

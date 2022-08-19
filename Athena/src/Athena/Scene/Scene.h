@@ -11,6 +11,7 @@ namespace Athena
 	{
 	public:
 		friend class Entity;
+		friend class SceneHierarchyPanel;
 
 		Scene();
 		~Scene();

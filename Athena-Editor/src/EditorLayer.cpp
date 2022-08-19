@@ -1,5 +1,12 @@
 #include "EditorLayer.h"
 
+#include "Athena/Core/Input.h"
+#include "Athena/Core/Application.h"
+#include "Athena/Debug/Instrumentor.h"
+#include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/RenderCommand.h"
+#include "Athena/Scene/Components.h"
+
 #include <imgui.h>
 
 
@@ -54,6 +61,8 @@ namespace Athena
         };
 
         m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
+
+        m_HierarchyPanel.SetContext(m_ActiveScene);
     }
 
     void EditorLayer::OnDetach()
@@ -83,15 +92,6 @@ namespace Athena
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
         m_ActiveScene->OnUpdate(frameTime);
-
-        //static float rotation = 0.0f;
-        //rotation += frameTime.AsSeconds() * 1.f;
-
-        //Renderer2D::DrawQuad({ -1.f, 0.2f }, { 0.8f, 0.8f }, m_SquareColor);
-        //Renderer2D::DrawRotatedQuad({ 0.65f, 0.65f }, { 0.8f, 0.8f }, rotation, m_SquareColor);
-        //Renderer2D::DrawQuad({ 0.2f, -0.5f }, { 0.5f, 0.75f }, { 0.1f, 0.9f, 0.6f });
-        //Renderer2D::DrawQuad({ -0.f, -0.f, 0.1f }, { 10.f, 10.f }, m_CheckerBoard, 10, LinearColor(1.f, 0.95f, 0.95f));
-        //Renderer2D::DrawRotatedQuad({ -0.9f, -0.9f }, { 1.f, 1.f }, Radians(45), m_KomodoHype);
 
         m_Framebuffer->UnBind();
     }
@@ -166,10 +166,7 @@ namespace Athena
             ImGui::EndMenuBar();
         }
 
-        ImGui::Begin("GameObjects");
-        ImGui::Text("%s", m_SquareEntity.GetComponent<TagComponent>().Tag.data());
-        ImGui::End();
-
+        m_HierarchyPanel.OnImGuiRender();
 
         ImGui::Begin("Renderer2D Stats");
 

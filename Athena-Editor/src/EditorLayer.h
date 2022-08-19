@@ -1,6 +1,13 @@
 #pragma once
 
-#include <Athena.h>
+#include "Athena/Core/Layer.h"
+#include "Athena/Core/Color.h"
+#include "Athena/Core/OrthographicCameraController.h"
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Scene/Entity.h"
+
+#include "Panels/SceneHierarchyPanel.h"
 
 
 namespace Athena
@@ -31,5 +38,7 @@ namespace Athena
 
 		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		OrthographicCameraController m_CameraController;
+
+		SceneHierarchyPanel m_HierarchyPanel;
 	};
 }

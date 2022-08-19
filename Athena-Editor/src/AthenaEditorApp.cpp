@@ -1,4 +1,4 @@
-#include <Athena.h>
+#include "Athena/Core/Application.h"
 #include <Athena/Core/EntryPoint.h>
 
 #include "EditorLayer.h"

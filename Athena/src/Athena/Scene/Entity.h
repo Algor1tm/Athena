@@ -53,7 +53,22 @@ namespace Athena
 			return m_Scene->m_Registry.all_of<T>(m_EntityHandle);
 		}
 
-		operator bool() { return m_EntityHandle != entt::null; }
+		operator bool() const { return m_EntityHandle != entt::null; }
+
+		operator uint32() const 
+		{
+			return (uint32)m_EntityHandle;
+		}
+
+		bool operator==(const Entity entity) const 
+		{ 
+			return m_EntityHandle == entity.m_EntityHandle && m_Scene == entity.m_Scene; 
+		}
+
+		bool operator!=(const Entity entity) const
+		{
+			return m_EntityHandle != entity.m_EntityHandle || m_Scene != entity.m_Scene;
+		}
 
 	private:
 		entt::entity m_EntityHandle = entt::null;

@@ -30,13 +30,27 @@ namespace Athena
 
 	void Scene::OnUpdate(Time frameTime)
 	{
-		// Render 2D
+		//Run native scripts
+		m_Registry.view<NativeScriptComponent>().each([=] (auto entity, auto& nsc) 
+		{
+			if (!nsc.Script)
+			{
+				nsc.Script = nsc.InstantiateScript();
+				nsc.Script->m_Entity = Entity(entity, this);
+
+				nsc.Script->Init();
+			}
+
+			nsc.Script->OnUpdate(frameTime);
+		});
+
+		// Choose camera
 		Camera* mainCamera = nullptr;
 		Matrix4* cameraTransform = nullptr;
-		const auto& group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
+		auto group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
 		for (auto entity : group)
 		{
-			auto& [camera, transformComponent] = group.get<CameraComponent, TransformComponent>(entity);
+			auto [camera, transformComponent] = group.get<CameraComponent, TransformComponent>(entity);
 
 			if (camera.Primary)
 			{
@@ -45,7 +59,7 @@ namespace Athena
 				break;
 			}
 		}
-
+		// Render 2D
 		if (mainCamera && cameraTransform)
 		{
 			Renderer2D::BeginScene(*mainCamera, *cameraTransform);
@@ -53,7 +67,7 @@ namespace Athena
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group)
 			{
-				auto& [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 				Renderer2D::DrawQuad(transform, sprite.Color);
 			}
@@ -67,7 +81,7 @@ namespace Athena
 		m_ViewportWidth = width;
 		m_ViewportHeight = height;
 
-		const auto& view = m_Registry.view<CameraComponent>();
+		auto view = m_Registry.view<CameraComponent>();
 		for (auto entity : view)
 		{
 			auto& cameraComponent = view.get<CameraComponent>(entity);

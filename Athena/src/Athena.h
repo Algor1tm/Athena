@@ -19,7 +19,9 @@
 // ---Scene--------------------
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Scene.h"
+#include "Athena/Scene/SceneCamera.h"
 #include "Athena/Scene/Components.h"
+#include "Athena/Scene/NativeScript.h"
 
 
 // ---Renderer--------------------

@@ -3,6 +3,9 @@
 #include "Athena/Math/Matrix.h"
 #include "Athena/Core/Color.h"
 #include "Athena/Scene/SceneCamera.h"
+#include "NativeScript.h"
+
+#include <functional>
 
 
 namespace Athena
@@ -39,5 +42,20 @@ namespace Athena
 		SceneCamera Camera;
 		bool Primary = true;
 		bool FixedAspectRatio = false;
+	};
+
+	struct NativeScriptComponent
+	{
+		NativeScript* Script = nullptr;
+
+		NativeScript*(*InstantiateScript)();
+		void (*DestroyScript)(NativeScriptComponent*);
+		
+		template <typename T>
+		void Bind()
+		{
+			InstantiateScript = []() { return static_cast<NativeScript*>(new T()); };
+			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Script; nsc->Script = nullptr; };
+		}
 	};
 }

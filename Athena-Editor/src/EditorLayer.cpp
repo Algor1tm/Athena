@@ -33,6 +33,27 @@ namespace Athena
 
         m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
         m_CameraEntity.AddComponent<CameraComponent>();
+
+        class CameraScript: public NativeScript
+        {
+        public:
+            void OnUpdate(Time frameTime) override
+            {
+                Matrix4& transform = GetComponent<TransformComponent>().Transform;
+                static float speed = 10.f;
+
+                if (Input::IsKeyPressed(Key::A))
+                    transform[3][0] -= speed * frameTime.AsSeconds();
+                if (Input::IsKeyPressed(Key::D))
+                    transform[3][0] += speed * frameTime.AsSeconds();
+                if (Input::IsKeyPressed(Key::S))
+                    transform[3][1] -= speed * frameTime.AsSeconds();
+                if (Input::IsKeyPressed(Key::W))
+                    transform[3][1] += speed * frameTime.AsSeconds();
+            }
+        };
+
+        m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
     }
 
     void EditorLayer::OnDetach()

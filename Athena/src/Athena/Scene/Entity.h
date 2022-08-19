@@ -42,6 +42,8 @@ namespace Athena
 		template <typename T>
 		inline const T& GetComponent() const
 		{
+			ATN_CORE_ASSERT(HasComponent<T>(), "Entity does not have this component!");
+
 			return m_Scene->m_Registry.get<T>(m_EntityHandle);
 		}
 

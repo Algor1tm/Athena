@@ -21,7 +21,7 @@ namespace Athena::Math
 	inline Matrix<T, 4, 4> RotateMatrix(float radians, const Vector<T, 3>& axis)
 	{
 		T c = Math::Cos(radians);
-		T s = Math::Sin(radians);
+		T s = Math::Sqrt(radians);
 
 		Vector<T, 3> temp((T(1) - c) * axis);
 
@@ -56,5 +56,37 @@ namespace Athena::Math
 		out[1][1] = vec3.y;
 		out[2][2] = vec3.z;
 		return out;
+	}
+
+
+	template <typename T>
+	inline Matrix<T, 4, 4> EulerAngles(T x, T y, T z)
+	{
+		T c1 = Math::Cos(-x);
+		T c2 = Math::Cos(-y);
+		T c3 = Math::Cos(-z);
+		T s1 = Math::Sin(-x);
+		T s2 = Math::Sin(-y);
+		T s3 = Math::Sin(-z);
+
+		Matrix<T, 4, 4> Result;
+
+		Result[0][0] = c2 * c3;
+		Result[0][1] = -c1 * s3 + s1 * s2 * c3;
+		Result[0][2] = s1 * s3 + c1 * s2 * c3;
+		Result[0][3] = static_cast<T>(0);
+		Result[1][0] = c2 * s3;
+		Result[1][1] = c1 * c3 + s1 * s2 * s3;
+		Result[1][2] = -s1 * c3 + c1 * s2 * s3;
+		Result[1][3] = static_cast<T>(0);
+		Result[2][0] = -s2;
+		Result[2][1] = s1 * c2;
+		Result[2][2] = c1 * c2;
+		Result[2][3] = static_cast<T>(0);
+		Result[3][0] = static_cast<T>(0);
+		Result[3][1] = static_cast<T>(0);
+		Result[3][2] = static_cast<T>(0);
+		Result[3][3] = static_cast<T>(1);
+		return Result;
 	}
 }

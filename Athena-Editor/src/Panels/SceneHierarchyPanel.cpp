@@ -2,6 +2,7 @@
 #include "Athena/Scene/Components.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <array>
 
@@ -59,6 +60,65 @@ namespace Athena
 			ImGui::TreePop();
 	}
 
+	static void DrawVec3Control(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 100.f)
+	{
+		ImGui::PushID(label.data());
+
+		ImGui::Columns(2);
+		ImGui::SetColumnWidth(0, columnWidth);
+		ImGui::Text(label.data());
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+		ImVec2 buttonSize = { lineHeight + 3, lineHeight };
+		
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.f });
+		if (ImGui::Button("X", buttonSize))
+			values.x = defaultValues;
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##X", &values.x, 0.07f, 0.f, 0.f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PopStyleColor(3);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.f });
+		if (ImGui::Button("Y", buttonSize))
+			values.y = defaultValues;
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Y", &values.y, 0.07f, 0.f, 0.f, "%.2f");
+		ImGui::PopItemWidth();
+		ImGui::SameLine();
+
+		ImGui::PopStyleColor(3);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.f });
+		if (ImGui::Button("Z", buttonSize))
+			values.z = defaultValues;
+
+		ImGui::SameLine();
+		ImGui::DragFloat("##Z", &values.z, 0.7f, 0.f, 0.f, "%.2f");
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleColor(3);
+
+		ImGui::PopStyleVar();
+		ImGui::Columns(1);
+
+		ImGui::PopID();
+	}
+
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
 		DrawComponent<TagComponent>(entity, "Tag", [](Entity entity) 
@@ -76,8 +136,12 @@ namespace Athena
 
 		DrawComponent<TransformComponent>(entity, "Transform", [](Entity entity)
 			{
-				Matrix4& transform = entity.GetComponent<TransformComponent>().Transform;
-				ImGui::DragFloat3("Position", transform[3].Data(), 0.05f);
+				auto& transform = entity.GetComponent<TransformComponent>();
+				DrawVec3Control("Position", transform.Position, 0.0f);
+				Vector3 degrees = Math::Degrees(transform.Rotation);
+				DrawVec3Control("Rotation", degrees, 0.0f);
+				transform.Rotation = Math::Radians(degrees);
+				DrawVec3Control("Scale", transform.Scale, 1.0f);
 			});
 
 		DrawComponent<SpriteRendererComponent>(entity, "Sprite", [](Entity entity)
@@ -148,6 +212,7 @@ namespace Athena
 						camera.SetPerspectiveData(perspectiveDesc);
 					}
 				}
+
 				else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
 				{
 					auto orthoDesc = camera.GetOrthographicData();

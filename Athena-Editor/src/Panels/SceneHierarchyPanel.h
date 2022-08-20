@@ -32,9 +32,8 @@ namespace Athena
 				{
 					function(entity);
 					ImGui::TreePop();
+					ImGui::Separator();
 				}
-
-				ImGui::Separator();
 			}
 		}
 

@@ -22,13 +22,19 @@ namespace Athena
 
 	struct TransformComponent
 	{
-		Matrix4 Transform;
+		Vector3 Position = { 0.f, 0.f, 0.f };
+		Vector3 Rotation = { 0.f, 0.f, 0.f };
+		Vector3 Scale = { 1.f, 1.f, 1.f };
 
-		TransformComponent(const Matrix4& transform = Matrix4::Identity())
-			: Transform(transform) {}
+		TransformComponent() = default;
+		TransformComponent(const Vector3& position)
+			: Position(position) {}
 
-		operator Matrix4& () { return Transform; }
-		operator const Matrix4& () const { return Transform; }
+		Matrix4 GetTransform() const
+		{
+			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Math::EulerAngles(Rotation.x, Rotation.y, Rotation.z);
+			return transofrm.Translate(Position);
+		}
 	};
 
 	struct SpriteRendererComponent
@@ -55,8 +61,8 @@ namespace Athena
 	{
 		NativeScript* Script = nullptr;
 
-		NativeScript*(*InstantiateScript)();
-		void (*DestroyScript)(NativeScriptComponent*);
+		NativeScript*(*InstantiateScript)() = nullptr;
+		void (*DestroyScript)(NativeScriptComponent*) = nullptr;
 		
 		template <typename T>
 		void Bind()

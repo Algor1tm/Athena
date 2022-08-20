@@ -37,31 +37,32 @@ namespace Athena
 
         m_SquareEntity = m_ActiveScene->CreateEntity("Square");
         m_SquareEntity.AddComponent<SpriteRendererComponent>(LinearColor::Green);
-        m_SquareEntity.GetComponent<TransformComponent>().Transform.Translate(Vector3(-1.f, 0, 0));
+        m_SquareEntity.GetComponent<TransformComponent>().Position += Vector3(-1.f, 0, 0);
 
         m_Komodo = m_ActiveScene->CreateEntity("KomodoHype");
         m_Komodo.AddComponent<SpriteRendererComponent>(m_KomodoHype);
-        m_Komodo.GetComponent<TransformComponent>().Transform.Translate(Vector3(2.f, 2.f, 0)).Scale(Vector3(1.5f, 1.5f, 1.f));
+        m_Komodo.GetComponent<TransformComponent>().Position += Vector3(2.f, 2.f, 0);
 
         m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
         m_CameraEntity.AddComponent<CameraComponent>();
+        m_CameraEntity.GetComponent<CameraComponent>().Camera.SetOrthographicSize(10.f);
 
         class CameraScript: public NativeScript
         {
         public:
             void OnUpdate(Time frameTime) override
             {
-                Matrix4& transform = GetComponent<TransformComponent>().Transform;
+                Vector3& position = GetComponent<TransformComponent>().Position;
                 static float speed = 10.f;
 
                 if (Input::IsKeyPressed(Key::A))
-                    transform[3][0] -= speed * frameTime.AsSeconds();
+                    position.x -= speed * frameTime.AsSeconds();
                 if (Input::IsKeyPressed(Key::D))
-                    transform[3][0] += speed * frameTime.AsSeconds();
+                    position.x += speed * frameTime.AsSeconds();
                 if (Input::IsKeyPressed(Key::S))
-                    transform[3][1] -= speed * frameTime.AsSeconds();
+                    position.y -= speed * frameTime.AsSeconds();
                 if (Input::IsKeyPressed(Key::W))
-                    transform[3][1] += speed * frameTime.AsSeconds();
+                    position.y += speed * frameTime.AsSeconds();
             }
         };
 
@@ -199,8 +200,8 @@ namespace Athena
         {
             elapsed += m_FrameTime;
         }
-        ImGui::Text("FPS: %.4g", fps);
-        ImGui::Text("FrameTime: %.5g", frameTime);
+        ImGui::Text("FPS: %d", (int)fps);
+        ImGui::Text("FrameTime: %.3f", frameTime);
 
         ImGui::End();
 

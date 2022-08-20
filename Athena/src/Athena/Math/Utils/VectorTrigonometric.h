@@ -6,6 +6,26 @@
 
 namespace Athena::Math
 {
+	template <typename T, SIZE_T Size>
+	inline Vector<T, Size> Radians(const Vector<T, Size>& vec)
+	{
+		Vector<T, Size> out;
+		for (SIZE_T i = 0; i < Size; ++i)
+			out[i] = Radians(vec[i]);
+
+		return out;
+	}
+
+	template <typename T, SIZE_T Size>
+	inline Vector<T, Size> Degrees(const Vector<T, Size>& vec)
+	{
+		Vector<T, Size> out;
+		for (SIZE_T i = 0; i < Size; ++i)
+			out[i] = Degrees(vec[i]);
+
+		return out;
+	}
+
 	template<typename T, SIZE_T Size>
 	inline Vector<T, Size> Cos(const Vector<T, Size>& vec)
 	{

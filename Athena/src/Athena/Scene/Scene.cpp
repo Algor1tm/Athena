@@ -46,7 +46,7 @@ namespace Athena
 
 		// Choose camera
 		Camera* mainCamera = nullptr;
-		Matrix4* cameraTransform = nullptr;
+		Matrix4 cameraTransform;
 		auto group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
 		for (auto entity : group)
 		{
@@ -55,14 +55,14 @@ namespace Athena
 			if (camera.Primary)
 			{
 				mainCamera = &camera.Camera;
-				cameraTransform = &transformComponent.Transform;
+				cameraTransform = transformComponent.GetTransform();
 				break;
 			}
 		}
 		// Render 2D
-		if (mainCamera && cameraTransform)
+		if (mainCamera)
 		{
-			Renderer2D::BeginScene(*mainCamera, *cameraTransform);
+			Renderer2D::BeginScene(*mainCamera, cameraTransform);
 
 			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
 			for (auto entity : group)
@@ -70,9 +70,9 @@ namespace Athena
 				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
 
 				if (sprite.Texture.GetNativeTexture() != nullptr)
-					Renderer2D::DrawQuad(transform, sprite.Texture, sprite.Color, sprite.TilingFactor);
+					Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 				else
-					Renderer2D::DrawQuad(transform, sprite.Color);
+					Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
 			}
 
 			Renderer2D::EndScene();

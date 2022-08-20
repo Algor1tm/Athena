@@ -6,16 +6,10 @@
 
 namespace Athena
 {
-	SceneCamera::SceneCamera()
+	SceneCamera::SceneCamera(ProjectionType type)
+		: m_ProjectionType(type)
 	{
 		RecalculateProjection();
-	}
-
-	void SceneCamera::SetOrthographic(float size, float nearClip, float farClip)
-	{
-		m_OrthographicSize = size;
-		m_OrthographicNear = nearClip;
-		m_OrthographicFar = farClip;
 	}
 
 	void SceneCamera::SetViewportSize(uint32 width, uint32 height)
@@ -26,12 +20,19 @@ namespace Athena
 
 	void SceneCamera::RecalculateProjection()
 	{
-		float orthoLeft = -m_OrthographicSize * m_AspecRatio * 0.5f;
-		float orthoRight = m_OrthographicSize * m_AspecRatio * 0.5f;
-		float orthoBottom = -m_OrthographicSize * 0.5f;
-		float orthoTop = m_OrthographicSize * 0.5f;
+		if (m_ProjectionType == ProjectionType::Orthographic)
+		{
+			float orthoLeft = -m_OrthoData.Size * m_AspecRatio * 0.5f;
+			float orthoRight = m_OrthoData.Size * m_AspecRatio * 0.5f;
+			float orthoBottom = -m_OrthoData.Size * 0.5f;
+			float orthoTop = m_OrthoData.Size * 0.5f;
 
-		SetProjection(Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthographicNear, m_OrthographicFar));
+			SetProjection(Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthoData.NearClip, m_OrthoData.FarClip));
+		}
+		else if (m_ProjectionType == ProjectionType::Perspective)
+		{
+			SetProjection(Perspective(m_PerspectiveData.VerticalFOV, m_AspecRatio, 
+				m_PerspectiveData.NearClip, m_PerspectiveData.FarClip));
+		}
 	}
-
 }

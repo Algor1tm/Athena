@@ -19,7 +19,11 @@ namespace Athena
 
 	private:
 		void DrawEntityNode(Entity entity);
-		void DrawComponents(Entity entity);
+		void DrawAllComponents(Entity entity);
+
+		void DrawTagComponent(Entity entity);
+		void DrawTransformComponent(Entity entity);
+		void DrawCameraComponent(Entity entity);
 
 	private:
 		Ref<Scene> m_Context;

@@ -2,26 +2,55 @@
 
 #include "Athena/Renderer/Camera.h"
 
+#include "Athena/Math/Utils/Trigonometric.h"
+
 
 namespace Athena
 {
 	class ATHENA_API SceneCamera : public Camera
 	{
 	public:
-		SceneCamera();
+		enum class ProjectionType { Perspective = 0, Orthographic = 1 };
 
-		void SetOrthographic(float size, float nearClip, float farClip);
+		struct OrthographicDesc
+		{
+			float Size = 10.f;
+			float NearClip = -1.f;
+			float FarClip = 1.f;
+		};
+
+		struct PerspectiveDesc
+		{
+			float VerticalFOV = Radians(45.f);
+			float NearClip = 0.01f;
+			float FarClip = 1000.f;
+		};
+
+	public:
+		SceneCamera(ProjectionType type = ProjectionType::Orthographic);
+
 		void SetViewportSize(uint32 width, uint32 height);
 
-		float GetOrthographicSize() const { return m_OrthographicSize; }
-		void SetOrthographicSize(float size) { m_OrthographicSize = size; RecalculateProjection(); }
+		float GetOrthographicSize() const { return m_OrthoData.Size; }
+		void SetOrthographicSize(float size) { m_OrthoData.Size = size; RecalculateProjection(); }
+
+		const OrthographicDesc& GetOrthographicData() const { return m_OrthoData; }
+		const PerspectiveDesc& GetPerspectiveData() const { return m_PerspectiveData; }
+
+		void SetOrthographicData(const OrthographicDesc& desc) { m_OrthoData = desc; RecalculateProjection(); }
+		void SetPerspectiveData(const PerspectiveDesc& desc) { m_PerspectiveData = desc; RecalculateProjection(); }
+
+		ProjectionType GetProjectionType() const { return m_ProjectionType; }
+		void SetProjectionType(ProjectionType type) { m_ProjectionType = type; RecalculateProjection(); }
 
 	private:
 		void RecalculateProjection();
 
 	private:
-		float m_OrthographicSize = 10.f;
-		float m_OrthographicNear = -1.f, m_OrthographicFar = 1.f;
+		ProjectionType m_ProjectionType = ProjectionType::Orthographic;
+
+		OrthographicDesc m_OrthoData;
+		PerspectiveDesc m_PerspectiveData;
 
 		float m_AspecRatio = 1.f;
 	};

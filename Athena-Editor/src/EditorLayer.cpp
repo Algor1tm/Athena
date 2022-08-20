@@ -13,7 +13,7 @@
 namespace Athena
 {
     EditorLayer::EditorLayer()
-        : Layer("SandBox2D"), m_CameraController(16.f / 9.f, false), m_SquareColor(0.8f, 0.2f, 0.3f)
+        : Layer("SandBox2D"), m_CameraController(16.f / 9.f, false)
     {
 
     }
@@ -36,7 +36,12 @@ namespace Athena
         m_ActiveScene = CreateRef<Scene>();
 
         m_SquareEntity = m_ActiveScene->CreateEntity("Square");
-        m_SquareEntity.AddComponent<SpriteRendererComponent>();
+        m_SquareEntity.AddComponent<SpriteRendererComponent>(LinearColor::Green);
+        m_SquareEntity.GetComponent<TransformComponent>().Transform.Translate(Vector3(-1.f, 0, 0));
+
+        m_Komodo = m_ActiveScene->CreateEntity("KomodoHype");
+        m_Komodo.AddComponent<SpriteRendererComponent>(m_KomodoHype);
+        m_Komodo.GetComponent<TransformComponent>().Transform.Translate(Vector3(2.f, 2.f, 0)).Scale(Vector3(1.5f, 1.5f, 1.f));
 
         m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
         m_CameraEntity.AddComponent<CameraComponent>();
@@ -175,9 +180,6 @@ namespace Athena
         ImGui::Text("Quads: %d", stats.QuadCount);
         ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
         ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
-
-        ImGui::ColorEdit4("Square Color", m_SquareColor.Data());
-        m_SquareEntity.GetComponent<SpriteRendererComponent>().Color = m_SquareColor;
 
         ImGui::End();
 

@@ -36,7 +36,7 @@ namespace Athena
 	public:
 		SubTexture2D(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
 
-		inline const Ref<Texture2D>& GetTexture() const { return m_Texture; }
+		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
 		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
 
 		static Ref<SubTexture2D> CreateFromCoords(const Ref<Texture2D>& texture, const Vector2& coords, const Vector2& cellSize, const Vector2& spriteSize = { 1, 1 });
@@ -49,13 +49,17 @@ namespace Athena
 	class ATHENA_API Texture2DStorage
 	{
 	public:
+		Texture2DStorage() = default;
 		Texture2DStorage(const Ref<Texture2D>& texture);
 		Texture2DStorage(const Ref<SubTexture2D>& subtexture);
 
-		inline const Ref<Texture2D>& GetTexture() const { return m_Texture; }
+		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
 		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
 
 		inline void SetTextureCoords(const std::array<Vector2, 4>& coords) { m_TexCoords = coords; }
+
+		void Set(const Ref<Texture2D>& texture);
+		void Set(const Ref<SubTexture2D>& subtexture);
 
 	private:
 		Ref<Texture2D> m_Texture;

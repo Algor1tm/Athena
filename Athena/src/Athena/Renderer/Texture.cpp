@@ -58,14 +58,24 @@ namespace Athena
 
 
 	Texture2DStorage::Texture2DStorage(const Ref<Texture2D>& texture)
-		: m_Texture(texture), m_TexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} })
 	{
-
+		Set(texture);
 	}
 
 	Texture2DStorage::Texture2DStorage(const Ref<SubTexture2D>& subtexture)
-		: m_Texture(subtexture->GetTexture()), m_TexCoords(subtexture->GetTexCoords())
 	{
+		Set(subtexture);
+	}
 
+	void Texture2DStorage::Set(const Ref<Texture2D>& texture)
+	{
+		m_Texture = texture;
+		m_TexCoords = { Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+	}
+
+	void Texture2DStorage::Set(const Ref<SubTexture2D>& subtexture)
+	{
+		m_Texture = subtexture->GetNativeTexture();
+		m_TexCoords = subtexture->GetTexCoords();
 	}
 }

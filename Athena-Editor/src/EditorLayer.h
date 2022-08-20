@@ -25,7 +25,6 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
-		LinearColor m_SquareColor;
 		Ref<Texture2D> m_CheckerBoard;
 		Ref<Texture2D> m_KomodoHype;
 
@@ -34,6 +33,7 @@ namespace Athena
 
 		Ref<Scene> m_ActiveScene;
 		Entity m_SquareEntity;
+		Entity m_Komodo;
 		Entity m_CameraEntity;
 
 		bool m_ViewportFocused = true, m_ViewportHovered = true;

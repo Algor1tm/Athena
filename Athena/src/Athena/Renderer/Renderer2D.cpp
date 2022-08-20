@@ -10,7 +10,7 @@ namespace Athena
 	struct QuadVertex
 	{
 		Vector3 Position;
-		LinearColor Color;	// Vector<4, float> has issues with allignment
+		LinearColor Color;
 		Vector2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
@@ -177,16 +177,16 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
 	{
-		DrawQuad({ position.x, position.y, 0.f }, size, texture, tilingFactor, tint);
+		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )).Translate(position);
 		
-		DrawQuad(transform, texture, tilingFactor, tint);
+		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
 	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
@@ -202,17 +202,17 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
 	{
-		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
+		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = 
 			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
-		DrawQuad(transform, texture, tilingFactor, tint);
+		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
 	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
@@ -242,7 +242,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -255,7 +255,7 @@ namespace Athena
 
 		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
-			if (*s_Data.TextureSlots[i] == *(texture.GetTexture()))
+			if (*s_Data.TextureSlots[i] == *(texture.GetNativeTexture()))
 			{
 				textureIndex = (float)i;
 				break;
@@ -268,7 +268,7 @@ namespace Athena
 				NextBatch();
 
 			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture.GetTexture();
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture.GetNativeTexture();
 			s_Data.TextureSlotIndex++;
 		}
 

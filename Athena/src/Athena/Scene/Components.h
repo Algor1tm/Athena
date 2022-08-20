@@ -3,6 +3,8 @@
 #include "Athena/Math/Matrix.h"
 #include "Athena/Core/Color.h"
 #include "Athena/Scene/SceneCamera.h"
+#include "Athena/Renderer/Texture.h"
+
 #include "NativeScript.h"
 
 #include <functional>
@@ -32,9 +34,14 @@ namespace Athena
 	struct SpriteRendererComponent
 	{
 		LinearColor Color;
+		Texture2DStorage Texture;
+		float TilingFactor;
 
 		SpriteRendererComponent(const LinearColor& color = LinearColor::White)
-			: Color(color) {}
+			: Color(color), TilingFactor(1.f) {}
+
+		SpriteRendererComponent(const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
+			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}
 	};
 
 	struct CameraComponent

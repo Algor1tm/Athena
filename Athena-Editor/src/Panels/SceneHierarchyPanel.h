@@ -4,6 +4,8 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Scene/Entity.h"
 
+#include <string_view>
+
 
 namespace Athena
 {
@@ -21,9 +23,21 @@ namespace Athena
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
 
-		void DrawTagComponent(Entity entity);
-		void DrawTransformComponent(Entity entity);
-		void DrawCameraComponent(Entity entity);
+		template <typename Component, typename Func>
+		void DrawComponent(Entity entity, std::string_view name, Func function)
+		{
+			if (entity.HasComponent<Component>())
+			{
+				if (ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, name.data()))
+				{
+					function(entity);
+					ImGui::TreePop();
+				}
+
+				ImGui::Separator();
+			}
+		}
+
 
 	private:
 		Ref<Scene> m_Context;

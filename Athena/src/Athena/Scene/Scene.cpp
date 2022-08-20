@@ -14,7 +14,7 @@ namespace Athena
 
 	}
 
-	Scene::~Scene() 
+	Scene::~Scene()
 	{
 
 	}
@@ -26,6 +26,11 @@ namespace Athena
 		entity.AddComponent<TagComponent>(name);
 
 		return entity;
+	}
+
+	void Scene::DestroyEntity(Entity entity)
+	{
+		m_Registry.destroy(entity);
 	}
 
 	void Scene::OnUpdate(Time frameTime)
@@ -64,10 +69,10 @@ namespace Athena
 		{
 			Renderer2D::BeginScene(*mainCamera, cameraTransform);
 
-			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteRendererComponent>);
+			auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
 			for (auto entity : group)
 			{
-				auto [transform, sprite] = group.get<TransformComponent, SpriteRendererComponent>(entity);
+				auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
 
 				if (sprite.Texture.GetNativeTexture() != nullptr)
 					Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.Color, sprite.TilingFactor);

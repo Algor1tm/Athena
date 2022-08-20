@@ -36,11 +36,11 @@ namespace Athena
         m_ActiveScene = CreateRef<Scene>();
 
         m_SquareEntity = m_ActiveScene->CreateEntity("Square");
-        m_SquareEntity.AddComponent<SpriteRendererComponent>(LinearColor::Green);
+        m_SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
         m_SquareEntity.GetComponent<TransformComponent>().Position += Vector3(-1.f, 0, 0);
 
         m_Komodo = m_ActiveScene->CreateEntity("KomodoHype");
-        m_Komodo.AddComponent<SpriteRendererComponent>(m_KomodoHype);
+        m_Komodo.AddComponent<SpriteComponent>(m_KomodoHype);
         m_Komodo.GetComponent<TransformComponent>().Position += Vector3(2.f, 2.f, 0);
 
         m_CameraEntity = m_ActiveScene->CreateEntity("Camera");

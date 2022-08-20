@@ -37,16 +37,16 @@ namespace Athena
 		}
 	};
 
-	struct SpriteRendererComponent
+	struct SpriteComponent
 	{
 		LinearColor Color;
 		Texture2DStorage Texture;
 		float TilingFactor;
 
-		SpriteRendererComponent(const LinearColor& color = LinearColor::White)
+		SpriteComponent(const LinearColor& color = LinearColor::White)
 			: Color(color), TilingFactor(1.f) {}
 
-		SpriteRendererComponent(const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
+		SpriteComponent(const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
 			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}
 	};
 
@@ -56,6 +56,12 @@ namespace Athena
 		bool Primary = true;
 		bool FixedAspectRatio = false;
 	};
+
+	template <>
+	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
+	{
+		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+	}
 
 	struct NativeScriptComponent
 	{

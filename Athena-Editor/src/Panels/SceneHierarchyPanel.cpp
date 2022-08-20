@@ -21,6 +21,8 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
+		ImGui::ShowDemoWindow();
+
 		ImGui::Begin("Scene Hierarchy");
 
 		m_Context->m_Registry.each([=](auto entityID)
@@ -33,15 +35,42 @@ namespace Athena
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_SelectionContext = {};
 
+		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		{
+			if (ImGui::MenuItem("Create Entity"))
+				m_Context->CreateEntity();
+
+			ImGui::EndPopup();
+		}
 		ImGui::End();
+
 
 		ImGui::Begin("Properties");
 
 		if (m_SelectionContext)
 		{
 			DrawAllComponents(m_SelectionContext);
-		}
 
+			if (ImGui::Button("Add Component"))
+				ImGui::OpenPopup("AddComponent");
+
+			if (ImGui::BeginPopup("AddComponent"))
+			{
+				if (ImGui::MenuItem("Camera"))
+				{
+					m_SelectionContext.AddComponent<CameraComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+
+				if (ImGui::MenuItem("Sprite"))
+				{
+					m_SelectionContext.AddComponent<SpriteComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+		}
 		ImGui::End();
 	}
 
@@ -56,8 +85,24 @@ namespace Athena
 		if (ImGui::IsItemClicked())
 			m_SelectionContext = entity;
 
+		bool entityDeleted = false;
+		if (ImGui::BeginPopupContextItem())
+		{
+			if (ImGui::MenuItem("Delete Entity"))
+				entityDeleted = true;
+
+			ImGui::EndPopup();
+		}
+
 		if (opened)
 			ImGui::TreePop();
+
+		if (entityDeleted)
+		{
+			if (m_SelectionContext == entity)
+				m_SelectionContext = {};
+			m_Context->DestroyEntity(entity);
+		}
 	}
 
 	static void DrawVec3Control(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 100.f)
@@ -121,7 +166,7 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
-		DrawComponent<TagComponent>(entity, "Tag", [](Entity entity) 
+		DrawComponent<TagComponent>(entity, "Tag", ImGuiTreeNodeFlags_DefaultOpen, [](Entity entity)
 			{
 				String& tag = entity.GetComponent<TagComponent>().Tag;
 
@@ -134,7 +179,8 @@ namespace Athena
 				}
 			});
 
-		DrawComponent<TransformComponent>(entity, "Transform", [](Entity entity)
+
+		DrawComponent<TransformComponent>(entity, "Transform", ImGuiTreeNodeFlags_DefaultOpen, [](Entity entity)
 			{
 				auto& transform = entity.GetComponent<TransformComponent>();
 				DrawVec3Control("Position", transform.Position, 0.0f);
@@ -144,9 +190,11 @@ namespace Athena
 				DrawVec3Control("Scale", transform.Scale, 1.0f);
 			});
 
-		DrawComponent<SpriteRendererComponent>(entity, "Sprite", [](Entity entity)
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
+
+		DrawComponent<SpriteComponent>(entity, "Sprite", flags, [](Entity entity)
 			{
-				auto& spriteComponent = entity.GetComponent<SpriteRendererComponent>();
+				auto& spriteComponent = entity.GetComponent<SpriteComponent>();
 
 				if (spriteComponent.Texture.GetNativeTexture() != nullptr)
 				{
@@ -159,7 +207,7 @@ namespace Athena
 				}
 			});
 
-		DrawComponent<CameraComponent>(entity, "Camera", [](Entity entity)
+		DrawComponent<CameraComponent>(entity, "Camera", flags, [](Entity entity)
 			{
 				auto& cameraComponent = entity.GetComponent<CameraComponent>();
 				auto& camera = cameraComponent.Camera;

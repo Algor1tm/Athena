@@ -177,31 +177,16 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )).Translate(position);
 		
 		DrawQuad(transform, texture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		DrawQuad({ position.x, position.y, 0.f }, size, subtexture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		const Vector2* texCoords = subtexture->GetTexCoords();
-		const Ref<Texture2D>& texture = subtexture->GetTexture();
-
-		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
-
-		DrawQuad(transform, texture, tilingFactor, tint, texCoords);
 	}
 
 	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
@@ -217,33 +202,17 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tilingFactor, tint);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
 	{
 		Matrix4 transform = 
 			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
 		DrawQuad(transform, texture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, subtexture, tilingFactor, tint);
-	}
-
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<SubTexture2D>& subtexture, float tilingFactor, const LinearColor& tint)
-	{
-		const Ref<Texture2D>& texture = subtexture->GetTexture();
-		const Vector2* texCoords = subtexture->GetTexCoords();
-
-		Matrix4 transform =
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
-
-		DrawQuad(transform, texture, tilingFactor, tint, texCoords);
 	}
 
 	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
@@ -273,7 +242,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Ref<Texture2D>& texture, float tilingFactor, const LinearColor& tint, const Vector2* texCoords)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DStorage& texture, float tilingFactor, const LinearColor& tint)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -281,16 +250,12 @@ namespace Athena
 			NextBatch();
 
 		constexpr SIZE_T QuadVertexCount = 4;
-		constexpr Vector2 defaultTexCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
-
-		if (texCoords == nullptr)
-			texCoords = defaultTexCoords;
-
+		const auto& texCoords = texture.GetTexCoords();
 		float textureIndex = 0.0f;
 
 		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
 		{
-			if (*s_Data.TextureSlots[i] == *texture)
+			if (*s_Data.TextureSlots[i] == *(texture.GetTexture()))
 			{
 				textureIndex = (float)i;
 				break;
@@ -303,7 +268,7 @@ namespace Athena
 				NextBatch();
 
 			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture;
+			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture.GetTexture();
 			s_Data.TextureSlotIndex++;
 		}
 

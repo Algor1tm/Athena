@@ -8,7 +8,7 @@
 #include <sstream>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T, SIZE_T Size>
 	constexpr Vector<T, Size> operator+(T scalar, const Vector<T, Size>& vec)
@@ -86,9 +86,13 @@ namespace Athena
 	{
 		return direction - 2 * normal * Dot(direction, normal);
 	}
+}
 
+
+namespace Athena
+{
 	template <typename T, SIZE_T Size>
-	inline String ToString(const Vector<T, Size>& vec)
+	inline String ToString(const Math::Vector<T, Size>& vec)
 	{
 		std::stringstream stream;
 		stream << "Vector" << vec.Size() << "(";

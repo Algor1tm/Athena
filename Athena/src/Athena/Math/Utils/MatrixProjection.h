@@ -3,7 +3,7 @@
 #include "Athena/Math/Types/Matrix.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr Matrix<T, 4, 4> Ortho(T left, T right, T bottom, T top, T zNear, T zFar)

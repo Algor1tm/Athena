@@ -9,6 +9,9 @@
 
 namespace Athena
 {
+	template <typename T>
+	using Quaternion = Athena::Math::Quaternion<T>;
+
 	using Quat = Quaternion<float>;
 	using FQuat = Quaternion<float>;
 	using DQuat = Quaternion<double>;

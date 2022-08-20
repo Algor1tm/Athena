@@ -8,7 +8,7 @@
 #include "Athena/Math/Types/Vector.h"
 #include "Athena/Math/Utils/Exponential.h"
 
-namespace Athena
+namespace Athena::Math
 {
 #define Size4 4
 
@@ -207,7 +207,7 @@ namespace Athena
 
 		inline float Length() const
 		{
-			return Sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		inline Vector& Normalize()

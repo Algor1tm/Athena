@@ -6,7 +6,7 @@
 #include "Athena/Math/Utils/Common.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T, SIZE_T _Size>
 	class Vector;
@@ -14,8 +14,10 @@ namespace Athena
 	// Forward declaration (VectorRelational.h)
 	template <typename T, SIZE_T Size>
 	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right);
+}
 
-
+namespace Athena
+{
 	template <typename T, SIZE_T Size>
 	class VectorConstIterator
 	{
@@ -70,7 +72,7 @@ namespace Athena
 		constexpr VectorConstIterator operator--(int)
 		{
 			VectorConstIterator tmp = *this;
-			--*this;
+			--* this;
 			return tmp;
 		}
 
@@ -174,7 +176,7 @@ namespace Athena
 
 
 	template <class T, SIZE_T Size>
-	class VectorIterator: public VectorConstIterator<T, Size>
+	class VectorIterator : public VectorConstIterator<T, Size>
 	{
 	public:
 		using Base = VectorConstIterator<T, Size>;
@@ -264,8 +266,10 @@ namespace Athena
 	{
 		return Next += Off;
 	}
+}
 
-
+namespace Athena::Math
+{
 	template <typename T, SIZE_T _Size>
 	class Vector
 	{
@@ -374,7 +378,7 @@ namespace Athena
 
 		constexpr float Length() const
 		{
-			return Sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

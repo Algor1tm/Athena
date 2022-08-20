@@ -7,7 +7,7 @@
 #include <random>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	class Random
 	{

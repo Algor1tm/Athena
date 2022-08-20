@@ -5,7 +5,7 @@
 #include "Athena/Math/Utils/Common.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr Quaternion<T> Lerp(const Quaternion<T>& a, const Quaternion<T>& b, T t)

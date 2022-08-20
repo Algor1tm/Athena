@@ -4,7 +4,7 @@
 #include "Common.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template<typename X, SIZE_T Size, typename Y, typename Z>
 	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)

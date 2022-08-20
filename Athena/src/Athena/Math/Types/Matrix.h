@@ -5,7 +5,7 @@
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	// ROW-MAJOR
 	// Column - size of column

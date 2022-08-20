@@ -5,7 +5,7 @@
 #include <cmath>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template<typename T>
 	constexpr T Radians(T degrees)

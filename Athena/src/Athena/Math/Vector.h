@@ -19,6 +19,9 @@
 
 namespace Athena
 {
+	template <typename T, SIZE_T Size>
+	using Vector = Athena::Math::Vector<T, Size>;
+
 	using Vector2 = Vector<float, 2>;
 	using Vector2f = Vector<float, 2>;
 	using Vector2u = Vector<uint32, 2>;

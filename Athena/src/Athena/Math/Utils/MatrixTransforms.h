@@ -5,7 +5,7 @@
 #include "Common.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr Matrix<T, 4, 4> TranslateMatrix(const Vector<T, 3>& vec3)
@@ -20,8 +20,8 @@ namespace Athena
 	template <typename T>
 	inline Matrix<T, 4, 4> RotateMatrix(float radians, const Vector<T, 3>& axis)
 	{
-		T c = Cos(radians);
-		T s = Sin(radians);
+		T c = Math::Cos(radians);
+		T s = Math::Sin(radians);
 
 		Vector<T, 3> temp((T(1) - c) * axis);
 

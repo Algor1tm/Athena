@@ -3,7 +3,7 @@
 #include <cmath>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename X, typename Y, typename Z>
 	constexpr X Clamp(X scalar, Y min, Z max)

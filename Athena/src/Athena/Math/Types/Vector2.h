@@ -3,7 +3,7 @@
 #include "Vector.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 #define Size2 2
 
@@ -133,7 +133,7 @@ namespace Athena
 
 		constexpr float Length() const 
 		{
-			return Sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

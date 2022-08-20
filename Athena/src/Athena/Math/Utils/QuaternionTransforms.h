@@ -3,7 +3,7 @@
 #include "Athena/Math/Types/Quaternion.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	inline Quaternion<T> RotateQuat(T radians, const Vector<T, 3>& axis)

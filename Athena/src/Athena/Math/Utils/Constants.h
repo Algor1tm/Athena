@@ -2,7 +2,7 @@
 
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr T PI()

@@ -4,7 +4,7 @@
 #include "Trigonometric.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template<typename T, SIZE_T Size>
 	inline Vector<T, Size> Cos(const Vector<T, Size>& vec)

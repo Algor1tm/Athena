@@ -53,128 +53,125 @@ namespace Athena
 		bool opened = ImGui::TreeNodeEx((void*)(uint64)(uint32)entity, flags, tag.data());
 
 		if (ImGui::IsItemClicked())
-		{
 			m_SelectionContext = entity;
-		}
 
 		if (opened)
-		{
 			ImGui::TreePop();
-		}
 	}
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
-		DrawTagComponent(entity);
-		ImGui::Separator();
-		DrawTransformComponent(entity);
-		ImGui::Separator();
-		DrawCameraComponent(entity);
+		if (entity.HasComponent<TagComponent>())
+		{
+			DrawTagComponent(entity);
+			ImGui::Separator();
+		}
+		if (entity.HasComponent<TransformComponent>())
+		{
+			DrawTransformComponent(entity);
+			ImGui::Separator();
+		}
+		if (entity.HasComponent<CameraComponent>())
+		{
+			DrawCameraComponent(entity);
+			ImGui::Separator();
+		}
 	}
 
 	void SceneHierarchyPanel::DrawTagComponent(Entity entity)
 	{
-		if (entity.HasComponent<TagComponent>())
-		{
-			auto& tag = entity.GetComponent<TagComponent>().Tag;
+		auto& tag = entity.GetComponent<TagComponent>().Tag;
 
-			static char buffer[256];
-			memset(buffer, 0, sizeof(buffer));
-			strcpy_s(buffer, tag.c_str());
-			if (ImGui::InputText("Tag", buffer, sizeof(buffer)))
-			{
-				tag = String(buffer);
-			}
+		static char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strcpy_s(buffer, tag.c_str());
+		if (ImGui::InputText("Tag", buffer, sizeof(buffer)))
+		{
+			tag = String(buffer);
 		}
 	}
 
 	void SceneHierarchyPanel::DrawTransformComponent(Entity entity)
 	{
-		if (entity.HasComponent<TransformComponent>())
+		if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
 		{
-			if (ImGui::TreeNodeEx((void*)typeid(TransformComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Transform"))
-			{
-				Matrix4& transform = entity.GetComponent<TransformComponent>().Transform;
-				ImGui::DragFloat3("Position", transform[3].Data(), 0.05f);
+			Matrix4& transform = entity.GetComponent<TransformComponent>().Transform;
+			ImGui::DragFloat3("Position", transform[3].Data(), 0.05f);
 
-				ImGui::TreePop();
-			}
+			ImGui::TreePop();
 		}
 	}
 
 	void SceneHierarchyPanel::DrawCameraComponent(Entity entity)
 	{
-		if (entity.HasComponent<CameraComponent>())
+		if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera"))
 		{
-			if (ImGui::TreeNodeEx((void*)typeid(CameraComponent).hash_code(), ImGuiTreeNodeFlags_DefaultOpen, "Camera"))
+			auto& cameraComponent = entity.GetComponent<CameraComponent>();
+			auto& camera = cameraComponent.Camera;
+
+			static auto typeToStr = [](SceneCamera::ProjectionType type) -> std::string_view
 			{
-				auto& cameraComponent = entity.GetComponent<CameraComponent>();
-				auto& camera = cameraComponent.Camera;
-
-				static auto typeToStr = [](SceneCamera::ProjectionType type) -> std::string_view
+				switch (type)
 				{
-					switch (type)
-					{
-					case SceneCamera::ProjectionType::Orthographic: return "Orthographic";
-					case SceneCamera::ProjectionType::Perspective: return "Perspective";
-					}
-
-					return "Invalid";
-				};
-
-				std::string_view currentProjectionType = typeToStr(camera.GetProjectionType());
-
-				if (ImGui::BeginCombo("Projection", currentProjectionType.data()))
-				{
-					for (int i = 0; i < 2; ++i)
-					{
-						const std::string_view typeStr = typeToStr((SceneCamera::ProjectionType)i);
-						bool isSelected = currentProjectionType == typeStr;
-						if (ImGui::Selectable(typeStr.data(), isSelected))
-						{
-							currentProjectionType = typeStr;
-							camera.SetProjectionType((SceneCamera::ProjectionType)i);
-						}
-
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
-					}
-
-					ImGui::EndCombo();
+				case SceneCamera::ProjectionType::Orthographic: return "Orthographic";
+				case SceneCamera::ProjectionType::Perspective: return "Perspective";
 				}
 
-				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+				return "Invalid";
+			};
+
+			std::string_view currentProjectionType = typeToStr(camera.GetProjectionType());
+
+			if (ImGui::BeginCombo("Projection", currentProjectionType.data()))
+			{
+				for (int i = 0; i < 2; ++i)
 				{
-					auto perspectiveDesc = camera.GetPerspectiveData();
-					bool changed = false;
-
-					float degreesFOV = Degrees(perspectiveDesc.VerticalFOV);
-					changed = ImGui::DragFloat("Vertical FOV", &degreesFOV, 0.1f) || changed;
-					changed = ImGui::DragFloat("NearClip", &perspectiveDesc.NearClip, 0.1f) || changed;
-					changed = ImGui::DragFloat("FarClip", &perspectiveDesc.FarClip, 10.f) || changed;
-
-					if (changed)
+					const std::string_view typeStr = typeToStr((SceneCamera::ProjectionType)i);
+					bool isSelected = currentProjectionType == typeStr;
+					if (ImGui::Selectable(typeStr.data(), isSelected))
 					{
-						perspectiveDesc.VerticalFOV = Radians(degreesFOV);
-						camera.SetPerspectiveData(perspectiveDesc);
+						currentProjectionType = typeStr;
+						camera.SetProjectionType((SceneCamera::ProjectionType)i);
 					}
-				}
-				else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
-				{
-					auto orthoDesc = camera.GetOrthographicData();
-					bool changed = false;
-					changed = ImGui::DragFloat("Size", &orthoDesc.Size, 0.1f) || changed;
-					changed = ImGui::DragFloat("NearClip", &orthoDesc.NearClip, 0.1f) || changed;
-					changed = ImGui::DragFloat("FarClip", &orthoDesc.FarClip, 0.1f) || changed;
 
-					if (changed)
-						camera.SetOrthographicData(orthoDesc);
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
 				}
 
-				ImGui::Checkbox("Primary", &cameraComponent.Primary);
-
-				ImGui::TreePop();
+				ImGui::EndCombo();
 			}
+
+			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+			{
+				auto perspectiveDesc = camera.GetPerspectiveData();
+				bool changed = false;
+
+				float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
+				changed = ImGui::DragFloat("Vertical FOV", &degreesFOV, 0.1f) || changed;
+				changed = ImGui::DragFloat("NearClip", &perspectiveDesc.NearClip, 0.1f) || changed;
+				changed = ImGui::DragFloat("FarClip", &perspectiveDesc.FarClip, 10.f) || changed;
+
+				if (changed)
+				{
+					perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
+					camera.SetPerspectiveData(perspectiveDesc);
+				}
+			}
+			else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+			{
+				auto orthoDesc = camera.GetOrthographicData();
+				bool changed = false;
+				changed = ImGui::DragFloat("Size", &orthoDesc.Size, 0.1f) || changed;
+				changed = ImGui::DragFloat("NearClip", &orthoDesc.NearClip, 0.1f) || changed;
+				changed = ImGui::DragFloat("FarClip", &orthoDesc.FarClip, 0.1f) || changed;
+
+				if (changed)
+					camera.SetOrthographicData(orthoDesc);
+			}
+
+			ImGui::Checkbox("Primary", &cameraComponent.Primary);
+
+			ImGui::TreePop();
 		}
 	}
 }

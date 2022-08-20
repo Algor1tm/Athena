@@ -3,7 +3,7 @@
 #include <cmath>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	inline T Sqrt(T scalar)

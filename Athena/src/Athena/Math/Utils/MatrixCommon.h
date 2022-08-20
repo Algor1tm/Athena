@@ -4,7 +4,7 @@
 #include "Common.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T, SIZE_T Column, SIZE_T Row>
 	constexpr bool All(const Matrix<T, Column, Row>& mat)

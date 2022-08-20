@@ -8,7 +8,7 @@
 #include "Vector4_float.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	inline float Dot(const Vector<float, 4>& left, const Vector<float, 4>& right)
 	{

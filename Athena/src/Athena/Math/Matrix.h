@@ -14,6 +14,9 @@
 
 namespace Athena
 {
+	template <typename T, SIZE_T Column, SIZE_T Row>
+	using Matrix = Athena::Math::Matrix<T, Column, Row>;
+
 	using Matrix2 = Matrix<float, 2, 2>;
 	using Matrix3 = Matrix<float, 3, 3>;
 	using Matrix4 = Matrix<float, 4, 4>;

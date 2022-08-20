@@ -3,7 +3,7 @@
 #include "Quaternion.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr Quaternion<T> operator+(T scalar, const Quaternion<T>& quat)
@@ -28,13 +28,16 @@ namespace Athena
 	{
 		return left.w * right.w + left.x * right.x + left.y * right.y + left.z * right.z;
 	}
+}
 
+namespace Athena
+{
 	template <typename T>
-	inline String ToString(const Quaternion<T>& quat)
+	inline String ToString(const Math::Quaternion<T>& quat)
 	{
 		std::stringstream stream;
 		stream << "Quaternion(" << quat.w << ", " << quat.x << ", " << quat.y << ", " << quat.z << ")";
-		
+
 		return stream.str();
 	}
 }

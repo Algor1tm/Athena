@@ -7,7 +7,7 @@
 #include "Athena/Math/Utils/VectorCommon.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	class Quaternion;

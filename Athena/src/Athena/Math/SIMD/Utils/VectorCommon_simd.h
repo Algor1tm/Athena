@@ -8,7 +8,7 @@
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template<typename Y, typename Z>
 	inline Vector<float, 4> Clamp(const Vector<float, 4>& vec, Y min, Z max)

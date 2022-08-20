@@ -4,7 +4,7 @@
 
 
 
-namespace Athena
+namespace Athena::Math
 {
 #define Size3 3
 
@@ -158,7 +158,7 @@ namespace Athena
 
 		constexpr float Length() const
 		{
-			return Sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

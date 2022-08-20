@@ -21,7 +21,7 @@ namespace Athena
 
 		struct PerspectiveDesc
 		{
-			float VerticalFOV = Radians(45.f);
+			float VerticalFOV = Math::Radians(45.f);
 			float NearClip = 0.01f;
 			float FarClip = 1000.f;
 		};

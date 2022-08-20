@@ -54,8 +54,8 @@ namespace Athena
 		g = g;
 		b = b;
 
-		float cmax = Max(r, g, b); 
-		float cmin = Min(r, g, b); 
+		float cmax = Math::Max(r, g, b); 
+		float cmin = Math::Min(r, g, b);
 		float diff = cmax - cmin;
 
 
@@ -63,13 +63,13 @@ namespace Athena
 			result.H = 0;
 
 		else if (cmax == r)
-			result.H = FMod(60 * ((g - b) / diff) + 360, 360.f);
+			result.H = Math::FMod(60 * ((g - b) / diff) + 360, 360.f);
 
 		else if (cmax == g)
-			result.H = FMod(60 * ((b - r) / diff) + 120, 360.f);
+			result.H = Math::FMod(60 * ((b - r) / diff) + 120, 360.f);
 
 		else if (cmax == b)
-			result.H = FMod(60 * ((r - g) / diff) + 240, 360.f);
+			result.H = Math::FMod(60 * ((r - g) / diff) + 240, 360.f);
 
 		if (cmax == 0)
 			result.S = 0;
@@ -86,7 +86,7 @@ namespace Athena
 		float s = hsv.S / 100;
 		float v = hsv.V / 100;
 		float C = s * v;
-		float X = C * (1 - Abs(FMod(hsv.H / 60.f, 2.f) - 1));
+		float X = C * (1 - Math::Abs(Math::FMod(hsv.H / 60.f, 2.f) - 1));
 		float m = v - C;
 		float r, g, b;
 
@@ -326,19 +326,19 @@ namespace Athena
 	LinearColor Lerp(const LinearColor& a, const LinearColor& b, float t)
 	{
 		return LinearColor(
-			Lerp(a.r, b.r, t), 
-			Lerp(a.g, b.g, t), 
-			Lerp(a.b, b.b, t), 
-			Lerp(a.a, b.a, t));
+			Math::Lerp(a.r, b.r, t), 
+			Math::Lerp(a.g, b.g, t), 
+			Math::Lerp(a.b, b.b, t), 
+			Math::Lerp(a.a, b.a, t));
 	}
 
 	LinearColor Clamp(const LinearColor& clr, float min, float max)
 	{
 		return LinearColor(
-			Clamp(clr.r, min, max),
-			Clamp(clr.g, min, max),
-			Clamp(clr.b, min, max),
-			Clamp(clr.a, min, max));
+			Math::Clamp(clr.r, min, max),
+			Math::Clamp(clr.g, min, max),
+			Math::Clamp(clr.b, min, max),
+			Math::Clamp(clr.a, min, max));
 	}
 
 	String ToString(const LinearColor& color)
@@ -491,10 +491,10 @@ namespace Athena
 	IntegerColor Lerp(const IntegerColor& a, const IntegerColor& b, float t)
 	{
 		IntegerColor out;
-		out.r = (uint8)Lerp((float)a.r, (float)b.r, t);
-		out.g = (uint8)Lerp((float)a.g, (float)b.g, t);
-		out.b = (uint8)Lerp((float)a.b, (float)b.b, t);
-		out.a = (uint8)Lerp((float)a.a, (float)b.a, t);
+		out.r = (uint8)Math::Lerp((float)a.r, (float)b.r, t);
+		out.g = (uint8)Math::Lerp((float)a.g, (float)b.g, t);
+		out.b = (uint8)Math::Lerp((float)a.b, (float)b.b, t);
+		out.a = (uint8)Math::Lerp((float)a.a, (float)b.a, t);
 
 		return out;
 	}
@@ -502,10 +502,10 @@ namespace Athena
 	IntegerColor Clamp(const IntegerColor& color, uint8 min, uint8 max)
 	{
 		IntegerColor out;
-		out.r = Clamp(color.r, min, max);
-		out.g = Clamp(color.g, min, max);
-		out.b = Clamp(color.b, min, max);
-		out.a = Clamp(color.a, min, max);
+		out.r = Math::Clamp(color.r, min, max);
+		out.g = Math::Clamp(color.g, min, max);
+		out.b = Math::Clamp(color.b, min, max);
+		out.a = Math::Clamp(color.a, min, max);
 
 		return out;
 	}

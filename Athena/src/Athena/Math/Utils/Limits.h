@@ -11,7 +11,7 @@
 	#undef min
 #endif
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T>
 	constexpr T Epsilon()

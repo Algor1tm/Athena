@@ -4,7 +4,7 @@
 #include "Exponential.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T, SIZE_T Size>
 	inline Vector<T, Size> Sqrt(const Vector<T, Size>& vec)

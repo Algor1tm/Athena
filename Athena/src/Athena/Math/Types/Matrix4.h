@@ -5,7 +5,7 @@
 #define Size4 4
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template<typename T>
 	class Matrix<T, Size4, Size4>
@@ -159,8 +159,8 @@ namespace Athena
 
 		inline Matrix& Rotate(T radians, const Vector<T, 3>& axis)
 		{
-			T c = Cos(radians);
-			T s = Sin(radians);
+			T c = Math::Cos(radians);
+			T s = Math::Sin(radians);
 
 			Vector<T, 3> temp((T(1) - c) * axis);
 

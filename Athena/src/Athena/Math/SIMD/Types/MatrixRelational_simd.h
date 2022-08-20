@@ -8,7 +8,7 @@
 #include "Athena/Math/Types/Matrix.h"
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
 
-namespace Athena
+namespace Athena::Math
 {
 	inline Vector<float, 4> operator*(const Vector<float, 4>& vec, const Matrix<float, 4, 4>& mat)
 	{

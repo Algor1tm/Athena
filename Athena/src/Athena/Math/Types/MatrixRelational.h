@@ -6,7 +6,7 @@
 #include <sstream>
 
 
-namespace Athena
+namespace Athena::Math
 {
 	template <typename T, SIZE_T Column, SIZE_T Row>
 	constexpr Matrix<T, Column, Row> operator+(float scalar, const Matrix<T, Column, Row>& mat)
@@ -63,10 +63,12 @@ namespace Athena
 
 		return out;
 	}
+}
 
-
+namespace Athena
+{
 	template <typename T, SIZE_T Column, SIZE_T Row>
-	inline String ToString(const Matrix<T, Column, Row>& mat)
+	inline String ToString(const Math::Matrix<T, Column, Row>& mat)
 	{
 		std::stringstream stream;
 		stream << "Matrix(";
@@ -84,6 +86,7 @@ namespace Athena
 		return stream.str();
 	}
 }
+
 
 #ifdef ATN_SIMD
 #include "Athena/Math/SIMD/Types/MatrixRelational_simd.h"

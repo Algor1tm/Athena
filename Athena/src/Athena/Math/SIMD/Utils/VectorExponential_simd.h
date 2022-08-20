@@ -8,7 +8,7 @@
 #include "Athena/Math/SIMD/Types/Vector4_float.h"
 
 
-namespace Athena
+namespace Athena::Math
 {
 	inline Vector<float, 4> Sqrt(const Vector<float, 4>& vec)
 	{

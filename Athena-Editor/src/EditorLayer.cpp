@@ -79,6 +79,8 @@ namespace Athena
     {
         ATN_PROFILE_FUNCTION();
 
+        m_FrameTime = frameTime;
+
         const auto& desc = m_Framebuffer->GetDescription();
         if (m_ViewportSize.x > 0 && m_ViewportSize.y > 0 &&
             (desc.Width != m_ViewportSize.x || desc.Height != m_ViewportSize.y)) 
@@ -180,6 +182,25 @@ namespace Athena
         ImGui::Text("Quads: %d", stats.QuadCount);
         ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
         ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+
+        static Timer fpsUpdateTimer;
+        static Time updateInterval = Time::Seconds(0.05f);
+        static Time elapsed = Time(0);
+        static float fps = 0.f;
+        static float frameTime = 0.f;
+
+        if (elapsed > updateInterval)
+        {
+            fps = 1 / m_FrameTime.AsSeconds();
+            frameTime = m_FrameTime.AsMilliseconds();
+            elapsed = Time(0);
+        }
+        else
+        {
+            elapsed += m_FrameTime;
+        }
+        ImGui::Text("FPS: %.4g", fps);
+        ImGui::Text("FrameTime: %.5g", frameTime);
 
         ImGui::End();
 

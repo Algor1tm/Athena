@@ -26,6 +26,7 @@ namespace Athena
 	{
 		WindowDesc wdesc;
 		wdesc.Title = "Athena Editor";
+		wdesc.VSync = false;
 		return new AthenaEditor(wdesc);
 	}
 }

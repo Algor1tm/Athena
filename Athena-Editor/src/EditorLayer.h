@@ -30,6 +30,7 @@ namespace Athena
 
 		Vector2u m_ViewportSize = { 0, 0 };
 		Ref<Framebuffer> m_Framebuffer;
+		Time m_FrameTime;
 
 		Ref<Scene> m_ActiveScene;
 		Entity m_SquareEntity;

@@ -68,6 +68,8 @@ namespace Athena
 		glfwSetWindowUserPointer(m_Window, &m_Desc);
 		if (m_Desc.VSync)
 			glfwSwapInterval(1);	// VSync is disabled by default
+		else
+			glfwSwapInterval(0);
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{

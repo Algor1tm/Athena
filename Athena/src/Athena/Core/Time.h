@@ -37,12 +37,61 @@ namespace Athena
 		{
 			return m_Time.count();
 		}
+		
+		inline Time& operator+=(Time other)
+		{
+			m_Time += other.m_Time;
+			return *this;;
+		}
+
+		inline Time& operator-=(Time other)
+		{
+			m_Time -= other.m_Time;
+			return *this;;
+		}
+
+		inline Time operator+(Time other) const
+		{
+			return Time(m_Time + other.m_Time);
+		}
 
 		inline Time operator-(Time other) const
 		{
 			return Time(m_Time - other.m_Time);
 		}
 
+		inline bool operator==(Time other) const
+		{
+			return m_Time == other.m_Time;
+		}
+
+		inline bool operator!=(Time other) const
+		{
+			return m_Time != other.m_Time;
+		}
+
+		inline bool operator>(Time other) const
+		{
+			return m_Time > other.m_Time;
+		}
+
+		inline bool operator<(Time other) const
+		{
+			return m_Time < other.m_Time;
+		}
+
+		inline bool operator>=(Time other) const
+		{
+			return m_Time >= other.m_Time;
+		}
+
+		inline bool operator<=(Time other) const
+		{
+			return m_Time <= other.m_Time;
+		}
+
+
+	public:
 		static inline Time Seconds(float seconds)
 		{
 			return Time(seconds);

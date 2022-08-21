@@ -14,6 +14,8 @@ namespace Athena
 		ImGuiLayer();
 		~ImGuiLayer();
 
+		void SetDarkTheme();
+
 		void OnAttach() override;
 		void OnDetach() override;
 		void OnEvent(Event& event) override;

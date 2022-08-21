@@ -152,8 +152,9 @@ namespace Athena
         if (opt_fullscreen)
             ImGui::PopStyleVar(2);
 
-        // Submit the DockSpace
+        //DockSpace
         ImGuiIO& io = ImGui::GetIO();
+        // Submit the DockSpace
         if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
         {
             ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");

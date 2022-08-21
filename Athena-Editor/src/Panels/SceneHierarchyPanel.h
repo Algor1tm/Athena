@@ -24,7 +24,7 @@ namespace Athena
 		void DrawAllComponents(Entity entity);
 
 		template <typename Component, typename Func>
-		void DrawComponent(Entity entity, std::string_view name, int treeNodeFlags, Func function);
+		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
 
 	private:
 		Ref<Scene> m_Context;
@@ -34,36 +34,42 @@ namespace Athena
 
 
 	template <typename Component, typename Func>
-	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, int treeNodeFlags, Func function)
+	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, Func uiFunction)
 	{
+		ImGuiTreeNodeFlags flags =
+			ImGuiTreeNodeFlags_DefaultOpen |
+			ImGuiTreeNodeFlags_AllowItemOverlap |
+			ImGuiTreeNodeFlags_SpanAvailWidth |
+			ImGuiTreeNodeFlags_Framed |
+			ImGuiTreeNodeFlags_FramePadding;
+
 		if (entity.HasComponent<Component>())
 		{
+			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
+			float lineWidth = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+			bool open = ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), flags, name.data());
+			ImGui::PopStyleVar();
+
+			ImGui::SameLine(regionAvail.x - lineWidth * 0.5f);
+			if (ImGui::Button("...", { lineWidth, lineWidth }))
+				ImGui::OpenPopup("ComponentSettings");
+
 			bool removeComponent = false;
-
-			if (ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), treeNodeFlags, name.data()))
+			if (ImGui::BeginPopup("ComponentSettings"))
 			{
-				if (treeNodeFlags & ImGuiTreeNodeFlags_AllowItemOverlap)
-				{
-					ImGui::SameLine(ImGui::GetWindowWidth() - 25.f);
+				if (ImGui::MenuItem("RemoveComponent"))
+					removeComponent = true;
 
-					if (ImGui::Button("+"))
-						ImGui::OpenPopup("ComponentSettings");
-
-
-					if (ImGui::BeginPopup("ComponentSettings"))
-					{
-						if (ImGui::MenuItem("RemoveComponent"))
-							removeComponent = true;
-
-						ImGui::EndPopup();
-					}
-				}
-
-				function(entity);
+				ImGui::EndPopup();
+			}
+				
+			if (open)
+			{
+				uiFunction(entity.GetComponent<Component>());
 				ImGui::TreePop();
-
 				ImGui::Spacing();
-				ImGui::Separator();
 			}
 
 			if (removeComponent)

@@ -2,7 +2,7 @@
 
 #include "Scene.h"
 
-#include <entt.h>
+#include <entt/entt.h>
 
 
 namespace Athena

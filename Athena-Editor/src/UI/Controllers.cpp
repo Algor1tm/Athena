@@ -1,9 +1,11 @@
-#include "Utils.h"
+#include "Controllers.h"
+
+#include <ImGui/imgui_internal.h>
 
 
 namespace Athena::UI
 {
-	void DrawVec3Control(std::string_view label, Vector3& values, float defaultValues, float columnWidth)
+	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];

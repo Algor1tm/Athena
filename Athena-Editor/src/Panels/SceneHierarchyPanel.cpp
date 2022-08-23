@@ -1,8 +1,8 @@
 #include "SceneHierarchyPanel.h"
 #include "Athena/Scene/Components.h"
-#include "../UILib/Utils.h"
+#include "UI/Controllers.h"
 
-#include <imgui.h>
+#include <ImGui/imgui.h>
 
 #include <array>
 
@@ -99,11 +99,11 @@ namespace Athena
 		
 		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
 			{
-				UI::DrawVec3Control("Position", transform.Position, 0.0f);
+				UI::DrawVec3Controller("Position", transform.Position, 0.0f);
 				Vector3 degrees = Math::Degrees(transform.Rotation);
-				UI::DrawVec3Control("Rotation", degrees, 0.0f);
+				UI::DrawVec3Controller("Rotation", degrees, 0.0f);
 				transform.Rotation = Math::Radians(degrees);
-				UI::DrawVec3Control("Scale", transform.Scale, 1.0f);
+				UI::DrawVec3Controller("Scale", transform.Scale, 1.0f);
 
 				ImGui::Spacing();
 			});

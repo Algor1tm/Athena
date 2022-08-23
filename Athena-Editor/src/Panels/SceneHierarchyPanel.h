@@ -4,6 +4,8 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Scene/Entity.h"
 
+#include <ImGui/imgui_internal.h>
+
 #include <string_view>
 
 

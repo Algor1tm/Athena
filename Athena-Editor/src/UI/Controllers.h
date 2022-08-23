@@ -2,15 +2,14 @@
 
 #include "Athena/Math/Vector.h"
 
-#include <imgui.h>
-#include <imgui_internal.h>
+#include <ImGui/imgui.h>
 
 #include <string_view>
 
 
 namespace Athena::UI
 {
-	void DrawVec3Control(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 70.f);
+	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 70.f);
 
 	template <typename Controller>
 	void DrawController(std::string_view label, float columnWidth, Controller controller)

@@ -7,7 +7,7 @@
 #include "Athena/Renderer/RenderCommand.h"
 #include "Athena/Scene/Components.h"
 
-#include <imgui.h>
+#include <ImGui/imgui.h>
 
 
 namespace Athena

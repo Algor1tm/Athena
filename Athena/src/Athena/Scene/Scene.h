@@ -12,6 +12,7 @@ namespace Athena
 	public:
 		friend class Entity;
 		friend class SceneHierarchyPanel;
+		friend class SceneSerializer;
 
 		Scene();
 		~Scene();
@@ -41,5 +42,3 @@ namespace Athena
 	template<typename T>
 	void Scene::OnComponentRemove(Entity entity) {}
 }
-
-

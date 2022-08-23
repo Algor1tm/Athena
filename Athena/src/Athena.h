@@ -22,6 +22,7 @@
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/NativeScript.h"
+#include "Athena/Scene/SceneSerializer.h"
 
 
 // ---Renderer--------------------

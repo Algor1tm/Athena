@@ -18,7 +18,8 @@ workspace "Athena"
 
 	defines
 	{
-		"ATN_SIMD"
+		"ATN_SIMD",
+		"YAML_CPP_STATIC_DEFINE"
 	}
 
 
@@ -29,6 +30,7 @@ group "Dependencies"
 	include "Athena/vendor/GLFW"
 	include "Athena/vendor/ImGui"
 	include "Athena/vendor/spdlog"
+	include "Athena/vendor/yaml-cpp"
 
 group ""
 

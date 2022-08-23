@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	struct WindowDesc
+	struct WindowDESC
 	{
 		using EventCallbackFn = std::function<void(Event&)>;
 
@@ -31,13 +31,13 @@ namespace Athena
 		virtual unsigned int GetHeight() const = 0;
 
 		// Window attributes
-		virtual void SetEventCallback(const WindowDesc::EventCallbackFn& callback) = 0;
+		virtual void SetEventCallback(const WindowDESC::EventCallbackFn& callback) = 0;
 		virtual void SetVSync(bool enabled) = 0;
 		virtual bool IsVSync() const = 0;
 
 		virtual void* GetNativeWindow() = 0;
 
-		static Scope<Window> Create(const WindowDesc& desc);
+		static Scope<Window> Create(const WindowDESC& desc);
 	};
 }
 

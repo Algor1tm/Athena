@@ -44,6 +44,7 @@
 	#error "Unknown platform!"
 #endif // End of platform detection
 
+
 // Type of linking detection
 // Athena currently not supporting dynamic linking
 #ifdef ATN_PLATFORM_WINDOWS

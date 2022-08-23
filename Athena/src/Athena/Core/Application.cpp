@@ -11,7 +11,7 @@ namespace Athena
 {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const WindowDesc& wdesc)
+	Application::Application(const WindowDESC& wdesc)
 		: m_Running(true), m_Minimized(false)
 	{
 		ATN_PROFILE_FUNCTION();

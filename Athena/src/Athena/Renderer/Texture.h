@@ -18,6 +18,8 @@ namespace Athena
 
 		virtual void Bind(uint32 slot = 0) const = 0;
 		virtual void UnBind() const = 0;
+
+		virtual const String& GetFilepath() const = 0;
 	};
 
 
@@ -51,6 +53,7 @@ namespace Athena
 	public:
 		Texture2DInstance() = default;
 		Texture2DInstance(const Ref<Texture2D>& texture);
+		Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
 		Texture2DInstance(const Ref<SubTexture2D>& subtexture);
 
 		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
@@ -58,8 +61,9 @@ namespace Athena
 
 		inline void SetTextureCoords(const std::array<Vector2, 4>& coords) { m_TexCoords = coords; }
 
-		void Set(const Ref<Texture2D>& texture);
-		void Set(const Ref<SubTexture2D>& subtexture);
+		void SetTexture(const Ref<Texture2D>& texture);
+		void SetTexture(const Ref<SubTexture2D>& subtexture);
+		void SetTexCoords(const std::array<Vector2, 4>& texCoords);
 
 	private:
 		Ref<Texture2D> m_Texture;

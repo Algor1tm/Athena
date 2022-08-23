@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	Ref<Framebuffer> Framebuffer::Create(const FramebufferDesc& desc)
+	Ref<Framebuffer> Framebuffer::Create(const FramebufferDESC& desc)
 	{
 		switch (Renderer::GetAPI())
 		{

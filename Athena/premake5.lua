@@ -29,23 +29,25 @@ project "Athena"
 		"%{IncludeDir.ImGui}",
 		"vendor/ImGui/ImGui",
 		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.stb_image}"
+		"%{IncludeDir.stb_image}",
+		"%{IncludeDir.yaml}"
 	}
 	
 	links
 	{
 		"glad",
 		"GLFW",
+		"opengl32.lib",
 		"ImGui",
 		"spdlog",
-		"opengl32.lib"
+		"yaml-cpp"
 	}
 
 	defines 
 	{
 		"_CRT_SECURE_NO_WARNINGS",
 		"ATN_BUILD_DLL",
-		"GLFW_INCLUDE_NONE"
+		"GLFW_INCLUDE_NONE",
 	}
 
 	filter "system:windows"

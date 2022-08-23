@@ -19,13 +19,13 @@ namespace Athena
 		ATN_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Scope<Window> Window::Create(const WindowDesc& desc)
+	Scope<Window> Window::Create(const WindowDESC& desc)
 	{
 		return CreateScope<WindowsWindow>(desc);
 	}
 
 
-	WindowsWindow::WindowsWindow(const WindowDesc& desc)
+	WindowsWindow::WindowsWindow(const WindowDESC& desc)
 		: m_Desc(desc)
 	{
 		ATN_PROFILE_FUNCTION();
@@ -73,7 +73,7 @@ namespace Athena
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 				data.Width = width;
 				data.Height = height;
 
@@ -83,7 +83,7 @@ namespace Athena
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow * window)
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
 				WindowCloseEvent event;
 				data.EventCallback(event);
@@ -91,7 +91,7 @@ namespace Athena
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 				
 				switch (action)
 				{
@@ -118,7 +118,7 @@ namespace Athena
 		
 		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int character) 
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
 				KeyTypedEvent event(character);
 				data.EventCallback(event);
@@ -126,7 +126,7 @@ namespace Athena
 
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int modes)
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
 				switch (action)
 				{
@@ -147,7 +147,7 @@ namespace Athena
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
 				MouseScrolledEvent event((float)xOffset, (float)yOffset);
 				data.EventCallback(event);
@@ -155,7 +155,7 @@ namespace Athena
 
 		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double x, double y) 
 			{
-				WindowDesc& data = *reinterpret_cast<WindowDesc*>(glfwGetWindowUserPointer(window));
+				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
 				MouseMovedEvent event((float)x, (float)y);
 				data.EventCallback(event);

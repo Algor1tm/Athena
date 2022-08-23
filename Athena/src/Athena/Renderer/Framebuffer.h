@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	struct FramebufferDesc
+	struct FramebufferDESC
 	{
 		uint32 Width, Height;
 		uint32 Samples = 1;
@@ -20,13 +20,13 @@ namespace Athena
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
-		virtual const FramebufferDesc& GetDescription() const = 0;
+		virtual const FramebufferDESC& GetDescription() const = 0;
 		virtual uint32 GetColorAttachmentRendererID() const = 0;
 
 		virtual void Bind() const = 0;
 		virtual void UnBind() const = 0;
 
-		static Ref<Framebuffer> Create(const FramebufferDesc& desc);
+		static Ref<Framebuffer> Create(const FramebufferDESC& desc);
 	};
 }
 	

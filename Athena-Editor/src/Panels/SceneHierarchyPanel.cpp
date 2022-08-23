@@ -185,7 +185,7 @@ namespace Athena
 				}
 
 				ImGui::Checkbox("Primary", &cameraComponent.Primary);
-
+				ImGui::Checkbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
 			});
 
 		ImGui::Separator();

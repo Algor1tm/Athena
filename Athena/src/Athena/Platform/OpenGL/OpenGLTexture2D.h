@@ -22,7 +22,10 @@ namespace Athena
 		void Bind(uint32 slot = 0) const override;
 		void UnBind() const override;
 
+		const String& GetFilepath() const override { return m_Path; };
+
 		bool operator==(const Texture2D& other) const override;
+
 	private:
 		RendererID m_RendererID = 0;
 

@@ -11,7 +11,7 @@ namespace Athena
 	class ATHENA_API WindowsWindow : public Window
 	{
 	public:
-		WindowsWindow(const WindowDesc& desc);
+		WindowsWindow(const WindowDESC& desc);
 		~WindowsWindow();
 
 		void OnUpdate() override;
@@ -19,7 +19,7 @@ namespace Athena
 		inline unsigned int GetWidth() const override { return m_Desc.Width; }
 		inline unsigned int GetHeight() const override { return m_Desc.Height; }
 
-		inline void SetEventCallback(const WindowDesc::EventCallbackFn& callback) override
+		inline void SetEventCallback(const WindowDESC::EventCallbackFn& callback) override
 		{
 			m_Desc.EventCallback = callback;
 		}
@@ -35,7 +35,7 @@ namespace Athena
 
 	private:
 		GLFWwindow* m_Window;
-		WindowDesc m_Desc;
+		WindowDESC m_Desc;
 		Scope<GraphicsContext> m_Context;
 	};
 }

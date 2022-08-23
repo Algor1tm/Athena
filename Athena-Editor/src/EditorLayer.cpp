@@ -6,6 +6,7 @@
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/RenderCommand.h"
 #include "Athena/Scene/Components.h"
+#include "Athena/Scene/SceneSerializer.h"
 
 #include <ImGui/imgui.h>
 
@@ -22,18 +23,18 @@ namespace Athena
     {
         ATN_PROFILE_FUNCTION();
 
-        m_CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
-        m_KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
-
-        m_CameraController.SetZoomLevel(1.f);
-
-        FramebufferDesc fbDesc;
+        FramebufferDESC fbDesc;
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
         m_Framebuffer = Framebuffer::Create(fbDesc);
         m_ViewportSize = { fbDesc.Width, fbDesc.Height };
 
         m_ActiveScene = CreateRef<Scene>();
+#if 0
+        m_CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
+        m_KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
+
+        m_CameraController.SetZoomLevel(1.f);
 
         m_SquareEntity = m_ActiveScene->CreateEntity("Square");
         m_SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
@@ -67,6 +68,7 @@ namespace Athena
         };
 
         m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
+#endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
     }
@@ -165,11 +167,31 @@ namespace Athena
         {
             if (ImGui::BeginMenu("File"))
             {
+                if (ImGui::MenuItem("Save", NULL, false))
+                {
+                    std::string_view savePath = "assets/scene/Example.atnscene";
+                    SceneSerializer serializer(m_ActiveScene);
+                    serializer.SerializeToFile(savePath.data());
+                    ATN_CORE_INFO("Successfully saved into '{0}'", savePath.data());
+                }
+
+                if (ImGui::MenuItem("Load", NULL, false))
+                {
+                    std::string_view loadPath = "assets/scene/Example.atnscene";
+                    SceneSerializer serializer(m_ActiveScene);
+                    serializer.DeserializeFromFile(loadPath.data());
+                    ATN_CORE_INFO("Successfully loaded from '{0}'", loadPath.data());
+                }
+
+                ImGui::Separator();
+                ImGui::Spacing();
+
                 if (ImGui::MenuItem("Close", NULL, false))
                 {
                     dockSpaceOpen = false;
                     Application::Get().Close();
                 }
+
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();

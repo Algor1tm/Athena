@@ -59,23 +59,34 @@ namespace Athena
 
 	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture)
 	{
-		Set(texture);
+		SetTexture(texture);
+		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
 	}
 
 	Texture2DInstance::Texture2DInstance(const Ref<SubTexture2D>& subtexture)
 	{
-		Set(subtexture);
+		SetTexture(subtexture);
+		SetTexCoords(subtexture->GetTexCoords());
 	}
 
-	void Texture2DInstance::Set(const Ref<Texture2D>& texture)
+	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
+	{
+		SetTexture(texture);
+		SetTexCoords(texCoords);
+	}
+
+	void Texture2DInstance::SetTexture(const Ref<Texture2D>& texture)
 	{
 		m_Texture = texture;
-		m_TexCoords = { Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 	}
 
-	void Texture2DInstance::Set(const Ref<SubTexture2D>& subtexture)
+	void Texture2DInstance::SetTexture(const Ref<SubTexture2D>& subtexture)
 	{
 		m_Texture = subtexture->GetNativeTexture();
-		m_TexCoords = subtexture->GetTexCoords();
+	}
+
+	void Texture2DInstance::SetTexCoords(const std::array<Vector2, 4>& texCoords)
+	{
+		m_TexCoords = texCoords;
 	}
 }

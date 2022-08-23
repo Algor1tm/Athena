@@ -8,7 +8,7 @@ namespace Athena
 {
 	static uint32 s_MaxFramebufferSize = 8192;
 
-	OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferDesc& desc)
+	OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferDESC& desc)
 		: m_Description(desc)
 	{
 		Recreate();

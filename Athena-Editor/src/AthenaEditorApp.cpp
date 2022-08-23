@@ -9,7 +9,7 @@ namespace Athena
 	class AthenaEditor : public Application
 	{
 	public:
-		AthenaEditor(const WindowDesc& wdesc)
+		AthenaEditor(const WindowDESC& wdesc)
 			: Application(wdesc)
 		{
 			PushLayer(new EditorLayer);
@@ -24,7 +24,7 @@ namespace Athena
 
 	Application* CreateApplication()
 	{
-		WindowDesc wdesc;
+		WindowDESC wdesc;
 		wdesc.Title = "Athena Editor";
 		wdesc.VSync = true;
 		return new AthenaEditor(wdesc);

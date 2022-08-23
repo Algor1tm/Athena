@@ -4,8 +4,6 @@
 
 #include <ImGui/imgui.h>
 
-#include <array>
-
 
 namespace Athena
 {

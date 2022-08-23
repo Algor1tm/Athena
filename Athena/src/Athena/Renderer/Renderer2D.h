@@ -23,16 +23,16 @@ namespace Athena
 
 		static void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		static void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
-		static void DrawQuad(const Vector2& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		static void DrawQuad(const Vector3& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		static void DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		static void DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
-		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		static void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White);
-		static void DrawQuad(const Matrix4& transform, const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		static void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		// Stats
 		struct Statistics

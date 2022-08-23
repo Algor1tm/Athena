@@ -46,12 +46,12 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture2DStorage
+	class ATHENA_API Texture2DInstance
 	{
 	public:
-		Texture2DStorage() = default;
-		Texture2DStorage(const Ref<Texture2D>& texture);
-		Texture2DStorage(const Ref<SubTexture2D>& subtexture);
+		Texture2DInstance() = default;
+		Texture2DInstance(const Ref<Texture2D>& texture);
+		Texture2DInstance(const Ref<SubTexture2D>& subtexture);
 
 		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
 		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };

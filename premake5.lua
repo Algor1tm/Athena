@@ -21,12 +21,6 @@ workspace "Athena"
 		"ATN_SIMD"
 	}
 
-	filter "system:windows"
-		buildoptions
-		{
-			"/arch:AVX2"
-		}
-
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 

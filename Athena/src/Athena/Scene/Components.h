@@ -30,7 +30,7 @@ namespace Athena
 		TransformComponent(const Vector3& position)
 			: Position(position) {}
 
-		Matrix4 GetTransform() const
+		Matrix4 AsMatrix() const
 		{
 			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Math::EulerAngles(Rotation.x, Rotation.y, Rotation.z);
 			return transofrm.Translate(Position);
@@ -40,13 +40,13 @@ namespace Athena
 	struct SpriteComponent
 	{
 		LinearColor Color;
-		Texture2DStorage Texture;
+		Texture2DInstance Texture;
 		float TilingFactor;
 
 		SpriteComponent(const LinearColor& color = LinearColor::White)
 			: Color(color), TilingFactor(1.f) {}
 
-		SpriteComponent(const Texture2DStorage& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
+		SpriteComponent(const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
 			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}
 	};
 

@@ -60,7 +60,7 @@ namespace Athena
 			if (camera.Primary)
 			{
 				mainCamera = &camera.Camera;
-				cameraTransform = transformComponent.GetTransform();
+				cameraTransform = transformComponent.AsMatrix();
 				break;
 			}
 		}
@@ -75,9 +75,9 @@ namespace Athena
 				auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
 
 				if (sprite.Texture.GetNativeTexture() != nullptr)
-					Renderer2D::DrawQuad(transform.GetTransform(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 				else
-					Renderer2D::DrawQuad(transform.GetTransform(), sprite.Color);
+					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Color);
 			}
 
 			Renderer2D::EndScene();

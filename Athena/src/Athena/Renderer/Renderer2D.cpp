@@ -177,12 +177,12 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f )).Translate(position);
 		
@@ -202,12 +202,12 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = 
 			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -242,7 +242,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DStorage& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		ATN_PROFILE_FUNCTION();
 

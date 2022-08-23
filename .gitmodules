@@ -8,6 +8,6 @@
 	path = Athena/vendor/ImGui/ImGui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
-[submodule "Athena/vendor/yaml/yaml"]
+[submodule "Athena/vendor/yaml-cpp/yaml-cpp"]
 	path = Athena/vendor/yaml-cpp/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git

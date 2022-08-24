@@ -2,9 +2,12 @@
 
 #include "Athena/Core/Input.h"
 #include "Athena/Core/Application.h"
+#include "Athena/Core/PlatformUtils.h"
+
 #include "Athena/Debug/Instrumentor.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/RenderCommand.h"
+
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
@@ -167,26 +170,25 @@ namespace Athena
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("Save", NULL, false))
+                if (ImGui::MenuItem("New", "Ctrl+N", false))
                 {
-                    std::string_view savePath = "assets/scene/Example.atnscene";
-                    SceneSerializer serializer(m_ActiveScene);
-                    serializer.SerializeToFile(savePath.data());
-                    ATN_CORE_INFO("Successfully saved into '{0}'", savePath.data());
+                    NewScene();
                 }
 
-                if (ImGui::MenuItem("Load", NULL, false))
+                if (ImGui::MenuItem("Open...", "Ctrl+O", false))
                 {
-                    std::string_view loadPath = "assets/scene/Example.atnscene";
-                    SceneSerializer serializer(m_ActiveScene);
-                    serializer.DeserializeFromFile(loadPath.data());
-                    ATN_CORE_INFO("Successfully loaded from '{0}'", loadPath.data());
+                    OpenScene();
+                }
+
+                if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+                {
+                    SaveSceneAs();
                 }
 
                 ImGui::Separator();
                 ImGui::Spacing();
 
-                if (ImGui::MenuItem("Close", NULL, false))
+                if (ImGui::MenuItem("Close", "Escape", false))
                 {
                     dockSpaceOpen = false;
                     Application::Get().Close();
@@ -250,5 +252,63 @@ namespace Athena
     void EditorLayer::OnEvent(Event& event)
     {
         m_CameraController.OnEvent(event);
+
+        EventDispatcher dispatcher(event);
+        dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
+    }
+
+    bool EditorLayer::OnKeyPressed(KeyPressedEvent& event)
+    {
+        if (event.GetRepeatCount() > 0)
+            return false;
+
+        bool ctrl = Input::IsKeyPressed(Key::LCtrl) || Input::IsKeyPressed(Key::RCtrl);
+
+        if (!ctrl)
+            return true;
+            
+        switch (event.GetKeyCode())
+        {
+        case Key::S: SaveSceneAs(); break;         
+        case Key::N: NewScene(); break;
+        case Key::O: OpenScene(); break;
+        }
+
+        return true;
+    }
+
+
+    void EditorLayer::NewScene()
+    {
+        m_ActiveScene = CreateRef<Scene>();
+        m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        m_HierarchyPanel.SetContext(m_ActiveScene);
+        ATN_CORE_INFO("Successfully created new scene");
+    }
+
+    void EditorLayer::SaveSceneAs()
+    {
+        String filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
+        if (!filepath.empty())
+        {
+            SceneSerializer serializer(m_ActiveScene);
+            serializer.SerializeToFile(filepath.data());
+            ATN_CORE_INFO("Successfully saved into '{0}'", filepath.data());
+        }
+    }
+
+    void EditorLayer::OpenScene()
+    {
+        String filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
+        if (!filepath.empty())
+        {
+            m_ActiveScene = CreateRef<Scene>();
+            m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+            m_HierarchyPanel.SetContext(m_ActiveScene);
+
+            SceneSerializer serializer(m_ActiveScene);
+            serializer.DeserializeFromFile(filepath.data());
+            ATN_CORE_INFO("Successfully loaded from '{0}'", filepath.data());
+        }
     }
 }

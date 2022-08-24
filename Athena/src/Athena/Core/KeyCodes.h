@@ -131,14 +131,14 @@ namespace Athena
 			KPEnter = 335,
 			KPEqual = 336,
 
-			LeftShift = 340,
-			LeftControl = 341,
-			LeftAlt = 342,
-			LeftWindows = 343,
-			RightShift = 344,
-			RightControl = 345,
-			RightAlt = 346,
-			RightWindows = 347,
+			LShift = 340,
+			LCtrl = 341,
+			LAlt = 342,
+			LWindows = 343,
+			RShift = 344,
+			RCtrl = 345,
+			RAlt = 346,
+			RWindows = 347,
 			Menu = 348
 		};
 	}

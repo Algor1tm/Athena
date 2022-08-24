@@ -3,6 +3,7 @@
 #include "Athena/Core/Layer.h"
 #include "Athena/Core/Color.h"
 #include "Athena/Core/OrthographicCameraController.h"
+#include "Athena/Events/KeyEvent.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Framebuffer.h"
 #include "Athena/Scene/Entity.h"
@@ -23,6 +24,13 @@ namespace Athena
 		void OnUpdate(Time frameTime) override;
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
+
+	private:
+		bool OnKeyPressed(KeyPressedEvent& event);
+
+		void NewScene();
+		void SaveSceneAs();
+		void OpenScene();
 
 	private:
 		Ref<Texture2D> m_CheckerBoard;

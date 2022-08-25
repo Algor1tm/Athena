@@ -3,6 +3,8 @@
 #include "Athena/Math/Types/Matrix.h"
 #include "Athena/Math/Types/Vector.h"
 #include "Common.h"
+#include "MatrixCommon.h"
+#include "Limits.h"
 
 
 namespace Athena::Math
@@ -58,6 +60,33 @@ namespace Athena::Math
 		return out;
 	}
 
+	template <typename T>
+	inline void DecomposeTransform(const Matrix<T, 4, 4>& transform, Vector<T, 3>& translation, Vector<T, 3>& rotation, Vector<T, 3>& scale)
+	{
+		translation = transform[3];
+
+		Vector<T, 3> rows[3];
+		for (SIZE_T i = 0; i < 3; ++i)
+			rows[i] = transform[i];
+
+		scale.x = rows[0].Length();
+		scale.y = rows[1].Length();
+		scale.z = rows[2].Length();
+
+		rows[0].Normalize(); rows[1].Normalize(), rows[2].Normalize();
+
+		rotation.y = Math::Asin(-rows[0][2]);
+		if (Math::Cos(rotation.y) != 0)
+		{
+			rotation.x = Math::Atan2(rows[1][2], rows[2][2]);
+			rotation.z = Math::Atan2(rows[0][1], rows[0][0]);
+		}
+		else
+		{
+			rotation.x = Math::Atan2(-rows[2][0], rows[1][1]);
+			rotation.z = 0;
+		}
+	}
 
 	template <typename T>
 	inline Matrix<T, 4, 4> EulerAngles(T x, T y, T z)

@@ -2,7 +2,13 @@
 
 #include "Scene.h"
 
+#ifdef _MSC_VER
+#pragma warning(push, 0)
 #include <entt/entt.h>
+#pragma warning(pop)
+#else
+#include <entt/entt.h>
+#endif
 
 
 namespace Athena

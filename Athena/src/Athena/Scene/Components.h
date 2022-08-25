@@ -4,6 +4,7 @@
 #include "Athena/Core/Color.h"
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Math/Quaternion.h"
 
 #include "NativeScript.h"
 
@@ -22,18 +23,18 @@ namespace Athena
 
 	struct TransformComponent
 	{
-		Vector3 Position = { 0.f, 0.f, 0.f };
+		Vector3 Translation = { 0.f, 0.f, 0.f };
 		Vector3 Rotation = { 0.f, 0.f, 0.f };
 		Vector3 Scale = { 1.f, 1.f, 1.f };
 
 		TransformComponent() = default;
 		TransformComponent(const Vector3& position)
-			: Position(position) {}
+			: Translation(position) {}
 
 		Matrix4 AsMatrix() const
 		{
-			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Math::EulerAngles(Rotation.x, Rotation.y, Rotation.z);
-			return transofrm.Translate(Position);
+			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Matrix4(Quat(Rotation));
+			return transofrm.Translate(Translation);
 		}
 	};
 

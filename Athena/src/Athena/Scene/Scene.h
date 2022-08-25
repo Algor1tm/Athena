@@ -2,7 +2,13 @@
 
 #include "Athena/Core/Time.h"
 
+#ifdef _MSC_VER
+#pragma warning(push, 0)
 #include <entt/entt.h>
+#pragma warning(pop)
+#else
+#include <entt/entt.h>
+#endif
 
 
 namespace Athena
@@ -22,6 +28,8 @@ namespace Athena
 
 		void OnUpdate(Time frameTime);
 		void OnViewportResize(uint32 width, uint32 height);
+
+		Entity GetPrimaryCameraEntity();
 
 	private:
 		template <typename T>

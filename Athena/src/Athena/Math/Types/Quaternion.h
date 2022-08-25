@@ -38,12 +38,23 @@ namespace Athena::Math
 			  y(static_cast<T>(vec4.z)),
 			  z(static_cast<T>(vec4.w)) {}
 
-		constexpr Quaternion(float radians, const Vector<T, 3>& axis)
+		inline Quaternion(const Vector<T, 3>& eulerAngles)
 		{
-			T s = Sin(radians * static_cast<T>(0.5));
+			Vector<T, 3> c = Math::Cos(eulerAngles * T(0.5));
+			Vector<T, 3> s = Math::Sin(eulerAngles * T(0.5));
+
+			w = c.x * c.y * c.z + s.x * s.y * s.z;
+			x = s.x * c.y * c.z - c.x * s.y * s.z;
+			y = c.x * s.y * c.z + s.x * c.y * s.z;
+			z = c.x * c.y * s.z - s.x * s.y * c.z;
+		}
+
+		inline Quaternion(float radians, const Vector<T, 3>& axis)
+		{
+			T s = Math::Sin(radians * static_cast<T>(0.5));
 			Vector<T, 3> v = axis * s;
 
-			w = Cos(a * static_cast<T>(0.5));
+			w = Math::Cos(a * static_cast<T>(0.5));
 			x = v.x;
 			y = v.y;
 			z = v.z;
@@ -80,16 +91,31 @@ namespace Athena::Math
 			switch (biggestIndex)
 			{
 			case 0:
-				return Quaternion(biggestVal, (m[1][2] - m[2][1]) * mult, (m[2][0] - m[0][2]) * mult, (m[0][1] - m[1][0]) * mult);
+				w = biggestVal; 
+				x = (m[1][2] - m[2][1]) * mult; 
+				y = (m[2][0] - m[0][2]) * mult; 
+				z = (m[0][1] - m[1][0]) * mult; 
+				break;
 			case 1:
-				return Quaternion((m[1][2] - m[2][1]) * mult, biggestVal, (m[0][1] + m[1][0]) * mult, (m[2][0] + m[0][2]) * mult);
+				w = (m[1][2] - m[2][1]) * mult;
+				x = biggestVal;
+				y = (m[0][1] + m[1][0]) * mult;
+				z = (m[2][0] + m[0][2]) * mult;
+				break;
 			case 2:
-				return Quaternion((m[2][0] - m[0][2]) * mult, (m[0][1] + m[1][0]) * mult, biggestVal, (m[1][2] + m[2][1]) * mult);
+				w = (m[2][0] - m[0][2]) * mult;
+				x = (m[0][1] + m[1][0]) * mult;
+				y = biggestVal;
+				z = (m[1][2] + m[2][1]) * mult;
+				break;
 			case 3:
-				return Quaternion((m[0][1] - m[1][0]) * mult, (m[2][0] + m[0][2]) * mult, (m[1][2] + m[2][1]) * mult, biggestVal);
+				w = (m[0][1] - m[1][0]) * mult;
+				x = (m[2][0] + m[0][2]) * mult;
+				y = (m[1][2] + m[2][1]) * mult;
+				z = biggestVal;
+				break;
 			default:
 				ATN_CORE_ASSERT(false, "");
-				return Quaternion();
 			}
 		}
 

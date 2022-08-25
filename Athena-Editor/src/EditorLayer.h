@@ -10,6 +10,8 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 
+#include <ImGuizmo/ImGuizmo.h>
+
 
 namespace Athena
 {
@@ -33,20 +35,15 @@ namespace Athena
 		void OpenScene();
 
 	private:
-		Ref<Texture2D> m_CheckerBoard;
-		Ref<Texture2D> m_KomodoHype;
-
+		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		Vector2u m_ViewportSize = { 0, 0 };
 		Ref<Framebuffer> m_Framebuffer;
+		OrthographicCameraController m_CameraController;
 		Time m_FrameTime;
 
 		Ref<Scene> m_ActiveScene;
-		Entity m_SquareEntity;
-		Entity m_Komodo;
-		Entity m_CameraEntity;
-
-		bool m_ViewportFocused = true, m_ViewportHovered = true;
-		OrthographicCameraController m_CameraController;
+		Entity m_SelectedEntity = {};
+		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 
 		SceneHierarchyPanel m_HierarchyPanel;
 	};

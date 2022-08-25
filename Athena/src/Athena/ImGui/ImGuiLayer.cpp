@@ -11,6 +11,8 @@
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_opengl3.h>
 
+#include <ImGuizmo/ImGuizmo.h>
+
 
 namespace Athena
 {
@@ -126,6 +128,7 @@ namespace Athena
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 	}
 
 	void ImGuiLayer::End()

@@ -15,6 +15,8 @@ project "Athena"
 		"src/**.h",
 		"src/**.cpp",
 		"vendor/entt/entt.h",
+		"vendor/ImGuizmo/ImGuizmo.h",
+		"vendor/ImGuizmo/ImGuizmo.cpp",
 		"vendor/stb_image/stb_image.h",
 		"vendor/stb_image/stb_image.cpp"
 	}
@@ -28,6 +30,7 @@ project "Athena"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
 		"vendor/ImGui/ImGui",
+		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.yaml}"
@@ -49,6 +52,9 @@ project "Athena"
 		"ATN_BUILD_DLL",
 		"GLFW_INCLUDE_NONE",
 	}
+
+	filter "files:vendor/ImGuizmo/**.cpp"
+	flags { "NoPCH" }
 
 	filter "system:windows"
 		staticruntime "On"

@@ -34,29 +34,29 @@ namespace Athena
 
         m_ActiveScene = CreateRef<Scene>();
 #if 0
-        m_CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
-        m_KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
+        auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
+        auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
         m_CameraController.SetZoomLevel(1.f);
 
-        m_SquareEntity = m_ActiveScene->CreateEntity("Square");
-        m_SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
-        m_SquareEntity.GetComponent<TransformComponent>().Position += Vector3(-1.f, 0, 0);
+        Entity SquareEntity = m_ActiveScene->CreateEntity("Square");
+        SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
+        SquareEntity.GetComponent<TransformComponent>().Translation += Vector3(-1.f, 0, 0);
 
-        m_Komodo = m_ActiveScene->CreateEntity("KomodoHype");
-        m_Komodo.AddComponent<SpriteComponent>(m_KomodoHype);
-        m_Komodo.GetComponent<TransformComponent>().Position += Vector3(2.f, 2.f, 0);
+        Entity Komodo = m_ActiveScene->CreateEntity("KomodoHype");
+        Komodo.AddComponent<SpriteComponent>(KomodoHype);
+        Komodo.GetComponent<TransformComponent>().Translation += Vector3(2.f, 2.f, 0);
 
-        m_CameraEntity = m_ActiveScene->CreateEntity("Camera");
-        m_CameraEntity.AddComponent<CameraComponent>();
-        m_CameraEntity.GetComponent<CameraComponent>().Camera.SetOrthographicSize(10.f);
+        Entity CameraEntity = m_ActiveScene->CreateEntity("Camera");
+        CameraEntity.AddComponent<CameraComponent>();
+        CameraEntity.GetComponent<CameraComponent>().Camera.SetOrthographicSize(10.f);
 
         class CameraScript: public NativeScript
         {
         public:
             void OnUpdate(Time frameTime) override
             {
-                Vector3& position = GetComponent<TransformComponent>().Position;
+                Vector3& position = GetComponent<TransformComponent>().Translation;
                 static float speed = 10.f;
 
                 if (Input::IsKeyPressed(Key::A))
@@ -70,7 +70,7 @@ namespace Athena
             }
         };
 
-        m_CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
+        CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
 #endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -235,13 +235,52 @@ namespace Athena
 
         m_ViewportFocused = ImGui::IsWindowFocused();
         m_ViewportHovered = ImGui::IsWindowHovered();    
-        Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
+        Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
 
         auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
 
         uint32 texID = m_Framebuffer->GetColorAttachmentRendererID();
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
+
+        m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();
+        //Gizmos
+        if (m_SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::UNIVERSAL && m_SelectedEntity.HasComponent<TransformComponent>())
+        {
+            ImGuizmo::SetOrthographic(false);
+            ImGuizmo::SetDrawlist();
+            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, 
+                ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+            
+            auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
+            const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+            const Matrix4& cameraProjection = camera.GetProjection();
+            Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
+
+            auto& tc = m_SelectedEntity.GetComponent<TransformComponent>();
+            Matrix4 transform = tc.AsMatrix();
+
+            bool snap = Input::IsKeyPressed(Key::LCtrl);
+            float snapValue = 0.5f;
+            if (m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)
+                snapValue = 45.f;
+
+            Vector3 snapValues = Vector3(snapValue);
+
+            ImGuizmo::Manipulate(cameraView.Data(), cameraProjection.Data(), 
+                m_GuizmoOperation, ImGuizmo::LOCAL, transform.Data(), 
+                nullptr, snap ? snapValues.Data() : nullptr);
+
+            if (ImGuizmo::IsUsing())
+            {
+                Vector3 translation, rotation, scale;
+                Math::DecomposeTransform(transform, translation, rotation, scale);
+
+                tc.Translation = translation;
+                tc.Rotation = rotation;
+                tc.Scale = scale;
+            }
+        }
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -264,14 +303,16 @@ namespace Athena
 
         bool ctrl = Input::IsKeyPressed(Key::LCtrl) || Input::IsKeyPressed(Key::RCtrl);
 
-        if (!ctrl)
-            return true;
-            
         switch (event.GetKeyCode())
         {
-        case Key::S: SaveSceneAs(); break;         
-        case Key::N: NewScene(); break;
-        case Key::O: OpenScene(); break;
+        case Key::S: if(ctrl) SaveSceneAs(); break;
+        case Key::N: if(ctrl) NewScene(); break;
+        case Key::O: if(ctrl) OpenScene(); break;
+        //Gizmos
+        case Key::Q: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::UNIVERSAL); break;
+        case Key::W: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+        case Key::E: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+        case Key::R: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
         }
 
         return true;

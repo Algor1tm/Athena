@@ -186,7 +186,7 @@ namespace Athena
 				if (transformComponentNode)
 				{
 					auto& transform = deserializedEntity.GetComponent<TransformComponent>();
-					transform.Position = transformComponentNode["Position"].as<Vector3>();
+					transform.Translation = transformComponentNode["Translation"].as<Vector3>();
 					transform.Rotation = transformComponentNode["Rotation"].as<Vector3>();
 					transform.Scale = transformComponentNode["Scale"].as<Vector3>();
 				}
@@ -284,7 +284,7 @@ namespace Athena
 		SerializeComponent<TransformComponent>(out, "TransformComponent", entity,
 			[](YAML::Emitter& output, const TransformComponent& transform)
 			{
-				output << YAML::Key << "Position" << YAML::Value << transform.Position;
+				output << YAML::Key << "Translation" << YAML::Value << transform.Translation;
 				output << YAML::Key << "Rotation" << YAML::Value << transform.Rotation;
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
 			});

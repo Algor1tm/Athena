@@ -20,6 +20,7 @@ project "Athena-Editor"
 		"%{wks.location}/Athena/vendor",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.spdlog}"
 	}
 

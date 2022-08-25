@@ -98,7 +98,7 @@ namespace Athena
 		
 		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
 			{
-				UI::DrawVec3Controller("Position", transform.Position, 0.0f);
+				UI::DrawVec3Controller("Position", transform.Translation, 0.0f);
 				Vector3 degrees = Math::Degrees(transform.Rotation);
 				UI::DrawVec3Controller("Rotation", degrees, 0.0f);
 				transform.Rotation = Math::Radians(degrees);

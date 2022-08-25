@@ -9,7 +9,7 @@ namespace Athena
 {
 	struct QuadVertex
 	{
-		Vector3 Position;
+		Vector3 Translation;
 		LinearColor Color;
 		Vector2 TexCoord;
 		float TexIndex;
@@ -229,7 +229,7 @@ namespace Athena
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
+			s_Data.QuadVertexBufferPointer->Translation = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = color;
 			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
 			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
@@ -274,7 +274,7 @@ namespace Athena
 
 		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
 		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
+			s_Data.QuadVertexBufferPointer->Translation = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
 			s_Data.QuadVertexBufferPointer->TexCoord = texCoords[i];
 			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;

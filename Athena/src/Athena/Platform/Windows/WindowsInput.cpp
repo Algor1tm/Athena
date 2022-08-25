@@ -22,7 +22,7 @@ namespace Athena
 		return state;
 	}
 
-	Vector2 Input::GetMouse()
+	Vector2 Input::GetMousePosition()
 	{
 		auto window = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
 		double x, y;

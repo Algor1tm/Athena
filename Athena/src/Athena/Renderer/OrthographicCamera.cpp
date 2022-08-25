@@ -21,13 +21,13 @@ namespace Athena
 		m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;
 	}
 
-	void OrthographicCamera::RecalculateViewMatrix()
+	void OrthographicCamera::RecalculateView()
 	{
 		ATN_PROFILE_FUNCTION();
 
-		Matrix4 transform = RotateMatrix(m_Rotation, Vector3(0, 0, 1)) * TranslateMatrix(m_Position);
+		Matrix4 transform = Math::RotateMatrix(m_Rotation, Vector3(0, 0, 1)) * Math::TranslateMatrix(m_Position);
 		
-		m_ViewMatrix = AffineInverse(transform);
+		m_ViewMatrix = Math::AffineInverse(transform);
 		m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;
 	}
 }

@@ -4,7 +4,7 @@
 #include "Entity.h"
 
 #include "Components.h"
-#include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/Renderer2D.h" 
 
 
 namespace Athena
@@ -33,21 +33,42 @@ namespace Athena
 		m_Registry.destroy(entity);
 	}
 
-	void Scene::OnUpdate(Time frameTime)
+	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
+	{
+		// Render 2D
+
+		Renderer2D::BeginScene(camera);
+
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
+		for (auto entity : group)
+		{
+			auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
+
+			if (sprite.Texture.GetNativeTexture() != nullptr)
+				Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+			else
+				Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Color);
+		}
+
+		Renderer2D::EndScene();
+		
+	}
+
+	void Scene::OnUpdateRuntime(Time frameTime)
 	{
 		//Run native scripts
-		m_Registry.view<NativeScriptComponent>().each([=] (auto entity, auto& nsc) 
-		{
-			if (!nsc.Script)
+		m_Registry.view<NativeScriptComponent>().each([=](auto entity, auto& nsc)
 			{
-				nsc.Script = nsc.InstantiateScript();
-				nsc.Script->m_Entity = Entity(entity, this);
+				if (!nsc.Script)
+				{
+					nsc.Script = nsc.InstantiateScript();
+					nsc.Script->m_Entity = Entity(entity, this);
 
-				nsc.Script->Init();
-			}
+					nsc.Script->Init();
+				}
 
-			nsc.Script->OnUpdate(frameTime);
-		});
+				nsc.Script->OnUpdate(frameTime);
+			});
 
 		// Choose camera
 		Camera* mainCamera = nullptr;
@@ -81,7 +102,7 @@ namespace Athena
 			}
 
 			Renderer2D::EndScene();
-		}	
+		}
 	}
 
 	void Scene::OnViewportResize(uint32 width, uint32 height)

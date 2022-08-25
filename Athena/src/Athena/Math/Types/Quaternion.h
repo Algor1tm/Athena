@@ -323,10 +323,10 @@ namespace Athena::Math
 		constexpr Vector<T, 3> operator*(const Vector<T, 3>& vec3) const
 		{
 			Vector<T, 3> quatVector(x, y, z);
-			Vector<T, 3> uv = Cross(quatVector, v);
+			Vector<T, 3> uv = Cross(quatVector, vec3);
 			Vector<T, 3> uuv = Cross(quatVector, uv);
 
-			return v + ((uv * q.w) + uuv) * static_cast<T>(2);
+			return vec3 + ((uv * w) + uuv) * static_cast<T>(2);
 		}
 
 		constexpr Quaternion operator+(const Quaternion& other) const

@@ -13,6 +13,6 @@ namespace Athena
 	public:
 		static bool IsKeyPressed(KeyCode keycode);
 		static bool IsMouseButtonPressed(MouseCode button);
-		static Vector2 GetMouse();
+		static Vector2 GetMousePosition();
 	};
 }

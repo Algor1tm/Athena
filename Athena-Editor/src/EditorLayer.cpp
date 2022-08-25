@@ -17,7 +17,7 @@
 namespace Athena
 {
     EditorLayer::EditorLayer()
-        : Layer("SandBox2D"), m_CameraController(16.f / 9.f, false)
+        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f)
     {
 
     }
@@ -92,19 +92,19 @@ namespace Athena
             (desc.Width != m_ViewportSize.x || desc.Height != m_ViewportSize.y)) 
         {
             m_Framebuffer->Resize(m_ViewportSize.x, m_ViewportSize.y);
-            m_CameraController.Resize(m_ViewportSize.x, m_ViewportSize.y);
-
+            m_EditorCamera.SetViewportSize(m_ViewportSize.x, m_ViewportSize.y);
+                
             m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
         }
 
-        if(m_ViewportHovered)
-            m_CameraController.OnUpdate(frameTime);
+        if(m_ViewportHovered && !ImGuizmo::IsUsing())
+            m_EditorCamera.OnUpdate(frameTime);
 
         Renderer2D::ResetStats();
         m_Framebuffer->Bind();
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-        m_ActiveScene->OnUpdate(frameTime);
+        m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera);
 
         m_Framebuffer->UnBind();
     }
@@ -252,10 +252,12 @@ namespace Athena
             ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, 
                 ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
             
-            auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
-            const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
-            const Matrix4& cameraProjection = camera.GetProjection();
-            Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
+            //auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
+            //const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
+            //const Matrix4& cameraProjection = camera.GetProjection();
+            //Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
+            const Matrix4& cameraProjection = m_EditorCamera.GetProjection();
+            Matrix4 cameraView = m_EditorCamera.GetViewMatrix();
 
             auto& tc = m_SelectedEntity.GetComponent<TransformComponent>();
             Matrix4 transform = tc.AsMatrix();
@@ -290,7 +292,7 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        m_CameraController.OnEvent(event);
+        m_EditorCamera.OnEvent(event);
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));

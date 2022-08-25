@@ -130,6 +130,16 @@ namespace Athena
 		StartBatch();
 	}
 
+	void Renderer2D::BeginScene(const EditorCamera& camera)
+	{
+		ATN_PROFILE_FUNCTION();
+
+		s_Data.TextureShader->Bind();
+		s_Data.TextureShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
+
+		StartBatch();
+	}
+
 	void Renderer2D::EndScene()
 	{
 		ATN_PROFILE_FUNCTION();

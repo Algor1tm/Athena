@@ -6,6 +6,7 @@
 #include "Athena/Events/KeyEvent.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Renderer/Editorcamera.h"
 #include "Athena/Scene/Entity.h"
 
 #include "Panels/SceneHierarchyPanel.h"
@@ -38,10 +39,10 @@ namespace Athena
 		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		Vector2u m_ViewportSize = { 0, 0 };
 		Ref<Framebuffer> m_Framebuffer;
-		OrthographicCameraController m_CameraController;
 		Time m_FrameTime;
 
 		Ref<Scene> m_ActiveScene;
+		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 

@@ -8,14 +8,13 @@ namespace Athena
 	class Camera
 	{
 	public:
-		Camera() = default;
-		Camera(const Matrix4& projection)
+		Camera(const Matrix4& projection = Matrix4::Identity())
 			: m_Projection(projection) {}
 
 		const Matrix4& GetProjection() const { return m_Projection; }
 		void SetProjection(const Matrix4& projection) { m_Projection = projection; }
 
-	private:
-		Matrix4 m_Projection = Matrix4::Identity();
+	protected:
+		Matrix4 m_Projection;
 	};
 }

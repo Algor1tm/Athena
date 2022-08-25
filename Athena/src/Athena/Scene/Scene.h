@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Time.h"
+#include "Athena/Renderer/EditorCamera.h"
 
 #ifdef _MSC_VER
 #pragma warning(push, 0)
@@ -26,7 +27,8 @@ namespace Athena
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
 
-		void OnUpdate(Time frameTime);
+		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
+		void OnUpdateRuntime(Time frameTime);
 		void OnViewportResize(uint32 width, uint32 height);
 
 		Entity GetPrimaryCameraEntity();

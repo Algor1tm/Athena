@@ -19,11 +19,11 @@ namespace Athena
 		inline const Vector3& GetPosition() const { return m_Position; }
 		inline float GetRotation() const { return m_Rotation; }
 
-		inline void SetPosition(const Vector3& position) { m_Position = position; RecalculateViewMatrix(); }
-		inline void SetRotation(float rotation) { m_Rotation = rotation; RecalculateViewMatrix(); }
+		inline void SetPosition(const Vector3& position) { m_Position = position; RecalculateView(); }
+		inline void SetRotation(float rotation) { m_Rotation = rotation; RecalculateView(); }
 
 	private:
-		void RecalculateViewMatrix();
+		void RecalculateView();
 
 	private:
 		Matrix4 m_ProjectionMatrix;

@@ -11,3 +11,6 @@
 [submodule "Athena/vendor/yaml-cpp/yaml-cpp"]
 	path = Athena/vendor/yaml-cpp/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "Athena/vendor/ImGuizmo"]
+	path = Athena/vendor/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

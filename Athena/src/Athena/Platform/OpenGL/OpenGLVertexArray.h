@@ -23,6 +23,7 @@ namespace Athena
 
 		std::vector<Ref<VertexBuffer>> m_VertexBuffers;
 		Ref<IndexBuffer> m_IndexBuffer;
+		uint32 m_VertexBufferIndex = 0;
 	};
 }
 

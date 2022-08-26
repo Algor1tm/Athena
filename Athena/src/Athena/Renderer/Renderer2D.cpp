@@ -14,6 +14,8 @@ namespace Athena
 		Vector2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
+
+		int EntityID = 0;
 	};
 
 	struct Renderer2DData
@@ -53,8 +55,9 @@ namespace Athena
 			{ShaderDataType::Float3, "a_Position"},
 			{ShaderDataType::Float4, "a_Color"},
 			{ShaderDataType::Float2, "a_TexCoord"},
-			{ShaderDataType::Float, "a_TexIndex"},
-			{ShaderDataType::Float, "a_TilingFactor"}
+			{ShaderDataType::Float,  "a_TexIndex"},
+			{ShaderDataType::Float,  "a_TilingFactor"},
+			{ShaderDataType::Int,    "a_EntityID"}
 		};
 		s_Data.QuadVertexBuffer->SetLayout(layout);
 		s_Data.QuadVertexArray->AddVertexBuffer(s_Data.QuadVertexBuffer);
@@ -225,7 +228,7 @@ namespace Athena
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int entityID)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -244,6 +247,7 @@ namespace Athena
 			s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
 			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+			s_Data.QuadVertexBufferPointer->EntityID = entityID;
 			s_Data.QuadVertexBufferPointer++;
 		}
 
@@ -252,7 +256,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int entityID)
 	{
 		ATN_PROFILE_FUNCTION();
 
@@ -289,6 +293,7 @@ namespace Athena
 			s_Data.QuadVertexBufferPointer->TexCoord = texCoords[i];
 			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
 			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+			s_Data.QuadVertexBufferPointer->EntityID = entityID;
 			s_Data.QuadVertexBufferPointer++;
 		}
 

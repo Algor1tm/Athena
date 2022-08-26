@@ -65,14 +65,9 @@ namespace Athena
 			MousePan(delta);
 			changed = true;
 		}
-		else if (Input::IsMouseButtonPressed(Mouse::Left))
-		{
-			MouseRotate(delta);
-			changed = true;
-		}
 		else if (Input::IsMouseButtonPressed(Mouse::Right))
 		{
-			MouseZoom(delta.y);
+			MouseRotate(delta);
 			changed = true;
 		}
 

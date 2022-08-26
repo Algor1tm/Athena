@@ -27,7 +27,7 @@ namespace Athena
         ATN_PROFILE_FUNCTION();
 
         FramebufferDESC fbDesc;
-        fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::Depth };
+        fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth };
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
         m_Framebuffer = Framebuffer::Create(fbDesc);
@@ -72,6 +72,13 @@ namespace Athena
         };
 
         CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
+
+#else
+        std::string_view filepath = "assets/scene/3DExample.atn";
+        SceneSerializer serializer(m_ActiveScene);
+        serializer.DeserializeFromFile(filepath.data());
+        ATN_CORE_INFO("Successfully loaded from '{0}'", filepath.data());
+
 #endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -104,6 +111,8 @@ namespace Athena
         Renderer2D::ResetStats();
         m_Framebuffer->Bind();
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+        // Clear our entity ID attachment to -1
+        m_Framebuffer->ClearAttachment(1, -1);
 
         m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera);
 
@@ -189,7 +198,7 @@ namespace Athena
                 ImGui::Separator();
                 ImGui::Spacing();
 
-                if (ImGui::MenuItem("Close", "Escape", false))
+                if (ImGui::MenuItem("Close", NULL, false))
                 {
                     dockSpaceOpen = false;
                     Application::Get().Close();
@@ -234,6 +243,12 @@ namespace Athena
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         ImGui::Begin("Viewport");
 
+        ImVec2 viewportMinRegion = ImGui::GetWindowContentRegionMin();
+        ImVec2 viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+        ImVec2 viewportOffset = ImGui::GetWindowPos();
+        m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
+        m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
+
         m_ViewportFocused = ImGui::IsWindowFocused();
         m_ViewportHovered = ImGui::IsWindowHovered();    
         Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
@@ -241,8 +256,9 @@ namespace Athena
         auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
 
-        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(1);
+        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
+
 
         m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();
         //Gizmos
@@ -250,8 +266,8 @@ namespace Athena
         {
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
-            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, 
-                ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+            ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y,
+                m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
             
             //auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
             //const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
@@ -297,6 +313,7 @@ namespace Athena
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
+        dispatcher.Dispatch<MouseButtonReleasedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnMouseReleased));
     }
 
     bool EditorLayer::OnKeyPressed(KeyPressedEvent& event)
@@ -316,11 +333,42 @@ namespace Athena
         case Key::W: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
         case Key::E: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
         case Key::R: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{});
         }
 
-        return true;
+        return false;
     }
 
+    bool EditorLayer::OnMouseReleased(MouseButtonReleasedEvent& event) 
+    {
+        if (ImGuizmo::IsOver())
+            return false;
+
+        switch(event.GetMouseButton())
+        {
+        case Mouse::Left:
+        {
+            auto [mx, my] = ImGui::GetMousePos();
+            mx -= m_ViewportBounds[0].x;
+            my -= m_ViewportBounds[0].y;
+            Vector2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+            my = viewportSize.y - my;
+
+            int mouseX = (int)mx;
+            int mouseY = (int)my;
+
+            if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+            {
+                m_Framebuffer->Bind();
+                int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
+                if (pixelData != -1)
+                    m_HierarchyPanel.SetSelectedEntity({ (entt::entity)pixelData, m_ActiveScene.get() });
+            }
+            break;
+        }
+        }
+        return false;
+    }
 
     void EditorLayer::NewScene()
     {

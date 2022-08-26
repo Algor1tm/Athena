@@ -18,12 +18,15 @@ namespace Athena
 		virtual const FramebufferDESC& GetDescription() const override { return m_Description; }
 		virtual uint32 GetColorAttachmentRendererID(SIZE_T index = 0) const override { ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range"); return m_ColorAttachments[index]; }
 
+		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) override;
+		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) override;
+
 		virtual void Bind() const override;
 		virtual void UnBind() const override;
 
 	private:
 		void DeleteAttachments();
-		void AttachColorTextures(RendererID id, uint32 samples, unsigned int format, uint32 width, uint32 height, SIZE_T index);
+		void AttachColorTexture(RendererID id, uint32 samples, unsigned int internalFormat, unsigned int format, uint32 width, uint32 height, SIZE_T index);
 		void AttachDepthTexture(RendererID id, uint32 samples, unsigned int format, unsigned int attachmentType, uint32 width, uint32 height);
 
 	private:

@@ -12,7 +12,8 @@ namespace Athena
 		None = 0,
 
 		// Color
-		RGBA8,
+		RGBA8, 
+		RED_INTEGER,
 
 		//Depth/Stencil
 		DEPTH24STENCIL8,
@@ -56,6 +57,9 @@ namespace Athena
 
 		virtual const FramebufferDESC& GetDescription() const = 0;
 		virtual uint32 GetColorAttachmentRendererID(SIZE_T index = 0) const = 0;
+
+		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) = 0;
+		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) = 0;
 
 		virtual void Bind() const = 0;
 		virtual void UnBind() const = 0;

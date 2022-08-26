@@ -43,7 +43,7 @@ namespace Athena
 		void RecalculateProjection();
 		void RecalculateView();
 
-		bool OnMouseScroll(MouseScrolledEvent& e);
+		bool OnMouseScroll(MouseScrolledEvent& event);
 
 		void MousePan(const Vector2& delta);
 		void MouseRotate(const Vector2& delta);

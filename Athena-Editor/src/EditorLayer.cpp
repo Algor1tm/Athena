@@ -27,6 +27,7 @@ namespace Athena
         ATN_PROFILE_FUNCTION();
 
         FramebufferDESC fbDesc;
+        fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::Depth };
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
         m_Framebuffer = Framebuffer::Create(fbDesc);
@@ -240,7 +241,7 @@ namespace Athena
         auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
 
-        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID();
+        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(1);
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
 
         m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();

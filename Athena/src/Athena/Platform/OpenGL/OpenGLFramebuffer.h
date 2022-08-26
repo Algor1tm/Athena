@@ -16,14 +16,24 @@ namespace Athena
 		void Resize(uint32 width, uint32 height) override;
 
 		virtual const FramebufferDESC& GetDescription() const override { return m_Description; }
-		virtual uint32 GetColorAttachmentRendererID() const override { return m_ColorAttachment; }
+		virtual uint32 GetColorAttachmentRendererID(SIZE_T index = 0) const override { ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range"); return m_ColorAttachments[index]; }
 
 		virtual void Bind() const override;
 		virtual void UnBind() const override;
 
 	private:
+		void DeleteAttachments();
+		void AttachColorTextures(RendererID id, uint32 samples, unsigned int format, uint32 width, uint32 height, SIZE_T index);
+		void AttachDepthTexture(RendererID id, uint32 samples, unsigned int format, unsigned int attachmentType, uint32 width, uint32 height);
+
+	private:
 		RendererID m_RendererID = 0;
-		RendererID m_ColorAttachment = 0, m_DepthAttachment = 0;
 		FramebufferDESC m_Description;
+
+		std::vector<FramebufferTextureDESC> m_ColorAttachmentDescriptions;
+		std::vector<RendererID> m_ColorAttachments;
+
+		FramebufferTextureDESC m_DepthAttachmentDescription = FramebufferTextureFormat::None;
+		RendererID m_DepthAttachment;
 	};
 }

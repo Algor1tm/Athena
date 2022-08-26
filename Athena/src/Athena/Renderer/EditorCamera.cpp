@@ -30,10 +30,10 @@ namespace Athena
 	Vector2 EditorCamera::PanSpeed() const
 	{
 		float x = Math::Min(m_ViewportWidth / 1000.f, 2.4f);
-		float xFactor = 0.0366f * (x * x) - 0.1778f * x + 5.3021f;
+		float xFactor = 0.0366f * (x * x) - 0.1778f * x + 0.3021f;
 
 		float y = Math::Min(m_ViewportHeight / 1000.0f, 2.4f);
-		float yFactor = 0.0366f * (y * y) - 0.1778f * y + 5.3021f;
+		float yFactor = 0.0366f * (y * y) - 0.1778f * y + 0.3021f;
 
 		return { xFactor, yFactor };
 	}

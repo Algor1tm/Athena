@@ -29,6 +29,7 @@ void main()
 #version 330 core
 			
 layout(location = 0) out vec4 out_Color;
+layout(location = 1) out vec4 out_Color2;
 
 in vec4 v_Color;
 in vec2 v_TexCoord;
@@ -79,4 +80,6 @@ void main()
 		case 31: TexColor *= texture(u_Texture[31], v_TexCoord * v_TilingFactor); break;
 	}
 	out_Color = TexColor;
+
+	out_Color2 = vec4(1, 0, 0, 1);
 }

@@ -210,6 +210,7 @@ namespace Athena
         }
 
         m_HierarchyPanel.OnImGuiRender();
+        m_ContentBrowserPanel.OnImGuiRender();
 
         ImGui::Begin("Renderer2D Stats");
 

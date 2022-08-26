@@ -14,6 +14,7 @@
 #include "Athena/Scene/Entity.h"
 
 #include "Panels/SceneHierarchyPanel.h"
+#include "Panels/ContentBrowserPanel.h"
 
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -52,6 +53,7 @@ namespace Athena
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 
 		SceneHierarchyPanel m_HierarchyPanel;
+		ContentBrowserPanel m_ContentBrowserPanel;
 		Time m_FrameTime;
 	};
 }

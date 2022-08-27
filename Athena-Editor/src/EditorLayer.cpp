@@ -19,7 +19,8 @@ namespace Athena
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f)
     {
-
+        m_EditorCamera.SetDistance(7.f);
+        m_EditorCamera.SetPitch(Math::Radians(30.f));
     }
 
     void EditorLayer::OnAttach()
@@ -210,7 +211,8 @@ namespace Athena
         }
 
         m_HierarchyPanel.OnImGuiRender();
-        m_ContentBrowserPanel.OnImGuiRender();
+        if(m_ContentBrowserRendering)
+            m_ContentBrowserPanel.OnImGuiRender();
 
         ImGui::Begin("Renderer2D Stats");
 
@@ -326,15 +328,18 @@ namespace Athena
 
         switch (event.GetKeyCode())
         {
+        // Scenes Management
         case Key::S: if(ctrl) SaveSceneAs(); break;
         case Key::N: if(ctrl) NewScene(); break;
         case Key::O: if(ctrl) OpenScene(); break;
+        //Panels
+        case Key::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
+        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
         //Gizmos
         case Key::Q: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::UNIVERSAL); break;
         case Key::W: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
         case Key::E: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
         case Key::R: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
-        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{});
         }
 
         return false;

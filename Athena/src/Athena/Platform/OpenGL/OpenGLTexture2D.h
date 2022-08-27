@@ -17,6 +17,8 @@ namespace Athena
 		inline uint32 GetWidth() const override { return m_Width; }
 		inline uint32 GetHeight() const override { return m_Height; }
 
+		inline RendererID GetRendererID() const override { return m_RendererID; }
+
 		void SetData(const void* data, uint32 size) override;
 
 		void Bind(uint32 slot = 0) const override;

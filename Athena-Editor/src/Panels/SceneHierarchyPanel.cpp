@@ -116,12 +116,12 @@ namespace Athena
 			{
 				if (sprite.Texture.GetNativeTexture() != nullptr)
 				{
-					UI::DrawController("Tint", 60, [&sprite]() { ImGui::ColorEdit4("##Tint", sprite.Color.Data()); });
-					UI::DrawController("Tiling", 60, [&sprite]() { ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+					UI::DrawController("Tint", 0, [&sprite]() { ImGui::ColorEdit4("##Tint", sprite.Color.Data()); });
+					UI::DrawController("Tiling", 0, [&sprite]() { ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
 				}
 				else
 				{
-					UI::DrawController("Color", 60, [&sprite]() { ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+					UI::DrawController("Color", 0, [&sprite]() { ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
 				}
 			});
 

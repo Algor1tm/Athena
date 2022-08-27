@@ -54,6 +54,7 @@ namespace Athena
 
 		SceneHierarchyPanel m_HierarchyPanel;
 		ContentBrowserPanel m_ContentBrowserPanel;
+		bool m_ContentBrowserRendering = true;
 		Time m_FrameTime;
 	};
 }

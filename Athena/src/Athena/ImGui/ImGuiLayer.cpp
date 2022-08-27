@@ -45,7 +45,7 @@ namespace Athena
 		colors[ImGuiCol_ButtonActive] = ImVec4{ 46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f };
 
 		// Frame BG
-		colors[ImGuiCol_FrameBg] = ImVec4{ 17.f / 255.f, 16.f / 255.f, 16.f / 255.f, 1.0f };
+		colors[ImGuiCol_FrameBg] = ImVec4{ 14.f / 255.f, 11.f / 255.f, 11.f / 255.f, 1.0f };
 		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
 		colors[ImGuiCol_FrameBgActive] = ImVec4{ 46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f };
 		

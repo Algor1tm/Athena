@@ -12,18 +12,11 @@ namespace Athena::UI
 	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 70.f);
 
 	template <typename Controller>
-	void DrawController(std::string_view label, float columnWidth, Controller controller)
+	void DrawController(std::string_view label, float offset, Controller controller)
 	{
-		ImGui::PushID(label.data());
-
-		ImGui::Columns(2);
-		ImGui::SetColumnWidth(0, columnWidth);
 		ImGui::Text(label.data());
-		ImGui::NextColumn();
+		ImGui::SameLine(offset);
 
 		controller();
-
-		ImGui::Columns(1);
-		ImGui::PopID();
 	}
 }

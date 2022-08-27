@@ -12,7 +12,7 @@ namespace Athena::UI
 
 		ImGui::PushID(label.data());
 
-		ImGui::Columns(2);
+		ImGui::Columns(2, 0, false);
 		ImGui::SetColumnWidth(0, columnWidth);
 		ImGui::Text(label.data());
 		ImGui::NextColumn();
@@ -68,7 +68,7 @@ namespace Athena::UI
 		ImGui::PopStyleColor(3);
 
 		ImGui::PopStyleVar();
-		ImGui::Columns(1);
+		ImGui::Columns(1, 0, false);
 
 		ImGui::PopID();
 	}

@@ -106,25 +106,25 @@ namespace Athena
 	using uint64 = ::std::uint64_t; // 64-bit unsigned int
 	 
 	using byte = ::std::byte; // type of size 1 byte
-	using String = std::string; // string type
+	using String = ::std::string; // string type
 	using SIZE_T = uint64; // size type, same size as a pointer
 
 	using RendererID = uint32; // type for Renderer IDs
-
+	 
 
 	template <typename T>
-	using Scope = std::unique_ptr<T>;
+	using Scope = ::std::unique_ptr<T>;
 	template<typename T, typename... Args>
 	constexpr Scope<T> CreateScope(Args&&... args)
 	{
-		return std::make_unique<T>(std::forward<Args>(args)...);
+		return ::std::make_unique<T>(std::forward<Args>(args)...);
 	}
 
 	template <typename T>
-	using Ref = std::shared_ptr<T>;
+	using Ref = ::std::shared_ptr<T>;
 	template<typename T, typename... Args>
 	constexpr Ref<T> CreateRef(Args&&... args)
 	{
-		return std::make_shared<T>(std::forward<Args>(args)...);
+		return ::std::make_shared<T>(std::forward<Args>(args)...);
 	}
 }

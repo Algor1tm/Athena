@@ -22,10 +22,13 @@ namespace Athena
 		void OnEvent(Event& e);
 
 		inline float GetDistance() const { return m_Distance; }
-		inline void SetDistance(float distance) { m_Distance = distance; }
+		inline void SetDistance(float distance) { m_Distance = distance; RecalculateView(); }
 
 		inline void SetViewportSize(uint32 width, uint32 height) 
 		{ m_ViewportWidth = (float)width; m_ViewportHeight = (float)height; RecalculateProjection(); }
+
+		inline void SetPitch(float pitch) { m_Pitch = pitch; RecalculateView(); }
+		inline void SetYaw(float yaw) { m_Yaw = yaw; RecalculateView(); }
 
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
 		Matrix4 GetViewProjection() const { return m_ViewMatrix * m_Projection; }

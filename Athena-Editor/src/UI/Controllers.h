@@ -12,11 +12,11 @@ namespace Athena::UI
 	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 70.f);
 
 	template <typename Controller>
-	void DrawController(std::string_view label, float offset, Controller controller)
+	bool DrawController(std::string_view label, float offset, Controller controller)
 	{
 		ImGui::Text(label.data());
 		ImGui::SameLine(offset);
 
-		controller();
+		return controller();
 	}
 }

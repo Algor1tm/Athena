@@ -115,8 +115,8 @@ namespace Athena
 
 		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
 			{
-				UI::DrawController("Color", 0, [&sprite]() { ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
-				UI::DrawController("Tiling", 0, [&sprite]() { ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+				UI::DrawController("Color", 0, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+				UI::DrawController("Tiling", 0, [&sprite]() { return ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
 				ImGui::Text("Texture");
 				ImGui::SameLine();
 				ImGui::ImageButton((void*)(uint64)sprite.Texture.GetNativeTexture()->GetRendererID(), { 50.f, 50.f }, { 0, 1 }, { 1, 0 });
@@ -179,7 +179,8 @@ namespace Athena
 
 				std::string_view currentProjectionType = typeToStr(camera.GetProjectionType());
 
-				if (ImGui::BeginCombo("Projection", currentProjectionType.data()))
+				if (UI::DrawController("Projection", 0, [&currentProjectionType]() 
+					{ return ImGui::BeginCombo("##Projection", currentProjectionType.data()); }))
 				{
 					for (int i = 0; i < 2; ++i)
 					{
@@ -201,14 +202,17 @@ namespace Athena
 				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
 				{
 					auto perspectiveDesc = camera.GetPerspectiveData();
-					bool changed = false;
+					bool used = false;
 
 					float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
-					changed = ImGui::DragFloat("Vertical FOV", &degreesFOV, 0.1f) || changed;
-					changed = ImGui::DragFloat("NearClip", &perspectiveDesc.NearClip, 0.1f) || changed;
-					changed = ImGui::DragFloat("FarClip", &perspectiveDesc.FarClip, 10.f) || changed;
+					used = UI::DrawController("FOV           ", 0, [&degreesFOV]() 
+						{ return ImGui::DragFloat("##FOV", &degreesFOV, 0.1f); }) || used;
+					used = UI::DrawController("NearClip   ", 0, [&perspectiveDesc]()
+						{ return ImGui::DragFloat("##NearClip", &perspectiveDesc.NearClip, 0.1f); }) || used;
+					used = UI::DrawController("FarClip      ", 0, [&perspectiveDesc]()
+						{ return ImGui::DragFloat("##FarClip", &perspectiveDesc.FarClip, 10.f); }) || used;
 
-					if (changed)
+					if (used)
 					{
 						perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
 						camera.SetPerspectiveData(perspectiveDesc);
@@ -218,17 +222,23 @@ namespace Athena
 				else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
 				{
 					auto orthoDesc = camera.GetOrthographicData();
-					bool changed = false;
-					changed = ImGui::DragFloat("Size", &orthoDesc.Size, 0.1f) || changed;
-					changed = ImGui::DragFloat("NearClip", &orthoDesc.NearClip, 0.1f) || changed;
-					changed = ImGui::DragFloat("FarClip", &orthoDesc.FarClip, 0.1f) || changed;
+					bool used = false;
 
-					if (changed)
+					used = UI::DrawController("Size            ", 0, [&orthoDesc]()
+						{ return ImGui::DragFloat("##Size", &orthoDesc.Size, 0.1f); }) || used;
+					used = UI::DrawController("NearClip   ", 0, [&orthoDesc]()
+						{ return ImGui::DragFloat("##NearClip", &orthoDesc.NearClip, 0.1f); }) || used;
+					used = UI::DrawController("FarClip      ", 0, [&orthoDesc]()
+						{ return ImGui::DragFloat("##FarClip", &orthoDesc.FarClip, 0.1f); }) || used;
+
+					if (used)
 						camera.SetOrthographicData(orthoDesc);
 				}
 
-				ImGui::Checkbox("Primary", &cameraComponent.Primary);
-				ImGui::Checkbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
+				UI::DrawController("Primary", 0, [&cameraComponent]()
+					{ return ImGui::Checkbox("##Primary", &cameraComponent.Primary); });
+				UI::DrawController("FixedAspectRatio", 0, [&cameraComponent]()
+					{ return ImGui::Checkbox("##FixedAspectRatio", &cameraComponent.FixedAspectRatio); });
 			});
 
 		ImGui::Separator();

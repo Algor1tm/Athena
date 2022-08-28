@@ -40,11 +40,12 @@ namespace Athena
 		void NewScene();
 		void SaveSceneAs();
 		void OpenScene();
+		void OpenScene(const std::filesystem::path& path);
 
 	private:
 		bool m_ViewportFocused = true, m_ViewportHovered = true;
 		Vector2u m_ViewportSize = { 0, 0 };
-		Vector2 m_ViewportBounds[2];
+		Vector2 m_ViewportBounds[2] = {};
 		Ref<Framebuffer> m_Framebuffer;
 
 		Ref<Scene> m_ActiveScene;

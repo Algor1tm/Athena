@@ -243,7 +243,7 @@ namespace Athena
 
         ImGui::End();
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
         ImGui::Begin("Viewport");
 
         ImVec2 viewportMinRegion = ImGui::GetWindowContentRegionMin();
@@ -262,6 +262,19 @@ namespace Athena
         uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
 
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+            {
+                std::string_view path = (const char*)payload->Data;
+                std::string_view extent = path.substr(path.size() - 4, path.size());
+                if(extent == ".atn\0")
+                    OpenScene(path.data());
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
 
         m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();
         //Gizmos
@@ -277,7 +290,7 @@ namespace Athena
             //const Matrix4& cameraProjection = camera.GetProjection();
             //Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
             const Matrix4& cameraProjection = m_EditorCamera.GetProjection();
-            Matrix4 cameraView = m_EditorCamera.GetViewMatrix();
+            const Matrix4& cameraView = m_EditorCamera.GetViewMatrix();
 
             auto& tc = m_SelectedEntity.GetComponent<TransformComponent>();
             Matrix4 transform = tc.AsMatrix();
@@ -306,7 +319,7 @@ namespace Athena
 
         ImGui::End();
         ImGui::PopStyleVar();
-        
+
         ImGui::End();
     }
 
@@ -390,7 +403,7 @@ namespace Athena
         if (!filepath.empty())
         {
             SceneSerializer serializer(m_ActiveScene);
-            serializer.SerializeToFile(filepath.data());
+            serializer.SerializeToFile(filepath);
             ATN_CORE_INFO("Successfully saved into '{0}'", filepath.data());
         }
     }
@@ -399,14 +412,17 @@ namespace Athena
     {
         String filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
-        {
-            m_ActiveScene = CreateRef<Scene>();
-            m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-            m_HierarchyPanel.SetContext(m_ActiveScene);
+            OpenScene(filepath);
+    }
 
-            SceneSerializer serializer(m_ActiveScene);
-            serializer.DeserializeFromFile(filepath.data());
-            ATN_CORE_INFO("Successfully loaded from '{0}'", filepath.data());
-        }
+    void EditorLayer::OpenScene(const std::filesystem::path& path)
+    {
+        m_ActiveScene = CreateRef<Scene>();
+        m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        m_HierarchyPanel.SetContext(m_ActiveScene);
+
+        SceneSerializer serializer(m_ActiveScene);
+        serializer.DeserializeFromFile(path.string());
+        ATN_CORE_INFO("Successfully loaded from '{0}'", path.string().data());
     }
 }

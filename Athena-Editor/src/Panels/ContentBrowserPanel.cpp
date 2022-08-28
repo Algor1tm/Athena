@@ -29,10 +29,12 @@ namespace Athena
 
 		if (m_CurrentDirectory != m_AssetDirectory)
 		{
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
 			if (ImGui::ImageButton(reinterpret_cast<void*>((uint64)m_BackButtonIconID), m_BackButtonSize, { 0, 1 }, { 1, 0 }))
 			{
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			}
+			ImGui::PopStyleColor();
 		}
 
 		float cellSize = m_Padding + m_ItemSize.x;
@@ -40,25 +42,35 @@ namespace Athena
 
 		ImGui::Columns(int(panelWidth / cellSize), 0, false);
 
-		for (const auto& dir_entry: std::filesystem::directory_iterator(m_CurrentDirectory))
+		uint64 iconID;
+		for (const auto& dirEntry: std::filesystem::directory_iterator(m_CurrentDirectory))
 		{
-			const auto& filename = dir_entry.path().filename().string();
+			const auto& relativePath = dirEntry.path();
+			const auto& filename = dirEntry.path().filename().string();
+			iconID = dirEntry.is_directory() ? m_FolderIconID : m_FileIconID;
 
-			if (dir_entry.is_directory())
+			ImGui::PushID(filename.data());
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
+			ImGui::ImageButton(reinterpret_cast<void*>(iconID), m_ItemSize, { 0, 1 }, { 1, 0 });
+
+			if(dirEntry.is_directory() && ImGui::IsItemClicked())
 			{
-				ImGui::ImageButton(reinterpret_cast<void*>((uint64)m_FolderIconID), m_ItemSize, { 0, 1 }, { 1, 0 });
-				if(ImGui::IsItemClicked())
-				{
-					m_CurrentDirectory /= filename;
-				}
+				m_CurrentDirectory /= filename;
 			}
 			else
 			{
-				ImGui::ImageButton(reinterpret_cast<void*>((uint64)m_FileIconID), m_ItemSize, { 0, 1 }, { 1, 0 });
+				if (ImGui::BeginDragDropSource())
+				{
+					const auto& path = relativePath.string();
+
+					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", path.data(), strlen(path.data()) + 1, ImGuiCond_Once);
+					ImGui::EndDragDropSource();
+				}
 			}
+			ImGui::PopStyleColor();
+			ImGui::PopID();
 
 			ImGui::TextWrapped(filename.data());
-
 			ImGui::NextColumn();
 		}
 

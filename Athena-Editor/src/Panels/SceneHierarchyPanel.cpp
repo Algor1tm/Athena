@@ -1,6 +1,7 @@
 #include "SceneHierarchyPanel.h"
 #include "Athena/Scene/Components.h"
 #include "UI/Controllers.h"
+#include "Athena/Core/PlatformUtils.h"
 
 #include <ImGui/imgui.h>
 
@@ -114,14 +115,50 @@ namespace Athena
 
 		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
 			{
-				if (sprite.Texture.GetNativeTexture() != nullptr)
+				UI::DrawController("Color", 0, [&sprite]() { ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+				UI::DrawController("Tiling", 0, [&sprite]() { ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+				ImGui::Text("Texture");
+				ImGui::SameLine();
+				ImGui::ImageButton((void*)(uint64)sprite.Texture.GetNativeTexture()->GetRendererID(), { 50.f, 50.f }, { 0, 1 }, { 1, 0 });
+
+				if (ImGui::BeginDragDropTarget())
 				{
-					UI::DrawController("Tint", 0, [&sprite]() { ImGui::ColorEdit4("##Tint", sprite.Color.Data()); });
-					UI::DrawController("Tiling", 0, [&sprite]() { ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					{
+						std::string_view path = (const char*)payload->Data;
+						std::string_view extent = path.substr(path.size() - 4, path.size());
+						if (extent == ".png\0")
+						{
+							sprite.Texture = Texture2D::Create(String(path));
+							sprite.Color = LinearColor::White;
+						}
+						else
+						{
+							ATN_CORE_ERROR("Invalid Texture format");
+						}
+					}
+					ImGui::EndDragDropTarget();
 				}
-				else
+
+				ImGui::SameLine();
+				if (ImGui::Button("Browse"))
 				{
-					UI::DrawController("Color", 0, [&sprite]() { ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+					String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+					if (!filepath.empty())
+					{
+						sprite.Texture = Texture2D::Create(filepath);
+						sprite.Color = LinearColor::White;
+						ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
+					}
+					else
+					{
+						ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Reset"))
+				{
+					sprite.Texture = Texture2D::WhiteTexture();
 				}
 			});
 

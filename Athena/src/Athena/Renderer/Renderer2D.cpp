@@ -28,7 +28,6 @@ namespace Athena
 		Ref<VertexArray> QuadVertexArray;
 		Ref<VertexBuffer> QuadVertexBuffer;
 		Ref<Shader> TextureShader;
-		Ref<Texture2D> WhiteTexture;
 
 		uint32 QuadIndexCount = 0;
 		QuadVertex* QuadVertexBufferBase = nullptr;
@@ -84,10 +83,6 @@ namespace Athena
 		s_Data.QuadVertexArray->SetIndexBuffer(indexBuffer);
 		delete[] quadIndices;
 
-		s_Data.WhiteTexture = Texture2D::Create(1, 1);
-		uint32 whiteTextureData = 0xffffffff;
-		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
-
 		int32 samplers[Renderer2DData::MaxTextureSlots];
 		for (int32 i = 0; i < std::size(samplers); ++i)
 			samplers[i] = i;
@@ -96,7 +91,7 @@ namespace Athena
 		s_Data.TextureShader->Bind();
 		s_Data.TextureShader->SetIntArray("u_Texture", samplers, s_Data.MaxTextureSlots);
 
-		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
+		s_Data.TextureSlots[0] = Texture2D::WhiteTexture();
 
 		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };

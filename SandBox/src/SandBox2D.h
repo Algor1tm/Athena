@@ -17,9 +17,9 @@ public:
 
 private:
 	Athena::Ref<Athena::Texture2D> m_SpriteSheet;
-	Athena::Ref<Athena::SubTexture2D> m_Water, m_Dirt, m_Barrel;
+	Athena::Texture2DInstance m_Water, m_Dirt, m_Barrel;
 
 	Athena::OrthographicCameraController m_CameraController;
 
-	std::unordered_map<char, Athena::Ref<Athena::SubTexture2D>> m_TextureMap;
+	std::unordered_map<char, Athena::Texture2DInstance> m_TextureMap;
 };

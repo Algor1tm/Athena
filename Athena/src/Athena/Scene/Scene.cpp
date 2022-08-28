@@ -95,10 +95,7 @@ namespace Athena
 			{
 				auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
 
-				if (sprite.Texture.GetNativeTexture() != nullptr)
-					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-				else
-					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Color);
+				Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 			}
 
 			Renderer2D::EndScene();

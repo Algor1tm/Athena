@@ -9,6 +9,13 @@ Entities:
       Scale: [1, 1, 1]
     SpriteComponent:
       Color: [1, 0, 0.949807167, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
   - Entity: 12345678910
     TagComponent:
       Tag: Right
@@ -18,6 +25,13 @@ Entities:
       Scale: [1, 1, 1]
     SpriteComponent:
       Color: [0.54842025, 0, 0.586872578, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
   - Entity: 12345678910
     TagComponent:
       Tag: Camera
@@ -45,3 +59,10 @@ Entities:
       Scale: [1, 1, 1]
     SpriteComponent:
       Color: [0.876447856, 0, 0.834712803, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1

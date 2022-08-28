@@ -270,6 +270,8 @@ namespace Athena
                 std::string_view extent = path.substr(path.size() - 4, path.size());
                 if(extent == ".atn\0")
                     OpenScene(path.data());
+                else
+                    ATN_CORE_ERROR("Invalid Scene format");
             }
 
             ImGui::EndDragDropTarget();
@@ -404,7 +406,11 @@ namespace Athena
         {
             SceneSerializer serializer(m_ActiveScene);
             serializer.SerializeToFile(filepath);
-            ATN_CORE_INFO("Successfully saved into '{0}'", filepath.data());
+            ATN_CORE_INFO("Successfully saved Scene into '{0}'", filepath.data());
+        }
+        else
+        {
+            ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.data());
         }
     }
 
@@ -413,6 +419,8 @@ namespace Athena
         String filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             OpenScene(filepath);
+        else
+            ATN_CORE_ERROR("Invalid filepath to load Scene '{0}'", filepath.data());
     }
 
     void EditorLayer::OpenScene(const std::filesystem::path& path)
@@ -423,6 +431,6 @@ namespace Athena
 
         SceneSerializer serializer(m_ActiveScene);
         serializer.DeserializeFromFile(path.string());
-        ATN_CORE_INFO("Successfully loaded from '{0}'", path.string().data());
+        ATN_CORE_INFO("Successfully load Scene from '{0}'", path.string().data());
     }
 }

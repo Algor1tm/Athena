@@ -39,21 +39,13 @@ namespace Athena
 		return nullptr;
 	}
 
-	SubTexture2D::SubTexture2D(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
-		: m_Texture(texture)
+	Ref<Texture2D> Texture2D::WhiteTexture()
 	{
-		m_TexCoords[0] = { min.x, min.y };
-		m_TexCoords[1] = { max.x, min.y };
-		m_TexCoords[2] = { max.x, max.y };
-		m_TexCoords[3] = { min.x, max.y };
-	}
+		auto whiteTexture = Texture2D::Create(1, 1);
+		uint32 whiteTextureData = 0xffffffff;
+		whiteTexture->SetData(&whiteTextureData, sizeof(uint32));
 
-	Ref<SubTexture2D> SubTexture2D::CreateFromCoords(const Ref<Texture2D>& texture, const Vector2& coords, const Vector2& cellSize, const Vector2& spriteSize)
-	{
-		Vector2 min = { coords.x * cellSize.x / texture->GetWidth(), coords.y * cellSize.y / texture->GetHeight() };
-		Vector2 max = { (coords.x + spriteSize.x) * cellSize.x / texture->GetWidth(), (coords.y + spriteSize.y) * cellSize.y / texture->GetHeight() };
-
-		return CreateRef<SubTexture2D>(texture, min, max);
+		return whiteTexture;
 	}
 
 
@@ -63,30 +55,26 @@ namespace Athena
 		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
 	}
 
-	Texture2DInstance::Texture2DInstance(const Ref<SubTexture2D>& subtexture)
-	{
-		SetTexture(subtexture);
-		SetTexCoords(subtexture->GetTexCoords());
-	}
-
 	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
 	{
 		SetTexture(texture);
 		SetTexCoords(texCoords);
 	}
 
-	void Texture2DInstance::SetTexture(const Ref<Texture2D>& texture)
+	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
 	{
-		m_Texture = texture;
+		SetTexture(texture);
+		SetTexCoords(min, max);
 	}
 
-	void Texture2DInstance::SetTexture(const Ref<SubTexture2D>& subtexture)
+	void Texture2DInstance::SetTexCoords(const Vector2& min, const Vector2& max) 
 	{
-		m_Texture = subtexture->GetNativeTexture();
-	}
+		float width = (float)m_Texture->GetWidth();
+		float height = (float)m_Texture->GetHeight();
 
-	void Texture2DInstance::SetTexCoords(const std::array<Vector2, 4>& texCoords)
-	{
-		m_TexCoords = texCoords;
+		m_TexCoords[0] = { min.x / width, min.y / height };
+		m_TexCoords[1] = { max.x / width, min.y / height };
+		m_TexCoords[2] = { max.x / width, max.y / height };
+		m_TexCoords[3] = { min.x / width, max.y / height };
 	}
 }

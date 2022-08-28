@@ -31,9 +31,9 @@ void SandBox2D::OnAttach()
 	ATN_PROFILE_FUNCTION();
 
 	m_SpriteSheet = Athena::Texture2D::Create("assets/game/textures/SpriteSheet.png");
-	m_TextureMap['D'] = Athena::SubTexture2D::CreateFromCoords(m_SpriteSheet, {6, 11}, {128, 128});
-	m_TextureMap['W'] = Athena::SubTexture2D::CreateFromCoords(m_SpriteSheet, { 11, 11 }, { 128, 128 });
-	m_Barrel = Athena::SubTexture2D::CreateFromCoords(m_SpriteSheet, { 9, 0 }, { 128, 128 });
+	m_TextureMap['D'] = Athena::Texture2DInstance(m_SpriteSheet, {6 * 128, 11 * 128}, { 7 * 128, 12 * 128 });
+	m_TextureMap['W'] = Athena::Texture2DInstance(m_SpriteSheet, { 11 * 128, 11 * 128 }, { 12 * 128, 12 * 128 });
+	m_Barrel = Athena::Texture2DInstance(m_SpriteSheet, { 9 * 128, 0 }, { 9 * 128, 1 * 128 });
 
 	m_CameraController.SetZoomLevel(5.f);
 }
@@ -60,7 +60,7 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 		for (uint32_t x = 0; x < s_MapWidth; ++x)
 		{
 			char tileType = s_MapTiles[x + y * s_MapWidth];
-			Athena::Ref<Athena::SubTexture2D> texture = m_Barrel;
+			Athena::Texture2DInstance texture = m_Barrel;
 			if (m_TextureMap.find(tileType) != m_TextureMap.end())
 				texture = m_TextureMap[tileType];
 

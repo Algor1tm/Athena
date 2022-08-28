@@ -45,7 +45,7 @@ namespace Athena
 		float TilingFactor;
 
 		SpriteComponent(const LinearColor& color = LinearColor::White)
-			: Color(color), TilingFactor(1.f) {}
+			: Color(color), Texture(Texture2D::WhiteTexture()), TilingFactor(1.f) {}
 
 		SpriteComponent(const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
 			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}

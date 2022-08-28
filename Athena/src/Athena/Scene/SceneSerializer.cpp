@@ -220,27 +220,25 @@ namespace Athena
 				{
 					auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
 
+					sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
+
 					auto& textureNode = spriteComponentNode["Texture"];
-					if (textureNode)
-					{
-						Ref<Texture2D> texture = Texture2D::Create(textureNode.as<String>());
-
-						std::array<Vector2, 4> texCoords;
-						auto& texCoordsNode = spriteComponentNode["TexCoords"];
-						texCoords[0] = texCoordsNode["0"].as<Vector2>();
-						texCoords[1] = texCoordsNode["1"].as<Vector2>();
-						texCoords[2] = texCoordsNode["2"].as<Vector2>();
-						texCoords[3] = texCoordsNode["3"].as<Vector2>();
-
-						sprite.Texture = Texture2DInstance(texture, texCoords);
-						sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
-						sprite.Color = spriteComponentNode["Tint"].as<LinearColor>();
-					}
+					const auto& path = textureNode.as<String>();
+					Ref<Texture2D> texture;
+					if (path == String())
+						texture = Texture2D::WhiteTexture();
 					else
-					{
-						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
-						sprite.TilingFactor = 1.f;
-					}
+						texture = Texture2D::Create(path);
+
+					std::array<Vector2, 4> texCoords;
+					auto& texCoordsNode = spriteComponentNode["TexCoords"];
+					texCoords[0] = texCoordsNode["0"].as<Vector2>();
+					texCoords[1] = texCoordsNode["1"].as<Vector2>();
+					texCoords[2] = texCoordsNode["2"].as<Vector2>();
+					texCoords[3] = texCoordsNode["3"].as<Vector2>();
+
+					sprite.Texture = Texture2DInstance(texture, texCoords);
+					sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
 				}
 
 				ATN_CORE_TRACE("Loaded Entity 'Name = {0}', 'ID = {1}'", name, uuid);
@@ -292,10 +290,10 @@ namespace Athena
 		SerializeComponent<CameraComponent>(out, "CameraComponent", entity,
 			[](YAML::Emitter& output, const CameraComponent& cameraComponent)
 			{
-				auto& camera = cameraComponent.Camera;
-
-				auto& perspectiveData = camera.GetPerspectiveData();
-				auto& orthoData = camera.GetOrthographicData();
+				const auto& camera = cameraComponent.Camera;
+				
+				const auto& perspectiveData = camera.GetPerspectiveData();
+				const auto& orthoData = camera.GetOrthographicData();
 
 				output << YAML::Key << "Camera" << YAML::Value;
 				output << YAML::BeginMap;
@@ -315,26 +313,19 @@ namespace Athena
 		SerializeComponent<SpriteComponent>(out, "SpriteComponent", entity,
 			[](YAML::Emitter& output, const SpriteComponent& sprite)
 			{
-				if (sprite.Texture.GetNativeTexture() != nullptr)
-				{
-					output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilepath();
+				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
+				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilepath();
 
-					auto& texCoords = sprite.Texture.GetTexCoords();
-					output << YAML::Key << "TexCoords" << YAML::Value;
-					output << YAML::BeginMap;
-					output << YAML::Key << "0" << YAML::Value << texCoords[0];
-					output << YAML::Key << "1" << YAML::Value << texCoords[1];
-					output << YAML::Key << "2" << YAML::Value << texCoords[2];
-					output << YAML::Key << "3" << YAML::Value << texCoords[3];
-					output << YAML::EndMap;
+				const auto& texCoords = sprite.Texture.GetTexCoords();
+				output << YAML::Key << "TexCoords" << YAML::Value;
+				output << YAML::BeginMap;
+				output << YAML::Key << "0" << YAML::Value << texCoords[0];
+				output << YAML::Key << "1" << YAML::Value << texCoords[1];
+				output << YAML::Key << "2" << YAML::Value << texCoords[2];
+				output << YAML::Key << "3" << YAML::Value << texCoords[3];
+				output << YAML::EndMap;
 
-					output << YAML::Key << "Tint" << YAML::Value << sprite.Color;
-					output << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
-				}
-				else
-				{
-					output << YAML::Key << "Color" << YAML::Value << sprite.Color;
-				}
+				output << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
 			});
 
 		out << YAML::EndMap; // Entity

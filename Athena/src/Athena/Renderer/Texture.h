@@ -30,25 +30,10 @@ namespace Athena
 	public:
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const String& path);
+		static Ref<Texture2D> WhiteTexture();
 
 		virtual bool operator==(const Texture2D& other) const = 0;
 	};
-
-
-	class ATHENA_API SubTexture2D
-	{
-	public:
-		SubTexture2D(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
-
-		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
-		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
-
-		static Ref<SubTexture2D> CreateFromCoords(const Ref<Texture2D>& texture, const Vector2& coords, const Vector2& cellSize, const Vector2& spriteSize = { 1, 1 });
-	private:
-		Ref<Texture2D> m_Texture;
-		std::array<Vector2, 4> m_TexCoords;
-	};
-
 
 	class ATHENA_API Texture2DInstance
 	{
@@ -56,20 +41,17 @@ namespace Athena
 		Texture2DInstance() = default;
 		Texture2DInstance(const Ref<Texture2D>& texture);
 		Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
-		Texture2DInstance(const Ref<SubTexture2D>& subtexture);
+		Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
 
 		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
 		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
 
-		inline void SetTextureCoords(const std::array<Vector2, 4>& coords) { m_TexCoords = coords; }
-
-		void SetTexture(const Ref<Texture2D>& texture);
-		void SetTexture(const Ref<SubTexture2D>& subtexture);
-		void SetTexCoords(const std::array<Vector2, 4>& texCoords);
+		inline void SetTexture(const Ref<Texture2D>& texture) { m_Texture = texture; }
+		inline void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
+		void SetTexCoords(const Vector2& min, const Vector2& max);
 
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
 	};
 }
-

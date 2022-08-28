@@ -4,9 +4,9 @@ Entities:
     TagComponent:
       Tag: Red
     TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 1.57079637]
-      Scale: [4, 0.200000003, 1]
+      Translation: [-6.2004851e-08, -1.04026878, 0]
+      Rotation: [0, -0, 1.57079625]
+      Scale: [3.99999976, 0.199999988, 1]
     SpriteComponent:
       Color: [1, 0, 0, 1]
       Texture: ""
@@ -38,24 +38,24 @@ Entities:
     TagComponent:
       Tag: KomodoHype
     TransformComponent:
-      Translation: [0.0399999991, 0, -1.39999998]
-      Rotation: [0, 0, 0]
+      Translation: [0.147216454, -0.882109761, -1.39999998]
+      Rotation: [0, -0, 0]
       Scale: [3, 3, 1]
     SpriteComponent:
+      Color: [1, 1, 1, 1]
       Texture: assets/textures/KomodoHype.png
       TexCoords:
         0: [0, 0]
         1: [1, 0]
         2: [1, 1]
         3: [0, 1]
-      Color: [1, 1, 1, 1]
-      TilingFactor: 4
+      TilingFactor: 1
   - Entity: 12345678910
     TagComponent:
       Tag: Green
     TransformComponent:
-      Translation: [0, 0, -2.0999999]
-      Rotation: [0, 0, 0]
+      Translation: [0.0919999182, -1.03114164, -1.08677638]
+      Rotation: [0, -0, 0]
       Scale: [4, 0.200000003, 1]
     SpriteComponent:
       Color: [0, 1, 0, 1]

@@ -73,10 +73,7 @@ namespace Athena
         CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
 
 #else
-        std::string_view filepath = "assets/scene/3DExample.atn";
-        SceneSerializer serializer(m_ActiveScene);
-        serializer.DeserializeFromFile(filepath.data());
-        ATN_CORE_INFO("Successfully loaded from '{0}'", filepath.data());
+        OpenScene("assets/scene/3DExample.atn");
 #endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -251,7 +248,8 @@ namespace Athena
 
         m_ViewportFocused = ImGui::IsWindowFocused();
         m_ViewportHovered = ImGui::IsWindowHovered();    
-        Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
+        //Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
+        Application::Get().GetImGuiLayer()->BlockEvents(false);
 
         auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
@@ -353,6 +351,9 @@ namespace Athena
         case Key::W: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
         case Key::E: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
         case Key::R: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+
+        case Key::Delete: 
+            if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_ActiveScene->DestroyEntity(m_SelectedEntity); break;
         }
 
         return false;

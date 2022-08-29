@@ -11,7 +11,7 @@ layout (location = 5) in int a_EntityID;
 out vec4 v_Color;
 out vec2 v_TexCoord;
 flat out float v_TexIndex;
-flat out float v_TilingFactor;
+out float v_TilingFactor;
 flat out int v_EntityID;
 
 uniform mat4 u_ViewProjection;
@@ -37,7 +37,7 @@ layout(location = 1) out int out_EntityID;
 in vec4 v_Color;
 in vec2 v_TexCoord;
 flat in float v_TexIndex;
-flat in float v_TilingFactor;
+in float v_TilingFactor;
 flat in int v_EntityID;
 
 uniform sampler2D u_Texture[32];

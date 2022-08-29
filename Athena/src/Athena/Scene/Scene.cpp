@@ -36,7 +36,6 @@ namespace Athena
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
 		// Render 2D
-
 		Renderer2D::BeginScene(camera);
 
 		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
@@ -44,14 +43,10 @@ namespace Athena
 		{
 			auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
 
-			if (sprite.Texture.GetNativeTexture() != nullptr)
-				Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
-			else
-				Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Color, (int)entity);
+			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
 		}
 
 		Renderer2D::EndScene();
-		
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)

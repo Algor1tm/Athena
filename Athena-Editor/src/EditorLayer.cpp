@@ -39,8 +39,6 @@ namespace Athena
         auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
         auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
-        m_CameraController.SetZoomLevel(1.f);
-
         Entity SquareEntity = m_ActiveScene->CreateEntity("Square");
         SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
         SquareEntity.GetComponent<TransformComponent>().Translation += Vector3(-1.f, 0, 0);
@@ -79,7 +77,6 @@ namespace Athena
         SceneSerializer serializer(m_ActiveScene);
         serializer.DeserializeFromFile(filepath.data());
         ATN_CORE_INFO("Successfully loaded from '{0}'", filepath.data());
-
 #endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -327,7 +324,8 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        m_EditorCamera.OnEvent(event);
+        if(m_ViewportHovered && !ImGuizmo::IsUsing())
+            m_EditorCamera.OnEvent(event);
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
@@ -384,6 +382,7 @@ namespace Athena
                 int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
                 if (pixelData != -1)
                     m_HierarchyPanel.SetSelectedEntity({ (entt::entity)pixelData, m_ActiveScene.get() });
+                m_Framebuffer->UnBind();
             }
             break;
         }

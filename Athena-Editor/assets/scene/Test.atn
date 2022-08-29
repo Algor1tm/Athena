@@ -2,13 +2,29 @@ Scene: Scene Name
 Entities:
   - Entity: 12345678910
     TagComponent:
-      Tag: Red
+      Tag: UnNamed
     TransformComponent:
-      Translation: [-6.2004851e-08, -1.04026878, 0]
-      Rotation: [0, -0, 1.57079625]
-      Scale: [3.99999976, 0.199999988, 1]
+      Translation: [0, 0, -1.50989139]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
     SpriteComponent:
-      Color: [1, 0, 0, 1]
+      Color: [1, 1, 1, 1]
+      Texture: assets\textures\CheckerBoard.png
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
+  - Entity: 12345678910
+    TagComponent:
+      Tag: Top
+    TransformComponent:
+      Translation: [0, 0.5, 0]
+      Rotation: [1.57079637, 0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Color: [0.876447856, 0, 0.834712803, 1]
       Texture: ""
       TexCoords:
         0: [0, 0]
@@ -20,30 +36,23 @@ Entities:
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [0, 1.70000005, 4]
+      Rotation: [-0.404916435, 0, 0]
       Scale: [1, 1, 1]
     CameraComponent:
       Camera:
-        ProjectionType: 1
-        PerspectiveFOV: 0.785398185
+        ProjectionType: 0
+        PerspectiveFOV: 0.52359879
         PerspectiveNearClip: 0.00999999978
         PerspectiveFarClip: 1000
-        OrthographicSize: 4.9000001
+        OrthographicSize: 10
         OrthographicNearClip: -1
         OrthographicFarClip: 1
       Primary: true
       FixedAspectRatio: false
-  - Entity: 12345678910
-    TagComponent:
-      Tag: KomodoHype
-    TransformComponent:
-      Translation: [0.147216454, -0.882109761, -1.39999998]
-      Rotation: [0, -0, 0]
-      Scale: [3, 3, 1]
     SpriteComponent:
       Color: [1, 1, 1, 1]
-      Texture: assets/textures/KomodoHype.png
+      Texture: assets\textures\CheckerBoard.png
       TexCoords:
         0: [0, 0]
         1: [1, 0]
@@ -52,13 +61,29 @@ Entities:
       TilingFactor: 1
   - Entity: 12345678910
     TagComponent:
-      Tag: Green
+      Tag: Right
     TransformComponent:
-      Translation: [0.0919999182, -1.03114164, -1.08677638]
-      Rotation: [0, -0, 0]
-      Scale: [4, 0.200000003, 1]
+      Translation: [0.351999998, 0, 0.349999994]
+      Rotation: [0, 0.785398185, 0]
+      Scale: [1, 1, 1]
     SpriteComponent:
-      Color: [0, 1, 0, 1]
+      Color: [0.549019635, 0, 0.588235319, 0.0784313753]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
+  - Entity: 12345678910
+    TagComponent:
+      Tag: Left
+    TransformComponent:
+      Translation: [-0.355000019, 0, 0.349999964]
+      Rotation: [0, -0.785398245, 0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Color: [0.588235319, 0.301960796, 0.572549045, 0.505882382]
       Texture: ""
       TexCoords:
         0: [0, 0]

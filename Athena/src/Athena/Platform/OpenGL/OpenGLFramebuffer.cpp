@@ -76,6 +76,7 @@ namespace Athena
 			DeleteAttachments();
 
 			m_ColorAttachments.clear();
+			m_DepthAttachment = 0;
 		}
 
 		glCreateFramebuffers(1, &m_RendererID);

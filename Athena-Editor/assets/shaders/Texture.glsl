@@ -1,5 +1,5 @@
 #type VERTEX_SHADER
-#version 330 core
+#version 430 core
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec4 a_Color;
@@ -29,7 +29,7 @@ void main()
 
 
 #type FRAGMENT_SHADER
-#version 330 core
+#version 430 core
 			
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
@@ -50,16 +50,16 @@ void main()
 	vec4 TexColor = v_Color;
 	switch(int(v_TexIndex))
 	{
-		case 0: TexColor *= texture(u_Texture[0], v_TexCoord * v_TilingFactor); break;
-		case 1: TexColor *= texture(u_Texture[1], v_TexCoord * v_TilingFactor); break;
-		case 2: TexColor *= texture(u_Texture[2], v_TexCoord * v_TilingFactor); break;
-		case 3: TexColor *= texture(u_Texture[3], v_TexCoord * v_TilingFactor); break;
-		case 4: TexColor *= texture(u_Texture[4], v_TexCoord * v_TilingFactor); break;
-		case 5: TexColor *= texture(u_Texture[5], v_TexCoord * v_TilingFactor); break;
-		case 6: TexColor *= texture(u_Texture[6], v_TexCoord * v_TilingFactor); break;
-		case 7: TexColor *= texture(u_Texture[7], v_TexCoord * v_TilingFactor); break;
-		case 8: TexColor *= texture(u_Texture[8], v_TexCoord * v_TilingFactor); break;
-		case 9: TexColor *= texture(u_Texture[9], v_TexCoord * v_TilingFactor); break;
+		case 0:  TexColor *= texture(u_Texture[0],  v_TexCoord * v_TilingFactor); break;
+		case 1:  TexColor *= texture(u_Texture[1],  v_TexCoord * v_TilingFactor); break;
+		case 2:  TexColor *= texture(u_Texture[2],  v_TexCoord * v_TilingFactor); break;
+		case 3:  TexColor *= texture(u_Texture[3],  v_TexCoord * v_TilingFactor); break;
+		case 4:  TexColor *= texture(u_Texture[4],  v_TexCoord * v_TilingFactor); break;
+		case 5:  TexColor *= texture(u_Texture[5],  v_TexCoord * v_TilingFactor); break;
+		case 6:  TexColor *= texture(u_Texture[6],  v_TexCoord * v_TilingFactor); break;
+		case 7:  TexColor *= texture(u_Texture[7],  v_TexCoord * v_TilingFactor); break;
+		case 8:  TexColor *= texture(u_Texture[8],  v_TexCoord * v_TilingFactor); break;
+		case 9:  TexColor *= texture(u_Texture[9],  v_TexCoord * v_TilingFactor); break;
 		case 10: TexColor *= texture(u_Texture[10], v_TexCoord * v_TilingFactor); break;
 		case 11: TexColor *= texture(u_Texture[11], v_TexCoord * v_TilingFactor); break;
 		case 12: TexColor *= texture(u_Texture[12], v_TexCoord * v_TilingFactor); break;

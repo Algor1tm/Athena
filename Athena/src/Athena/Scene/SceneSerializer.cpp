@@ -241,6 +241,29 @@ namespace Athena
 					sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
 				}
 
+				auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
+				if (rigidbody2DComponentNode)
+				{
+					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+
+					rb2d.Type = (Rigidbody2DComponent::BodyType)rigidbody2DComponentNode["BodyType"].as<int>();
+					rb2d.FixedRotation = rigidbody2DComponentNode["FixedRotation"].as<bool>();
+				}
+
+				auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
+				if (boxCollider2DComponentNode)
+				{
+					auto& rb2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+
+					rb2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
+					rb2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
+
+					rb2d.Density = boxCollider2DComponentNode["Density"].as<float>();
+					rb2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
+					rb2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
+					rb2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
+				}
+
 				ATN_CORE_TRACE("Loaded Entity 'Name = {0}', 'ID = {1}'", name, uuid);
 			}
 		}
@@ -326,6 +349,25 @@ namespace Athena
 				output << YAML::EndMap;
 
 				output << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
+			});
+
+		SerializeComponent<Rigidbody2DComponent>(out, "Rigidbody2DComponent", entity,
+			[](YAML::Emitter& output, const Rigidbody2DComponent& rb2d)
+			{
+				output << YAML::Key << "BodyType" << YAML::Value << (int)rb2d.Type;
+				output << YAML::Key << "FixedRotation" << YAML::Value << rb2d.FixedRotation;
+			});
+
+		SerializeComponent<BoxCollider2DComponent>(out, "BoxCollider2DComponent", entity,
+			[](YAML::Emitter& output, const BoxCollider2DComponent& bc2d)
+			{
+				output << YAML::Key << "Offset" << YAML::Value << bc2d.Offset;
+				output << YAML::Key << "Size" << YAML::Value << bc2d.Size;
+
+				output << YAML::Key << "Density" << YAML::Value << bc2d.Density;
+				output << YAML::Key << "Friction" << YAML::Value << bc2d.Friction;
+				output << YAML::Key << "Restitution" << YAML::Value << bc2d.Restitution;
+				output << YAML::Key << "RestitutionThreshold" << YAML::Value << bc2d.RestitutionThreshold;
 			});
 
 		out << YAML::EndMap; // Entity

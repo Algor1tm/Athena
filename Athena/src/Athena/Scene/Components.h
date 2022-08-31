@@ -24,8 +24,8 @@ namespace Athena
 	struct TransformComponent
 	{
 		Vector3 Translation = { 0.f, 0.f, 0.f };
-		Vector3 Rotation = { 0.f, 0.f, 0.f };
-		Vector3 Scale = { 1.f, 1.f, 1.f };
+		Vector3 Rotation = { 0.f, 0.f, 0.f };  // Radians
+		Vector3 Scale = { 1.f, 1.f, 1.f }; 
 
 		TransformComponent() = default;
 		TransformComponent(const Vector3& position)
@@ -77,5 +77,30 @@ namespace Athena
 			InstantiateScript = []() { return static_cast<NativeScript*>(new T()); };
 			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Script; nsc->Script = nullptr; };
 		}
+	};
+
+
+	struct Rigidbody2DComponent
+	{
+		enum class BodyType {STATIC = 0, DYNAMIC = 1, KINEMATIC = 2};
+		BodyType Type = BodyType::STATIC;
+		bool FixedRotation = false;
+
+		//Storage
+		void* RuntimeBody = nullptr;
+	};
+
+	struct BoxCollider2DComponent
+	{
+		Vector2 Offset = { 0.f, 0.f };
+		Vector2 Size = { 0.5f, 0.5f };
+
+		float Density = 1.f;
+		float Friction = 0.5f;
+		float Restitution = 0.f;
+		float RestitutionThreshold = 0.5f;
+
+		//Storage
+		void* RuntimeFixture = nullptr;
 	};
 }

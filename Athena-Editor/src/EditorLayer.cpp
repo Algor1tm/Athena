@@ -20,8 +20,7 @@ namespace Athena
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
         m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png")
     {
-        m_EditorCamera.SetDistance(7.f);
-        m_EditorCamera.SetPitch(Math::Radians(30.f));
+
     }
 
     void EditorLayer::OnAttach()
@@ -36,7 +35,7 @@ namespace Athena
         m_ViewportSize = { fbDesc.Width, fbDesc.Height };
 
         m_ActiveScene = CreateRef<Scene>();
-#if 1
+#if 0
         auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
         auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
@@ -74,7 +73,9 @@ namespace Athena
         CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
 
 #else
-        OpenScene("assets/scene/3DExample.atn");
+        m_EditorCamera.SetDistance(7.f);
+        m_EditorCamera.Pan({ 0, 0.7f, 0 });
+        OpenScene("assets/scene/PhysicsExample.atn");
 #endif
 
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -366,11 +367,14 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
+        m_HierarchyPanel.SetSelectedEntity(Entity{});
         m_SceneState = SceneState::Play;
+        m_ActiveScene->OnRuntimeStart();
     }
 
     void EditorLayer::OnSceneStop()
     {
+        m_ActiveScene->OnRuntimeStop();
         m_SceneState = SceneState::Edit;
     }
 
@@ -397,17 +401,20 @@ namespace Athena
         case Key::S: if(ctrl) SaveSceneAs(); break;
         case Key::N: if(ctrl) NewScene(); break;
         case Key::O: if(ctrl) OpenScene(); break;
+
         //Panels
         case Key::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
-        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
-        //Gizmos
-        case Key::Q: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::UNIVERSAL); break;
-        case Key::W: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
-        case Key::E: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
-        case Key::R: if(m_SelectedEntity)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
 
+        //Gizmos
+        case Key::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::UNIVERSAL); break;
+        case Key::W: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+        case Key::E: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+        case Key::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+
+        //Entities
+        case Key::Escape: if (m_SelectedEntity && m_ViewportFocused) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
         case Key::Delete: 
-            if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_ActiveScene->DestroyEntity(m_SelectedEntity); break;
+            if (m_SelectedEntity && m_ViewportFocused) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_ActiveScene->DestroyEntity(m_SelectedEntity); break;
         }
 
         return false;

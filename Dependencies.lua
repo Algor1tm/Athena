@@ -1,6 +1,7 @@
 
 IncludeDir = {}
 
+IncludeDir["Box2d"] = "%{wks.location}/Athena/vendor/Box2d/Box2d/include"
 IncludeDir["entt"] = "%{wks.location}/Athena/vendor/entt"
 IncludeDir["glad"] = "%{wks.location}/Athena/vendor/glad/glad/include"
 IncludeDir["GLFW"] = "%{wks.location}/Athena/vendor/GLFW/GLFW/include"

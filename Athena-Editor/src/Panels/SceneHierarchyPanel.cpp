@@ -241,6 +241,59 @@ namespace Athena
 					{ return ImGui::Checkbox("##FixedAspectRatio", &cameraComponent.FixedAspectRatio); });
 			});
 
+
+		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
+			{
+				static auto typeToStr = [](Rigidbody2DComponent::BodyType type) -> std::string_view
+				{
+					switch (type)
+					{
+					case Rigidbody2DComponent::BodyType::STATIC: return "Static";
+					case Rigidbody2DComponent::BodyType::DYNAMIC: return "Dynamic";
+					case Rigidbody2DComponent::BodyType::KINEMATIC: return "Kinematic";
+					}
+
+					return "Invalid";
+				};
+
+				std::string_view currentBodyType = typeToStr(rb2d.Type);
+
+				if (UI::DrawController("BodyType        ", 0, [&currentBodyType]()
+					{ return ImGui::BeginCombo("##BodyType", currentBodyType.data()); }))
+				{
+					for (int i = 0; i < 3; ++i)
+					{
+						const std::string_view typeStr = typeToStr((Rigidbody2DComponent::BodyType)i);
+						bool isSelected = currentBodyType == typeStr;
+						if (ImGui::Selectable(typeStr.data(), isSelected))
+						{
+							currentBodyType = typeStr;
+							rb2d.Type = (Rigidbody2DComponent::BodyType)i;
+						}
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+
+				UI::DrawController("Fixed Rotation", 0, [&rb2d] { return ImGui::Checkbox("##FixedRotation", &rb2d.FixedRotation); });
+			});
+
+
+		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", [](BoxCollider2DComponent& bc2d)
+			{
+				UI::DrawController("Offset          ", 0, [&bc2d]() { return ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f); });
+				UI::DrawController("Size              ", 0, [&bc2d]() { return ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f); });
+
+				UI::DrawController("Density       ", 0, [&bc2d]() { return ImGui::DragFloat("##Density", &bc2d.Density, 0.01f, 0.f, 1.f); });
+				UI::DrawController("Friction       ", 0, [&bc2d]() { return ImGui::DragFloat("##Friction", &bc2d.Friction, 0.01f, 0.f, 1.f); });
+				UI::DrawController("Restitution ", 0, [&bc2d]() { return ImGui::DragFloat("##Restitution", &bc2d.Restitution, 0.01f, 0.f, 1.f); });
+				UI::DrawController("RestitutionThreshold", 0, [&bc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.01f, 0.f); });
+			});
+
+
 		ImGui::Separator();
 
 		if (ImGui::Button("Add"))
@@ -257,6 +310,18 @@ namespace Athena
 			if (!entity.HasComponent<SpriteComponent>() && ImGui::MenuItem("Sprite"))
 			{
 				m_SelectionContext.AddComponent<SpriteComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!entity.HasComponent<Rigidbody2DComponent>() && ImGui::MenuItem("Rigidbody2D"))
+			{
+				m_SelectionContext.AddComponent<Rigidbody2DComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!entity.HasComponent<BoxCollider2DComponent>() && ImGui::MenuItem("BoxCollider2D"))
+			{
+				m_SelectionContext.AddComponent<BoxCollider2DComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

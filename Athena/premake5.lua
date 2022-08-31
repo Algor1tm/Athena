@@ -25,6 +25,7 @@ project "Athena"
 	{
 		"src",
 		"vendor",
+		"%{IncludeDir.Box2d}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.glad}",
 		"%{IncludeDir.GLFW}",
@@ -38,6 +39,7 @@ project "Athena"
 	
 	links
 	{
+		"Box2d",
 		"glad",
 		"GLFW",
 		"opengl32.lib",

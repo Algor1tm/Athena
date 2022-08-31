@@ -11,6 +11,11 @@
 #include <entt/entt.h>
 #endif
 
+#include <memory>
+
+
+class b2World;
+
 
 namespace Athena
 {
@@ -29,6 +34,10 @@ namespace Athena
 
 		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);
+
+		void OnRuntimeStart();
+		void OnRuntimeStop();
+
 		void OnViewportResize(uint32 width, uint32 height);
 
 		Entity GetPrimaryCameraEntity();
@@ -43,6 +52,8 @@ namespace Athena
 	private:
 		entt::registry m_Registry;
 		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
+
+		std::unique_ptr<b2World> m_PhysicsWorld;
 	};
 
 

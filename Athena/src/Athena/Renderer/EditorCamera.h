@@ -27,20 +27,22 @@ namespace Athena
 		inline void SetViewportSize(uint32 width, uint32 height) 
 		{ m_ViewportWidth = (float)width; m_ViewportHeight = (float)height; RecalculateProjection(); }
 
-		inline void SetPitch(float pitch) { m_Pitch = pitch; RecalculateView(); }
-		inline void SetYaw(float yaw) { m_Yaw = yaw; RecalculateView(); }
-
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
 		Matrix4 GetViewProjection() const { return m_ViewMatrix * m_Projection; }
 			
 		Vector3 GetUpDirection() const;
 		Vector3 GetRightDirection() const;
 		Vector3 GetForwardDirection() const;
-		const Vector3& GetPosition() const { return m_Position; }
+		inline const Vector3& GetPosition() const { return m_Position; }
 		Quat GetOrientation() const;
 
-		float GetPitch() const { return m_Pitch; }
-		float GetYaw() const { return m_Yaw; }
+		inline void SetPitch(float pitch) { m_Pitch = pitch; RecalculateView(); }
+		inline void SetYaw(float yaw) { m_Yaw = yaw; RecalculateView(); }
+
+		inline float GetPitch() const { return m_Pitch; }
+		inline float GetYaw() const { return m_Yaw; }
+
+		inline void Pan(const Vector3& offset) { m_FocalPoint += offset; RecalculateView(); }
 
 	private:
 		void RecalculateProjection();

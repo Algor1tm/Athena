@@ -14,3 +14,6 @@
 [submodule "Athena/vendor/ImGuizmo"]
 	path = Athena/vendor/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Athena/vendor/Box2d/Box2d"]
+	path = Athena/vendor/Box2d/Box2d
+	url = https://github.com/erincatto/box2d.git

@@ -17,7 +17,8 @@
 namespace Athena
 {
     EditorLayer::EditorLayer()
-        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f)
+        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
+        m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png")
     {
         m_EditorCamera.SetDistance(7.f);
         m_EditorCamera.SetPitch(Math::Radians(30.f));
@@ -35,7 +36,7 @@ namespace Athena
         m_ViewportSize = { fbDesc.Width, fbDesc.Height };
 
         m_ActiveScene = CreateRef<Scene>();
-#if 0
+#if 1
         auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
         auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
@@ -45,7 +46,7 @@ namespace Athena
 
         Entity Komodo = m_ActiveScene->CreateEntity("KomodoHype");
         Komodo.AddComponent<SpriteComponent>(KomodoHype);
-        Komodo.GetComponent<TransformComponent>().Translation += Vector3(2.f, 2.f, 0);
+        Komodo.GetComponent<TransformComponent>().Translation += Vector3(1.f, 1.f, 0);
 
         Entity CameraEntity = m_ActiveScene->CreateEntity("Camera");
         CameraEntity.AddComponent<CameraComponent>();
@@ -100,16 +101,29 @@ namespace Athena
             m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
         }
 
-        if(m_ViewportHovered && !ImGuizmo::IsUsing())
-            m_EditorCamera.OnUpdate(frameTime);
-
         Renderer2D::ResetStats();
         m_Framebuffer->Bind();
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
         // Clear our entity ID attachment to -1
         m_Framebuffer->ClearAttachment(1, -1);
 
-        m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera);
+        switch (m_SceneState)
+        {
+        case SceneState::Edit:
+        {
+            if (m_ViewportHovered && !ImGuizmo::IsUsing())
+                m_EditorCamera.OnUpdate(frameTime);
+
+            m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera); 
+            break;
+
+        }
+        case SceneState::Play:
+        {
+            m_ActiveScene->OnUpdateRuntime(frameTime); 
+            break;
+        }
+        }
 
         m_Framebuffer->UnBind();
     }
@@ -317,7 +331,47 @@ namespace Athena
         ImGui::End();
         ImGui::PopStyleVar();
 
+        Toolbar();
+
         ImGui::End();
+    }
+
+    void EditorLayer::Toolbar()
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
+
+        ImGui::Begin("##Toolbar", nullptr, 
+            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+        float size = ImGui::GetWindowHeight() - 8.f;
+        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f));
+        void* iconID = m_SceneState == SceneState::Edit ? m_PlayIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
+        if (ImGui::ImageButton(iconID, {size, size}))
+        {
+            if(m_SceneState == SceneState::Edit)
+                OnScenePlay();
+            else if (m_SceneState == SceneState::Play)
+                OnSceneStop();
+        }
+
+        ImGui::End();
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(3);
+    }
+
+    void EditorLayer::OnScenePlay()
+    {
+        m_SceneState = SceneState::Play;
+    }
+
+    void EditorLayer::OnSceneStop()
+    {
+        m_SceneState = SceneState::Edit;
     }
 
     void EditorLayer::OnEvent(Event& event)

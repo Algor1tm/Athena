@@ -15,6 +15,7 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "UI/Icon.h"
 
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -34,8 +35,13 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
+		void Toolbar();
+
 		bool OnKeyPressed(KeyPressedEvent& event);
 		bool OnMouseReleased(MouseButtonReleasedEvent& event);
+
+		void OnScenePlay();
+		void OnSceneStop();
 
 		void NewScene();
 		void SaveSceneAs();
@@ -57,5 +63,14 @@ namespace Athena
 		ContentBrowserPanel m_ContentBrowserPanel;
 		bool m_ContentBrowserRendering = true;
 		Time m_FrameTime;
+
+		enum class SceneState
+		{
+			Edit = 0, Play = 1
+		};
+
+		SceneState m_SceneState = SceneState::Edit;
+		UI::Icon m_PlayIcon;
+		UI::Icon m_StopIcon;
 	};
 }

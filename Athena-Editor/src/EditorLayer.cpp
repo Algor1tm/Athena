@@ -18,7 +18,8 @@ namespace Athena
 {
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
-        m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png")
+        m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png"),
+        m_SaveEditorScenePath("Resources/tmp/EditorScene.atn")
     {
 
     }
@@ -34,20 +35,21 @@ namespace Athena
         m_Framebuffer = Framebuffer::Create(fbDesc);
         m_ViewportSize = { fbDesc.Width, fbDesc.Height };
 
-        m_ActiveScene = CreateRef<Scene>();
+        m_EditorScene = CreateRef<Scene>();
+        m_ActiveScene = m_EditorScene;
 #if 0
         auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
         auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
-        Entity SquareEntity = m_ActiveScene->CreateEntity("Square");
+        Entity SquareEntity = m_EditorScene->CreateEntity("Square");
         SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
         SquareEntity.GetComponent<TransformComponent>().Translation += Vector3(-1.f, 0, 0);
 
-        Entity Komodo = m_ActiveScene->CreateEntity("KomodoHype");
+        Entity Komodo = m_EditorScene->CreateEntity("KomodoHype");
         Komodo.AddComponent<SpriteComponent>(KomodoHype);
         Komodo.GetComponent<TransformComponent>().Translation += Vector3(1.f, 1.f, 0);
 
-        Entity CameraEntity = m_ActiveScene->CreateEntity("Camera");
+        Entity CameraEntity = m_EditorScene->CreateEntity("Camera");
         CameraEntity.AddComponent<CameraComponent>();
         CameraEntity.GetComponent<CameraComponent>().Camera.SetOrthographicSize(10.f);
 
@@ -78,7 +80,7 @@ namespace Athena
         OpenScene("assets/scene/PhysicsExample.atn");
 #endif
 
-        m_HierarchyPanel.SetContext(m_ActiveScene);
+        m_HierarchyPanel.SetContext(m_EditorScene);
     }
 
     void EditorLayer::OnDetach()
@@ -231,7 +233,6 @@ namespace Athena
         ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
         ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
 
-        static Timer fpsUpdateTimer;
         static Time updateInterval = Time::Seconds(0.05f);
         static Time elapsed = Time(0);
         static float fps = 0.f;
@@ -272,7 +273,7 @@ namespace Athena
         uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
 
-        if (m_SceneState == SceneState::Edit && ImGui::BeginDragDropTarget())
+        if (ImGui::BeginDragDropTarget())
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
             {
@@ -284,7 +285,7 @@ namespace Athena
                     OpenScene(path.data());
                 }
                 //Texture Drag/Drop on Entity
-                else if (extent == ".png\0")
+                else if (m_SceneState == SceneState::Edit && extent == ".png\0")
                 {
                     Entity target = GetEntityByCurrentMousePosition();
                     if (target.HasComponent<SpriteComponent>())
@@ -302,7 +303,7 @@ namespace Athena
 
         m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();
         //Gizmos
-        if (m_SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::UNIVERSAL && m_SelectedEntity.HasComponent<TransformComponent>())
+        if (m_SceneState == SceneState::Edit && m_SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::UNIVERSAL && m_SelectedEntity.HasComponent<TransformComponent>())
         {
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
@@ -393,7 +394,7 @@ namespace Athena
             m_Framebuffer->Bind();
             int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
             if (pixelData != -1)
-                return { (entt::entity)pixelData, m_ActiveScene.get() };
+                return { (entt::entity)pixelData, m_EditorScene.get() };
             m_Framebuffer->UnBind();
         }
 
@@ -403,14 +404,28 @@ namespace Athena
     void EditorLayer::OnScenePlay()
     {
         m_HierarchyPanel.SetSelectedEntity(Entity{});
+
+        SaveSceneAs(m_SaveEditorScenePath);
         m_SceneState = SceneState::Play;
-        m_ActiveScene->OnRuntimeStart();
+
+        m_RuntimeScene = m_EditorScene;
+        m_RuntimeScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        m_RuntimeScene->OnRuntimeStart();
+        m_HierarchyPanel.SetContext(m_RuntimeScene);
+
+        m_ActiveScene = m_RuntimeScene;
     }
 
     void EditorLayer::OnSceneStop()
     {
-        m_ActiveScene->OnRuntimeStop();
         m_SceneState = SceneState::Edit;
+        m_RuntimeScene->OnRuntimeStop();
+
+        m_ActiveScene = m_EditorScene;
+        OpenScene(m_SaveEditorScenePath);
+        m_HierarchyPanel.SetContext(m_EditorScene);
+
+        m_RuntimeScene = nullptr;
     }
 
     void EditorLayer::OnEvent(Event& event)
@@ -449,7 +464,7 @@ namespace Athena
         //Entities
         case Key::Escape: if (m_SelectedEntity && m_ViewportFocused) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
         case Key::Delete: 
-            if (m_SelectedEntity && m_ViewportFocused) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_ActiveScene->DestroyEntity(m_SelectedEntity); break;
+            if (m_SelectedEntity && m_ViewportFocused && m_SceneState == SceneState::Edit) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_EditorScene->DestroyEntity(m_SelectedEntity); break;
         }
 
         return false;
@@ -475,29 +490,39 @@ namespace Athena
 
     void EditorLayer::NewScene()
     {
-        m_ActiveScene = CreateRef<Scene>();
-        m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        if (m_SceneState != SceneState::Edit)
+            OnSceneStop();
+
+        m_EditorScene = CreateRef<Scene>();
+        m_ActiveScene = m_EditorScene;
         m_HierarchyPanel.SetContext(m_ActiveScene);
         ATN_CORE_INFO("Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
     {
+        if (m_SceneState != SceneState::Edit)
+            OnSceneStop();
+
         String filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
-        {
-            SceneSerializer serializer(m_ActiveScene);
-            serializer.SerializeToFile(filepath);
-            ATN_CORE_INFO("Successfully saved Scene into '{0}'", filepath.data());
-        }
+            SaveSceneAs(filepath);
         else
-        {
             ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.data());
-        }
+    }
+
+    void EditorLayer::SaveSceneAs(const std::filesystem::path& path)
+    {
+        SceneSerializer serializer(m_ActiveScene);
+        serializer.SerializeToFile(path.string());
+        ATN_CORE_INFO("Successfully saved Scene into '{0}'", path.string().data());
     }
 
     void EditorLayer::OpenScene()
     {
+        if (m_SceneState != SceneState::Edit)
+            OnSceneStop();
+
         String filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             OpenScene(filepath);
@@ -507,12 +532,23 @@ namespace Athena
 
     void EditorLayer::OpenScene(const std::filesystem::path& path)
     {
-        m_ActiveScene = CreateRef<Scene>();
-        m_ActiveScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
-        m_HierarchyPanel.SetContext(m_ActiveScene);
+        if (m_SceneState != SceneState::Edit)
+            OnSceneStop();
 
-        SceneSerializer serializer(m_ActiveScene);
-        serializer.DeserializeFromFile(path.string());
-        ATN_CORE_INFO("Successfully load Scene from '{0}'", path.string().data());
+        Ref<Scene> newScene = CreateRef<Scene>();
+
+        SceneSerializer serializer(newScene);
+        if(serializer.DeserializeFromFile(path.string()))
+        {
+            m_EditorScene = newScene;
+            m_ActiveScene = newScene;
+
+            m_HierarchyPanel.SetContext(m_ActiveScene);
+            ATN_CORE_INFO("Successfully load Scene from '{0}'", path.string().data());
+        }
+        else
+        {
+            ATN_CORE_ERROR("Failed to load Scene from '{0}'", path.string().data());
+        }
     }
 }

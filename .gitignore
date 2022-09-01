@@ -11,6 +11,11 @@ bin-int/
 SandBox/AthenaProfile-Runtime.json
 SandBox/AthenaProfile-Shutdown.json
 SandBox/AthenaProfile-Startup.json
+Athena-Editor/AthenaProfile-Runtime.json
+Athena-Editor/AthenaProfile-Shutdown.json
+Athena-Editor/AthenaProfile-Startup.json
+
+Athena-Editor/Resources/tmp/
 
 Plans.txt
 

@@ -29,7 +29,7 @@ namespace Athena
 		void DrawAllComponents(Entity entity);
 
 		template <typename Component, typename Func>
-		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
+		void DrawComponent(Entity entity, std::string_view name, bool canDelete, Func uiFunction);
 
 	private:
 		Ref<Scene> m_Context;
@@ -39,7 +39,7 @@ namespace Athena
 
 
 	template <typename Component, typename Func>
-	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, Func uiFunction)
+	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, bool canDelete, Func uiFunction)
 	{
 		ImGuiTreeNodeFlags flags =
 			ImGuiTreeNodeFlags_DefaultOpen |
@@ -57,17 +57,20 @@ namespace Athena
 			bool open = ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), flags, name.data());
 			ImGui::PopStyleVar();
 
-			ImGui::SameLine(regionAvail.x - lineWidth * 0.5f);
-			if (ImGui::Button("...", { lineWidth, lineWidth }))
-				ImGui::OpenPopup("ComponentSettings");
-
 			bool removeComponent = false;
-			if (ImGui::BeginPopup("ComponentSettings"))
+			if (canDelete)
 			{
-				if (ImGui::MenuItem("RemoveComponent"))
-					removeComponent = true;
+				ImGui::SameLine(regionAvail.x - lineWidth * 0.5f);
+				if (ImGui::Button("...", { lineWidth, lineWidth }))
+					ImGui::OpenPopup("ComponentSettings");
 
-				ImGui::EndPopup();
+				if (ImGui::BeginPopup("ComponentSettings"))
+				{
+					if (ImGui::MenuItem("RemoveComponent"))
+						removeComponent = true;
+
+					ImGui::EndPopup();
+				}
 			}
 				
 			if (open)

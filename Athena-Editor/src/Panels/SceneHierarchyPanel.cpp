@@ -91,7 +91,7 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
-		DrawComponent<TagComponent>(entity, "Tag", [](TagComponent& tagComponent)
+		DrawComponent<TagComponent>(entity, "Tag", false, [](TagComponent& tagComponent)
 			{
 				String& tag = tagComponent.Tag;
 
@@ -102,7 +102,7 @@ namespace Athena
 					tag = String(buffer);
 			});
 		
-		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
+		DrawComponent<TransformComponent>(entity, "Transform", true, [](TransformComponent& transform)
 			{
 				UI::DrawVec3Controller("Position", transform.Translation, 0.0f);
 				Vector3 degrees = Math::Degrees(transform.Rotation);
@@ -113,7 +113,7 @@ namespace Athena
 				ImGui::Spacing();
 			});
 
-		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
+		DrawComponent<SpriteComponent>(entity, "Sprite", true, [](SpriteComponent& sprite)
 			{
 				UI::DrawController("Color", 0, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
 				UI::DrawController("Tiling", 0, [&sprite]() { return ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
@@ -162,7 +162,7 @@ namespace Athena
 				}
 			});
 
-		DrawComponent<CameraComponent>(entity, "Camera", [](CameraComponent& cameraComponent)
+		DrawComponent<CameraComponent>(entity, "Camera", true, [](CameraComponent& cameraComponent)
 			{
 				auto& camera = cameraComponent.Camera;
 
@@ -242,7 +242,7 @@ namespace Athena
 			});
 
 
-		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
+		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", true, [](Rigidbody2DComponent& rb2d)
 			{
 				static auto typeToStr = [](Rigidbody2DComponent::BodyType type) -> std::string_view
 				{
@@ -282,7 +282,7 @@ namespace Athena
 			});
 
 
-		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", [](BoxCollider2DComponent& bc2d)
+		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", true, [](BoxCollider2DComponent& bc2d)
 			{
 				UI::DrawController("Offset          ", 0, [&bc2d]() { return ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f); });
 				UI::DrawController("Size              ", 0, [&bc2d]() { return ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f); });

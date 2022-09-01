@@ -42,20 +42,15 @@ namespace Athena
 	{
 		Entity entity(m_Registry.create(), this);
 		entity.AddComponent<IDComponent>(id);
-		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<TagComponent>(name);
+		entity.AddComponent<TransformComponent>();
 
 		return entity;
 	}
 
 	Entity Scene::CreateEntity(const String& name)
 	{
-		Entity entity(m_Registry.create(), this);
-		entity.AddComponent<IDComponent>();
-		entity.AddComponent<TransformComponent>();
-		entity.AddComponent<TagComponent>(name);
-
-		return entity;
+		return CreateEntity(name, UUID());
 	}
 
 	void Scene::DestroyEntity(Entity entity)

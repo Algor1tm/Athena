@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	class NativeScript
+	class ATHENA_API NativeScript
 	{
 	public:
 		friend class Scene;

@@ -19,7 +19,7 @@ namespace Athena::Math
 
 		static float Float()
 		{
-			return (float)s_Distribution(s_RandomEngine) / (float)MaxValue<uint32>();
+			return (float)s_Distribution(s_RandomEngine) / (float)MaxValue<internal_type>();
 		}
 
 		static float Float(float min, float max)
@@ -27,12 +27,22 @@ namespace Athena::Math
 			return Lerp(min, max, Float());
 		}
 
-		static uint32 UInt()
+		static uint32 UInt32()
+		{
+			return (uint32)s_Distribution(s_RandomEngine);
+		}
+
+		static uint32 UInt32(uint32 min, uint32 max)
+		{
+			return min + ((uint32)s_Distribution(s_RandomEngine) % (max - min + 1));
+		}
+
+		static uint64 UInt64()
 		{
 			return s_Distribution(s_RandomEngine);
 		}
 
-		static uint32 UInt(uint32 min, uint32 max)
+		static uint64 UInt64(uint64 min, uint64 max)
 		{
 			return min + (s_Distribution(s_RandomEngine) % (max - min + 1));
 		}
@@ -68,7 +78,10 @@ namespace Athena::Math
 		}
 
 	private:
+		using internal_type = uint64;
+
+	private:
 		static std::mt19937 s_RandomEngine;
-		static std::uniform_int_distribution<std::mt19937::result_type> s_Distribution;
+		static std::uniform_int_distribution<internal_type> s_Distribution;
 	};
 }

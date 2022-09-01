@@ -1,10 +1,12 @@
 #include "atnpch.h"
 
+#include "Athena/Renderer/Renderer2D.h" 
+
 #include "Scene.h"
 #include "Entity.h"
 
 #include "Components.h"
-#include "Athena/Renderer/Renderer2D.h" 
+#include "NativeScript.h"
 
 #include <box2d/b2_world.h>
 #include <box2d/b2_body.h>
@@ -36,9 +38,20 @@ namespace Athena
 
 	}
 
+	Entity Scene::CreateEntity(const String& name, UUID id)
+	{
+		Entity entity(m_Registry.create(), this);
+		entity.AddComponent<IDComponent>(id);
+		entity.AddComponent<TransformComponent>();
+		entity.AddComponent<TagComponent>(name);
+
+		return entity;
+	}
+
 	Entity Scene::CreateEntity(const String& name)
 	{
 		Entity entity(m_Registry.create(), this);
+		entity.AddComponent<IDComponent>();
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<TagComponent>(name);
 
@@ -86,8 +99,8 @@ namespace Athena
 
 		//Physics
 		{
-			const uint32 velocityIterations = 6;
-			const uint32 positionIterations = 3;
+			constexpr uint32 velocityIterations = 6;
+			constexpr uint32 positionIterations = 2;
 			m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
 			m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([](auto entityID, auto& rb2d, auto& transform)

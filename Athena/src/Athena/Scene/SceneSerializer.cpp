@@ -173,14 +173,17 @@ namespace Athena
 		{
 			for (auto entityNode : entities)
 			{
-				uint64 uuid = entityNode["Entity"].as<uint64>();
+				uint64 uuid = 0;
+				auto& uuidComponentNode = entityNode["IDComponent"];
+				if (uuidComponentNode)
+					uuid = uuidComponentNode["ID"].as<uint64>();
 
 				String name;
 				auto& tagComponentNode = entityNode["TagComponent"];
 				if (tagComponentNode)
 					name = tagComponentNode["Tag"].as<String>();
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name);
+				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
 
 				auto& transformComponentNode = entityNode["TransformComponent"];
 				if (transformComponentNode)
@@ -225,7 +228,7 @@ namespace Athena
 					auto& textureNode = spriteComponentNode["Texture"];
 					const auto& path = textureNode.as<String>();
 					Ref<Texture2D> texture;
-					if (path == String())
+					if (path.empty())
 						texture = Texture2D::WhiteTexture();
 					else
 						texture = Texture2D::Create(path);
@@ -293,8 +296,18 @@ namespace Athena
 
 	void SceneSerializer::SerializeEntity(YAML::Emitter& out, Entity entity)
 	{
+		if (!entity.HasComponent<IDComponent>() && !entity.HasComponent<TagComponent>())
+		{
+			ATN_CORE_ERROR("Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
+			return;
+		}
+
 		out << YAML::BeginMap; // Entity
-		out << YAML::Key << "Entity" << YAML::Value << 12345678910;
+
+		SerializeComponent<IDComponent>(out, "IDComponent", entity, [](YAML::Emitter& output, const IDComponent& id) 
+			{
+				output << YAML::Key << "ID" << YAML::Value << (uint64)id.ID;
+			});
 
 		SerializeComponent<TagComponent>(out, "TagComponent", entity, 
 			[](YAML::Emitter& output, const TagComponent& tag) 
@@ -372,6 +385,6 @@ namespace Athena
 
 		out << YAML::EndMap; // Entity
 
-		ATN_CORE_TRACE("Saved Entity");
+		ATN_CORE_TRACE("Saved Entity 'Name = {0}', 'ID = {1}'", entity.GetComponent<TagComponent>().Tag, entity.GetComponent<IDComponent>().ID);
 	}
 }

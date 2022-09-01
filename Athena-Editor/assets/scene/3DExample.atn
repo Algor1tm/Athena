@@ -1,6 +1,7 @@
 Scene: Scene Name
 Entities:
-  - Entity: 12345678910
+  - IDComponent:
+      ID: 1799302827895858725
     TagComponent:
       Tag: Left
     TransformComponent:
@@ -16,7 +17,8 @@ Entities:
         2: [1, 1]
         3: [0, 1]
       TilingFactor: 1
-  - Entity: 12345678910
+  - IDComponent:
+      ID: 10088183424363624464
     TagComponent:
       Tag: Right
     TransformComponent:
@@ -32,7 +34,8 @@ Entities:
         2: [1, 1]
         3: [0, 1]
       TilingFactor: 1
-  - Entity: 12345678910
+  - IDComponent:
+      ID: 5137385360522333466
     TagComponent:
       Tag: Camera
     TransformComponent:
@@ -50,7 +53,8 @@ Entities:
         OrthographicFarClip: 1
       Primary: true
       FixedAspectRatio: false
-  - Entity: 12345678910
+  - IDComponent:
+      ID: 11664969248402573611
     TagComponent:
       Tag: Top
     TransformComponent:

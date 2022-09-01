@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "Components.h"
 
 #ifdef _MSC_VER
 #pragma warning(push, 0)
@@ -67,6 +68,9 @@ namespace Athena
 		operator uint32() const  { return (uint32)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }
 
+		UUID GetID() const { return GetComponent<IDComponent>().ID; }
+		const String& GetName() const { return GetComponent<TagComponent>().Tag; }
+
 		bool operator==(const Entity entity) const 
 		{ 
 			return m_EntityHandle == entity.m_EntityHandle && m_Scene == entity.m_Scene; 
@@ -81,4 +85,17 @@ namespace Athena
 		entt::entity m_EntityHandle = entt::null;
 		Scene* m_Scene = nullptr;
 	};
+
+
+	template <typename T>
+	void Scene::OnComponentAdd(Entity entity, T& component) {}
+
+	template<typename T>
+	void Scene::OnComponentRemove(Entity entity) {}
+
+	template <>
+	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
+	{
+		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+	}
 }

@@ -1,18 +1,24 @@
 #pragma once
 
-#include "Athena/Math/Matrix.h"
 #include "Athena/Core/Color.h"
+#include "Athena/Core/UUID.h"
+
+#include "Athena/Math/Quaternion.h"
+#include "Athena/Math/Matrix.h"
+
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Math/Quaternion.h"
-
-#include "NativeScript.h"
 
 #include <functional>
 
 
 namespace Athena
 {
+	struct IDComponent
+	{
+		UUID ID;
+	};
+
 	struct TagComponent
 	{
 		String Tag;
@@ -58,11 +64,8 @@ namespace Athena
 		bool FixedAspectRatio = false;
 	};
 
-	template <>
-	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
-	{
-		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
-	}
+	// Forward declaration (defined in NativeScript.h)
+	class ATHENA_API NativeScript;
 
 	struct NativeScriptComponent
 	{

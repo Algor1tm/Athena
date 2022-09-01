@@ -1,7 +1,10 @@
 #pragma once
 
 #include "Athena/Core/Time.h"
+#include "Athena/Core/UUID.h"
 #include "Athena/Renderer/EditorCamera.h"
+
+#include "Components.h" 
 
 #ifdef _MSC_VER
 #pragma warning(push, 0)
@@ -29,6 +32,7 @@ namespace Athena
 		Scene();
 		~Scene();
 
+		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
 
@@ -55,11 +59,4 @@ namespace Athena
 
 		std::unique_ptr<b2World> m_PhysicsWorld;
 	};
-
-
-	template <typename T>
-	void Scene::OnComponentAdd(Entity entity, T& component) {}
-
-	template<typename T>
-	void Scene::OnComponentRemove(Entity entity) {}
 }

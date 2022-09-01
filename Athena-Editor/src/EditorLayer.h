@@ -37,6 +37,8 @@ namespace Athena
 	private:
 		void Toolbar();
 
+		Entity GetEntityByCurrentMousePosition();
+
 		bool OnKeyPressed(KeyPressedEvent& event);
 		bool OnMouseReleased(MouseButtonReleasedEvent& event);
 

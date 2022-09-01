@@ -272,16 +272,28 @@ namespace Athena
         uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
         ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
 
-        if (ImGui::BeginDragDropTarget())
+        if (m_SceneState == SceneState::Edit && ImGui::BeginDragDropTarget())
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
             {
                 std::string_view path = (const char*)payload->Data;
                 std::string_view extent = path.substr(path.size() - 4, path.size());
-                if(extent == ".atn\0")
+                //Scene Drag/Drop
+                if (extent == ".atn\0")
+                {
                     OpenScene(path.data());
-                else
-                    ATN_CORE_ERROR("Invalid Scene format");
+                }
+                //Texture Drag/Drop on Entity
+                else if (extent == ".png\0")
+                {
+                    Entity target = GetEntityByCurrentMousePosition();
+                    if (target.HasComponent<SpriteComponent>())
+                    {
+                        auto& sprite = target.GetComponent<SpriteComponent>();
+                        sprite.Texture = Texture2D::Create(String(path));
+                        sprite.Color = LinearColor::White;
+                    }
+                }
             }
 
             ImGui::EndDragDropTarget();
@@ -365,6 +377,29 @@ namespace Athena
         ImGui::PopStyleColor(3);
     }
 
+    Entity EditorLayer::GetEntityByCurrentMousePosition()
+    {
+        auto [mx, my] = ImGui::GetMousePos();
+        mx -= m_ViewportBounds[0].x;
+        my -= m_ViewportBounds[0].y;
+        Vector2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
+        my = viewportSize.y - my;
+
+        int mouseX = (int)mx;
+        int mouseY = (int)my;
+
+        if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+        {
+            m_Framebuffer->Bind();
+            int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
+            if (pixelData != -1)
+                return { (entt::entity)pixelData, m_ActiveScene.get() };
+            m_Framebuffer->UnBind();
+        }
+
+        return Entity{};
+    }
+
     void EditorLayer::OnScenePlay()
     {
         m_HierarchyPanel.SetSelectedEntity(Entity{});
@@ -429,23 +464,9 @@ namespace Athena
         {
         case Mouse::Left:
         {
-            auto [mx, my] = ImGui::GetMousePos();
-            mx -= m_ViewportBounds[0].x;
-            my -= m_ViewportBounds[0].y;
-            Vector2 viewportSize = m_ViewportBounds[1] - m_ViewportBounds[0];
-            my = viewportSize.y - my;
-
-            int mouseX = (int)mx;
-            int mouseY = (int)my;
-
-            if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
-            {
-                m_Framebuffer->Bind();
-                int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
-                if (pixelData != -1)
-                    m_HierarchyPanel.SetSelectedEntity({ (entt::entity)pixelData, m_ActiveScene.get() });
-                m_Framebuffer->UnBind();
-            }
+            Entity selectedEntity = GetEntityByCurrentMousePosition();
+            if (selectedEntity)
+                m_HierarchyPanel.SetSelectedEntity(selectedEntity);
             break;
         }
         }

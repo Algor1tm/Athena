@@ -105,7 +105,7 @@ namespace Athena
 					tag = String(buffer);
 			});
 		
-		DrawComponent<TransformComponent>(entity, "Transform", true, [](TransformComponent& transform)
+		DrawComponent<TransformComponent>(entity, "Transform", false, [](TransformComponent& transform)
 			{
 				UI::DrawVec3Controller("Position", transform.Translation, 0.0f);
 				Vector3 degrees = Math::Degrees(transform.Rotation);
@@ -303,6 +303,17 @@ namespace Athena
 				UI::DrawController("RestitutionThreshold", 0, [&bc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.01f, 0.f); });
 			});
 
+		DrawComponent<CircleCollider2DComponent>(entity, "CircleCollider2D", true, [](CircleCollider2DComponent& cc2d)
+			{
+				UI::DrawController("Offset          ", 0, [&cc2d]() { return ImGui::DragFloat2("##Offset", cc2d.Offset.Data(), 0.1f); });
+				UI::DrawController("Radius         ", 0, [&cc2d]() { return ImGui::DragFloat("##Radius", &cc2d.Radius, 0.1f); });
+
+				UI::DrawController("Density       ", 0, [&cc2d]() { return ImGui::DragFloat("##Density", &cc2d.Density, 0.01f, 0.f, 1.f); });
+				UI::DrawController("Friction       ", 0, [&cc2d]() { return ImGui::DragFloat("##Friction", &cc2d.Friction, 0.01f, 0.f, 1.f); });
+				UI::DrawController("Restitution ", 0, [&cc2d]() { return ImGui::DragFloat("##Restitution", &cc2d.Restitution, 0.01f, 0.f, 1.f); });
+				UI::DrawController("RestitutionThreshold", 0, [&cc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.01f, 0.f); });
+			});
+
 
 		ImGui::Separator();
 
@@ -338,6 +349,12 @@ namespace Athena
 			if (!entity.HasComponent<BoxCollider2DComponent>() && ImGui::MenuItem("BoxCollider2D"))
 			{
 				m_SelectionContext.AddComponent<BoxCollider2DComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!entity.HasComponent<CircleCollider2DComponent>() && ImGui::MenuItem("CircleCollider2D"))
+			{
+				m_SelectionContext.AddComponent<CircleCollider2DComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

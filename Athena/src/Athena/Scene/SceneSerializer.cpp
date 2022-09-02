@@ -284,15 +284,31 @@ namespace Athena
 					auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
 					if (boxCollider2DComponentNode)
 					{
-						auto& rb2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+						auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
 
-						rb2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
-						rb2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
+						bc2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
+						bc2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
 
-						rb2d.Density = boxCollider2DComponentNode["Density"].as<float>();
-						rb2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
-						rb2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
-						rb2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
+						bc2d.Density = boxCollider2DComponentNode["Density"].as<float>();
+						bc2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
+						bc2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
+						bc2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
+					}
+				}
+
+				{
+					auto& circleCollider2DComponentNode = entityNode["CircleCollider2DComponent"];
+					if (circleCollider2DComponentNode)
+					{
+						auto& cc2d = deserializedEntity.AddComponent<CircleCollider2DComponent>();
+
+						cc2d.Offset = circleCollider2DComponentNode["Offset"].as<Vector2>();
+						cc2d.Radius = circleCollider2DComponentNode["Radius"].as<float>();
+
+						cc2d.Density = circleCollider2DComponentNode["Density"].as<float>();
+						cc2d.Friction = circleCollider2DComponentNode["Friction"].as<float>();
+						cc2d.Restitution = circleCollider2DComponentNode["Restitution"].as<float>();
+						cc2d.RestitutionThreshold = circleCollider2DComponentNode["RestitutionThreshold"].as<float>();
 					}
 				}
 
@@ -417,6 +433,18 @@ namespace Athena
 				output << YAML::Key << "Friction" << YAML::Value << bc2d.Friction;
 				output << YAML::Key << "Restitution" << YAML::Value << bc2d.Restitution;
 				output << YAML::Key << "RestitutionThreshold" << YAML::Value << bc2d.RestitutionThreshold;
+			});
+
+		SerializeComponent<CircleCollider2DComponent>(out, "CircleCollider2DComponent", entity,
+			[](YAML::Emitter& output, const CircleCollider2DComponent& cc2d)
+			{
+				output << YAML::Key << "Offset" << YAML::Value << cc2d.Offset;
+				output << YAML::Key << "Radius" << YAML::Value << cc2d.Radius;
+
+				output << YAML::Key << "Density" << YAML::Value << cc2d.Density;
+				output << YAML::Key << "Friction" << YAML::Value << cc2d.Friction;
+				output << YAML::Key << "Restitution" << YAML::Value << cc2d.Restitution;
+				output << YAML::Key << "RestitutionThreshold" << YAML::Value << cc2d.RestitutionThreshold;
 			});
 
 		out << YAML::EndMap; // Entity

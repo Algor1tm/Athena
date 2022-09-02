@@ -116,4 +116,18 @@ namespace Athena
 		//Storage
 		void* RuntimeFixture = nullptr;
 	};
+
+	struct CircleCollider2DComponent
+	{
+		Vector2 Offset = { 0.f, 0.f };
+		float Radius = 0.5f;
+
+		float Density = 1.f;
+		float Friction = 0.5f;
+		float Restitution = 0.f;
+		float RestitutionThreshold = 0.5f;
+
+		//Storage
+		void* RuntimeFixture = nullptr;
+	};
 }

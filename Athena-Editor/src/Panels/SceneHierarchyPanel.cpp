@@ -46,7 +46,6 @@ namespace Athena
 				m_SelectionContext = created;
 			}
 
-
 			ImGui::EndPopup();
 		}
 		ImGui::End();

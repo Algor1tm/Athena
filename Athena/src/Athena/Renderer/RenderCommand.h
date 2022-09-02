@@ -23,9 +23,19 @@ namespace Athena
 			s_RendererAPI->Clear(color); 
 		}
 
-		static inline void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0)
+		static inline void DrawTriangles(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0)
 		{
-			s_RendererAPI->DrawIndexed(vertexArray, indexCount);
+			s_RendererAPI->DrawTriangles(vertexArray, indexCount);
+		}
+
+		static inline void DrawLines(const Ref<VertexArray>& vertexArray, uint32 vertexCount = 0)
+		{
+			s_RendererAPI->DrawLines(vertexArray, vertexCount);
+		}
+
+		static inline void SetLineWidth(float width)
+		{
+			s_RendererAPI->SetLineWidth(width);
 		}
 
 	private:

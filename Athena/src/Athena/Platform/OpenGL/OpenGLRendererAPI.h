@@ -11,6 +11,8 @@ namespace Athena
 		void Init() override;
 		void SetViewport(uint32 x, uint32 y, uint32 width, uint32 height) override;
 		void Clear(const LinearColor& color) override;
-		void DrawIndexed(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0) override;
+		void DrawTriangles(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0) override;
+		void DrawLines(const Ref<VertexArray>& vertexArray, uint32 vertexCount = 0) override;
+		void SetLineWidth(float width) override;
 	};
 }

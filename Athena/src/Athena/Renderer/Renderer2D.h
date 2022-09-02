@@ -39,6 +39,14 @@ namespace Athena
 
 		static void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f, int entityID = -1);
 
+		static void DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color = LinearColor::White, int entityID = -1);
+
+		static void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White, int entityID = -1);
+		static void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White, int entityID = -1);
+
+		static float GetLineWidth();
+		static void SetLineWidth(float width);
+
 		// Stats
 		struct Statistics
 		{

@@ -462,9 +462,15 @@ namespace Athena
         case Key::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
 
         //Entities
-        case Key::Escape: if (m_SelectedEntity && m_ViewportFocused) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
+        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
         case Key::Delete: 
-            if (m_SelectedEntity && m_ViewportFocused && m_SceneState == SceneState::Edit) m_HierarchyPanel.SetSelectedEntity(Entity{}); m_EditorScene->DestroyEntity(m_SelectedEntity); break;
+        {
+            if (m_SelectedEntity && m_SceneState == SceneState::Edit)
+            {
+                m_HierarchyPanel.SetSelectedEntity(Entity{});
+                m_EditorScene->DestroyEntity(m_SelectedEntity); break;
+            }
+        }
         }
 
         return false;

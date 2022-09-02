@@ -78,7 +78,7 @@ namespace Athena
 
 			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
 		}
-
+		
 		Renderer2D::EndScene();
 	}
 

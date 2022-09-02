@@ -44,6 +44,7 @@ namespace Athena
 		bool OnMouseReleased(MouseButtonReleasedEvent& event);
 
 		void OnScenePlay();
+		void OnSceneSimulate();
 		void OnSceneStop();
 
 		void NewScene();
@@ -73,11 +74,12 @@ namespace Athena
 
 		enum class SceneState
 		{
-			Edit = 0, Play = 1
+			Edit = 0, Play = 1, Simulation = 2
 		};
 
 		SceneState m_SceneState = SceneState::Edit;
 		UI::Icon m_PlayIcon;
 		UI::Icon m_StopIcon;
+		UI::Icon m_SimulationIcon;
 	};
 }

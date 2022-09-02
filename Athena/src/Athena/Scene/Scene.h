@@ -38,9 +38,10 @@ namespace Athena
 
 		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);
+		void OnUpdateSimulation(Time frameTime, EditorCamera& camera);
 
 		void OnRuntimeStart();
-		void OnRuntimeStop();
+		void OnSimulationStart();
 
 		void OnViewportResize(uint32 width, uint32 height);
 
@@ -53,6 +54,10 @@ namespace Athena
 		}
 
 	private:
+		void OnPhysics2DStart();
+		void RenderEditorScene(const EditorCamera& camera);
+		void UpdatePhysics(Time frameTime);
+
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);
 

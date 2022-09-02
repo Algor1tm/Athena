@@ -433,7 +433,7 @@ namespace Athena
 
 		s_Data.CircleIndexCount += 6;
 
-		s_Data.Stats.QuadCount++;
+		s_Data.Stats.CircleCount++;
 	}
 
 	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, int entityID) 
@@ -454,6 +454,8 @@ namespace Athena
 		s_Data.LineVertexBufferPointer++;
 
 		s_Data.LineVertexCount += 2;
+
+		s_Data.Stats.LineCount++;
 	}
 
 	float Renderer2D::GetLineWidth()
@@ -495,6 +497,8 @@ namespace Athena
 	{
 		s_Data.Stats.DrawCalls = 0;
 		s_Data.Stats.QuadCount = 0;
+		s_Data.Stats.CircleCount = 0;
+		s_Data.Stats.LineCount = 0;
 	}
 
 	Renderer2D::Statistics Renderer2D::GetStats()

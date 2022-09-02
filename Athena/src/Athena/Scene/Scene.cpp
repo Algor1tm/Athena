@@ -61,26 +61,7 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
-		// Render 2D
-		Renderer2D::BeginScene(camera);
-
-		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
-		for (auto entity : group)
-		{
-			auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
-
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
-		}
-
-		auto circles = m_Registry.view<TransformComponent, CircleComponent>();
-		for (auto entity : circles)
-		{
-			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
-
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
-		}
-		
-		Renderer2D::EndScene();
+		RenderEditorScene(camera);
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)
@@ -102,20 +83,7 @@ namespace Athena
 		}
 
 		//Physics
-		{
-			constexpr uint32 velocityIterations = 6;
-			constexpr uint32 positionIterations = 2;
-			m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
-
-			m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([](auto entityID, auto& rb2d, auto& transform)
-				{
-					b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
-					const auto& position = body->GetPosition();
-					transform.Translation.x = position.x;
-					transform.Translation.y = position.y;
-					transform.Rotation.z = body->GetAngle();
-				});
-		}
+		UpdatePhysics(frameTime);
 
 		// Choose camera
 		Camera* mainCamera = nullptr;
@@ -162,7 +130,52 @@ namespace Athena
 		}
 	}
 
+	void Scene::OnUpdateSimulation(Time frameTime, EditorCamera& camera)
+	{
+		UpdatePhysics(frameTime);
+		RenderEditorScene(camera);
+	}
+
 	void Scene::OnRuntimeStart()
+	{
+		OnPhysics2DStart();
+	}
+
+	void Scene::OnSimulationStart()
+	{
+		OnPhysics2DStart();
+	}
+
+	void Scene::OnViewportResize(uint32 width, uint32 height)
+	{
+		m_ViewportWidth = width;
+		m_ViewportHeight = height;
+
+		auto view = m_Registry.view<CameraComponent>();
+		for (auto entity : view)
+		{
+			auto& cameraComponent = view.get<CameraComponent>(entity);
+			if (!cameraComponent.FixedAspectRatio)
+			{
+				cameraComponent.Camera.SetViewportSize(width, height);
+			}
+		}
+	}
+
+	Entity Scene::GetPrimaryCameraEntity()
+	{
+		auto view = m_Registry.view<CameraComponent>();
+		for (auto entity : view)
+		{
+			auto& cameraComponent = view.get<CameraComponent>(entity);
+			if (cameraComponent.Primary)
+				return Entity(entity, this);
+		}
+
+		return Entity{};
+	}
+
+	void Scene::OnPhysics2DStart()
 	{
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
 		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([this](auto entityID, auto& rb2d, auto& transform)
@@ -214,37 +227,42 @@ namespace Athena
 			});
 	}
 
-	void Scene::OnRuntimeStop()
+	void Scene::RenderEditorScene(const EditorCamera& camera)
 	{
-		
+		Renderer2D::BeginScene(camera);
+
+		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
+		for (auto entity : group)
+		{
+			auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
+
+			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
+		}
+
+		auto circles = m_Registry.view<TransformComponent, CircleComponent>();
+		for (auto entity : circles)
+		{
+			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
+
+			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
+		}
+
+		Renderer2D::EndScene();
 	}
 
-	void Scene::OnViewportResize(uint32 width, uint32 height)
+	void Scene::UpdatePhysics(Time frameTime)
 	{
-		m_ViewportWidth = width;
-		m_ViewportHeight = height;
+		constexpr uint32 velocityIterations = 6;
+		constexpr uint32 positionIterations = 2;
+		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
-		auto view = m_Registry.view<CameraComponent>();
-		for (auto entity : view)
-		{
-			auto& cameraComponent = view.get<CameraComponent>(entity);
-			if (!cameraComponent.FixedAspectRatio)
+		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([](auto entityID, auto& rb2d, auto& transform)
 			{
-				cameraComponent.Camera.SetViewportSize(width, height);
-			}
-		}
-	}
-
-	Entity Scene::GetPrimaryCameraEntity()
-	{
-		auto view = m_Registry.view<CameraComponent>();
-		for (auto entity : view)
-		{
-			auto& cameraComponent = view.get<CameraComponent>(entity);
-			if (cameraComponent.Primary)
-				return Entity(entity, this);
-		}
-
-		return Entity{};
+				b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
+				const auto& position = body->GetPosition();
+				transform.Translation.x = position.x;
+				transform.Translation.y = position.y;
+				transform.Rotation.z = body->GetAngle();
+			});
 	}
 }

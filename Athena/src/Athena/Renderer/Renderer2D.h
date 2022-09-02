@@ -52,9 +52,11 @@ namespace Athena
 		{
 			uint32 DrawCalls = 0;
 			uint32 QuadCount = 0;
+			uint32 CircleCount = 0;
+			uint32 LineCount = 0;
 
-			uint32 GetTotalVertexCount() { return QuadCount * 4; }
-			uint32 GetTotalIndexCount() { return QuadCount * 6; }
+			uint32 GetTotalVertexCount() { return QuadCount * 4 + CircleCount * 4 + LineCount * 2; }
+			uint32 GetTotalIndexCount() { return QuadCount * 6 + CircleCount * 6 + LineCount * 2; }
 		};
 
 		static void ResetStats();

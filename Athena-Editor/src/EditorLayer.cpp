@@ -21,7 +21,7 @@ namespace Athena
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
         m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png"),
-        m_SaveEditorScenePath("Resources/tmp/EditorScene.atn")
+        m_SimulationIcon("Resources/Icons/SimulationIcon.png"), m_SaveEditorScenePath("Resources/tmp/EditorScene.atn")
     {
 
     }
@@ -128,6 +128,15 @@ namespace Athena
             m_ActiveScene->OnUpdateRuntime(frameTime); 
             break;
         }
+        case SceneState::Simulation:
+        {
+            if (m_ViewportHovered && !ImGuizmo::IsUsing())
+                m_EditorCamera.OnUpdate(frameTime);
+
+            m_ActiveScene->OnUpdateSimulation(frameTime, m_EditorCamera);
+            break;
+        }
+
         }
 
         VisualizeColliders();
@@ -234,6 +243,8 @@ namespace Athena
         auto stats = Renderer2D::GetStats();
         ImGui::Text("Draw Calls: %d", stats.DrawCalls);
         ImGui::Text("Quads: %d", stats.QuadCount);
+        ImGui::Text("Circles: %d", stats.CircleCount);
+        ImGui::Text("Lines: %d", stats.LineCount);
         ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
         ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
 
@@ -373,14 +384,28 @@ namespace Athena
             ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         float size = ImGui::GetWindowHeight() - 8.f;
-        ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f));
-        void* iconID = m_SceneState == SceneState::Edit ? m_PlayIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
-        if (ImGui::ImageButton(iconID, {size, size}))
         {
-            if(m_SceneState == SceneState::Edit)
-                OnScenePlay();
-            else if (m_SceneState == SceneState::Play)
-                OnSceneStop();
+            ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f));
+            void* iconID = m_SceneState != SceneState::Play ? m_PlayIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
+            if (ImGui::ImageButton(iconID, { size, size }))
+            {
+                if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation)
+                    OnScenePlay();
+                else if (m_SceneState == SceneState::Play)
+                    OnSceneStop();
+            }
+        }
+        ImGui::SameLine();
+        {
+            ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f) + size * 1.25f);
+            void* iconID = m_SceneState != SceneState::Simulation ? m_SimulationIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
+            if (ImGui::ImageButton(iconID, { size, size }))
+            {
+                if (m_SceneState == SceneState::Edit)
+                    OnSceneSimulate();
+                else if (m_SceneState == SceneState::Simulation)
+                    OnSceneStop();
+            }
         }
 
         ImGui::End();
@@ -467,6 +492,9 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
+        if (m_SceneState == SceneState::Simulation)
+            OnSceneStop();
+
         m_HierarchyPanel.SetSelectedEntity(Entity{});
 
         SaveSceneAs(m_SaveEditorScenePath);
@@ -483,13 +511,27 @@ namespace Athena
     void EditorLayer::OnSceneStop()
     {
         m_SceneState = SceneState::Edit;
-        m_RuntimeScene->OnRuntimeStop();
 
         m_ActiveScene = m_EditorScene;
         OpenScene(m_SaveEditorScenePath);
         m_HierarchyPanel.SetContext(m_EditorScene);
 
         m_RuntimeScene = nullptr;
+    }
+
+    void EditorLayer::OnSceneSimulate()
+    {
+        m_HierarchyPanel.SetSelectedEntity(Entity{});
+
+        SaveSceneAs(m_SaveEditorScenePath);
+        m_SceneState = SceneState::Simulation;
+
+        m_RuntimeScene = m_EditorScene;
+        m_RuntimeScene->OnViewportResize(m_ViewportSize.x, m_ViewportSize.y);
+        m_RuntimeScene->OnSimulationStart();
+        m_HierarchyPanel.SetContext(m_RuntimeScene);
+
+        m_ActiveScene = m_RuntimeScene;
     }
 
     void EditorLayer::OnEvent(Event& event)
@@ -515,6 +557,10 @@ namespace Athena
         case Key::S: if(ctrl) SaveSceneAs(); break;
         case Key::N: if(ctrl) NewScene(); break;
         case Key::O: if(ctrl) OpenScene(); break;
+
+        case Key::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
+        case Key::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
+        case Key::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
 
         //Panels
         case Key::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;

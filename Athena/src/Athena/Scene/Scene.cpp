@@ -71,6 +71,14 @@ namespace Athena
 			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
 		}
 
+		auto circles = m_Registry.view<TransformComponent, CircleComponent>();
+		for (auto entity : circles)
+		{
+			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
+
+			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
+		}
+
 		Renderer2D::EndScene();
 	}
 
@@ -132,12 +140,20 @@ namespace Athena
 			{
 				Renderer2D::BeginScene(*mainCamera, cameraTransform);
 
-				auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
-				for (auto entity : group)
+				auto quads = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
+				for (auto entity : quads)
 				{
-					auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
+					auto [transform, sprite] = quads.get<TransformComponent, SpriteComponent>(entity);
 
 					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+				}
+
+				auto circles = m_Registry.view<TransformComponent, CircleComponent>();
+				for (auto entity : circles)
+				{
+					auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
+
+					Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
 				}
 
 				Renderer2D::EndScene();
@@ -148,7 +164,7 @@ namespace Athena
 	void Scene::OnRuntimeStart()
 	{
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
-		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([=](auto entityID, auto& rb2d, auto& transform)
+		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([this](auto entityID, auto& rb2d, auto& transform)
 			{
 				Entity entity = Entity(entityID, this);
 

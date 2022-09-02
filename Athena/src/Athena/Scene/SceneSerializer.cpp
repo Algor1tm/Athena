@@ -174,97 +174,123 @@ namespace Athena
 			for (auto entityNode : entities)
 			{
 				uint64 uuid = 0;
-				auto& uuidComponentNode = entityNode["IDComponent"];
-				if (uuidComponentNode)
-					uuid = uuidComponentNode["ID"].as<uint64>();
+				{
+					auto& uuidComponentNode = entityNode["IDComponent"];
+					if (uuidComponentNode)
+						uuid = uuidComponentNode["ID"].as<uint64>();
+				}
 
 				String name;
-				auto& tagComponentNode = entityNode["TagComponent"];
-				if (tagComponentNode)
-					name = tagComponentNode["Tag"].as<String>();
+				{
+					auto& tagComponentNode = entityNode["TagComponent"];
+					if (tagComponentNode)
+						name = tagComponentNode["Tag"].as<String>();
+				}
 
 				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
 
-				auto& transformComponentNode = entityNode["TransformComponent"];
-				if (transformComponentNode)
 				{
-					auto& transform = deserializedEntity.GetComponent<TransformComponent>();
-					transform.Translation = transformComponentNode["Translation"].as<Vector3>();
-					transform.Rotation = transformComponentNode["Rotation"].as<Vector3>();
-					transform.Scale = transformComponentNode["Scale"].as<Vector3>();
+					auto& transformComponentNode = entityNode["TransformComponent"];
+					if (transformComponentNode)
+					{
+						auto& transform = deserializedEntity.GetComponent<TransformComponent>();
+						transform.Translation = transformComponentNode["Translation"].as<Vector3>();
+						transform.Rotation = transformComponentNode["Rotation"].as<Vector3>();
+						transform.Scale = transformComponentNode["Scale"].as<Vector3>();
+					}
 				}
 
-				auto& cameraComponentNode = entityNode["CameraComponent"];
-				if (cameraComponentNode)
 				{
-					auto& cc = deserializedEntity.AddComponent<CameraComponent>();
-					auto& cameraPropsNode = cameraComponentNode["Camera"];
+					auto& cameraComponentNode = entityNode["CameraComponent"];
+					if (cameraComponentNode)
+					{
+						auto& cc = deserializedEntity.AddComponent<CameraComponent>();
+						auto& cameraPropsNode = cameraComponentNode["Camera"];
 
-					cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
+						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
 
-					SceneCamera::PerspectiveDESC perspectiveDesc;
-					perspectiveDesc.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
-					perspectiveDesc.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
-					perspectiveDesc.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
-					cc.Camera.SetPerspectiveData(perspectiveDesc);
+						SceneCamera::PerspectiveDESC perspectiveDesc;
+						perspectiveDesc.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
+						perspectiveDesc.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
+						perspectiveDesc.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
+						cc.Camera.SetPerspectiveData(perspectiveDesc);
 
-					SceneCamera::OrthographicDESC orthoDesc;
-					orthoDesc.Size = cameraPropsNode["OrthographicSize"].as<float>();
-					orthoDesc.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
-					orthoDesc.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
-					cc.Camera.SetOrthographicData(orthoDesc);
+						SceneCamera::OrthographicDESC orthoDesc;
+						orthoDesc.Size = cameraPropsNode["OrthographicSize"].as<float>();
+						orthoDesc.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
+						orthoDesc.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
+						cc.Camera.SetOrthographicData(orthoDesc);
 
-					cc.Primary = cameraComponentNode["Primary"].as<bool>();
-					cc.FixedAspectRatio = cameraComponentNode["FixedAspectRatio"].as<bool>();
+						cc.Primary = cameraComponentNode["Primary"].as<bool>();
+						cc.FixedAspectRatio = cameraComponentNode["FixedAspectRatio"].as<bool>();
+					}
 				}
 
-				auto& spriteComponentNode = entityNode["SpriteComponent"];
-				if (spriteComponentNode)
 				{
-					auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
+					auto& spriteComponentNode = entityNode["SpriteComponent"];
+					if (spriteComponentNode)
+					{
+						auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
 
-					sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
+						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
 
-					auto& textureNode = spriteComponentNode["Texture"];
-					const auto& path = textureNode.as<String>();
-					Ref<Texture2D> texture;
-					if (path.empty())
-						texture = Texture2D::WhiteTexture();
-					else
-						texture = Texture2D::Create(path);
+						auto& textureNode = spriteComponentNode["Texture"];
+						const auto& path = textureNode.as<String>();
+						Ref<Texture2D> texture;
+						if (path.empty())
+							texture = Texture2D::DefaultTexture();
+						else
+							texture = Texture2D::Create(path);
 
-					std::array<Vector2, 4> texCoords;
-					auto& texCoordsNode = spriteComponentNode["TexCoords"];
-					texCoords[0] = texCoordsNode["0"].as<Vector2>();
-					texCoords[1] = texCoordsNode["1"].as<Vector2>();
-					texCoords[2] = texCoordsNode["2"].as<Vector2>();
-					texCoords[3] = texCoordsNode["3"].as<Vector2>();
+						std::array<Vector2, 4> texCoords;
+						auto& texCoordsNode = spriteComponentNode["TexCoords"];
+						texCoords[0] = texCoordsNode["0"].as<Vector2>();
+						texCoords[1] = texCoordsNode["1"].as<Vector2>();
+						texCoords[2] = texCoordsNode["2"].as<Vector2>();
+						texCoords[3] = texCoordsNode["3"].as<Vector2>();
 
-					sprite.Texture = Texture2DInstance(texture, texCoords);
-					sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
+						sprite.Texture = Texture2DInstance(texture, texCoords);
+						sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
+					}
 				}
 
-				auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
-				if (rigidbody2DComponentNode)
 				{
-					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+					auto& circleComponentNode = entityNode["CircleComponent"];
+					if (circleComponentNode)
+					{
+						auto& circle = deserializedEntity.AddComponent<CircleComponent>();
 
-					rb2d.Type = (Rigidbody2DComponent::BodyType)rigidbody2DComponentNode["BodyType"].as<int>();
-					rb2d.FixedRotation = rigidbody2DComponentNode["FixedRotation"].as<bool>();
+						circle.Color = circleComponentNode["Color"].as<LinearColor>();
+						circle.Thickness = circleComponentNode["Thickness"].as<float>();
+						circle.Fade = circleComponentNode["Fade"].as<float>();
+					}
 				}
 
-				auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
-				if (boxCollider2DComponentNode)
 				{
-					auto& rb2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+					auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
+					if (rigidbody2DComponentNode)
+					{
+						auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
 
-					rb2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
-					rb2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
+						rb2d.Type = (Rigidbody2DComponent::BodyType)rigidbody2DComponentNode["BodyType"].as<int>();
+						rb2d.FixedRotation = rigidbody2DComponentNode["FixedRotation"].as<bool>();
+					}
+				}
 
-					rb2d.Density = boxCollider2DComponentNode["Density"].as<float>();
-					rb2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
-					rb2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
-					rb2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
+				{
+					auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
+					if (boxCollider2DComponentNode)
+					{
+						auto& rb2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+
+						rb2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
+						rb2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
+
+						rb2d.Density = boxCollider2DComponentNode["Density"].as<float>();
+						rb2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
+						rb2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
+						rb2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
+					}
 				}
 
 				ATN_CORE_TRACE("Loaded Entity 'Name = {0}', 'ID = {1}'", name, uuid);
@@ -362,6 +388,13 @@ namespace Athena
 				output << YAML::EndMap;
 
 				output << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
+			});
+
+		SerializeComponent<CircleComponent>(out, "CircleComponent", entity, [](YAML::Emitter& output, const CircleComponent& circle)
+			{
+				output << YAML::Key << "Color" << YAML::Value << circle.Color;
+				output << YAML::Key << "Thickness" << YAML::Value << circle.Thickness;
+				output << YAML::Key << "Fade" << YAML::Value << circle.Fade;
 			});
 
 		SerializeComponent<Rigidbody2DComponent>(out, "Rigidbody2DComponent", entity,

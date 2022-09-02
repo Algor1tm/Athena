@@ -37,6 +37,8 @@ namespace Athena
 		static void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White, int entityID = -1);
 		static void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f, int entityID = -1);
 
+		static void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f, int entityID = -1);
+
 		// Stats
 		struct Statistics
 		{

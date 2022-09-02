@@ -51,10 +51,20 @@ namespace Athena
 		float TilingFactor;
 
 		SpriteComponent(const LinearColor& color = LinearColor::White)
-			: Color(color), Texture(Texture2D::WhiteTexture()), TilingFactor(1.f) {}
+			: Color(color), Texture(Texture2D::DefaultTexture()), TilingFactor(1.f) {}
 
 		SpriteComponent(const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
 			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}
+	};
+
+	struct CircleComponent
+	{
+		LinearColor Color;
+		float Thickness = 1.f;
+		float Fade = 0.005f;
+
+		CircleComponent(const LinearColor& color = LinearColor::White)
+			: Color(color) {}
 	};
 
 	struct CameraComponent

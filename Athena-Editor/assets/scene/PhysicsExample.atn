@@ -168,7 +168,7 @@ Entities:
     TagComponent:
       Tag: RedCubic
     TransformComponent:
-      Translation: [0.907383978, 1.84640288, 9.09566879e-05]
+      Translation: [0.907383978, 1.84640288, 0]
       Rotation: [0, -0, -1.57079327]
       Scale: [0.299997419, 0.299997419, 1]
     SpriteComponent:

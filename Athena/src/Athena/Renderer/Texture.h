@@ -30,7 +30,7 @@ namespace Athena
 	public:
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const String& path);
-		static Ref<Texture2D> WhiteTexture();
+		static Ref<Texture2D> DefaultTexture();
 
 		virtual bool operator==(const Texture2D& other) const = 0;
 	};

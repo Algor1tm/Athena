@@ -41,7 +41,11 @@ namespace Athena
 		if (ImGui::BeginPopupContextWindow(0, 1, false))
 		{
 			if (ImGui::MenuItem("Create Entity"))
-				m_Context->CreateEntity();
+			{
+				Entity created = m_Context->CreateEntity();
+				m_SelectionContext = created;
+			}
+
 
 			ImGui::EndPopup();
 		}
@@ -158,8 +162,15 @@ namespace Athena
 				ImGui::SameLine();
 				if (ImGui::Button("Reset"))
 				{
-					sprite.Texture = Texture2D::WhiteTexture();
+					sprite.Texture = Texture2D::DefaultTexture();
 				}
+			});
+
+		DrawComponent<CircleComponent>(entity, "Circle", true, [](CircleComponent& circle)
+			{
+				UI::DrawController("Color       ", 0, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
+				UI::DrawController("Thickness", 0, [&circle]() { return ImGui::DragFloat("##Thickness", &circle.Thickness, 0.01f, 0.f, 1.f); });
+				UI::DrawController("Fade         ", 0, [&circle]() { return ImGui::DragFloat("##Fade", &circle.Fade, 0.00025f, 0.f, 1.f); });
 			});
 
 		DrawComponent<CameraComponent>(entity, "Camera", true, [](CameraComponent& cameraComponent)
@@ -310,6 +321,12 @@ namespace Athena
 			if (!entity.HasComponent<SpriteComponent>() && ImGui::MenuItem("Sprite"))
 			{
 				m_SelectionContext.AddComponent<SpriteComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
+			if (!entity.HasComponent<CircleComponent>() && ImGui::MenuItem("Circle"))
+			{
+				m_SelectionContext.AddComponent<CircleComponent>();
 				ImGui::CloseCurrentPopup();
 			}
 

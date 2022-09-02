@@ -32,7 +32,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNCTION();
 
-		glCreateVertexArrays(0, &m_RendererID);
+		glCreateVertexArrays(1, &m_RendererID);
 	}
 
 	OpenGLVertexArray::~OpenGLVertexArray()

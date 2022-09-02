@@ -7,6 +7,9 @@
 
 namespace Athena
 {
+	Ref<Texture2D> Texture2D::m_WhiteTexture = nullptr;
+
+
 	Ref<Texture2D> Texture2D::Create(uint32 width, uint32 height)
 	{
 		switch (Renderer::GetAPI())
@@ -39,13 +42,16 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::DefaultTexture()
+	Ref<Texture2D> Texture2D::WhiteTexture()
 	{
-		auto whiteTexture = Texture2D::Create(1, 1);
-		uint32 whiteTextureData = 0xffffffff;
-		whiteTexture->SetData(&whiteTextureData, sizeof(uint32));
+		if (m_WhiteTexture == nullptr)
+		{
+			m_WhiteTexture = Texture2D::Create(1, 1);
+			uint32 whiteTextureData = 0xffffffff;
+			m_WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
+		}
 
-		return whiteTexture;
+		return m_WhiteTexture;
 	}
 
 

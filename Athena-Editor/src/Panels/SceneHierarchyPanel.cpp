@@ -162,7 +162,7 @@ namespace Athena
 				ImGui::SameLine();
 				if (ImGui::Button("Reset"))
 				{
-					sprite.Texture = Texture2D::DefaultTexture();
+					sprite.Texture = Texture2D::WhiteTexture();
 				}
 			});
 

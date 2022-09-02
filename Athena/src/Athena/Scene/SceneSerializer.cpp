@@ -234,14 +234,6 @@ namespace Athena
 
 						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
 
-						auto& textureNode = spriteComponentNode["Texture"];
-						const auto& path = textureNode.as<String>();
-						Ref<Texture2D> texture;
-						if (path.empty())
-							texture = Texture2D::DefaultTexture();
-						else
-							texture = Texture2D::Create(path);
-
 						std::array<Vector2, 4> texCoords;
 						auto& texCoordsNode = spriteComponentNode["TexCoords"];
 						texCoords[0] = texCoordsNode["0"].as<Vector2>();
@@ -249,7 +241,18 @@ namespace Athena
 						texCoords[2] = texCoordsNode["2"].as<Vector2>();
 						texCoords[3] = texCoordsNode["3"].as<Vector2>();
 
-						sprite.Texture = Texture2DInstance(texture, texCoords);
+						auto& textureNode = spriteComponentNode["Texture"];
+						const auto& path = textureNode.as<String>();
+						if (!path.empty())
+						{
+							Ref<Texture2D> texture = Texture2D::Create(path);
+							sprite.Texture = Texture2DInstance(texture, texCoords);
+						}
+						else
+						{
+							sprite.Texture.SetTexCoords(texCoords);
+						}
+
 						sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
 					}
 				}

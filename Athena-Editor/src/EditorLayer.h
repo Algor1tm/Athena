@@ -36,6 +36,7 @@ namespace Athena
 
 	private:
 		void Toolbar();
+		void VisualizeColliders();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -63,6 +64,7 @@ namespace Athena
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+		bool m_ShowColliders = false;
 
 		SceneHierarchyPanel m_HierarchyPanel;
 		ContentBrowserPanel m_ContentBrowserPanel;

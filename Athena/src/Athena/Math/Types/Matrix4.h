@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Matrix.h"
+#include "Athena/Math/Utils/MatrixTransforms.h"
 
 #define Size4 4
 
@@ -150,40 +151,16 @@ namespace Athena::Math
 
 		constexpr Matrix& Scale(const Vector<T, 3>& vec3)
 		{
-			m_Array[0][0] += vec3.x;
-			m_Array[1][1] += vec3.y;
-			m_Array[2][2] += vec3.z;
+			m_Array[0][0] *= vec3.x;
+			m_Array[1][1] *= vec3.y;
+			m_Array[2][2] *= vec3.z;
 
 			return *this;
 		}
 
 		inline Matrix& Rotate(T radians, const Vector<T, 3>& axis)
 		{
-			T c = Math::Cos(radians);
-			T s = Math::Sin(radians);
-
-			Vector<T, 3> temp((T(1) - c) * axis);
-
-			Matrix rotateMat;
-			rotateMat[0][0] = c + temp[0] * axis[0];
-			rotateMat[0][1] = temp[0] * axis[1] + s * axis[2];
-			rotateMat[0][2] = temp[0] * axis[2] - s * axis[1];
-
-			rotateMat[1][0] = temp[1] * axis[0] - s * axis[2];
-			rotateMat[1][1] = c + temp[1] * axis[1];
-			rotateMat[1][2] = temp[1] * axis[2] + s * axis[0];
-
-			rotateMat[2][0] = temp[2] * axis[0] + s * axis[1];
-			rotateMat[2][1] = temp[2] * axis[1] - s * axis[0];
-			rotateMat[2][2] = c + temp[2] * axis[2];
-
-			Matrix Result;
-			Result[0] = m_Array[0] * rotateMat[0][0] + m_Array[1] * rotateMat[0][1] + m_Array[2] * rotateMat[0][2];
-			Result[1] = m_Array[0] * rotateMat[1][0] + m_Array[1] * rotateMat[1][1] + m_Array[2] * rotateMat[1][2];
-			Result[2] = m_Array[0] * rotateMat[2][0] + m_Array[1] * rotateMat[2][1] + m_Array[2] * rotateMat[2][2];
-			Result[3] = m_Array[3];
-
-			return *this = Result;
+			return *this *= Math::RotateMatrix(radians, axis);
 		}
 
 // -------------Operators-------------------------------------

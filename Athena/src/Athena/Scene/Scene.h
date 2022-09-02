@@ -46,6 +46,12 @@ namespace Athena
 
 		Entity GetPrimaryCameraEntity();
 
+		template <typename... Components>
+		auto GetAllEntitiesWith()
+		{
+			return m_Registry.view<Components...>();
+		}
+
 	private:
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

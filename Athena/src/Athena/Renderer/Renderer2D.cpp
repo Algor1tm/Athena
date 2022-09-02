@@ -295,7 +295,7 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
 	{
-		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
+		Matrix4 transform = Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
 		DrawQuad(transform, color);
 	}
@@ -320,7 +320,7 @@ namespace Athena
 	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
 		Matrix4 transform =
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
+			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
 		DrawQuad(transform, color);
 	}
@@ -333,7 +333,7 @@ namespace Athena
 	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform =
-			ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
+			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}

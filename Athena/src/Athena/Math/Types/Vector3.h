@@ -54,7 +54,7 @@ namespace Athena::Math
 		constexpr Vector<T, Size3>(const Vector<X, 2>& _xy, Y _z)
 			: x(static_cast<T>(_xy.x)),
 			y(static_cast<T>(_xy.y)),
-			z(static_cast<T>(z)) {}
+			z(static_cast<T>(_z)) {}
 
 
 		template <typename X, typename Y>

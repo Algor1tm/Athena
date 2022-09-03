@@ -21,7 +21,7 @@ namespace Athena
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
         m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png"),
-        m_SimulationIcon("Resources/Icons/SimulationIcon.png"), m_SaveEditorScenePath("Resources/tmp/EditorScene.atn")
+        m_SimulationIcon("Resources/Icons/SimulationIcon.png"), m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
 
     }
@@ -39,48 +39,10 @@ namespace Athena
 
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
-#if 0
-        auto CheckerBoard = Texture2D::Create("assets/textures/CheckerBoard.png");
-        auto KomodoHype = Texture2D::Create("assets/textures/KomodoHype.png");
 
-        Entity SquareEntity = m_EditorScene->CreateEntity("Square");
-        SquareEntity.AddComponent<SpriteComponent>(LinearColor::Green);
-        SquareEntity.GetComponent<TransformComponent>().Translation += Vector3(-1.f, 0, 0);
-
-        Entity Komodo = m_EditorScene->CreateEntity("KomodoHype");
-        Komodo.AddComponent<SpriteComponent>(KomodoHype);
-        Komodo.GetComponent<TransformComponent>().Translation += Vector3(1.f, 1.f, 0);
-
-        Entity CameraEntity = m_EditorScene->CreateEntity("Camera");
-        CameraEntity.AddComponent<CameraComponent>();
-        CameraEntity.GetComponent<CameraComponent>().Camera.SetOrthographicSize(10.f);
-
-        class CameraScript: public NativeScript
-        {
-        public:
-            void OnUpdate(Time frameTime) override
-            {
-                Vector3& position = GetComponent<TransformComponent>().Translation;
-                static float speed = 10.f;
-
-                if (Input::IsKeyPressed(Key::A))
-                    position.x -= speed * frameTime.AsSeconds();
-                if (Input::IsKeyPressed(Key::D))
-                    position.x += speed * frameTime.AsSeconds();
-                if (Input::IsKeyPressed(Key::S))
-                    position.y -= speed * frameTime.AsSeconds();
-                if (Input::IsKeyPressed(Key::W))
-                    position.y += speed * frameTime.AsSeconds();
-            }
-        };
-
-        CameraEntity.AddComponent<NativeScriptComponent>().Bind<CameraScript>();
-
-#else
         m_EditorCamera.SetDistance(7.f);
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
-        OpenScene("assets/scene/PhysicsExample.atn");
-#endif
+        OpenScene("Assets/Scenes/PhysicsExample.atn");
 
         m_HierarchyPanel.SetContext(m_EditorScene);
     }
@@ -504,7 +466,7 @@ namespace Athena
 
         m_HierarchyPanel.SetSelectedEntity(Entity{});
 
-        SaveSceneAs(m_SaveEditorScenePath);
+        SaveSceneAs(m_TemporaryEditorScenePath);
         m_SceneState = SceneState::Play;
 
         m_RuntimeScene = m_EditorScene;
@@ -520,7 +482,7 @@ namespace Athena
         m_SceneState = SceneState::Edit;
 
         m_ActiveScene = m_EditorScene;
-        OpenScene(m_SaveEditorScenePath);
+        OpenScene(m_TemporaryEditorScenePath);
         m_HierarchyPanel.SetContext(m_EditorScene);
 
         m_RuntimeScene = nullptr;
@@ -530,7 +492,7 @@ namespace Athena
     {
         m_HierarchyPanel.SetSelectedEntity(Entity{});
 
-        SaveSceneAs(m_SaveEditorScenePath);
+        SaveSceneAs(m_TemporaryEditorScenePath);
         m_SceneState = SceneState::Simulation;
 
         m_RuntimeScene = m_EditorScene;
@@ -561,7 +523,17 @@ namespace Athena
         switch (event.GetKeyCode())
         {
         // Scenes Management
-        case Key::S: if(ctrl) SaveSceneAs(); break;
+        case Key::S: 
+        {
+            if (ctrl)
+            {
+                if (m_CurrentScenePath == std::filesystem::path())
+                    SaveSceneAs();
+                else
+                    SaveSceneAs(m_CurrentScenePath);
+            }
+            break;
+        }
         case Key::N: if(ctrl) NewScene(); break;
         case Key::O: if(ctrl) OpenScene(); break;
 
@@ -616,6 +588,7 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
+        m_CurrentScenePath = std::filesystem::path();
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
         m_HierarchyPanel.SetContext(m_ActiveScene);
@@ -663,6 +636,8 @@ namespace Athena
         SceneSerializer serializer(newScene);
         if(serializer.DeserializeFromFile(path.string()))
         {
+            m_CurrentScenePath = path;
+
             m_EditorScene = newScene;
             m_ActiveScene = newScene;
 

@@ -61,7 +61,8 @@ namespace Athena
 
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		std::filesystem::path m_SaveEditorScenePath;
+		std::filesystem::path m_TemporaryEditorScenePath;
+		std::filesystem::path m_CurrentScenePath;
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;

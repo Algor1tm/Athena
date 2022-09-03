@@ -77,8 +77,8 @@ namespace Athena
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
-		io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Bold.ttf", 16.f);
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/Open_Sans/OpenSans-Medium.ttf", 16.f);
+		io.Fonts->AddFontFromFileTTF("Assets/Fonts/Open_Sans/OpenSans-Bold.ttf", 16.f);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Open_Sans/OpenSans-Medium.ttf", 16.f);
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();

@@ -154,9 +154,9 @@ Entities:
     TagComponent:
       Tag: RedCubic
     TransformComponent:
-      Translation: [0.546132386, 1.84640276, 0]
+      Translation: [0.546132624, 1.83025706, 0]
       Rotation: [0, -0, -1.57079327]
-      Scale: [0.299990714, 0.299990714, 1]
+      Scale: [0.299988776, 0.299988776, 1]
     SpriteComponent:
       Color: [1, 0.371308029, 0.371308029, 1]
       Texture: ""

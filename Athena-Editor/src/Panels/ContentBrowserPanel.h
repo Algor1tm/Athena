@@ -20,7 +20,7 @@ namespace Athena
 
 	private:
 		std::filesystem::path m_CurrentDirectory;
-		std::string_view m_AssetDirectory = "assets";
+		std::string_view m_AssetDirectory = "Assets";
 
 		UI::Icon m_FolderIcon;
 		UI::Icon m_FileIcon;

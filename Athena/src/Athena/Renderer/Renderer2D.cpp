@@ -146,9 +146,9 @@ namespace Athena
 		s_Data.LineVertexArray->SetIndexBuffer(indexBuffer); // quad index buffer
 		s_Data.LineVertexBufferBase = new LineVertex[Renderer2DData::MaxLineVertices];
 
-		s_Data.QuadShader = Shader::Create("assets/shaders/Quad.glsl");
-		s_Data.CircleShader = Shader::Create("assets/shaders/Circle.glsl");
-		s_Data.LineShader = Shader::Create("assets/shaders/Line.glsl");
+		s_Data.QuadShader = Shader::Create("Assets/Shaders/Quad.glsl");
+		s_Data.CircleShader = Shader::Create("Assets/Shaders/Circle.glsl");
+		s_Data.LineShader = Shader::Create("Assets/Shaders/Line.glsl");
 
 		int32 samplers[Renderer2DData::MaxTextureSlots];
 		for (int32 i = 0; i < std::size(samplers); ++i)

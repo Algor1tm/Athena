@@ -4,7 +4,6 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/PlatformUtils.h"
 
-#include "Athena/Debug/Instrumentor.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/RenderCommand.h"
 
@@ -28,8 +27,6 @@ namespace Athena
 
     void EditorLayer::OnAttach()
     {
-        ATN_PROFILE_FUNCTION();
-
         FramebufferDESC fbDesc;
         fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth };
         fbDesc.Width = 1280;
@@ -49,13 +46,11 @@ namespace Athena
 
     void EditorLayer::OnDetach()
     {
-        ATN_PROFILE_FUNCTION();
+
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        ATN_PROFILE_FUNCTION();
-
         m_FrameTime = frameTime;
 
         const auto& desc = m_Framebuffer->GetDescription();
@@ -108,8 +103,6 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-        ATN_PROFILE_FUNCTION();
-
         static bool dockSpaceOpen = true;
 
         static bool opt_fullscreen = true;

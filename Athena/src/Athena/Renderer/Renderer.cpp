@@ -10,8 +10,6 @@ namespace Athena
 
 	void Renderer::Init()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		RenderCommand::Init();
 		Renderer2D::Init();
 	}

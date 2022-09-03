@@ -64,8 +64,6 @@ namespace Athena
 
 	void ImGuiLayer::OnAttach()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -104,8 +102,6 @@ namespace Athena
 
 	void ImGuiLayer::OnDetach()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
@@ -123,8 +119,6 @@ namespace Athena
 
 	void ImGuiLayer::Begin()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -133,8 +127,6 @@ namespace Athena
 
 	void ImGuiLayer::End()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		ImGuiIO& io = ImGui::GetIO();
 		Application& app = Application::Get();
 		io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());

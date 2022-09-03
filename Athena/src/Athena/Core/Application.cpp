@@ -14,8 +14,6 @@ namespace Athena
 	Application::Application(const WindowDESC& wdesc)
 		: m_Running(true), m_Minimized(false)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
@@ -31,16 +29,12 @@ namespace Athena
 
 	Application::~Application()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Renderer::Shutdown();
 	}
 
 
 	void Application::OnEvent(Event& event)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<WindowCloseEvent>(ATN_BIND_EVENT_FN(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
@@ -56,15 +50,11 @@ namespace Athena
 
 	void Application::Run()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Timer Timer;
 		Time LastTime;
 
 		while (m_Running)
 		{
-			ATN_PROFILE_SCOPE("Run Loop");
-
 				Time now = Timer.ElapsedTime();
 				Time frameTime = now - LastTime;
 				LastTime = now;
@@ -72,8 +62,6 @@ namespace Athena
 			if (m_Minimized == false)
 			{
 				{
-					ATN_PROFILE_SCOPE("LayerStack OnUpdate");
-
 					for (Layer* layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
 				}
@@ -81,8 +69,6 @@ namespace Athena
 
 			m_ImGuiLayer->Begin();
 			{
-				ATN_PROFILE_SCOPE("LayerStack OnImGuiRender");
-
 				for (Layer* layer : m_LayerStack)
 					layer->OnImGuiRender();
 			}
@@ -101,8 +87,6 @@ namespace Athena
 
 	void Application::PushLayer(Layer* layer)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		m_LayerStack.PushLayer(layer);
 		layer->OnAttach();
 	}
@@ -110,8 +94,6 @@ namespace Athena
 
 	void Application::PushOverlay(Layer* layer)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();
 	}
@@ -126,8 +108,6 @@ namespace Athena
 
 	bool Application::OnWindowResized(WindowResizedEvent& event)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (event.GetWidth() == 0 || event.GetHeight() == 0)
 		{
 			m_Minimized = true;

@@ -87,7 +87,6 @@ namespace Athena
 
 	void Renderer2D::Init()
 	{
-		ATN_PROFILE_FUNCTION();
 		s_Data.QuadVertexArray = VertexArray::Create();
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(Renderer2DData::MaxQuadVertices * sizeof(QuadVertex));
 		s_Data.QuadVertexBuffer->SetLayout({
@@ -168,15 +167,11 @@ namespace Athena
 
 	void Renderer2D::Shutdown()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		delete[] s_Data.QuadVertexBufferBase;
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera, const Matrix4& transform)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Matrix4 viewProj = AffineInverse(transform) * camera.GetProjection();
 
 		s_Data.QuadShader->Bind();
@@ -193,8 +188,6 @@ namespace Athena
 
 	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		s_Data.QuadShader->Bind();
 		s_Data.QuadShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
 
@@ -209,8 +202,6 @@ namespace Athena
 
 	void Renderer2D::BeginScene(const EditorCamera& camera)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		s_Data.QuadShader->Bind();
 		s_Data.QuadShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
 
@@ -225,15 +216,11 @@ namespace Athena
 
 	void Renderer2D::EndScene()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Flush();
 	}
 
 	void Renderer2D::Flush()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (s_Data.QuadIndexCount)
 		{
 			uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
@@ -340,8 +327,6 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int entityID)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
@@ -368,8 +353,6 @@ namespace Athena
 
 	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int entityID)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
@@ -415,8 +398,6 @@ namespace Athena
 
 	void Renderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade, int entityID)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (s_Data.CircleIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
@@ -438,8 +419,6 @@ namespace Athena
 
 	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, int entityID) 
 	{
-		ATN_PROFILE_FUNCTION();
-
 		if (s_Data.LineVertexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 

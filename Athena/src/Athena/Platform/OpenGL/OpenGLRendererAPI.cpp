@@ -28,8 +28,6 @@ namespace Athena
 
 	void OpenGLRendererAPI::Init()
 	{
-		ATN_PROFILE_FUNCTION();
-
 #ifdef ATN_DEBUG
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

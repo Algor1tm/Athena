@@ -28,8 +28,6 @@ SandBox2D::SandBox2D()
 
 void SandBox2D::OnAttach()
 {
-	ATN_PROFILE_FUNCTION();
-
 	m_SpriteSheet = Athena::Texture2D::Create("assets/game/textures/SpriteSheet.png");
 	m_TextureMap['D'] = Athena::Texture2DInstance(m_SpriteSheet, {6 * 128, 11 * 128}, { 7 * 128, 12 * 128 });
 	m_TextureMap['W'] = Athena::Texture2DInstance(m_SpriteSheet, { 11 * 128, 11 * 128 }, { 12 * 128, 12 * 128 });
@@ -40,13 +38,11 @@ void SandBox2D::OnAttach()
 
 void SandBox2D::OnDetach()
 {
-	ATN_PROFILE_FUNCTION();
+
 }
 
 void SandBox2D::OnUpdate(Athena::Time frameTime)
 {
-	ATN_PROFILE_FUNCTION();
-
 	m_CameraController.OnUpdate(frameTime);
 
     Athena::Renderer2D::ResetStats();
@@ -73,8 +69,6 @@ void SandBox2D::OnUpdate(Athena::Time frameTime)
 
 void SandBox2D::OnImGuiRender()
 {
-	ATN_PROFILE_FUNCTION();
-
     ImGui::Begin("Renderer2D Stats");
 
     auto stats = Athena::Renderer2D::GetStats();

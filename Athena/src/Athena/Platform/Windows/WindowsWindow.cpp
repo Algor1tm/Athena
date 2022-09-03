@@ -28,24 +28,18 @@ namespace Athena
 	WindowsWindow::WindowsWindow(const WindowDESC& desc)
 		: m_Desc(desc)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Init();
 	}
 
 
 	WindowsWindow::~WindowsWindow()
 	{ 
-		ATN_PROFILE_FUNCTION();
-
 		Shutdown();
 	}
 
 
 	void WindowsWindow::Init()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		ATN_CORE_INFO("Creating Window {0} ({1}, {2})", m_Desc.Title, m_Desc.Width, m_Desc.Height);
 
 		if (s_GLFWWindowCount == 0)
@@ -166,8 +160,6 @@ namespace Athena
 
 	void WindowsWindow::Shutdown()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		glfwDestroyWindow(m_Window);
 		--s_GLFWWindowCount;
 
@@ -178,8 +170,6 @@ namespace Athena
 
 	void WindowsWindow::OnUpdate()
 	{
-		ATN_PROFILE_FUNCTION();
-
 		glfwPollEvents();
 		m_Context->SwapBuffers();
 	}

@@ -41,8 +41,6 @@ namespace Athena
 
 	Ref<IndexBuffer> IndexBuffer::Create(uint32* vertices, uint32 count)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:

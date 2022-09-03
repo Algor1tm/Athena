@@ -15,8 +15,6 @@ namespace Athena
 
 	void OrthographicCameraController::OnUpdate(Time frameTime)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		float seconds = frameTime.AsSeconds();
 
 		if (Input::IsKeyPressed(Key::A))
@@ -43,8 +41,6 @@ namespace Athena
 
 	void OrthographicCameraController::OnEvent(Event& event)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<MouseScrolledEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnMouseScrolled));
 		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
@@ -63,8 +59,6 @@ namespace Athena
 
 	bool OrthographicCameraController::OnMouseScrolled(MouseScrolledEvent& event)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		m_ZoomLevel -= event.GetYOffset() * 0.4f;
 		m_ZoomLevel = Math::Max(m_ZoomLevel, 0.2f);
 		m_CameraSpeed = m_ZoomLevel * 1.5f;
@@ -76,8 +70,6 @@ namespace Athena
 
 	bool OrthographicCameraController::OnWindowResized(WindowResizedEvent& event)
 	{
-		ATN_PROFILE_FUNCTION();
-
 		Resize(event.GetWidth(), event.GetHeight());
 
 		return false;

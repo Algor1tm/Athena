@@ -32,7 +32,6 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
-#include "Athena/Debug/Instrumentor.h"
 
 // ---Platform Specific-------------
 #ifdef ATN_PLATFORM_WINDOWS

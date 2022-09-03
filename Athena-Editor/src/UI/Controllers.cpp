@@ -72,4 +72,9 @@ namespace Athena::UI
 
 		ImGui::PopID();
 	}
+
+	bool DrawImageButton(const Ref<Texture2D>& texture, const Vector2& size)
+	{
+		return ImGui::ImageButton(reinterpret_cast<ImTextureID>((uint64)texture->GetRendererID()), { size.x, size.y }, { 0.f, 1.f }, { 1.f, 0.f }, -1);
+	}
 }

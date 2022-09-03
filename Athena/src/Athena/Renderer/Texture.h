@@ -14,7 +14,7 @@ namespace Athena
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
 
-		virtual RendererID GetRendererID() const = 0;
+		virtual RendererID GetRendererID() const { return m_RendererID; };
 
 		virtual void SetData(const void* data, uint32 size) = 0;
 
@@ -22,6 +22,9 @@ namespace Athena
 		virtual void UnBind() const = 0;
 
 		virtual const String& GetFilepath() const = 0;
+
+	protected:
+		RendererID m_RendererID;
 	};
 
 
@@ -32,7 +35,10 @@ namespace Athena
 		static Ref<Texture2D> Create(const String& path);
 		static Ref<Texture2D> WhiteTexture();
 
-		virtual bool operator==(const Texture2D& other) const = 0;
+		inline bool operator==(const Texture2D& other) const
+		{
+			return m_RendererID == other.m_RendererID;
+		}
 
 	private:
 		static Ref<Texture2D> m_WhiteTexture;

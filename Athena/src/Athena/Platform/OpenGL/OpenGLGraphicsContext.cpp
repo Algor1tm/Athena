@@ -21,6 +21,7 @@ namespace Athena
 
 		ATN_CORE_INFO("OpenGL version: {0}", glGetString(GL_VERSION));
 		ATN_CORE_INFO("Graphics Card: {0}", glGetString(GL_RENDERER));
+		ATN_CORE_INFO("");
 	}
 
 	void OpenGLGraphicsContext::SwapBuffers()

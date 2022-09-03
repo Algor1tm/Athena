@@ -88,9 +88,4 @@ namespace Athena
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-
-	bool OpenGLTexture2D::operator==(const Texture2D& other) const
-	{
-		return m_RendererID == ((OpenGLTexture2D&)other).m_RendererID;
-	}
 }

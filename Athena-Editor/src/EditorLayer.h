@@ -15,7 +15,6 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
-#include "UI/Icon.h"
 
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -79,8 +78,8 @@ namespace Athena
 		};
 
 		SceneState m_SceneState = SceneState::Edit;
-		UI::Icon m_PlayIcon;
-		UI::Icon m_StopIcon;
-		UI::Icon m_SimulationIcon;
+		Ref<Texture2D> m_PlayIcon;
+		Ref<Texture2D> m_StopIcon;
+		Ref<Texture2D> m_SimulationIcon;
 	};
 }

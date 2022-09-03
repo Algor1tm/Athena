@@ -19,10 +19,11 @@ namespace Athena
 {
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
-        m_PlayIcon("Resources/Icons/PlayIcon.png"), m_StopIcon("Resources/Icons/StopIcon.png"),
-        m_SimulationIcon("Resources/Icons/SimulationIcon.png"), m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
+          m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
-
+        m_PlayIcon = Texture2D::Create("Resources/Icons/PlayIcon.png");
+        m_SimulationIcon = Texture2D::Create("Resources/Icons/SimulationIcon.png");
+        m_StopIcon = Texture2D::Create("Resources/Icons/StopIcon.png");
     }
 
     void EditorLayer::OnAttach()
@@ -341,8 +342,7 @@ namespace Athena
         float size = ImGui::GetWindowHeight() - 8.f;
         {
             ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f));
-            void* iconID = m_SceneState != SceneState::Play ? m_PlayIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
-            if (ImGui::ImageButton(iconID, { size, size }))
+            if (UI::DrawImageButton(m_SceneState != SceneState::Play ? m_PlayIcon : m_StopIcon, { size, size }))
             {
                 if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation)
                     OnScenePlay();
@@ -353,8 +353,7 @@ namespace Athena
         ImGui::SameLine();
         {
             ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f) + size * 1.25f);
-            void* iconID = m_SceneState != SceneState::Simulation ? m_SimulationIcon.GetRendererIDvoid() : m_StopIcon.GetRendererIDvoid();
-            if (ImGui::ImageButton(iconID, { size, size }))
+            if (UI::DrawImageButton(m_SceneState != SceneState::Simulation ? m_SimulationIcon : m_StopIcon, { size, size }))
             {
                 if (m_SceneState == SceneState::Edit)
                     OnSceneSimulate();
@@ -616,7 +615,7 @@ namespace Athena
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to load Scene '{0}'", filepath.data());
+            ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.data());
     }
 
     void EditorLayer::OpenScene(const std::filesystem::path& path)

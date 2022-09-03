@@ -40,7 +40,8 @@ namespace Athena
 
 	void WindowsWindow::Init()
 	{
-		ATN_CORE_INFO("Creating Window {0} ({1}, {2})", m_Desc.Title, m_Desc.Width, m_Desc.Height);
+		ATN_CORE_INFO("Creating Windows Window {0} ({1}, {2})", m_Desc.Title, m_Desc.Width, m_Desc.Height);
+		ATN_CORE_INFO("");
 
 		if (s_GLFWWindowCount == 0)
 		{
@@ -165,6 +166,8 @@ namespace Athena
 
 		if (s_GLFWWindowCount == 0)
 			glfwTerminate();
+
+		ATN_CORE_INFO("Shutting down Windows Window");
 	}
 
 

@@ -176,7 +176,6 @@ namespace Athena
 			return false;
 
 		String sceneName = data["Scene"].as<String>();
-		ATN_CORE_TRACE("Deserializing scene '{0}'", sceneName);
 
 		auto& entities = data["Entities"];
 		if (entities)
@@ -321,8 +320,6 @@ namespace Athena
 						cc2d.RestitutionThreshold = circleCollider2DComponentNode["RestitutionThreshold"].as<float>();
 					}
 				}
-
-				ATN_CORE_TRACE("Loaded Entity 'Name = {0}', 'ID = {1}'", name, uuid);
 			}
 		}
 
@@ -458,7 +455,5 @@ namespace Athena
 			});
 
 		out << YAML::EndMap; // Entity
-
-		ATN_CORE_TRACE("Saved Entity 'Name = {0}', 'ID = {1}'", entity.GetComponent<TagComponent>().Tag, entity.GetComponent<IDComponent>().ID);
 	}
 }

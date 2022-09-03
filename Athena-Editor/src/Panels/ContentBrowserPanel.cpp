@@ -10,9 +10,11 @@
 namespace Athena
 {
 	ContentBrowserPanel::ContentBrowserPanel()
-		: m_FolderIcon("Resources/Icons/FolderIcon.png"), m_FileIcon("Resources/Icons/FileIcon.png"), 
-		m_BackButtonIcon("Resources/Icons/BackButtonIcon.png")
 	{
+		m_FolderIcon = Texture2D::Create("Resources/Icons/FolderIcon.png");
+		m_FileIcon = Texture2D::Create("Resources/Icons/FileIcon.png");
+		m_BackButtonIcon = Texture2D::Create("Resources/Icons/BackButtonIcon.png");
+
 		m_CurrentDirectory = m_AssetDirectory;
 	}
 
@@ -23,7 +25,7 @@ namespace Athena
 		if (m_CurrentDirectory != m_AssetDirectory)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-			if (ImGui::ImageButton(m_BackButtonIcon.GetRendererIDvoid(), m_BackButtonSize, {0, 1}, {1, 0}))
+			if (UI::DrawImageButton(m_BackButtonIcon, m_BackButtonSize))
 			{
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			}
@@ -35,16 +37,14 @@ namespace Athena
 
 		ImGui::Columns(int(panelWidth / cellSize), 0, false);
 
-		void* iconID;
 		for (const auto& dirEntry: std::filesystem::directory_iterator(m_CurrentDirectory))
 		{
 			const auto& relativePath = dirEntry.path();
 			const auto& filename = dirEntry.path().filename().string();
-			iconID = dirEntry.is_directory() ? m_FolderIcon.GetRendererIDvoid() : m_FileIcon.GetRendererIDvoid();
 
 			ImGui::PushID(filename.data());
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-			ImGui::ImageButton(iconID, m_ItemSize, { 0, 1 }, { 1, 0 });
+			UI::DrawImageButton(dirEntry.is_directory() ? m_FolderIcon : m_FileIcon, m_ItemSize);
 
 			if(dirEntry.is_directory() && ImGui::IsItemClicked())
 			{

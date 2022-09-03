@@ -1,4 +1,4 @@
-project "Box2d"
+project "Box2D"
     kind "StaticLib"
     language "C++"
     cppdialect "C++17"
@@ -9,27 +9,22 @@ project "Box2d"
     
     files
     {
-        "Box2d/src/collision/*.cpp",
-        "Box2d/src/collision/*.h",
-        "Box2d/src/common/*.cpp",
-        "Box2d/src/common/*.h",
-        "Box2d/src/dynamics/*.cpp",
-        "Box2d/src/dynamics/*.h",
-        "Box2d/src/rope/*.cpp",
-        "Box2d/src/rope/*.h",
-        "Box2d/include/box2d/*.h"
+        "src/collision/*.cpp",
+        "src/collision/*.h",
+        "src/common/*.cpp",
+        "src/common/*.h",
+        "src/dynamics/*.cpp",
+        "src/dynamics/*.h",
+        "src/rope/*.cpp",
+        "src/rope/*.h",
+        "include/box2d/*.h"
     }
 
     includedirs
 	{
-		"Box2d/include",
-		"Box2d/src"
+		"include",
+		"src"
 	}
-
-    defines
-    {
-        "_CRT_SECURE_NO_WARNINGS"
-    }
 
     filter "system:windows"
         systemversion "latest"

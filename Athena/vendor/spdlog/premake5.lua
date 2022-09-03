@@ -10,8 +10,8 @@ project "spdlog"
 
 	files
 	{
-		"spdlog/include/spdlog/**.h",
-		"spdlog/src/**.cpp"
+		"include/spdlog/**.h",
+		"src/**.cpp"
 	}
 
 	defines
@@ -22,7 +22,7 @@ project "spdlog"
 
 	includedirs
 	{
-		"spdlog/include"
+		"include"
 	}
 
 	filter "system:windows"

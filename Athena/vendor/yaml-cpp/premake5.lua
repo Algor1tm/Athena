@@ -9,15 +9,15 @@ project "yaml-cpp"
 
 	files
 	{
-		"yaml-cpp/src/**.h",
-		"yaml-cpp/src/**.cpp",
+		"src/**.h",
+		"src/**.cpp",
 		
-		"yaml-cpp/include/**.h"
+		"include/**.h"
 	}
 
 	includedirs
 	{
-		"yaml-cpp/include"
+		"include"
 	}
 
 	defines

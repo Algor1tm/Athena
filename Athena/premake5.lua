@@ -25,12 +25,11 @@ project "Athena"
 	{
 		"src",
 		"vendor",
-		"%{IncludeDir.Box2d}",
+		"%{IncludeDir.Box2D}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.glad}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.ImGui}",
-		"vendor/ImGui/ImGui",
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.stb_image}",
@@ -39,7 +38,7 @@ project "Athena"
 	
 	links
 	{
-		"Box2d",
+		"Box2D",
 		"glad",
 		"GLFW",
 		"opengl32.lib",

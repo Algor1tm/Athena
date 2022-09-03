@@ -31,7 +31,7 @@ group "Dependencies"
 	include "Athena/vendor/ImGui"
 	include "Athena/vendor/spdlog"
 	include "Athena/vendor/yaml-cpp"
-	include "Athena/vendor/Box2d"
+	include "Athena/vendor/Box2D"
 
 group ""
 

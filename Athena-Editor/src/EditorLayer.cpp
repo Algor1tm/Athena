@@ -324,7 +324,7 @@ namespace Athena
 
         m_SelectedEntity = m_HierarchyPanel.GetSelectedEntity();
         //Gizmos
-        if (m_SceneState == SceneState::Edit && m_SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::UNIVERSAL && m_SelectedEntity.HasComponent<TransformComponent>())
+        if (m_SceneState == SceneState::Edit && m_SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_SelectedEntity.HasComponent<TransformComponent>())
         {
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
@@ -573,7 +573,7 @@ namespace Athena
         case Key::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
 
         //Gizmos
-        case Key::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::UNIVERSAL); break;
+        case Key::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
         case Key::W: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
         case Key::E: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
         case Key::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;

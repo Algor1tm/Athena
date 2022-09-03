@@ -1,10 +1,9 @@
 #include "atnpch.h"
 #include "Application.h"
+
 #include "Log.h"
-
 #include "Athena/Renderer/Renderer.h"
-
-#include "Input.h"
+#include "Athena/Input/Input.h"
 
 
 namespace Athena
@@ -37,7 +36,7 @@ namespace Athena
 	{
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<WindowCloseEvent>(ATN_BIND_EVENT_FN(Application::OnWindowClose));
-		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
+		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
 
 		for (LayerStack::iterator it = m_LayerStack.end(); it != m_LayerStack.begin();)
 		{
@@ -106,7 +105,7 @@ namespace Athena
 	}
 
 
-	bool Application::OnWindowResized(WindowResizedEvent& event)
+	bool Application::OnWindowResized(WindowResizeEvent& event)
 	{
 		if (event.GetWidth() == 0 || event.GetHeight() == 0)
 		{

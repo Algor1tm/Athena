@@ -2,7 +2,7 @@
 
 #include "Entity.h"
 #include "Athena/Core/Time.h"
-#include "Athena/Events/Event.h"
+#include "Athena/Input/Events/Event.h"
 
 
 namespace Athena

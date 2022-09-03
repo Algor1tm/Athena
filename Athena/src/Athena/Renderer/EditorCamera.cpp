@@ -1,7 +1,7 @@
 #include "atnpch.h"
 #include "EditorCamera.h"
 
-#include "Athena/Core/Input.h"
+#include "Athena/Input/Input.h"
 
 
 namespace Athena
@@ -60,7 +60,7 @@ namespace Athena
 
 		bool changed = false;
 
-		if (Input::IsMouseButtonPressed(Mouse::Middle))
+		if (Input::IsMouseButtonPressed(Mouse::Wheel))
 		{
 			MousePan(delta);
 			changed = true;

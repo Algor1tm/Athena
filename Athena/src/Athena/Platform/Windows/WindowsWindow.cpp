@@ -3,9 +3,9 @@
 #include "WindowsWindow.h"
 #include "Athena/Platform/OpenGL/OpenGLGraphicsContext.h"
 
-#include "Athena/Events/ApplicationEvent.h"
-#include "Athena/Events/KeyEvent.h"
-#include "Athena/Events/MouseEvent.h"
+#include "Athena/Input/Events/ApplicationEvent.h"
+#include "Athena/Input/Events/KeyEvent.h"
+#include "Athena/Input/Events/MouseEvent.h"
 
 #include <GLFW/glfw3.h>
 
@@ -24,19 +24,16 @@ namespace Athena
 		return CreateScope<WindowsWindow>(desc);
 	}
 
-
 	WindowsWindow::WindowsWindow(const WindowDESC& desc)
 		: m_Desc(desc)
 	{
 		Init();
 	}
 
-
 	WindowsWindow::~WindowsWindow()
 	{ 
 		Shutdown();
 	}
-
 
 	void WindowsWindow::Init()
 	{
@@ -57,14 +54,11 @@ namespace Athena
 									nullptr);
 		s_GLFWWindowCount++;
 
-		m_Context = CreateScope<OpenGLGraphicsContext>(m_Window);
+		m_Context = GraphicsContext::Create(m_Window);
 		m_Context->Init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Desc);
-		if (m_Desc.VSync)
-			glfwSwapInterval(1);	// VSync is disabled by default
-		else
-			glfwSwapInterval(0);
+		SetVSync(m_Desc.VSync);
 
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 			{
@@ -72,7 +66,7 @@ namespace Athena
 				data.Width = width;
 				data.Height = height;
 
-				WindowResizedEvent event(width, height);	
+				WindowResizeEvent event(width, height);
 				data.EventCallback(event);
 			});
 
@@ -92,30 +86,30 @@ namespace Athena
 				{
 					case GLFW_PRESS:
 					{
-						KeyPressedEvent event(key, 0);
+						KeyPressedEvent event((Keyboard::Key)key, false);
 						data.EventCallback(event);
 						break;
 					}
 					case GLFW_RELEASE:
 					{
-						KeyReleasedEvent event(key);
+						KeyReleasedEvent event((Keyboard::Key)key);
 						data.EventCallback(event);
 						break;
 					}
 					case GLFW_REPEAT:
 					{
-						KeyPressedEvent event(key, 1);
+						KeyPressedEvent event((Keyboard::Key)key, true);
 						data.EventCallback(event);
 						break;
 					}
 				}
 			});
-		
+
 		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int character) 
 			{
 				WindowDESC& data = *reinterpret_cast<WindowDESC*>(glfwGetWindowUserPointer(window));
 
-				KeyTypedEvent event(character);
+				KeyTypedEvent event((Keyboard::Key)character);
 				data.EventCallback(event);
 			});
 
@@ -127,13 +121,13 @@ namespace Athena
 				{
 					case GLFW_PRESS:
 					{
-						MouseButtonPressedEvent event(button);
+						MouseButtonPressedEvent event((Mouse::Button)button);
 						data.EventCallback(event);
 						break;
 					}
 					case GLFW_RELEASE:
 					{
-						MouseButtonReleasedEvent event(button);
+						MouseButtonReleasedEvent event((Mouse::Button)button);
 						data.EventCallback(event);
 						break;
 					}
@@ -155,9 +149,7 @@ namespace Athena
 				MouseMovedEvent event((float)x, (float)y);
 				data.EventCallback(event);
 			});
-
 	}
-
 
 	void WindowsWindow::Shutdown()
 	{
@@ -170,13 +162,11 @@ namespace Athena
 		ATN_CORE_INFO("Shutting down Windows Window");
 	}
 
-
 	void WindowsWindow::OnUpdate()
 	{
 		glfwPollEvents();
 		m_Context->SwapBuffers();
 	}
-
 
 	void WindowsWindow::SetVSync(bool enabled)
 	{

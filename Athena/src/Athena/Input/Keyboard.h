@@ -1,13 +1,13 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
+
 
 namespace Athena
 {
-	using KeyCode = uint16;
-
-	namespace Key
+	namespace Keyboard
 	{
-		enum : KeyCode
+		enum Key: uint16
 		{
 			// From glfw3.h
 			Space = 32,

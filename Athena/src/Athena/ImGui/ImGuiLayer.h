@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Athena/Core/Layer.h"
-#include "Athena/Events/MouseEvent.h"
-#include "Athena/Events/KeyEvent.h"
-#include "Athena/Events/ApplicationEvent.h"
+#include "Athena/Input/Events/MouseEvent.h"
+#include "Athena/Input/Events/KeyEvent.h"
+#include "Athena/Input/Events/ApplicationEvent.h"
 
 
 namespace Athena
@@ -16,9 +16,9 @@ namespace Athena
 
 		void SetDarkTheme();
 
-		void OnAttach() override;
-		void OnDetach() override;
-		void OnEvent(Event& event) override;
+		virtual void OnAttach() override;
+		virtual void OnDetach() override;
+		virtual void OnEvent(Event& event) override;
 
 		void Begin();
 		void End();

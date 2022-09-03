@@ -4,8 +4,8 @@
 #include "Athena/Core/Color.h"
 #include "Athena/Core/OrthographicCameraController.h"
 
-#include "Athena/Events/KeyEvent.h"
-#include "Athena/Events/MouseEvent.h"
+#include "Athena/Input/Events/KeyEvent.h"
+#include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Framebuffer.h"

@@ -1,8 +1,7 @@
 #pragma once
 
-#include "atnpch.h"
 #include "Core.h"
-#include "Athena/Events/Event.h"
+#include "Athena/Input/Events/Event.h"
 
 
 namespace Athena

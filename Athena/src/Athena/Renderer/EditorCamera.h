@@ -2,8 +2,8 @@
 
 #include "Athena/Core/Time.h"
 #include "Athena/Renderer/Camera.h"
-#include "Athena/Events/Event.h"
-#include "Athena/Events/MouseEvent.h"
+#include "Athena/Input/Events/Event.h"
+#include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Vector.h"

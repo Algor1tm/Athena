@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Athena/Core/Time.h"
-#include "Athena/Events/Event.h"
-#include "Athena/Events/ApplicationEvent.h"
-#include "Athena/Events/MouseEvent.h"
+#include "Athena/Input/Events/Event.h"
+#include "Athena/Input/Events/ApplicationEvent.h"
+#include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Renderer/OrthographicCamera.h"
 
@@ -30,7 +30,7 @@ namespace Athena
 		void RecalculateView();
 
 		bool OnMouseScrolled(MouseScrolledEvent& event);
-		bool OnWindowResized(WindowResizedEvent& event);
+		bool OnWindowResized(WindowResizeEvent& event);
 
 	private:
 		float m_AspectRatio;

@@ -25,7 +25,8 @@ namespace Athena
 
 		static Ref<Shader> Create(const String& filepath);
 		static Ref<Shader> Create(const String& name, const String& vertexSrc, const String& fragmentSrc);
-	private:
+
+	protected:
 		uint32 m_RendererID;
 	};
 

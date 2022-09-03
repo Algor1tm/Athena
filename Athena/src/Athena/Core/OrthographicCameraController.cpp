@@ -1,7 +1,7 @@
 #include "atnpch.h"
 #include "OrthographicCameraController.h"
 
-#include "Athena/Core/Input.h"
+#include "Athena/Input/Input.h"
 
 
 namespace Athena
@@ -17,20 +17,20 @@ namespace Athena
 	{
 		float seconds = frameTime.AsSeconds();
 
-		if (Input::IsKeyPressed(Key::A))
+		if (Input::IsKeyPressed(Keyboard::A))
 			m_CameraPosition.x -= m_CameraSpeed * seconds;
-		else if (Input::IsKeyPressed(Key::D))
+		else if (Input::IsKeyPressed(Keyboard::D))
 			m_CameraPosition.x += m_CameraSpeed * seconds;
-		else if (Input::IsKeyPressed(Key::W))
+		else if (Input::IsKeyPressed(Keyboard::W))
 			m_CameraPosition.y += m_CameraSpeed * seconds;
-		else if (Input::IsKeyPressed(Key::S))
+		else if (Input::IsKeyPressed(Keyboard::S))
 			m_CameraPosition.y -= m_CameraSpeed * seconds;
 
 		if (m_Rotation)
 		{
-			if (Input::IsKeyPressed(Key::Q))
+			if (Input::IsKeyPressed(Keyboard::Q))
 				m_CameraRotation += m_CameraRotationSpeed * seconds;
-			else if (Input::IsKeyPressed(Key::E))
+			else if (Input::IsKeyPressed(Keyboard::E))
 				m_CameraRotation -= m_CameraRotationSpeed * seconds;
 
 			m_Camera.SetRotation(m_CameraRotation);
@@ -43,7 +43,7 @@ namespace Athena
 	{
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<MouseScrolledEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnMouseScrolled));
-		dispatcher.Dispatch<WindowResizedEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
+		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OrthographicCameraController::OnWindowResized));
 	}
 	
 	void OrthographicCameraController::Resize(uint32 width, uint32 height)
@@ -68,7 +68,7 @@ namespace Athena
 		return false;
 	}
 
-	bool OrthographicCameraController::OnWindowResized(WindowResizedEvent& event)
+	bool OrthographicCameraController::OnWindowResized(WindowResizeEvent& event)
 	{
 		Resize(event.GetWidth(), event.GetHeight());
 

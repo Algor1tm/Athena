@@ -7,16 +7,16 @@
 
 namespace Athena 
 {
-	class ATHENA_API WindowResizedEvent : public Event
+	class ATHENA_API WindowResizeEvent : public Event
 	{
 	public:
-		WindowResizedEvent(uint32 width, uint32 height)
+		WindowResizeEvent(uint32 width, uint32 height)
 			: m_Width(width), m_Height(height) {}
 
 		uint32 GetWidth() const { return m_Width; }
 		uint32 GetHeight() const { return m_Height; }
 
-		String ToString() const override
+		virtual String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "WindowResizedEvent: width = " << m_Width << ", height = " << m_Height;
@@ -25,6 +25,7 @@ namespace Athena
 
 		EVENT_CLASS_TYPE(WindowResized)
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
 	private:
 		uint32 m_Width, m_Height;
 	};

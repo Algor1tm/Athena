@@ -8,7 +8,7 @@ namespace Athena
 {
 	LayerStack::~LayerStack()
 	{
-		for (value_type layer : m_Layers)
+		for (Layer* layer : m_Layers)
 		{
 			layer->OnDetach();
 			delete layer;
@@ -16,20 +16,20 @@ namespace Athena
 	}
 
 
-	void LayerStack::PushLayer(value_type layer)
+	void LayerStack::PushLayer(Layer* layer)
 	{
 		m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
 		++m_LayerInsertIndex;
 	}
 
 
-	void LayerStack::PushOverlay(value_type overlay)
+	void LayerStack::PushOverlay(Layer* overlay)
 	{
 		m_Layers.emplace_back(overlay);
 	}
 
 
-	void LayerStack::PopLayer(value_type layer)
+	void LayerStack::PopLayer(Layer* layer)
 	{
 		auto it = std::find(m_Layers.begin(), m_Layers.end(), layer);
 		if (it != m_Layers.begin() + m_LayerInsertIndex)
@@ -45,7 +45,7 @@ namespace Athena
 	}
 
 
-	void LayerStack::PopOverlay(value_type overlay)
+	void LayerStack::PopOverlay(Layer* overlay)
 	{
 		auto it = std::find(m_Layers.begin(), m_Layers.end(), overlay);
 		if (it != m_Layers.end())

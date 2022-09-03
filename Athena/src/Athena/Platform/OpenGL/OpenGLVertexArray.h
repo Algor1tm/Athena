@@ -11,12 +11,12 @@ namespace Athena
 		OpenGLVertexArray();
 		~OpenGLVertexArray();
 
-		void Bind() const override;
-		void UnBind() const override;
+		virtual void Bind() const override;
+		virtual void UnBind() const override;
 
-		void AddVertexBuffer(const Ref<VertexBuffer>& vertexBuffer) override;
-		void SetIndexBuffer(const Ref<IndexBuffer>& indexBuffer) override;
-		inline const Ref<IndexBuffer>& GetIndexBuffer() const override { return m_IndexBuffer; }
+		virtual void AddVertexBuffer(const Ref<VertexBuffer>& vertexBuffer) override;
+		virtual void SetIndexBuffer(const Ref<IndexBuffer>& indexBuffer) override;
+		virtual inline const Ref<IndexBuffer>& GetIndexBuffer() const override { return m_IndexBuffer; }
 
 	private:
 		RendererID m_RendererID = 0;

@@ -11,7 +11,7 @@
 
 namespace Athena
 {
-	String FileDialogs::OpenFile(const char* filter)
+	String FileDialogs::OpenFile(std::string_view filter)
 	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
@@ -20,7 +20,7 @@ namespace Athena
 		ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow());
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter;
+		ofn.lpstrFilter = filter.data();
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
@@ -30,7 +30,7 @@ namespace Athena
 		return {};
 	}
 
-	String FileDialogs::SaveFile(const char* filter)
+	String FileDialogs::SaveFile(std::string_view filter)
 	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
@@ -39,7 +39,7 @@ namespace Athena
 		ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow());
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter;
+		ofn.lpstrFilter = filter.data();
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 

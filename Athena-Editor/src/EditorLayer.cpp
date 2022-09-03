@@ -1,6 +1,6 @@
 #include "EditorLayer.h"
 
-#include "Athena/Core/Input.h"
+#include "Athena/Input/Input.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/PlatformUtils.h"
 
@@ -297,7 +297,7 @@ namespace Athena
             auto& tc = m_SelectedEntity.GetComponent<TransformComponent>();
             Matrix4 transform = tc.AsMatrix();
 
-            bool snap = Input::IsKeyPressed(Key::LCtrl);
+            bool snap = Input::IsKeyPressed(Keyboard::LCtrl);
             float snapValue = 0.5f;
             if (m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.f;
@@ -510,12 +510,12 @@ namespace Athena
         if (event.IsRepeat())
             return false;
 
-        bool ctrl = Input::IsKeyPressed(Key::LCtrl) || Input::IsKeyPressed(Key::RCtrl);
+        bool ctrl = Input::IsKeyPressed(Keyboard::LCtrl) || Input::IsKeyPressed(Keyboard::RCtrl);
 
         switch (event.GetKeyCode())
         {
         // Scenes Management
-        case Key::S: 
+        case Keyboard::S: 
         {
             if (ctrl)
             {
@@ -526,25 +526,25 @@ namespace Athena
             }
             break;
         }
-        case Key::N: if(ctrl) NewScene(); break;
-        case Key::O: if(ctrl) OpenScene(); break;
+        case Keyboard::N: if(ctrl) NewScene(); break;
+        case Keyboard::O: if(ctrl) OpenScene(); break;
 
-        case Key::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
-        case Key::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
-        case Key::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
+        case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
+        case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
+        case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
 
         //Panels
-        case Key::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
+        case Keyboard::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
 
         //Gizmos
-        case Key::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
-        case Key::W: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
-        case Key::E: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
-        case Key::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+        case Keyboard::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
+        case Keyboard::W: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+        case Keyboard::E: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+        case Keyboard::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
 
         //Entities
-        case Key::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
-        case Key::Delete: 
+        case Keyboard::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
+        case Keyboard::Delete: 
         {
             if (m_SelectedEntity && m_SceneState == SceneState::Edit)
             {

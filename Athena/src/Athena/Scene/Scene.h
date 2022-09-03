@@ -7,11 +7,13 @@
 #include "Components.h" 
 
 #ifdef _MSC_VER
-#pragma warning(push, 0)
+	#pragma warning(push, 0)
+#endif
+
 #include <entt/entt.h>
-#pragma warning(pop)
-#else
-#include <entt/entt.h>
+
+#ifdef _MSC_VER
+	#pragma warning(pop)
 #endif
 
 #include <memory>

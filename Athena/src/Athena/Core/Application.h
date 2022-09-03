@@ -3,7 +3,7 @@
 #include "Core.h"
 #include "Window.h"
 #include "LayerStack.h"
-#include "Athena/Events/ApplicationEvent.h"
+#include "Athena/Input/Events/ApplicationEvent.h"
 #include "Athena/Core/Time.h"
 
 #include "Athena/Renderer/Shader.h"
@@ -37,13 +37,14 @@ namespace Athena
 
 	private:
 		bool OnWindowClose(WindowCloseEvent& event);
-		bool OnWindowResized(WindowResizedEvent& event);
+		bool OnWindowResized(WindowResizeEvent& event);
 
 		Scope<Window> m_Window;
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running;
 		bool m_Minimized;
 		LayerStack m_LayerStack;
+
 	private:
 		static Application* s_Instance;
 	};

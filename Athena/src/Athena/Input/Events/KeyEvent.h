@@ -1,35 +1,37 @@
 #pragma once
 
 #include "Event.h"
-#include "Athena/Core/KeyCodes.h"
+#include "Athena/Input/Keyboard.h"
 
 #include <sstream>
+
 
 namespace Athena
 {
 	class ATHENA_API KeyEvent: public Event
 	{
 	public:
-		inline KeyCode GetKeyCode() const { return m_KeyCode; }
+		inline Keyboard::Key GetKeyCode() const { return m_KeyCode; }
 
 		EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
+
 	protected:
-		KeyEvent(KeyCode keycode)
+		KeyEvent(Keyboard::Key keycode)
 			: m_KeyCode(keycode) {}
 
-		KeyCode m_KeyCode;
+		Keyboard::Key m_KeyCode;
 	};
 
 
 	class ATHENA_API KeyPressedEvent: public KeyEvent
 	{
 	public:
-		KeyPressedEvent(KeyCode keycode, bool isRepeat)
+		KeyPressedEvent(Keyboard::Key keycode, bool isRepeat)
 			: KeyEvent(keycode), m_IsRepeat(isRepeat) {}
 
 		inline bool IsRepeat() const { return m_IsRepeat; }
 
-		String ToString() const override
+		virtual String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyPressedEvent: " << m_KeyCode << " (Is repeat - " << m_IsRepeat << ")";
@@ -37,6 +39,7 @@ namespace Athena
 		}
 
 		EVENT_CLASS_TYPE(KeyPressed)
+
 	private:
 		bool m_IsRepeat;
 	};
@@ -45,10 +48,10 @@ namespace Athena
 	class ATHENA_API KeyReleasedEvent : public KeyEvent
 	{
 	public:
-		KeyReleasedEvent(KeyCode keycode)
+		KeyReleasedEvent(Keyboard::Key keycode)
 			: KeyEvent(keycode) {}
 
-		String ToString() const override
+		virtual String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyReleasedEvent: " << m_KeyCode;
@@ -62,11 +65,11 @@ namespace Athena
 	class ATHENA_API KeyTypedEvent : public KeyEvent
 	{
 	public:
-		KeyTypedEvent(KeyCode keycode)
+		KeyTypedEvent(Keyboard::Key keycode)
 			: KeyEvent(keycode) {}
 
 
-		String ToString() const override
+		virtual String ToString() const override
 		{
 			std::stringstream stream;
 			stream << "KeyTypedEvent: " << m_KeyCode;

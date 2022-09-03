@@ -15,7 +15,7 @@ namespace Athena
 
 		void Recreate();
 
-		void Resize(uint32 width, uint32 height) override;
+		virtual void Resize(uint32 width, uint32 height) override;
 
 		virtual const FramebufferDESC& GetDescription() const override { return m_Description; }
 		virtual uint32 GetColorAttachmentRendererID(SIZE_T index = 0) const override { ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range"); return m_ColorAttachments[index]; }

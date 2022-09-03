@@ -12,13 +12,14 @@ namespace Athena
 		OpenGLVertexBuffer(uint32 size);
 		~OpenGLVertexBuffer();
 
-		void Bind() const override;
-		void UnBind() const override;
+		virtual void Bind() const override;
+		virtual void UnBind() const override;
 
-		void SetData(const void* data, uint32 size) override;
+		virtual void SetData(const void* data, uint32 size) override;
 
-		inline void SetLayout(const BufferLayout& layout) override { m_Layout = layout; }
-		inline const BufferLayout& GetLayout() const override { return m_Layout; }
+		virtual inline void SetLayout(const BufferLayout& layout) override { m_Layout = layout; }
+		virtual inline const BufferLayout& GetLayout() const override { return m_Layout; }
+
 	private:
 		RendererID m_RendererID = 0;
 		BufferLayout m_Layout;
@@ -31,10 +32,11 @@ namespace Athena
 		OpenGLIndexBuffer(uint32* indices, uint32 ñount);
 		~OpenGLIndexBuffer();
 
-		void Bind() const override;
-		void UnBind() const override;
+		virtual void Bind() const override;
+		virtual void UnBind() const override;
 
-		inline uint32 GetCount() const override { return m_Count; };
+		virtual inline uint32 GetCount() const override { return m_Count; };
+
 	private:
 		RendererID m_RendererID = 0;
 		uint32 m_Count;

@@ -11,9 +11,9 @@
 
 #include "Athena/Core/Time.h"
 
-#include "Athena/Core/Input.h"
-#include "Athena/Core/KeyCodes.h"
-#include "Athena/Core/MouseCodes.h"
+#include "Athena/Input/Input.h"
+#include "Athena/Input/Keyboard.h"
+#include "Athena/Input/Mouse.h"
 
 
 // ---Scene--------------------

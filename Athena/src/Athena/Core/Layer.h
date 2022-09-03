@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Core.h"
-#include "Athena/Events/Event.h"
+#include "Athena/Input/Events/Event.h"
 #include "Athena/Core/Time.h"
 
 

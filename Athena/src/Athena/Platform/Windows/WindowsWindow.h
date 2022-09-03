@@ -14,28 +14,28 @@ namespace Athena
 		WindowsWindow(const WindowDESC& desc);
 		~WindowsWindow();
 
-		void OnUpdate() override;
+		virtual void OnUpdate() override;
 
-		inline uint32 GetWidth() const override { return m_Desc.Width; }
-		inline uint32 GetHeight() const override { return m_Desc.Height; }
+		virtual inline uint32 GetWidth() const override { return m_Desc.Width; }
+		virtual inline uint32 GetHeight() const override { return m_Desc.Height; }
 
-		inline void SetEventCallback(const WindowDESC::EventCallbackFn& callback) override
+		virtual inline void SetEventCallback(const WindowDESC::EventCallbackFn& callback) override
 		{
 			m_Desc.EventCallback = callback;
 		}
 
-		void SetVSync(bool enabled) override;
-		inline bool IsVSync() const override { return m_Desc.VSync; }
+		virtual void SetVSync(bool enabled) override;
+		virtual inline bool IsVSync() const override { return m_Desc.VSync; }
 
-		inline void* GetNativeWindow() override { return m_Window; }
+		virtual inline void* GetNativeWindow() override { return m_Window; }
 
 	private:
-		virtual void Init();
-		virtual void Shutdown();
+		void Init();
+		void Shutdown();
 
 	private:
 		GLFWwindow* m_Window;
 		WindowDESC m_Desc;
-		Scope<GraphicsContext> m_Context;
+		Ref<GraphicsContext> m_Context;
 	};
 }

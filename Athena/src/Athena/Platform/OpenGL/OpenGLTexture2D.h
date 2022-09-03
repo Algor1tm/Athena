@@ -14,15 +14,15 @@ namespace Athena
 		OpenGLTexture2D(const String& path);
 		~OpenGLTexture2D();
 
-		inline uint32 GetWidth() const override { return m_Width; }
-		inline uint32 GetHeight() const override { return m_Height; }
+		virtual inline uint32 GetWidth() const override { return m_Width; }
+		virtual inline uint32 GetHeight() const override { return m_Height; }
 
-		void SetData(const void* data, uint32 size) override;
+		virtual void SetData(const void* data, uint32 size) override;
 
-		void Bind(uint32 slot = 0) const override;
-		void UnBind() const override;
+		virtual void Bind(uint32 slot = 0) const override;
+		virtual void UnBind() const override;
 
-		const String& GetFilepath() const override { return m_Path; };
+		virtual const String& GetFilepath() const override { return m_Path; };
 
 	private:
 		String m_Path;

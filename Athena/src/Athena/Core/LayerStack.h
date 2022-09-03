@@ -29,6 +29,6 @@ namespace Athena
 
 	private:
 		std::vector<value_type> m_Layers;
-		unsigned int m_LayerInsertIndex = 0;
+		uint32 m_LayerInsertIndex = 0;
 	};
 }

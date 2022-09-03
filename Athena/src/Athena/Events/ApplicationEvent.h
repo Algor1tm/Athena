@@ -10,11 +10,11 @@ namespace Athena
 	class ATHENA_API WindowResizedEvent : public Event
 	{
 	public:
-		WindowResizedEvent(unsigned int width, unsigned int height)
+		WindowResizedEvent(uint32 width, uint32 height)
 			: m_Width(width), m_Height(height) {}
 
-		unsigned int GetWidth() const { return m_Width; }
-		unsigned int GetHeight() const { return m_Height; }
+		uint32 GetWidth() const { return m_Width; }
+		uint32 GetHeight() const { return m_Height; }
 
 		String ToString() const override
 		{
@@ -26,7 +26,7 @@ namespace Athena
 		EVENT_CLASS_TYPE(WindowResized)
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 	private:
-		unsigned int m_Width, m_Height;
+		uint32 m_Width, m_Height;
 	};
 
 

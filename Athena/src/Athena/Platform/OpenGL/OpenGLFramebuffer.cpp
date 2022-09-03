@@ -181,7 +181,7 @@ namespace Athena
 		glDeleteTextures(1, &m_DepthAttachment);
 	}
 
-	void OpenGLFramebuffer::AttachColorTexture(RendererID id, uint32 samples, unsigned int internalFormat, unsigned int format, uint32 width, uint32 height, SIZE_T index)
+	void OpenGLFramebuffer::AttachColorTexture(RendererID id, uint32 samples, GLenum internalFormat, GLenum format, uint32 width, uint32 height, SIZE_T index)
 	{
 		bool multisampled = samples > 1;
 		if (multisampled)
@@ -202,7 +202,7 @@ namespace Athena
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, TextureTarget(multisampled), id, 0);
 	}
 
-	void OpenGLFramebuffer::AttachDepthTexture(RendererID id, uint32 samples, unsigned int format, unsigned int attachmentType, uint32 width, uint32 height)
+	void OpenGLFramebuffer::AttachDepthTexture(RendererID id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height)
 	{
 		bool multisampled = samples > 1;
 		if (multisampled)

@@ -16,8 +16,8 @@ namespace Athena
 
 		void OnUpdate() override;
 
-		inline unsigned int GetWidth() const override { return m_Desc.Width; }
-		inline unsigned int GetHeight() const override { return m_Desc.Height; }
+		inline uint32 GetWidth() const override { return m_Desc.Width; }
+		inline uint32 GetHeight() const override { return m_Desc.Height; }
 
 		inline void SetEventCallback(const WindowDESC::EventCallbackFn& callback) override
 		{

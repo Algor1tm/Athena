@@ -36,7 +36,7 @@ namespace Athena
 
 	private:
 		void Toolbar();
-		void VisualizeColliders();
+		void RenderOverlay();
 
 		Entity GetEntityByCurrentMousePosition();
 

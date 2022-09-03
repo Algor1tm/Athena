@@ -161,7 +161,17 @@ namespace Athena
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
 
-		YAML::Node data = YAML::Load(strStream.str());
+		YAML::Node data;
+		try
+		{
+			data = YAML::Load(strStream.str());
+		}
+		catch (const YAML::ParserException& ex)
+		{
+			ATN_CORE_ERROR("Failed to deserialize scene '{0}'\n {1}", filepath, ex.what());
+			return false;
+		}
+
 		if (!data["Scene"])
 			return false;
 

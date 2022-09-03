@@ -2,6 +2,8 @@
 
 #include "Athena/Renderer/Framebuffer.h"
 
+// TODO: Remove
+typedef unsigned int GLenum;
 
 namespace Athena
 {
@@ -26,8 +28,8 @@ namespace Athena
 
 	private:
 		void DeleteAttachments();
-		void AttachColorTexture(RendererID id, uint32 samples, unsigned int internalFormat, unsigned int format, uint32 width, uint32 height, SIZE_T index);
-		void AttachDepthTexture(RendererID id, uint32 samples, unsigned int format, unsigned int attachmentType, uint32 width, uint32 height);
+		void AttachColorTexture(RendererID id, uint32 samples, GLenum internalFormat, GLenum format, uint32 width, uint32 height, SIZE_T index);
+		void AttachDepthTexture(RendererID id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height);
 
 	private:
 		RendererID m_RendererID = 0;

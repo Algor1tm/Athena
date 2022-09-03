@@ -139,7 +139,7 @@ namespace Athena
 
         }
 
-        VisualizeColliders();
+        RenderOverlay();
 
         m_Framebuffer->UnBind();
     }
@@ -436,55 +436,62 @@ namespace Athena
         return Entity{};
     }
 
-    void EditorLayer::VisualizeColliders()
+    void EditorLayer::RenderOverlay()
     {
-        if (!m_ShowColliders)
-            return;
-
-        if (m_SceneState == SceneState::Play)
+        if (m_ShowColliders)
         {
-            Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
-            auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
+            float offset = 0;
 
-            Renderer2D::BeginScene(runtimeCamera, camera.GetComponent<TransformComponent>().AsMatrix());
-        }
-        else if(m_SceneState == SceneState::Edit)
-        {
-            Renderer2D::BeginScene(m_EditorCamera);
-        }
-
-        float offset;
-        if (m_EditorCamera.GetPosition().z >= 0)
-            offset = 0.001f;
-        else
-            offset = -0.001f;
-
-        {
-            auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
-            for (auto entity : view)
+            if (m_SceneState == SceneState::Play)
             {
-                auto& [tc, bc2d] = view.get<TransformComponent, BoxCollider2DComponent>(entity);
+                Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
+                auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-                Vector2 translation = Vector2(tc.Translation) + bc2d.Offset;
-                Vector2 scale = Vector2(tc.Scale) * bc2d.Size * 2.f;
-                Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Rotate(tc.Rotation.z, Vector3::back()).Translate(Vector3(translation, offset));
+                offset = camera.GetComponent<TransformComponent>().Translation.z >= 0 ? 0.001f : -0.001f;
 
-                Renderer2D::DrawRect(transform, LinearColor::Green);
+                Renderer2D::BeginScene(runtimeCamera, camera.GetComponent<TransformComponent>().AsMatrix());
+            }
+            else if (m_SceneState == SceneState::Edit)
+            {
+                offset = m_EditorCamera.GetPosition().z >= 0 ? 0.001f : -0.001f;
+
+                Renderer2D::BeginScene(m_EditorCamera);
+            }
+
+            {
+                auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
+                for (auto entity : view)
+                {
+                    auto& [tc, bc2d] = view.get<TransformComponent, BoxCollider2DComponent>(entity);
+
+                    Vector2 translation = Vector2(tc.Translation);
+                    Vector2 scale = Vector2(tc.Scale) * bc2d.Size * 2.f;
+                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Rotate(tc.Rotation.z, Vector3::back()).Translate(Vector3(translation, offset));
+
+                    Renderer2D::DrawRect(transform, LinearColor::Green);
+                }
+            }
+
+            {
+                auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, CircleCollider2DComponent>();
+                for (auto entity : view)
+                {
+                    auto& [tc, cc2d] = view.get<TransformComponent, CircleCollider2DComponent>(entity);
+
+                    Vector2 translation = Vector2(tc.Translation) + cc2d.Offset;
+                    Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
+                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, offset));
+
+                    Renderer2D::DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
+                }
             }
         }
 
+
+        if (m_SelectedEntity)
         {
-            auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, CircleCollider2DComponent>();
-            for (auto entity : view)
-            {
-                auto& [tc, cc2d] = view.get<TransformComponent, CircleCollider2DComponent>(entity);
-
-                Vector2 translation = Vector2(tc.Translation) + cc2d.Offset;
-                Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
-                Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, offset));
-
-                Renderer2D::DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
-            }
+            const TransformComponent& transform = m_SelectedEntity.GetComponent<TransformComponent>();
+            Renderer2D::DrawRect(transform.AsMatrix(), { 1.f, 0.5f, 0.f, 1.f });
         }
 
         Renderer2D::EndScene();
@@ -536,7 +543,7 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        if(m_ViewportHovered && !ImGuizmo::IsUsing())
+        if(m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation && m_ViewportHovered && !ImGuizmo::IsUsing())
             m_EditorCamera.OnEvent(event);
 
         EventDispatcher dispatcher(event);
@@ -546,7 +553,7 @@ namespace Athena
 
     bool EditorLayer::OnKeyPressed(KeyPressedEvent& event)
     {
-        if (event.GetRepeatCount() > 0)
+        if (event.IsRepeat())
             return false;
 
         bool ctrl = Input::IsKeyPressed(Key::LCtrl) || Input::IsKeyPressed(Key::RCtrl);

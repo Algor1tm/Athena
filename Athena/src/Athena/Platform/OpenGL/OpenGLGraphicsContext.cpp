@@ -19,8 +19,11 @@ namespace Athena
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		ATN_CORE_ASSERT(status, "Failed to initialize Glad!");
 
+		ATN_CORE_INFO("");
+		ATN_CORE_INFO("Create OpenGL Graphics Context:");
 		ATN_CORE_INFO("OpenGL version: {0}", glGetString(GL_VERSION));
 		ATN_CORE_INFO("Graphics Card: {0}", glGetString(GL_RENDERER));
+		ATN_CORE_INFO("Vendor: {0}", glGetString(GL_VENDOR));
 		ATN_CORE_INFO("");
 	}
 

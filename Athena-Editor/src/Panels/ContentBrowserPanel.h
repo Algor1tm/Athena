@@ -18,7 +18,7 @@ namespace Athena
 		void OnImGuiRender();
 
 	private:
-		std::filesystem::path m_CurrentDirectory;
+		Filepath m_CurrentDirectory;
 		std::string_view m_AssetDirectory = "Assets";
 
 		Ref<Texture2D> m_FolderIcon;

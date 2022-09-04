@@ -474,7 +474,11 @@ namespace Athena
         m_SceneState = SceneState::Edit;
 
         m_ActiveScene = m_EditorScene;
+
+        Filepath activeScenePath = m_CurrentScenePath;
         OpenScene(m_TemporaryEditorScenePath);
+        m_CurrentScenePath = activeScenePath;
+
         m_HierarchyPanel.SetContext(m_EditorScene);
 
         m_RuntimeScene = nullptr;
@@ -519,7 +523,7 @@ namespace Athena
         {
             if (ctrl)
             {
-                if (m_CurrentScenePath == std::filesystem::path())
+                if (m_CurrentScenePath == Filepath())
                     SaveSceneAs();
                 else
                     SaveSceneAs(m_CurrentScenePath);
@@ -580,11 +584,11 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        m_CurrentScenePath = std::filesystem::path();
+        m_CurrentScenePath = Filepath();
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
         m_HierarchyPanel.SetContext(m_ActiveScene);
-        ATN_CORE_INFO("Successfully created new scene");
+        ATN_CORE_TRACE("Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
@@ -599,11 +603,11 @@ namespace Athena
             ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.data());
     }
 
-    void EditorLayer::SaveSceneAs(const std::filesystem::path& path)
+    void EditorLayer::SaveSceneAs(const Filepath& path)
     {
         SceneSerializer serializer(m_ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_INFO("Successfully saved Scene into '{0}'", path.string().data());
+        ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string().data());
     }
 
     void EditorLayer::OpenScene()
@@ -618,7 +622,7 @@ namespace Athena
             ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.data());
     }
 
-    void EditorLayer::OpenScene(const std::filesystem::path& path)
+    void EditorLayer::OpenScene(const Filepath& path)
     {
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
@@ -634,7 +638,7 @@ namespace Athena
             m_ActiveScene = newScene;
 
             m_HierarchyPanel.SetContext(m_ActiveScene);
-            ATN_CORE_INFO("Successfully load Scene from '{0}'", path.string().data());
+            ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }
         else
         {

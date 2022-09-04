@@ -48,9 +48,9 @@ namespace Athena
 
 		void NewScene();
 		void SaveSceneAs();
-		void SaveSceneAs(const std::filesystem::path& path);
+		void SaveSceneAs(const Filepath& path);
 		void OpenScene();
-		void OpenScene(const std::filesystem::path& path);
+		void OpenScene(const Filepath& path);
 
 	private:
 		bool m_ViewportFocused = true, m_ViewportHovered = true;
@@ -60,8 +60,8 @@ namespace Athena
 
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		std::filesystem::path m_TemporaryEditorScenePath;
-		std::filesystem::path m_CurrentScenePath;
+		Filepath m_TemporaryEditorScenePath;
+		Filepath m_CurrentScenePath;
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;

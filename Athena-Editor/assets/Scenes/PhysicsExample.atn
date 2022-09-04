@@ -10,8 +10,8 @@ Entities:
       Scale: [0.300000012, 0.300000012, 1]
     CircleComponent:
       Color: [1, 0.419607848, 1, 1]
-      Thickness: 1
-      Fade: 0.00499999989
+      Thickness: 0.280000001
+      Fade: 0.123999998
     Rigidbody2DComponent:
       BodyType: 1
       FixedRotation: false

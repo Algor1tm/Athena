@@ -96,6 +96,8 @@
 
 namespace Athena
 {
+	using byte = ::std::byte; // type of size 1 byte
+
 	using int8  = ::std::int8_t;  // 8-bit int
 	using int16 = ::std::int16_t; // 16-bit int
 	using int32 = ::std::int32_t; // 32-bit int
@@ -108,9 +110,8 @@ namespace Athena
 
 	using SIZE_T = uint64; // size type, same size as a pointer
 
-	using byte = ::std::byte; // type of size 1 byte
 	using String = ::std::string; // string type
-	using Path = ::std::filesystem::path;
+	using Filepath = ::std::filesystem::path;
 
 	using RendererID = uint32; // type for Renderer IDs
 	 

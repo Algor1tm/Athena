@@ -1,6 +1,5 @@
 #include "SandBox2D.h"
 
-//#include <ImGui/imgui.h>
 
 
 namespace Athena
@@ -71,15 +70,7 @@ namespace Athena
 
 	void SandBox2D::OnImGuiRender()
 	{
-		//ImGui::Begin("Renderer2D Stats");
 
-		//auto stats = Renderer2D::GetStats();
-		//ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-		//ImGui::Text("Quads: %d", stats.QuadCount);
-		//ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
-		//ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
-
-		//ImGui::End();
 	}
 
 	void SandBox2D::OnEvent(Event& event)

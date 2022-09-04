@@ -54,6 +54,10 @@ namespace Athena
 		return m_WhiteTexture;
 	}
 
+	Texture2DInstance::Texture2DInstance() 
+	{
+		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
+	}
 
 	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture)
 	{

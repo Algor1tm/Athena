@@ -255,14 +255,14 @@ namespace Athena
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
             {
                 std::string_view path = (const char*)payload->Data;
-                std::string_view extent = path.substr(path.size() - 4, path.size());
+                std::string_view extension = path.substr(path.size() - 4, path.size());
                 //Scene Drag/Drop
-                if (extent == ".atn\0")
+                if (extension == ".atn\0")
                 {
                     OpenScene(path.data());
                 }
                 //Texture Drag/Drop on Entity
-                else if (m_SceneState == SceneState::Edit && extent == ".png\0")
+                else if (m_SceneState == SceneState::Edit && extension == ".png\0")
                 {
                     Entity target = GetEntityByCurrentMousePosition();
                     if (target.HasComponent<SpriteComponent>())
@@ -392,26 +392,20 @@ namespace Athena
 
     void EditorLayer::RenderOverlay()
     {
+        if (m_SceneState == SceneState::Play)
+        {
+            Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
+            auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
+
+            Renderer2D::BeginScene(runtimeCamera, camera.GetComponent<TransformComponent>().AsMatrix());
+        }
+        else
+        {
+            Renderer2D::BeginScene(m_EditorCamera);
+        }
+
         if (m_ShowColliders)
         {
-            float offset = 0;
-
-            if (m_SceneState == SceneState::Play)
-            {
-                Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
-                auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
-
-                offset = camera.GetComponent<TransformComponent>().Translation.z >= 0 ? 0.001f : -0.001f;
-
-                Renderer2D::BeginScene(runtimeCamera, camera.GetComponent<TransformComponent>().AsMatrix());
-            }
-            else if (m_SceneState == SceneState::Edit)
-            {
-                offset = m_EditorCamera.GetPosition().z >= 0 ? 0.001f : -0.001f;
-
-                Renderer2D::BeginScene(m_EditorCamera);
-            }
-
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
                 for (auto entity : view)
@@ -419,8 +413,8 @@ namespace Athena
                     auto& [tc, bc2d] = view.get<TransformComponent, BoxCollider2DComponent>(entity);
 
                     Vector2 translation = Vector2(tc.Translation);
-                    Vector2 scale = Vector2(tc.Scale) * bc2d.Size * 2.f;
-                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Rotate(tc.Rotation.z, Vector3::back()).Translate(Vector3(translation, offset));
+                    Vector2 scale = tc.Scale * Vector3(bc2d.Size * 2.f, 1.f);
+                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(bc2d.Offset.y, bc2d.Offset.x, 0.f)).Rotate(tc.Rotation.z, Vector3::back()).Translate(Vector3(translation, 0.001f));
 
                     Renderer2D::DrawRect(transform, LinearColor::Green);
                 }
@@ -434,13 +428,13 @@ namespace Athena
 
                     Vector2 translation = Vector2(tc.Translation) + cc2d.Offset;
                     Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
-                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, offset));
+                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, 0.001f));
 
                     Renderer2D::DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
                 }
             }
         }
-
+        
 
         if (m_SelectedEntity)
         {
@@ -457,6 +451,7 @@ namespace Athena
             OnSceneStop();
 
         m_HierarchyPanel.SetSelectedEntity(Entity{});
+        m_SelectedEntity = Entity{};
 
         SaveSceneAs(m_TemporaryEditorScenePath);
         m_SceneState = SceneState::Play;
@@ -501,7 +496,7 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        if(m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation && m_ViewportHovered && !ImGuizmo::IsUsing())
+        if((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && m_ViewportHovered && !ImGuizmo::IsUsing())
             m_EditorCamera.OnEvent(event);
 
         EventDispatcher dispatcher(event);
@@ -553,7 +548,9 @@ namespace Athena
             if (m_SelectedEntity && m_SceneState == SceneState::Edit)
             {
                 m_HierarchyPanel.SetSelectedEntity(Entity{});
-                m_EditorScene->DestroyEntity(m_SelectedEntity); break;
+                m_EditorScene->DestroyEntity(m_SelectedEntity);
+                m_SelectedEntity = Entity{};
+                break;
             }
         }
         }
@@ -572,7 +569,10 @@ namespace Athena
         {
             Entity selectedEntity = GetEntityByCurrentMousePosition();
             if (selectedEntity)
+            {
                 m_HierarchyPanel.SetSelectedEntity(selectedEntity);
+                m_SelectedEntity = selectedEntity;
+            }
             break;
         }
         }

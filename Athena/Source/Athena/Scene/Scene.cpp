@@ -8,11 +8,19 @@
 #include "Components.h"
 #include "NativeScript.h"
 
+#ifdef _MSC_VER
+	#pragma warning(push, 0)
+#endif
+
 #include <box2d/b2_world.h>
 #include <box2d/b2_body.h>
 #include <box2d/b2_fixture.h>
 #include <box2d/b2_polygon_shape.h>
 #include <box2d/b2_circle_shape.h>
+
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif
 
 
 namespace Athena
@@ -196,8 +204,7 @@ namespace Athena
 					auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
 
 					b2PolygonShape boxShape;
-					boxShape.m_centroid.Set(bc2d.Offset.x, bc2d.Offset.y);
-					boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y);
+					boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y, b2Vec2(bc2d.Offset.y, bc2d.Offset.x), 0.f);
 
 					b2FixtureDef fixtureDef;
 					fixtureDef.shape = &boxShape;

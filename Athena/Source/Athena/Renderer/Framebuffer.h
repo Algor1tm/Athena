@@ -41,7 +41,7 @@ namespace Athena
 
 	struct FramebufferDESC
 	{
-		uint32 Width, Height;
+		uint32 Width = 0, Height = 0;
 		FramebufferAttachmentDESC Attachments;
 		uint32 Samples = 1;
 

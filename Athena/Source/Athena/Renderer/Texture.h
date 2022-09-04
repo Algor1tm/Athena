@@ -48,7 +48,7 @@ namespace Athena
 	class ATHENA_API Texture2DInstance
 	{
 	public:
-		Texture2DInstance() = default;
+		Texture2DInstance();
 		Texture2DInstance(const Ref<Texture2D>& texture);
 		Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
 		Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);

@@ -26,12 +26,12 @@ workspace "Athena"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Dependencies"
-	include "Athena/vendor/glad"
-	include "Athena/vendor/GLFW"
-	include "Athena/vendor/ImGui"
-	include "Athena/vendor/spdlog"
-	include "Athena/vendor/yaml-cpp"
-	include "Athena/vendor/Box2D"
+	include "Athena/ThirdParty/glad"
+	include "Athena/ThirdParty/GLFW"
+	include "Athena/ThirdParty/ImGui"
+	include "Athena/ThirdParty/spdlog"
+	include "Athena/ThirdParty/yaml-cpp"
+	include "Athena/ThirdParty/Box2D"
 
 group ""
 

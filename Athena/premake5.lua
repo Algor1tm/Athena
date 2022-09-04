@@ -8,23 +8,23 @@ project "Athena"
 	objdir    ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
 	pchheader  "atnpch.h"
-	pchsource  "src/atnpch.cpp"
+	pchsource  "Source/atnpch.cpp"
 
 	files
 	{
-		"src/**.h",
-		"src/**.cpp",
-		"vendor/entt/entt.h",
-		"vendor/ImGuizmo/ImGuizmo.h",
-		"vendor/ImGuizmo/ImGuizmo.cpp",
-		"vendor/stb_image/stb_image.h",
-		"vendor/stb_image/stb_image.cpp"
+		"Source/**.h",
+		"Source/**.cpp",
+		"ThirdParty/entt/entt.h",
+		"ThirdParty/ImGuizmo/ImGuizmo.h",
+		"ThirdParty/ImGuizmo/ImGuizmo.cpp",
+		"ThirdParty/stb_image/stb_image.h",
+		"ThirdParty/stb_image/stb_image.cpp"
 	}
 
 	includedirs 
 	{
-		"src",
-		"vendor",
+		"Source",
+		"ThirdParty",
 		"%{IncludeDir.Box2D}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.glad}",
@@ -54,7 +54,7 @@ project "Athena"
 		"GLFW_INCLUDE_NONE",
 	}
 
-	filter "files:vendor/ImGuizmo/**.cpp"
+	filter "files:ThirdParty/ImGuizmo/**.cpp"
 	flags { "NoPCH" }
 
 	filter "system:windows"

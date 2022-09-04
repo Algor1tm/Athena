@@ -1,6 +1,6 @@
 @echo off
-pushd ..\
-call vendor\premake\premake5.exe vs2022
+pushd %~dp0\..\
+call ThirdParty\Premake\premake5.exe vs2022
 popd
 
 PAUSE

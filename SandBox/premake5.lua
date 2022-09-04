@@ -9,15 +9,15 @@ project "SandBox"
 
 	files
 	{
-		"src/**.h",
-		"src/**.cpp"
+		"Source/**.h",
+		"Source/**.cpp"
 	}
 
 	includedirs
 	{
-		"src",
-		"%{wks.location}/Athena/src",
-		"%{wks.location}/Athena/vendor",
+		"Source",
+		"%{wks.location}/Athena/Source",
+		"%{wks.location}/Athena/ThirdParty",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.spdlog}"

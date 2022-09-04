@@ -1,0 +1,72 @@
+Scene: Scene Name
+Entities:
+  - IDComponent:
+      ID: 10088183424363624464
+    TagComponent:
+      Tag: Red
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 1.57079637]
+      Scale: [4, 0.200000003, 1]
+    SpriteComponent:
+      Color: [1, 0, 0, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
+  - IDComponent:
+      ID: 5137385360522333466
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 1
+        PerspectiveFOV: 0.785398185
+        PerspectiveNearClip: 0.00999999978
+        PerspectiveFarClip: 1000
+        OrthographicSize: 4.9000001
+        OrthographicNearClip: -1
+        OrthographicFarClip: 1
+      Primary: true
+      FixedAspectRatio: false
+  - IDComponent:
+      ID: 1799302827895858725
+    TagComponent:
+      Tag: KomodoHype
+    TransformComponent:
+      Translation: [0.0399999991, 0, -1.39999998]
+      Rotation: [0, 0, 0]
+      Scale: [3, 3, 1]
+    SpriteComponent:
+      Texture: assets/textures/KomodoHype.png
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      Color: [1, 1, 1, 1]
+      TilingFactor: 4
+  - IDComponent:
+      ID: 11664969248402573611
+    TagComponent:
+      Tag: Green
+    TransformComponent:
+      Translation: [0, 0, -2.0999999]
+      Rotation: [0, 0, 0]
+      Scale: [4, 0.200000003, 1]
+    SpriteComponent:
+      Color: [0, 1, 0, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1

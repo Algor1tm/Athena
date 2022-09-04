@@ -1,0 +1,72 @@
+Scene: Scene Name
+Entities:
+  - IDComponent:
+      ID: 1799302827895858725
+    TagComponent:
+      Tag: Left
+    TransformComponent:
+      Translation: [-0.354999989, 0, 0.349999994]
+      Rotation: [0, -0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Color: [1, 0, 0.949807167, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
+  - IDComponent:
+      ID: 10088183424363624464
+    TagComponent:
+      Tag: Right
+    TransformComponent:
+      Translation: [0.351999998, 0, 0.349999994]
+      Rotation: [0, 0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Color: [0.54842025, 0, 0.586872578, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1
+  - IDComponent:
+      ID: 5137385360522333466
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [0, 1.70000005, 4]
+      Rotation: [-0.404916406, 0, 0]
+      Scale: [1, 1, 1]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.52359879
+        PerspectiveNearClip: 0.00999999978
+        PerspectiveFarClip: 1000
+        OrthographicSize: 10
+        OrthographicNearClip: -1
+        OrthographicFarClip: 1
+      Primary: true
+      FixedAspectRatio: false
+  - IDComponent:
+      ID: 11664969248402573611
+    TagComponent:
+      Tag: Top
+    TransformComponent:
+      Translation: [0, 0.5, 0]
+      Rotation: [1.57079637, 0.785398185, 0]
+      Scale: [1, 1, 1]
+    SpriteComponent:
+      Color: [0.876447856, 0, 0.834712803, 1]
+      Texture: ""
+      TexCoords:
+        0: [0, 0]
+        1: [1, 0]
+        2: [1, 1]
+        3: [0, 1]
+      TilingFactor: 1

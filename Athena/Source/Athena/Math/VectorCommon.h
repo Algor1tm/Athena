@@ -194,5 +194,5 @@ namespace Athena::Math
 
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Utils/VectorCommon_simd.h"
+#include "Athena/Math/Impl/VectorCommon_impl.h"
 #endif

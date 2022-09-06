@@ -88,6 +88,14 @@
 	#define ATN_CORE_ASSERT(x, ...)
 #endif
 
+#ifdef _MSC_VER
+	#define _FORCEINLINE __forceinline
+#elif __GNUC__
+	#define _FORCEINLINE __attribute__((always_inline))
+#else 
+	#define _FORCEINLINE inline
+#endif
+
 
 #define BIT(x) (1 << x)
 

@@ -6,15 +6,15 @@
 #include "Types/Vector3.h"
 #include "Types/Vector4.h"
 #include "Types/VectorRelational.h"
-#include "Utils/VectorCommon.h"
-#include "Utils/VectorTrigonometric.h"
-#include "Utils/VectorExponential.h"
+#include "VectorCommon.h"
+#include "VectorTrigonometric.h"
+#include "VectorExponential.h"
 
-#include "SIMD/Platform.h"
-#include "SIMD/Types/Vector4_float.h"
-#include "SIMD/Types/VectorRelational_simd.h"
-#include "SIMD/Utils/VectorCommon_simd.h"
-#include "SIMD/Utils/VectorExponential_simd.h"
+#include "Impl/Platform.h"
+#include "Impl/Types/Vector4float_impl.h"
+#include "Impl/Types/VectorRelational_impl.h"
+#include "Impl/VectorCommon_impl.h"
+#include "Impl/VectorExponential_impl.h"
 
 
 namespace Athena

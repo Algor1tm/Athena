@@ -4,7 +4,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Athena/Math/Types/VectorRelational.h" 
-#include "Athena/Math/Utils/VectorCommon.h"
+#include "Athena/Math/VectorCommon.h"
 
 
 namespace Athena::Math
@@ -243,15 +243,15 @@ namespace Athena::Math
 			Vector<T, 3> tmp = axis;
 
 			T len = tmp.Length();
-			if (Abs(len - static_cast<T>(1.f)) > static_cast<T>(0.001f))
+			if (Math::Abs(len - static_cast<T>(1.f)) > static_cast<T>(0.001f))
 			{
 				T oneOverLen = static_cast<T>(1) / len;
 				tmp *= oneOverLen;
 			}
 
-			T sin = Sin(radians * static_cast<T>(0.5));
+			T sin = Math::Sin(radians * static_cast<T>(0.5));
 
-			return *this *= Quaternion(Cos(radians * static_cast<T>(0.5)), tmp.x * sin, tmp.y * sin, tmp.z * sin);
+			return *this *= Quaternion(Math::Cos(radians * static_cast<T>(0.5)), tmp.x * sin, tmp.y * sin, tmp.z * sin);
 		}
 
 		inline Quaternion GetRotated(T angle, const Vector<T, 3>& axis) const

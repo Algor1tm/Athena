@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Math/Vector.h"
-#include "Athena/Math/SIMD/Types/Vector4_float.h"
+#include "Athena/Math/Impl/Types/Vector4float_impl.h"
 #include "Limits.h"
 
 #include <random>

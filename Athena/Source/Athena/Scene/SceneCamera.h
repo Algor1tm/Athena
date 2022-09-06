@@ -2,7 +2,7 @@
 
 #include "Athena/Renderer/Camera.h"
 
-#include "Athena/Math/Utils/Trigonometric.h"
+#include "Athena/Math/Trigonometric.h"
 
 
 namespace Athena

@@ -43,4 +43,3 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Quaternion.h"
-#include "Athena/Math/Utils.h"

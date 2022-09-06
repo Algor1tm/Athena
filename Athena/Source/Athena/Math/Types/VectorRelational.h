@@ -105,5 +105,5 @@ namespace Athena
 
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Types/VectorRelational_simd.h"
+#include "Athena/Math/Impl/Types/VectorRelational_impl.h"
 #endif

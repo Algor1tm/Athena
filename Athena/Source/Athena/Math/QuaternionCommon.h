@@ -2,7 +2,7 @@
 
 #include "Athena/Math/Types/Quaternion.h"
 #include "Athena/Math/Types/QuaternionRelational.h"
-#include "Athena/Math/Utils/Common.h"
+#include "Athena/Math/Common.h"
 
 
 namespace Athena::Math

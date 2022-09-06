@@ -356,5 +356,5 @@ namespace Athena::Math
 }
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Types/Vector4_float.h"
+#include "Athena/Math/Impl/Types/Vector4float_impl.h"
 #endif

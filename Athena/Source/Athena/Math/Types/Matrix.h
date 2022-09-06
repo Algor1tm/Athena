@@ -2,14 +2,13 @@
 
 #include "Athena/Core/Core.h"
 #include "Vector.h"
-#include "Athena/Math/SIMD/Types/Vector4_float.h"
+#include "Athena/Math/Impl/Types/Vector4float_impl.h"
 
 
 namespace Athena::Math
 {
-	// ROW-MAJOR
-	// Column - size of column
-	// Row - size of row
+	// Column - size of columns
+	// Row - size of rows
 	template <typename T, SIZE_T Column, SIZE_T Row>
 	class Matrix
 	{

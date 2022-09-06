@@ -5,6 +5,8 @@
 
 #include <sstream>
 
+#include "Athena/Math/Impl/Types/MatrixRelational_impl.h"
+
 
 namespace Athena::Math
 {
@@ -88,6 +90,5 @@ namespace Athena
 }
 
 
-#ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Types/MatrixRelational_simd.h"
-#endif
+#include "Athena/Math/Impl/Types/MatrixRelational_impl.inl"
+

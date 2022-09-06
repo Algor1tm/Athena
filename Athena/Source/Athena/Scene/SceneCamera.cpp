@@ -1,7 +1,7 @@
 #include "atnpch.h"
 #include "SceneCamera.h"
 
-#include "Athena/Math/Utils/MatrixProjection.h"
+#include "Athena/Math/MatrixProjection.h"
 
 
 namespace Athena

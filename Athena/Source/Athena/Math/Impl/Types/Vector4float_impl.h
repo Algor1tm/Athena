@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Athena/Math/SIMD/Platform.h"
+#include "Athena/Math/Impl/Platform.h"
 
 
-#ifdef ATN_SSE
+#ifdef ATN_SSE_2
 
 #include "Athena/Math/Types/Vector.h"
-#include "Athena/Math/Utils/Exponential.h"
+#include "Athena/Math/Exponential.h"
 
 namespace Athena::Math
 {

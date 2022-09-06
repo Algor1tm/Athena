@@ -88,5 +88,5 @@ namespace Athena::Math
 }
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Utils/VectorExponential_simd.h"
+#include "Athena/Math/Impl/VectorExponential_impl.h"
 #endif

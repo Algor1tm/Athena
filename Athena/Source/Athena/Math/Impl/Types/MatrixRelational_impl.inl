@@ -1,13 +1,5 @@
 #pragma once
 
-#include "Athena/Math/SIMD/Platform.h"
-
-
-#ifdef ATN_SSE
-
-#include "Athena/Math/Types/Matrix.h"
-#include "Athena/Math/SIMD/Types/Vector4_float.h"
-
 namespace Athena::Math
 {
 	inline Vector<float, 4> operator*(const Vector<float, 4>& vec, const Matrix<float, 4, 4>& mat)
@@ -55,7 +47,7 @@ namespace Athena::Math
 	inline Matrix<float, 4, 4> AffineInverse(const Matrix<float, 4, 4>& mat)
 	{
 		Matrix<float, 4, 4> out;
-		
+
 		// Transpose 3x3 matrix
 		__m128 tmp1 = _mm_shuffle_ps(mat[0]._xmm, mat[1]._xmm, _MM_SHUFFLE(1, 0, 1, 0));
 		__m128 tmp2 = _mm_shuffle_ps(mat[0]._xmm, mat[1]._xmm, _MM_SHUFFLE(3, 2, 3, 2));
@@ -78,5 +70,3 @@ namespace Athena::Math
 		return out;
 	}
 }
-
-#endif // ATN_SSE

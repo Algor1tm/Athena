@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Athena/Math/SIMD/Platform.h"
+#include "Athena/Math/Impl/Platform.h"
 
 
-#ifdef ATN_SSE
+#ifdef ATN_SSE_2
 
-#include "Athena/Math/SIMD/Types/Vector4_float.h"
+#include "Athena/Math/Impl/Types/Vector4float_impl.h"
 
 
 namespace Athena::Math

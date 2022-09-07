@@ -134,6 +134,6 @@ namespace Athena
 
 		virtual uint32 GetCount() const = 0;
 
-		static Ref<IndexBuffer> Create(uint32* indices, uint32 ñount);
+		static Ref<IndexBuffer> Create(uint32* indices, uint32 count);
 	};
 }

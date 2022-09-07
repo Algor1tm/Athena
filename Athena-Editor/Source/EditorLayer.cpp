@@ -244,7 +244,7 @@ namespace Athena
         //Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
         Application::Get().GetImGuiLayer()->BlockEvents(false);
 
-        auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
+        const auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
 
         uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
@@ -410,7 +410,7 @@ namespace Athena
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
                 for (auto entity : view)
                 {
-                    auto& [tc, bc2d] = view.get<TransformComponent, BoxCollider2DComponent>(entity);
+                    const auto& [tc, bc2d] = view.get<TransformComponent, BoxCollider2DComponent>(entity);
 
                     Vector2 translation = Vector2(tc.Translation);
                     Vector2 scale = tc.Scale * Vector3(bc2d.Size * 2.f, 1.f);
@@ -424,7 +424,7 @@ namespace Athena
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, CircleCollider2DComponent>();
                 for (auto entity : view)
                 {
-                    auto& [tc, cc2d] = view.get<TransformComponent, CircleCollider2DComponent>(entity);
+                    const auto& [tc, cc2d] = view.get<TransformComponent, CircleCollider2DComponent>(entity);
 
                     Vector2 translation = Vector2(tc.Translation) + cc2d.Offset;
                     Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);

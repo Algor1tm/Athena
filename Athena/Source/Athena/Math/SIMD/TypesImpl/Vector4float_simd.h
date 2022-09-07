@@ -277,47 +277,47 @@ namespace Athena::Math
 			return *this;
 		}
 
-		constexpr Vector operator+(const Vector& other) const
+		inline Vector operator+(const Vector& other) const
 		{
 			return Vector(_mm_add_ps(_data, other._data));
 		}
 
-		constexpr Vector operator-(const Vector& other) const
+		inline Vector operator-(const Vector& other) const
 		{
 			return Vector(_mm_sub_ps(_data, other._data));
 		}
 
-		constexpr Vector operator*(const Vector& other) const
+		inline Vector operator*(const Vector& other) const
 		{
 			return Vector(_mm_mul_ps(_data, other._data));
 		}
 
-		constexpr Vector operator/(const Vector& other) const
+		inline Vector operator/(const Vector& other) const
 		{
 			return Vector(_mm_div_ps(_data, other._data));
 		}
 
-		constexpr Vector operator+(float scalar) const
+		inline Vector operator+(float scalar) const
 		{
 			return Vector(_mm_add_ps(_data, _mm_set_ps1(scalar)));
 		}
 
-		constexpr Vector operator-(float scalar) const
+		inline Vector operator-(float scalar) const
 		{
 			return Vector(_mm_sub_ps(_data, _mm_set_ps1(scalar)));
 		}
 
-		constexpr Vector operator*(float scalar) const
+		inline Vector operator*(float scalar) const
 		{
 			return Vector(_mm_mul_ps(_data, _mm_set_ps1(scalar)));
 		}
 
-		constexpr Vector operator/(float scalar) const
+		inline Vector operator/(float scalar) const
 		{
 			return Vector(_mm_div_ps(_data, _mm_set_ps1(scalar)));
 		}
 
-		constexpr Vector operator-() const
+		inline Vector operator-() const
 		{
 			return Vector(_mm_set_ps(-w, -z, -y, -x));
 		}

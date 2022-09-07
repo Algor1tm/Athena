@@ -274,14 +274,12 @@ namespace Athena::Math
 		return mat * scalar;
 	}
 
-	template <typename T, SIZE_T vecRow, SIZE_T Column, SIZE_T Row>
+	template <typename T, SIZE_T Shared, SIZE_T Row>
 	constexpr Vector<T, Row> operator*(
-		const Vector<T, vecRow>& vec, const Matrix<T, Column, Row>& mat)
+		const Vector<T, Shared>& vec, const Matrix<T, Shared, Row>& mat)
 	{
-		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
-
 		Vector<T, Row> out(static_cast<T>(0));
-		for (SIZE_T i = 0; i < Column; i++)
+		for (SIZE_T i = 0; i < Shared; i++)
 		{
 			for (SIZE_T j = 0; j < Row; ++j)
 				out[j] += vec[i] * mat[i][j];

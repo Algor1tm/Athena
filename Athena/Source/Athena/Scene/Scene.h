@@ -24,6 +24,11 @@ class b2World;
 
 namespace Athena
 {
+	class Entity;
+	class SceneHierarchyPanel;
+	class SceneSerializer;
+
+
 	class ATHENA_API Scene
 	{
 	public:

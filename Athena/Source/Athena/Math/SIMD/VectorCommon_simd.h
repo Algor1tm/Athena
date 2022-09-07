@@ -37,14 +37,14 @@ namespace Athena::Math
 
 	inline Vector<float, 4> Sign(const Vector<float, 4>& vec)
 	{
-		__m128 zro = _mm_setzero_ps();
-		__m128 cmp0 = _mm_cmplt_ps(vec._data, zro);
-		__m128 cmp1 = _mm_cmpgt_ps(vec._data, zro);
-		__m128 and0 = _mm_and_ps(cmp0, _mm_set1_ps(-1.0f));
-		__m128 and1 = _mm_and_ps(cmp1, _mm_set1_ps(1.0f));
-		__m128 or = _mm_or_ps(and0, and1);
+		__m128 zr0 = _mm_setzero_ps();
+		__m128 cmp0 = _mm_cmplt_ps(vec._data, zr0);
+		__m128 cmp1 = _mm_cmpgt_ps(vec._data, zr0);
+		__m128 and0 = _mm_and_ps(cmp0, _mm_set_ps1(-1.0f));
+		__m128 and1 = _mm_and_ps(cmp1, _mm_set_ps1(1.0f));
+		__m128 or0 = _mm_or_ps(and0, and1);
 
-		return Vector<float, 4>(or);
+		return Vector<float, 4>(or0);
 	}
 
 

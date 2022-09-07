@@ -22,16 +22,6 @@ namespace Athena::Math
 		return Vector<float, 4>(result);
 	}
 
-	inline Matrix<float, 4, 4> operator*(const Matrix<float, 4, 4>& Left, const Matrix<float, 4, 4>& Right)
-	{
-		Matrix<float, 4, 4> out;
-		out[0] = Left[0] * Right;
-		out[1] = Left[1] * Right;
-		out[2] = Left[2] * Right;
-		out[3] = Left[3] * Right;
-		return out;
-	}
-
 	inline Matrix<float, 4, 4> Transpose(const Matrix<float, 4, 4>& mat)
 	{
 		Matrix<float, 4, 4> out;

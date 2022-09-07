@@ -357,7 +357,7 @@ namespace Athena::Math
 	template <typename T>
 	constexpr Vector<T, 3> Cross(const Vector<T, 3>& left, const Vector<T, 3>& right)
 	{
-		Vector3 out;
+		Vector<T, 3> out;
 		out.x = left.y * right.z - left.z * right.y;
 		out.y = -left.x * right.z + left.z * right.x;
 		out.z = left.x * right.y - left.y * right.x;

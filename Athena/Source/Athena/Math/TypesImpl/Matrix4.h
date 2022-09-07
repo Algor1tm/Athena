@@ -86,7 +86,7 @@ namespace Athena::Math
 
 		constexpr ColumnType GetColumn(SIZE_T idx) const
 		{
-			ATN_CORE_ASSERT(idx < Row, "Matrix subscript out of range");
+			ATN_CORE_ASSERT(idx < 4, "Matrix subscript out of range");
 			ColumnType out(m_Array[0][idx], m_Array[1][idx], m_Array[2][idx], m_Array[3][idx]);
 
 			return out;
@@ -109,7 +109,7 @@ namespace Athena::Math
 
 		constexpr iterator end()
 		{
-			return iterator(m_Array, Column);
+			return iterator(m_Array, 4);
 		}
 
 		constexpr const_iterator cbegin() const
@@ -119,7 +119,7 @@ namespace Athena::Math
 
 		constexpr const_iterator cend() const
 		{
-			return const_iterator(m_Array, Column);
+			return const_iterator(m_Array, 4);
 		}
 
 		constexpr Matrix& Fill(T value)
@@ -280,21 +280,13 @@ namespace Athena::Math
 			return Matrix(*this) -= other;
 		}
 
-		template <typename T>
-		constexpr Matrix<T, 4, 4> operator*(const Matrix<T, 4, 4>& other) const
+		constexpr Matrix operator*(const Matrix& other) const
 		{
-			Matrix<T, 4, 4> out;
-
-			for (SIZE_T i = 0; i < Size4; ++i)
-			{
-				for (SIZE_T j = 0; j < Size4; ++j)
-				{
-					out[i][j] = m_Array[i][0] * other[0][j] + 
-						m_Array[i][1] * other[1][j] + 
-						m_Array[i][2] * other[2][j] + 
-						m_Array[i][3] * other[3][j];
-				}
-			}
+			Matrix out;
+			out[0] = m_Array[0] * other;
+			out[1] = m_Array[1] * other;
+			out[2] = m_Array[2] * other;
+			out[3] = m_Array[3] * other;
 
 			return out;
 		}

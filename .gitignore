@@ -17,6 +17,9 @@ Athena-Editor/AthenaProfile-Startup.json
 
 Athena-Editor/Resources/Tmp/EditorScene.atn
 Plans.txt
+Makefile
+
+.vscode/
 
 ##### ATHENA #########################
 

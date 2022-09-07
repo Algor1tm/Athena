@@ -89,11 +89,11 @@
 #endif
 
 #ifdef _MSC_VER
-	#define _FORCEINLINE __forceinline
+	#define ATN_FORCEINLINE __forceinline
 #elif __GNUC__
-	#define _FORCEINLINE __attribute__((always_inline))
+	#define ATN_FORCEINLINE __attribute__((always_inline))
 #else 
-	#define _FORCEINLINE inline
+	#define ATN_FORCEINLINE inline
 #endif
 
 

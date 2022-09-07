@@ -10,7 +10,7 @@ namespace Athena::Math
 	template<typename X, SIZE_T Size, typename Y, typename Z>
 	constexpr Vector<X, Size> Clamp(const Vector<X, Size>& vec, Y min, Z max)
 	{
-		Vector<T, Size> out;
+		Vector<X, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
 			out[i] = Math::Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
 

@@ -74,10 +74,10 @@ namespace Athena::Math
 	{
 		Quaternion<T> out;
 
-		T fourXSquaredMinus1 = m[0][0] - m[1][1] - m[2][2];
-		T fourYSquaredMinus1 = m[1][1] - m[0][0] - m[2][2];
-		T fourZSquaredMinus1 = m[2][2] - m[0][0] - m[1][1];
-		T fourWSquaredMinus1 = m[0][0] + m[1][1] + m[2][2];
+		T fourXSquaredMinus1 = mat3[0][0] - mat3[1][1] - mat3[2][2];
+		T fourYSquaredMinus1 = mat3[1][1] - mat3[0][0] - mat3[2][2];
+		T fourZSquaredMinus1 = mat3[2][2] - mat3[0][0] - mat3[1][1];
+		T fourWSquaredMinus1 = mat3[0][0] + mat3[1][1] + mat3[2][2];
 
 		int biggestIndex = 0;
 		T fourBiggestSquaredMinus1 = fourWSquaredMinus1;
@@ -97,33 +97,33 @@ namespace Athena::Math
 			biggestIndex = 3;
 		}
 
-		T biggestVal = sqrt(fourBiggestSquaredMinus1 + static_cast<T>(1)) * static_cast<T>(0.5);
+		T biggestVal = Math::Sqrt(fourBiggestSquaredMinus1 + static_cast<T>(1)) * static_cast<T>(0.5);
 		T mult = static_cast<T>(0.25) / biggestVal;
 
 		switch (biggestIndex)
 		{
 		case 0:
 			out.w = biggestVal;
-			out.x = (m[1][2] - m[2][1]) * mult;
-			out.y = (m[2][0] - m[0][2]) * mult;
-			out.z = (m[0][1] - m[1][0]) * mult;
+			out.x = (mat3[1][2] - mat3[2][1]) * mult;
+			out.y = (mat3[2][0] - mat3[0][2]) * mult;
+			out.z = (mat3[0][1] - mat3[1][0]) * mult;
 			break;
 		case 1:
-			out.w = (m[1][2] - m[2][1]) * mult;
+			out.w = (mat3[1][2] - mat3[2][1]) * mult;
 			out.x = biggestVal;
-			out.y = (m[0][1] + m[1][0]) * mult;
-			out.z = (m[2][0] + m[0][2]) * mult;
+			out.y = (mat3[0][1] + mat3[1][0]) * mult;
+			out.z = (mat3[2][0] + mat3[0][2]) * mult;
 			break;
 		case 2:
-			out.w = (m[2][0] - m[0][2]) * mult;
-			out.x = (m[0][1] + m[1][0]) * mult;
+			out.w = (mat3[2][0] - mat3[0][2]) * mult;
+			out.x = (mat3[0][1] + mat3[1][0]) * mult;
 			out.y = biggestVal;
-			out.z = (m[1][2] + m[2][1]) * mult;
+			out.z = (mat3[1][2] + mat3[2][1]) * mult;
 			break;
 		case 3:
-			out.w = (m[0][1] - m[1][0]) * mult;
-			out.x = (m[2][0] + m[0][2]) * mult;
-			out.y = (m[1][2] + m[2][1]) * mult;
+			out.w = (mat3[0][1] - mat3[1][0]) * mult;
+			out.x = (mat3[2][0] + mat3[0][2]) * mult;
+			out.y = (mat3[1][2] + mat3[2][1]) * mult;
 			out.z = biggestVal;
 			break;
 		default:

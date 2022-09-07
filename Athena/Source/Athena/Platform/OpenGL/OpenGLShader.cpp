@@ -101,7 +101,7 @@ namespace Athena
 			GLuint shader = glCreateShader(glType);
 
 			const char* source = sourceString.c_str();
-			glShaderSource(shader, 1, &(const GLchar*)source, 0);
+			glShaderSource(shader, 1, &source, 0);
 
 			glCompileShader(shader);
 

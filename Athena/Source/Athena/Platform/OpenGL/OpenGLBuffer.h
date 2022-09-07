@@ -29,7 +29,7 @@ namespace Athena
 	class ATHENA_API OpenGLIndexBuffer : public IndexBuffer
 	{
 	public:
-		OpenGLIndexBuffer(uint32* indices, uint32 ñount);
+		OpenGLIndexBuffer(uint32* indices, uint32 count);
 		~OpenGLIndexBuffer();
 
 		virtual void Bind() const override;

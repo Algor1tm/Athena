@@ -177,21 +177,21 @@ namespace Athena
 
 		String sceneName = data["Scene"].as<String>();
 
-		auto& entities = data["Entities"];
+		const auto& entities = data["Entities"];
 		if (entities)
 		{
 			for (auto entityNode : entities)
 			{
 				uint64 uuid = 0;
 				{
-					auto& uuidComponentNode = entityNode["IDComponent"];
+					const auto& uuidComponentNode = entityNode["IDComponent"];
 					if (uuidComponentNode)
 						uuid = uuidComponentNode["ID"].as<uint64>();
 				}
 
 				String name;
 				{
-					auto& tagComponentNode = entityNode["TagComponent"];
+					const auto& tagComponentNode = entityNode["TagComponent"];
 					if (tagComponentNode)
 						name = tagComponentNode["Tag"].as<String>();
 				}
@@ -199,7 +199,7 @@ namespace Athena
 				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
 
 				{
-					auto& transformComponentNode = entityNode["TransformComponent"];
+					const auto& transformComponentNode = entityNode["TransformComponent"];
 					if (transformComponentNode)
 					{
 						auto& transform = deserializedEntity.GetComponent<TransformComponent>();
@@ -210,11 +210,11 @@ namespace Athena
 				}
 
 				{
-					auto& cameraComponentNode = entityNode["CameraComponent"];
+					const auto& cameraComponentNode = entityNode["CameraComponent"];
 					if (cameraComponentNode)
 					{
 						auto& cc = deserializedEntity.AddComponent<CameraComponent>();
-						auto& cameraPropsNode = cameraComponentNode["Camera"];
+						const auto& cameraPropsNode = cameraComponentNode["Camera"];
 
 						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
 
@@ -236,7 +236,7 @@ namespace Athena
 				}
 
 				{
-					auto& spriteComponentNode = entityNode["SpriteComponent"];
+					const auto& spriteComponentNode = entityNode["SpriteComponent"];
 					if (spriteComponentNode)
 					{
 						auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
@@ -244,13 +244,13 @@ namespace Athena
 						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
 
 						std::array<Vector2, 4> texCoords;
-						auto& texCoordsNode = spriteComponentNode["TexCoords"];
+						const auto& texCoordsNode = spriteComponentNode["TexCoords"];
 						texCoords[0] = texCoordsNode["0"].as<Vector2>();
 						texCoords[1] = texCoordsNode["1"].as<Vector2>();
 						texCoords[2] = texCoordsNode["2"].as<Vector2>();
 						texCoords[3] = texCoordsNode["3"].as<Vector2>();
 
-						auto& textureNode = spriteComponentNode["Texture"];
+						const auto& textureNode = spriteComponentNode["Texture"];
 						const auto& path = textureNode.as<String>();
 						if (!path.empty())
 						{
@@ -267,7 +267,7 @@ namespace Athena
 				}
 
 				{
-					auto& circleComponentNode = entityNode["CircleComponent"];
+					const auto& circleComponentNode = entityNode["CircleComponent"];
 					if (circleComponentNode)
 					{
 						auto& circle = deserializedEntity.AddComponent<CircleComponent>();
@@ -279,7 +279,7 @@ namespace Athena
 				}
 
 				{
-					auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
+					const auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
 					if (rigidbody2DComponentNode)
 					{
 						auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
@@ -290,7 +290,7 @@ namespace Athena
 				}
 
 				{
-					auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
+					const auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
 					if (boxCollider2DComponentNode)
 					{
 						auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
@@ -306,7 +306,7 @@ namespace Athena
 				}
 
 				{
-					auto& circleCollider2DComponentNode = entityNode["CircleCollider2DComponent"];
+					const auto& circleCollider2DComponentNode = entityNode["CircleCollider2DComponent"];
 					if (circleCollider2DComponentNode)
 					{
 						auto& cc2d = deserializedEntity.AddComponent<CircleCollider2DComponent>();

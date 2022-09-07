@@ -6,7 +6,7 @@
 // Vector<float, 4>,   Quaternion<float, 4>,    Matrix<float, 4, 4> 
 // 1. Cannot be constexpr.
 // 2. Have strict alignment.
-// 3. Math functions that works with these classes does not constexpr.
+// 3. Math functions that works with these classes do not constexpr.
 
 
 // Athena currently does not support ARM NEON
@@ -39,17 +39,8 @@
 	#endif
 	
 #if defined(ATN_SSE_2) || defined(ATN_SSE_4_1)
-
-#include <xmmintrin.h>
-#include <immintrin.h>
-
-namespace Athena::Math
-{
-	using __float4 = __m128;
-	using __int4 = __m128i;
-}
-
+	#include <xmmintrin.h>
+	#include <immintrin.h>
 #endif
 
 #endif
-

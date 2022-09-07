@@ -1,8 +1,11 @@
 #pragma once
 
-#include "Athena/Math/Vector.h"
-#include "Athena/Math/Impl/Types/Vector4float_impl.h"
+#include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/Types/Vector2.h"
+#include "Athena/Math/Types/Vector3.h"
+#include "Athena/Math/Types/Vector4.h"
 #include "Limits.h"
+#include "Common.h"
 
 #include <random>
 

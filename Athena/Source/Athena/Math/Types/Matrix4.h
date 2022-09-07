@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Matrix.h"
-
-#define Size4 4
+#include "Vector4.h"
 
 
 namespace Athena::Math
 {
+#define Size4 4
+
 	template<typename T>
 	class Matrix<T, Size4, Size4>
 	{
@@ -303,8 +304,36 @@ namespace Athena::Math
 		}
 
 	private:
-		RowType m_Array[4];
+		RowType m_Array[Size4];
 	};
-}
 
 #undef Size4
+
+	
+
+// -------------Relative Functions-------------------------------------
+
+	// For Transformation Matrices
+	template <typename T>
+	constexpr Matrix<T, 4, 4> AffineInverse(const Matrix<T, 4, 4>& mat)
+	{
+		Matrix<T, 4, 4> out;
+
+		out[0][0] = mat[0][0]; out[0][1] = mat[1][0]; out[0][2] = mat[2][0]; out[0][3] = 0;
+		out[1][0] = mat[0][1]; out[1][1] = mat[1][1]; out[1][2] = mat[2][1]; out[1][3] = 0;
+		out[2][0] = mat[0][2]; out[2][1] = mat[1][2]; out[2][2] = mat[2][2]; out[2][3] = 0;
+
+		out[3][0] = -(mat[3][0] * out[0][0] + mat[3][1] * out[1][0] + mat[3][2] * out[2][0]);
+		out[3][1] = -(mat[3][0] * out[0][1] + mat[3][1] * out[1][1] + mat[3][2] * out[2][1]);
+		out[3][2] = -(mat[3][0] * out[0][2] + mat[3][1] * out[1][2] + mat[3][2] * out[2][2]);
+		out[3][3] = 1;
+
+		return out;
+	}
+}
+
+
+#ifdef ATN_SIMD
+#include "Athena/Math/SIMD/Types/MatrixRelational_simd.h"
+#endif
+

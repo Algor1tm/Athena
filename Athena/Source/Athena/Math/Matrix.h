@@ -3,13 +3,9 @@
 
 #include "Types/Matrix.h"
 #include "Types/Matrix4.h"
-#include "Types/MatrixRelational.h"
 #include "MatrixTransforms.h"
 #include "MatrixProjection.h"
 #include "MatrixCommon.h"
-
-#include "Impl/Platform.h"
-#include "Impl/Types/MatrixRelational_impl.h"
 
 
 namespace Athena

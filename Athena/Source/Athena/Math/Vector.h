@@ -5,16 +5,9 @@
 #include "Types/Vector2.h"
 #include "Types/Vector3.h"
 #include "Types/Vector4.h"
-#include "Types/VectorRelational.h"
 #include "VectorCommon.h"
 #include "VectorTrigonometric.h"
 #include "VectorExponential.h"
-
-#include "Impl/Platform.h"
-#include "Impl/Types/Vector4float_impl.h"
-#include "Impl/Types/VectorRelational_impl.h"
-#include "Impl/VectorCommon_impl.h"
-#include "Impl/VectorExponential_impl.h"
 
 
 namespace Athena

@@ -2,7 +2,8 @@
 
 #include "Athena/Core/Core.h"
 #include "Vector.h"
-#include "Athena/Math/Impl/Types/Vector4float_impl.h"
+
+#include <sstream>
 
 
 namespace Athena::Math
@@ -254,4 +255,71 @@ namespace Athena::Math
 	private:
 		RowType m_Array[Column];
 	};
+
+
+
+// -------------Relative Functions-------------------------------------
+
+	template <typename T, SIZE_T Column, SIZE_T Row>
+	constexpr Matrix<T, Column, Row> operator+(float scalar, const Matrix<T, Column, Row>& mat)
+	{
+		return mat + scalar;
+	}
+
+	template <typename T, SIZE_T Column, SIZE_T Row>
+	constexpr Matrix<T, Column, Row> operator*(float scalar, const Matrix<T, Column, Row>& mat)
+	{
+		return mat * scalar;
+	}
+
+	template <typename T, SIZE_T vecRow, SIZE_T Column, SIZE_T Row>
+	constexpr Vector<T, Row> operator*(
+		const Vector<T, vecRow>& vec, const Matrix<T, Column, Row>& mat)
+	{
+		static_assert(vecRow == Column, "Invalid Vector Matrix multiplication");
+
+		Vector<T, Row> out(static_cast<T>(0));
+		for (SIZE_T i = 0; i < Column; i++)
+		{
+			for (SIZE_T j = 0; j < Row; ++j)
+				out[j] += vec[i] * mat[i][j];
+		}
+		return out;
+	}
+
+	template <typename T, SIZE_T Column, SIZE_T Row>
+	constexpr Matrix<T, Row, Column> Transpose(const Matrix<T, Column, Row>& mat)
+	{
+		Matrix<T, Row, Column> out;
+		for (SIZE_T i = 0; i < Column; ++i)
+		{
+			for (SIZE_T j = 0; j < Row; ++j)
+				out[j][i] = mat[i][j];
+		}
+		return out;
+	}
 }
+
+
+namespace Athena
+{
+	template <typename T, SIZE_T Column, SIZE_T Row>
+	inline String ToString(const Math::Matrix<T, Column, Row>& mat)
+	{
+		std::stringstream stream;
+		stream << "Matrix(";
+		for (SIZE_T i = 0; i < Column; ++i)
+		{
+			for (SIZE_T j = 0; j < Row; ++j)
+			{
+				stream << mat[i][j] << ", ";
+			}
+			if (i == Column - 1)
+				stream << "Column = " << Column << ", Row = " << Row << ")";
+			else
+				stream << "\n       ";
+		}
+		return stream.str();
+	}
+}
+

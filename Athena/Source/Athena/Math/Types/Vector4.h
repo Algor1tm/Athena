@@ -192,7 +192,7 @@ namespace Athena::Math
 
 		constexpr float Length() const 
 		{
-			return Math::Sqrt(SqrLength());
+			return std::sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()
@@ -353,8 +353,20 @@ namespace Athena::Math
 	};
 
 #undef Size4
+
+
+
+// -------------Relative Functions-------------------------------------
+
+	template <typename T>
+	constexpr T Dot(const Vector<T, 4>& left, const Vector<T, 4>& right)
+	{
+		return left.x * right.x + left.y * right.y + left.z * right.z + left.w * right.w;
+	}
 }
 
 #ifdef ATN_SIMD
-#include "Athena/Math/Impl/Types/Vector4float_impl.h"
+#include "Vector3.h"
+#include "Athena/Math/SIMD/Types/Vector4float_simd.h"
+#include "Athena/Math/SIMD/Types/VectorRelational_simd.h"
 #endif

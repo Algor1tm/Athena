@@ -1,7 +1,7 @@
 #include "atnpch.h"
 #include "UUID.h"
 
-#include "Athena/Math/Utils/Random.h"
+#include "Athena/Math/Random.h"
 
 
 namespace Athena

@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
 
-#include "Athena/Math/Common.h"
+#include <sstream>
 
 
 namespace Athena::Math
@@ -11,7 +11,6 @@ namespace Athena::Math
 	template <typename T, SIZE_T _Size>
 	class Vector;
 
-	// Forward declaration (VectorRelational.h)
 	template <typename T, SIZE_T Size>
 	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right);
 }
@@ -378,7 +377,7 @@ namespace Athena::Math
 
 		constexpr float Length() const
 		{
-			return Math::Sqrt(SqrLength());
+			return std::sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()
@@ -527,4 +526,51 @@ namespace Athena::Math
 	private:
 		T m_Array[_Size];
 	};
+
+
+
+// -------------Relative Functions-------------------------------------
+
+	template <typename T, SIZE_T Size>
+	constexpr Vector<T, Size> operator+(T scalar, const Vector<T, Size>& vec)
+	{
+		return vec + scalar;
+	}
+
+	template <typename T, SIZE_T Size>
+	constexpr Vector<T, Size> operator*(T scalar, const Vector<T, Size>& vec)
+	{
+		return vec * scalar;
+	}
+
+	template <typename T, SIZE_T Size>
+	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right)
+	{
+		T out;
+		for (SIZE_T i = 0; i < Size; ++i)
+			out += left[i] * right[i];
+		return out;
+	}
+
+	template <typename T, SIZE_T Size>
+	constexpr float Distance(const Vector<T, Size>& left, const Vector<T, Size>& right)
+	{
+		return (left - right).GetLength();
+	}
 }
+
+
+namespace Athena
+{
+	template <typename T, SIZE_T Size>
+	inline String ToString(const Math::Vector<T, Size>& vec)
+	{
+		std::stringstream stream;
+		stream << "Vector" << vec.Size() << "(";
+		for (SIZE_T i = 0; i < vec.Size() - 1; ++i)
+			stream << vec[i] << ", ";
+		stream << vec[vec.Size() - 1] << ")";
+		return stream.str();
+	}
+}
+

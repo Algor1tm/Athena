@@ -133,7 +133,7 @@ namespace Athena::Math
 
 		constexpr float Length() const 
 		{
-			return Math::Sqrt(SqrLength());
+			return std::sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()
@@ -300,4 +300,27 @@ namespace Athena::Math
 	};
 
 #undef Size2
+
+
+// -------------Relative Functions-------------------------------------
+	template <typename T>
+	constexpr T Dot(const Vector<T, 2>& left, const Vector<T, 2>& right)
+	{
+		return left.x * right.x + left.y * right.y;
+	}
+
+	template <typename T>
+	constexpr T Cross(const Vector<T, 2>& left, const Vector<T, 2>& right)
+	{
+		return left.x * right.y - left.y * right.x;
+	}
+
+	// @param normal: Expected to be normalized
+	template <typename T>
+	constexpr Vector<T, 2> Reflect(
+		const Vector<T, 2>& direction, const Vector<T, 2>& normal)
+	{
+		return direction - 2 * normal * Dot(direction, normal);
+	}
+
 }

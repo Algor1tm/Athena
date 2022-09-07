@@ -3,8 +3,7 @@
 #include "Athena/Core/Color.h"
 #include "Athena/Core/UUID.h"
 
-#include "Athena/Math/Quaternion.h"
-#include "Athena/Math/Matrix.h"
+#include "Athena/Math/Transforms.h"
 
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Renderer/Texture.h"
@@ -39,7 +38,7 @@ namespace Athena
 
 		Matrix4 AsMatrix() const
 		{
-			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Matrix4(Quat(Rotation));
+			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Math::ToMat4(Math::ToQuat(Rotation));
 			return transofrm.Translate(Translation);
 		}
 	};

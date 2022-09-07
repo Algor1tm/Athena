@@ -3,6 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Vector.h"
 
+#include "Athena/Math/Common.h"
+
 #include <sstream>
 
 
@@ -245,7 +247,7 @@ namespace Athena::Math
 		{
 			Matrix out(static_cast<T>(0));
 
-			constexpr SIZE_T min = Min(Column, Row);
+			constexpr SIZE_T min = Math::Min(Column, Row);
 			for (SIZE_T i = 0; i < min; ++i)
 				out[i][i] = static_cast<T>(1);
 
@@ -322,4 +324,3 @@ namespace Athena
 		return stream.str();
 	}
 }
-

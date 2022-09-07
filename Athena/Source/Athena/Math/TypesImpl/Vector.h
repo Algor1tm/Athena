@@ -3,6 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
 
+#include "Athena/Math/Exponential.h"
+
 #include <sstream>
 
 
@@ -372,12 +374,12 @@ namespace Athena::Math
 
 		constexpr T SqrLength() const
 		{
-			return Dot(*this, *this);
+			return Math::Dot(*this, *this);
 		}
 
 		constexpr float Length() const
 		{
-			return std::sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()

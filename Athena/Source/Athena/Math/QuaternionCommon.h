@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Athena/Math/Types/Quaternion.h"
-#include "Athena/Math/Types/QuaternionRelational.h"
-#include "Athena/Math/Common.h"
+#include "Athena/Math/TypesImpl/Quaternion.h"
+
+#include "Common.h"
+#include "Trigonometric.h"
 
 
 namespace Athena::Math
@@ -11,10 +12,10 @@ namespace Athena::Math
 	constexpr Quaternion<T> Lerp(const Quaternion<T>& a, const Quaternion<T>& b, T t)
 	{
 		Quaternion<T> out;
-		out.w = Lerp(a.w, b.w, t);
-		out.x = Lerp(a.x, b.x, t);
-		out.y = Lerp(a.y, b.y, t);
-		out.z = Lerp(a.z, b.z, t);
+		out.w = Math::Lerp(a.w, b.w, t);
+		out.x = Math::Lerp(a.x, b.x, t);
+		out.y = Math::Lerp(a.y, b.y, t);
+		out.z = Math::Lerp(a.z, b.z, t);
 
 		return out;
 	}
@@ -22,25 +23,25 @@ namespace Athena::Math
 	template <typename T>
 	constexpr Quaternion<T> SLerp(const Quaternion<T>& a, const Quaternion<T>& b, T t)
 	{
-		T cosTheta = Dot(a, b);
+		T cosTheta = Math::Dot(a, b);
 
 		if (cosTheta > static_cast<T>(1) - static_cast<T>(0.001f))
 		{
-			return Lerp(a, b, t);
+			return Math::Lerp(a, b, t);
 		}
 		else
 		{
-			T angle = Acos(cosTheta);
-			return (Sin((static_cast<T>(1) - t) * angle) * a + Sin(t * angle) * b) / Sin(angle);
+			T angle = Math::Acos(cosTheta);
+			return (Math::Sin((static_cast<T>(1) - t) * angle) * a + Math::Sin(t * angle) * b) / Math::Sin(angle);
 		}
 	}
 
 	template <typename T>
 	constexpr void Swap(Quaternion<T>& left, Quaternion<T>& right)
 	{
-		Swap(left.w, right.w);
-		Swap(left.x, right.x);
-		Swap(left.y, right.y);
-		Swap(left.z, right.z);
+		Math::Swap(left.w, right.w);
+		Math::Swap(left.x, right.x);
+		Math::Swap(left.y, right.y);
+		Math::Swap(left.z, right.z);
 	}
 }

@@ -128,12 +128,12 @@ namespace Athena::Math
 
 		constexpr T SqrLength() const 
 		{
-			return Dot(*this, *this);
+			return Math::Dot(*this, *this);
 		}
 
 		constexpr float Length() const 
 		{
-			return std::sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()
@@ -320,7 +320,6 @@ namespace Athena::Math
 	constexpr Vector<T, 2> Reflect(
 		const Vector<T, 2>& direction, const Vector<T, 2>& normal)
 	{
-		return direction - 2 * normal * Dot(direction, normal);
+		return direction - 2 * normal * Math::Dot(direction, normal);
 	}
-
 }

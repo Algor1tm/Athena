@@ -1,7 +1,6 @@
 #pragma once
 
 
-
 namespace Athena::Math
 {
 	template <typename T>

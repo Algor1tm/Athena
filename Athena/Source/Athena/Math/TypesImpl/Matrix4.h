@@ -3,6 +3,8 @@
 #include "Matrix.h"
 #include "Vector4.h"
 
+#include "Athena/Math/Trigonometric.h"
+
 
 namespace Athena::Math
 {
@@ -160,7 +162,33 @@ namespace Athena::Math
 
 		inline Matrix& Rotate(T radians, const Vector<T, 3>& axis)
 		{
-			return *this *= Math::RotateMatrix(radians, axis);
+			T c = Math::Cos(radians);
+			T s = Math::Sin(radians);
+
+			Vector<T, 3> temp((T(1) - c) * axis);
+
+			Matrix rotateMat;
+			rotateMat[0][0] = c + temp[0] * axis[0];
+			rotateMat[0][1] = temp[0] * axis[1] + s * axis[2];
+			rotateMat[0][2] = temp[0] * axis[2] - s * axis[1];
+			rotateMat[0][3] = T(0);
+
+			rotateMat[1][0] = temp[1] * axis[0] - s * axis[2];
+			rotateMat[1][1] = c + temp[1] * axis[1];
+			rotateMat[1][2] = temp[1] * axis[2] + s * axis[0];
+			rotateMat[1][3] = T(0);
+
+			rotateMat[2][0] = temp[2] * axis[0] + s * axis[1];
+			rotateMat[2][1] = temp[2] * axis[1] - s * axis[0];
+			rotateMat[2][2] = c + temp[2] * axis[2];
+			rotateMat[2][3] = T(0);
+
+			rotateMat[3][0] = T(0);
+			rotateMat[3][1] = T(0);
+			rotateMat[3][2] = T(0);
+			rotateMat[3][3] = T(1);
+
+			return *this *= rotateMat;
 		}
 
 // -------------Operators-------------------------------------
@@ -295,7 +323,8 @@ namespace Athena::Math
 	public:
 		static constexpr Matrix Identity()
 		{
-			Matrix out(T(1), T(0), T(0), T(0),
+			Matrix out(
+				T(1), T(0), T(0), T(0),
 				T(0), T(1), T(0), T(0),
 				T(0), T(0), T(1), T(0),
 				T(0), T(0), T(0), T(1));
@@ -334,6 +363,5 @@ namespace Athena::Math
 
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Types/MatrixRelational_simd.h"
+#include "Athena/Math/SIMD/TypesImpl/MatrixRelational_simd.h"
 #endif
-

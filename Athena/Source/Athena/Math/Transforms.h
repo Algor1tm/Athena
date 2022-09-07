@@ -1,7 +1,11 @@
 #pragma once
 
-#include "Athena/Math/Types/Matrix.h"
-#include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/TypesImpl/Matrix.h"
+#include "Athena/Math/TypesImpl/Matrix4.h"
+#include "Athena/Math/TypesImpl/Vector.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
+#include "Athena/Math/TypesImpl/Quaternion.h"
+
 #include "Common.h"
 #include "MatrixCommon.h"
 #include "Limits.h"
@@ -61,6 +65,23 @@ namespace Athena::Math
 	}
 
 	template <typename T>
+	inline Quaternion<T> RotateQuat(T radians, const Vector<T, 3>& axis)
+	{
+		Vector<T, 3> tmp = axis;
+
+		T len = tmp.Length();
+		if (Math::Abs(len - static_cast<T>(1.f)) > static_cast<T>(0.001f))
+		{
+			T oneOverLen = static_cast<T>(1) / len;
+			tmp *= oneOverLen;
+		}
+
+		T sin = Math::Sin(radians * static_cast<T>(0.5));
+
+		return Quaternion<T>(Math::Cos(radians * static_cast<T>(0.5)), tmp.x * sin, tmp.y * sin, tmp.z * sin);
+	}
+
+	template <typename T>
 	inline void DecomposeTransform(const Matrix<T, 4, 4>& transform, Vector<T, 3>& translation, Vector<T, 3>& rotation, Vector<T, 3>& scale)
 	{
 		translation = transform[3];
@@ -73,7 +94,9 @@ namespace Athena::Math
 		scale.y = rows[1].Length();
 		scale.z = rows[2].Length();
 
-		rows[0].Normalize(); rows[1].Normalize(), rows[2].Normalize();
+		rows[0].Normalize(); 
+		rows[1].Normalize();
+		rows[2].Normalize();
 
 		rotation.y = Math::Asin(-rows[0][2]);
 		if (Math::Cos(rotation.y) != 0)

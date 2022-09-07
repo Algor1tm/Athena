@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include "Types/Quaternion.h"
-#include "Types/QuaternionRelational.h"
-#include "QuaternionTransforms.h"
+#include "TypesImpl/Quaternion.h"
+
 #include "QuaternionCommon.h"
+#include "TypeCasts.h"
 
 
 namespace Athena

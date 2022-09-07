@@ -57,7 +57,7 @@ namespace Athena::Math
 	constexpr bool All(T left, T right, Args... others)
 	{
 		if (left != 0)
-			return All(right, std::forward<Args>(others)...);
+			return All(right, others...);
 		else
 			return false;
 	}
@@ -72,7 +72,7 @@ namespace Athena::Math
 	constexpr bool Any(T left, T right, Args... others)
 	{
 		if (left == 0)
-			return Any(right, std::forward<Args>(others)...);
+			return Any(right, others...);
 		else
 			return true;
 	}
@@ -112,13 +112,13 @@ namespace Athena::Math
 	template <typename T>
 	constexpr T Mod(T left, T right)
 	{
-		return left - right * Floor(left / right);
+		return left - right * Math::Floor(left / right);
 	}
 
 	template <typename T>
 	constexpr T FMod(T left, T right)
 	{
-		return left - right * Trunc(left / right);
+		return left - right * Math::Trunc(left / right);
 	}
 
 	template <typename T>
@@ -139,9 +139,9 @@ namespace Athena::Math
 	constexpr T Max(T val1, T val2, Args... others)
 	{
 		if (val1 >= val2)
-			return Max(val1, std::forward<Args>(others)...);
+			return Math::Max(val1, others...);
 
-		return Max(val2, std::forward<Args>(others)...);
+		return Math::Max(val2, others...);
 	}
 
 	template <typename T>
@@ -154,9 +154,9 @@ namespace Athena::Math
 	constexpr T Min(T val1, T val2, Args... others)
 	{
 		if (val1 <= val2)
-			return Min(val1, std::forward<Args>(others)...);
+			return Math::Min(val1, others...);
 
-		return Min(val2, std::forward<Args>(others)...);
+		return Math::Min(val2, others...);
 	}
 
 	template <typename T>

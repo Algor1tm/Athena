@@ -1,10 +1,9 @@
 #pragma once
 
 
-#include "Types/Matrix.h"
-#include "Types/Matrix4.h"
-#include "MatrixTransforms.h"
-#include "MatrixProjection.h"
+#include "TypesImpl/Matrix.h"
+#include "TypesImpl/Matrix4.h"
+
 #include "MatrixCommon.h"
 
 
@@ -57,4 +56,3 @@ namespace Athena
 	using Matrix3x4d = Matrix<double, 3, 4>;
 	using Matrix4x3d = Matrix<double, 4, 3>;
 }
-

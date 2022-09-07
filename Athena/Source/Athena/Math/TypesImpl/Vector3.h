@@ -153,12 +153,12 @@ namespace Athena::Math
 
 		constexpr T SqrLength() const
 		{
-			return Dot(*this, *this);
+			return Math::Dot(*this, *this);
 		}
 
 		constexpr float Length() const
 		{
-			return std::sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		constexpr Vector& Normalize()
@@ -369,12 +369,12 @@ namespace Athena::Math
 	constexpr Vector<T, 3> Reflect(
 		const Vector<T, 3>& direction, const Vector<T, 3>& normal)
 	{
-		return direction - 2 * normal * Dot(direction, normal);
+		return direction - 2 * normal * Math::Dot(direction, normal);
 	}
 }
 
 
 #ifdef ATN_SIMD
-#include "Athena/Math/SIMD/Types/Vector4float_simd.h"
-#include "Athena/Math/SIMD/Types/VectorRelational_simd.h"
+#include "Athena/Math/SIMD/TypesImpl/Vector4float_simd.h"
+#include "Athena/Math/SIMD/TypesImpl/VectorRelational_simd.h"
 #endif

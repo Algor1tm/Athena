@@ -195,12 +195,12 @@ namespace Athena::Math
 
 		inline float SqrLength() const
 		{
-			return Dot(*this, *this);
+			return Math::Dot(*this, *this);
 		}
 
 		inline float Length() const
 		{
-			return std::sqrt(SqrLength());
+			return Math::Sqrt(SqrLength());
 		}
 
 		inline Vector& Normalize()

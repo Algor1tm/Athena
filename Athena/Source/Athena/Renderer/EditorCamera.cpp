@@ -1,6 +1,7 @@
 #include "atnpch.h"
 #include "EditorCamera.h"
 
+#include "Athena/Math/Projections.h"
 #include "Athena/Input/Input.h"
 
 
@@ -23,7 +24,7 @@ namespace Athena
 	{
 		m_Position = CalculatePosition();
 
-		m_ViewMatrix = Matrix4(GetOrientation());
+		m_ViewMatrix = Math::ToMat4(GetOrientation());
 		m_ViewMatrix = Math::AffineInverse(m_ViewMatrix.Translate(m_Position));
 	}
 
@@ -135,6 +136,6 @@ namespace Athena
 
 	Quat EditorCamera::GetOrientation() const
 	{
-		return Quat(Vector3(-m_Pitch, -m_Yaw, 0.0f));
+		return Math::ToQuat(Vector3(-m_Pitch, -m_Yaw, 0.0f));
 	}
 }

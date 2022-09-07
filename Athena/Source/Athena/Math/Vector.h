@@ -1,10 +1,11 @@
 #pragma once
 
 
-#include "Types/Vector.h"
-#include "Types/Vector2.h"
-#include "Types/Vector3.h"
-#include "Types/Vector4.h"
+#include "TypesImpl/Vector.h"
+#include "TypesImpl/Vector2.h"
+#include "TypesImpl/Vector3.h"
+#include "TypesImpl/Vector4.h"
+
 #include "VectorCommon.h"
 #include "VectorTrigonometric.h"
 #include "VectorExponential.h"

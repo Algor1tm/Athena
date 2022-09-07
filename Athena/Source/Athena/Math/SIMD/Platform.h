@@ -3,7 +3,7 @@
 
 // If defined ATN_SIMD Athena will use SIMD instructions for optimizations
 // But this will lead to the following problems with these classes:
-// Vector<float, 4>,   Quaternion<float, 4>,    Matrix<float, 4, 4> 
+// Vector<float, 4>,  Matrix<float, 4, 4> 
 // 1. Cannot be constexpr.
 // 2. Have strict alignment.
 // 3. Math functions that works with these classes do not constexpr.

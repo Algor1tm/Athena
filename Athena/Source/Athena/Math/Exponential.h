@@ -14,7 +14,7 @@ namespace Athena::Math
 	template <typename T>
 	inline T Cbrt(T scalar)
 	{
-		return std::cbrt(scalar);
+		return static_cast<T>(std::cbrt(scalar));
 	}
 
 	template <typename T>
@@ -53,4 +53,3 @@ namespace Athena::Math
 		return std::pow(scalar, exp);
 	}
 }
-

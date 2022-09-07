@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Athena/Math/Types/Matrix.h"
+#include "Athena/Math/TypesImpl/Matrix.h"
+#include "Athena/Math/TypesImpl/Matrix4.h"
 
 
 namespace Athena::Math
@@ -24,7 +25,7 @@ namespace Athena::Math
 	inline Matrix<T, 4, 4> Perspective(T verticalFOV, T aspectRatio, T zNear, T zFar)
 	{
 		Matrix<T, 4, 4> out(0.f);
-		T invTan = T(1) / Tan(verticalFOV / 2);
+		T invTan = T(1) / Math::Tan(verticalFOV / 2);
 		out[0][0] = invTan / aspectRatio;
 		out[1][1] = invTan;
 		out[2][2] = -(zFar + zNear) / (zFar - zNear);

@@ -1,6 +1,9 @@
 #include "atnpch.h"
 #include "OrthographicCamera.h"
 
+#include "Athena/Math/Projections.h"
+#include "Athena/Math/Transforms.h"
+
 
 namespace Athena 
 {

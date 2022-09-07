@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/TypesImpl/Vector.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
 #include "Exponential.h"
 
 
@@ -11,7 +12,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Sqrt(vec[i]);
+			out[i] = Math::Sqrt(vec[i]);
 
 		return out;
 	}
@@ -21,7 +22,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Cbrt(vec[i]);
+			out[i] = Math::Cbrt(vec[i]);
 
 		return out;
 	}
@@ -31,7 +32,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = ExpE(vec[i]);
+			out[i] = Math::ExpE(vec[i]);
 
 		return out;
 	}
@@ -41,7 +42,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Exp2(vec[i]);
+			out[i] = Math::Exp2(vec[i]);
 
 		return out;
 	}
@@ -51,7 +52,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = LogE(vec[i]);
+			out[i] = Math::LogE(vec[i]);
 
 		return out;
 	}
@@ -61,7 +62,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Log2(vec[i]);
+			out[i] = Math::Log2(vec[i]);
 
 		return out;
 	}
@@ -71,7 +72,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Log10(vec[i]);
+			out[i] = Math::Log10(vec[i]);
 
 		return out;
 	}
@@ -81,7 +82,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Pow(vec[i], exp);
+			out[i] = Math::Pow(vec[i], exp);
 
 		return out;
 	}

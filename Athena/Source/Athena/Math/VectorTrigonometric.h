@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/TypesImpl/Vector.h"
 #include "Trigonometric.h"
 
 
@@ -11,7 +11,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Radians(vec[i]);
+			out[i] = Math::Radians(vec[i]);
 
 		return out;
 	}
@@ -21,7 +21,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Degrees(vec[i]);
+			out[i] = Math::Degrees(vec[i]);
 
 		return out;
 	}
@@ -31,7 +31,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Cos(vec[i]);
+			out[i] = Math::Cos(vec[i]);
 
 		return out;
 	}
@@ -41,7 +41,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Sin(vec[i]);
+			out[i] = Math::Sin(vec[i]);
 
 		return out;
 	}
@@ -51,7 +51,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Tan(vec[i]);
+			out[i] = Math::Tan(vec[i]);
 
 		return out;
 	}
@@ -61,7 +61,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Acos(vec[i]);
+			out[i] = Math::Acos(vec[i]);
 
 		return out;
 	}
@@ -71,7 +71,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Asin(vec[i]);
+			out[i] = Math::Asin(vec[i]);
 
 		return out;
 	}
@@ -81,7 +81,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Atan(vec[i]);
+			out[i] = Math::Atan(vec[i]);
 
 		return out;
 	}
@@ -91,7 +91,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Atan2(x[i], y[i]);
+			out[i] = Math::Atan2(x[i], y[i]);
 
 		return out;
 	}
@@ -101,7 +101,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Cosh(vec[i]);
+			out[i] = Math::Cosh(vec[i]);
 
 		return out;
 	}
@@ -111,7 +111,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Sinh(vec[i]);
+			out[i] = Math::Sinh(vec[i]);
 
 		return out;
 	}
@@ -121,7 +121,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Tanh(vec[i]);
+			out[i] = Math::Tanh(vec[i]);
 
 		return out;
 	}
@@ -131,7 +131,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Acosh(vec[i]);
+			out[i] = Math::Acosh(vec[i]);
 
 		return out;
 	}
@@ -141,7 +141,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Asinh(vec[i]);
+			out[i] = Math::Asinh(vec[i]);
 
 		return out;
 	}
@@ -151,7 +151,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Atanh(vec[i]);
+			out[i] = Math::Atanh(vec[i]);
 
 		return out;
 	}

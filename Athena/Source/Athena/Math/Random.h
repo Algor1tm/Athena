@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Athena/Math/Types/Vector.h"
-#include "Athena/Math/Types/Vector2.h"
-#include "Athena/Math/Types/Vector3.h"
-#include "Athena/Math/Types/Vector4.h"
+#include "Athena/Math/TypesImpl/Vector.h"
+#include "Athena/Math/TypesImpl/Vector2.h"
+#include "Athena/Math/TypesImpl/Vector3.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
 #include "Limits.h"
 #include "Common.h"
 
@@ -22,12 +22,12 @@ namespace Athena::Math
 
 		static float Float()
 		{
-			return (float)s_Distribution(s_RandomEngine) / (float)MaxValue<internal_type>();
+			return (float)s_Distribution(s_RandomEngine) / (float)Math::MaxValue<internal_type>();
 		}
 
 		static float Float(float min, float max)
 		{
-			return Lerp(min, max, Float());
+			return Math::Lerp(min, max, Float());
 		}
 
 		static uint32 UInt32()

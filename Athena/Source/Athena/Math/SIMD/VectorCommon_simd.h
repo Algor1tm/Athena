@@ -5,26 +5,14 @@
 
 #ifdef ATN_SSE_2
 
-#include "Athena/Math/SIMD/Types/Vector4float_simd.h"
-
-
 namespace Athena::Math
 {
-	template<typename Y, typename Z>
-	inline Vector<float, 4> Clamp(const Vector<float, 4>& vec, Y min, Z max)
-	{
-		__m128 min0 = _mm_min_ps(vec._data, _mm_set_ps1(static_cast<float>(max)));
-		__m128 max0 = _mm_max_ps(min0, _mm_set_ps1(static_cast<float>(min)));
-
-		return Vector<float, 4>(max0);
-	}
-
 	inline Vector<float, 4> Clamp(const Vector<float, 4>& vec, const Vector<float, 4>& min, const Vector<float, 4>& max)
 	{
-		__m128 min0 = _mm_min_ps(vec._data, max._data);
-		__m128 max0 = _mm_max_ps(min0, min._data);
+		Vector<float, 4> out;
+		out._data = _mm_min_ps(_mm_max_ps(vec._data, min._data), max._data);
 
-		return Vector<float, 4>(max0);
+		return out;
 	}
 
 	inline Vector<float, 4> Lerp(const Vector<float, 4>& a, const Vector<float, 4>& b, float t)
@@ -63,25 +51,49 @@ namespace Athena::Math
 
 	inline Vector<float, 4> Round(const Vector<float, 4>& vec)
 	{
+#ifdef ATN_SSE_4_1
 		__m128 out = _mm_round_ps(vec._data, _MM_FROUND_TO_NEAREST_INT);
+#else
+		__m128 sgn0 = _mm_castsi128_ps(_mm_set1_epi32(int(0x80000000)));
+		__m128 and0 = _mm_and_ps(sgn0, vec._data);
+		__m128 or0 = _mm_or_ps(and0, _mm_set_ps1(8388608.0f));
+		__m128 add0 = _mm_add_ps(vec._data, or0);
+		__m128 out = _mm_sub_ps(add0, or0);
+#endif
 		return Vector<float, 4>(out);
 	}
 
 	inline Vector<float, 4> Floor(const Vector<float, 4>& vec)
 	{
+#ifdef ATN_SSE_4_1
 		__m128 out = _mm_floor_ps(vec._data);
+#else
+		__m128 rnd0 = Round(vec)._data;
+		__m128 cmp0 = _mm_cmplt_ps(vec._data, rnd0);
+		__m128 and0 = _mm_and_ps(cmp0, _mm_set1_ps(1.0f));
+		__m128 out = _mm_sub_ps(rnd0, and0);
+#endif
+
 		return Vector<float, 4>(out);
 	}
 
 	inline Vector<float, 4> Ceil(const Vector<float, 4>& vec)
 	{
+#ifdef ATN_SSE_4_1
 		__m128 out = _mm_ceil_ps(vec._data);
+#else
+		__m128 rnd0 = Round(vec)._data;
+		__m128 cmp0 = _mm_cmpgt_ps(vec._data, rnd0);
+		__m128 and0 = _mm_and_ps(cmp0, _mm_set_ps1(1.0f));
+		__m128 out = _mm_add_ps(rnd0, and0);
+#endif
+
 		return Vector<float, 4>(out);
 	}
 
 	inline Vector<float, 4> Fract(const Vector<float, 4>& vec)
 	{
-		__m128 flr = _mm_floor_ps(vec._data);
+		__m128 flr = Floor(vec)._data;
 		__m128 sub = _mm_sub_ps(vec._data, flr);
 
 		return Vector<float, 4>(sub);
@@ -90,7 +102,7 @@ namespace Athena::Math
 	inline float Mod(const Vector<float, 4>& left, const Vector<float, 4>& right)
 	{	
 		__m128 div0 = _mm_div_ps(left._data, right._data);
-		__m128 flr0 = _mm_floor_ps(div0);
+		__m128 flr0 = Floor(Vector<float, 4>(div0))._data;
 		__m128 mul0 = _mm_mul_ps(right._data, flr0);
 		__m128 sub0 = _mm_sub_ps(left._data, mul0);
 
@@ -123,4 +135,4 @@ namespace Athena::Math
 	}
 }
 
-#endif // ATN_SSE
+#endif // ATN_SSE_2

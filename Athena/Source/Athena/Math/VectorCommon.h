@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Athena/Math/Types/Vector.h"
+#include "Athena/Math/TypesImpl/Vector.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
 #include "Common.h"
 
 
@@ -11,7 +12,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
+			out[i] = Math::Clamp(vec[i], static_cast<X>(min), static_cast<X>(max));
 
 		return out;
 	}
@@ -21,7 +22,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Clamp(vec[i], min[i], max[i]);
+			out[i] = Math::Clamp(vec[i], min[i], max[i]);
 
 		return out;
 	}
@@ -32,7 +33,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Lerp(a[i], b[i], t);
+			out[i] = Math::Lerp(a[i], b[i], t);
 
 		return out;
 	}
@@ -45,7 +46,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Abs(vec[i]);
+			out[i] = Math::Abs(vec[i]);
 
 		return out;
 	}
@@ -55,7 +56,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Sign(vec[i]);
+			out[i] = Math::Sign(vec[i]);
 
 		return out;
 	}
@@ -84,6 +85,30 @@ namespace Athena::Math
 		return false;
 	}
 
+	template<typename T, SIZE_T Size, typename ConditionFunc>
+	constexpr bool All(const Vector<T, Size>& vec, ConditionFunc cond)
+	{
+		for (SIZE_T i = 0; i < Size; ++i)
+		{
+			if (cond(vec[i]) == false)
+				return false;
+		}
+
+		return true;
+	}
+
+	template<typename T, SIZE_T Size, typename ConditionFunc>
+	constexpr bool Any(const Vector<T, Size>& vec, ConditionFunc cond)
+	{
+		for (SIZE_T i = 0; i < Size; ++i)
+		{
+			if (cond(vec[i]) == true)
+				return true;
+		}
+
+		return false;
+	}
+
 
 
 	template<typename T, SIZE_T Size>
@@ -91,7 +116,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Round(vec[i]);
+			out[i] = Math::Round(vec[i]);
 
 		return out;
 	}
@@ -101,7 +126,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Floor(vec[i]);
+			out[i] = Math::Floor(vec[i]);
 
 		return out;
 	}
@@ -111,7 +136,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Ceil(vec[i]);
+			out[i] = Math::Ceil(vec[i]);
 
 		return out;
 	}
@@ -121,7 +146,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Trunc(vec[i]);
+			out[i] = Math::Trunc(vec[i]);
 
 		return out;
 	}
@@ -131,7 +156,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Fract(vec[i]);
+			out[i] = Math::Fract(vec[i]);
 
 		return out;
 	}
@@ -143,7 +168,7 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Max(left[i], right[i]);
+			out[i] = Math::Max(left[i], right[i]);
 
 		return out;
 	}
@@ -153,13 +178,13 @@ namespace Athena::Math
 	{
 		Vector<T, Size> out;
 		for (SIZE_T i = 0; i < Size; ++i)
-			out[i] = Min(left[i], right[i]);
+			out[i] = Math::Min(left[i], right[i]);
 
 		return out;
 	}
 
 	template<typename T, SIZE_T Size>
-	constexpr Vector<T, Size> Max(const Vector<T, Size>& vec)
+	constexpr T Max(const Vector<T, Size>& vec)
 	{
 		T result = vec[0];
 		for (SIZE_T i = 1; i < Size; ++i)
@@ -172,7 +197,7 @@ namespace Athena::Math
 	}
 
 	template<typename T, SIZE_T Size>
-	constexpr  Vector<T, Size> Min(const Vector<T, Size>& vec)
+	constexpr T Min(const Vector<T, Size>& vec)
 	{
 		T result = vec[0];
 		for (SIZE_T i = 1; i < Size; ++i)
@@ -188,7 +213,7 @@ namespace Athena::Math
 	constexpr void Swap(Vector<T, Size>& left, Vector<T, Size>& right)
 	{
 		for (SIZE_T i = 0; i < Size; ++i)
-			Swap(left[i], right[i]);
+			Math::Swap(left[i], right[i]);
 	}
 }
 

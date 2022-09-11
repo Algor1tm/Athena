@@ -1,0 +1,19 @@
+Direct3D11
+Editor
+  Duplicate Entity, 
+  PanelManager, 
+  Better ContentBrowser, 
+  Better UI
+Dll instead of static lib
+Python scripting
+Linux Support
+Editor
+  Asset Manager, 
+  Undo/Redo System
+Audio Engine
+Compile shaders on a fly
+Renderer2D
+  Particles, 
+  Light,
+  Animation
+  Text

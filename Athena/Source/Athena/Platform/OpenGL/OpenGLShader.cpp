@@ -11,7 +11,7 @@ namespace Athena
 		if (type == "VERTEX_SHADER") return GL_VERTEX_SHADER;
 		if (type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER") return GL_FRAGMENT_SHADER;
 
-		ATN_CORE_ASSERT(false, "Unknown shader type '{0}'", type.data());
+		ATN_CORE_ASSERT(false, "Unknown shader type");
 		return 0;
 	}
 

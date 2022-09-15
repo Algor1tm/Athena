@@ -80,14 +80,6 @@
 #endif
 
 
-#ifdef ATN_ASSERTS
-	#define ATN_ASSERT(x, ...)	{ if(!(x)) { ATN_ERROR("Assertion Failed: {0}", __VA_ARGS__); ATN_DEBUGBREAK(); } }
-	#define ATN_CORE_ASSERT(x, ...)  { if(!(x)) { ATN_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); ATN_DEBUGBREAK(); } }
-#else
-	#define ATN_ASSERT(x, ...) 
-	#define ATN_CORE_ASSERT(x, ...)
-#endif
-
 #ifdef _MSC_VER
 	#define ATN_FORCEINLINE __forceinline
 #elif __GNUC__
@@ -96,10 +88,16 @@
 	#define ATN_FORCEINLINE inline
 #endif
 
+#define ATN_EXPAND_MACRO(x) x
+#define ATN_STRINGIFY_MACRO(x) #x
+
 
 #define BIT(x) (1 << x)
 
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
+
+
+#include "Assert.h"
 
 
 namespace Athena

@@ -30,6 +30,10 @@ namespace Athena
 	{
 	public:
 		static void Init();
+		static void InitWithoutConsole();
+
+		static void Disable();
+		static void Enable();
 
 		inline static const Ref<spdlog::logger>& GetCoreLogger()   { return s_CoreLogger; }
 		inline static const Ref<spdlog::logger>& GetClientLogger() { return s_ClientLogger; }
@@ -49,6 +53,11 @@ namespace Athena
 	constexpr const String& ToString(const String& x)
 	{
 		return x;
+	}
+
+	inline std::string ToString(const std::wstring& x)
+	{
+		return Filepath(x).string();
 	}
 
 	constexpr const char* ToString(const char* x)

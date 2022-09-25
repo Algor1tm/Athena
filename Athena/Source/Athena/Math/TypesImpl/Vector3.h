@@ -308,32 +308,32 @@ namespace Athena::Math
 
 // -------------Static Methods-------------------------------------
 	public:
-		static constexpr Vector up()
+		static constexpr Vector Up()
 		{
 			return Vector(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
 		}
 
-		static constexpr Vector down()
+		static constexpr Vector Down()
 		{
 			return Vector(static_cast<T>(0), static_cast<T>(-1), static_cast<T>(0));
 		}
 
-		static constexpr Vector left()
+		static constexpr Vector Left()
 		{
 			return Vector(static_cast<T>(-1), static_cast<T>(0), static_cast<T>(0));
 		}
 
-		static constexpr Vector right()
+		static constexpr Vector Right()
 		{
 			return Vector(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
 		}
 
-		static constexpr Vector forward()
+		static constexpr Vector Forward()
 		{
 			return Vector(static_cast<T>(0), static_cast<T>(0), static_cast<T>(-1));
 		}
 
-		static constexpr Vector back()
+		static constexpr Vector Back()
 		{
 			return Vector(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 		}

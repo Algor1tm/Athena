@@ -20,7 +20,7 @@ namespace Athena
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader,
-			const Ref<VertexArray>& vertexArray,
+			const Ref<VertexBuffer>& vertexBuffer,
 			const Matrix4& transform = Matrix4::Identity());
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }

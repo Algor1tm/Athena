@@ -11,21 +11,18 @@ namespace Athena
 	class ATHENA_API Texture
 	{
 	public:
+		virtual ~Texture() = default;
+
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
 
-		virtual RendererID GetRendererID() const { return m_RendererID; };
+		virtual void* GetRendererID() const = 0;
 
 		virtual void SetData(const void* data, uint32 size) = 0;
-
 		virtual void Bind(uint32 slot = 0) const = 0;
 
 		virtual bool IsLoaded() const = 0;
-
-		virtual const String& GetFilepath() const = 0;
-
-	protected:
-		RendererID m_RendererID;
+		virtual const Filepath& GetFilepath() const = 0;
 	};
 
 
@@ -33,13 +30,10 @@ namespace Athena
 	{
 	public:
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
-		static Ref<Texture2D> Create(const String& path);
+		static Ref<Texture2D> Create(const Filepath& path);
 		static Ref<Texture2D> WhiteTexture();
 
-		inline bool operator==(const Texture2D& other) const
-		{
-			return m_RendererID == other.m_RendererID;
-		}
+		bool operator==(const Texture2D& other) const { return GetRendererID() == other.GetRendererID(); }
 
 	private:
 		static Ref<Texture2D> m_WhiteTexture;

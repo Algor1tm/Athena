@@ -9,26 +9,35 @@ namespace Athena
 	class AthenaEditor : public Application
 	{
 	public:
-		AthenaEditor(const ApplicationDESC& appdesc)
+		AthenaEditor(const ApplicationDescription& appdesc)
 			: Application(appdesc)
 		{
-			PushLayer(new EditorLayer);
+			PushLayer(CreateRef<EditorLayer>());
 		}
 
 		~AthenaEditor()
 		{
-
+			
 		}
 	};
 
 
 	Application* CreateApplication()
 	{
-		ApplicationDESC appdesc;
-		appdesc.WindowWidth = 1600;
-		appdesc.WindowHeight = 900;
-		appdesc.Title = "Athena Editor";
-		appdesc.VSync = true;
+		ApplicationDescription appdesc;
+		appdesc.WindowDesc.Width = 1600;
+		appdesc.WindowDesc.Height = 900;
+		appdesc.WindowDesc.Title = "Athena Editor";
+		appdesc.WindowDesc.VSync = true;
+		appdesc.WindowDesc.Mode = WindowMode::Maximized;
+		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
+
+#ifdef FORCE_GLFW
+		appdesc.API = RendererAPI::OpenGL;
+#else
+		appdesc.API = RendererAPI::Direct3D;
+#endif
+		appdesc.UseConsole = true;
 		appdesc.UseImGui = true;
 
 		return new AthenaEditor(appdesc);

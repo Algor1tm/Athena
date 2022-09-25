@@ -2,19 +2,20 @@
 #include "Framebuffer.h"
 
 #include "Renderer.h"
-#include "Athena/Platform/OpenGL/OpenGLFramebuffer.h"
+#include "Athena/Platform/OpenGL/GLFramebuffer.h"
+#include "Athena/Platform/Direct3D/D3D11Framebuffer.h"
 
 
 namespace Athena
 {
-	Ref<Framebuffer> Framebuffer::Create(const FramebufferDESC& desc)
+	Ref<Framebuffer> Framebuffer::Create(const FramebufferDescription& desc)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<OpenGLFramebuffer>(desc); break;
+			return CreateRef<GLFramebuffer>(desc); break;
 		case RendererAPI::API::Direct3D:
-			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
+			return CreateRef<D3D11Framebuffer>(desc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

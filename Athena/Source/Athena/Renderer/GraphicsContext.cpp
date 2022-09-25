@@ -1,5 +1,6 @@
 #include "atnpch.h"
-#include "Athena/Platform/OpenGL/OpenGLGraphicsContext.h"
+#include "Athena/Platform/OpenGL/GLGraphicsContext.h"
+#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
 
 #include "Athena/Renderer/Renderer.h"
 
@@ -11,9 +12,9 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<OpenGLGraphicsContext>(reinterpret_cast<GLFWwindow*>(windowHandle)); break;
+			return CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(windowHandle)); break;
 		case RendererAPI::API::Direct3D:
-			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
+			return CreateRef<D3D11GraphicsContext>(reinterpret_cast<HWND>(windowHandle)); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

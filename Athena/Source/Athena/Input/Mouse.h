@@ -7,22 +7,14 @@ namespace Athena
 {
 	namespace Mouse
 	{
-		enum Button: uint16
+		enum Button : uint16
 		{
-			// From glfw3.h
-			XButton0 = 0,
-			XButton1 = 1,
-			XButton2 = 2,
-			XButton3 = 3,
-			XButton4 = 4,
-			XButton5 = 5,
-			XButton6 = 6,
-			XButton7 = 7,
+			XButton1 = 0x0020,
+			XButton2 = 0x0040,
 
-			LastButton = XButton7,
-			Left = XButton0,
-			Right = XButton1,
-			Wheel = XButton2
+			Left = 0x0001,
+			Right = 0x0002,
+			Middle = 0x0010
 		};
 	}
 }

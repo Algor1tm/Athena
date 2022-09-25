@@ -6,7 +6,8 @@ Editor
   Better UI
 Dll instead of static lib
 Python scripting
-Linux Support
+MSAA
+Simple 3D
 Editor
   Asset Manager, 
   Undo/Redo System

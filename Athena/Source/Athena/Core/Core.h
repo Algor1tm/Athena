@@ -4,6 +4,9 @@
 #include <string>
 #include <filesystem>
 
+
+//#define FORCE_GLFW
+
 // Platform detection using predefined macros
 #ifdef _WIN32
 	/* Windows x64/x86 */
@@ -92,12 +95,28 @@
 #define ATN_STRINGIFY_MACRO(x) #x
 
 
+#ifdef ATN_ASSERTS
+	// Alteratively we could use the same "default" message for both "WITH_MSG" and "NO_MSG" and
+	// provide support for custom formatting by concatenating the formatting string instead of having the format inside the default message
+	#define ATN_INTERNAL_ASSERT_IMPL(type, check, msg, ...) { if(!(check)) { ATN##type##ERROR(msg, __VA_ARGS__); ATN_DEBUGBREAK(); } }
+	#define ATN_INTERNAL_ASSERT_WITH_MSG(type, check, ...) ATN_INTERNAL_ASSERT_IMPL(type, check, "Assertion failed: {0}", __VA_ARGS__)
+	#define ATN_INTERNAL_ASSERT_NO_MSG(type, check) ATN_INTERNAL_ASSERT_IMPL(type, check, "Assertion '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(check), std::filesystem::path(__FILE__).filename().string(), __LINE__)
+
+	#define ATN_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro
+	#define ATN_INTERNAL_ASSERT_GET_MACRO(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO_NAME(__VA_ARGS__, ATN_INTERNAL_ASSERT_WITH_MSG, ATN_INTERNAL_ASSERT_NO_MSG) )
+
+	// CurreATNly accepts at least the condition and one additional parameter (the message) being optional
+	#define ATN_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, __VA_ARGS__) )
+	#define ATN_CORE_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, __VA_ARGS__) )
+#else
+	#define ATN_ASSERT(x, ...) 
+	#define ATN_CORE_ASSERT(x, ...)
+#endif
+
+
 #define BIT(x) (1 << x)
 
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
-
-
-#include "Assert.h"
 
 
 namespace Athena
@@ -117,10 +136,7 @@ namespace Athena
 	using SIZE_T = uint64; // size type
 
 	using String = ::std::string; // string type
-	using Filepath = ::std::filesystem::path;
-
-	using RendererID = uint32; // type for Renderer IDs
-	 
+	using Filepath = ::std::filesystem::path;	// filesystem path
 
 	template <typename T>
 	using Scope = ::std::unique_ptr<T>;

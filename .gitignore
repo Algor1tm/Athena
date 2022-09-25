@@ -1,12 +1,13 @@
 ##### ATHENA #########################
 
-# Visual Studio
 *.sln
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
 bin/
 bin-int/
+
+!Athena/ThirdParty/DirectXTK/bin/
 
 SandBox/AthenaProfile-Runtime.json
 SandBox/AthenaProfile-Shutdown.json
@@ -16,7 +17,6 @@ Athena-Editor/AthenaProfile-Shutdown.json
 Athena-Editor/AthenaProfile-Startup.json
 
 Athena-Editor/Resources/Tmp/EditorScene.atn
-Plans.txt
 Makefile
 
 .vscode/

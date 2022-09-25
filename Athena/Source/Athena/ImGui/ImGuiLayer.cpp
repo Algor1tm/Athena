@@ -3,14 +3,11 @@
 #include "ImGuiLayer.h"
 #include "Athena/Core/Application.h"
 
-// TEMPORARY
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Platform/OpenGL/GLImGuiLayerImpl.h"
+#include "Athena/Platform/Direct3D/D3D11ImGuiLayerImpl.h"
 
-#define IMGUI_API_IMPL
-#include <ImGui/backends/imgui_impl_glfw.h>
-#include <ImGui/backends/imgui_impl_opengl3.h>
-
+#include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 
 
@@ -25,6 +22,25 @@ namespace Athena
 	ImGuiLayer::~ImGuiLayer()
 	{
 
+	}
+	
+	Ref<ImGuiLayer> ImGuiLayer::Create()
+	{
+		auto imguiLayer = CreateRef<ImGuiLayer>();
+
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			imguiLayer->m_ImGuiImpl = CreateScope<GLImGuiLayerImpl>(); break;
+		case RendererAPI::API::Direct3D:
+			imguiLayer->m_ImGuiImpl = CreateScope<D3D11ImGuiLayerImpl>(); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); break;
+		default:
+			ATN_CORE_ASSERT(false, "Unknown RendererAPI!"); break;
+		}
+
+		return imguiLayer;
 	}
 
 	void ImGuiLayer::SetDarkTheme()
@@ -93,11 +109,8 @@ namespace Athena
 		SetDarkTheme();
 
 		Application& app = Application::Get();
-		GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 
-		// Setup Platform/Renderer bindings
-		ImGui_ImplGlfw_InitForOpenGL(window, true);
-		ImGui_ImplOpenGL3_Init("#version 410");
+		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
 
 		ATN_CORE_INFO("Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
@@ -106,8 +119,7 @@ namespace Athena
 
 	void ImGuiLayer::OnDetach()
 	{
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
+		m_ImGuiImpl->Shutdown();
 		ImGui::DestroyContext();
 
 		ATN_CORE_INFO("");
@@ -126,8 +138,7 @@ namespace Athena
 
 	void ImGuiLayer::Begin()
 	{
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
+		m_ImGuiImpl->NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
 	}
@@ -140,14 +151,11 @@ namespace Athena
 
 		// Rendering
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		m_ImGuiImpl->RenderDrawData();
 
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+			m_ImGuiImpl->UpdateViewports();
 		}
 	}
 }

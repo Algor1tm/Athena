@@ -33,7 +33,7 @@ project "Athena"
 		"%{IncludeDir.ImGuizmo}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.stb_image}",
-		"%{IncludeDir.yaml}"
+		"%{IncludeDir.yaml}",
 	}
 	
 	links
@@ -41,10 +41,9 @@ project "Athena"
 		"Box2D",
 		"glad",
 		"GLFW",
-		"opengl32.lib",
 		"ImGui",
 		"spdlog",
-		"yaml-cpp"
+		"yaml-cpp",
 	}
 
 	defines 
@@ -61,6 +60,20 @@ project "Athena"
 		staticruntime "On"
 		systemversion "latest"
 
+		links
+		{
+			"d3d11.lib",
+			"DXGI.lib"
+		}
+
+	filter "system:linux"
+		pic "On"
+		systemversion "latest"
+
+		links
+		{
+			"opengl32.lib"
+		}
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"

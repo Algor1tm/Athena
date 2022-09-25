@@ -3,16 +3,21 @@
 
 #include "SandBox2D.h"
 
+#include "Athena/Core/PlatformUtils.h"
+#include "Athena/Renderer/ConstantBuffer.h"
+
+#include <ImGui/imgui.h>
+
 
 namespace Athena
 {
 	class SandBox : public Application
 	{
 	public:
-		SandBox(const ApplicationDESC& appdesc)
+		SandBox(const ApplicationDescription& appdesc)
 			: Application(appdesc)
 		{
-			PushLayer(new SandBox2D());
+			PushLayer(CreateRef<SandBox2D>());
 		}
 
 		~SandBox()
@@ -24,13 +29,21 @@ namespace Athena
 
 	Application* CreateApplication()
 	{
-		ApplicationDESC appdesc;
-		appdesc.WindowWidth = 1600;
-		appdesc.WindowHeight = 900;
-		appdesc.Title = "SandBox";
-		appdesc.VSync = true;
+		ApplicationDescription appdesc;
+		appdesc.WindowDesc.Width = 1600;
+		appdesc.WindowDesc.Height = 900;
+		appdesc.WindowDesc.Title = "SandBox";
+		appdesc.WindowDesc.VSync = true;
+		appdesc.WindowDesc.Mode = WindowMode::Maximized;
+		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
 
+#ifdef FORCE_GLFW
+		appdesc.API = RendererAPI::OpenGL;
+#else
+		appdesc.API = RendererAPI::Direct3D;
+#endif
 		appdesc.UseImGui = false;
+		appdesc.UseConsole = true;
 		appdesc.WorkingDirectory = "../Athena-Editor";
 
 		return new SandBox(appdesc);

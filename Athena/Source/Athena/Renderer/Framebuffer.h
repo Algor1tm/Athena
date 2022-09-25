@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Color.h"
 
 #include <vector>
 
@@ -9,43 +10,39 @@ namespace Athena
 {
 	enum class FramebufferTextureFormat
 	{
-		None = 0,
+		NONE = 0,
 
 		// Color
-		RGBA8, 
+		RGBA8,
 		RED_INTEGER,
 
 		//Depth/Stencil
 		DEPTH24STENCIL8,
-
-		//Defaults
-		Depth = DEPTH24STENCIL8
 	};
-
-	struct FramebufferTextureDESC
+	
+	struct FramebufferTextureDescription
 	{
-		FramebufferTextureDESC(FramebufferTextureFormat format = FramebufferTextureFormat::None)
-			: TextureFormat(format) {}
+		FramebufferTextureDescription(FramebufferTextureFormat format = FramebufferTextureFormat::NONE, bool backBufferOutput = false)
+			: TextureFormat(format), BackBufferOutput(backBufferOutput) {}
 
 		FramebufferTextureFormat TextureFormat;
+		bool BackBufferOutput;
 	};
-	 
-	struct FramebufferAttachmentDESC
+	
+	struct FramebufferAttachmentDescription
 	{
-		FramebufferAttachmentDESC() = default;
-		FramebufferAttachmentDESC(const std::initializer_list<FramebufferTextureDESC>& attachments)
+		FramebufferAttachmentDescription() = default;
+		FramebufferAttachmentDescription(const std::initializer_list<FramebufferTextureDescription>& attachments)
 			: Attachments(attachments) {}
 
-		std::vector<FramebufferTextureDESC> Attachments;
+		std::vector<FramebufferTextureDescription> Attachments;
 	};
 
-	struct FramebufferDESC
+	struct FramebufferDescription
 	{
 		uint32 Width = 0, Height = 0;
-		FramebufferAttachmentDESC Attachments;
+		FramebufferAttachmentDescription Attachments;
 		uint32 Samples = 1;
-
-		bool SwapChainTarget = false;
 	};
 
 	class ATHENA_API Framebuffer
@@ -55,16 +52,14 @@ namespace Athena
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
-		virtual const FramebufferDESC& GetDescription() const = 0;
-		virtual uint32 GetColorAttachmentRendererID(SIZE_T index = 0) const = 0;
+		virtual const FramebufferDescription& GetDescription() const = 0;
+		virtual void* GetColorAttachmentRendererID(SIZE_T index = 0) const = 0;
 
 		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) = 0;
 		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) = 0;
 
-		virtual void Bind() const = 0;
-		virtual void UnBind() const = 0;
+		virtual void ClearColorAndDepth(const LinearColor& color) = 0;
 
-		static Ref<Framebuffer> Create(const FramebufferDESC& desc);
+		static Ref<Framebuffer> Create(const FramebufferDescription& desc);
 	};
 }
-	

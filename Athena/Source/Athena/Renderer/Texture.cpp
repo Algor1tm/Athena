@@ -2,7 +2,8 @@
 #include "Texture.h"
 
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Platform/OpenGL/OpenGLTexture2D.h"
+#include "Athena/Platform/OpenGL/GLTexture2D.h"
+#include "Athena/Platform/Direct3D/D3D11Texture2D.h"
 
 
 namespace Athena
@@ -12,12 +13,14 @@ namespace Athena
 
 	Ref<Texture2D> Texture2D::Create(uint32 width, uint32 height)
 	{
+		ATN_CORE_ASSERT(width > 0 && height > 0, "Invalid size for Texture2D!");
+
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<OpenGLTexture2D>(width, height); break;
+			return CreateRef<GLTexture2D>(width, height); break;
 		case RendererAPI::API::Direct3D:
-			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
+			return CreateRef<D3D11Texture2D>(width, height); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -26,14 +29,16 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const String& path)
+	Ref<Texture2D> Texture2D::Create(const Filepath& path)
 	{
+		ATN_CORE_ASSERT(std::filesystem::exists(path), "Invalid filepath for Texture2D!");
+
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<OpenGLTexture2D>(path); break;
+			return CreateRef<GLTexture2D>(path); break;
 		case RendererAPI::API::Direct3D:
-			ATN_CORE_ASSERT(false, "Renderer API Direct3D is not supported"); break;
+			return CreateRef<D3D11Texture2D>(path); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RendererAPI.h"
+#include "Buffer.h"
+#include "Framebuffer.h"
 
 
 namespace Athena
@@ -8,10 +10,7 @@ namespace Athena
 	class RenderCommand
 	{
 	public:
-		static inline void Init() 
-		{
-			s_RendererAPI->Init();
-		}
+		static void Init();
 
 		static inline void SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)
 		{
@@ -23,22 +22,27 @@ namespace Athena
 			s_RendererAPI->Clear(color); 
 		}
 
-		static inline void DrawTriangles(const Ref<VertexArray>& vertexArray, uint32 indexCount = 0)
+		static inline void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0)
 		{
-			s_RendererAPI->DrawTriangles(vertexArray, indexCount);
+			s_RendererAPI->DrawTriangles(vertexBuffer, indexCount);
 		}
 
-		static inline void DrawLines(const Ref<VertexArray>& vertexArray, uint32 vertexCount = 0)
+		static inline void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0)
 		{
-			s_RendererAPI->DrawLines(vertexArray, vertexCount);
+			s_RendererAPI->DrawLines(vertexBuffer, vertexCount);
 		}
 
-		static inline void SetLineWidth(float width)
+		static inline void BindFramebuffer(const Ref<Framebuffer>& framebuffer)
 		{
-			s_RendererAPI->SetLineWidth(width);
+			s_RendererAPI->BindFramebuffer(framebuffer);
+		}
+
+		static inline void UnBindFramebuffer()
+		{
+			s_RendererAPI->UnBindFramebuffer();
 		}
 
 	private:
-		static RendererAPI* s_RendererAPI;
+		static Scope<RendererAPI> s_RendererAPI;
 	};
 }

@@ -2,41 +2,71 @@
 
 #include "Core.h"
 #include "Athena/Input/Events/Event.h"
+#include "Athena/Renderer/GraphicsContext.h"
 
 
 namespace Athena
 {
-	struct WindowDESC
+	enum class WindowMode
+	{
+		Default = 0,
+		Maximized = 1,
+		Fullscreen = 2
+	};
+
+	struct WindowDescription
 	{
 		using EventCallbackFn = std::function<void(Event&)>;
 
 		uint32 Width = 1280; 
 		uint32 Height = 720;
-		bool VSync = true;
 		String Title = "Athena App";
+		bool VSync = true;
+		WindowMode Mode = WindowMode::Default;
+		Filepath Icon;
 
-		EventCallbackFn EventCallback;
+		EventCallbackFn EventCallback = [](Event&) {};
 	};
 
 	// Interface representing a desktop system based Window
 	class ATHENA_API Window
 	{
 	public:
-		virtual ~Window() = default;
+		static Scope<Window> Create(const WindowDescription& desc);
+
+		~Window();
 		
-		virtual void OnUpdate() = 0;
+		void OnUpdate();
 
-		virtual uint32 GetWidth() const = 0;
-		virtual uint32 GetHeight() const = 0;
+		inline uint32 GetWidth() const { return m_Data.Width; }
+		inline uint32 GetHeight() const { return m_Data.Height; }
 
-		// Window attributes
-		virtual void SetEventCallback(const WindowDESC::EventCallbackFn& callback) = 0;
-		virtual void SetVSync(bool enabled) = 0;
-		virtual bool IsVSync() const = 0;
+		inline void SetEventCallback(const WindowDescription::EventCallbackFn& callback)
+		{
+			m_Data.EventCallback = callback;
+		}
 
-		virtual void* GetNativeWindow() = 0;
+		void SetVSync(bool enabled);
+		bool IsVSync() const { return m_Data.VSync; }
 
-		static Scope<Window> Create(const WindowDESC& desc);
+		inline void* GetNativeWindow() { return m_WindowHandle; }
+
+	public:
+		struct WindowData
+		{
+			uint32 Width = 1280;
+			uint32 Height = 720;
+			bool VSync = true;
+			String Title = "Athena App";
+
+			WindowDescription::EventCallbackFn EventCallback;
+		};
+
+	private:
+		void* m_WindowHandle;
+		WindowData m_Data;
+		Ref<GraphicsContext> m_Context;
+
+		static inline uint8 m_WindowCount = 0;
 	};
 }
-

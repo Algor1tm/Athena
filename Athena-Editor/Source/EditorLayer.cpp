@@ -21,15 +21,15 @@ namespace Athena
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
           m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
-        m_PlayIcon = Texture2D::Create("Resources/Icons/PlayIcon.png");
-        m_SimulationIcon = Texture2D::Create("Resources/Icons/SimulationIcon.png");
-        m_StopIcon = Texture2D::Create("Resources/Icons/StopIcon.png");
+        m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/PlayIcon.png");
+        m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/SimulationIcon.png");
+        m_StopIcon = Texture2D::Create("Resources/Icons/Editor/StopIcon.png");
     }
 
     void EditorLayer::OnAttach()
     {
-        FramebufferDESC fbDesc;
-        fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::Depth };
+        FramebufferDescription fbDesc;
+        fbDesc.Attachments = { {FramebufferTextureFormat::RGBA8, true}, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
         m_Framebuffer = Framebuffer::Create(fbDesc);
@@ -65,7 +65,7 @@ namespace Athena
         }
 
         Renderer2D::ResetStats();
-        m_Framebuffer->Bind();
+        RenderCommand::BindFramebuffer(m_Framebuffer);
         RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
         // Clear our entity ID attachment to -1
         m_Framebuffer->ClearAttachment(1, -1);
@@ -99,7 +99,7 @@ namespace Athena
 
         RenderOverlay();
 
-        m_Framebuffer->UnBind();
+        RenderCommand::UnBindFramebuffer();
     }
 
     void EditorLayer::OnImGuiRender()
@@ -232,23 +232,26 @@ namespace Athena
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
         ImGui::Begin("Viewport");
-
+        
         ImVec2 viewportMinRegion = ImGui::GetWindowContentRegionMin();
         ImVec2 viewportMaxRegion = ImGui::GetWindowContentRegionMax();
         ImVec2 viewportOffset = ImGui::GetWindowPos();
         m_ViewportBounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
         m_ViewportBounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
-
+        
         m_ViewportFocused = ImGui::IsWindowFocused();
         m_ViewportHovered = ImGui::IsWindowHovered();    
         //Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered && !m_ViewportFocused);
         Application::Get().GetImGuiLayer()->BlockEvents(false);
-
+        
         const auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_ViewportSize = { viewportX, viewportY };
-
-        uint32 texID = m_Framebuffer->GetColorAttachmentRendererID(0);
-        ImGui::Image((void*)(uint64)texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
+        
+        void* texID = m_Framebuffer->GetColorAttachmentRendererID(0);
+        if(RendererAPI::GetAPI() == RendererAPI::OpenGL)        // TODO: make better
+            ImGui::Image(texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y), { 0, 1 }, { 1, 0 });
+        else
+            ImGui::Image(texID, ImVec2((float)m_ViewportSize.x, (float)m_ViewportSize.y));
 
         if (ImGui::BeginDragDropTarget())
         {
@@ -265,15 +268,18 @@ namespace Athena
                 else if (m_SceneState == SceneState::Edit && extension == ".png\0")
                 {
                     Entity target = GetEntityByCurrentMousePosition();
-                    if (target.HasComponent<SpriteComponent>())
+                    if (target != Entity{})
                     {
-                        auto& sprite = target.GetComponent<SpriteComponent>();
-                        sprite.Texture = Texture2D::Create(String(path));
-                        sprite.Color = LinearColor::White;
+                        if (target.HasComponent<SpriteComponent>())
+                        {
+                            auto& sprite = target.GetComponent<SpriteComponent>();
+                            sprite.Texture = Texture2D::Create(String(path));
+                            sprite.Color = LinearColor::White;
+                        }
                     }
                 }
             }
-
+        
             ImGui::EndDragDropTarget();
         }
 
@@ -380,11 +386,9 @@ namespace Athena
 
         if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
         {
-            m_Framebuffer->Bind();
             int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
             if (pixelData != -1)
                 return { (entt::entity)pixelData, m_EditorScene.get() };
-            m_Framebuffer->UnBind();
         }
 
         return Entity{};
@@ -414,9 +418,9 @@ namespace Athena
 
                     Vector2 translation = Vector2(tc.Translation);
                     Vector2 scale = tc.Scale * Vector3(bc2d.Size * 2.f, 1.f);
-                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(bc2d.Offset.y, bc2d.Offset.x, 0.f)).Rotate(tc.Rotation.z, Vector3::back()).Translate(Vector3(translation, 0.001f));
+                    Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(bc2d.Offset.y, bc2d.Offset.x, 0.f)).Rotate(tc.Rotation.z, Vector3::Back()).Translate(Vector3(translation, 0.001f));
 
-                    Renderer2D::DrawRect(transform, LinearColor::Green);
+                    Renderer2D::DrawRect(transform, LinearColor::Green, 3.f);
                 }
             }
 
@@ -439,7 +443,7 @@ namespace Athena
         if (m_SelectedEntity)
         {
             const TransformComponent& transform = m_SelectedEntity.GetComponent<TransformComponent>();
-            Renderer2D::DrawRect(transform.AsMatrix(), { 1.f, 0.5f, 0.f, 1.f });
+            Renderer2D::DrawRect(transform.AsMatrix(), { 1.f, 0.5f, 0.f, 1.f }, 6.f);
         }
 
         Renderer2D::EndScene();
@@ -536,10 +540,10 @@ namespace Athena
         case Keyboard::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
 
         //Gizmos
-        case Keyboard::Q: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
-        case Keyboard::W: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
-        case Keyboard::E: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
-        case Keyboard::R: if(m_SelectedEntity && m_ViewportFocused)(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+        case Keyboard::Q: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
+        case Keyboard::W: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+        case Keyboard::E: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+        case Keyboard::R: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
 
         //Entities
         case Keyboard::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;

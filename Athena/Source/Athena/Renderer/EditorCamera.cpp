@@ -61,7 +61,7 @@ namespace Athena
 
 		bool changed = false;
 
-		if (Input::IsMouseButtonPressed(Mouse::Wheel))
+		if (Input::IsMouseButtonPressed(Mouse::Middle))
 		{
 			MousePan(delta);
 			changed = true;
@@ -116,17 +116,17 @@ namespace Athena
 
 	Vector3 EditorCamera::GetUpDirection() const
 	{
-		return GetOrientation() * Vector3::up();
+		return GetOrientation() * Vector3::Up();
 	}
 
 	Vector3 EditorCamera::GetRightDirection() const
 	{
-		return GetOrientation() * Vector3::right();
+		return GetOrientation() * Vector3::Right();
 	}
 
 	Vector3 EditorCamera::GetForwardDirection() const
 	{
-		return GetOrientation() * Vector3::forward();
+		return GetOrientation() * Vector3::Forward();
 	}
 
 	Vector3 EditorCamera::CalculatePosition() const

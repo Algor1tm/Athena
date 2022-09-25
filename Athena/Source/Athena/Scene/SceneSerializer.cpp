@@ -218,13 +218,13 @@ namespace Athena
 
 						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
 
-						SceneCamera::PerspectiveDESC perspectiveDesc;
+						SceneCamera::PerspectiveDescription perspectiveDesc;
 						perspectiveDesc.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
 						perspectiveDesc.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
 						perspectiveDesc.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
 						cc.Camera.SetPerspectiveData(perspectiveDesc);
 
-						SceneCamera::OrthographicDESC orthoDesc;
+						SceneCamera::OrthographicDescription orthoDesc;
 						orthoDesc.Size = cameraPropsNode["OrthographicSize"].as<float>();
 						orthoDesc.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
 						orthoDesc.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
@@ -251,7 +251,7 @@ namespace Athena
 						texCoords[3] = texCoordsNode["3"].as<Vector2>();
 
 						const auto& textureNode = spriteComponentNode["Texture"];
-						const auto& path = textureNode.as<String>();
+						const auto& path = Filepath(textureNode.as<String>());
 						if (!path.empty())
 						{
 							Ref<Texture2D> texture = Texture2D::Create(path);
@@ -402,7 +402,7 @@ namespace Athena
 			[](YAML::Emitter& output, const SpriteComponent& sprite)
 			{
 				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
-				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilepath();
+				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilepath().string();
 
 				const auto& texCoords = sprite.Texture.GetTexCoords();
 				output << YAML::Key << "TexCoords" << YAML::Value;

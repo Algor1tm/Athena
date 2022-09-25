@@ -30,7 +30,7 @@ namespace Athena
 	}
 
 
-	struct ATHENA_API BufferElement
+	struct BufferElement
 	{
 		String Name;
 		ShaderDataType Type;
@@ -107,33 +107,44 @@ namespace Athena
 	};
 
 	
-	class ATHENA_API VertexBuffer
-	{
-	public:
-		virtual ~VertexBuffer() = default;
-
-		virtual void Bind() const = 0;
-		virtual void UnBind() const = 0;
-
-		virtual void SetLayout(const BufferLayout& layout) = 0;
-		virtual const BufferLayout& GetLayout() const = 0;
-
-		virtual void SetData(const void* data, uint32 size) = 0;
-
-		static Ref<VertexBuffer> Create(float* vertices, uint32 size);
-		static Ref<VertexBuffer> Create(uint32 size);
-	};
-
 	class ATHENA_API IndexBuffer
 	{
 	public:
+		static Ref<IndexBuffer> Create(uint32* indices, uint32 count);
 		virtual ~IndexBuffer() = default;
 
 		virtual void Bind() const = 0;
 		virtual void UnBind() const = 0;
 
 		virtual uint32 GetCount() const = 0;
+	};
 
-		static Ref<IndexBuffer> Create(uint32* indices, uint32 count);
+	enum class Usage
+	{
+		STATIC,
+		DYNAMIC
+	};
+
+	struct VertexBufferDescription
+	{
+		const void* Data;
+		uint32 Size;
+		const BufferLayout* pBufferLayout;
+		Ref<IndexBuffer> pIndexBuffer;
+		Usage BufferUsage;
+	};
+
+	class ATHENA_API VertexBuffer
+	{
+	public:
+		static Ref<VertexBuffer> Create(const VertexBufferDescription& desc);
+		virtual ~VertexBuffer() = default;
+
+		virtual void Bind() const = 0;
+		virtual void UnBind() const = 0;
+
+		virtual void SetData(const void* data, uint32 size) = 0;
+
+		virtual const Ref<IndexBuffer>& GetIndexBuffer() const = 0;
 	};
 }

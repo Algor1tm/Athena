@@ -4,11 +4,10 @@
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Math/Transforms.h"
+#include "Athena/Math/TypeCasts.h"
 
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Renderer/Texture.h"
-
-#include <functional>
 
 
 namespace Athena

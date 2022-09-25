@@ -37,5 +37,7 @@
 // ---Platform Specific-------------
 #ifdef ATN_PLATFORM_WINDOWS
 	#include <Windows.h>
+	#include <d3d11.h>
+	#include <wrl.h>
 	#include <commdlg.h>
 #endif

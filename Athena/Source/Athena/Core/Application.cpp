@@ -10,30 +10,30 @@ namespace Athena
 {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const ApplicationDESC& appdesc)
+	Application::Application(const ApplicationDescription& appdesc)
 		: m_Running(true), m_Minimized(false)
 	{
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
 		if (appdesc.WorkingDirectory != Filepath())
-		{
 			std::filesystem::current_path(appdesc.WorkingDirectory);
-		}
 
-		WindowDESC wdesc;
-		wdesc.Width = appdesc.WindowWidth;
-		wdesc.Height = appdesc.WindowHeight;
-		wdesc.Title = appdesc.Title;
-		wdesc.VSync = appdesc.VSync;
+		appdesc.UseConsole ? Log::Init() : Log::InitWithoutConsole();
+			
+		WindowDescription wdesc = appdesc.WindowDesc;
+
+		RendererAPI::Init(appdesc.API);
 		m_Window = Window::Create(wdesc);
+		Renderer::Init();
+
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
 
-		Renderer::Init();
+		Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
 
 		if (appdesc.UseImGui)
 		{
-			m_ImGuiLayer = new ImGuiLayer();
+			m_ImGuiLayer = ImGuiLayer::Create();
 			PushOverlay(m_ImGuiLayer);
 		}
 		else
@@ -68,14 +68,14 @@ namespace Athena
 
 		while (m_Running)
 		{
-				Time now = Timer.ElapsedTime();
-				Time frameTime = now - LastTime;
-				LastTime = now;
+			Time now = Timer.ElapsedTime();
+			Time frameTime = now - LastTime;
+			LastTime = now;
 
 			if (m_Minimized == false)
 			{
 				{
-					for (Layer* layer : m_LayerStack)
+					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
 				}
 			}
@@ -84,7 +84,7 @@ namespace Athena
 			{
 				m_ImGuiLayer->Begin();
 				{
-					for (Layer* layer : m_LayerStack)
+					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnImGuiRender();
 				}
 				m_ImGuiLayer->End();
@@ -99,13 +99,13 @@ namespace Athena
 		m_Running = false;
 	}
 
-	void Application::PushLayer(Layer* layer)
+	void Application::PushLayer(Ref<Layer> layer)
 	{
 		m_LayerStack.PushLayer(layer);
 		layer->OnAttach();
 	}
 
-	void Application::PushOverlay(Layer* layer)
+	void Application::PushOverlay(Ref<Layer> layer)
 	{
 		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();

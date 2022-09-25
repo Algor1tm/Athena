@@ -4,6 +4,7 @@
 #include "Athena/Math/Transforms.h"
 #include "RenderCommand.h"
 #include "Shader.h"
+#include "ConstantBuffer.h"
 
 
 namespace Athena
@@ -50,15 +51,12 @@ namespace Athena
 
 		static const uint32 MaxTextureSlots = 32;   // TODO: RenderCaps
 
-		Ref<VertexArray> QuadVertexArray;
 		Ref<VertexBuffer> QuadVertexBuffer;
 		Ref<Shader> QuadShader;
 
-		Ref<VertexArray> CircleVertexArray;
 		Ref<VertexBuffer> CircleVertexBuffer;
 		Ref<Shader> CircleShader;
 
-		Ref<VertexArray> LineVertexArray;
 		Ref<VertexBuffer> LineVertexBuffer;
 		Ref<Shader> LineShader;
 
@@ -74,35 +72,39 @@ namespace Athena
 		LineVertex* LineVertexBufferBase = nullptr;
 		LineVertex* LineVertexBufferPointer = nullptr;
 
-		float LineWidth = 2.0f;
-
 		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
 		uint32 TextureSlotIndex = 1; // 0 - white texture
 
 		Vector4 QuadVertexPositions[4];
 
 		Renderer2D::Statistics Stats;
+
+		struct CameraData
+		{
+			Matrix4 ViewProjection;
+		};
+		CameraData CameraBuffer;
+		Ref<ConstantBuffer> CameraConstantBuffer;
 	};
 
 	static Renderer2DData s_Data;
 
 	void Renderer2D::Init()
 	{
-		s_Data.QuadVertexArray = VertexArray::Create();
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(Renderer2DData::MaxQuadVertices * sizeof(QuadVertex));
-		s_Data.QuadVertexBuffer->SetLayout({
+		BufferLayout layout = {
 			{ ShaderDataType::Float3, "a_Position"     },
 			{ ShaderDataType::Float4, "a_Color"        },
 			{ ShaderDataType::Float2, "a_TexCoord"     },
 			{ ShaderDataType::Float,  "a_TexIndex"     },
 			{ ShaderDataType::Float,  "a_TilingFactor" },
-			{ ShaderDataType::Int,    "a_EntityID"     }
-			});
-		s_Data.QuadVertexArray->AddVertexBuffer(s_Data.QuadVertexBuffer);
+			{ ShaderDataType::Int,    "a_EntityID"     } 
+		};
+
+		s_Data.QuadShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Quad");
+
 		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxQuadVertices];
 
 		uint32* indices = new uint32[Renderer2DData::MaxIndices];
-
 		uint32 offset = 0;
 		for (uint32 i = 0; i < Renderer2DData::MaxIndices; i += 6)
 		{
@@ -118,45 +120,60 @@ namespace Athena
 		}
 
 		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, Renderer2DData::MaxIndices);
-		s_Data.QuadVertexArray->SetIndexBuffer(indexBuffer);
 		delete[] indices;
 
-		s_Data.CircleVertexArray = VertexArray::Create();
-		s_Data.CircleVertexBuffer = VertexBuffer::Create(Renderer2DData::MaxCircles * sizeof(CircleVertex));
-		s_Data.CircleVertexBuffer->SetLayout({
+		VertexBufferDescription vBufferDesc;
+		vBufferDesc.Data = nullptr;
+		vBufferDesc.Size = Renderer2DData::MaxQuadVertices * sizeof(QuadVertex);
+		vBufferDesc.pBufferLayout = &layout;
+		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.BufferUsage = Usage::DYNAMIC;
+
+		s_Data.QuadVertexBuffer = VertexBuffer::Create(vBufferDesc);
+
+
+		layout = {
 			{ ShaderDataType::Float3, "a_WorldPosition"  },
 			{ ShaderDataType::Float3, "a_LocalPosition"  },
 			{ ShaderDataType::Float4, "a_Color"     },
 			{ ShaderDataType::Float,  "a_Thickness" },
 			{ ShaderDataType::Float,  "a_Fade"      },
-			{ ShaderDataType::Int,    "a_EntityID"  }
-			});
-		s_Data.CircleVertexArray->AddVertexBuffer(s_Data.CircleVertexBuffer);
-		s_Data.CircleVertexArray->SetIndexBuffer(indexBuffer); // quad index buffer
+			{ ShaderDataType::Int,    "a_EntityID"  } 
+		};
+		s_Data.CircleShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Circle");
+
+		vBufferDesc.Data = nullptr;
+		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
+		vBufferDesc.pBufferLayout = &layout;
+		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.BufferUsage = Usage::DYNAMIC;
+
+		s_Data.CircleVertexBuffer = VertexBuffer::Create(vBufferDesc);
+
 		s_Data.CircleVertexBufferBase = new CircleVertex[Renderer2DData::MaxCircleVertices];
 
-		s_Data.LineVertexArray = VertexArray::Create();
-		s_Data.LineVertexBuffer = VertexBuffer::Create(Renderer2DData::MaxCircles * sizeof(LineVertex));
-		s_Data.LineVertexBuffer->SetLayout({
+
+		layout = {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Int,    "a_EntityID" }
-			});
-		s_Data.LineVertexArray->AddVertexBuffer(s_Data.LineVertexBuffer);
-		s_Data.LineVertexArray->SetIndexBuffer(indexBuffer); // quad index buffer
+		};
+		s_Data.LineShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Line");
+
+		vBufferDesc.Data = nullptr;
+		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);
+		vBufferDesc.pBufferLayout = &layout;
+		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.BufferUsage = Usage::DYNAMIC;
+
+		s_Data.LineVertexBuffer = VertexBuffer::Create(vBufferDesc);
+
 		s_Data.LineVertexBufferBase = new LineVertex[Renderer2DData::MaxLineVertices];
 
-		s_Data.QuadShader = Shader::Create("Assets/Shaders/Quad.glsl");
-		s_Data.CircleShader = Shader::Create("Assets/Shaders/Circle.glsl");
-		s_Data.LineShader = Shader::Create("Assets/Shaders/Line.glsl");
 
 		int32 samplers[Renderer2DData::MaxTextureSlots];
 		for (int32 i = 0; i < std::size(samplers); ++i)
 			samplers[i] = i;
-
-		s_Data.QuadShader->Bind();
-		s_Data.QuadShader->SetIntArray("u_Texture", samplers, s_Data.MaxTextureSlots);
-		s_Data.QuadShader->UnBind();
 
 		s_Data.TextureSlots[0] = Texture2D::WhiteTexture();
 
@@ -164,53 +181,37 @@ namespace Athena
 		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
+
+		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
 	}
 
 	void Renderer2D::Shutdown()
 	{
 		delete[] s_Data.QuadVertexBufferBase;
+		delete[] s_Data.CircleVertexBufferBase;
+		delete[] s_Data.LineVertexBufferBase;
 	}
 
 	void Renderer2D::BeginScene(const Camera& camera, const Matrix4& transform)
 	{
-		Matrix4 viewProj = AffineInverse(transform) * camera.GetProjection();
-
-		s_Data.QuadShader->Bind();
-		s_Data.QuadShader->SetMat4("u_ViewProjection", viewProj);
-
-		s_Data.CircleShader->Bind();
-		s_Data.CircleShader->SetMat4("u_ViewProjection", viewProj);
-
-		s_Data.LineShader->Bind();
-		s_Data.LineShader->SetMat4("u_ViewProjection", viewProj);
+		s_Data.CameraBuffer.ViewProjection = AffineInverse(transform) * camera.GetProjection();
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		StartBatch();
 	}
 
 	void Renderer2D::BeginScene(const OrthographicCamera& camera)
 	{
-		s_Data.QuadShader->Bind();
-		s_Data.QuadShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
-
-		s_Data.CircleShader->Bind();
-		s_Data.CircleShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
-
-		s_Data.LineShader->Bind();
-		s_Data.LineShader->SetMat4("u_ViewProjection", camera.GetViewProjectionMatrix());
+		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjectionMatrix();
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		StartBatch();
 	}
 
 	void Renderer2D::BeginScene(const EditorCamera& camera)
 	{
-		s_Data.QuadShader->Bind();
-		s_Data.QuadShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
-
-		s_Data.CircleShader->Bind();
-		s_Data.CircleShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
-
-		s_Data.LineShader->Bind();
-		s_Data.LineShader->SetMat4("u_ViewProjection", camera.GetViewProjection());
+		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		StartBatch();
 	}
@@ -231,7 +232,7 @@ namespace Athena
 				s_Data.TextureSlots[i]->Bind(i);
 
 			s_Data.QuadShader->Bind();
-			RenderCommand::DrawTriangles(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
+			RenderCommand::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 
@@ -241,7 +242,7 @@ namespace Athena
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
 
 			s_Data.CircleShader->Bind();
-			RenderCommand::DrawTriangles(s_Data.CircleVertexArray, s_Data.CircleIndexCount);
+			RenderCommand::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 
@@ -251,8 +252,7 @@ namespace Athena
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
 			s_Data.LineShader->Bind();
-			RenderCommand::SetLineWidth(s_Data.LineWidth);
-			RenderCommand::DrawLines(s_Data.LineVertexArray, s_Data.LineVertexCount);
+			RenderCommand::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 	}
@@ -418,59 +418,82 @@ namespace Athena
 		s_Data.Stats.CircleCount++;
 	}
 
-	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, int entityID) 
+	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int entityID)
 	{
-		if (s_Data.LineVertexCount >= Renderer2DData::MaxIndices)
-			NextBatch();
+		if (width > 0.f && width <= 1.f)
+		{
+			if (s_Data.LineVertexCount >= Renderer2DData::MaxIndices)
+				NextBatch();
 
-		s_Data.LineVertexBufferPointer->Position = p0;
-		s_Data.LineVertexBufferPointer->Color = color;
-		s_Data.LineVertexBufferPointer->EntityID = entityID;
-		s_Data.LineVertexBufferPointer++;
-		
-		s_Data.LineVertexBufferPointer->Position = p1;
-		s_Data.LineVertexBufferPointer->Color = color;
-		s_Data.LineVertexBufferPointer->EntityID = entityID;
-		s_Data.LineVertexBufferPointer++;
+			s_Data.LineVertexBufferPointer->Position = p0;
+			s_Data.LineVertexBufferPointer->Color = color;
+			s_Data.LineVertexBufferPointer->EntityID = entityID;
+			s_Data.LineVertexBufferPointer++;
 
-		s_Data.LineVertexCount += 2;
+			s_Data.LineVertexBufferPointer->Position = p1;
+			s_Data.LineVertexBufferPointer->Color = color;
+			s_Data.LineVertexBufferPointer->EntityID = entityID;
+			s_Data.LineVertexBufferPointer++;
 
-		s_Data.Stats.LineCount++;
+			s_Data.LineVertexCount += 2;
+
+			s_Data.Stats.LineCount++;
+		}
+		else if(width > 1.f)
+		{
+			Vector3 dir = p1 - p0;
+			Vector3 normal = Vector3(-dir.y, dir.x, 0.f).Normalize() * width / 1000.f;
+
+			Vector3 positions[4] = { p1 + normal, p1 - normal, p0 - normal, p0 + normal };
+
+			if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+				NextBatch();
+
+			constexpr SIZE_T QuadVertexCount = 4;
+			constexpr float textureIndex = 0.f; // White Texture
+			constexpr Vector2 textureCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+			constexpr float tilingFactor = 1.f;
+
+			for (SIZE_T i = 0; i < QuadVertexCount; ++i)
+			{
+				s_Data.QuadVertexBufferPointer->Position = positions[i];
+				s_Data.QuadVertexBufferPointer->Color = color;
+				s_Data.QuadVertexBufferPointer->TexCoord = textureCoords[i];
+				s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+				s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+				s_Data.QuadVertexBufferPointer->EntityID = entityID;
+				s_Data.QuadVertexBufferPointer++;
+			}
+
+			s_Data.QuadIndexCount += 6;
+
+			s_Data.Stats.QuadCount++;
+		}
 	}
 
-	float Renderer2D::GetLineWidth()
-	{
-		return s_Data.LineWidth;
-	}
-
-	void Renderer2D::SetLineWidth(float width)
-	{
-		s_Data.LineWidth = width;
-	}
-
-	void Renderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, int entityID)
+	void Renderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, float lineWidth, int entityID)
 	{
 		Vector3 p0 = Vector3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		Vector3 p1 = Vector3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		Vector3 p2 = Vector3(position.x + size.x * 0.5f, position.y + size.y * 0.5f, position.z);
 		Vector3 p3 = Vector3(position.x - size.x * 0.5f, position.y + size.y * 0.5f, position.z);
 
-		DrawLine(p0, p1, color, entityID);
-		DrawLine(p1, p2, color, entityID);
-		DrawLine(p2, p3, color, entityID);
-		DrawLine(p3, p0, color, entityID);
+		DrawLine(p0, p1, color, lineWidth, entityID);
+		DrawLine(p1, p2, color, lineWidth, entityID);
+		DrawLine(p2, p3, color, lineWidth, entityID);
+		DrawLine(p3, p0, color, lineWidth, entityID);
 	}
 
-	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, int entityID)
+	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int entityID)
 	{
 		Vector3 lineVertices[4];
 		for (SIZE_T i = 0; i < 4; ++i)
 			lineVertices[i] = s_Data.QuadVertexPositions[i] * transform;
 
-		DrawLine(lineVertices[0], lineVertices[1], color, entityID);
-		DrawLine(lineVertices[1], lineVertices[2], color, entityID);
-		DrawLine(lineVertices[2], lineVertices[3], color, entityID);
-		DrawLine(lineVertices[3], lineVertices[0], color, entityID);
+		DrawLine(lineVertices[0], lineVertices[1], color, lineWidth, entityID);
+		DrawLine(lineVertices[1], lineVertices[2], color, lineWidth, entityID);
+		DrawLine(lineVertices[2], lineVertices[3], color, lineWidth, entityID);
+		DrawLine(lineVertices[3], lineVertices[0], color, lineWidth, entityID);
 	}
 
 	void Renderer2D::ResetStats()

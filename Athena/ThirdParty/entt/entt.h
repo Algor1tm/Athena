@@ -6178,6 +6178,7 @@ namespace entt {
                 else {
                     return (element == other) ? other : nullptr;
                 }
+                [[fallthrough]];
             case operation::get:
                 return element;
             }
@@ -24782,7 +24783,7 @@ namespace entt {
          * @param other The instance to move from.
          * @return This registry.
          */
-        basic_registry& operator=(basic_registry&& other) {
+        basic_registry& operator=(basic_registry&& other) noexcept{
             pools = std::move(other.pools);
             groups = std::move(other.groups);
             entities = std::move(other.entities);

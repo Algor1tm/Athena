@@ -6,24 +6,25 @@
 #include "Athena/Input/Events/ApplicationEvent.h"
 #include "Athena/Core/Time.h"
 
-#include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Buffer.h"
-#include "Athena/Renderer/VertexArray.h"
 #include "Athena/Renderer/OrthographicCamera.h"
+#include "Athena/Renderer/RendererAPI.h"
 
 #include "Athena/ImGui/ImGuiLayer.h"
 
 
 namespace Athena
 {
-	struct ApplicationDESC
+	struct ApplicationDescription
 	{
-		uint32 WindowWidth = 1600;
-		uint32 WindowHeight = 900;
-		String Title = "Athena App";
-		bool VSync;
+		WindowDescription WindowDesc;
 
+#ifdef ATN_PLATFORM_WINDOWS
+		RendererAPI::API API = RendererAPI::Direct3D;
+#else
+		RendererAPI::API API = RendererAPI::OpenGL;
+#endif
 		bool UseImGui = true;
+		bool UseConsole = true;
 		Filepath WorkingDirectory = Filepath();
 	};
 
@@ -31,16 +32,16 @@ namespace Athena
 	class ATHENA_API Application
 	{
 	public:
-		Application(const ApplicationDESC& appdesc);
+		Application(const ApplicationDescription& appdesc);
 		virtual ~Application();
 
 		void Run();
 		void OnEvent(Event& event);
 
-		void PushLayer(Layer* layer);
-		void PushOverlay(Layer* layer);
+		void PushLayer(Ref<Layer> layer);
+		void PushOverlay(Ref<Layer> layer);
 
-		inline ImGuiLayer* GetImGuiLayer() { return m_ImGuiLayer; }
+		inline Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
 		inline Window& GetWindow() { return *m_Window; }
 
 		void Close();
@@ -52,7 +53,7 @@ namespace Athena
 		bool OnWindowResized(WindowResizeEvent& event);
 
 		Scope<Window> m_Window;
-		ImGuiLayer* m_ImGuiLayer;
+		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;
 		bool m_Minimized;
 		LayerStack m_LayerStack;

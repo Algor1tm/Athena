@@ -1,20 +1,21 @@
-Direct3D11
+//////Direct3D11
 Editor
   Duplicate Entity, 
   PanelManager, 
-  Better ContentBrowser, 
   Better UI
 Dll instead of static lib
 Python scripting
 MSAA
 Simple 3D
+Audio Engine
 Editor
+  Better ContentBrowser, 
   Asset Manager, 
   Undo/Redo System
-Audio Engine
 Compile shaders on a fly
 Renderer2D
   Particles, 
   Light,
   Animation
   Text
+Multithreading

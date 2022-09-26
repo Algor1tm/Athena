@@ -12,6 +12,10 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(windowHandle, "Window handle is null!");
 
+#ifdef ATN_DEBUG
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+#endif
+
 		glfwMakeContextCurrent(windowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		ATN_CORE_ASSERT(status, "Failed to initialize glad!");

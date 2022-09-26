@@ -14,6 +14,7 @@ namespace Athena
 
 		virtual void SwapBuffers() override;
 		virtual void SetVSync(bool enabled) override;
+		virtual void SetFullscreen(bool enabled) override {};
 
 	private:
 		GLFWwindow* m_WindowHandle;

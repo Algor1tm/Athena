@@ -15,6 +15,10 @@
 #include <ImGui/imgui.h>
 
 
+// TMP
+#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
+
+
 namespace Athena
 {
     EditorLayer::EditorLayer()
@@ -517,8 +521,8 @@ namespace Athena
 
         switch (event.GetKeyCode())
         {
-        // Scenes Management
-        case Keyboard::S: 
+            // Scenes Management
+        case Keyboard::S:
         {
             if (ctrl)
             {
@@ -529,33 +533,45 @@ namespace Athena
             }
             break;
         }
-        case Keyboard::N: if(ctrl) NewScene(); break;
-        case Keyboard::O: if(ctrl) OpenScene(); break;
+        case Keyboard::N: if (ctrl) NewScene(); break;
+        case Keyboard::O: if (ctrl) OpenScene(); break;
 
         case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
         case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
         case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
 
-        //Panels
+            //Panels
         case Keyboard::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
 
-        //Gizmos
-        case Keyboard::Q: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
-        case Keyboard::W: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
-        case Keyboard::E: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
-        case Keyboard::R: if(m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+            //Gizmos
+        case Keyboard::Q: if (m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
+        case Keyboard::W: if (m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+        case Keyboard::E: if (m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+        case Keyboard::R: if (m_SelectedEntity && (m_ViewportHovered || m_ViewportFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
 
-        //Entities
+            //Entities
         case Keyboard::Escape: if (m_SelectedEntity) m_HierarchyPanel.SetSelectedEntity(Entity{}); break;
-        case Keyboard::Delete: 
+        case Keyboard::Delete:
         {
             if (m_SelectedEntity && m_SceneState == SceneState::Edit)
             {
                 m_HierarchyPanel.SetSelectedEntity(Entity{});
                 m_EditorScene->DestroyEntity(m_SelectedEntity);
                 m_SelectedEntity = Entity{};
-                break;
             }
+            break;
+        }
+        case Keyboard::F11:
+        {
+            auto& window = Application::Get().GetWindow();
+            WindowMode currentMode = window.GetWindowMode();
+            if (currentMode == WindowMode::Fullscreen)
+                window.SetWindowMode(WindowMode::Maximized);
+            else
+            {
+                window.SetWindowMode(WindowMode::Fullscreen);
+            }
+            break;
         }
         }
 

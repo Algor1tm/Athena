@@ -12,6 +12,7 @@ namespace Athena
 
 		virtual void SwapBuffers() = 0;
 		virtual void SetVSync(bool enabled) = 0;
+		virtual void SetFullscreen(bool enabled) = 0;
 
 		static Ref<GraphicsContext> Create(void* windowHandle);
 	};

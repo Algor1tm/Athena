@@ -20,6 +20,7 @@ namespace Athena
 
 		virtual void SwapBuffers() override;
 		virtual void SetVSync(bool enabled) override;
+		virtual void SetFullscreen(bool enabled) override;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Device> m_Device;

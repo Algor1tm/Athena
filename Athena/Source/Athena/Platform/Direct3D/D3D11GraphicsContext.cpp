@@ -179,4 +179,9 @@ namespace Athena
 		else
 			m_Interval = 0;
 	}
+
+	void D3D11GraphicsContext::SetFullscreen(bool enabled)
+	{
+		D3D11CurrentContext::SwapChain->SetFullscreenState(enabled, nullptr);
+	}
 }

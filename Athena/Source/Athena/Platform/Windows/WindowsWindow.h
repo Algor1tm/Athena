@@ -256,31 +256,10 @@ namespace Athena
 
 		ATN_CORE_INFO("Create Windows Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
-		ShowWindow(hWnd, desc.Mode == WindowMode::Maximized ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
-		UpdateWindow(hWnd);
-		
-		if (desc.Mode == WindowMode::Fullscreen)
-		{
-			WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
-
-			DWORD dwStyle = GetWindowLong(hWnd, GWL_STYLE);
-			if (dwStyle & WS_OVERLAPPEDWINDOW)
-			{
-				MONITORINFO mi = { sizeof(mi) };
-				if (GetWindowPlacement(hWnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY), &mi))
-				{
-					SetWindowLong(hWnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-					SetWindowPos(hWnd, HWND_TOP,
-						mi.rcMonitor.left, mi.rcMonitor.top,
-						mi.rcMonitor.right - mi.rcMonitor.left,
-						mi.rcMonitor.bottom - mi.rcMonitor.top,
-						SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-				}
-			}
-		}
-
 		window->m_Context = GraphicsContext::Create(window->m_WindowHandle);
 		window->SetVSync(window->m_Data.VSync);
+
+		window->SetWindowMode(desc.Mode);
 
 		if (desc.Mode == WindowMode::Maximized)
 		{
@@ -324,5 +303,71 @@ namespace Athena
 	{
 		m_Context->SetVSync(enabled);
 		m_Data.VSync = enabled;
+	}
+
+	void Window::SetWindowMode(WindowMode mode)
+	{
+		WindowMode currentMode = GetWindowMode();
+		HWND hWnd = reinterpret_cast<HWND>(m_WindowHandle);
+
+		if (currentMode == mode)
+			return;
+
+		if (currentMode == WindowMode::Fullscreen)
+		{
+			SetWindowLong(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+			m_Context->SetFullscreen(false);
+			SetWindowPos(hWnd, 0,
+				100, 100,
+				m_Data.Width * 3 / 2,
+				m_Data.Height * 3 / 2,
+				0);
+		}
+
+		switch (mode)
+		{
+		case WindowMode::Default:
+		{
+			ShowWindow(hWnd, SW_SHOWDEFAULT);
+			break;
+		}
+		case WindowMode::Maximized:
+		{
+			ShowWindow(hWnd, SW_SHOWMAXIMIZED);
+			break;
+		}
+		case WindowMode::Minimized:
+		{
+			ShowWindow(hWnd, SW_SHOWMINIMIZED);
+			break;
+		}
+		case WindowMode::Fullscreen:
+		{
+			if (currentMode == WindowMode::Fullscreen)
+				m_Context->SetFullscreen(true);
+			ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+			WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
+
+			DWORD dwStyle = GetWindowLong(hWnd, GWL_STYLE);
+			if (dwStyle & WS_OVERLAPPEDWINDOW)
+			{
+				MONITORINFO mi = { sizeof(mi) };
+				if (GetWindowPlacement(hWnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY), &mi))
+				{
+					SetWindowLong(hWnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+					SetWindowPos(hWnd, HWND_TOP,
+						mi.rcMonitor.left, mi.rcMonitor.top,
+						mi.rcMonitor.right - mi.rcMonitor.left,
+						mi.rcMonitor.bottom - mi.rcMonitor.top,
+						SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+				}
+			}
+
+			m_Context->SetFullscreen(true);
+		}
+		}
+
+		m_Data.Mode = mode;
 	}
 }

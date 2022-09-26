@@ -134,36 +134,14 @@ namespace Athena
 			ATN_CORE_ASSERT(success, "Could not intialize GLFW");
 			ATN_CORE_INFO("Init GLFW");
 			glfwSetErrorCallback(GLFWErrorCallback);
-			if(desc.Mode == WindowMode::Maximized)
-				glfwWindowHint(GLFW_MAXIMIZED, 1);
-		}
-
-		int width;
-		int height;
-		GLFWmonitor* monitor;
-		if (desc.Mode == WindowMode::Fullscreen)
-		{
-			monitor = glfwGetPrimaryMonitor();
-			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-			width = mode->width;
-			height = mode->height;
-
-			window->m_Data.Width = mode->width;
-			window->m_Data.Height = mode->height;
-		}
-		else
-		{
-			monitor = nullptr;
-			width = window->m_Data.Width;
-			height = window->m_Data.Height;
 		}
 
 		GLFWwindow* hWnd;
 		window->m_WindowHandle = hWnd = glfwCreateWindow(
-			width,
-			height,
+			window->m_Data.Width,
+			window->m_Data.Height,
 			window->m_Data.Title.c_str(),
-			monitor,
+			nullptr,
 			nullptr);
 
 		m_WindowCount++;
@@ -176,6 +154,8 @@ namespace Athena
 		window->m_Context = GraphicsContext::Create(window->m_WindowHandle);
 		window->SetVSync(window->m_Data.VSync);
 
+		window->SetWindowMode(desc.Mode);
+
 		if (desc.Icon != Filepath())
 		{
 			GLFWimage image;
@@ -184,15 +164,6 @@ namespace Athena
 			ATN_CORE_ASSERT(image.pixels, "Failed to load icon");
 			glfwSetWindowIcon(hWnd, 1, &image);
 			stbi_image_free(image.pixels);
-		}
-
-		if (desc.Mode == WindowMode::Maximized)
-		{
-			int width, height;
-			glfwGetFramebufferSize(hWnd, &width, &height);
-
-			window->m_Data.Width = width;
-			window->m_Data.Height = height;
 		}
 
 		return window;
@@ -222,6 +193,63 @@ namespace Athena
 	{
 		m_Context->SetVSync(enabled);
 		m_Data.VSync = enabled;
+	}
+
+	void Window::SetWindowMode(WindowMode mode)
+	{
+		WindowMode currentMode = GetWindowMode();
+		GLFWwindow* hWnd = reinterpret_cast<GLFWwindow*>(m_WindowHandle);
+		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+
+		if (currentMode == mode)
+			return;
+
+		if (currentMode == WindowMode::Fullscreen)
+		{
+			m_Context->SetFullscreen(false);
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+			glfwSetWindowMonitor(hWnd, nullptr, 100, 100, m_Data.Width * 3 / 2, m_Data.Width * 3 / 2, mode->refreshRate);
+		}
+
+		switch (mode)
+		{
+		case WindowMode::Default:
+		{
+			break;
+		}
+		case WindowMode::Maximized:
+		{
+			int area_x, area_y, area_width, area_height;
+			glfwGetMonitorWorkarea(monitor, &area_x, &area_y, &area_width, &area_height);
+			m_Data.Width = area_width;
+			m_Data.Height = area_height;
+			glfwSetWindowPos(hWnd,
+				area_x,
+				area_y);
+			
+			glfwSetWindowSize(hWnd, m_Data.Width, m_Data.Height);
+			glfwMaximizeWindow(hWnd);
+			glfwShowWindow(hWnd);
+
+			break;
+		}
+		case WindowMode::Minimized:
+		{
+			glfwIconifyWindow(hWnd);
+			break;
+		}
+		case WindowMode::Fullscreen:
+		{
+			GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+			
+			glfwSetWindowMonitor(hWnd, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+			m_Context->SetFullscreen(true);
+			break;
+		}
+		}
+
+		m_Data.Mode = mode;
 	}
 
 

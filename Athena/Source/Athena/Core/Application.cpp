@@ -29,7 +29,8 @@ namespace Athena
 
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
 
-		Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
+		if (m_Window->GetWindowMode() != WindowMode::Default)
+			Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
 
 		if (appdesc.UseImGui)
 		{
@@ -78,16 +79,16 @@ namespace Athena
 					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
 				}
-			}
 
-			if (m_ImGuiLayer != nullptr)
-			{
-				m_ImGuiLayer->Begin();
+				if (m_ImGuiLayer != nullptr)
 				{
-					for (Ref<Layer> layer : m_LayerStack)
-						layer->OnImGuiRender();
+					m_ImGuiLayer->Begin();
+					{
+						for (Ref<Layer> layer : m_LayerStack)
+							layer->OnImGuiRender();
+					}
+					m_ImGuiLayer->End();
 				}
-				m_ImGuiLayer->End();
 			}
 
 			m_Window->OnUpdate();

@@ -11,7 +11,8 @@ namespace Athena
 	{
 		Default = 0,
 		Maximized = 1,
-		Fullscreen = 2
+		Minimized = 2,
+		Fullscreen = 3
 	};
 
 	struct WindowDescription
@@ -51,6 +52,9 @@ namespace Athena
 
 		inline void* GetNativeWindow() { return m_WindowHandle; }
 
+		void SetWindowMode(WindowMode mode);
+		inline WindowMode GetWindowMode() const { return m_Data.Mode; }
+
 	public:
 		struct WindowData
 		{
@@ -58,8 +62,9 @@ namespace Athena
 			uint32 Height = 720;
 			bool VSync = true;
 			String Title = "Athena App";
+			WindowMode Mode = WindowMode::Default;
 
-			WindowDescription::EventCallbackFn EventCallback;
+			WindowDescription::EventCallbackFn EventCallback = [](Event&) {};
 		};
 
 	private:

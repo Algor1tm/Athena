@@ -13,10 +13,7 @@
 #include "UI/Controllers.h"
 
 #include <ImGui/imgui.h>
-
-
-// TMP
-#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
+#include <ImGui/imgui_internal.h>
 
 
 namespace Athena
@@ -25,9 +22,12 @@ namespace Athena
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
           m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
-        m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/PlayIcon.png");
-        m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/SimulationIcon.png");
-        m_StopIcon = Texture2D::Create("Resources/Icons/Editor/StopIcon.png");
+        m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");
+        m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/SimulationIcon.png");
+        m_StopIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/StopIcon.png");
+        m_Logo = Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png");
+        m_CloseButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/CloseButton.png");
+        m_MinimizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MinimizeButton.png");
     }
 
     void EditorLayer::OnAttach()
@@ -116,7 +116,7 @@ namespace Athena
 
         // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
         // because it would be confusing to have two docking targets within each others.
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;;
         if (opt_fullscreen)
         {
             const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -145,6 +145,8 @@ namespace Athena
         // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
         if (!opt_padding)
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+
         ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
         if (!opt_padding)
             ImGui::PopStyleVar();
@@ -161,39 +163,7 @@ namespace Athena
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        if (ImGui::BeginMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::MenuItem("New", "Ctrl+N", false))
-                {
-                    NewScene();
-                }
-
-                if (ImGui::MenuItem("Open...", "Ctrl+O", false))
-                {
-                    OpenScene();
-                }
-
-                if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
-                {
-                    SaveSceneAs();
-                }
-
-                ImGui::Separator();
-                ImGui::Spacing();
-
-                if (ImGui::MenuItem("Close", NULL, false))
-                {
-                    dockSpaceOpen = false;
-                    Application::Get().Close();
-                }
-
-                ImGui::EndMenu();
-            }
-            ImGui::EndMenuBar();
-        }
-
+        MenuBar();
         m_HierarchyPanel.OnImGuiRender();
         if(m_ContentBrowserRendering)
             m_ContentBrowserPanel.OnImGuiRender();
@@ -332,26 +302,93 @@ namespace Athena
         ImGui::End();
         ImGui::PopStyleVar();
 
-        Toolbar();
 
         ImGui::End();
     }
 
-    void EditorLayer::Toolbar()
+    void EditorLayer::MenuBar()
     {
+        const ImVec2 framePadding = { 15, 1 };
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
         ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, framePadding);
 
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
 
-        ImGui::Begin("##Toolbar", nullptr, 
-            ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin("##Menubar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        float size = ImGui::GetWindowHeight() - 8.f;
+        float window_height = ImGui::GetWindowHeight();
+
+        ImGui::Image(m_Logo->GetRendererID(), { window_height, window_height }, { 0, 1 }, { 1, 0 });
+
+        ///////// Menu Buttons ////////////////
+        ImGui::SameLine();
+        ImVec2 buttonSize = { 0, window_height / 2.5f };
+        ImVec2 menuStart = ImGui::GetCursorPos();
+        ImVec2 popupPos = { menuStart.x , ImGui::GetWindowPos().y + menuStart.y };//{ buttonSize.x + popupPos.x, ImGui::GetWindowPos().y + (buttonSize.y + popupPos.y) };
+
+        const char* label = "File";
+        ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+        ImVec2 sizeFILE = { label_size.x + framePadding.x * 2.0f, buttonSize.y };
+        ImVec2 popupPosFILE = { popupPos.x, popupPos.y + sizeFILE.y };
+        if (ImGui::Button(label, sizeFILE))
         {
-            ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f));
+            ImGui::OpenPopup("File");
+        }
+
+        ImGui::SameLine();
+
+        label = "View";
+        label_size = ImGui::CalcTextSize(label, NULL, true);
+        ImVec2 sizeVIEW = { label_size.x + framePadding.x * 2.0f, buttonSize.y };
+        ImVec2 popupPosVIEW = { popupPosFILE.x + sizeFILE.x, popupPosFILE.y };
+        if (ImGui::Button(label, sizeVIEW))
+            ImGui::OpenPopup("View");
+
+        ImGui::PopStyleVar(4);
+
+        ImGui::SetNextWindowPos(popupPosFILE);
+        if (ImGui::BeginPopup("File"))
+        {
+            if (ImGui::MenuItem("New", "Ctrl+N", false))
+            {
+                NewScene();
+            }
+
+            if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+            {
+                OpenScene();
+            }
+
+            if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+            {
+                SaveSceneAs();
+            }
+
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::MenuItem("Close", NULL, false))
+            {
+                Application::Get().Close();
+            }
+            ImGui::EndPopup();
+        }
+
+        ImGui::SetNextWindowPos(popupPosVIEW);
+        if (ImGui::BeginPopup("View"))
+        {
+            ImGui::EndPopup();
+        }
+
+        ///////// Play Buttons ////////////////
+        ImGui::SameLine();
+        float size = window_height / 2.5f;
+        {
+            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f), window_height - size - 5.f });
             if (UI::DrawImageButton(m_SceneState != SceneState::Play ? m_PlayIcon : m_StopIcon, { size, size }))
             {
                 if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation)
@@ -362,7 +399,7 @@ namespace Athena
         }
         ImGui::SameLine();
         {
-            ImGui::SetCursorPosX(ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f) + size * 1.25f);
+            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f) + size * 1.25f, window_height - size - 5.f });
             if (UI::DrawImageButton(m_SceneState != SceneState::Simulation ? m_SimulationIcon : m_StopIcon, { size, size }))
             {
                 if (m_SceneState == SceneState::Edit)
@@ -372,8 +409,26 @@ namespace Athena
             }
         }
 
+        ///////// Window Buttons ////////////////
+        size = window_height / 1.7f;
+        ImGui::SameLine();
+        {
+            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - size - 10.f, 0.f });
+            if (ImGui::ImageButton(m_CloseButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
+            {
+                Application::Get().Close();
+            }
+        }
+        ImGui::SameLine();
+        {
+            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - 2 * size - 10.f, 0.f });
+            if (ImGui::ImageButton(m_MinimizeButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
+            {
+                Application::Get().GetWindow().SetWindowMode(WindowMode::Minimized);;
+            }
+        }
+
         ImGui::End();
-        ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(3);
     }
 

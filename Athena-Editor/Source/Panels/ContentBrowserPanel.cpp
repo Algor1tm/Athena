@@ -11,9 +11,9 @@ namespace Athena
 {
 	ContentBrowserPanel::ContentBrowserPanel()
 	{
-		m_FolderIcon = Texture2D::Create("Resources/Icons/Editor/FolderIcon.png");
-		m_FileIcon = Texture2D::Create("Resources/Icons/Editor/FileIcon.png");
-		m_BackButtonIcon = Texture2D::Create("Resources/Icons/Editor/BackButtonIcon.png");
+		m_FolderIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FolderIcon.png");
+		m_FileIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FileIcon.png");
+		m_BackButtonIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/BackButtonIcon.png");
 
 		m_CurrentDirectory = m_AssetDirectory;
 	}

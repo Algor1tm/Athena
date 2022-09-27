@@ -33,7 +33,7 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
-		void Toolbar();
+		void MenuBar();
 		void RenderOverlay();
 
 		Entity GetEntityByCurrentMousePosition();
@@ -80,5 +80,8 @@ namespace Athena
 		Ref<Texture2D> m_PlayIcon;
 		Ref<Texture2D> m_StopIcon;
 		Ref<Texture2D> m_SimulationIcon;
+		Ref<Texture2D> m_Logo;
+		Ref<Texture2D> m_CloseButton;
+		Ref<Texture2D> m_MinimizeButton;
 	};
 }

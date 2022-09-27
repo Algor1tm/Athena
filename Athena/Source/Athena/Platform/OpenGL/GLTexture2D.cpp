@@ -31,7 +31,7 @@ namespace Athena
 		unsigned char* data;
 		data = stbi_load(path.string().data(), &width, &height, &channels, 0);
 
-		if (data) 
+		if (data)
 		{
 			m_Width = width;
 			m_Height = height;

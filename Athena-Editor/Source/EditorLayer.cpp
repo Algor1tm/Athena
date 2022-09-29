@@ -28,6 +28,8 @@ namespace Athena
         m_Logo = Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png");
         m_CloseButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/CloseButton.png");
         m_MinimizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MinimizeButton.png");
+        m_RestoreDownButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/RestoreDownButton.png");
+        m_MaximizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MaximizeButton.png");
     }
 
     void EditorLayer::OnAttach()
@@ -328,7 +330,7 @@ namespace Athena
         ImGui::SameLine();
         ImVec2 buttonSize = { 0, window_height / 2.5f };
         ImVec2 menuStart = ImGui::GetCursorPos();
-        ImVec2 popupPos = { menuStart.x , ImGui::GetWindowPos().y + menuStart.y };//{ buttonSize.x + popupPos.x, ImGui::GetWindowPos().y + (buttonSize.y + popupPos.y) };
+        ImVec2 popupPos = { ImGui::GetWindowPos().x + menuStart.x , ImGui::GetWindowPos().y + menuStart.y };
 
         const char* label = "File";
         ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
@@ -422,6 +424,27 @@ namespace Athena
         ImGui::SameLine();
         {
             ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - 2 * size - 10.f, 0.f });
+            auto mode = Application::Get().GetWindow().GetWindowMode();
+            if (mode != WindowMode::Default)
+            {
+                if (ImGui::ImageButton(m_RestoreDownButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
+                {
+                    Application::Get().GetWindow().SetWindowMode(WindowMode::Default);;
+                }
+            }
+            else
+            {
+                if (ImGui::ImageButton(m_MaximizeButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
+                {
+                    Application::Get().GetWindow().SetWindowMode(WindowMode::Maximized);;
+                }
+            }
+
+        }
+        ImGui::SameLine();
+        {
+            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - 3 * size - 10.f, 0.f });
+
             if (ImGui::ImageButton(m_MinimizeButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
             {
                 Application::Get().GetWindow().SetWindowMode(WindowMode::Minimized);;

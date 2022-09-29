@@ -14,8 +14,6 @@ namespace Athena
 		D3D11Texture2D(const Filepath& path);
 		virtual ~D3D11Texture2D();
 
-		virtual void* GetRendererID() const { return m_ShaderResourceView.Get(); }
-
 		virtual inline uint32 GetWidth() const override { return m_Width; }
 		virtual inline uint32 GetHeight() const override { return m_Height; }
 

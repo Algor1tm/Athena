@@ -27,6 +27,8 @@ namespace Athena
 
 		hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_Texture2D.Get(), nullptr, m_ShaderResourceView.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
+
+		m_RendererID = (uint64)m_ShaderResourceView.Get();
 	}
 
 	D3D11Texture2D::D3D11Texture2D(const Filepath& path)
@@ -79,6 +81,8 @@ namespace Athena
 
 			hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_Texture2D.Get(), nullptr, m_ShaderResourceView.GetAddressOf());
 			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
+
+			m_RendererID = (uint64)m_ShaderResourceView.Get();
 
 			stbi_image_free(data);
 		}

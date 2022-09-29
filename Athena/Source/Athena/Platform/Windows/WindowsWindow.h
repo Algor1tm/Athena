@@ -66,6 +66,24 @@ namespace Athena
 			data.EventCallback(event);
 			return 0;
 		}
+		case WM_SYSCOMMAND:
+		{
+			Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+			switch (wParam)
+			{
+			case SC_MAXIMIZE:
+				data.Mode = WindowMode::Maximized;
+				break;
+			case SC_MINIMIZE:
+				data.Mode = WindowMode::Minimized;
+				break;
+			case SC_RESTORE:
+				data.Mode = WindowMode::Default;
+				break;
+			}
+			break;
+		}
 			//------------------KEYBOARD------------------------
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
@@ -187,6 +205,7 @@ namespace Athena
 		windowData.Height = desc.Height;
 		windowData.VSync = desc.VSync;
 		windowData.Title = desc.Title;
+		windowData.Mode = desc.Mode;
 		windowData.EventCallback = desc.EventCallback;
 
 		window->m_Data = windowData;
@@ -259,6 +278,7 @@ namespace Athena
 		window->m_Context = GraphicsContext::Create(window->m_WindowHandle);
 		window->SetVSync(window->m_Data.VSync);
 
+		window->m_Data.Mode = WindowMode::Default;
 		window->SetWindowMode(desc.Mode);
 
 		if (desc.Mode == WindowMode::Maximized)
@@ -319,8 +339,8 @@ namespace Athena
 			m_Context->SetFullscreen(false);
 			SetWindowPos(hWnd, 0,
 				100, 100,
-				m_Data.Width * 3 / 2,
-				m_Data.Height * 3 / 2,
+				m_Data.Width * 3 / 4,
+				m_Data.Height * 3 / 4,
 				0);
 		}
 
@@ -343,10 +363,6 @@ namespace Athena
 		}
 		case WindowMode::Fullscreen:
 		{
-			if (currentMode == WindowMode::Fullscreen)
-				m_Context->SetFullscreen(true);
-			ShowWindow(hWnd, SW_SHOWDEFAULT);
-
 			WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
 
 			DWORD dwStyle = GetWindowLong(hWnd, GWL_STYLE);

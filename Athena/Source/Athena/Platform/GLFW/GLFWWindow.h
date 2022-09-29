@@ -41,6 +41,24 @@ namespace Athena
 				data.EventCallback(event);
 			});
 
+		glfwSetWindowIconifyCallback(windowHandle, [](GLFWwindow* window, int iconified)
+			{
+				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				if (iconified)
+					data.Mode = WindowMode::Minimized;
+				else
+					data.Mode = WindowMode::Default;
+			});
+
+		glfwSetWindowMaximizeCallback(windowHandle, [](GLFWwindow* window, int maximized)
+			{
+				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				if (maximized)
+					data.Mode = WindowMode::Minimized;
+				else
+					data.Mode = WindowMode::Default;
+			});
+
 		glfwSetKeyCallback(windowHandle, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
@@ -208,7 +226,7 @@ namespace Athena
 		{
 			m_Context->SetFullscreen(false);
 			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-			glfwSetWindowMonitor(hWnd, nullptr, 100, 100, m_Data.Width * 3 / 2, m_Data.Width * 3 / 2, mode->refreshRate);
+			glfwSetWindowMonitor(hWnd, nullptr, 100, 100, m_Data.Width * 3 / 4, m_Data.Width * 3 / 4, mode->refreshRate);
 		}
 
 		switch (mode)

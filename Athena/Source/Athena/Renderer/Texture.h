@@ -16,13 +16,16 @@ namespace Athena
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
 
-		virtual void* GetRendererID() const = 0;
+		inline void* GetRendererID() const { return (void*)m_RendererID; };
 
 		virtual void SetData(const void* data, uint32 size) = 0;
 		virtual void Bind(uint32 slot = 0) const = 0;
 
 		virtual bool IsLoaded() const = 0;
 		virtual const Filepath& GetFilepath() const = 0;
+
+	protected:
+		uint64 m_RendererID = 0;
 	};
 
 

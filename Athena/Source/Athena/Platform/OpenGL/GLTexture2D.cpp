@@ -12,14 +12,15 @@ namespace Athena
 		m_InternalFormat = GL_RGBA8;
 		m_DataFormat = GL_RGBA;
 
-		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-		glTextureStorage2D(m_RendererID, 1, m_InternalFormat, m_Width, m_Height);
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_GLRendererID);
+		m_RendererID = m_GLRendererID;
+		glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);
 
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 
 	GLTexture2D::GLTexture2D(const Filepath& path)
@@ -54,16 +55,17 @@ namespace Athena
 
 			ATN_CORE_ASSERT(m_InternalFormat * m_DataFormat, "Texture format not supported!");
 
-			glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-			glTextureStorage2D(m_RendererID, 1, internalFormat, m_Width, m_Height);
+			glCreateTextures(GL_TEXTURE_2D, 1, &m_GLRendererID);
+			m_RendererID = m_GLRendererID;
+			glTextureStorage2D(m_GLRendererID, 1, internalFormat, m_Width, m_Height);
 
-			glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-			glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
+			glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
 
 			stbi_image_free(data);
 		}
@@ -75,12 +77,12 @@ namespace Athena
 
 	GLTexture2D::~GLTexture2D()
 	{
-		glDeleteTextures(1, &m_RendererID);
+		glDeleteTextures(1, &m_GLRendererID);
 	}
 
 	void GLTexture2D::Bind(uint32 slot) const
 	{
-		glBindTextureUnit(slot, m_RendererID);
+		glBindTextureUnit(slot, m_GLRendererID);
 	}
 
 	void GLTexture2D::SetData(const void* data, uint32 size)
@@ -88,6 +90,6 @@ namespace Athena
 		uint32 bpp = m_DataFormat == GL_RGBA ? 4 : 3;
 		ATN_CORE_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
 
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
+		glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
 	}
 }

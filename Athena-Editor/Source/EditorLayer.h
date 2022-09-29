@@ -83,5 +83,7 @@ namespace Athena
 		Ref<Texture2D> m_Logo;
 		Ref<Texture2D> m_CloseButton;
 		Ref<Texture2D> m_MinimizeButton;
+		Ref<Texture2D> m_RestoreDownButton;
+		Ref<Texture2D> m_MaximizeButton;
 	};
 }

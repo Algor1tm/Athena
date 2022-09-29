@@ -14,8 +14,6 @@ namespace Athena
 		GLTexture2D(const Filepath& path);
 		virtual ~GLTexture2D();
 
-		virtual void* GetRendererID() const { return reinterpret_cast<void*>((uint64)m_RendererID); }
-
 		virtual inline uint32 GetWidth() const override { return m_Width; }
 		virtual inline uint32 GetHeight() const override { return m_Height; }
 
@@ -31,6 +29,6 @@ namespace Athena
 		uint32 m_Width = 0, m_Height = 0;
 		bool m_IsLoaded = false;
 		GLenum m_InternalFormat = 0, m_DataFormat = 0;
-		uint32 m_RendererID = 0;
+		uint32 m_GLRendererID;
 	};
 }

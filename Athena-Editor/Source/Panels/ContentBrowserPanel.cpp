@@ -25,7 +25,7 @@ namespace Athena
 		if (m_CurrentDirectory != m_AssetDirectory)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-			if (UI::DrawImageButton(m_BackButtonIcon, m_BackButtonSize))
+			if (ImGui::ImageButton(m_BackButtonIcon->GetRendererID(), { m_BackButtonSize.x, m_BackButtonSize.y }, {0, 1}, {1, 0}))
 			{
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			}
@@ -44,7 +44,7 @@ namespace Athena
 
 			ImGui::PushID(filename.data());
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-			UI::DrawImageButton(dirEntry.is_directory() ? m_FolderIcon : m_FileIcon, m_ItemSize);
+			ImGui::ImageButton(dirEntry.is_directory() ? m_FolderIcon->GetRendererID() : m_FileIcon->GetRendererID(), { m_ItemSize.x, m_ItemSize.y }, { 0, 1 }, { 1, 0 });
 
 			if(dirEntry.is_directory() && ImGui::IsItemClicked())
 			{

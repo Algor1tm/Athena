@@ -1,4 +1,4 @@
-Scene: Scene Name
+Scene: 2DExample
 Entities:
   - IDComponent:
       ID: 10088183424363624464

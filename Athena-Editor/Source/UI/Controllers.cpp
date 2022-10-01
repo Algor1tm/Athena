@@ -73,8 +73,17 @@ namespace Athena::UI
 		ImGui::PopID();
 	}
 
-	bool DrawImageButton(const Ref<Texture2D>& texture, const Vector2& size)
+	bool TextInput(const String& label, String& destination)
 	{
-		return ImGui::ImageButton(reinterpret_cast<ImTextureID>((uint64)texture->GetRendererID()), { size.x, size.y }, { 0.f, 1.f }, { 1.f, 0.f }, -1);
+		static char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strcpy_s(buffer, label.c_str());
+		if (ImGui::InputText("##TextInput", buffer, sizeof(buffer)))
+		{
+			destination = String(buffer);
+			return true;
+		}
+
+		return false;
 	}
 }

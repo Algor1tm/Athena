@@ -9,12 +9,12 @@ namespace Athena
 	{
 		enum Button : uint16
 		{
-			XButton1 = 0x0020,
-			XButton2 = 0x0040,
+			XButton1 = 0x05,
+			XButton2 = 0x06,
 
-			Left = 0x0001,
-			Right = 0x0002,
-			Middle = 0x0010
+			Left = 0x01,
+			Right = 0x02,
+			Middle = 0x04
 		};
 	}
 }

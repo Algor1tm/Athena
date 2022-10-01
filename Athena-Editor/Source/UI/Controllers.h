@@ -13,7 +13,7 @@ namespace Athena::UI
 {
 	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth = 70.f);
 	
-	bool DrawImageButton(const Ref<Texture2D>& texture, const Vector2& size);
+	bool TextInput(const String& label, String& destination);
 
 	template <typename Controller>
 	bool DrawController(std::string_view label, float offset, Controller controller)

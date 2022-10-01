@@ -14,6 +14,7 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "Panels/MenuBarPanel.h"
 
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -33,7 +34,7 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
-		void MenuBar();
+		void InitializePanels();
 		void RenderOverlay();
 
 		Entity GetEntityByCurrentMousePosition();
@@ -66,6 +67,7 @@ namespace Athena
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 		bool m_ShowColliders = false;
 
+		MenuBarPanel m_MenuBarPanel;
 		SceneHierarchyPanel m_HierarchyPanel;
 		ContentBrowserPanel m_ContentBrowserPanel;
 		bool m_ContentBrowserRendering = true;
@@ -80,10 +82,5 @@ namespace Athena
 		Ref<Texture2D> m_PlayIcon;
 		Ref<Texture2D> m_StopIcon;
 		Ref<Texture2D> m_SimulationIcon;
-		Ref<Texture2D> m_Logo;
-		Ref<Texture2D> m_CloseButton;
-		Ref<Texture2D> m_MinimizeButton;
-		Ref<Texture2D> m_RestoreDownButton;
-		Ref<Texture2D> m_MaximizeButton;
 	};
 }

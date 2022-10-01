@@ -98,11 +98,7 @@ namespace Athena
 			{
 				String& tag = tagComponent.Tag;
 
-				static char buffer[256];
-				memset(buffer, 0, sizeof(buffer));
-				strcpy_s(buffer, tag.c_str());
-				if (ImGui::InputText("##Tag", buffer, sizeof(buffer)))
-					tag = String(buffer);
+				UI::TextInput(tag, tag);
 			});
 		
 		DrawComponent<TransformComponent>(entity, "Transform", false, [](TransformComponent& transform)

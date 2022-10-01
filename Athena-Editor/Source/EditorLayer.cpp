@@ -20,16 +20,13 @@ namespace Athena
 {
     EditorLayer::EditorLayer()
         : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
-          m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
+        m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
         m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");
         m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/SimulationIcon.png");
         m_StopIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/StopIcon.png");
-        m_Logo = Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png");
-        m_CloseButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/CloseButton.png");
-        m_MinimizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MinimizeButton.png");
-        m_RestoreDownButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/RestoreDownButton.png");
-        m_MaximizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MaximizeButton.png");
+
+        InitializePanels();
     }
 
     void EditorLayer::OnAttach()
@@ -165,7 +162,8 @@ namespace Athena
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        MenuBar();
+        //MenuBar();
+        m_MenuBarPanel.OnImGuiRender();
         m_HierarchyPanel.OnImGuiRender();
         if(m_ContentBrowserRendering)
             m_ContentBrowserPanel.OnImGuiRender();
@@ -308,151 +306,62 @@ namespace Athena
         ImGui::End();
     }
 
-    void EditorLayer::MenuBar()
+    void EditorLayer::InitializePanels()
     {
-        const ImVec2 framePadding = { 15, 1 };
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, framePadding);
-
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
-
-        ImGui::Begin("##Menubar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-
-        float window_height = ImGui::GetWindowHeight();
-
-        ImGui::Image(m_Logo->GetRendererID(), { window_height, window_height }, { 0, 1 }, { 1, 0 });
-
-        ///////// Menu Buttons ////////////////
-        ImGui::SameLine();
-        ImVec2 buttonSize = { 0, window_height / 2.5f };
-        ImVec2 menuStart = ImGui::GetCursorPos();
-        ImVec2 popupPos = { ImGui::GetWindowPos().x + menuStart.x , ImGui::GetWindowPos().y + menuStart.y };
-
-        const char* label = "File";
-        ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
-        ImVec2 sizeFILE = { label_size.x + framePadding.x * 2.0f, buttonSize.y };
-        ImVec2 popupPosFILE = { popupPos.x, popupPos.y + sizeFILE.y };
-        if (ImGui::Button(label, sizeFILE))
-        {
-            ImGui::OpenPopup("File");
-        }
-
-        ImGui::SameLine();
-
-        label = "View";
-        label_size = ImGui::CalcTextSize(label, NULL, true);
-        ImVec2 sizeVIEW = { label_size.x + framePadding.x * 2.0f, buttonSize.y };
-        ImVec2 popupPosVIEW = { popupPosFILE.x + sizeFILE.x, popupPosFILE.y };
-        if (ImGui::Button(label, sizeVIEW))
-            ImGui::OpenPopup("View");
-
-        ImGui::PopStyleVar(4);
-
-        ImGui::SetNextWindowPos(popupPosFILE);
-        if (ImGui::BeginPopup("File"))
-        {
-            if (ImGui::MenuItem("New", "Ctrl+N", false))
+        m_MenuBarPanel.SetLogoIcon(Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png"));
+        m_MenuBarPanel.AddMenuItem("File", [this]()
             {
-                NewScene();
-            }
+                if (ImGui::MenuItem("New", "Ctrl+N", false))
+                {
+                    NewScene();
+                }
 
-            if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+                if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+                {
+                    OpenScene();
+                }
+
+                if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+                {
+                    SaveSceneAs();
+                }
+
+                ImGui::Separator();
+                ImGui::Spacing();
+
+                if (ImGui::MenuItem("Close", NULL, false))
+                {
+                    Application::Get().Close();
+                }
+            });
+
+        m_MenuBarPanel.AddMenuItem("View", [this]() 
             {
-                OpenScene();
-            }
+                if (ImGui::MenuItem("New", "Ctrl+N", false))
+                {
+                    NewScene();
+                }
+            });
 
-            if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+        m_MenuBarPanel.AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
             {
-                SaveSceneAs();
-            }
+                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
 
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            if (ImGui::MenuItem("Close", NULL, false))
-            {
-                Application::Get().Close();
-            }
-            ImGui::EndPopup();
-        }
-
-        ImGui::SetNextWindowPos(popupPosVIEW);
-        if (ImGui::BeginPopup("View"))
-        {
-            ImGui::EndPopup();
-        }
-
-        ///////// Play Buttons ////////////////
-        ImGui::SameLine();
-        float size = window_height / 2.5f;
-        {
-            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f), window_height - size - 5.f });
-            if (UI::DrawImageButton(m_SceneState != SceneState::Play ? m_PlayIcon : m_StopIcon, { size, size }))
-            {
                 if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation)
                     OnScenePlay();
                 else if (m_SceneState == SceneState::Play)
                     OnSceneStop();
-            }
-        }
-        ImGui::SameLine();
-        {
-            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x * 0.5f - (size * 0.5f) + size * 1.25f, window_height - size - 5.f });
-            if (UI::DrawImageButton(m_SceneState != SceneState::Simulation ? m_SimulationIcon : m_StopIcon, { size, size }))
+            });
+
+        m_MenuBarPanel.AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
             {
+                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
+
                 if (m_SceneState == SceneState::Edit)
                     OnSceneSimulate();
                 else if (m_SceneState == SceneState::Simulation)
                     OnSceneStop();
-            }
-        }
-
-        ///////// Window Buttons ////////////////
-        size = window_height / 1.7f;
-        ImGui::SameLine();
-        {
-            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - size - 10.f, 0.f });
-            if (ImGui::ImageButton(m_CloseButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
-            {
-                Application::Get().Close();
-            }
-        }
-        ImGui::SameLine();
-        {
-            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - 2 * size - 10.f, 0.f });
-            auto mode = Application::Get().GetWindow().GetWindowMode();
-            if (mode != WindowMode::Default)
-            {
-                if (ImGui::ImageButton(m_RestoreDownButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
-                {
-                    Application::Get().GetWindow().SetWindowMode(WindowMode::Default);;
-                }
-            }
-            else
-            {
-                if (ImGui::ImageButton(m_MaximizeButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
-                {
-                    Application::Get().GetWindow().SetWindowMode(WindowMode::Maximized);;
-                }
-            }
-
-        }
-        ImGui::SameLine();
-        {
-            ImGui::SetCursorPos({ ImGui::GetContentRegionMax().x - 3 * size - 10.f, 0.f });
-
-            if (ImGui::ImageButton(m_MinimizeButton->GetRendererID(), { size, size * 3.f / 4.f }, { 0, 1 }, { 1, 0 }))
-            {
-                Application::Get().GetWindow().SetWindowMode(WindowMode::Minimized);;
-            }
-        }
-
-        ImGui::End();
-        ImGui::PopStyleColor(3);
+            });
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
@@ -644,10 +553,14 @@ namespace Athena
             auto& window = Application::Get().GetWindow();
             WindowMode currentMode = window.GetWindowMode();
             if (currentMode == WindowMode::Fullscreen)
+            {
                 window.SetWindowMode(WindowMode::Maximized);
+                m_MenuBarPanel.UseWindowDefaultButtons(false);
+            }
             else
             {
                 window.SetWindowMode(WindowMode::Fullscreen);
+                m_MenuBarPanel.UseWindowDefaultButtons(true);
             }
             break;
         }
@@ -735,6 +648,7 @@ namespace Athena
             m_EditorScene = newScene;
             m_ActiveScene = newScene;
 
+            m_MenuBarPanel.SetSceneRef(m_EditorScene);
             m_HierarchyPanel.SetContext(m_ActiveScene);
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }

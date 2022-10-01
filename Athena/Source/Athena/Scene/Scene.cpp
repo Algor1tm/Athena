@@ -37,7 +37,8 @@ namespace Athena
 		return (b2BodyType)0;
 	}
 
-	Scene::Scene()
+	Scene::Scene(const String& name)
+		: m_Name(name)
 	{
 
 	}

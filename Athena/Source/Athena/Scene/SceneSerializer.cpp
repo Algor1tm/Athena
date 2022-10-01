@@ -132,7 +132,7 @@ namespace Athena
 	{
 		YAML::Emitter out;
 		out << YAML::BeginMap;
-		out << YAML::Key << "Scene" << YAML::Value << "Scene Name";
+		out << YAML::Key << "Scene" << YAML::Value << m_Scene->GetSceneName();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
 			{
@@ -176,6 +176,7 @@ namespace Athena
 			return false;
 
 		String sceneName = data["Scene"].as<String>();
+		m_Scene->SetSceneName(sceneName);
 
 		const auto& entities = data["Entities"];
 		if (entities)

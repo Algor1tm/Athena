@@ -36,7 +36,7 @@ namespace Athena
 		friend class SceneHierarchyPanel;
 		friend class SceneSerializer;
 
-		Scene();
+		Scene(const String& name = "UnNamed");
 		~Scene();
 
 		Entity CreateEntity(const String& name, UUID id);
@@ -51,6 +51,9 @@ namespace Athena
 		void OnSimulationStart();
 
 		void OnViewportResize(uint32 width, uint32 height);
+
+		void SetSceneName(const String& name) { m_Name = name; }
+		const String& GetSceneName() const { return m_Name; };
 
 		Entity GetPrimaryCameraEntity();
 
@@ -76,5 +79,6 @@ namespace Athena
 		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 		std::unique_ptr<b2World> m_PhysicsWorld;
+		String m_Name;
 	};
 }

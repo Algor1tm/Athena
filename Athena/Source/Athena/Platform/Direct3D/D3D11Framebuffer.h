@@ -7,6 +7,14 @@
 
 namespace Athena
 {
+	struct FramebufferAttachment
+	{
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> RenderTargetTexture = nullptr;
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView = nullptr;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ShaderResourceView = nullptr;
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> ReadableTexture = nullptr;
+	};
+
 	class ATHENA_API D3D11Framebuffer: public Framebuffer
 	{
 	public:
@@ -34,11 +42,7 @@ namespace Athena
 		FramebufferDescription m_Description;
 
 		std::vector<FramebufferTextureDescription> m_RenderTargetsDescriptions;
-
-		std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> m_RenderTargetsTextures;
-		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> m_RenderTargets;
-		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_ShaderResourceViews;
-		std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> m_ReadableTextures;
+		std::vector<FramebufferAttachment> m_Attachments;
 
 		SIZE_T m_ClearColorTargetIndex;
 

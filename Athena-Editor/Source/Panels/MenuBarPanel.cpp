@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "MenuBarPanel.h"
 
 #include "Athena/Core/Application.h"
@@ -108,6 +107,7 @@ namespace Athena
             }
         }
 
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 5.f, 5.f });
         if (ImGui::BeginPopup("SceneName"))
         {
             String newName;
@@ -115,7 +115,7 @@ namespace Athena
                 m_Scene->SetSceneName(newName);
             ImGui::EndPopup();
         }
-
+        ImGui::PopStyleVar();
 
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));

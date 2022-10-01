@@ -47,20 +47,17 @@ namespace Athena
 	{
 		if (!m_RenderTargetsDescriptions.empty())
 		{
-			m_RenderTargetsTextures.resize(m_RenderTargetsDescriptions.size());
-			m_RenderTargets.resize(m_RenderTargetsDescriptions.size());
-			m_ShaderResourceViews.resize(m_RenderTargetsDescriptions.size());
-			m_ReadableTextures.resize(m_RenderTargetsDescriptions.size());
+			m_Attachments.resize(m_RenderTargetsDescriptions.size());
 			//Attachments
-			for (SIZE_T i = 0; i < m_RenderTargets.size(); ++i)
+			for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
 			{
 				switch (m_RenderTargetsDescriptions[i].TextureFormat)
 				{
 				case FramebufferTextureFormat::RGBA8:
-					AttachColorTexture(m_RenderTargets[i].GetAddressOf(), DXGI_FORMAT_R8G8B8A8_UNORM, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(m_Attachments[i].RenderTargetView.GetAddressOf(), DXGI_FORMAT_R8G8B8A8_UNORM, m_Description.Width, m_Description.Height, i);
 					break;
 				case FramebufferTextureFormat::RED_INTEGER:
-					AttachColorTexture(m_RenderTargets[i].GetAddressOf(), DXGI_FORMAT_R32_SINT, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(m_Attachments[i].RenderTargetView.GetAddressOf(), DXGI_FORMAT_R32_SINT, m_Description.Width, m_Description.Height, i);
 				}
 			}
 		}
@@ -93,8 +90,8 @@ namespace Athena
 
 	void* D3D11Framebuffer::GetColorAttachmentRendererID(SIZE_T index) const
 	{ 
-		ATN_CORE_ASSERT(index < m_ShaderResourceViews.size(), "Subscript out of range!");
-		return m_ShaderResourceViews[index].Get();
+		ATN_CORE_ASSERT(index < m_Attachments.size(), "Subscript out of range!");
+		return m_Attachments[index].ShaderResourceView.Get();
 	}
 
 	int D3D11Framebuffer::ReadPixel(SIZE_T attachmentIndex, int x, int y)
@@ -102,35 +99,35 @@ namespace Athena
 		D3D11_BOX srcBox;
 		srcBox.left = x;
 		srcBox.right = srcBox.left + 1;
-		srcBox.top = m_Description.Height - y;	 // Reverse y
+		srcBox.top = m_Description.Height - y; // Reverse y
 		srcBox.bottom = srcBox.top - 1;
 		srcBox.front = 0;
 		srcBox.back = 1;
 
-		D3D11CurrentContext::DeviceContext->CopySubresourceRegion(m_ReadableTextures[attachmentIndex].Get(), 0, 0, 0, 0, m_RenderTargetsTextures[attachmentIndex].Get(), 0, &srcBox);
+		D3D11CurrentContext::DeviceContext->CopySubresourceRegion(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0, 0, 0, 0, m_Attachments[attachmentIndex].RenderTargetTexture.Get(), 0, &srcBox);
 
 		D3D11_MAPPED_SUBRESOURCE msr;
-		D3D11CurrentContext::DeviceContext->Map(m_ReadableTextures[attachmentIndex].Get(), 0, D3D11_MAP_READ, 0, &msr);
+		D3D11CurrentContext::DeviceContext->Map(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0, D3D11_MAP_READ, 0, &msr);
 		void* pixel = msr.pData;
-		D3D11CurrentContext::DeviceContext->Unmap(m_ReadableTextures[attachmentIndex].Get(), 0);
+		D3D11CurrentContext::DeviceContext->Unmap(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0);
 
 		return *reinterpret_cast<int*>(pixel);
 	}
 
 	void D3D11Framebuffer::ClearAttachment(SIZE_T attachmentIndex, int value)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_RenderTargets.size(), "Subscript out of range!");
+		ATN_CORE_ASSERT(attachmentIndex < m_Attachments.size(), "Subscript out of range!");
 
 		float color[4] = { (float)value, (float)value, (float)value, (float)value };
-		D3D11CurrentContext::DeviceContext->ClearRenderTargetView(m_RenderTargets[attachmentIndex].Get(), color);
+		D3D11CurrentContext::DeviceContext->ClearRenderTargetView(m_Attachments[attachmentIndex].RenderTargetView.Get(), color);
 	}
 
 	void D3D11Framebuffer::ClearColorAndDepth(const LinearColor& color)
 	{
-		std::vector<ID3D11RenderTargetView*> views(m_RenderTargets.size());
-		for (SIZE_T i = 0; i < m_RenderTargets.size(); ++i)
+		std::vector<ID3D11RenderTargetView*> views(m_Attachments.size());
+		for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
 		{
-			views[i] = m_RenderTargets[i].Get();
+			views[i] = m_Attachments[i].RenderTargetView.Get();
 		}
 
 		D3D11_VIEWPORT viewport;
@@ -145,7 +142,7 @@ namespace Athena
 
 		D3D11CurrentContext::DeviceContext->OMSetRenderTargets((UINT)views.size(), views.data(), m_DepthStencil.Get());
 
-		D3D11CurrentContext::DeviceContext->ClearRenderTargetView(m_RenderTargets[m_ClearColorTargetIndex].Get(), color.Data());
+		D3D11CurrentContext::DeviceContext->ClearRenderTargetView(m_Attachments[m_ClearColorTargetIndex].RenderTargetView.Get(), color.Data());
 		D3D11CurrentContext::DeviceContext->ClearDepthStencilView(m_DepthStencil.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 	}
 
@@ -153,9 +150,9 @@ namespace Athena
 	{
 		for (SIZE_T i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
 		{
-			m_RenderTargets[i]->Release();
-			m_RenderTargetsTextures[i]->Release();
-			m_ShaderResourceViews[i]->Release();
+			m_Attachments[i].RenderTargetView->Release();
+			m_Attachments[i].RenderTargetTexture->Release();
+			m_Attachments[i].ShaderResourceView->Release();
 		}
 
 		m_DepthStencil->Release();
@@ -176,13 +173,13 @@ namespace Athena
 		colorTextureDesc.CPUAccessFlags = 0;
 		colorTextureDesc.MiscFlags = 0;
 
-		HRESULT hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_RenderTargetsTextures[index].GetAddressOf());
+		HRESULT hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_Attachments[index].RenderTargetTexture.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create color texture!");
 
-		hr = D3D11CurrentContext::Device->CreateRenderTargetView(m_RenderTargetsTextures[index].Get(), nullptr, target);
+		hr = D3D11CurrentContext::Device->CreateRenderTargetView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, target);
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create color view!");
 
-		hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_RenderTargetsTextures[index].Get(), nullptr, m_ShaderResourceViews[index].GetAddressOf());
+		hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, m_Attachments[index].ShaderResourceView.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
 
 		if (!m_RenderTargetsDescriptions[index].BackBufferOutput)
@@ -192,7 +189,7 @@ namespace Athena
 			colorTextureDesc.Usage = D3D11_USAGE_STAGING;
 			colorTextureDesc.BindFlags = 0;
 			colorTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-			hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_ReadableTextures[index].GetAddressOf());
+			hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_Attachments[index].ReadableTexture.GetAddressOf());
 			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create readable texture!");
 		}
 	}

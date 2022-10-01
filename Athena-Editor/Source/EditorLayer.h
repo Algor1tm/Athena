@@ -15,8 +15,10 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/MenuBarPanel.h"
+#include "Panels/ProfilingPanel.h"
+#include "Panels/ViewportPanel.h"
 
-#include <ImGuizmo/ImGuizmo.h>
+#include "ImGuizmoLayer.h"
 
 
 namespace Athena
@@ -34,6 +36,7 @@ namespace Athena
 		void OnEvent(Event& event) override;
 
 	private:
+		void SelectEntity(Entity entity);
 		void InitializePanels();
 		void RenderOverlay();
 
@@ -53,30 +56,30 @@ namespace Athena
 		void OpenScene(const Filepath& path);
 
 	private:
-		bool m_ViewportFocused = true, m_ViewportHovered = true;
-		Vector2u m_ViewportSize = { 0, 0 };
-		Vector2 m_ViewportBounds[2] = {};
+		ImGuizmoLayer m_ImGuizmoLayer;
+
 		Ref<Framebuffer> m_Framebuffer;
 
-		Ref<Scene> m_ActiveScene;
-		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		Filepath m_TemporaryEditorScenePath;
-		Filepath m_CurrentScenePath;
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
-		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 		bool m_ShowColliders = false;
 
+		ViewportPanel m_MainViewport;
+		ProfilingPanel m_ProfilingPanel;
 		MenuBarPanel m_MenuBarPanel;
 		SceneHierarchyPanel m_HierarchyPanel;
 		ContentBrowserPanel m_ContentBrowserPanel;
 		bool m_ContentBrowserRendering = true;
-		Time m_FrameTime;
 
 		enum class SceneState
 		{
 			Edit = 0, Play = 1, Simulation = 2
 		};
+
+		Ref<Scene> m_ActiveScene;
+		Ref<Scene> m_EditorScene, m_RuntimeScene;
+		Filepath m_TemporaryEditorScenePath;
+		Filepath m_CurrentScenePath;
 
 		SceneState m_SceneState = SceneState::Edit;
 		Ref<Texture2D> m_PlayIcon;

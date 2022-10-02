@@ -10,7 +10,7 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
-#include "UI/Controllers.h"
+#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 
@@ -34,6 +34,11 @@ namespace Athena
         fbDesc.Height = 720;
         m_Framebuffer = Framebuffer::Create(fbDesc);
 
+
+        Application::Get().GetImGuiLayer()->BlockEvents(false);
+        InitializePanels();
+
+
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
 
@@ -41,11 +46,7 @@ namespace Athena
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
         OpenScene("Assets/Scenes/PhysicsExample.atn");
 
-        m_HierarchyPanel.SetContext(m_EditorScene);
-
-        Application::Get().GetImGuiLayer()->BlockEvents(false);
-
-        InitializePanels();
+        m_SceneHierarchy->SetContext(m_EditorScene);
     }
 
     void EditorLayer::OnDetach()
@@ -55,7 +56,7 @@ namespace Athena
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        const auto& vpDesc = m_MainViewport.GetDescription();
+        const auto& vpDesc = m_MainViewport->GetDescription();
         const auto& framebufferDesc = m_Framebuffer->GetDescription();
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
@@ -107,74 +108,34 @@ namespace Athena
     void EditorLayer::OnImGuiRender()
     {
         static bool dockSpaceOpen = true;
+        static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        static bool opt_fullscreen = true;
-        static bool opt_padding = false;
-        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
 
-        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-        // because it would be confusing to have two docking targets within each others.
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;;
-        if (opt_fullscreen)
-        {
-            const ImGuiViewport* viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-            ImGui::SetNextWindowViewport(viewport->ID);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-        }
-        else
-        {
-            dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
-        }
-
-        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
-        // and handle the pass-thru hole, so we ask Begin() to not render a background.
-        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-            window_flags |= ImGuiWindowFlags_NoBackground;
-
-        // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-        // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-        // all active windows docked into it will lose their parent and become undocked.
-        // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-        // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-        if (!opt_padding)
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
         ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
-        if (!opt_padding)
-            ImGui::PopStyleVar();
+        ImGui::PopStyleVar(3);
 
-        if (opt_fullscreen)
-            ImGui::PopStyleVar(2);
-
-        //DockSpace
         ImGuiIO& io = ImGui::GetIO();
-        // Submit the DockSpace
         if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
         {
             ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         }
 
 
-        SelectEntity(m_HierarchyPanel.GetSelectedEntity());
-
-        m_MainViewport.OnImGuiRender();
-        m_ProfilingPanel.OnImGuiRender();
-        m_MenuBarPanel.OnImGuiRender();
-        m_HierarchyPanel.OnImGuiRender();
-        if(m_ContentBrowserRendering)
-            m_ContentBrowserPanel.OnImGuiRender();
+        SelectEntity(m_SceneHierarchy->GetSelectedEntity());
+        m_PanelManager.OnImGuiRender();
 
         ImGui::Begin("Editor Settings");
-
         UI::DrawController("Show Physics Colliders", 0, [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
-
         ImGui::End();
 
         ImGui::End();
@@ -183,48 +144,48 @@ namespace Athena
     void EditorLayer::SelectEntity(Entity entity)
     {
         m_ImGuizmoLayer.SetActiveEntity(entity);
-        m_HierarchyPanel.SetSelectedEntity(entity);
+        m_SceneHierarchy->SetSelectedEntity(entity);
         m_SelectedEntity = entity;
     }
 
     void EditorLayer::InitializePanels()
     {
-        m_MenuBarPanel.SetLogoIcon(Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png"));
-        m_MenuBarPanel.AddMenuItem("File", [this]()
+        m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
+        m_MainMenuBar->SetLogoIcon(Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png"));
+        m_MainMenuBar->AddMenuItem("File", [this]()
             {
                 if (ImGui::MenuItem("New", "Ctrl+N", false))
-                {
                     NewScene();
-                }
 
                 if (ImGui::MenuItem("Open...", "Ctrl+O", false))
-                {
                     OpenScene();
-                }
 
                 if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
-                {
                     SaveSceneAs();
-                }
 
                 ImGui::Separator();
                 ImGui::Spacing();
 
-                if (ImGui::MenuItem("Close", NULL, false))
-                {
+                if (ImGui::MenuItem("Exit", NULL, false))
                     Application::Get().Close();
-                }
             });
 
-        m_MenuBarPanel.AddMenuItem("View", [this]() 
+        m_MainMenuBar->AddMenuItem("View", [this]()
             {
-                if (ImGui::MenuItem("New", "Ctrl+N", false))
-                {
-                    NewScene();
-                }
+                bool open = m_PanelManager.IsPanelOpen("SceneHierarchy");
+                if (ImGui::MenuItem("SceneHierarchy", NULL, open))
+                    m_PanelManager.RenderPanel("SceneHierarchy", !open);
+
+                open = m_PanelManager.IsPanelOpen("ContentBrowser");
+                if (ImGui::MenuItem("ContentBrowser", "Ctrl+Space", open))
+                    m_PanelManager.RenderPanel("ContentBrowser", !open);
+
+                open = m_PanelManager.IsPanelOpen("ProfilingPanel");
+                if (ImGui::MenuItem("ProfilingPanel", NULL, open))
+                    m_PanelManager.RenderPanel("ProfilingPanel", !open);
             });
 
-        m_MenuBarPanel.AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
+        m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
             {
                 currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
 
@@ -234,7 +195,7 @@ namespace Athena
                     OnSceneStop();
             });
 
-        m_MenuBarPanel.AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
+        m_MainMenuBar->AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
             {
                 currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
 
@@ -244,10 +205,14 @@ namespace Athena
                     OnSceneStop();
             });
 
+        m_PanelManager.AddPanel(m_MainMenuBar);
 
-        m_MainViewport.SetImGuizmoLayer(&m_ImGuizmoLayer);
-        m_MainViewport.SetFramebuffer(m_Framebuffer, 0);
-        m_MainViewport.SetDragDropCallback([this]()
+
+        m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
+
+        m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
+        m_MainViewport->SetFramebuffer(m_Framebuffer, 0);
+        m_MainViewport->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
@@ -274,11 +239,23 @@ namespace Athena
                     }
                 }
             });
+
+        m_PanelManager.AddPanel(m_MainViewport);
+
+
+        m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
+        m_PanelManager.AddPanel(m_SceneHierarchy);
+
+        auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser");
+        m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
+
+        auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
+        m_PanelManager.AddPanel(profiling);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-        const auto& vpDesc = m_MainViewport.GetDescription();
+        const auto& vpDesc = m_MainViewport->GetDescription();
 
         auto [mx, my] = ImGui::GetMousePos();
         mx -= vpDesc.Bounds[0].x;
@@ -356,7 +333,7 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
-        const auto& vpDesc = m_MainViewport.GetDescription();
+        const auto& vpDesc = m_MainViewport->GetDescription();
 
         if (m_SceneState == SceneState::Simulation)
             OnSceneStop();
@@ -369,7 +346,7 @@ namespace Athena
         m_RuntimeScene = m_EditorScene;
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnRuntimeStart();
-        m_HierarchyPanel.SetContext(m_RuntimeScene);
+        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
         m_ActiveScene = m_RuntimeScene;
     }
@@ -384,14 +361,14 @@ namespace Athena
         OpenScene(m_TemporaryEditorScenePath);
         m_CurrentScenePath = activeScenePath;
 
-        m_HierarchyPanel.SetContext(m_EditorScene);
+        m_SceneHierarchy->SetContext(m_EditorScene);
 
         m_RuntimeScene = nullptr;
     }
 
     void EditorLayer::OnSceneSimulate()
     {
-        const auto& vpDesc = m_MainViewport.GetDescription();
+        const auto& vpDesc = m_MainViewport->GetDescription();
 
         SelectEntity({});
 
@@ -401,19 +378,21 @@ namespace Athena
         m_RuntimeScene = m_EditorScene;
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnSimulationStart();
-        m_HierarchyPanel.SetContext(m_RuntimeScene);
+        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
         m_ActiveScene = m_RuntimeScene;
     }
 
     void EditorLayer::OnEvent(Event& event)
     {
-        const auto& vpDesc = m_MainViewport.GetDescription();
+        const auto& vpDesc = m_MainViewport->GetDescription();
         if ((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && vpDesc.IsHovered && !ImGuizmo::IsUsing())
         {
             m_EditorCamera.OnEvent(event);
             m_ImGuizmoLayer.OnEvent(event);
         }
+
+        m_PanelManager.OnEvent(event);
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
@@ -443,13 +422,10 @@ namespace Athena
         }
         case Keyboard::N: if (ctrl) NewScene(); break;
         case Keyboard::O: if (ctrl) OpenScene(); break;
-
+            
         case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
         case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
         case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
-
-            //Panels
-        case Keyboard::Space: if (ctrl) m_ContentBrowserRendering = !m_ContentBrowserRendering; break;
 
             //Entities
         case Keyboard::Escape: if (m_SelectedEntity) SelectEntity({});; break;
@@ -469,12 +445,12 @@ namespace Athena
             if (currentMode == WindowMode::Fullscreen)
             {
                 window.SetWindowMode(WindowMode::Maximized);
-                m_MenuBarPanel.UseWindowDefaultButtons(false);
+                m_MainMenuBar->UseWindowDefaultButtons(false);
             }
             else
             {
                 window.SetWindowMode(WindowMode::Fullscreen);
-                m_MenuBarPanel.UseWindowDefaultButtons(true);
+                m_MainMenuBar->UseWindowDefaultButtons(true);
             }
             break;
         }
@@ -511,7 +487,7 @@ namespace Athena
         m_CurrentScenePath = Filepath();
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
-        m_HierarchyPanel.SetContext(m_ActiveScene);
+        m_SceneHierarchy->SetContext(m_ActiveScene);
         ATN_CORE_TRACE("Successfully created new scene");
     }
 
@@ -561,8 +537,8 @@ namespace Athena
             m_EditorScene = newScene;
             m_ActiveScene = newScene;
 
-            m_MenuBarPanel.SetSceneRef(m_EditorScene);
-            m_HierarchyPanel.SetContext(m_ActiveScene);
+            m_MainMenuBar->SetSceneRef(m_EditorScene);
+            m_SceneHierarchy->SetContext(m_ActiveScene);
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }
         else

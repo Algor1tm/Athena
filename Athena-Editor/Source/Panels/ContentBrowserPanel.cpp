@@ -1,5 +1,6 @@
 #include "ContentBrowserPanel.h"
-#include "UI/Controllers.h"
+
+#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -9,7 +10,8 @@
 
 namespace Athena
 {
-	ContentBrowserPanel::ContentBrowserPanel()
+	ContentBrowserPanel::ContentBrowserPanel(std::string_view name)
+		: Panel(name)
 	{
 		m_FolderIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FolderIcon.png");
 		m_FileIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FileIcon.png");

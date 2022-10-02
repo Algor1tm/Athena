@@ -4,6 +4,8 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Scene/Entity.h"
 
+#include "Panel.h"
+
 #include <ImGui/imgui_internal.h>
 
 #include <string_view>
@@ -11,15 +13,14 @@
 
 namespace Athena
 {
-	class SceneHierarchyPanel
+	class SceneHierarchyPanel: public Panel
 	{
 	public:
-		SceneHierarchyPanel() = default;
-		SceneHierarchyPanel(const Ref<Scene>& context);
+		SceneHierarchyPanel(std::string_view name, const Ref<Scene>& context);
 
 		void SetContext(const Ref<Scene>& context);
 
-		void OnImGuiRender();
+		virtual void OnImGuiRender() override;
 
 		void SetSelectedEntity(Entity entity);
 		Entity GetSelectedEntity() const { return m_SelectionContext; }

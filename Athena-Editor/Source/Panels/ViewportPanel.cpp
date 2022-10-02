@@ -7,6 +7,12 @@
 
 namespace Athena
 {
+    ViewportPanel::ViewportPanel(std::string_view name)
+        : Panel(name)
+    {
+
+    }
+
 	void ViewportPanel::OnImGuiRender()
 	{
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });

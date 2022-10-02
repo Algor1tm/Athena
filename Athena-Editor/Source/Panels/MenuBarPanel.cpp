@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Application.h"
 
-#include "UI/Controllers.h"
+#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -10,7 +10,8 @@
 
 namespace Athena
 {
-    MenuBarPanel::MenuBarPanel()
+    MenuBarPanel::MenuBarPanel(std::string_view name)
+        : Panel(name)
 	{
 		m_CloseButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/CloseButton.png");
 		m_MinimizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MinimizeButton.png");

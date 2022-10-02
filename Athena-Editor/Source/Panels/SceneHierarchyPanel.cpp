@@ -1,14 +1,17 @@
 #include "SceneHierarchyPanel.h"
+
 #include "Athena/Scene/Components.h"
-#include "UI/Controllers.h"
 #include "Athena/Core/PlatformUtils.h"
+
+#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 
 
 namespace Athena
 {
-	SceneHierarchyPanel::SceneHierarchyPanel(const Ref<Scene>& context)
+	SceneHierarchyPanel::SceneHierarchyPanel(std::string_view name, const Ref<Scene>& context)
+		: Panel(name)
 	{
 		SetContext(context);
 	}

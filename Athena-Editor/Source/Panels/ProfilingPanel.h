@@ -3,15 +3,19 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
+#include "Panel.h"
+
 #include <array>
 
 
 namespace Athena
 {
-	class ATHENA_API ProfilingPanel
+	class ProfilingPanel : public Panel
 	{
 	public:
-		void OnImGuiRender();
+		ProfilingPanel(std::string_view name);
+
+		virtual void OnImGuiRender() override;
 
 	private:
 		bool m_IsPlottingFrameRate = false;

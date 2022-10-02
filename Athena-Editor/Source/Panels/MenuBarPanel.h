@@ -4,6 +4,8 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Scene/Scene.h"
 
+#include "Panel.h"
+
 #include <functional>
 
 
@@ -25,10 +27,12 @@ namespace Athena
 	};
 
 
-	class ATHENA_API MenuBarPanel
+	class MenuBarPanel : public Panel
 	{
 	public:
-		MenuBarPanel();
+		MenuBarPanel(std::string_view name);
+
+		virtual void OnImGuiRender() override;
 
 		void SetSceneRef(const Ref<Scene>& scene) { m_Scene = scene; };
 		void SetLogoIcon(const Ref<Texture2D>& logo) { m_Logo = logo; };
@@ -36,7 +40,6 @@ namespace Athena
 		void AddMenuItem(std::string_view text, const std::function<void()>& callback);
 		void AddMenuButton(const Ref<Texture2D>& icon, const std::function<void(Ref<Texture2D>&)>& callback);
 
-		void OnImGuiRender();
 		void UseWindowDefaultButtons(bool enabled) { m_UseWindowDefaultButtons = enabled; }
 
 	private:

@@ -17,6 +17,7 @@
 #include "Panels/MenuBarPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "PanelManager.h"
 
 #include "ImGuizmoLayer.h"
 
@@ -56,32 +57,30 @@ namespace Athena
 		void OpenScene(const Filepath& path);
 
 	private:
-		ImGuizmoLayer m_ImGuizmoLayer;
-
 		Ref<Framebuffer> m_Framebuffer;
 
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 		bool m_ShowColliders = false;
 
-		ViewportPanel m_MainViewport;
-		ProfilingPanel m_ProfilingPanel;
-		MenuBarPanel m_MenuBarPanel;
-		SceneHierarchyPanel m_HierarchyPanel;
-		ContentBrowserPanel m_ContentBrowserPanel;
-		bool m_ContentBrowserRendering = true;
+		ImGuizmoLayer m_ImGuizmoLayer;
+
+		PanelManager m_PanelManager;
+		Ref<ViewportPanel> m_MainViewport;
+		Ref<MenuBarPanel> m_MainMenuBar;
+		Ref<SceneHierarchyPanel> m_SceneHierarchy;
 
 		enum class SceneState
 		{
 			Edit = 0, Play = 1, Simulation = 2
 		};
 
+		SceneState m_SceneState = SceneState::Edit;
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		Filepath m_TemporaryEditorScenePath;
 		Filepath m_CurrentScenePath;
 
-		SceneState m_SceneState = SceneState::Edit;
 		Ref<Texture2D> m_PlayIcon;
 		Ref<Texture2D> m_StopIcon;
 		Ref<Texture2D> m_SimulationIcon;

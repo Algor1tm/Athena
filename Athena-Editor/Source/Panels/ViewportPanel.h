@@ -4,6 +4,8 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Framebuffer.h"
 
+#include "Panel.h"
+
 #include "ImGuizmoLayer.h"
 
 #include <functional>
@@ -22,10 +24,12 @@ namespace Athena
 		uint32 AttachmentIndex;
 	};
 
-	class ATHENA_API ViewportPanel
+	class ViewportPanel: public Panel
 	{
 	public:
-		void OnImGuiRender();
+		ViewportPanel(std::string_view name);
+
+		virtual void OnImGuiRender() override;
 
 		void SetFramebuffer(const Ref<Framebuffer>& framebuffer, uint32 attachmentIndex) 
 		{

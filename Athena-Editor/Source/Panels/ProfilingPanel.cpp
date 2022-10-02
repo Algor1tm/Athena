@@ -3,13 +3,19 @@
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Math/Trigonometric.h"
 
-#include "UI/Controllers.h"
+#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 
 
 namespace Athena
 {
+    ProfilingPanel::ProfilingPanel(std::string_view name)
+        : Panel(name)
+    {
+
+    }
+
 	void ProfilingPanel::OnImGuiRender()
 	{
         Time now = m_Timer.ElapsedTime();

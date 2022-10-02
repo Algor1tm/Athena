@@ -13,10 +13,10 @@
 
 namespace Athena
 {
-	class ATHENA_API ImGuizmoLayer
+	class ImGuizmoLayer
 	{
 	public:
-		friend class ATHENA_API ViewportPanel;
+		friend class ViewportPanel;
 
 	public:
 		ImGuizmoLayer(EditorCamera* camera);

@@ -3,6 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Texture.h"
 
+#include "Panel.h"
+
 #include <ImGui/imgui.h>
 
 #include <filesystem>
@@ -10,12 +12,12 @@
 
 namespace Athena
 {
-	class ContentBrowserPanel
+	class ContentBrowserPanel : public Panel
 	{
 	public:
-		ContentBrowserPanel();
+		ContentBrowserPanel(std::string_view name);
 
-		void OnImGuiRender();
+		virtual void OnImGuiRender() override;
 
 	private:
 		Filepath m_CurrentDirectory;

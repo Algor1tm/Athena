@@ -64,7 +64,7 @@ namespace Athena
 	static std::string_view D3DVendorIDToName(UINT vendorID)
 	{
 		if (vendorID == 0x10DE)
-			return "NVIDIA";
+			return "NVIDIA Corporation";
 		if (vendorID == 0x1002 || vendorID == 0x1022)
 			return "AMD";
 		if (vendorID == 0x163C || vendorID == 0x8086 || vendorID == 0x8087)

@@ -7,7 +7,7 @@
 
 #include "Panels/Panel.h"
 
-#include <vector>
+#include <unordered_map>
 
 
 namespace Athena
@@ -16,6 +16,7 @@ namespace Athena
 	{
 		Ref<Panel> PanelRef;
 		bool IsOpen = true;
+		bool IsHideable = true;
 		Keyboard::Key HotKey = Keyboard::Escape;
 	};
 
@@ -26,17 +27,19 @@ namespace Athena
 		void OnImGuiRender();
 		void OnEvent(Event& event);
 
-		void AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey = Keyboard::Escape);
+		void ImGuiRenderAsMenuItems();
+
+		void AddPanel(const Ref<Panel>& panel, bool isHideable = true);
+		void AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey);
 
 		bool IsPanelOpen(std::string_view name);
 		void RenderPanel(std::string_view name, bool enable);
 		Ref<Panel> GetPanel(std::string_view name);
 
 	private:
-		PanelDescription* GetPanelDesc(std::string_view name);
 		bool OnKeyPressedEvent(KeyPressedEvent& event);
 
 	private:
-		std::vector<PanelDescription> m_Panels;
+		std::unordered_map<std::string_view, PanelDescription> m_Panels;
 	};
 }

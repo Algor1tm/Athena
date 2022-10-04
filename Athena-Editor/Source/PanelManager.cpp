@@ -3,12 +3,24 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Input/Input.h"
 
+#include <ImGui/imgui.h>
+
 
 namespace Athena
 {
+	static const char* KeyToString(Keyboard::Key key)
+	{
+		switch (key)
+		{
+		case Keyboard::Space: return "Ctrl+Space";
+		}
+
+		return NULL;
+	}
+
 	void PanelManager::OnImGuiRender()
 	{
-		for (auto& panel : m_Panels)
+		for (auto& [key, panel] : m_Panels)
 		{
 			if (panel.IsOpen)
 			{
@@ -23,48 +35,52 @@ namespace Athena
 		dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(PanelManager::OnKeyPressedEvent));
 	}
 
+	void PanelManager::ImGuiRenderAsMenuItems()
+	{
+		for (auto& [key, panel] : m_Panels)
+		{
+			if (panel.IsHideable)
+			{
+				if (ImGui::MenuItem(panel.PanelRef->GetName().data(), KeyToString(panel.HotKey), panel.IsOpen))
+				{
+					panel.IsOpen = !panel.IsOpen;
+				}
+			}
+		}
+	}
+
+	void PanelManager::AddPanel(const Ref<Panel>& panel, bool isHideable)
+	{
+		PanelDescription desc;
+		desc.PanelRef = panel;
+		desc.IsOpen = true;
+		desc.IsHideable = isHideable;
+		m_Panels[panel->GetName()] = desc;
+	}
+
 	void PanelManager::AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey)
 	{
-		m_Panels.push_back({ panel, true, hotkey });
+		PanelDescription desc;
+		desc.PanelRef = panel;
+		desc.IsOpen = true;
+		desc.IsHideable = true;
+		desc.HotKey = hotkey;
+		m_Panels[panel->GetName()] = desc;
 	}
 
 	bool PanelManager::IsPanelOpen(std::string_view name)
 	{
-		auto* panel = GetPanelDesc(name);
-
-		if (panel != nullptr)
-			return panel->IsOpen;
-
-		return false;
+		return m_Panels.at(name).IsOpen;
 	}
 
 	void PanelManager::RenderPanel(std::string_view name, bool enable)
 	{
-		auto* panel = GetPanelDesc(name);
-
-		if (panel != nullptr)
-			panel->IsOpen = enable;
+		m_Panels.at(name).IsOpen = enable;
 	}
 
 	Ref<Panel> PanelManager::GetPanel(std::string_view name)
 	{
-		auto* panel = GetPanelDesc(name);
-
-		return panel == nullptr ? nullptr : panel->PanelRef;
-	}
-
-	PanelDescription* PanelManager::GetPanelDesc(std::string_view name)
-	{
-		for (auto& panel : m_Panels)
-		{
-			if (panel.PanelRef->GetName() == name)
-			{
-				return &panel;
-			}
-		}
-
-		ATN_CORE_ERROR("PanelManager: Failed to find panel '{0}'", name);
-		return nullptr;
+		return m_Panels.at(name).PanelRef;
 	}
 
 	bool PanelManager::OnKeyPressedEvent(KeyPressedEvent& event)
@@ -74,9 +90,8 @@ namespace Athena
 		if (ctrl)
 		{
 			auto keycode = event.GetKeyCode();
-			for (auto& panel : m_Panels)
+			for (auto& [key, panel] : m_Panels)
 			{
-				ATN_CORE_TRACE(event.ToString());
 				if (panel.HotKey != Keyboard::Escape && panel.HotKey == keycode)
 				{
 					panel.IsOpen = !panel.IsOpen;

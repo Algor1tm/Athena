@@ -135,7 +135,7 @@ namespace Athena
         m_PanelManager.OnImGuiRender();
 
         ImGui::Begin("Editor Settings");
-        UI::DrawController("Show Physics Colliders", 0, [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
+        UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
         ImGui::End();
 
         ImGui::End();
@@ -172,17 +172,7 @@ namespace Athena
 
         m_MainMenuBar->AddMenuItem("View", [this]()
             {
-                bool open = m_PanelManager.IsPanelOpen("SceneHierarchy");
-                if (ImGui::MenuItem("SceneHierarchy", NULL, open))
-                    m_PanelManager.RenderPanel("SceneHierarchy", !open);
-
-                open = m_PanelManager.IsPanelOpen("ContentBrowser");
-                if (ImGui::MenuItem("ContentBrowser", "Ctrl+Space", open))
-                    m_PanelManager.RenderPanel("ContentBrowser", !open);
-
-                open = m_PanelManager.IsPanelOpen("ProfilingPanel");
-                if (ImGui::MenuItem("ProfilingPanel", NULL, open))
-                    m_PanelManager.RenderPanel("ProfilingPanel", !open);
+                m_PanelManager.ImGuiRenderAsMenuItems();
             });
 
         m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
@@ -205,7 +195,7 @@ namespace Athena
                     OnSceneStop();
             });
 
-        m_PanelManager.AddPanel(m_MainMenuBar);
+        m_PanelManager.AddPanel(m_MainMenuBar, false);
 
 
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
@@ -240,7 +230,7 @@ namespace Athena
                 }
             });
 
-        m_PanelManager.AddPanel(m_MainViewport);
+        m_PanelManager.AddPanel(m_MainViewport, false);
 
 
         m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
@@ -539,6 +529,7 @@ namespace Athena
 
             m_MainMenuBar->SetSceneRef(m_EditorScene);
             m_SceneHierarchy->SetContext(m_ActiveScene);
+            SelectEntity({});
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }
         else

@@ -2,6 +2,7 @@
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Core/PlatformUtils.h"
+#include "Athena/Input/Input.h"
 
 #include "UI/Widgets.h"
 
@@ -54,12 +55,15 @@ namespace Athena
 		ImGui::End();
 
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 		ImGui::Begin("Properties");
+		ImGui::PopStyleVar();
 
 		if (m_SelectionContext)
 		{
 			DrawAllComponents(m_SelectionContext);
 		}
+
 		ImGui::End();
 	}
 
@@ -97,230 +101,44 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
-		DrawComponent<TagComponent>(entity, "Tag", false, [](TagComponent& tagComponent)
-			{
-				String& tag = tagComponent.Tag;
+		float fullWidth = ImGui::GetContentRegionAvail().x;
+		if(ImGui::Button("Edit"))
+			m_EditTagComponent = !m_EditTagComponent;
 
-				UI::TextInput(tag, tag);
-			});
-		
-		DrawComponent<TransformComponent>(entity, "Transform", false, [](TransformComponent& transform)
-			{
-				UI::DrawVec3Controller("Position", transform.Translation, 0.0f);
-				Vector3 degrees = Math::Degrees(transform.Rotation);
-				UI::DrawVec3Controller("Rotation", degrees, 0.0f);
-				transform.Rotation = Math::Radians(degrees);
-				UI::DrawVec3Controller("Scale", transform.Scale, 1.0f);
+		ImGui::SameLine();
 
-				ImGui::Spacing();
-			});
-
-		DrawComponent<SpriteComponent>(entity, "Sprite", true, [](SpriteComponent& sprite)
-			{
-				UI::DrawController("Color", 0, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
-				UI::DrawController("Tiling", 0, [&sprite]() { return ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
-				ImGui::Text("Texture");
-				ImGui::SameLine();
-				ImGui::ImageButton((void*)(uint64)sprite.Texture.GetNativeTexture()->GetRendererID(), { 50.f, 50.f }, { 0, 1 }, { 1, 0 });
-
-				if (ImGui::BeginDragDropTarget())
-				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-					{
-						std::string_view path = (const char*)payload->Data;
-						std::string_view extent = path.substr(path.size() - 4, path.size());
-						if (extent == ".png\0")
-						{
-							sprite.Texture = Texture2D::Create(String(path));
-							sprite.Color = LinearColor::White;
-						}
-						else
-						{
-							ATN_CORE_ERROR("Invalid Texture format");
-						}
-					}
-					ImGui::EndDragDropTarget();
-				}
-
-				ImGui::SameLine();
-				if (ImGui::Button("Browse"))
-				{
-					String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-					if (!filepath.empty())
-					{
-						sprite.Texture = Texture2D::Create(filepath);
-						sprite.Color = LinearColor::White;
-						ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
-					}
-					else
-					{
-						ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
-					}
-				}
-				ImGui::SameLine();
-				if (ImGui::Button("Reset"))
-				{
-					sprite.Texture = Texture2D::WhiteTexture();
-				}
-			});
-
-		DrawComponent<CircleComponent>(entity, "Circle", true, [](CircleComponent& circle)
-			{
-				UI::DrawController("Color       ", 0, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
-				UI::DrawController("Thickness", 0, [&circle]() { return ImGui::DragFloat("##Thickness", &circle.Thickness, 0.01f, 0.f, 1.f); });
-				UI::DrawController("Fade         ", 0, [&circle]() { return ImGui::DragFloat("##Fade", &circle.Fade, 0.00025f, 0.f, 1.f); });
-			});
-
-		DrawComponent<CameraComponent>(entity, "Camera", true, [](CameraComponent& cameraComponent)
-			{
-				auto& camera = cameraComponent.Camera;
-
-				static auto typeToStr = [](SceneCamera::ProjectionType type) -> std::string_view
-				{
-					switch (type)
-					{
-					case SceneCamera::ProjectionType::Orthographic: return "Orthographic";
-					case SceneCamera::ProjectionType::Perspective: return "Perspective";
-					}
-
-					return "Invalid";
-				};
-
-				std::string_view currentProjectionType = typeToStr(camera.GetProjectionType());
-
-				if (UI::DrawController("Projection", 0, [&currentProjectionType]() 
-					{ return ImGui::BeginCombo("##Projection", currentProjectionType.data()); }))
-				{
-					for (int i = 0; i < 2; ++i)
-					{
-						const std::string_view typeStr = typeToStr((SceneCamera::ProjectionType)i);
-						bool isSelected = currentProjectionType == typeStr;
-						if (ImGui::Selectable(typeStr.data(), isSelected))
-						{
-							currentProjectionType = typeStr;
-							camera.SetProjectionType((SceneCamera::ProjectionType)i);
-						}
-
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
-					}
-
-					ImGui::EndCombo();
-				}
-
-				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
-				{
-					auto perspectiveDesc = camera.GetPerspectiveData();
-					bool used = false;
-
-					float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
-					used = UI::DrawController("FOV           ", 0, [&degreesFOV]() 
-						{ return ImGui::DragFloat("##FOV", &degreesFOV, 0.1f); }) || used;
-					used = UI::DrawController("NearClip   ", 0, [&perspectiveDesc]()
-						{ return ImGui::DragFloat("##NearClip", &perspectiveDesc.NearClip, 0.1f); }) || used;
-					used = UI::DrawController("FarClip      ", 0, [&perspectiveDesc]()
-						{ return ImGui::DragFloat("##FarClip", &perspectiveDesc.FarClip, 10.f); }) || used;
-
-					if (used)
-					{
-						perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
-						camera.SetPerspectiveData(perspectiveDesc);
-					}
-				}
-
-				else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
-				{
-					auto orthoDesc = camera.GetOrthographicData();
-					bool used = false;
-
-					used = UI::DrawController("Size            ", 0, [&orthoDesc]()
-						{ return ImGui::DragFloat("##Size", &orthoDesc.Size, 0.1f); }) || used;
-					used = UI::DrawController("NearClip   ", 0, [&orthoDesc]()
-						{ return ImGui::DragFloat("##NearClip", &orthoDesc.NearClip, 0.1f); }) || used;
-					used = UI::DrawController("FarClip      ", 0, [&orthoDesc]()
-						{ return ImGui::DragFloat("##FarClip", &orthoDesc.FarClip, 0.1f); }) || used;
-
-					if (used)
-						camera.SetOrthographicData(orthoDesc);
-				}
-
-				UI::DrawController("Primary", 0, [&cameraComponent]()
-					{ return ImGui::Checkbox("##Primary", &cameraComponent.Primary); });
-				UI::DrawController("FixedAspectRatio", 0, [&cameraComponent]()
-					{ return ImGui::Checkbox("##FixedAspectRatio", &cameraComponent.FixedAspectRatio); });
-			});
-
-
-		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", true, [](Rigidbody2DComponent& rb2d)
-			{
-				static auto typeToStr = [](Rigidbody2DComponent::BodyType type) -> std::string_view
-				{
-					switch (type)
-					{
-					case Rigidbody2DComponent::BodyType::STATIC: return "Static";
-					case Rigidbody2DComponent::BodyType::DYNAMIC: return "Dynamic";
-					case Rigidbody2DComponent::BodyType::KINEMATIC: return "Kinematic";
-					}
-
-					return "Invalid";
-				};
-
-				std::string_view currentBodyType = typeToStr(rb2d.Type);
-
-				if (UI::DrawController("BodyType        ", 0, [&currentBodyType]()
-					{ return ImGui::BeginCombo("##BodyType", currentBodyType.data()); }))
-				{
-					for (int i = 0; i < 3; ++i)
-					{
-						const std::string_view typeStr = typeToStr((Rigidbody2DComponent::BodyType)i);
-						bool isSelected = currentBodyType == typeStr;
-						if (ImGui::Selectable(typeStr.data(), isSelected))
-						{
-							currentBodyType = typeStr;
-							rb2d.Type = (Rigidbody2DComponent::BodyType)i;
-						}
-
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();
-					}
-
-					ImGui::EndCombo();
-				}
-
-				UI::DrawController("Fixed Rotation", 0, [&rb2d] { return ImGui::Checkbox("##FixedRotation", &rb2d.FixedRotation); });
-			});
-
-
-		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", true, [](BoxCollider2DComponent& bc2d)
-			{
-				UI::DrawController("Offset          ", 0, [&bc2d]() { return ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f); });
-				UI::DrawController("Size              ", 0, [&bc2d]() { return ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f); });
-
-				UI::DrawController("Density       ", 0, [&bc2d]() { return ImGui::DragFloat("##Density", &bc2d.Density, 0.01f, 0.f, 1.f); });
-				UI::DrawController("Friction       ", 0, [&bc2d]() { return ImGui::DragFloat("##Friction", &bc2d.Friction, 0.01f, 0.f, 1.f); });
-				UI::DrawController("Restitution ", 0, [&bc2d]() { return ImGui::DragFloat("##Restitution", &bc2d.Restitution, 0.01f, 0.f, 1.f); });
-				UI::DrawController("RestitutionThreshold", 0, [&bc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.01f, 0.f); });
-			});
-
-		DrawComponent<CircleCollider2DComponent>(entity, "CircleCollider2D", true, [](CircleCollider2DComponent& cc2d)
-			{
-				UI::DrawController("Offset          ", 0, [&cc2d]() { return ImGui::DragFloat2("##Offset", cc2d.Offset.Data(), 0.1f); });
-				UI::DrawController("Radius         ", 0, [&cc2d]() { return ImGui::DragFloat("##Radius", &cc2d.Radius, 0.1f); });
-
-				UI::DrawController("Density       ", 0, [&cc2d]() { return ImGui::DragFloat("##Density", &cc2d.Density, 0.01f, 0.f, 1.f); });
-				UI::DrawController("Friction       ", 0, [&cc2d]() { return ImGui::DragFloat("##Friction", &cc2d.Friction, 0.01f, 0.f, 1.f); });
-				UI::DrawController("Restitution ", 0, [&cc2d]() { return ImGui::DragFloat("##Restitution", &cc2d.Restitution, 0.01f, 0.f, 1.f); });
-				UI::DrawController("RestitutionThreshold", 0, [&cc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.01f, 0.f); });
-			});
-
-
-		ImGui::Separator();
-
-		if (ImGui::Button("Add"))
-			ImGui::OpenPopup("Add");
-
-		if (ImGui::BeginPopup("Add"))
+		auto& tag = entity.GetComponent<TagComponent>().Tag;
+		if (m_EditTagComponent)
 		{
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
+			UI::TextInput(tag, tag);
+			if (ImGui::IsItemDeactivatedAfterEdit())
+				m_EditTagComponent = false;
+		}
+		else 
+		{
+			UI::PushBoldFont();
+			ImGui::Text(tag.data());
+			ImGui::PopFont();
+		}
+
+
+		ImGui::SameLine();
+
+		auto& style = ImGui::GetStyle();
+		float buttonWidth = ImGui::CalcTextSize("Add Component").x + 2 * style.ItemInnerSpacing.x;
+		ImGui::SetCursorPosX(fullWidth - buttonWidth - 1.f);
+		if (ImGui::Button("Add Component"))
+			ImGui::OpenPopup("Add Component");
+
+		if (ImGui::BeginPopup("Add Component"))
+		{
+			if (!entity.HasComponent<TransformComponent>() && ImGui::MenuItem("Transform"))
+			{
+				m_SelectionContext.AddComponent<TransformComponent>();
+				ImGui::CloseCurrentPopup();
+			}
+
 			if (!entity.HasComponent<CameraComponent>() && ImGui::MenuItem("Camera"))
 			{
 				m_SelectionContext.AddComponent<CameraComponent>();
@@ -359,5 +177,272 @@ namespace Athena
 
 			ImGui::EndPopup();
 		}
+
+		ImGui::Spacing();
+
+		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawVec3Controller("Translation", transform.Translation, 0.0f, height);
+					Vector3 degrees = Math::Degrees(transform.Rotation);
+					UI::DrawVec3Controller("Rotation", degrees, 0.0f, height);
+					transform.Rotation = Math::Radians(degrees);
+					UI::DrawVec3Controller("Scale", transform.Scale, 1.0f, height);
+
+					UI::EndDrawControllers();
+				}
+				ImGui::Spacing();
+			});
+
+		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+					UI::DrawController("Tiling", height, [&sprite]() { return ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+
+					UI::DrawController("Texture", 50.f, [&sprite]()
+						{ 
+							float imageSize = 45.f;
+
+							ImGui::ImageButton(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+
+							if (ImGui::BeginDragDropTarget())
+							{
+								if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+								{
+									std::string_view path = (const char*)payload->Data;
+									std::string_view extent = path.substr(path.size() - 4, path.size());
+									if (extent == ".png\0")
+									{
+										sprite.Texture = Texture2D::Create(String(path));
+										sprite.Color = LinearColor::White;
+									}
+									else
+									{
+										ATN_CORE_ERROR("Invalid Texture format");
+									}
+								}
+								ImGui::EndDragDropTarget();
+							}
+
+							ImGui::SameLine();
+							ImVec2 cursor = ImGui::GetCursorPos();
+							if (ImGui::Button("Browse"))
+							{
+								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								if (!filepath.empty())
+								{
+									sprite.Texture = Texture2D::Create(filepath);
+									sprite.Color = LinearColor::White;
+									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
+								}
+								else
+								{
+									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
+								}
+							}
+
+							ImGui::SetCursorPos({cursor.x, cursor.y + imageSize / 1.8f});
+							if (ImGui::Button("Reset"))
+							{
+								sprite.Texture = Texture2D::WhiteTexture();
+							}
+
+							return false;
+						});
+
+					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<CircleComponent>(entity, "Circle", [](CircleComponent& circle)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
+					UI::DrawController("Thickness", height, [&circle]() { return ImGui::DragFloat("##Thickness", &circle.Thickness, 0.01f, 0.f, 1.f); });
+					UI::DrawController("Fade", height, [&circle]() { return ImGui::DragFloat("##Fade", &circle.Fade, 0.00025f, 0.f, 1.f); });
+
+					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<CameraComponent>(entity, "Camera", [](CameraComponent& cameraComponent)
+			{
+				auto& camera = cameraComponent.Camera;
+
+				static auto typeToStr = [](SceneCamera::ProjectionType type) -> std::string_view
+				{
+					switch (type)
+					{
+					case SceneCamera::ProjectionType::Orthographic: return "Orthographic";
+					case SceneCamera::ProjectionType::Perspective: return "Perspective";
+					}
+
+					return "Invalid";
+				};
+
+				std::string_view currentProjectionType = typeToStr(camera.GetProjectionType());
+
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					if (UI::DrawController("Projection", height, [&currentProjectionType]()
+						{ return ImGui::BeginCombo("##Projection", currentProjectionType.data()); }))
+					{
+						for (int i = 0; i < 2; ++i)
+						{
+							const std::string_view typeStr = typeToStr((SceneCamera::ProjectionType)i);
+							bool isSelected = currentProjectionType == typeStr;
+							if (ImGui::Selectable(typeStr.data(), isSelected))
+							{
+								currentProjectionType = typeStr;
+								camera.SetProjectionType((SceneCamera::ProjectionType)i);
+							}
+
+							if (isSelected)
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+
+					if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+					{
+						auto perspectiveDesc = camera.GetPerspectiveData();
+						bool used = false;
+
+						float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
+						used = UI::DrawController("FOV", height, [&degreesFOV]()
+							{ return ImGui::DragFloat("##FOV", &degreesFOV, 0.1f); }) || used;
+						used = UI::DrawController("NearClip", height, [&perspectiveDesc]()
+							{ return ImGui::DragFloat("##NearClip", &perspectiveDesc.NearClip, 0.1f); }) || used;
+						used = UI::DrawController("FarClip", height, [&perspectiveDesc]()
+							{ return ImGui::DragFloat("##FarClip", &perspectiveDesc.FarClip, 10.f); }) || used;
+
+						if (used)
+						{
+							perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
+							camera.SetPerspectiveData(perspectiveDesc);
+						}
+					}
+
+					else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+					{
+						auto orthoDesc = camera.GetOrthographicData();
+						bool used = false;
+
+						used = UI::DrawController("Size", height, [&orthoDesc]()
+							{ return ImGui::DragFloat("##Size", &orthoDesc.Size, 0.1f); }) || used;
+						used = UI::DrawController("NearClip", height, [&orthoDesc]()
+							{ return ImGui::DragFloat("##NearClip", &orthoDesc.NearClip, 0.1f); }) || used;
+						used = UI::DrawController("FarClip", height, [&orthoDesc]()
+							{ return ImGui::DragFloat("##FarClip", &orthoDesc.FarClip, 0.1f); }) || used;
+
+						if (used)
+							camera.SetOrthographicData(orthoDesc);
+					}
+
+					UI::DrawController("Primary", height, [&cameraComponent]()
+						{ return ImGui::Checkbox("##Primary", &cameraComponent.Primary); });
+					UI::DrawController("FixedAspectRatio", height, [&cameraComponent]()
+						{ return ImGui::Checkbox("##FixedAspectRatio", &cameraComponent.FixedAspectRatio); });
+
+					UI::EndDrawControllers();
+				}
+			});
+
+
+		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
+			{
+				static auto typeToStr = [](Rigidbody2DComponent::BodyType type) -> std::string_view
+				{
+					switch (type)
+					{
+					case Rigidbody2DComponent::BodyType::STATIC: return "Static";
+					case Rigidbody2DComponent::BodyType::DYNAMIC: return "Dynamic";
+					case Rigidbody2DComponent::BodyType::KINEMATIC: return "Kinematic";
+					}
+
+					return "Invalid";
+				};
+
+				std::string_view currentBodyType = typeToStr(rb2d.Type);
+
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					if (UI::DrawController("BodyType", height, [&currentBodyType]()
+						{ return ImGui::BeginCombo("##BodyType", currentBodyType.data()); }))
+					{
+						for (int i = 0; i < 3; ++i)
+						{
+							const std::string_view typeStr = typeToStr((Rigidbody2DComponent::BodyType)i);
+							bool isSelected = currentBodyType == typeStr;
+							if (ImGui::Selectable(typeStr.data(), isSelected))
+							{
+								currentBodyType = typeStr;
+								rb2d.Type = (Rigidbody2DComponent::BodyType)i;
+							}
+
+							if (isSelected)
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+
+					UI::DrawController("Fixed Rotation", height, [&rb2d] { return ImGui::Checkbox("##FixedRotation", &rb2d.FixedRotation); });
+
+					UI::EndDrawControllers();
+				}
+			});
+
+
+		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", [](BoxCollider2DComponent& bc2d)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Offset", height, [&bc2d]() { return ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f); });
+					UI::DrawController("Size", height, [&bc2d]() { return ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f); });
+
+					UI::DrawController("Density", height, [&bc2d]() { return ImGui::DragFloat("##Density", &bc2d.Density, 0.01f, 0.f, 1.f); });
+					UI::DrawController("Friction", height, [&bc2d]() { return ImGui::DragFloat("##Friction", &bc2d.Friction, 0.01f, 0.f, 1.f); });
+					UI::DrawController("Restitution", height, [&bc2d]() { return ImGui::DragFloat("##Restitution", &bc2d.Restitution, 0.01f, 0.f, 1.f); });
+					UI::DrawController("RestitutionThreshold", height, [&bc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.01f, 0.f); });
+
+					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<CircleCollider2DComponent>(entity, "CircleCollider2D", [](CircleCollider2DComponent& cc2d)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Offset", height, [&cc2d]() { return ImGui::DragFloat2("##Offset", cc2d.Offset.Data(), 0.1f); });
+					UI::DrawController("Radius", height, [&cc2d]() { return ImGui::DragFloat("##Radius", &cc2d.Radius, 0.1f); });
+
+					UI::DrawController("Density", height, [&cc2d]() { return ImGui::DragFloat("##Density", &cc2d.Density, 0.01f, 0.f, 1.f); });
+					UI::DrawController("Friction", height, [&cc2d]() { return ImGui::DragFloat("##Friction", &cc2d.Friction, 0.01f, 0.f, 1.f); });
+					UI::DrawController("Restitution", height, [&cc2d]() { return ImGui::DragFloat("##Restitution", &cc2d.Restitution, 0.01f, 0.f, 1.f); });
+					UI::DrawController("RestitutionThreshold", height, [&cc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.01f, 0.f); });
+
+					UI::EndDrawControllers();
+				}
+			});
 	}
 }

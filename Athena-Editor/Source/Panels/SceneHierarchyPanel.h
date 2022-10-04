@@ -30,17 +30,19 @@ namespace Athena
 		void DrawAllComponents(Entity entity);
 
 		template <typename Component, typename Func>
-		void DrawComponent(Entity entity, std::string_view name, bool canDelete, Func uiFunction);
+		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
 
 	private:
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
+
+		bool m_EditTagComponent = false;
 	};
 
 
 
 	template <typename Component, typename Func>
-	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, bool canDelete, Func uiFunction)
+	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, Func uiFunction)
 	{
 		ImGuiTreeNodeFlags flags =
 			ImGuiTreeNodeFlags_DefaultOpen |
@@ -53,27 +55,29 @@ namespace Athena
 		{
 			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
 
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
-			float lineWidth = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+
+			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+
 			bool open = ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), flags, name.data());
-			ImGui::PopStyleVar();
 
 			bool removeComponent = false;
-			if (canDelete)
+
+			ImGui::SameLine(regionAvail.x - lineHeight);
+			if (ImGui::Button("...", { lineHeight, lineHeight }))
+				ImGui::OpenPopup("ComponentSettings");
+
+			if (ImGui::BeginPopup("ComponentSettings"))
 			{
-				ImGui::SameLine(regionAvail.x - lineWidth * 0.5f);
-				if (ImGui::Button("...", { lineWidth, lineWidth }))
-					ImGui::OpenPopup("ComponentSettings");
+				if (ImGui::MenuItem("RemoveComponent"))
+					removeComponent = true;
 
-				if (ImGui::BeginPopup("ComponentSettings"))
-				{
-					if (ImGui::MenuItem("RemoveComponent"))
-						removeComponent = true;
-
-					ImGui::EndPopup();
-				}
+				ImGui::EndPopup();
 			}
 				
+			ImGui::PopStyleVar(2);
+
 			if (open)
 			{
 				uiFunction(entity.GetComponent<Component>());

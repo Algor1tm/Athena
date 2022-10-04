@@ -99,7 +99,7 @@ namespace Athena
 		D3D11_BOX srcBox;
 		srcBox.left = x;
 		srcBox.right = srcBox.left + 1;
-		srcBox.top = m_Description.Height - y; // Reverse y
+		srcBox.top = m_Description.Height - y - 1; // Reverse y
 		srcBox.bottom = srcBox.top - 1;
 		srcBox.front = 0;
 		srcBox.back = 1;

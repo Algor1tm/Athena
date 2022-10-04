@@ -15,27 +15,59 @@ namespace Athena
 	{
 		m_FolderIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FolderIcon.png");
 		m_FileIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FileIcon.png");
-		m_BackButtonIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/BackButtonIcon.png");
+		m_BackButton = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/BackButton.png");
+		m_ForwardButton = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/ForwardButton.png");
 
-		m_CurrentDirectory = m_AssetDirectory;
+		m_LastDirectory = m_CurrentDirectory = m_AssetDirectory;
 	}
 
 	void ContentBrowserPanel::OnImGuiRender()
 	{
 		ImGui::Begin("Content Browser");
 
-		if (m_CurrentDirectory != m_AssetDirectory)
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 17.f / 255.f, 14.f / 255.f, 14.f / 255.f, 1.0f });
+
+		if (ImGui::ImageButton(m_BackButton->GetRendererID(), { m_BackButtonSize.x, m_BackButtonSize.y }, {0, 1}, {1, 0}))
 		{
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-			if (ImGui::ImageButton(m_BackButtonIcon->GetRendererID(), { m_BackButtonSize.x, m_BackButtonSize.y }, {0, 1}, {1, 0}))
+			if (m_CurrentDirectory != m_AssetDirectory)
 			{
+				m_LastDirectory = m_CurrentDirectory;
 				m_CurrentDirectory = m_CurrentDirectory.parent_path();
 			}
-			ImGui::PopStyleColor();
 		}
 
+		ImGui::SameLine();
+
+		if (ImGui::ImageButton(m_ForwardButton->GetRendererID(), { m_BackButtonSize.x, m_BackButtonSize.y }, { 0, 1 }, { 1, 0 }))
+		{
+			if (m_CurrentDirectory != m_LastDirectory)
+			{
+				m_CurrentDirectory = m_LastDirectory;
+			}
+		}
+
+		ImGui::SameLine();
+
+		ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+
+		ImGui::PushItemWidth(regionAvail.x * 0.15f);
+		String searchString;
+		UI::TextInputWithHint("Search...", searchString); // TODO: make this
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + regionAvail.x * 0.01f);
+		ImGui::Text(m_CurrentDirectory.string().c_str());
+
+
+		ImGui::Separator();
+
 		float cellSize = m_Padding + m_ItemSize.x;
-		float panelWidth = ImGui::GetContentRegionAvail().x;
+		float panelWidth = regionAvail.x;
 
 		ImGui::Columns(int(panelWidth / cellSize), 0, false);
 

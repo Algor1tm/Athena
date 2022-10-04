@@ -5,85 +5,113 @@
 
 namespace Athena::UI
 {
-	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float columnWidth)
+	void DrawVec3Controller(std::string_view label, Vector3& values, float defaultValues, float height)
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		auto boldFont = io.Fonts->Fonts[0];
+		DrawController(label, height, [label, defaultValues, &values]()
+			{
+				ImGui::PushID(label.data());
 
-		ImGui::PushID(label.data());
+				float full_width = ImGui::GetContentRegionAvail().x - 15.f;
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 
-		ImGui::Columns(2, 0, false);
-		ImGui::SetColumnWidth(0, columnWidth);
-		ImGui::Text(label.data());
-		ImGui::NextColumn();
+				float buttonWidth = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+				ImVec2 buttonSize = { buttonWidth, buttonWidth };
 
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+				float dragWidth = (full_width - 3 * buttonWidth) / 3.f;
 
-		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
-		ImVec2 buttonSize = { lineHeight + 3, lineHeight };
+				ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.f });
+				UI::PushBoldFont();
+				if (ImGui::Button("X", buttonSize))
+					values.x = defaultValues;
+				ImGui::PopFont();
 
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("X", buttonSize))
-			values.x = defaultValues;
-		ImGui::PopFont();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(dragWidth);
+				ImGui::DragFloat("##X", &values.x, 0.07f, 0.f, 0.f, "%.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
 
-		ImGui::SameLine();
-		ImGui::DragFloat("##X", &values.x, 0.07f, 0.f, 0.f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
+				ImGui::PopStyleColor(3);
 
-		ImGui::PopStyleColor(3);
+				ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.f });
+				UI::PushBoldFont();
+				if (ImGui::Button("Y", buttonSize))
+					values.y = defaultValues;
+				ImGui::PopFont();
 
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Y", buttonSize))
-			values.y = defaultValues;
-		ImGui::PopFont();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(dragWidth);
+				ImGui::DragFloat("##Y", &values.y, 0.07f, 0.f, 0.f, "%.2f");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
 
-		ImGui::SameLine();
-		ImGui::DragFloat("##Y", &values.y, 0.07f, 0.f, 0.f, "%.2f");
-		ImGui::PopItemWidth();
-		ImGui::SameLine();
+				ImGui::PopStyleColor(3);
 
-		ImGui::PopStyleColor(3);
+				ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.f });
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.f });
+				UI::PushBoldFont();
+				if (ImGui::Button("Z", buttonSize))
+					values.z = defaultValues;
+				ImGui::PopFont();
 
-		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.f });
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.f });
-		ImGui::PushFont(boldFont);
-		if (ImGui::Button("Z", buttonSize))
-			values.z = defaultValues;
-		ImGui::PopFont();
+				ImGui::SameLine();
+				ImGui::PushItemWidth(dragWidth);
+				ImGui::DragFloat("##Z", &values.z, 0.7f, 0.f, 0.f, "%.2f");
+				ImGui::PopItemWidth();
 
-		ImGui::SameLine();
-		ImGui::DragFloat("##Z", &values.z, 0.7f, 0.f, 0.f, "%.2f");
-		ImGui::PopItemWidth();
+				ImGui::PopStyleColor(3);
 
-		ImGui::PopStyleColor(3);
+				ImGui::PopStyleVar();
 
-		ImGui::PopStyleVar();
-		ImGui::Columns(1, 0, false);
+				ImGui::PopID();
 
-		ImGui::PopID();
+				return false;
+			});
+
 	}
 
-	bool TextInput(const String& label, String& destination)
+	bool TextInput(const String& label, String& destination, ImGuiInputTextFlags flags)
 	{
-		static char buffer[256];
+		static char buffer[128];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, label.c_str());
-		if (ImGui::InputText("##TextInput", buffer, sizeof(buffer)))
+		if (ImGui::InputText("##TextInput", buffer, sizeof(buffer), flags))
 		{
 			destination = String(buffer);
 			return true;
 		}
 
 		return false;
+	}
+
+	bool TextInputWithHint(const std::string_view hint, String& destination, ImGuiInputTextFlags flags)
+	{
+		static char buffer[128];
+		memset(buffer, 0, sizeof(buffer));
+		if (ImGui::InputTextWithHint("##TextInputWithHint", hint.data(), buffer, sizeof(buffer), flags))
+		{
+			destination = String(buffer);
+			return true;
+		}
+
+		return false;
+	}
+
+	bool BeginDrawControllers()
+	{
+		static const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | 
+			ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_SizingFixedFit;
+
+		return ImGui::BeginTable("table", 2, flags);
+	}
+
+	void EndDrawControllers()
+	{
+		ImGui::EndTable();
 	}
 }

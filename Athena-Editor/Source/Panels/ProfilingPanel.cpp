@@ -24,7 +24,7 @@ namespace Athena
 
         ImGui::Begin("Profiling");
 
-        UI::DrawController("Renderer2D", 0, [this]() { return ImGui::Checkbox("##Renderer2D", &m_IsShowRenderer2D); });
+        UI::DrawImGuiWidget("Renderer2D", [this]() { return ImGui::Checkbox("##Renderer2D", &m_IsShowRenderer2D); });
         if (m_IsShowRenderer2D)
         {
             auto stats = Renderer2D::GetStats();
@@ -63,7 +63,7 @@ namespace Athena
             m_FrameRateIndex++;
         }
 
-        UI::DrawController("Plot FrameRate", 0, [this]() { return ImGui::Checkbox("##Plot FrameRate", &m_IsPlottingFrameRate); });
+        UI::DrawImGuiWidget("Plot FrameRate", [this]() { return ImGui::Checkbox("##Plot FrameRate", &m_IsPlottingFrameRate); });
         if (m_IsPlottingFrameRate)
         {
             ImGui::PlotLines("##FrameRate", m_FrameRateStack.data(), (int)m_FrameRateStack.size(), 0, (const char*)0, 0, 0.1f, { ImGui::GetWindowSize().x * 0.9f, ImGui::GetWindowSize().y * 0.2f});

@@ -9,6 +9,7 @@ namespace Athena::UI
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		auto& boldFont = io.Fonts->Fonts[0];
+
 		ImGui::PushFont(boldFont);
 	}
 }

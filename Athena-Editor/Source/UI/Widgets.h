@@ -49,4 +49,25 @@ namespace Athena::UI
 
 		return widget();
 	}
+
+
+	template <typename CallbackFunc>
+	void Selectable(std::string_view label, bool* isSelected, CallbackFunc callback)
+	{
+		if (*isSelected)
+		{
+			ImVec4& color = ImGui::GetStyle().Colors[ImGuiCol_ResizeGripActive];
+			ImGui::PushStyleColor(ImGuiCol_Header, color);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, color);
+		}
+
+		if (ImGui::Selectable(label.data(), isSelected))
+		{
+			callback();
+		}
+
+		if(*isSelected)
+			ImGui::PopStyleColor(3);
+	}
 }

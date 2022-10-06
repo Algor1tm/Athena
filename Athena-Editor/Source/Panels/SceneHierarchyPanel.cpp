@@ -30,7 +30,16 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBg]);
 		ImGui::Begin("Scene Hierarchy");
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+		ImVec4& color = ImGui::GetStyle().Colors[ImGuiCol_ResizeGripActive];
+		ImGui::PushStyleColor(ImGuiCol_Header, color);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
 
 		m_Context->m_Registry.each([=](auto entityID)
 			{
@@ -38,6 +47,8 @@ namespace Athena
 
 				DrawEntityNode(entity);
 			});
+		ImGui::PopStyleColor(2);
+		ImGui::PopStyleVar();
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_SelectionContext = {};
@@ -55,7 +66,7 @@ namespace Athena
 		ImGui::End();
 
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Properties");
 		ImGui::PopStyleVar();
 
@@ -74,10 +85,21 @@ namespace Athena
 		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0);
 		flags |= ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+		flags |= ImGuiTreeNodeFlags_FramePadding;
+
+		bool selectedEntity = m_SelectionContext == entity;
+		if(selectedEntity)
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyle().Colors[ImGuiCol_ResizeGripActive]);
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint64)(uint32)entity, flags, tag.data());
 
+		if (selectedEntity)
+			ImGui::PopStyleColor();
+
 		if (ImGui::IsItemClicked())
+		{
 			m_SelectionContext = entity;
+		}
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
@@ -102,7 +124,10 @@ namespace Athena
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{
 		float fullWidth = ImGui::GetContentRegionAvail().x;
-		if(ImGui::Button("Edit"))
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 3.f, 3.f });
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5.f, 5.f });
+		UI::ShiftCursorX(5.f);
+		if (ImGui::Button("Edit"))
 			m_EditTagComponent = !m_EditTagComponent;
 
 		ImGui::SameLine();
@@ -110,6 +135,8 @@ namespace Athena
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
 		if (m_EditTagComponent)
 		{
+			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+				ImGui::SetKeyboardFocusHere(0);
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
 			UI::TextInput(tag, tag);
 			if (ImGui::IsItemDeactivatedAfterEdit())
@@ -121,7 +148,6 @@ namespace Athena
 			ImGui::Text(tag.data());
 			ImGui::PopFont();
 		}
-
 
 		ImGui::SameLine();
 
@@ -178,6 +204,8 @@ namespace Athena
 			ImGui::EndPopup();
 		}
 
+		ImGui::PopStyleVar(2);
+
 		ImGui::Spacing();
 
 		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
@@ -204,13 +232,13 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawController("Color", height, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
-					UI::DrawController("Tiling", height, [&sprite]() { return ImGui::DragFloat("##Tiling", &sprite.TilingFactor, 0.05f); });
+					UI::DrawController("Tiling", height, [&sprite]() { return ImGui::SliderFloat("##Tiling", &sprite.TilingFactor, 1.f, 20.f); });
 
 					UI::DrawController("Texture", 50.f, [&sprite]()
 						{ 
 							float imageSize = 45.f;
 
-							ImGui::ImageButton(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+							ImGui::Image(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
 
 							if (ImGui::BeginDragDropTarget())
 							{
@@ -268,8 +296,8 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawController("Color", height, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
-					UI::DrawController("Thickness", height, [&circle]() { return ImGui::DragFloat("##Thickness", &circle.Thickness, 0.01f, 0.f, 1.f); });
-					UI::DrawController("Fade", height, [&circle]() { return ImGui::DragFloat("##Fade", &circle.Fade, 0.00025f, 0.f, 1.f); });
+					UI::DrawController("Thickness", height, [&circle]() { return ImGui::SliderFloat("##Thickness", &circle.Thickness, 0.f, 1.f); });
+					UI::DrawController("Fade", height, [&circle]() { return ImGui::SliderFloat("##Fade", &circle.Fade, 0.f, 1.f); });
 
 					UI::EndDrawControllers();
 				}
@@ -303,11 +331,12 @@ namespace Athena
 						{
 							const std::string_view typeStr = typeToStr((SceneCamera::ProjectionType)i);
 							bool isSelected = currentProjectionType == typeStr;
-							if (ImGui::Selectable(typeStr.data(), isSelected))
-							{
-								currentProjectionType = typeStr;
-								camera.SetProjectionType((SceneCamera::ProjectionType)i);
-							}
+
+							UI::Selectable(typeStr, &isSelected, [&currentProjectionType, typeStr, &camera, i]()
+								{
+									currentProjectionType = typeStr;
+									camera.SetProjectionType((SceneCamera::ProjectionType)i);
+								});
 
 							if (isSelected)
 								ImGui::SetItemDefaultFocus();
@@ -323,11 +352,11 @@ namespace Athena
 
 						float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
 						used = UI::DrawController("FOV", height, [&degreesFOV]()
-							{ return ImGui::DragFloat("##FOV", &degreesFOV, 0.1f); }) || used;
+							{ return ImGui::SliderFloat("##FOV", &degreesFOV, 0.f, 360.f); }) || used;
 						used = UI::DrawController("NearClip", height, [&perspectiveDesc]()
-							{ return ImGui::DragFloat("##NearClip", &perspectiveDesc.NearClip, 0.1f); }) || used;
+							{ return ImGui::SliderFloat("##NearClip", &perspectiveDesc.NearClip, 0.f, 10.f); }) || used;
 						used = UI::DrawController("FarClip", height, [&perspectiveDesc]()
-							{ return ImGui::DragFloat("##FarClip", &perspectiveDesc.FarClip, 10.f); }) || used;
+							{ return ImGui::SliderFloat("##FarClip", &perspectiveDesc.FarClip, 10.f, 10000.f); }) || used;
 
 						if (used)
 						{
@@ -344,9 +373,9 @@ namespace Athena
 						used = UI::DrawController("Size", height, [&orthoDesc]()
 							{ return ImGui::DragFloat("##Size", &orthoDesc.Size, 0.1f); }) || used;
 						used = UI::DrawController("NearClip", height, [&orthoDesc]()
-							{ return ImGui::DragFloat("##NearClip", &orthoDesc.NearClip, 0.1f); }) || used;
+							{ return ImGui::SliderFloat("##NearClip", &orthoDesc.NearClip, -10.f, 0.f); }) || used;
 						used = UI::DrawController("FarClip", height, [&orthoDesc]()
-							{ return ImGui::DragFloat("##FarClip", &orthoDesc.FarClip, 0.1f); }) || used;
+							{ return ImGui::SliderFloat("##FarClip", &orthoDesc.FarClip, 0.f, 10.f); }) || used;
 
 						if (used)
 							camera.SetOrthographicData(orthoDesc);
@@ -389,11 +418,12 @@ namespace Athena
 						{
 							const std::string_view typeStr = typeToStr((Rigidbody2DComponent::BodyType)i);
 							bool isSelected = currentBodyType == typeStr;
-							if (ImGui::Selectable(typeStr.data(), isSelected))
-							{
-								currentBodyType = typeStr;
-								rb2d.Type = (Rigidbody2DComponent::BodyType)i;
-							}
+
+							UI::Selectable(typeStr, &isSelected, [&currentBodyType, typeStr, &rb2d, i]()
+								{
+										currentBodyType = typeStr;
+										rb2d.Type = (Rigidbody2DComponent::BodyType)i;
+								});
 
 							if (isSelected)
 								ImGui::SetItemDefaultFocus();
@@ -418,10 +448,10 @@ namespace Athena
 					UI::DrawController("Offset", height, [&bc2d]() { return ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f); });
 					UI::DrawController("Size", height, [&bc2d]() { return ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f); });
 
-					UI::DrawController("Density", height, [&bc2d]() { return ImGui::DragFloat("##Density", &bc2d.Density, 0.01f, 0.f, 1.f); });
-					UI::DrawController("Friction", height, [&bc2d]() { return ImGui::DragFloat("##Friction", &bc2d.Friction, 0.01f, 0.f, 1.f); });
-					UI::DrawController("Restitution", height, [&bc2d]() { return ImGui::DragFloat("##Restitution", &bc2d.Restitution, 0.01f, 0.f, 1.f); });
-					UI::DrawController("RestitutionThreshold", height, [&bc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.01f, 0.f); });
+					UI::DrawController("Density", height, [&bc2d]() { return ImGui::SliderFloat("##Density", &bc2d.Density, 0.f, 1.f); });
+					UI::DrawController("Friction", height, [&bc2d]() { return ImGui::SliderFloat("##Friction", &bc2d.Friction, 0.f, 1.f); });
+					UI::DrawController("Restitution", height, [&bc2d]() { return ImGui::SliderFloat("##Restitution", &bc2d.Restitution, 0.f, 1.f); });
+					UI::DrawController("RestitutionThreshold", height, [&bc2d]() { return ImGui::SliderFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f); });
 
 					UI::EndDrawControllers();
 				}
@@ -436,10 +466,10 @@ namespace Athena
 					UI::DrawController("Offset", height, [&cc2d]() { return ImGui::DragFloat2("##Offset", cc2d.Offset.Data(), 0.1f); });
 					UI::DrawController("Radius", height, [&cc2d]() { return ImGui::DragFloat("##Radius", &cc2d.Radius, 0.1f); });
 
-					UI::DrawController("Density", height, [&cc2d]() { return ImGui::DragFloat("##Density", &cc2d.Density, 0.01f, 0.f, 1.f); });
-					UI::DrawController("Friction", height, [&cc2d]() { return ImGui::DragFloat("##Friction", &cc2d.Friction, 0.01f, 0.f, 1.f); });
-					UI::DrawController("Restitution", height, [&cc2d]() { return ImGui::DragFloat("##Restitution", &cc2d.Restitution, 0.01f, 0.f, 1.f); });
-					UI::DrawController("RestitutionThreshold", height, [&cc2d]() { return ImGui::DragFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.01f, 0.f); });
+					UI::DrawController("Density", height, [&cc2d]() { return ImGui::SliderFloat("##Density", &cc2d.Density, 0.f, 1.f); });
+					UI::DrawController("Friction", height, [&cc2d]() { return ImGui::SliderFloat("##Friction", &cc2d.Friction, 0.f, 1.f); });
+					UI::DrawController("Restitution", height, [&cc2d]() { return ImGui::SliderFloat("##Restitution", &cc2d.Restitution, 0.f, 1.f); });
+					UI::DrawController("RestitutionThreshold", height, [&cc2d]() { return ImGui::SliderFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f); });
 
 					UI::EndDrawControllers();
 				}

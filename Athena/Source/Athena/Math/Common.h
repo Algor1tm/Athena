@@ -33,7 +33,7 @@ namespace Athena::Math
 	template <typename T>
 	constexpr T Abs(T scalar)
 	{
-		return scalar >= 0 ? scalar : -scalar;
+		return scalar >= static_cast<T>(0) ? scalar : -scalar;
 	}
 
 	template <typename T>

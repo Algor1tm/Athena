@@ -45,37 +45,59 @@ namespace Athena
 
 	void ImGuiLayer::SetDarkTheme()
 	{
-		auto& colors = ImGui::GetStyle().Colors;
+		ImGuiStyle& style = ImGui::GetStyle();
+		auto& colors = style.Colors;
 
-		colors[ImGuiCol_WindowBg] = ImVec4{ 21.f / 255.f, 19.f / 255.f, 19.f / 255.f, 1.0f };
+		style.FrameRounding = 3.f;
+		style.FrameBorderSize = 1.f;
 
-		// Hovered Red - ImVec4{ 250.f / 255.f, 70.f / 255.f, 70.f / 255.f, 1.f }; 
-		// Headers
-		colors[ImGuiCol_Header] = ImVec4{ 38.f / 255.f, 36.f / 255.f, 36.f / 255.f, 1.0f };
-		colors[ImGuiCol_HeaderHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f }; 
-		colors[ImGuiCol_HeaderActive] = ImVec4{ 46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f }; 
 
-		// Buttons
-		colors[ImGuiCol_Button] = ImVec4{ 38.f / 255.f, 36.f / 255.f, 36.f / 255.f, 1.0f };
-		colors[ImGuiCol_ButtonHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_ButtonActive] = ImVec4{ 46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f };
+		// Widgets Active Items
+		colors[ImGuiCol_SliderGrab] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_SliderGrabActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_ResizeGripActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_CheckMark] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+
+		// Docking
+		colors[ImGuiCol_DockingPreview] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_DockingEmptyBg] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
 
 		// Frame BG
-		colors[ImGuiCol_FrameBg] = ImVec4{ 14.f / 255.f, 11.f / 255.f, 11.f / 255.f, 1.0f };
-		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_FrameBgActive] = ImVec4{ 46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f };
+		colors[ImGuiCol_FrameBg] = ImVec4{ 14.f / 255.f, 14.f / 255.f, 14.f / 255.f, 1.0f };
+		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 51.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+		colors[ImGuiCol_FrameBgActive] = ImVec4{ 51.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+
+		// Headers
+		colors[ImGuiCol_Header] = ImVec4{ 40.f / 255.f, 40.f / 255.f, 40.f / 255.f, 1.0f };
+		colors[ImGuiCol_HeaderHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+		colors[ImGuiCol_HeaderActive] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+
+		// Buttons
+		colors[ImGuiCol_Button] = ImVec4{ 41.f / 255.f, 41.f / 255.f, 41.f / 255.f, 1.0f };
+		colors[ImGuiCol_ButtonHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+		colors[ImGuiCol_ButtonActive] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
 		
+		// Window
+		colors[ImGuiCol_WindowBg] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
+
 		// Tabs
-		colors[ImGuiCol_Tab] = ImVec4{ 28.f / 255.f, 26.f / 255.f, 26.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabActive] = ImVec4{ 55.f / 255.f, 53.f / 255.f, 53.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabUnfocused] = ImVec4{ 28.f / 255.f, 26.f / 255.f, 26.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 40.f / 255.f, 38.f / 255.f, 38.f / 255.f, 1.0f };
+		colors[ImGuiCol_Tab] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
+		colors[ImGuiCol_TabHovered] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 0.2f };
+		colors[ImGuiCol_TabActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 0.2f };
+		colors[ImGuiCol_TabUnfocused] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
+		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
 
 		// Title
-		colors[ImGuiCol_TitleBg] = ImVec4{ 28.f / 255.f, 26.f / 255.f, 26.f / 255.f, 1.0f };
-		colors[ImGuiCol_TitleBgActive] = ImVec4{ 28.f / 255.f, 26.f / 255.f, 26.f / 255.f, 1.0f };
-		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+		colors[ImGuiCol_TitleBg] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
+		colors[ImGuiCol_TitleBgActive] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
+
+		// Lines
+		colors[ImGuiCol_Separator] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };
+		colors[ImGuiCol_TableBorderStrong] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };;
+		colors[ImGuiCol_TableBorderLight] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };;
+		colors[ImGuiCol_Border] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };
 	}
 
 	void ImGuiLayer::OnAttach()

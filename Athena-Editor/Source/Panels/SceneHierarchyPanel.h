@@ -4,9 +4,9 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Scene/Entity.h"
 
-#include "Panel.h"
+#include "Athena/Renderer/Texture.h"
 
-#include <ImGui/imgui_internal.h>
+#include "Panel.h"
 
 #include <string_view>
 
@@ -56,17 +56,20 @@ namespace Athena
 			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
 
-			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+			float lineHeight = ImGui::GetFrameHeight();
 
 			bool open = ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), flags, name.data());
 
 			bool removeComponent = false;
 
 			ImGui::SameLine(regionAvail.x - lineHeight);
-			if (ImGui::Button("...", { lineHeight, lineHeight }))
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+			UI::ShiftCursorY(1.f);
+			if (ImGui::Button("...", { lineHeight - 2.f, lineHeight - 2.f }))
 				ImGui::OpenPopup("ComponentSettings");
+			ImGui::PopStyleVar();
 
 			if (ImGui::BeginPopup("ComponentSettings"))
 			{
@@ -75,7 +78,7 @@ namespace Athena
 
 				ImGui::EndPopup();
 			}
-				
+			
 			ImGui::PopStyleVar(2);
 
 			if (open)

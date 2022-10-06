@@ -71,6 +71,7 @@ namespace Athena
 
 		ImGui::Columns(int(panelWidth / cellSize), 0, false);
 
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
 		for (const auto& dirEntry: std::filesystem::directory_iterator(m_CurrentDirectory))
 		{
 			const auto& relativePath = dirEntry.path();
@@ -100,6 +101,7 @@ namespace Athena
 			ImGui::TextWrapped(filename.data());
 			ImGui::NextColumn();
 		}
+		ImGui::PopStyleVar();
 
 		ImGui::EndColumns();
 

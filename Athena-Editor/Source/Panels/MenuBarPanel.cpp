@@ -38,7 +38,10 @@ namespace Athena
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, framePadding);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBg]);
         ImGui::Begin("##Menubar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::PopStyleColor();
 
         float window_height = ImGui::GetWindowHeight();
 
@@ -52,6 +55,7 @@ namespace Athena
         }
 
         ///////// Menu Items ////////////////
+        ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyle().Colors[ImGuiCol_ResizeGripActive]);
         ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
         float buttonSizeY = window_height / 2.5f;
         ImVec2 menuStart = ImGui::GetCursorPos();
@@ -74,12 +78,13 @@ namespace Athena
             }
             ImGui::SameLine();
         }
+        ImGui::PopStyleColor();
 
         ///////// Scene Name ////////////////
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f));
-
+       
         if (m_Scene != nullptr)
         {
             ImVec2 textSize = ImGui::CalcTextSize(m_Scene->GetSceneName().data());
@@ -108,7 +113,7 @@ namespace Athena
             }
         }
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 5.f, 5.f });
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 10.f, 10.f });
         if (ImGui::BeginPopup("SceneName"))
         {
             String newName;
@@ -118,6 +123,7 @@ namespace Athena
         }
         ImGui::PopStyleVar();
 
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(46.f / 255.f, 44.f / 255.f, 44.f / 255.f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 
@@ -175,6 +181,7 @@ namespace Athena
             }
 		}
         ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar();
 
         ImGui::End();
 	}

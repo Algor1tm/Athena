@@ -19,7 +19,6 @@ namespace Athena
 
 	private:
 		bool m_IsPlottingFrameRate = false;
-		bool m_IsShowRenderer2D = true;
 
 		std::array<float, 64> m_FrameRateStack;
 		SIZE_T m_FrameRateIndex = 0;

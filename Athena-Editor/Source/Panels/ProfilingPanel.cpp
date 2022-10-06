@@ -22,23 +22,31 @@ namespace Athena
         m_FrameTime = now - m_LastTime;
         m_LastTime = now;
 
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         ImGui::Begin("Profiling");
+        ImGui::PopStyleVar();
 
-        UI::DrawImGuiWidget("Renderer2D", [this]() { return ImGui::Checkbox("##Renderer2D", &m_IsShowRenderer2D); });
-        if (m_IsShowRenderer2D)
+        const ImGuiTreeNodeFlags flags =
+            ImGuiTreeNodeFlags_AllowItemOverlap |
+            ImGuiTreeNodeFlags_SpanAvailWidth |
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_FramePadding | 
+            ImGuiTreeNodeFlags_DefaultOpen;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5.f, 5.f });
+        if (ImGui::TreeNodeEx("##Renderer2D Statistics", flags, "Renderer2D Statistics"))
         {
             auto stats = Renderer2D::GetStats();
-            ImGui::BulletText("Draw Calls: %d", stats.DrawCalls);
-            ImGui::BulletText("Quads: %d", stats.QuadCount);
-            ImGui::BulletText("Circles: %d", stats.CircleCount);
-            ImGui::BulletText("Lines: %d", stats.LineCount);
-            ImGui::BulletText("Vertices: %d", stats.GetTotalVertexCount());
-            ImGui::BulletText("Indices: %d", stats.GetTotalIndexCount());
+            ImGui::Text("Draw Calls: %d", stats.DrawCalls);
+            ImGui::Text("Quads: %d", stats.QuadCount);
+            ImGui::Text("Circles: %d", stats.CircleCount);
+            ImGui::Text("Lines: %d", stats.LineCount);
+            ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
+            ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+
+            ImGui::TreePop();
         }
 
-
-        ImGui::Separator();
-        ImGui::Spacing();
 
         static Time elapsed = Time(0);
         static float fps = 0.f;
@@ -54,20 +62,33 @@ namespace Athena
         {
             elapsed += m_FrameTime;
         }
-        ImGui::Text("FPS: %d", (int)fps);
-        ImGui::Text("FrameTime: %.3f", frameTime);
 
-        if (m_IsPlottingFrameRate)
+        if (ImGui::TreeNodeEx("##Performance", flags, "Performance"))
         {
-            m_FrameRateStack[m_FrameRateIndex % m_FrameRateStack.size()] = m_FrameTime.AsSeconds();
-            m_FrameRateIndex++;
+            ImGui::Text("FPS: %d", (int)fps);
+            ImGui::Text("FrameTime: %.3f", frameTime);
+
+            if (m_IsPlottingFrameRate)
+            {
+                m_FrameRateStack[m_FrameRateIndex % m_FrameRateStack.size()] = m_FrameTime.AsSeconds();
+                m_FrameRateIndex++;
+            }
+
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 3 });
+            UI::DrawImGuiWidget("Plot FrameRate", [this]() 
+                {
+                    return ImGui::Checkbox("##Plot FrameRate", &m_IsPlottingFrameRate); 
+                });
+            ImGui::PopStyleVar();
+            if (m_IsPlottingFrameRate)
+            {
+                ImGui::PlotLines("##FrameRate", m_FrameRateStack.data(), (int)m_FrameRateStack.size(), 0, (const char*)0, 0, 0.1f, { ImGui::GetWindowSize().x * 0.9f, ImGui::GetWindowSize().y * 0.2f });
+            }
+
+            ImGui::TreePop();
         }
 
-        UI::DrawImGuiWidget("Plot FrameRate", [this]() { return ImGui::Checkbox("##Plot FrameRate", &m_IsPlottingFrameRate); });
-        if (m_IsPlottingFrameRate)
-        {
-            ImGui::PlotLines("##FrameRate", m_FrameRateStack.data(), (int)m_FrameRateStack.size(), 0, (const char*)0, 0, 0.1f, { ImGui::GetWindowSize().x * 0.9f, ImGui::GetWindowSize().y * 0.2f});
-        }
+        ImGui::PopStyleVar();
 
         ImGui::End();
 	}

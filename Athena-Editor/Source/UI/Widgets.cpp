@@ -107,6 +107,7 @@ namespace Athena::UI
 		static const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | 
 			ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_SizingFixedFit;
 
+		UI::ShiftCursorY(1.f);
 		return ImGui::BeginTable("table", 2, flags);
 	}
 

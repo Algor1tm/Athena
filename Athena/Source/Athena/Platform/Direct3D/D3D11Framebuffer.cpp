@@ -16,11 +16,22 @@ namespace Athena
 		return false;
 	}
 
+	static DXGI_FORMAT AthenaFormatToDXGIFormat(FramebufferTextureFormat format)
+	{
+		switch (format)
+		{
+		case FramebufferTextureFormat::RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case FramebufferTextureFormat::RED_INTEGER: return DXGI_FORMAT_R32_SINT; 
+		case FramebufferTextureFormat::DEPTH24STENCIL8: return DXGI_FORMAT_D24_UNORM_S8_UINT;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return DXGI_FORMAT_UNKNOWN;
+	}
+
 	D3D11Framebuffer::D3D11Framebuffer(const FramebufferDescription& desc)
 		: m_Description(desc)
 	{
-		ATN_CORE_ASSERT(m_Description.Samples == 1, "DirectX does not support multisampling now!");
-
 		m_RenderTargetsDescriptions.reserve(desc.Attachments.Attachments.size());
 
 		const auto& attachments = desc.Attachments.Attachments;
@@ -40,7 +51,7 @@ namespace Athena
 
 	D3D11Framebuffer::~D3D11Framebuffer()
 	{
-
+		
 	}
 
 	void D3D11Framebuffer::Recreate()
@@ -48,16 +59,18 @@ namespace Athena
 		if (!m_RenderTargetsDescriptions.empty())
 		{
 			m_Attachments.resize(m_RenderTargetsDescriptions.size());
+			if (IsMultisample())
+				m_ResolvedAttachments.resize(m_RenderTargetsDescriptions.size());
 			//Attachments
 			for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
 			{
 				switch (m_RenderTargetsDescriptions[i].TextureFormat)
 				{
 				case FramebufferTextureFormat::RGBA8:
-					AttachColorTexture(m_Attachments[i].RenderTargetView.GetAddressOf(), DXGI_FORMAT_R8G8B8A8_UNORM, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(m_Description.Samples, DXGI_FORMAT_R8G8B8A8_UNORM, m_Description.Width, m_Description.Height, i);
 					break;
 				case FramebufferTextureFormat::RED_INTEGER:
-					AttachColorTexture(m_Attachments[i].RenderTargetView.GetAddressOf(), DXGI_FORMAT_R32_SINT, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(m_Description.Samples, DXGI_FORMAT_R32_SINT, m_Description.Width, m_Description.Height, i);
 				}
 			}
 		}
@@ -67,7 +80,7 @@ namespace Athena
 			switch (m_DepthStencilDescription.TextureFormat)
 			{
 			case FramebufferTextureFormat::DEPTH24STENCIL8:
-				AttachDepthTexture(m_DepthStencil.GetAddressOf(), DXGI_FORMAT_D24_UNORM_S8_UINT, m_Description.Width, m_Description.Height);
+				AttachDepthTexture(m_Description.Samples, DXGI_FORMAT_D24_UNORM_S8_UINT, m_Description.Width, m_Description.Height);
 				break;
 			}
 		}
@@ -90,12 +103,20 @@ namespace Athena
 
 	void* D3D11Framebuffer::GetColorAttachmentRendererID(SIZE_T index) const
 	{ 
+		if (IsMultisample())
+		{
+			ATN_CORE_ASSERT(index < m_ResolvedAttachments.size(), "Subscript out of range!");
+			return m_ResolvedAttachments[index].ShaderResourceView.Get();
+		}
+
 		ATN_CORE_ASSERT(index < m_Attachments.size(), "Subscript out of range!");
 		return m_Attachments[index].ShaderResourceView.Get();
 	}
 
 	int D3D11Framebuffer::ReadPixel(SIZE_T attachmentIndex, int x, int y)
 	{
+		ATN_CORE_ASSERT(attachmentIndex < m_Attachments.size(), "Subscript out of range!");
+
 		D3D11_BOX srcBox;
 		srcBox.left = x;
 		srcBox.right = srcBox.left + 1;
@@ -104,7 +125,8 @@ namespace Athena
 		srcBox.front = 0;
 		srcBox.back = 1;
 
-		D3D11CurrentContext::DeviceContext->CopySubresourceRegion(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0, 0, 0, 0, m_Attachments[attachmentIndex].RenderTargetTexture.Get(), 0, &srcBox);
+		auto source = IsMultisample() ? m_ResolvedAttachments[attachmentIndex].SingleSampledTexture.Get(): m_Attachments[attachmentIndex].RenderTargetTexture.Get();
+		D3D11CurrentContext::DeviceContext->CopySubresourceRegion(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0, 0, 0, 0, source, 0, &srcBox);
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		D3D11CurrentContext::DeviceContext->Map(m_Attachments[attachmentIndex].ReadableTexture.Get(), 0, D3D11_MAP_READ, 0, &msr);
@@ -146,19 +168,43 @@ namespace Athena
 		D3D11CurrentContext::DeviceContext->ClearDepthStencilView(m_DepthStencil.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 	}
 
+
+	void D3D11Framebuffer::ResolveMutlisampling()
+	{
+		if (IsMultisample())
+		{
+			for (SIZE_T i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
+			{
+				D3D11CurrentContext::DeviceContext->ResolveSubresource(m_ResolvedAttachments[i].SingleSampledTexture.Get(), 0,
+					m_Attachments[i].RenderTargetTexture.Get(), 0,
+					AthenaFormatToDXGIFormat(m_RenderTargetsDescriptions[i].TextureFormat));
+			}
+		}
+	}
+
 	void D3D11Framebuffer::DeleteAttachments()
 	{
 		for (SIZE_T i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
 		{
 			m_Attachments[i].RenderTargetView->Release();
 			m_Attachments[i].RenderTargetTexture->Release();
-			m_Attachments[i].ShaderResourceView->Release();
+			m_Attachments[i].ReadableTexture->Release();
+
+			if (IsMultisample())
+			{
+				m_ResolvedAttachments[i].SingleSampledTexture->Release();
+				m_ResolvedAttachments[i].ShaderResourceView->Release();
+			}
+			else
+			{
+				m_Attachments[i].ShaderResourceView->Release();
+			}
 		}
 
 		m_DepthStencil->Release();
 	}
 
-	void D3D11Framebuffer::AttachColorTexture(ID3D11RenderTargetView** target, DXGI_FORMAT format, uint32 width, uint32 height, SIZE_T index)
+	void D3D11Framebuffer::AttachColorTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height, SIZE_T index)
 	{
 		D3D11_TEXTURE2D_DESC colorTextureDesc;
 		colorTextureDesc.Width = width;
@@ -166,35 +212,52 @@ namespace Athena
 		colorTextureDesc.MipLevels = 1;
 		colorTextureDesc.ArraySize = 1;
 		colorTextureDesc.Format = format;
-		colorTextureDesc.SampleDesc.Count = 1;
+		colorTextureDesc.SampleDesc.Count = samples;
 		colorTextureDesc.SampleDesc.Quality = 0;
 		colorTextureDesc.Usage = D3D11_USAGE_DEFAULT;
-		colorTextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		colorTextureDesc.BindFlags = IsMultisample() ? D3D11_BIND_RENDER_TARGET : D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 		colorTextureDesc.CPUAccessFlags = 0;
 		colorTextureDesc.MiscFlags = 0;
 
 		HRESULT hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_Attachments[index].RenderTargetTexture.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create color texture!");
 
-		hr = D3D11CurrentContext::Device->CreateRenderTargetView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, target);
+		hr = D3D11CurrentContext::Device->CreateRenderTargetView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, m_Attachments[index].RenderTargetView.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create color view!");
 
-		hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, m_Attachments[index].ShaderResourceView.GetAddressOf());
-		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
-
-		if (!m_RenderTargetsDescriptions[index].BackBufferOutput)
+		if (IsMultisample())
 		{
-			colorTextureDesc.Width = 1;
-			colorTextureDesc.Height = 1;
-			colorTextureDesc.Usage = D3D11_USAGE_STAGING;
-			colorTextureDesc.BindFlags = 0;
-			colorTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-			hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_Attachments[index].ReadableTexture.GetAddressOf());
-			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create readable texture!");
+			colorTextureDesc.SampleDesc.Count = 1;
+			colorTextureDesc.SampleDesc.Quality = 0;
+			colorTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+			colorTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+			hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_ResolvedAttachments[index].SingleSampledTexture.GetAddressOf());
+			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create single sampled texture!");
+
+			hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_ResolvedAttachments[index].SingleSampledTexture.Get(), nullptr, m_ResolvedAttachments[index].ShaderResourceView.GetAddressOf());
+			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
 		}
+		else
+		{
+			hr = D3D11CurrentContext::Device->CreateShaderResourceView(m_Attachments[index].RenderTargetTexture.Get(), nullptr, m_Attachments[index].ShaderResourceView.GetAddressOf());
+			ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create shader resource view!");
+		}
+
+		colorTextureDesc.Width = 1;
+		colorTextureDesc.Height = 1;
+		colorTextureDesc.SampleDesc.Count = 1;
+		colorTextureDesc.SampleDesc.Quality = 0;
+		colorTextureDesc.Usage = D3D11_USAGE_STAGING;
+		colorTextureDesc.BindFlags = 0;
+		colorTextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+		hr = D3D11CurrentContext::Device->CreateTexture2D(&colorTextureDesc, nullptr, m_Attachments[index].ReadableTexture.GetAddressOf());
+		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create readable texture!");
+
 	}
 
-	void D3D11Framebuffer::AttachDepthTexture(ID3D11DepthStencilView** target, DXGI_FORMAT format, uint32 width, uint32 height)
+	void D3D11Framebuffer::AttachDepthTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height)
 	{
 		ID3D11Texture2D* depthTexture;
 
@@ -204,7 +267,7 @@ namespace Athena
 		depthStencilTextureDesc.MipLevels = 1;
 		depthStencilTextureDesc.ArraySize = 1;
 		depthStencilTextureDesc.Format = format;
-		depthStencilTextureDesc.SampleDesc.Count = 1;
+		depthStencilTextureDesc.SampleDesc.Count = samples;
 		depthStencilTextureDesc.SampleDesc.Quality = 0;
 		depthStencilTextureDesc.Usage = D3D11_USAGE_DEFAULT;
 		depthStencilTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -214,7 +277,7 @@ namespace Athena
 		HRESULT hr = D3D11CurrentContext::Device->CreateTexture2D(&depthStencilTextureDesc, nullptr, &depthTexture);
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create depth stencil texture!");
 
-		hr = D3D11CurrentContext::Device->CreateDepthStencilView(depthTexture, nullptr, target);
+		hr = D3D11CurrentContext::Device->CreateDepthStencilView(depthTexture, nullptr, m_DepthStencil.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create depth stencil view!");
 
 		depthTexture->Release();

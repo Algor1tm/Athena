@@ -71,62 +71,33 @@ namespace Athena
 
 	void GLFramebuffer::Recreate()
 	{
-		if (m_RendererID)
+		if (m_FramebufferID)
 		{
 			DeleteAttachments();
 
 			m_ColorAttachments.clear();
+			m_ColorAttachmentsResolved.clear();
 			m_DepthAttachment = 0;
 		}
 
-		glCreateFramebuffers(1, &m_RendererID);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
-
-		bool multisample = m_Description.Samples > 1;
-
-		if (!m_ColorAttachmentDescriptions.empty())
+		if (IsMultisample())
 		{
-			m_ColorAttachments.resize(m_ColorAttachmentDescriptions.size());
-			CreateTextures(multisample, m_ColorAttachments.data(), m_ColorAttachments.size());
-			//Attachments
-			for (SIZE_T i = 0; i < m_ColorAttachments.size(); ++i)
-			{
-				BindTexture(multisample, m_ColorAttachments[i]);
-				switch (m_ColorAttachmentDescriptions[i].TextureFormat)
-				{
-				case FramebufferTextureFormat::RGBA8:
-					AttachColorTexture(m_ColorAttachments[i], m_Description.Samples, GL_RGBA8, GL_RGBA, m_Description.Width, m_Description.Height, i);
-					break;
-				case FramebufferTextureFormat::RED_INTEGER:
-					AttachColorTexture(m_ColorAttachments[i], m_Description.Samples, GL_R32I, GL_RED_INTEGER, m_Description.Width, m_Description.Height, i);
-				}
-			}
+			CreateFramebufferObject(&m_ResolvedFramebufferID, true);
 		}
+		
+		CreateFramebufferObject(&m_FramebufferID, false);
 
-		if (m_DepthAttachmentDescription.TextureFormat != FramebufferTextureFormat::NONE)
-		{
-			CreateTextures(multisample, &m_DepthAttachment, 1);
-			BindTexture(multisample, m_DepthAttachment);
-			switch (m_DepthAttachmentDescription.TextureFormat)
-			{
-			case FramebufferTextureFormat::DEPTH24STENCIL8:
-				AttachDepthTexture(m_DepthAttachment, m_Description.Samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Description.Width, m_Description.Height);
-				break;
-			}
-		}
-
-		if (m_ColorAttachments.size() > 0)
+		if (m_ColorAttachments.size() > 1)
 		{
 			ATN_CORE_ASSERT(m_ColorAttachments.size() <= 4, "GLFramebuffer supports only up to 4 color attachments!");
 			GLenum buffers[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 			glDrawBuffers((GLsizei)m_ColorAttachments.size(), buffers);
 		}
-		else if(m_ColorAttachments.empty())
+		else if (m_ColorAttachments.empty())
 		{
 			glDrawBuffer(GL_NONE);
 		}
 
-		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
@@ -147,14 +118,20 @@ namespace Athena
 
 	void* GLFramebuffer::GetColorAttachmentRendererID(SIZE_T index) const
 	{ 
-		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range"); 
+		if (IsMultisample())
+		{
+			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "subscript out of range");
+			return reinterpret_cast<void*>((uint64)m_ColorAttachmentsResolved[index]);
+		}
+
+		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range");
 		return reinterpret_cast<void*>((uint64)m_ColorAttachments[index]); 
 	}
 
 	int GLFramebuffer::ReadPixel(SIZE_T attachmentIndex, int x, int y)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "ReadPixel() invalid attachmentIndex!");
-		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
+		glBindFramebuffer(GL_FRAMEBUFFER, IsMultisample() ? m_ResolvedFramebufferID : m_FramebufferID); 
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)attachmentIndex);
 		int pixelData;
@@ -166,16 +143,16 @@ namespace Athena
 
 	void GLFramebuffer::ClearAttachment(SIZE_T attachmentIndex, int value)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "ClearAttachment() invalid attachmentIndex!");
-
+		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
+		
 		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
-
+		
 		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, TextureFormatToGLenum(desc.TextureFormat), GL_INT, &value);
 	}
 
 	void GLFramebuffer::ClearColorAndDepth(const LinearColor& color)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
 		glViewport(0, 0, m_Description.Width, m_Description.Height);
 
 		glClearColor(color.r, color.g, color.b, color.a);
@@ -184,17 +161,79 @@ namespace Athena
 
 	void GLFramebuffer::DeleteAttachments()
 	{
-		glDeleteFramebuffers(1, &m_RendererID);
+		glDeleteFramebuffers(1, &m_FramebufferID);
 		glDeleteTextures((GLsizei)m_ColorAttachments.size(), m_ColorAttachments.data());
+		if (IsMultisample())
+			glDeleteTextures((GLsizei)m_ColorAttachmentsResolved.size(), m_ColorAttachmentsResolved.data());
 		glDeleteTextures(1, &m_DepthAttachment);
+	}
+
+	void GLFramebuffer::ResolveMutlisampling()
+	{
+		if (IsMultisample())
+		{
+			for (SIZE_T i = 0; i < m_ColorAttachmentDescriptions.size(); ++i)
+			{
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
+				glReadBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_ResolvedFramebufferID);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
+
+				glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
+		}
+	}
+
+	void GLFramebuffer::CreateFramebufferObject(uint32* rendererID, bool resolved)
+	{
+		glCreateFramebuffers(1, rendererID);
+		glBindFramebuffer(GL_FRAMEBUFFER, *rendererID);
+
+		uint32 samples = resolved ? 1 : m_Description.Samples;
+		bool multisample = samples > 1;
+		std::vector<uint32>& attachments = resolved ? m_ColorAttachmentsResolved : m_ColorAttachments;
+
+		if (!m_ColorAttachmentDescriptions.empty())
+		{
+			attachments.resize(m_ColorAttachmentDescriptions.size());
+			CreateTextures(multisample, attachments.data(), attachments.size());
+			//Attachments
+			for (SIZE_T i = 0; i < attachments.size(); ++i)
+			{
+				BindTexture(multisample, attachments[i]);
+				switch (m_ColorAttachmentDescriptions[i].TextureFormat)
+				{
+				case FramebufferTextureFormat::RGBA8:
+					AttachColorTexture(attachments[i], samples, GL_RGBA8, GL_RGBA, m_Description.Width, m_Description.Height, i);
+					break;
+
+				case FramebufferTextureFormat::RED_INTEGER:
+					AttachColorTexture(attachments[i], samples, GL_R32I, GL_RED_INTEGER, m_Description.Width, m_Description.Height, i);
+					
+				}
+			}
+		}
+
+		if (m_DepthAttachmentDescription.TextureFormat != FramebufferTextureFormat::NONE)
+		{
+			CreateTextures(multisample, &m_DepthAttachment, 1);
+			BindTexture(multisample, m_DepthAttachment);
+			switch (m_DepthAttachmentDescription.TextureFormat)
+			{
+			case FramebufferTextureFormat::DEPTH24STENCIL8:
+				AttachDepthTexture(m_DepthAttachment, samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Description.Width, m_Description.Height);
+				break;
+			}
+		}
+
+		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 
 	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, uint32 width, uint32 height, SIZE_T index)
 	{
-		bool multisampled = samples > 1;
-		if (multisampled)
+		if (samples > 1)
 		{
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, GL_FALSE);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, GL_FALSE);
 		}
 		else
 		{
@@ -207,13 +246,12 @@ namespace Athena
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, TextureTarget(multisampled), id, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, TextureTarget(samples > 1), id, 0);
 	}
 
 	void GLFramebuffer::AttachDepthTexture(uint32 id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height)
 	{
-		bool multisampled = samples > 1;
-		if (multisampled)
+		if (samples > 1)
 		{
 			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, GL_FALSE);
 		}
@@ -228,6 +266,6 @@ namespace Athena
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, TextureTarget(multisampled), id, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, TextureTarget(samples > 1), id, 0);
 	}
 }

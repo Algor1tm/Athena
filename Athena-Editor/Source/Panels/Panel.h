@@ -11,6 +11,8 @@ namespace Athena
 		Panel(std::string_view name = "UnNamed")
 			: m_Name(name) {}
 
+		virtual ~Panel() = default;
+
 		virtual void OnImGuiRender() = 0;
 
 		std::string_view GetName() { return m_Name; }

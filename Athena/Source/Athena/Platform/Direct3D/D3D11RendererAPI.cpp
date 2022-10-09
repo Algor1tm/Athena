@@ -18,7 +18,7 @@ namespace Athena
 		rasterizerDesc.DepthClipEnable = FALSE;
 		rasterizerDesc.ScissorEnable = FALSE;
 		rasterizerDesc.MultisampleEnable = TRUE;
-		rasterizerDesc.AntialiasedLineEnable = FALSE;
+		rasterizerDesc.AntialiasedLineEnable = TRUE;
 		
 		HRESULT hr = D3D11CurrentContext::Device->CreateRasterizerState(&rasterizerDesc, m_RasterizerState.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create rasterizer state!");
@@ -95,7 +95,7 @@ namespace Athena
 		}
 		else
 		{
-			D3D11CurrentContext::DeviceContext->OMSetRenderTargets(1, m_BackBufferView.GetAddressOf(), nullptr);
+			D3D11CurrentContext::DeviceContext->OMSetRenderTargets(1, m_BackBufferView.GetAddressOf(), m_DepthStencilView.Get());
 			D3D11CurrentContext::DeviceContext->ClearRenderTargetView(m_BackBufferView.Get(), color.Data());
 			D3D11CurrentContext::DeviceContext->ClearDepthStencilView(m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 		}
@@ -130,7 +130,8 @@ namespace Athena
 
 	void D3D11RendererAPI::UnBindFramebuffer()
 	{
-		D3D11CurrentContext::DeviceContext->OMSetRenderTargets(1, m_BackBufferView.GetAddressOf(), nullptr);
+		m_OutputFramebuffer->ResolveMutlisampling();
+		D3D11CurrentContext::DeviceContext->OMSetRenderTargets(1, m_BackBufferView.GetAddressOf(), m_DepthStencilView.Get());
 		m_OutputFramebuffer = nullptr;
 	}
 

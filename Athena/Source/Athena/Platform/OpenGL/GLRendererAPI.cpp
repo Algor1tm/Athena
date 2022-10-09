@@ -42,6 +42,8 @@ namespace Athena
 		glEnable(GL_DEPTH_TEST);
 
 		glEnable(GL_LINE_SMOOTH);
+
+		glEnable(GL_MULTISAMPLE);
 	}
 
 	void GLRendererAPI::SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)
@@ -82,6 +84,7 @@ namespace Athena
 
 	void GLRendererAPI::UnBindFramebuffer()
 	{
+		m_OutputFramebuffer->ResolveMutlisampling();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		m_OutputFramebuffer = nullptr;
 	}

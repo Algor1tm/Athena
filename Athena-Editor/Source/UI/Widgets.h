@@ -29,7 +29,7 @@ namespace Athena::UI
 		ImGui::TableNextRow(ImGuiTableRowFlags_None, height + offset);
 
 		ImGui::TableSetColumnIndex(0);
-		ShiftCursorY((height + offset - ImGui::GetTextLineHeight()) / 2.f);
+		ShiftCursorY((height + offset - ImGui::GetTextLineHeight()) / 2.f - 2.f);
 		ImGui::Text(label.data());
 
 		ImGui::TableSetColumnIndex(1);
@@ -62,7 +62,7 @@ namespace Athena::UI
 			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, color);
 		}
 
-		if (ImGui::Selectable(label.data(), isSelected))
+		if (ImGui::Selectable(label.data(), *isSelected))
 		{
 			callback();
 		}

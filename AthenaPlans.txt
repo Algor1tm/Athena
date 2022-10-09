@@ -1,7 +1,8 @@
 //////Direct3D11
 //////Editor
 //////  PanelManager, 
-  Better UI
+//////  Better UI
+
 MSAA
 Dll instead of static lib
 Python scripting
@@ -9,10 +10,10 @@ Simple 3D
 Editor
   Duplicate Entity,
   Asset Manager, 
+More 3D
 Audio Engine
 Multithreading
 Text Rendering
-More 3D
 Editor
   Better ContentBrowser, 
   Undo/Redo System

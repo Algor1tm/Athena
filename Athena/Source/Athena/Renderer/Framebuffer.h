@@ -22,11 +22,10 @@ namespace Athena
 	
 	struct FramebufferTextureDescription
 	{
-		FramebufferTextureDescription(FramebufferTextureFormat format = FramebufferTextureFormat::NONE, bool backBufferOutput = false)
-			: TextureFormat(format), BackBufferOutput(backBufferOutput) {}
+		FramebufferTextureDescription(FramebufferTextureFormat format = FramebufferTextureFormat::NONE)
+			: TextureFormat(format) {}
 
 		FramebufferTextureFormat TextureFormat;
-		bool BackBufferOutput;
 	};
 	
 	struct FramebufferAttachmentDescription
@@ -49,6 +48,7 @@ namespace Athena
 	{
 	public:
 		virtual ~Framebuffer() = default;
+		static Ref<Framebuffer> Create(const FramebufferDescription& desc);
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
@@ -60,6 +60,6 @@ namespace Athena
 
 		virtual void ClearColorAndDepth(const LinearColor& color) = 0;
 
-		static Ref<Framebuffer> Create(const FramebufferDescription& desc);
+		virtual void ResolveMutlisampling() = 0;
 	};
 }

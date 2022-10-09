@@ -15,6 +15,13 @@ namespace Athena
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> ReadableTexture = nullptr;
 	};
 
+	struct ResolvedFramebufferAttachment
+	{
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> SingleSampledTexture = nullptr;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ShaderResourceView = nullptr;
+	};
+
+
 	class ATHENA_API D3D11Framebuffer: public Framebuffer
 	{
 	public:
@@ -33,16 +40,21 @@ namespace Athena
 
 		virtual void ClearColorAndDepth(const LinearColor& color) override;
 
+		virtual void ResolveMutlisampling() override;
+
 	private:
 		void DeleteAttachments();
-		void AttachColorTexture(ID3D11RenderTargetView** target, DXGI_FORMAT format, uint32 width, uint32 height, SIZE_T index);
-		void AttachDepthTexture(ID3D11DepthStencilView** target, DXGI_FORMAT format, uint32 width, uint32 height);
+		void AttachColorTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height, SIZE_T index);
+		void AttachDepthTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height);
+
+		bool IsMultisample() const { return m_Description.Samples > 1; }
 
 	private:
 		FramebufferDescription m_Description;
 
 		std::vector<FramebufferTextureDescription> m_RenderTargetsDescriptions;
 		std::vector<FramebufferAttachment> m_Attachments;
+		std::vector<ResolvedFramebufferAttachment> m_ResolvedAttachments; // if not multisample - invalid
 
 		SIZE_T m_ClearColorTargetIndex;
 

@@ -33,7 +33,4 @@ namespace Athena
 		Vector3 m_Position;
 		float m_Rotation;
 	};
-
-
-
 }

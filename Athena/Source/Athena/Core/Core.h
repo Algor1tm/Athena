@@ -50,16 +50,11 @@
 
 
 // Type of linking detection
-// Athena currently not supporting dynamic linking
 #ifdef ATN_PLATFORM_WINDOWS
-	#ifdef ATN_DYNAMIC_LINK
-		#ifdef ATN_BUILD_DLL
-			#define ATHENA_API __declspec(dllexport)
-		#else
-			#define  ATHENA_API __declspec(dllimport)
-		#endif
+	#ifdef ATN_BUILD_DLL
+		#define ATHENA_API __declspec(dllexport)
 	#else
-		#define ATHENA_API
+		#define  ATHENA_API __declspec(dllimport)
 	#endif
 #else
 	#error Athena only supports Windows!

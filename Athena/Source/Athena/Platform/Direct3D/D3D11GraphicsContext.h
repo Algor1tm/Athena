@@ -40,3 +40,4 @@ namespace Athena
 		static Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;
 	};
 }
+

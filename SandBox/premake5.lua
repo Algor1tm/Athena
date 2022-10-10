@@ -31,7 +31,11 @@ project "SandBox"
 	filter "system:windows"
 		staticruntime "On"
 		systemversion "latest"
-
+		
+		disablewarnings 
+		{
+			"4251"
+		}
 
 	filter "configurations:Debug"
 		defines "ATN_DEBUG"

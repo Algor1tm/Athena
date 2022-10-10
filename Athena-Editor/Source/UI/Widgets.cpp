@@ -1,7 +1,5 @@
 #include "UI/Widgets.h"
 
-#include <ImGui/imgui_internal.h>
-
 
 namespace Athena::UI
 {
@@ -14,7 +12,7 @@ namespace Athena::UI
 				float full_width = ImGui::GetContentRegionAvail().x - 15.f;
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 
-				float buttonWidth = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.f;
+				float buttonWidth = ImGui::GetFrameHeight();
 				ImVec2 buttonSize = { buttonWidth, buttonWidth };
 
 				float dragWidth = (full_width - 3 * buttonWidth) / 3.f;

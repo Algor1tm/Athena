@@ -1,14 +1,14 @@
 project "Athena"
-	kind "StaticLib"
+	kind "SharedLib"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "On"
+	staticruntime "Off"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir    ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader  "atnpch.h"
 	pchsource  "Source/atnpch.cpp"
+	pchheader  "atnpch.h"
 
 	files
 	{
@@ -53,12 +53,28 @@ project "Athena"
 		"GLFW_INCLUDE_NONE",
 	}
 
+	postbuildcommands
+	{
+		("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Athena-Editor/\""),
+		("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/SandBox/\"")
+	}
+
 	filter "files:ThirdParty/ImGuizmo/**.cpp"
-	flags { "NoPCH" }
+		flags { "NoPCH" }
 
 	filter "system:windows"
 		staticruntime "On"
 		systemversion "latest"
+
+		disablewarnings 
+		{
+			"4251"
+		}
+
+		files
+		{
+			"Athena.def"
+		}
 
 		links
 		{
@@ -69,6 +85,8 @@ project "Athena"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
+
+		visibility "Default"
 
 		links
 		{

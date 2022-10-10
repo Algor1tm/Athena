@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	class RenderCommand
+	class ATHENA_API RenderCommand
 	{
 	public:
 		static void Init();

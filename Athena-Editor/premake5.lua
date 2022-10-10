@@ -28,10 +28,14 @@ project "Athena-Editor"
 	{
 		"Athena"
 	}
-
 	filter "system:windows"
 		staticruntime "On"
 		systemversion "latest"
+
+		disablewarnings 
+		{
+			"4251"
+		}
 
 
 	filter "configurations:Debug"

@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class Camera
+	class ATHENA_API Camera
 	{
 	public:
 		Camera(const Matrix4& projection = Matrix4::Identity())

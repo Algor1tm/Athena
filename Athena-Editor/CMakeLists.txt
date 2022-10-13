@@ -14,6 +14,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 EnableMultiProcessorCompilation(Athena-Editor)
 set_property(TARGET Athena-Editor PROPERTY CXX_STANDARD 17)
 set_property(TARGET Athena-Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  "${CMAKE_SOURCE_DIR}/Athena-Editor")
+set_property(TARGET Athena-Editor PROPERTY FOLDER Tools)
 
 target_compile_definitions(Athena-Editor PUBLIC
   $<$<CONFIG:Debug>:ATN_DEBUG>

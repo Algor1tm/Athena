@@ -19,6 +19,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 
 EnableMultiProcessorCompilation(Athena)
 set_property(TARGET Athena PROPERTY CXX_STANDARD 17)
+set_property(TARGET Athena PROPERTY FOLDER Core)
 
 target_compile_definitions(Athena PRIVATE
 	$<$<CONFIG:Debug>:ATN_DEBUG>

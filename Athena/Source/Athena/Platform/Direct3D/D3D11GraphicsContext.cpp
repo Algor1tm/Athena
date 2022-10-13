@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "D3D11GraphicsContext.h"
 
 #include <vector>

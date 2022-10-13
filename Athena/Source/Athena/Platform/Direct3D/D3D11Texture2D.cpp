@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "D3D11Texture2D.h"
 
 #include <stb_image/stb_image.h>

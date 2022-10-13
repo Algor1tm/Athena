@@ -96,8 +96,8 @@ set(BOX2D_HEADER_FILES
 	../include/box2d/b2_world_callbacks.h
 	../include/box2d/box2d.h)
 
-add_library(box2d ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
-target_include_directories(box2d
+add_library(Box2D ${BOX2D_SOURCE_FILES} ${BOX2D_HEADER_FILES})
+target_include_directories(Box2D
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -105,7 +105,7 @@ target_include_directories(box2d
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set_target_properties(box2d PROPERTIES
+set_target_properties(Box2D PROPERTIES
 	CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
@@ -114,20 +114,20 @@ set_target_properties(box2d PROPERTIES
 )
 
 if(MSVC)
-  set_target_properties(box2d PROPERTIES
+  set_target_properties(Box2D PROPERTIES
     COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMPILE_PDB_NAME box2d
+    COMPILE_PDB_NAME Box2D
   )
 
   install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/box2d.pdb"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Box2D.pdb"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     OPTIONAL
   )
 endif()
 
 if (BUILD_SHARED_LIBS)
-  target_compile_definitions(box2d
+  target_compile_definitions(Box2D
     PUBLIC
       B2_SHARED
   )
@@ -137,7 +137,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "src" FILES ${BOX2D_SOURC
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include" PREFIX "include" FILES ${BOX2D_HEADER_FILES})
 
 install(
-  TARGETS box2d
+  TARGETS Box2D
   EXPORT box2dConfig
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -147,7 +147,7 @@ install(
 install(
   EXPORT box2dConfig
   NAMESPACE box2d::
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Box2D"
 )
 
 include(CMakePackageConfigHelpers)
@@ -159,5 +159,5 @@ write_basic_package_version_file(
 
 install(
   FILES "${CMAKE_CURRENT_BINARY_DIR}/box2dConfigVersion.cmake"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/box2d"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Box2D"
 )

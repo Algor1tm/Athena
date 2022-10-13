@@ -1,5 +1,3 @@
-#include "atnpch.h"
-
 #include "ImGuiLayer.h"
 #include "Athena/Core/Application.h"
 

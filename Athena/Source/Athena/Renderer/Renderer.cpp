@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Renderer.h"
 
 #include "Athena/Renderer/Renderer2D.h"

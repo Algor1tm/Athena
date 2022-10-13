@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Color.h"
 
 #include "Athena/Math/Common.h"

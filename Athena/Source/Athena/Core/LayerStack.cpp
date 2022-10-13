@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "LayerStack.h"
 
 #include "Log.h"

@@ -24,6 +24,7 @@ namespace Athena
 
 	Application* CreateApplication()
 	{
+		auto test = std::filesystem::current_path();
 		ApplicationDescription appdesc;
 		appdesc.WindowDesc.Width = 1600;
 		appdesc.WindowDesc.Height = 900;

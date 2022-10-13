@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Texture.h"
 
 #include "Athena/Renderer/Renderer.h"

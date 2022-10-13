@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Shader.h"
 
 #include "Athena/Platform/OpenGl/GLShader.h"

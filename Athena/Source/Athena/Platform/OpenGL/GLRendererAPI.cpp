@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "GLRendererAPI.h"
 
 #include <glad/glad.h>

@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "ScriptEngine.h"
 
 

@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "SceneSerializer.h"
 #include "Components.h"
 #include "Entity.h"

@@ -3,6 +3,7 @@
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Core/Application.h"
 
+#include <Windows.h>
 #include <commdlg.h>
 
 

@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "SceneCamera.h"
 
 #include "Athena/Math/Projections.h"

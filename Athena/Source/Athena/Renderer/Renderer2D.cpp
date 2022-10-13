@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Renderer2D.h"
 
 #include "Athena/Math/Transforms.h"

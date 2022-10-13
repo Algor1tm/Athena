@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "RenderCommand.h"
 #include "Renderer.h"
 

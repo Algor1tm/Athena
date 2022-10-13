@@ -68,7 +68,7 @@ namespace Athena
 		};
 
 	private:
-		void* m_WindowHandle;
+		void* m_WindowHandle = nullptr;
 		WindowData m_Data;
 		Ref<GraphicsContext> m_Context;
 

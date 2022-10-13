@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Framebuffer.h"
 
 #include "Renderer.h"

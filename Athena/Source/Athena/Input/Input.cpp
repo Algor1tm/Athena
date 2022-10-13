@@ -1,6 +1,3 @@
-#include "atnpch.h"
-
-
 #ifdef FORCE_GLFW
 	#include "Athena/Platform/GLFW/GLFWInput.h"
 #else

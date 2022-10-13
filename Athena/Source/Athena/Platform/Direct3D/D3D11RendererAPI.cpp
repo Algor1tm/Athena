@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "D3D11RendererAPI.h"
 
 

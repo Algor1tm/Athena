@@ -16,7 +16,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace Athena
 {
-	static constexpr const wchar_t* s_ClassName = L"AthenaApp";
+	static constexpr const char* s_ClassName = "AthenaApp";
 	static HINSTANCE s_HInstance;
 
 
@@ -215,7 +215,7 @@ namespace Athena
 			HANDLE icon;
 			if (desc.Icon != Filepath())
 			{
-				std::wstring iconPath = desc.Icon.wstring() + L".ico";		// TODO: Make more customizable
+				std::string iconPath = desc.Icon.string() + ".ico";		// TODO: Make more customizable
 				icon = LoadImage(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
 				ATN_CORE_ASSERT(icon, "Failed to load icon");
 			}
@@ -253,14 +253,10 @@ namespace Athena
 		wr.bottom = window->m_Data.Height + wr.top;
 		AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 
-		std::wstring wtitle;
-		wtitle.resize(window->m_Data.Title.size());
-		MultiByteToWideChar(CP_UTF8, 0, window->m_Data.Title.c_str(), (int)window->m_Data.Title.size(), &wtitle[0], (int)wtitle.size());
-
 		HWND hWnd;
 		window->m_WindowHandle = hWnd = CreateWindow(
 			s_ClassName,
-			wtitle.c_str(),
+			window->m_Data.Title.c_str(),
 			WS_OVERLAPPEDWINDOW,
 			100,
 			100,

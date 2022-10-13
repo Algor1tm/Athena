@@ -32,6 +32,15 @@
 #include <malloc.h>
 #endif
 
+
+#ifdef max
+    #undef max
+#endif
+
+#ifdef min
+    #undef min
+#endif
+
 // includes patches for multiview from
 // https://github.com/CedricGuillemet/ImGuizmo/issues/15
 

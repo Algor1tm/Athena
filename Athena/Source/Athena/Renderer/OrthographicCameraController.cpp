@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "OrthographicCameraController.h"
 
 #include "Athena/Input/Input.h"

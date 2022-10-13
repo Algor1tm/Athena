@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "D3D11Shader.h"
 
 #include <d3dcompiler.h>

@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "ConstantBuffer.h"
 
 #include "Renderer.h"

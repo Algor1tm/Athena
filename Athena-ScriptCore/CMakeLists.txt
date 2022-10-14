@@ -29,3 +29,8 @@ set_target_properties(AthenaScriptCore
 )
 
 target_include_directories(AthenaScriptCore PUBLIC ${PYBIND11_INCLUDE_DIR})
+
+add_custom_command(TARGET AthenaScriptCore POST_BUILD 
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+     "$<TARGET_FILE:AthenaScriptCore>"
+     "${SCRIPTS_FOLDER}" )

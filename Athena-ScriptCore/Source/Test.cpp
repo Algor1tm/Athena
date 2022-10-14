@@ -28,7 +28,7 @@ int add(int i, int j = 2)
 }
 
 
-PYBIND11_MODULE(example, handle)
+PYBIND11_MODULE(AthenaScriptCore, handle)
 {
     handle.doc() = "pybind11 example plugin";
 

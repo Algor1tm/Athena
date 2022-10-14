@@ -7,8 +7,6 @@
 bin/
 bin-int/
 
-!Athena/ThirdParty/DirectXTK/bin/
-
 SandBox/AthenaProfile-Runtime.json
 SandBox/AthenaProfile-Shutdown.json
 SandBox/AthenaProfile-Startup.json
@@ -20,6 +18,7 @@ Athena-Editor/Resources/Tmp/EditorScene.atn
 Makefile
 
 .vscode/
+.idea/
 
 ##### ATHENA #########################
 

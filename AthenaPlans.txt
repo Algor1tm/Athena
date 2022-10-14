@@ -2,9 +2,9 @@
 //////Editor
 //////  PanelManager, 
 //////  Better UI
+//////MSAA
+//////Dll instead of static lib
 
-MSAA
-Dll instead of static lib
 Python scripting
 Simple 3D
 Editor

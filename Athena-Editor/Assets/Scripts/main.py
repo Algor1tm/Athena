@@ -1,11 +1,4 @@
-from AthenaScriptCore import *
+import Athena
 
-print(add(i=3))
-
-pet = Pet("Molly")
-print(pet.getName())
-pet.name = "NoMolly"
-
-dog = Dog("Jack")
-dog.bark()
-pet = dog
+Athena.Info("HAHAHAHA\n")
+entity = Athena.Entity()

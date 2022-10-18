@@ -3,6 +3,7 @@
 #include "Log.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Input/Input.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 
 namespace Athena
@@ -22,7 +23,7 @@ namespace Athena
 			
 		WindowDescription wdesc = appdesc.WindowDesc;
 
-		RendererAPI::Init(appdesc.API);
+		RendererAPI::Init(appdesc.API);		// TODO: Make Better API
 		m_Window = Window::Create(wdesc);
 		Renderer::Init();
 
@@ -40,11 +41,14 @@ namespace Athena
 		{
 			m_ImGuiLayer = nullptr;
 		}
+
+		ScriptEngine::Init();
 	}
 
 	Application::~Application()
 	{
 		Renderer::Shutdown();
+		ScriptEngine::Shutdown();
 	}
 
 	void Application::OnEvent(Event& event)

@@ -6,6 +6,8 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	Athena.def
 	"Source/*.h" 
 	"Source/*.cpp" 
+	"ThirdParty/pybind11/include/*.h"
+	"ThirdParty/pybind11/include/*.cpp"
 	"ThirdParty/stb_image/stb_image.h"
 	"ThirdParty/stb_image/stb_image.cpp"
 	"ThirdParty/entt/entt.h"
@@ -46,6 +48,11 @@ add_custom_command(TARGET Athena POST_BUILD
      "$<TARGET_FILE:Athena>"
      "${BUILD_FOLDER}/SandBox/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
 
+add_custom_command(TARGET Athena POST_BUILD 
+  COMMAND "${CMAKE_COMMAND}" -E copy 
+     "$<TARGET_FILE:Athena>"
+     "${BUILD_FOLDER}/AthenaScriptCore/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
+
 # Precompile Header
 target_precompile_headers(Athena PRIVATE
 	<memory> <algorithm> <functional> <utility> <chrono>
@@ -69,6 +76,7 @@ target_include_directories(Athena PRIVATE
 	${GLAD_INCLUDE_DIR}
 	${GLFW_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
+	${PYBIND11_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
 	${YAML_CPP_INCLUDE_DIR})
 
@@ -77,6 +85,7 @@ target_link_libraries(Athena PRIVATE
 	glad
 	GLFW
 	ImGui
+	pybind11::embed
 	spdlog
 	yaml-cpp
 )

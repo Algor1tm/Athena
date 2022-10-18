@@ -1,4 +1,3 @@
-#include "atnpch.h"
 #include "Log.h"
 
 #if defined(_MSC_VER)

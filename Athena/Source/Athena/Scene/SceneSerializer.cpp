@@ -210,6 +210,15 @@ namespace Athena
 				}
 
 				{
+					const auto& scriptComponentNode = entityNode["ScriptComponent"];
+					if (scriptComponentNode)
+					{
+						auto& script = deserializedEntity.AddComponent<ScriptComponent>();
+						script.Name = scriptComponentNode["Name"].as<String>();
+					}
+				}
+
+				{
 					const auto& cameraComponentNode = entityNode["CameraComponent"];
 					if (cameraComponentNode)
 					{
@@ -373,6 +382,12 @@ namespace Athena
 				output << YAML::Key << "Translation" << YAML::Value << transform.Translation;
 				output << YAML::Key << "Rotation" << YAML::Value << transform.Rotation;
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
+			});
+
+		SerializeComponent<ScriptComponent>(out, "ScriptComponent", entity,
+			[](YAML::Emitter& output, const ScriptComponent& script)
+			{
+				output << YAML::Key << "Name" << YAML::Value << script.Name;
 			});
 
 		SerializeComponent<CameraComponent>(out, "CameraComponent", entity,

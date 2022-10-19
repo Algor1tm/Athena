@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Scene/Entity.h"
 
 
 namespace Athena
@@ -10,5 +11,7 @@ namespace Athena
 	public:
 		static void Init();
 		static void Shutdown();
+
+		static void OnUpdateEntity(Entity entity, float frameTime);
 	};
 }

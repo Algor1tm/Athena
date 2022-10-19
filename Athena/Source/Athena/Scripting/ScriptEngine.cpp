@@ -10,6 +10,9 @@
 	#pragma warning(pop)
 #endif
 
+#include <unordered_map>
+
+
 namespace py = pybind11;
 
 
@@ -30,12 +33,17 @@ namespace Athena
 		auto& path = sys.attr("path");
 		path.attr("insert")(0, "Assets/Scripts/");
 
-		py::module_ athena = py::module_::import("Athena");
-		ATN_CORE_ASSERT(athena);
+		py::module_ test = py::module_::import("Test");
+		ATN_CORE_ASSERT(test);
 	}
 
 	void ScriptEngine::Shutdown()
 	{
 		delete s_Data;
+	}
+
+	void ScriptEngine::OnUpdateEntity(Entity entity, float frameTime)
+	{
+		
 	}
 }

@@ -153,53 +153,20 @@ namespace Athena
 
 		auto& style = ImGui::GetStyle();
 		float buttonWidth = ImGui::CalcTextSize("Add Component").x + 2 * style.ItemInnerSpacing.x;
-		ImGui::SetCursorPosX(fullWidth - buttonWidth - 1.f);
+		ImGui::SetCursorPosX(fullWidth - buttonWidth - 5.f);
 		if (ImGui::Button("Add Component"))
 			ImGui::OpenPopup("Add Component");
 
 		if (ImGui::BeginPopup("Add Component"))
 		{
-			if (!entity.HasComponent<TransformComponent>() && ImGui::MenuItem("Transform"))
-			{
-				m_SelectionContext.AddComponent<TransformComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<CameraComponent>() && ImGui::MenuItem("Camera"))
-			{
-				m_SelectionContext.AddComponent<CameraComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<SpriteComponent>() && ImGui::MenuItem("Sprite"))
-			{
-				m_SelectionContext.AddComponent<SpriteComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<CircleComponent>() && ImGui::MenuItem("Circle"))
-			{
-				m_SelectionContext.AddComponent<CircleComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<Rigidbody2DComponent>() && ImGui::MenuItem("Rigidbody2D"))
-			{
-				m_SelectionContext.AddComponent<Rigidbody2DComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<BoxCollider2DComponent>() && ImGui::MenuItem("BoxCollider2D"))
-			{
-				m_SelectionContext.AddComponent<BoxCollider2DComponent>();
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (!entity.HasComponent<CircleCollider2DComponent>() && ImGui::MenuItem("CircleCollider2D"))
-			{
-				m_SelectionContext.AddComponent<CircleCollider2DComponent>();
-				ImGui::CloseCurrentPopup();
-			}
+			DrawAddComponentEntry<TransformComponent>(entity, "Transform");
+			DrawAddComponentEntry<CameraComponent>(entity, "Camera");
+			DrawAddComponentEntry<ScriptComponent>(entity, "Script");
+			DrawAddComponentEntry<SpriteComponent>(entity, "Sprite");
+			DrawAddComponentEntry<CircleComponent>(entity, "Circle");
+			DrawAddComponentEntry<Rigidbody2DComponent>(entity, "Rigidbody2D");
+			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
+			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
 
 			ImGui::EndPopup();
 		}
@@ -222,82 +189,18 @@ namespace Athena
 
 					UI::EndDrawControllers();
 				}
-				ImGui::Spacing();
 			});
 
-		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
+		DrawComponent<ScriptComponent>(entity, "Script", [](ScriptComponent& script)
 			{
 				float height = ImGui::GetFrameHeight();
 
 				if (UI::BeginDrawControllers())
 				{
-					UI::DrawController("Color", height, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
-					UI::DrawController("Tiling", height, [&sprite]() { return ImGui::SliderFloat("##Tiling", &sprite.TilingFactor, 1.f, 20.f); });
-
-					UI::DrawController("Texture", 50.f, [&sprite]()
+					UI::DrawController("ScriptName", height, [&script]() 
 						{ 
-							float imageSize = 45.f;
-
-							ImGui::Image(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
-
-							if (ImGui::BeginDragDropTarget())
-							{
-								if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-								{
-									std::string_view path = (const char*)payload->Data;
-									std::string_view extent = path.substr(path.size() - 4, path.size());
-									if (extent == ".png\0")
-									{
-										sprite.Texture = Texture2D::Create(String(path));
-										sprite.Color = LinearColor::White;
-									}
-									else
-									{
-										ATN_CORE_ERROR("Invalid Texture format");
-									}
-								}
-								ImGui::EndDragDropTarget();
-							}
-
-							ImGui::SameLine();
-							ImVec2 cursor = ImGui::GetCursorPos();
-							if (ImGui::Button("Browse"))
-							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									sprite.Texture = Texture2D::Create(filepath);
-									sprite.Color = LinearColor::White;
-									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
-								}
-								else
-								{
-									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
-								}
-							}
-
-							ImGui::SetCursorPos({cursor.x, cursor.y + imageSize / 1.8f});
-							if (ImGui::Button("Reset"))
-							{
-								sprite.Texture = Texture2D::WhiteTexture();
-							}
-
-							return false;
+							return UI::TextInput(script.Name, script.Name);
 						});
-
-					UI::EndDrawControllers();
-				}
-			});
-
-		DrawComponent<CircleComponent>(entity, "Circle", [](CircleComponent& circle)
-			{
-				float height = ImGui::GetFrameHeight();
-
-				if (UI::BeginDrawControllers())
-				{
-					UI::DrawController("Color", height, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
-					UI::DrawController("Thickness", height, [&circle]() { return ImGui::SliderFloat("##Thickness", &circle.Thickness, 0.f, 1.f); });
-					UI::DrawController("Fade", height, [&circle]() { return ImGui::SliderFloat("##Fade", &circle.Fade, 0.f, 1.f); });
 
 					UI::EndDrawControllers();
 				}
@@ -390,6 +293,83 @@ namespace Athena
 				}
 			});
 
+		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&sprite]() { return ImGui::ColorEdit4("##Color", sprite.Color.Data()); });
+					UI::DrawController("Tiling", height, [&sprite]() { return ImGui::SliderFloat("##Tiling", &sprite.TilingFactor, 1.f, 20.f); });
+
+					UI::DrawController("Texture", 50.f, [&sprite]()
+						{ 
+							float imageSize = 45.f;
+
+							ImGui::Image(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+
+							if (ImGui::BeginDragDropTarget())
+							{
+								if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+								{
+									std::string_view path = (const char*)payload->Data;
+									std::string_view extent = path.substr(path.size() - 4, path.size());
+									if (extent == ".png\0")
+									{
+										sprite.Texture = Texture2D::Create(String(path));
+										sprite.Color = LinearColor::White;
+									}
+									else
+									{
+										ATN_CORE_ERROR("Invalid Texture format");
+									}
+								}
+								ImGui::EndDragDropTarget();
+							}
+
+							ImGui::SameLine();
+							ImVec2 cursor = ImGui::GetCursorPos();
+							if (ImGui::Button("Browse"))
+							{
+								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								if (!filepath.empty())
+								{
+									sprite.Texture = Texture2D::Create(filepath);
+									sprite.Color = LinearColor::White;
+									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
+								}
+								else
+								{
+									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
+								}
+							}
+
+							ImGui::SetCursorPos({cursor.x, cursor.y + imageSize / 1.8f});
+							if (ImGui::Button("Reset"))
+							{
+								sprite.Texture = Texture2D::WhiteTexture();
+							}
+
+							return false;
+						});
+
+					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<CircleComponent>(entity, "Circle", [](CircleComponent& circle)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&circle]() { return ImGui::ColorEdit4("##Color", circle.Color.Data()); });
+					UI::DrawController("Thickness", height, [&circle]() { return ImGui::SliderFloat("##Thickness", &circle.Thickness, 0.f, 1.f); });
+					UI::DrawController("Fade", height, [&circle]() { return ImGui::SliderFloat("##Fade", &circle.Fade, 0.f, 1.f); });
+
+					UI::EndDrawControllers();
+				}
+			});
 
 		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
 			{

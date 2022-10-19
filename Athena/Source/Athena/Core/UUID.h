@@ -17,3 +17,17 @@ namespace Athena
 		uint64 m_UUID;
 	};
 }
+
+namespace std {
+	template <typename T> struct hash;
+
+	template<>
+	struct hash<Athena::UUID>
+	{
+		std::size_t operator()(const Athena::UUID& uuid) const
+		{
+			return (std::size_t)uuid;
+		}
+	};
+
+}

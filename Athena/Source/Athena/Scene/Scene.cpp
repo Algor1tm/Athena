@@ -1,10 +1,11 @@
-#include "Athena/Renderer/Renderer2D.h" 
-
 #include "Scene.h"
-#include "Entity.h"
 
+#include "Entity.h"
 #include "Components.h"
 #include "NativeScript.h"
+
+#include "Athena/Renderer/Renderer2D.h" 
+#include "Athena/Scripting/ScriptEngine.h"
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -73,8 +74,16 @@ namespace Athena
 
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
-		//Run native scripts
+		// Update scripts
 		{
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto id : view)
+			{
+				Entity entity = { id, this };
+				ScriptEngine::OnUpdateEntity(entity, frameTime);
+			}
+
+
 			m_Registry.view<NativeScriptComponent>().each([=](auto entityID, auto& nsc)
 				{
 					if (!nsc.Script)

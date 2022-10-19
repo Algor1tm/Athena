@@ -1,11 +1,8 @@
-ATHENA_MODULE_FOLDER =  "" # "../../" # use in shipped application
-
-import sys
-sys.path.insert(0, ATHENA_MODULE_FOLDER)
-
-from AthenaScriptCore import *
+import Internal
 
 class Entity:
+    _UUID = 0
+
     def __init__(self):
         print("Entity()")
         pass

@@ -72,6 +72,11 @@ namespace Athena
 		bool FixedAspectRatio = false;
 	};
 
+	struct ScriptComponent
+	{
+		std::string Name;
+	};
+
 	// Forward declaration (defined in NativeScript.h)
 	class ATHENA_API NativeScript;
 

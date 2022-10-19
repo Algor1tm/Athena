@@ -62,6 +62,8 @@ Entities:
       Translation: [0, 0.734100044, 3.13647175]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
+    ScriptComponent:
+      Name: Test
     CameraComponent:
       Camera:
         ProjectionType: 0

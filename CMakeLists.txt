@@ -16,11 +16,20 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/bin")
-
 set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
 
 # Find Python 3.6+
 find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)
+
+# Show python scripts in explorer
+file(GLOB_RECURSE PYTHON_FILES CONFIGURE_DEPENDS 
+	"${SCRIPTS_FOLDER}/*.py")
+
+add_library(Athena-RuntimeScripts ${PYTHON_FILES})
+
+source_group(TREE "${SCRIPTS_FOLDER}/../" FILES ${PYTHON_FILES} )
+set_property(TARGET Athena-RuntimeScripts PROPERTY LINKER_LANGUAGE CXX)
+set_property(TARGET Athena-RuntimeScripts PROPERTY FOLDER Core)
 
 include(Dependencies.cmake)
 
@@ -34,6 +43,5 @@ add_subdirectory("${THIRD_PARTY_DIR}/spdlog")
 add_subdirectory("${THIRD_PARTY_DIR}/yaml-cpp")
 
 add_subdirectory("Athena")
-add_subdirectory("Athena-ScriptCore")
 add_subdirectory("Athena-Editor")
 add_subdirectory("SandBox")

@@ -48,11 +48,6 @@ add_custom_command(TARGET Athena POST_BUILD
      "$<TARGET_FILE:Athena>"
      "${BUILD_FOLDER}/SandBox/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
 
-add_custom_command(TARGET Athena POST_BUILD 
-  COMMAND "${CMAKE_COMMAND}" -E copy 
-     "$<TARGET_FILE:Athena>"
-     "${BUILD_FOLDER}/AthenaScriptCore/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
-
 # Precompile Header
 target_precompile_headers(Athena PRIVATE
 	<memory> <algorithm> <functional> <utility> <chrono>

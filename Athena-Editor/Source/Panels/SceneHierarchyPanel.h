@@ -13,7 +13,7 @@
 
 namespace Athena
 {
-	class SceneHierarchyPanel: public Panel
+	class SceneHierarchyPanel : public Panel
 	{
 	public:
 		SceneHierarchyPanel(std::string_view name, const Ref<Scene>& context);
@@ -31,6 +31,9 @@ namespace Athena
 
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
+
+		template <typename Component>
+		void DrawAddComponentEntry(Entity entity, std::string_view name);
 
 	private:
 		Ref<Scene> m_Context;
@@ -67,6 +70,7 @@ namespace Athena
 			ImGui::SameLine(regionAvail.x - lineHeight);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
 			UI::ShiftCursorY(1.f);
+			UI::ShiftCursorX(1.f);
 			if (ImGui::Button("...", { lineHeight - 2.f, lineHeight - 2.f }))
 				ImGui::OpenPopup("ComponentSettings");
 			ImGui::PopStyleVar();
@@ -78,7 +82,7 @@ namespace Athena
 
 				ImGui::EndPopup();
 			}
-			
+
 			ImGui::PopStyleVar(2);
 
 			if (open)
@@ -90,6 +94,16 @@ namespace Athena
 
 			if (removeComponent)
 				entity.RemoveComponent<Component>();
+		}
+	}
+
+	template <typename Component>
+	void SceneHierarchyPanel::DrawAddComponentEntry(Entity entity, std::string_view name)
+	{
+		if (!entity.HasComponent<Component>() && ImGui::MenuItem(name.data()))
+		{
+			entity.AddComponent<Component>();
+			ImGui::CloseCurrentPopup();
 		}
 	}
 }

@@ -1,6 +1,8 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Input/Input.h"
 
+#include "ScriptEntity.h"
+
 #ifdef _MSC_VER
 #pragma warning(push, 0)
 #endif
@@ -13,10 +15,11 @@
 
 namespace py = pybind11;
 
-namespace Athena
-{
 #define ADD_INTERNAL_FUNCTION(Name) handle.def(ATN_STRINGIFY_MACRO(Name), &Athena::Name)
 
+
+namespace Athena
+{
 #pragma region LOG
 
     void Log_Trace(const std::string& message)
@@ -71,9 +74,26 @@ namespace Athena
     {
         handle.doc() = "Internal Athena Core Calls";
 
-        py::class_<Vector2>(handle, "Vector2").
-            def_readwrite("x", &Vector2::x).
-            def_readwrite("y", &Vector2::y);
+        py::class_<Vector2>(handle, "Vector2")
+            .def_readwrite("x", &Vector2::x)
+            .def_readwrite("y", &Vector2::y);
+
+        py::class_<Vector3>(handle, "Vector3")
+            .def_readwrite("x", &Vector3::x)
+            .def_readwrite("y", &Vector3::y)
+            .def_readwrite("z", &Vector3::z);
+
+        py::class_<Vector4>(handle, "Vector4")
+            .def_readwrite("x", &Vector4::x)
+            .def_readwrite("y", &Vector4::y)
+            .def_readwrite("z", &Vector4::z)
+            .def_readwrite("w", &Vector4::w);
+
+
+        py::class_<ScriptEntity>(handle, "Entity")
+            .def(py::init<>())
+            .def_readwrite("_ID", &ScriptEntity::m_ID)
+            .def("GetTranslation", &ScriptEntity::GetTranslation);
 
         ADD_INTERNAL_FUNCTION(Log_Trace);
         ADD_INTERNAL_FUNCTION(Log_Info);
@@ -86,5 +106,3 @@ namespace Athena
         ADD_INTERNAL_FUNCTION(Input_GetMousePosition);
     }
 }
-
-

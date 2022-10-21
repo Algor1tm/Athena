@@ -25,6 +25,7 @@ class b2World;
 namespace Athena
 {
 	class Entity;
+	class ScriptEntity;
 	class SceneHierarchyPanel;
 	class SceneSerializer;
 
@@ -33,6 +34,7 @@ namespace Athena
 	{
 	public:
 		friend class Entity;
+		friend class ScriptEntity;
 		friend class SceneHierarchyPanel;
 		friend class SceneSerializer;
 

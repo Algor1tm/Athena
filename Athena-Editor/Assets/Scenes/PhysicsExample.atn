@@ -63,7 +63,7 @@ Entities:
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
     ScriptComponent:
-      Name: Test
+      Name: Camera
     CameraComponent:
       Camera:
         ProjectionType: 0

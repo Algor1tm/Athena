@@ -155,6 +155,17 @@ namespace Athena
 	void Scene::OnRuntimeStart()
 	{
 		OnPhysics2DStart();
+
+		// Scripting
+		{
+			// Instantiate all script entities
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto id: view)
+			{
+				Entity entity = { id, this };
+				ScriptEngine::OnCreateEntity(entity);
+			}
+		}
 	}
 
 	void Scene::OnSimulationStart()

@@ -1,21 +1,4 @@
-import Internal
-from Internal import Vector2
-
 from enum import IntEnum
-
-
-class Input:
-    @staticmethod
-    def IsKeyPressed(keyCode):
-        return Internal.Input_IsKeyPressed(keyCode)
-
-    @staticmethod
-    def IsMouseButtonPressed(mouseCode):
-        return Internal.Input_IsMouseButtonPressed(mouseCode)
-
-    @staticmethod
-    def GetMousePosition():
-        return Internal.Input_GetMousePosition()
 
 
 class Keyboard(IntEnum):
@@ -26,7 +9,7 @@ class Keyboard(IntEnum):
     Dot = 0xBE        # . 
     Slash = 0x6C      # / 
 
-    #0 - 9 are the same as ASCII '0' - '9'
+    # 0 - 9 are the same as ASCII '0' - '9'
     D0 = 0x30   # 0 
     D1 = 0x31   # 1 
     D2 = 0x32   # 2 
@@ -122,7 +105,7 @@ class Keyboard(IntEnum):
     F23 = 0x86
     F24 = 0x87
         
-    # Numpad 
+    # NumPad
     KP0 = 0x60
     KP1 = 0x61
     KP2 = 0x62
@@ -150,6 +133,7 @@ class Keyboard(IntEnum):
     LWindows = 0x5B
     RWindows = 0x5C
     Menu = 0x5D
+
 
 class Mouse(IntEnum):
     XButton1 = 0x05

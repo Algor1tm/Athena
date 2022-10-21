@@ -38,7 +38,7 @@ namespace Athena
 		ScriptInstance(ScriptClass scriptClass, Entity entity);
 
 		void InvokeOnCreate();
-		void InvokeOnUpdate(float frameTime);
+		void InvokeOnUpdate(Time frameTime);
 
 	private:
 		ScriptClass m_ScriptClass;
@@ -62,6 +62,6 @@ namespace Athena
 		static bool EntityClassExists(const String& name);
 
 		static void OnCreateEntity(Entity entity);
-		static void OnUpdateEntity(Entity entity, float frameTime);
+		static void OnUpdateEntity(Entity entity, Time frameTime);
 	};
 }

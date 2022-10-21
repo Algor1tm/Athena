@@ -35,6 +35,8 @@ namespace Athena
 		return m_PyClass.attr(name.data());
 	}
 
+
+
 	ScriptInstance::ScriptInstance(ScriptClass scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)
 	{
@@ -50,10 +52,11 @@ namespace Athena
 		m_OnCreateMethod(m_PyInstance);
 	}
 
-	void ScriptInstance::InvokeOnUpdate(float frameTime)
+	void ScriptInstance::InvokeOnUpdate(Time frameTime)
 	{
 		m_OnUpdateMethod(m_PyInstance, frameTime);
 	}
+
 
 
 	void ScriptEngine::Init()
@@ -104,7 +107,7 @@ namespace Athena
 		instance.InvokeOnCreate();
 	}
 
-	void ScriptEngine::OnUpdateEntity(Entity entity, float frameTime)
+	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
 		s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
 	}

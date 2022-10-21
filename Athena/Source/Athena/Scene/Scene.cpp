@@ -54,6 +54,8 @@ namespace Athena
 		entity.AddComponent<TagComponent>(name);
 		entity.AddComponent<TransformComponent>();
 
+		m_EntityMap[id] = entity;
+
 		return entity;
 	}
 
@@ -65,6 +67,14 @@ namespace Athena
 	void Scene::DestroyEntity(Entity entity)
 	{
 		m_Registry.destroy(entity);
+		m_EntityMap.erase(entity.GetID());
+	}
+
+	Entity Scene::GetEntityByUUID(UUID uuid)
+	{
+		ATN_CORE_ASSERT(m_EntityMap.find(uuid) != m_EntityMap.end());
+
+		return m_EntityMap.at(uuid);
 	}
 
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
@@ -158,6 +168,8 @@ namespace Athena
 
 		// Scripting
 		{
+			ScriptEngine::OnRuntimeStart(this);
+
 			// Instantiate all script entities
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id: view)

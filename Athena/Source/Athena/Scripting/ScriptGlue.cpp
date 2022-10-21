@@ -22,50 +22,57 @@ namespace Athena
 {
 #pragma region LOG
 
-    void Log_Trace(const std::string& message)
+    class PyLog
     {
-        ATN_CORE_TRACE(message);
-    }
+    public:
+        static void Trace(const std::string& message)
+        {
+            ATN_CORE_TRACE(message);
+        }
 
-    void Log_Info(const std::string& message)
-    {
-        ATN_CORE_INFO(message);
-    }
+        static void Info(const std::string& message)
+        {
+            ATN_CORE_INFO(message);
+        }
 
-    void Log_Warn(const std::string& message)
-    {
-        ATN_CORE_WARN(message);
-    }
+        static void Warn(const std::string& message)
+        {
+            ATN_CORE_WARN(message);
+        }
 
-    void Log_Error(const std::string& message)
-    {
-        ATN_CORE_ERROR(message);
-    }
+        static void Error(const std::string& message)
+        {
+            ATN_CORE_ERROR(message);
+        }
 
-    void Log_Fatal(const std::string& message)
-    {
-        ATN_CORE_FATAL(message);
-    }
+        static void Fatal(const std::string& message)
+        {
+            ATN_CORE_FATAL(message);
+        }
+    };
 
 #pragma endregion
 
 #pragma region INPUT
 
-    bool Input_IsKeyPressed(uint16 keyCode)
+    class PyInput
     {
-        ATN_CORE_ERROR(keyCode);
-        return Input::IsKeyPressed((Keyboard::Key)keyCode);
-    }
+    public:
+        static bool IsKeyPressed(uint16 keyCode)
+        {
+            return Input::IsKeyPressed((Keyboard::Key)keyCode);
+        }
 
-    bool Input_IsMouseButtonPressed(uint16 mouseCode)
-    {
-        return Input::IsMouseButtonPressed((Mouse::Button)mouseCode);
-    }
+        static bool IsMouseButtonPressed(uint16 mouseCode)
+        {
+            return Input::IsMouseButtonPressed((Mouse::Button)mouseCode);
+        }
 
-    Vector2 Input_GetMousePosition()
-    {
-        return Input::GetMousePosition();
-    }
+        static Vector2 GetMousePosition()
+        {
+            return Input::GetMousePosition();
+        }
+    };
 
 #pragma endregion
 
@@ -93,16 +100,27 @@ namespace Athena
         py::class_<ScriptEntity>(handle, "Entity")
             .def(py::init<>())
             .def_readwrite("_ID", &ScriptEntity::m_ID)
-            .def("GetTranslation", &ScriptEntity::GetTranslation);
+            .def("GetTranslation", &ScriptEntity::GetTranslation, py::return_value_policy::reference);
 
-        ADD_INTERNAL_FUNCTION(Log_Trace);
-        ADD_INTERNAL_FUNCTION(Log_Info);
-        ADD_INTERNAL_FUNCTION(Log_Warn);
-        ADD_INTERNAL_FUNCTION(Log_Error);
-        ADD_INTERNAL_FUNCTION(Log_Fatal);
 
-        ADD_INTERNAL_FUNCTION(Input_IsKeyPressed);
-        ADD_INTERNAL_FUNCTION(Input_IsMouseButtonPressed);
-        ADD_INTERNAL_FUNCTION(Input_GetMousePosition);
+        py::class_<PyLog>(handle, "Log")
+            .def("Trace", static_cast<void (*)(const std::string&)>(PyLog::Trace))
+            .def("Info", static_cast<void (*)(const std::string&)>(PyLog::Info))
+            .def("Warn", static_cast<void (*)(const std::string&)>(PyLog::Warn))
+            .def("Error", static_cast<void (*)(const std::string&)>(PyLog::Error))
+            .def("Fatal", static_cast<void (*)(const std::string&)>(PyLog::Fatal));
+
+
+        py::class_<PyInput>(handle, "Input")
+            .def("IsKeyPressed", static_cast<bool (*)(uint16)>(PyInput::IsKeyPressed))
+            .def("IsMouseButtonPressed", static_cast<bool (*)(uint16)>(PyInput::IsMouseButtonPressed))
+            .def("GetMousePosition", static_cast<Vector2 (*)()>(PyInput::GetMousePosition));
+
+        py::class_<Time>(handle, "Time")
+            .def(py::init<>())
+            .def(py::init<float>())
+            .def("AsSeconds", &Time::AsSeconds)
+            .def("AsMilliseconds", &Time::AsMilliseconds)
+            .def("AsMicroseconds", &Time::AsMicroseconds);
     }
 }

@@ -17,6 +17,7 @@
 #endif
 
 #include <memory>
+#include <unordered_map>
 
 
 class b2World;
@@ -44,6 +45,8 @@ namespace Athena
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
+
+		Entity GetEntityByUUID(UUID uuid);
 
 		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);
@@ -82,5 +85,7 @@ namespace Athena
 
 		std::unique_ptr<b2World> m_PhysicsWorld;
 		String m_Name;
+
+		std::unordered_map<UUID, Entity> m_EntityMap;
 	};
 }

@@ -3,22 +3,23 @@ from Athena_Core import *
 
 class Camera(Entity):
     _speed = 5
+    position = Vector3(0, 0, 0)
 
     def OnCreate(self):
         Log.Warn(f"CameraScript::OnCreate - {self._ID}")
-        Log.Warn(f"PositionY: {self.GetTranslation().y}")
+        self.position = self.GetComponent(TransformComponent).Translation
 
     def OnUpdate(self, frameTime):
         if Input.IsKeyPressed(Keyboard.Space):
-            Log.Error(f"SPACE PRESSED!!   FrameTime - {frameTime}")
+            Log.Error(f"SPACE PRESSED!!   FrameTime - {frameTime.AsSeconds()}")
 
         offset = frameTime.AsSeconds() * self._speed
 
         if Input.IsKeyPressed(Keyboard.A):
-            self.GetTranslation().x -= offset
+            self.position.x -= offset
         if Input.IsKeyPressed(Keyboard.W):
-            self.GetTranslation().y += offset
+            self.position.y += offset
         if Input.IsKeyPressed(Keyboard.S):
-            self.GetTranslation().y -= offset
+            self.position.y -= offset
         if Input.IsKeyPressed(Keyboard.D):
-            self.GetTranslation().x += offset
+            self.position.x += offset

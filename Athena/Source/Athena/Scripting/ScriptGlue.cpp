@@ -80,7 +80,7 @@ namespace Athena
     class PyComponent
     {
     public:
-        PyComponent(uint64 id)
+        PyComponent(UUID id)
             : _EntityID(id) {}
 
     protected:
@@ -100,7 +100,7 @@ namespace Athena
     class PyTransformComponent : public PyComponent
     {
     public:
-        PyTransformComponent(uint64 id)
+        PyTransformComponent(UUID id)
             : PyComponent(id) {}
 
         bool _HasThisComponent() { return GetEntity().HasComponent<TransformComponent>(); }
@@ -114,6 +114,16 @@ namespace Athena
         void SetRotation(const Vector3& rotation) { GetEntity().GetComponent<TransformComponent>().Rotation = rotation; }
         const Vector3& GetRotation() { return GetEntity().GetComponent<TransformComponent>().Rotation; }
     };
+
+
+    static UUID Entity_FindEntityByName(const std::string& name)
+    {
+        Scene* scene = ScriptEngine::GetSceneContext();
+        ATN_CORE_ASSERT(scene);
+        Entity entity = scene->FindEntityByName(name);
+        ATN_CORE_ASSERT(entity);
+        return entity.GetID();
+    }
 
 
     PYBIND11_EMBEDDED_MODULE(Internal, handle)
@@ -161,8 +171,14 @@ namespace Athena
             .def("AsMicroseconds", &Time::AsMicroseconds);
 
 
-        py::class_<PyComponent>(handle, "Component")
+        py::class_<UUID>(handle, "UUID")
+            .def(py::init<>())
             .def(py::init<uint64>());
+        
+        ADD_INTERNAL_FUNCTION(Entity_FindEntityByName);
+
+        py::class_<PyComponent>(handle, "Component")
+            .def(py::init<UUID>());
 
         py::class_<PyTransformComponent, PyComponent>(handle, "TransformComponent")
             .def(py::init<uint64>())

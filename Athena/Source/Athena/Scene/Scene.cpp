@@ -77,6 +77,18 @@ namespace Athena
 		return m_EntityMap.at(uuid);
 	}
 
+	Entity Scene::FindEntityByName(const String& name)
+	{
+		auto view = m_Registry.view<TagComponent>();
+		for (auto entity : view)
+		{
+			if (view.get<TagComponent>(entity).Tag == name)
+				return Entity{ entity, this };
+		}
+
+		return {};
+	}
+
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
 		RenderEditorScene(camera);

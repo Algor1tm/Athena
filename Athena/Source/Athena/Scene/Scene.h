@@ -47,6 +47,7 @@ namespace Athena
 		void DestroyEntity(Entity entity);
 
 		Entity GetEntityByUUID(UUID uuid);
+		Entity FindEntityByName(const String& name);
 
 		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);

@@ -80,7 +80,7 @@ namespace Athena
 
 	void ScriptEngine::OnRuntimeStop()
 	{
-
+		s_Data->SceneContext = nullptr;
 	}
 
 	Scene* ScriptEngine::GetSceneContext()

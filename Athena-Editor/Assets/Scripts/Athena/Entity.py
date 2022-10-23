@@ -12,12 +12,13 @@ class Entity:
     def GetComponent(self, component):
         if not self.HasComponent(component):
             return None
-
+        
         return component(self._ID)
 
     @staticmethod
-    def FindEntityByName(self, name):
+    def FindEntityByName(name):
         uuid = Entity_FindEntityByName(name)
-        if(uuid == 0):
+        if(uuid == UUID(0)):
             return None
+
         return Entity(uuid)

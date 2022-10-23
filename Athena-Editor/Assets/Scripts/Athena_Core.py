@@ -28,7 +28,7 @@ from Internal import Time
 ###############  ECS  ##################
 from Internal import UUID
 from Internal import Component
-from Internal import TransformComponent
+from Internal import TransformComponent, Rigidbody2DComponent
 
 #############################################
 ###############  INTERNAL  ##################

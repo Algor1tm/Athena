@@ -3,6 +3,8 @@
 
 #include "ScriptEngine.h"
 
+#include <Box2D/b2_body.h>
+
 #ifdef _MSC_VER
 #pragma warning(push, 0)
 #endif
@@ -115,6 +117,28 @@ namespace Athena
         const Vector3& GetRotation() { return GetEntity().GetComponent<TransformComponent>().Rotation; }
     };
 
+    class PyRigidbody2DComponent : public PyComponent
+    {
+    public:
+        bool _HasThisComponent() { return GetEntity().HasComponent<Rigidbody2DComponent>(); }
+
+        void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point, bool wake)
+        {
+            Entity entity = GetEntity();
+            auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+            b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
+            body->ApplyLinearImpulse({ impulse.x, impulse.y }, {point.x, point.y}, wake);
+        }
+
+        void ApplyLinearImpulseToCenter(const Vector2& impulse, bool wake)
+        {
+            Entity entity = GetEntity();
+            auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
+            b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
+            body->ApplyLinearImpulseToCenter({ impulse.x, impulse.y }, wake);
+        }
+    };
+
 
     static UUID Entity_FindEntityByName(const std::string& name)
     {
@@ -173,18 +197,25 @@ namespace Athena
 
         py::class_<UUID>(handle, "UUID")
             .def(py::init<>())
-            .def(py::init<uint64>());
-        
+            .def(py::init<uint64>())
+            .def("AsUInt64", [](UUID* self) { return (uint64)*self; });
+            
         ADD_INTERNAL_FUNCTION(Entity_FindEntityByName);
 
         py::class_<PyComponent>(handle, "Component")
             .def(py::init<UUID>());
 
         py::class_<PyTransformComponent, PyComponent>(handle, "TransformComponent")
-            .def(py::init<uint64>())
+            .def(py::init<UUID>())
             .def("_HasThisComponent", &PyTransformComponent::_HasThisComponent)
             .def_property("Translation", &PyTransformComponent::GetTranslation, &PyTransformComponent::SetTranslation)
             .def_property("Scale", &PyTransformComponent::GetScale, &PyTransformComponent::SetScale)
             .def_property("Rotation", &PyTransformComponent::GetRotation, &PyTransformComponent::SetRotation);
+
+        py::class_<PyRigidbody2DComponent, PyComponent>(handle, "Rigidbody2DComponent")
+            .def(py::init<UUID>())
+            .def("_HasThisComponent", &PyRigidbody2DComponent::_HasThisComponent)
+            .def("ApplyLinearImpulse", &PyRigidbody2DComponent::ApplyLinearImpulse)
+            .def("ApplyLinearImpulseToCenter", &PyRigidbody2DComponent::ApplyLinearImpulseToCenter);
     }
 }

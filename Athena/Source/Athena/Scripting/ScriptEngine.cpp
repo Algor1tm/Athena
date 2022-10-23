@@ -41,7 +41,7 @@ namespace Athena
 		: m_ScriptClass(scriptClass)
 	{
 		m_PyInstance = m_ScriptClass.Instantiate();
-		m_PyInstance.attr("_ID") = py::cast((uint64)(entity.GetID()));
+		m_PyInstance.attr("_ID") = py::cast((UUID)(entity.GetID()));
 
 		m_OnCreateMethod = m_ScriptClass.GetMethod("OnCreate");
 		m_OnUpdateMethod = m_ScriptClass.GetMethod("OnUpdate");

@@ -2,27 +2,32 @@ from Athena_Core import *
 
 
 class Camera(Entity):
-    _speed = 5
-    position = Vector3(0, 0, 0)
-    cubicPosition = Vector3(0, 0, 0)
+    _Speed = 5
+    _Position = Vector3(0, 0, 0)
+    _CubicBody = None
 
     def OnCreate(self):
-        Log.Warn(f"CameraScript::OnCreate - {self._ID}")
-        self.position = self.GetComponent(TransformComponent).Translation
-        self.cubicPosition = self.FindEntityByName("YellowCubic").GetComponent(TransformComponent).Translation
+        Log.Warn(f"Camera::OnCreate() - {self._ID.AsUInt64()}")
+        self._Position = self.GetComponent(TransformComponent).Translation
+        self._CubicBody = Entity.FindEntityByName("YellowCubic").GetComponent(Rigidbody2DComponent)
 
     def OnUpdate(self, frameTime):
         if Input.IsKeyPressed(Keyboard.Space):
             Log.Error(f"SPACE PRESSED!!   FrameTime - {frameTime.AsSeconds()}")
-            self.cubicPosition.y += frameTime.AsSeconds() * self._speed / 2
+            self._CubicBody.ApplyLinearImpulseToCenter(Vector2(0, frameTime.AsSeconds() * self._Speed / 5), True)
 
-        offset = frameTime.AsSeconds() * self._speed
+        offset = frameTime.AsSeconds() * self._Speed
+
+        cubicPos = Entity.FindEntityByName("YellowCubic").GetComponent(TransformComponent).Translation
+        self._Position.x = cubicPos.x
+        self._Position.y = cubicPos.y
 
         if Input.IsKeyPressed(Keyboard.A):
-            self.position.x -= offset
+            self._Position.x -= offset
         if Input.IsKeyPressed(Keyboard.W):
-            self.position.y += offset
+            self._Position.y += offset
         if Input.IsKeyPressed(Keyboard.S):
-            self.position.y -= offset
+            self._Position.y -= offset
         if Input.IsKeyPressed(Keyboard.D):
-            self.position.x += offset
+            self._Position.x += offset
+ 

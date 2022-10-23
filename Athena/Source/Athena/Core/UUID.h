@@ -18,7 +18,8 @@ namespace Athena
 	};
 }
 
-namespace std {
+namespace std 
+{
 	template <typename T> struct hash;
 
 	template<>

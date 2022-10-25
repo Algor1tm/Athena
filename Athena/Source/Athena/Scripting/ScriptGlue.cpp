@@ -82,7 +82,7 @@ namespace Athena
     class PyComponent
     {
     public:
-        PyComponent(UUID id)
+        PyComponent(UUID id = 0)
             : _EntityID(id) {}
 
     protected:
@@ -102,7 +102,7 @@ namespace Athena
     class PyTransformComponent : public PyComponent
     {
     public:
-        PyTransformComponent(UUID id)
+        PyTransformComponent(UUID id = 0)
             : PyComponent(id) {}
 
         bool _HasThisComponent() { return GetEntity().HasComponent<TransformComponent>(); }
@@ -120,6 +120,10 @@ namespace Athena
     class PyRigidbody2DComponent : public PyComponent
     {
     public:
+        PyRigidbody2DComponent(UUID id = 0)
+            : PyComponent(id) {}
+
+
         bool _HasThisComponent() { return GetEntity().HasComponent<Rigidbody2DComponent>(); }
 
         void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point, bool wake)
@@ -147,6 +151,16 @@ namespace Athena
         Entity entity = scene->FindEntityByName(name);
         ATN_CORE_ASSERT(entity);
         return entity.GetID();
+    }
+
+    static py::object Entity_GetScriptInstance(UUID uuid)
+    {
+        return ScriptEngine::GetScriptInstance(uuid).GetInternalInstance();
+    }
+
+    static bool Entity_ExistsScriptInstance(UUID uuid)
+    {
+        return ScriptEngine::EntityInstanceExists(uuid);
     }
 
 
@@ -201,11 +215,16 @@ namespace Athena
             .def("AsUInt64", [](UUID* self) { return (uint64)*self; });
             
         ADD_INTERNAL_FUNCTION(Entity_FindEntityByName);
+        ADD_INTERNAL_FUNCTION(Entity_ExistsScriptInstance);
+        handle.def(ATN_STRINGIFY_MACRO(Entity_GetScriptInstance), &Athena::Entity_GetScriptInstance, py::return_value_policy::reference);
+
 
         py::class_<PyComponent>(handle, "Component")
+            .def(py::init<>())
             .def(py::init<UUID>());
 
         py::class_<PyTransformComponent, PyComponent>(handle, "TransformComponent")
+            .def(py::init<>())
             .def(py::init<UUID>())
             .def("_HasThisComponent", &PyTransformComponent::_HasThisComponent)
             .def_property("Translation", &PyTransformComponent::GetTranslation, &PyTransformComponent::SetTranslation)
@@ -213,6 +232,7 @@ namespace Athena
             .def_property("Rotation", &PyTransformComponent::GetRotation, &PyTransformComponent::SetRotation);
 
         py::class_<PyRigidbody2DComponent, PyComponent>(handle, "Rigidbody2DComponent")
+            .def(py::init<>())
             .def(py::init<UUID>())
             .def("_HasThisComponent", &PyRigidbody2DComponent::_HasThisComponent)
             .def("ApplyLinearImpulse", &PyRigidbody2DComponent::ApplyLinearImpulse)

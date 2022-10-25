@@ -24,8 +24,10 @@ namespace Athena
 		ScriptClass() = default;
 		ScriptClass(const String& className);
 
-		py::object Instantiate();
+		py::object Instantiate(Entity entity);
 		py::object GetMethod(const String& name);
+
+		py::object GetInternalClass() { return m_PyClass; }
 
 	private:
 		py::object m_PyClass;
@@ -39,6 +41,8 @@ namespace Athena
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(Time frameTime);
+
+		py::object GetInternalInstance();
 
 	private:
 		ScriptClass m_ScriptClass;
@@ -60,7 +64,11 @@ namespace Athena
 
 		static Scene* GetSceneContext();
 		static bool EntityClassExists(const String& name);
+		static bool EntityInstanceExists(UUID uuid);
 
+		static ScriptInstance& GetScriptInstance(UUID uuid);
+
+		static void InstantiateEntity(Entity entity);
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, Time frameTime);
 	};

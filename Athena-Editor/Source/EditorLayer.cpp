@@ -32,7 +32,7 @@ namespace Athena
         fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
-        fbDesc.Samples = 1;
+        fbDesc.Samples = 4;
         m_Framebuffer = Framebuffer::Create(fbDesc);
 
         Application::Get().GetImGuiLayer()->BlockEvents(false);
@@ -129,8 +129,8 @@ namespace Athena
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         }
 
-
-        SelectEntity(m_SceneHierarchy->GetSelectedEntity());
+        if(m_SceneState != SceneState::Play)
+            SelectEntity(m_SceneHierarchy->GetSelectedEntity());
         m_PanelManager.OnImGuiRender();
 
         ImGui::Begin("Editor Settings");
@@ -178,7 +178,7 @@ namespace Athena
             {
                 currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
 
-                if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation)
+                if (m_SceneState == SceneState::Edit)
                     OnScenePlay();
                 else if (m_SceneState == SceneState::Play)
                     OnSceneStop();
@@ -457,10 +457,13 @@ namespace Athena
         {
         case Mouse::Left:
         {
-            Entity selectedEntity = GetEntityByCurrentMousePosition();
-            if (selectedEntity)
+            if (m_SceneState != SceneState::Play)
             {
-                SelectEntity(selectedEntity);
+                Entity selectedEntity = GetEntityByCurrentMousePosition();
+                if (selectedEntity)
+                {
+                    SelectEntity(selectedEntity);
+                }
             }
             break;
         }

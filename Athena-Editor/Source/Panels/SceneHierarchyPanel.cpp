@@ -115,9 +115,9 @@ namespace Athena
 
 		if (entityDeleted)
 		{
+			m_Context->DestroyEntity(entity);
 			if (m_SelectionContext == entity)
 				m_SelectionContext = {};
-			m_Context->DestroyEntity(entity);
 		}
 	}
 

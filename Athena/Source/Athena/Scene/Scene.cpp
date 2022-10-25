@@ -66,15 +66,15 @@ namespace Athena
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		m_Registry.destroy(entity);
 		m_EntityMap.erase(entity.GetID());
+		m_Registry.destroy(entity);
 	}
 
 	Entity Scene::GetEntityByUUID(UUID uuid)
 	{
 		ATN_CORE_ASSERT(m_EntityMap.find(uuid) != m_EntityMap.end());
 
-		return m_EntityMap.at(uuid);
+		return { m_EntityMap.at(uuid), this };
 	}
 
 	Entity Scene::FindEntityByName(const String& name)
@@ -185,6 +185,12 @@ namespace Athena
 			// Instantiate all script entities
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id: view)
+			{
+				Entity entity = { id, this };
+				ScriptEngine::InstantiateEntity(entity);
+			}
+
+			for (auto id : view)
 			{
 				Entity entity = { id, this };
 				ScriptEngine::OnCreateEntity(entity);

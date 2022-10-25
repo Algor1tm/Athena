@@ -87,6 +87,6 @@ namespace Athena
 		std::unique_ptr<b2World> m_PhysicsWorld;
 		String m_Name;
 
-		std::unordered_map<UUID, Entity> m_EntityMap;
+		std::unordered_map<UUID, entt::entity> m_EntityMap;
 	};
 }

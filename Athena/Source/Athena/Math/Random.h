@@ -84,7 +84,7 @@ namespace Athena::Math
 		using internal_type = uint64;
 
 	private:
-		static std::mt19937 s_RandomEngine;
+		static std::mt19937_64 s_RandomEngine;
 		static std::uniform_int_distribution<internal_type> s_Distribution;
 	};
 }

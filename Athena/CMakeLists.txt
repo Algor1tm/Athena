@@ -30,6 +30,12 @@ target_compile_definitions(Athena PRIVATE
 	ATN_BUILD_DLL
 )
 
+if(ATN_PY_DEBUG)
+	target_compile_definitions(Athena PRIVATE
+		$<$<CONFIG:Debug>:Py_DEBUG>
+	)
+endif(ATN_PY_DEBUG)
+
 # Build folder
 set_target_properties(Athena
 	PROPERTIES

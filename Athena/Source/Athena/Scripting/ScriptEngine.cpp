@@ -1,6 +1,21 @@
 #include "ScriptEngine.h"
 
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(push, 0)
+#endif
+
+#include <pybind11/embed.h>
+
+#ifdef _MSC_VER
+#undef _CRT_SECURE_NO_WARNINGS
+#pragma warning(pop)
+#endif
+
 #include <unordered_map>
+
+namespace py = pybind11;
 
 
 namespace Athena
@@ -8,6 +23,9 @@ namespace Athena
 	struct ScriptEngineData
 	{
 		py::scoped_interpreter PythonInterpreter;
+		Filepath ScriptsFolder;
+
+		std::unordered_map<String, py::module_> PythonModules;
 
 		std::unordered_map<String, ScriptClass> EntityClasses;
 		std::unordered_map<UUID, ScriptInstance> EntityInstances;
@@ -16,11 +34,41 @@ namespace Athena
 
 	static ScriptEngineData* s_Data;
 
+	static std::vector<String> GetStringPyModules()
+	{
+		std::vector<String> modules;
+
+		for (const auto& dirEntry : std::filesystem::directory_iterator(s_Data->ScriptsFolder))
+		{
+			if (!dirEntry.is_directory())
+			{
+				const auto& path = dirEntry.path();
+				if (path.extension() == L".py")
+				{
+					const auto& filename = path.stem().string();
+					if (filename.find("Athena") == std::string::npos)
+					{
+						modules.push_back(filename);
+					}
+				}
+			}
+		}
+
+		return modules;
+	}
+
+	static void ImportAndAddModule(const String& name)
+	{
+		py::module_ check = s_Data->PythonModules[name] = py::module_::import(name.c_str());
+		if (check)
+			ATN_CORE_INFO("Successfuly load python module '{0}{1}'", name, ".py");
+		else
+			ATN_CORE_FATAL("Failed to load python module '{0}{1}' !", name, ".py");
+	}
 
 	ScriptClass::ScriptClass(const String& className)
 	{
-		py::module_ pyModule = py::module_::import(className.data());
-		ATN_CORE_ASSERT(pyModule, "Failed to load script!");
+		py::module_ pyModule = s_Data->PythonModules.at(className);
 
 		m_PyClass = pyModule.attr(className.data());
 		ATN_CORE_ASSERT(m_PyClass, "Failed to load script class!");
@@ -81,13 +129,45 @@ namespace Athena
 
 
 
-	void ScriptEngine::Init()
+	void ScriptEngine::Init(const Filepath& scriptsFolder)
 	{
 		s_Data = new ScriptEngineData();
+		s_Data->ScriptsFolder = scriptsFolder;
 
 		py::module_ sys = py::module_::import("sys");
 		auto& path = sys.attr("path");
-		path.attr("insert")(0, "Assets/Scripts/");
+		path.attr("insert")(0, s_Data->ScriptsFolder.string().c_str());
+
+		const auto& modules = GetStringPyModules();
+		for (const auto& strModule : modules)
+		{
+			ImportAndAddModule(strModule);
+			s_Data->EntityClasses[strModule] = ScriptClass(strModule);
+		}
+	}
+
+	void ScriptEngine::ReloadScripts()
+	{
+		const auto& modules = GetStringPyModules();
+
+		for (const String& strModule : modules)
+		{
+			if (s_Data->PythonModules.find(strModule) == s_Data->PythonModules.end())
+			{
+				ImportAndAddModule(strModule);
+			}
+			else
+			{
+				s_Data->PythonModules.at(strModule).reload();
+				ATN_CORE_INFO("Reload python module {0}{1}", strModule,".py");
+			}
+		}
+
+		s_Data->EntityClasses.clear();
+		for (const auto& [moduleName, _] : s_Data->PythonModules)
+		{
+			s_Data->EntityClasses[moduleName] = ScriptClass(moduleName);
+		}
 	}
 
 	void ScriptEngine::Shutdown()
@@ -103,6 +183,7 @@ namespace Athena
 	void ScriptEngine::OnRuntimeStop()
 	{
 		s_Data->SceneContext = nullptr;
+		s_Data->EntityInstances.clear();
 	}
 
 	Scene* ScriptEngine::GetSceneContext()
@@ -129,11 +210,6 @@ namespace Athena
 	void ScriptEngine::InstantiateEntity(Entity entity)
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
-
-		if (!EntityClassExists(sc.Name))
-		{
-			s_Data->EntityClasses[sc.Name] = ScriptClass(sc.Name);
-		}
 
 		auto& instance = s_Data->EntityInstances[entity.GetID()] = ScriptInstance(s_Data->EntityClasses.at(sc.Name), entity);
 	}

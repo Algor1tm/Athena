@@ -45,6 +45,7 @@ namespace Athena
 		appdesc.UseImGui = false;
 		appdesc.UseConsole = true;
 		appdesc.WorkingDirectory = "../Athena-Editor";
+		appdesc.ScriptsFolder = "Assets/Scripts";
 
 		return new SandBox(appdesc);
 	}

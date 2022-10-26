@@ -42,7 +42,7 @@ namespace Athena
 			m_ImGuiLayer = nullptr;
 		}
 
-		ScriptEngine::Init();
+		ScriptEngine::Init(appdesc.ScriptsFolder);
 	}
 
 	Application::~Application()

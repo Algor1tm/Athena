@@ -89,6 +89,12 @@ namespace Athena
 		return {};
 	}
 
+	void Scene::ReloadScripts()
+	{
+		ScriptEngine::ReloadScripts();
+	}
+
+
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
 		RenderEditorScene(camera);

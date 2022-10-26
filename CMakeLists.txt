@@ -21,6 +21,20 @@ set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
 # Find Python 3.6+
 find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)
 
+get_target_property(lib Python::Python IMPORTED_IMPLIB)
+message(STATUS "Python3 - ${lib}")
+
+get_target_property(lib Python::Python IMPORTED_IMPLIB_DEBUG)
+message(STATUS "Python3 (Debug) - ${lib}")
+
+if(lib)
+    set(ATN_PY_DEBUG 1)
+endif(lib)
+
+get_target_property(lib Python::Python IMPORTED_IMPLIB_RELEASE)
+message(STATUS "Python3 (Release) - ${lib}")
+
+
 # Show python scripts in explorer
 file(GLOB_RECURSE PYTHON_FILES CONFIGURE_DEPENDS 
 	"${SCRIPTS_FOLDER}/*.py")

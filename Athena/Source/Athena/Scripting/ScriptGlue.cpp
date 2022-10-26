@@ -6,12 +6,14 @@
 #include <Box2D/b2_body.h>
 
 #ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
 #pragma warning(push, 0)
 #endif
 
 #include <pybind11/embed.h>
 
 #ifdef _MSC_VER
+#undef _CRT_SECURE_NO_WARNINGS
 #pragma warning(pop)
 #endif
 

@@ -4,13 +4,15 @@
 #include "Athena/Scene/Entity.h"
 
 #ifdef _MSC_VER
-	#pragma warning(push, 0)
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(push, 0)
 #endif
 
 #include <pybind11/embed.h>
 
 #ifdef _MSC_VER
-	#pragma warning(pop)
+#undef _CRT_SECURE_NO_WARNINGS
+#pragma warning(pop)
 #endif
 
 namespace py = pybind11;
@@ -18,6 +20,21 @@ namespace py = pybind11;
 
 namespace Athena
 {
+	enum class ScriptFieldType
+	{
+		None = 0,
+		Int, Float, String,
+		Vector2, Vector3, Vector4,
+	};
+
+	struct ScriptField
+	{
+		ScriptFieldType Type;
+		String Name;
+
+		py::object InternalValue;
+	};
+
 	class ScriptClass
 	{
 	public:
@@ -56,8 +73,10 @@ namespace Athena
 	class ATHENA_API ScriptEngine
 	{
 	public:
-		static void Init();
+		static void Init(const Filepath& scriptsFolder);
 		static void Shutdown();
+
+		static void ReloadScripts();
 
 		static void OnRuntimeStart(Scene* scene);
 		static void OnRuntimeStop();

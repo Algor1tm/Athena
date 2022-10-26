@@ -3,7 +3,7 @@ from Athena_Core import *
 
 class Player(Entity):
     _translation = Vector3(0, 0, 0)
-    _rigidbody2D = Vector2(0, 0)
+    _rigidbody2D = Rigidbody2DComponent()
     _camera = Entity()
     speed = 0.1
 

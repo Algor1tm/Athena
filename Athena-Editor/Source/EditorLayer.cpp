@@ -135,6 +135,10 @@ namespace Athena
 
         ImGui::Begin("Editor Settings");
         UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
+        if (ImGui::Button("Reload Scripts"))
+        {
+            m_EditorScene->ReloadScripts();
+        }
         ImGui::End();
 
         ImGui::End();

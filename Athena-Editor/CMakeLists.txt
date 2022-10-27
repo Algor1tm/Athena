@@ -22,6 +22,12 @@ target_compile_definitions(Athena-Editor PUBLIC
   ATN_SIMD
 )
 
+if(ATN_PY_DEBUG)
+	target_compile_definitions(Athena-Editor PRIVATE
+		$<$<CONFIG:Debug>:Py_DEBUG>
+	)
+endif(ATN_PY_DEBUG)
+
 # Build folder
 set_target_properties(Athena-Editor
 	PROPERTIES
@@ -30,7 +36,7 @@ set_target_properties(Athena-Editor
 	RUNTIME_OUTPUT_DIRECTORY "${BUILD_FOLDER}/Athena-Editor"
 )
 
-target_include_directories(Athena-Editor PUBLIC 
+target_include_directories(Athena-Editor PRIVATE 
 	"Source" 
 	"${CMAKE_SOURCE_DIR}/Athena/Source" 
 	${THIRD_PARTY_DIR}
@@ -40,4 +46,4 @@ target_include_directories(Athena-Editor PUBLIC
 	${SPDLOG_INCLUDE_DIR}
 )
 
-target_link_libraries(Athena-Editor Athena)
+target_link_libraries(Athena-Editor PRIVATE Athena)

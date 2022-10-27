@@ -49,8 +49,6 @@ namespace Athena
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 
-		void ReloadScripts();
-
 		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);
 		void OnUpdateSimulation(Time frameTime, EditorCamera& camera);

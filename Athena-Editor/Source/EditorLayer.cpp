@@ -10,6 +10,8 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
+#include "Athena/Scripting/PublicScriptEngine.h"
+
 #include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
@@ -137,7 +139,7 @@ namespace Athena
         UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
         if (ImGui::Button("Reload Scripts"))
         {
-            m_EditorScene->ReloadScripts();
+            PublicScriptEngine::ReloadScripts();
         }
         ImGui::End();
 

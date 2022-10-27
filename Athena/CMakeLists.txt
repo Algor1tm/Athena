@@ -65,11 +65,6 @@ target_precompile_headers(Athena PRIVATE
 	Source/Athena/Core/Log.h
 )
 
-if(WIN32)
-	target_precompile_headers(Athena PRIVATE <Windows.h> <d3d11.h>)
-endif(WIN32)
-
-
 target_include_directories(Athena PRIVATE 
 	"Source" 
 	${THIRD_PARTY_DIR}
@@ -109,6 +104,7 @@ target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static comp
 
 # Windows specific code
 if(WIN32)
+	target_precompile_headers(Athena PRIVATE <Windows.h> <d3d11.h>)
 	target_link_libraries(Athena PRIVATE d3d11.lib)
 	target_link_libraries(Athena PRIVATE DXGI.lib)
 	target_compile_definitions(Athena PUBLIC ATN_WINDOWS)

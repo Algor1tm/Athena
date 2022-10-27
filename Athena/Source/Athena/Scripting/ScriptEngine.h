@@ -3,12 +3,14 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Scene/Entity.h"
 
+#include "ScriptFields.h"
+
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(push, 0)
 #endif
 
-#include <pybind11/embed.h>
+#include <pybind11/pytypes.h>
 
 #ifdef _MSC_VER
 #undef _CRT_SECURE_NO_WARNINGS
@@ -20,21 +22,6 @@ namespace py = pybind11;
 
 namespace Athena
 {
-	enum class ScriptFieldType
-	{
-		None = 0,
-		Int, Float, String,
-		Vector2, Vector3, Vector4,
-	};
-
-	struct ScriptField
-	{
-		ScriptFieldType Type;
-		String Name;
-
-		py::object InternalValue;
-	};
-
 	class ScriptClass
 	{
 	public:
@@ -46,8 +33,11 @@ namespace Athena
 
 		py::object GetInternalClass() { return m_PyClass; }
 
+		const ScriptFieldsDescription& GetFieldsDescription() const { return m_FieldsDescription; }
+
 	private:
 		py::object m_PyClass;
+		ScriptFieldsDescription m_FieldsDescription;
 	};
 
 	class ScriptInstance
@@ -70,7 +60,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API ScriptEngine
+	class ScriptEngine
 	{
 	public:
 		static void Init(const Filepath& scriptsFolder);
@@ -81,11 +71,14 @@ namespace Athena
 		static void OnRuntimeStart(Scene* scene);
 		static void OnRuntimeStop();
 
+		static ScriptFieldMap& GetScriptFieldMap(Entity entity);
+
 		static Scene* GetSceneContext();
 		static bool EntityClassExists(const String& name);
 		static bool EntityInstanceExists(UUID uuid);
 
 		static ScriptInstance& GetScriptInstance(UUID uuid);
+		static const ScriptClass& GetScriptClass(const String& name);
 
 		static void InstantiateEntity(Entity entity);
 		static void OnCreateEntity(Entity entity);

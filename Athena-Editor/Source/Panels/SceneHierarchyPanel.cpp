@@ -1,8 +1,10 @@
 #include "SceneHierarchyPanel.h"
 
-#include "Athena/Scene/Components.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Input/Input.h"
+
+#include "Athena/Scene/Components.h"
+#include "Athena/Scripting/PublicScriptEngine.h"
 
 #include "UI/Widgets.h"
 
@@ -191,7 +193,7 @@ namespace Athena
 				}
 			});
 
-		DrawComponent<ScriptComponent>(entity, "Script", [](ScriptComponent& script)
+		DrawComponent<ScriptComponent>(entity, "Script", [entity](ScriptComponent& script)
 			{
 				float height = ImGui::GetFrameHeight();
 
@@ -201,6 +203,26 @@ namespace Athena
 						{ 
 							return UI::TextInput(script.Name, script.Name);
 						});
+
+					const ScriptFieldsDescription& fieldsDesc = PublicScriptEngine::GetFieldsDescription(script.Name);
+					ScriptFieldMap& fieldMap = PublicScriptEngine::GetScriptFieldMap(entity);
+
+					for (const auto& [name, field] : fieldsDesc)
+					{
+						auto& fieldStorage = fieldMap[name];
+						if (field.Type == ScriptFieldType::Float)
+						{
+							// Set Initial Value
+							if (fieldStorage.GetValue<Vector4>() == Vector4(0, 0, 0, 0))	// TODO: Remove
+							{
+								fieldStorage.SetValue<float>(field.Storage.GetValue<float>());
+							}
+
+							float data = fieldStorage.GetValue<float>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat("##speed", &data); }))
+								fieldStorage.SetValue(data);
+						}
+					}
 
 					UI::EndDrawControllers();
 				}

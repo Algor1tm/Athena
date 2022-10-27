@@ -20,6 +20,55 @@ namespace py = pybind11;
 
 namespace Athena
 {
+	static void SetInternalValue(py::object accessor, const char* name, ScriptFieldType type, const void* buffer)
+	{
+		switch (type)
+		{
+		case ScriptFieldType::Int: accessor.attr(name) = *(int*)buffer; break;
+		case ScriptFieldType::Float: accessor.attr(name) = *(float*)buffer; break;
+		case ScriptFieldType::Bool: accessor.attr(name) = *(bool*)buffer; break;
+		case ScriptFieldType::String: accessor.attr(name) = std::string((const char*)buffer); break;
+
+		case ScriptFieldType::Vector2: accessor.attr(name) = *(Vector2*)buffer; break;
+		case ScriptFieldType::Vector3: accessor.attr(name) = *(Vector3*)buffer; break;
+		case ScriptFieldType::Vector4: accessor.attr(name) = *(Vector4*)buffer; break;
+
+		default: ATN_CORE_ASSERT(false);
+		}
+	}
+
+	static void GetInternalValue(const py::handle& accessor, ScriptFieldType type, void* buffer)
+	{
+		switch (type)
+		{
+		case ScriptFieldType::Int: { int value = py::cast<int>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+		case ScriptFieldType::Float: { float value = py::cast<float>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+		case ScriptFieldType::Bool: { bool value = py::cast<bool>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+		case ScriptFieldType::String: { std::string value = py::cast<std::string>(accessor); memcpy(buffer, value.c_str(), value.size()); break; }
+
+		case ScriptFieldType::Vector2: { Vector2 value = py::cast<Vector2>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+		case ScriptFieldType::Vector3: { Vector3 value = py::cast<Vector3>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+		case ScriptFieldType::Vector4: { Vector4 value = py::cast<Vector4>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
+									 
+		default: ATN_CORE_ASSERT(false);
+		}
+	}
+
+	static std::unordered_map<String, ScriptFieldType> s_ScriptFieldTypeMap =
+	{
+		{ "NoneType", ScriptFieldType::None },
+
+		{ "int", ScriptFieldType::Int },
+		{ "float", ScriptFieldType::Float },
+		{ "bool", ScriptFieldType::Bool },
+		{ "str", ScriptFieldType::String },
+
+		{ "Vector2", ScriptFieldType::Vector2 },
+		{ "Vector3", ScriptFieldType::Vector3 },
+		{ "Vector4", ScriptFieldType::Vector4 }
+	};
+
+
 	struct ScriptEngineData
 	{
 		py::scoped_interpreter PythonInterpreter;
@@ -29,6 +78,8 @@ namespace Athena
 
 		std::unordered_map<String, ScriptClass> EntityClasses;
 		std::unordered_map<UUID, ScriptInstance> EntityInstances;
+		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
+
 		Scene* SceneContext = nullptr;
 	};
 
@@ -66,12 +117,40 @@ namespace Athena
 			ATN_CORE_FATAL("Failed to load python module '{0}{1}' !", name, ".py");
 	}
 
+
+
 	ScriptClass::ScriptClass(const String& className)
 	{
 		py::module_ pyModule = s_Data->PythonModules.at(className);
 
 		m_PyClass = pyModule.attr(className.data());
+		//py::isinstance(m_PyClass, EntityClass);
 		ATN_CORE_ASSERT(m_PyClass, "Failed to load script class!");
+
+		py::dict fields = py::cast<py::dict>(m_PyClass.attr("__dict__"));
+		for (const auto& [nameHandle, initialValue] : fields)
+		{
+			std::string name = py::cast<std::string>(nameHandle);
+			if (name.at(0) != '_')
+			{
+				std::string type = py::cast<std::string>(m_PyClass.attr(name.c_str()).attr("__class__").attr("__name__"));
+				if (type != "function")
+				{
+					if (s_ScriptFieldTypeMap.find(type) == s_ScriptFieldTypeMap.end())
+					{
+						ATN_CORE_WARN("Unknown field type: {0} ({1}), class - {2}", name, type, className);
+						continue;
+					}
+
+					ScriptField fieldDesc;
+					fieldDesc.Name = name;
+					fieldDesc.Type = s_ScriptFieldTypeMap.at(type);
+					GetInternalValue(initialValue, fieldDesc.Type, fieldDesc.Storage.m_Buffer);
+
+					m_FieldsDescription[name] = fieldDesc;
+				}
+			}
+		}
 	}
 
 	py::object ScriptClass::Instantiate(Entity entity)
@@ -91,30 +170,27 @@ namespace Athena
 	ScriptInstance::ScriptInstance(ScriptClass scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)
 	{
-		m_PyInstance = m_ScriptClass.Instantiate(entity);
-
 		m_OnCreateMethod = m_ScriptClass.GetMethod("OnCreate");
 		m_OnUpdateMethod = m_ScriptClass.GetMethod("OnUpdate");
+
+		m_PyInstance = m_ScriptClass.Instantiate(entity);
+
+		UUID entityID = entity.GetID();
+		if (s_Data->EntityScriptFields.find(entityID) != s_Data->EntityScriptFields.end())
+		{
+			const ScriptFieldsDescription& desc = m_ScriptClass.GetFieldsDescription();
+			const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entityID);
+			for (const auto& [name, field] : fieldMap)
+			{
+				auto type = desc.at(name).Type;
+				SetInternalValue(m_PyInstance, name.data(), type, field.m_Buffer);
+			}
+		}
 	}
 
 	void ScriptInstance::InvokeOnCreate()
 	{
 		m_OnCreateMethod(m_PyInstance);
-
-		py::dict fields = py::cast<py::dict>(m_ScriptClass.GetInternalClass().attr("__dict__"));
-		for (const auto& [nameHandle, _] : fields)
-		{
-			std::string name = py::cast<std::string>(nameHandle);
-			if (name.substr(0, 2) != "__")
-			{
-				std::string type = py::cast<std::string>(m_PyInstance.attr(name.c_str()).attr("__class__").attr("__name__"));
-				if (type != "method")
-				{
-					ATN_CORE_WARN("Field: {0}, Type: {1}", name, type);
-				}
-			}
-		}
-		ATN_CORE_WARN("");
 	}
 
 	void ScriptInstance::InvokeOnUpdate(Time frameTime)
@@ -186,6 +262,14 @@ namespace Athena
 		s_Data->EntityInstances.clear();
 	}
 
+	ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
+	{
+		ATN_CORE_ASSERT(entity);
+
+		UUID entityID = entity.GetID();
+		return s_Data->EntityScriptFields[entityID];
+	}
+
 	Scene* ScriptEngine::GetSceneContext()
 	{
 		return s_Data->SceneContext;
@@ -205,6 +289,12 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
 		return s_Data->EntityInstances.at(uuid);
+	}
+
+	const ScriptClass& ScriptEngine::GetScriptClass(const String& name)
+	{
+		ATN_CORE_ASSERT(s_Data->EntityClasses.find(name) != s_Data->EntityClasses.end());
+		return s_Data->EntityClasses.at(name);
 	}
 
 	void ScriptEngine::InstantiateEntity(Entity entity)

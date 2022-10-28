@@ -20,4 +20,9 @@ namespace Athena
 	{
 		ScriptEngine::ReloadScripts();
 	}
+
+	void PublicScriptEngine::OnScriptComponentRemove(Entity entity)
+	{
+		ScriptEngine::OnScriptComponentRemove(entity);
+	}
 }

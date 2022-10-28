@@ -3,6 +3,8 @@
 #include "Scene.h"
 #include "Components.h"
 
+#include "Athena/Scripting/PublicScriptEngine.h"
+
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
 #endif
@@ -99,5 +101,11 @@ namespace Athena
 	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
 	{
 		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+	}
+
+	template <>
+	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity)
+	{
+		PublicScriptEngine::OnScriptComponentRemove(entity);
 	}
 }

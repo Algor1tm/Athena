@@ -83,5 +83,7 @@ namespace Athena
 		static void InstantiateEntity(Entity entity);
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, Time frameTime);
+
+		static void OnScriptComponentRemove(Entity entity);
 	};
 }

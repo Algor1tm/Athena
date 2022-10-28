@@ -24,6 +24,17 @@ namespace Athena
 			memset(m_Buffer, 0, sizeof(m_Buffer));
 		}
 
+		ScriptFieldStorage(const ScriptFieldStorage& other)
+		{
+			memcpy(m_Buffer, other.m_Buffer, sizeof(m_Buffer));
+		}
+
+		ScriptFieldStorage& operator=(const ScriptFieldStorage& other)
+		{
+			memcpy(m_Buffer, other.m_Buffer, sizeof(m_Buffer));
+			return *this;
+		}
+
 		template<typename T>
 		T GetValue() const
 		{

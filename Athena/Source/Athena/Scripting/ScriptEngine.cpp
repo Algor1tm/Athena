@@ -239,6 +239,7 @@ namespace Athena
 			}
 		}
 
+		s_Data->EntityScriptFields.clear();
 		s_Data->EntityClasses.clear();
 		for (const auto& [moduleName, _] : s_Data->PythonModules)
 		{
@@ -267,7 +268,7 @@ namespace Athena
 		ATN_CORE_ASSERT(entity);
 
 		UUID entityID = entity.GetID();
-		return s_Data->EntityScriptFields[entityID];
+		return s_Data->EntityScriptFields[entityID]; // TODO: [] -> at()
 	}
 
 	Scene* ScriptEngine::GetSceneContext()
@@ -312,5 +313,16 @@ namespace Athena
 	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
 		s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
+	}
+
+	void ScriptEngine::OnScriptComponentRemove(Entity entity)
+	{
+		UUID entityID = entity.GetID();
+
+		if(s_Data->EntityScriptFields.find(entityID) != s_Data->EntityScriptFields.end())
+			s_Data->EntityScriptFields.erase(entityID);
+
+		if (s_Data->EntityInstances.find(entityID) != s_Data->EntityInstances.end())
+			s_Data->EntityInstances.erase(entityID);
 	}
 }

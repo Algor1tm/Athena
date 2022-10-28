@@ -1,4 +1,3 @@
-from cgi import test
 from Athena_Core import *
 
 

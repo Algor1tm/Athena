@@ -34,7 +34,7 @@ namespace Athena
         fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
         fbDesc.Width = 1280;
         fbDesc.Height = 720;
-        fbDesc.Samples = 4;
+        fbDesc.Samples = 1;
         m_Framebuffer = Framebuffer::Create(fbDesc);
 
         Application::Get().GetImGuiLayer()->BlockEvents(false);

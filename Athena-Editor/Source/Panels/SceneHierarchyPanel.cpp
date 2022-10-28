@@ -207,17 +207,20 @@ namespace Athena
 					const ScriptFieldsDescription& fieldsDesc = PublicScriptEngine::GetFieldsDescription(script.Name);
 					ScriptFieldMap& fieldMap = PublicScriptEngine::GetScriptFieldMap(entity);
 
+					if (!fieldsDesc.empty() && fieldMap.empty())	// TODO: Move to ScriptEngine
+					{												
+						for (const auto& [name, field] : fieldsDesc)	// fill FieldMap
+						{
+							ScriptFieldStorage& storage = fieldMap[name];
+							storage = field.Storage;
+						}
+					}
+
 					for (const auto& [name, field] : fieldsDesc)
 					{
 						auto& fieldStorage = fieldMap[name];
 						if (field.Type == ScriptFieldType::Float)
 						{
-							// Set Initial Value
-							if (fieldStorage.GetValue<Vector4>() == Vector4(0, 0, 0, 0))	// TODO: Remove
-							{
-								fieldStorage.SetValue<float>(field.Storage.GetValue<float>());
-							}
-
 							float data = fieldStorage.GetValue<float>();
 							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat("##speed", &data); }))
 								fieldStorage.SetValue(data);

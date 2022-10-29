@@ -68,7 +68,6 @@ namespace Athena
 		{ "Vector4", ScriptFieldType::Vector4 }
 	};
 
-
 	struct ScriptEngineData
 	{
 		py::scoped_interpreter PythonInterpreter;
@@ -324,5 +323,17 @@ namespace Athena
 
 		if (s_Data->EntityInstances.find(entityID) != s_Data->EntityInstances.end())
 			s_Data->EntityInstances.erase(entityID);
+	}
+
+	std::vector<String> ScriptEngine::GetAvailableModules()
+	{
+		std::vector<String> modules;
+
+		for (const auto& [name, _] : s_Data->PythonModules)
+		{
+			modules.push_back(name);
+		}
+
+		return modules;
 	}
 }

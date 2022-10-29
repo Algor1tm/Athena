@@ -16,5 +16,6 @@ namespace Athena
 		static void ReloadScripts();
 		static const ScriptFieldsDescription& GetFieldsDescription(const String& className);
 		static void OnScriptComponentRemove(Entity entity);
+		static std::vector<String> GetAvailableModules();
 	};
 }

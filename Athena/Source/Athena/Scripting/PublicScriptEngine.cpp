@@ -25,4 +25,9 @@ namespace Athena
 	{
 		ScriptEngine::OnScriptComponentRemove(entity);
 	}
+
+	std::vector<String> PublicScriptEngine::GetAvailableModules()
+	{
+		return ScriptEngine::GetAvailableModules();
+	}
 }

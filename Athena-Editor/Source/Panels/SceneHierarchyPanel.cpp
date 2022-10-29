@@ -199,10 +199,33 @@ namespace Athena
 
 				if (UI::BeginDrawControllers())
 				{
-					UI::DrawController("ScriptName", height, [&script]() 
-						{ 
-							return UI::TextInput(script.Name, script.Name);
-						});
+					if (UI::DrawController("ScriptName", height, [&script]()
+						{ return ImGui::BeginCombo("##BodyType", script.Name.data()); }))
+					{
+						auto modules = PublicScriptEngine::GetAvailableModules();
+						auto currentName = std::string_view(script.Name.data());
+
+						for (const auto& moduleName : modules)
+						{
+							bool isSelected = currentName == moduleName;
+
+							UI::Selectable(moduleName, &isSelected, [&script, &moduleName]() 
+								{
+									script.Name = moduleName;
+								});
+
+							if (isSelected)
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+
+					if (script.Name.empty())
+					{
+						UI::EndDrawControllers();
+						return;
+					}
 
 					const ScriptFieldsDescription& fieldsDesc = PublicScriptEngine::GetFieldsDescription(script.Name);
 					ScriptFieldMap& fieldMap = PublicScriptEngine::GetScriptFieldMap(entity);
@@ -219,10 +242,47 @@ namespace Athena
 					for (const auto& [name, field] : fieldsDesc)
 					{
 						auto& fieldStorage = fieldMap[name];
-						if (field.Type == ScriptFieldType::Float)
+						if (field.Type == ScriptFieldType::Int)
+						{
+							int data = fieldStorage.GetValue<int>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragInt("##int", &data); }))
+								fieldStorage.SetValue(data);
+						}
+						else if (field.Type == ScriptFieldType::Float)
 						{
 							float data = fieldStorage.GetValue<float>();
-							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat("##speed", &data); }))
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat("##float", &data); }))
+								fieldStorage.SetValue(data);
+						}
+						//else if (field.Type == ScriptFieldType::String)	// TODO: make for strings
+						//{
+						//	char* data = fieldStorage.GetValue<char*>();
+						//	String input;
+						//	if (UI::DrawController(name.data(), height, [&data, &input]() { return UI::TextInput(data, input); }))
+						//		fieldStorage.SetValue(input.c_str());
+						//}
+						else if (field.Type == ScriptFieldType::Bool)
+						{
+							bool data = fieldStorage.GetValue<bool>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::Checkbox("##bool", &data); }))
+								fieldStorage.SetValue(data);
+						}
+						else if (field.Type == ScriptFieldType::Vector2)
+						{
+							Vector2 data = fieldStorage.GetValue<Vector2>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat2("##Vector2", data.Data()); }))
+								fieldStorage.SetValue(data);
+						}
+						else if (field.Type == ScriptFieldType::Vector3)
+						{
+							Vector3 data = fieldStorage.GetValue<Vector3>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat3("##Vector3", data.Data()); }))
+								fieldStorage.SetValue(data);
+						}
+						else if (field.Type == ScriptFieldType::Vector4)
+						{
+							Vector4 data = fieldStorage.GetValue<Vector4>();
+							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat4("##Vector4", data.Data()); }))
 								fieldStorage.SetValue(data);
 						}
 					}

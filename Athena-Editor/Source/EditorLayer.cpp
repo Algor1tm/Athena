@@ -133,6 +133,7 @@ namespace Athena
 
         if(m_SceneState != SceneState::Play)
             SelectEntity(m_SceneHierarchy->GetSelectedEntity());
+
         m_PanelManager.OnImGuiRender();
 
         ImGui::Begin("Editor Settings");

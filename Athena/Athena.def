@@ -13,6 +13,9 @@ EXPORTS
 	?ColorEdit4@ImGui@@YA_NPEBDQEAMH@Z
 	?DragFloat@ImGui@@YA_NPEBDPEAMMMM0H@Z
 	?DragFloat2@ImGui@@YA_NPEBDQEAMMMM0H@Z
+	?DragFloat3@ImGui@@YA_NPEBDQEAMMMM0H@Z
+	?DragFloat4@ImGui@@YA_NPEBDQEAMMMM0H@Z
+	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
 	?ImageButton@ImGui@@YA_NPEAXAEBUImVec2@@11HAEBUImVec4@@2@Z
 	?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
 	?IsAnyItemActive@ImGui@@YA_NXZ

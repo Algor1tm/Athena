@@ -85,5 +85,6 @@ namespace Athena
 		static void OnUpdateEntity(Entity entity, Time frameTime);
 
 		static void OnScriptComponentRemove(Entity entity);
+		static std::vector<String> GetAvailableModules();
 	};
 }

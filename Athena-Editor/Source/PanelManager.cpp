@@ -13,6 +13,9 @@ namespace Athena
 		switch (key)
 		{
 		case Keyboard::Space: return "Ctrl+Space";
+		case Keyboard::I: return "Ctrl+I";
+		case Keyboard::K: return "Ctrl+K";
+		case Keyboard::J: return "Ctrl+J";
 		}
 
 		return NULL;

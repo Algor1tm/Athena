@@ -20,10 +20,10 @@ class Player(Entity):
             velocity.x += 1
         elif Input.IsKeyPressed(Keyboard.A):
             velocity.x -= 1
-
+        
         if Input.IsKeyPressed(Keyboard.Space):
             velocity.y += 2
-
+        
         velocity.x *= self.speed * frameTime.AsSeconds()
         velocity.y *= self.speed * frameTime.AsSeconds()
         self._rigidbody2D.ApplyLinearImpulseToCenter(velocity, True)

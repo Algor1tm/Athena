@@ -70,4 +70,7 @@ namespace Athena::UI
 		if(*isSelected)
 			ImGui::PopStyleColor(3);
 	}
+
+	bool BeginTreeNode(std::string_view label);
+	void EndTreeNode();
 }

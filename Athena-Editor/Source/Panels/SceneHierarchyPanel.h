@@ -47,13 +47,6 @@ namespace Athena
 	template <typename Component, typename Func>
 	void SceneHierarchyPanel::DrawComponent(Entity entity, std::string_view name, Func uiFunction)
 	{
-		ImGuiTreeNodeFlags flags =
-			ImGuiTreeNodeFlags_DefaultOpen |
-			ImGuiTreeNodeFlags_AllowItemOverlap |
-			ImGuiTreeNodeFlags_SpanAvailWidth |
-			ImGuiTreeNodeFlags_Framed |
-			ImGuiTreeNodeFlags_FramePadding;
-
 		if (entity.HasComponent<Component>())
 		{
 			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
@@ -63,7 +56,7 @@ namespace Athena
 
 			float lineHeight = ImGui::GetFrameHeight();
 
-			bool open = ImGui::TreeNodeEx((void*)typeid(Component).hash_code(), flags, name.data());
+			bool open = UI::BeginTreeNode(name.data());
 
 			bool removeComponent = false;
 
@@ -88,7 +81,7 @@ namespace Athena
 			if (open)
 			{
 				uiFunction(entity.GetComponent<Component>());
-				ImGui::TreePop();
+				UI::EndTreeNode();
 				ImGui::Spacing();
 			}
 

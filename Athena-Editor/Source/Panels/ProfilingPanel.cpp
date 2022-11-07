@@ -26,15 +26,7 @@ namespace Athena
         ImGui::Begin("Profiling");
         ImGui::PopStyleVar();
 
-        const ImGuiTreeNodeFlags flags =
-            ImGuiTreeNodeFlags_AllowItemOverlap |
-            ImGuiTreeNodeFlags_SpanAvailWidth |
-            ImGuiTreeNodeFlags_Framed |
-            ImGuiTreeNodeFlags_FramePadding | 
-            ImGuiTreeNodeFlags_DefaultOpen;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5.f, 5.f });
-        if (ImGui::TreeNodeEx("##Renderer2D Statistics", flags, "Renderer2D Statistics"))
+        if(UI::BeginTreeNode("Renderer2D Statistics"))
         {
             auto stats = Renderer2D::GetStats();
             ImGui::Text("Draw Calls: %d", stats.DrawCalls);
@@ -44,7 +36,7 @@ namespace Athena
             ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
             ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
 
-            ImGui::TreePop();
+            UI::EndTreeNode();
         }
 
 
@@ -63,7 +55,7 @@ namespace Athena
             elapsed += m_FrameTime;
         }
 
-        if (ImGui::TreeNodeEx("##Performance", flags, "Performance"))
+        if (UI::BeginTreeNode("Performance"))
         {
             ImGui::Text("FPS: %d", (int)fps);
             ImGui::Text("FrameTime: %.3f", frameTime);
@@ -85,10 +77,8 @@ namespace Athena
                 ImGui::PlotLines("##FrameRate", m_FrameRateStack.data(), (int)m_FrameRateStack.size(), 0, (const char*)0, 0, 0.1f, { ImGui::GetWindowSize().x * 0.9f, ImGui::GetWindowSize().y * 0.2f });
             }
 
-            ImGui::TreePop();
+            UI::EndTreeNode();
         }
-
-        ImGui::PopStyleVar();
 
         ImGui::End();
 	}

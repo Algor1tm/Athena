@@ -9,8 +9,8 @@ class Camera(Entity):
 
     def OnUpdate(self, frameTime):
         translation = self.GetComponent(TransformComponent).Translation
-        translation.x = self._translation.x;
-        translation.y = self._translation.y;
+        translation.x = self._translation.x
+        translation.y = self._translation.y
 
     def SetPosition(self, translation):
         self._translation = translation

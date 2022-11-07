@@ -10,10 +10,6 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
-#include "Athena/Scripting/PublicScriptEngine.h"
-
-#include "UI/Widgets.h"
-
 #include <ImGui/imgui.h>
 
 
@@ -83,7 +79,6 @@ namespace Athena
 
             m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera); 
             break;
-
         }
         case SceneState::Play:
         {
@@ -98,7 +93,6 @@ namespace Athena
             m_ActiveScene->OnUpdateSimulation(frameTime, m_EditorCamera);
             break;
         }
-
         }
 
         RenderOverlay();
@@ -135,14 +129,6 @@ namespace Athena
             SelectEntity(m_SceneHierarchy->GetSelectedEntity());
 
         m_PanelManager.OnImGuiRender();
-
-        ImGui::Begin("Editor Settings");
-        UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_ShowColliders); });
-        if (ImGui::Button("Reload Scripts"))
-        {
-            PublicScriptEngine::ReloadScripts();
-        }
-        ImGui::End();
 
         ImGui::End();
     }
@@ -240,13 +226,16 @@ namespace Athena
 
 
         m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
-        m_PanelManager.AddPanel(m_SceneHierarchy);
+        m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
 
         auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser");
         m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
 
         auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
-        m_PanelManager.AddPanel(profiling);
+        m_PanelManager.AddPanel(profiling, Keyboard::K);
+
+        m_EditorSettings = CreateRef<EditorSettingsPanel>("EditorSettings");
+        m_PanelManager.AddPanel(m_EditorSettings, Keyboard::I);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
@@ -286,7 +275,7 @@ namespace Athena
             Renderer2D::BeginScene(m_EditorCamera);
         }
 
-        if (m_ShowColliders)
+        if (m_EditorSettings->GetSettings().m_ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();

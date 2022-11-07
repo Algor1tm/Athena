@@ -17,6 +17,7 @@
 #include "Panels/MenuBarPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/EditorSettingsPanel.h"
 #include "PanelManager.h"
 
 #include "ImGuizmoLayer.h"
@@ -61,7 +62,6 @@ namespace Athena
 
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
-		bool m_ShowColliders = false;
 
 		ImGuizmoLayer m_ImGuizmoLayer;
 
@@ -69,6 +69,7 @@ namespace Athena
 		Ref<ViewportPanel> m_MainViewport;
 		Ref<MenuBarPanel> m_MainMenuBar;
 		Ref<SceneHierarchyPanel> m_SceneHierarchy;
+		Ref<EditorSettingsPanel> m_EditorSettings;
 
 		enum class SceneState
 		{

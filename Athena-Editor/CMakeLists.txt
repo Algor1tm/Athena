@@ -22,12 +22,6 @@ target_compile_definitions(Athena-Editor PUBLIC
   ATN_SIMD
 )
 
-if(ATN_PY_DEBUG)
-	target_compile_definitions(Athena-Editor PRIVATE
-		$<$<CONFIG:Debug>:Py_DEBUG>
-	)
-endif(ATN_PY_DEBUG)
-
 # Build folder
 set_target_properties(Athena-Editor
 	PROPERTIES

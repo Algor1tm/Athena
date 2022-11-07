@@ -26,7 +26,7 @@ namespace Athena
 		ImGui::Begin("Content Browser");
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 17.f / 255.f, 14.f / 255.f, 14.f / 255.f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
 
 		if (ImGui::ImageButton(m_BackButton->GetRendererID(), { m_BackButtonSize.x, m_BackButtonSize.y }, {0, 1}, {1, 0}))
 		{

@@ -1,4 +1,3 @@
-from cmath import e
 from Internal import Entity_FindEntityByName, Entity_GetScriptInstance, Entity_ExistsScriptInstance
 from Internal import UUID
 from Internal import Log

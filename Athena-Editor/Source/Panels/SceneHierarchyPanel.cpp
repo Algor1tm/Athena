@@ -33,7 +33,7 @@ namespace Athena
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBg]);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetDarkColor());
 		ImGui::Begin("Scene Hierarchy");
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();

@@ -102,7 +102,7 @@ namespace Athena::UI
 
 	bool BeginDrawControllers()
 	{
-		static const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable | 
+		static const ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_Resizable |
 			ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_SizingFixedFit;
 
 		UI::ShiftCursorY(1.f);
@@ -112,5 +112,28 @@ namespace Athena::UI
 	void EndDrawControllers()
 	{
 		ImGui::EndTable();
+	}
+
+
+	bool BeginTreeNode(std::string_view label)
+	{
+		static const ImGuiTreeNodeFlags flags =
+			ImGuiTreeNodeFlags_AllowItemOverlap |
+			ImGuiTreeNodeFlags_SpanAvailWidth |
+			ImGuiTreeNodeFlags_Framed |
+			ImGuiTreeNodeFlags_FramePadding |
+			ImGuiTreeNodeFlags_DefaultOpen;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+		bool result = ImGui::TreeNodeEx(label.data(), flags, label.data());
+		ImGui::PopStyleVar(2);
+
+		return result;
+	}
+
+	void EndTreeNode()
+	{
+		ImGui::TreePop();
 	}
 }

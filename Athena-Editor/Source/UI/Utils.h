@@ -16,4 +16,9 @@ namespace Athena::UI
 	{
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset);
 	}
+
+	inline const ImVec4& GetDarkColor()
+	{
+		return ImGui::GetStyle().Colors[ImGuiCol_TitleBg];
+	}
 }

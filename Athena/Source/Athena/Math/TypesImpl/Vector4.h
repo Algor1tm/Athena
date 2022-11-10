@@ -96,6 +96,12 @@ namespace Athena::Math
 			  z(static_cast<T>(_yz.y)),
 			  w(static_cast<T>(_w)) {}
 
+		template <typename X, typename Y>
+		constexpr Vector<T, Size4>(const Vector<X, 2>& _xy, const Vector<X, 2>& _zw)
+			: x(static_cast<T>(_xy.x)),
+			y(static_cast<T>(_xy.y)),
+			z(static_cast<T>(_zw.x)),
+			w(static_cast<T>(_zw.y)) {}
 
 		template <typename U>
 		constexpr Vector<T, Size4>(const Vector<U, 3>& other)

@@ -254,13 +254,6 @@ namespace Athena
 							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat("##float", &data); }))
 								fieldStorage.SetValue(data);
 						}
-						//else if (field.Type == ScriptFieldType::String)	// TODO: make for strings
-						//{
-						//	char* data = fieldStorage.GetValue<char*>();
-						//	String input;
-						//	if (UI::DrawController(name.data(), height, [&data, &input]() { return UI::TextInput(data, input); }))
-						//		fieldStorage.SetValue(input.c_str());
-						//}
 						else if (field.Type == ScriptFieldType::Bool)
 						{
 							bool data = fieldStorage.GetValue<bool>();

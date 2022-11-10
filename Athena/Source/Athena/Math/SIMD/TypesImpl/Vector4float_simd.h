@@ -109,6 +109,14 @@ namespace Athena::Math
 				static_cast<float>(_x))) {}
 
 
+		template <typename X, typename Y>
+		inline Vector<float, Size4>(const Vector<X, 2>& _xy, const Vector<Y, 2>& _zw)
+			: _data(_mm_set_ps(static_cast<float>(_xy.x),
+				static_cast<float>(_xy.y),
+				static_cast<float>(_zw.x),
+				static_cast<float>(_zw.y))) {}
+
+
 		template <typename U>
 		inline Vector<float, Size4>(const Vector<U, 3>& other)
 		{

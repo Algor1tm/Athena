@@ -27,7 +27,6 @@ namespace Athena
 		case ScriptFieldType::Int: accessor.attr(name) = *(int*)buffer; break;
 		case ScriptFieldType::Float: accessor.attr(name) = *(float*)buffer; break;
 		case ScriptFieldType::Bool: accessor.attr(name) = *(bool*)buffer; break;
-		case ScriptFieldType::String: accessor.attr(name) = std::string((const char*)buffer); break;
 
 		case ScriptFieldType::Vector2: accessor.attr(name) = *(Vector2*)buffer; break;
 		case ScriptFieldType::Vector3: accessor.attr(name) = *(Vector3*)buffer; break;
@@ -44,7 +43,6 @@ namespace Athena
 		case ScriptFieldType::Int: { int value = py::cast<int>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
 		case ScriptFieldType::Float: { float value = py::cast<float>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
 		case ScriptFieldType::Bool: { bool value = py::cast<bool>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
-		case ScriptFieldType::String: { std::string value = py::cast<std::string>(accessor); memcpy(buffer, value.c_str(), value.size()); break; }
 
 		case ScriptFieldType::Vector2: { Vector2 value = py::cast<Vector2>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
 		case ScriptFieldType::Vector3: { Vector3 value = py::cast<Vector3>(accessor); memcpy(buffer, &value, sizeof(value)); break; }
@@ -111,9 +109,9 @@ namespace Athena
 	{
 		py::module_ check = s_Data->PythonModules[name] = py::module_::import(name.c_str());
 		if (check)
-			ATN_CORE_INFO("Successfuly load python module '{0}{1}'", name, ".py");
+			ATN_CORE_INFO("Successfuly load python module '{0}.{1}'", name, "py");
 		else
-			ATN_CORE_FATAL("Failed to load python module '{0}{1}' !", name, ".py");
+			ATN_CORE_FATAL("Failed to load python module '{0}.{1}' !", name, "py");
 	}
 
 
@@ -123,7 +121,6 @@ namespace Athena
 		py::module_ pyModule = s_Data->PythonModules.at(className);
 
 		m_PyClass = pyModule.attr(className.data());
-		//py::isinstance(m_PyClass, EntityClass);
 		ATN_CORE_ASSERT(m_PyClass, "Failed to load script class!");
 
 		py::dict fields = py::cast<py::dict>(m_PyClass.attr("__dict__"));
@@ -234,7 +231,7 @@ namespace Athena
 			else
 			{
 				s_Data->PythonModules.at(strModule).reload();
-				ATN_CORE_INFO("Reload python module {0}{1}", strModule,".py");
+				ATN_CORE_INFO("Reload python module {0}.{1}", strModule,"py");
 			}
 		}
 
@@ -267,7 +264,7 @@ namespace Athena
 		ATN_CORE_ASSERT(entity);
 
 		UUID entityID = entity.GetID();
-		return s_Data->EntityScriptFields[entityID]; // TODO: [] -> at()
+		return s_Data->EntityScriptFields[entityID];
 	}
 
 	Scene* ScriptEngine::GetSceneContext()

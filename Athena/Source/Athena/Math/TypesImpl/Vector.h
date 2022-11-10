@@ -548,7 +548,7 @@ namespace Athena::Math
 	template <typename T, SIZE_T Size>
 	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
-		T out;
+		T out = 0;
 		for (SIZE_T i = 0; i < Size; ++i)
 			out += left[i] * right[i];
 		return out;

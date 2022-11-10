@@ -11,6 +11,7 @@
 #endif
 
 #include <pybind11/embed.h>
+#include <pybind11/operators.h>
 
 #ifdef _MSC_VER
 #undef _CRT_SECURE_NO_WARNINGS
@@ -21,11 +22,32 @@ namespace py = pybind11;
 
 #define ADD_INTERNAL_FUNCTION(Name) handle.def(ATN_STRINGIFY_MACRO(Name), &Athena::Name)
 
+#define DEF_MATH_OPERATORS()        .def(py::self + py::self)   \
+                                    .def(py::self - py::self)   \
+                                    .def(py::self * py::self)   \
+                                    .def(py::self / py::self)   \
+                                    .def(py::self += py::self)  \
+                                    .def(py::self -= py::self)  \
+                                    .def(py::self *= py::self)  \
+                                    .def(py::self /= py::self)  \
+                                    .def(py::self + float())    \
+                                    .def(py::self - float())    \
+                                    .def(py::self * float())    \
+                                    .def(py::self / float())    \
+                                    .def(py::self += float())   \
+                                    .def(py::self -= float())   \
+                                    .def(py::self *= float())   \
+                                    .def(py::self /= float())   \
+                                    .def(float() + py::self)    \
+                                    .def(float() * py::self)    \
+                                    .def(-py::self)             \
+                                    .def(py::self == py::self)  \
+                                    .def(py::self != py::self)
+
 
 namespace Athena
 {
 #pragma region LOG
-
     class PyLog
     {
     public:
@@ -55,10 +77,10 @@ namespace Athena
         }
     };
 
-#pragma endregion
+#pragma endregion LOG
+
 
 #pragma region INPUT
-
     class PyInput
     {
     public:
@@ -78,9 +100,10 @@ namespace Athena
         }
     };
 
-#pragma endregion
+#pragma endregion INPUT
 
 
+#pragma region COMPONENTS
     class PyComponent
     {
     public:
@@ -142,10 +165,14 @@ namespace Athena
             auto& rb2d = entity.GetComponent<Rigidbody2DComponent>();
             b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
             body->ApplyLinearImpulseToCenter({ impulse.x, impulse.y }, wake);
+
+            Vector4(Vector2(), Vector2());
         }
     };
+#pragma endregion COMPONENTS
 
 
+#pragma region UTILS
     static UUID Entity_FindEntityByName(const std::string& name)
     {
         Scene* scene = ScriptEngine::GetSceneContext();
@@ -164,45 +191,79 @@ namespace Athena
     {
         return ScriptEngine::EntityInstanceExists(uuid);
     }
-
+#pragma endregion UTILS
 
     PYBIND11_EMBEDDED_MODULE(Internal, handle)
     {
         handle.doc() = "Internal Athena Core Calls";
 
+
+#pragma region VECTORS
         py::class_<Vector2>(handle, "Vector2")
+            .def(py::init([]() {return Vector2(0, 0); }))
             .def(py::init<float, float>())
             .def_readwrite("x", &Vector2::x)
-            .def_readwrite("y", &Vector2::y);
+            .def_readwrite("y", &Vector2::y)
+            DEF_MATH_OPERATORS()
+            .def("Length", &Vector2::Length)
+            .def("Normalize", &Vector2::Normalize)
+            .def("Dot", (float (*)(const Vector2&, const Vector2&))Math::Dot)
+            .def("Cross", (float (*)(const Vector2&, const Vector2&))Math::Cross)
+            .def("__repr__", [](const Vector2& vec2) { return Athena::ToString(vec2); });
+
 
         py::class_<Vector3>(handle, "Vector3")
+            .def(py::init([]() {return Vector3(0, 0, 0); }))
             .def(py::init<float, float, float>())
+            .def(py::init<Vector2, float>())
+            .def(py::init<float, Vector2>())
             .def_readwrite("x", &Vector3::x)
             .def_readwrite("y", &Vector3::y)
-            .def_readwrite("z", &Vector3::z);
+            .def_readwrite("z", &Vector3::z)
+            DEF_MATH_OPERATORS()
+            .def("Length", &Vector3::Length)
+            .def("Normalize", &Vector3::Normalize)
+            .def("Dot", (float (*)(const Vector3&, const Vector3&))Math::Dot)
+            .def("Cross", (Vector3(*)(const Vector3&, const Vector3&))Math::Cross)
+            .def("__repr__", [](Vector3 vec3) { return Athena::ToString(vec3); });
 
         py::class_<Vector4>(handle, "Vector4")
+            .def(py::init([]() {return Vector4(0, 0, 0, 0); }))
             .def(py::init<float, float, float, float>())
+            .def(py::init<Vector2, Vector2>())
+            .def(py::init<float, Vector3>())
+            .def(py::init<Vector3, float>())
             .def_readwrite("x", &Vector4::x)
             .def_readwrite("y", &Vector4::y)
             .def_readwrite("z", &Vector4::z)
-            .def_readwrite("w", &Vector4::w);
+            .def_readwrite("w", &Vector4::w)
+            DEF_MATH_OPERATORS()
+            .def("Length", &Vector4::Length)
+            .def("Normalize", &Vector4::Normalize)
+            .def("Dot", (float (*)(const Vector4&, const Vector4&))Math::Dot)
+            .def("__repr__", [](Vector4 vec4) { return Athena::ToString(vec4); });
+#pragma endregion VECTORS
 
 
+#pragma region LOG
         py::class_<PyLog>(handle, "Log")
             .def("Trace", static_cast<void (*)(const std::string&)>(PyLog::Trace))
             .def("Info", static_cast<void (*)(const std::string&)>(PyLog::Info))
             .def("Warn", static_cast<void (*)(const std::string&)>(PyLog::Warn))
             .def("Error", static_cast<void (*)(const std::string&)>(PyLog::Error))
             .def("Fatal", static_cast<void (*)(const std::string&)>(PyLog::Fatal));
+#pragma endregion LOG
 
 
+#pragma region INPUT
         py::class_<PyInput>(handle, "Input")
             .def("IsKeyPressed", static_cast<bool (*)(uint16)>(PyInput::IsKeyPressed))
             .def("IsMouseButtonPressed", static_cast<bool (*)(uint16)>(PyInput::IsMouseButtonPressed))
             .def("GetMousePosition", static_cast<Vector2 (*)()>(PyInput::GetMousePosition));
+#pragma endregion INPUT
 
 
+#pragma region UTILS
         py::class_<Time>(handle, "Time")
             .def(py::init<>())
             .def(py::init<float>())
@@ -219,8 +280,10 @@ namespace Athena
         ADD_INTERNAL_FUNCTION(Entity_FindEntityByName);
         ADD_INTERNAL_FUNCTION(Entity_ExistsScriptInstance);
         handle.def(ATN_STRINGIFY_MACRO(Entity_GetScriptInstance), &Athena::Entity_GetScriptInstance, py::return_value_policy::reference);
+#pragma endregion UTILS
 
 
+#pragma region COMPONENTS
         py::class_<PyComponent>(handle, "Component")
             .def(py::init<>())
             .def(py::init<UUID>());
@@ -239,5 +302,7 @@ namespace Athena
             .def("_HasThisComponent", &PyRigidbody2DComponent::_HasThisComponent)
             .def("ApplyLinearImpulse", &PyRigidbody2DComponent::ApplyLinearImpulse)
             .def("ApplyLinearImpulseToCenter", &PyRigidbody2DComponent::ApplyLinearImpulseToCenter);
+#pragma endregion COMPONENTS
     }
 }
+

@@ -10,7 +10,7 @@ namespace Athena
 	enum class ScriptFieldType
 	{
 		None = 0,
-		Int, Float, String, Bool,
+		Int, Float, String, Bool,	// TODO: support string fields
 		Vector2, Vector3, Vector4,
 	};
 

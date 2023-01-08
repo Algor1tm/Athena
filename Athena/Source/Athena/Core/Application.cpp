@@ -23,9 +23,8 @@ namespace Athena
 			
 		WindowDescription wdesc = appdesc.WindowDesc;
 
-		RendererAPI::Init(appdesc.API);		// TODO: Make Better API
 		m_Window = Window::Create(wdesc);
-		Renderer::Init();
+		Renderer::Init(appdesc.API);
 
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
 

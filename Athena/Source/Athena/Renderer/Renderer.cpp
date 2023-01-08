@@ -7,8 +7,9 @@ namespace Athena
 {
 	Renderer::SceneData* Renderer::m_SceneData = new Renderer::SceneData();
 
-	void Renderer::Init()
+	void Renderer::Init(RendererAPI::API graphicsAPI)
 	{
+		RendererAPI::Init(graphicsAPI);
 		RenderCommand::Init();
 		Renderer2D::Init();
 	}

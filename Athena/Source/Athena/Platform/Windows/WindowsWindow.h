@@ -6,6 +6,8 @@
 #include "Athena/Input/Events/KeyEvent.h"
 #include "Athena/Input/Events/MouseEvent.h"
 
+#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
+
 #include <Windows.h>
 #include <Windowsx.h>
 
@@ -271,7 +273,7 @@ namespace Athena
 
 		ATN_CORE_INFO("Create Windows Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
-		window->m_Context = GraphicsContext::Create(window->m_WindowHandle);
+		window->m_Context = CreateRef<D3D11GraphicsContext>(reinterpret_cast<HWND>(window->m_WindowHandle));
 		window->SetVSync(window->m_Data.VSync);
 
 		window->m_Data.Mode = WindowMode::Default;

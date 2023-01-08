@@ -22,22 +22,15 @@
 
 class b2World;
 
-
 namespace Athena
 {
-	class Entity;
-	class ScriptEntity;
-	class SceneHierarchyPanel;
-	class SceneSerializer;
-
-
 	class ATHENA_API Scene
 	{
 	public:
 		friend class Entity;
 		friend class ScriptEntity;
 		friend class SceneHierarchyPanel;
-		friend class SceneSerializer;
+		friend class ATHENA_API SceneSerializer;
 
 		Scene(const String& name = "UnNamed");
 		~Scene();

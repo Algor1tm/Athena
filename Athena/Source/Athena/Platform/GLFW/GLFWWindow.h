@@ -6,6 +6,8 @@
 #include "Athena/Input/Events/KeyEvent.h"
 #include "Athena/Input/Events/MouseEvent.h"
 
+#include  "Athena/Platform/OpenGL/GLGraphicsContext.h"
+
 #include <GLFW/glfw3.h>
 #include <stb_image/stb_image.h>
 
@@ -169,7 +171,7 @@ namespace Athena
 		glfwSetWindowUserPointer(hWnd, &window->m_Data);
 		SetEventCallbacks(hWnd);
 
-		window->m_Context = GraphicsContext::Create(window->m_WindowHandle);
+		window->m_Context = CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(window->m_WindowHandle));;
 		window->SetVSync(window->m_Data.VSync);
 
 		window->SetWindowMode(desc.Mode);

@@ -10,8 +10,7 @@ namespace Athena
 	class ATHENA_API Renderer
 	{
 	public:
-		Renderer() = delete;
-		static void Init();
+		static void Init(RendererAPI::API graphicsAPI);
 		static void Shutdown();
 
 		static void OnWindowResized(uint32 width, uint32 height);

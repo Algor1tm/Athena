@@ -1,4 +1,8 @@
 # Athena
-Cross-Platform Game Engine, supports OpenGL and DirectX 11.
+Athena is an early-stage Game Engine.   
+Currently working on 2D and Windows platform.   
+Supports OpenGL and DirectX 11.
 
-Currently working on 2D and Windows platform
+## Getting Started
+Visual Studio 2019 or 2022 is recommended.   
+To setup projects run one of the scripts in <b>Scripts</b> folder.    

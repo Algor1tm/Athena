@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 # https://cmake.org/cmake/help/latest/command/project.html
-project(Box2d VERSION 2.4.1)
+project(Box2D VERSION 2.4.1)
 
 # set(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
 

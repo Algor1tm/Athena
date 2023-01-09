@@ -27,7 +27,7 @@ namespace Athena
             //const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
             //const Matrix4& cameraProjection = camera.GetProjection();
             //Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
-            const Matrix4& cameraProjection = m_pCamera->GetProjection();
+            const Matrix4& cameraProjection = m_pCamera->GetProjectionMatrix();
             const Matrix4& cameraView = m_pCamera->GetViewMatrix();
 
             auto& tc = m_ActiveEntity.GetComponent<TransformComponent>();

@@ -2,11 +2,12 @@
 
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Vector.h"
+#include "Athena/Renderer/Camera.h"
 
 
 namespace Athena
 {
-	class ATHENA_API OrthographicCamera
+	class ATHENA_API OrthographicCamera: public Camera
 	{
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
@@ -26,7 +27,6 @@ namespace Athena
 		void RecalculateView();
 
 	private:
-		Matrix4 m_ProjectionMatrix;
 		Matrix4 m_ViewMatrix;
 		Matrix4 m_ViewProjectionMatrix;
 

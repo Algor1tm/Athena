@@ -7,7 +7,7 @@
 namespace Athena 
 {
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top)
-		: m_ProjectionMatrix(Math::Ortho(left, right, bottom, top, -1.f, 1.f)), m_ViewMatrix(Matrix4::Identity()),
+		: Camera(Math::Ortho(left, right, bottom, top, -1.f, 1.f)), m_ViewMatrix(Matrix4::Identity()),
 		  m_Position(0.f), m_Rotation(0.f)
 	{
 		m_ViewProjectionMatrix = m_ViewMatrix * m_ProjectionMatrix;

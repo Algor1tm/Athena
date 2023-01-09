@@ -191,25 +191,9 @@ namespace Athena
 		delete[] s_Data.LineVertexBufferBase;
 	}
 
-	void Renderer2D::BeginScene(const Camera& camera, const Matrix4& transform)
+	void Renderer2D::BeginScene(const Matrix4& cameraViewProjection)
 	{
-		s_Data.CameraBuffer.ViewProjection = AffineInverse(transform) * camera.GetProjection();
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
-
-		StartBatch();
-	}
-
-	void Renderer2D::BeginScene(const OrthographicCamera& camera)
-	{
-		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjectionMatrix();
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
-
-		StartBatch();
-	}
-
-	void Renderer2D::BeginScene(const EditorCamera& camera)
-	{
-		s_Data.CameraBuffer.ViewProjection = camera.GetViewProjection();
+		s_Data.CameraBuffer.ViewProjection = cameraViewProjection;
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		StartBatch();

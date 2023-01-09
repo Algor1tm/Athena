@@ -28,7 +28,7 @@ namespace Athena
 		{ m_ViewportWidth = (float)width; m_ViewportHeight = (float)height; RecalculateProjection(); }
 
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
-		Matrix4 GetViewProjection() const { return m_ViewMatrix * m_Projection; }
+		Matrix4 GetViewProjectionMatrix() const { return m_ViewMatrix * m_ProjectionMatrix; }
 			
 		Vector3 GetUpDirection() const;
 		Vector3 GetRightDirection() const;
@@ -63,7 +63,7 @@ namespace Athena
 	private:
 		float m_FOV = 45.0f, m_AspectRatio = 1.778f, m_NearClip = 0.1f, m_FarClip = 1000.0f;
 
-		Matrix4 m_ViewMatrix;
+		Matrix4 m_ViewMatrix = Matrix4::Identity();
 		Vector3 m_Position = { 0.0f, 0.0f, 0.0f };
 		Vector3 m_FocalPoint = { 0.0f, 0.0f, 0.0f };
 

@@ -16,7 +16,7 @@ namespace Athena
 	void EditorCamera::RecalculateProjection()
 	{
 		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
-		m_Projection = Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
+		m_ProjectionMatrix = Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
 	}
 
 	void EditorCamera::RecalculateView()

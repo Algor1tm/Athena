@@ -64,7 +64,6 @@ namespace Athena
 
 	private:
 		void OnPhysics2DStart();
-		void RenderEditorScene(const EditorCamera& camera);
 		void UpdatePhysics(Time frameTime);
 
 		template <typename T>

@@ -7,7 +7,6 @@
 #include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Framebuffer.h"
 #include "Athena/Renderer/Editorcamera.h"
 
 #include "Athena/Scene/Entity.h"
@@ -58,8 +57,6 @@ namespace Athena
 		void OpenScene(const Filepath& path);
 
 	private:
-		Ref<Framebuffer> m_Framebuffer;
-
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 

@@ -4,6 +4,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/PlatformUtils.h"
 
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/RenderCommand.h"
 
@@ -26,13 +27,6 @@ namespace Athena
 
     void EditorLayer::OnAttach()
     {
-        FramebufferDescription fbDesc;
-        fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
-        fbDesc.Width = 1280;
-        fbDesc.Height = 720;
-        fbDesc.Samples = 1;
-        m_Framebuffer = Framebuffer::Create(fbDesc);
-
         Application::Get().GetImGuiLayer()->BlockEvents(false);
         InitializePanels();
 
@@ -54,21 +48,22 @@ namespace Athena
     void EditorLayer::OnUpdate(Time frameTime)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        const auto& framebufferDesc = m_Framebuffer->GetDescription();
+        const auto& framebuffer = Renderer::GetFramebuffer();
+        const auto& framebufferDesc = framebuffer->GetDescription();
+
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
         {
-            m_Framebuffer->Resize(vpDesc.Size.x, vpDesc.Size.y);
+            framebuffer->Resize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera.SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
                 
             m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
         Renderer2D::ResetStats();
-        RenderCommand::BindFramebuffer(m_Framebuffer);
-        RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+        Renderer::Clear({ 0.1f, 0.1f, 0.1f, 1 });
         // Clear our entity ID attachment to -1
-        m_Framebuffer->ClearAttachment(1, -1);
+        framebuffer->ClearAttachment(1, -1);
 
         switch (m_SceneState)
         {
@@ -97,7 +92,7 @@ namespace Athena
 
         RenderOverlay();
 
-        RenderCommand::UnBindFramebuffer();
+        RenderCommand::UnBindFramebuffer(); // TODO: Remove
     }
 
     void EditorLayer::OnImGuiRender()
@@ -193,7 +188,7 @@ namespace Athena
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
 
         m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
-        m_MainViewport->SetFramebuffer(m_Framebuffer, 0);
+        m_MainViewport->SetFramebuffer(Renderer::GetFramebuffer(), 0);
         m_MainViewport->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
@@ -253,7 +248,7 @@ namespace Athena
 
         if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
         {
-            int pixelData = m_Framebuffer->ReadPixel(1, mouseX, mouseY);
+            int pixelData = Renderer::GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
             if (pixelData != -1)
                 return { (entt::entity)pixelData, m_EditorScene.get() };
         }
@@ -268,11 +263,12 @@ namespace Athena
             Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
             auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-            Renderer2D::BeginScene(runtimeCamera, camera.GetComponent<TransformComponent>().AsMatrix());
+            Matrix4 viewProjection = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix()) * runtimeCamera.GetProjectionMatrix();
+            Renderer2D::BeginScene(viewProjection);
         }
         else
         {
-            Renderer2D::BeginScene(m_EditorCamera);
+            Renderer2D::BeginScene(m_EditorCamera.GetViewProjectionMatrix());
         }
 
         if (m_EditorSettings->GetSettings().m_ShowPhysicsColliders)

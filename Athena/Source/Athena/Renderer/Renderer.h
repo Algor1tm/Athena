@@ -15,21 +15,16 @@ namespace Athena
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginScene(const OrthographicCamera& Camera);
+		static void BeginScene(const Matrix4& viewProjection);
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader,
 			const Ref<VertexBuffer>& vertexBuffer,
 			const Matrix4& transform = Matrix4::Identity());
 
+		static void Clear(const LinearColor& color);
+		static Ref<Framebuffer> GetFramebuffer();
+
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
-
-	private:
-		struct SceneData
-		{
-			Matrix4 ViewProjectionMatrix = Matrix4::Identity();
-		};
-
-		static SceneData* m_SceneData;
 	};
 }

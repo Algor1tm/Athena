@@ -5,6 +5,7 @@
 #include "NativeScript.h"
 
 #include "Athena/Renderer/Renderer2D.h" 
+#include "Athena/Scene/SceneRenderer.h"
 #include "Athena/Scripting/ScriptEngine.h"
 
 #ifdef _MSC_VER
@@ -91,7 +92,7 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
-		RenderEditorScene(camera);
+		SceneRenderer::RenderEditorScene(this, camera);
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)
@@ -145,25 +146,8 @@ namespace Athena
 		{
 			if (mainCamera)
 			{
-				Renderer2D::BeginScene(*mainCamera, cameraTransform);
-
-				auto quads = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
-				for (auto entity : quads)
-				{
-					auto [transform, sprite] = quads.get<TransformComponent, SpriteComponent>(entity);
-
-					Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-				}
-
-				auto circles = m_Registry.view<TransformComponent, CircleComponent>();
-				for (auto entity : circles)
-				{
-					auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
-
-					Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
-				}
-
-				Renderer2D::EndScene();
+				Matrix4 viewProjection = Math::AffineInverse(cameraTransform) * (*mainCamera).GetProjectionMatrix();
+				SceneRenderer::Render(this, viewProjection);
 			}
 		}
 	}
@@ -171,7 +155,7 @@ namespace Athena
 	void Scene::OnUpdateSimulation(Time frameTime, EditorCamera& camera)
 	{
 		UpdatePhysics(frameTime);
-		RenderEditorScene(camera);
+		SceneRenderer::RenderEditorScene(this, camera);
 	}
 
 	void Scene::OnRuntimeStart()
@@ -190,7 +174,7 @@ namespace Athena
 				ScriptEngine::InstantiateEntity(entity);
 			}
 
-			for (auto id : view)
+			for (auto id: view)
 			{
 				Entity entity = { id, this };
 				ScriptEngine::OnCreateEntity(entity);
@@ -281,29 +265,6 @@ namespace Athena
 					body->CreateFixture(&fixtureDef);
 				}
 			});
-	}
-
-	void Scene::RenderEditorScene(const EditorCamera& camera)
-	{
-		Renderer2D::BeginScene(camera);
-
-		auto group = m_Registry.group<TransformComponent>(entt::get<SpriteComponent>);
-		for (auto entity : group)
-		{
-			auto [transform, sprite] = group.get<TransformComponent, SpriteComponent>(entity);
-
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
-		}
-
-		auto circles = m_Registry.view<TransformComponent, CircleComponent>();
-		for (auto entity : circles)
-		{
-			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
-
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
-		}
-
-		Renderer2D::EndScene();
 	}
 
 	void Scene::UpdatePhysics(Time frameTime)

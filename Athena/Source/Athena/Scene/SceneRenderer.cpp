@@ -2,6 +2,7 @@
 
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena
@@ -15,7 +16,13 @@ namespace Athena
 
 	void SceneRenderer::Init()
 	{
+		BufferLayout layout = 
+		{
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Color" }
+		};
 
+		s_Data.PBRShader = Shader::Create(layout, "Resources/Shaders/Renderer_PBR");
 	}
 
 	void SceneRenderer::Shutdown()
@@ -44,11 +51,28 @@ namespace Athena
 		}
 
 		Renderer2D::EndScene();
+
+
+		Renderer::BeginScene(cameraViewProjection);
+
+		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
+		for (auto entity : entities)
+		{
+			auto [transform, mesh] = entities.get<TransformComponent, MeshComponent>(entity);
+
+			if (!mesh.Hide)
+			{
+				Renderer::Submit(s_Data.PBRShader, mesh.Mesh->GetVertexBuffer(), transform.AsMatrix());
+			}
+		}
+
+		Renderer::EndScene();
 	}
 
 	void SceneRenderer::RenderEditorScene(Scene* scene, const EditorCamera& camera)
 	{
-		Renderer2D::BeginScene(camera.GetViewProjectionMatrix());
+		auto viewProjection = camera.GetViewProjectionMatrix();
+		Renderer2D::BeginScene(viewProjection);
 
 		auto quads = scene->GetAllEntitiesWith<TransformComponent, SpriteComponent>();
 		for (auto entity : quads)
@@ -67,5 +91,21 @@ namespace Athena
 		}
 
 		Renderer2D::EndScene();
+
+
+		Renderer::BeginScene(viewProjection);
+
+		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
+		for (auto entity : entities)
+		{
+			auto [transform, mesh] = entities.get<TransformComponent, MeshComponent>(entity);
+
+			if (!mesh.Hide)
+			{
+				Renderer::Submit(s_Data.PBRShader, mesh.Mesh->GetVertexBuffer(), transform.AsMatrix());
+			}
+		}
+
+		Renderer::EndScene();
 	}
 }

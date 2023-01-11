@@ -6,8 +6,10 @@
 #include "Athena/Math/Transforms.h"
 #include "Athena/Math/TypeCasts.h"
 
-#include "Athena/Scene/SceneCamera.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Mesh.h"
+
+#include "Athena/Scene/SceneCamera.h"
 
 
 namespace Athena
@@ -132,5 +134,11 @@ namespace Athena
 
 		//Storage
 		void* RuntimeFixture = nullptr;
+	};
+
+	struct MeshComponent
+	{
+		Ref<Mesh> Mesh;
+		bool Hide = false;
 	};
 }

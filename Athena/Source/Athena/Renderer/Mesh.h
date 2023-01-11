@@ -9,8 +9,10 @@ namespace Athena
 	class ATHENA_API Mesh
 	{
 	public:
-		Mesh(const Ref<VertexBuffer>& vertexBuffer) {}
-		Mesh(const Filepath& filepath) {}
+		static Ref<Mesh> Create(const Ref<VertexBuffer>& vertexBuffer);
+		static Ref<Mesh> LoadFromFile(const Filepath& filepath);
+
+		Ref<VertexBuffer> GetVertexBuffer();
 
 	private:
 		Ref<VertexBuffer> m_VertexBuffer;

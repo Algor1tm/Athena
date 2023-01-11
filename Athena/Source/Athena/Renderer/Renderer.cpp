@@ -2,6 +2,7 @@
 
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/ConstantBuffer.h"
+#include "Athena/Scene/SceneRenderer.h"
 
 
 namespace Athena
@@ -26,13 +27,14 @@ namespace Athena
 		RendererAPI::Init(graphicsAPI);
 		RenderCommand::Init();
 		Renderer2D::Init();
+		SceneRenderer::Init();
 
 
 		FramebufferDescription fbDesc;
 		fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
-		fbDesc.Samples = 1;
+		fbDesc.Samples = 4;
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
 
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);

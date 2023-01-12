@@ -22,6 +22,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 EnableMultiProcessorCompilation(Athena)
 set_property(TARGET Athena PROPERTY CXX_STANDARD 17)
 set_property(TARGET Athena PROPERTY FOLDER Core)
+set_property(TARGET Athena PROPERTY DEBUG_POSTFIX "")
 
 target_compile_definitions(Athena PRIVATE
 	$<$<CONFIG:Debug>:ATN_DEBUG>
@@ -58,7 +59,7 @@ add_custom_command(TARGET Athena POST_BUILD
 target_precompile_headers(Athena PRIVATE
 	<memory> <algorithm> <functional> <utility> <chrono>
 	<iomanip> <thread> <filesystem> <limits> <random>
-	<numeric> <math.h> <cmath> <xmmintrin.h> <iostream> <sstream>
+	<numeric> <math.h> <cmath> <iostream> <sstream>
 	<fstream> <array> <vector> <string> <unordered_map> <unordered_set>
 
 	Source/Athena/Core/Core.h
@@ -67,6 +68,7 @@ target_precompile_headers(Athena PRIVATE
 
 target_include_directories(Athena PRIVATE 
 	"Source" 
+	${ASSIMP_INCLUDE_DIR}
 	${THIRD_PARTY_DIR}
 	${BOX2D_INCLUDE_DIR}
 	${GLAD_INCLUDE_DIR}
@@ -104,6 +106,8 @@ target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static comp
 
 # Windows specific code
 if(WIN32)
+	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
+
 	target_precompile_headers(Athena PRIVATE <Windows.h> <d3d11.h>)
 	target_link_libraries(Athena PRIVATE d3d11.lib)
 	target_link_libraries(Athena PRIVATE DXGI.lib)

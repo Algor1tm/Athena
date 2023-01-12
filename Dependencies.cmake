@@ -1,5 +1,6 @@
 set(THIRD_PARTY_DIR "${CMAKE_SOURCE_DIR}/Athena/ThirdParty")
 
+set(ASSIMP_INCLUDE_DIR "${THIRD_PARTY_DIR}/assimp/include")
 set(BOX2D_INCLUDE_DIR "${THIRD_PARTY_DIR}/Box2D/include")
 set(ENTT_INCLUDE_DIR "${THIRD_PARTY_DIR}/entt")
 set(GLAD_INCLUDE_DIR "${THIRD_PARTY_DIR}/glad/include")

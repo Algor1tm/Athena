@@ -1,11 +1,23 @@
 cmake_minimum_required (VERSION 3.16)
 
+set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
+set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
+
 # Enable in cross-platform way multi-processor compilation
 macro(EnableMultiProcessorCompilation TARGET_NAME)
     if(MSVC)
 	    target_compile_options(${TARGET_NAME} PUBLIC /MP)
     endif(MSVC)
     #TODO: support other compilers
+endmacro()
+
+macro(CopyDLLToBinaries DLL_PATH TARGET_NAME)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/Athena/Debug/${TARGET_NAME}" COPYONLY)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/Athena/Release/${TARGET_NAME}" COPYONLY)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/Athena-Editor/Debug/${TARGET_NAME}" COPYONLY)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/Athena-Editor/Release/${TARGET_NAME}" COPYONLY)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/SandBox/Debug/${TARGET_NAME}" COPYONLY)
+    configure_file("${DLL_PATH}" "${BUILD_FOLDER}/SandBox/Release/${TARGET_NAME}" COPYONLY)
 endmacro()
 
 
@@ -15,8 +27,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "Athena-Editor")
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
-set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
-set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
 
 # Find Python 3.6+
 find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)
@@ -43,6 +53,10 @@ add_library(Athena-RuntimeScripts ${PYTHON_FILES})
 source_group(TREE "${SCRIPTS_FOLDER}/../" FILES ${PYTHON_FILES} )
 set_property(TARGET Athena-RuntimeScripts PROPERTY LINKER_LANGUAGE CXX)
 set_property(TARGET Athena-RuntimeScripts PROPERTY FOLDER Core)
+
+if(WIN32)  
+    CopyDLLToBinaries("${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.dll" "assimp-vc143-mt.dll")
+endif(WIN32)
 
 include(Dependencies.cmake)
 

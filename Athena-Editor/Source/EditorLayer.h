@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Layer.h"
-#include "Athena/Core/Color.h"
 
 #include "Athena/Input/Events/KeyEvent.h"
 #include "Athena/Input/Events/MouseEvent.h"
 
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Editorcamera.h"
 

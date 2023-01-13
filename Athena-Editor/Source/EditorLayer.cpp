@@ -35,14 +35,16 @@ namespace Athena
 
         m_EditorCamera.SetDistance(7.f);
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
-        //OpenScene("Assets/Scenes/PhysicsExample.atn");
 
-        Ref<Mesh> mesh = Mesh::Create("Assets/Meshes/Monkey.obj");
-
+#if 1
+        OpenScene("Assets/Scenes/PhysicsExample.atn");
+#else
+        Ref<Mesh> mesh = Mesh::Create("Assets/Meshes/bugatti.obj");
+        
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<MeshComponent>();
         m_TestCube.GetComponent<MeshComponent>().Mesh = mesh;
-
+#endif
         m_SceneHierarchy->SetContext(m_EditorScene);
     }
 
@@ -309,7 +311,7 @@ namespace Athena
         }
         
 
-        if (m_SelectedEntity)
+        if (m_SelectedEntity && !m_SelectedEntity.HasComponent<MeshComponent>())
         {
             const TransformComponent& transform = m_SelectedEntity.GetComponent<TransformComponent>();
             Renderer2D::DrawRect(transform.AsMatrix(), { 1.f, 0.5f, 0.f, 1.f }, 6.f);

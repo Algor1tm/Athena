@@ -99,7 +99,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID"     } 
 		};
 
-		s_Data.QuadShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Quad");
+		s_Data.QuadShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Quad");
 
 		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxQuadVertices];
 
@@ -139,7 +139,7 @@ namespace Athena
 			{ ShaderDataType::Float,  "a_Fade"      },
 			{ ShaderDataType::Int,    "a_EntityID"  } 
 		};
-		s_Data.CircleShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Circle");
+		s_Data.CircleShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Circle");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
@@ -157,7 +157,7 @@ namespace Athena
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Int,    "a_EntityID" }
 		};
-		s_Data.LineShader = Shader::Create(layout, "Resources/Shaders/Renderer2D_Line");
+		s_Data.LineShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Line");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);

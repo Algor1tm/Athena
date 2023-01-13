@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Core/Color.h"
+#include "Color.h"
 #include "Buffer.h"
 #include "Framebuffer.h"
 

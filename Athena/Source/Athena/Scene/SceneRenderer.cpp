@@ -16,13 +16,7 @@ namespace Athena
 
 	void SceneRenderer::Init()
 	{
-		BufferLayout layout = 
-		{
-			{ ShaderDataType::Float3, "a_Position" },
-			{ ShaderDataType::Float4, "a_Color" }
-		};
-
-		s_Data.PBRShader = Shader::Create(layout, "Resources/Shaders/Renderer_PBR");
+		s_Data.PBRShader = Shader::Create(Renderer::GetVertexBufferLayout(), "Assets/Shaders/Renderer_PBR");
 	}
 
 	void SceneRenderer::Shutdown()
@@ -61,16 +55,7 @@ namespace Athena
 			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
 
 			if (!meshComponent.Hide)
-			{
-				auto mesh = meshComponent.Mesh;
-				const auto& nodes = mesh->GetNodes();
-				
-				for (uint32 i = 0; i < nodes.size(); ++i)
-				{
-					for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
-						Renderer::Submit(s_Data.PBRShader, nodes[i].SubMeshes[j], transform.AsMatrix());
-				}
-			}
+				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());
 		}
 
 		Renderer::EndScene();
@@ -108,16 +93,7 @@ namespace Athena
 			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
 
 			if (!meshComponent.Hide)
-			{
-				auto mesh = meshComponent.Mesh;
-				const auto& nodes = mesh->GetNodes();
-
-				for (uint32 i = 0; i < nodes.size(); ++i)
-				{
-					for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
-						Renderer::Submit(s_Data.PBRShader, nodes[i].SubMeshes[j], transform.AsMatrix());
-				}
-			}
+				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());
 		}
 
 		Renderer::EndScene();

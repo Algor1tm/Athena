@@ -43,6 +43,8 @@ namespace Athena
 		glEnable(GL_LINE_SMOOTH);
 
 		glEnable(GL_MULTISAMPLE);
+
+		glEnable(GL_CULL_FACE);
 	}
 
 	void GLRendererAPI::SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)

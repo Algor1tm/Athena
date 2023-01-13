@@ -6,10 +6,6 @@
 #include <vector>
 
 
-class aiMesh;
-class aiScene;
-class aiNode;
-
 namespace Athena
 {
 	struct MeshNode
@@ -26,10 +22,6 @@ namespace Athena
 		const std::vector<MeshNode>& GetNodes() const { return m_Nodes; }
 		const String& GetName() const { return m_Name; }
 		const Filepath& GetFilepath() const { return m_Filepath; }
-
-	private:
-		static Ref<VertexBuffer> AssimpMeshToVertexBuffer(aiMesh* aimesh);
-		static void AssimpNodesToAthenaNodes(const aiScene* scene, aiNode* node, std::vector<MeshNode>& storage);
 
 	private:
 		std::vector<MeshNode> m_Nodes;

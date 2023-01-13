@@ -10,6 +10,7 @@ namespace Athena
 	struct RendererData
 	{
 		Ref<Framebuffer> MainFramebuffer;
+		BufferLayout VertexBufferLayout;
 
 		struct SceneData
 		{
@@ -35,7 +36,15 @@ namespace Athena
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Samples = 4;
+
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
+
+		s_Data.VertexBufferLayout =
+		{
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+			{ ShaderDataType::Float3, "a_Normal" }
+		};
 
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);
 	}
@@ -61,7 +70,7 @@ namespace Athena
 	}
 	
 	void Renderer::Submit(const Ref<Shader>& shader,
-		const Ref<VertexBuffer>& vertexBuffer,
+		const Ref<Mesh>& mesh,
 		const Matrix4& transform)
 	{
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
@@ -69,7 +78,12 @@ namespace Athena
 
 		shader->Bind();
 
-		RenderCommand::DrawTriangles(vertexBuffer);
+		const auto& nodes = mesh->GetNodes();
+		for (uint32 i = 0; i < nodes.size(); ++i)
+		{
+			for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
+				RenderCommand::DrawTriangles(nodes[i].SubMeshes[j]);
+		}
 	}
 
 	void Renderer::Clear(const LinearColor& color)
@@ -81,5 +95,10 @@ namespace Athena
 	Ref<Framebuffer> Renderer::GetFramebuffer()
 	{
 		return s_Data.MainFramebuffer;
+	}
+
+	const BufferLayout& Renderer::GetVertexBufferLayout()
+	{
+		return s_Data.VertexBufferLayout;
 	}
 }

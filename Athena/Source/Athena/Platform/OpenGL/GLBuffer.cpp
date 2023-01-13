@@ -50,6 +50,7 @@ namespace Athena
 	void GLVertexBuffer::Bind() const
 	{
 		glBindVertexArray(m_VertexArrayRendererID);
+		m_IndexBuffer->Bind();
 	}
 
 	void GLVertexBuffer::UnBind() const
@@ -111,8 +112,8 @@ namespace Athena
 			case ShaderDataType::Mat3:
 			case ShaderDataType::Mat4:
 			{
-				uint8_t count = element.GetComponentCount();
-				for (uint8_t i = 0; i < count; i++)
+				uint8 count = element.GetComponentCount();
+				for (uint8 i = 0; i < count; i++)
 				{
 					glEnableVertexAttribArray(vertexBufferIndex);
 					glVertexAttribPointer(vertexBufferIndex,

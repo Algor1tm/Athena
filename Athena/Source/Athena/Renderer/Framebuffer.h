@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Color.h"
+#include "Color.h"
 
 #include <vector>
 

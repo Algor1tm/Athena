@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Athena/Math/Vector.h"
-#include "Athena/Core/Color.h"
+
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Texture.h"
 
 #include "Utils.h"

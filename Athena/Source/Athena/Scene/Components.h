@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Athena/Core/Color.h"
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Math/Transforms.h"
 #include "Athena/Math/TypeCasts.h"
 
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Mesh.h"
 

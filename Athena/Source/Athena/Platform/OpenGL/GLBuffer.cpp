@@ -35,7 +35,7 @@ namespace Athena
 
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
-		glBufferData(GL_ARRAY_BUFFER, desc.Size, desc.Data, desc.BufferUsage == Usage::STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, desc.Size, desc.Data, desc.Usage == BufferUsage::STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
 
 		SetLayout((*desc.pBufferLayout));
 		SetIndexBuffer(desc.pIndexBuffer);

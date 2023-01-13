@@ -37,58 +37,7 @@ namespace Athena
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
         //OpenScene("Assets/Scenes/PhysicsExample.atn");
 
-        uint32 indices[] = 
-        {
-            0, 1, 2, // Side 0
-            2, 1, 3,
-            4, 0, 6, // Side 1
-            6, 0, 2,
-            7, 5, 6, // Side 2
-            6, 5, 4,
-            3, 1, 7, // Side 3 
-            7, 1, 5,
-            4, 5, 0, // Side 4 
-            0, 5, 1,
-            3, 7, 2, // Side 5 
-            2, 7, 6
-        };
-
-        BufferLayout layout =
-        {
-            { ShaderDataType::Float3, "a_Position" },
-            { ShaderDataType::Float4, "a_Color" }
-        };
-
-        struct Vertex
-        {
-            Vector3 Position;
-            LinearColor Color;
-        };
-
-        Vertex vertices[] =
-        {
-            { { -0.5f,  0.5f, -0.5f }, LinearColor::Cyan },
-            { {  0.5f,  0.5f, -0.5f }, LinearColor::Red },
-            { { -0.5f, -0.5f, -0.5f }, LinearColor::Yellow },
-            { {  0.5f, -0.5f, -0.5f }, LinearColor::Blue },
-            { { -0.5f,  0.5f,  0.5f }, LinearColor::Green },
-            { {  0.5f,  0.5f,  0.5f }, LinearColor::White },
-            { { -0.5f, -0.5f,  0.5f }, LinearColor::Magenta },
-            { {  0.5f, -0.5f,  0.5f }, LinearColor::Transparent }
-        };
-
-        Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32));
-
-        VertexBufferDescription vBufferDesc;
-        vBufferDesc.Data = vertices;
-        vBufferDesc.Size = sizeof(vertices);
-        vBufferDesc.pBufferLayout = &layout;
-        vBufferDesc.pIndexBuffer = indexBuffer;
-        vBufferDesc.BufferUsage = Usage::STATIC;
-
-        Ref<VertexBuffer> vb = VertexBuffer::Create(vBufferDesc);
-
-        Ref<Mesh> mesh = Mesh::Create(vb);
+        Ref<Mesh> mesh = Mesh::Create("Assets/Meshes/Monkey.obj");
 
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<MeshComponent>();

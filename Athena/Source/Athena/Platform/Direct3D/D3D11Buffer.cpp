@@ -7,7 +7,7 @@ namespace Athena
 
 	D3D11VertexBuffer::D3D11VertexBuffer(const VertexBufferDescription& desc)
 	{
-		bool staticUsage = desc.BufferUsage == Usage::STATIC;
+		bool staticUsage = desc.Usage == BufferUsage::STATIC;
 
 		D3D11_BUFFER_DESC bufferDesc;
 		bufferDesc.ByteWidth = desc.Size;

@@ -58,11 +58,18 @@ namespace Athena
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
 		for (auto entity : entities)
 		{
-			auto [transform, mesh] = entities.get<TransformComponent, MeshComponent>(entity);
+			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
 
-			if (!mesh.Hide)
+			if (!meshComponent.Hide)
 			{
-				Renderer::Submit(s_Data.PBRShader, mesh.Mesh->GetVertexBuffer(), transform.AsMatrix());
+				auto mesh = meshComponent.Mesh;
+				const auto& nodes = mesh->GetNodes();
+				
+				for (uint32 i = 0; i < nodes.size(); ++i)
+				{
+					for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
+						Renderer::Submit(s_Data.PBRShader, nodes[i].SubMeshes[j], transform.AsMatrix());
+				}
 			}
 		}
 
@@ -98,11 +105,18 @@ namespace Athena
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
 		for (auto entity : entities)
 		{
-			auto [transform, mesh] = entities.get<TransformComponent, MeshComponent>(entity);
+			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
 
-			if (!mesh.Hide)
+			if (!meshComponent.Hide)
 			{
-				Renderer::Submit(s_Data.PBRShader, mesh.Mesh->GetVertexBuffer(), transform.AsMatrix());
+				auto mesh = meshComponent.Mesh;
+				const auto& nodes = mesh->GetNodes();
+
+				for (uint32 i = 0; i < nodes.size(); ++i)
+				{
+					for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
+						Renderer::Submit(s_Data.PBRShader, nodes[i].SubMeshes[j], transform.AsMatrix());
+				}
 			}
 		}
 

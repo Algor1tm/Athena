@@ -119,7 +119,7 @@ namespace Athena
 		virtual uint32 GetCount() const = 0;
 	};
 
-	enum class Usage
+	enum class BufferUsage
 	{
 		STATIC,
 		DYNAMIC
@@ -131,7 +131,7 @@ namespace Athena
 		uint32 Size;
 		const BufferLayout* pBufferLayout;
 		Ref<IndexBuffer> pIndexBuffer;
-		Usage BufferUsage;
+		BufferUsage Usage;
 	};
 
 	class ATHENA_API VertexBuffer

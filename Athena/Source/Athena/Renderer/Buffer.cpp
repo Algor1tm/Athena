@@ -25,7 +25,7 @@ namespace Athena
 
 	Ref<VertexBuffer> VertexBuffer::Create(const VertexBufferDescription& desc)
 	{
-		ATN_CORE_ASSERT(!(desc.BufferUsage == Usage::STATIC && desc.Data == nullptr), "Invalid vertex buffer data!");
+		ATN_CORE_ASSERT(!(desc.Usage == BufferUsage::STATIC && desc.Data == nullptr), "Invalid vertex buffer data!");
 
 		switch (Renderer::GetAPI())
 		{

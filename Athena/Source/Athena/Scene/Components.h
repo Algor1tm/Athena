@@ -136,9 +136,9 @@ namespace Athena
 		void* RuntimeFixture = nullptr;
 	};
 
-	struct MeshComponent
+	struct StaticMeshComponent
 	{
-		Ref<Mesh> Mesh;
+		Ref<StaticMesh> Mesh;
 		bool Hide = false;
 	};
 }

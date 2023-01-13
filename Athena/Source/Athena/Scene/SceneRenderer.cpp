@@ -49,10 +49,10 @@ namespace Athena
 
 		Renderer::BeginScene(cameraViewProjection);
 
-		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
+		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)
 		{
-			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
+			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
 				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());
@@ -87,10 +87,10 @@ namespace Athena
 
 		Renderer::BeginScene(viewProjection);
 
-		auto entities = scene->GetAllEntitiesWith<TransformComponent, MeshComponent>();
+		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)
 		{
-			auto [transform, meshComponent] = entities.get<TransformComponent, MeshComponent>(entity);
+			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
 				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());

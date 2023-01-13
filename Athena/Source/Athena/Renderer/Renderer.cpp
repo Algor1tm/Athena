@@ -70,7 +70,7 @@ namespace Athena
 	}
 	
 	void Renderer::Submit(const Ref<Shader>& shader,
-		const Ref<Mesh>& mesh,
+		const Ref<StaticMesh>& mesh,
 		const Matrix4& transform)
 	{
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
@@ -78,12 +78,9 @@ namespace Athena
 
 		shader->Bind();
 
-		const auto& nodes = mesh->GetNodes();
-		for (uint32 i = 0; i < nodes.size(); ++i)
-		{
-			for (uint32 j = 0; j < nodes[i].SubMeshes.size(); ++j)
-				RenderCommand::DrawTriangles(nodes[i].SubMeshes[j]);
-		}
+		const auto& submeshes = mesh->GetSubMeshes();
+		for (uint32 i = 0; i < submeshes.size(); ++i)
+			RenderCommand::DrawTriangles(submeshes[i].Vertices);
 	}
 
 	void Renderer::Clear(const LinearColor& color)

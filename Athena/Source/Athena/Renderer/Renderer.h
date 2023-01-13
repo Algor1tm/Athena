@@ -27,7 +27,7 @@ namespace Athena
 		static void EndScene();
 
 		static void Submit(const Ref<Shader>& shader,
-			const Ref<Mesh>& mesh,
+			const Ref<StaticMesh>& mesh,
 			const Matrix4& transform = Matrix4::Identity());
 
 		static void Clear(const LinearColor& color);

@@ -39,6 +39,8 @@ namespace Athena
 
 		SetLayout((*desc.pBufferLayout));
 		SetIndexBuffer(desc.pIndexBuffer);
+
+		glBindVertexArray(0);
 	}
 
 	GLVertexBuffer::~GLVertexBuffer()
@@ -50,7 +52,6 @@ namespace Athena
 	void GLVertexBuffer::Bind() const
 	{
 		glBindVertexArray(m_VertexArrayRendererID);
-		m_IndexBuffer->Bind();
 	}
 
 	void GLVertexBuffer::UnBind() const

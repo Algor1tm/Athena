@@ -8,23 +8,23 @@
 
 namespace Athena
 {
-	struct MeshNode
+	struct SubMesh
 	{
 		String Name;
-		std::vector<Ref<VertexBuffer>> SubMeshes;
+		Ref<VertexBuffer> Vertices;
 	};
 
-	class ATHENA_API Mesh
+	class ATHENA_API StaticMesh
 	{
 	public:
-		static Ref<Mesh> Create(const Filepath& filepath);
+		static Ref<StaticMesh> Create(const Filepath& filepath);
 
-		const std::vector<MeshNode>& GetNodes() const { return m_Nodes; }
+		const std::vector<SubMesh>& GetSubMeshes() const { return m_SubMeshes; }
 		const String& GetName() const { return m_Name; }
 		const Filepath& GetFilepath() const { return m_Filepath; }
 
 	private:
-		std::vector<MeshNode> m_Nodes;
+		std::vector<SubMesh> m_SubMeshes;
 		String m_Name;
 		Filepath m_Filepath;
 	};

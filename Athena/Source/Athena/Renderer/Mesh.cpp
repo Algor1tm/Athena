@@ -77,44 +77,39 @@ namespace Athena
 		return VertexBuffer::Create(vBufferDesc);
 	}
 
-	static void AssimpNodesToAthenaNodes(const aiScene* scene, aiNode* root, std::vector<MeshNode>& storage)
+	static void LoadAssimpMeshes(const aiScene* scene, aiNode* root, std::vector<SubMesh>& storage)
 	{
 		if (root != nullptr)
 		{
-			storage.reserve(root->mNumChildren);
-
-			if (root->mNumMeshes > 0)
+			for (uint32 j = 0; j < root->mNumMeshes; ++j)
 			{
-				MeshNode node;
-				node.Name = root->mName.C_Str();
-				node.SubMeshes.resize(root->mNumMeshes);
+				SubMesh submesh;
+				submesh.Name = root->mName.C_Str();
 
-				for (uint32 j = 0; j < root->mNumMeshes; ++j)
-				{
-					aiMesh* aimesh = scene->mMeshes[root->mMeshes[j]];
-					node.SubMeshes[j] = AssimpMeshToVertexBuffer(aimesh);
-				}
+				aiMesh* aimesh = scene->mMeshes[root->mMeshes[j]];
+				submesh.Vertices = AssimpMeshToVertexBuffer(aimesh);
 
-				storage.push_back(std::move(node));
+				storage.push_back(std::move(submesh));
 			}
 
 			for (uint32 i = 0; i < root->mNumChildren; ++i)
 			{
-				AssimpNodesToAthenaNodes(scene, root->mChildren[i], storage);
+				LoadAssimpMeshes(scene, root->mChildren[i], storage);
 			}
 		}
 	}
 
-	Ref<Mesh> Mesh::Create(const Filepath& filepath)
+	Ref<StaticMesh> StaticMesh::Create(const Filepath& filepath)
 	{
-		Ref<Mesh> result = CreateRef<Mesh>();
+		Ref<StaticMesh> result = CreateRef<StaticMesh>();
 		result->m_Filepath = filepath;
 		result->m_Name = filepath.stem().string();
 
 		const aiScene* scene = aiImportFile(filepath.string().c_str(), aiProcessPreset_TargetRealtime_Fast);
 		aiNode* root = scene->mRootNode;
 
-		AssimpNodesToAthenaNodes(scene, root, result->m_Nodes);
+		result->m_SubMeshes.reserve(scene->mNumMeshes);
+		LoadAssimpMeshes(scene, root, result->m_SubMeshes);
 
 		return result;
 	}

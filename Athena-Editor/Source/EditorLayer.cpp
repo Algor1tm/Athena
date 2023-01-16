@@ -36,14 +36,15 @@ namespace Athena
         m_EditorCamera.SetDistance(7.f);
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
 
-#if 0
+#if 1
         OpenScene("Assets/Scenes/PhysicsExample.atn");
 #else
-        Ref<StaticMesh> mesh = StaticMesh::Create("Assets/Meshes/Ak-47.obj", m_ActiveScene);
+        Ref<StaticMesh> mesh = StaticMesh::Create("Assets/Meshes/Cube.obj", m_ActiveScene);
         
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<StaticMeshComponent>();
         m_TestCube.GetComponent<StaticMeshComponent>().Mesh = mesh;
+        m_TestCube.GetComponent<TagComponent>().Tag = mesh->GetName();
 #endif
         m_SceneHierarchy->SetContext(m_EditorScene);
     }
@@ -100,6 +101,9 @@ namespace Athena
         }
         }
 
+        if (m_SceneState != SceneState::Play)
+            SelectEntity(m_SceneHierarchy->GetSelectedEntity());
+
         RenderOverlay();
         Renderer::EndFrame();
     }
@@ -128,9 +132,6 @@ namespace Athena
             ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         }
-
-        if(m_SceneState != SceneState::Play)
-            SelectEntity(m_SceneHierarchy->GetSelectedEntity());
 
         m_PanelManager.OnImGuiRender();
 
@@ -203,14 +204,14 @@ namespace Athena
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
                     std::string_view path = (const char*)payload->Data;
-                    std::string_view extension = path.substr(path.size() - 4, path.size());
+                    Filepath ext = Filepath(path).extension();
                     //Scene Drag/Drop
-                    if (extension == ".atn\0")
+                    if (ext == ".atn\0")
                     {
                         OpenScene(path.data());
                     }
                     //Texture Drag/Drop on Entity
-                    else if (m_SceneState == SceneState::Edit && extension == ".png\0")
+                    else if (m_SceneState == SceneState::Edit && ext == ".png\0")
                     {
                         Entity target = GetEntityByCurrentMousePosition();
                         if (target != Entity{})
@@ -222,6 +223,17 @@ namespace Athena
                                 sprite.Color = LinearColor::White;
                             }
                         }
+                    }
+                    // Mesh Drag/Drop
+                    else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf"))
+                    {
+                        Ref<StaticMesh> mesh = StaticMesh::Create(path, m_ActiveScene);
+
+                        Entity newEntity = m_ActiveScene->CreateEntity();
+                        newEntity.AddComponent<StaticMeshComponent>();
+                        newEntity.GetComponent<StaticMeshComponent>().Mesh = mesh;
+                        newEntity.GetComponent<TagComponent>().Tag = mesh->GetName();
+                        m_SceneHierarchy->SetSelectedEntity(newEntity);
                     }
                 }
             });

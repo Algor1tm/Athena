@@ -31,13 +31,6 @@ namespace Athena
 	class ATHENA_API Material
 	{
 	public:
-		Material();
-		static Ref<Material> Create(const MaterialDescription& desc);
-
-		void Bind();
-		MaterialDescription& GetDescription() { return m_Description; };
-
-	private:
 		struct ShaderData
 		{
 			Vector3 Albedo;
@@ -50,10 +43,15 @@ namespace Athena
 			bool UseMetalnessMap;
 		};
 
-	private:
-		Ref<ConstantBuffer> m_ConstantBuffer;
-		ShaderData m_ShaderData;
+	public:
+		Material();
+		static Ref<Material> Create(const MaterialDescription& desc);
 
+		const ShaderData& Bind();
+		MaterialDescription& GetDescription() { return m_Description; };
+
+	private:
+		ShaderData m_ShaderData;
 		MaterialDescription m_Description;
 	};
 }

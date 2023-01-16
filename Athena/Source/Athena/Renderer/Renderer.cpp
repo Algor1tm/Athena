@@ -20,6 +20,8 @@ namespace Athena
 
 		SceneData SceneDataBuffer;
 		Ref<ConstantBuffer> SceneConstantBuffer;
+
+		Ref<ConstantBuffer> MaterialConstantBuffer;
 	};
 
 	static RendererData s_Data;
@@ -49,6 +51,8 @@ namespace Athena
 
 		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/Renderer_PBR");
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);
+
+		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), 2);
 	}
 
 	void Renderer::Shutdown()
@@ -85,11 +89,12 @@ namespace Athena
 
 	void Renderer::RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform)
 	{
+		Matrix4 viewProjection = s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
-		if(material)
-			material->Bind();
+		if (material)
+			s_Data.MaterialConstantBuffer->SetData(&material->Bind(), sizeof(Material::ShaderData));	
 
 		if (mesh)
 		{
@@ -101,6 +106,8 @@ namespace Athena
 		{
 			ATN_CORE_WARN("Renderer Warn: Attempt to render nullptr mesh!");
 		}
+
+		s_Data.SceneDataBuffer.ModelViewProjection = viewProjection;
 	}
 
 	void Renderer::Clear(const LinearColor& color)

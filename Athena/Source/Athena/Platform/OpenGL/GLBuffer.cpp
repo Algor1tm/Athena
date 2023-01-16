@@ -148,6 +148,8 @@ namespace Athena
 	GLIndexBuffer::GLIndexBuffer(uint32* indices, uint32 count)
 		: m_Count(count)
 	{
+		glBindVertexArray(0);
+
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint32), indices, GL_STATIC_DRAW);

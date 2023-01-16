@@ -169,6 +169,7 @@ namespace Athena
 			DrawAddComponentEntry<Rigidbody2DComponent>(entity, "Rigidbody2D");
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
+			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMeshComponent");
 
 			ImGui::EndPopup();
 		}
@@ -200,7 +201,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					if (UI::DrawController("ScriptName", height, [&script]()
-						{ return ImGui::BeginCombo("##BodyType", script.Name.data()); }))
+						{ return ImGui::BeginCombo("##Scripts", script.Name.data()); }))
 					{
 						auto modules = PublicScriptEngine::GetAvailableModules();
 						auto currentName = std::string_view(script.Name.data());
@@ -530,6 +531,132 @@ namespace Athena
 					UI::DrawController("RestitutionThreshold", height, [&cc2d]() { return ImGui::SliderFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f); });
 
 					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<StaticMeshComponent>(entity, "StaticMeshComponent", [this, entity](StaticMeshComponent& meshComponent)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					if (UI::DrawController("Mesh", height, [&meshComponent]()
+						{ return ImGui::BeginCombo("##BodyType", meshComponent.Mesh->GetName().data()); }))
+					{
+						const Filepath meshDir = "Assets/Meshes";
+						const Filepath meshFilename = meshComponent.Mesh->GetFilepath().filename();
+
+						for (const auto& dirEntry : std::filesystem::directory_iterator(meshDir))
+						{
+							if (!dirEntry.is_directory())
+							{
+								const auto& filename = dirEntry.path().filename();
+								bool open = meshFilename == filename;
+								UI::Selectable(filename.string(), &open, [&meshComponent, &meshDir, &filename, this]()
+									{
+										meshComponent.Mesh = StaticMesh::Create(meshDir / filename, m_Context);
+									});
+							}
+						}
+
+						ImGui::EndCombo();
+					}
+
+					UI::EndDrawControllers();
+				}
+
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
+
+				float lineHeight = ImGui::GetFrameHeight();
+
+				bool open = UI::BeginTreeNode("Material");
+
+				ImGui::PopStyleVar(2);
+
+				Ref<Material> material = m_Context->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				auto& matDesc = material->GetDescription();
+
+				if (UI::BeginDrawControllers())
+				{
+					void* whiteTexRendererID = Texture2D::WhiteTexture()->GetRendererID();
+
+					UI::DrawController("Albedo", 50.f, [&matDesc, whiteTexRendererID]
+						{ 
+							float imageSize = 45.f;
+
+							void* rendererID;
+							if (matDesc.AlbedoTexture)
+								rendererID = matDesc.AlbedoTexture->GetRendererID();
+							else
+								rendererID = whiteTexRendererID;
+
+							ImGui::Image(rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+							ImGui::SameLine();
+							ImGui::Checkbox("Use", &matDesc.UseAlbedoTexture);
+							ImGui::SameLine();
+							ImGui::ColorEdit3("Color", matDesc.Albedo.Data(), ImGuiColorEditFlags_NoInputs);
+							return true;
+						});
+
+					UI::DrawController("Normals", 50.f, [&matDesc, whiteTexRendererID]
+						{
+							float imageSize = 45.f;
+
+							void* rendererID;
+							if (matDesc.NormalMap)
+								rendererID = matDesc.NormalMap->GetRendererID();
+							else
+								rendererID = whiteTexRendererID;
+
+							ImGui::Image(rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+							ImGui::SameLine();
+							ImGui::Checkbox("Use", &matDesc.UseNormalMap);
+							return true;
+						});
+
+					UI::DrawController("Roughness", 50.f, [&matDesc, whiteTexRendererID]
+						{
+							float imageSize = 45.f;
+
+							void* rendererID;
+							if (matDesc.RoughnessMap)
+								rendererID = matDesc.RoughnessMap->GetRendererID();
+							else
+								rendererID = whiteTexRendererID;
+
+							ImGui::Image(rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+							ImGui::SameLine();
+							ImGui::Checkbox("Use", &matDesc.UseRoughnessMap);
+							ImGui::SameLine();
+							ImGui::SliderFloat("##Roughness", &matDesc.Roughness, 0.f, 1.f);
+							return true;
+						});
+
+					UI::DrawController("Metalness", 50.f, [&matDesc, whiteTexRendererID]
+						{
+							float imageSize = 45.f;
+
+							void* rendererID;
+							if (matDesc.MetalnessMap)
+								rendererID = matDesc.MetalnessMap->GetRendererID();
+							else
+								rendererID = whiteTexRendererID;
+
+							ImGui::Image(rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+							ImGui::SameLine();
+							ImGui::Checkbox("Use", &matDesc.UseMetalnessMap);
+							ImGui::SameLine();
+							ImGui::SliderFloat("##Metalness", &matDesc.Metalness, 0.f, 1.f);
+							return true;
+						});
+					UI::EndDrawControllers();
+				}
+
+				if (open)
+				{
+					UI::EndTreeNode();
+					ImGui::Spacing();
 				}
 			});
 	}

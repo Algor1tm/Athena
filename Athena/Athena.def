@@ -10,6 +10,8 @@ EXPORTS
 	?BeginTable@ImGui@@YA_NPEBDHHAEBUImVec2@@M@Z
 	?Button@ImGui@@YA_NPEBDAEBUImVec2@@@Z
 	?Checkbox@ImGui@@YA_NPEBDPEA_N@Z	
+	?ColorPicker3@ImGui@@YA_NPEBDQEAMH@Z
+	?ColorEdit3@ImGui@@YA_NPEBDQEAMH@Z
 	?ColorEdit4@ImGui@@YA_NPEBDQEAMH@Z
 	?DragFloat@ImGui@@YA_NPEBDPEAMMMM0H@Z
 	?DragFloat2@ImGui@@YA_NPEBDQEAMMMM0H@Z

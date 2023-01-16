@@ -106,7 +106,6 @@ namespace Athena
 				ScriptEngine::OnUpdateEntity(entity, frameTime);
 			}
 
-
 			m_Registry.view<NativeScriptComponent>().each([=](auto entityID, auto& nsc)
 				{
 					if (!nsc.Script)

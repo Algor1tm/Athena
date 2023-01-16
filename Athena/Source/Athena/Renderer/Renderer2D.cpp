@@ -90,7 +90,8 @@ namespace Athena
 
 	void Renderer2D::Init()
 	{
-		BufferLayout layout = {
+		BufferLayout layout = 
+		{
 			{ ShaderDataType::Float3, "a_Position"     },
 			{ ShaderDataType::Float4, "a_Color"        },
 			{ ShaderDataType::Float2, "a_TexCoord"     },
@@ -131,7 +132,8 @@ namespace Athena
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vBufferDesc);
 
 
-		layout = {
+		layout = 
+		{
 			{ ShaderDataType::Float3, "a_WorldPosition"  },
 			{ ShaderDataType::Float3, "a_LocalPosition"  },
 			{ ShaderDataType::Float4, "a_Color"     },
@@ -139,6 +141,7 @@ namespace Athena
 			{ ShaderDataType::Float,  "a_Fade"      },
 			{ ShaderDataType::Int,    "a_EntityID"  } 
 		};
+
 		s_Data.CircleShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Circle");
 
 		vBufferDesc.Data = nullptr;
@@ -152,11 +155,13 @@ namespace Athena
 		s_Data.CircleVertexBufferBase = new CircleVertex[Renderer2DData::MaxCircleVertices];
 
 
-		layout = {
+		layout = 
+		{
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Int,    "a_EntityID" }
 		};
+
 		s_Data.LineShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Line");
 
 		vBufferDesc.Data = nullptr;

@@ -39,7 +39,7 @@ namespace Athena
 #if 0
         OpenScene("Assets/Scenes/PhysicsExample.atn");
 #else
-        Ref<StaticMesh> mesh = StaticMesh::Create("Assets/Meshes/LegoMan.obj");
+        Ref<StaticMesh> mesh = StaticMesh::Create("Assets/Meshes/Ak-47.obj", m_ActiveScene);
         
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<StaticMeshComponent>();
@@ -69,6 +69,8 @@ namespace Athena
         }
 
         Renderer2D::ResetStats();
+
+        Renderer::BeginFrame();
         Renderer::Clear({ 0.1f, 0.1f, 0.1f, 1 });
         // Clear our entity ID attachment to -1
         framebuffer->ClearAttachment(1, -1);
@@ -99,8 +101,7 @@ namespace Athena
         }
 
         RenderOverlay();
-
-        RenderCommand::UnBindFramebuffer(); // TODO: Remove
+        Renderer::EndFrame();
     }
 
     void EditorLayer::OnImGuiRender()

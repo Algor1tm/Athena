@@ -282,4 +282,33 @@ namespace Athena
 				transform.Rotation.z = body->GetAngle();
 			});
 	}
+
+	SIZE_T Scene::AddMaterial(const Ref<Material>& material)
+	{
+		auto iter = std::find(m_Materials.begin(), m_Materials.end(), material);
+		if (iter != m_Materials.end())
+			return std::distance(m_Materials.begin(), iter);
+
+		m_Materials.push_back(material);
+		return m_Materials.size() - 1;
+	}
+
+	SIZE_T Scene::GetMaterialIndex(const Ref<Material>& material)
+	{
+		auto iter = std::find(m_Materials.begin(), m_Materials.end(), material);
+		if (iter == m_Materials.end())
+			ATN_CORE_ERROR("Material with index '{1}' does not belong to this scene!", std::distance(m_Materials.begin(), iter));
+		return std::distance(m_Materials.begin(), iter);
+	}
+
+	Ref<Material> Scene::GetMaterial(SIZE_T index)
+	{
+		if (index >= m_Materials.size())
+		{
+			ATN_CORE_ERROR("Scene Error: invalid index for material!");
+			return nullptr;
+		}
+
+		return m_Materials[index];
+	}
 }

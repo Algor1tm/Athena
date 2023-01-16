@@ -26,9 +26,10 @@ namespace Athena
 		static void BeginScene(const Matrix4& viewProjection);
 		static void EndScene();
 
-		static void Submit(const Ref<Shader>& shader,
-			const Ref<StaticMesh>& mesh,
-			const Matrix4& transform = Matrix4::Identity());
+		static void BeginFrame();
+		static void EndFrame();
+
+		static void RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material = nullptr, const Matrix4& transform = Matrix4::Identity());
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();

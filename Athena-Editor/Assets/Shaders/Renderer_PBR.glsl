@@ -35,6 +35,23 @@ void main()
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
 
+layout(std140, binding = 2) uniform MaterialData
+{
+    vec3 u_Albedo;
+    float u_Roughness;
+    float u_Metalness;
+
+	bool u_UseAlbedoTexture;
+	bool u_UseNormalMap;
+	bool u_UseRoughnessMap;
+	bool u_UseMetalnessMap;
+};
+
+uniform sampler2D u_AlbedoTexture;
+uniform sampler2D u_NormalMap;
+uniform sampler2D u_RoughnessMap;
+uniform sampler2D u_MetalnessMap;
+
 struct VertexOutput
 {
 	vec2 TexCoord;
@@ -46,8 +63,13 @@ layout (location = 0) in VertexOutput Input;
 void main()
 {
     vec3 LightColor = vec3(0.8, 0.8, 0.8);
-    vec3 Color = vec3(0.8, 0.8, 0.8);
+    vec4 factor = vec4(LightColor, 1) * vec4(vec3(Input.LightScalar), 1);
 
-    out_Color = clamp(vec4(Color * LightColor * vec3(Input.LightScalar), 1), 0.05, 1.);
+    vec4 color = vec4(u_Albedo, 1);
+    if(u_UseAlbedoTexture)
+        color *= texture(u_AlbedoTexture, Input.TexCoord);
+
+    out_Color = clamp(color * factor, 0.05, 1.);
+    
     out_EntityID = 0;
 }

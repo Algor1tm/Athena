@@ -11,6 +11,7 @@ namespace Athena
 	{
 		Ref<Framebuffer> MainFramebuffer;
 		BufferLayout VertexBufferLayout;
+		Ref<Shader> PBRShader;
 
 		struct SceneData
 		{
@@ -46,12 +47,14 @@ namespace Athena
 			{ ShaderDataType::Float3, "a_Normal" }
 		};
 
+		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/Renderer_PBR");
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);
 	}
 
 	void Renderer::Shutdown()
 	{
 		Renderer2D::Shutdown();
+		SceneRenderer::Shutdown();
 	}
 	
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
@@ -62,6 +65,7 @@ namespace Athena
 	void Renderer::BeginScene(const Matrix4& viewProjection)
 	{
 		s_Data.SceneDataBuffer.ModelViewProjection = viewProjection;
+		s_Data.PBRShader->Bind();
 	}
 	
 	void Renderer::EndScene()
@@ -69,23 +73,38 @@ namespace Athena
 
 	}
 	
-	void Renderer::Submit(const Ref<Shader>& shader,
-		const Ref<StaticMesh>& mesh,
-		const Matrix4& transform)
+	void Renderer::BeginFrame()
+	{
+		RenderCommand::BindFramebuffer(s_Data.MainFramebuffer);
+	}
+
+	void Renderer::EndFrame()
+	{
+		RenderCommand::UnBindFramebuffer();
+	}
+
+	void Renderer::RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform)
 	{
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
-		shader->Bind();
+		if(material)
+			material->Bind();
 
-		const auto& submeshes = mesh->GetSubMeshes();
-		for (uint32 i = 0; i < submeshes.size(); ++i)
-			RenderCommand::DrawTriangles(submeshes[i].Vertices);
+		if (mesh)
+		{
+			const auto& vertices = mesh->GetVertices();
+			for (uint32 i = 0; i < vertices.size(); ++i)
+				RenderCommand::DrawTriangles(vertices[i]);
+		}
+		else
+		{
+			ATN_CORE_WARN("Renderer Warn: Attempt to render nullptr mesh!");
+		}
 	}
 
 	void Renderer::Clear(const LinearColor& color)
 	{
-		RenderCommand::BindFramebuffer(s_Data.MainFramebuffer);
 		RenderCommand::Clear(color);
 	}
 

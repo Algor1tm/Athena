@@ -16,7 +16,6 @@
 	#pragma warning(pop)
 #endif
 
-#include <memory>
 #include <unordered_map>
 
 
@@ -32,6 +31,7 @@ namespace Athena
 		friend class SceneHierarchyPanel;
 		friend class ATHENA_API SceneSerializer;
 
+	public:
 		Scene(const String& name = "UnNamed");
 		~Scene();
 
@@ -55,6 +55,10 @@ namespace Athena
 		const String& GetSceneName() const { return m_Name; };
 
 		Entity GetPrimaryCameraEntity();
+
+		SIZE_T AddMaterial(const Ref<Material>& material);
+		SIZE_T GetMaterialIndex(const Ref<Material>& material);
+		Ref<Material> GetMaterial(SIZE_T index);
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()
@@ -80,5 +84,6 @@ namespace Athena
 		String m_Name;
 
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
+		std::vector<Ref<Material>> m_Materials;
 	};
 }

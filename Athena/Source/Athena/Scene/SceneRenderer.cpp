@@ -7,16 +7,9 @@
 
 namespace Athena
 {
-	struct SceneRendererData
-	{
-		Ref<Shader> PBRShader;
-	};
-
-	static SceneRendererData s_Data;
-
 	void SceneRenderer::Init()
 	{
-		s_Data.PBRShader = Shader::Create(Renderer::GetVertexBufferLayout(), "Assets/Shaders/Renderer_PBR");
+
 	}
 
 	void SceneRenderer::Shutdown()
@@ -55,7 +48,10 @@ namespace Athena
 			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
-				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());
+			{
+				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
+			}
 		}
 
 		Renderer::EndScene();
@@ -93,7 +89,10 @@ namespace Athena
 			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
-				Renderer::Submit(s_Data.PBRShader, meshComponent.Mesh, transform.AsMatrix());
+			{
+				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
+			}
 		}
 
 		Renderer::EndScene();

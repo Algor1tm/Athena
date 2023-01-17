@@ -3,6 +3,7 @@
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Material.h"
 
 
 namespace Athena
@@ -49,7 +50,7 @@ namespace Athena
 
 			if (!meshComponent.Hide)
 			{
-				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->MaterialIndex);
 				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
 			}
 		}
@@ -90,7 +91,7 @@ namespace Athena
 
 			if (!meshComponent.Hide)
 			{
-				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->MaterialIndex);
 				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
 			}
 		}

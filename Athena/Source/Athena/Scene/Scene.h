@@ -2,7 +2,9 @@
 
 #include "Athena/Core/Time.h"
 #include "Athena/Core/UUID.h"
+
 #include "Athena/Renderer/EditorCamera.h"
+#include "Athena/Renderer/Material.h"
 
 #include "Components.h" 
 
@@ -56,9 +58,9 @@ namespace Athena
 
 		Entity GetPrimaryCameraEntity();
 
-		SIZE_T AddMaterial(const Ref<Material>& material);
-		SIZE_T GetMaterialIndex(const Ref<Material>& material);
-		Ref<Material> GetMaterial(SIZE_T index);
+		int32 AddMaterial(const Ref<Material>& material);
+		int32 GetMaterialIndex(const Ref<Material>& material);
+		Ref<Material> GetMaterial(int32 index);
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()

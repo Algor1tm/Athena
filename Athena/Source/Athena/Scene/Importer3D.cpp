@@ -1,0 +1,306 @@
+#include "Importer3D.h"
+
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Material.h"
+
+#include "Entity.h"
+
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+
+namespace Athena
+{
+	static void AssimpVector3ToAthenaVector3(const aiVector3D& input, Vector3& output)
+	{
+		output.x = input.x;
+		output.y = input.y;
+		output.z = input.z;
+	}
+
+	static Ref<Material> AssimpMaterialToAthenaMaterial(aiMaterial* aimaterial)
+	{
+		MaterialDescription desc;
+
+		desc.Name = aimaterial->GetName().C_Str();
+
+		bool metalnessWorkflow = true;
+		aiColor4D color;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
+		{
+			desc.Albedo = Vector3(color.r, color.g, color.b);
+		}
+		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
+		{
+			metalnessWorkflow = false;
+			desc.Albedo = Vector3(color.r, color.g, color.b);
+		}
+
+		float roughness;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
+			desc.Roughness = roughness;
+
+		float metalness;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
+			desc.Metalness = metalness;
+
+		aiString texFilepath;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(metalnessWorkflow ? aiTextureType_BASE_COLOR : aiTextureType_DIFFUSE, 0), texFilepath))
+		{
+			desc.AlbedoTexture = Texture2D::Create(texFilepath.C_Str());
+			desc.UseAlbedoTexture = true;
+		}
+
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))
+		{
+			desc.NormalMap = Texture2D::Create(texFilepath.C_Str());
+			desc.UseNormalMap = true;
+		}
+
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE_ROUGHNESS, 0), texFilepath))
+		{
+			desc.RoughnessMap = Texture2D::Create(texFilepath.C_Str());
+			desc.UseRoughnessMap = true;
+		}
+
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_METALNESS, 0), texFilepath))
+		{
+			desc.MetalnessMap = Texture2D::Create(texFilepath.C_Str());
+			desc.UseMetalnessMap = true;
+		}
+
+		return Material::Create(desc);
+	}
+
+	static Ref<VertexBuffer> AssimpMeshToVertexBuffer(aiMesh* aimesh)
+	{
+		uint32 numFaces = aimesh->mNumFaces;
+		aiFace* faces = aimesh->mFaces;
+
+		std::vector<uint32> indicies(numFaces * 3);
+
+		uint32 index = 0;
+		for (uint32 i = 0; i < numFaces; i++)
+		{
+			if (faces[i].mNumIndices != 3)
+				break;
+
+			indicies[index++] = faces[i].mIndices[0];
+			indicies[index++] = faces[i].mIndices[1];
+			indicies[index++] = faces[i].mIndices[2];
+		}
+
+		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indicies.data(), indicies.size());
+
+		uint32 numVertices = aimesh->mNumVertices;
+		aiVector3D* positions = aimesh->mVertices;
+		aiVector3D** texcoords = aimesh->mTextureCoords;
+		std::vector<Vertex> vertices(numVertices);
+
+		for (uint32 i = 0; i < numVertices; ++i)
+		{
+			// Position
+			AssimpVector3ToAthenaVector3(aimesh->mVertices[i], vertices[i].Position);
+
+			// TexCoord
+			if (aimesh->HasTextureCoords(0))
+			{
+				vertices[i].TexCoords.x = aimesh->mTextureCoords[0][i].x;
+				vertices[i].TexCoords.y = aimesh->mTextureCoords[0][i].y;
+			}
+
+			// Normal
+			if (aimesh->HasNormals())
+			{
+				AssimpVector3ToAthenaVector3(aimesh->mNormals[i], vertices[i].Normal);
+			}
+			else
+			{
+				vertices[i].Normal = Vector3(0);
+			}
+		}
+
+
+		VertexBufferDescription vBufferDesc;
+		vBufferDesc.Data = vertices.data();
+		vBufferDesc.Size = vertices.size() * sizeof(Vertex);
+		vBufferDesc.pBufferLayout = &Renderer::GetVertexBufferLayout();
+		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.Usage = BufferUsage::STATIC;
+
+		return VertexBuffer::Create(vBufferDesc);
+	}
+
+	static void LoadAssimpMeshes(const aiScene* scene, aiNode* root, std::vector<Ref<VertexBuffer>>& storage)
+	{
+		if (root != nullptr)
+		{
+			for (uint32 j = 0; j < root->mNumMeshes; ++j)
+			{
+				Ref<VertexBuffer> vertexBuffer;
+				aiMesh* aimesh = scene->mMeshes[root->mMeshes[j]];
+				vertexBuffer = AssimpMeshToVertexBuffer(aimesh);
+
+				storage.push_back(vertexBuffer);
+			}
+
+			for (uint32 i = 0; i < root->mNumChildren; ++i)
+			{
+				LoadAssimpMeshes(scene, root->mChildren[i], storage);
+			}
+		}
+	}
+
+	Importer3D::Importer3D(Ref<Scene> scene)
+		: m_Context(scene)
+	{
+
+	}
+
+	Importer3D::~Importer3D()
+	{
+		Release();
+	}
+
+	bool Importer3D::ImportScene(const Filepath& filepath)
+	{
+		const aiScene* aiscene = OpenFile(filepath);
+		if (!aiscene)
+			return false;
+
+		if (aiscene->mNumMaterials < 2)
+		{
+			StaticMeshImportInfo info;
+
+			Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
+			ImportStaticMesh(filepath, info, mesh);
+
+			Entity entity = m_Context->CreateEntity();
+			entity.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
+			entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
+		}
+		else
+		{
+			ProcessNode(aiscene, aiscene->mRootNode);
+		}
+
+		return true;
+	}
+
+	bool Importer3D::ImportStaticMesh(const Filepath& filepath, const StaticMeshImportInfo& info, Ref<StaticMesh> outMesh)
+	{
+		const aiScene* aiscene = OpenFile(filepath);
+		if (!aiscene)
+			return false;
+
+		if(outMesh == nullptr)
+			outMesh = CreateRef<StaticMesh>();
+
+		outMesh->Filepath = filepath;
+
+		if (info.Indices.size() > 0)
+		{
+			outMesh->ImportInfo = info;
+			outMesh->Vertices.resize(info.Indices.size());
+
+			for (uint32 i = 0; i < info.Indices.size(); ++i)
+				outMesh->Vertices[i] = AssimpMeshToVertexBuffer(aiscene->mMeshes[info.Indices[i]]);
+
+			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
+			outMesh->MaterialIndex = m_Context->AddMaterial(material);
+		}
+		else
+		{
+			if (aiscene->mNumMaterials != 0)
+			{
+				if (aiscene->mNumMaterials > 1)
+				{
+					ATN_CORE_ERROR("Currently does not support StaticMesh with >= 2 materials!");
+					return false;
+				}
+				else
+				{
+					Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[0]);
+					outMesh->MaterialIndex = m_Context->AddMaterial(material);
+				}
+			}
+
+			outMesh->ImportInfo.Name = filepath.stem().string();
+			outMesh->Vertices.clear();
+			outMesh->Vertices.reserve(aiscene->mNumMeshes);
+			LoadAssimpMeshes(aiscene, aiscene->mRootNode, outMesh->Vertices);
+		}
+
+		return true;
+	}
+
+	void Importer3D::ProcessNode(const aiScene* aiscene, aiNode* node)
+	{
+		for (uint32 i = 0; i < node->mNumMeshes; ++i)
+		{
+			aiMesh* aimesh = aiscene->mMeshes[node->mMeshes[i]];
+
+			Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
+
+			StaticMeshImportInfo info;
+			info.Name = node->mName.C_Str();
+			info.Indices = { node->mMeshes[i] };
+			info.MaterialIndex = aimesh->mMaterialIndex;
+			mesh->ImportInfo = info;
+
+			mesh->Filepath = m_CurrentFilepath;
+			mesh->Vertices.push_back(AssimpMeshToVertexBuffer(aimesh));
+			
+			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
+			mesh->MaterialIndex = m_Context->AddMaterial(material);
+
+			Entity entity = m_Context->CreateEntity();
+			entity.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
+			entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
+		}
+
+		for (uint32 i = 0; i < node->mNumChildren; ++i)
+		{
+			ProcessNode(aiscene, node->mChildren[i]);
+		}
+	}
+
+	const aiScene* Importer3D::OpenFile(const Filepath& filepath)
+	{
+		if (m_ImportedScenes.find(filepath) == m_ImportedScenes.end())
+		{
+			unsigned int flags = aiProcessPreset_TargetRealtime_Fast |
+				aiProcess_PreTransformVertices |
+				aiProcess_RemoveRedundantMaterials |
+				aiProcess_OptimizeMeshes;
+
+			if (RendererAPI::GetAPI() == RendererAPI::Direct3D)
+				flags |= aiProcess_MakeLeftHanded | aiProcess_FlipUVs;
+
+			const aiScene* aiscene = aiImportFile(filepath.string().c_str(), flags);
+
+			if (aiscene == nullptr || aiscene->mFlags == AI_SCENE_FLAGS_INCOMPLETE)
+			{
+				aiReleaseImport(aiscene);
+				const char* error = aiGetErrorString();
+				ATN_CORE_ERROR("Importer3D Error: {0}", error);
+				return nullptr;
+			}
+
+			m_ImportedScenes[filepath] = aiscene;
+		}
+
+		m_CurrentFilepath = filepath;
+
+		return m_ImportedScenes[filepath];
+	}
+
+	void Importer3D::Release()
+	{
+		for (auto& [_, aiscene] : m_ImportedScenes)
+		{
+			aiReleaseImport(aiscene);
+		}
+	}
+}

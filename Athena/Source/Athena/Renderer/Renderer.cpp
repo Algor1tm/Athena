@@ -2,6 +2,8 @@
 
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/ConstantBuffer.h"
+#include "Athena/Renderer/Material.h"
+
 #include "Athena/Scene/SceneRenderer.h"
 
 
@@ -98,7 +100,7 @@ namespace Athena
 
 		if (mesh)
 		{
-			const auto& vertices = mesh->GetVertices();
+			const auto& vertices = mesh->Vertices;
 			for (uint32 i = 0; i < vertices.size(); ++i)
 				RenderCommand::DrawTriangles(vertices[i]);
 		}

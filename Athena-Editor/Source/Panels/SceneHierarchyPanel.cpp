@@ -4,6 +4,10 @@
 #include "Athena/Input/Input.h"
 
 #include "Athena/Scene/Components.h"
+#include "Athena/Scene/Importer3D.h"
+
+#include "Athena/Renderer/Material.h"
+
 #include "Athena/Scripting/PublicScriptEngine.h"
 
 #include "UI/Widgets.h"
@@ -541,10 +545,10 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					if (UI::DrawController("Mesh", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##BodyType", meshComponent.Mesh->GetName().data()); }))
+						{ return ImGui::BeginCombo("##BodyType", meshComponent.Mesh->ImportInfo.Name.data()); }))
 					{
 						const Filepath meshDir = "Assets/Meshes";
-						const Filepath meshFilename = meshComponent.Mesh->GetFilepath().filename();
+						const Filepath meshFilename = meshComponent.Mesh->Filepath.filename();
 
 						for (const auto& dirEntry : std::filesystem::directory_iterator(meshDir))
 						{
@@ -554,7 +558,10 @@ namespace Athena
 								bool open = meshFilename == filename;
 								UI::Selectable(filename.string(), &open, [&meshComponent, &meshDir, &filename, this]()
 									{
-										meshComponent.Mesh = StaticMesh::Create(meshDir / filename, m_Context);
+										Importer3D importer(m_Context);
+
+										meshComponent.Mesh->ImportInfo.Indices.clear();
+										importer.ImportStaticMesh(meshDir / filename, meshComponent.Mesh->ImportInfo, meshComponent.Mesh);
 									});
 							}
 						}
@@ -574,7 +581,7 @@ namespace Athena
 
 				ImGui::PopStyleVar(2);
 
-				Ref<Material> material = m_Context->GetMaterial(meshComponent.Mesh->GetMaterialIndex());
+				Ref<Material> material = m_Context->GetMaterial(meshComponent.Mesh->MaterialIndex);
 				auto& matDesc = material->GetDescription();
 
 				if (UI::BeginDrawControllers())

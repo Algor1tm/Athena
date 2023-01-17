@@ -282,29 +282,40 @@ namespace Athena
 			});
 	}
 
-	SIZE_T Scene::AddMaterial(const Ref<Material>& material)
+	int32 Scene::AddMaterial(const Ref<Material>& material)
 	{
-		auto iter = std::find(m_Materials.begin(), m_Materials.end(), material);
-		if (iter != m_Materials.end())
-			return std::distance(m_Materials.begin(), iter);
+		for (uint32 i = 0; i < m_Materials.size(); ++i)
+		{
+			if (m_Materials[i] == material)
+				return i;
+		}
 
 		m_Materials.push_back(material);
 		return m_Materials.size() - 1;
 	}
 
-	SIZE_T Scene::GetMaterialIndex(const Ref<Material>& material)
+	int32 Scene::GetMaterialIndex(const Ref<Material>& material)
 	{
-		auto iter = std::find(m_Materials.begin(), m_Materials.end(), material);
-		if (iter == m_Materials.end())
-			ATN_CORE_ERROR("Material with index '{1}' does not belong to this scene!", std::distance(m_Materials.begin(), iter));
-		return std::distance(m_Materials.begin(), iter);
+		for (uint32 i = 0; i < m_Materials.size(); ++i)
+		{
+			if (m_Materials[i] == material)
+				return i;
+		}
+
+		ATN_CORE_ERROR("Material '{1}' does not belong to this scene!", material->GetDescription().Name);
+		return -1;
 	}
 
-	Ref<Material> Scene::GetMaterial(SIZE_T index)
+	Ref<Material> Scene::GetMaterial(int32 index)
 	{
 		if (index >= m_Materials.size())
 		{
 			ATN_CORE_ERROR("Scene Error: invalid index for material!");
+			return nullptr;
+		}
+
+		if (index < 0)
+		{
 			return nullptr;
 		}
 

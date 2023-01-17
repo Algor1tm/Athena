@@ -4,6 +4,7 @@
 #include "OrthographicCamera.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "Material.h"
 
 
 namespace Athena

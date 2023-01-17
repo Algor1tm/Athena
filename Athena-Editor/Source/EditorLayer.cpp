@@ -10,6 +10,7 @@
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
+#include "Athena/Scene/Importer3D.h"
 
 #include <ImGui/imgui.h>
 
@@ -17,7 +18,7 @@
 namespace Athena
 {
     EditorLayer::EditorLayer()
-        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f),
+        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 10000.f),
         m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn"), m_ImGuizmoLayer(&m_EditorCamera)
     {
         m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");
@@ -36,15 +37,17 @@ namespace Athena
         m_EditorCamera.SetDistance(7.f);
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
 
-#if 1
+#if 0
         OpenScene("Assets/Scenes/PhysicsExample.atn");
 #else
-        Ref<StaticMesh> mesh = StaticMesh::Create("Assets/Meshes/Cube.obj", m_ActiveScene);
-        
+        Importer3D importer(m_ActiveScene);
+        StaticMeshImportInfo info;
+        Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
+        importer.ImportStaticMesh("Assets/Meshes/Cube.obj", info, mesh);
+
         m_TestCube = m_ActiveScene->CreateEntity();
-        m_TestCube.AddComponent<StaticMeshComponent>();
-        m_TestCube.GetComponent<StaticMeshComponent>().Mesh = mesh;
-        m_TestCube.GetComponent<TagComponent>().Tag = mesh->GetName();
+        m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;
+        m_TestCube.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
 #endif
         m_SceneHierarchy->SetContext(m_EditorScene);
     }
@@ -225,15 +228,10 @@ namespace Athena
                         }
                     }
                     // Mesh Drag/Drop
-                    else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf"))
+                    else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
                     {
-                        Ref<StaticMesh> mesh = StaticMesh::Create(path, m_ActiveScene);
-
-                        Entity newEntity = m_ActiveScene->CreateEntity();
-                        newEntity.AddComponent<StaticMeshComponent>();
-                        newEntity.GetComponent<StaticMeshComponent>().Mesh = mesh;
-                        newEntity.GetComponent<TagComponent>().Tag = mesh->GetName();
-                        m_SceneHierarchy->SetSelectedEntity(newEntity);
+                        Importer3D importer(m_ActiveScene);
+                        importer.ImportScene(path);
                     }
                 }
             });

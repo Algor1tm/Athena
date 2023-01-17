@@ -2,6 +2,8 @@
 #include "Components.h"
 #include "Entity.h"
 
+#include "Importer3D.h"
+
 #if defined(_MSC_VER)
 	#pragma warning (push, 0)
 #endif
@@ -118,6 +120,7 @@ namespace YAML
 	}
 }
 
+#define SERIALIZE_MATERIALS 0	// TODO: Serialize materials
 
 namespace Athena
 {
@@ -143,6 +146,30 @@ namespace Athena
 			});
 
 		out << YAML::EndSeq;
+
+#if SERIALIZE_MATERIALS
+		out << YAML::Key << "Materials" << YAML::Value << YAML::BeginSeq;
+
+		for (uint32 i = 0; i < m_Scene->m_Materials.size(); ++i)
+		{
+			out << YAML::BeginMap;
+			out << YAML::Key << std::to_string(i).data();
+			out << YAML::BeginMap;
+
+			const MaterialDescription matDesc = m_Scene->m_Materials[i]->GetDescription();
+			out << YAML::Key << "Name" << YAML::Value << matDesc.Name;
+			out << YAML::Key << "Albedo" << YAML::Value << matDesc.Albedo;
+			out << YAML::Key << "Roughness" << YAML::Value << matDesc.Roughness;
+			out << YAML::Key << "Metalness" << YAML::Value << matDesc.Metalness;
+			out << YAML::Key << "UseAlbedoTexture" << YAML::Value << matDesc.UseAlbedoTexture;
+			out << YAML::Key << "UseRoughnessMap" << YAML::Value << matDesc.UseRoughnessMap;
+			out << YAML::Key << "UseMetalnessMap" << YAML::Value << matDesc.UseMetalnessMap;
+
+			out << YAML::EndMap;
+			out << YAML::EndMap;
+		}
+		out << YAML::EndSeq;
+#endif
 		out << YAML::EndMap;
 
 		std::ofstream fout(filepath);
@@ -151,7 +178,7 @@ namespace Athena
 
 	void SceneSerializer::SerializeRuntime(const String& filepath)
 	{
-		ATN_CORE_ASSERT(false, "No Implemented");
+		ATN_CORE_ASSERT(false, "Not Implemented");
 	}
 
 	bool SceneSerializer::DeserializeFromFile(const String& filepath)
@@ -177,10 +204,35 @@ namespace Athena
 		String sceneName = data["Scene"].as<String>();
 		m_Scene->SetSceneName(sceneName);
 
+#if SERIALIZE_MATERIALS
+		const auto& materials = data["Materials"];
+		if (materials)
+		{
+			uint32 iter = 0;
+			for (const auto& materialNode : materials)
+			{
+				const auto& material = materialNode[(const char*)std::to_string(iter).data()];
+				MaterialDescription matDesc;
+
+				matDesc.Name = material["Name"].as<String>();
+				matDesc.Albedo = material["Albedo"].as<Vector3>();
+				matDesc.Roughness = material["Roughness"].as<float>();
+				matDesc.Metalness = material["Metalness"].as<float>();
+				matDesc.UseAlbedoTexture = material["UseAlbedoTexture"].as<bool>();
+				matDesc.UseRoughnessMap = material["UseRoughnessMap"].as<bool>();
+				matDesc.UseMetalnessMap = material["UseMetalnessMap"].as<bool>();
+
+				m_Scene->AddMaterial(Material::Create(matDesc));
+				iter++;
+			}
+		}
+#endif
+
+		Importer3D importer(m_Scene);
 		const auto& entities = data["Entities"];
 		if (entities)
 		{
-			for (auto entityNode : entities)
+			for (const auto& entityNode : entities)
 			{
 				uint64 uuid = 0;
 				{
@@ -328,6 +380,24 @@ namespace Athena
 						cc2d.Restitution = circleCollider2DComponentNode["Restitution"].as<float>();
 						cc2d.RestitutionThreshold = circleCollider2DComponentNode["RestitutionThreshold"].as<float>();
 					}
+
+					const auto& staticMeshComponentNode = entityNode["StaticMeshComponent"];
+					if (staticMeshComponentNode)
+					{
+						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
+						meshComp.Mesh = CreateRef<StaticMesh>();
+
+						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
+						meshComp.Mesh->Filepath = staticMeshComponentNode["Filepath"].as<String>();
+						meshComp.Mesh->MaterialIndex = staticMeshComponentNode["MaterialIndex"].as<int32>();
+						const auto& importInfoNode = staticMeshComponentNode["ImportInfo"];
+						meshComp.Mesh->ImportInfo.Name = importInfoNode["Name"].as<String>();
+						meshComp.Mesh->ImportInfo.MaterialIndex = importInfoNode["MaterialIndex"].as<uint32>();
+						for (const auto& index : importInfoNode["Indices"])
+							meshComp.Mesh->ImportInfo.Indices.push_back(index.as<uint32>());
+
+						importer.ImportStaticMesh(meshComp.Mesh->Filepath, meshComp.Mesh->ImportInfo, meshComp.Mesh);
+					}
 				}
 			}
 		}
@@ -337,7 +407,7 @@ namespace Athena
 
 	bool SceneSerializer::DeserializeRuntime(const String& filepath)
 	{
-		ATN_CORE_ASSERT(false, "No Implemented");
+		ATN_CORE_ASSERT(false, "Not Implemented");
 		return false;
 	}
 
@@ -469,6 +539,27 @@ namespace Athena
 				output << YAML::Key << "RestitutionThreshold" << YAML::Value << cc2d.RestitutionThreshold;
 			});
 
-		out << YAML::EndMap; // Entity
+		SerializeComponent<StaticMeshComponent>(out, "StaticMeshComponent", entity,
+			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
+			{
+				Ref<StaticMesh> mesh = meshComponent.Mesh;
+				output << YAML::Key << "Filepath" << YAML::Value << mesh->Filepath.string();
+				output << YAML::Key << "MaterialIndex" << YAML::Value << mesh->MaterialIndex;
+
+				output << YAML::Key << "ImportInfo" << YAML::Value;
+				output << YAML::BeginMap;
+				output << YAML::Key << "Name" << YAML::Value << mesh->ImportInfo.Name;
+				output << YAML::Key << "Indices" << YAML::Flow;
+				output << YAML::BeginSeq;
+				for (SIZE_T i = 0; i < mesh->ImportInfo.Indices.size(); ++i)
+					output << mesh->ImportInfo.Indices[i];
+				output << YAML::EndSeq;
+				output << YAML::Key << "MaterialIndex" << YAML::Value << mesh->ImportInfo.MaterialIndex;
+				output << YAML::EndMap;
+
+				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
+			});
+
+		out << YAML::EndMap;
 	}
 }

@@ -342,7 +342,7 @@ namespace Athena
 						used = UI::DrawController("NearClip", height, [&perspectiveDesc]()
 							{ return ImGui::SliderFloat("##NearClip", &perspectiveDesc.NearClip, 0.f, 10.f); }) || used;
 						used = UI::DrawController("FarClip", height, [&perspectiveDesc]()
-							{ return ImGui::SliderFloat("##FarClip", &perspectiveDesc.FarClip, 10.f, 10000.f); }) || used;
+							{ return ImGui::SliderFloat("##FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f); }) || used;
 
 						if (used)
 						{

@@ -314,7 +314,7 @@ namespace Athena
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int entityID)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int32 entityID)
 	{
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
@@ -340,7 +340,7 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int entityID)
+	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int32 entityID)
 	{
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
@@ -385,7 +385,7 @@ namespace Athena
 	}
 
 
-	void Renderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade, int entityID)
+	void Renderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade, int32 entityID)
 	{
 		if (s_Data.CircleIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
@@ -406,7 +406,7 @@ namespace Athena
 		s_Data.Stats.CircleCount++;
 	}
 
-	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int entityID)
+	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int32 entityID)
 	{
 		if (width > 0.f && width <= 1.f)
 		{
@@ -432,7 +432,7 @@ namespace Athena
 			Vector3 dir = p1 - p0;
 			Vector3 normal = Vector3(-dir.y, dir.x, 0.f).Normalize() * width / 1000.f;
 
-			Vector3 positions[4] = { p1 + normal, p1 - normal, p0 - normal, p0 + normal };
+			Vector3 positions[4] = { p1 - normal, p1 + normal, p0 + normal, p0 - normal };
 
 			if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 				NextBatch();
@@ -459,7 +459,7 @@ namespace Athena
 		}
 	}
 
-	void Renderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, float lineWidth, int entityID)
+	void Renderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, float lineWidth, int32 entityID)
 	{
 		Vector3 p0 = Vector3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		Vector3 p1 = Vector3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
@@ -472,7 +472,7 @@ namespace Athena
 		DrawLine(p3, p0, color, lineWidth, entityID);
 	}
 
-	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int entityID)
+	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int32 entityID)
 	{
 		Vector3 lineVertices[4];
 		for (SIZE_T i = 0; i < 4; ++i)

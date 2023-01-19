@@ -8,6 +8,7 @@ layout (location = 2) in vec3 a_Normal;
 layout(std140, binding = 1) uniform SceneData
 {
 	mat4 u_ModelViewProjection;
+    int u_EntityID;
 };
 
 struct VertexOutput
@@ -17,11 +18,13 @@ struct VertexOutput
 };
 
 layout (location = 0) out VertexOutput Output;
+layout (location = 2) flat out int v_EntityID;
 
 void main()
 {
     gl_Position = u_ModelViewProjection * vec4(a_Position, 1);
 
+    v_EntityID = u_EntityID;
     Output.TexCoord = a_TexCoord;
 
     vec3 LightDirection = normalize(vec3(-0.25, -0.75, -1));
@@ -59,6 +62,7 @@ struct VertexOutput
 };
 
 layout (location = 0) in VertexOutput Input;
+layout (location = 2) flat in int v_EntityID;
 
 void main()
 {
@@ -71,5 +75,5 @@ void main()
 
     out_Color = clamp(color * factor, 0.05, 1.);
     
-    out_EntityID = 0;
+    out_EntityID = v_EntityID;
 }

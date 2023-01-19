@@ -43,7 +43,7 @@ namespace Athena
         Importer3D importer(m_ActiveScene);
         StaticMeshImportInfo info;
         Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
-        importer.ImportStaticMesh("Assets/Meshes/Cube.obj", info, mesh);
+        importer.ImportStaticMesh("Assets/Meshes/Monkey.obj", info, mesh);
 
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;
@@ -322,10 +322,48 @@ namespace Athena
         }
         
 
-        if (m_SelectedEntity && !m_SelectedEntity.HasComponent<StaticMeshComponent>())
+        if (m_SelectedEntity)
         {
+            LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
             const TransformComponent& transform = m_SelectedEntity.GetComponent<TransformComponent>();
-            Renderer2D::DrawRect(transform.AsMatrix(), { 1.f, 0.5f, 0.f, 1.f }, 6.f);
+
+            if (m_SelectedEntity.HasComponent<CameraComponent>())
+            {
+                float scale = m_EditorCamera.GetDistance() / 10.f;
+                Renderer2D::DrawRect(Math::ScaleMatrix(Vector3(scale, scale, 1.f)) * transform.AsMatrix(), color, 1);
+            }
+            else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
+            {
+                const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->BoundingBox;
+                
+                AABB transformedBox = box.Transform(transform.AsMatrix());
+
+                Vector3 min = transformedBox.GetMinPoint();
+                Vector3 max = transformedBox.GetMaxPoint();
+
+                // front
+                Renderer2D::DrawLine(max, { max.x, min.y, max.z }, color, 1);
+                Renderer2D::DrawLine({ max.x, min.y, max.z }, { min.x, min.y, max.z }, color, 1);
+                Renderer2D::DrawLine({ min.x, min.y, max.z }, { min.x, max.y, max.z }, color, 1);
+                Renderer2D::DrawLine({ min.x, max.y, max.z }, max, color, 1);
+                // back
+                Renderer2D::DrawLine(min, { min.x, max.y, min.z }, color, 1);
+                Renderer2D::DrawLine({ min.x, max.y, min.z }, { max.x, max.y, min.z }, color, 1);
+                Renderer2D::DrawLine({ max.x, max.y, min.z }, { max.x, min.y, min.z }, color, 1);
+                Renderer2D::DrawLine({ max.x, min.y, min.z }, min, color, 1);
+
+                // left
+                Renderer2D::DrawLine(min, { min.x, min.y, max.z }, color, 1);
+                Renderer2D::DrawLine({ min.x, max.y, min.z }, { min.x, max.y, max.z }, color, 1);
+
+                // right
+                Renderer2D::DrawLine(max, { max.x, max.y, min.z }, color, 1);
+                Renderer2D::DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color, 1);
+            }
+            else
+            {
+                Renderer2D::DrawRect(transform.AsMatrix(), color, 8.f);
+            }
         }
 
         Renderer2D::EndScene();

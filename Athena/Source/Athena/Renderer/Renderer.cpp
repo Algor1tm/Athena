@@ -18,6 +18,7 @@ namespace Athena
 		struct SceneData
 		{
 			Matrix4 ModelViewProjection;
+			int32 EntityID = -1;
 		};
 
 		SceneData SceneDataBuffer;
@@ -89,10 +90,11 @@ namespace Athena
 		RenderCommand::UnBindFramebuffer();
 	}
 
-	void Renderer::RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform)
+	void Renderer::RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
 	{
 		Matrix4 viewProjection = s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
+		s_Data.SceneDataBuffer.EntityID = entityID;
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 		
 		if (material)

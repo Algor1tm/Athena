@@ -30,7 +30,7 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
-		static void RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material = nullptr, const Matrix4& transform = Matrix4::Identity());
+		static void RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material = nullptr, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();

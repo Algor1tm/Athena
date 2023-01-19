@@ -47,8 +47,8 @@ namespace Athena
 	{
 		float distance = m_Distance * 0.4f;
 		distance = Math::Max(distance, 0.0f);
-		float speed = distance * distance;
-		speed = Math::Min(speed, 100.0f);
+		float speed = Math::Pow(distance, 1.5f);
+		speed = Math::Min(speed, 1000.0f);
 		return speed;
 	}
 

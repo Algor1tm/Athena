@@ -23,7 +23,7 @@ namespace Athena
 		{
 			float VerticalFOV = Math::Radians(45.f);
 			float NearClip = 0.01f;
-			float FarClip = 1000.f;
+			float FarClip = 10000.f;
 		};
 
 	public:

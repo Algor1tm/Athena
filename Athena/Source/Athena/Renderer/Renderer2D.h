@@ -32,15 +32,15 @@ namespace Athena
 		static void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 		static void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
-		static void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White, int entityID = -1);
-		static void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f, int entityID = -1);
+		static void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White, int32 entityID = -1);
+		static void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f, int32 entityID = -1);
 
-		static void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f, int entityID = -1);
+		static void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f, int32 entityID = -1);
 
-		static void DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color = LinearColor::White, float width = 1.f, int entityID = -1);
+		static void DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color = LinearColor::White, float width = 1.f, int32 entityID = -1);
 
-		static void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int entityID = -1);
-		static void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int entityID = -1);
+		static void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int32 entityID = -1);
+		static void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int32 entityID = -1);
 
 		static void ReloadShaders();
 

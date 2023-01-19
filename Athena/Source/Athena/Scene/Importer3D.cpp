@@ -73,7 +73,7 @@ namespace Athena
 		return Material::Create(desc);
 	}
 
-	static Ref<VertexBuffer> AssimpMeshToVertexBuffer(aiMesh* aimesh)
+	static void LoadAssimpMesh(aiMesh* aimesh, Ref<VertexBuffer>& vertexBuffer, AABB& box)
 	{
 		uint32 numFaces = aimesh->mNumFaces;
 		aiFace* faces = aimesh->mFaces;
@@ -102,6 +102,7 @@ namespace Athena
 		{
 			// Position
 			AssimpVector3ToAthenaVector3(aimesh->mVertices[i], vertices[i].Position);
+			box.Extend(vertices[i].Position);
 
 			// TexCoord
 			if (aimesh->HasTextureCoords(0))
@@ -129,10 +130,10 @@ namespace Athena
 		vBufferDesc.pIndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::STATIC;
 
-		return VertexBuffer::Create(vBufferDesc);
+		vertexBuffer = VertexBuffer::Create(vBufferDesc);
 	}
 
-	static void LoadAssimpMeshes(const aiScene* scene, aiNode* root, std::vector<Ref<VertexBuffer>>& storage)
+	static void LoadAssimpMeshesAsStaticMesh(const aiScene* scene, aiNode* root, std::vector<Ref<VertexBuffer>>& storage, AABB& box)
 	{
 		if (root != nullptr)
 		{
@@ -140,14 +141,14 @@ namespace Athena
 			{
 				Ref<VertexBuffer> vertexBuffer;
 				aiMesh* aimesh = scene->mMeshes[root->mMeshes[j]];
-				vertexBuffer = AssimpMeshToVertexBuffer(aimesh);
+				LoadAssimpMesh(aimesh, vertexBuffer, box);
 
 				storage.push_back(vertexBuffer);
 			}
 
 			for (uint32 i = 0; i < root->mNumChildren; ++i)
 			{
-				LoadAssimpMeshes(scene, root->mChildren[i], storage);
+				LoadAssimpMeshesAsStaticMesh(scene, root->mChildren[i], storage, box);
 			}
 		}
 	}
@@ -205,7 +206,7 @@ namespace Athena
 			outMesh->Vertices.resize(info.Indices.size());
 
 			for (uint32 i = 0; i < info.Indices.size(); ++i)
-				outMesh->Vertices[i] = AssimpMeshToVertexBuffer(aiscene->mMeshes[info.Indices[i]]);
+				LoadAssimpMesh(aiscene->mMeshes[info.Indices[i]], outMesh->Vertices[i], outMesh->BoundingBox);
 
 			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
 			outMesh->MaterialIndex = m_Context->AddMaterial(material);
@@ -229,7 +230,7 @@ namespace Athena
 			outMesh->ImportInfo.Name = filepath.stem().string();
 			outMesh->Vertices.clear();
 			outMesh->Vertices.reserve(aiscene->mNumMeshes);
-			LoadAssimpMeshes(aiscene, aiscene->mRootNode, outMesh->Vertices);
+			LoadAssimpMeshesAsStaticMesh(aiscene, aiscene->mRootNode, outMesh->Vertices, outMesh->BoundingBox);
 		}
 
 		return true;
@@ -250,7 +251,9 @@ namespace Athena
 			mesh->ImportInfo = info;
 
 			mesh->Filepath = m_CurrentFilepath;
-			mesh->Vertices.push_back(AssimpMeshToVertexBuffer(aimesh));
+			Ref<VertexBuffer> buffer;
+			LoadAssimpMesh(aimesh, buffer, mesh->BoundingBox);
+			mesh->Vertices.push_back(buffer);
 			
 			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
 			mesh->MaterialIndex = m_Context->AddMaterial(material);

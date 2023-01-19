@@ -68,7 +68,7 @@ namespace Athena
 		{
 			auto [transform, sprite] = quads.get<TransformComponent, SpriteComponent>(entity);
 
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int)entity);
+			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
 		}
 
 		auto circles = scene->GetAllEntitiesWith<TransformComponent, CircleComponent>();
@@ -76,7 +76,7 @@ namespace Athena
 		{
 			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
 
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int)entity);
+			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
 		}
 
 		Renderer2D::EndScene();
@@ -92,7 +92,7 @@ namespace Athena
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = scene->GetMaterial(meshComponent.Mesh->MaterialIndex);
-				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
+				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix(), (int32)entity);
 			}
 		}
 

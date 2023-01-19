@@ -100,7 +100,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID"     } 
 		};
 
-		s_Data.QuadShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Quad");
+		s_Data.QuadShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Quad");
 
 		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxQuadVertices];
 
@@ -142,7 +142,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID"  } 
 		};
 
-		s_Data.CircleShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Circle");
+		s_Data.CircleShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Circle");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
@@ -162,7 +162,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID" }
 		};
 
-		s_Data.LineShader = Shader::Create(layout, "Assets/Shaders/Renderer2D_Line");
+		s_Data.LineShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Line");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);
@@ -482,6 +482,13 @@ namespace Athena
 		DrawLine(lineVertices[1], lineVertices[2], color, lineWidth, entityID);
 		DrawLine(lineVertices[2], lineVertices[3], color, lineWidth, entityID);
 		DrawLine(lineVertices[3], lineVertices[0], color, lineWidth, entityID);
+	}
+
+	void Renderer2D::ReloadShaders()
+	{
+		s_Data.QuadShader->Reload();
+		s_Data.CircleShader->Reload();
+		s_Data.LineShader->Reload();
 	}
 
 	void Renderer2D::ResetStats()

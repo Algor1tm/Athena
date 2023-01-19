@@ -51,7 +51,7 @@ namespace Athena
 			{ ShaderDataType::Float3, "a_Normal" }
 		};
 
-		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/Renderer_PBR");
+		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/PBR");
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);
 
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), 2);
@@ -94,10 +94,10 @@ namespace Athena
 		Matrix4 viewProjection = s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneDataBuffer.ModelViewProjection = transform * s_Data.SceneDataBuffer.ModelViewProjection;
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
-
+		
 		if (material)
 			s_Data.MaterialConstantBuffer->SetData(&material->Bind(), sizeof(Material::ShaderData));	
-
+		
 		if (mesh)
 		{
 			const auto& vertices = mesh->Vertices;
@@ -108,7 +108,7 @@ namespace Athena
 		{
 			ATN_CORE_WARN("Renderer Warn: Attempt to render nullptr mesh!");
 		}
-
+		
 		s_Data.SceneDataBuffer.ModelViewProjection = viewProjection;
 	}
 
@@ -125,5 +125,11 @@ namespace Athena
 	const BufferLayout& Renderer::GetVertexBufferLayout()
 	{
 		return s_Data.VertexBufferLayout;
+	}
+
+	void Renderer::ReloadShaders()
+	{
+		Renderer2D::ReloadShaders();
+		s_Data.PBRShader->Reload();
 	}
 }

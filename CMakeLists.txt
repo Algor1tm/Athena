@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.16)
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
 set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
+set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Shaders")
 
 # Enable in cross-platform way multi-processor compilation
 macro(EnableMultiProcessorCompilation TARGET_NAME)
@@ -44,16 +45,28 @@ endif(LibDebug)
 get_target_property(LibRelease Python::Python IMPORTED_IMPLIB_RELEASE)
 message(STATUS "Python3 (Release) - ${LibRelease}")
 
-# Show python scripts in explorer
+# Show python scripts in solution explorer
 file(GLOB_RECURSE PYTHON_FILES CONFIGURE_DEPENDS 
 	"${SCRIPTS_FOLDER}/*.py")
 
-add_library(Athena-RuntimeScripts ${PYTHON_FILES})
+add_library(PythonScripts ${PYTHON_FILES})
 
-source_group(TREE "${SCRIPTS_FOLDER}/../" FILES ${PYTHON_FILES} )
-set_property(TARGET Athena-RuntimeScripts PROPERTY LINKER_LANGUAGE CXX)
-set_property(TARGET Athena-RuntimeScripts PROPERTY FOLDER Core)
+source_group(TREE "${SCRIPTS_FOLDER}" FILES ${PYTHON_FILES} )
+set_property(TARGET PythonScripts PROPERTY LINKER_LANGUAGE CXX)
+set_property(TARGET PythonScripts PROPERTY FOLDER Core)
 
+# Show python scripts in solution explorer
+file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
+	"${SHADERS_FOLDER}/*.glsl"
+    "${SHADERS_FOLDER}/*.hlsl")
+
+add_library(Shaders ${SHADER_FILES})
+
+source_group(TREE "${SHADERS_FOLDER}" FILES ${SHADER_FILES} )
+set_property(TARGET Shaders PROPERTY LINKER_LANGUAGE CXX)
+set_property(TARGET Shaders PROPERTY FOLDER Core)
+
+# copy assimp dlls
 if(WIN32)  
     CopyDLLToBinaries("${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.dll" "assimp-vc143-mt.dll")
 endif(WIN32)

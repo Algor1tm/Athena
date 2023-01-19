@@ -46,11 +46,11 @@ namespace Athena
 	D3D11Shader::D3D11Shader(const BufferLayout& layout, const Filepath& filepath)
 	{
 		ATN_CORE_ASSERT(std::filesystem::exists(filepath), "Invalid filepath for Shader");
-		const auto& strFilepath = filepath.string();
 
-		SetNameFromFilepath(strFilepath);
+		m_Filepath = filepath;
+		m_Name = m_Filepath.stem().string();
 
-		String result = ReadFile(strFilepath);
+		String result = ReadFile(filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 
@@ -112,6 +112,10 @@ namespace Athena
 		}
 	}
 
+	void D3D11Shader::Reload()
+	{
+		ATN_CORE_ASSERT(false, "Not Implemented");
+	}
 
 	void D3D11Shader::Bind() const
 	{
@@ -188,35 +192,5 @@ namespace Athena
 			m_ShaderByteCodes[ShaderType::VERTEX_SHADER]->GetBufferPointer(), 
 			m_ShaderByteCodes[ShaderType::VERTEX_SHADER]->GetBufferSize(),
 			m_InputLayout.GetAddressOf());
-	}
-
-	void D3D11Shader::SetInt(const String& name, int value)
-	{
-
-	}
-
-	void D3D11Shader::SetIntArray(const String& name, int* value, uint32 count)
-	{
-
-	}
-
-	void D3D11Shader::SetFloat(const String& name, float value)
-	{
-
-	}
-
-	void D3D11Shader::SetFloat3(const String& name, const Vector3& vec3)
-	{
-
-	}
-
-	void D3D11Shader::SetFloat4(const String& name, const Vector4& vec4)
-	{
-
-	}
-
-	void D3D11Shader::SetMat4(const String& name, const Matrix4& mat4)
-	{
-
 	}
 }

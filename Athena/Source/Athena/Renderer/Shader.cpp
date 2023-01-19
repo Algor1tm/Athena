@@ -51,7 +51,7 @@ namespace Athena
 		return nullptr;
 	}
 	
-	String Shader::ReadFile(const String& filepath)
+	String Shader::ReadFile(const Filepath& filepath)
 	{
 		String result;
 		std::ifstream in(filepath, std::ios::in | std::ios::binary);
@@ -94,18 +94,6 @@ namespace Athena
 
 		return shaderSources;
 	}
-
-	void Shader::SetNameFromFilepath(const String& filepath)
-	{
-		// assets/shaders/Grid.glsl -> m_Name = Grid
-		SIZE_T lastSlash = filepath.find_last_of("/\\");
-		lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
-		SIZE_T lastDot = filepath.rfind('.');
-		SIZE_T count = lastDot == std::string::npos ? filepath.size() - lastSlash : lastDot - lastSlash;
-		m_Name = filepath.substr(lastSlash, count);
-	}
-
-
 
 	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
 	{

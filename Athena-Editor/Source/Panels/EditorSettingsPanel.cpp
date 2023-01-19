@@ -1,6 +1,8 @@
 #include "EditorSettingsPanel.h"
 
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Scripting/PublicScriptEngine.h"
+
 #include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
@@ -35,6 +37,21 @@ namespace Athena
 			if (ImGui::Button("Reload Scripts"))
 			{
 				PublicScriptEngine::ReloadScripts();
+			}
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
+
+			UI::EndTreeNode();
+		}
+
+		if (UI::BeginTreeNode("Renderer"))
+		{
+			UI::ShiftCursorX(2.f);
+			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+			if (ImGui::Button("Reload Shaders"))
+			{
+				Renderer::ReloadShaders();
 			}
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();

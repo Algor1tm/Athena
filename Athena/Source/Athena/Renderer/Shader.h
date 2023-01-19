@@ -14,38 +14,44 @@ namespace Athena
 		FRAGMENT_SHADER = 1,
 	};
 
+	inline std::string_view ShaderTypeToString(ShaderType type)
+	{
+		switch (type)
+		{
+		case ShaderType::VERTEX_SHADER: return "Vertex Shader";
+		case ShaderType::FRAGMENT_SHADER: return "Fragment Shader";
+		}
+
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
+
 
 	class ATHENA_API Shader
 	{
 	public:
+		// Pass file without extension
+		//     if RendererAPI = Direct3D extension will be .hlsl
+		//     if RendererAPI = OpenGL extension will be .glsl
+		static Ref<Shader> Create(const BufferLayout& layout, const Filepath& filepath);
+		static Ref<Shader> Create(const BufferLayout& layout, const String& name, const String& vertexSrc, const String& fragmentSrc);
+
 		virtual ~Shader() = default;
 
 		virtual void Bind() const = 0;
 		virtual void UnBind() const = 0;
 
-		virtual void SetInt(const String& name, int value) = 0;
-		virtual void SetIntArray(const String& name, int* value, uint32 count) = 0;
-		virtual void SetFloat(const String& name, float value) = 0;
-		virtual void SetFloat3(const String& name, const Vector3& vec3) = 0;
-		virtual void SetFloat4(const String& name, const Vector4& vec4) = 0;
-		virtual void SetMat4(const String& name, const Matrix4& mat4) = 0;
+		virtual void Reload() = 0;
 
 		const String& GetName() const { return m_Name; }
 
-		// Pass file without extension
-		// if RendererAPI = Direct3D extension will be .hlsl
-		// if RendererAPI = OpenGL extension will be .glsl
-		static Ref<Shader> Create(const BufferLayout& layout, const Filepath& filepath);
-		static Ref<Shader> Create(const BufferLayout& layout, const String& name, const String& vertexSrc, const String& fragmentSrc);
-
 	protected:
-		String ReadFile(const String& filepath);
+		String ReadFile(const Filepath& filepath);
 		std::unordered_map<ShaderType, String> PreProcess(const String& source);
-
-		void SetNameFromFilepath(const String& filepath);
 
 	protected:
 		String m_Name;
+		Filepath m_Filepath;
 	};
 
 	class ATHENA_API ShaderLibrary

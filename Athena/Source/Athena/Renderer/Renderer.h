@@ -36,6 +36,8 @@ namespace Athena
 		static Ref<Framebuffer> GetFramebuffer();
 		static const BufferLayout& GetVertexBufferLayout();
 
+		static void ReloadShaders();
+
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};
 }

@@ -1,4 +1,4 @@
-Scene: UnNamed
+Scene: 3DExample
 Entities:
   - IDComponent:
       ID: 4620546740167642908

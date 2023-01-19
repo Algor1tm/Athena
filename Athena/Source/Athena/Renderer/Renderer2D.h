@@ -42,6 +42,8 @@ namespace Athena
 		static void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int entityID = -1);
 		static void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int entityID = -1);
 
+		static void ReloadShaders();
+
 		// Stats
 		struct Statistics
 		{

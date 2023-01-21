@@ -4,6 +4,7 @@
 
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/ConstantBuffer.h"
 
 
@@ -13,19 +14,22 @@ namespace Athena
 	{
 		String Name;
 
-		Vector3 Albedo = Vector3(0.7);
+		Vector3 Albedo = Vector3(1);
 		float Roughness = 0;
 		float Metalness = 0;
+		float AmbientOcclusion = 0;
 
 		Ref<Texture2D> AlbedoTexture = nullptr;
 		Ref<Texture2D> NormalMap = nullptr;
 		Ref<Texture2D> RoughnessMap = nullptr;
 		Ref<Texture2D> MetalnessMap = nullptr;
+		Ref<Texture2D> AmbientOcclusionMap = nullptr;
 
 		bool UseAlbedoTexture = false;
 		bool UseNormalMap = false;
 		bool UseRoughnessMap = false;
 		bool UseMetalnessMap = false;
+		bool UseAmbientOcclusionMap = false;
 	};
 
 	class ATHENA_API Material
@@ -33,14 +37,16 @@ namespace Athena
 	public:
 		struct ShaderData
 		{
-			Vector3 Albedo;
+			LinearColor Albedo;
 			float Roughness;
 			float Metalness;
+			float AmbientOcclusion;
 
-			bool UseAlbedoTexture;
-			bool UseNormalMap;
-			bool UseRoughnessMap;
-			bool UseMetalnessMap;
+			int UseAlbedoTexture;
+			int UseNormalMap;
+			int UseRoughnessMap;
+			int UseMetalnessMap;
+			int UseAmbientOcclusionMap;
 		};
 
 	public:

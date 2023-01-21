@@ -5,6 +5,7 @@
 
 #include "Athena/Renderer/EditorCamera.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Environment.h"
 
 #include "Components.h" 
 
@@ -62,6 +63,8 @@ namespace Athena
 		int32 GetMaterialIndex(const Ref<Material>& material);
 		Ref<Material> GetMaterial(int32 index);
 
+		Ref<Environment> GetEnvironment() { return m_Environment; }
+
 		template <typename... Components>
 		auto GetAllEntitiesWith()
 		{
@@ -87,5 +90,6 @@ namespace Athena
 
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 		std::vector<Ref<Material>> m_Materials;
+		Ref<Environment> m_Environment;
 	};
 }

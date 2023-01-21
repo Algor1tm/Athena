@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Material.h"
+#include "Environment.h"
 
 
 namespace Athena
@@ -14,6 +15,8 @@ namespace Athena
 		Vector3 Position;
 		Vector2 TexCoords;
 		Vector3 Normal;
+		Vector3 Tangent;
+		Vector3 Bitangent;
 	};
 
 	class ATHENA_API Renderer
@@ -24,7 +27,7 @@ namespace Athena
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginScene(const Matrix4& viewProjection);
+		static void BeginScene(const Matrix4& viewProjection, Ref<Environment> environment);
 		static void EndScene();
 
 		static void BeginFrame();

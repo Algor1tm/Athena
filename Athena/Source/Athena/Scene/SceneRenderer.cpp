@@ -41,7 +41,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(cameraViewProjection);
+		Renderer::BeginScene(cameraViewProjection, scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)
@@ -82,7 +82,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(viewProjection);
+		Renderer::BeginScene(viewProjection, scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)

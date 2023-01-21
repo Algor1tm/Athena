@@ -19,7 +19,7 @@ namespace Athena
 		output.z = input.z;
 	}
 
-	static Ref<Material> AssimpMaterialToAthenaMaterial(aiMaterial* aimaterial)
+	static Ref<Material> AssimpMaterialToAthenaMaterial(aiMaterial* aimaterial, const Filepath& currentFilepath)
 	{
 		MaterialDescription desc;
 
@@ -48,25 +48,33 @@ namespace Athena
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(metalnessWorkflow ? aiTextureType_BASE_COLOR : aiTextureType_DIFFUSE, 0), texFilepath))
 		{
-			desc.AlbedoTexture = Texture2D::Create(texFilepath.C_Str());
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.AlbedoTexture = Texture2D::Create(path);
 			desc.UseAlbedoTexture = true;
 		}
-
+		
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))
 		{
-			desc.NormalMap = Texture2D::Create(texFilepath.C_Str());
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.NormalMap = Texture2D::Create(path);
 			desc.UseNormalMap = true;
 		}
-
+		
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE_ROUGHNESS, 0), texFilepath))
 		{
-			desc.RoughnessMap = Texture2D::Create(texFilepath.C_Str());
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.RoughnessMap = Texture2D::Create(path);
 			desc.UseRoughnessMap = true;
 		}
-
+		
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_METALNESS, 0), texFilepath))
 		{
-			desc.MetalnessMap = Texture2D::Create(texFilepath.C_Str());
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.MetalnessMap = Texture2D::Create(path);
 			desc.UseMetalnessMap = true;
 		}
 
@@ -112,14 +120,11 @@ namespace Athena
 			}
 
 			// Normal
-			if (aimesh->HasNormals())
-			{
-				AssimpVector3ToAthenaVector3(aimesh->mNormals[i], vertices[i].Normal);
-			}
-			else
-			{
-				vertices[i].Normal = Vector3(0);
-			}
+			AssimpVector3ToAthenaVector3(aimesh->mNormals[i], vertices[i].Normal);
+			// Tangents
+			AssimpVector3ToAthenaVector3(aimesh->mTangents[i], vertices[i].Tangent);
+			// Bitangent
+			AssimpVector3ToAthenaVector3(aimesh->mBitangents[i], vertices[i].Bitangent);
 		}
 
 
@@ -208,7 +213,7 @@ namespace Athena
 			for (uint32 i = 0; i < info.Indices.size(); ++i)
 				LoadAssimpMesh(aiscene->mMeshes[info.Indices[i]], outMesh->Vertices[i], outMesh->BoundingBox);
 
-			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
+			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex], m_CurrentFilepath);
 			outMesh->MaterialIndex = m_Context->AddMaterial(material);
 		}
 		else
@@ -222,7 +227,7 @@ namespace Athena
 				}
 				else
 				{
-					Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[0]);
+					Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[0], m_CurrentFilepath);
 					outMesh->MaterialIndex = m_Context->AddMaterial(material);
 				}
 			}
@@ -255,7 +260,7 @@ namespace Athena
 			LoadAssimpMesh(aimesh, buffer, mesh->BoundingBox);
 			mesh->Vertices.push_back(buffer);
 			
-			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex]);
+			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex], m_CurrentFilepath);
 			mesh->MaterialIndex = m_Context->AddMaterial(material);
 
 			Entity entity = m_Context->CreateEntity();

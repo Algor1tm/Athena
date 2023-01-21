@@ -40,7 +40,7 @@ namespace Athena
 	Scene::Scene(const String& name)
 		: m_Name(name)
 	{
-
+		m_Environment = CreateRef<Environment>();
 	}
 
 	Scene::~Scene()

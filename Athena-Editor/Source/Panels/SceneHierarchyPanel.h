@@ -28,6 +28,7 @@ namespace Athena
 	private:
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
+		void DrawEnvironment(const Ref<Environment>& environment);
 
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);

@@ -3,11 +3,6 @@
 
 namespace Athena
 {
-	Material::Material()
-	{
-
-	}
-
 	Ref<Material> Material::Create(const MaterialDescription& desc)
 	{
 		Ref<Material> result = CreateRef<Material>();
@@ -35,7 +30,7 @@ namespace Athena
 			m_Description.MetalnessMap->Bind(3);
 
 		if (m_ShaderData.UseAmbientOcclusionMap = m_Description.UseAmbientOcclusionMap && m_Description.AmbientOcclusionMap)
-			m_Description.MetalnessMap->Bind(4);
+			m_Description.AmbientOcclusionMap->Bind(4);
 
 		return m_ShaderData;
 	}

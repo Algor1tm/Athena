@@ -50,7 +50,6 @@ namespace Athena
 		};
 
 	public:
-		Material();
 		static Ref<Material> Create(const MaterialDescription& desc);
 
 		const ShaderData& Bind();

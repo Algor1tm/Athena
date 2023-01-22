@@ -125,7 +125,7 @@ namespace Athena
 
 		// Choose camera
 		Camera* mainCamera = nullptr;
-		Matrix4 cameraTransform;
+		TransformComponent cameraTransform;
 		{
 			auto group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
 			for (auto entity : group)
@@ -135,7 +135,7 @@ namespace Athena
 				if (camera.Primary)
 				{
 					mainCamera = &camera.Camera;
-					cameraTransform = transformComponent.AsMatrix();
+					cameraTransform = transformComponent;
 					break;
 				}
 			}
@@ -145,8 +145,8 @@ namespace Athena
 		{
 			if (mainCamera)
 			{
-				Matrix4 viewProjection = Math::AffineInverse(cameraTransform) * (*mainCamera).GetProjectionMatrix();
-				SceneRenderer::Render(this, viewProjection);
+				Matrix4 viewProjection = Math::AffineInverse(cameraTransform.AsMatrix()) * (*mainCamera).GetProjectionMatrix();
+				SceneRenderer::Render(this, viewProjection, cameraTransform.Translation);
 			}
 		}
 	}

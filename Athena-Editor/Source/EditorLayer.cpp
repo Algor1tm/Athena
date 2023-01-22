@@ -34,7 +34,7 @@ namespace Athena
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
 
-        m_EditorCamera.SetDistance(7.f);
+        m_EditorCamera.SetDistance(400.f);
         m_EditorCamera.Pan({ 0, 0.7f, 0 });
 
 #if 0
@@ -43,7 +43,7 @@ namespace Athena
         Importer3D importer(m_ActiveScene);
         StaticMeshImportInfo info;
         Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
-        importer.ImportStaticMesh("Assets/Meshes/Monkey.obj", info, mesh);
+        importer.ImportStaticMesh("Assets/Meshes/Sphere.fbx", info, mesh);
 
         m_TestCube = m_ActiveScene->CreateEntity();
         m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;

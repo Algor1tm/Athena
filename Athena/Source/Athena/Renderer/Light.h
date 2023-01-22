@@ -9,7 +9,7 @@ namespace Athena
 	struct DirectionalLight
 	{
 		LinearColor Color = LinearColor::White;
-		Vector3 Direction = Vector3::Down();
+		Vector3 Direction = Vector3(-1, -1, -1);
 		float Intensity = 1;
 	};
 

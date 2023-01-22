@@ -18,7 +18,7 @@ namespace Athena
 
 	}
 
-	void SceneRenderer::Render(Scene* scene, const Matrix4& cameraViewProjection)
+	void SceneRenderer::Render(Scene* scene, const Matrix4& cameraViewProjection, const Vector3& cameraPosition)
 	{
 		Renderer2D::BeginScene(cameraViewProjection);
 
@@ -41,7 +41,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(cameraViewProjection, scene->GetEnvironment());
+		Renderer::BeginScene(cameraViewProjection, cameraPosition, scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)
@@ -82,7 +82,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(viewProjection, scene->GetEnvironment());
+		Renderer::BeginScene(viewProjection, camera.GetPosition(), scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)

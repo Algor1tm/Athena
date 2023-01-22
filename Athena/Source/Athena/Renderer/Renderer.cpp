@@ -22,6 +22,7 @@ namespace Athena
 		struct SceneData
 		{
 			Matrix4 ViewProjectionMatrix;
+			Vector4 CameraPosition;
 			Matrix4 TransformMatrix;
 			int32 EntityID = -1;
 		};
@@ -78,9 +79,10 @@ namespace Athena
 		RenderCommand::SetViewport(0, 0, width, height);
 	}
 
-	void Renderer::BeginScene(const Matrix4& viewProjection, Ref<Environment> environment)
+	void Renderer::BeginScene(const Matrix4& viewProjection, const Vector3& cameraPosition, const Ref<Environment>& environment)
 	{
 		s_Data.SceneDataBuffer.ViewProjectionMatrix = viewProjection;
+		s_Data.SceneDataBuffer.CameraPosition = cameraPosition;
 		s_Data.PBRShader->Bind();
 
 		s_Data.ActiveEnvironment = environment;

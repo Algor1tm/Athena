@@ -45,6 +45,10 @@ namespace Athena
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
 			desc.Metalness = metalness;
 
+		float ambientOcclusion;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, ambientOcclusion))
+			desc.AmbientOcclusion = ambientOcclusion;
+
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(metalnessWorkflow ? aiTextureType_BASE_COLOR : aiTextureType_DIFFUSE, 0), texFilepath))
 		{
@@ -53,7 +57,6 @@ namespace Athena
 			desc.AlbedoTexture = Texture2D::Create(path);
 			desc.UseAlbedoTexture = true;
 		}
-		
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))
 		{
 			Filepath path = currentFilepath;
@@ -61,21 +64,26 @@ namespace Athena
 			desc.NormalMap = Texture2D::Create(path);
 			desc.UseNormalMap = true;
 		}
-		
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE_ROUGHNESS, 0), texFilepath))
+		if (AI_SUCCESS == aimaterial->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &texFilepath))
 		{
 			Filepath path = currentFilepath;
 			path.replace_filename(texFilepath.C_Str());
 			desc.RoughnessMap = Texture2D::Create(path);
 			desc.UseRoughnessMap = true;
 		}
-		
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_METALNESS, 0), texFilepath))
+		if (AI_SUCCESS == aimaterial->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &texFilepath))
 		{
 			Filepath path = currentFilepath;
 			path.replace_filename(texFilepath.C_Str());
 			desc.MetalnessMap = Texture2D::Create(path);
 			desc.UseMetalnessMap = true;
+		}
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT_OCCLUSION, 0), texFilepath))
+		{
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.AmbientOcclusionMap = Texture2D::Create(path);
+			desc.UseAmbientOcclusionMap = true;
 		}
 
 		return Material::Create(desc);

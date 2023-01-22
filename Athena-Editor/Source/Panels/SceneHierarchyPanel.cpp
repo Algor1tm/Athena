@@ -723,6 +723,33 @@ namespace Athena
 							return true;
 						});
 					ImGui::PopID();
+					ImGui::PushID("AmbientOcclusion");
+					UI::DrawController("Ambient Occlusion", 50.f, [&matDesc, whiteTexRendererID]
+						{
+							float imageSize = 45.f;
+
+							void* rendererID;
+							if (matDesc.AmbientOcclusionMap)
+								rendererID = matDesc.AmbientOcclusionMap->GetRendererID();
+							else
+								rendererID = whiteTexRendererID;
+
+							if (ImGui::ImageButton("##AmbientOcclusionMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+							{
+								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								if (!filepath.empty())
+								{
+									matDesc.AmbientOcclusionMap = Texture2D::Create(filepath);
+									matDesc.UseAmbientOcclusionMap = true;
+								}
+							}
+							ImGui::SameLine();
+							ImGui::Checkbox("Use", &matDesc.UseAmbientOcclusionMap);
+							ImGui::SameLine();
+							ImGui::SliderFloat("##AmbientOcclusion", &matDesc.AmbientOcclusion, 0.f, 1.f);
+							return true;
+						});
+					ImGui::PopID();
 					UI::EndDrawControllers();
 				}
 

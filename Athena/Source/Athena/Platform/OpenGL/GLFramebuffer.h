@@ -3,7 +3,7 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Renderer/Framebuffer.h"
 
-// TODO: Remove
+
 typedef unsigned int GLenum;
 
 namespace Athena

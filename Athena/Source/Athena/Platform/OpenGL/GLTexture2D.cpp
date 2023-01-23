@@ -1,5 +1,6 @@
 #include "GLTexture2D.h"
 
+#include <glad/glad.h>
 #include <stb_image/stb_image.h>
 
 
@@ -73,7 +74,7 @@ namespace Athena
 
 			if (channels == 1)
 			{
-				GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
+				const GLint swizzleMask[] = { GL_RED, GL_RED, GL_RED, GL_ONE };
 				glTextureParameteriv(m_GLRendererID, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 			}
 

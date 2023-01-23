@@ -1,8 +1,11 @@
 #include "Texture.h"
 
 #include "Athena/Renderer/Renderer.h"
+
 #include "Athena/Platform/OpenGL/GLTexture2D.h"
 #include "Athena/Platform/Direct3D/D3D11Texture2D.h"
+
+#include "Athena/Platform/OpenGL/GLCubemap.h"
 
 
 namespace Athena
@@ -90,5 +93,24 @@ namespace Athena
 		m_TexCoords[1] = { max.x / width, min.y / height };
 		m_TexCoords[2] = { max.x / width, max.y / height };
 		m_TexCoords[3] = { min.x / width, max.y / height };
+	}
+
+	Ref<Cubemap> Cubemap::Create(const std::array<Filepath, 6>& faces)
+	{
+		for(const auto& path: faces)
+			ATN_CORE_ASSERT(std::filesystem::exists(path), "Invalid filepath for Cubemap!");
+
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLCubemap>(faces); break;
+		//case RendererAPI::API::Direct3D:
+		//	return CreateRef<D3D11Cubemap>(path); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
 	}
 }

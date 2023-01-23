@@ -39,6 +39,7 @@ namespace Athena
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
 		glEnable(GL_LINE_SMOOTH);
 

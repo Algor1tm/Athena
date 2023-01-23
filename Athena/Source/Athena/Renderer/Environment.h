@@ -11,5 +11,6 @@ namespace Athena
 	struct Environment
 	{
 		DirectionalLight DirLight;
+		Ref<Cubemap> Skybox;
 	};
 }

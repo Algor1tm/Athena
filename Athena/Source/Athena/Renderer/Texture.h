@@ -13,16 +13,10 @@ namespace Athena
 	public:
 		virtual ~Texture() = default;
 
-		virtual uint32 GetWidth() const = 0;
-		virtual uint32 GetHeight() const = 0;
-
 		inline void* GetRendererID() const { return (void*)m_RendererID; };
 
-		virtual void SetData(const void* data, uint32 size) = 0;
 		virtual void Bind(uint32 slot = 0) const = 0;
-
 		virtual bool IsLoaded() const = 0;
-		virtual const Filepath& GetFilepath() const = 0;
 
 	protected:
 		uint64 m_RendererID = 0;
@@ -35,6 +29,12 @@ namespace Athena
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const Filepath& path);
 		static Ref<Texture2D> WhiteTexture();
+
+		virtual uint32 GetWidth() const = 0;
+		virtual uint32 GetHeight() const = 0;
+
+		virtual void SetData(const void* data, uint32 size) = 0;
+		virtual const Filepath& GetFilepath() const = 0;
 
 		bool operator==(const Texture2D& other) const { return GetRendererID() == other.GetRendererID(); }
 
@@ -60,5 +60,12 @@ namespace Athena
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
+	};
+
+
+	class ATHENA_API Cubemap: public Texture
+	{
+	public:
+		static Ref<Cubemap> Create(const std::array<Filepath, 6>& faces);
 	};
 }

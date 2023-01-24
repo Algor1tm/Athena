@@ -11,7 +11,7 @@ namespace Athena
 	{
 	public:
 		D3D11Texture2D(uint32 width, uint32 height);
-		D3D11Texture2D(const Filepath& path);
+		D3D11Texture2D(const Texture2DDescription& desc);
 		virtual ~D3D11Texture2D();
 
 		virtual inline uint32 GetWidth() const override { return m_Width; }

@@ -1,4 +1,5 @@
 #include "GLTexture2D.h"
+#include "Shared.h"
 
 #include <glad/glad.h>
 #include <stb_image/stb_image.h>
@@ -23,46 +24,35 @@ namespace Athena
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 
-	GLTexture2D::GLTexture2D(const Filepath& path)
-		: m_Path(path)
+	GLTexture2D::GLTexture2D(const Texture2DDescription& desc)
+		: m_Path(desc.TexturePath)
 	{
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
 
-		unsigned char* data;
-		data = stbi_load(path.string().data(), &width, &height, &channels, 0);
+		void* data;
+		if(desc.HDR)
+			data = stbi_loadf(m_Path.string().data(), &width, &height, &channels, 0); // float*
+		else
+			data = stbi_load(m_Path.string().data(), &width, &height, &channels, 0);  // unsigned char*
 
 		if (data)
 		{
 			m_Width = width;
 			m_Height = height;
+
+			if (!GetGLFormats(channels, desc.HDR, m_InternalFormat, m_DataFormat))
+			{
+				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", desc.TexturePath, channels);
+				stbi_image_free(data);
+				return;
+			}
+
 			m_IsLoaded = true;
-
-			GLenum internalFormat = 0, dataFormat = 0;
-			if (channels == 4)
-			{
-				internalFormat = GL_RGBA8;
-				dataFormat = GL_RGBA;
-			}
-			else if (channels == 3)
-			{
-				internalFormat = GL_RGB8;
-				dataFormat = GL_RGB;
-			}
-			else if (channels == 1)
-			{
-				internalFormat = GL_R8;
-				dataFormat = GL_RED;
-			}
-			
-			m_InternalFormat = internalFormat;
-			m_DataFormat = dataFormat;
-
-			ATN_CORE_ASSERT(m_InternalFormat * m_DataFormat, "Texture format not supported!");
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_GLRendererID);
 			m_RendererID = m_GLRendererID;
-			glTextureStorage2D(m_GLRendererID, 1, internalFormat, m_Width, m_Height);
+			glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);
 
 			glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -70,7 +60,7 @@ namespace Athena
 			glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-			glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, data);
+			glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, desc.HDR ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
 
 			if (channels == 1)
 			{
@@ -82,7 +72,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load image for Texture2D! (path = '{0}')", path);
+			ATN_CORE_ERROR("Failed to load image for Texture2D! (path = '{0}')", m_Path);
 		}
 	}
 

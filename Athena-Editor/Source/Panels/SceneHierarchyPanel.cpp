@@ -428,7 +428,7 @@ namespace Athena
 									std::string_view extent = path.substr(path.size() - 4, path.size());
 									if (extent == ".png\0")
 									{
-										sprite.Texture = Texture2D::Create(String(path));
+										sprite.Texture = Texture2D::Create(Filepath(path));
 										sprite.Color = LinearColor::White;
 									}
 									else
@@ -443,16 +443,16 @@ namespace Athena
 							ImVec2 cursor = ImGui::GetCursorPos();
 							if (ImGui::Button("Browse"))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									sprite.Texture = Texture2D::Create(filepath);
 									sprite.Color = LinearColor::White;
-									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.data());
+									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.string());
 								}
 								else
 								{
-									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.data());
+									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.string());
 								}
 							}
 
@@ -630,7 +630,7 @@ namespace Athena
 
 							if (ImGui::ImageButton("##AlbedoTexture", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									matDesc.AlbedoTexture = Texture2D::Create(filepath);
@@ -657,7 +657,7 @@ namespace Athena
 
 							if (ImGui::ImageButton("##Normals", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									matDesc.NormalMap = Texture2D::Create(filepath);
@@ -682,7 +682,7 @@ namespace Athena
 
 							if (ImGui::ImageButton("##RoughnessMap", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									matDesc.RoughnessMap = Texture2D::Create(filepath);
@@ -709,7 +709,7 @@ namespace Athena
 
 							if (ImGui::ImageButton("##MetalnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									matDesc.MetalnessMap = Texture2D::Create(filepath);
@@ -736,7 +736,7 @@ namespace Athena
 
 							if (ImGui::ImageButton("##AmbientOcclusionMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 							{
-								String filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 								if (!filepath.empty())
 								{
 									matDesc.AmbientOcclusionMap = Texture2D::Create(filepath);

@@ -46,7 +46,7 @@ namespace Athena
 
 
 		FramebufferDescription fbDesc;
-		fbDesc.Attachments = { FramebufferTextureFormat::RGBA8, FramebufferTextureFormat::RED_INTEGER, FramebufferTextureFormat::DEPTH24STENCIL8 };
+		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Samples = 4;

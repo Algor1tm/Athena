@@ -5,23 +5,23 @@ namespace Athena
 {
 	static uint32 s_MaxFramebufferSize = 8192;
 
-	static bool IsDepthFormat(FramebufferTextureFormat format)
+	static bool IsDepthFormat(TextureFormat format)
 	{
 		switch (format)
 		{
-		case FramebufferTextureFormat::DEPTH24STENCIL8: return true;
+		case TextureFormat::DEPTH24STENCIL8: return true;
 		}
 
 		return false;
 	}
 
-	static DXGI_FORMAT AthenaFormatToDXGIFormat(FramebufferTextureFormat format)
+	static DXGI_FORMAT AthenaFormatToDXGIFormat(TextureFormat format)
 	{
 		switch (format)
 		{
-		case FramebufferTextureFormat::RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM;
-		case FramebufferTextureFormat::RED_INTEGER: return DXGI_FORMAT_R32_SINT; 
-		case FramebufferTextureFormat::DEPTH24STENCIL8: return DXGI_FORMAT_D24_UNORM_S8_UINT;
+		case TextureFormat::RGBA8: return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case TextureFormat::RED_INTEGER: return DXGI_FORMAT_R32_SINT;
+		case TextureFormat::DEPTH24STENCIL8: return DXGI_FORMAT_D24_UNORM_S8_UINT;
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -36,13 +36,13 @@ namespace Athena
 		const auto& attachments = desc.Attachments.Attachments;
 		for (SIZE_T i = 0; i < attachments.size(); ++i)
 		{
-			if (attachments[i].TextureFormat == FramebufferTextureFormat::RGBA8)
+			if (attachments[i].Format == TextureFormat::RGBA8)
 				m_ClearColorTargetIndex = i;
 
-			if (!IsDepthFormat(desc.Attachments.Attachments[i].TextureFormat))
-				m_RenderTargetsDescriptions.emplace_back(attachments[i].TextureFormat);
+			if (!IsDepthFormat(desc.Attachments.Attachments[i].Format))
+				m_RenderTargetsDescriptions.emplace_back(attachments[i].Format);
 			else
-				m_DepthStencilDescription = attachments[i].TextureFormat;
+				m_DepthStencilDescription = attachments[i].Format;
 		}
 
 		Recreate();
@@ -63,22 +63,22 @@ namespace Athena
 			//Attachments
 			for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
 			{
-				switch (m_RenderTargetsDescriptions[i].TextureFormat)
+				switch (m_RenderTargetsDescriptions[i].Format)
 				{
-				case FramebufferTextureFormat::RGBA8:
+				case TextureFormat::RGBA8:
 					AttachColorTexture(m_Description.Samples, DXGI_FORMAT_R8G8B8A8_UNORM, m_Description.Width, m_Description.Height, i);
 					break;
-				case FramebufferTextureFormat::RED_INTEGER:
+				case TextureFormat::RED_INTEGER:
 					AttachColorTexture(m_Description.Samples, DXGI_FORMAT_R32_SINT, m_Description.Width, m_Description.Height, i);
 				}
 			}
 		}
 
-		if (m_DepthStencilDescription.TextureFormat != FramebufferTextureFormat::NONE)
+		if (m_DepthStencilDescription.Format != TextureFormat::NONE)
 		{
-			switch (m_DepthStencilDescription.TextureFormat)
+			switch (m_DepthStencilDescription.Format)
 			{
-			case FramebufferTextureFormat::DEPTH24STENCIL8:
+			case TextureFormat::DEPTH24STENCIL8:
 				AttachDepthTexture(m_Description.Samples, DXGI_FORMAT_D24_UNORM_S8_UINT, m_Description.Width, m_Description.Height);
 				break;
 			}
@@ -176,7 +176,7 @@ namespace Athena
 			{
 				D3D11CurrentContext::DeviceContext->ResolveSubresource(m_ResolvedAttachments[i].SingleSampledTexture.Get(), 0,
 					m_Attachments[i].RenderTargetTexture.Get(), 0,
-					AthenaFormatToDXGIFormat(m_RenderTargetsDescriptions[i].TextureFormat));
+					AthenaFormatToDXGIFormat(m_RenderTargetsDescriptions[i].Format));
 			}
 		}
 	}

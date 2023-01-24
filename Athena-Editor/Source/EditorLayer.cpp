@@ -59,6 +59,11 @@ namespace Athena
             "Assets/EnvironmentMaps/Skybox/back.jpg",
         };
         m_ActiveScene->GetEnvironment()->Skybox = Cubemap::Create(faces);
+
+        Texture2DDescription desc;
+        desc.TexturePath = "Assets/EnvironmentMaps/lago_disola_4k.hdr";
+        desc.HDR = true;
+        auto hdrTexture = Texture2D::Create(desc);
 #endif
         m_SceneHierarchy->SetContext(m_EditorScene);
     }
@@ -233,7 +238,7 @@ namespace Athena
                             if (target.HasComponent<SpriteComponent>())
                             {
                                 auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = Texture2D::Create(String(path));
+                                sprite.Texture = Texture2D::Create(Filepath(path));
                                 sprite.Color = LinearColor::White;
                             }
                         }
@@ -548,18 +553,18 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        String filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
+        Filepath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.data());
+            ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.string());
     }
 
     void EditorLayer::SaveSceneAs(const Filepath& path)
     {
         SceneSerializer serializer(m_ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string().data());
+        ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string());
     }
 
     void EditorLayer::OpenScene()
@@ -567,11 +572,11 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        String filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
+        Filepath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.data());
+            ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.string());
     }
 
     void EditorLayer::OpenScene(const Filepath& path)

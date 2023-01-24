@@ -1,4 +1,5 @@
 #include "GLFramebuffer.h"
+#include "Shared.h"
 
 #include <glad/glad.h>
 
@@ -7,43 +8,30 @@ namespace Athena
 {
 	static uint32 s_MaxFramebufferSize = 8192;
 
-
-	static GLenum TextureTarget(bool multisample)
+	static GLenum GLTextureTarget(bool multisample)
 	{
 		return multisample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 	}
 
 	static void CreateTextures(bool multisample, uint32* outIDs, SIZE_T count)
 	{
-		glCreateTextures(TextureTarget(multisample), (GLsizei)count, outIDs);
+		glCreateTextures(GLTextureTarget(multisample), (GLsizei)count, outIDs);
 	}
 
 	static void BindTexture(bool multisample, uint32 id)
 	{
-		glBindTexture(TextureTarget(multisample), id);
+		glBindTexture(GLTextureTarget(multisample), id);
 	}
 
-	static bool IsDepthFormat(FramebufferTextureFormat format)
+	static bool IsDepthFormat(TextureFormat format)
 	{
 		switch (format)
 		{
-			case FramebufferTextureFormat::DEPTH24STENCIL8: return true;
+			case TextureFormat::DEPTH24STENCIL8: return true;
+			case TextureFormat::DEPTH32: return true;
 		}
 
 		return false;
-	}
-
-	static GLenum TextureFormatToGLenum(FramebufferTextureFormat format)
-	{
-		switch (format)
-		{
-		case FramebufferTextureFormat::RED_INTEGER: return GL_RED_INTEGER;
-		case FramebufferTextureFormat::RGBA8: return GL_RGBA8;
-		case FramebufferTextureFormat::DEPTH24STENCIL8: return GL_DEPTH24_STENCIL8;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown texture format!");
-		return GL_NONE;
 	}
 
 
@@ -54,7 +42,7 @@ namespace Athena
 
 		for (auto format : desc.Attachments.Attachments)
 		{
-			if (!IsDepthFormat(format.TextureFormat))
+			if (!IsDepthFormat(format.Format))
 				m_ColorAttachmentDescriptions.emplace_back(format);
 			else
 				m_DepthAttachmentDescription = format;
@@ -146,7 +134,7 @@ namespace Athena
 		
 		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
 		
-		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, TextureFormatToGLenum(desc.TextureFormat), GL_INT, &value);
+		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, TextureFormatToGLenum(desc.Format), GL_INT, &value);
 	}
 
 	void GLFramebuffer::ClearColorAndDepth(const LinearColor& color)
@@ -200,27 +188,34 @@ namespace Athena
 			for (SIZE_T i = 0; i < attachments.size(); ++i)
 			{
 				BindTexture(multisample, attachments[i]);
-				switch (m_ColorAttachmentDescriptions[i].TextureFormat)
+				switch (m_ColorAttachmentDescriptions[i].Format)
 				{
-				case FramebufferTextureFormat::RGBA8:
+				case TextureFormat::RGBA8:
 					AttachColorTexture(attachments[i], samples, GL_RGBA8, GL_RGBA, m_Description.Width, m_Description.Height, i);
 					break;
 
-				case FramebufferTextureFormat::RED_INTEGER:
+				case TextureFormat::RGB16F:
+					AttachColorTexture(attachments[i], samples, GL_RGB16F, GL_RGB, m_Description.Width, m_Description.Height, i);
+					break;
+
+				case TextureFormat::RED_INTEGER:
 					AttachColorTexture(attachments[i], samples, GL_R32I, GL_RED_INTEGER, m_Description.Width, m_Description.Height, i);
-					
+					break;
 				}
 			}
 		}
 
-		if (m_DepthAttachmentDescription.TextureFormat != FramebufferTextureFormat::NONE)
+		if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
 		{
 			CreateTextures(multisample, &m_DepthAttachment, 1);
 			BindTexture(multisample, m_DepthAttachment);
-			switch (m_DepthAttachmentDescription.TextureFormat)
+			switch (m_DepthAttachmentDescription.Format)
 			{
-			case FramebufferTextureFormat::DEPTH24STENCIL8:
+			case TextureFormat::DEPTH24STENCIL8:
 				AttachDepthTexture(m_DepthAttachment, samples, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT, m_Description.Width, m_Description.Height);
+				break;
+			case TextureFormat::DEPTH32:
+				AttachDepthTexture(m_DepthAttachment, samples, GL_DEPTH_COMPONENT32, GL_DEPTH_ATTACHMENT, m_Description.Width, m_Description.Height);
 				break;
 			}
 		}
@@ -245,7 +240,7 @@ namespace Athena
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, TextureTarget(samples > 1), id, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, GLTextureTarget(samples > 1), id, 0);
 	}
 
 	void GLFramebuffer::AttachDepthTexture(uint32 id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height)
@@ -265,6 +260,12 @@ namespace Athena
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, TextureTarget(samples > 1), id, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1), id, 0);
+	}
+
+	void GLFramebuffer::ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentIndex, GLTextureTarget(textureTarget), (uint32)(uint64)rendererID, 0);
 	}
 }

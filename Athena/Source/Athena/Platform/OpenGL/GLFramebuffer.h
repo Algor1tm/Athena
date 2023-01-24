@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Athena/Core/Log.h"
 #include "Athena/Renderer/Framebuffer.h"
 
 
@@ -23,6 +22,7 @@ namespace Athena
 
 		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) override;
 		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) override;
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) override;
 
 		virtual void ClearColorAndDepth(const LinearColor& color) override;
 
@@ -46,7 +46,7 @@ namespace Athena
 		std::vector<uint32> m_ColorAttachments;
 		std::vector<uint32> m_ColorAttachmentsResolved; // if not multisample - invalid
 
-		FramebufferTextureDescription m_DepthAttachmentDescription = FramebufferTextureFormat::NONE;
+		FramebufferTextureDescription m_DepthAttachmentDescription = TextureFormat::NONE;
 		uint32 m_DepthAttachment;
 	};
 }

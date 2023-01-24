@@ -31,16 +31,16 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const Filepath& path)
+	Ref<Texture2D> Texture2D::Create(const Texture2DDescription& desc)
 	{
-		ATN_CORE_ASSERT(std::filesystem::exists(path), "Invalid filepath for Texture2D!");
+		ATN_CORE_ASSERT(std::filesystem::exists(desc.TexturePath), "Invalid filepath for Texture2D!");
 
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<GLTexture2D>(path); break;
+			return CreateRef<GLTexture2D>(desc); break;
 		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Texture2D>(path); break;
+			return CreateRef<D3D11Texture2D>(desc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -106,6 +106,22 @@ namespace Athena
 			return CreateRef<GLCubemap>(faces); break;
 		//case RendererAPI::API::Direct3D:
 		//	return CreateRef<D3D11Cubemap>(path); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
+	Ref<Cubemap> Cubemap::Create(uint32 width, uint32 height, TextureFormat format)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLCubemap>(width, height, format); break;
+			//case RendererAPI::API::Direct3D:
+			//	return CreateRef<D3D11Cubemap>(path); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

@@ -11,6 +11,7 @@ namespace Athena
 	{
 	public:
 		GLCubemap(const std::array<Filepath, 6>& faces);
+		GLCubemap(uint32 width, uint32 height, TextureFormat format);
 		~GLCubemap();
 
 		virtual void Bind(uint32 slot = 0) const override;

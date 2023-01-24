@@ -39,6 +39,7 @@ namespace Athena
 		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) override;
 
 		virtual void ClearColorAndDepth(const LinearColor& color) override;
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) override {};
 
 		virtual void ResolveMutlisampling() override;
 
@@ -58,7 +59,7 @@ namespace Athena
 
 		SIZE_T m_ClearColorTargetIndex;
 
-		FramebufferTextureDescription m_DepthStencilDescription = FramebufferTextureFormat::NONE;
+		FramebufferTextureDescription m_DepthStencilDescription = TextureFormat::NONE;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_DepthStencil;
 	};
 }

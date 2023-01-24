@@ -30,14 +30,14 @@ namespace Athena
 		m_RendererID = (uint64)m_ShaderResourceView.Get();
 	}
 
-	D3D11Texture2D::D3D11Texture2D(const Filepath& path)
-		: m_Path(path)
+	D3D11Texture2D::D3D11Texture2D(const Texture2DDescription& desc)
+		: m_Path(desc.TexturePath)
 	{
 		int width, height, channels;
-		stbi_set_flip_vertically_on_load(1);
+		stbi_set_flip_vertically_on_load(true);
 
 		unsigned char* data;
-		data = stbi_load(path.string().data(), &width, &height, &channels, 0);
+		data = stbi_load(m_Path.string().data(), &width, &height, &channels, 0);
 
 		int pitch = width * channels;
 
@@ -87,7 +87,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load image for Texture2D! (path = '{0}')", path);
+			ATN_CORE_ERROR("Failed to load image for Texture2D! (path = '{0}')", m_Path);
 		}
 	}
 

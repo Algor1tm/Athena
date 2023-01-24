@@ -8,6 +8,33 @@
 
 namespace Athena
 {
+	enum class TextureFormat
+	{
+		NONE = 0,
+
+		// Color
+		RGBA8,
+		RGB16F,
+		RED_INTEGER,
+
+		//Depth/Stencil
+		DEPTH24STENCIL8,
+		DEPTH32
+	};
+
+	enum class TextureTarget
+	{
+		TEXTURE_2D = 0,
+		TEXTURE_2D_MULTISAMPLE = 1,
+
+		TEXTURE_CUBE_MAP_POSITIVE_X = 2,
+		TEXTURE_CUBE_MAP_NEGATIVE_X = 3,
+		TEXTURE_CUBE_MAP_POSITIVE_Y = 4,
+		TEXTURE_CUBE_MAP_NEGATIVE_Y = 5,
+		TEXTURE_CUBE_MAP_POSITIVE_Z = 6,
+		TEXTURE_CUBE_MAP_NEGATIVE_Z = 7,
+	};
+
 	class ATHENA_API Texture
 	{
 	public:
@@ -23,11 +50,26 @@ namespace Athena
 	};
 
 
+	struct Texture2DDescription
+	{
+		Texture2DDescription() = default;
+
+		Texture2DDescription(const Filepath& path)
+			: TexturePath(path) {}
+
+		Texture2DDescription(const char* path)
+			: TexturePath(path) {}
+
+		Filepath TexturePath;
+		bool HDR = false;
+		// TODO: Filter modes, sRGB, TextureWrap
+	};
+
 	class ATHENA_API Texture2D: public Texture
 	{
 	public:
 		static Ref<Texture2D> Create(uint32 width, uint32 height);
-		static Ref<Texture2D> Create(const Filepath& path);
+		static Ref<Texture2D> Create(const Texture2DDescription& desc);
 		static Ref<Texture2D> WhiteTexture();
 
 		virtual uint32 GetWidth() const = 0;
@@ -67,5 +109,6 @@ namespace Athena
 	{
 	public:
 		static Ref<Cubemap> Create(const std::array<Filepath, 6>& faces);
+		static Ref<Cubemap> Create(uint32 width, uint32 height, TextureFormat format);
 	};
 }

@@ -2,30 +2,19 @@
 
 #include "Athena/Core/Core.h"
 #include "Color.h"
+#include "Texture.h"
 
 #include <vector>
 
 
 namespace Athena
 {
-	enum class FramebufferTextureFormat
-	{
-		NONE = 0,
-
-		// Color
-		RGBA8,
-		RED_INTEGER,
-
-		//Depth/Stencil
-		DEPTH24STENCIL8,
-	};
-	
 	struct FramebufferTextureDescription
 	{
-		FramebufferTextureDescription(FramebufferTextureFormat format = FramebufferTextureFormat::NONE)
-			: TextureFormat(format) {}
+		FramebufferTextureDescription(TextureFormat format = TextureFormat::NONE)
+			: Format(format) {}
 
-		FramebufferTextureFormat TextureFormat;
+		TextureFormat Format;
 	};
 	
 	struct FramebufferAttachmentDescription
@@ -61,5 +50,7 @@ namespace Athena
 		virtual void ClearColorAndDepth(const LinearColor& color) = 0;
 
 		virtual void ResolveMutlisampling() = 0;
+
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) = 0;
 	};
 }

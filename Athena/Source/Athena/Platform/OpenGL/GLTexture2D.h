@@ -11,7 +11,7 @@ namespace Athena
 	{
 	public:
 		GLTexture2D(uint32 width, uint32 height);
-		GLTexture2D(const Filepath& path);
+		GLTexture2D(const Texture2DDescription& desc);
 		virtual ~GLTexture2D();
 
 		virtual inline uint32 GetWidth() const override { return m_Width; }

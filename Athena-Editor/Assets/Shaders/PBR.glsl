@@ -84,6 +84,8 @@ layout(binding = 2) uniform sampler2D u_RoughnessMap;
 layout(binding = 3) uniform sampler2D u_MetalnessMap;
 layout(binding = 4) uniform sampler2D u_AmbientOcclusionMap;
 
+layout(binding = 5) uniform samplerCube u_IrradianceMap;
+
 struct VertexOutput
 {
     vec3 WorldPos;
@@ -135,6 +137,11 @@ vec3 FresnelShlick(float cosHalfWayAndView, vec3 reflectivityAtZeroIncidence)
     return reflectivityAtZeroIncidence + (1.0 - reflectivityAtZeroIncidence) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
 }
 
+vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
+}  
+
 void main()
 {
     vec4 albedo = u_Albedo;
@@ -174,33 +181,42 @@ void main()
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
     reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo.rgb, metalness);
 
+    vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
+
     vec3 totalIrradiance = vec3(0.0);
     // Calculate per light
-    vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
-    vec3 lightDirection = -normalize(Light.Direction);
-    vec3 halfWayVector = normalize(viewVector + lightDirection);
+    {
+        vec3 lightDirection = -normalize(Light.Direction);
+        vec3 halfWayVector = normalize(viewVector + lightDirection);
 
-    vec3 radiance = vec3(Light.Color) * Light.Intensity;
+        vec3 radiance = vec3(Light.Color) * Light.Intensity;
 
-    float NDF = DistributionGGX(normal, halfWayVector, roughness);
-    float G = GeometrySmith(normal, viewVector, lightDirection, roughness);
-    vec3 F = FresnelShlick(max(dot(halfWayVector, viewVector), 0.0), reflectivityAtZeroIncidence);
+        float NDF = DistributionGGX(normal, halfWayVector, roughness);
+        float G = GeometrySmith(normal, viewVector, lightDirection, roughness);
+        vec3 F = FresnelShlick(max(dot(halfWayVector, viewVector), 0.0), reflectivityAtZeroIncidence);
 
-    vec3 reflectedLight = F;
-    vec3 absorbedLight = vec3(1.0) - reflectedLight;
+        vec3 reflectedLight = F;
+        vec3 absorbedLight = vec3(1.0) - reflectedLight;
+        
+        absorbedLight *= 1.0 - metalness;
 
-    absorbedLight *= 1.0 - metalness;
+        vec3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(normal, viewVector), 0.0) * max(dot(normal, lightDirection), 0.0) + 0.0001;
+        vec3 specular = numerator / denominator;
 
-    vec3 numerator = NDF * G * F;
-    float denominator = 4.0 * max(dot(normal, viewVector), 0.0) * max(dot(normal, lightDirection), 0.0) + 0.0001;
-    vec3 specular = numerator / denominator;
+        float normalDotLightDir = max(dot(normal, lightDirection), 0.0);
+        totalIrradiance += (absorbedLight * albedo.rgb / PI + specular) * radiance * normalDotLightDir;
+    }
 
-    float normalDotLightDir = max(dot(normal, lightDirection), 0.0);
-    totalIrradiance += (absorbedLight * albedo.rgb / PI + specular) * radiance * normalDotLightDir;
+    vec3 reflectedLight = FresnelSchlickRoughness(max(dot(normal, viewVector), 0.0), reflectivityAtZeroIncidence, roughness); 
+    vec3 absorbedLight = 1.0 - reflectedLight;
+    vec3 irradiance = texture(u_IrradianceMap, normal).rgb;
+    vec3 diffuse = irradiance * albedo.rgb;
 
-
-    vec3 ambient = vec3(0.03) * albedo.rgb * ambientOcclusion;
+    vec3 ambient = absorbedLight * diffuse * ambientOcclusion;
     vec3 color = ambient + totalIrradiance;
+
+    color = pow(color, vec3(1.0/2.2)); 
 
     out_Color = vec4(color, albedo.a);
     out_EntityID = u_EntityID;

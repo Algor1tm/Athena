@@ -12,5 +12,6 @@ namespace Athena
 	{
 		DirectionalLight DirLight;
 		Ref<Cubemap> Skybox;
+		Ref<Cubemap> IrradianceMap;
 	};
 }

@@ -265,6 +265,8 @@ namespace Athena
 
 	void GLFramebuffer::ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID)
 	{
+		m_ColorAttachments[attachmentIndex] = (uint32)(uint64)rendererID;
+
 		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentIndex, GLTextureTarget(textureTarget), (uint32)(uint64)rendererID, 0);
 	}

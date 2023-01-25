@@ -141,4 +141,27 @@ namespace Athena::Math
 		Result[3][3] = static_cast<T>(1);
 		return Result;
 	}
+
+	template <typename T>
+	inline Matrix<T, 4, 4> LookAt(const Vector<T, 3>& eye, const Vector<T, 3>& center, const Vector<T, 3>& up)
+	{
+		const Vector<T, 3> f((center - eye).GetNormalized());
+		const Vector<T, 3> s(Math::Cross(f, up).GetNormalized());
+		const Vector<T, 3> u(Math::Cross(s, f));
+		
+		Matrix<T, 4, 4> result = Matrix<T, 4, 4>::Identity();
+		result[0][0] = s.x;
+		result[1][0] = s.y;
+		result[2][0] = s.z;
+		result[0][1] = u.x;
+		result[1][1] = u.y;
+		result[2][1] = u.z;
+		result[0][2] = -f.x;
+		result[1][2] = -f.y;
+		result[2][2] = -f.z;
+		result[3][0] = -Math::Dot(s, eye);
+		result[3][1] = -Math::Dot(u, eye);
+		result[3][2] = Math::Dot(f, eye);
+		return result;
+	}
 }

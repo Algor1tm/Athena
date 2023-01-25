@@ -17,7 +17,7 @@ void main()
 {
     vec3 uv = a_Position;
     TexCoords = vec3(uv.x, uv.y, -uv.z);
-    vec4 pos = u_ViewProjection * vec4(a_Position, 1);
+    vec4 pos = mat4(mat3(u_ViewProjection)) * vec4(a_Position, 1);
     gl_Position = pos.xyww;
 }
 
@@ -34,7 +34,13 @@ layout(binding = 0) uniform samplerCube u_Skybox;
 
 void main()
 {
-    out_Color = texture(u_Skybox, TexCoords);
-    //out_Color = vec4(TexCoords, 1);
+    vec3 envColor = texture(u_Skybox, TexCoords).rgb;
+
+    const float exposure = 0.7;
+    envColor = vec3(1.0) - exp(-envColor * exposure);
+    envColor = pow(envColor, vec3(1.0/2.2)); 
+
+    out_Color = vec4(envColor, 1);
+
     out_EntityID = -1;
 }

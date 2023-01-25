@@ -40,6 +40,7 @@ namespace Athena
 		static const BufferLayout& GetVertexBufferLayout();
 
 		static void ReloadShaders();
+		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, const Ref<Environment>& envStorage);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};

@@ -4,7 +4,8 @@
 #include "Components.h"
 #include "NativeScript.h"
 
-#include "Athena/Renderer/Renderer2D.h" 
+#include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Scene/SceneRenderer.h"
 #include "Athena/Scripting/ScriptEngine.h"
 
@@ -320,5 +321,16 @@ namespace Athena
 		}
 
 		return m_Materials[index];
+	}
+
+	void Scene::LoadEnvironmentMap(const Filepath& path)
+	{
+		Texture2DDescription desc;
+		desc.TexturePath = path;
+		desc.HDR = true;
+		Ref<Texture2D> equirectangularMap = Texture2D::Create(desc);
+
+		if(equirectangularMap->IsLoaded())
+			Renderer::PreProcessEnvironmentMap(equirectangularMap, m_Environment);
 	}
 }

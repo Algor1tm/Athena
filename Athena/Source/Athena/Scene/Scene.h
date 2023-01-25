@@ -64,6 +64,7 @@ namespace Athena
 		Ref<Material> GetMaterial(int32 index);
 
 		Ref<Environment> GetEnvironment() { return m_Environment; }
+		void LoadEnvironmentMap(const Filepath& path);
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()

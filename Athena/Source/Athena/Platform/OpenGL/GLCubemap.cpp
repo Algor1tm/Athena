@@ -16,10 +16,13 @@ namespace Athena
 			internalFormat = GL_RGB16F;
 			dataFormat = GL_RGB;
 			type = GL_FLOAT;
+			break;
+		}
+		default:
+		{
+			ATN_CORE_ASSERT(false, "Invalid texture format!");
 		}
 		}
-
-		ATN_CORE_ASSERT(false, "Invalid texture format!");
 	}
 
 	GLCubemap::GLCubemap(const std::array<Filepath, 6>& faces)

@@ -12,7 +12,7 @@ namespace Athena
 		static void Init();
 		static void Shutdown();
 
-		static void Render(Scene* scene, const Matrix4& cameraViewProjection, const Vector3& cameraPosition);
+		static void Render(Scene* scene, const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 		static void RenderEditorScene(Scene* scene, const EditorCamera& camera);
 	};
 }

@@ -40,8 +40,63 @@ namespace Athena
 		return GL_NONE;
 	}
 
-	inline bool GetGLFormats(int channels, bool HDR, GLenum& internalFormat, GLenum& dataFormat)
+	inline GLenum AthenaTextureWrapToGLenum(TextureWrap wrap)
 	{
+		switch (wrap)
+		{
+		case TextureWrap::REPEAT: return GL_REPEAT;
+		case TextureWrap::CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+		case TextureWrap::MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
+		case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return GL_MIRROR_CLAMP_TO_EDGE;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown texture wrap!");
+		return GL_NONE;
+	}
+
+	inline GLenum AthenaTextureFilterToGLenum(TextureFilter filter)
+	{
+		switch (filter)
+		{
+		case TextureFilter::LINEAR: return GL_LINEAR;
+		case TextureFilter::NEAREST: return GL_NEAREST;
+		case TextureFilter::LINEAR_MIPMAP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown texture filter!");
+		return GL_NONE;
+	}
+
+	inline void GetGLFormatAndType(TextureFormat format, GLenum& internalFormat, GLenum& dataFormat, GLenum& type)
+	{
+		switch (format)
+		{
+		case TextureFormat::RGB16F:
+		{
+			internalFormat = GL_RGB16F;
+			dataFormat = GL_RGB;
+			type = GL_FLOAT;
+			break;
+		}
+		case TextureFormat::RGBA8:
+		{
+			internalFormat = GL_RGBA8;
+			dataFormat = GL_RGBA;
+			type = GL_UNSIGNED_BYTE;
+			break;
+		}
+		default:
+		{
+			ATN_CORE_ASSERT(false, "Invalid texture format!");
+		}
+		}
+	}
+
+	inline bool GetGLFormats(int channels, bool HDR, bool sRGB, GLenum& internalFormat, GLenum& dataFormat)
+	{
+		if ((HDR && sRGB))
+			return false;
+
 		if (channels == 1)
 		{
 			internalFormat = HDR ? GL_R16F : GL_R8;
@@ -49,12 +104,34 @@ namespace Athena
 		}
 		else if (channels == 3)
 		{
-			internalFormat = HDR ? GL_RGB16F : GL_RGB8;
+			if (HDR)
+			{
+				internalFormat = GL_RGB16F;
+			}
+			else
+			{
+				if (sRGB)
+					internalFormat = GL_SRGB8;
+				else
+					internalFormat = GL_RGB8;
+			}
+
 			dataFormat = GL_RGB;
 		}
 		else if (channels == 4)
 		{
-			internalFormat = HDR ? GL_RGBA16F : GL_RGBA8;
+			if (HDR)
+			{
+				internalFormat = GL_RGBA16F;
+			}
+			else
+			{
+				if (sRGB)
+					internalFormat = GL_SRGB8_ALPHA8;
+				else
+					internalFormat = GL_RGBA8;
+			}
+
 			dataFormat = GL_RGBA;
 		}
 		else

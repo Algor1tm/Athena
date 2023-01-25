@@ -146,8 +146,9 @@ namespace Athena
 		{
 			if (mainCamera)
 			{
-				Matrix4 viewProjection = Math::AffineInverse(cameraTransform.AsMatrix()) * (*mainCamera).GetProjectionMatrix();
-				SceneRenderer::Render(this, viewProjection, cameraTransform.Translation);
+				Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
+				Matrix4 projectionMatrix = (*mainCamera).GetProjectionMatrix();
+				SceneRenderer::Render(this, viewMatrix, projectionMatrix);
 			}
 		}
 	}

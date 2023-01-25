@@ -7,90 +7,15 @@
 
 namespace Athena
 {
-	static void GetGLFormatAndType(TextureFormat format, GLenum& internalFormat, GLenum& dataFormat, GLenum& type)
+	GLCubemap::GLCubemap(const CubemapDescription& desc)
 	{
-		switch (format)
+		if (!desc.Faces[0].second.empty())
 		{
-		case TextureFormat::RGB16F:
-		{
-			internalFormat = GL_RGB16F;
-			dataFormat = GL_RGB;
-			type = GL_FLOAT;
-			break;
+			LoadFromFile(desc);
 		}
-		default:
+		else
 		{
-			ATN_CORE_ASSERT(false, "Invalid texture format!");
-		}
-		}
-	}
-
-	GLCubemap::GLCubemap(const std::array<Filepath, 6>& faces)
-	{
-		stbi_set_flip_vertically_on_load(false);
-
-		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
-		m_RendererID = m_GLRendererID;
-
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
-		m_IsLoaded = true;
-		for (uint32 i = 0; i < faces.size(); ++i)
-		{
-			int width, height, channels;
-
-			unsigned char* data;
-			data = stbi_load(faces[i].string().data(), &width, &height, &channels, 0);
-
-			if (!data)
-			{
-				ATN_CORE_ERROR("Failed to load texture for Cubemap! (path = '{0}')", faces[i]);
-				m_IsLoaded = false;
-				break;
-			}
-
-			GLenum internalFormat = 0, dataFormat = 0;
-			if (!GetGLFormats(channels, false, internalFormat, dataFormat))
-			{
-				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", faces[i], channels);
-				m_IsLoaded = false;
-				stbi_image_free(data);
-				break;
-			}
-
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
-
-			stbi_image_free(data);
-		}
-	}
-
-	GLCubemap::GLCubemap(uint32 width, uint32 height, TextureFormat format)
-	{
-		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
-		m_RendererID = m_GLRendererID;
-
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
-		m_IsLoaded = true;
-
-		for (uint32 i = 0; i < 6; ++i)
-		{
-			GLenum internalFormat, dataFormat, type;
-			GetGLFormatAndType(format, internalFormat, dataFormat, type);
-
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, width, height, 0, dataFormat, type, nullptr);
+			PreAllocate(desc);
 		}
 	}
 
@@ -107,5 +32,81 @@ namespace Athena
 	bool GLCubemap::IsLoaded() const
 	{
 		return m_IsLoaded;
+	}
+
+	void GLCubemap::LoadFromFile(const CubemapDescription& desc)
+	{
+		stbi_set_flip_vertically_on_load(false);
+
+		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
+		m_RendererID = m_GLRendererID;
+
+		ApplyTexParamters(desc);
+
+		for (const auto& [target, path] : desc.Faces)
+		{
+			int width, height, channels;
+
+			unsigned char* data;
+			data = stbi_load(path.string().data(), &width, &height, &channels, 0);
+
+			if (!data)
+			{
+				ATN_CORE_ERROR("Failed to load texture for Cubemap! (path = '{0}')", path);
+				m_IsLoaded = false;
+				break;
+			}
+
+			GLenum internalFormat = 0, dataFormat = 0;
+			if (!GetGLFormats(channels, desc.HDR, desc.sRGB, internalFormat, dataFormat))
+			{
+				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", path, channels);
+				m_IsLoaded = false;
+				stbi_image_free(data);
+				break;
+			}
+
+			glTexImage2D(GLTextureTarget(target), 0, internalFormat, width, height, 0, dataFormat, desc.HDR ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
+
+			stbi_image_free(data);
+		}
+	}
+
+	void GLCubemap::PreAllocate(const CubemapDescription& desc)
+	{
+		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
+		m_RendererID = m_GLRendererID;
+
+		ApplyTexParamters(desc);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
+
+		GLenum internalFormat, dataFormat, type;
+		GetGLFormatAndType(desc.Format, internalFormat, dataFormat, type);
+
+		for (uint32 i = 0; i < 6; ++i)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, desc.Width, desc.Height, 0, dataFormat, type, nullptr);
+		}
+
+		m_IsLoaded = true;
+	}
+
+	void GLCubemap::ApplyTexParamters(const CubemapDescription& desc)
+	{
+		GLenum minfilter = AthenaTextureFilterToGLenum(desc.MinFilter);
+		GLenum magfilter = AthenaTextureFilterToGLenum(desc.MagFilter);
+
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);
+
+		GLenum wrap = AthenaTextureWrapToGLenum(desc.Wrap);
+
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_R, wrap);
+
+		if (desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
+			glGenerateTextureMipmap(m_GLRendererID);
 	}
 }

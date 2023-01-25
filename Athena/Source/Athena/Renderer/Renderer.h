@@ -27,7 +27,7 @@ namespace Athena
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginScene(const Matrix4& viewProjection, const Vector3& cameraPosition, const Ref<Environment>& environment);
+		static void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix, const Ref<Environment>& environment);
 		static void EndScene();
 
 		static void BeginFrame();

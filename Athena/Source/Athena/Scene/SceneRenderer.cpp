@@ -18,9 +18,9 @@ namespace Athena
 
 	}
 
-	void SceneRenderer::Render(Scene* scene, const Matrix4& cameraViewProjection, const Vector3& cameraPosition)
+	void SceneRenderer::Render(Scene* scene, const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
 	{
-		Renderer2D::BeginScene(cameraViewProjection);
+		Renderer2D::BeginScene(viewMatrix * projectionMatrix);
 
 		auto quads = scene->GetAllEntitiesWith<TransformComponent, SpriteComponent>();
 		for (auto entity : quads)
@@ -41,7 +41,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(cameraViewProjection, cameraPosition, scene->GetEnvironment());
+		Renderer::BeginScene(viewMatrix, projectionMatrix, scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)
@@ -60,7 +60,10 @@ namespace Athena
 
 	void SceneRenderer::RenderEditorScene(Scene* scene, const EditorCamera& camera)
 	{
-		auto viewProjection = camera.GetViewProjectionMatrix();
+		Matrix4 viewMatrix = camera.GetViewMatrix();
+		Matrix4 projectionMatrix = camera.GetProjectionMatrix();
+
+		Matrix4 viewProjection = viewMatrix * projectionMatrix;
 		Renderer2D::BeginScene(viewProjection);
 
 		auto quads = scene->GetAllEntitiesWith<TransformComponent, SpriteComponent>();
@@ -82,7 +85,7 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(viewProjection, camera.GetPosition(), scene->GetEnvironment());
+		Renderer::BeginScene(viewMatrix, projectionMatrix, scene->GetEnvironment());
 
 		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : entities)

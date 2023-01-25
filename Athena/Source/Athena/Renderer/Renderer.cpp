@@ -20,17 +20,18 @@ namespace Athena
 		Ref<Shader> PBRShader;
 		Ref<Shader> SkyboxShader;
 		Ref<Shader> EquirectangularToCubemapShader;
-		Ref<Shader> ConvoluteEnvMapShader;
+		Ref<Shader> GenIrradianceMapShader;
 
-		Ref<VertexBuffer> SkyboxVertexBuffer;
+		Ref<VertexBuffer> CubeVertexBuffer;
 
 		Ref<Environment> ActiveEnvironment;
 
 		struct SceneData
 		{
-			Matrix4 ViewProjectionMatrix;
-			Vector4 CameraPosition;
+			Matrix4 ViewMatrix;
+			Matrix4 ProjectionMatrix;
 			Matrix4 TransformMatrix;
+			Vector4 CameraPosition;
 			int32 EntityID = -1;
 		};
 
@@ -70,11 +71,11 @@ namespace Athena
 
 		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/PBR");
 
-		BufferLayout skyBoxVBLayout = { { ShaderDataType::Float3, "a_Position" } };
+		BufferLayout cubeVBLayout = { { ShaderDataType::Float3, "a_Position" } };
 
-		s_Data.SkyboxShader = Shader::Create(skyBoxVBLayout, "Assets/Shaders/Skybox");
-		s_Data.EquirectangularToCubemapShader = Shader::Create(skyBoxVBLayout, "Assets/Shaders/EquirectangularToCubemap");
-		s_Data.ConvoluteEnvMapShader = Shader::Create(skyBoxVBLayout, "Assets/Shaders/ConvoluteEnvMap");
+		s_Data.SkyboxShader = Shader::Create(cubeVBLayout, "Assets/Shaders/Skybox");
+		s_Data.EquirectangularToCubemapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/EquirectangularToCubemap");
+		s_Data.GenIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/GenIrradianceMap");
 		// Cube
 		uint32 indices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 vertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -82,11 +83,11 @@ namespace Athena
 		VertexBufferDescription desc;
 		desc.Data = vertices;
 		desc.Size = sizeof(vertices);
-		desc.pBufferLayout = &skyBoxVBLayout;
+		desc.pBufferLayout = &cubeVBLayout;
 		desc.pIndexBuffer = IndexBuffer::Create(indices, std::size(indices));
 		desc.Usage = BufferUsage::STATIC;
 
-		s_Data.SkyboxVertexBuffer = VertexBuffer::Create(desc);
+		s_Data.CubeVertexBuffer = VertexBuffer::Create(desc);
 
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), 1);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), 2);
@@ -104,10 +105,11 @@ namespace Athena
 		RenderCommand::SetViewport(0, 0, width, height);
 	}
 
-	void Renderer::BeginScene(const Matrix4& viewProjection, const Vector3& cameraPosition, const Ref<Environment>& environment)
+	void Renderer::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix, const Ref<Environment>& environment)
 	{
-		s_Data.SceneDataBuffer.ViewProjectionMatrix = viewProjection;
-		s_Data.SceneDataBuffer.CameraPosition = cameraPosition;
+		s_Data.SceneDataBuffer.ViewMatrix = viewMatrix;
+		s_Data.SceneDataBuffer.ProjectionMatrix = projectionMatrix;
+		s_Data.SceneDataBuffer.CameraPosition = Math::AffineInverse(viewMatrix)[3];
 		s_Data.PBRShader->Bind();
 
 		s_Data.ActiveEnvironment = environment;
@@ -116,15 +118,22 @@ namespace Athena
 	
 	void Renderer::EndScene()
 	{
-		s_Data.SceneDataBuffer.ViewProjectionMatrix = s_Data.SceneDataBuffer.ViewProjectionMatrix;
-		s_Data.SceneDataBuffer.TransformMatrix = Matrix4::Identity();
+		if (s_Data.ActiveEnvironment->Skybox)
+		{
+			// Remove translation
+			s_Data.SceneDataBuffer.ViewMatrix[3][0] = 0;
+			s_Data.SceneDataBuffer.ViewMatrix[3][1] = 0;
+			s_Data.SceneDataBuffer.ViewMatrix[3][2] = 0;
 
-		s_Data.SkyboxShader->Bind();
-		s_Data.ActiveEnvironment->Skybox->Bind();
+			s_Data.SceneDataBuffer.TransformMatrix = Matrix4::Identity();
 
-		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+			s_Data.SkyboxShader->Bind();
+			s_Data.ActiveEnvironment->Skybox->Bind();
 
-		RenderCommand::DrawTriangles(s_Data.SkyboxVertexBuffer);
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+
+			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
+		}
 
 		s_Data.ActiveEnvironment = nullptr;
 	}
@@ -148,6 +157,8 @@ namespace Athena
 		if (material)
 			s_Data.MaterialConstantBuffer->SetData(&material->Bind(), sizeof(Material::ShaderData));	
 		
+		s_Data.ActiveEnvironment->IrradianceMap->Bind(5);
+
 		if (mesh)
 		{
 			const auto& vertices = mesh->Vertices;
@@ -181,7 +192,7 @@ namespace Athena
 		s_Data.PBRShader->Reload();
 		s_Data.SkyboxShader->Reload();
 		s_Data.EquirectangularToCubemapShader->Reload();
-		s_Data.ConvoluteEnvMapShader->Reload();
+		s_Data.GenIrradianceMapShader->Reload();
 	}
 
 	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, const Ref<Environment>& envStorage)
@@ -197,7 +208,13 @@ namespace Athena
 
 		Ref<Framebuffer> framebuffer = Framebuffer::Create(fbDesc);
 		void* framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
-		Ref<Cubemap> envCubemap = Cubemap::Create(width, height, TextureFormat::RGB16F);
+
+		CubemapDescription cubeMapDesc;
+		cubeMapDesc.Width = width;
+		cubeMapDesc.Height = height;
+		cubeMapDesc.Format = TextureFormat::RGB16F;
+
+		Ref<Cubemap> envCubemap = Cubemap::Create(cubeMapDesc);
 		
 		Matrix4 captureProjection = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 10.0f);
 		Matrix4 captureViews[] =
@@ -216,18 +233,20 @@ namespace Athena
 		s_Data.EquirectangularToCubemapShader->Bind();
 		equirectangularHDRMap->Bind();
 
+		s_Data.SceneDataBuffer.ProjectionMatrix = captureProjection;
+
 		RenderCommand::SetViewport(0, 0, width, height);
 		for (uint32 i = 0; i < 6; ++i)
 		{
-			s_Data.SceneDataBuffer.ViewProjectionMatrix = captureViews[i] * captureProjection;
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData), 0);
+			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
 			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
 
 			framebuffer->ReplaceAttachment(0, target, envCubemap->GetRendererID());
 			RenderCommand::Clear({ 1, 1, 1, 1 });
 
-			RenderCommand::DrawTriangles(s_Data.SkyboxVertexBuffer);
+			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 		}
 
 		envStorage->Skybox = envCubemap;
@@ -236,27 +255,30 @@ namespace Athena
 		width = 32;
 		height = 32;
 
-		Ref<Cubemap> irradianceMap = Cubemap::Create(width, height, TextureFormat::RGB16F);
+		cubeMapDesc.Width = width;
+		cubeMapDesc.Height = height;
+
+		Ref<Cubemap> irradianceMap = Cubemap::Create(cubeMapDesc);
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
 		framebuffer->Resize(width, height);
 
 		// Convolute Environment Map
-		s_Data.ConvoluteEnvMapShader->Bind();
+		s_Data.GenIrradianceMapShader->Bind();
 		envCubemap->Bind();
 
 		RenderCommand::SetViewport(0, 0, width, height);
 		for (uint32 i = 0; i < 6; ++i)
 		{
-			s_Data.SceneDataBuffer.ViewProjectionMatrix = captureViews[i] * captureProjection;
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData), 0);
+			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
 			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
 
 			framebuffer->ReplaceAttachment(0, target, irradianceMap->GetRendererID());
 			RenderCommand::Clear({ 1, 1, 1, 1 });
 
-			RenderCommand::DrawTriangles(s_Data.SkyboxVertexBuffer);
+			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 		}
 
 		envStorage->IrradianceMap = irradianceMap;

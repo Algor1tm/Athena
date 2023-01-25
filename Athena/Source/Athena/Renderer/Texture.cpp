@@ -12,28 +12,10 @@ namespace Athena
 {
 	Ref<Texture2D> Texture2D::m_WhiteTexture = nullptr;
 
-
-	Ref<Texture2D> Texture2D::Create(uint32 width, uint32 height)
-	{
-		ATN_CORE_ASSERT(width > 0 && height > 0, "Invalid size for Texture2D!");
-
-		switch (Renderer::GetAPI())
-		{
-		case RendererAPI::API::OpenGL:
-			return CreateRef<GLTexture2D>(width, height); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Texture2D>(width, height); break;
-		case RendererAPI::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
-		return nullptr;
-	}
-
 	Ref<Texture2D> Texture2D::Create(const Texture2DDescription& desc)
 	{
-		ATN_CORE_ASSERT(std::filesystem::exists(desc.TexturePath), "Invalid filepath for Texture2D!");
+		if(!desc.TexturePath.empty())
+			ATN_CORE_ASSERT(std::filesystem::exists(desc.TexturePath), "Invalid filepath for Texture2D!");
 
 		switch (Renderer::GetAPI())
 		{
@@ -53,7 +35,12 @@ namespace Athena
 	{
 		if (m_WhiteTexture == nullptr)
 		{
-			m_WhiteTexture = Texture2D::Create(1, 1);
+			Texture2DDescription desc;
+			desc.Width = 1;
+			desc.Height = 1;
+			desc.Format = TextureFormat::RGBA8;
+
+			m_WhiteTexture = Texture2D::Create(desc);
 			uint32 whiteTextureData = 0xffffffff;
 			m_WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
 		}
@@ -95,33 +82,14 @@ namespace Athena
 		m_TexCoords[3] = { min.x / width, max.y / height };
 	}
 
-	Ref<Cubemap> Cubemap::Create(const std::array<Filepath, 6>& faces)
+	Ref<Cubemap> Cubemap::Create(const CubemapDescription& desc)
 	{
-		for(const auto& path: faces)
-			ATN_CORE_ASSERT(std::filesystem::exists(path), "Invalid filepath for Cubemap!");
-
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<GLCubemap>(faces); break;
+			return CreateRef<GLCubemap>(desc); break;
 		//case RendererAPI::API::Direct3D:
 		//	return CreateRef<D3D11Cubemap>(path); break;
-		case RendererAPI::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
-		return nullptr;
-	}
-
-	Ref<Cubemap> Cubemap::Create(uint32 width, uint32 height, TextureFormat format)
-	{
-		switch (Renderer::GetAPI())
-		{
-		case RendererAPI::API::OpenGL:
-			return CreateRef<GLCubemap>(width, height, format); break;
-			//case RendererAPI::API::Direct3D:
-			//	return CreateRef<D3D11Cubemap>(path); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

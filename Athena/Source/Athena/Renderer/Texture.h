@@ -35,6 +35,21 @@ namespace Athena
 		TEXTURE_CUBE_MAP_NEGATIVE_Z = 7,
 	};
 
+	enum class TextureFilter
+	{
+		LINEAR = 1,
+		NEAREST = 2,
+		LINEAR_MIPMAP_LINEAR = 3
+	};
+
+	enum class TextureWrap
+	{
+		REPEAT = 1,
+		CLAMP_TO_EDGE = 2,
+		MIRRORED_REPEAT = 3,
+		MIRRORED_CLAMP_TO_EDGE = 4
+	};
+
 	class ATHENA_API Texture
 	{
 	public:
@@ -62,13 +77,21 @@ namespace Athena
 
 		Filepath TexturePath;
 		bool HDR = false;
-		// TODO: Filter modes, sRGB, TextureWrap
+		bool sRGB = false;
+
+		const void* Data = nullptr;
+		TextureFormat Format = TextureFormat::RGBA8;
+		uint32 Width = 0;
+		uint32 Height = 0;
+
+		TextureFilter MinFilter = TextureFilter::LINEAR;
+		TextureFilter MagFilter = TextureFilter::LINEAR;
+		TextureWrap Wrap = TextureWrap::REPEAT;
 	};
 
 	class ATHENA_API Texture2D: public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const Texture2DDescription& desc);
 		static Ref<Texture2D> WhiteTexture();
 
@@ -105,10 +128,24 @@ namespace Athena
 	};
 
 
+	struct CubemapDescription
+	{
+		std::array<std::pair<TextureTarget, Filepath>, 6> Faces;
+		bool HDR = false;
+		bool sRGB = false;
+
+		TextureFormat Format = TextureFormat::RGBA8;
+		uint32 Width = 0;
+		uint32 Height = 0;
+
+		TextureFilter MinFilter = TextureFilter::LINEAR;
+		TextureFilter MagFilter = TextureFilter::LINEAR;
+		TextureWrap Wrap = TextureWrap::CLAMP_TO_EDGE;
+	};
+
 	class ATHENA_API Cubemap: public Texture
 	{
 	public:
-		static Ref<Cubemap> Create(const std::array<Filepath, 6>& faces);
-		static Ref<Cubemap> Create(uint32 width, uint32 height, TextureFormat format);
+		static Ref<Cubemap> Create(const CubemapDescription& desc);
 	};
 }

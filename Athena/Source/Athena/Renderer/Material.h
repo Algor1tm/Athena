@@ -17,7 +17,7 @@ namespace Athena
 		Vector3 Albedo = Vector3(1);
 		float Roughness = 0;
 		float Metalness = 0;
-		float AmbientOcclusion = 0;
+		float AmbientOcclusion = 1;
 
 		Ref<Texture2D> AlbedoTexture = nullptr;
 		Ref<Texture2D> NormalMap = nullptr;

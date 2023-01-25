@@ -7,16 +7,17 @@ out vec3 LocalPos;
 
 layout(std140, binding = 1) uniform SceneData
 {
-	mat4 u_ViewProjection;
-    vec4 u_CameraPosition;
+	mat4 u_ViewMatrix;
+    mat4 u_ProjectionMatrix;
     mat4 u_Transform;
+    vec4 u_CameraPosition;
     int u_EntityID;
 };
 
 void main()
 {
     LocalPos = a_Position;  
-    gl_Position =  u_ViewProjection * vec4(a_Position, 1.0);
+    gl_Position =  u_ProjectionMatrix * u_ViewMatrix * vec4(a_Position, 1.0);
 }
 
 #type FRAGMENT_SHADER

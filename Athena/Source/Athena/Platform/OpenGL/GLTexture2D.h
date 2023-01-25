@@ -10,7 +10,6 @@ namespace Athena
 	class ATHENA_API GLTexture2D: public Texture2D
 	{
 	public:
-		GLTexture2D(uint32 width, uint32 height);
 		GLTexture2D(const Texture2DDescription& desc);
 		virtual ~GLTexture2D();
 
@@ -23,6 +22,12 @@ namespace Athena
 		virtual bool IsLoaded() const override { return m_IsLoaded; };
 
 		virtual const Filepath& GetFilepath() const override { return m_Path; };
+
+	private:
+		void LoadFromFile(const Texture2DDescription& desc);
+		void LoadFromMemory(const Texture2DDescription& desc);
+		void PreAllocate(const Texture2DDescription& desc);
+		void ApplyTexParamters(const Texture2DDescription& desc);
 
 	private:
 		Filepath m_Path;

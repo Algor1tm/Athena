@@ -9,9 +9,10 @@ layout (location = 4) in vec3 a_Bitangent;
 
 layout(std140, binding = 1) uniform SceneData
 {
-	mat4 u_ViewProjection;
-    vec4 u_CameraPosition;
+	mat4 u_ViewMatrix;
+    mat4 u_ProjectionMatrix;
     mat4 u_Transform;
+    vec4 u_CameraPosition;
     int u_EntityID;
 };
 
@@ -27,7 +28,7 @@ layout (location = 0) out VertexOutput Output;
 
 void main()
 {
-    gl_Position = u_ViewProjection *  u_Transform * vec4(a_Position, 1);
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_Transform * vec4(a_Position, 1);
 
     Output.WorldPos = vec3(u_Transform * vec4(a_Position, 1));
     Output.TexCoord = a_TexCoord;
@@ -51,9 +52,10 @@ layout(location = 1) out int out_EntityID;
 
 layout(std140, binding = 1) uniform SceneData
 {
-	mat4 u_ViewProjection;
-    vec4 u_CameraPosition;
+	mat4 u_ViewMatrix;
+    mat4 u_ProjectionMatrix;
     mat4 u_Transform;
+    vec4 u_CameraPosition;
     int u_EntityID;
 };
 
@@ -104,7 +106,7 @@ float DistributionGGX(vec3 normal, vec3 halfWay, float roughness)
     float normalDotHalfWay  = max(dot(normal, halfWay), 0.0);
     float normalDotHalfWay2 = normalDotHalfWay * normalDotHalfWay;
 	
-    float numerator   = a2;
+    float numerator = a2;
     float denominator = (normalDotHalfWay2 * (a2 - 1.0) + 1.0);
     denominator = PI * denominator * denominator;
 	

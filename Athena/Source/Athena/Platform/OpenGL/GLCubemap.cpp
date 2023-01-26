@@ -79,10 +79,10 @@ namespace Athena
 
 		ApplyTexParamters(desc);
 
-		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
-
 		GLenum internalFormat, dataFormat, type;
 		GetGLFormatAndType(desc.Format, internalFormat, dataFormat, type);
+		
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
 
 		for (uint32 i = 0; i < 6; ++i)
 		{
@@ -105,8 +105,13 @@ namespace Athena
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_R, wrap);
+	}
 
-		if (desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
-			glGenerateTextureMipmap(m_GLRendererID);
+	void GLCubemap::GenerateMipMap(uint32 count)
+	{
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_BASE_LEVEL, 0);
+		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAX_LEVEL, count);
+		
+		glGenerateTextureMipmap(m_GLRendererID);
 	}
 }

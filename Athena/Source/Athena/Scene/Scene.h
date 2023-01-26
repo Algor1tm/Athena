@@ -64,6 +64,7 @@ namespace Athena
 		Ref<Material> GetMaterial(int32 index);
 
 		Ref<Environment> GetEnvironment() { return m_Environment; }
+		const Filepath& GetEnvironmentMapPath() const { return m_EnvironmentMapPath; };
 		void LoadEnvironmentMap(const Filepath& path);
 
 		template <typename... Components>
@@ -92,5 +93,6 @@ namespace Athena
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 		std::vector<Ref<Material>> m_Materials;
 		Ref<Environment> m_Environment;
+		Filepath m_EnvironmentMapPath;
 	};
 }

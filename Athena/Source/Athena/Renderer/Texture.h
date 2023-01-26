@@ -13,8 +13,10 @@ namespace Athena
 		NONE = 0,
 
 		// Color
+		RG16F,
 		RGBA8,
 		RGB16F,
+		RGB32F,
 		RED_INTEGER,
 
 		//Depth/Stencil
@@ -147,5 +149,7 @@ namespace Athena
 	{
 	public:
 		static Ref<Cubemap> Create(const CubemapDescription& desc);
+
+		virtual void GenerateMipMap(uint32 count) = 0;
 	};
 }

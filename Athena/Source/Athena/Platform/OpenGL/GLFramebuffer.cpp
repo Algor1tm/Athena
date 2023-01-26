@@ -190,16 +190,24 @@ namespace Athena
 				BindTexture(multisample, attachments[i]);
 				switch (m_ColorAttachmentDescriptions[i].Format)
 				{
+				case TextureFormat::RG16F:
+					AttachColorTexture(attachments[i], samples, GL_RG16F, GL_RG, GL_FLOAT, m_Description.Width, m_Description.Height, i);
+					break;
+
 				case TextureFormat::RGBA8:
-					AttachColorTexture(attachments[i], samples, GL_RGBA8, GL_RGBA, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(attachments[i], samples, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, m_Description.Width, m_Description.Height, i);
 					break;
 
 				case TextureFormat::RGB16F:
-					AttachColorTexture(attachments[i], samples, GL_RGB16F, GL_RGB, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(attachments[i], samples, GL_RGB16F, GL_RGB, GL_FLOAT, m_Description.Width, m_Description.Height, i);
+					break;
+
+				case TextureFormat::RGB32F:
+					AttachColorTexture(attachments[i], samples, GL_RGB32F, GL_RGB, GL_FLOAT, m_Description.Width, m_Description.Height, i);
 					break;
 
 				case TextureFormat::RED_INTEGER:
-					AttachColorTexture(attachments[i], samples, GL_R32I, GL_RED_INTEGER, m_Description.Width, m_Description.Height, i);
+					AttachColorTexture(attachments[i], samples, GL_R32I, GL_RED_INTEGER, GL_UNSIGNED_BYTE, m_Description.Width, m_Description.Height, i);
 					break;
 				}
 			}
@@ -223,7 +231,7 @@ namespace Athena
 		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 
-	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, uint32 width, uint32 height, SIZE_T index)
+	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32 width, uint32 height, SIZE_T index)
 	{
 		if (samples > 1)
 		{
@@ -231,7 +239,7 @@ namespace Athena
 		}
 		else
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, nullptr);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -263,11 +271,14 @@ namespace Athena
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1), id, 0);
 	}
 
-	void GLFramebuffer::ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID)
+	void GLFramebuffer::ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level)
 	{
 		m_ColorAttachments[attachmentIndex] = (uint32)(uint64)rendererID;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentIndex, GLTextureTarget(textureTarget), (uint32)(uint64)rendererID, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentIndex, GLTextureTarget(textureTarget), (uint32)(uint64)rendererID, level);
+
+		auto error = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 }

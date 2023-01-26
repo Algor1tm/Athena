@@ -39,7 +39,7 @@ namespace Athena
 		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) override;
 
 		virtual void ClearColorAndDepth(const LinearColor& color) override;
-		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) override {};
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) override {};
 
 		virtual void ResolveMutlisampling() override;
 

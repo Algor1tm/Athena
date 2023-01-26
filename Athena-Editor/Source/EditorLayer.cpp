@@ -40,27 +40,16 @@ namespace Athena
 #if 0
         OpenScene("Assets/Scenes/PhysicsExample.atn");
 #else
-        //Importer3D importer(m_ActiveScene);
-        //StaticMeshImportInfo info;
-        //Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
-        //importer.ImportStaticMesh("Assets/Meshes/Sphere.fbx", info, mesh);
-        //
-        //m_TestCube = m_ActiveScene->CreateEntity();
-        //m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;
-        //m_TestCube.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
-        //
-        //std::array<Filepath, 6> faces =
-        //{
-        //    "Assets/EnvironmentMaps/Skybox/right.jpg",
-        //    "Assets/EnvironmentMaps/Skybox/left.jpg",
-        //    "Assets/EnvironmentMaps/Skybox/top.jpg",
-        //    "Assets/EnvironmentMaps/Skybox/bottom.jpg",
-        //    "Assets/EnvironmentMaps/Skybox/front.jpg",
-        //    "Assets/EnvironmentMaps/Skybox/back.jpg",
-        //};
-        //m_ActiveScene->GetEnvironment()->Skybox = Cubemap::Create(faces);
+        Importer3D importer(m_ActiveScene);
+        StaticMeshImportInfo info;
+        Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
+        importer.ImportStaticMesh("Assets/Meshes/Sphere.fbx", info, mesh);
+        
+        m_TestCube = m_ActiveScene->CreateEntity();
+        m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;
+        m_TestCube.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
 
-        m_ActiveScene->LoadEnvironmentMap("Assets/EnvironmentMaps/lago_disola_4k.hdr");
+        m_ActiveScene->LoadEnvironmentMap("Assets/EnvironmentMaps/Sun_Snow_4k.hdr");
 #endif
         m_SceneHierarchy->SetContext(m_EditorScene);
     }

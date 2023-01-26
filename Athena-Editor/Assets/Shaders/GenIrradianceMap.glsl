@@ -11,6 +11,8 @@ layout(std140, binding = 1) uniform SceneData
     mat4 u_ProjectionMatrix;
     mat4 u_Transform;
     vec4 u_CameraPosition;
+    float u_SkyboxLOD;
+	float u_Exposure;
     int u_EntityID;
 };
 
@@ -54,7 +56,7 @@ void main()
             // tangent space to world
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-            irradiance += clamp(texture(u_EnvironmentMap, sampleVec).rgb, 0.0, maxFloat) * cos(theta) * sin(theta);
+            irradiance += clamp(textureLod(u_EnvironmentMap, sampleVec, 0).rgb, 0, maxFloat) * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

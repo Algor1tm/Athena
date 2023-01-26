@@ -141,6 +141,31 @@ namespace Athena
 
 		float height = ImGui::GetFrameHeight();
 
+		if (UI::BeginTreeNode("Environment"))
+		{
+			if (UI::BeginDrawControllers())
+			{
+				UI::DrawController("Skybox", height, [this]() 
+					{
+						const Filepath& path = m_Context->GetEnvironmentMapPath();
+						if (ImGui::Button(path.stem().string().data()))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
+							if (!filepath.empty())
+								m_Context->LoadEnvironmentMap(filepath);
+							return true;
+						}
+						return false;
+					});
+				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, 10); });
+				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 7); });
+
+				UI::EndDrawControllers();
+			}
+
+			UI::EndTreeNode();
+		}
+
 		if (UI::BeginTreeNode("Light"))
 		{
 			if (UI::BeginDrawControllers())
@@ -692,6 +717,8 @@ namespace Athena
 							ImGui::SameLine();
 							ImGui::Checkbox("Use", &matDesc.UseRoughnessMap);
 							ImGui::SameLine();
+
+							ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 							ImGui::SliderFloat("##Roughness", &matDesc.Roughness, 0.f, 1.f);
 							return true;
 						});

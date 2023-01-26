@@ -16,6 +16,8 @@ namespace Athena
 		virtual void Bind(uint32 slot = 0) const override;
 		virtual bool IsLoaded() const override;
 
+		virtual void GenerateMipMap(uint32 count) override;
+
 	private:
 		void LoadFromFile(const CubemapDescription& desc);
 		void PreAllocate(const CubemapDescription& desc);

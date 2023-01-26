@@ -4,6 +4,7 @@
 #include "RenderCommand.h"
 #include "Shader.h"
 #include "ConstantBuffer.h"
+#include "Renderer.h"
 
 
 namespace Athena
@@ -186,7 +187,7 @@ namespace Athena
 		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 
-		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), 0);
+		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), ConstantBufferBinder::RENDERER2D_CAMERA_DATA);
 	}
 
 	void Renderer2D::Shutdown()

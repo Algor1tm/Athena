@@ -85,6 +85,20 @@ namespace Athena
 			type = GL_UNSIGNED_BYTE;
 			break;
 		}
+		case TextureFormat::RG16F:
+		{
+			internalFormat = GL_RG16F;
+			dataFormat = GL_RG;
+			type = GL_FLOAT;
+			break;
+		}
+		case TextureFormat::RGB32F:
+		{
+			internalFormat = GL_RGB32F;
+			dataFormat = GL_RGB;
+			type = GL_FLOAT;
+			break;
+		}
 		default:
 		{
 			ATN_CORE_ASSERT(false, "Invalid texture format!");

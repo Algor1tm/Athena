@@ -51,6 +51,6 @@ namespace Athena
 
 		virtual void ResolveMutlisampling() = 0;
 
-		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) = 0;
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) = 0;
 	};
 }

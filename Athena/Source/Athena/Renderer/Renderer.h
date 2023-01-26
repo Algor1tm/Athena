@@ -10,6 +10,29 @@
 
 namespace Athena
 {
+	enum TextureBinder
+	{
+		ALBEDO_TEXTURE = 0,
+		NORMAL_MAP = 1,
+		ROUGHNESS_MAP = 2,
+		METALNESS_MAP = 3,
+		AMBIENT_OCCLUSION_MAP = 4,
+
+		IRRADIANCE_MAP = 5,
+		PREFILTER_MAP = 6,
+		BRDF_LUT = 7,
+
+		SKY_BOX = 0
+	};
+
+	enum ConstantBufferBinder
+	{
+		RENDERER2D_CAMERA_DATA = 0,
+		SCENE_DATA = 1,
+		MATERIAL_DATA = 2,
+		LIGHT_DATA = 3
+	};
+
 	struct Vertex
 	{
 		Vector3 Position;

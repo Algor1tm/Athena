@@ -46,6 +46,8 @@ namespace Athena
 		glEnable(GL_MULTISAMPLE);
 
 		glEnable(GL_CULL_FACE);
+
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	}
 
 	void GLRendererAPI::SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)

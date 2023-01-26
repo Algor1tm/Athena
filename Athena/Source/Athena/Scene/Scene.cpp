@@ -331,7 +331,10 @@ namespace Athena
 		desc.HDR = true;
 		Ref<Texture2D> equirectangularMap = Texture2D::Create(desc);
 
-		if(equirectangularMap->IsLoaded())
+		if (equirectangularMap->IsLoaded())
+		{
+			m_EnvironmentMapPath = path;
 			Renderer::PreProcessEnvironmentMap(equirectangularMap, m_Environment);
+		}
 	}
 }

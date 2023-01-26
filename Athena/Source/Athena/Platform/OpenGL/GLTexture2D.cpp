@@ -65,7 +65,6 @@ namespace Athena
 				return;
 			}
 
-
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_GLRendererID);
 			m_RendererID = m_GLRendererID;
 			glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);

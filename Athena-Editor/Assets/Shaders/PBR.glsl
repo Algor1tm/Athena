@@ -13,6 +13,8 @@ layout(std140, binding = 1) uniform SceneData
     mat4 u_ProjectionMatrix;
     mat4 u_Transform;
     vec4 u_CameraPosition;
+    float u_SkyboxLOD;
+	float u_Exposure;
     int u_EntityID;
 };
 
@@ -56,6 +58,8 @@ layout(std140, binding = 1) uniform SceneData
     mat4 u_ProjectionMatrix;
     mat4 u_Transform;
     vec4 u_CameraPosition;
+    float u_SkyboxLOD;
+	float u_Exposure;
     int u_EntityID;
 };
 
@@ -87,6 +91,8 @@ layout(binding = 3) uniform sampler2D u_MetalnessMap;
 layout(binding = 4) uniform sampler2D u_AmbientOcclusionMap;
 
 layout(binding = 5) uniform samplerCube u_IrradianceMap;
+layout(binding = 6) uniform samplerCube u_PrefilterMap;
+layout(binding = 7) uniform sampler2D   u_BRDF_LUT;
 
 struct VertexOutput
 {
@@ -210,16 +216,30 @@ void main()
         totalIrradiance += (absorbedLight * albedo.rgb / PI + specular) * radiance * normalDotLightDir;
     }
 
-    vec3 reflectedLight = FresnelSchlickRoughness(max(dot(normal, viewVector), 0.0), reflectivityAtZeroIncidence, roughness); 
+    vec3 reflectedVec = reflect(-viewVector, normal); 
+    reflectedVec.z = -reflectedVec.z;
+
+    float NdotV = max(dot(normal, viewVector), 0.0);
+
+    vec3 reflectedLight = FresnelSchlickRoughness(NdotV, reflectivityAtZeroIncidence, roughness); 
     vec3 absorbedLight = 1.0 - reflectedLight;
+    absorbedLight *= 1.0 - metalness;
+
     vec3 irradiance = texture(u_IrradianceMap, normal).rgb;
     vec3 diffuse = irradiance * albedo.rgb;
 
-    vec3 ambient = absorbedLight * diffuse * ambientOcclusion;
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(u_PrefilterMap, reflectedVec, roughness * MAX_REFLECTION_LOD).rgb;  
+    vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
+
+    vec3 ambient = (absorbedLight * diffuse + specular) * ambientOcclusion;
     vec3 color = ambient + totalIrradiance;
 
+    color = vec3(1.0) - exp(-color * u_Exposure);
     color = pow(color, vec3(1.0/2.2)); 
 
     out_Color = vec4(color, albedo.a);
+
     out_EntityID = u_EntityID;
 }

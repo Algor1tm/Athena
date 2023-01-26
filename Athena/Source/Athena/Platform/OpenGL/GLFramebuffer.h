@@ -22,7 +22,7 @@ namespace Athena
 
 		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) override;
 		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) override;
-		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID) override;
+		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) override;
 
 		virtual void ClearColorAndDepth(const LinearColor& color) override;
 
@@ -30,7 +30,7 @@ namespace Athena
 
 	private:
 		void DeleteAttachments();
-		void AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, uint32 width, uint32 height, SIZE_T index);
+		void AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32 width, uint32 height, SIZE_T index);
 		void AttachDepthTexture(uint32 id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height);
 
 		void CreateFramebufferObject(uint32* rendererID, bool resolved);

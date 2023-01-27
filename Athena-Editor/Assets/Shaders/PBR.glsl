@@ -217,7 +217,6 @@ void main()
     }
 
     vec3 reflectedVec = reflect(-viewVector, normal); 
-    reflectedVec.z = -reflectedVec.z;
 
     float NdotV = max(dot(normal, viewVector), 0.0);
 

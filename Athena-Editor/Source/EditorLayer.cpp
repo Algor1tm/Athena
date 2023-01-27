@@ -34,23 +34,15 @@ namespace Athena
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
 
-        m_EditorCamera.SetDistance(400.f);
-        m_EditorCamera.Pan({ 0, 0.7f, 0 });
+        m_EditorCamera.SetDistance(1000.f);
 
-#if 0
-        OpenScene("Assets/Scenes/PhysicsExample.atn");
-#else
-        Importer3D importer(m_ActiveScene);
-        StaticMeshImportInfo info;
-        Ref<StaticMesh> mesh = CreateRef<StaticMesh>();
-        importer.ImportStaticMesh("Assets/Meshes/Sphere.fbx", info, mesh);
-        
-        m_TestCube = m_ActiveScene->CreateEntity();
-        m_TestCube.AddComponent<StaticMeshComponent>().Mesh = mesh;
-        m_TestCube.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;
-
-        m_ActiveScene->LoadEnvironmentMap("Assets/EnvironmentMaps/Sun_Snow_4k.hdr");
+#if 1
+        OpenScene("Assets/Scenes/PBR_Example.atn");
+        m_EditorCamera.SetDistance(1700.f);
+        m_EditorCamera.SetPitch(0.335);
+        m_EditorCamera.SetYaw(-0.64);
 #endif
+
         m_SceneHierarchy->SetContext(m_EditorScene);
     }
 

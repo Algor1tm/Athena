@@ -147,8 +147,10 @@ namespace Athena
 			{
 				UI::DrawController("Skybox", height, [this]() 
 					{
-						const Filepath& path = m_Context->GetEnvironmentMapPath();
-						if (ImGui::Button(path.stem().string().data()))
+						String label;
+						const Filepath& envPath = m_Context->GetEnvironmentMapPath();
+						label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+						if (ImGui::Button(label.data()))
 						{
 							Filepath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
 							if (!filepath.empty())
@@ -622,6 +624,7 @@ namespace Athena
 
 						ImGui::EndCombo();
 					}
+					UI::DrawController("Hide", height, [&meshComponent]() { return ImGui::Checkbox("##Hide", &meshComponent.Hide); });
 
 					UI::EndDrawControllers();
 				}

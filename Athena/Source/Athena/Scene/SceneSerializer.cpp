@@ -170,6 +170,30 @@ namespace Athena
 		}
 		out << YAML::EndSeq;
 #endif
+		auto env = m_Scene->GetEnvironment();
+		out << YAML::Key << "Environment";
+		out << YAML::BeginMap;
+
+		if (env->Skybox)
+		{
+			out << YAML::Key << "Skybox";
+			out << YAML::BeginMap;
+			auto test = m_Scene->GetEnvironmentMapPath().string();
+			out << YAML::Key << "FilePath" << m_Scene->GetEnvironmentMapPath().relative_path().string();
+			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
+			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
+			out << YAML::EndMap;
+		}
+
+		out << YAML::Key << "Light";
+		out << YAML::BeginMap;
+		out << YAML::Key << "Direction" << YAML::Value << env->DirLight.Direction;
+		out << YAML::Key << "Color" << YAML::Value << env->DirLight.Color;
+		out << YAML::Key << "Intensity" << YAML::Value << env->DirLight.Intensity;
+		out << YAML::EndMap;
+
+		out << YAML::EndMap;
+
 		out << YAML::EndMap;
 
 		std::ofstream fout(filepath);
@@ -227,6 +251,32 @@ namespace Athena
 			}
 		}
 #endif
+		Ref<Environment> environment;
+		const auto& envNode = data["Environment"];
+		if (envNode)
+		{
+			const auto& skyboxNode = envNode["Skybox"];
+			if (skyboxNode)
+			{
+				m_Scene->LoadEnvironmentMap(skyboxNode["FilePath"].as<String>());
+				environment = m_Scene->GetEnvironment();
+
+				if (environment)
+				{
+					environment->SkyboxLOD = skyboxNode["Skybox LOD"].as<float>();
+					environment->Exposure = skyboxNode["Exposure"].as<float>();
+				}
+			}
+
+			const auto& lightNode = envNode["Light"];
+			if (lightNode && environment)
+			{
+				environment->DirLight.Direction = lightNode["Direction"].as<Vector3>();
+				environment->DirLight.Color = lightNode["Color"].as<LinearColor>();
+				environment->DirLight.Intensity = lightNode["Intensity"].as<float>();
+			}
+		}
+
 
 		Importer3D importer(m_Scene);
 		const auto& entities = data["Entities"];

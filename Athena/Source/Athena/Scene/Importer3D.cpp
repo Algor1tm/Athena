@@ -25,7 +25,6 @@ namespace Athena
 
 		desc.Name = aimaterial->GetName().C_Str();
 
-		bool metalnessWorkflow = true;
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
 		{
@@ -33,7 +32,6 @@ namespace Athena
 		}
 		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
 		{
-			metalnessWorkflow = false;
 			desc.Albedo = Vector3(color.r, color.g, color.b);
 		}
 
@@ -43,20 +41,26 @@ namespace Athena
 
 		float metalness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
+		{
 			desc.Metalness = metalness;
-
-		float ambientOcclusion;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, ambientOcclusion))
-			desc.AmbientOcclusion = ambientOcclusion;
+		}
 
 		aiString texFilepath;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(metalnessWorkflow ? aiTextureType_BASE_COLOR : aiTextureType_DIFFUSE, 0), texFilepath))
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_BASE_COLOR, 0), texFilepath))
 		{
 			Filepath path = currentFilepath;
 			path.replace_filename(texFilepath.C_Str());
 			desc.AlbedoTexture = Texture2D::Create(path);
 			desc.UseAlbedoTexture = true;
 		}
+		else if(AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texFilepath))
+		{
+			Filepath path = currentFilepath;
+			path.replace_filename(texFilepath.C_Str());
+			desc.AlbedoTexture = Texture2D::Create(path);
+			desc.UseAlbedoTexture = true;
+		}
+
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))
 		{
 			Filepath path = currentFilepath;
@@ -117,9 +121,12 @@ namespace Athena
 		for (uint32 i = 0; i < numVertices; ++i)
 		{
 			// Position
-			AssimpVector3ToAthenaVector3(aimesh->mVertices[i], vertices[i].Position);
-			box.Extend(vertices[i].Position);
-
+			if (aimesh->HasPositions())
+			{
+				AssimpVector3ToAthenaVector3(aimesh->mVertices[i], vertices[i].Position);
+				box.Extend(vertices[i].Position);
+			}
+			
 			// TexCoord
 			if (aimesh->HasTextureCoords(0))
 			{
@@ -128,11 +135,19 @@ namespace Athena
 			}
 
 			// Normal
-			AssimpVector3ToAthenaVector3(aimesh->mNormals[i], vertices[i].Normal);
-			// Tangents
-			AssimpVector3ToAthenaVector3(aimesh->mTangents[i], vertices[i].Tangent);
-			// Bitangent
-			AssimpVector3ToAthenaVector3(aimesh->mBitangents[i], vertices[i].Bitangent);
+			if (aimesh->HasNormals())
+			{
+				AssimpVector3ToAthenaVector3(aimesh->mNormals[i], vertices[i].Normal);
+			}
+
+			if (aimesh->HasTangentsAndBitangents())
+			{
+				// Tangents
+				AssimpVector3ToAthenaVector3(aimesh->mTangents[i], vertices[i].Tangent);
+				// Bitangent
+				AssimpVector3ToAthenaVector3(aimesh->mBitangents[i], vertices[i].Bitangent);
+			}
+
 		}
 
 

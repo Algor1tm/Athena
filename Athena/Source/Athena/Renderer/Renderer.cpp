@@ -171,9 +171,12 @@ namespace Athena
 		s_Data.LightConstantBuffer->SetData(&environment->DirLight, sizeof(DirectionalLight));
 
 		s_Data.PBRShader->Bind();
+		if (s_Data.ActiveEnvironment->Skybox)
+		{
+			s_Data.ActiveEnvironment->IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
+			s_Data.ActiveEnvironment->PrefilterMap->Bind(TextureBinder::PREFILTER_MAP);
+		}
 
-		s_Data.ActiveEnvironment->IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
-		s_Data.ActiveEnvironment->PrefilterMap->Bind(TextureBinder::PREFILTER_MAP);
 		s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 	}
 	
@@ -349,8 +352,8 @@ namespace Athena
 		envStorage->IrradianceMap = irradianceMap;
 
 		// Create prefilter map
-		width = 256;
-		height = 256;
+		width = 512;
+		height = 512;
 		
 		cubeMapDesc.Width = width;
 		cubeMapDesc.Height = height;

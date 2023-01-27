@@ -18,8 +18,7 @@ layout(std140, binding = 1) uniform SceneData
 
 void main()
 {
-    vec3 uv = a_Position;
-    TexCoords = vec3(uv.x, uv.y, -uv.z);
+    TexCoords = a_Position;
 
     vec4 pos = u_ProjectionMatrix * u_ViewMatrix * vec4(a_Position, 1);
     gl_Position = pos.xyww;

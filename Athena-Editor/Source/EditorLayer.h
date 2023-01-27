@@ -57,7 +57,6 @@ namespace Athena
 		void OpenScene(const Filepath& path);
 
 	private:
-		Entity m_TestCube;
 		EditorCamera m_EditorCamera;
 		Entity m_SelectedEntity = {};
 

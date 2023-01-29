@@ -17,7 +17,7 @@ namespace Athena
 
 		if (equirectangularMap->IsLoaded())
 		{
-			Renderer::PreProcessEnvironmentMap(equirectangularMap, result->m_SkyboxCubemap, result->m_IrradianceMap, result->m_PrefilterMap);
+			Renderer::PreProcessEnvironmentMap(equirectangularMap, result->m_SkyboxMap, result->m_IrradianceMap);
 		}
 
 		return result;
@@ -25,11 +25,10 @@ namespace Athena
 
 	void Skybox::Bind()
 	{
-		if (m_SkyboxCubemap)
+		if (m_SkyboxMap)
 		{
-			m_SkyboxCubemap->Bind(TextureBinder::SKY_BOX);
+			m_SkyboxMap->Bind(TextureBinder::SKY_BOX);
 			m_IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
-			m_PrefilterMap->Bind(TextureBinder::PREFILTER_MAP);
 		}
 	}
 }

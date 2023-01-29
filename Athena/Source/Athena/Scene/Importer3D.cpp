@@ -48,15 +48,15 @@ namespace Athena
 		{
 			Filepath path = currentFilepath;
 			path.replace_filename(texFilepath.C_Str());
-			desc.AlbedoTexture = Texture2D::Create(path);
-			desc.UseAlbedoTexture = true;
+			desc.AlbedoMap = Texture2D::Create(path);
+			desc.UseAlbedoMap = true;
 		}
 		else if(AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texFilepath))
 		{
 			Filepath path = currentFilepath;
 			path.replace_filename(texFilepath.C_Str());
-			desc.AlbedoTexture = Texture2D::Create(path);
-			desc.UseAlbedoTexture = true;
+			desc.AlbedoMap = Texture2D::Create(path);
+			desc.UseAlbedoMap = true;
 		}
 
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))

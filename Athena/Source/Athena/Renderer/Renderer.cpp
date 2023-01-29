@@ -9,19 +9,33 @@
 
 #include "Athena/Scene/SceneRenderer.h"
 
+#include <deque>
+
 
 namespace Athena
 {
+	struct DrawCallInfo
+	{
+		Ref<VertexBuffer> VertexBuffer;
+		Ref<Material> Material;
+		Matrix4 Transform;
+		int32 EntityID;
+
+		bool operator<(const DrawCallInfo& other) { return Material->GetName() < other.Material->GetName(); }
+	};
+
 	struct RendererData
 	{
+		std::deque<DrawCallInfo> RenderQueue;
+
 		Ref<Framebuffer> MainFramebuffer;
 		BufferLayout VertexBufferLayout;
 
 		Ref<Shader> PBRShader;
 		Ref<Shader> SkyboxShader;
 		Ref<Shader> EquirectangularToCubemapShader;
-		Ref<Shader> GenIrradianceMapShader;
-		Ref<Shader> GenPrefilterMapShader;
+		Ref<Shader> ComputeIrradianceMapShader;
+		Ref<Shader> ComputePrefilterMapShader;
 
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<Texture2D> BRDF_LUT;
@@ -79,9 +93,9 @@ namespace Athena
 
 		s_Data.SkyboxShader = Shader::Create(cubeVBLayout, "Assets/Shaders/Skybox");
 		s_Data.EquirectangularToCubemapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/EquirectangularToCubemap");
-		s_Data.GenIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/GenIrradianceMap");
-		s_Data.GenPrefilterMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/GenPrefilterMap");
-		// Cube
+		s_Data.ComputeIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputeIrradianceMap");
+		s_Data.ComputePrefilterMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputePrefilterMap");
+		
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
 
@@ -111,7 +125,7 @@ namespace Athena
 		s_Data.BRDF_LUT = Texture2D::Create(brdf_lutDesc);
 
 		BufferLayout quadVBLayout = { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
-		Ref<Shader> GenBRDF_LUTShader = Shader::Create(quadVBLayout, "Assets/Shaders/GenBRDF_LUT");
+		Ref<Shader> ComputeBRDF_LUTShader = Shader::Create(quadVBLayout, "Assets/Shaders/ComputeBRDF_LUT");
 
 		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
 		float quadVertices[] = { -1.f, -1.f, 0.f,   0.f, 0.f,
@@ -136,7 +150,7 @@ namespace Athena
 		void *framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
 		RenderCommand::BindFramebuffer(framebuffer);
 
-		GenBRDF_LUTShader->Bind();
+		ComputeBRDF_LUTShader->Bind();
 
 		RenderCommand::SetViewport(0, 0, width, height);
 
@@ -212,25 +226,49 @@ namespace Athena
 		RenderCommand::UnBindFramebuffer();
 	}
 
-	void Renderer::RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
+	void Renderer::Submit(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
 	{
-		s_Data.SceneDataBuffer.TransformMatrix = transform;
-		s_Data.SceneDataBuffer.EntityID = entityID;
-		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
-		
-		if (material)
-			s_Data.MaterialConstantBuffer->SetData(&material->Bind(), sizeof(Material::ShaderData));	
-		
 		if (mesh)
 		{
 			const auto& vertices = mesh->Vertices;
 			for (uint32 i = 0; i < vertices.size(); ++i)
-				RenderCommand::DrawTriangles(vertices[i]);
+			{
+				DrawCallInfo info;
+				info.VertexBuffer = vertices[i];
+				info.Material = material;
+				info.Transform = transform;
+				info.EntityID = entityID;
+
+				s_Data.RenderQueue.push_back(info);
+			}
 		}
 		else
 		{
-			ATN_CORE_WARN("Renderer Warn: Attempt to render nullptr mesh!");
+			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr mesh!");
 		}
+	}
+
+	void Renderer::WaitAndRender()
+	{
+		std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end());
+
+		Ref<Material> lastMaterial = nullptr;
+		for (const auto& info : s_Data.RenderQueue)
+		{
+			s_Data.SceneDataBuffer.TransformMatrix = info.Transform;
+			s_Data.SceneDataBuffer.EntityID = info.EntityID;
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+
+			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+			{
+				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+				lastMaterial = info.Material;
+			}
+
+			RenderCommand::DrawTriangles(info.VertexBuffer);
+		}
+
+		s_Data.RenderQueue.clear();
 	}
 
 	void Renderer::Clear(const LinearColor& color)
@@ -254,10 +292,10 @@ namespace Athena
 		s_Data.PBRShader->Reload();
 		s_Data.SkyboxShader->Reload();
 		s_Data.EquirectangularToCubemapShader->Reload();
-		s_Data.GenIrradianceMapShader->Reload();
+		s_Data.ComputeIrradianceMapShader->Reload();
 	}
 
-	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& skybox, Ref<Cubemap>& irradianceMap, Ref<Cubemap>& prefilterMap)
+	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap)
 	{
 		uint32 width = 2048;
 		uint32 height = 2048;
@@ -277,7 +315,7 @@ namespace Athena
 		cubeMapDesc.Format = TextureFormat::RGB16F;
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 
-		skybox = Cubemap::Create(cubeMapDesc);
+		Ref<Cubemap> skybox = Cubemap::Create(cubeMapDesc);
 		
 		Matrix4 captureProjection = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 10.0f);
 		Matrix4 captureViews[] =
@@ -328,7 +366,7 @@ namespace Athena
 		framebuffer->Resize(width, height);
 		framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
 
-		s_Data.GenIrradianceMapShader->Bind();
+		s_Data.ComputeIrradianceMapShader->Bind();
 		skybox->Bind();
 
 		RenderCommand::SetViewport(0, 0, width, height);
@@ -346,19 +384,22 @@ namespace Athena
 		}
 
 		// Create prefilter map
-		width = 512;
-		height = 512;
+		width = 2048;
+		height = 2048;
 		
 		cubeMapDesc.Width = width;
 		cubeMapDesc.Height = height;
 		cubeMapDesc.Format = TextureFormat::RGB16F;
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-		prefilterMap = Cubemap::Create(cubeMapDesc);
-		prefilterMap->GenerateMipMap(4);
+		prefilteredMap = Cubemap::Create(cubeMapDesc);
 
-		s_Data.GenPrefilterMapShader->Bind();
+		const uint32 maxMipLevels = 11;
+
+		prefilteredMap->GenerateMipMap(maxMipLevels);
+
+		s_Data.ComputePrefilterMapShader->Bind();
 		skybox->Bind();
-		const uint32 maxMipLevels = 5;
+
 		for (uint32 mip = 0; mip < maxMipLevels; ++mip)
 		{
 			uint32 mipWidth  = width * Math::Pow(0.5f, (float)mip);
@@ -378,7 +419,7 @@ namespace Athena
 				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
 				TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
-				framebuffer->ReplaceAttachment(0, target, prefilterMap->GetRendererID(), mip);
+				framebuffer->ReplaceAttachment(0, target, prefilteredMap->GetRendererID(), mip);
 				RenderCommand::Clear({ 1, 1, 1, 1 });
 
 				RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);

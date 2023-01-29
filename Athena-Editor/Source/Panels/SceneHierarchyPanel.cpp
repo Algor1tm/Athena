@@ -244,22 +244,22 @@ namespace Athena
 						float imageSize = 45.f;
 
 						void* rendererID;
-						if (matDesc.AlbedoTexture)
-							rendererID = matDesc.AlbedoTexture->GetRendererID();
+						if (matDesc.AlbedoMap)
+							rendererID = matDesc.AlbedoMap->GetRendererID();
 						else
 							rendererID = whiteTexRendererID;
 
-						if (ImGui::ImageButton("##AlbedoTexture", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						if (ImGui::ImageButton("##AlbedoMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
 							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 							if (!filepath.empty())
 							{
-								matDesc.AlbedoTexture = Texture2D::Create(filepath);
-								matDesc.UseAlbedoTexture = true;
+								matDesc.AlbedoMap = Texture2D::Create(filepath);
+								matDesc.UseAlbedoMap = true;
 							}
 						}
 						ImGui::SameLine();
-						ImGui::Checkbox("Use", &matDesc.UseAlbedoTexture);
+						ImGui::Checkbox("Use", &matDesc.UseAlbedoMap);
 						ImGui::SameLine();
 						ImGui::ColorEdit3("Color", matDesc.Albedo.Data(), ImGuiColorEditFlags_NoInputs);
 						return true;

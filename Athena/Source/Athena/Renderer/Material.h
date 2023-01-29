@@ -17,13 +17,13 @@ namespace Athena
 		float Metalness = 0;
 		float AmbientOcclusion = 1;
 
-		Ref<Texture2D> AlbedoTexture = nullptr;
+		Ref<Texture2D> AlbedoMap = nullptr;
 		Ref<Texture2D> NormalMap = nullptr;
 		Ref<Texture2D> RoughnessMap = nullptr;
 		Ref<Texture2D> MetalnessMap = nullptr;
 		Ref<Texture2D> AmbientOcclusionMap = nullptr;
 
-		bool UseAlbedoTexture = false;
+		bool UseAlbedoMap = false;
 		bool UseNormalMap = false;
 		bool UseRoughnessMap = false;
 		bool UseMetalnessMap = false;
@@ -61,7 +61,7 @@ namespace Athena
 			float Metalness;
 			float AmbientOcclusion;
 
-			int UseAlbedoTexture;
+			int UseAlbedoMap;
 			int UseNormalMap;
 			int UseRoughnessMap;
 			int UseMetalnessMap;
@@ -73,9 +73,14 @@ namespace Athena
 		MaterialDescription& GetDescription() { return m_Description; };
 		const String& GetName() const { return m_Name; };
 
-		bool operator==(const Material& other)
+		bool operator==(const Material& other) const
 		{
 			return m_Name == other.m_Name;
+		}
+
+		bool operator!=(const Material& other) const
+		{
+			return m_Name != other.m_Name;
 		}
 
 	private:

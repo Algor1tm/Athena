@@ -16,9 +16,8 @@ namespace Athena
 		const Filepath& GetFilepath() { return m_Path; };
 
 	private:
-		Ref<Cubemap> m_SkyboxCubemap;
+		Ref<Cubemap> m_SkyboxMap;
 		Ref<Cubemap> m_IrradianceMap;
-		Ref<Cubemap> m_PrefilterMap;
 
 		Filepath m_Path;
 	};

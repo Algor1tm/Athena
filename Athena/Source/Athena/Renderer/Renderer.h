@@ -18,11 +18,9 @@ namespace Athena
 		METALNESS_MAP = 3,
 		AMBIENT_OCCLUSION_MAP = 4,
 
-		IRRADIANCE_MAP = 5,
-		PREFILTER_MAP = 6,
+		SKY_BOX = 5,
+		IRRADIANCE_MAP = 6,
 		BRDF_LUT = 7,
-
-		SKY_BOX = 8
 	};
 
 	enum ConstantBufferBinder
@@ -56,14 +54,15 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
-		static void RenderMesh(const Ref<StaticMesh>& mesh, const Ref<Material>& material = nullptr, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void Submit(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void WaitAndRender();
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();
 		static const BufferLayout& GetVertexBufferLayout();
 
 		static void ReloadShaders();
-		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& skybox, Ref<Cubemap>& irradianceMap, Ref<Cubemap>& prefilterMap);
+		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};

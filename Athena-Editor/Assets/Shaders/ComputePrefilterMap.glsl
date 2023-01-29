@@ -81,16 +81,28 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
     return normalize(sampleVec);
 }  
 
+float DistributionGGX(float NdotH, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+
+    float numerator = a2;
+    float denominator = (NdotH * NdotH * (a2 - 1.0) + 1.0);
+    denominator = PI * denominator * denominator;
+	
+    return numerator / denominator;
+}
+
 void main()
 {
-    const float maxFloat = 3.402823466 * pow(10.0, 1.3);
+    const float maxFloat = 3.402823466 * pow(10.0, 1.5);
     float roughness = u_SkyboxLOD;
 
     vec3 N = normalize(LocalPos);    
     vec3 R = N;
     vec3 V = R;
 
-    const uint SAMPLE_COUNT = 2048u;
+    const uint SAMPLE_COUNT = 1024;
     float totalWeight = 0.0;   
     vec3 prefilteredColor = vec3(0.0);     
     for(uint i = 0u; i < SAMPLE_COUNT; ++i)
@@ -104,7 +116,16 @@ void main()
         float HdotV = max(dot(H, V), 0.0);
         if(NdotL > 0.0)
         {
-            prefilteredColor += clamp(textureLod(u_EnvironmentMap, L, 0).rgb, 0, maxFloat) * NdotL;
+            float D = DistributionGGX(NdotH, roughness);
+            float pdf = (D * NdotH / (4.0 * HdotV)) + 0.0001; 
+
+            float resolution = 2048;
+            float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+
+            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+
+            prefilteredColor += clamp(textureLod(u_EnvironmentMap, L, mipLevel).rgb, 0, maxFloat) * NdotL;
             totalWeight      += NdotL;
         }
     }

@@ -48,6 +48,7 @@ void main()
 #version 430 core
 
 #define PI 3.14159265358979323846
+#define MAX_SKYBOX_MAP_LOD 10
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
@@ -90,8 +91,8 @@ layout(binding = 2) uniform sampler2D u_RoughnessMap;
 layout(binding = 3) uniform sampler2D u_MetalnessMap;
 layout(binding = 4) uniform sampler2D u_AmbientOcclusionMap;
 
-layout(binding = 5) uniform samplerCube u_IrradianceMap;
-layout(binding = 6) uniform samplerCube u_PrefilterMap;
+layout(binding = 5) uniform samplerCube u_SkyboxMap;
+layout(binding = 6) uniform samplerCube u_IrradianceMap;
 layout(binding = 7) uniform sampler2D   u_BRDF_LUT;
 
 struct VertexOutput
@@ -227,8 +228,7 @@ void main()
     vec3 irradiance = texture(u_IrradianceMap, normal).rgb;
     vec3 diffuse = irradiance * albedo.rgb;
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(u_PrefilterMap, reflectedVec, roughness * MAX_REFLECTION_LOD).rgb;  
+    vec3 prefilteredColor = textureLod(u_SkyboxMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
 

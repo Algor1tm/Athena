@@ -51,9 +51,11 @@ namespace Athena
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = MaterialManager::GetMaterial(meshComponent.Mesh->MaterialName);
-				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix());
+				Renderer::Submit(meshComponent.Mesh, material, transform.AsMatrix());
 			}
 		}
+
+		Renderer::WaitAndRender();
 
 		Renderer::EndScene();
 	}
@@ -95,9 +97,11 @@ namespace Athena
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = MaterialManager::GetMaterial(meshComponent.Mesh->MaterialName);
-				Renderer::RenderMesh(meshComponent.Mesh, material, transform.AsMatrix(), (int32)entity);
+				Renderer::Submit(meshComponent.Mesh, material, transform.AsMatrix(), (int32)entity);
 			}
 		}
+
+		Renderer::WaitAndRender();
 
 		Renderer::EndScene();
 	}

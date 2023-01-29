@@ -29,6 +29,7 @@ namespace Athena
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
 		void DrawEnvironment(const Ref<Environment>& environment);
+		void DrawMaterials();
 
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
@@ -53,7 +54,7 @@ namespace Athena
 			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
 
 			float lineHeight = ImGui::GetFrameHeight();
 

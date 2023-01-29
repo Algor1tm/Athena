@@ -22,7 +22,7 @@ namespace Athena
 		PREFILTER_MAP = 6,
 		BRDF_LUT = 7,
 
-		SKY_BOX = 0
+		SKY_BOX = 8
 	};
 
 	enum ConstantBufferBinder
@@ -63,7 +63,7 @@ namespace Athena
 		static const BufferLayout& GetVertexBufferLayout();
 
 		static void ReloadShaders();
-		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, const Ref<Environment>& envStorage);
+		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& skybox, Ref<Cubemap>& irradianceMap, Ref<Cubemap>& prefilterMap);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 	};

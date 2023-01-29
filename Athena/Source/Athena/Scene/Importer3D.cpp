@@ -23,8 +23,6 @@ namespace Athena
 	{
 		MaterialDescription desc;
 
-		desc.Name = aimaterial->GetName().C_Str();
-
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
 		{
@@ -90,7 +88,7 @@ namespace Athena
 			desc.UseAmbientOcclusionMap = true;
 		}
 
-		return Material::Create(desc);
+		return MaterialManager::CreateMaterial(desc, aimaterial->GetName().C_Str());
 	}
 
 	static void LoadAssimpMesh(aiMesh* aimesh, Ref<VertexBuffer>& vertexBuffer, AABB& box)
@@ -237,7 +235,7 @@ namespace Athena
 				LoadAssimpMesh(aiscene->mMeshes[info.Indices[i]], outMesh->Vertices[i], outMesh->BoundingBox);
 
 			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex], m_CurrentFilepath);
-			outMesh->MaterialIndex = m_Context->AddMaterial(material);
+			outMesh->MaterialName = material->GetName();
 		}
 		else
 		{
@@ -251,7 +249,7 @@ namespace Athena
 				else
 				{
 					Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[0], m_CurrentFilepath);
-					outMesh->MaterialIndex = m_Context->AddMaterial(material);
+					outMesh->MaterialName = material->GetName();
 				}
 			}
 
@@ -284,7 +282,7 @@ namespace Athena
 			mesh->Vertices.push_back(buffer);
 			
 			Ref<Material> material = AssimpMaterialToAthenaMaterial(aiscene->mMaterials[info.MaterialIndex], m_CurrentFilepath);
-			mesh->MaterialIndex = m_Context->AddMaterial(material);
+			mesh->MaterialName = material->GetName();
 
 			Entity entity = m_Context->CreateEntity();
 			entity.GetComponent<TagComponent>().Tag = mesh->ImportInfo.Name;

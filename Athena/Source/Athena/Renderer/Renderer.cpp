@@ -173,8 +173,7 @@ namespace Athena
 		s_Data.PBRShader->Bind();
 		if (s_Data.ActiveEnvironment->Skybox)
 		{
-			s_Data.ActiveEnvironment->IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
-			s_Data.ActiveEnvironment->PrefilterMap->Bind(TextureBinder::PREFILTER_MAP);
+			s_Data.ActiveEnvironment->Skybox->Bind();
 		}
 
 		s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
@@ -194,7 +193,6 @@ namespace Athena
 			s_Data.SceneDataBuffer.TransformMatrix = Matrix4::Identity();
 
 			s_Data.SkyboxShader->Bind();
-			s_Data.ActiveEnvironment->Skybox->Bind(TextureBinder::SKY_BOX);
 
 			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
 
@@ -259,7 +257,7 @@ namespace Athena
 		s_Data.GenIrradianceMapShader->Reload();
 	}
 
-	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, const Ref<Environment>& envStorage)
+	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& skybox, Ref<Cubemap>& irradianceMap, Ref<Cubemap>& prefilterMap)
 	{
 		uint32 width = 2048;
 		uint32 height = 2048;
@@ -279,7 +277,7 @@ namespace Athena
 		cubeMapDesc.Format = TextureFormat::RGB16F;
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 
-		Ref<Cubemap> skybox = Cubemap::Create(cubeMapDesc);
+		skybox = Cubemap::Create(cubeMapDesc);
 		
 		Matrix4 captureProjection = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 10.0f);
 		Matrix4 captureViews[] =
@@ -315,8 +313,6 @@ namespace Athena
 		}
 		skybox->GenerateMipMap(10);
 
-		envStorage->Skybox = skybox;
-
 		// Create Irradiance map
 		width = 32;
 		height = 32;
@@ -326,7 +322,7 @@ namespace Athena
 		cubeMapDesc.Format = TextureFormat::RGB16F;
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR;
 
-		Ref<Cubemap> irradianceMap = Cubemap::Create(cubeMapDesc);
+		irradianceMap = Cubemap::Create(cubeMapDesc);
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
 		framebuffer->Resize(width, height);
@@ -349,8 +345,6 @@ namespace Athena
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 		}
 
-		envStorage->IrradianceMap = irradianceMap;
-
 		// Create prefilter map
 		width = 512;
 		height = 512;
@@ -359,7 +353,7 @@ namespace Athena
 		cubeMapDesc.Height = height;
 		cubeMapDesc.Format = TextureFormat::RGB16F;
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-		Ref<Cubemap> prefilterMap = Cubemap::Create(cubeMapDesc);
+		prefilterMap = Cubemap::Create(cubeMapDesc);
 		prefilterMap->GenerateMipMap(4);
 
 		s_Data.GenPrefilterMapShader->Bind();
@@ -390,8 +384,6 @@ namespace Athena
 				RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 			}
 		}
-
-		envStorage->PrefilterMap = prefilterMap;
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
 		RenderCommand::UnBindFramebuffer();

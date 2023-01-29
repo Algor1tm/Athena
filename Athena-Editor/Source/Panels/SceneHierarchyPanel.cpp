@@ -73,22 +73,35 @@ namespace Athena
 
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		ImGui::Begin("Properties");
-		ImGui::PopStyleVar();
-
-		if (m_SelectionContext)
+		if (ImGui::Begin("Environment"))
 		{
-			DrawAllComponents(m_SelectionContext);
+			DrawEnvironment(m_Context->GetEnvironment());
 		}
 
+		ImGui::PopStyleVar();
 		ImGui::End();
 
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		ImGui::Begin("Environment");
+		if (ImGui::Begin("Materials"))
+		{
+			DrawMaterials();
+		}
+
 		ImGui::PopStyleVar();
+		ImGui::End();
 
-		DrawEnvironment(m_Context->GetEnvironment());
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
+		if (ImGui::Begin("Properties"))
+		{
+			if (m_SelectionContext)
+			{
+				DrawAllComponents(m_SelectionContext);
+			}
+		}
+
+		ImGui::PopStyleVar();
 		ImGui::End();
 	}
 
@@ -148,13 +161,16 @@ namespace Athena
 				UI::DrawController("Skybox", height, [this]() 
 					{
 						String label;
-						const Filepath& envPath = m_Context->GetEnvironmentMapPath();
+						const Filepath& envPath = m_Context->GetEnvironment()->Skybox->GetFilepath();
 						label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
 						if (ImGui::Button(label.data()))
 						{
 							Filepath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
 							if (!filepath.empty())
-								m_Context->LoadEnvironmentMap(filepath);
+							{
+								Ref<Skybox> skybox = Skybox::Create(filepath);
+								m_Context->GetEnvironment()->Skybox = skybox;
+							}
 							return true;
 						}
 						return false;
@@ -180,6 +196,191 @@ namespace Athena
 			}
 
 			UI::EndTreeNode();
+		}
+	}
+
+	void SceneHierarchyPanel::DrawMaterials()
+	{
+		float height = ImGui::GetFrameHeight();
+
+		const char* materialName = nullptr;
+		if (m_SelectionContext)
+		{
+			if (m_SelectionContext.HasComponent<StaticMeshComponent>())
+			{
+				materialName = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh->MaterialName.data();
+			}
+		}
+
+		if (materialName)
+		{
+			if (UI::BeginDrawControllers())
+			{
+				if (UI::DrawController("Name", height, [materialName]()
+					{ ImGui::Text(materialName); return true; }));
+				
+				UI::EndDrawControllers();
+			}
+			
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
+
+			float lineHeight = ImGui::GetFrameHeight();
+
+			bool open = UI::BeginTreeNode("Material");
+
+			ImGui::PopStyleVar(2);
+
+			Ref<Material> material = MaterialManager::GetMaterial(materialName);
+			auto& matDesc = material->GetDescription();
+
+			if (open && UI::BeginDrawControllers())
+			{
+				void* whiteTexRendererID = Texture2D::WhiteTexture()->GetRendererID();
+
+				ImGui::PushID("Albedo");
+				UI::DrawController("Albedo", 50.f, [&matDesc, whiteTexRendererID]
+					{
+						float imageSize = 45.f;
+
+						void* rendererID;
+						if (matDesc.AlbedoTexture)
+							rendererID = matDesc.AlbedoTexture->GetRendererID();
+						else
+							rendererID = whiteTexRendererID;
+
+						if (ImGui::ImageButton("##AlbedoTexture", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!filepath.empty())
+							{
+								matDesc.AlbedoTexture = Texture2D::Create(filepath);
+								matDesc.UseAlbedoTexture = true;
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Checkbox("Use", &matDesc.UseAlbedoTexture);
+						ImGui::SameLine();
+						ImGui::ColorEdit3("Color", matDesc.Albedo.Data(), ImGuiColorEditFlags_NoInputs);
+						return true;
+					});
+				ImGui::PopID();
+				ImGui::PushID("Normal");
+				UI::DrawController("Normals", 50.f, [&matDesc, whiteTexRendererID]
+					{
+						float imageSize = 45.f;
+
+						void* rendererID;
+						if (matDesc.NormalMap)
+							rendererID = matDesc.NormalMap->GetRendererID();
+						else
+							rendererID = whiteTexRendererID;
+
+						if (ImGui::ImageButton("##Normals", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!filepath.empty())
+							{
+								matDesc.NormalMap = Texture2D::Create(filepath);
+								matDesc.UseNormalMap = true;
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Checkbox("Use", &matDesc.UseNormalMap);
+						return true;
+					});
+				ImGui::PopID();
+				ImGui::PushID("Roughness");
+				UI::DrawController("Roughness", 50.f, [&matDesc, whiteTexRendererID]
+					{
+						float imageSize = 45.f;
+
+						void* rendererID;
+						if (matDesc.RoughnessMap)
+							rendererID = matDesc.RoughnessMap->GetRendererID();
+						else
+							rendererID = whiteTexRendererID;
+
+						if (ImGui::ImageButton("##RoughnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!filepath.empty())
+							{
+								matDesc.RoughnessMap = Texture2D::Create(filepath);
+								matDesc.UseRoughnessMap = true;
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Checkbox("Use", &matDesc.UseRoughnessMap);
+						ImGui::SameLine();
+
+						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+						ImGui::SliderFloat("##Roughness", &matDesc.Roughness, 0.f, 1.f);
+						return true;
+					});
+				ImGui::PopID();
+				ImGui::PushID("Metalness");
+				UI::DrawController("Metalness", 50.f, [&matDesc, whiteTexRendererID]
+					{
+						float imageSize = 45.f;
+
+						void* rendererID;
+						if (matDesc.MetalnessMap)
+							rendererID = matDesc.MetalnessMap->GetRendererID();
+						else
+							rendererID = whiteTexRendererID;
+
+						if (ImGui::ImageButton("##MetalnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!filepath.empty())
+							{
+								matDesc.MetalnessMap = Texture2D::Create(filepath);
+								matDesc.UseMetalnessMap = true;
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Checkbox("Use", &matDesc.UseMetalnessMap);
+						ImGui::SameLine();
+						ImGui::SliderFloat("##Metalness", &matDesc.Metalness, 0.f, 1.f);
+						return true;
+					});
+				ImGui::PopID();
+				ImGui::PushID("AmbientOcclusion");
+				UI::DrawController("Ambient Occlusion", 50.f, [&matDesc, whiteTexRendererID]
+					{
+						float imageSize = 45.f;
+
+						void* rendererID;
+						if (matDesc.AmbientOcclusionMap)
+							rendererID = matDesc.AmbientOcclusionMap->GetRendererID();
+						else
+							rendererID = whiteTexRendererID;
+
+						if (ImGui::ImageButton("##AmbientOcclusionMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+						{
+							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!filepath.empty())
+							{
+								matDesc.AmbientOcclusionMap = Texture2D::Create(filepath);
+								matDesc.UseAmbientOcclusionMap = true;
+							}
+						}
+						ImGui::SameLine();
+						ImGui::Checkbox("Use", &matDesc.UseAmbientOcclusionMap);
+						ImGui::SameLine();
+						ImGui::SliderFloat("##AmbientOcclusion", &matDesc.AmbientOcclusion, 0.f, 1.f);
+						return true;
+					});
+				ImGui::PopID();
+				UI::EndDrawControllers();
+			}
+
+			if (open)
+			{
+				UI::EndTreeNode();
+				ImGui::Spacing();
+			}
 		}
 	}
 
@@ -601,7 +802,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					if (UI::DrawController("Mesh", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##BodyType", meshComponent.Mesh->ImportInfo.Name.data()); }))
+						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->ImportInfo.Name.data()); }))
 					{
 						const Filepath meshDir = "Assets/Meshes";
 						const Filepath meshFilename = meshComponent.Mesh->Filepath.filename();
@@ -626,167 +827,27 @@ namespace Athena
 					}
 					UI::DrawController("Hide", height, [&meshComponent]() { return ImGui::Checkbox("##Hide", &meshComponent.Hide); });
 
+					if (UI::DrawController("Material", height, [&meshComponent]()
+						{ return ImGui::BeginCombo("##Material", meshComponent.Mesh->MaterialName.data()); }))
+					{
+						auto begin = MaterialManager::GetMaterialsMapIterator();
+							
+						for (uint32 i = 0; i < MaterialManager::GetMaterialsCount(); ++i)
+						{
+							const auto& name = begin->first;
+							bool open = name == meshComponent.Mesh->MaterialName;
+							UI::Selectable(name, &open, [name, &meshComponent]() 
+								{
+									meshComponent.Mesh->MaterialName = name;
+								});
+
+							begin++;
+						}
+
+						ImGui::EndCombo();
+					}
+
 					UI::EndDrawControllers();
-				}
-
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
-
-				float lineHeight = ImGui::GetFrameHeight();
-
-				bool open = UI::BeginTreeNode("Material");
-
-				ImGui::PopStyleVar(2);
-
-				Ref<Material> material = m_Context->GetMaterial(meshComponent.Mesh->MaterialIndex);
-				auto& matDesc = material->GetDescription();
-
-				if (UI::BeginDrawControllers())
-				{
-					void* whiteTexRendererID = Texture2D::WhiteTexture()->GetRendererID();
-
-					ImGui::PushID("Albedo");
-					UI::DrawController("Albedo", 50.f, [&matDesc, whiteTexRendererID]
-						{ 
-							float imageSize = 45.f;
-
-							void* rendererID;
-							if (matDesc.AlbedoTexture)
-								rendererID = matDesc.AlbedoTexture->GetRendererID();
-							else
-								rendererID = whiteTexRendererID;
-
-							if (ImGui::ImageButton("##AlbedoTexture", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
-							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									matDesc.AlbedoTexture = Texture2D::Create(filepath);
-									matDesc.UseAlbedoTexture = true;
-								}
-							}
-							ImGui::SameLine();
-							ImGui::Checkbox("Use", &matDesc.UseAlbedoTexture);
-							ImGui::SameLine();
-							ImGui::ColorEdit3("Color", matDesc.Albedo.Data(), ImGuiColorEditFlags_NoInputs);
-							return true;
-						});
-					ImGui::PopID();
-					ImGui::PushID("Normal");
-					UI::DrawController("Normals", 50.f, [&matDesc, whiteTexRendererID]
-						{
-							float imageSize = 45.f;
-
-							void* rendererID;
-							if (matDesc.NormalMap)
-								rendererID = matDesc.NormalMap->GetRendererID();
-							else
-								rendererID = whiteTexRendererID;
-
-							if (ImGui::ImageButton("##Normals", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
-							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									matDesc.NormalMap = Texture2D::Create(filepath);
-									matDesc.UseNormalMap = true;
-								}
-							}
-							ImGui::SameLine();
-							ImGui::Checkbox("Use", &matDesc.UseNormalMap);
-							return true;
-						});
-					ImGui::PopID();
-					ImGui::PushID("Roughness");
-					UI::DrawController("Roughness", 50.f, [&matDesc, whiteTexRendererID]
-						{
-							float imageSize = 45.f;
-
-							void* rendererID;
-							if (matDesc.RoughnessMap)
-								rendererID = matDesc.RoughnessMap->GetRendererID();
-							else
-								rendererID = whiteTexRendererID;
-
-							if (ImGui::ImageButton("##RoughnessMap", rendererID, {imageSize, imageSize}, {0, 1}, {1, 0}))
-							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									matDesc.RoughnessMap = Texture2D::Create(filepath);
-									matDesc.UseRoughnessMap = true;
-								}
-							}
-							ImGui::SameLine();
-							ImGui::Checkbox("Use", &matDesc.UseRoughnessMap);
-							ImGui::SameLine();
-
-							ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-							ImGui::SliderFloat("##Roughness", &matDesc.Roughness, 0.f, 1.f);
-							return true;
-						});
-					ImGui::PopID();
-					ImGui::PushID("Metalness");
-					UI::DrawController("Metalness", 50.f, [&matDesc, whiteTexRendererID]
-						{
-							float imageSize = 45.f;
-
-							void* rendererID;
-							if (matDesc.MetalnessMap)
-								rendererID = matDesc.MetalnessMap->GetRendererID();
-							else
-								rendererID = whiteTexRendererID;
-
-							if (ImGui::ImageButton("##MetalnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
-							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									matDesc.MetalnessMap = Texture2D::Create(filepath);
-									matDesc.UseMetalnessMap = true;
-								}
-							}
-							ImGui::SameLine();
-							ImGui::Checkbox("Use", &matDesc.UseMetalnessMap);
-							ImGui::SameLine();
-							ImGui::SliderFloat("##Metalness", &matDesc.Metalness, 0.f, 1.f);
-							return true;
-						});
-					ImGui::PopID();
-					ImGui::PushID("AmbientOcclusion");
-					UI::DrawController("Ambient Occlusion", 50.f, [&matDesc, whiteTexRendererID]
-						{
-							float imageSize = 45.f;
-
-							void* rendererID;
-							if (matDesc.AmbientOcclusionMap)
-								rendererID = matDesc.AmbientOcclusionMap->GetRendererID();
-							else
-								rendererID = whiteTexRendererID;
-
-							if (ImGui::ImageButton("##AmbientOcclusionMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
-							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
-								{
-									matDesc.AmbientOcclusionMap = Texture2D::Create(filepath);
-									matDesc.UseAmbientOcclusionMap = true;
-								}
-							}
-							ImGui::SameLine();
-							ImGui::Checkbox("Use", &matDesc.UseAmbientOcclusionMap);
-							ImGui::SameLine();
-							ImGui::SliderFloat("##AmbientOcclusion", &matDesc.AmbientOcclusion, 0.f, 1.f);
-							return true;
-						});
-					ImGui::PopID();
-					UI::EndDrawControllers();
-				}
-
-				if (open)
-				{
-					UI::EndTreeNode();
-					ImGui::Spacing();
 				}
 			});
 	}

@@ -147,43 +147,17 @@ namespace Athena
 
 		out << YAML::EndSeq;
 
-#if SERIALIZE_MATERIALS
-		out << YAML::Key << "Materials" << YAML::Value << YAML::BeginSeq;
-
-		for (uint32 i = 0; i < m_Scene->m_Materials.size(); ++i)
-		{
-			out << YAML::BeginMap;
-			out << YAML::Key << std::to_string(i).data();
-			out << YAML::BeginMap;
-
-			const MaterialDescription matDesc = m_Scene->m_Materials[i]->GetDescription();
-			out << YAML::Key << "Name" << YAML::Value << matDesc.Name;
-			out << YAML::Key << "Albedo" << YAML::Value << matDesc.Albedo;
-			out << YAML::Key << "Roughness" << YAML::Value << matDesc.Roughness;
-			out << YAML::Key << "Metalness" << YAML::Value << matDesc.Metalness;
-			out << YAML::Key << "UseAlbedoTexture" << YAML::Value << matDesc.UseAlbedoTexture;
-			out << YAML::Key << "UseRoughnessMap" << YAML::Value << matDesc.UseRoughnessMap;
-			out << YAML::Key << "UseMetalnessMap" << YAML::Value << matDesc.UseMetalnessMap;
-
-			out << YAML::EndMap;
-			out << YAML::EndMap;
-		}
-		out << YAML::EndSeq;
-#endif
 		auto env = m_Scene->GetEnvironment();
 		out << YAML::Key << "Environment";
 		out << YAML::BeginMap;
 
+		out << YAML::Key << "Skybox";
+		out << YAML::BeginMap;
 		if (env->Skybox)
-		{
-			out << YAML::Key << "Skybox";
-			out << YAML::BeginMap;
-			auto test = m_Scene->GetEnvironmentMapPath().string();
-			out << YAML::Key << "FilePath" << m_Scene->GetEnvironmentMapPath().relative_path().string();
-			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
-			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
-			out << YAML::EndMap;
-		}
+			out << YAML::Key << "FilePath" << env->Skybox->GetFilepath().string();
+		out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
+		out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
+		out << YAML::EndMap;
 
 		out << YAML::Key << "Light";
 		out << YAML::BeginMap;
@@ -228,38 +202,14 @@ namespace Athena
 		String sceneName = data["Scene"].as<String>();
 		m_Scene->SetSceneName(sceneName);
 
-#if SERIALIZE_MATERIALS
-		const auto& materials = data["Materials"];
-		if (materials)
-		{
-			uint32 iter = 0;
-			for (const auto& materialNode : materials)
-			{
-				const auto& material = materialNode[(const char*)std::to_string(iter).data()];
-				MaterialDescription matDesc;
-
-				matDesc.Name = material["Name"].as<String>();
-				matDesc.Albedo = material["Albedo"].as<Vector3>();
-				matDesc.Roughness = material["Roughness"].as<float>();
-				matDesc.Metalness = material["Metalness"].as<float>();
-				matDesc.UseAlbedoTexture = material["UseAlbedoTexture"].as<bool>();
-				matDesc.UseRoughnessMap = material["UseRoughnessMap"].as<bool>();
-				matDesc.UseMetalnessMap = material["UseMetalnessMap"].as<bool>();
-
-				m_Scene->AddMaterial(Material::Create(matDesc));
-				iter++;
-			}
-		}
-#endif
-		Ref<Environment> environment;
+		Ref<Environment> environment = CreateRef<Environment>();
 		const auto& envNode = data["Environment"];
 		if (envNode)
 		{
 			const auto& skyboxNode = envNode["Skybox"];
 			if (skyboxNode)
 			{
-				m_Scene->LoadEnvironmentMap(skyboxNode["FilePath"].as<String>());
-				environment = m_Scene->GetEnvironment();
+				environment->Skybox = Skybox::Create(skyboxNode["FilePath"].as<String>());
 
 				if (environment)
 				{
@@ -276,6 +226,8 @@ namespace Athena
 				environment->DirLight.Intensity = lightNode["Intensity"].as<float>();
 			}
 		}
+
+		m_Scene->SetEnvironment(environment);
 
 
 		Importer3D importer(m_Scene);
@@ -439,7 +391,6 @@ namespace Athena
 
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
 						meshComp.Mesh->Filepath = staticMeshComponentNode["Filepath"].as<String>();
-						meshComp.Mesh->MaterialIndex = staticMeshComponentNode["MaterialIndex"].as<int32>();
 						const auto& importInfoNode = staticMeshComponentNode["ImportInfo"];
 						meshComp.Mesh->ImportInfo.Name = importInfoNode["Name"].as<String>();
 						meshComp.Mesh->ImportInfo.MaterialIndex = importInfoNode["MaterialIndex"].as<uint32>();
@@ -594,7 +545,6 @@ namespace Athena
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "Filepath" << YAML::Value << mesh->Filepath.string();
-				output << YAML::Key << "MaterialIndex" << YAML::Value << mesh->MaterialIndex;
 
 				output << YAML::Key << "ImportInfo" << YAML::Value;
 				output << YAML::BeginMap;

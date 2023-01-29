@@ -5,11 +5,59 @@
 
 namespace Athena
 {
-	Ref<Material> Material::Create(const MaterialDescription& desc)
+	std::unordered_map<String, Ref<Material>> MaterialManager::m_Materials;
+
+
+	Ref<Material> MaterialManager::CreateMaterial(const MaterialDescription& desc, const String& name)
 	{
-		Ref<Material> result = CreateRef<Material>();
-		result->m_Description = desc;
-		return result;
+		Ref<Material> material = CreateRef<Material>();
+		material->m_Description = desc;
+
+		if (m_Materials.find(name) != m_Materials.end())
+		{
+			uint32 postfix = 0;
+			String newName;
+			do
+			{
+				newName = name + std::to_string(postfix);
+				postfix++;
+			} while (m_Materials.find(name) == m_Materials.end());
+
+			material->m_Name = newName;
+		}
+		else
+		{
+			material->m_Name = name;
+		}
+
+		m_Materials[material->m_Name] = material;
+
+		return material;
+	}
+
+	Ref<Material> MaterialManager::GetMaterial(const String& name)
+	{
+		if (m_Materials.find(name) == m_Materials.end())
+		{
+			ATN_CORE_ERROR("MaterialManager::GetMaterial: invalid material name!");
+			return nullptr;
+		}
+		else
+		{
+			return m_Materials.at(name);
+		}
+	}
+
+	void MaterialManager::DeleteMaterial(const String& name)
+	{
+		if (m_Materials.find(name) == m_Materials.end())
+		{
+			ATN_CORE_ERROR("MaterialManager::DeleteMaterial: invalid material name!");
+		}
+		else
+		{
+			m_Materials.erase(name);
+		}
 	}
 
 	const Material::ShaderData& Material::Bind()

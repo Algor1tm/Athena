@@ -21,7 +21,7 @@ namespace Athena
 	{
 		std::vector<Ref<VertexBuffer>> Vertices;
 		AABB BoundingBox;
-		int32 MaterialIndex = -1;
+		String MaterialName;
 		Filepath Filepath;
 		StaticMeshImportInfo ImportInfo;
 	};

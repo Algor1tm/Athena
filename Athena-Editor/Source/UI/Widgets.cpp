@@ -124,7 +124,7 @@ namespace Athena::UI
 			ImGuiTreeNodeFlags_FramePadding |
 			ImGuiTreeNodeFlags_DefaultOpen;
 
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 		bool result = ImGui::TreeNodeEx(label.data(), flags, label.data());
 		ImGui::PopStyleVar(2);

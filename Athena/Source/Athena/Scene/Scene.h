@@ -59,13 +59,8 @@ namespace Athena
 
 		Entity GetPrimaryCameraEntity();
 
-		int32 AddMaterial(const Ref<Material>& material);
-		int32 GetMaterialIndex(const Ref<Material>& material);
-		Ref<Material> GetMaterial(int32 index);
-
 		Ref<Environment> GetEnvironment() { return m_Environment; }
-		const Filepath& GetEnvironmentMapPath() const { return m_EnvironmentMapPath; };
-		void LoadEnvironmentMap(const Filepath& path);
+		void SetEnvironment(const Ref<Environment>& env) { m_Environment = env; }
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()
@@ -84,15 +79,14 @@ namespace Athena
 		void OnComponentRemove(Entity entity);
 
 	private:
-		entt::registry m_Registry;
-		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
-
-		std::unique_ptr<b2World> m_PhysicsWorld;
 		String m_Name;
 
+		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
-		std::vector<Ref<Material>> m_Materials;
+
+		std::unique_ptr<b2World> m_PhysicsWorld;
 		Ref<Environment> m_Environment;
-		Filepath m_EnvironmentMapPath;
+
+		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
 	};
 }

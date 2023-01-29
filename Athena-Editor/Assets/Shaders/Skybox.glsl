@@ -44,7 +44,7 @@ layout(std140, binding = 1) uniform SceneData
     int u_EntityID;
 };
 
-layout(binding = 0) uniform samplerCube u_Skybox;
+layout(binding = 8) uniform samplerCube u_Skybox;
 
 void main()
 {

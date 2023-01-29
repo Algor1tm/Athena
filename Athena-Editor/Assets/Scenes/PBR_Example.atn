@@ -1,52 +1,19 @@
 Scene: UnNamed
 Entities:
   - IDComponent:
-      ID: 7469126240319926998
+      ID: 4620546740167642908
     TagComponent:
-      Tag: Beretta Pistol
+      Tag: Cube.001
     TransformComponent:
-      Translation: [18.9398003, 350.08728, 14.4176903]
-      Rotation: [0, -0.0165766794, 0]
-      Scale: [0.328600168, 0.328599989, 0.328600168]
+      Translation: [0, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
-      MaterialIndex: 5
+      Filepath: Assets\Scenes\BlenderScene.fbx
       ImportInfo:
-        Name: Beretta Pistol
-        Indices: []
+        Name: Cube.001
+        Indices: [0]
         MaterialIndex: 0
-      Hide: false
-  - IDComponent:
-      ID: 355488278567739596
-    TagComponent:
-      Tag: Cube.002
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      MaterialIndex: 4
-      ImportInfo:
-        Name: Cube.002
-        Indices: [3]
-        MaterialIndex: 3
-      Hide: false
-  - IDComponent:
-      ID: 17462938647148434322
-    TagComponent:
-      Tag: Cone
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      MaterialIndex: 3
-      ImportInfo:
-        Name: Cone
-        Indices: [2]
-        MaterialIndex: 2
       Hide: false
   - IDComponent:
       ID: 13109570281517897720
@@ -58,26 +25,54 @@ Entities:
       Scale: [1, 1, 1]
     StaticMeshComponent:
       Filepath: Assets\Scenes\BlenderScene.fbx
-      MaterialIndex: 2
       ImportInfo:
         Name: Sphere
         Indices: [1]
         MaterialIndex: 1
       Hide: false
   - IDComponent:
-      ID: 4620546740167642908
+      ID: 17462938647148434322
     TagComponent:
-      Tag: Cube.001
+      Tag: Cone
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0, -0, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     StaticMeshComponent:
       Filepath: Assets\Scenes\BlenderScene.fbx
-      MaterialIndex: 1
       ImportInfo:
-        Name: Cube.001
-        Indices: [0]
+        Name: Cone
+        Indices: [2]
+        MaterialIndex: 2
+      Hide: false
+  - IDComponent:
+      ID: 355488278567739596
+    TagComponent:
+      Tag: Cube.002
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    StaticMeshComponent:
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      ImportInfo:
+        Name: Cube.002
+        Indices: [3]
+        MaterialIndex: 3
+      Hide: false
+  - IDComponent:
+      ID: 7469126240319926998
+    TagComponent:
+      Tag: Beretta Pistol
+    TransformComponent:
+      Translation: [18.9398003, 350.08728, 14.4176903]
+      Rotation: [0, -0.0165766794, 0]
+      Scale: [0.328600168, 0.328599989, 0.328600168]
+    StaticMeshComponent:
+      Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
+      ImportInfo:
+        Name: Beretta Pistol
+        Indices: []
         MaterialIndex: 0
       Hide: false
 Environment:
@@ -86,6 +81,6 @@ Environment:
     Skybox LOD: 0
     Exposure: 1
   Light:
-    Direction: [-5.76000023, -1, -1]
+    Direction: [-1.92999995, -0.959999979, -1.39999998]
     Color: [1, 1, 1, 1]
     Intensity: 1

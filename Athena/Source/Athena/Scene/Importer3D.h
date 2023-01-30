@@ -14,17 +14,16 @@ namespace Athena
 		Importer3D(Ref<Scene> scene);
 		~Importer3D();
 
-		bool ImportScene(const Filepath& filepath);
-		bool ImportStaticMesh(const Filepath& filepath, const StaticMeshImportInfo& info, Ref<StaticMesh> outMesh);
+		bool Import(const Filepath& filepath);
+		Ref<StaticMesh> ImportStaticMesh(const Filepath& filepath, uint32 aiMeshIndex);
 
 		void Release();
 
 	private:
-		void ProcessNode(const aiScene* aiscene, aiNode* node);
 		const aiScene* OpenFile(const Filepath& filepath);
 
 	private:
-		Ref<Scene> m_Context;
+		Ref<Scene> m_Scene;
 		Filepath m_CurrentFilepath;
 		std::unordered_map<Filepath, const aiScene*> m_ImportedScenes;
 	};

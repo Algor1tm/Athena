@@ -38,9 +38,9 @@ namespace Athena
 
 #if 1
         OpenScene("Assets/Scenes/PBR_Example.atn");
-        m_EditorCamera.SetDistance(1700.f);
-        m_EditorCamera.SetPitch(0.335);
-        m_EditorCamera.SetYaw(-0.64);
+        m_EditorCamera.SetDistance(3400.f);
+        m_EditorCamera.SetPitch(0.356f);
+        m_EditorCamera.SetYaw(-4.2);
 #endif
 
         m_SceneHierarchy->SetContext(m_EditorScene);
@@ -225,7 +225,7 @@ namespace Athena
                     else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
                     {
                         Importer3D importer(m_ActiveScene);
-                        importer.ImportScene(path);
+                        importer.Import(path);
                     }
                 }
             });
@@ -523,6 +523,9 @@ namespace Athena
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
         m_SceneHierarchy->SetContext(m_ActiveScene);
+        m_SceneHierarchy->SetSelectedEntity(Entity{});
+        SelectEntity(Entity{});
+
         ATN_CORE_TRACE("Successfully created new scene");
     }
 

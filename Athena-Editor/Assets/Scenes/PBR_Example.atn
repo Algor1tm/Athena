@@ -1,83 +1,73 @@
-Scene: UnNamed
+Scene: PBR_Example
 Entities:
   - IDComponent:
       ID: 4620546740167642908
     TagComponent:
-      Tag: Cube.001
+      Tag: Sphere
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0, -0, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     StaticMeshComponent:
       Filepath: Assets\Scenes\BlenderScene.fbx
-      ImportInfo:
-        Name: Cube.001
-        Indices: [0]
-        MaterialIndex: 0
+      Name: Sphere
+      aiMeshIndex: 0
       Hide: false
   - IDComponent:
       ID: 13109570281517897720
     TagComponent:
-      Tag: Sphere
+      Tag: Cone
+    TransformComponent:
+      Translation: [0, 9.9834137, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    StaticMeshComponent:
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      Name: Cone
+      aiMeshIndex: 1
+      Hide: false
+  - IDComponent:
+      ID: 17462938647148434322
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    StaticMeshComponent:
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      Name: Cube
+      aiMeshIndex: 2
+      Hide: false
+  - IDComponent:
+      ID: 355488278567739596
+    TagComponent:
+      Tag: Floor
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
     StaticMeshComponent:
       Filepath: Assets\Scenes\BlenderScene.fbx
-      ImportInfo:
-        Name: Sphere
-        Indices: [1]
-        MaterialIndex: 1
-      Hide: false
-  - IDComponent:
-      ID: 17462938647148434322
-    TagComponent:
-      Tag: Cone
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      ImportInfo:
-        Name: Cone
-        Indices: [2]
-        MaterialIndex: 2
-      Hide: false
-  - IDComponent:
-      ID: 355488278567739596
-    TagComponent:
-      Tag: Cube.002
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      ImportInfo:
-        Name: Cube.002
-        Indices: [3]
-        MaterialIndex: 3
+      Name: Floor
+      aiMeshIndex: 3
       Hide: false
   - IDComponent:
       ID: 7469126240319926998
     TagComponent:
       Tag: Beretta Pistol
     TransformComponent:
-      Translation: [18.9398003, 350.08728, 14.4176903]
-      Rotation: [0, -0.0165766794, 0]
-      Scale: [0.328600168, 0.328599989, 0.328600168]
+      Translation: [0, 667.02301, -303.722992]
+      Rotation: [0, -0, 0]
+      Scale: [0.659999967, 0.659999967, 0.659999967]
     StaticMeshComponent:
       Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
-      ImportInfo:
-        Name: Beretta Pistol
-        Indices: []
-        MaterialIndex: 0
+      Name: Circle.004
+      aiMeshIndex: 0
       Hide: false
 Environment:
   Skybox:
-    FilePath: Assets/EnvironmentMaps/Sun_Snow_4k.hdr
+    FilePath: D:\Development\CppProjects\Athena\Athena-Editor\Assets\EnvironmentMaps\Sun_Snow_4k.hdr
     Skybox LOD: 0
     Exposure: 1
   Light:

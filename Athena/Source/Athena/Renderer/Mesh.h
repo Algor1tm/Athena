@@ -10,19 +10,13 @@
 
 namespace Athena
 {
-	struct StaticMeshImportInfo
-	{
-		String Name;
-		std::vector<uint32> Indices;
-		uint32 MaterialIndex;
-	};
-
 	struct StaticMesh
 	{
-		std::vector<Ref<VertexBuffer>> Vertices;
+		Ref<VertexBuffer> Vertices;
 		AABB BoundingBox;
+		String Name;
 		String MaterialName;
 		Filepath Filepath;
-		StaticMeshImportInfo ImportInfo;
+		uint32 aiMeshIndex;
 	};
 }

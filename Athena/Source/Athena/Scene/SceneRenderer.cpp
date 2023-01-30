@@ -51,7 +51,7 @@ namespace Athena
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = MaterialManager::GetMaterial(meshComponent.Mesh->MaterialName);
-				Renderer::Submit(meshComponent.Mesh, material, transform.AsMatrix());
+				Renderer::Submit(meshComponent.Mesh->Vertices, material, transform.AsMatrix());
 			}
 		}
 
@@ -97,7 +97,7 @@ namespace Athena
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = MaterialManager::GetMaterial(meshComponent.Mesh->MaterialName);
-				Renderer::Submit(meshComponent.Mesh, material, transform.AsMatrix(), (int32)entity);
+				Renderer::Submit(meshComponent.Mesh->Vertices, material, transform.AsMatrix(), (int32)entity);
 			}
 		}
 

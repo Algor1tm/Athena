@@ -382,22 +382,19 @@ namespace Athena
 						cc2d.Restitution = circleCollider2DComponentNode["Restitution"].as<float>();
 						cc2d.RestitutionThreshold = circleCollider2DComponentNode["RestitutionThreshold"].as<float>();
 					}
+				}
 
+				{
 					const auto& staticMeshComponentNode = entityNode["StaticMeshComponent"];
 					if (staticMeshComponentNode)
 					{
 						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
-						meshComp.Mesh = CreateRef<StaticMesh>();
 
+						uint32 aiMeshIndex = staticMeshComponentNode["aiMeshIndex"].as<uint32>();
+						Filepath path = staticMeshComponentNode["Filepath"].as<String>();
+
+						meshComp.Mesh = importer.ImportStaticMesh(path, aiMeshIndex);
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
-						meshComp.Mesh->Filepath = staticMeshComponentNode["Filepath"].as<String>();
-						const auto& importInfoNode = staticMeshComponentNode["ImportInfo"];
-						meshComp.Mesh->ImportInfo.Name = importInfoNode["Name"].as<String>();
-						meshComp.Mesh->ImportInfo.MaterialIndex = importInfoNode["MaterialIndex"].as<uint32>();
-						for (const auto& index : importInfoNode["Indices"])
-							meshComp.Mesh->ImportInfo.Indices.push_back(index.as<uint32>());
-
-						importer.ImportStaticMesh(meshComp.Mesh->Filepath, meshComp.Mesh->ImportInfo, meshComp.Mesh);
 					}
 				}
 			}
@@ -545,17 +542,8 @@ namespace Athena
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "Filepath" << YAML::Value << mesh->Filepath.string();
-
-				output << YAML::Key << "ImportInfo" << YAML::Value;
-				output << YAML::BeginMap;
-				output << YAML::Key << "Name" << YAML::Value << mesh->ImportInfo.Name;
-				output << YAML::Key << "Indices" << YAML::Flow;
-				output << YAML::BeginSeq;
-				for (SIZE_T i = 0; i < mesh->ImportInfo.Indices.size(); ++i)
-					output << mesh->ImportInfo.Indices[i];
-				output << YAML::EndSeq;
-				output << YAML::Key << "MaterialIndex" << YAML::Value << mesh->ImportInfo.MaterialIndex;
-				output << YAML::EndMap;
+				output << YAML::Key << "Name" << YAML::Value << mesh->Name;
+				output << YAML::Key << "aiMeshIndex" << YAML::Value << mesh->aiMeshIndex;
 
 				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
 			});

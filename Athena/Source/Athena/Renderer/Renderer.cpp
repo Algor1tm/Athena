@@ -226,25 +226,21 @@ namespace Athena
 		RenderCommand::UnBindFramebuffer();
 	}
 
-	void Renderer::Submit(const Ref<StaticMesh>& mesh, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
+	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
 	{
-		if (mesh)
+		if (vertexBuffer)
 		{
-			const auto& vertices = mesh->Vertices;
-			for (uint32 i = 0; i < vertices.size(); ++i)
-			{
-				DrawCallInfo info;
-				info.VertexBuffer = vertices[i];
-				info.Material = material;
-				info.Transform = transform;
-				info.EntityID = entityID;
+			DrawCallInfo info;
+			info.VertexBuffer = vertexBuffer;
+			info.Material = material;
+			info.Transform = transform;
+			info.EntityID = entityID;
 
-				s_Data.RenderQueue.push_back(info);
-			}
+			s_Data.RenderQueue.push_back(info);
 		}
 		else
 		{
-			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr mesh!");
+			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr vertexBuffer!");
 		}
 	}
 

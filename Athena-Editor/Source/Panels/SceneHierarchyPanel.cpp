@@ -36,6 +36,26 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
+		if (ImGui::Begin("Environment"))
+		{
+			DrawEnvironment(m_Context->GetEnvironment());
+		}
+
+		ImGui::PopStyleVar();
+		ImGui::End();
+
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
+		if (ImGui::Begin("Materials"))
+		{
+			DrawMaterials();
+		}
+
+		ImGui::PopStyleVar();
+		ImGui::End();
+
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetDarkColor());
 		ImGui::Begin("Scene Hierarchy");
@@ -70,27 +90,6 @@ namespace Athena
 			ImGui::EndPopup();
 		}
 		ImGui::End();
-
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		if (ImGui::Begin("Environment"))
-		{
-			DrawEnvironment(m_Context->GetEnvironment());
-		}
-
-		ImGui::PopStyleVar();
-		ImGui::End();
-
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		if (ImGui::Begin("Materials"))
-		{
-			DrawMaterials();
-		}
-
-		ImGui::PopStyleVar();
-		ImGui::End();
-
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		if (ImGui::Begin("Properties"))
@@ -161,8 +160,17 @@ namespace Athena
 				UI::DrawController("Skybox", height, [this]() 
 					{
 						String label;
-						const Filepath& envPath = m_Context->GetEnvironment()->Skybox->GetFilepath();
-						label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+						Ref<Skybox> skybox = m_Context->GetEnvironment()->Skybox;
+						if (skybox)
+						{
+							const Filepath& envPath = skybox->GetFilepath();
+							label = !envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+						}
+						else
+						{
+							label = "Load Environment Map";
+						}
+
 						if (ImGui::Button(label.data()))
 						{
 							Filepath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
@@ -802,7 +810,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					if (UI::DrawController("Mesh", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->ImportInfo.Name.data()); }))
+						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->Name.data()); }))
 					{
 						const Filepath meshDir = "Assets/Meshes";
 						const Filepath meshFilename = meshComponent.Mesh->Filepath.filename();
@@ -817,8 +825,7 @@ namespace Athena
 									{
 										Importer3D importer(m_Context);
 
-										meshComponent.Mesh->ImportInfo.Indices.clear();
-										importer.ImportStaticMesh(meshDir / filename, meshComponent.Mesh->ImportInfo, meshComponent.Mesh);
+										meshComponent.Mesh = importer.ImportStaticMesh(meshDir / filename, 0);
 									});
 							}
 						}

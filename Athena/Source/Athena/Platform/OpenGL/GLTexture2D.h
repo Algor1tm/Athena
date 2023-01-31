@@ -27,7 +27,7 @@ namespace Athena
 		void LoadFromFile(const Texture2DDescription& desc);
 		void LoadFromMemory(const Texture2DDescription& desc);
 		void PreAllocate(const Texture2DDescription& desc);
-		void ApplyTexParamters(const Texture2DDescription& desc);
+		void ApplyTexParameters(const Texture2DDescription& desc);
 
 	private:
 		Filepath m_Path;

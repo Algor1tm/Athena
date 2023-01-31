@@ -41,7 +41,7 @@ namespace Athena
 		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
 		m_RendererID = m_GLRendererID;
 
-		ApplyTexParamters(desc);
+		ApplyTexParameters(desc);
 
 		for (const auto& [target, path] : desc.Faces)
 		{
@@ -58,7 +58,7 @@ namespace Athena
 			}
 
 			GLenum internalFormat = 0, dataFormat = 0;
-			if (!GetGLFormats(channels, desc.HDR, desc.sRGB, internalFormat, dataFormat))
+			if (!GetGLFormats(channels, false, desc.sRGB, internalFormat, dataFormat))
 			{
 				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", path, channels);
 				m_IsLoaded = false;
@@ -66,7 +66,7 @@ namespace Athena
 				break;
 			}
 
-			glTexImage2D(GLTextureTarget(target), 0, internalFormat, width, height, 0, dataFormat, desc.HDR ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GLTextureTarget(target), 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
 
 			stbi_image_free(data);
 		}
@@ -77,10 +77,10 @@ namespace Athena
 		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
 		m_RendererID = m_GLRendererID;
 
-		ApplyTexParamters(desc);
+		ApplyTexParameters(desc);
 
 		GLenum internalFormat, dataFormat, type;
-		GetGLFormatAndType(desc.Format, internalFormat, dataFormat, type);
+		AthenaFormatToGLenum(desc.Format, internalFormat, dataFormat, type);
 		
 		glBindTexture(GL_TEXTURE_CUBE_MAP, m_GLRendererID);
 
@@ -92,7 +92,7 @@ namespace Athena
 		m_IsLoaded = true;
 	}
 
-	void GLCubemap::ApplyTexParamters(const CubemapDescription& desc)
+	void GLCubemap::ApplyTexParameters(const CubemapDescription& desc)
 	{
 		GLenum minfilter = AthenaTextureFilterToGLenum(desc.MinFilter);
 		GLenum magfilter = AthenaTextureFilterToGLenum(desc.MagFilter);

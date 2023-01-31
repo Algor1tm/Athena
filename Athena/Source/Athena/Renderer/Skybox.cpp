@@ -12,7 +12,6 @@ namespace Athena
 
 		Texture2DDescription desc;
 		desc.TexturePath = hdrMap;
-		desc.HDR = true;
 		Ref<Texture2D> equirectangularMap = Texture2D::Create(desc);
 
 		if (equirectangularMap->IsLoaded())

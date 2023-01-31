@@ -810,7 +810,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					if (UI::DrawController("Mesh", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->Name.data()); }))
+						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->Filepath.filename().string().data()); }))
 					{
 						const Filepath meshDir = "Assets/Meshes";
 						const Filepath meshFilename = meshComponent.Mesh->Filepath.filename();

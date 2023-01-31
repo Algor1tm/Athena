@@ -8,10 +8,32 @@
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/matrix4x4.h>
 
 
 namespace Athena
 {
+	struct SceneNode
+	{
+		aiNode* aiNode = nullptr;
+		aiMatrix4x4 WorldTransform;
+	};
+
+	static Matrix4 aiMatrix4x4ToMatrix4(const aiMatrix4x4& input)
+	{
+		Matrix4 output;
+
+		for (uint32 i = 0; i < 4; ++i)
+		{
+			for (uint32 j = 0; j < 4; ++j)
+			{
+				output[i][j] = input[j][i];
+			}
+		}
+
+		return output;
+	}
+
 	static Vector3 aiVector3DToVector3(const aiVector3D& input)
 	{
 		return { input.x, input.y, input.z };
@@ -24,19 +46,43 @@ namespace Athena
 		output.z = input.z;
 	}
 
-	static Ref<Material> ParseMaterial(aiMaterial* aimaterial, const Filepath& currentFilepath)
+	Ref<Texture2D> LoadTexture(const aiScene* scene, const aiMaterial* aimaterial, aiTextureType type, const Filepath& sceneFilepath)
 	{
+		Ref<Texture2D> result = nullptr;
+
+		aiString texFilepath;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
+		{
+			const aiTexture* embededTex = scene->GetEmbeddedTexture(texFilepath.C_Str());
+			if (embededTex)
+			{
+				Texture2DDescription texDesc;
+				texDesc.Data = embededTex->pcData;
+				texDesc.Width = embededTex->mWidth;
+				texDesc.Height = embededTex->mHeight;
+				result = Texture2D::Create(texDesc);
+			}
+			else
+			{
+				Filepath path = sceneFilepath;
+				path.replace_filename(texFilepath.C_Str());
+				result = Texture2D::Create(path);
+			}
+		}
+
+		return result;
+	}
+
+	static Ref<Material> LoadMaterial(const aiScene* scene, uint32 aiMaterialIndex, const Filepath& sceneFilepath)
+	{
+		const aiMaterial* aimaterial = scene->mMaterials[aiMaterialIndex];
 		MaterialDescription desc;
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-		{
 			desc.Albedo = Vector3(color.r, color.g, color.b);
-		}
 		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-		{
 			desc.Albedo = Vector3(color.r, color.g, color.b);
-		}
 
 		float roughness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
@@ -44,59 +90,34 @@ namespace Athena
 
 		float metalness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-		{
 			desc.Metalness = metalness;
-		}
 
-		aiString texFilepath;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_BASE_COLOR, 0), texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.AlbedoMap = Texture2D::Create(path);
-			desc.UseAlbedoMap = true;
-		}
-		else if(AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.AlbedoMap = Texture2D::Create(path);
-			desc.UseAlbedoMap = true;
-		}
 
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0), texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.NormalMap = Texture2D::Create(path);
+		if(desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_BASE_COLOR, sceneFilepath))
+			desc.UseAlbedoMap = true;
+		else if(desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE, sceneFilepath))
+			desc.UseAlbedoMap = true;
+
+		if (desc.NormalMap = LoadTexture(scene, aimaterial, aiTextureType_NORMALS, sceneFilepath))
 			desc.UseNormalMap = true;
-		}
-		if (AI_SUCCESS == aimaterial->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.RoughnessMap = Texture2D::Create(path);
+
+		if (desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, sceneFilepath))
 			desc.UseRoughnessMap = true;
-		}
-		if (AI_SUCCESS == aimaterial->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.MetalnessMap = Texture2D::Create(path);
+		else if(desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_SHININESS, sceneFilepath))
+			desc.UseRoughnessMap = true;
+
+		if (desc.MetalnessMap = LoadTexture(scene, aimaterial, aiTextureType_METALNESS, sceneFilepath))
 			desc.UseMetalnessMap = true;
-		}
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT_OCCLUSION, 0), texFilepath))
-		{
-			Filepath path = currentFilepath;
-			path.replace_filename(texFilepath.C_Str());
-			desc.AmbientOcclusionMap = Texture2D::Create(path);
+
+		if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, sceneFilepath))
 			desc.UseAmbientOcclusionMap = true;
-		}
+		else if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_LIGHTMAP, sceneFilepath))
+			desc.UseAmbientOcclusionMap = true;
 
 		return MaterialManager::CreateMaterial(desc, aimaterial->GetName().C_Str());
 	}
 
-	static Ref<StaticMesh> ParseStaticMesh(const aiScene* scene, uint32 aiMeshIndex, const Filepath& currentFilepath)
+	static Ref<StaticMesh> LoadStaticMesh(const aiScene* scene, uint32 aiMeshIndex, const Filepath& sceneFilepath)
 	{
 		aiMesh* aimesh = scene->mMeshes[aiMeshIndex];
 
@@ -111,8 +132,8 @@ namespace Athena
 		}
 
 		result->Name = aimesh->mName.C_Str();
-		result->MaterialName = ParseMaterial(scene->mMaterials[aimesh->mMaterialIndex], currentFilepath)->GetName();
-		result->Filepath = currentFilepath;
+		result->MaterialName = LoadMaterial(scene, aimesh->mMaterialIndex, sceneFilepath)->GetName();
+		result->Filepath = sceneFilepath;
 		result->aiMeshIndex = aiMeshIndex;
 
 		uint32 numFaces = aimesh->mNumFaces;
@@ -134,8 +155,6 @@ namespace Athena
 		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indicies.data(), indicies.size());
 
 		uint32 numVertices = aimesh->mNumVertices;
-		aiVector3D* positions = aimesh->mVertices;
-		aiVector3D** texcoords = aimesh->mTextureCoords;
 		std::vector<Vertex> vertices(numVertices);
 
 		for (uint32 i = 0; i < numVertices; ++i)
@@ -149,10 +168,14 @@ namespace Athena
 			}
 			
 			// TexCoord
-			if (aimesh->HasTextureCoords(0))
+			for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
 			{
-				vertices[i].TexCoords.x = aimesh->mTextureCoords[0][i].x;
-				vertices[i].TexCoords.y = aimesh->mTextureCoords[0][i].y;
+				if (aimesh->HasTextureCoords(j))
+				{
+					vertices[i].TexCoords.x = aimesh->mTextureCoords[j][i].x;
+					vertices[i].TexCoords.y = aimesh->mTextureCoords[j][i].y;
+					break;
+				}
 			}
 
 			// Normal
@@ -181,7 +204,7 @@ namespace Athena
 		return result;
 	}
 
-	Importer3D::Importer3D(Ref<Scene> scene)
+	Importer3D::Importer3D(const Ref<Scene>& scene)
 		: m_Scene(scene)
 	{
 
@@ -198,14 +221,10 @@ namespace Athena
 		if (!aiscene)
 			return false;
 
-		for (uint32 i = 0; i < aiscene->mNumMeshes; ++i)
-		{
-			Ref<StaticMesh> mesh = ParseStaticMesh(aiscene, i, m_CurrentFilepath);
+		SceneNode root;
+		root.aiNode = aiscene->mRootNode;
 
-			Entity entity = m_Scene->CreateEntity();
-			entity.GetComponent<TagComponent>().Tag = mesh->Name;
-			entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-		}
+		ProcessNode(aiscene, &root);
 
 		return true;
 	}
@@ -216,19 +235,67 @@ namespace Athena
 		if (!aiscene)
 			return nullptr;
 
-		Ref<StaticMesh> mesh = ParseStaticMesh(aiscene, aiMeshIndex, m_CurrentFilepath);
+		Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, aiMeshIndex, m_SceneFilepath);
 
 		return mesh;
+	}
+
+	void Importer3D::ProcessNode(const aiScene* aiscene, const SceneNode* node)
+	{
+		aiMatrix4x4 worldTransform = node->WorldTransform * node->aiNode->mTransformation;
+		
+		aiVector3D translation, scale, rotation;
+		TransformComponent transform;
+
+		if (node->aiNode->mNumMeshes > 0)
+		{
+			worldTransform.Decompose(scale, rotation, translation);
+
+			transform.Translation = aiVector3DToVector3(translation);
+			transform.Rotation = aiVector3DToVector3(rotation);;
+			transform.Scale = aiVector3DToVector3(scale);
+		}
+
+		for (uint32 i = 0; i < node->aiNode->mNumMeshes; ++i)
+		{
+			Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, node->aiNode->mMeshes[i], m_SceneFilepath);
+
+			Entity entity = m_Scene->CreateEntity();
+			entity.GetComponent<TagComponent>().Tag = mesh->Name;
+			entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
+
+			entity.GetComponent<TransformComponent>() = transform;
+		}
+
+		SceneNode newNode;
+		newNode.WorldTransform = worldTransform;
+
+		for (uint32 i = 0; i < node->aiNode->mNumChildren; ++i)
+		{
+			newNode.aiNode = node->aiNode->mChildren[i];
+
+			ProcessNode(aiscene, &newNode);
+		}
 	}
 
 	const aiScene* Importer3D::OpenFile(const Filepath& filepath)
 	{
 		if (m_ImportedScenes.find(filepath) == m_ImportedScenes.end())
 		{
-			unsigned int flags = aiProcessPreset_TargetRealtime_Fast |
-				aiProcess_PreTransformVertices |
+			unsigned int flags =
+				aiProcess_Triangulate |
+				aiProcess_GenUVCoords |
+				aiProcess_CalcTangentSpace |
+				aiProcess_GenNormals |
+				aiProcess_SortByPType |
+				aiProcess_FindDegenerates | 
+				aiProcess_ImproveCacheLocality |
+				aiProcess_LimitBoneWeights | 
+				aiProcess_OptimizeGraph |
 				aiProcess_RemoveRedundantMaterials |
-				aiProcess_OptimizeMeshes;
+				aiProcess_OptimizeMeshes |
+				aiProcess_EmbedTextures | 
+				aiProcess_GenBoundingBoxes;
 
 			if (RendererAPI::GetAPI() == RendererAPI::Direct3D)
 				flags |= aiProcess_MakeLeftHanded | aiProcess_FlipUVs;
@@ -246,7 +313,7 @@ namespace Athena
 			m_ImportedScenes[filepath] = aiscene;
 		}
 
-		m_CurrentFilepath = filepath;
+		m_SceneFilepath = filepath;
 
 		return m_ImportedScenes[filepath];
 	}

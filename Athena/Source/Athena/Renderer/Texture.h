@@ -78,13 +78,13 @@ namespace Athena
 			: TexturePath(path) {}
 
 		Filepath TexturePath;
-		bool HDR = false;
-		bool sRGB = false;
 
 		const void* Data = nullptr;
-		TextureFormat Format = TextureFormat::RGBA8;
 		uint32 Width = 0;
 		uint32 Height = 0;
+
+		TextureFormat Format = TextureFormat::RGBA8;
+		bool sRGB = false;
 
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;
@@ -133,12 +133,12 @@ namespace Athena
 	struct CubemapDescription
 	{
 		std::array<std::pair<TextureTarget, Filepath>, 6> Faces;
-		bool HDR = false;
-		bool sRGB = false;
 
-		TextureFormat Format = TextureFormat::RGBA8;
 		uint32 Width = 0;
 		uint32 Height = 0;
+
+		TextureFormat Format = TextureFormat::RGBA8;
+		bool sRGB = false;
 
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;

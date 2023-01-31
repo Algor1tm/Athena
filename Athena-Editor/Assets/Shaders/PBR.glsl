@@ -34,7 +34,7 @@ void main()
 
     Output.WorldPos = vec3(u_Transform * vec4(a_Position, 1));
     Output.TexCoord = a_TexCoord;
-    Output.Normal = vec3(u_Transform * vec4(a_Normal, 0));
+    Output.Normal = normalize(vec3(u_Transform * vec4(a_Normal, 0)));
 
     vec3 T = normalize(vec3(u_Transform * vec4(a_Tangent, 0)));
     vec3 N = Output.Normal;
@@ -166,7 +166,7 @@ void main()
     }
     else
     {
-        normal = normalize(Input.Normal);
+        normal = Input.Normal;
     }
 
     float roughness;

@@ -21,7 +21,7 @@ namespace Athena
 	private:
 		void LoadFromFile(const CubemapDescription& desc);
 		void PreAllocate(const CubemapDescription& desc);
-		void ApplyTexParamters(const CubemapDescription& desc);
+		void ApplyTexParameters(const CubemapDescription& desc);
 
 	private:
 		GLenum m_GLRendererID;

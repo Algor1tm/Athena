@@ -67,7 +67,7 @@ namespace Athena
 		return GL_NONE;
 	}
 
-	inline void GetGLFormatAndType(TextureFormat format, GLenum& internalFormat, GLenum& dataFormat, GLenum& type)
+	inline void AthenaFormatToGLenum(TextureFormat format, GLenum& internalFormat, GLenum& dataFormat, GLenum& type)
 	{
 		switch (format)
 		{

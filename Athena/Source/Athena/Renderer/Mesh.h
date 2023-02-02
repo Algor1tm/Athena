@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Buffer.h"
+#include "GPUBuffers.h"
 #include "AABB.h"
 
 #include <vector>

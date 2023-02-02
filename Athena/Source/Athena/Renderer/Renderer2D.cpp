@@ -3,7 +3,7 @@
 #include "Athena/Math/Transforms.h"
 #include "RenderCommand.h"
 #include "Shader.h"
-#include "ConstantBuffer.h"
+#include "GPUBuffers.h"
 #include "Renderer.h"
 
 

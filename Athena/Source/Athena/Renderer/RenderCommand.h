@@ -1,7 +1,7 @@
 #pragma once
 
 #include "RendererAPI.h"
-#include "Buffer.h"
+#include "GPUBuffers.h"
 #include "Framebuffer.h"
 
 

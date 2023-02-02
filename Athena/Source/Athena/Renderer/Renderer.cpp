@@ -1,7 +1,7 @@
 #include "Renderer.h"
 
 #include "Athena/Renderer/Renderer2D.h"
-#include "Athena/Renderer/ConstantBuffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
 
 #include "Athena/Math/Projections.h"

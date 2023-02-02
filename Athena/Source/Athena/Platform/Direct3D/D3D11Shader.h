@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Buffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 #include "D3D11GraphicsContext.h"
 

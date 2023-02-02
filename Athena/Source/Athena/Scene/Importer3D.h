@@ -5,6 +5,7 @@
 
 class aiScene;
 class aiNode;
+class aiMaterial;
 
 
 namespace Athena
@@ -25,6 +26,10 @@ namespace Athena
 	private:
 		const aiScene* OpenFile(const Filepath& filepath);
 		void ProcessNode(const aiScene* aiscene, const SceneNode* node);
+
+		Ref<Texture2D> LoadTexture(const aiScene* scene, const aiMaterial* aimaterial, uint32 type);
+		Ref<Material> LoadMaterial(const aiScene* scene, uint32 aiMaterialIndex);
+		Ref<StaticMesh> LoadStaticMesh(const aiScene* scene, uint32 aiMeshIndex);
 
 	private:
 		Ref<Scene> m_Scene;

@@ -147,4 +147,26 @@ namespace Athena
 
 		virtual const Ref<IndexBuffer>& GetIndexBuffer() const = 0;
 	};
+
+
+	class ATHENA_API ConstantBuffer
+	{
+	public:
+		virtual ~ConstantBuffer() = default;
+
+		static Ref<ConstantBuffer> Create(uint32 size, uint32 binding);
+
+		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+	};
+
+
+	class ATHENA_API ShaderStorageBuffer
+	{
+	public:
+		virtual ~ShaderStorageBuffer() = default;
+
+		static Ref<ShaderStorageBuffer> Create(uint32 size, uint32 binding);
+
+		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+	};
 }

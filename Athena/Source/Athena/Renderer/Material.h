@@ -5,7 +5,7 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/ConstantBuffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 
 namespace Athena

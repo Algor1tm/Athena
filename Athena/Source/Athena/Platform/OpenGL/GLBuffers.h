@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/Buffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 
 namespace Athena
@@ -45,5 +45,31 @@ namespace Athena
 	private:
 		uint32 m_RendererID = 0;
 		uint32 m_Count = 0;
+	};
+
+
+	class ATHENA_API GLUniformBuffer : public ConstantBuffer
+	{
+	public:
+		GLUniformBuffer(uint32 size, uint32 binding);
+		virtual ~GLUniformBuffer();
+
+		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) override;
+
+	private:
+		uint32 m_RendererID = 0;
+	};
+
+
+	class ATHENA_API GLShaderStorageBuffer : public ShaderStorageBuffer
+	{
+	public:
+		GLShaderStorageBuffer(uint32 size, uint32 binding);
+		virtual ~GLShaderStorageBuffer();
+
+		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) override;
+
+	private:
+		uint32 m_RendererID = 0;
 	};
 }

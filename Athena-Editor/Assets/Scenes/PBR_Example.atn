@@ -1,43 +1,17 @@
 Scene: PBR_Example
 Entities:
   - IDComponent:
-      ID: 14514284786278117030
+      ID: 355488278567739596
     TagComponent:
-      Tag: Sphere
+      Tag: Beretta Pistol
     TransformComponent:
-      Translation: [-409.283691, 155.896439, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.53537, 113.53537]
+      Translation: [-1.22039247, 667.358887, -292.394043]
+      Rotation: [-1.57079685, 1.1920929e-07, -1.57079685]
+      Scale: [74.8797302, 74.8797302, 74.8797302]
     StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Sphere
+      Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
+      Name: Beretta Pistol
       aiMeshIndex: 0
-      Hide: false
-  - IDComponent:
-      ID: 4620546740167642908
-    TagComponent:
-      Tag: Cone
-    TransformComponent:
-      Translation: [-409.283691, 160.25946, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.532982, 113.532982]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Cone
-      aiMeshIndex: 1
-      Hide: false
-  - IDComponent:
-      ID: 13109570281517897720
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Translation: [-409.283691, 155.896439, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.53537, 113.53537]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Cube
-      aiMeshIndex: 2
       Hide: false
   - IDComponent:
       ID: 17462938647148434322
@@ -53,16 +27,42 @@ Entities:
       aiMeshIndex: 3
       Hide: false
   - IDComponent:
-      ID: 355488278567739596
+      ID: 13109570281517897720
     TagComponent:
-      Tag: Beretta Pistol
+      Tag: Cube
     TransformComponent:
-      Translation: [-1.22039247, 667.358887, -292.394043]
-      Rotation: [-1.57079685, 1.1920929e-07, -1.57079685]
-      Scale: [74.8797302, 74.8797302, 74.8797302]
+      Translation: [-409.283691, 161.865936, 224.332428]
+      Rotation: [-1.57079649, -0, 0]
+      Scale: [113.53537, 113.532562, 113.532562]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
-      Name: Circle.000.Circle.004.Circle.003.Circle.002.Circle.001
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      Name: Cube
+      aiMeshIndex: 2
+      Hide: false
+  - IDComponent:
+      ID: 4620546740167642908
+    TagComponent:
+      Tag: Cone
+    TransformComponent:
+      Translation: [-409.283691, 167.069397, 224.332428]
+      Rotation: [-1.57079649, -0, 0]
+      Scale: [113.53537, 113.531738, 113.531738]
+    StaticMeshComponent:
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      Name: Cone
+      aiMeshIndex: 1
+      Hide: false
+  - IDComponent:
+      ID: 14514284786278117030
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Translation: [-409.283691, 155.896439, 224.332428]
+      Rotation: [-1.57079649, -0, 0]
+      Scale: [113.53537, 113.53537, 113.53537]
+    StaticMeshComponent:
+      Filepath: Assets\Scenes\BlenderScene.fbx
+      Name: Sphere
       aiMeshIndex: 0
       Hide: false
 Environment:

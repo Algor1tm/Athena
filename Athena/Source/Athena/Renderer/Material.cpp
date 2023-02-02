@@ -39,7 +39,6 @@ namespace Athena
 	{
 		if (m_Materials.find(name) == m_Materials.end())
 		{
-			ATN_CORE_ERROR("MaterialManager::GetMaterial: invalid material name!");
 			return nullptr;
 		}
 		else

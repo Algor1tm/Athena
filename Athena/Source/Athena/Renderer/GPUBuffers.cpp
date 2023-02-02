@@ -1,8 +1,8 @@
-#include "Buffer.h"
+#include "GPUBuffers.h"
 
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Platform/OpenGL/GLBuffer.h"
-#include "Athena/Platform/Direct3D/D3D11Buffer.h"
+#include "Athena/Platform/OpenGL/GLBuffers.h"
+#include "Athena/Platform/Direct3D/D3D11Buffers.h"
 
 
 namespace Athena
@@ -23,6 +23,7 @@ namespace Athena
 		return nullptr;
 	}
 
+
 	Ref<VertexBuffer> VertexBuffer::Create(const VertexBufferDescription& desc)
 	{
 		ATN_CORE_ASSERT(!(desc.Usage == BufferUsage::STATIC && desc.Data == nullptr), "Invalid vertex buffer data!");
@@ -33,6 +34,38 @@ namespace Athena
 			return CreateRef<GLVertexBuffer>(desc); break;
 		case RendererAPI::API::Direct3D:
 			return CreateRef<D3D11VertexBuffer>(desc); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
+
+	Ref<ConstantBuffer> ConstantBuffer::Create(uint32 size, uint32 binding)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLUniformBuffer>(size, binding); break;
+		case RendererAPI::API::Direct3D:
+			return CreateRef<D3D11ConstantBuffer>(size, binding);
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
+
+	Ref<ShaderStorageBuffer> ShaderStorageBuffer::Create(uint32 size, uint32 binding)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLShaderStorageBuffer>(size, binding); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

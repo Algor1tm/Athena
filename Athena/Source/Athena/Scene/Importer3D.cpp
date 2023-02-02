@@ -46,7 +46,7 @@ namespace Athena
 		output.z = input.z;
 	}
 
-	Ref<Texture2D> LoadTexture(const aiScene* scene, const aiMaterial* aimaterial, aiTextureType type, const Filepath& sceneFilepath)
+	Ref<Texture2D> Importer3D::LoadTexture(const aiScene* scene, const aiMaterial* aimaterial, uint32 type)
 	{
 		Ref<Texture2D> result = nullptr;
 
@@ -64,7 +64,7 @@ namespace Athena
 			}
 			else
 			{
-				Filepath path = sceneFilepath;
+				Filepath path = m_SceneFilepath;
 				path.replace_filename(texFilepath.C_Str());
 				result = Texture2D::Create(path);
 			}
@@ -73,9 +73,15 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* scene, uint32 aiMaterialIndex, const Filepath& sceneFilepath)
+	Ref<Material> Importer3D::LoadMaterial(const aiScene* scene, uint32 aiMaterialIndex)
 	{
+		Ref<Material> result;
 		const aiMaterial* aimaterial = scene->mMaterials[aiMaterialIndex];
+		String materialName = aimaterial->GetName().C_Str();
+
+		if (result = MaterialManager::GetMaterial(materialName))
+			return result;
+
 		MaterialDescription desc;
 
 		aiColor4D color;
@@ -93,31 +99,32 @@ namespace Athena
 			desc.Metalness = metalness;
 
 
-		if(desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_BASE_COLOR, sceneFilepath))
+		if (desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_BASE_COLOR))
 			desc.UseAlbedoMap = true;
-		else if(desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE, sceneFilepath))
+		else if (desc.AlbedoMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE))
 			desc.UseAlbedoMap = true;
 
-		if (desc.NormalMap = LoadTexture(scene, aimaterial, aiTextureType_NORMALS, sceneFilepath))
+		if (desc.NormalMap = LoadTexture(scene, aimaterial, aiTextureType_NORMALS))
 			desc.UseNormalMap = true;
 
-		if (desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, sceneFilepath))
+		if (desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS))
 			desc.UseRoughnessMap = true;
-		else if(desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_SHININESS, sceneFilepath))
+		else if (desc.RoughnessMap = LoadTexture(scene, aimaterial, aiTextureType_SHININESS))
 			desc.UseRoughnessMap = true;
 
-		if (desc.MetalnessMap = LoadTexture(scene, aimaterial, aiTextureType_METALNESS, sceneFilepath))
+		if (desc.MetalnessMap = LoadTexture(scene, aimaterial, aiTextureType_METALNESS))
 			desc.UseMetalnessMap = true;
 
-		if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, sceneFilepath))
+		if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_AMBIENT_OCCLUSION))
 			desc.UseAmbientOcclusionMap = true;
-		else if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_LIGHTMAP, sceneFilepath))
+		else if (desc.AmbientOcclusionMap = LoadTexture(scene, aimaterial, aiTextureType_LIGHTMAP))
 			desc.UseAmbientOcclusionMap = true;
 
-		return MaterialManager::CreateMaterial(desc, aimaterial->GetName().C_Str());
+		result = MaterialManager::CreateMaterial(desc, materialName);
+		return result;
 	}
 
-	static Ref<StaticMesh> LoadStaticMesh(const aiScene* scene, uint32 aiMeshIndex, const Filepath& sceneFilepath)
+	Ref<StaticMesh> Importer3D::LoadStaticMesh(const aiScene* scene, uint32 aiMeshIndex)
 	{
 		aiMesh* aimesh = scene->mMeshes[aiMeshIndex];
 
@@ -132,8 +139,8 @@ namespace Athena
 		}
 
 		result->Name = aimesh->mName.C_Str();
-		result->MaterialName = LoadMaterial(scene, aimesh->mMaterialIndex, sceneFilepath)->GetName();
-		result->Filepath = sceneFilepath;
+		result->MaterialName = LoadMaterial(scene, aimesh->mMaterialIndex)->GetName();
+		result->Filepath = m_SceneFilepath;
 		result->aiMeshIndex = aiMeshIndex;
 
 		uint32 numFaces = aimesh->mNumFaces;
@@ -166,7 +173,7 @@ namespace Athena
 				if (createBoundingBox)
 					result->BoundingBox.Extend(vertices[i].Position);
 			}
-			
+
 			// TexCoord
 			for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
 			{
@@ -235,7 +242,7 @@ namespace Athena
 		if (!aiscene)
 			return nullptr;
 
-		Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, aiMeshIndex, m_SceneFilepath);
+		Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, aiMeshIndex);
 
 		return mesh;
 	}
@@ -258,7 +265,7 @@ namespace Athena
 
 		for (uint32 i = 0; i < node->aiNode->mNumMeshes; ++i)
 		{
-			Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, node->aiNode->mMeshes[i], m_SceneFilepath);
+			Ref<StaticMesh> mesh = LoadStaticMesh(aiscene, node->aiNode->mMeshes[i]);
 
 			Entity entity = m_Scene->CreateEntity();
 			entity.GetComponent<TagComponent>().Tag = mesh->Name;

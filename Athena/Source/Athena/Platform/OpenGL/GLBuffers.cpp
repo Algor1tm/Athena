@@ -1,4 +1,4 @@
-#include "GLBuffer.h"
+#include "GLBuffers.h"
 
 #include <glad/glad.h>
 
@@ -26,8 +26,9 @@ namespace Athena
 		return 0;
 	}
 
-
+	/////////////////////////////////////////////////////////
 	///////////////////// VertexBuffer /////////////////////
+	/////////////////////////////////////////////////////////
 
 	GLVertexBuffer::GLVertexBuffer(const VertexBufferDescription& desc)
 	{
@@ -143,7 +144,9 @@ namespace Athena
 		m_IndexBuffer = indexBuffer;
 	}
 
-	///////////////////// IndexBuffer /////////////////////
+	/////////////////////////////////////////////////////////
+	///////////////////// IndexBuffer ///////////////////////
+	/////////////////////////////////////////////////////////
 
 	GLIndexBuffer::GLIndexBuffer(uint32* indices, uint32 count)
 		: m_Count(count)
@@ -168,5 +171,47 @@ namespace Athena
 	void GLIndexBuffer::UnBind() const
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	/////////////////////////////////////////////////////////
+	///////////////////// UniformBuffer /////////////////////
+	/////////////////////////////////////////////////////////
+
+	GLUniformBuffer::GLUniformBuffer(uint32 size, uint32 binding)
+	{
+		glCreateBuffers(1, &m_RendererID);
+		glNamedBufferData(m_RendererID, size, nullptr, GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_UNIFORM_BUFFER, binding, m_RendererID);
+	}
+
+	GLUniformBuffer::~GLUniformBuffer()
+	{
+		glDeleteBuffers(1, &m_RendererID);
+	}
+
+	void GLUniformBuffer::SetData(const void* data, uint32 size, uint32 offset)
+	{
+		glNamedBufferSubData(m_RendererID, offset, size, data);
+	}
+
+	/////////////////////////////////////////////////////////
+	///////////////////// ShaderStorageBuffer ///////////////
+	/////////////////////////////////////////////////////////
+
+	GLShaderStorageBuffer::GLShaderStorageBuffer(uint32 size, uint32 binding)
+	{
+		glCreateBuffers(1, &m_RendererID);
+		glNamedBufferData(m_RendererID, size, nullptr, GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, m_RendererID);
+	}
+
+	GLShaderStorageBuffer::~GLShaderStorageBuffer()
+	{
+		glDeleteBuffers(1, &m_RendererID);
+	}
+
+	void GLShaderStorageBuffer::SetData(const void* data, uint32 size, uint32 offset)
+	{
+		glNamedBufferSubData(m_RendererID, offset, size, data);
 	}
 }

@@ -95,7 +95,7 @@ namespace Athena
 		s_Data.EquirectangularToCubemapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/EquirectangularToCubemap");
 		s_Data.ComputeIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputeIrradianceMap");
 		s_Data.ComputePrefilterMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputePrefilterMap");
-		
+
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
 
@@ -108,9 +108,9 @@ namespace Athena
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
 
-		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), ConstantBufferBinder::SCENE_DATA);
-		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), ConstantBufferBinder::MATERIAL_DATA);
-		s_Data.LightConstantBuffer = ConstantBuffer::Create(sizeof(DirectionalLight), ConstantBufferBinder::LIGHT_DATA);
+		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), BufferBinder::SCENE_DATA);
+		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
+		s_Data.LightConstantBuffer = ConstantBuffer::Create(sizeof(DirectionalLight), BufferBinder::LIGHT_DATA);
 
 		// Create BRDF_LUT
 		uint32 width = 512;

@@ -23,4 +23,18 @@ namespace Athena
 		uint32 m_RendererID = 0;
 		bool m_Compiled = false;
 	};
+
+
+	class ATHENA_API GLIncludeShader : public IncludeShader
+	{
+	public:
+		GLIncludeShader(const Filepath& filepath);
+		virtual ~GLIncludeShader();
+
+		virtual void Reload() override;
+
+	private:
+		Filepath m_Filepath;
+		String m_IncludeName;
+	};
 }

@@ -187,7 +187,7 @@ namespace Athena
 		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 
-		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), ConstantBufferBinder::RENDERER2D_CAMERA_DATA);
+		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
 	}
 
 	void Renderer2D::Shutdown()

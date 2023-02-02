@@ -1,5 +1,7 @@
 #include "GLShader.h"
 
+#include "Athena/Core/FileSystem.h"
+
 #include <glad/glad.h>
 
 
@@ -56,6 +58,7 @@ namespace Athena
 			GLuint shader = glCreateShader(ShaderTypeToGLenum(glType));
 
 			const char* source = sourceString.c_str();
+
 			glShaderSource(shader, 1, &source, 0);
 
 			glCompileShader(shader);
@@ -86,6 +89,7 @@ namespace Athena
 		m_RendererID = program;
 		glLinkProgram(m_RendererID);
 
+
 		GLint isLinked = 0;
 		glGetProgramiv(m_RendererID, GL_LINK_STATUS, &isLinked);
 		if (isLinked == GL_FALSE)
@@ -95,8 +99,8 @@ namespace Athena
 
 			std::vector<GLchar> infoLog(maxLength);
 			glGetProgramInfoLog(m_RendererID, maxLength, &maxLength, infoLog.data());
-			
-			for(auto id: shaderIDs)
+
+			for (auto id : shaderIDs)
 				glDeleteShader(id);
 
 			ATN_CORE_ERROR("{0}", infoLog.data());
@@ -114,7 +118,7 @@ namespace Athena
 
 	void GLShader::Reload()
 	{
-		String result = ReadFile(m_Filepath);
+		String result = FileSystem::ReadFile(m_Filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 	}
@@ -130,5 +134,27 @@ namespace Athena
 	void GLShader::UnBind() const
 	{
 		glUseProgram(0);
+	}
+
+
+	GLIncludeShader::GLIncludeShader(const Filepath& filepath)
+	{
+		ATN_CORE_ASSERT(std::filesystem::exists(filepath), "Invalid filepath for Shader");
+
+		m_Filepath = filepath;
+		Reload();
+	}
+
+	GLIncludeShader::~GLIncludeShader()
+	{
+		glDeleteNamedStringARB(m_IncludeName.size(), m_IncludeName.c_str());
+	}
+
+	void GLIncludeShader::Reload()
+	{
+		String source = FileSystem::ReadFile(m_Filepath);
+		m_IncludeName = "/" + m_Filepath.filename().string();
+
+		glNamedStringARB(GL_SHADER_INCLUDE_ARB, m_IncludeName.size(), m_IncludeName.c_str(), source.size(), source.c_str());
 	}
 }

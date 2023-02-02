@@ -46,12 +46,21 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 
 	protected:
-		String ReadFile(const Filepath& filepath);
 		std::unordered_map<ShaderType, String> PreProcess(const String& source);
 
 	protected:
 		String m_Name;
 		Filepath m_Filepath;
+	};
+
+
+	class ATHENA_API IncludeShader
+	{
+	public:
+		static Ref<IncludeShader> Create(const Filepath& filepath);
+		virtual ~IncludeShader() = default;
+
+		virtual void Reload() = 0;
 	};
 
 	class ATHENA_API ShaderLibrary

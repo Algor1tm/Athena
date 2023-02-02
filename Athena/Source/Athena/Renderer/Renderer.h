@@ -23,7 +23,7 @@ namespace Athena
 		BRDF_LUT = 7,
 	};
 
-	enum ConstantBufferBinder
+	enum BufferBinder
 	{
 		RENDERER2D_CAMERA_DATA = 0,
 		SCENE_DATA = 1,

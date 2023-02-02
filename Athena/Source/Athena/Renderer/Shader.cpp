@@ -19,14 +19,14 @@ namespace Athena
 
 	Ref<Shader> Shader::Create(const BufferLayout& layout, const Filepath& filepath)
 	{
-		Filepath withExtension = filepath;
+		Filepath stem = filepath;
 
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
-			return CreateRef<GLShader>(withExtension.concat(L".glsl")); break;
+			return CreateRef<GLShader>(stem.concat(L".glsl")); break;
 		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Shader>(layout, withExtension.concat(L".hlsl")); break;
+			return CreateRef<D3D11Shader>(layout, stem.concat(L".hlsl")); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -51,25 +51,6 @@ namespace Athena
 		return nullptr;
 	}
 	
-	String Shader::ReadFile(const Filepath& filepath)
-	{
-		String result;
-		std::ifstream in(filepath, std::ios::in | std::ios::binary);
-		if (in)
-		{
-			in.seekg(0, std::ios::end);
-			result.resize(in.tellg());
-			in.seekg(0, std::ios::beg);
-			in.read(result.data(), result.size());
-			in.close();
-		}
-		else
-		{
-			ATN_CORE_ERROR("Could not open file: '{0}'", filepath);
-		}
-		return result;
-	}
-
 	std::unordered_map<ShaderType, String> Shader::PreProcess(const String& source)
 	{
 		std::unordered_map<ShaderType, String> shaderSources;
@@ -94,6 +75,23 @@ namespace Athena
 
 		return shaderSources;
 	}
+
+	Ref<IncludeShader> IncludeShader::Create(const Filepath& filepath)
+	{
+		Filepath stem = filepath;
+
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLIncludeShader>(stem.concat(L".glsl")); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
 
 	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
 	{

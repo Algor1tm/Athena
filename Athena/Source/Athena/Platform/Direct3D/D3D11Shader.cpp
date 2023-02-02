@@ -1,5 +1,7 @@
 #include "D3D11Shader.h"
 
+#include "Athena/Core/FileSystem.h"
+
 #include <d3dcompiler.h>
 
 
@@ -50,7 +52,7 @@ namespace Athena
 		m_Filepath = filepath;
 		m_Name = m_Filepath.stem().string();
 
-		String result = ReadFile(filepath);
+		String result = FileSystem::ReadFile(m_Filepath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 

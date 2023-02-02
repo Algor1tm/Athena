@@ -71,7 +71,7 @@ layout(std140, binding = 2) uniform MaterialData
     float u_Metalness;
     float u_AmbientOcclusion;
 
-	int u_UseAlbedoTexture;
+	int u_UseAlbedoMap;
 	int u_UseNormalMap;
 	int u_UseRoughnessMap;
 	int u_UseMetalnessMap;
@@ -85,7 +85,7 @@ layout(std140, binding = 3) uniform DirectionalLight
     float Intensity;
 } Light;
 
-layout(binding = 0) uniform sampler2D u_AlbedoTexture;
+layout(binding = 0) uniform sampler2D u_AlbedoMap;
 layout(binding = 1) uniform sampler2D u_NormalMap;
 layout(binding = 2) uniform sampler2D u_RoughnessMap;
 layout(binding = 3) uniform sampler2D u_MetalnessMap;
@@ -154,8 +154,8 @@ vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
 void main()
 {
     vec4 albedo = u_Albedo;
-    if(bool(u_UseAlbedoTexture))
-        albedo *= texture(u_AlbedoTexture, Input.TexCoord);
+    if(bool(u_UseAlbedoMap))
+        albedo *= texture(u_AlbedoMap, Input.TexCoord);
 
     vec3 normal;
     if(bool(u_UseNormalMap))
@@ -166,7 +166,7 @@ void main()
     }
     else
     {
-        normal = Input.Normal;
+        normal = normalize(Input.Normal);
     }
 
     float roughness;

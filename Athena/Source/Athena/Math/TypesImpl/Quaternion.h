@@ -215,12 +215,12 @@ namespace Athena::Math
 
 		constexpr Quaternion operator*(T scalar) const
 		{
-			return Quaternion(x * scalar, y * scalar, z * scalar, w * scalar);
+			return Quaternion(w * scalar, x * scalar, y * scalar, z * scalar);
 		}
 
 		constexpr Quaternion operator/(T scalar) const
 		{
-			return Quaternion(x / scalar, y / scalar, z / scalar, w / scalar);
+			return Quaternion(w / scalar, x / scalar, y / scalar, z / scalar);
 		}
 
 		constexpr bool operator==(const Quaternion& other) const
@@ -249,15 +249,9 @@ namespace Athena::Math
 // -------------Relative Functions-------------------------------------
 
 	template <typename T>
-	constexpr Quaternion<T> operator+(T scalar, const Quaternion<T>& quat)
-	{
-		return quat += scalar;
-	}
-
-	template <typename T>
 	constexpr Quaternion<T> operator*(T scalar, const Quaternion<T>& quat)
 	{
-		return quat *= scalar;
+		return quat * scalar;
 	}
 
 	template <typename T>

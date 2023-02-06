@@ -34,7 +34,7 @@ namespace Athena
 		Vector3 GetRightDirection() const;
 		Vector3 GetForwardDirection() const;
 		inline const Vector3& GetPosition() const { return m_Position; }
-		Quat GetOrientation() const;
+		Quaternion GetOrientation() const;
 
 		inline void SetPitch(float pitch) { m_Pitch = pitch; RecalculateView(); }
 		inline void SetYaw(float yaw) { m_Yaw = yaw; RecalculateView(); }

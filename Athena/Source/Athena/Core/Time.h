@@ -90,7 +90,6 @@ namespace Athena
 			return m_Time <= other.m_Time;
 		}
 
-
 	public:
 		static inline Time Seconds(float seconds)
 		{

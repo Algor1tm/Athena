@@ -38,8 +38,8 @@ namespace Athena
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
 		glBufferData(GL_ARRAY_BUFFER, desc.Size, desc.Data, desc.Usage == BufferUsage::STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
 
-		SetLayout((*desc.pBufferLayout));
-		SetIndexBuffer(desc.pIndexBuffer);
+		SetLayout(desc.Layout);
+		SetIndexBuffer(desc.IndexBuffer);
 
 		glBindVertexArray(0);
 	}

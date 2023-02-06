@@ -100,7 +100,7 @@ namespace Athena
 
 	struct Rigidbody2DComponent
 	{
-		enum class BodyType {STATIC = 0, DYNAMIC = 1, KINEMATIC = 2};
+		enum class BodyType { STATIC = 0, DYNAMIC = 1, KINEMATIC = 2 };
 		BodyType Type = BodyType::STATIC;
 		bool FixedRotation = false;
 
@@ -140,5 +140,11 @@ namespace Athena
 	{
 		Ref<StaticMesh> Mesh;
 		bool Hide = false;
+	};
+
+	struct SkeletalMeshComponent
+	{
+		Ref<SkeletalMesh> Mesh;
+		Ref<Animator> Animator;
 	};
 }

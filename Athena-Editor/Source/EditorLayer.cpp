@@ -36,7 +36,7 @@ namespace Athena
 
         m_EditorCamera.SetDistance(1000.f);
 
-#if 1
+#if 0
         OpenScene("Assets/Scenes/PBR_Example.atn");
         m_EditorCamera.SetDistance(3400.f);
         m_EditorCamera.SetPitch(0.356f);
@@ -354,7 +354,7 @@ namespace Athena
                 Renderer2D::DrawLine(max, { max.x, max.y, min.z }, color, 1);
                 Renderer2D::DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color, 1);
             }
-            else
+            else if(m_SelectedEntity.HasComponent<SpriteComponent>() || m_SelectedEntity.HasComponent<CircleComponent>())
             {
                 Renderer2D::DrawRect(transform.AsMatrix(), color, 8.f);
             }

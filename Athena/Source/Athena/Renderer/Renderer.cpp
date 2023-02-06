@@ -3,6 +3,7 @@
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Vertex.h"
 
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
@@ -18,10 +19,9 @@ namespace Athena
 	{
 		Ref<VertexBuffer> VertexBuffer;
 		Ref<Material> Material;
+		Ref<Animation> Animation;
 		Matrix4 Transform;
 		int32 EntityID;
-
-		bool operator<(const DrawCallInfo& other) { return Material->GetName() < other.Material->GetName(); }
 	};
 
 	struct RendererData
@@ -29,9 +29,11 @@ namespace Athena
 		std::deque<DrawCallInfo> RenderQueue;
 
 		Ref<Framebuffer> MainFramebuffer;
-		BufferLayout VertexBufferLayout;
 
-		Ref<Shader> PBRShader;
+		Ref<IncludeShader> PBR_FSIncludeShader;
+		Ref<Shader> PBR_StaticShader;
+		Ref<Shader> PBR_AnimShader;
+
 		Ref<Shader> SkyboxShader;
 		Ref<Shader> EquirectangularToCubemapShader;
 		Ref<Shader> ComputeIrradianceMapShader;
@@ -58,6 +60,7 @@ namespace Athena
 		Ref<ConstantBuffer> SceneConstantBuffer;
 		Ref<ConstantBuffer> MaterialConstantBuffer;
 		Ref<ConstantBuffer> LightConstantBuffer;
+		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 	};
 
 	static RendererData s_Data;
@@ -78,16 +81,9 @@ namespace Athena
 
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
 
-		s_Data.VertexBufferLayout =
-		{
-			{ ShaderDataType::Float3, "a_Position" },
-			{ ShaderDataType::Float2, "a_TexCoord" },
-			{ ShaderDataType::Float3, "a_Normal" },
-			{ ShaderDataType::Float3, "a_Tangent" },
-			{ ShaderDataType::Float3, "a_Bitangent" }
-		};
-
-		s_Data.PBRShader = Shader::Create(s_Data.VertexBufferLayout, "Assets/Shaders/PBR");
+		s_Data.PBR_FSIncludeShader = IncludeShader::Create("Assets/Shaders/PBR_FS");
+		s_Data.PBR_StaticShader = Shader::Create(StaticVertex::GetLayout(), "Assets/Shaders/PBR_Static");
+		s_Data.PBR_AnimShader = Shader::Create(AnimVertex::GetLayout(), "Assets/Shaders/PBR_Anim");
 
 		BufferLayout cubeVBLayout = { { ShaderDataType::Float3, "a_Position" } };
 
@@ -102,8 +98,8 @@ namespace Athena
 		VertexBufferDescription cubeVBdesc;
 		cubeVBdesc.Data = cubeVertices;
 		cubeVBdesc.Size = sizeof(cubeVertices);
-		cubeVBdesc.pBufferLayout = &cubeVBLayout;
-		cubeVBdesc.pIndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
+		cubeVBdesc.Layout = cubeVBLayout;
+		cubeVBdesc.IndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
 		cubeVBdesc.Usage = BufferUsage::STATIC;
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
@@ -111,6 +107,7 @@ namespace Athena
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), BufferBinder::SCENE_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.LightConstantBuffer = ConstantBuffer::Create(sizeof(DirectionalLight), BufferBinder::LIGHT_DATA);
+		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * MAX_NUM_BONES, BufferBinder::ANIMATION_DATA);
 
 		// Create BRDF_LUT
 		uint32 width = 512;
@@ -136,8 +133,8 @@ namespace Athena
 		VertexBufferDescription desc;
 		desc.Data = quadVertices;
 		desc.Size = sizeof(quadVertices);
-		desc.pBufferLayout = &quadVBLayout;
-		desc.pIndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
+		desc.Layout = quadVBLayout;
+		desc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
 		desc.Usage = BufferUsage::STATIC;
 
 		Ref<VertexBuffer> quadVertexBuffer = VertexBuffer::Create(desc);
@@ -184,7 +181,6 @@ namespace Athena
 
 		s_Data.LightConstantBuffer->SetData(&environment->DirLight, sizeof(DirectionalLight));
 
-		s_Data.PBRShader->Bind();
 		if (s_Data.ActiveEnvironment->Skybox)
 		{
 			s_Data.ActiveEnvironment->Skybox->Bind();
@@ -244,13 +240,51 @@ namespace Athena
 		}
 	}
 
+	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animation>& animation, const Matrix4& transform, int32 entityID)
+	{
+		if (vertexBuffer)
+		{
+			DrawCallInfo info;
+			info.VertexBuffer = vertexBuffer;
+			info.Material = material;
+			info.Animation = animation;
+			info.Transform = transform;
+			info.EntityID = entityID;
+
+			s_Data.RenderQueue.push_back(info);
+		}
+		else
+		{
+			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr vertexBuffer!");
+		}
+	}
+
 	void Renderer::WaitAndRender()
 	{
-		std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end());
+		if (s_Data.RenderQueue.empty())
+			return;
 
+		std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right) 
+			{
+				if (left.Animation != right.Animation)
+					return left.Animation < right.Animation;
+
+				return left.Material->GetName() < right.Material->GetName(); 
+			});
+
+
+		auto iter = s_Data.RenderQueue.begin();
 		Ref<Material> lastMaterial = nullptr;
-		for (const auto& info : s_Data.RenderQueue)
+
+		// Render Static Meshes
+		s_Data.PBR_StaticShader->Bind();
+		while (iter != s_Data.RenderQueue.end())
 		{
+			auto& info = *iter;
+
+			if (info.Animation != nullptr)
+				break;
+
 			s_Data.SceneDataBuffer.TransformMatrix = info.Transform;
 			s_Data.SceneDataBuffer.EntityID = info.EntityID;
 			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
@@ -262,6 +296,31 @@ namespace Athena
 			}
 
 			RenderCommand::DrawTriangles(info.VertexBuffer);
+			iter++;
+		}
+
+		// Render Animated Meshes
+		if(iter != s_Data.RenderQueue.end())
+			s_Data.PBR_AnimShader->Bind();
+		while (iter != s_Data.RenderQueue.end())
+		{
+			auto& info = *iter;
+
+			s_Data.SceneDataBuffer.TransformMatrix = info.Transform;
+			s_Data.SceneDataBuffer.EntityID = info.EntityID;
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+
+			const auto& boneTransforms = info.Animation->GetBoneTransforms();
+			s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
+
+			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+			{
+				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+				lastMaterial = info.Material;
+			}
+
+			RenderCommand::DrawTriangles(info.VertexBuffer);
+			iter++;
 		}
 
 		s_Data.RenderQueue.clear();
@@ -277,15 +336,14 @@ namespace Athena
 		return s_Data.MainFramebuffer;
 	}
 
-	const BufferLayout& Renderer::GetVertexBufferLayout()
-	{
-		return s_Data.VertexBufferLayout;
-	}
-
 	void Renderer::ReloadShaders()
 	{
 		Renderer2D::ReloadShaders();
-		s_Data.PBRShader->Reload();
+
+		s_Data.PBR_FSIncludeShader->Reload();
+		s_Data.PBR_StaticShader->Reload();
+		s_Data.PBR_AnimShader->Reload();
+
 		s_Data.SkyboxShader->Reload();
 		s_Data.EquirectangularToCubemapShader->Reload();
 		s_Data.ComputeIrradianceMapShader->Reload();
@@ -348,8 +406,8 @@ namespace Athena
 		skybox->GenerateMipMap(10);
 
 		// Create Irradiance map
-		width = 32;
-		height = 32;
+		width = 128;
+		height = 128;
 
 		cubeMapDesc.Width = width;
 		cubeMapDesc.Height = height;

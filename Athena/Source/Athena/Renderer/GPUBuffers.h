@@ -129,8 +129,8 @@ namespace Athena
 	{
 		const void* Data;
 		uint32 Size;
-		const BufferLayout* pBufferLayout;
-		Ref<IndexBuffer> pIndexBuffer;
+		BufferLayout Layout;
+		Ref<IndexBuffer> IndexBuffer;
 		BufferUsage Usage;
 	};
 

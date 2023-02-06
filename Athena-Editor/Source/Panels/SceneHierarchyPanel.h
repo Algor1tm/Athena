@@ -41,6 +41,7 @@ namespace Athena
 		Ref<Scene> m_Context;
 		Entity m_SelectionContext;
 
+		String m_ActiveMaterial;
 		bool m_EditTagComponent = false;
 	};
 

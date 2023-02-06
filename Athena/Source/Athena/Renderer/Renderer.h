@@ -28,16 +28,8 @@ namespace Athena
 		RENDERER2D_CAMERA_DATA = 0,
 		SCENE_DATA = 1,
 		MATERIAL_DATA = 2,
-		LIGHT_DATA = 3
-	};
-
-	struct Vertex
-	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
+		LIGHT_DATA = 3,
+		ANIMATION_DATA = 4
 	};
 
 	class ATHENA_API Renderer
@@ -55,11 +47,11 @@ namespace Athena
 		static void EndFrame();
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animation>& animation, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		static void WaitAndRender();
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();
-		static const BufferLayout& GetVertexBufferLayout();
 
 		static void ReloadShaders();
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);

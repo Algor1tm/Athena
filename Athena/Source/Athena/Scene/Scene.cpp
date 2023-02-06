@@ -93,6 +93,18 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
+		// Update Animations
+		auto view = m_Registry.view<SkeletalMeshComponent>();
+		for(auto entity : view)
+		{
+			auto meshComponent = view.get<SkeletalMeshComponent>(entity);
+
+			if (meshComponent.Animator->IsPlaying())
+			{
+				meshComponent.Animator->OnUpdate(frameTime);
+			}
+		}
+
 		SceneRenderer::RenderEditorScene(this, camera);
 	}
 
@@ -121,7 +133,19 @@ namespace Athena
 				});
 		}
 
-		//Physics
+		// Update Animations
+		auto view = m_Registry.view<SkeletalMeshComponent>();
+		for (auto entity : view)
+		{
+			auto meshComponent = view.get<SkeletalMeshComponent>(entity);
+
+			if (meshComponent.Animator->IsPlaying())
+			{
+				meshComponent.Animator->OnUpdate(frameTime);
+			}
+		}
+
+		// Physics
 		UpdatePhysics(frameTime);
 
 		// Choose camera

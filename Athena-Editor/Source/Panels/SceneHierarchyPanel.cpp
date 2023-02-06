@@ -211,35 +211,64 @@ namespace Athena
 	{
 		float height = ImGui::GetFrameHeight();
 
-		const char* materialName = nullptr;
+		std::vector<String> materials;
 		if (m_SelectionContext)
 		{
 			if (m_SelectionContext.HasComponent<StaticMeshComponent>())
 			{
-				materialName = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh->MaterialName.data();
+				materials.push_back(m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh->MaterialName.data());
+			}
+			else if(m_SelectionContext.HasComponent<SkeletalMeshComponent>())
+			{
+				auto mesh = m_SelectionContext.GetComponent<SkeletalMeshComponent>().Mesh;
+				materials.reserve(mesh->GetSubMeshesCount());
+				for (uint32 i = 0; i < mesh->GetSubMeshesCount(); ++i)
+				{
+					const String& material = mesh->GetSubMesh(i).MaterialName;
+					if (std::find(materials.begin(), materials.end(), material) == materials.end())
+					{
+						materials.push_back(material);
+					}
+				}
 			}
 		}
-
-		if (materialName)
+		else
 		{
+			m_ActiveMaterial.clear();
+		}
+
+		if (!materials.empty())
+		{
+			if (m_ActiveMaterial.empty())
+				m_ActiveMaterial = materials[0];
+
 			if (UI::BeginDrawControllers())
 			{
-				if (UI::DrawController("Name", height, [materialName]()
-					{ ImGui::Text(materialName); return true; }));
-				
+				if (UI::DrawController("Material List", height, [this]()
+					{ return ImGui::BeginCombo("##Material List", m_ActiveMaterial.data()); }))
+				{
+					for (const auto& material : materials)
+					{
+						bool open = material == m_ActiveMaterial;
+						UI::Selectable(material, &open, [this, material]() 
+							{
+								m_ActiveMaterial = material;
+							});
+					}
+
+					ImGui::EndCombo();
+				}
 				UI::EndDrawControllers();
 			}
 			
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 6 });
-
-			float lineHeight = ImGui::GetFrameHeight();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
 
 			bool open = UI::BeginTreeNode("Material");
 
 			ImGui::PopStyleVar(2);
 
-			Ref<Material> material = MaterialManager::GetMaterial(materialName);
+			Ref<Material> material = MaterialManager::GetMaterial(m_ActiveMaterial);
 			auto& matDesc = material->GetDescription();
 
 			if (open && UI::BeginDrawControllers())
@@ -438,7 +467,8 @@ namespace Athena
 			DrawAddComponentEntry<Rigidbody2DComponent>(entity, "Rigidbody2D");
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
-			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMeshComponent");
+			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
+			DrawAddComponentEntry<SkeletalMeshComponent>(entity, "SkeletalMesh");
 
 			ImGui::EndPopup();
 		}
@@ -809,29 +839,8 @@ namespace Athena
 
 				if (UI::BeginDrawControllers())
 				{
-					if (UI::DrawController("Mesh", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##Mesh", meshComponent.Mesh->Filepath.filename().string().data()); }))
-					{
-						const Filepath meshDir = "Assets/Meshes";
-						const Filepath meshFilename = meshComponent.Mesh->Filepath.filename();
+					UI::DrawController("Mesh", height, [&meshComponent]() { ImGui::Text(meshComponent.Mesh->Filepath.filename().string().data()); return true; });
 
-						for (const auto& dirEntry : std::filesystem::directory_iterator(meshDir))
-						{
-							if (!dirEntry.is_directory())
-							{
-								const auto& filename = dirEntry.path().filename();
-								bool open = meshFilename == filename;
-								UI::Selectable(filename.string(), &open, [&meshComponent, &meshDir, &filename, this]()
-									{
-										Importer3D importer(m_Context);
-
-										meshComponent.Mesh = importer.ImportStaticMesh(meshDir / filename, 0);
-									});
-							}
-						}
-
-						ImGui::EndCombo();
-					}
 					UI::DrawController("Hide", height, [&meshComponent]() { return ImGui::Checkbox("##Hide", &meshComponent.Hide); });
 
 					if (UI::DrawController("Material", height, [&meshComponent]()
@@ -855,6 +864,81 @@ namespace Athena
 					}
 
 					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<SkeletalMeshComponent>(entity, "SkeletalMesh", [this, entity](SkeletalMeshComponent& meshComponent)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Mesh", height, [&meshComponent]() { ImGui::Text(meshComponent.Mesh->GetFilepath().filename().string().data()); return true; });
+
+					UI::EndDrawControllers();
+
+					if (!meshComponent.Mesh->GetAllAnimations().empty())
+					{
+						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
+						ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
+						bool open = UI::BeginTreeNode("Animations");
+						ImGui::PopStyleVar(2);
+
+						if (open && UI::BeginDrawControllers())
+						{
+							Ref<Animation> active = meshComponent.Animator->GetAnimation();
+							active = active ? active : meshComponent.Mesh->GetAllAnimations()[0];
+							const String& preview = active->GetName();
+
+							if (UI::DrawController("Animation List", height, [&meshComponent, preview]()
+								{ return ImGui::BeginCombo("##Animation List", preview.data()); }))
+							{
+								const auto& animations = meshComponent.Mesh->GetAllAnimations();
+								for (uint32 i = 0; i < animations.size(); ++i)
+								{
+									Ref<Animation> anim = animations[i];
+									const String& name = anim->GetName();
+									bool open = name == preview;
+									UI::Selectable(name, &open, [&meshComponent, anim]()
+										{
+											meshComponent.Animator->PlayAnimation(anim);
+										});
+								}
+
+								ImGui::EndCombo();
+							}
+
+							UI::DrawController("Play", height, [&meshComponent, preview, active]() 
+								{ 
+									bool playNow = active == meshComponent.Animator->GetAnimation();
+									bool check = playNow;
+									ImGui::Checkbox("##Play", &check); 
+
+									if (check && !playNow)
+										meshComponent.Animator->PlayAnimation(active);
+									else if (!check && playNow)
+										meshComponent.Animator->StopAnimation();
+
+									if (check)
+									{
+										Ref<Animation> anim = meshComponent.Animator->GetAnimation();
+										uint32 ticks = anim->GetTicksPerSecond();
+										float animTime = meshComponent.Animator->GetAnimationTime() / (float)ticks;
+										ImGui::SameLine();
+										ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+										ImGui::SliderFloat("##Duration", &animTime, 0, anim->GetDuration() / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
+										meshComponent.Animator->SetAnimationTime(animTime * (float)ticks);
+									}
+
+									return check;
+								});
+
+							UI::EndDrawControllers();
+
+							UI::EndTreeNode();
+							ImGui::Spacing();
+						}
+					}
 				}
 			});
 	}

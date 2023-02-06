@@ -27,9 +27,9 @@ namespace Athena
 		HRESULT hr = D3D11CurrentContext::Device->CreateBuffer(&bufferDesc, staticUsage ? &initData : nullptr, m_Buffer.GetAddressOf());
 		ATN_CORE_ASSERT(SUCCEEDED(hr), "Failed to create vertex buffer!");
 
-		ATN_CORE_ASSERT(desc.pBufferLayout->GetElements().size(), "Invalid buffer layout!");
-		m_Stride = desc.pBufferLayout->GetStride();
-		m_IndexBuffer = desc.pIndexBuffer;
+		ATN_CORE_ASSERT(desc.Layout.GetElements().size(), "Invalid buffer layout!");
+		m_Stride = desc.Layout.GetStride();
+		m_IndexBuffer = desc.IndexBuffer;
 	}
 
 	D3D11VertexBuffer::~D3D11VertexBuffer()

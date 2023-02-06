@@ -126,12 +126,11 @@ namespace Athena
 		VertexBufferDescription vBufferDesc;
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxQuadVertices * sizeof(QuadVertex);
-		vBufferDesc.pBufferLayout = &layout;
-		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.Layout = layout;
+		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vBufferDesc);
-
 
 		layout = 
 		{
@@ -147,8 +146,8 @@ namespace Athena
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
-		vBufferDesc.pBufferLayout = &layout;
-		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.Layout = layout;
+		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
 
 		s_Data.CircleVertexBuffer = VertexBuffer::Create(vBufferDesc);
@@ -167,8 +166,8 @@ namespace Athena
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);
-		vBufferDesc.pBufferLayout = &layout;
-		vBufferDesc.pIndexBuffer = indexBuffer;
+		vBufferDesc.Layout = layout;
+		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
 
 		s_Data.LineVertexBuffer = VertexBuffer::Create(vBufferDesc);

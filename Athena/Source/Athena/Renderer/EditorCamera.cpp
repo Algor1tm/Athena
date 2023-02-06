@@ -133,7 +133,7 @@ namespace Athena
 		return m_FocalPoint - GetForwardDirection() * m_Distance;
 	}
 
-	Quat EditorCamera::GetOrientation() const
+	Quaternion EditorCamera::GetOrientation() const
 	{
 		return Math::ToQuat(Vector3(-m_Pitch, -m_Yaw, 0.0f));
 	}

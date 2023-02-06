@@ -43,10 +43,10 @@ namespace Athena
 
 		Renderer::BeginScene(viewMatrix, projectionMatrix, scene->GetEnvironment());
 
-		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
-		for (auto entity : entities)
+		auto staticMeshes = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
+		for (auto entity : staticMeshes)
 		{
-			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
+			auto [transform, meshComponent] = staticMeshes.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
 			{
@@ -54,6 +54,21 @@ namespace Athena
 				Renderer::Submit(meshComponent.Mesh->Vertices, material, transform.AsMatrix());
 			}
 		}
+
+		auto skeletalMeshes = scene->GetAllEntitiesWith<TransformComponent, SkeletalMeshComponent>();
+		for (auto entity : skeletalMeshes)
+		{
+			auto [transform, meshComponent] = skeletalMeshes.get<TransformComponent, SkeletalMeshComponent>(entity);
+
+			for (uint32 i = 0; i < meshComponent.Mesh->GetSubMeshesCount(); ++i)
+			{
+				const auto& subMesh = meshComponent.Mesh->GetSubMesh(i);
+
+				Ref<Material> material = MaterialManager::GetMaterial(subMesh.MaterialName);
+				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), transform.AsMatrix(), (int32)entity);
+			}
+		}
+
 
 		Renderer::WaitAndRender();
 
@@ -89,15 +104,29 @@ namespace Athena
 
 		Renderer::BeginScene(viewMatrix, projectionMatrix, scene->GetEnvironment());
 
-		auto entities = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
-		for (auto entity : entities)
+		auto staticMeshes = scene->GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
+		for (auto entity : staticMeshes)
 		{
-			auto [transform, meshComponent] = entities.get<TransformComponent, StaticMeshComponent>(entity);
+			auto [transform, meshComponent] = staticMeshes.get<TransformComponent, StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
 			{
 				Ref<Material> material = MaterialManager::GetMaterial(meshComponent.Mesh->MaterialName);
 				Renderer::Submit(meshComponent.Mesh->Vertices, material, transform.AsMatrix(), (int32)entity);
+			}
+		}
+
+		auto skeletalMeshes = scene->GetAllEntitiesWith<TransformComponent, SkeletalMeshComponent>();
+		for (auto entity : skeletalMeshes)
+		{
+			auto [transform, meshComponent] = skeletalMeshes.get<TransformComponent, SkeletalMeshComponent>(entity);
+
+			for (uint32 i = 0; i < meshComponent.Mesh->GetSubMeshesCount(); ++i)
+			{
+				const auto& subMesh = meshComponent.Mesh->GetSubMesh(i);
+
+				Ref<Material> material = MaterialManager::GetMaterial(subMesh.MaterialName);
+				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), transform.AsMatrix(), (int32)entity);
 			}
 		}
 

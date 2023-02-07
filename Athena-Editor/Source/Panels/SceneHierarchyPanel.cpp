@@ -926,7 +926,7 @@ namespace Athena
 										float animTime = meshComponent.Animator->GetAnimationTime() / (float)ticks;
 										ImGui::SameLine();
 										ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-										ImGui::SliderFloat("##Duration", &animTime, 0, anim->GetDuration() / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
+										ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
 										meshComponent.Animator->SetAnimationTime(animTime * (float)ticks);
 									}
 

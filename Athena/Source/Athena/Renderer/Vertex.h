@@ -3,6 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
 
+#include "Animation.h"
 #include "GPUBuffers.h"
 
 
@@ -36,8 +37,8 @@ namespace Athena
 		Vector3 Normal;
 		Vector3 Tangent;
 		Vector3 Bitangent;
-		Vector4i BoneIDs;
-		float Weights[4];
+		int BoneIDs[MAX_NUM_BONES_PER_VERTEX];
+		float Weights[MAX_NUM_BONES_PER_VERTEX];
 
 		static inline BufferLayout GetLayout()
 		{

@@ -34,7 +34,7 @@ namespace Athena
 	public:
 		static Ref<Skeleton> Create(const BoneStructureInfo& boneHierarchy);
 
-		void SetBoneTransform(const String& name, const Matrix4& transform);
+		void SetBoneOffsetMatrix(const String& name, const Matrix4& transform);
 		const Matrix4& GetBoneOffset(uint32 id) const { return m_BoneOffsetMatrices.at(id); }
 
 		uint32 GetBoneID(const String& name) const;

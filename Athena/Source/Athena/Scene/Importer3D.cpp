@@ -78,7 +78,7 @@ namespace Athena
 				}
 				else
 				{
-					ATN_CORE_WARN("Importer3D: Could not load texture '{}'", path);
+					ATN_CORE_WARN("Importer3D: Failed to load texture at {}", path);
 				}
 			}
 		}
@@ -212,24 +212,29 @@ namespace Athena
 		uint32 numVertices = aimesh->mNumVertices;
 		std::vector<AnimVertex> vertices(numVertices);
 
-		if (aimesh->HasBones())
+		if (aimesh->HasBones() && skeleton)
 		{
 			for (uint32 i = 0; i < aimesh->mNumBones; ++i)
 			{
 				aiBone* aibone = aimesh->mBones[i];
-				skeleton->SetBoneTransform(aibone->mName.C_Str(), aiMatrix4x4ToMatrix4(aibone->mOffsetMatrix));
+				skeleton->SetBoneOffsetMatrix(aibone->mName.C_Str(), aiMatrix4x4ToMatrix4(aibone->mOffsetMatrix));
 				uint32 boneID = skeleton->GetBoneID(aibone->mName.C_Str());
 
 				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
 				{
-					uint32 k = 0;
-					for (; k < MAX_NUM_BONES_PER_VERTEX; ++k)
+					uint32 vertexID = aibone->mWeights[j].mVertexId;
+					for (uint32 k = 0; k < MAX_NUM_BONES_PER_VERTEX; ++k)
 					{
-						if (vertices[aibone->mWeights[j].mVertexId].Weights[k] == 0.f)
+						if (vertices[vertexID].Weights[k] == 0.f)
 						{
-							vertices[aibone->mWeights[j].mVertexId].BoneIDs[k] = boneID;
-							vertices[aibone->mWeights[j].mVertexId].Weights[k] = aibone->mWeights[j].mWeight;
+							vertices[vertexID].BoneIDs[k] = boneID;
+							vertices[vertexID].Weights[k] = aibone->mWeights[j].mWeight;
 							break;
+						}
+						else if (k == MAX_NUM_BONES_PER_VERTEX - 1)
+						{
+							ATN_CORE_WARN("Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+								boneID, aibone->mWeights[j].mWeight);
 						}
 					}
 				}
@@ -290,6 +295,7 @@ namespace Athena
 
 		ATN_CORE_ASSERT(aianimation->mNumChannels < MAX_NUM_BONES);
 
+		desc.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
 		{
 			aiNodeAnim* channel = aianimation->mChannels[i];
@@ -298,12 +304,11 @@ namespace Athena
 			std::vector<KeyFrame> keyFrames(channel->mNumPositionKeys);
 			for (uint32 j = 0; j < channel->mNumPositionKeys; ++j)
 			{
-				KeyFrame keyFrame;
-				keyFrame.TimeStamp = channel->mPositionKeys[j].mTime;
-				keyFrame.Translation = aiVector3DToVector3(channel->mPositionKeys[j].mValue);
-				keyFrame.Rotation = aiQuaternionToQuaternion(channel->mRotationKeys[j].mValue);
-				keyFrame.Scale = aiVector3DToVector3(channel->mScalingKeys[j].mValue);
-				keyFrames[j] = keyFrame;
+				keyFrames[j].TimeStamp = channel->mPositionKeys[j].mTime;
+
+				keyFrames[j].Translation = aiVector3DToVector3(channel->mPositionKeys[j].mValue);
+				keyFrames[j].Rotation = aiQuaternionToQuaternion(channel->mRotationKeys[j].mValue);
+				keyFrames[j].Scale = aiVector3DToVector3(channel->mScalingKeys[j].mValue);
 			}
 
 			desc.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
@@ -322,25 +327,29 @@ namespace Athena
 			LoadSkeletonRecursiveHelper(rootNode->mChildren[i], rootBone);
 		}
 
+		if (rootBone.Children.empty() && rootBone.Name.empty())
+			return nullptr;
+
 		return Skeleton::Create(rootBone);
 	}
 
-	void Importer3D::LoadSkeletonRecursiveHelper(const aiNode* node, BoneStructureInfo& bone)
+	void Importer3D::LoadSkeletonRecursiveHelper(const aiNode* ainode, BoneStructureInfo& bone)
 	{
-		if (node->mNumMeshes == 0)
+		if (ainode->mNumMeshes == 0)
 		{
-			bone.Name = node->mName.C_Str();
-			if (node->mNumChildren > 0 && bone.Name.find("AssimpFbx") != String::npos)
+			String nodeName = ainode->mName.C_Str();
+			bool isValid = nodeName.find("AssimpFbx") == String::npos && nodeName.find("RootNode") == String::npos;
+			if (ainode->mNumChildren > 0 && !isValid)
 			{
-				LoadSkeletonRecursiveHelper(node->mChildren[0], bone);
+				LoadSkeletonRecursiveHelper(ainode->mChildren[0], bone);
 				return;
 			}
 
-			bone.Children.resize(node->mNumChildren);
-			for (uint32 i = 0; i < node->mNumChildren; ++i)
+			bone.Name = nodeName;
+			bone.Children.resize(ainode->mNumChildren);
+			for (uint32 i = 0; i < ainode->mNumChildren; ++i)
 			{
-				static int counter = 0;
-				LoadSkeletonRecursiveHelper(node->mChildren[i], bone.Children[i]);
+				LoadSkeletonRecursiveHelper(ainode->mChildren[i], bone.Children[i]);
 			}
 		}
 	}
@@ -349,20 +358,18 @@ namespace Athena
 	{
 		Ref<Skeleton> skeleton = LoadSkeleton(aiscene);
 
-		std::vector<SubMesh> subMeshes(aiscene->mNumMeshes);
-		for (uint32 i = 0; i < aiscene->mNumMeshes; ++i)
-		{
-			aiMesh* aimesh = aiscene->mMeshes[i];
-
-			subMeshes[i].Name = aimesh->mName.C_Str();
-			subMeshes[i].VertexBuffer = LoadAnimVertexBuffer(aimesh, skeleton);
-			subMeshes[i].MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex)->GetName();
-		}
+		std::vector<SubMesh> subMeshes;
+		SceneNode node;
+		node.aiNode = aiscene->mRootNode;
+		Matrix4 globalInverse = aiMatrix4x4ToMatrix4(aiscene->mRootNode->mTransformation);
+		ProcessNodeForSubMeshes(aiscene, &node, subMeshes, skeleton);
 
 		std::vector<Ref<Animation>> animations(aiscene->mNumAnimations);
-		for(uint32 i = 0; i < aiscene->mNumAnimations; ++i)
-			animations[i] = LoadAnimation(aiscene->mAnimations[i], skeleton);
-
+		if (skeleton)
+		{
+			for (uint32 i = 0; i < aiscene->mNumAnimations; ++i)
+				animations[i] = LoadAnimation(aiscene->mAnimations[i], skeleton);
+		}
 
 		SkeletalMeshDescription desc;
 		desc.Name = m_SceneFilepath.stem().string();
@@ -411,7 +418,7 @@ namespace Athena
 		SceneNode root;
 		root.aiNode = aiscene->mRootNode;
 
-		if (aiscene->HasAnimations())
+		if (aiscene->HasAnimations() || aiscene->mNumMaterials != aiscene->mNumMeshes)
 		{
 			Ref<SkeletalMesh> mesh = LoadSkeletalMesh(aiscene);
 
@@ -422,15 +429,15 @@ namespace Athena
 		}
 		else
 		{
-			ProcessNode(aiscene, &root);
+			ProcessNodeForStaticMeshes(aiscene, &root);
 		}
 
 		return true;
 	}
 
-	Ref<StaticMesh> Importer3D::ImportStaticMesh(const Filepath& filepath, uint32 aiMeshIndex)
+	Ref<StaticMesh> Importer3D::ImportStaticMesh(const Filepath& path, uint32 aiMeshIndex)
 	{
-		const aiScene* aiscene = OpenFile(filepath);
+		const aiScene* aiscene = OpenFile(path);
 		if (!aiscene)
 			return nullptr;
 
@@ -439,9 +446,20 @@ namespace Athena
 		return mesh;
 	}
 
-	void Importer3D::ProcessNode(const aiScene* aiscene, const SceneNode* node)
+	Ref<SkeletalMesh> Importer3D::ImportSkeletalMesh(const Filepath& path)
 	{
-		aiMatrix4x4 worldTransform = node->WorldTransform * node->aiNode->mTransformation;	// !!! MULTIPLICATION ORDER ?
+		const aiScene* aiscene = OpenFile(path);
+		if (!aiscene)
+			return nullptr;
+
+		Ref<SkeletalMesh> mesh = LoadSkeletalMesh(aiscene);
+
+		return mesh;
+	}
+
+	void Importer3D::ProcessNodeForStaticMeshes(const aiScene* aiscene, const SceneNode* node)
+	{
+		aiMatrix4x4 worldTransform = node->WorldTransform * node->aiNode->mTransformation;
 		
 		aiVector3D translation, scale, rotation;
 		TransformComponent transform;
@@ -473,15 +491,46 @@ namespace Athena
 		{
 			newNode.aiNode = node->aiNode->mChildren[i];
 
-			ProcessNode(aiscene, &newNode);
+			ProcessNodeForStaticMeshes(aiscene, &newNode);
 		}
 	}
 
-	const aiScene* Importer3D::OpenFile(const Filepath& filepath)
+	void Importer3D::ProcessNodeForSubMeshes(const aiScene* aiscene, const SceneNode* node, std::vector<SubMesh>& subMeshes, const Ref<Skeleton>& skeleton)
 	{
-		if (m_ImportedScenes.find(filepath) == m_ImportedScenes.end())
+		aiMatrix4x4 localTransform = node->WorldTransform * node->aiNode->mTransformation;
+
+		subMeshes.reserve(node->aiNode->mNumMeshes);
+		for (uint32 i = 0; i < node->aiNode->mNumMeshes; ++i)
+		{
+			aiMesh* aimesh = aiscene->mMeshes[node->aiNode->mMeshes[i]];
+
+			SubMesh mesh;
+			mesh.Name = aimesh->mName.C_Str();
+			mesh.VertexBuffer = LoadAnimVertexBuffer(aimesh, skeleton);
+			mesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex)->GetName();
+			mesh.LocalTransform = aiMatrix4x4ToMatrix4(localTransform);
+			subMeshes.push_back(mesh);
+		}
+
+		for (uint32 i = 0; i < node->aiNode->mNumChildren; ++i)
+		{
+			SceneNode newNode;
+			newNode.WorldTransform = localTransform;
+
+			if (node->aiNode->mChildren[i]->mNumMeshes > 0)
+			{
+				newNode.aiNode = node->aiNode->mChildren[i];
+				ProcessNodeForSubMeshes(aiscene, &newNode, subMeshes, skeleton);
+			}
+		}
+	}
+
+	const aiScene* Importer3D::OpenFile(const Filepath& path)
+	{
+		if (m_ImportedScenes.find(path) == m_ImportedScenes.end())
 		{
 			unsigned int flags =
+				aiProcess_OptimizeGraph | 
 				aiProcess_Triangulate |
 				aiProcess_GenUVCoords |
 				aiProcess_CalcTangentSpace |
@@ -490,16 +539,16 @@ namespace Athena
 				aiProcess_FindDegenerates | 
 				aiProcess_ImproveCacheLocality |
 				aiProcess_LimitBoneWeights | 
-				aiProcess_OptimizeGraph |
 				aiProcess_RemoveRedundantMaterials |
 				aiProcess_OptimizeMeshes |
 				aiProcess_EmbedTextures | 
+				aiProcess_LimitBoneWeights |
 				aiProcess_GenBoundingBoxes;
 
 			if (RendererAPI::GetAPI() == RendererAPI::Direct3D)
 				flags |= aiProcess_MakeLeftHanded | aiProcess_FlipUVs;
 
-			const aiScene* aiscene = aiImportFile(filepath.string().c_str(), flags);
+			const aiScene* aiscene = aiImportFile(path.string().c_str(), flags);
 
 			if (aiscene == nullptr || aiscene->mFlags == AI_SCENE_FLAGS_INCOMPLETE)
 			{
@@ -509,12 +558,12 @@ namespace Athena
 				return nullptr;
 			}
 
-			m_ImportedScenes[filepath] = aiscene;
+			m_ImportedScenes[path] = aiscene;
 		}
 
-		m_SceneFilepath = filepath;
+		m_SceneFilepath = path;
 
-		return m_ImportedScenes[filepath];
+		return m_ImportedScenes[path];
 	}
 
 	void Importer3D::Release()

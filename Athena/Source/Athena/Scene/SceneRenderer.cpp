@@ -65,7 +65,8 @@ namespace Athena
 				const auto& subMesh = meshComponent.Mesh->GetSubMesh(i);
 
 				Ref<Material> material = MaterialManager::GetMaterial(subMesh.MaterialName);
-				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), transform.AsMatrix(), (int32)entity);
+				Matrix4 fullTransform = subMesh.LocalTransform * transform.AsMatrix();
+				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), fullTransform, (int32)entity);
 			}
 		}
 
@@ -126,7 +127,8 @@ namespace Athena
 				const auto& subMesh = meshComponent.Mesh->GetSubMesh(i);
 
 				Ref<Material> material = MaterialManager::GetMaterial(subMesh.MaterialName);
-				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), transform.AsMatrix(), (int32)entity);
+				Matrix4 fullTransform = subMesh.LocalTransform * transform.AsMatrix();
+				Renderer::Submit(subMesh.VertexBuffer, material, meshComponent.Animator->GetAnimation(), fullTransform, (int32)entity);
 			}
 		}
 

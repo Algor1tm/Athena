@@ -23,7 +23,7 @@ namespace Athena::Math
 	template <typename T>
 	Matrix<T, 3, 3> ToMat3(const Quaternion<T>& quat)
 	{
-		Matrix<float, 3, 3> out(T(1));
+		Matrix<T, 3, 3> out;
 		T qxx(quat.x * quat.x);
 		T qyy(quat.y * quat.y);
 		T qzz(quat.z * quat.z);

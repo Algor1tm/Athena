@@ -151,13 +151,16 @@ namespace Athena
 		out << YAML::Key << "Environment";
 		out << YAML::BeginMap;
 
-		out << YAML::Key << "Skybox";
-		out << YAML::BeginMap;
 		if (env->Skybox)
-			out << YAML::Key << "FilePath" << env->Skybox->GetFilepath().string();
-		out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
-		out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
-		out << YAML::EndMap;
+		{
+			out << YAML::Key << "Skybox";
+			out << YAML::BeginMap;
+			if (env->Skybox)
+				out << YAML::Key << "FilePath" << env->Skybox->GetFilepath().string();
+			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
+			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
+			out << YAML::EndMap;
+		}
 
 		out << YAML::Key << "Light";
 		out << YAML::BeginMap;
@@ -397,6 +400,18 @@ namespace Athena
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
 					}
 				}
+
+				{
+					const auto& skeletalMeshComponentNode = entityNode["SkeletalMeshComponent"];
+					if (skeletalMeshComponentNode)
+					{
+						auto& meshComp = deserializedEntity.AddComponent<SkeletalMeshComponent>();
+
+						Filepath path = skeletalMeshComponentNode["Filepath"].as<String>();
+						meshComp.Mesh = importer.ImportSkeletalMesh(path);
+						meshComp.Animator = Animator::Create(meshComp.Mesh);
+					}
+				}
 			}
 		}
 
@@ -546,6 +561,13 @@ namespace Athena
 				output << YAML::Key << "aiMeshIndex" << YAML::Value << mesh->aiMeshIndex;
 
 				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
+			});
+
+		SerializeComponent<SkeletalMeshComponent>(out, "SkeletalMeshComponent", entity,
+			[](YAML::Emitter& output, const SkeletalMeshComponent& meshComponent)
+			{
+				Ref<SkeletalMesh> mesh = meshComponent.Mesh;
+				output << YAML::Key << "Filepath" << YAML::Value << mesh->GetFilepath().string();
 			});
 
 		out << YAML::EndMap;

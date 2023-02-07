@@ -39,8 +39,7 @@ namespace Athena
 
 		Matrix4 AsMatrix() const
 		{
-			Matrix4 transofrm = Math::ScaleMatrix(Scale) * Math::ToMat4(Math::ToQuat(Rotation));
-			return transofrm.Translate(Translation);
+			return Math::ToMat4(Math::ToQuat(Rotation)).Scale(Scale).Translate(Translation);
 		}
 	};
 

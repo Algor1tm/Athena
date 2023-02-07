@@ -27,19 +27,20 @@ namespace Athena
 
 		uint32 boneCount = 0;
 		BoneCreateHelper(boneHierarchy, result->m_RootBone, boneCount);
+		boneCount++;
 
 		result->m_BoneOffsetMatrices.reserve(boneCount);
 		Matrix4 identity = Matrix4::Identity();
 
 		for (uint32 i = 0; i < boneCount; ++i)
 		{
-			result->m_BoneOffsetMatrices[i + 1] = identity;	  // id == 0 - RootNode
+			result->m_BoneOffsetMatrices[i] = identity;
 		}
 
 		return result;
 	}
 
-	void Skeleton::SetBoneTransform(const String& name, const Matrix4& transform)
+	void Skeleton::SetBoneOffsetMatrix(const String& name, const Matrix4& transform)
 	{
 		uint32 id = GetBoneID(name);
 		m_BoneOffsetMatrices.at(id) = transform;
@@ -77,14 +78,12 @@ namespace Athena
 		result->m_TicksPerSecond = desc.TicksPerSecond;
 		result->m_Skeleton = desc.Skeleton;
 
-		result->m_FinalTransforms.reserve(desc.BoneNameToKeyFramesMap.size() + 1);
+		result->m_FinalTransforms.reserve(desc.BoneNameToKeyFramesMap.size());
 		for (const auto& [name, keyframes] : desc.BoneNameToKeyFramesMap)
 		{
 			result->m_BoneIDToKeyFramesMap[desc.Skeleton->GetBoneID(name)] = keyframes;
 			result->m_FinalTransforms.push_back(Matrix4::Identity());
 		}
-
-		result->m_FinalTransforms.push_back(Matrix4::Identity()); // id == 0 - RootNode, that does not calculated during animation
 
 		return result;
 	}
@@ -92,8 +91,7 @@ namespace Athena
 	void Animation::SetBonesState(float time)
 	{
 		const Bone& root = m_Skeleton->GetRootBone();
-		for (uint32 i = 0; i < root.Children.size(); ++i)
-			SetBoneTransform(root.Children[i], Matrix4::Identity(), time);
+		SetBoneTransform(root, Matrix4::Identity(), time);
 	}
 
 	void Animation::Reset()
@@ -125,34 +123,32 @@ namespace Athena
 		if (keyFrames.size() == 1)
 		{
 			const KeyFrame& keyFrame = keyFrames[0];
-			Matrix4 transofrm = Math::ScaleMatrix(keyFrame.Scale) * Math::ToMat4(keyFrame.Rotation);
-			return transofrm.Translate(keyFrame.Translation);
+			return Math::ToMat4(keyFrame.Rotation).Scale(keyFrame.Scale).Translate(keyFrame.Translation);
 		}
 
 		KeyFrame target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keyFrames.begin(), keyFrames.end(), target, 
 			[](const KeyFrame& left, const KeyFrame& right) { return left.TimeStamp < right.TimeStamp; });
-
+		
 		iter--;
-		ATN_CORE_ASSERT(iter >= keyFrames.begin() && iter <= (keyFrames.end() - 1));
-
+		ATN_CORE_ASSERT(iter >= keyFrames.begin() && iter <= (keyFrames.end() - 2));
+		
 		auto startIter = iter;
 		auto endIter = iter + 1;
-
+		
 		const KeyFrame& start = *startIter;
 		const KeyFrame& end = *endIter;
 
-		ATN_CORE_ASSERT(start.TimeStamp != end.TimeStamp);
-
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
+
+		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		Vector3 translation = Math::Lerp(start.Translation, end.Translation, scaleFactor);
 		Quaternion rotation = Math::SLerp(start.Rotation, end.Rotation, scaleFactor);
 		Vector3 scale = Math::Lerp(start.Scale, end.Scale, scaleFactor);
 
-		Matrix4 transofrm = Math::ScaleMatrix(scale) * Math::ToMat4(rotation);
-		return transofrm.Translate(translation);
+		return Math::ToMat4(rotation).Scale(scale).Translate(translation);
 	}
 	
 

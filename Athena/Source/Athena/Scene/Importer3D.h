@@ -21,14 +21,16 @@ namespace Athena
 		Importer3D(const Ref<Scene>& scene);
 		~Importer3D();
 
-		bool Import(const Filepath& filepath);
-		Ref<StaticMesh> ImportStaticMesh(const Filepath& filepath, uint32 aiMeshIndex);
+		bool Import(const Filepath& path);
+		Ref<StaticMesh> ImportStaticMesh(const Filepath& path, uint32 aiMeshIndex);
+		Ref<SkeletalMesh> ImportSkeletalMesh(const Filepath& path);
 
 		void Release();
 
 	private:
-		const aiScene* OpenFile(const Filepath& filepath);
-		void ProcessNode(const aiScene* aiscene, const SceneNode* node);
+		const aiScene* OpenFile(const Filepath& path);
+		void ProcessNodeForStaticMeshes(const aiScene* aiscene, const SceneNode* node);
+		void ProcessNodeForSubMeshes(const aiScene* aiscene, const SceneNode* node, std::vector<SubMesh>& subMeshes, const Ref<Skeleton>& skeleton);
 
 		Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type);
 		Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex);
@@ -39,7 +41,7 @@ namespace Athena
 
 		Ref<Animation> LoadAnimation(const aiAnimation* aianimation, const Ref<Skeleton>& skeleton);
 		Ref<Skeleton> LoadSkeleton(const aiScene* aiscene);
-		void LoadSkeletonRecursiveHelper(const aiNode* scene, BoneStructureInfo& bone);
+		void LoadSkeletonRecursiveHelper(const aiNode* ainode, BoneStructureInfo& bone);
 
 		Ref<SkeletalMesh> LoadSkeletalMesh(const aiScene* aiscene);
 		Ref<StaticMesh> LoadStaticMesh(const aiScene* aiscene, uint32 aiMeshIndex);

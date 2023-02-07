@@ -1,0 +1,17 @@
+Scene: UnNamed
+Entities:
+  - IDComponent:
+      ID: 14514284786278117030
+    TagComponent:
+      Tag: Spiderman
+    TransformComponent:
+      Translation: [0, -93.8035583, 6.10351562e-05]
+      Rotation: [0, -0, 0]
+      Scale: [178.222549, 178.222549, 178.222549]
+    SkeletalMeshComponent:
+      Filepath: Assets\Meshes\Spiderman\Spiderman.fbx
+Environment:
+  Light:
+    Direction: [-1, -1, -1]
+    Color: [1, 1, 1, 1]
+    Intensity: 1

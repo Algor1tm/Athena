@@ -1,6 +1,9 @@
 #type VERTEX_SHADER
 #version 430 core
 
+#define MAX_NUM_BONES_PER_VERTEX 4
+#define MAX_NUM_BONES 512
+
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
 layout (location = 2) in vec3 a_Normal;
@@ -28,11 +31,10 @@ struct VertexOutput
     mat3 TBN;
 };
 
-#define MAX_BONES 512
 
 layout(std430, binding = 4) readonly buffer BoneTransforms
 {
-    mat4 g_Bones[MAX_BONES];
+    mat4 g_Bones[MAX_NUM_BONES];
 };
 
 layout (location = 0) out VertexOutput Output;
@@ -40,9 +42,10 @@ layout (location = 0) out VertexOutput Output;
 void main()
 {
     mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
-    boneTransform     += g_Bones[a_BoneIDs[1]] * a_Weights[1];
-    boneTransform     += g_Bones[a_BoneIDs[2]] * a_Weights[2];
-    boneTransform     += g_Bones[a_BoneIDs[3]] * a_Weights[3];
+    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+    {
+        boneTransform += g_Bones[a_BoneIDs[i]] * a_Weights[i];
+    }
 
     mat4 fullTransform = u_Transform * boneTransform;
     vec4 animatedPos = fullTransform * vec4(a_Position, 1);

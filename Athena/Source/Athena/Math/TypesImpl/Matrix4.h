@@ -153,9 +153,9 @@ namespace Athena::Math
 
 		constexpr Matrix& Scale(const Vector<T, 3>& vec3)
 		{
-			m_Array[0][0] *= vec3.x;
-			m_Array[1][1] *= vec3.y;
-			m_Array[2][2] *= vec3.z;
+			m_Array[0][0] *= vec3.x; m_Array[0][1] *= vec3.x; m_Array[0][2] *= vec3.x;
+			m_Array[1][0] *= vec3.y; m_Array[1][1] *= vec3.y; m_Array[1][2] *= vec3.y;
+			m_Array[2][0] *= vec3.z; m_Array[2][1] *= vec3.z; m_Array[2][2] *= vec3.z;
 
 			return *this;
 		}

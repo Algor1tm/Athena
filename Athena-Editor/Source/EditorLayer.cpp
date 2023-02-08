@@ -10,7 +10,6 @@
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
-#include "Athena/Scene/Importer3D.h"
 
 #include <ImGui/imgui.h>
 
@@ -224,8 +223,13 @@ namespace Athena
                     // Mesh Drag/Drop
                     else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
                     {
-                        Importer3D importer(m_ActiveScene);
-                        importer.Import(path);
+                        Ref<StaticMesh> mesh = StaticMesh::Create(path);
+                        if (mesh)
+                        {
+                            Entity entity = m_ActiveScene->CreateEntity();
+                            entity.GetComponent<TagComponent>().Tag = mesh->GetName();
+                            entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
+                        }
                     }
                 }
             });
@@ -328,7 +332,7 @@ namespace Athena
             }
             else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
             {
-                const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->BoundingBox;
+                const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
                 
                 AABB transformedBox = box.Transform(transform.AsMatrix());
 

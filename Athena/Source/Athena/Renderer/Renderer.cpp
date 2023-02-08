@@ -157,6 +157,8 @@ namespace Athena
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
 		RenderCommand::UnBindFramebuffer();
+
+		ComputeBRDF_LUTShader->UnBind();
 	}
 
 	void Renderer::Shutdown()

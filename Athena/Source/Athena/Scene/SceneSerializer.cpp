@@ -2,8 +2,6 @@
 #include "Components.h"
 #include "Entity.h"
 
-#include "Importer3D.h"
-
 #if defined(_MSC_VER)
 	#pragma warning (push, 0)
 #endif
@@ -233,7 +231,6 @@ namespace Athena
 		m_Scene->SetEnvironment(environment);
 
 
-		Importer3D importer(m_Scene);
 		const auto& entities = data["Entities"];
 		if (entities)
 		{
@@ -393,23 +390,10 @@ namespace Athena
 					{
 						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
 
-						uint32 aiMeshIndex = staticMeshComponentNode["aiMeshIndex"].as<uint32>();
 						Filepath path = staticMeshComponentNode["Filepath"].as<String>();
 
-						meshComp.Mesh = importer.ImportStaticMesh(path, aiMeshIndex);
+						meshComp.Mesh = StaticMesh::Create(path);
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
-					}
-				}
-
-				{
-					const auto& skeletalMeshComponentNode = entityNode["SkeletalMeshComponent"];
-					if (skeletalMeshComponentNode)
-					{
-						auto& meshComp = deserializedEntity.AddComponent<SkeletalMeshComponent>();
-
-						Filepath path = skeletalMeshComponentNode["Filepath"].as<String>();
-						meshComp.Mesh = importer.ImportSkeletalMesh(path);
-						meshComp.Animator = Animator::Create(meshComp.Mesh);
 					}
 				}
 			}
@@ -556,18 +540,8 @@ namespace Athena
 			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
-				output << YAML::Key << "Filepath" << YAML::Value << mesh->Filepath.string();
-				output << YAML::Key << "Name" << YAML::Value << mesh->Name;
-				output << YAML::Key << "aiMeshIndex" << YAML::Value << mesh->aiMeshIndex;
-
-				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
-			});
-
-		SerializeComponent<SkeletalMeshComponent>(out, "SkeletalMeshComponent", entity,
-			[](YAML::Emitter& output, const SkeletalMeshComponent& meshComponent)
-			{
-				Ref<SkeletalMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "Filepath" << YAML::Value << mesh->GetFilepath().string();
+				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
 			});
 
 		out << YAML::EndMap;

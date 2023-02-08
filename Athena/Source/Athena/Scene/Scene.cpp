@@ -94,14 +94,13 @@ namespace Athena
 	void Scene::OnUpdateEditor(Time frameTime, EditorCamera& camera)
 	{
 		// Update Animations
-		auto view = m_Registry.view<SkeletalMeshComponent>();
+		auto view = m_Registry.view<StaticMeshComponent>();
 		for(auto entity : view)
 		{
-			auto meshComponent = view.get<SkeletalMeshComponent>(entity);
-
-			if (meshComponent.Animator->IsPlaying())
+			auto meshComponent = view.get<StaticMeshComponent>(entity);
+			if (meshComponent.Mesh->HasAnimations())
 			{
-				meshComponent.Animator->OnUpdate(frameTime);
+				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
 			}
 		}
 
@@ -134,14 +133,13 @@ namespace Athena
 		}
 
 		// Update Animations
-		auto view = m_Registry.view<SkeletalMeshComponent>();
+		auto view = m_Registry.view<StaticMeshComponent>();
 		for (auto entity : view)
 		{
-			auto meshComponent = view.get<SkeletalMeshComponent>(entity);
-
-			if (meshComponent.Animator->IsPlaying())
+			auto meshComponent = view.get<StaticMeshComponent>(entity);
+			if (meshComponent.Mesh->HasAnimations())
 			{
-				meshComponent.Animator->OnUpdate(frameTime);
+				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
 			}
 		}
 

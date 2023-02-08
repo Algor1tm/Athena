@@ -9,58 +9,44 @@
 #include <vector>
 
 
+class aiScene;
+class aiNode;
+
+
 namespace Athena
 {
-	struct StaticMesh
-	{
-		Ref<VertexBuffer> Vertices;
-		AABB BoundingBox;
-		String Name;
-		String MaterialName;
-		Filepath Filepath;
-		uint32 aiMeshIndex;
-	};
-
-
-
 	struct SubMesh
 	{
-		String Name = "UnNamed";
+		String Name;
 		Ref<VertexBuffer> VertexBuffer;
 		String MaterialName;
-		Matrix4 LocalTransform = Matrix4::Identity();
 	};
 
-	struct SkeletalMeshDescription
-	{
-		std::vector<SubMesh> SubMeshes;
-		String Name;
-		Filepath Filepath;
-
-		Ref<Skeleton> Skeleton = nullptr;
-		std::vector<Ref<Animation>> Animations;
-	};
-
-	class ATHENA_API SkeletalMesh
+	class ATHENA_API StaticMesh
 	{
 	public:
-		static Ref<SkeletalMesh> Create(const SkeletalMeshDescription& desc);
+		static Ref<StaticMesh> Create(const Filepath& path);
 
-		uint32 GetSubMeshesCount() const { return m_SubMeshes.size(); }
-		const SubMesh& GetSubMesh(uint32 index) { return m_SubMeshes[index]; }
+		const std::vector<SubMesh>& GetAllSubMeshes() const { return m_SubMeshes; }
 
 		const String& GetName() const { return m_Name; }
-		const Filepath GetFilepath() const { return m_Filepath; }
+		const Filepath& GetFilepath() const { return m_Filepath; }
+		const AABB& GetBoundingBox() const { return m_AABB; }
 
-		bool HasAnimation(const Ref<Animation>& animation);
-		const std::vector<Ref<Animation>>& GetAllAnimations() const { return m_Animations; };
+		const Ref<Animator>& GetAnimator() { return m_Animator; }
+
+		bool HasAnimations() const { return m_Animator != nullptr; }
 
 	private:
-		std::vector<SubMesh> m_SubMeshes;
-		String m_Name;
+		void ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform);
+
+	private:
 		Filepath m_Filepath;
+		String m_Name;
+		AABB m_AABB;
+		std::vector<SubMesh> m_SubMeshes;
 
 		Ref<Skeleton> m_Skeleton;
-		std::vector<Ref<Animation>> m_Animations;
+		Ref<Animator> m_Animator;
 	};
 }

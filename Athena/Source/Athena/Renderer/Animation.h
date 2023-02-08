@@ -10,15 +10,13 @@
 
 namespace Athena
 {
-	class ATHENA_API SkeletalMesh;
-
 #define MAX_NUM_BONES_PER_VERTEX 4
 #define MAX_NUM_BONES 512
 
-	struct BoneStructureInfo
+	struct BonesHierarchyInfo
 	{
 		String Name;
-		std::vector<BoneStructureInfo> Children;
+		std::vector<BonesHierarchyInfo> Children;
 	};
 
 	struct Bone
@@ -32,7 +30,7 @@ namespace Athena
 	class ATHENA_API Skeleton
 	{
 	public:
-		static Ref<Skeleton> Create(const BoneStructureInfo& boneHierarchy);
+		static Ref<Skeleton> Create(const BonesHierarchyInfo& boneHierarchy);
 
 		void SetBoneOffsetMatrix(const String& name, const Matrix4& transform);
 		const Matrix4& GetBoneOffset(uint32 id) const { return m_BoneOffsetMatrices.at(id); }
@@ -98,22 +96,24 @@ namespace Athena
 	class ATHENA_API Animator
 	{
 	public:
-		static Ref<Animator> Create(const Ref<SkeletalMesh>& mesh);
+		static Ref<Animator> Create(const std::vector<Ref<Animation>>& animations);
 
 		void OnUpdate(Time frameTime);
-		bool IsPlaying() const { return m_Animation != nullptr; }
+		bool IsPlaying() const { return m_CurrentAnimation != nullptr; }
 
 		void StopAnimation();
 		void PlayAnimation(const Ref<Animation>& animation);
 
-		const Ref<Animation>& GetAnimation() const { return m_Animation; }
+		const Ref<Animation>& GetCurrentAnimation() const { return m_CurrentAnimation; }
 
 		float GetAnimationTime() const { return m_CurrentTime; }
 		void SetAnimationTime(float time) { m_CurrentTime = time; }
 
+		const std::vector<Ref<Animation>>& GetAllAnimations() const { return m_Animations; }
+
 	private:
-		Ref<SkeletalMesh> m_Mesh;
-		Ref<Animation> m_Animation;
+		std::vector<Ref<Animation>> m_Animations;
+		Ref<Animation> m_CurrentAnimation;
 		float m_CurrentTime;
 	};
 }

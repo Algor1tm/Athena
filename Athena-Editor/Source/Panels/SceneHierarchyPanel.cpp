@@ -4,7 +4,6 @@
 #include "Athena/Input/Input.h"
 
 #include "Athena/Scene/Components.h"
-#include "Athena/Scene/Importer3D.h"
 
 #include "Athena/Renderer/Material.h"
 
@@ -214,17 +213,14 @@ namespace Athena
 		std::vector<String> materials;
 		if (m_SelectionContext)
 		{
-			if (m_SelectionContext.HasComponent<StaticMeshComponent>())
+			if(m_SelectionContext.HasComponent<StaticMeshComponent>())
 			{
-				materials.push_back(m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh->MaterialName.data());
-			}
-			else if(m_SelectionContext.HasComponent<SkeletalMeshComponent>())
-			{
-				auto mesh = m_SelectionContext.GetComponent<SkeletalMeshComponent>().Mesh;
-				materials.reserve(mesh->GetSubMeshesCount());
-				for (uint32 i = 0; i < mesh->GetSubMeshesCount(); ++i)
+				auto mesh = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh;
+				const auto& subMeshes = mesh->GetAllSubMeshes();
+				materials.reserve(subMeshes.size());
+				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
-					const String& material = mesh->GetSubMesh(i).MaterialName;
+					const String& material = subMeshes[i].MaterialName;
 					if (std::find(materials.begin(), materials.end(), material) == materials.end())
 					{
 						materials.push_back(material);
@@ -468,7 +464,6 @@ namespace Athena
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
 			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
-			DrawAddComponentEntry<SkeletalMeshComponent>(entity, "SkeletalMesh");
 
 			ImGui::EndPopup();
 		}
@@ -833,41 +828,7 @@ namespace Athena
 				}
 			});
 
-		DrawComponent<StaticMeshComponent>(entity, "StaticMeshComponent", [this, entity](StaticMeshComponent& meshComponent)
-			{
-				float height = ImGui::GetFrameHeight();
-
-				if (UI::BeginDrawControllers())
-				{
-					UI::DrawController("Mesh", height, [&meshComponent]() { ImGui::Text(meshComponent.Mesh->Filepath.filename().string().data()); return true; });
-
-					UI::DrawController("Hide", height, [&meshComponent]() { return ImGui::Checkbox("##Hide", &meshComponent.Hide); });
-
-					if (UI::DrawController("Material", height, [&meshComponent]()
-						{ return ImGui::BeginCombo("##Material", meshComponent.Mesh->MaterialName.data()); }))
-					{
-						auto begin = MaterialManager::GetMaterialsMapIterator();
-							
-						for (uint32 i = 0; i < MaterialManager::GetMaterialsCount(); ++i)
-						{
-							const auto& name = begin->first;
-							bool open = name == meshComponent.Mesh->MaterialName;
-							UI::Selectable(name, &open, [name, &meshComponent]() 
-								{
-									meshComponent.Mesh->MaterialName = name;
-								});
-
-							begin++;
-						}
-
-						ImGui::EndCombo();
-					}
-
-					UI::EndDrawControllers();
-				}
-			});
-
-		DrawComponent<SkeletalMeshComponent>(entity, "SkeletalMesh", [this, entity](SkeletalMeshComponent& meshComponent)
+		DrawComponent<StaticMeshComponent>(entity, "StaticMesh", [this, entity](StaticMeshComponent& meshComponent)
 			{
 				float height = ImGui::GetFrameHeight();
 
@@ -877,7 +838,8 @@ namespace Athena
 
 					UI::EndDrawControllers();
 
-					if (!meshComponent.Mesh->GetAllAnimations().empty())
+					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
+					if (animator)
 					{
 						ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 						ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
@@ -886,48 +848,48 @@ namespace Athena
 
 						if (open && UI::BeginDrawControllers())
 						{
-							Ref<Animation> active = meshComponent.Animator->GetAnimation();
-							active = active ? active : meshComponent.Mesh->GetAllAnimations()[0];
+							Ref<Animation> active = animator->GetCurrentAnimation();
+							active = active ? active : animator->GetAllAnimations()[0];
 							const String& preview = active->GetName();
 
 							if (UI::DrawController("Animation List", height, [&meshComponent, preview]()
 								{ return ImGui::BeginCombo("##Animation List", preview.data()); }))
 							{
-								const auto& animations = meshComponent.Mesh->GetAllAnimations();
+								const auto& animations = animator->GetAllAnimations();
 								for (uint32 i = 0; i < animations.size(); ++i)
 								{
 									Ref<Animation> anim = animations[i];
 									const String& name = anim->GetName();
 									bool open = name == preview;
-									UI::Selectable(name, &open, [&meshComponent, anim]()
+									UI::Selectable(name, &open, [animator, anim]()
 										{
-											meshComponent.Animator->PlayAnimation(anim);
+											animator->PlayAnimation(anim);
 										});
 								}
 
 								ImGui::EndCombo();
 							}
 
-							UI::DrawController("Play", height, [&meshComponent, preview, active]() 
+							UI::DrawController("Play", height, [animator, preview, active]()
 								{ 
-									bool playNow = active == meshComponent.Animator->GetAnimation();
+									bool playNow = active == animator->GetCurrentAnimation();
 									bool check = playNow;
 									ImGui::Checkbox("##Play", &check); 
 
 									if (check && !playNow)
-										meshComponent.Animator->PlayAnimation(active);
+										animator->PlayAnimation(active);
 									else if (!check && playNow)
-										meshComponent.Animator->StopAnimation();
+										animator->StopAnimation();
 
 									if (check)
 									{
-										Ref<Animation> anim = meshComponent.Animator->GetAnimation();
+										Ref<Animation> anim = animator->GetCurrentAnimation();
 										uint32 ticks = anim->GetTicksPerSecond();
-										float animTime = meshComponent.Animator->GetAnimationTime() / (float)ticks;
+										float animTime = animator->GetAnimationTime() / (float)ticks;
 										ImGui::SameLine();
 										ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 										ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
-										meshComponent.Animator->SetAnimationTime(animTime * (float)ticks);
+										animator->SetAnimationTime(animTime * (float)ticks);
 									}
 
 									return check;

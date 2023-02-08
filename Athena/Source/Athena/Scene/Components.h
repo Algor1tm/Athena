@@ -140,10 +140,4 @@ namespace Athena
 		Ref<StaticMesh> Mesh;
 		bool Hide = false;
 	};
-
-	struct SkeletalMeshComponent
-	{
-		Ref<SkeletalMesh> Mesh;
-		Ref<Animator> Animator;
-	};
 }

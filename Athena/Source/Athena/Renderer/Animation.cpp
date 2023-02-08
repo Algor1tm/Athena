@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	static void BoneCreateHelper(const BoneStructureInfo& info, Bone& bone, uint32& size)
+	static void BoneCreateHelper(const BonesHierarchyInfo& info, Bone& bone, uint32& size)
 	{
 		bone.Name = info.Name;
 		bone.ID = size;
@@ -21,7 +21,7 @@ namespace Athena
 		}
 	}
 
-	Ref<Skeleton> Skeleton::Create(const BoneStructureInfo& boneHierarchy)
+	Ref<Skeleton> Skeleton::Create(const BonesHierarchyInfo& boneHierarchy)
 	{
 		Ref<Skeleton> result = CreateRef<Skeleton>();
 
@@ -152,10 +152,12 @@ namespace Athena
 	}
 	
 
-	Ref<Animator> Animator::Create(const Ref<SkeletalMesh>& mesh)
+	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations)
 	{
 		Ref<Animator> result = CreateRef<Animator>();
-		result->m_Mesh = mesh;
+
+		result->m_Animations = animations;
+		result->m_CurrentTime = 0.f;
 
 		return result;
 	}
@@ -164,14 +166,10 @@ namespace Athena
 	{
 		if (IsPlaying())
 		{
-			m_CurrentTime += m_Animation->GetTicksPerSecond() * frameTime.AsSeconds();
-			m_CurrentTime = Math::FMod(m_CurrentTime, m_Animation->GetDuration());
+			m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * frameTime.AsSeconds();
+			m_CurrentTime = Math::FMod(m_CurrentTime, m_CurrentAnimation->GetDuration());
 
-			m_Animation->SetBonesState(m_CurrentTime);
-		}
-		else
-		{
-			ATN_CORE_WARN("Animator::OnUpdate: Animation is unset!");
+			m_CurrentAnimation->SetBonesState(m_CurrentTime);
 		}
 	}
 
@@ -179,23 +177,23 @@ namespace Athena
 	{
 		m_CurrentTime = 0.f;
 
-		if (m_Animation != nullptr)
+		if (m_CurrentAnimation != nullptr)
 		{
-			m_Animation->Reset();
-			m_Animation = nullptr;
+			m_CurrentAnimation->Reset();
+			m_CurrentAnimation = nullptr;
 		}
 	}
 
 	void Animator::PlayAnimation(const Ref<Animation>& animation)
 	{
-		if (m_Mesh->HasAnimation(animation))
+		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
 		{
 			StopAnimation();
-			m_Animation = animation;
+			m_CurrentAnimation = animation;
 		}
 		else
 		{
-			ATN_CORE_WARN("Animator::PlayAnimaton: Attempt to play animation that does not belong to SkeletalMesh!");
+			ATN_CORE_WARN("Animator::PlayAnimation: Attempt to play Animation that does not belong to Animator!");
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace Athena::Math
 {
 	// Column - size of columns
 	// Row - size of rows
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	class Matrix
 	{
 	public:
@@ -35,7 +35,7 @@ namespace Athena::Math
 		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
 			ATN_CORE_ASSERT(values.size() == Column, "Invalid initializer list");
-			SIZE_T idx = 0;
+			uint32 idx = 0;
 			for (auto& row : values)
 			{
 				m_Array[idx] = row;
@@ -52,7 +52,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Matrix(const Matrix<U, Column, Row>& other)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -60,7 +60,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Matrix<T, Column, Row>& operator=(const Matrix<U, Column, Row>& other)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -85,21 +85,21 @@ namespace Athena::Math
 			return &(m_Array[0][0]);
 		}
 
-		constexpr ColumnType GetColumn(SIZE_T idx) const
+		constexpr ColumnType GetColumn(uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < Row, "Matrix subscript out of range");
 			ColumnType out;
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				out[i] = m_Array[i][idx];
 			return out;
 		}
 
-		constexpr SIZE_T SizeOfRow() const
+		constexpr uint32 SizeOfRow() const
 		{
 			return Row;
 		}
 
-		constexpr SIZE_T SizeOfColumn() const
+		constexpr uint32 SizeOfColumn() const
 		{
 			return Column;
 		}
@@ -126,27 +126,27 @@ namespace Athena::Math
 		
 		constexpr Matrix& Fill(T value)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i].Fill(value);
 			return *this;
 		}
 
 		constexpr Matrix& Apply(T(*func)(T))
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i].Apply(func);
 			return *this;
 		}
 
 // -------------Operators-------------------------------------
 	public:
-		constexpr const RowType& operator[](SIZE_T idx) const
+		constexpr const RowType& operator[](uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr RowType& operator[](SIZE_T idx)
+		constexpr RowType& operator[](uint32 idx)
 		{
 			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
@@ -154,42 +154,42 @@ namespace Athena::Math
 
 		constexpr Matrix& operator+=(const Matrix& other)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] += other[i];
 			return *this;
 		}
 
 		constexpr Matrix& operator-=(const Matrix& other)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] -= other[i];
 			return *this;
 		}
 
 		constexpr Matrix& operator+=(float scalar)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
 		constexpr Matrix& operator-=(float scalar)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
 		constexpr Matrix& operator*=(float scalar)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] *= scalar;
 			return *this;
 		}
 
 		constexpr Matrix& operator/=(float scalar)
 		{
-			for (SIZE_T i = 0; i < Column; ++i)
+			for (uint32 i = 0; i < Column; ++i)
 				m_Array[i] /= scalar;
 			return *this;
 		}
@@ -204,17 +204,17 @@ namespace Athena::Math
 			return Matrix(*this) -= other;
 		}
 
-		template <SIZE_T OtherColumn, SIZE_T OtherRow>
+		template <uint32 OtherColumn, uint32 OtherRow>
 		constexpr Matrix<T, Column, OtherRow> operator*(const Matrix<T, OtherColumn, OtherRow>& other) const
 		{
 			static_assert(Row == OtherColumn, "Invalid Matrix multiplication");
 
 			Matrix<T, Column, OtherRow> out(static_cast<T>(0));
-			for (SIZE_T i = 0; i < Column; i++)
+			for (uint32 i = 0; i < Column; i++)
 			{
-				for (SIZE_T j = 0; j < OtherRow; j++)
+				for (uint32 j = 0; j < OtherRow; j++)
 				{
-					for (SIZE_T k = 0; k < Row; ++k)
+					for (uint32 k = 0; k < Row; ++k)
 						out[i][j] += m_Array[i][k] * other[k][j];
 				}
 			}
@@ -247,8 +247,8 @@ namespace Athena::Math
 		{
 			Matrix out(static_cast<T>(0));
 
-			constexpr SIZE_T min = Math::Min(Column, Row);
-			for (SIZE_T i = 0; i < min; ++i)
+			constexpr uint32 min = Math::Min(Column, Row);
+			for (uint32 i = 0; i < min; ++i)
 				out[i][i] = static_cast<T>(1);
 
 			return out;
@@ -262,38 +262,38 @@ namespace Athena::Math
 
 // -------------Relative Functions-------------------------------------
 
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr Matrix<T, Column, Row> operator+(float scalar, const Matrix<T, Column, Row>& mat)
 	{
 		return mat + scalar;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr Matrix<T, Column, Row> operator*(float scalar, const Matrix<T, Column, Row>& mat)
 	{
 		return mat * scalar;
 	}
 
-	template <typename T, SIZE_T Shared, SIZE_T Row>
+	template <typename T, uint32 Shared, uint32 Row>
 	constexpr Vector<T, Row> operator*(
 		const Vector<T, Shared>& vec, const Matrix<T, Shared, Row>& mat)
 	{
 		Vector<T, Row> out(static_cast<T>(0));
-		for (SIZE_T i = 0; i < Shared; i++)
+		for (uint32 i = 0; i < Shared; i++)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 				out[j] += vec[i] * mat[i][j];
 		}
 		return out;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr Matrix<T, Row, Column> Transpose(const Matrix<T, Column, Row>& mat)
 	{
 		Matrix<T, Row, Column> out;
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 				out[j][i] = mat[i][j];
 		}
 		return out;
@@ -303,14 +303,14 @@ namespace Athena::Math
 
 namespace Athena
 {
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	inline String ToString(const Math::Matrix<T, Column, Row>& mat)
 	{
 		std::stringstream stream;
 		stream << "Matrix(";
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 			{
 				stream << mat[i][j] << ", ";
 			}

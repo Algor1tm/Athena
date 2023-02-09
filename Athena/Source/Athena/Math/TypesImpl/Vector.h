@@ -10,16 +10,16 @@
 
 namespace Athena::Math
 {
-	template <typename T, SIZE_T _Size>
+	template <typename T, uint32 _Size>
 	class Vector;
 
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right);
 }
 
 namespace Athena
 {
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	class VectorConstIterator
 	{
 	public:
@@ -32,7 +32,7 @@ namespace Athena
 		constexpr VectorConstIterator()
 			: m_Ptr(nullptr), m_Idx(0) {}
 
-		constexpr explicit VectorConstIterator(pointer Ptr, SIZE_T Off = 0)
+		constexpr explicit VectorConstIterator(pointer Ptr, uint32 Off = 0)
 			: m_Ptr(Ptr), m_Idx(Off) {}
 
 		constexpr reference operator*() const
@@ -80,7 +80,7 @@ namespace Athena
 		constexpr VectorConstIterator& operator+=(const ptrdiff_t Off)
 		{
 			VerifyOffset(Off);
-			m_Idx += static_cast<SIZE_T>(Off);
+			m_Idx += static_cast<uint32>(Off);
 			return *this;
 		}
 
@@ -156,19 +156,19 @@ namespace Athena
 				ATN_CORE_ASSERT(m_Ptr, "Cannot seek value-initialized vector iterator");
 
 			if (Off < 0)
-				ATN_CORE_ASSERT(m_Idx >= SIZE_T{ 0 } - static_cast<SIZE_T>(Off), "Cannot seek vector iterator before begin");
+				ATN_CORE_ASSERT(m_Idx >= uint32{ 0 } - static_cast<uint32>(Off), "Cannot seek vector iterator before begin");
 
 			if (Off > 0)
-				ATN_CORE_ASSERT(Size - m_Idx >= static_cast<SIZE_T>(Off), "Cannot seek vector iterator after end");
+				ATN_CORE_ASSERT(Size - m_Idx >= static_cast<uint32>(Off), "Cannot seek vector iterator after end");
 		}
 
 	private:
 		pointer m_Ptr;
-		SIZE_T m_Idx;
+		uint32 m_Idx;
 	};
 
 
-	template <class T, SIZE_T Size>
+	template <class T, uint32 Size>
 	constexpr VectorConstIterator<T, Size> operator+(
 		const ptrdiff_t Off, VectorConstIterator<T, Size> Iter)
 	{
@@ -176,7 +176,7 @@ namespace Athena
 	}
 
 
-	template <class T, SIZE_T Size>
+	template <class T, uint32 Size>
 	class VectorIterator : public VectorConstIterator<T, Size>
 	{
 	public:
@@ -190,7 +190,7 @@ namespace Athena
 	public:
 		constexpr VectorIterator() = default;
 
-		constexpr explicit VectorIterator(pointer Ptr, SIZE_T Off = 0)
+		constexpr explicit VectorIterator(pointer Ptr, uint32 Off = 0)
 			: Base(Ptr, Off) {}
 
 		constexpr reference operator*() const
@@ -261,7 +261,7 @@ namespace Athena
 		}
 	};
 
-	template <class T, SIZE_T Size>
+	template <class T, uint32 Size>
 	constexpr VectorIterator<T, Size> operator+(
 		const ptrdiff_t Off, VectorIterator<T, Size> Next)
 	{
@@ -271,7 +271,7 @@ namespace Athena
 
 namespace Athena::Math
 {
-	template <typename T, SIZE_T _Size>
+	template <typename T, uint32 _Size>
 	class Vector
 	{
 	public:
@@ -292,7 +292,7 @@ namespace Athena::Math
 			ATN_CORE_ASSERT(values.size() == _Size,
 				"Cannot initialize vector with initializer list");
 
-			SIZE_T iter = 0;
+			uint32 iter = 0;
 			for (auto val : values)
 			{
 				m_Array[iter] = val;
@@ -308,7 +308,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Vector<T, _Size>(const Vector<U, _Size>& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -316,7 +316,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Vector<T, _Size>& operator=(const Vector<U, _Size>& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 
 			return *this;
@@ -324,7 +324,7 @@ namespace Athena::Math
 
 // -------------Public Methods-------------------------------------
 	public:
-		constexpr SIZE_T Size() const
+		constexpr uint32 Size() const
 		{
 			return _Size;
 		}
@@ -361,13 +361,13 @@ namespace Athena::Math
 
 		constexpr void Fill(T value)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] = value;
 		}
 
 		constexpr Vector& Apply(T(*func)(T))
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] = func(m_Array[i]);
 			return *this;
 		}
@@ -396,13 +396,13 @@ namespace Athena::Math
 
 // -------------Operators-------------------------------------
 	public:
-		constexpr T operator[](SIZE_T idx) const
+		constexpr T operator[](uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr T& operator[](SIZE_T idx)
+		constexpr T& operator[](uint32 idx)
 		{
 			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
@@ -410,56 +410,56 @@ namespace Athena::Math
 
 		constexpr Vector& operator+=(const Vector& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] += other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator-=(const Vector& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] -= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator*=(const Vector& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] *= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator/=(const Vector& other)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] /= other.m_Array[i];
 			return *this;
 		}
 
 		constexpr Vector& operator+=(T scalar)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] += scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator-=(T scalar)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] -= scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator*=(T scalar)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] *= scalar;
 			return *this;
 		}
 
 		constexpr Vector& operator/=(T scalar)
 		{
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				m_Array[i] /= scalar;
 			return *this;
 		}
@@ -507,7 +507,7 @@ namespace Athena::Math
 		constexpr Vector operator-() const 
 		{
 			Vector out(*this);
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				out.m_Array[i] = -out.m_Array[i];
 			return out;
 		}
@@ -515,7 +515,7 @@ namespace Athena::Math
 		constexpr bool operator==(const Vector& other) const 
 		{
 			bool out = true;
-			for (SIZE_T i = 0; i < _Size; ++i)
+			for (uint32 i = 0; i < _Size; ++i)
 				out = out && m_Array[i] == other.m_Array[i];
 			return out;
 		}
@@ -533,28 +533,28 @@ namespace Athena::Math
 
 // -------------Relative Functions-------------------------------------
 
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	constexpr Vector<T, Size> operator+(T scalar, const Vector<T, Size>& vec)
 	{
 		return vec + scalar;
 	}
 
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	constexpr Vector<T, Size> operator*(T scalar, const Vector<T, Size>& vec)
 	{
 		return vec * scalar;
 	}
 
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	constexpr T Dot(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
 		T out = 0;
-		for (SIZE_T i = 0; i < Size; ++i)
+		for (uint32 i = 0; i < Size; ++i)
 			out += left[i] * right[i];
 		return out;
 	}
 
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	constexpr float Distance(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
 		return (left - right).GetLength();
@@ -564,12 +564,12 @@ namespace Athena::Math
 
 namespace Athena
 {
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	inline String ToString(const Math::Vector<T, Size>& vec)
 	{
 		std::stringstream stream;
 		stream << "Vector" << vec.Size() << "(";
-		for (SIZE_T i = 0; i < vec.Size() - 1; ++i)
+		for (uint32 i = 0; i < vec.Size() - 1; ++i)
 			stream << vec[i] << ", ";
 		stream << vec[vec.Size() - 1] << ")";
 		return stream.str();

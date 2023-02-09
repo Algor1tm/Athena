@@ -49,7 +49,7 @@ namespace Athena::Math
 		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
 			ATN_CORE_ASSERT(values.size() == Size4, "Invalid initializer list");
-			SIZE_T idx = 0;
+			uint32 idx = 0;
 			for (auto& row : values)
 			{
 				m_Array[idx] = row;
@@ -60,7 +60,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Matrix(const Matrix<U, Size4, Size4>& other)
 		{
-			for (SIZE_T i = 0; i < Size4; ++i)
+			for (uint32 i = 0; i < Size4; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -68,7 +68,7 @@ namespace Athena::Math
 		template <typename U>
 		constexpr Matrix<T, Size4, Size4>& operator=(const Matrix<U, Size4, Size4>& other)
 		{
-			for (SIZE_T i = 0; i < Size4; ++i)
+			for (uint32 i = 0; i < Size4; ++i)
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
@@ -84,7 +84,7 @@ namespace Athena::Math
 			return &(m_Array[0][0]);
 		}
 
-		constexpr ColumnType GetColumn(SIZE_T idx) const
+		constexpr ColumnType GetColumn(uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < 4, "Matrix subscript out of range");
 			ColumnType out(m_Array[0][idx], m_Array[1][idx], m_Array[2][idx], m_Array[3][idx]);
@@ -92,12 +92,12 @@ namespace Athena::Math
 			return out;
 		}
 
-		constexpr SIZE_T SizeOfRow() const
+		constexpr uint32 SizeOfRow() const
 		{
 			return Size4;
 		}
 
-		constexpr SIZE_T SizeOfColumn() const
+		constexpr uint32 SizeOfColumn() const
 		{
 			return Size4;
 		}
@@ -193,13 +193,13 @@ namespace Athena::Math
 
 // -------------Operators-------------------------------------
 	public:
-		constexpr const RowType& operator[](SIZE_T idx) const
+		constexpr const RowType& operator[](uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < Size4, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
-		constexpr RowType& operator[](SIZE_T idx)
+		constexpr RowType& operator[](uint32 idx)
 		{
 			ATN_CORE_ASSERT(idx < Size4, "Matrix subscript out of range");
 			return m_Array[idx];

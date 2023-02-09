@@ -43,15 +43,15 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
 		virtual const FramebufferDescription& GetDescription() const = 0;
-		virtual void* GetColorAttachmentRendererID(SIZE_T index = 0) const = 0;
+		virtual void* GetColorAttachmentRendererID(uint32 index = 0) const = 0;
 
-		virtual int ReadPixel(SIZE_T attachmentIndex, int x, int y) = 0;
-		virtual void ClearAttachment(SIZE_T attachmentIndex, int value) = 0;
+		virtual int ReadPixel(uint32 attachmentIndex, int x, int y) = 0;
+		virtual void ClearAttachment(uint32 attachmentIndex, int value) = 0;
 
 		virtual void ClearColorAndDepth(const LinearColor& color) = 0;
 
 		virtual void ResolveMutlisampling() = 0;
 
-		virtual void ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) = 0;
+		virtual void ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) = 0;
 	};
 }

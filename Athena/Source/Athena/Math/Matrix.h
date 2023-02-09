@@ -9,7 +9,7 @@
 
 namespace Athena
 {
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	using Matrix = Athena::Math::Matrix<T, Column, Row>;
 
 	using Matrix2 = Matrix<float, 2, 2>;

@@ -842,13 +842,16 @@ namespace Athena
 					{
 						for (const auto& dirEntry : std::filesystem::directory_iterator("Assets/Meshes"))
 						{
-							const auto& filename = dirEntry.path().filename().string();
-							bool isSelected = filename == meshFilename;
-							UI::Selectable(filename, &isSelected, [&meshComponent, &dirEntry]() 
-								{
-									meshComponent.Mesh = StaticMesh::Create(dirEntry.path());
-									meshComponent.Hide = false;
-								});
+							if (!dirEntry.is_directory())
+							{
+								const auto& filename = dirEntry.path().filename().string();
+								bool isSelected = filename == meshFilename;
+								UI::Selectable(filename, &isSelected, [&meshComponent, &dirEntry]()
+									{
+										meshComponent.Mesh = StaticMesh::Create(dirEntry.path());
+										meshComponent.Hide = false;
+									});
+							}
 						}
 
 						ImGui::EndCombo();

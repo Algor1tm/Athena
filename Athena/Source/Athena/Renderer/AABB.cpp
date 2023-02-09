@@ -32,7 +32,7 @@ namespace Athena
 		corners[7] = m_MaxPoint;
 
 		AABB result;
-		for (SIZE_T i = 0; i < corners.size(); ++i)
+		for (uint32 i = 0; i < corners.size(); ++i)
 		{
 			Vector3 transformed = corners[i] * transform;
 			result.Extend(transformed);

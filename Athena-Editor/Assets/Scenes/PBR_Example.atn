@@ -9,7 +9,7 @@ Entities:
       Rotation: [-3.1415925, 0.475432873, -3.1415925]
       Scale: [289.284058, 289.283478, 289.284058]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\Spiderman\Spiderman.fbx
+      FilePath: Assets\Meshes\Spiderman\Spiderman.fbx
       Hide: false
   - IDComponent:
       ID: 4620546740167642908
@@ -20,7 +20,7 @@ Entities:
       Rotation: [-2.74959557e-08, -1.38929653, 3.03894382e-07]
       Scale: [140.35437, 140.354126, 140.35437]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\StormTrooper\silly_dancing.fbx
+      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
       Hide: false
   - IDComponent:
       ID: 14514284786278117030
@@ -31,7 +31,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\BlenderScene.fbx
+      FilePath: Assets\Meshes\BlenderScene.fbx
       Hide: false
 Environment:
   Skybox:

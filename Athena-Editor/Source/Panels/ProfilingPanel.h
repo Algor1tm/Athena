@@ -21,7 +21,7 @@ namespace Athena
 		bool m_IsPlottingFrameRate = false;
 
 		std::array<float, 64> m_FrameRateStack;
-		SIZE_T m_FrameRateIndex = 0;
+		uint32 m_FrameRateIndex = 0;
 
 		Time m_FrameTime;
 		Timer m_Timer;

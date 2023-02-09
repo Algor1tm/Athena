@@ -14,7 +14,7 @@ namespace Athena
 		return multisample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 	}
 
-	static void CreateTextures(bool multisample, uint32* outIDs, SIZE_T count)
+	static void CreateTextures(bool multisample, uint32* outIDs, uint32 count)
 	{
 		glCreateTextures(GLTextureTarget(multisample), (GLsizei)count, outIDs);
 	}
@@ -104,7 +104,7 @@ namespace Athena
 		Recreate();
 	}
 
-	void* GLFramebuffer::GetColorAttachmentRendererID(SIZE_T index) const
+	void* GLFramebuffer::GetColorAttachmentRendererID(uint32 index) const
 	{ 
 		if (IsMultisample())
 		{
@@ -116,7 +116,7 @@ namespace Athena
 		return reinterpret_cast<void*>((uint64)m_ColorAttachments[index]); 
 	}
 
-	int GLFramebuffer::ReadPixel(SIZE_T attachmentIndex, int x, int y)
+	int GLFramebuffer::ReadPixel(uint32 attachmentIndex, int x, int y)
 	{
 		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
 		glBindFramebuffer(GL_FRAMEBUFFER, IsMultisample() ? m_ResolvedFramebufferID : m_FramebufferID); 
@@ -129,7 +129,7 @@ namespace Athena
 		return pixelData;
 	}
 
-	void GLFramebuffer::ClearAttachment(SIZE_T attachmentIndex, int value)
+	void GLFramebuffer::ClearAttachment(uint32 attachmentIndex, int value)
 	{
 		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
 		
@@ -160,7 +160,7 @@ namespace Athena
 	{
 		if (IsMultisample())
 		{
-			for (SIZE_T i = 0; i < m_ColorAttachmentDescriptions.size(); ++i)
+			for (uint32 i = 0; i < m_ColorAttachmentDescriptions.size(); ++i)
 			{
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
 				glReadBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
@@ -186,7 +186,7 @@ namespace Athena
 			attachments.resize(m_ColorAttachmentDescriptions.size());
 			CreateTextures(multisample, attachments.data(), attachments.size());
 			//Attachments
-			for (SIZE_T i = 0; i < attachments.size(); ++i)
+			for (uint32 i = 0; i < attachments.size(); ++i)
 			{
 				BindTexture(multisample, attachments[i]);
 				switch (m_ColorAttachmentDescriptions[i].Format)
@@ -232,7 +232,7 @@ namespace Athena
 		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 
-	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32 width, uint32 height, SIZE_T index)
+	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32 width, uint32 height, uint32 index)
 	{
 		if (samples > 1)
 		{
@@ -272,7 +272,7 @@ namespace Athena
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1), id, 0);
 	}
 
-	void GLFramebuffer::ReplaceAttachment(SIZE_T attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level)
+	void GLFramebuffer::ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level)
 	{
 		m_ColorAttachments[attachmentIndex] = (uint32)(uint64)rendererID;
 

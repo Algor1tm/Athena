@@ -319,12 +319,12 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr SIZE_T QuadVertexCount = 4;
+		constexpr uint32 QuadVertexCount = 4;
 		constexpr float textureIndex = 0.f; // White Texture
 		constexpr Vector2 textureCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		constexpr float tilingFactor = 1.f;
 
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
+		for (uint32 i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = color;
@@ -345,7 +345,7 @@ namespace Athena
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		constexpr SIZE_T QuadVertexCount = 4;
+		constexpr uint32 QuadVertexCount = 4;
 		const auto& texCoords = texture.GetTexCoords();
 		float textureIndex = 0.0f;
 
@@ -368,7 +368,7 @@ namespace Athena
 			s_Data.TextureSlotIndex++;
 		}
 
-		for (SIZE_T i = 0; i < QuadVertexCount; ++i)
+		for (uint32 i = 0; i < QuadVertexCount; ++i)
 		{
 			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.QuadVertexBufferPointer->Color = tint;
@@ -390,7 +390,7 @@ namespace Athena
 		if (s_Data.CircleIndexCount >= Renderer2DData::MaxIndices)
 			NextBatch();
 
-		for (SIZE_T i = 0; i < 4; ++i)
+		for (uint32 i = 0; i < 4; ++i)
 		{
 			s_Data.CircleVertexBufferPointer->WorldPosition = s_Data.QuadVertexPositions[i] * transform;
 			s_Data.CircleVertexBufferPointer->LocalPosition = s_Data.QuadVertexPositions[i] * 2.f;
@@ -437,12 +437,12 @@ namespace Athena
 			if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
 				NextBatch();
 
-			constexpr SIZE_T QuadVertexCount = 4;
+			constexpr uint32 QuadVertexCount = 4;
 			constexpr float textureIndex = 0.f; // White Texture
 			constexpr Vector2 textureCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 			constexpr float tilingFactor = 1.f;
 
-			for (SIZE_T i = 0; i < QuadVertexCount; ++i)
+			for (uint32 i = 0; i < QuadVertexCount; ++i)
 			{
 				s_Data.QuadVertexBufferPointer->Position = positions[i];
 				s_Data.QuadVertexBufferPointer->Color = color;
@@ -475,7 +475,7 @@ namespace Athena
 	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int32 entityID)
 	{
 		Vector3 lineVertices[4];
-		for (SIZE_T i = 0; i < 4; ++i)
+		for (uint32 i = 0; i < 4; ++i)
 			lineVertices[i] = s_Data.QuadVertexPositions[i] * transform;
 
 		DrawLine(lineVertices[0], lineVertices[1], color, lineWidth, entityID);

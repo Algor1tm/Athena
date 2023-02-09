@@ -34,7 +34,7 @@ namespace Athena
 		m_RenderTargetsDescriptions.reserve(desc.Attachments.Attachments.size());
 
 		const auto& attachments = desc.Attachments.Attachments;
-		for (SIZE_T i = 0; i < attachments.size(); ++i)
+		for (uint32 i = 0; i < attachments.size(); ++i)
 		{
 			if (attachments[i].Format == TextureFormat::RGBA8)
 				m_ClearColorTargetIndex = i;
@@ -61,7 +61,7 @@ namespace Athena
 			if (IsMultisample())
 				m_ResolvedAttachments.resize(m_RenderTargetsDescriptions.size());
 			//Attachments
-			for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
+			for (uint32 i = 0; i < m_Attachments.size(); ++i)
 			{
 				switch (m_RenderTargetsDescriptions[i].Format)
 				{
@@ -100,7 +100,7 @@ namespace Athena
 		Recreate();
 	}
 
-	void* D3D11Framebuffer::GetColorAttachmentRendererID(SIZE_T index) const
+	void* D3D11Framebuffer::GetColorAttachmentRendererID(uint32 index) const
 	{ 
 		if (IsMultisample())
 		{
@@ -112,7 +112,7 @@ namespace Athena
 		return m_Attachments[index].ShaderResourceView.Get();
 	}
 
-	int D3D11Framebuffer::ReadPixel(SIZE_T attachmentIndex, int x, int y)
+	int D3D11Framebuffer::ReadPixel(uint32 attachmentIndex, int x, int y)
 	{
 		ATN_CORE_ASSERT(attachmentIndex < m_Attachments.size(), "Subscript out of range!");
 
@@ -135,7 +135,7 @@ namespace Athena
 		return *reinterpret_cast<int*>(pixel);
 	}
 
-	void D3D11Framebuffer::ClearAttachment(SIZE_T attachmentIndex, int value)
+	void D3D11Framebuffer::ClearAttachment(uint32 attachmentIndex, int value)
 	{
 		ATN_CORE_ASSERT(attachmentIndex < m_Attachments.size(), "Subscript out of range!");
 
@@ -146,7 +146,7 @@ namespace Athena
 	void D3D11Framebuffer::ClearColorAndDepth(const LinearColor& color)
 	{
 		std::vector<ID3D11RenderTargetView*> views(m_Attachments.size());
-		for (SIZE_T i = 0; i < m_Attachments.size(); ++i)
+		for (uint32 i = 0; i < m_Attachments.size(); ++i)
 		{
 			views[i] = m_Attachments[i].RenderTargetView.Get();
 		}
@@ -172,7 +172,7 @@ namespace Athena
 	{
 		if (IsMultisample())
 		{
-			for (SIZE_T i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
+			for (uint32 i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
 			{
 				D3D11CurrentContext::DeviceContext->ResolveSubresource(m_ResolvedAttachments[i].SingleSampledTexture.Get(), 0,
 					m_Attachments[i].RenderTargetTexture.Get(), 0,
@@ -183,7 +183,7 @@ namespace Athena
 
 	void D3D11Framebuffer::DeleteAttachments()
 	{
-		for (SIZE_T i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
+		for (uint32 i = 0; i < m_RenderTargetsDescriptions.size(); ++i)
 		{
 			m_Attachments[i].RenderTargetView->Release();
 			m_Attachments[i].RenderTargetTexture->Release();
@@ -203,7 +203,7 @@ namespace Athena
 		m_DepthStencil->Release();
 	}
 
-	void D3D11Framebuffer::AttachColorTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height, SIZE_T index)
+	void D3D11Framebuffer::AttachColorTexture(uint32 samples, DXGI_FORMAT format, uint32 width, uint32 height, uint32 index)
 	{
 		D3D11_TEXTURE2D_DESC colorTextureDesc;
 		colorTextureDesc.Width = width;

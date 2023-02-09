@@ -143,7 +143,7 @@ namespace Athena
 		{
 			if (elem.Type == ShaderDataType::Mat3)
 			{
-				for (SIZE_T i = 0; i < 3; ++i)
+				for (uint32 i = 0; i < 3; ++i)
 				{
 					D3D11_INPUT_ELEMENT_DESC desc;
 					desc.SemanticName = elem.Name.c_str();
@@ -159,7 +159,7 @@ namespace Athena
 			}
 			else if (elem.Type == ShaderDataType::Mat4)
 			{
-				for (SIZE_T i = 0; i < 4; ++i)
+				for (uint32 i = 0; i < 4; ++i)
 				{
 					D3D11_INPUT_ELEMENT_DESC desc;
 					desc.SemanticName = elem.Name.c_str();

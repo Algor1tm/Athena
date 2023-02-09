@@ -13,7 +13,7 @@
 
 namespace Athena
 {
-	template <typename T, SIZE_T Size>
+	template <typename T, uint32 Size>
 	using Vector = Athena::Math::Vector<T, Size>;
 
 	using Vector2  = Vector<float, 2>;

@@ -391,7 +391,7 @@ namespace Athena
 					{
 						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
 
-						FilePath path = staticMeshComponentNode["Filepath"].as<String>();
+						FilePath path = staticMeshComponentNode["FilePath"].as<String>();
 
 						meshComp.Mesh = StaticMesh::Create(path);
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
@@ -541,7 +541,7 @@ namespace Athena
 			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
-				output << YAML::Key << "Filepath" << YAML::Value << mesh->GetFilePath().string();
+				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath().string();
 				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
 			});
 

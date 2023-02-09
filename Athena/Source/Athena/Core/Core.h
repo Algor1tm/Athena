@@ -128,8 +128,6 @@ namespace Athena
 	using uint32 = ::std::uint32_t; // 32-bit unsigned int
 	using uint64 = ::std::uint64_t; // 64-bit unsigned int
 
-	using SIZE_T = uint64; // size type
-
 	using String = ::std::string; // string type
 	using FilePath = ::std::filesystem::path;	// filesystem path
 

@@ -6,12 +6,12 @@
 
 namespace Athena::Math
 {
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr bool All(const Matrix<T, Column, Row>& mat)
 	{
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 			{
 				if (static_cast<bool>(mat[i][j]) == false)
 					return false;
@@ -21,12 +21,12 @@ namespace Athena::Math
 		return true;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr bool Any(const Matrix<T, Column, Row>& mat)
 	{
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 			{
 				if (static_cast<bool>(mat[i][j]) == true)
 					return true;
@@ -36,12 +36,12 @@ namespace Athena::Math
 		return false;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row, typename ConditionFunc>
+	template <typename T, uint32 Column, uint32 Row, typename ConditionFunc>
 	constexpr bool All(const Matrix<T, Column, Row>& mat, ConditionFunc cond)
 	{
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 			{
 				if (cond(mat[i][j]) == false)
 					return false;
@@ -51,12 +51,12 @@ namespace Athena::Math
 		return true;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row, typename ConditionFunc>
+	template <typename T, uint32 Column, uint32 Row, typename ConditionFunc>
 	constexpr bool Any(const Matrix<T, Column, Row>& mat, ConditionFunc cond)
 	{
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 		{
-			for (SIZE_T j = 0; j < Row; ++j)
+			for (uint32 j = 0; j < Row; ++j)
 			{
 				if (cond(mat[i][j]) == true)
 					return true;
@@ -66,10 +66,10 @@ namespace Athena::Math
 		return false;
 	}
 
-	template <typename T, SIZE_T Column, SIZE_T Row>
+	template <typename T, uint32 Column, uint32 Row>
 	constexpr void Swap(const Matrix<T, Column, Row>& left, const Matrix<T, Column, Row>& right)
 	{
-		for (SIZE_T i = 0; i < Column; ++i)
+		for (uint32 i = 0; i < Column; ++i)
 			Math::Swap(left[i], right[i]);
 	}
 }

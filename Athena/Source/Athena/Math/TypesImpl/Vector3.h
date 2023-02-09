@@ -101,7 +101,7 @@ namespace Athena::Math
 
 // -------------Public Methods-------------------------------------
 	public:
-		constexpr SIZE_T Size() const
+		constexpr uint32 Size() const
 		{
 			return Size3;
 		}
@@ -175,13 +175,13 @@ namespace Athena::Math
 
 // -------------Operators-------------------------------------
 	public:
-		constexpr const T& operator[](SIZE_T idx) const
+		constexpr const T& operator[](uint32 idx) const
 		{
 			ATN_CORE_ASSERT(idx < Size3, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
-		constexpr T& operator[](SIZE_T idx)
+		constexpr T& operator[](uint32 idx)
 		{
 			ATN_CORE_ASSERT(idx < Size3, "Vector subscript out of range");
 			return *(&x + idx);

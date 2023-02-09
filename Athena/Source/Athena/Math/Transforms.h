@@ -87,7 +87,7 @@ namespace Athena::Math
 		translation = transform[3];
 
 		Vector<T, 3> rows[3];
-		for (SIZE_T i = 0; i < 3; ++i)
+		for (uint32 i = 0; i < 3; ++i)
 			rows[i] = transform[i];
 
 		scale.x = rows[0].Length();

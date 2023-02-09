@@ -56,21 +56,21 @@ namespace Athena
 		std::unordered_map<ShaderType, String> shaderSources;
 
 		const char* typeToken = "#type";
-		SIZE_T typeTokenLength = strlen(typeToken);
-		SIZE_T pos = source.find(typeToken, 0);
-		while (pos != std::string::npos)
+		uint64 typeTokenLength = strlen(typeToken);
+		uint64 pos = source.find(typeToken, 0);
+		while (pos != String::npos)
 		{
-			SIZE_T eol = source.find_first_of("\r\n", pos);
-			ATN_CORE_ASSERT(eol != std::string::npos, "Syntax Error");
-			SIZE_T begin = pos + typeTokenLength + 1;
+			uint64 eol = source.find_first_of("\r\n", pos);
+			ATN_CORE_ASSERT(eol != String::npos, "Syntax Error");
+			uint64 begin = pos + typeTokenLength + 1;
 			String type = source.substr(begin, eol - begin);
 			ATN_CORE_ASSERT(type == "VERTEX_SHADER" || type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER",
 				"Invalid Shader Type specifier");
 
-			SIZE_T nextLinePos = source.find_first_not_of("\r,\n", eol);
+			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
 			pos = source.find(typeToken, nextLinePos);
 			shaderSources[ShaderTypeFromString(type)] =
-				source.substr(nextLinePos, pos - (nextLinePos == std::string::npos ? source.size() - 1 : nextLinePos));
+				source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
 		}
 
 		return shaderSources;

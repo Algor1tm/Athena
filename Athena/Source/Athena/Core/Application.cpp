@@ -1,6 +1,8 @@
 #include "Application.h"
 
 #include "Log.h"
+#include "FileSystem.h"
+
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Scripting/ScriptEngine.h"
@@ -16,14 +18,12 @@ namespace Athena
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
-		if (appdesc.WorkingDirectory != Filepath())
-			std::filesystem::current_path(appdesc.WorkingDirectory);
+		if (appdesc.WorkingDirectory != FilePath())
+			FileSystem::SetWorkingDirectory(appdesc.WorkingDirectory);
 
 		appdesc.UseConsole ? Log::Init() : Log::InitWithoutConsole();
 			
-		WindowDescription wdesc = appdesc.WindowDesc;
-
-		m_Window = Window::Create(wdesc);
+		m_Window = Window::Create(appdesc.WindowDesc);
 		Renderer::Init(appdesc.API);
 
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));

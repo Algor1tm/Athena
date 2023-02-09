@@ -39,7 +39,7 @@ namespace Athena
 #endif
 		appdesc.UseConsole = true;
 		appdesc.UseImGui = true;
-		appdesc.WorkingDirectory = Filepath();
+		appdesc.WorkingDirectory = FilePath();
 		appdesc.ScriptsFolder = "Assets/Scripts";
 
 		return new AthenaEditor(appdesc);

@@ -1,5 +1,7 @@
 #include "Texture.h"
 
+#include "Athena/Core/FileSystem.h"
+
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/OpenGL/GLTexture2D.h"
@@ -15,7 +17,7 @@ namespace Athena
 	Ref<Texture2D> Texture2D::Create(const Texture2DDescription& desc)
 	{
 		if(!desc.TexturePath.empty())
-			ATN_CORE_ASSERT(std::filesystem::exists(desc.TexturePath), "Invalid filepath for Texture2D!");
+			ATN_CORE_ASSERT(FileSystem::Exists(desc.TexturePath), "Invalid filepath for Texture2D!");
 
 		switch (Renderer::GetAPI())
 		{

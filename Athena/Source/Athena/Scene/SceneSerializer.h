@@ -17,11 +17,11 @@ namespace Athena
 	public:
 		SceneSerializer(const Ref<Scene>& scene);
 
-		void SerializeToFile(const String& filepath);
-		void SerializeRuntime(const String& filepath);
+		void SerializeToFile(const FilePath& path);
+		void SerializeRuntime(const FilePath& path);
 		
-		bool DeserializeFromFile(const String& filepath);
-		bool DeserializeRuntime(const String& filepath);
+		bool DeserializeFromFile(const FilePath& path);
+		bool DeserializeRuntime(const FilePath& path);
 
 	private:
 		void SerializeEntity(YAML::Emitter& out, Entity entity);

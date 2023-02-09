@@ -10,7 +10,7 @@ namespace Athena
 	class ATHENA_API FileDialogs
 	{
 	public:
-		static Filepath OpenFile(std::string_view filter);
-		static Filepath SaveFile(std::string_view filter);
+		static FilePath OpenFile(std::string_view filter);
+		static FilePath SaveFile(std::string_view filter);
 	};
 }

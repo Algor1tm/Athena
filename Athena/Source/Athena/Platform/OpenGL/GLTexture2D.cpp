@@ -8,7 +8,7 @@
 namespace Athena
 {
 	GLTexture2D::GLTexture2D(const Texture2DDescription& desc)
-		: m_Path(desc.TexturePath)
+		: m_FilePath(desc.TexturePath)
 	{
 		if (!desc.TexturePath.empty())
 		{
@@ -60,7 +60,7 @@ namespace Athena
 		stbi_set_flip_vertically_on_load(1);
 
 		bool HDR = false;
-		std::string path = m_Path.string();
+		std::string path = m_FilePath.string();
 		void* data;
 		if (stbi_is_hdr(path.data()))
 		{
@@ -104,7 +104,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load Texture2D!(path = '{0}')", m_Path);
+			ATN_CORE_ERROR("Failed to load Texture2D!(path = '{0}')", m_FilePath);
 		}
 	}
 

@@ -131,7 +131,7 @@ namespace Athena
 	using SIZE_T = uint64; // size type
 
 	using String = ::std::string; // string type
-	using Filepath = ::std::filesystem::path;	// filesystem path
+	using FilePath = ::std::filesystem::path;	// filesystem path
 
 	template <typename T>
 	using Scope = ::std::unique_ptr<T>;

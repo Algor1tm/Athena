@@ -215,7 +215,7 @@ namespace Athena
 		if (m_WindowCount == 0)
 		{
 			HANDLE icon;
-			if (desc.Icon != Filepath())
+			if (desc.Icon != FilePath())
 			{
 				std::string iconPath = desc.Icon.string() + ".ico";		// TODO: Make more customizable
 				icon = LoadImage(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);

@@ -19,12 +19,12 @@ namespace Athena
 		return 0;
 	}
 
-	GLShader::GLShader(const Filepath& filepath)
+	GLShader::GLShader(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(std::filesystem::exists(filepath), "Invalid filepath for Shader");
+		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Shader");
 
-		m_Filepath = filepath;
-		m_Name = m_Filepath.stem().string();
+		m_FilePath = path;
+		m_Name = m_FilePath.stem().string();
 
 		Reload();
 	}
@@ -118,7 +118,7 @@ namespace Athena
 
 	void GLShader::Reload()
 	{
-		String result = FileSystem::ReadFile(m_Filepath);
+		String result = FileSystem::ReadFile(m_FilePath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 	}
@@ -137,11 +137,11 @@ namespace Athena
 	}
 
 
-	GLIncludeShader::GLIncludeShader(const Filepath& filepath)
+	GLIncludeShader::GLIncludeShader(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(std::filesystem::exists(filepath), "Invalid filepath for Shader");
+		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Shader");
 
-		m_Filepath = filepath;
+		m_FilePath = path;
 		Reload();
 	}
 
@@ -152,8 +152,8 @@ namespace Athena
 
 	void GLIncludeShader::Reload()
 	{
-		String source = FileSystem::ReadFile(m_Filepath);
-		m_IncludeName = "/" + m_Filepath.filename().string();
+		String source = FileSystem::ReadFile(m_FilePath);
+		m_IncludeName = "/" + m_FilePath.filename().string();
 
 		glNamedStringARB(GL_SHADER_INCLUDE_ARB, m_IncludeName.size(), m_IncludeName.c_str(), source.size(), source.c_str());
 	}

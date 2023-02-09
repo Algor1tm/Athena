@@ -57,7 +57,7 @@ namespace Athena
 
 	inline std::string ToString(const std::wstring& x)
 	{
-		return Filepath(x).string();
+		return FilePath(x).string();
 	}
 
 	constexpr const char* ToString(const char* x)

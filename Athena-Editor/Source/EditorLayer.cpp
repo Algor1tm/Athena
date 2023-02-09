@@ -200,7 +200,7 @@ namespace Athena
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
                     std::string_view path = (const char*)payload->Data;
-                    Filepath ext = Filepath(path).extension();
+                    FilePath ext = FilePath(path).extension();
                     //Scene Drag/Drop
                     if (ext == ".atn\0")
                     {
@@ -215,7 +215,7 @@ namespace Athena
                             if (target.HasComponent<SpriteComponent>())
                             {
                                 auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = Texture2D::Create(Filepath(path));
+                                sprite.Texture = Texture2D::Create(FilePath(path));
                                 sprite.Color = LinearColor::White;
                             }
                         }
@@ -394,7 +394,7 @@ namespace Athena
 
         m_ActiveScene = m_EditorScene;
 
-        Filepath activeScenePath = m_CurrentScenePath;
+        FilePath activeScenePath = m_CurrentScenePath;
         OpenScene(m_TemporaryEditorScenePath);
         m_CurrentScenePath = activeScenePath;
 
@@ -450,7 +450,7 @@ namespace Athena
         {
             if (ctrl)
             {
-                if (m_CurrentScenePath == Filepath())
+                if (m_CurrentScenePath == FilePath())
                     SaveSceneAs();
                 else
                     SaveSceneAs(m_CurrentScenePath);
@@ -524,7 +524,7 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        m_CurrentScenePath = Filepath();
+        m_CurrentScenePath = FilePath();
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
         m_SceneHierarchy->SetContext(m_ActiveScene);
@@ -539,14 +539,14 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        Filepath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
             ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.string());
     }
 
-    void EditorLayer::SaveSceneAs(const Filepath& path)
+    void EditorLayer::SaveSceneAs(const FilePath& path)
     {
         SceneSerializer serializer(m_ActiveScene);
         serializer.SerializeToFile(path.string());
@@ -558,14 +558,14 @@ namespace Athena
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();
 
-        Filepath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
         if (!filepath.empty())
             OpenScene(filepath);
         else
             ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.string());
     }
 
-    void EditorLayer::OpenScene(const Filepath& path)
+    void EditorLayer::OpenScene(const FilePath& path)
     {
         if (m_SceneState != SceneState::Edit)
             OnSceneStop();

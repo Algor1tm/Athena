@@ -3,7 +3,7 @@
 
 namespace Athena
 {
-	String FileSystem::ReadFile(const Filepath& path)
+	String FileSystem::ReadFile(const FilePath& path)
 	{
 		String result;
 		std::ifstream in(path, std::ios::in | std::ios::binary);
@@ -21,5 +21,20 @@ namespace Athena
 		}
 
 		return result;
+	}
+
+	FilePath FileSystem::GetWorkingDirectory()
+	{
+		return std::filesystem::current_path();
+	}
+
+	void FileSystem::SetWorkingDirectory(const FilePath& path)
+	{
+		std::filesystem::current_path(path);
+	}
+
+	bool FileSystem::Exists(const FilePath& path)
+	{
+		return std::filesystem::exists(path);
 	}
 }

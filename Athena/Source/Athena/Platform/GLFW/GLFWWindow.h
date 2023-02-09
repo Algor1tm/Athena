@@ -176,7 +176,7 @@ namespace Athena
 
 		window->SetWindowMode(desc.Mode);
 
-		if (desc.Icon != Filepath())
+		if (desc.Icon != FilePath())
 		{
 			GLFWimage image;
 			String imagePath = desc.Icon.string() + ".png";			// TODO: Make more customizable

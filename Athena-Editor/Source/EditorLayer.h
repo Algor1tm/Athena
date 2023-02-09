@@ -52,9 +52,9 @@ namespace Athena
 
 		void NewScene();
 		void SaveSceneAs();
-		void SaveSceneAs(const Filepath& path);
+		void SaveSceneAs(const FilePath& path);
 		void OpenScene();
-		void OpenScene(const Filepath& path);
+		void OpenScene(const FilePath& path);
 
 	private:
 		EditorCamera m_EditorCamera;
@@ -76,8 +76,8 @@ namespace Athena
 		SceneState m_SceneState = SceneState::Edit;
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		Filepath m_TemporaryEditorScenePath;
-		Filepath m_CurrentScenePath;
+		FilePath m_TemporaryEditorScenePath;
+		FilePath m_CurrentScenePath;
 
 		Ref<Texture2D> m_PlayIcon;
 		Ref<Texture2D> m_StopIcon;

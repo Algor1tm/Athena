@@ -25,12 +25,12 @@ namespace Athena
 	class ATHENA_API StaticMesh
 	{
 	public:
-		static Ref<StaticMesh> Create(const Filepath& path);
+		static Ref<StaticMesh> Create(const FilePath& path);
 
 		const std::vector<SubMesh>& GetAllSubMeshes() const { return m_SubMeshes; }
 
 		const String& GetName() const { return m_Name; }
-		const Filepath& GetFilepath() const { return m_Filepath; }
+		const FilePath& GetFilePath() const { return m_FilePath; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
 
 		const Ref<Animator>& GetAnimator() { return m_Animator; }
@@ -41,7 +41,7 @@ namespace Athena
 		void ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform);
 
 	private:
-		Filepath m_Filepath;
+		FilePath m_FilePath;
 		String m_Name;
 		AABB m_AABB;
 		std::vector<SubMesh> m_SubMeshes;

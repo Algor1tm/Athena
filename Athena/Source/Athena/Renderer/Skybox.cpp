@@ -5,10 +5,10 @@
 
 namespace Athena
 {
-	Ref<Skybox> Skybox::Create(const Filepath& hdrMap)
+	Ref<Skybox> Skybox::Create(const FilePath& hdrMap)
 	{
 		Ref<Skybox> result = CreateRef<Skybox>();
-		result->m_Path = hdrMap;
+		result->m_FilePath = hdrMap;
 
 		Texture2DDescription desc;
 		desc.TexturePath = hdrMap;

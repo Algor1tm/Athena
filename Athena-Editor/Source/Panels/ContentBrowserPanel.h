@@ -20,9 +20,9 @@ namespace Athena
 		virtual void OnImGuiRender() override;
 
 	private:
-		Filepath m_CurrentDirectory;
+		FilePath m_CurrentDirectory;
 		std::string_view m_AssetDirectory = "Assets";
-		Filepath m_LastDirectory;
+		FilePath m_LastDirectory;
 
 		Ref<Texture2D> m_FolderIcon;
 		Ref<Texture2D> m_FileIcon;

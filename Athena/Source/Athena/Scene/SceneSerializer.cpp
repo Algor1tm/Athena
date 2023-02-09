@@ -128,7 +128,7 @@ namespace Athena
 
 	}
 
-	void SceneSerializer::SerializeToFile(const String& filepath)
+	void SceneSerializer::SerializeToFile(const FilePath& path)
 	{
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -154,7 +154,7 @@ namespace Athena
 			out << YAML::Key << "Skybox";
 			out << YAML::BeginMap;
 			if (env->Skybox)
-				out << YAML::Key << "FilePath" << env->Skybox->GetFilepath().string();
+				out << YAML::Key << "FilePath" << env->Skybox->GetFilePath().string();
 			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
 			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
 			out << YAML::EndMap;
@@ -171,18 +171,18 @@ namespace Athena
 
 		out << YAML::EndMap;
 
-		std::ofstream fout(filepath);
+		std::ofstream fout(path);
 		fout << out.c_str();
 	}
 
-	void SceneSerializer::SerializeRuntime(const String& filepath)
+	void SceneSerializer::SerializeRuntime(const FilePath& path)
 	{
 		ATN_CORE_ASSERT(false, "Not Implemented");
 	}
 
-	bool SceneSerializer::DeserializeFromFile(const String& filepath)
+	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
-		std::ifstream stream(filepath);
+		std::ifstream stream(path);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
 
@@ -193,7 +193,7 @@ namespace Athena
 		}
 		catch (const YAML::ParserException& ex)
 		{
-			ATN_CORE_ERROR("Failed to deserialize scene '{0}'\n {1}", filepath, ex.what());
+			ATN_CORE_ERROR("Failed to deserialize scene '{0}'\n {1}", path, ex.what());
 			return false;
 		}
 
@@ -314,7 +314,7 @@ namespace Athena
 						texCoords[3] = texCoordsNode["3"].as<Vector2>();
 
 						const auto& textureNode = spriteComponentNode["Texture"];
-						const auto& path = Filepath(textureNode.as<String>());
+						const auto& path = FilePath(textureNode.as<String>());
 						if (!path.empty())
 						{
 							Ref<Texture2D> texture = Texture2D::Create(path);
@@ -390,7 +390,7 @@ namespace Athena
 					{
 						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
 
-						Filepath path = staticMeshComponentNode["Filepath"].as<String>();
+						FilePath path = staticMeshComponentNode["Filepath"].as<String>();
 
 						meshComp.Mesh = StaticMesh::Create(path);
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
@@ -402,7 +402,7 @@ namespace Athena
 		return true;
 	}
 
-	bool SceneSerializer::DeserializeRuntime(const String& filepath)
+	bool SceneSerializer::DeserializeRuntime(const FilePath& path)
 	{
 		ATN_CORE_ASSERT(false, "Not Implemented");
 		return false;
@@ -484,7 +484,7 @@ namespace Athena
 			[](YAML::Emitter& output, const SpriteComponent& sprite)
 			{
 				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
-				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilepath().string();
+				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilePath().string();
 
 				const auto& texCoords = sprite.Texture.GetTexCoords();
 				output << YAML::Key << "TexCoords" << YAML::Value;
@@ -540,7 +540,7 @@ namespace Athena
 			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
-				output << YAML::Key << "Filepath" << YAML::Value << mesh->GetFilepath().string();
+				output << YAML::Key << "Filepath" << YAML::Value << mesh->GetFilePath().string();
 				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
 			});
 

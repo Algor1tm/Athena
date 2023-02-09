@@ -63,7 +63,7 @@ namespace Athena
 	class ScriptEngine
 	{
 	public:
-		static void Init(const Filepath& scriptsFolder);
+		static void Init(const FilePath& scriptsFolder);
 		static void Shutdown();
 
 		static void ReloadScripts();

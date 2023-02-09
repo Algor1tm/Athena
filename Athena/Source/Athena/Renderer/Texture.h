@@ -71,13 +71,13 @@ namespace Athena
 	{
 		Texture2DDescription() = default;
 
-		Texture2DDescription(const Filepath& path)
+		Texture2DDescription(const FilePath& path)
 			: TexturePath(path) {}
 
 		Texture2DDescription(const char* path)
 			: TexturePath(path) {}
 
-		Filepath TexturePath;
+		FilePath TexturePath;
 
 		const void* Data = nullptr;
 		uint32 Width = 0;
@@ -101,7 +101,7 @@ namespace Athena
 		virtual uint32 GetHeight() const = 0;
 
 		virtual void SetData(const void* data, uint32 size) = 0;
-		virtual const Filepath& GetFilepath() const = 0;
+		virtual const FilePath& GetFilePath() const = 0;
 
 		bool operator==(const Texture2D& other) const { return GetRendererID() == other.GetRendererID(); }
 
@@ -132,7 +132,7 @@ namespace Athena
 
 	struct CubemapDescription
 	{
-		std::array<std::pair<TextureTarget, Filepath>, 6> Faces;
+		std::array<std::pair<TextureTarget, FilePath>, 6> Faces;
 
 		uint32 Width = 0;
 		uint32 Height = 0;

@@ -69,7 +69,7 @@ namespace Athena
 	struct ScriptEngineData
 	{
 		py::scoped_interpreter PythonInterpreter;
-		Filepath ScriptsFolder;
+		FilePath ScriptsFolder;
 
 		std::unordered_map<String, py::module_> PythonModules;
 
@@ -201,7 +201,7 @@ namespace Athena
 
 
 
-	void ScriptEngine::Init(const Filepath& scriptsFolder)
+	void ScriptEngine::Init(const FilePath& scriptsFolder)
 	{
 		s_Data = new ScriptEngineData();
 		s_Data->ScriptsFolder = scriptsFolder;

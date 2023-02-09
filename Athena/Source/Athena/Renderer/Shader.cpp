@@ -17,9 +17,9 @@ namespace Athena
 	}
 
 
-	Ref<Shader> Shader::Create(const BufferLayout& layout, const Filepath& filepath)
+	Ref<Shader> Shader::Create(const BufferLayout& layout, const FilePath& path)
 	{
-		Filepath stem = filepath;
+		FilePath stem = path;
 
 		switch (Renderer::GetAPI())
 		{
@@ -76,9 +76,9 @@ namespace Athena
 		return shaderSources;
 	}
 
-	Ref<IncludeShader> IncludeShader::Create(const Filepath& filepath)
+	Ref<IncludeShader> IncludeShader::Create(const FilePath& path)
 	{
-		Filepath stem = filepath;
+		FilePath stem = path;
 
 		switch (Renderer::GetAPI())
 		{
@@ -105,16 +105,16 @@ namespace Athena
 		Add(name, shader);
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const String& filepath)
+	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const FilePath& path)
 	{
-		auto shader = Shader::Create(layout, filepath);
+		auto shader = Shader::Create(layout, path);
 		Add(shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const String& name, const String& filepath)
+	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const String& name, const FilePath& path)
 	{
-		auto shader = Shader::Create(layout, filepath);
+		auto shader = Shader::Create(layout, path);
 		Add(shader);
 		return shader;
 	}

@@ -12,7 +12,7 @@
 
 namespace Athena
 {
-	Filepath FileDialogs::OpenFile(std::string_view filter)
+	FilePath FileDialogs::OpenFile(std::string_view filter)
 	{
 #ifdef ATN_PLATFORM_WINDOWS
 		OPENFILENAMEA ofn;
@@ -36,7 +36,7 @@ namespace Athena
 #endif
 	}
 
-	Filepath FileDialogs::SaveFile(std::string_view filter)
+	FilePath FileDialogs::SaveFile(std::string_view filter)
 	{
 #ifdef ATN_PLATFORM_WINDOWS 
 		OPENFILENAMEA ofn;

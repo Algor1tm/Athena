@@ -162,7 +162,7 @@ namespace Athena
 						Ref<Skybox> skybox = m_Context->GetEnvironment()->Skybox;
 						if (skybox)
 						{
-							const Filepath& envPath = skybox->GetFilepath();
+							const FilePath& envPath = skybox->GetFilePath();
 							label = !envPath.empty() ? "Load Environment Map" : envPath.stem().string();
 						}
 						else
@@ -172,7 +172,7 @@ namespace Athena
 
 						if (ImGui::Button(label.data()))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
+							FilePath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
 							if (!filepath.empty())
 							{
 								Ref<Skybox> skybox = Skybox::Create(filepath);
@@ -284,10 +284,10 @@ namespace Athena
 
 						if (ImGui::ImageButton("##AlbedoMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-							if (!filepath.empty())
+							FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!path.empty())
 							{
-								matDesc.AlbedoMap = Texture2D::Create(filepath);
+								matDesc.AlbedoMap = Texture2D::Create(path);
 								matDesc.UseAlbedoMap = true;
 							}
 						}
@@ -311,10 +311,10 @@ namespace Athena
 
 						if (ImGui::ImageButton("##Normals", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-							if (!filepath.empty())
+							FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!path.empty())
 							{
-								matDesc.NormalMap = Texture2D::Create(filepath);
+								matDesc.NormalMap = Texture2D::Create(path);
 								matDesc.UseNormalMap = true;
 							}
 						}
@@ -336,7 +336,7 @@ namespace Athena
 
 						if (ImGui::ImageButton("##RoughnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							FilePath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 							if (!filepath.empty())
 							{
 								matDesc.RoughnessMap = Texture2D::Create(filepath);
@@ -365,10 +365,10 @@ namespace Athena
 
 						if (ImGui::ImageButton("##MetalnessMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-							if (!filepath.empty())
+							FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!path.empty())
 							{
-								matDesc.MetalnessMap = Texture2D::Create(filepath);
+								matDesc.MetalnessMap = Texture2D::Create(path);
 								matDesc.UseMetalnessMap = true;
 							}
 						}
@@ -392,10 +392,10 @@ namespace Athena
 
 						if (ImGui::ImageButton("##AmbientOcclusionMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
 						{
-							Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-							if (!filepath.empty())
+							FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+							if (!path.empty())
 							{
-								matDesc.AmbientOcclusionMap = Texture2D::Create(filepath);
+								matDesc.AmbientOcclusionMap = Texture2D::Create(path);
 								matDesc.UseAmbientOcclusionMap = true;
 							}
 						}
@@ -689,7 +689,7 @@ namespace Athena
 									std::string_view extent = path.substr(path.size() - 4, path.size());
 									if (extent == ".png\0")
 									{
-										sprite.Texture = Texture2D::Create(Filepath(path));
+										sprite.Texture = Texture2D::Create(FilePath(path));
 										sprite.Color = LinearColor::White;
 									}
 									else
@@ -704,16 +704,16 @@ namespace Athena
 							ImVec2 cursor = ImGui::GetCursorPos();
 							if (ImGui::Button("Browse"))
 							{
-								Filepath filepath = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-								if (!filepath.empty())
+								FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+								if (!path.empty())
 								{
-									sprite.Texture = Texture2D::Create(filepath);
+									sprite.Texture = Texture2D::Create(path);
 									sprite.Color = LinearColor::White;
-									ATN_CORE_INFO("Successfuly load Texture from '{0}'", filepath.string());
+									ATN_CORE_INFO("Successfuly load Texture from '{0}'", path.string());
 								}
 								else
 								{
-									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", filepath.string());
+									ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", path.string());
 								}
 							}
 
@@ -834,7 +834,7 @@ namespace Athena
 
 				if (UI::BeginDrawControllers())
 				{
-					String meshFilename = meshComponent.Mesh->GetFilepath().filename().string();
+					String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
 					if (UI::DrawController("Mesh", height, [&meshComponent, &meshFilename]()
 						{ return ImGui::BeginCombo("##Mesh", meshFilename.data()); }))
 					{

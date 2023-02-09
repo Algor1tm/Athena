@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include "Athena/Core/FileSystem.h"
+
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Vertex.h"
 
@@ -36,7 +38,7 @@ namespace Athena
 		return { input.x, input.y, input.z };
 	}
 
-	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, const Filepath& path)
+	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, const FilePath& path)
 	{
 		Ref<Texture2D> result = nullptr;
 
@@ -54,9 +56,9 @@ namespace Athena
 			}
 			else
 			{
-				Filepath path = path;
+				FilePath path = path;
 				path.replace_filename(texFilepath.C_Str());
-				if (std::filesystem::exists(path))
+				if (FileSystem::Exists(path))
 				{
 					result = Texture2D::Create(path);
 				}
@@ -70,7 +72,7 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const Filepath& path)
+	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
 	{
 		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
@@ -269,7 +271,7 @@ namespace Athena
 		return VertexBuffer::Create(vBufferDesc);
 	}
 
-	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const Filepath& path, const Matrix4& localTransform, Ref<Skeleton> skeleton, AABB& aabb)
+	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<Skeleton> skeleton, AABB& aabb)
 	{
 		aiMesh* aimesh = aiscene->mMeshes[aiMeshIndex];
 		SubMesh subMesh;
@@ -367,7 +369,7 @@ namespace Athena
 		m_SubMeshes.reserve(ainode->mNumMeshes);
 		for (uint32 i = 0; i < ainode->mNumMeshes; ++i)
 		{
-			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_Filepath, localTransform, m_Skeleton, m_AABB);
+			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_FilePath, localTransform, m_Skeleton, m_AABB);
 			m_SubMeshes.push_back(subMesh);
 		}
 
@@ -377,7 +379,7 @@ namespace Athena
 		}
 	}
 
-	Ref<StaticMesh> StaticMesh::Create(const Filepath& path)
+	Ref<StaticMesh> StaticMesh::Create(const FilePath& path)
 	{
 		const unsigned int flags =
 			aiProcess_OptimizeGraph |
@@ -404,7 +406,7 @@ namespace Athena
 		}
 
 		Ref<StaticMesh> result = CreateRef<StaticMesh>();
-		result->m_Filepath = path;
+		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
 
 		result->m_Skeleton = LoadSkeleton(aiscene);

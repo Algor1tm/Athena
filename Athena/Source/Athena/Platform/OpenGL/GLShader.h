@@ -7,7 +7,7 @@ namespace Athena
 	class ATHENA_API GLShader: public Shader
 	{
 	public:
-		GLShader(const Filepath& filepath);
+		GLShader(const FilePath& path);
 		GLShader(const String& name, const String& vertexSrc, const String& fragmentSrc);
 		virtual ~GLShader();
 
@@ -28,13 +28,13 @@ namespace Athena
 	class ATHENA_API GLIncludeShader : public IncludeShader
 	{
 	public:
-		GLIncludeShader(const Filepath& filepath);
+		GLIncludeShader(const FilePath& path);
 		virtual ~GLIncludeShader();
 
 		virtual void Reload() override;
 
 	private:
-		Filepath m_Filepath;
+		FilePath m_FilePath;
 		String m_IncludeName;
 	};
 }

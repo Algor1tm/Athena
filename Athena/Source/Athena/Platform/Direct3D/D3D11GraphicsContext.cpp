@@ -144,7 +144,7 @@ namespace Athena
 		ATN_CORE_INFO("");
 		ATN_CORE_INFO("Create Direct3D Graphics Context:");
 		ATN_CORE_INFO("Direct3D Version: {0}", D3DFeatureLevelToText(featureLevel));
-		ATN_CORE_INFO("Graphics Card: {0}", Filepath(selectedAdapter.Description.Description).string());
+		ATN_CORE_INFO("Graphics Card: {0}", FilePath(selectedAdapter.Description.Description).string());
 		ATN_CORE_INFO("Vendor: {0}", D3DVendorIDToName(selectedAdapter.Description.VendorId));
 		ATN_CORE_INFO("");
 

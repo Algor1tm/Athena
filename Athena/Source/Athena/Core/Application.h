@@ -25,8 +25,8 @@ namespace Athena
 #endif
 		bool UseImGui = true;
 		bool UseConsole = true;
-		Filepath WorkingDirectory = Filepath();
-		Filepath ScriptsFolder = Filepath();
+		FilePath WorkingDirectory = FilePath();
+		FilePath ScriptsFolder = FilePath();
 	};
 
 

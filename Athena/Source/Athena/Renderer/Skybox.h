@@ -10,15 +10,15 @@ namespace Athena
 	class ATHENA_API Skybox
 	{
 	public:
-		static Ref<Skybox> Create(const Filepath& hdrMap);
+		static Ref<Skybox> Create(const FilePath& hdrMap);
 
 		void Bind();
-		const Filepath& GetFilepath() { return m_Path; };
+		const FilePath& GetFilePath() { return m_FilePath; };
 
 	private:
 		Ref<Cubemap> m_SkyboxMap;
 		Ref<Cubemap> m_IrradianceMap;
 
-		Filepath m_Path;
+		FilePath m_FilePath;
 	};
 }

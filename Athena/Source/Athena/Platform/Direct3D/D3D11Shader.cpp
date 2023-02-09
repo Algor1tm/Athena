@@ -45,14 +45,14 @@ namespace Athena
 	}
 
 
-	D3D11Shader::D3D11Shader(const BufferLayout& layout, const Filepath& filepath)
+	D3D11Shader::D3D11Shader(const BufferLayout& layout, const FilePath& path)
 	{
-		ATN_CORE_ASSERT(std::filesystem::exists(filepath), "Invalid filepath for Shader");
+		ATN_CORE_ASSERT(std::filesystem::exists(path), "Invalid filepath for Shader");
 
-		m_Filepath = filepath;
-		m_Name = m_Filepath.stem().string();
+		m_FilePath = path;
+		m_Name = m_FilePath.stem().string();
 
-		String result = FileSystem::ReadFile(m_Filepath);
+		String result = FileSystem::ReadFile(m_FilePath);
 		auto shaderSources = PreProcess(result);
 		Compile(shaderSources);
 

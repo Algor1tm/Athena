@@ -11,7 +11,7 @@ namespace Athena
 	class ATHENA_API D3D11Shader : public Shader
 	{
 	public:
-		D3D11Shader(const BufferLayout& layout, const Filepath& filepath);
+		D3D11Shader(const BufferLayout& layout, const FilePath& path);
 		D3D11Shader(const BufferLayout& layout, const String& name, const String& vertexSrc, const String& fragmentSrc);
 		virtual ~D3D11Shader();
 

@@ -21,7 +21,7 @@ namespace Athena
 		virtual void Bind(uint32 slot = 0) const override;
 		virtual bool IsLoaded() const override { return m_IsLoaded; };
 
-		virtual const Filepath& GetFilepath() const override { return m_Path; };
+		virtual const FilePath& GetFilePath() const override { return m_FilePath; };
 
 	private:
 		void LoadFromFile(const Texture2DDescription& desc);
@@ -30,7 +30,7 @@ namespace Athena
 		void ApplyTexParameters(const Texture2DDescription& desc);
 
 	private:
-		Filepath m_Path;
+		FilePath m_FilePath;
 		uint32 m_Width = 0, m_Height = 0;
 		bool m_IsLoaded = false;
 		GLenum m_InternalFormat = 0, m_DataFormat = 0;

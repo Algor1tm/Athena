@@ -1,13 +1,14 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Renderer/EditorCamera.h"
-#include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Material.h"
 
-#include "Components.h" 
+#include "Athena/Scene/Components.h" 
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -26,6 +27,9 @@ class b2World;
 
 namespace Athena
 {
+	class ATHENA_API Environment;
+
+
 	class ATHENA_API Scene
 	{
 	public:

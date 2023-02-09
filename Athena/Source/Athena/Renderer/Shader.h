@@ -3,7 +3,7 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
 
-#include "GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 
 namespace Athena

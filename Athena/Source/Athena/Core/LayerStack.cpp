@@ -1,6 +1,7 @@
 #include "LayerStack.h"
 
-#include "Log.h"
+#include "Athena/Core/Layer.h"
+#include "Athena/Core/Log.h"
 
 
 namespace Athena

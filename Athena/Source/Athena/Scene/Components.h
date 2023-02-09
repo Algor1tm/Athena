@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Math/Transforms.h"

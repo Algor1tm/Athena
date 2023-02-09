@@ -1,9 +1,11 @@
 #include "ImGuiLayer.h"
+
 #include "Athena/Core/Application.h"
 
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/OpenGL/GLImGuiLayerImpl.h"
 #include "Athena/Platform/Direct3D/D3D11ImGuiLayerImpl.h"
+
+#include "Athena/Renderer/Renderer.h"
 
 #include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>

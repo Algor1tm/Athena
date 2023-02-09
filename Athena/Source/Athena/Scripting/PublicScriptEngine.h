@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Core.h"
 
-#include "ScriptFields.h"
+#include "Athena/Scripting/ScriptFields.h"
 
 
 namespace Athena

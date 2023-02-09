@@ -1,13 +1,16 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
-#include "Athena/Renderer/Camera.h"
+
 #include "Athena/Input/Events/Event.h"
 #include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
+
+#include "Athena/Renderer/Camera.h"
 
 
 namespace Athena

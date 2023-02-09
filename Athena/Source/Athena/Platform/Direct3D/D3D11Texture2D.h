@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Athena/Renderer/Texture.h"
+#include "Athena/Core/Core.h"
 
-#include "D3D11GraphicsContext.h"
+#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
+
+#include "Athena/Renderer/Texture.h"
 
 
 namespace Athena

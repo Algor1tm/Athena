@@ -1,5 +1,6 @@
 #include "GLFramebuffer.h"
-#include "Shared.h"
+
+#include "Athena/Platform/OpenGL/Shared.h"
 
 #include <glad/glad.h>
 

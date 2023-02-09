@@ -1,17 +1,19 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+
 #include "Athena/Input/Events/Event.h"
 #include "Athena/Input/Events/KeyEvent.h"
 #include "Athena/Input/Keyboard.h"
-
-#include "Panels/Panel.h"
 
 #include <unordered_map>
 
 
 namespace Athena
 {
+	class Panel;
+
+
 	struct PanelDescription
 	{
 		Ref<Panel> PanelRef;

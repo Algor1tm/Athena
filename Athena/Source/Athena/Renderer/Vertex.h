@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+
 #include "Athena/Math/Vector.h"
 
-#include "Animation.h"
-#include "GPUBuffers.h"
+#include "Athena/Renderer/Animation.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 
 namespace Athena

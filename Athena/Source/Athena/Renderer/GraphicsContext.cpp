@@ -1,3 +1,5 @@
+#include "GraphicsContext.h"
+
 #include "Athena/Platform/OpenGL/GLGraphicsContext.h"
 #include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
 

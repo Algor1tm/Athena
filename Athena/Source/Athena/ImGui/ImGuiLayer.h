@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Layer.h"
-#include "Athena/Input/Events/MouseEvent.h"
-#include "Athena/Input/Events/KeyEvent.h"
-#include "Athena/Input/Events/ApplicationEvent.h"
+
+#include "Athena/Input/Events/Event.h"
 
 
 namespace Athena

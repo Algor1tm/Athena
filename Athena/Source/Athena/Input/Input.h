@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+
+#include "Athena/Input/Keyboard.h"
+#include "Athena/Input/Mouse.h"
+
 #include "Athena/Math/Vector.h"
-#include "Keyboard.h"
-#include "Mouse.h"
 
 
 namespace Athena

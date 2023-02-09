@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
+
 #include "Athena/Input/Events/Event.h"
 #include "Athena/Input/Events/ApplicationEvent.h"
 #include "Athena/Input/Events/MouseEvent.h"

@@ -1,11 +1,13 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Athena/Core/PlatformUtils.h"
+
 #include "Athena/Input/Input.h"
 
-#include "Athena/Scene/Components.h"
-
+#include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
+
+#include "Athena/Scene/Components.h"
 
 #include "Athena/Scripting/PublicScriptEngine.h"
 

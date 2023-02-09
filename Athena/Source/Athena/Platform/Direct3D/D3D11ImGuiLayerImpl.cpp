@@ -1,6 +1,6 @@
 #include "D3D11ImGuiLayerImpl.h"
 
-#include "D3D11GraphicsContext.h"
+#include "Athena/Platform/Direct3D/D3D11GraphicsContext.h"
 
 #ifdef _MSC_VER
 #pragma warning(push, 0)

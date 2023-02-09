@@ -1,12 +1,15 @@
 #pragma once
 
-#include "Core.h"
+#include "Athena/Core/Core.h"
+
 #include "Athena/Input/Events/Event.h"
-#include "Athena/Renderer/GraphicsContext.h"
 
 
 namespace Athena
 {
+	class ATHENA_API GraphicsContext;
+
+
 	enum class WindowMode
 	{
 		Default = 0,
@@ -29,7 +32,6 @@ namespace Athena
 		EventCallbackFn EventCallback = [](Event&) {};
 	};
 
-	// Interface representing a desktop system based Window
 	class ATHENA_API Window
 	{
 	public:

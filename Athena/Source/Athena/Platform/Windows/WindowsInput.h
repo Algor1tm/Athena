@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Athena/Input/Input.h"
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Application.h"
+
+#include "Athena/Input/Input.h"
 
 #include <Windows.h>
 

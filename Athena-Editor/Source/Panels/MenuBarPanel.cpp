@@ -2,6 +2,9 @@
 
 #include "Athena/Core/Application.h"
 
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Scene/Scene.h"
+
 #include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>

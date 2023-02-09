@@ -1,5 +1,6 @@
 #include "GLTexture2D.h"
-#include "Shared.h"
+
+#include "Athena/Platform/OpenGL/Shared.h"
 
 #include <glad/glad.h>
 #include <stb_image/stb_image.h>

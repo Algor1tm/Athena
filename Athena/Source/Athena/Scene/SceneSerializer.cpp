@@ -1,6 +1,7 @@
 #include "SceneSerializer.h"
-#include "Components.h"
-#include "Entity.h"
+
+#include "Athena/Scene/Components.h"
+#include "Athena/Scene/Entity.h"
 
 #if defined(_MSC_VER)
 	#pragma warning (push, 0)

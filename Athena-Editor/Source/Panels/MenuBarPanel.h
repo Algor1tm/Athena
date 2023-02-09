@@ -1,16 +1,18 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/Texture.h"
-#include "Athena/Scene/Scene.h"
 
-#include "Panel.h"
+#include "Panels/Panel.h"
 
 #include <functional>
 
 
 namespace Athena
 {
+	class Texture2D;
+	class Scene;
+
+
 	struct MenuItem
 	{
 		std::string_view Label;

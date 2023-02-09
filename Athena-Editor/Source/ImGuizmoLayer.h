@@ -4,7 +4,6 @@
 
 #include "Athena/Input/Events/KeyEvent.h"
 
-#include "Athena/Renderer/EditorCamera.h"
 #include "Athena/Scene/Entity.h"
 
 #include <ImGui/imgui.h>
@@ -13,6 +12,10 @@
 
 namespace Athena
 {
+	class ViewportPanel;
+	class EditorCamera;
+
+
 	class ImGuizmoLayer
 	{
 	public:

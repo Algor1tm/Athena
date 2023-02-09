@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Core/Application.h"
 

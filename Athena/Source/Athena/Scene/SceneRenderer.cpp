@@ -1,9 +1,8 @@
 #include "SceneRenderer.h"
 
-#include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/Material.h"
 
 
 namespace Athena

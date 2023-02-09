@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Scene.h"
-#include "Components.h"
+#include "Athena/Core/Core.h"
+
+#include "Athena/Scene/Scene.h"
+#include "Athena/Scene/Components.h"
 
 #include "Athena/Scripting/PublicScriptEngine.h"
 

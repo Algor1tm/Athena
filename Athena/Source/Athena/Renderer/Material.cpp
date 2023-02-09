@@ -1,6 +1,7 @@
 #include "Material.h"
 
-#include "Renderer.h"
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena

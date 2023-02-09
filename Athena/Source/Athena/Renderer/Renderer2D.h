@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Color.h"
+#include "Athena/Core/Core.h"
 
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Camera.h"
-#include "Athena/Renderer/OrthographicCamera.h"
-#include "Athena/Renderer/EditorCamera.h"
 #include "Athena/Renderer/Texture.h"
 
 

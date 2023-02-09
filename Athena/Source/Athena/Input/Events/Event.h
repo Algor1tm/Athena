@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 
 #include <functional>
-#include <string>
 
 
 namespace Athena

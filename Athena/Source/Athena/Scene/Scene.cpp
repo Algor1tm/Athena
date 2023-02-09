@@ -1,12 +1,15 @@
 #include "Scene.h"
 
-#include "Entity.h"
-#include "Components.h"
-#include "NativeScript.h"
-
+#include "Athena/Renderer/Animation.h"
+#include "Athena/Renderer/Environment.h"
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/Renderer.h"
+
+#include "Athena/Scene/Entity.h"
+#include "Athena/Scene/Components.h"
+#include "Athena/Scene/NativeScript.h"
 #include "Athena/Scene/SceneRenderer.h"
+
 #include "Athena/Scripting/ScriptEngine.h"
 
 #ifdef _MSC_VER

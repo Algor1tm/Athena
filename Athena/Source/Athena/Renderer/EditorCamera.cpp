@@ -1,7 +1,8 @@
 #include "EditorCamera.h"
 
-#include "Athena/Math/Projections.h"
 #include "Athena/Input/Input.h"
+
+#include "Athena/Math/Projections.h"
 
 
 namespace Athena

@@ -2,9 +2,8 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Skybox.h"
-#include "Texture.h"
-#include "Light.h"
+#include "Athena/Renderer/Skybox.h"
+#include "Athena/Renderer/Light.h"
 
 
 namespace Athena

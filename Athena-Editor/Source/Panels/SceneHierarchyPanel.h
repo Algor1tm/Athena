@@ -2,17 +2,19 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
+
 #include "Athena/Scene/Entity.h"
 
-#include "Athena/Renderer/Texture.h"
-
-#include "Panel.h"
+#include "Panels/Panel.h"
 
 #include <string_view>
 
 
 namespace Athena
 {
+	class Scene;
+
+
 	class SceneHierarchyPanel : public Panel
 	{
 	public:

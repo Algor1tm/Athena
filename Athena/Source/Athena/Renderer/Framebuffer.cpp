@@ -1,8 +1,9 @@
 #include "Framebuffer.h"
 
-#include "Renderer.h"
 #include "Athena/Platform/OpenGL/GLFramebuffer.h"
 #include "Athena/Platform/Direct3D/D3D11Framebuffer.h"
+
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena

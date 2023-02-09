@@ -1,8 +1,9 @@
 #include "GPUBuffers.h"
 
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/OpenGL/GLBuffers.h"
 #include "Athena/Platform/Direct3D/D3D11Buffers.h"
+
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena

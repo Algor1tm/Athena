@@ -1,5 +1,7 @@
 #include "ContentBrowserPanel.h"
 
+#include "Athena/Renderer/Texture.h"
+
 #include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>

@@ -6,17 +6,10 @@
 #include "Athena/Input/Events/MouseEvent.h"
 
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Editorcamera.h"
 
 #include "Athena/Scene/Entity.h"
 
-#include "Panels/SceneHierarchyPanel.h"
-#include "Panels/ContentBrowserPanel.h"
-#include "Panels/MenuBarPanel.h"
-#include "Panels/ProfilingPanel.h"
-#include "Panels/ViewportPanel.h"
-#include "Panels/EditorSettingsPanel.h"
 #include "PanelManager.h"
 
 #include "ImGuizmoLayer.h"
@@ -24,6 +17,15 @@
 
 namespace Athena
 {
+	class Scene;
+	class Texture2D;
+
+	class ViewportPanel;
+	class MenuBarPanel;
+	class SceneHierarchyPanel;
+	class EditorSettingsPanel;
+
+
 	class EditorLayer : public Layer
 	{
 	public:

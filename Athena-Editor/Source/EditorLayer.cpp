@@ -1,8 +1,11 @@
 #include "EditorLayer.h"
 
-#include "Athena/Input/Input.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/PlatformUtils.h"
+
+#include "Athena/ImGui/ImGuiLayer.h"
+
+#include "Athena/Input/Input.h"
 
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Renderer2D.h"
@@ -10,6 +13,13 @@
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
+
+#include "Panels/ContentBrowserPanel.h"
+#include "Panels/EditorSettingsPanel.h"
+#include "Panels/MenuBarPanel.h"
+#include "Panels/ProfilingPanel.h"
+#include "Panels/SceneHierarchyPanel.h"
+#include "Panels/ViewportPanel.h"
 
 #include <ImGui/imgui.h>
 

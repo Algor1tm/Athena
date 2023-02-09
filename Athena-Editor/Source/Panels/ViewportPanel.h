@@ -2,17 +2,18 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
-#include "Athena/Renderer/Framebuffer.h"
 
-#include "Panel.h"
-
-#include "ImGuizmoLayer.h"
+#include "Panels/Panel.h"
 
 #include <functional>
 
 
 namespace Athena
 {
+	class Framebuffer;
+	class ImGuizmoLayer;
+
+
 	struct ViewportDescription
 	{
 		bool IsFocused = false;
@@ -41,7 +42,7 @@ namespace Athena
 		template <typename Func>
 		void SetDragDropCallback(const Func& callback) { m_DragDropCallback = callback; }
 
-		void SetImGuizmoLayer(ImGuizmoLayer* layer) { m_pImGuizmoLayer = layer; m_pImGuizmoLayer->m_pViewportPanel = this; }
+		void SetImGuizmoLayer(ImGuizmoLayer* layer);
 
 	private:
 		ImGuizmoLayer* m_pImGuizmoLayer;

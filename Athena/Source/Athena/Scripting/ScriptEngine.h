@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Scene/Entity.h"
 
-#include "ScriptFields.h"
+#include "Athena/Scripting/ScriptFields.h"
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS

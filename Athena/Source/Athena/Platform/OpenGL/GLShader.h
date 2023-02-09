@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
+
 #include "Athena/Renderer/Shader.h"
+
 
 namespace Athena
 {

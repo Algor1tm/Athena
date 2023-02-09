@@ -2,12 +2,11 @@
 
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Renderer/Renderer.h"
-
 #include "Athena/Platform/OpenGL/GLTexture2D.h"
 #include "Athena/Platform/Direct3D/D3D11Texture2D.h"
-
 #include "Athena/Platform/OpenGL/GLCubemap.h"
+
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena

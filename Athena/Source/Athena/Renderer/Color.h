@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
 
 #include <string>

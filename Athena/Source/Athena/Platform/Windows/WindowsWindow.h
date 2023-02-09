@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
 #include "Athena/Core/Window.h"
+
 #include "Athena/Input/Events/ApplicationEvent.h"
 #include "Athena/Input/Events/KeyEvent.h"
 #include "Athena/Input/Events/MouseEvent.h"
@@ -12,6 +14,7 @@
 #include <Windowsx.h>
 
 #include <ImGui/backends/imgui_impl_win32.h>
+
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

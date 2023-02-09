@@ -1,8 +1,11 @@
 #include "Renderer.h"
 
 #include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Environment.h"
 #include "Athena/Renderer/Vertex.h"
 
 #include "Athena/Math/Projections.h"

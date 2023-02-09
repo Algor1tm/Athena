@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Event.h"
+#include "Athena/Input/Events/Event.h"
 #include "Athena/Input/Mouse.h"
 
 #include <sstream>

@@ -1,15 +1,22 @@
 #pragma once
 
-#include "RenderCommand.h"
-#include "OrthographicCamera.h"
-#include "Shader.h"
-#include "Mesh.h"
-#include "Material.h"
-#include "Environment.h"
+#include "Athena/Core/Core.h"
+
+#include "Athena/Renderer/RenderCommand.h"
+#include "Athena/Renderer/Environment.h"
+
+#include "Athena/Math/Matrix.h"
 
 
 namespace Athena
 {
+	class ATHENA_API Animation;
+	class ATHENA_API VertexBuffer;
+	class ATHENA_API Material;
+	class ATHENA_API Texture2D;
+	class ATHENA_API Cubemap;
+
+
 	enum TextureBinder
 	{
 		ALBEDO_TEXTURE = 0,

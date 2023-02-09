@@ -1,8 +1,10 @@
 #pragma once
 
-#include "RendererAPI.h"
-#include "GPUBuffers.h"
-#include "Framebuffer.h"
+#include "Athena/Core/Core.h"
+
+#include "Athena/Renderer/RendererAPI.h"
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/Framebuffer.h"
 
 
 namespace Athena

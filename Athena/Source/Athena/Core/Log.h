@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Athena/Core/Core.h"
 
 
 #if defined(_MSC_VER)

@@ -2,6 +2,10 @@
 
 #include "Athena/Core/Application.h"
 
+#include "Athena/Renderer/Framebuffer.h"
+
+#include "ImGuizmoLayer.h"
+
 #include <ImGui/imgui.h>
 
 
@@ -51,4 +55,10 @@ namespace Athena
         ImGui::End();
         ImGui::PopStyleVar();
 	}
+
+    void ViewportPanel::SetImGuizmoLayer(class ImGuizmoLayer* layer)
+    {
+        m_pImGuizmoLayer = layer; 
+        m_pImGuizmoLayer->m_pViewportPanel = this; 
+    }
 }

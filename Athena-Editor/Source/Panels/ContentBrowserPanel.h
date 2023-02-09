@@ -1,17 +1,17 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/Texture.h"
+#include "Athena/Math/Vector.h"
 
-#include "Panel.h"
+#include "Panels/Panel.h"
 
 #include <ImGui/imgui.h>
-
-#include <filesystem>
 
 
 namespace Athena
 {
+	class Texture2D;
+
 	class ContentBrowserPanel : public Panel
 	{
 	public:

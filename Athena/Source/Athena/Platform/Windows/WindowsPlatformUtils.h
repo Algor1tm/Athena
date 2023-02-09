@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Core/Application.h"
 
@@ -9,7 +10,7 @@
 
 namespace Athena
 {
-	String FileDialogs::OpenFile(std::string_view filter)
+	FilePath FileDialogs::OpenFile(std::string_view filter)
 	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
@@ -28,7 +29,7 @@ namespace Athena
 		return {};
 	}
 
-	String FileDialogs::SaveFile(std::string_view filter)
+	FilePath FileDialogs::SaveFile(std::string_view filter)
 	{
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };

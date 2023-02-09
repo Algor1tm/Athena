@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Core.h"
-#include "Layer.h"
+#include "Athena/Core/Core.h"
 
 
 namespace Athena
 {
+	class ATHENA_API Layer;
+
+
 	class ATHENA_API LayerStack
 	{
 	public:

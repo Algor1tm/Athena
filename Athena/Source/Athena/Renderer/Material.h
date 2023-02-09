@@ -2,14 +2,15 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/GPUBuffers.h"
 
 
 namespace Athena
 {
+	class ATHENA_API Texture2D;
+	class ATHENA_API Material;
+
+
 	struct MaterialDescription
 	{
 		Vector3 Albedo = Vector3(1);
@@ -30,7 +31,6 @@ namespace Athena
 		bool UseAmbientOcclusionMap = false;
 	};
 
-	class ATHENA_API Material;
 
 	class ATHENA_API MaterialManager
 	{

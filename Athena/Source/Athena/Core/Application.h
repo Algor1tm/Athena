@@ -1,19 +1,20 @@
 #pragma once
 
-#include "Core.h"
-#include "Window.h"
-#include "LayerStack.h"
+#include "Athena/Core/Core.h"
+#include "Athena/Core/LayerStack.h"
+#include "Athena/Core/Window.h"
+
 #include "Athena/Input/Events/ApplicationEvent.h"
-#include "Athena/Core/Time.h"
 
 #include "Athena/Renderer/OrthographicCamera.h"
 #include "Athena/Renderer/RendererAPI.h"
 
-#include "Athena/ImGui/ImGuiLayer.h"
-
 
 namespace Athena
 {
+	class ATHENA_API ImGuiLayer;
+
+
 	struct ApplicationDescription
 	{
 		WindowDescription WindowDesc;

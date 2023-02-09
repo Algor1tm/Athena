@@ -3,6 +3,8 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Input/Input.h"
 
+#include "Panels/Panel.h"
+
 #include <ImGui/imgui.h>
 
 

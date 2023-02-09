@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/Core.h"
 #include "Athena/Renderer/Camera.h"
 
 #include "Athena/Math/Trigonometric.h"

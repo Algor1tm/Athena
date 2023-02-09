@@ -1,5 +1,7 @@
 #include "ImGuizmoLayer.h"
 
+#include "Athena/Renderer/EditorCamera.h"
+
 #include "Athena/Input/Input.h"
 
 #include "Panels/ViewportPanel.h"

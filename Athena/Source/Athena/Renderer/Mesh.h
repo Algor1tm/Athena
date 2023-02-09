@@ -2,9 +2,8 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Animation.h"
-#include "GPUBuffers.h"
-#include "AABB.h"
+#include "Athena/Renderer/AABB.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 #include <vector>
 
@@ -15,6 +14,10 @@ class aiNode;
 
 namespace Athena
 {
+	class ATHENA_API Skeleton;
+	class ATHENA_API Animator;
+
+
 	struct SubMesh
 	{
 		String Name;

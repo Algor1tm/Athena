@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
-#include "Panel.h"
+#include "Panels/Panel.h"
 
 
 namespace Athena

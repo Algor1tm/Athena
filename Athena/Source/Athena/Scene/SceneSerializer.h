@@ -2,8 +2,9 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Scene.h"
-#include "Entity.h"
+#include "Athena/Scene/Scene.h"
+#include "Athena/Scene/Entity.h"
+
 
 namespace YAML
 {

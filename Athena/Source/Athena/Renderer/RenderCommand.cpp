@@ -1,9 +1,9 @@
 #include "RenderCommand.h"
-#include "Renderer.h"
 
 #include "Athena/Platform/Direct3D/D3D11RendererAPI.h"
 #include "Athena/Platform/OpenGL/GLRendererAPI.h"
 
+#include "Renderer.h"
 
 namespace Athena
 {

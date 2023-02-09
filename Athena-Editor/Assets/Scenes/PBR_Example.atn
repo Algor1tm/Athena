@@ -1,75 +1,43 @@
 Scene: PBR_Example
 Entities:
   - IDComponent:
-      ID: 355488278567739596
+      ID: 14514284786278117030
     TagComponent:
-      Tag: Beretta Pistol
+      Tag: Spiderman
     TransformComponent:
-      Translation: [-1.22039247, 667.358887, -292.394043]
-      Rotation: [-1.57079685, 1.1920929e-07, -1.57079685]
-      Scale: [74.8797302, 74.8797302, 74.8797302]
+      Translation: [-212.375305, 48.6798553, 638.903564]
+      Rotation: [-3.1415925, 0.475432873, -3.1415925]
+      Scale: [289.284058, 289.283478, 289.284058]
     StaticMeshComponent:
-      Filepath: Assets\Meshes\Beretta Pistol\Beretta Pistol.fbx
-      Name: Beretta Pistol
-      aiMeshIndex: 0
-      Hide: false
-  - IDComponent:
-      ID: 17462938647148434322
-    TagComponent:
-      Tag: Floor
-    TransformComponent:
-      Translation: [-409.283691, 155.896439, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.53537, 113.53537]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Floor
-      aiMeshIndex: 3
-      Hide: false
-  - IDComponent:
-      ID: 13109570281517897720
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Translation: [-409.283691, 161.865936, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.532562, 113.532562]
-    StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Cube
-      aiMeshIndex: 2
+      Filepath: Assets\Meshes\Spiderman\Spiderman.fbx
       Hide: false
   - IDComponent:
       ID: 4620546740167642908
     TagComponent:
-      Tag: Cone
+      Tag: silly_dancing
     TransformComponent:
-      Translation: [-409.283691, 167.069397, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.531738, 113.531738]
+      Translation: [451.751648, 73.3511124, -367.715118]
+      Rotation: [-2.74959557e-08, -1.38929653, 3.03894382e-07]
+      Scale: [140.35437, 140.354126, 140.35437]
     StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Cone
-      aiMeshIndex: 1
+      Filepath: Assets\Meshes\StormTrooper\silly_dancing.fbx
       Hide: false
   - IDComponent:
       ID: 14514284786278117030
     TagComponent:
-      Tag: Sphere
+      Tag: BlenderScene
     TransformComponent:
-      Translation: [-409.283691, 155.896439, 224.332428]
-      Rotation: [-1.57079649, -0, 0]
-      Scale: [113.53537, 113.53537, 113.53537]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
     StaticMeshComponent:
-      Filepath: Assets\Scenes\BlenderScene.fbx
-      Name: Sphere
-      aiMeshIndex: 0
+      Filepath: Assets\Meshes\BlenderScene.fbx
       Hide: false
 Environment:
   Skybox:
     FilePath: D:\Development\CppProjects\Athena\Athena-Editor\Assets\EnvironmentMaps\Sun_Snow_4k.hdr
     Skybox LOD: 0
-    Exposure: 1
+    Exposure: 1.38699996
   Light:
     Direction: [-1.92999995, -0.959999979, -1.39999998]
     Color: [1, 1, 1, 1]

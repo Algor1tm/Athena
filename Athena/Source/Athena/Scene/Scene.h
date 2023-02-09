@@ -76,7 +76,7 @@ namespace Athena
 		void OnComponentAdd(Entity entity, T& component);
 
 		template <typename T>
-		void OnComponentRemove(Entity entity);
+		void OnComponentRemove(Entity entity, T& component);
 
 	private:
 		String m_Name;

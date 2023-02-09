@@ -42,7 +42,7 @@ namespace Athena
 		{
 			ATN_CORE_ASSERT(HasComponent<T>(), "Entity does not have this component!");
 
-			m_Scene->OnComponentRemove<T>(*this);
+			m_Scene->OnComponentRemove<T>(*this, GetComponent<T>());
 			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
 
@@ -95,7 +95,7 @@ namespace Athena
 	void Scene::OnComponentAdd(Entity entity, T& component) {}
 
 	template<typename T>
-	void Scene::OnComponentRemove(Entity entity) {}
+	void Scene::OnComponentRemove(Entity entity, T& component) {}
 
 	template <>
 	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
@@ -104,7 +104,7 @@ namespace Athena
 	}
 
 	template <>
-	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity)
+	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity, ScriptComponent& component)
 	{
 		PublicScriptEngine::OnScriptComponentRemove(entity);
 	}

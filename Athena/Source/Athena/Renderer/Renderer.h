@@ -27,9 +27,10 @@ namespace Athena
 	{
 		RENDERER2D_CAMERA_DATA = 0,
 		SCENE_DATA = 1,
-		MATERIAL_DATA = 2,
-		LIGHT_DATA = 3,
-		ANIMATION_DATA = 4
+		ENTITY_DATA = 2,
+		MATERIAL_DATA = 3,
+		LIGHT_DATA = 4,
+		ANIMATION_DATA = 5
 	};
 
 	class ATHENA_API Renderer
@@ -48,7 +49,6 @@ namespace Athena
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animation>& animation, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
-		static void WaitAndRender();
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();

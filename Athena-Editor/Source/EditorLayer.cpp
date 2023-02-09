@@ -35,7 +35,7 @@ namespace Athena
 
         m_EditorCamera.SetDistance(1000.f);
 
-#if 0
+#if 1
         OpenScene("Assets/Scenes/PBR_Example.atn");
         m_EditorCamera.SetDistance(3400.f);
         m_EditorCamera.SetPitch(0.356f);
@@ -229,6 +229,7 @@ namespace Athena
                             Entity entity = m_ActiveScene->CreateEntity();
                             entity.GetComponent<TagComponent>().Tag = mesh->GetName();
                             entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
+                            SelectEntity(entity);
                         }
                     }
                 }

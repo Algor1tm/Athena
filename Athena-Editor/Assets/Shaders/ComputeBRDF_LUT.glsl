@@ -18,7 +18,7 @@ void main()
 out vec4 out_Color;
 in vec2 TexCoords;
 
-const float PI = 3.14159265359;
+#define PI 3.14159265359
 
 float GeometrySchlickGGX(float NdotV, float roughness)
 {

@@ -11,10 +11,14 @@ layout(std140, binding = 1) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
-    mat4 u_Transform;
     vec4 u_CameraPosition;
     float u_SkyboxLOD;
 	float u_Exposure;
+};
+
+layout(std140, binding = 2) uniform EntityData
+{
+    mat4 u_Transform;
     int u_EntityID;
 };
 

@@ -24,6 +24,21 @@ namespace Athena
 		int32 EntityID;
 	};
 
+	struct SceneData
+	{
+		Matrix4 ViewMatrix;
+		Matrix4 ProjectionMatrix;
+		Vector4 CameraPosition;
+		float SkyboxLOD = 0;
+		float Exposure = 1;
+	};
+
+	struct EntityData
+	{
+		Matrix4 TransformMatrix;
+		int32 EntityID = -1;
+	};
+
 	struct RendererData
 	{
 		std::deque<DrawCallInfo> RenderQueue;
@@ -44,20 +59,11 @@ namespace Athena
 
 		Ref<Environment> ActiveEnvironment;
 
-		struct SceneData
-		{
-			Matrix4 ViewMatrix;
-			Matrix4 ProjectionMatrix;
-			Matrix4 TransformMatrix;
-			Vector4 CameraPosition;
-			float SkyboxLOD = 0;
-			float Exposure = 1;
-			int32 EntityID = -1;
-		};
-
 		SceneData SceneDataBuffer;
+		EntityData EntityDataBuffer;
 
 		Ref<ConstantBuffer> SceneConstantBuffer;
+		Ref<ConstantBuffer> EntityConstantBuffer;
 		Ref<ConstantBuffer> MaterialConstantBuffer;
 		Ref<ConstantBuffer> LightConstantBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
@@ -104,7 +110,8 @@ namespace Athena
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
 
-		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(RendererData::SceneData), BufferBinder::SCENE_DATA);
+		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
+		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.LightConstantBuffer = ConstantBuffer::Create(sizeof(DirectionalLight), BufferBinder::LIGHT_DATA);
 		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * MAX_NUM_BONES, BufferBinder::ANIMATION_DATA);
@@ -180,19 +187,87 @@ namespace Athena
 		s_Data.SceneDataBuffer.ProjectionMatrix = projectionMatrix;
 		s_Data.SceneDataBuffer.CameraPosition = Math::AffineInverse(viewMatrix)[3];
 		s_Data.SceneDataBuffer.Exposure = s_Data.ActiveEnvironment->Exposure;
-
-		s_Data.LightConstantBuffer->SetData(&environment->DirLight, sizeof(DirectionalLight));
-
-		if (s_Data.ActiveEnvironment->Skybox)
-		{
-			s_Data.ActiveEnvironment->Skybox->Bind();
-		}
-
-		s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 	}
 	
 	void Renderer::EndScene()
 	{
+		if (!s_Data.RenderQueue.empty())
+		{
+			std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
+				{
+					if (left.Animation != right.Animation)
+						return left.Animation < right.Animation;
+
+					return left.Material->GetName() < right.Material->GetName();
+				});
+
+			///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+			s_Data.LightConstantBuffer->SetData(&s_Data.ActiveEnvironment->DirLight, sizeof(DirectionalLight));
+
+			if (s_Data.ActiveEnvironment->Skybox)
+				s_Data.ActiveEnvironment->Skybox->Bind();
+
+			s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
+
+
+			auto iter = s_Data.RenderQueue.begin();
+			// Render Static Meshes
+			s_Data.PBR_StaticShader->Bind();
+
+			Ref<Material> lastMaterial = nullptr;
+			while (iter != s_Data.RenderQueue.end())
+			{
+				auto& info = *iter;
+
+				if (info.Animation != nullptr)
+					break;
+
+				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
+				s_Data.EntityDataBuffer.EntityID = info.EntityID;
+				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
+
+				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+				{
+					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+					lastMaterial = info.Material;
+				}
+
+				RenderCommand::DrawTriangles(info.VertexBuffer);
+				iter++;
+			}
+
+			// Render Animated Meshes
+			if (iter != s_Data.RenderQueue.end())
+				s_Data.PBR_AnimShader->Bind();
+
+			Ref<Animation> lastAnimation;
+			while (iter != s_Data.RenderQueue.end())
+			{
+				auto& info = *iter;
+
+				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
+				s_Data.EntityDataBuffer.EntityID = info.EntityID;
+				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
+
+				if (lastAnimation == nullptr || lastAnimation != info.Animation)
+				{
+					const auto& boneTransforms = info.Animation->GetBoneTransforms();
+					s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
+				}
+
+				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+				{
+					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+					lastMaterial = info.Material;
+				}
+
+				RenderCommand::DrawTriangles(info.VertexBuffer);
+				iter++;
+			}
+		}
+
+		///////////////////////////// SKYBOX RENDER PASS /////////////////////////////
 		if (s_Data.ActiveEnvironment->Skybox)
 		{
 			s_Data.SceneDataBuffer.SkyboxLOD = s_Data.ActiveEnvironment->SkyboxLOD;
@@ -202,15 +277,15 @@ namespace Athena
 			s_Data.SceneDataBuffer.ViewMatrix[3][1] = 0;
 			s_Data.SceneDataBuffer.ViewMatrix[3][2] = 0;
 
-			s_Data.SceneDataBuffer.TransformMatrix = Matrix4::Identity();
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+
+			s_Data.ActiveEnvironment->Skybox->Bind();
 
 			s_Data.SkyboxShader->Bind();
-
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
-
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 		}
 
+		s_Data.RenderQueue.clear();
 		s_Data.ActiveEnvironment = nullptr;
 	}
 	
@@ -259,73 +334,6 @@ namespace Athena
 		{
 			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr vertexBuffer!");
 		}
-	}
-
-	void Renderer::WaitAndRender()
-	{
-		if (s_Data.RenderQueue.empty())
-			return;
-
-		std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right) 
-			{
-				if (left.Animation != right.Animation)
-					return left.Animation < right.Animation;
-
-				return left.Material->GetName() < right.Material->GetName(); 
-			});
-
-
-		auto iter = s_Data.RenderQueue.begin();
-		Ref<Material> lastMaterial = nullptr;
-
-		// Render Static Meshes
-		s_Data.PBR_StaticShader->Bind();
-		while (iter != s_Data.RenderQueue.end())
-		{
-			auto& info = *iter;
-
-			if (info.Animation != nullptr)
-				break;
-
-			s_Data.SceneDataBuffer.TransformMatrix = info.Transform;
-			s_Data.SceneDataBuffer.EntityID = info.EntityID;
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
-
-			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-			{
-				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-				lastMaterial = info.Material;
-			}
-
-			RenderCommand::DrawTriangles(info.VertexBuffer);
-			iter++;
-		}
-
-		// Render Animated Meshes
-		if(iter != s_Data.RenderQueue.end())
-			s_Data.PBR_AnimShader->Bind();
-		while (iter != s_Data.RenderQueue.end())
-		{
-			auto& info = *iter;
-
-			s_Data.SceneDataBuffer.TransformMatrix = info.Transform;
-			s_Data.SceneDataBuffer.EntityID = info.EntityID;
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
-
-			const auto& boneTransforms = info.Animation->GetBoneTransforms();
-			s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
-
-			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-			{
-				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-				lastMaterial = info.Material;
-			}
-
-			RenderCommand::DrawTriangles(info.VertexBuffer);
-			iter++;
-		}
-
-		s_Data.RenderQueue.clear();
 	}
 
 	void Renderer::Clear(const LinearColor& color)
@@ -396,7 +404,7 @@ namespace Athena
 		for (uint32 i = 0; i < 6; ++i)
 		{
 			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 
 			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
 
@@ -429,7 +437,7 @@ namespace Athena
 		for (uint32 i = 0; i < 6; ++i)
 		{
 			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 
 			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
 
@@ -472,7 +480,7 @@ namespace Athena
 			for (uint32 i = 0; i < 6; ++i)
 			{
 				s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
-				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(RendererData::SceneData));
+				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 
 				TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
 				framebuffer->ReplaceAttachment(0, target, prefilteredMap->GetRendererID(), mip);

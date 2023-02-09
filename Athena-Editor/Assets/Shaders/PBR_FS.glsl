@@ -8,14 +8,18 @@ layout(std140, binding = 1) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
-    mat4 u_Transform;
     vec4 u_CameraPosition;
     float u_SkyboxLOD;
 	float u_Exposure;
+};
+
+layout(std140, binding = 2) uniform EntityData
+{
+    mat4 u_Transform;
     int u_EntityID;
 };
 
-layout(std140, binding = 2) uniform MaterialData
+layout(std140, binding = 3) uniform MaterialData
 {
     vec4 u_Albedo;
     float u_Roughness;
@@ -29,7 +33,7 @@ layout(std140, binding = 2) uniform MaterialData
     int u_UseAmbientOcclusionMap;
 };
 
-layout(std140, binding = 3) uniform DirectionalLight
+layout(std140, binding = 4) uniform DirectionalLight
 {
     vec4 Color;
     vec3 Direction;

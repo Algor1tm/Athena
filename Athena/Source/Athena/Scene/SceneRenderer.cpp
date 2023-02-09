@@ -63,8 +63,6 @@ namespace Athena
 			}
 		}
 
-		Renderer::WaitAndRender();
-
 		Renderer::EndScene();
 	}
 
@@ -116,8 +114,6 @@ namespace Athena
 				}
 			}
 		}
-
-		Renderer::WaitAndRender();
 
 		Renderer::EndScene();
 	}

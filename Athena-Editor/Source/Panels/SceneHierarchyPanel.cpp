@@ -834,7 +834,25 @@ namespace Athena
 
 				if (UI::BeginDrawControllers())
 				{
-					UI::DrawController("Mesh", height, [&meshComponent]() { ImGui::Text(meshComponent.Mesh->GetFilepath().filename().string().data()); return true; });
+					String meshFilename = meshComponent.Mesh->GetFilepath().filename().string();
+					if (UI::DrawController("Mesh", height, [&meshComponent, &meshFilename]()
+						{ return ImGui::BeginCombo("##Mesh", meshFilename.data()); }))
+					{
+						for (const auto& dirEntry : std::filesystem::directory_iterator("Assets/Meshes"))
+						{
+							const auto& filename = dirEntry.path().filename().string();
+							bool isSelected = filename == meshFilename;
+							UI::Selectable(filename, &isSelected, [&meshComponent, &dirEntry]() 
+								{
+									meshComponent.Mesh = StaticMesh::Create(dirEntry.path());
+									meshComponent.Hide = false;
+								});
+						}
+
+						ImGui::EndCombo();
+					}
+
+					UI::DrawController("Hide", height, [&meshComponent]() { return ImGui::Checkbox("##Hide", &meshComponent.Hide); });
 
 					UI::EndDrawControllers();
 

@@ -408,12 +408,7 @@ namespace Athena
 		result->m_Name = path.stem().string();
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
-
-		const aiNode* root = aiscene->mRootNode;
-		for (uint32 i = 0; i < root->mNumChildren; ++i)
-		{
-			result->ProcessNode(aiscene, root->mChildren[i], Matrix4::Identity());
-		}
+		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());
 
 		if (aiscene->mNumAnimations > 0)
 		{

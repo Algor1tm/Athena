@@ -22,7 +22,7 @@ namespace Athena
 	{
 		Ref<VertexBuffer> VertexBuffer;
 		Ref<Material> Material;
-		Ref<Animation> Animation;
+		Ref<Animator> Animator;
 		Matrix4 Transform;
 		int32 EntityID;
 	};
@@ -198,8 +198,8 @@ namespace Athena
 		{
 			std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
 				{
-					if (left.Animation != right.Animation)
-						return left.Animation < right.Animation;
+					if (left.Animator != right.Animator)
+						return left.Animator < right.Animator;
 
 					return left.Material->GetName() < right.Material->GetName();
 				});
@@ -223,7 +223,7 @@ namespace Athena
 			{
 				auto& info = *iter;
 
-				if (info.Animation != nullptr)
+				if (info.Animator != nullptr)
 					break;
 
 				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
@@ -244,7 +244,7 @@ namespace Athena
 			if (iter != s_Data.RenderQueue.end())
 				s_Data.PBR_AnimShader->Bind();
 
-			Ref<Animation> lastAnimation;
+			Ref<Animator> lastAnimator;
 			while (iter != s_Data.RenderQueue.end())
 			{
 				auto& info = *iter;
@@ -253,9 +253,9 @@ namespace Athena
 				s_Data.EntityDataBuffer.EntityID = info.EntityID;
 				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-				if (lastAnimation == nullptr || lastAnimation != info.Animation)
+				if (lastAnimator == nullptr || lastAnimator != info.Animator)
 				{
-					const auto& boneTransforms = info.Animation->GetBoneTransforms();
+					const auto& boneTransforms = info.Animator->GetBoneTransforms();
 					s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
 				}
 
@@ -320,14 +320,14 @@ namespace Athena
 		}
 	}
 
-	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animation>& animation, const Matrix4& transform, int32 entityID)
+	void Renderer::SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
 	{
 		if (vertexBuffer)
 		{
 			DrawCallInfo info;
 			info.VertexBuffer = vertexBuffer;
 			info.Material = material;
-			info.Animation = animation;
+			info.Animator = animator;
 			info.Transform = transform;
 			info.EntityID = entityID;
 

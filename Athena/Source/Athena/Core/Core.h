@@ -35,7 +35,7 @@
 		#error "Unknown Apple platform!"
 	#endif
  /* We also have to check __ANDROID__ before __linux__
-  * since android is based on the linux kernel
+  * since android is based on the Linux kernel
   * it has __linux__ defined */
 #elif defined(__ANDROID__)
 	#define ATN_PLATFORM_ANDROID
@@ -91,7 +91,7 @@
 
 
 #ifdef ATN_ASSERTS
-	// Alteratively we could use the same "default" message for both "WITH_MSG" and "NO_MSG" and
+	// Alternatively we could use the same "default" message for both "WITH_MSG" and "NO_MSG" and
 	// provide support for custom formatting by concatenating the formatting string instead of having the format inside the default message
 	#define ATN_INTERNAL_ASSERT_IMPL(type, check, msg, ...) { if(!(check)) { ATN##type##ERROR(msg, __VA_ARGS__); ATN_DEBUGBREAK(); } }
 	#define ATN_INTERNAL_ASSERT_WITH_MSG(type, check, ...) ATN_INTERNAL_ASSERT_IMPL(type, check, "Assertion failed: {0}", __VA_ARGS__)
@@ -100,7 +100,7 @@
 	#define ATN_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro
 	#define ATN_INTERNAL_ASSERT_GET_MACRO(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO_NAME(__VA_ARGS__, ATN_INTERNAL_ASSERT_WITH_MSG, ATN_INTERNAL_ASSERT_NO_MSG) )
 
-	// CurreATNly accepts at least the condition and one additional parameter (the message) being optional
+	// Currently accepts at least the condition and one additional parameter (the message) being optional
 	#define ATN_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, __VA_ARGS__) )
 	#define ATN_CORE_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, __VA_ARGS__) )
 #else
@@ -129,7 +129,7 @@ namespace Athena
 	using uint64 = ::std::uint64_t; // 64-bit unsigned int
 
 	using String = ::std::string; // string type
-	using FilePath = ::std::filesystem::path;	// filesystem path
+	using FilePath = ::std::filesystem::path; // filepath type
 
 	template <typename T>
 	using Scope = ::std::unique_ptr<T>;

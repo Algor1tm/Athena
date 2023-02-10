@@ -53,11 +53,16 @@ namespace Athena
 				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
 					Ref<Material> material = MaterialManager::GetMaterial(subMeshes[i].MaterialName);
-
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
-					Ref<Animation> animation = animator ? animator->GetCurrentAnimation() : nullptr;
-
-					Renderer::Submit(subMeshes[i].VertexBuffer, material, animation, transform.AsMatrix(), (int32)entity);
+					
+					if (animator != nullptr && animator->IsPlaying())
+					{
+						Renderer::SubmitWithAnimation(subMeshes[i].VertexBuffer, material, animator->IsPlaying() ? animator : nullptr, transform.AsMatrix(), (int32)entity);
+					}
+					else
+					{
+						Renderer::Submit(subMeshes[i].VertexBuffer, material, transform.AsMatrix(), (int32)entity);
+					}
 				}
 			}
 		}
@@ -105,11 +110,16 @@ namespace Athena
 				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
 					Ref<Material> material = MaterialManager::GetMaterial(subMeshes[i].MaterialName);
-
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
-					Ref<Animation> animation = animator ? animator->GetCurrentAnimation() : nullptr;
 
-					Renderer::Submit(subMeshes[i].VertexBuffer, material, animation, transform.AsMatrix(), (int32)entity);
+					if (animator != nullptr && animator->IsPlaying())
+					{
+						Renderer::SubmitWithAnimation(subMeshes[i].VertexBuffer, material, animator->IsPlaying() ? animator : nullptr, transform.AsMatrix(), (int32)entity);
+					}
+					else
+					{
+						Renderer::Submit(subMeshes[i].VertexBuffer, material, transform.AsMatrix(), (int32)entity);
+					}
 				}
 			}
 		}

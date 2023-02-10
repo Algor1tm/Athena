@@ -10,7 +10,7 @@
 
 namespace Athena
 {
-	class ATHENA_API Animation;
+	class ATHENA_API Animator;
 	class ATHENA_API VertexBuffer;
 	class ATHENA_API Material;
 	class ATHENA_API Texture2D;
@@ -55,7 +55,7 @@ namespace Athena
 		static void EndFrame();
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
-		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animation>& animation, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
 		static void Clear(const LinearColor& color);
 		static Ref<Framebuffer> GetFramebuffer();

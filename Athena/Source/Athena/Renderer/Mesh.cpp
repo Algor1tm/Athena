@@ -311,13 +311,16 @@ namespace Athena
 
 	static Ref<Skeleton> LoadSkeleton(const aiScene* aiscene)
 	{
+		if (aiscene->mNumAnimations < 0)
+			return nullptr;
+
 		const aiNode* root = aiscene->mRootNode;
 		const aiNode* bonesRoot = nullptr;
 
 		for (uint32 i = 0; i < root->mNumChildren; ++i)
 		{
 			String name = root->mChildren[i]->mName.C_Str();
-			if (name.find("RootNode") != String::npos && aiscene->mNumAnimations > 0)
+			if (name.find("RootNode") != String::npos || name.find("AssimpFbx") != String::npos)
 			{
 				bonesRoot = root->mChildren[i];
 				break;
@@ -346,16 +349,27 @@ namespace Athena
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
 		{
 			aiNodeAnim* channel = aianimation->mChannels[i];
-			ATN_CORE_ASSERT((channel->mNumPositionKeys == channel->mNumRotationKeys) && (channel->mNumRotationKeys == channel->mNumScalingKeys));
+			KeyFramesList keyFrames;
 
-			std::vector<KeyFrame> keyFrames(channel->mNumPositionKeys);
+			keyFrames.TranslationKeys.resize(channel->mNumPositionKeys);
 			for (uint32 j = 0; j < channel->mNumPositionKeys; ++j)
 			{
-				keyFrames[j].TimeStamp = channel->mPositionKeys[j].mTime;
+				keyFrames.TranslationKeys[j].TimeStamp = channel->mPositionKeys[j].mTime;
+				keyFrames.TranslationKeys[j].Value = ConvertaiVector3D(channel->mPositionKeys[j].mValue);
+			}
 
-				keyFrames[j].Translation = ConvertaiVector3D(channel->mPositionKeys[j].mValue);
-				keyFrames[j].Rotation = ConvertaiQuaternion(channel->mRotationKeys[j].mValue);
-				keyFrames[j].Scale = ConvertaiVector3D(channel->mScalingKeys[j].mValue);
+			keyFrames.RotationKeys.resize(channel->mNumRotationKeys);
+			for (uint32 j = 0; j < channel->mNumRotationKeys; ++j)
+			{
+				keyFrames.RotationKeys[j].TimeStamp = channel->mRotationKeys[j].mTime;
+				keyFrames.RotationKeys[j].Value = ConvertaiQuaternion(channel->mRotationKeys[j].mValue);
+			}
+
+			keyFrames.ScaleKeys.resize(channel->mNumScalingKeys);
+			for (uint32 j = 0; j < channel->mNumScalingKeys; ++j)
+			{
+				keyFrames.ScaleKeys[j].TimeStamp = channel->mScalingKeys[j].mTime;
+				keyFrames.ScaleKeys[j].Value = ConvertaiVector3D(channel->mScalingKeys[j].mValue);
 			}
 
 			desc.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;

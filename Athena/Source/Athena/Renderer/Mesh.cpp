@@ -6,6 +6,7 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Vertex.h"
+#include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
@@ -211,18 +212,19 @@ namespace Athena
 				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
 				{
 					uint32 vertexID = aibone->mWeights[j].mVertexId;
-					for (uint32 k = 0; k < MAX_NUM_BONES_PER_VERTEX; ++k)
+					float weight = aibone->mWeights[j].mWeight;
+					for (uint32 k = 0; k < ShaderLimits::MAX_NUM_BONES_PER_VERTEX; ++k)
 					{
 						if (vertices[vertexID].Weights[k] == 0.f)
 						{
 							vertices[vertexID].BoneIDs[k] = boneID;
-							vertices[vertexID].Weights[k] = aibone->mWeights[j].mWeight;
+							vertices[vertexID].Weights[k] = weight;
 							break;
 						}
-						else if (k == MAX_NUM_BONES_PER_VERTEX - 1)
+						else if (k == ShaderLimits::MAX_NUM_BONES_PER_VERTEX - 1)
 						{
 							ATN_CORE_WARN("Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
-								boneID, aibone->mWeights[j].mWeight);
+								boneID, weight);
 						}
 					}
 				}
@@ -343,7 +345,7 @@ namespace Athena
 		desc.TicksPerSecond = aianimation->mTicksPerSecond;
 		desc.Skeleton = skeleton;
 
-		ATN_CORE_ASSERT(aianimation->mNumChannels < MAX_NUM_BONES);
+		ATN_CORE_ASSERT(aianimation->mNumChannels < ShaderLimits::MAX_NUM_BONES);
 
 		desc.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
@@ -398,19 +400,22 @@ namespace Athena
 	Ref<StaticMesh> StaticMesh::Create(const FilePath& path)
 	{
 		const unsigned int flags =
-			aiProcess_OptimizeGraph |
-			aiProcess_Triangulate |
 			aiProcess_GenUVCoords |
 			aiProcess_CalcTangentSpace |
 			aiProcess_GenNormals |
+			aiProcess_GenBoundingBoxes |
+
 			aiProcess_SortByPType |
 			aiProcess_FindDegenerates |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_LimitBoneWeights |
+
 			aiProcess_RemoveRedundantMaterials |
+			aiProcess_OptimizeGraph |
 			aiProcess_OptimizeMeshes |
-			aiProcess_EmbedTextures |
-			aiProcess_GenBoundingBoxes;
+
+			aiProcess_Triangulate |
+			aiProcess_EmbedTextures;
 
 		const aiScene* aiscene = aiImportFile(path.string().c_str(), flags);
 

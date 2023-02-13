@@ -140,6 +140,7 @@ namespace Athena
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
+
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
 
@@ -164,6 +165,7 @@ namespace Athena
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
+
 		return Math::SLerp(start.Value, end.Value, scaleFactor);
 	}
 
@@ -188,6 +190,7 @@ namespace Athena
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
+
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
 
@@ -221,9 +224,10 @@ namespace Athena
 
 	void Animator::PlayAnimation(const Ref<Animation>& animation)
 	{
+		StopAnimation();
+
 		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
 		{
-			StopAnimation();
 			m_CurrentAnimation = animation;
 
 			m_BoneTransforms.resize(m_CurrentAnimation->GetSkeleton()->GetBoneCount());

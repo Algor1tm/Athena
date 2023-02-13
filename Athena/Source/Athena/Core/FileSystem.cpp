@@ -19,7 +19,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Could not open file: '{0}'", path);
+			ATN_CORE_ERROR("FileSystem::ReadFile: Could not open file: '{0}'", path);
 		}
 
 		return result;

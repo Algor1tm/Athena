@@ -67,6 +67,22 @@ namespace Athena
 			}
 		}
 
+		auto dirLights = scene->GetAllEntitiesWith<DirectionalLightComponent>();
+		for (auto entity : dirLights)
+		{
+			auto light = dirLights.get<DirectionalLightComponent>(entity);
+			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
+			Renderer::SubmitLight(dirLight);
+		}
+
+		auto pointLights = scene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
+		for (auto entity : pointLights)
+		{
+			auto [transform, light] = pointLights.get<TransformComponent, PointLightComponent>(entity);
+			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
+			Renderer::SubmitLight(pointLight);
+		}
+
 		Renderer::EndScene();
 	}
 
@@ -122,6 +138,22 @@ namespace Athena
 					}
 				}
 			}
+		}
+
+		auto dirLights = scene->GetAllEntitiesWith<DirectionalLightComponent>();
+		for(auto entity: dirLights)
+		{
+			auto light = dirLights.get<DirectionalLightComponent>(entity);
+			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
+			Renderer::SubmitLight(dirLight);
+		}
+
+		auto pointLights = scene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
+		for (auto entity : pointLights)
+		{
+			auto [transform, light] = pointLights.get<TransformComponent, PointLightComponent>(entity);
+			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
+			Renderer::SubmitLight(pointLight);
 		}
 
 		Renderer::EndScene();

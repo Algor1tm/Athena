@@ -1,5 +1,12 @@
+//#version 430 core
+
 #define PI 3.14159265358979323846
+
 #define MAX_SKYBOX_MAP_LOD 10
+
+#define MAX_DIRECTIONAL_LIGHT_COUNT 32
+#define MAX_POINT_LIGHT_COUNT 32
+
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
@@ -33,12 +40,30 @@ layout(std140, binding = 3) uniform MaterialData
     int u_UseAmbientOcclusionMap;
 };
 
-layout(std140, binding = 4) uniform DirectionalLight
+struct DirectionalLight
 {
     vec4 Color;
     vec3 Direction;
     float Intensity;
-} Light;
+};
+
+struct PointLight
+{
+    vec4 Color;
+    vec3 Position;
+    float Intensity;
+    float Radius;
+    float FallOff;
+};
+
+layout(std430, binding = 4) readonly buffer LightBuffer
+{
+    DirectionalLight g_DirectionalLightBuffer[MAX_DIRECTIONAL_LIGHT_COUNT];
+    int g_DirectionalLightCount;
+
+    PointLight g_PointLightBuffer[MAX_POINT_LIGHT_COUNT];
+    int g_PointLightCount;
+};
 
 layout(binding = 0) uniform sampler2D u_AlbedoMap;
 layout(binding = 1) uniform sampler2D u_NormalMap;
@@ -106,6 +131,30 @@ vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
 }  
 
+vec3 ComputeRadiance(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewVector, vec3 albedo, float metalness, float roughness, vec3 reflectivityAtZeroIncidence)
+{
+    vec3 negativeLightDir = -lightDirection;
+    vec3 halfWayVector = normalize(viewVector + negativeLightDir);
+
+    float NDF = DistributionGGX(normal, halfWayVector, roughness);
+    float G = GeometrySmith(normal, viewVector, negativeLightDir, roughness);
+    vec3 F = FresnelShlick(max(dot(halfWayVector, viewVector), 0.0), reflectivityAtZeroIncidence);
+
+    vec3 reflectedLight = F;
+    vec3 absorbedLight = vec3(1.0) - reflectedLight;
+        
+    absorbedLight *= 1.0 - metalness;
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(normal, viewVector), 0.0) * max(dot(normal, negativeLightDir), 0.0) + 0.0001;
+    vec3 specular = numerator / denominator;
+
+    float normalDotLightDir = max(dot(normal, negativeLightDir), 0.0);
+
+    return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
+}
+
+
 void main()
 {
     vec4 albedo = u_Albedo;
@@ -148,29 +197,37 @@ void main()
     vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
 
     vec3 totalIrradiance = vec3(0.0);
-    // Calculate per light
+    
+
+    for(int i = 0; i < g_DirectionalLightCount; ++i)
     {
-        vec3 lightDirection = -normalize(Light.Direction);
-        vec3 halfWayVector = normalize(viewVector + lightDirection);
+        vec3 lightDirection = normalize(g_DirectionalLightBuffer[i].Direction);
+        vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
-        vec3 radiance = vec3(Light.Color) * Light.Intensity;
-
-        float NDF = DistributionGGX(normal, halfWayVector, roughness);
-        float G = GeometrySmith(normal, viewVector, lightDirection, roughness);
-        vec3 F = FresnelShlick(max(dot(halfWayVector, viewVector), 0.0), reflectivityAtZeroIncidence);
-
-        vec3 reflectedLight = F;
-        vec3 absorbedLight = vec3(1.0) - reflectedLight;
-        
-        absorbedLight *= 1.0 - metalness;
-
-        vec3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(normal, viewVector), 0.0) * max(dot(normal, lightDirection), 0.0) + 0.0001;
-        vec3 specular = numerator / denominator;
-
-        float normalDotLightDir = max(dot(normal, lightDirection), 0.0);
-        totalIrradiance += (absorbedLight * albedo.rgb / PI + specular) * radiance * normalDotLightDir;
+        totalIrradiance += ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
+
+    for(int i = 0; i < g_PointLightCount; ++i)
+    {
+        float distance = length(Input.WorldPos - g_PointLightBuffer[i].Position);
+
+        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (distance * distance);
+
+        float factor = distance / g_PointLightBuffer[i].Radius;
+
+        float attenuation = 0.0;
+        if(factor < 1.0)
+        {
+            float factor2 = factor * factor;
+            attenuation = (1.0 - factor2) * (1.0 - factor2) / (1 + g_PointLightBuffer[i].FallOff * factor);
+            attenuation = clamp(attenuation, 0.0, 1.0);
+        }
+
+        vec3 lightRadiance = g_PointLightBuffer[i].Color.rgb * g_PointLightBuffer[i].Intensity * attenuation;
+
+        totalIrradiance += ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+    }
+
 
     vec3 reflectedVec = reflect(-viewVector, normal); 
 
@@ -188,6 +245,7 @@ void main()
     vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
     vec3 ambient = (absorbedLight * diffuse + specular) * ambientOcclusion;
+
     vec3 color = ambient + totalIrradiance;
 
     color = vec3(1.0) - exp(-color * u_Exposure);

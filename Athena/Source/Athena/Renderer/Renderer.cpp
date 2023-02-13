@@ -1,11 +1,11 @@
 #include "Renderer.h"
 
-#include "Athena/Renderer/Renderer2D.h"
-#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Vertex.h"
 
 #include "Athena/Math/Projections.h"
@@ -42,6 +42,15 @@ namespace Athena
 		int32 EntityID = -1;
 	};
 
+	struct LightData
+	{
+		DirectionalLight DirectionalLightBuffer[ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT];
+		uint32 DirectionalLightCount = 0;
+
+		PointLight PointLightBuffer[ShaderLimits::MAX_POINT_LIGHT_COUNT];
+		uint32 PointLightCount = 0;
+	};
+
 	struct RendererData
 	{
 		std::deque<DrawCallInfo> RenderQueue;
@@ -64,11 +73,12 @@ namespace Athena
 
 		SceneData SceneDataBuffer;
 		EntityData EntityDataBuffer;
+		LightData LightDataBuffer;
 
 		Ref<ConstantBuffer> SceneConstantBuffer;
 		Ref<ConstantBuffer> EntityConstantBuffer;
 		Ref<ConstantBuffer> MaterialConstantBuffer;
-		Ref<ConstantBuffer> LightConstantBuffer;
+		Ref<ShaderStorageBuffer> LightShaderStorageBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 	};
 
@@ -80,7 +90,6 @@ namespace Athena
 		RenderCommand::Init();
 		Renderer2D::Init();
 		SceneRenderer::Init();
-
 
 		FramebufferDescription fbDesc;
 		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
@@ -116,8 +125,8 @@ namespace Athena
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
-		s_Data.LightConstantBuffer = ConstantBuffer::Create(sizeof(DirectionalLight), BufferBinder::LIGHT_DATA);
-		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * MAX_NUM_BONES, BufferBinder::ANIMATION_DATA);
+		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
+		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * MAX_NUM_BONES, BufferBinder::BONES_DATA);
 
 		// Create BRDF_LUT
 		uint32 width = 512;
@@ -194,6 +203,7 @@ namespace Athena
 	
 	void Renderer::EndScene()
 	{
+		///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
 		if (!s_Data.RenderQueue.empty())
 		{
 			std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
@@ -204,9 +214,8 @@ namespace Athena
 					return left.Material->GetName() < right.Material->GetName();
 				});
 
-			///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
 			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
-			s_Data.LightConstantBuffer->SetData(&s_Data.ActiveEnvironment->DirLight, sizeof(DirectionalLight));
+			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
 			if (s_Data.ActiveEnvironment->Skybox)
 				s_Data.ActiveEnvironment->Skybox->Bind();
@@ -290,6 +299,9 @@ namespace Athena
 
 		s_Data.RenderQueue.clear();
 		s_Data.ActiveEnvironment = nullptr;
+
+		s_Data.LightDataBuffer.DirectionalLightCount = 0;
+		s_Data.LightDataBuffer.PointLightCount = 0;
 	}
 	
 	void Renderer::BeginFrame()
@@ -300,6 +312,30 @@ namespace Athena
 	void Renderer::EndFrame()
 	{
 		RenderCommand::UnBindFramebuffer();
+	}
+
+	void Renderer::SubmitLight(const DirectionalLight& dirLight)
+	{
+		if (ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
+		{
+			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} DirectionalLights!", ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT);
+			return;
+		}
+
+		s_Data.LightDataBuffer.DirectionalLightBuffer[s_Data.LightDataBuffer.DirectionalLightCount] = dirLight;
+		s_Data.LightDataBuffer.DirectionalLightCount++;
+	}
+
+	void Renderer::SubmitLight(const PointLight& pointLight) 
+	{
+		if (ShaderLimits::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
+		{
+			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} PointLights!", ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT);
+			return;
+		}
+
+		s_Data.LightDataBuffer.PointLightBuffer[s_Data.LightDataBuffer.PointLightCount] = pointLight;
+		s_Data.LightDataBuffer.PointLightCount++;
 	}
 
 	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
@@ -416,7 +452,7 @@ namespace Athena
 
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 		}
-		skybox->GenerateMipMap(10);
+		skybox->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
 
 		// Create Irradiance map
 		width = 128;

@@ -3,6 +3,31 @@ Entities:
   - IDComponent:
       ID: 14514284786278117030
     TagComponent:
+      Tag: PointLight
+    TransformComponent:
+      Translation: [-18.762085, 287.624725, 365.556885]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 1, 1]
+      Intensity: 1500
+      Radius: 2150
+      FallOff: 1
+  - IDComponent:
+      ID: 14514284786278117030
+    TagComponent:
+      Tag: DirectionalLight
+    TransformComponent:
+      Translation: [326.079224, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Direction: [-1.5, -0.75, -1.10000002]
+      Intensity: 1
+  - IDComponent:
+      ID: 14514284786278117030
+    TagComponent:
       Tag: Spiderman
     TransformComponent:
       Translation: [-212.375305, 48.6798553, 638.903564]
@@ -35,10 +60,6 @@ Entities:
       Hide: false
 Environment:
   Skybox:
-    FilePath: D:\Development\CppProjects\Athena\Athena-Editor\Assets\EnvironmentMaps\Sun_Snow_4k.hdr
+    FilePath: Assets\EnvironmentMaps\Sun_Snow_4k.hdr
     Skybox LOD: 0
     Exposure: 1.38699996
-  Light:
-    Direction: [-1.92999995, -0.959999979, -1.39999998]
-    Color: [1, 1, 1, 1]
-    Intensity: 1

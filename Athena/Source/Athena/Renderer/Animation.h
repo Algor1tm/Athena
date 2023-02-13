@@ -10,9 +10,6 @@
 
 namespace Athena
 {
-#define MAX_NUM_BONES_PER_VERTEX 4
-#define MAX_NUM_BONES 512
-
 	struct BonesHierarchyInfo
 	{
 		String Name;

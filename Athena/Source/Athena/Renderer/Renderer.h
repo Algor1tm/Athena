@@ -16,6 +16,16 @@ namespace Athena
 	class ATHENA_API Texture2D;
 	class ATHENA_API Cubemap;
 
+	enum ShaderLimits
+	{
+		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
+		MAX_POINT_LIGHT_COUNT = 32,
+
+		MAX_NUM_BONES_PER_VERTEX = 4,
+		MAX_NUM_BONES = 512,
+
+		MAX_SKYBOX_MAP_LOD = 10
+	};
 
 	enum TextureBinder
 	{
@@ -37,7 +47,7 @@ namespace Athena
 		ENTITY_DATA = 2,
 		MATERIAL_DATA = 3,
 		LIGHT_DATA = 4,
-		ANIMATION_DATA = 5
+		BONES_DATA = 5
 	};
 
 	class ATHENA_API Renderer
@@ -53,6 +63,9 @@ namespace Athena
 
 		static void BeginFrame();
 		static void EndFrame();
+
+		static void SubmitLight(const DirectionalLight& dirLight);
+		static void SubmitLight(const PointLight& pointLight);
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);

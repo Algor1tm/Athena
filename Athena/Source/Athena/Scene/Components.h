@@ -141,4 +141,19 @@ namespace Athena
 		Ref<StaticMesh> Mesh;
 		bool Hide = false;
 	};
+
+	struct DirectionalLightComponent
+	{
+		LinearColor Color = LinearColor::White;
+		Vector3 Direction = Vector3(-1, -1, -1);
+		float Intensity = 1;
+	};
+
+	struct PointLightComponent
+	{
+		LinearColor Color = LinearColor::White;
+		float Intensity = 1.f;
+		float Radius = 10.f;
+		float FallOff = 1.f;
+	};
 }

@@ -150,8 +150,6 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawEnvironment(const Ref<Environment>& environment)
 	{
-		auto& light = environment->DirLight;
-
 		float height = ImGui::GetFrameHeight();
 
 		if (UI::BeginTreeNode("Environment"))
@@ -186,20 +184,6 @@ namespace Athena
 					});
 				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, 10); });
 				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 7); });
-
-				UI::EndDrawControllers();
-			}
-
-			UI::EndTreeNode();
-		}
-
-		if (UI::BeginTreeNode("Light"))
-		{
-			if (UI::BeginDrawControllers())
-			{
-				UI::DrawVec3Controller("Direction", light.Direction, 0.0f, height);
-				UI::DrawController("Color", height, [&light]() {return ImGui::ColorEdit3("##Color", light.Color.Data()); });
-				UI::DrawController("Intensity", height, [&light]() {return ImGui::SliderFloat("##Intensity", &light.Intensity, 0.f, 1.f); });
 
 				UI::EndDrawControllers();
 			}
@@ -466,6 +450,8 @@ namespace Athena
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
 			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
+			DrawAddComponentEntry<DirectionalLightComponent>(entity, "DirectionalLight");
+			DrawAddComponentEntry<PointLightComponent>(entity, "PointLight");
 
 			ImGui::EndPopup();
 		}
@@ -924,6 +910,41 @@ namespace Athena
 							ImGui::Spacing();
 						}
 					}
+				}
+			});
+
+		DrawComponent<DirectionalLightComponent>(entity, "DirectionalLight", [](DirectionalLightComponent& lightComponent)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
+					UI::DrawController("Direction", height, [&lightComponent]() { return ImGui::DragFloat3("##Direction", lightComponent.Direction.Data(), 0.05f); });
+					UI::DrawController("Intensity", height, [&lightComponent]()
+						{ ImGui::DragFloat("##Intensity", &lightComponent.Intensity); Math::Clamp(lightComponent.Intensity, 0.f, lightComponent.Intensity); return true; });
+
+					UI::EndDrawControllers();
+				}
+			});
+
+		DrawComponent<PointLightComponent>(entity, "PointLight", [](PointLightComponent& lightComponent)
+			{
+				float height = ImGui::GetFrameHeight();
+
+				if (UI::BeginDrawControllers())
+				{
+					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
+					UI::DrawController("Intensity", height, [&lightComponent]() 
+						{ ImGui::DragFloat("##Intensity", &lightComponent.Intensity); Math::Clamp(lightComponent.Intensity, 0.f, lightComponent.Intensity); return true; });
+
+					UI::DrawController("Radius", height, [&lightComponent]() 
+						{ ImGui::DragFloat("##Radius", &lightComponent.Radius, 5.f); Math::Clamp(lightComponent.Radius, 0.f, lightComponent.Radius); return true; });
+
+					UI::DrawController("FallOff", height, [&lightComponent]() 
+						{ return ImGui::DragFloat("##FallOff", &lightComponent.FallOff, 0.1f); Math::Clamp(lightComponent.FallOff, 0.f, lightComponent.FallOff); return true; });
+
+					UI::EndDrawControllers();
 				}
 			});
 	}

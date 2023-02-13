@@ -4,7 +4,7 @@
 
 #include "Athena/Math/Vector.h"
 
-#include "Athena/Renderer/Animation.h"
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/GPUBuffers.h"
 
 
@@ -38,8 +38,8 @@ namespace Athena
 		Vector3 Normal;
 		Vector3 Tangent;
 		Vector3 Bitangent;
-		int BoneIDs[MAX_NUM_BONES_PER_VERTEX];
-		float Weights[MAX_NUM_BONES_PER_VERTEX];
+		int BoneIDs[ShaderLimits::MAX_NUM_BONES_PER_VERTEX];
+		float Weights[ShaderLimits::MAX_NUM_BONES_PER_VERTEX];
 
 		static inline BufferLayout GetLayout()
 		{

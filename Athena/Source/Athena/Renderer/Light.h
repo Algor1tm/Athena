@@ -11,24 +11,17 @@ namespace Athena
 {
 	struct DirectionalLight
 	{
-		LinearColor Color = LinearColor::White;
-		Vector3 Direction = Vector3(-1, -1, -1);
-		float Intensity = 1;
+		Vector4 Color;
+		Vector3 Direction;
+		float Intensity;
 	};
 
 	struct PointLight
 	{
-		LinearColor Color = LinearColor::White;
-		Vector3 Direction = Vector3::Forward();
-		Vector3 Position = Vector3(0.f);
-	};
-
-	struct SpotLight
-	{
-		LinearColor Color = LinearColor::White;
-		Vector3 Direction = Vector3::Forward();
-		Vector3 Position = Vector3(0.f);
-		float InnerCutOff = Math::Cos(Math::Radians(12.5f));
-		float OuterCutOff = Math::Cos(Math::Radians(15.f));
+		Vector4 Color;
+		Vector3 Position;
+		float Intensity;
+		float Radius;
+		float FallOff;
 	};
 }

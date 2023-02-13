@@ -10,8 +10,6 @@ namespace Athena
 {
 	struct Environment
 	{
-		DirectionalLight DirLight;
-
 		Ref<Skybox> Skybox;
 
 		float SkyboxLOD = 0;

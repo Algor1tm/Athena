@@ -154,19 +154,11 @@ namespace Athena
 		{
 			out << YAML::Key << "Skybox";
 			out << YAML::BeginMap;
-			if (env->Skybox)
-				out << YAML::Key << "FilePath" << env->Skybox->GetFilePath().string();
+			out << YAML::Key << "FilePath" << env->Skybox->GetFilePath().string();
 			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
 			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
 			out << YAML::EndMap;
 		}
-
-		out << YAML::Key << "Light";
-		out << YAML::BeginMap;
-		out << YAML::Key << "Direction" << YAML::Value << env->DirLight.Direction;
-		out << YAML::Key << "Color" << YAML::Value << env->DirLight.Color;
-		out << YAML::Key << "Intensity" << YAML::Value << env->DirLight.Intensity;
-		out << YAML::EndMap;
 
 		out << YAML::EndMap;
 
@@ -213,19 +205,8 @@ namespace Athena
 			{
 				environment->Skybox = Skybox::Create(skyboxNode["FilePath"].as<String>());
 
-				if (environment)
-				{
-					environment->SkyboxLOD = skyboxNode["Skybox LOD"].as<float>();
-					environment->Exposure = skyboxNode["Exposure"].as<float>();
-				}
-			}
-
-			const auto& lightNode = envNode["Light"];
-			if (lightNode && environment)
-			{
-				environment->DirLight.Direction = lightNode["Direction"].as<Vector3>();
-				environment->DirLight.Color = lightNode["Color"].as<LinearColor>();
-				environment->DirLight.Intensity = lightNode["Intensity"].as<float>();
+				environment->SkyboxLOD = skyboxNode["Skybox LOD"].as<float>();
+				environment->Exposure = skyboxNode["Exposure"].as<float>();
 			}
 		}
 
@@ -397,6 +378,30 @@ namespace Athena
 						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
 					}
 				}
+
+				{
+					const auto directionalLightComponent = entityNode["DirectionalLightComponent"];
+					if (directionalLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<DirectionalLightComponent>();
+
+						lightComp.Color = directionalLightComponent["Color"].as<LinearColor>();
+						lightComp.Direction = directionalLightComponent["Direction"].as<Vector3>();
+						lightComp.Intensity = directionalLightComponent["Intensity"].as<float>();
+					}
+				}
+
+				{
+					const auto pointLightComponent = entityNode["PointLightComponent"];
+					if (pointLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<PointLightComponent>();
+						lightComp.Color = pointLightComponent["Color"].as<LinearColor>();
+						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
+						lightComp.Radius = pointLightComponent["Radius"].as<float>();
+						lightComp.FallOff = pointLightComponent["FallOff"].as<float>();
+					}
+				}
 			}
 		}
 
@@ -543,6 +548,24 @@ namespace Athena
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath().string();
 				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
+			});
+
+
+		SerializeComponent<DirectionalLightComponent>(out, "DirectionalLightComponent", entity,
+			[](YAML::Emitter& output, const DirectionalLightComponent& lightComponent)
+			{
+				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
+				output << YAML::Key << "Direction" << YAML::Value << lightComponent.Direction;
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+			});
+
+		SerializeComponent<PointLightComponent>(out, "PointLightComponent", entity,
+			[](YAML::Emitter& output, const PointLightComponent& lightComponent)
+			{
+				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "Radius" << YAML::Value << lightComponent.Radius;
+				output << YAML::Key << "FallOff" << YAML::Value << lightComponent.FallOff;
 			});
 
 		out << YAML::EndMap;

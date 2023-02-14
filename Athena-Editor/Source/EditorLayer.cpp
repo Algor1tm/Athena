@@ -15,7 +15,7 @@
 #include "Athena/Scene/SceneSerializer.h"
 
 #include "Panels/ContentBrowserPanel.h"
-#include "Panels/EditorSettingsPanel.h"
+#include "Panels/SettingsPanel.h"
 #include "Panels/MenuBarPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
@@ -75,6 +75,7 @@ namespace Athena
             m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
+        Renderer::ResetStats();
         Renderer2D::ResetStats();
 
         Renderer::BeginFrame();
@@ -257,7 +258,7 @@ namespace Athena
         auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
         m_PanelManager.AddPanel(profiling, Keyboard::K);
 
-        m_EditorSettings = CreateRef<EditorSettingsPanel>("EditorSettings");
+        m_EditorSettings = CreateRef<SettingsPanel>("EditorSettings");
         m_PanelManager.AddPanel(m_EditorSettings, Keyboard::I);
     }
 
@@ -299,7 +300,7 @@ namespace Athena
             Renderer2D::BeginScene(m_EditorCamera.GetViewProjectionMatrix());
         }
 
-        if (m_EditorSettings->GetSettings().m_ShowPhysicsColliders)
+        if (m_EditorSettings->GetEditorSettings().m_ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();

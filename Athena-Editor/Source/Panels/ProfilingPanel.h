@@ -2,6 +2,9 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
+#include "Athena/Core/PlatformUtils.h"
+
+#include "Athena/Renderer/GraphicsContext.h"
 
 #include "Panels/Panel.h"
 
@@ -20,13 +23,7 @@ namespace Athena
 	private:
 		bool m_IsPlottingFrameRate = false;
 
-		std::array<float, 64> m_FrameRateStack;
-		uint32 m_FrameRateIndex = 0;
-
-		Time m_FrameTime;
-		Timer m_Timer;
-		Time m_LastTime = 0;
-
-		const Time m_UpdateInterval = Time::Seconds(0.05f);
+		SystemInfo m_SystemInfo;
+		GPUInfo m_GPUInfo;
 	};
 }

@@ -39,4 +39,16 @@ namespace Athena
 		else
 			glfwSwapInterval(0);
 	}
+
+	void GLGraphicsContext::GetGPUInfo(GPUInfo* info) const
+	{
+		info->APIVersion = "OpenGL " + String((char*)glGetString(GL_VERSION));
+		info->GPUBrandString = (char*)glGetString(GL_RENDERER);
+		info->Vendor = (char*)glGetString(GL_VENDOR);
+
+		GLint total_mem_kb = 0;
+		glGetIntegerv(0x9048, &total_mem_kb);
+
+		info->TotalPhysicalMemoryKB = total_mem_kb;
+	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/PlatformUtils.h"
 
 #include <chrono>
 
@@ -10,32 +11,32 @@ namespace Athena
 	class Time
 	{
 	public:
-		using duration_type = std::chrono::duration<float, std::micro>;
+		using duration_type = std::chrono::duration<double, std::micro>;
 
 	public:
 		Time(float seconds = 0)
-			: m_Time(std::chrono::duration<float>(seconds)) {}
+			: m_Time(std::chrono::duration<double>(seconds)) {}
 
 		template <typename Rep, typename Period>
 		Time(std::chrono::duration<Rep, Period> duration)
 			: m_Time(std::chrono::duration_cast<duration_type>(duration)) {}
 
-		inline operator float() const
+		inline operator double() const
 		{
 			return m_Time.count();
 		}
 
-		inline float AsSeconds() const
+		inline double AsSeconds() const
 		{
-			return m_Time.count() * 0.000001f;
+			return m_Time.count() * 0.000001;
 		}
 
-		inline float AsMilliseconds() const
+		inline double AsMilliseconds() const
 		{
-			return m_Time.count() * 0.001f;
+			return m_Time.count() * 0.001;
 		}
 
-		inline float AsMicroseconds() const
+		inline double AsMicroseconds() const
 		{
 			return m_Time.count();
 		}
@@ -93,19 +94,19 @@ namespace Athena
 		}
 
 	public:
-		static inline Time Seconds(float seconds)
+		static inline Time Seconds(double seconds)
 		{
 			return Time(seconds);
 		}
 
-		static inline Time Milliseconds(float milliseconds)
+		static inline Time Milliseconds(double milliseconds)
 		{
-			return Time(std::chrono::duration<float, std::milli>(milliseconds));
+			return Time(std::chrono::duration<double, std::milli>(milliseconds));
 		}
 
-		static inline Time Microseconds(float microseconds)
+		static inline Time Microseconds(double microseconds)
 		{
-			return Time(std::chrono::duration<float, std::micro>(microseconds));
+			return Time(std::chrono::duration<double, std::micro>(microseconds));
 		}
 
 	private:
@@ -123,17 +124,17 @@ namespace Athena
 
 		inline void Reset()
 		{
-			m_Start = std::chrono::high_resolution_clock::now();
+			m_Start = Platform::GetHighPrecisionTime();
 		}
 
 		inline Time ElapsedTime()
 		{
-			auto end = std::chrono::high_resolution_clock::now();
-			return Time(end - m_Start);
+			double end = Platform::GetHighPrecisionTime();
+			return Time::Milliseconds(end - m_Start);
 		}
 
 	private:
-		std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
+		double m_Start;
 	};
 
 }

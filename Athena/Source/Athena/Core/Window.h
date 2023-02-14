@@ -57,6 +57,8 @@ namespace Athena
 		void SetWindowMode(WindowMode mode);
 		inline WindowMode GetWindowMode() const { return m_Data.Mode; }
 
+		const Ref<GraphicsContext>& GetGraphicsContext() const { return m_Context; }
+
 	public:
 		struct WindowData
 		{

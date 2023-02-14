@@ -56,7 +56,7 @@ namespace Athena
 		};
 
 		static void ResetStats();
-		static Statistics GetStats();
+		static const Statistics& GetStatistics();
 
 	private:
 		static void StartBatch();

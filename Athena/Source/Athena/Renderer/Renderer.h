@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Time.h"
 
 #include "Athena/Renderer/RenderCommand.h"
 #include "Athena/Renderer/Environment.h"
@@ -50,8 +51,16 @@ namespace Athena
 		BONES_DATA = 5
 	};
 
+	enum class DebugView
+	{
+		NONE = 0,
+		NORMALS = 1
+	};
+
 	class ATHENA_API Renderer
 	{
+	public:
+
 	public:
 		static void Init(RendererAPI::API graphicsAPI);
 		static void Shutdown();
@@ -77,5 +86,26 @@ namespace Athena
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+
+		static void SetRenderQueueLimit(uint32 limit);
+		static void SetDebugView(DebugView view);
+
+		struct Statistics
+		{
+			Time GeometryPass;
+			Time SkyboxPass;
+
+			uint32 GeometryCount = 0;
+			uint32 PointLightsCount = 0;
+			uint32 DirectionalLightsCount = 0;
+			uint32 DrawCalls = 0;
+		};
+
+		static const Statistics& GetStatistics();
+		static void ResetStats();
+
+	private:
+		static void RenderDebugView(DebugView view);
+
 	};
 }

@@ -499,7 +499,7 @@ namespace Athena
 		s_Data.Stats.LineCount = 0;
 	}
 
-	Renderer2D::Statistics Renderer2D::GetStats()
+	const Renderer2D::Statistics& Renderer2D::GetStatistics()
 	{
 		return s_Data.Stats;
 	}

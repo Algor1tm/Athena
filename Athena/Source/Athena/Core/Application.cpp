@@ -57,6 +57,9 @@ namespace Athena
 
 	void Application::OnEvent(Event& event)
 	{
+		Timer timer;
+		Time start = timer.ElapsedTime();
+
 		EventDispatcher dispatcher(event);
 		dispatcher.Dispatch<WindowCloseEvent>(ATN_BIND_EVENT_FN(Application::OnWindowClose));
 		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
@@ -67,38 +70,55 @@ namespace Athena
 			if (event.Handled)
 				break;
 		}
+
+		m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
 	}
 
 	void Application::Run()
 	{
-		Timer Timer;
-		Time LastTime;
+		Timer timer;
+		Time frameTime = 0;
 
 		while (m_Running)
 		{
-			Time now = Timer.ElapsedTime();
-			Time frameTime = now - LastTime;
-			LastTime = now;
+			Time start = timer.ElapsedTime();
+			m_Statistics.FrameTime = frameTime;
 
 			if (m_Minimized == false)
 			{
 				{
+					Time start = timer.ElapsedTime();
+
 					for (Ref<Layer> layer : m_LayerStack)
+					{
 						layer->OnUpdate(frameTime);
+					}
+
+					m_Statistics.Application_OnUpdate = timer.ElapsedTime() - start;
 				}
 
 				if (m_ImGuiLayer != nullptr)
 				{
+					Time start = timer.ElapsedTime();
+
 					m_ImGuiLayer->Begin();
 					{
 						for (Ref<Layer> layer : m_LayerStack)
 							layer->OnImGuiRender();
 					}
 					m_ImGuiLayer->End();
+
+					m_Statistics.Application_OnImGuiRender = timer.ElapsedTime() - start;
 				}
 			}
 
-			m_Window->OnUpdate();
+			{
+				Time start = timer.ElapsedTime();
+				m_Window->OnUpdate();
+				m_Statistics.Window_OnUpdate = timer.ElapsedTime() - start;
+			}
+
+			frameTime = timer.ElapsedTime() - start;
 		}
 	}
 

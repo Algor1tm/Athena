@@ -18,6 +18,8 @@ namespace Athena
 		virtual void SetVSync(bool enabled) override;
 		virtual void SetFullscreen(bool enabled) override {};
 
+		virtual void GetGPUInfo(GPUInfo* info) const override;
+
 	private:
 		GLFWwindow* m_WindowHandle;
 	};

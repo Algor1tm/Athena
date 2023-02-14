@@ -23,6 +23,8 @@ namespace Athena
 		virtual void SetVSync(bool enabled) override;
 		virtual void SetFullscreen(bool enabled) override;
 
+		virtual void GetGPUInfo(GPUInfo* info) const override {};
+
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Device> m_Device;
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_DeviceContext;

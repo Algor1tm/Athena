@@ -33,6 +33,7 @@ EXPORTS
 	?MenuItem@ImGui@@YA_NPEBD0_N1@Z
 	?Selectable@ImGui@@YA_NPEBDPEA_NHAEBUImVec2@@@Z
 	?SetDragDropPayload@ImGui@@YA_NPEBDPEBX_KH@Z
+	?SliderInt@ImGui@@YA_NPEBDPEAHHH0H@Z
 	?SliderFloat@ImGui@@YA_NPEBDPEAMMM0H@Z
 	?TableSetColumnIndex@ImGui@@YA_NH@Z
 	?TreeNodeEx@ImGui@@YA_NPEBDH0ZZ

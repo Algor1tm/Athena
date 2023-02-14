@@ -1,7 +1,6 @@
 #include "ProfilingPanel.h"
 
-#include "Athena/Renderer/Renderer2D.h"
-#include "Athena/Math/Trigonometric.h"
+#include "Athena/Core/Application.h"
 
 #include "UI/Widgets.h"
 
@@ -13,68 +12,47 @@ namespace Athena
     ProfilingPanel::ProfilingPanel(std::string_view name)
         : Panel(name)
     {
-
+        Platform::GetSystemInfo(&m_SystemInfo);
+        Application::Get().GetWindow().GetGraphicsContext()->GetGPUInfo(&m_GPUInfo);
     }
 
 	void ProfilingPanel::OnImGuiRender()
 	{
-        Time now = m_Timer.ElapsedTime();
-        m_FrameTime = now - m_LastTime;
-        m_LastTime = now;
-
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         if (ImGui::Begin("Profiling"))
         {
-            if (UI::BeginTreeNode("Renderer2D Statistics"))
+            if (UI::BeginTreeNode("Platform"))
             {
-                auto stats = Renderer2D::GetStats();
-                ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-                ImGui::Text("Quads: %d", stats.QuadCount);
-                ImGui::Text("Circles: %d", stats.CircleCount);
-                ImGui::Text("Lines: %d", stats.LineCount);
-                ImGui::Text("Vertices: %d", stats.GetTotalVertexCount());
-                ImGui::Text("Indices: %d", stats.GetTotalIndexCount());
+                ImGui::Text("CPU: ");
+				ImGui::Text(m_SystemInfo.CPUBrandString.c_str());
+				ImGui::Text("Processor Cores: %d", m_SystemInfo.NumberOfProcessorCores);
+				ImGui::Text("Logical Processors: %d", m_SystemInfo.NumberOfLogicalProcessors);
+				ImGui::Text("RAM: %d MB", m_SystemInfo.TotalPhysicalMemoryKB / 1024);
+
+				ImGui::Spacing();
+                ImGui::Spacing();
+                ImGui::Spacing();
+                ImGui::Spacing();
+
+                ImGui::Text("GPU: ");
+				ImGui::Text(m_GPUInfo.GPUBrandString.c_str());
+				ImGui::Text("Driver: %s", m_GPUInfo.APIVersion.c_str());
+				ImGui::Text("Vendor: %s", m_GPUInfo.Vendor.c_str());
+				ImGui::Text("VRAM: %d MB", m_GPUInfo.TotalPhysicalMemoryKB / 1024);
 
                 UI::EndTreeNode();
             }
 
-
-            static Time elapsed = Time(0);
-            static float fps = 0.f;
-            static float frameTime = 0.f;
-
-            if (elapsed > m_UpdateInterval)
-            {
-                fps = 1 / m_FrameTime.AsSeconds();
-                frameTime = m_FrameTime.AsMilliseconds();
-                elapsed = Time(0);
-            }
-            else
-            {
-                elapsed += m_FrameTime;
-            }
-
             if (UI::BeginTreeNode("Performance"))
             {
-                ImGui::Text("FPS: %d", (int)fps);
-                ImGui::Text("FrameTime: %.3f", frameTime);
-
-                if (m_IsPlottingFrameRate)
-                {
-                    m_FrameRateStack[m_FrameRateIndex % m_FrameRateStack.size()] = m_FrameTime.AsSeconds();
-                    m_FrameRateIndex++;
-                }
-
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 3 });
-                UI::DrawImGuiWidget("Plot FrameRate", [this]()
-                    {
-                        return ImGui::Checkbox("##Plot FrameRate", &m_IsPlottingFrameRate);
-                    });
-                ImGui::PopStyleVar();
-                if (m_IsPlottingFrameRate)
-                {
-                    ImGui::PlotLines("##FrameRate", m_FrameRateStack.data(), (int)m_FrameRateStack.size(), 0, (const char*)0, 0, 0.1f, { ImGui::GetWindowSize().x * 0.9f, ImGui::GetWindowSize().y * 0.2f });
-                }
+                auto appstats = Application::Get().GetStatistics();
+                
+                ImGui::Text("FPS: %d", (int)(1.f / appstats.FrameTime.AsSeconds()));
+                ImGui::Text("FrameTime: %.3f", appstats.FrameTime.AsMilliseconds());
+                ImGui::Text("Application::OnUpdate: %.3f", appstats.Application_OnUpdate.AsMilliseconds());
+                ImGui::Text("Application::OnEvent: %.3f", appstats.Application_OnEvent.AsMilliseconds());
+                ImGui::Text("Application::OnImGuiRender: %.3f", appstats.Application_OnImGuiRender.AsMilliseconds());
+                ImGui::Text("Window::OnUpdate: %.3f", appstats.Window_OnUpdate.AsMilliseconds());
 
                 UI::EndTreeNode();
             }

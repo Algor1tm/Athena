@@ -23,7 +23,7 @@ namespace Athena
 	class ViewportPanel;
 	class MenuBarPanel;
 	class SceneHierarchyPanel;
-	class EditorSettingsPanel;
+	class SettingsPanel;
 
 
 	class EditorLayer : public Layer
@@ -68,7 +68,7 @@ namespace Athena
 		Ref<ViewportPanel> m_MainViewport;
 		Ref<MenuBarPanel> m_MainMenuBar;
 		Ref<SceneHierarchyPanel> m_SceneHierarchy;
-		Ref<EditorSettingsPanel> m_EditorSettings;
+		Ref<SettingsPanel> m_EditorSettings;
 
 		enum class SceneState
 		{

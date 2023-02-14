@@ -54,6 +54,7 @@ namespace Athena
 	struct RendererData
 	{
 		std::deque<DrawCallInfo> RenderQueue;
+		int32 RenderQueueLimit = -1;
 
 		Ref<Framebuffer> MainFramebuffer;
 
@@ -65,6 +66,7 @@ namespace Athena
 		Ref<Shader> EquirectangularToCubemapShader;
 		Ref<Shader> ComputeIrradianceMapShader;
 		Ref<Shader> ComputePrefilterMapShader;
+		Ref<Shader> NormalsDebugShader;
 
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<Texture2D> BRDF_LUT;
@@ -80,6 +82,9 @@ namespace Athena
 		Ref<ConstantBuffer> MaterialConstantBuffer;
 		Ref<ShaderStorageBuffer> LightShaderStorageBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
+
+		Renderer::Statistics Stats;
+		DebugView CurrentDebugView = DebugView::NONE;
 	};
 
 	static RendererData s_Data;
@@ -109,6 +114,8 @@ namespace Athena
 		s_Data.EquirectangularToCubemapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/EquirectangularToCubemap");
 		s_Data.ComputeIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputeIrradianceMap");
 		s_Data.ComputePrefilterMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputePrefilterMap");
+
+		s_Data.NormalsDebugShader = Shader::Create(StaticVertex::GetLayout(), "Assets/Shaders/Debug/Normals");
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -163,7 +170,7 @@ namespace Athena
 		fbDesc.Height = height;
 		fbDesc.Samples = 1;
 		Ref<Framebuffer> framebuffer = Framebuffer::Create(fbDesc);
-		void *framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
+		void* framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
 		RenderCommand::BindFramebuffer(framebuffer);
 
 		ComputeBRDF_LUTShader->Bind();
@@ -185,7 +192,7 @@ namespace Athena
 		Renderer2D::Shutdown();
 		SceneRenderer::Shutdown();
 	}
-	
+
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
 		RenderCommand::SetViewport(0, 0, width, height);
@@ -200,10 +207,14 @@ namespace Athena
 		s_Data.SceneDataBuffer.CameraPosition = Math::AffineInverse(viewMatrix)[3];
 		s_Data.SceneDataBuffer.Exposure = s_Data.ActiveEnvironment->Exposure;
 	}
-	
+
 	void Renderer::EndScene()
 	{
+		Timer timer;
+
 		///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
+		Time start = timer.ElapsedTime();
+
 		if (!s_Data.RenderQueue.empty())
 		{
 			std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
@@ -222,13 +233,16 @@ namespace Athena
 
 			s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 
+			if (s_Data.RenderQueueLimit < 0)
+				s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
+			auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
 
 			auto iter = s_Data.RenderQueue.begin();
 			// Render Static Meshes
 			s_Data.PBR_StaticShader->Bind();
 
 			Ref<Material> lastMaterial = nullptr;
-			while (iter != s_Data.RenderQueue.end())
+			while (iter != end)
 			{
 				auto& info = *iter;
 
@@ -246,15 +260,16 @@ namespace Athena
 				}
 
 				RenderCommand::DrawTriangles(info.VertexBuffer);
+				s_Data.Stats.DrawCalls++;
 				iter++;
 			}
 
 			// Render Animated Meshes
-			if (iter != s_Data.RenderQueue.end())
+			if (iter != end)
 				s_Data.PBR_AnimShader->Bind();
 
 			Ref<Animator> lastAnimator;
-			while (iter != s_Data.RenderQueue.end())
+			while (iter != end)
 			{
 				auto& info = *iter;
 
@@ -275,11 +290,19 @@ namespace Athena
 				}
 
 				RenderCommand::DrawTriangles(info.VertexBuffer);
+				s_Data.Stats.DrawCalls++;
 				iter++;
 			}
 		}
+		s_Data.Stats.GeometryPass = timer.ElapsedTime() - start;
+
+		if (s_Data.CurrentDebugView != DebugView::NONE)
+		{
+			RenderDebugView(s_Data.CurrentDebugView);
+		}
 
 		///////////////////////////// SKYBOX RENDER PASS /////////////////////////////
+		start = timer.ElapsedTime();
 		if (s_Data.ActiveEnvironment->Skybox)
 		{
 			s_Data.SceneDataBuffer.SkyboxLOD = s_Data.ActiveEnvironment->SkyboxLOD;
@@ -295,7 +318,14 @@ namespace Athena
 
 			s_Data.SkyboxShader->Bind();
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
+			s_Data.Stats.DrawCalls++;
 		}
+		s_Data.Stats.SkyboxPass = timer.ElapsedTime() - start;
+
+		s_Data.Stats.GeometryCount += s_Data.RenderQueue.size();
+		s_Data.Stats.DirectionalLightsCount += s_Data.LightDataBuffer.DirectionalLightCount;
+		s_Data.Stats.PointLightsCount += s_Data.LightDataBuffer.PointLightCount;
+
 
 		s_Data.RenderQueue.clear();
 		s_Data.ActiveEnvironment = nullptr;
@@ -303,7 +333,7 @@ namespace Athena
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
 		s_Data.LightDataBuffer.PointLightCount = 0;
 	}
-	
+
 	void Renderer::BeginFrame()
 	{
 		RenderCommand::BindFramebuffer(s_Data.MainFramebuffer);
@@ -326,7 +356,7 @@ namespace Athena
 		s_Data.LightDataBuffer.DirectionalLightCount++;
 	}
 
-	void Renderer::SubmitLight(const PointLight& pointLight) 
+	void Renderer::SubmitLight(const PointLight& pointLight)
 	{
 		if (ShaderLimits::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
 		{
@@ -396,6 +426,8 @@ namespace Athena
 		s_Data.SkyboxShader->Reload();
 		s_Data.EquirectangularToCubemapShader->Reload();
 		s_Data.ComputeIrradianceMapShader->Reload();
+
+		s_Data.NormalsDebugShader->Reload();
 	}
 
 	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap)
@@ -419,7 +451,7 @@ namespace Athena
 		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 
 		Ref<Cubemap> skybox = Cubemap::Create(cubeMapDesc);
-		
+
 		Matrix4 captureProjection = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 10.0f);
 		Matrix4 captureViews[] =
 		{
@@ -489,7 +521,7 @@ namespace Athena
 		// Create prefilter map
 		width = 2048;
 		height = 2048;
-		
+
 		cubeMapDesc.Width = width;
 		cubeMapDesc.Height = height;
 		cubeMapDesc.Format = TextureFormat::RGB16F;
@@ -505,7 +537,7 @@ namespace Athena
 
 		for (uint32 mip = 0; mip < maxMipLevels; ++mip)
 		{
-			uint32 mipWidth  = width * Math::Pow(0.5f, (float)mip);
+			uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
 			uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
 
 			framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
@@ -531,5 +563,60 @@ namespace Athena
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
 		RenderCommand::UnBindFramebuffer();
+	}
+
+	void Renderer::RenderDebugView(DebugView view)
+	{
+		if (view == DebugView::NORMALS)
+		{
+			if (s_Data.RenderQueueLimit < 0)
+				s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
+			auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
+
+			s_Data.NormalsDebugShader->Bind();
+
+			Ref<Material> lastMaterial = nullptr;
+			for(auto iter = s_Data.RenderQueue.begin(); iter < end; ++iter)
+			{
+				auto& info = *iter;
+
+				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
+				s_Data.EntityDataBuffer.EntityID = info.EntityID;
+				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
+
+				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+				{
+					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+					lastMaterial = info.Material;
+				}
+
+				RenderCommand::DrawTriangles(info.VertexBuffer);
+				s_Data.Stats.DrawCalls++;
+			}
+		}
+	}
+
+
+	void Renderer::SetRenderQueueLimit(uint32 limit)
+	{
+		s_Data.RenderQueueLimit = limit;
+	}
+
+	void Renderer::SetDebugView(DebugView view)
+	{
+		s_Data.CurrentDebugView = view;
+	}
+
+	const Renderer::Statistics& Renderer::GetStatistics()
+	{
+		return s_Data.Stats;
+	}
+
+	void Renderer::ResetStats() 
+	{
+		s_Data.Stats.DrawCalls = 0;
+		s_Data.Stats.GeometryCount = 0;
+		s_Data.Stats.PointLightsCount = 0;
+		s_Data.Stats.DirectionalLightsCount = 0;
 	}
 }

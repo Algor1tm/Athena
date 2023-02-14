@@ -6,19 +6,17 @@
 
 #include <GLFW/glfw3.h>
 
-#include <intrin.h>
 
-
-namespace Athena
-{
 #ifdef ATN_PLATFORM_WINDOWS
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
 #include <commdlg.h>
+#include <intrin.h>
 
-
+namespace Athena
+{
 	static DWORD CountSetBits(ULONG_PTR bitMask)
 	{
 		DWORD LSHIFT = sizeof(ULONG_PTR) * 8 - 1;
@@ -106,7 +104,7 @@ namespace Athena
 
 		while (byteOffset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= returnLength)
 		{
-			if(ptr->Relationship == RelationProcessorCore)
+			if (ptr->Relationship == RelationProcessorCore)
 			{
 				processorCoreCount++;
 
@@ -174,9 +172,11 @@ namespace Athena
 
 		return {};
 	}
-
+}
 
 #else
+namespace Athena
+{
 	void Platform::GetSystemInfo(SystemInfo* info)
 	{
 		ATN_CORE_ERROR("Athena does not support 'Platform::GetSystemInfo(SystemInfo* info)' function on current platform");
@@ -198,5 +198,5 @@ namespace Athena
 		ATN_CORE_ERROR("Athena does not support 'FileDialogs::SaveFile(std::string_view filter)' function on current platform");
 		return{};
 	}
-#endif
 }
+#endif

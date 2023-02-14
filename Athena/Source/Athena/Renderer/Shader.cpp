@@ -1,7 +1,6 @@
 #include "Shader.h"
 
 #include "Athena/Platform/OpenGl/GLShader.h"
-#include "Athena/Platform/Direct3D/D3D11Shader.h"
 #include "Renderer.h"
 
 
@@ -17,7 +16,7 @@ namespace Athena
 	}
 
 
-	Ref<Shader> Shader::Create(const BufferLayout& layout, const FilePath& path)
+	Ref<Shader> Shader::Create(const FilePath& path)
 	{
 		FilePath stem = path;
 
@@ -25,8 +24,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLShader>(stem.concat(L".glsl")); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Shader>(layout, stem.concat(L".hlsl")); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -35,14 +32,12 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Shader> Shader::Create(const BufferLayout& layout, const String& name, const String& vertexSrc, const String& fragmentSrc)
+	Ref<Shader> Shader::Create(const String& name, const String& vertexSrc, const String& fragmentSrc)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLShader>(name, vertexSrc, fragmentSrc); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Shader>(layout, name, vertexSrc, fragmentSrc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -105,16 +100,16 @@ namespace Athena
 		Add(name, shader);
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const FilePath& path)
+	Ref<Shader> ShaderLibrary::Load(const FilePath& path)
 	{
-		auto shader = Shader::Create(layout, path);
+		auto shader = Shader::Create(path);
 		Add(shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const BufferLayout& layout, const String& name, const FilePath& path)
+	Ref<Shader> ShaderLibrary::Load(const String& name, const FilePath& path)
 	{
-		auto shader = Shader::Create(layout, path);
+		auto shader = Shader::Create(path);
 		Add(shader);
 		return shader;
 	}

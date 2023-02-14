@@ -33,8 +33,8 @@ namespace Athena
 		// Pass file without extension
 		//     if RendererAPI = Direct3D extension will be .hlsl
 		//     if RendererAPI = OpenGL extension will be .glsl
-		static Ref<Shader> Create(const BufferLayout& layout, const FilePath& path);
-		static Ref<Shader> Create(const BufferLayout& layout, const String& name, const String& vertexSrc, const String& fragmentSrc);
+		static Ref<Shader> Create(const FilePath& path);
+		static Ref<Shader> Create(const String& name, const String& vertexSrc, const String& fragmentSrc);
 
 		virtual ~Shader() = default;
 
@@ -68,8 +68,8 @@ namespace Athena
 	public:
 		void Add(const Ref<Shader>& shader);
 		void Add(const String& name, const Ref<Shader>& shader);
-		Ref<Shader> Load(const BufferLayout& layout, const FilePath& filepath);
-		Ref<Shader> Load(const BufferLayout& layout, const String& name, const FilePath& filepath);
+		Ref<Shader> Load(const FilePath& filepath);
+		Ref<Shader> Load(const String& name, const FilePath& filepath);
 
 		Ref<Shader> Get(const String& name);
 		bool Exists(const String& name);

@@ -19,12 +19,7 @@ namespace Athena
 	struct ApplicationDescription
 	{
 		WindowDescription WindowDesc;
-
-#ifdef ATN_PLATFORM_WINDOWS
-		RendererAPI::API API = RendererAPI::Direct3D;
-#else
 		RendererAPI::API API = RendererAPI::OpenGL;
-#endif
 		bool UseImGui = true;
 		bool UseConsole = true;
 		FilePath WorkingDirectory = FilePath();

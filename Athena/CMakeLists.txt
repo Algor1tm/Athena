@@ -1,5 +1,20 @@
 cmake_minimum_required (VERSION 3.16)
 
+function(AddLibrary TARGET_NAME)
+    add_subdirectory("${THIRD_PARTY_DIR}/${TARGET_NAME}")
+    EnableMultiProcessorCompilation(${TARGET_NAME})
+    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER Dependencies)
+
+    set_target_properties(${TARGET_NAME}
+	PROPERTIES
+	ARCHIVE_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}"
+	LIBRARY_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}"
+	RUNTIME_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}")
+
+    target_link_libraries(Athena PRIVATE ${TARGET_NAME})
+endfunction()
+
+
 project(Athena)
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS 
@@ -78,39 +93,25 @@ target_include_directories(Athena PRIVATE
 	${SPDLOG_INCLUDE_DIR}
 	${YAML_CPP_INCLUDE_DIR})
 
-target_link_libraries(Athena PRIVATE
-	Box2D
-	glad
-	GLFW
-	ImGui
-	pybind11::embed
-	spdlog
-	yaml-cpp
-)
 
-set_property(TARGET Box2D PROPERTY FOLDER Dependencies)
-set_property(TARGET glad PROPERTY FOLDER Dependencies)
-set_property(TARGET GLFW PROPERTY FOLDER Dependencies)
-set_property(TARGET ImGui PROPERTY FOLDER Dependencies)
-set_property(TARGET spdlog PROPERTY FOLDER Dependencies)
-set_property(TARGET yaml-cpp PROPERTY FOLDER Dependencies)
+AddLibrary("Box2D")
+AddLibrary(glad)
+AddLibrary(GLFW)
+AddLibrary(ImGui)
+AddLibrary(spdlog)
 
-EnableMultiProcessorCompilation(Box2D)
-EnableMultiProcessorCompilation(glad)
-EnableMultiProcessorCompilation(GLFW)
-EnableMultiProcessorCompilation(ImGui)
-EnableMultiProcessorCompilation(spdlog)
-EnableMultiProcessorCompilation(yaml-cpp)
-
+AddLibrary(yaml-cpp)
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
+
+add_subdirectory("${THIRD_PARTY_DIR}/pybind11")
+target_link_libraries(Athena PRIVATE pybind11::embed)
+
 
 # Windows specific code
 if(WIN32)
 	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
 
-	target_precompile_headers(Athena PRIVATE <Windows.h> <d3d11.h>)
-	target_link_libraries(Athena PRIVATE d3d11.lib)
-	target_link_libraries(Athena PRIVATE DXGI.lib)
+	target_link_libraries(Athena PRIVATE opengl32.lib)
 	target_compile_definitions(Athena PUBLIC ATN_WINDOWS)
 endif(WIN32)
 

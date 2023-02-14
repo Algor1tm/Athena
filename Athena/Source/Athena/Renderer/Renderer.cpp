@@ -6,7 +6,6 @@
 #include "Athena/Renderer/Renderer2D.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Vertex.h"
 
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
@@ -91,7 +90,7 @@ namespace Athena
 
 	void Renderer::Init(RendererAPI::API graphicsAPI)
 	{
-		RendererAPI::Init(graphicsAPI);
+		RendererAPI::SetAPI(graphicsAPI);
 		RenderCommand::Init();
 		Renderer2D::Init();
 		SceneRenderer::Init();
@@ -105,17 +104,16 @@ namespace Athena
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
 
 		s_Data.PBR_FSIncludeShader = IncludeShader::Create("Assets/Shaders/PBR_FS");
-		s_Data.PBR_StaticShader = Shader::Create(StaticVertex::GetLayout(), "Assets/Shaders/PBR_Static");
-		s_Data.PBR_AnimShader = Shader::Create(AnimVertex::GetLayout(), "Assets/Shaders/PBR_Anim");
+		s_Data.PBR_StaticShader = Shader::Create("Assets/Shaders/PBR_Static");
+		s_Data.PBR_AnimShader = Shader::Create("Assets/Shaders/PBR_Anim");
 
-		BufferLayout cubeVBLayout = { { ShaderDataType::Float3, "a_Position" } };
 
-		s_Data.SkyboxShader = Shader::Create(cubeVBLayout, "Assets/Shaders/Skybox");
-		s_Data.EquirectangularToCubemapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/EquirectangularToCubemap");
-		s_Data.ComputeIrradianceMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputeIrradianceMap");
-		s_Data.ComputePrefilterMapShader = Shader::Create(cubeVBLayout, "Assets/Shaders/ComputePrefilterMap");
+		s_Data.SkyboxShader = Shader::Create("Assets/Shaders/Skybox");
+		s_Data.EquirectangularToCubemapShader = Shader::Create("Assets/Shaders/EquirectangularToCubemap");
+		s_Data.ComputeIrradianceMapShader = Shader::Create("Assets/Shaders/ComputeIrradianceMap");
+		s_Data.ComputePrefilterMapShader = Shader::Create("Assets/Shaders/ComputePrefilterMap");
 
-		s_Data.NormalsDebugShader = Shader::Create(StaticVertex::GetLayout(), "Assets/Shaders/Debug/Normals");
+		s_Data.NormalsDebugShader = Shader::Create("Assets/Shaders/Debug/Normals");
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -123,7 +121,7 @@ namespace Athena
 		VertexBufferDescription cubeVBdesc;
 		cubeVBdesc.Data = cubeVertices;
 		cubeVBdesc.Size = sizeof(cubeVertices);
-		cubeVBdesc.Layout = cubeVBLayout;
+		cubeVBdesc.Layout = { { ShaderDataType::Float3, "a_Position" } };
 		cubeVBdesc.IndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
 		cubeVBdesc.Usage = BufferUsage::STATIC;
 
@@ -147,8 +145,7 @@ namespace Athena
 
 		s_Data.BRDF_LUT = Texture2D::Create(brdf_lutDesc);
 
-		BufferLayout quadVBLayout = { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
-		Ref<Shader> ComputeBRDF_LUTShader = Shader::Create(quadVBLayout, "Assets/Shaders/ComputeBRDF_LUT");
+		Ref<Shader> ComputeBRDF_LUTShader = Shader::Create("Assets/Shaders/ComputeBRDF_LUT");
 
 		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
 		float quadVertices[] = { -1.f, -1.f, 0.f,   0.f, 0.f,
@@ -159,7 +156,7 @@ namespace Athena
 		VertexBufferDescription desc;
 		desc.Data = quadVertices;
 		desc.Size = sizeof(quadVertices);
-		desc.Layout = quadVBLayout;
+		desc.Layout = { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };;
 		desc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
 		desc.Usage = BufferUsage::STATIC;
 
@@ -171,7 +168,7 @@ namespace Athena
 		fbDesc.Samples = 1;
 		Ref<Framebuffer> framebuffer = Framebuffer::Create(fbDesc);
 		void* framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
-		RenderCommand::BindFramebuffer(framebuffer);
+		framebuffer->Bind();
 
 		ComputeBRDF_LUTShader->Bind();
 
@@ -182,7 +179,7 @@ namespace Athena
 		RenderCommand::DrawTriangles(quadVertexBuffer);
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-		RenderCommand::UnBindFramebuffer();
+		framebuffer->UnBind();
 
 		ComputeBRDF_LUTShader->UnBind();
 	}
@@ -336,12 +333,13 @@ namespace Athena
 
 	void Renderer::BeginFrame()
 	{
-		RenderCommand::BindFramebuffer(s_Data.MainFramebuffer);
+		s_Data.MainFramebuffer->Bind();
 	}
 
 	void Renderer::EndFrame()
 	{
-		RenderCommand::UnBindFramebuffer();
+		s_Data.MainFramebuffer->ResolveMutlisampling();
+		s_Data.MainFramebuffer->UnBind();
 	}
 
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
@@ -463,7 +461,7 @@ namespace Athena
 		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector3(0.0f, -1.0f,  0.0f))
 		};
 
-		RenderCommand::BindFramebuffer(framebuffer);
+		framebuffer->Bind();
 
 		// Convert Equirectangular 2D texture to Cubemap
 		s_Data.EquirectangularToCubemapShader->Bind();
@@ -562,7 +560,7 @@ namespace Athena
 		}
 
 		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-		RenderCommand::UnBindFramebuffer();
+		framebuffer->UnBind();
 	}
 
 	void Renderer::RenderDebugView(DebugView view)

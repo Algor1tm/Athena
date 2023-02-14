@@ -19,14 +19,15 @@ namespace Athena
 
 		virtual void Resize(uint32 width, uint32 height) override;
 
+		virtual void Bind() override;
+		virtual void UnBind() override;
+
 		virtual const FramebufferDescription& GetDescription() const override { return m_Description; }
 		virtual void* GetColorAttachmentRendererID(uint32 index = 0) const override;
 
 		virtual int ReadPixel(uint32 attachmentIndex, int x, int y) override;
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) override;
 		virtual void ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) override;
-
-		virtual void ClearColorAndDepth(const LinearColor& color) override;
 
 		virtual void ResolveMutlisampling() override;
 

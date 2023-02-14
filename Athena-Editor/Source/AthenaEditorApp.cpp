@@ -31,12 +31,7 @@ namespace Athena
 		appdesc.WindowDesc.VSync = true;
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
-
-#ifdef FORCE_GLFW
 		appdesc.API = RendererAPI::OpenGL;
-#else
-		appdesc.API = RendererAPI::Direct3D;
-#endif
 		appdesc.UseConsole = true;
 		appdesc.UseImGui = true;
 		appdesc.WorkingDirectory = FilePath();

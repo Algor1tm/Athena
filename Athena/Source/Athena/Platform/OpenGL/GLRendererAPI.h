@@ -16,9 +16,6 @@ namespace Athena
 		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexArray, uint32 indexCount = 0) override;
 		virtual void DrawLines(const Ref<VertexBuffer>& vertexArray, uint32 vertexCount = 0) override;
 
-		virtual void BindFramebuffer(const Ref<Framebuffer>& framebuffer) override;
-		virtual void UnBindFramebuffer() override;
-
 	private:
 		Ref<Framebuffer> m_OutputFramebuffer;
 	};

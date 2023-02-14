@@ -34,16 +34,6 @@ namespace Athena
 			s_RendererAPI->DrawLines(vertexBuffer, vertexCount);
 		}
 
-		static inline void BindFramebuffer(const Ref<Framebuffer>& framebuffer)
-		{
-			s_RendererAPI->BindFramebuffer(framebuffer);
-		}
-
-		static inline void UnBindFramebuffer()
-		{
-			s_RendererAPI->UnBindFramebuffer();
-		}
-
 	private:
 		static Scope<RendererAPI> s_RendererAPI;
 	};

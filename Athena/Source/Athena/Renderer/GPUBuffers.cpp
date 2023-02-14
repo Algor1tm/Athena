@@ -1,7 +1,6 @@
 #include "GPUBuffers.h"
 
 #include "Athena/Platform/OpenGL/GLBuffers.h"
-#include "Athena/Platform/Direct3D/D3D11Buffers.h"
 
 #include "Athena/Renderer/Renderer.h"
 
@@ -14,8 +13,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLIndexBuffer>(vertices, count); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11IndexBuffer>(vertices, count); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -33,8 +30,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLVertexBuffer>(desc); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11VertexBuffer>(desc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -50,8 +45,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLUniformBuffer>(size, binding); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11ConstantBuffer>(size, binding);
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

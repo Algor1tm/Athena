@@ -4,7 +4,7 @@
 #include "SandBox2D.h"
 
 #include "Athena/Core/PlatformUtils.h"
-#include "Athena/Renderer/ConstantBuffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 #include <ImGui/imgui.h>
 
@@ -36,12 +36,7 @@ namespace Athena
 		appdesc.WindowDesc.VSync = true;
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
-
-#ifdef FORCE_GLFW
 		appdesc.API = RendererAPI::OpenGL;
-#else
-		appdesc.API = RendererAPI::Direct3D;
-#endif
 		appdesc.UseImGui = false;
 		appdesc.UseConsole = true;
 		appdesc.WorkingDirectory = "../Athena-Editor";

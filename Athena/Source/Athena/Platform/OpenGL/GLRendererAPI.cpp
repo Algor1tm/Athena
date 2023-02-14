@@ -57,15 +57,8 @@ namespace Athena
 
 	void GLRendererAPI::Clear(const LinearColor& color)
 	{
-		if (m_OutputFramebuffer != nullptr)
-		{
-			m_OutputFramebuffer->ClearColorAndDepth(color);
-		}
-		else
-		{
-			glClearColor(color.r, color.g, color.b, color.a);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
+		glClearColor(color.r, color.g, color.b, color.a);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
 	void GLRendererAPI::DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount)
@@ -79,17 +72,5 @@ namespace Athena
 	{
 		vertexBuffer->Bind();
 		glDrawArrays(GL_LINES, 0, vertexCount);
-	}
-
-	void GLRendererAPI::BindFramebuffer(const Ref<Framebuffer>& framebuffer)
-	{
-		m_OutputFramebuffer = framebuffer;
-	}
-
-	void GLRendererAPI::UnBindFramebuffer()
-	{
-		m_OutputFramebuffer->ResolveMutlisampling();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		m_OutputFramebuffer = nullptr;
 	}
 }

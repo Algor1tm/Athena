@@ -1,6 +1,5 @@
 #include "RenderCommand.h"
 
-#include "Athena/Platform/Direct3D/D3D11RendererAPI.h"
 #include "Athena/Platform/OpenGL/GLRendererAPI.h"
 
 #include "Renderer.h"
@@ -15,8 +14,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			s_RendererAPI = CreateScope<GLRendererAPI>(); break;
-		case RendererAPI::API::Direct3D:
-			s_RendererAPI = CreateScope<D3D11RendererAPI>(); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

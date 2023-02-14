@@ -3,7 +3,6 @@
 #include "Athena/Core/Application.h"
 
 #include "Athena/Platform/OpenGL/GLImGuiLayerImpl.h"
-#include "Athena/Platform/Direct3D/D3D11ImGuiLayerImpl.h"
 
 #include "Athena/Renderer/Renderer.h"
 
@@ -32,8 +31,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			imguiLayer->m_ImGuiImpl = CreateScope<GLImGuiLayerImpl>(); break;
-		case RendererAPI::API::Direct3D:
-			imguiLayer->m_ImGuiImpl = CreateScope<D3D11ImGuiLayerImpl>(); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); break;
 		default:

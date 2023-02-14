@@ -1,10 +1,11 @@
 #include "Renderer2D.h"
 
 #include "Athena/Math/Transforms.h"
-#include "RenderCommand.h"
-#include "Shader.h"
-#include "GPUBuffers.h"
-#include "Renderer.h"
+
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/RenderCommand.h"
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Shader.h"
 
 
 namespace Athena
@@ -101,7 +102,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID"     } 
 		};
 
-		s_Data.QuadShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Quad");
+		s_Data.QuadShader = Shader::Create("Assets/Shaders/Renderer2D/Quad");
 
 		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxQuadVertices];
 
@@ -142,7 +143,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID"  } 
 		};
 
-		s_Data.CircleShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Circle");
+		s_Data.CircleShader = Shader::Create("Assets/Shaders/Renderer2D/Circle");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
@@ -162,7 +163,7 @@ namespace Athena
 			{ ShaderDataType::Int,    "a_EntityID" }
 		};
 
-		s_Data.LineShader = Shader::Create(layout, "Assets/Shaders/Renderer2D/Line");
+		s_Data.LineShader = Shader::Create("Assets/Shaders/Renderer2D/Line");
 
 		vBufferDesc.Data = nullptr;
 		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);

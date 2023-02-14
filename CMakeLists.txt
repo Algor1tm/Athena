@@ -73,15 +73,6 @@ endif(WIN32)
 
 include(Dependencies.cmake)
 
-# ThirdParty
-add_subdirectory("${THIRD_PARTY_DIR}/Box2D")
-add_subdirectory("${THIRD_PARTY_DIR}/glad")
-add_subdirectory("${THIRD_PARTY_DIR}/GLFW")
-add_subdirectory("${THIRD_PARTY_DIR}/ImGui")
-add_subdirectory("${THIRD_PARTY_DIR}/pybind11")
-add_subdirectory("${THIRD_PARTY_DIR}/spdlog")
-add_subdirectory("${THIRD_PARTY_DIR}/yaml-cpp")
-
 add_subdirectory("Athena")
 add_subdirectory("Athena-Editor")
 add_subdirectory("SandBox")

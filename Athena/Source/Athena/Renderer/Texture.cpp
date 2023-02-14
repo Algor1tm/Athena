@@ -3,7 +3,6 @@
 #include "Athena/Core/FileSystem.h"
 
 #include "Athena/Platform/OpenGL/GLTexture2D.h"
-#include "Athena/Platform/Direct3D/D3D11Texture2D.h"
 #include "Athena/Platform/OpenGL/GLCubemap.h"
 
 #include "Athena/Renderer/Renderer.h"
@@ -22,8 +21,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLTexture2D>(desc); break;
-		case RendererAPI::API::Direct3D:
-			return CreateRef<D3D11Texture2D>(desc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -89,8 +86,6 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLCubemap>(desc); break;
-		//case RendererAPI::API::Direct3D:
-		//	return CreateRef<D3D11Cubemap>(path); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

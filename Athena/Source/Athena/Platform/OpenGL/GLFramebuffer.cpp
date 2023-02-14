@@ -104,15 +104,26 @@ namespace Athena
 		Recreate();
 	}
 
+	void GLFramebuffer::Bind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
+		glViewport(0, 0, m_Description.Width, m_Description.Height);
+	}
+
+	void GLFramebuffer::UnBind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	void* GLFramebuffer::GetColorAttachmentRendererID(uint32 index) const
 	{ 
 		if (IsMultisample())
 		{
-			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "subscript out of range");
+			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "Subscript out of range");
 			return reinterpret_cast<void*>((uint64)m_ColorAttachmentsResolved[index]);
 		}
 
-		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "subscript out of range");
+		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "Subscript out of range");
 		return reinterpret_cast<void*>((uint64)m_ColorAttachments[index]); 
 	}
 
@@ -136,15 +147,6 @@ namespace Athena
 		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
 		
 		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, TextureFormatToGLenum(desc.Format), GL_INT, &value);
-	}
-
-	void GLFramebuffer::ClearColorAndDepth(const LinearColor& color)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
-		glViewport(0, 0, m_Description.Width, m_Description.Height);
-
-		glClearColor(color.r, color.g, color.b, color.a);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
 	void GLFramebuffer::DeleteAttachments()

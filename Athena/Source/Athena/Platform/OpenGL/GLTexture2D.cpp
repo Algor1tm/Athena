@@ -35,6 +35,11 @@ namespace Athena
 		glBindTextureUnit(slot, m_GLRendererID);
 	}
 
+	void GLTexture2D::BindAsImage(uint32 slot, uint32 level) 
+	{
+		glBindImageTexture(slot, m_RendererID, level, GL_FALSE, 0, GL_WRITE_ONLY, m_InternalFormat);
+	}
+
 	void GLTexture2D::SetData(const void* data, uint32 size)
 	{
 		uint32 bpp = 0;

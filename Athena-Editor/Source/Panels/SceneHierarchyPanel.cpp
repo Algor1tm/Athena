@@ -6,6 +6,7 @@
 
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Scene/Components.h"
 
@@ -163,7 +164,7 @@ namespace Athena
 						if (skybox)
 						{
 							const FilePath& envPath = skybox->GetFilePath();
-							label = !envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+							label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
 						}
 						else
 						{
@@ -182,7 +183,7 @@ namespace Athena
 						}
 						return false;
 					});
-				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, 10); });
+				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, ShaderLimits::MAX_SKYBOX_MAP_LOD - 1); });
 				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 7); });
 
 				UI::EndDrawControllers();
@@ -921,8 +922,7 @@ namespace Athena
 				{
 					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
 					UI::DrawController("Direction", height, [&lightComponent]() { return ImGui::DragFloat3("##Direction", lightComponent.Direction.Data(), 0.05f); });
-					UI::DrawController("Intensity", height, [&lightComponent]()
-						{ ImGui::DragFloat("##Intensity", &lightComponent.Intensity); Math::Clamp(lightComponent.Intensity, 0.f, lightComponent.Intensity); return true; });
+					UI::DrawController("Intensity", height, [&lightComponent]() { return ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f); });
 
 					UI::EndDrawControllers();
 				}
@@ -935,14 +935,11 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
-					UI::DrawController("Intensity", height, [&lightComponent]() 
-						{ ImGui::DragFloat("##Intensity", &lightComponent.Intensity); Math::Clamp(lightComponent.Intensity, 0.f, lightComponent.Intensity); return true; });
+					UI::DrawController("Intensity", height, [&lightComponent]() { return ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 1.f, 0.f, 10000.f);  });
 
-					UI::DrawController("Radius", height, [&lightComponent]() 
-						{ ImGui::DragFloat("##Radius", &lightComponent.Radius, 5.f); Math::Clamp(lightComponent.Radius, 0.f, lightComponent.Radius); return true; });
+					UI::DrawController("Radius", height, [&lightComponent]() {  return ImGui::DragFloat("##Radius", &lightComponent.Radius, 5.f, 0.f, 10000.f); });
 
-					UI::DrawController("FallOff", height, [&lightComponent]() 
-						{ return ImGui::DragFloat("##FallOff", &lightComponent.FallOff, 0.1f); Math::Clamp(lightComponent.FallOff, 0.f, lightComponent.FallOff); return true; });
+					UI::DrawController("FallOff", height, [&lightComponent]() {  return ImGui::DragFloat("##FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);  });
 
 					UI::EndDrawControllers();
 				}

@@ -17,6 +17,7 @@ namespace Athena
 		{
 		case DebugView::NONE: return "None";
 		case DebugView::NORMALS: return "Normals";
+		case DebugView::WIREFRAME: return "Wireframe";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -104,7 +105,7 @@ namespace Athena
 				ImGui::PopStyleVar();
 				if (ImGui::BeginCombo("##DebugView", DebugViewToString(m_CurrentDebugView).data()))
 				{
-					for (uint32 i = 0; i <= (uint32)DebugView::NORMALS; ++i)
+					for (uint32 i = 0; i <= (uint32)DebugView::WIREFRAME; ++i)
 					{
 						DebugView view = (DebugView)i;
 

@@ -17,6 +17,38 @@
 
 namespace Athena
 {
+	enum ShaderEnum
+	{
+		PBR_STATIC,
+		PBR_ANIM,
+		SKYBOX,
+
+		COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP,
+		COMPUTE_IRRADIANCE_MAP,
+		COMPUTE_PREFILTER_MAP,
+
+		DEBUG_NORMALS_STATIC,
+		DEBUG_NORMALS_ANIM,
+		DEBUG_WIREFRAME_STATIC,
+		DEBUG_WIREFRAME_ANIM
+	};
+
+	static std::unordered_map<ShaderEnum, String> s_ShaderMap
+	{
+		{ PBR_STATIC, "PBR_STATIC" },
+		{ PBR_ANIM, "PBR_ANIM" },
+		{ SKYBOX, "SKYBOX" },
+		  
+		{ COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP, "COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP" },
+		{ COMPUTE_IRRADIANCE_MAP, "COMPUTE_IRRADIANCE_MAP" },
+		{ COMPUTE_PREFILTER_MAP, "COMPUTE_PREFILTER_MAP" },
+		  
+		{ DEBUG_NORMALS_STATIC, "DEBUG_NORMALS_STATIC" },
+		{ DEBUG_NORMALS_ANIM, "DEBUG_NORMALS_ANIM" },
+		{ DEBUG_WIREFRAME_STATIC, "DEBUG_WIREFRAME_STATIC" },
+		{ DEBUG_WIREFRAME_ANIM, "DEBUG_WIREFRAME_ANIM" }
+	};
+
 	struct DrawCallInfo
 	{
 		Ref<VertexBuffer> VertexBuffer;
@@ -57,16 +89,6 @@ namespace Athena
 
 		Ref<Framebuffer> MainFramebuffer;
 
-		Ref<IncludeShader> PBR_FSIncludeShader;
-		Ref<Shader> PBR_StaticShader;
-		Ref<Shader> PBR_AnimShader;
-
-		Ref<Shader> SkyboxShader;
-		Ref<Shader> EquirectangularToCubemapShader;
-		Ref<Shader> ComputeIrradianceMapShader;
-		Ref<Shader> ComputePrefilterMapShader;
-		Ref<Shader> NormalsDebugShader;
-
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<Texture2D> BRDF_LUT;
 
@@ -84,9 +106,80 @@ namespace Athena
 
 		Renderer::Statistics Stats;
 		DebugView CurrentDebugView = DebugView::NONE;
+
+		ShaderLibrary ShaderPack;
+		void BindShader(ShaderEnum shader) { ShaderPack.Get<Shader>(s_ShaderMap[shader])->Bind(); }
+
+		const uint32 SkyboxSize = 2048;
+		const uint32 IrradianceMapSize = 128;
+		const uint32 BRDF_LUTSize = 512;
 	};
 
 	static RendererData s_Data;
+
+	static void RenderGeometryPass(ShaderEnum staticShader, ShaderEnum animShader)
+	{
+		if (s_Data.RenderQueueLimit < 0)
+			s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
+		auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
+
+		auto iter = s_Data.RenderQueue.begin();
+		// Render Static Meshes
+		s_Data.BindShader(staticShader);
+
+		Ref<Material> lastMaterial = nullptr;
+		while (iter != end)
+		{
+			auto& info = *iter;
+
+			if (info.Animator != nullptr)
+				break;
+
+			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
+			s_Data.EntityDataBuffer.EntityID = info.EntityID;
+			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
+
+			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+			{
+				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+				lastMaterial = info.Material;
+			}
+
+			RenderCommand::DrawTriangles(info.VertexBuffer);
+			s_Data.Stats.DrawCalls++;
+			iter++;
+		}
+
+		// Render Animated Meshes
+		if (iter != end)
+			s_Data.BindShader(animShader);
+
+		Ref<Animator> lastAnimator;
+		while (iter != end)
+		{
+			auto& info = *iter;
+
+			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
+			s_Data.EntityDataBuffer.EntityID = info.EntityID;
+			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
+
+			if (lastAnimator == nullptr || lastAnimator != info.Animator)
+			{
+				const auto& boneTransforms = info.Animator->GetBoneTransforms();
+				s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
+			}
+
+			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+			{
+				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
+				lastMaterial = info.Material;
+			}
+
+			RenderCommand::DrawTriangles(info.VertexBuffer);
+			s_Data.Stats.DrawCalls++;
+			iter++;
+		}
+	}
 
 	void Renderer::Init(RendererAPI::API graphicsAPI)
 	{
@@ -103,17 +196,19 @@ namespace Athena
 
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
 
-		s_Data.PBR_FSIncludeShader = IncludeShader::Create("Assets/Shaders/PBR_FS");
-		s_Data.PBR_StaticShader = Shader::Create("Assets/Shaders/PBR_Static");
-		s_Data.PBR_AnimShader = Shader::Create("Assets/Shaders/PBR_Anim");
+		s_Data.ShaderPack.Load<IncludeShader>("PBR_FS", "Assets/Shaders/PBR_FS");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR_STATIC], "Assets/Shaders/PBR_Static");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR_ANIM], "Assets/Shaders/PBR_Anim");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
 
-
-		s_Data.SkyboxShader = Shader::Create("Assets/Shaders/Skybox");
-		s_Data.EquirectangularToCubemapShader = Shader::Create("Assets/Shaders/EquirectangularToCubemap");
-		s_Data.ComputeIrradianceMapShader = Shader::Create("Assets/Shaders/ComputeIrradianceMap");
-		s_Data.ComputePrefilterMapShader = Shader::Create("Assets/Shaders/ComputePrefilterMap");
-
-		s_Data.NormalsDebugShader = Shader::Create("Assets/Shaders/Debug/Normals");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/ComputeEquirectangularToCubemap");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_IRRADIANCE_MAP], "Assets/Shaders/ComputeIrradianceMap");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP], "Assets/Shaders/ComputePrefilteredMap");
+							  
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS_STATIC], "Assets/Shaders/Debug/Normals_Static");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS_ANIM], "Assets/Shaders/Debug/Normals_Anim");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME_STATIC], "Assets/Shaders/Debug/Wireframe_Static");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME_ANIM], "Assets/Shaders/Debug/Wireframe_Anim");
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -131,11 +226,11 @@ namespace Athena
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
-		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * MAX_NUM_BONES, BufferBinder::BONES_DATA);
+		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderLimits::MAX_NUM_BONES, BufferBinder::BONES_DATA);
 
-		// Create BRDF_LUT
-		uint32 width = 512;
-		uint32 height = 512;
+		// Compute BRDF_LUT
+		uint32 width = s_Data.BRDF_LUTSize;
+		uint32 height = s_Data.BRDF_LUTSize;
 
 		Texture2DDescription brdf_lutDesc;
 		brdf_lutDesc.Width = width;
@@ -145,41 +240,11 @@ namespace Athena
 
 		s_Data.BRDF_LUT = Texture2D::Create(brdf_lutDesc);
 
-		Ref<Shader> ComputeBRDF_LUTShader = Shader::Create("Assets/Shaders/ComputeBRDF_LUT");
-
-		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
-		float quadVertices[] = { -1.f, -1.f, 0.f,   0.f, 0.f,
-								  1.f, -1.f, 0.f,	1.f, 0.f,
-								  1.f,  1.f, 0.f,	1.f, 1.f,
-								 -1.f,  1.f, 0.f,   0.f, 1.f };
-
-		VertexBufferDescription desc;
-		desc.Data = quadVertices;
-		desc.Size = sizeof(quadVertices);
-		desc.Layout = { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };;
-		desc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
-		desc.Usage = BufferUsage::STATIC;
-
-		Ref<VertexBuffer> quadVertexBuffer = VertexBuffer::Create(desc);
-
-		fbDesc.Attachments = { TextureFormat::RG16F, TextureFormat::DEPTH32 };
-		fbDesc.Width = width;
-		fbDesc.Height = height;
-		fbDesc.Samples = 1;
-		Ref<Framebuffer> framebuffer = Framebuffer::Create(fbDesc);
-		void* framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
-		framebuffer->Bind();
-
+		Ref<ComputeShader> ComputeBRDF_LUTShader = ComputeShader::Create("Assets/Shaders/ComputeBRDF_LUT");
 		ComputeBRDF_LUTShader->Bind();
 
-		RenderCommand::SetViewport(0, 0, width, height);
-
-		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, s_Data.BRDF_LUT->GetRendererID());
-		RenderCommand::Clear({ 1, 1, 1, 1 });
-		RenderCommand::DrawTriangles(quadVertexBuffer);
-
-		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-		framebuffer->UnBind();
+		s_Data.BRDF_LUT->BindAsImage();
+		ComputeBRDF_LUTShader->Execute(width, height);
 
 		ComputeBRDF_LUTShader->UnBind();
 	}
@@ -230,69 +295,11 @@ namespace Athena
 
 			s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 
-			if (s_Data.RenderQueueLimit < 0)
-				s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
-			auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
-
-			auto iter = s_Data.RenderQueue.begin();
-			// Render Static Meshes
-			s_Data.PBR_StaticShader->Bind();
-
-			Ref<Material> lastMaterial = nullptr;
-			while (iter != end)
-			{
-				auto& info = *iter;
-
-				if (info.Animator != nullptr)
-					break;
-
-				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
-				s_Data.EntityDataBuffer.EntityID = info.EntityID;
-				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
-
-				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-				{
-					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-					lastMaterial = info.Material;
-				}
-
-				RenderCommand::DrawTriangles(info.VertexBuffer);
-				s_Data.Stats.DrawCalls++;
-				iter++;
-			}
-
-			// Render Animated Meshes
-			if (iter != end)
-				s_Data.PBR_AnimShader->Bind();
-
-			Ref<Animator> lastAnimator;
-			while (iter != end)
-			{
-				auto& info = *iter;
-
-				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
-				s_Data.EntityDataBuffer.EntityID = info.EntityID;
-				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
-
-				if (lastAnimator == nullptr || lastAnimator != info.Animator)
-				{
-					const auto& boneTransforms = info.Animator->GetBoneTransforms();
-					s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
-				}
-
-				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-				{
-					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-					lastMaterial = info.Material;
-				}
-
-				RenderCommand::DrawTriangles(info.VertexBuffer);
-				s_Data.Stats.DrawCalls++;
-				iter++;
-			}
+			RenderGeometryPass(PBR_STATIC, PBR_ANIM);
 		}
 		s_Data.Stats.GeometryPass = timer.ElapsedTime() - start;
 
+		///////////////////////////// DEBUG VIEW /////////////////////////////
 		if (s_Data.CurrentDebugView != DebugView::NONE)
 		{
 			RenderDebugView(s_Data.CurrentDebugView);
@@ -313,7 +320,7 @@ namespace Athena
 
 			s_Data.ActiveEnvironment->Skybox->Bind();
 
-			s_Data.SkyboxShader->Bind();
+			s_Data.BindShader(SKYBOX);
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 			s_Data.Stats.DrawCalls++;
 		}
@@ -408,7 +415,7 @@ namespace Athena
 		RenderCommand::Clear(color);
 	}
 
-	Ref<Framebuffer> Renderer::GetFramebuffer()
+	Ref<Framebuffer> Renderer::GetMainFramebuffer()
 	{
 		return s_Data.MainFramebuffer;
 	}
@@ -417,183 +424,103 @@ namespace Athena
 	{
 		Renderer2D::ReloadShaders();
 
-		s_Data.PBR_FSIncludeShader->Reload();
-		s_Data.PBR_StaticShader->Reload();
-		s_Data.PBR_AnimShader->Reload();
-
-		s_Data.SkyboxShader->Reload();
-		s_Data.EquirectangularToCubemapShader->Reload();
-		s_Data.ComputeIrradianceMapShader->Reload();
-
-		s_Data.NormalsDebugShader->Reload();
+		s_Data.ShaderPack.Reload();
 	}
 
 	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap)
 	{
-		uint32 width = 2048;
-		uint32 height = 2048;
-
-		FramebufferDescription fbDesc;
-		fbDesc.Attachments = { TextureFormat::RGB16F, TextureFormat::DEPTH32 };
-		fbDesc.Width = width;
-		fbDesc.Height = height;
-		fbDesc.Samples = 1;
-
-		Ref<Framebuffer> framebuffer = Framebuffer::Create(fbDesc);
-		void* framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
-
-		CubemapDescription cubeMapDesc;
-		cubeMapDesc.Width = width;
-		cubeMapDesc.Height = height;
-		cubeMapDesc.Format = TextureFormat::RGB16F;
-		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-
-		Ref<Cubemap> skybox = Cubemap::Create(cubeMapDesc);
-
-		Matrix4 captureProjection = Math::Perspective(Math::Radians(90.0f), 1.0f, 0.1f, 10.0f);
-		Matrix4 captureViews[] =
+		// Convert EquirectangularHDRMap to Cubemap
+		Ref<Cubemap> skybox;
 		{
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f,  0.0f,  0.0f), Vector3(0.0f, -1.0f,  0.0f)),
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f,  0.0f), Vector3(0.0f, -1.0f,  0.0f)),
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f,  1.0f,  0.0f), Vector3(0.0f,  0.0f,  1.0f)),
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, -1.0f,  0.0f), Vector3(0.0f,  0.0f, -1.0f)),
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f,  0.0f,  1.0f), Vector3(0.0f, -1.0f,  0.0f)),
-		   Math::LookAt(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f,  0.0f, -1.0f), Vector3(0.0f, -1.0f,  0.0f))
-		};
+			uint32 width = s_Data.SkyboxSize;
+			uint32 height = s_Data.SkyboxSize;
 
-		framebuffer->Bind();
+			CubemapDescription cubeMapDesc;
+			cubeMapDesc.Width = width;
+			cubeMapDesc.Height = height;
+			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
+			cubeMapDesc.MinFilter = TextureFilter::LINEAR;
 
-		// Convert Equirectangular 2D texture to Cubemap
-		s_Data.EquirectangularToCubemapShader->Bind();
-		equirectangularHDRMap->Bind();
+			skybox = Cubemap::Create(cubeMapDesc);
 
-		s_Data.SceneDataBuffer.ProjectionMatrix = captureProjection;
+			equirectangularHDRMap->Bind();
+			skybox->BindAsImage(1);
 
-		RenderCommand::SetViewport(0, 0, width, height);
-		for (uint32 i = 0; i < 6; ++i)
-		{
-			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+			auto equirectangularToCubeMap = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP]);
+			equirectangularToCubeMap->Bind();
+			equirectangularToCubeMap->Execute(width, height, 6);
 
-			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
-
-			framebuffer->ReplaceAttachment(0, target, skybox->GetRendererID());
-			RenderCommand::Clear({ 1, 1, 1, 1 });
-
-			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
-		}
-		skybox->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
-
-		// Create Irradiance map
-		width = 128;
-		height = 128;
-
-		cubeMapDesc.Width = width;
-		cubeMapDesc.Height = height;
-		cubeMapDesc.Format = TextureFormat::RGB16F;
-		cubeMapDesc.MinFilter = TextureFilter::LINEAR;
-
-		irradianceMap = Cubemap::Create(cubeMapDesc);
-
-		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-		framebuffer->Resize(width, height);
-		framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
-
-		s_Data.ComputeIrradianceMapShader->Bind();
-		skybox->Bind();
-
-		RenderCommand::SetViewport(0, 0, width, height);
-		for (uint32 i = 0; i < 6; ++i)
-		{
-			s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
-
-			TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
-
-			framebuffer->ReplaceAttachment(0, target, irradianceMap->GetRendererID());
-			RenderCommand::Clear({ 1, 1, 1, 1 });
-
-			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
+			skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
+			skybox->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
 		}
 
-		// Create prefilter map
-		width = 2048;
-		height = 2048;
-
-		cubeMapDesc.Width = width;
-		cubeMapDesc.Height = height;
-		cubeMapDesc.Format = TextureFormat::RGB16F;
-		cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-		prefilteredMap = Cubemap::Create(cubeMapDesc);
-
-		const uint32 maxMipLevels = 11;
-
-		prefilteredMap->GenerateMipMap(maxMipLevels);
-
-		s_Data.ComputePrefilterMapShader->Bind();
-		skybox->Bind();
-
-		for (uint32 mip = 0; mip < maxMipLevels; ++mip)
+		// Compute Irradiance Map
 		{
-			uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
-			uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
+			uint32 width = s_Data.IrradianceMapSize;
+			uint32 height = s_Data.IrradianceMapSize;
 
-			framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-			framebuffer->Resize(mipWidth, mipHeight);
-			framebufferTexId = framebuffer->GetColorAttachmentRendererID(0);
+			CubemapDescription cubeMapDesc;
+			cubeMapDesc.Width = width;
+			cubeMapDesc.Height = height;
+			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
+			cubeMapDesc.MinFilter = TextureFilter::LINEAR;
 
-			RenderCommand::SetViewport(0, 0, mipWidth, mipHeight);
+			irradianceMap = Cubemap::Create(cubeMapDesc);
+			
+			skybox->Bind();
+			irradianceMap->BindAsImage(1);
 
-			float roughness = (float)mip / (float)(maxMipLevels - 1);
-			s_Data.SceneDataBuffer.SkyboxLOD = roughness;
-			for (uint32 i = 0; i < 6; ++i)
+			auto irradianceCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_IRRADIANCE_MAP]);
+			irradianceCompute->Bind();
+			irradianceCompute->Execute(width, height, 6);
+		}
+
+		// Compute Prefiltered Skybox Map
+		{
+			uint32 width = s_Data.SkyboxSize;
+			uint32 height = s_Data.SkyboxSize;
+
+			CubemapDescription cubeMapDesc;
+			cubeMapDesc.Width = width;
+			cubeMapDesc.Height = height;
+			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
+			cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
+
+			prefilteredMap = Cubemap::Create(cubeMapDesc);
+			prefilteredMap->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
+
+			auto prefilteredCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP]);
+			prefilteredCompute->Bind();
+
+			skybox->Bind();
+
+			for (uint32 mip = 0; mip < ShaderLimits::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
-				s_Data.SceneDataBuffer.ViewMatrix = captureViews[i];
+				prefilteredMap->BindAsImage(1, mip);
+
+				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
+				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
+
+				float roughness = (float)mip / (float)(ShaderLimits::MAX_SKYBOX_MAP_LOD - 1);
+				s_Data.SceneDataBuffer.SkyboxLOD = roughness;
 				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 
-				TextureTarget target = TextureTarget(static_cast<uint32>(TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X) + i);
-				framebuffer->ReplaceAttachment(0, target, prefilteredMap->GetRendererID(), mip);
-				RenderCommand::Clear({ 1, 1, 1, 1 });
-
-				RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
+				prefilteredCompute->Execute(mipWidth, mipHeight, 6);
 			}
 		}
-
-		framebuffer->ReplaceAttachment(0, TextureTarget::TEXTURE_2D, framebufferTexId);
-		framebuffer->UnBind();
 	}
 
 	void Renderer::RenderDebugView(DebugView view)
 	{
-		if (view == DebugView::NORMALS)
+		if (s_Data.RenderQueue.size() > 0)
 		{
-			if (s_Data.RenderQueueLimit < 0)
-				s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
-			auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
+			if (view == DebugView::NORMALS)
+				RenderGeometryPass(DEBUG_NORMALS_STATIC, DEBUG_NORMALS_ANIM);
 
-			s_Data.NormalsDebugShader->Bind();
-
-			Ref<Material> lastMaterial = nullptr;
-			for(auto iter = s_Data.RenderQueue.begin(); iter < end; ++iter)
-			{
-				auto& info = *iter;
-
-				s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
-				s_Data.EntityDataBuffer.EntityID = info.EntityID;
-				s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
-
-				if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-				{
-					s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-					lastMaterial = info.Material;
-				}
-
-				RenderCommand::DrawTriangles(info.VertexBuffer);
-				s_Data.Stats.DrawCalls++;
-			}
+			else if (view == DebugView::WIREFRAME)
+				RenderGeometryPass(DEBUG_WIREFRAME_STATIC, DEBUG_WIREFRAME_ANIM);
 		}
 	}
-
 
 	void Renderer::SetRenderQueueLimit(uint32 limit)
 	{

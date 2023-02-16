@@ -27,7 +27,6 @@ namespace Athena
 
 		virtual int ReadPixel(uint32 attachmentIndex, int x, int y) override;
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) override;
-		virtual void ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) override;
 
 		virtual void ResolveMutlisampling() override;
 

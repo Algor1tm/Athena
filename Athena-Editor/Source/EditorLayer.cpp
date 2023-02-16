@@ -63,7 +63,7 @@ namespace Athena
     void EditorLayer::OnUpdate(Time frameTime)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        const auto& framebuffer = Renderer::GetFramebuffer();
+        const auto& framebuffer = Renderer::GetMainFramebuffer();
         const auto& framebufferDesc = framebuffer->GetDescription();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
@@ -205,7 +205,7 @@ namespace Athena
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
 
         m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
-        m_MainViewport->SetFramebuffer(Renderer::GetFramebuffer(), 0);
+        m_MainViewport->SetFramebuffer(Renderer::GetMainFramebuffer(), 0);
         m_MainViewport->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
@@ -248,6 +248,8 @@ namespace Athena
 
         m_PanelManager.AddPanel(m_MainViewport, false);
 
+		m_EditorSettings = CreateRef<SettingsPanel>("Settings");
+		m_PanelManager.AddPanel(m_EditorSettings, Keyboard::I);
 
         m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
         m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
@@ -257,9 +259,6 @@ namespace Athena
 
         auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
         m_PanelManager.AddPanel(profiling, Keyboard::K);
-
-        m_EditorSettings = CreateRef<SettingsPanel>("EditorSettings");
-        m_PanelManager.AddPanel(m_EditorSettings, Keyboard::I);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
@@ -277,7 +276,7 @@ namespace Athena
 
         if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
         {
-            int pixelData = Renderer::GetFramebuffer()->ReadPixel(1, mouseX, mouseY);
+            int pixelData = Renderer::GetMainFramebuffer()->ReadPixel(1, mouseX, mouseY);
             if (pixelData != -1)
                 return { (entt::entity)pixelData, m_EditorScene.get() };
         }

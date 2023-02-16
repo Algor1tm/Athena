@@ -52,7 +52,5 @@ namespace Athena
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) = 0;
 
 		virtual void ResolveMutlisampling() = 0;
-
-		virtual void ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level = 0) = 0;
 	};
 }

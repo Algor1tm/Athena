@@ -12,6 +12,8 @@ namespace Athena
 	{
 		VERTEX_SHADER = 0,
 		FRAGMENT_SHADER = 1,
+		GEOMETRY_SHADER = 2,
+		COMPUTE_SHADER = 3
 	};
 
 	inline std::string_view ShaderTypeToString(ShaderType type)
@@ -20,6 +22,8 @@ namespace Athena
 		{
 		case ShaderType::VERTEX_SHADER: return "Vertex Shader";
 		case ShaderType::FRAGMENT_SHADER: return "Fragment Shader";
+		case ShaderType::GEOMETRY_SHADER: return "Geometry Shader";
+		case ShaderType::COMPUTE_SHADER: return "Compute Shader";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -54,27 +58,48 @@ namespace Athena
 	};
 
 
-	class ATHENA_API IncludeShader
+	class ATHENA_API IncludeShader: public Shader
 	{
 	public:
 		static Ref<IncludeShader> Create(const FilePath& path);
 		virtual ~IncludeShader() = default;
 
-		virtual void Reload() = 0;
+	private:
+		virtual void Bind() const override {};
+		virtual void UnBind() const override {};
 	};
+
+
+	class ATHENA_API ComputeShader : public Shader 
+	{
+	public:
+		static Ref<ComputeShader> Create(const FilePath& path, const Vector3i& workGroupSize = { 8, 4, 1 });
+		virtual ~ComputeShader() = default;
+
+		virtual void Execute(uint32 x, uint32 y, uint32 z = 1) = 0;
+	};
+
 
 	class ATHENA_API ShaderLibrary
 	{
 	public:
-		void Add(const Ref<Shader>& shader);
+		void Add(const String& name, const Ref<IncludeShader>& shader);
 		void Add(const String& name, const Ref<Shader>& shader);
-		Ref<Shader> Load(const FilePath& filepath);
-		Ref<Shader> Load(const String& name, const FilePath& filepath);
+		void Add(const String& name, const Ref<ComputeShader>& shader);
 
-		Ref<Shader> Get(const String& name);
+		template <typename T>
+		Ref<T> Load(const String& name, const FilePath& path);
+		
+		template <typename T>
+		Ref<T> Get(const String& name);
+
 		bool Exists(const String& name);
 
+		void Reload();
+
 	private:
+		std::unordered_map<String, Ref<IncludeShader>> m_IncludeShaders;
 		std::unordered_map<String, Ref<Shader>> m_Shaders;
+		std::unordered_map<String, Ref<ComputeShader>> m_ComputeShaders;
 	};
 }

@@ -18,7 +18,10 @@ namespace Athena
 		virtual void Bind(uint32 slot = 0) const override;
 		virtual bool IsLoaded() const override;
 
-		virtual void GenerateMipMap(uint32 count) override;
+		virtual void GenerateMipMap(uint32 maxLevel) override;
+		virtual void BindAsImage(uint32 slot = 0, uint32 level = 0) override;
+
+		virtual void SetFilters(TextureFilter min, TextureFilter mag) override;
 
 	private:
 		void LoadFromFile(const CubemapDescription& desc);
@@ -28,5 +31,7 @@ namespace Athena
 	private:
 		GLenum m_GLRendererID;
 		bool m_IsLoaded = false;
+		GLenum m_InternalFormat;
+		GLenum m_DataFormat;
 	};
 }

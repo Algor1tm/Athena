@@ -15,6 +15,7 @@ namespace Athena
 
 		// Color
 		RG16F,
+		R11F_G11F_B10F,
 		RGBA8,
 		RGB16F,
 		RGB32F,
@@ -23,19 +24,6 @@ namespace Athena
 		//Depth/Stencil
 		DEPTH24STENCIL8,
 		DEPTH32
-	};
-
-	enum class TextureTarget
-	{
-		TEXTURE_2D = 0,
-		TEXTURE_2D_MULTISAMPLE = 1,
-
-		TEXTURE_CUBE_MAP_POSITIVE_X = 2,
-		TEXTURE_CUBE_MAP_NEGATIVE_X = 3,
-		TEXTURE_CUBE_MAP_POSITIVE_Y = 4,
-		TEXTURE_CUBE_MAP_NEGATIVE_Y = 5,
-		TEXTURE_CUBE_MAP_POSITIVE_Z = 6,
-		TEXTURE_CUBE_MAP_NEGATIVE_Z = 7,
 	};
 
 	enum class TextureFilter
@@ -61,6 +49,8 @@ namespace Athena
 		inline void* GetRendererID() const { return (void*)m_RendererID; };
 
 		virtual void Bind(uint32 slot = 0) const = 0;
+		virtual void BindAsImage(uint32 slot = 0, uint32 level = 0) = 0;
+
 		virtual bool IsLoaded() const = 0;
 
 	protected:
@@ -131,9 +121,19 @@ namespace Athena
 	};
 
 
+	enum class CubemapTarget
+	{
+		TEXTURE_CUBE_MAP_POSITIVE_X = 1,
+		TEXTURE_CUBE_MAP_NEGATIVE_X = 2,
+		TEXTURE_CUBE_MAP_POSITIVE_Y = 3,
+		TEXTURE_CUBE_MAP_NEGATIVE_Y = 4,
+		TEXTURE_CUBE_MAP_POSITIVE_Z = 5,
+		TEXTURE_CUBE_MAP_NEGATIVE_Z = 6,
+	};
+
 	struct CubemapDescription
 	{
-		std::array<std::pair<TextureTarget, FilePath>, 6> Faces;
+		std::array<std::pair<CubemapTarget, FilePath>, 6> Faces;
 
 		uint32 Width = 0;
 		uint32 Height = 0;
@@ -151,6 +151,7 @@ namespace Athena
 	public:
 		static Ref<Cubemap> Create(const CubemapDescription& desc);
 
-		virtual void GenerateMipMap(uint32 count) = 0;
+		virtual void GenerateMipMap(uint32 maxLevel) = 0;
+		virtual void SetFilters(TextureFilter min, TextureFilter mag) = 0;
 	};
 }

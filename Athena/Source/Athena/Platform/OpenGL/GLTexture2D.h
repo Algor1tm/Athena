@@ -21,6 +21,8 @@ namespace Athena
 		virtual void SetData(const void* data, uint32 size) override;
 
 		virtual void Bind(uint32 slot = 0) const override;
+		virtual void BindAsImage(uint32 slot = 0, uint32 level = 0) override;
+
 		virtual bool IsLoaded() const override { return m_IsLoaded; };
 
 		virtual const FilePath& GetFilePath() const override { return m_FilePath; };

@@ -21,25 +21,6 @@ namespace Athena
 		return GL_NONE;
 	}
 
-	inline GLenum GLTextureTarget(TextureTarget target)
-	{
-		switch (target)
-		{
-		case TextureTarget::TEXTURE_2D: return GL_TEXTURE_2D;
-		case TextureTarget::TEXTURE_2D_MULTISAMPLE: return GL_TEXTURE_2D_MULTISAMPLE;
-
-		case TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-		case TextureTarget::TEXTURE_CUBE_MAP_NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
-		case TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
-		case TextureTarget::TEXTURE_CUBE_MAP_NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
-		case TextureTarget::TEXTURE_CUBE_MAP_POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
-		case TextureTarget::TEXTURE_CUBE_MAP_NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown texture target!");
-		return GL_NONE;
-	}
-
 	inline GLenum AthenaTextureWrapToGLenum(TextureWrap wrap)
 	{
 		switch (wrap)
@@ -71,9 +52,16 @@ namespace Athena
 	{
 		switch (format)
 		{
-		case TextureFormat::RGB16F:
+		case TextureFormat::RG16F:
 		{
-			internalFormat = GL_RGB16F;
+			internalFormat = GL_RG16F;
+			dataFormat = GL_RG;
+			type = GL_FLOAT;
+			break;
+		}
+		case TextureFormat::R11F_G11F_B10F:
+		{
+			internalFormat = GL_R11F_G11F_B10F;
 			dataFormat = GL_RGB;
 			type = GL_FLOAT;
 			break;
@@ -85,10 +73,10 @@ namespace Athena
 			type = GL_UNSIGNED_BYTE;
 			break;
 		}
-		case TextureFormat::RG16F:
+		case TextureFormat::RGB16F:
 		{
-			internalFormat = GL_RG16F;
-			dataFormat = GL_RG;
+			internalFormat = GL_RGB16F;
+			dataFormat = GL_RGB;
 			type = GL_FLOAT;
 			break;
 		}
@@ -108,7 +96,7 @@ namespace Athena
 
 	inline bool GetGLFormats(int channels, bool HDR, bool sRGB, GLenum& internalFormat, GLenum& dataFormat)
 	{
-		if ((HDR && sRGB))
+		if ((HDR && sRGB) || (HDR && channels == 4))
 			return false;
 
 		if (channels == 1)
@@ -119,33 +107,15 @@ namespace Athena
 		else if (channels == 3)
 		{
 			if (HDR)
-			{
-				internalFormat = GL_RGB16F;
-			}
+				internalFormat = GL_R11F_G11F_B10F;
 			else
-			{
-				if (sRGB)
-					internalFormat = GL_SRGB8;
-				else
-					internalFormat = GL_RGB8;
-			}
+				internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
 
 			dataFormat = GL_RGB;
 		}
 		else if (channels == 4)
 		{
-			if (HDR)
-			{
-				internalFormat = GL_RGBA16F;
-			}
-			else
-			{
-				if (sRGB)
-					internalFormat = GL_SRGB8_ALPHA8;
-				else
-					internalFormat = GL_RGBA8;
-			}
-
+			internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			dataFormat = GL_RGBA;
 		}
 		else
@@ -156,4 +126,3 @@ namespace Athena
 		return true;
 	}
 }
-

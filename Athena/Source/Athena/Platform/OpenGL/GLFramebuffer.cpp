@@ -273,15 +273,4 @@ namespace Athena
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1), id, 0);
 	}
-
-	void GLFramebuffer::ReplaceAttachment(uint32 attachmentIndex, TextureTarget textureTarget, void* rendererID, uint32 level)
-	{
-		m_ColorAttachments[attachmentIndex] = (uint32)(uint64)rendererID;
-
-		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentIndex, GLTextureTarget(textureTarget), (uint32)(uint64)rendererID, level);
-
-		auto error = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
-	}
 }

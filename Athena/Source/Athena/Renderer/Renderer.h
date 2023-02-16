@@ -25,7 +25,7 @@ namespace Athena
 		MAX_NUM_BONES_PER_VERTEX = 4,
 		MAX_NUM_BONES = 512,
 
-		MAX_SKYBOX_MAP_LOD = 10
+		MAX_SKYBOX_MAP_LOD = 8
 	};
 
 	enum TextureBinder
@@ -54,7 +54,8 @@ namespace Athena
 	enum class DebugView
 	{
 		NONE = 0,
-		NORMALS = 1
+		NORMALS = 1,
+		WIREFRAME = 2
 	};
 
 	class ATHENA_API Renderer
@@ -80,7 +81,7 @@ namespace Athena
 		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
 		static void Clear(const LinearColor& color);
-		static Ref<Framebuffer> GetFramebuffer();
+		static Ref<Framebuffer> GetMainFramebuffer();
 
 		static void ReloadShaders();
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);

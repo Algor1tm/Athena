@@ -1,22 +1,9 @@
-#type VERTEX_SHADER
-#version 430 core
+#version 460
 
-layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec2 a_TexCoords;
+layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
-out vec2 TexCoords;
+layout(rg16f, binding = 0) uniform image2D u_BRDF_LUT;
 
-void main()
-{
-    TexCoords = a_TexCoords;  
-    gl_Position =  vec4(a_Position, 1.0);
-}
-
-#type FRAGMENT_SHADER
-#version 430 core
-
-out vec4 out_Color;
-in vec2 TexCoords;
 
 #define PI 3.14159265359
 
@@ -117,8 +104,12 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
     return vec2(A, B);
 }
 
-void main()
+void main() 
 {
-    vec2 integratedBRDF = IntegrateBRDF(TexCoords.x, TexCoords.y);
-    out_Color = vec4(integratedBRDF, 0, 1);
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 texCoord = vec2(texelCoord.x + 1, texelCoord.y) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
+
+    vec2 integratedBRDF = IntegrateBRDF(texCoord.x, texCoord.y);
+	
+    imageStore(u_BRDF_LUT, texelCoord, vec4(integratedBRDF, 0, 1));
 }

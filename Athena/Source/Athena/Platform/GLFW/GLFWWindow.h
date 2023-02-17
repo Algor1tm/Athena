@@ -31,108 +31,108 @@ namespace Athena
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				WindowCloseEvent event;
-				data.EventCallback(event);
+		WindowCloseEvent event;
+		data.EventCallback(event);
 			});
 
 		glfwSetWindowSizeCallback(windowHandle, [](GLFWwindow* window, int width, int height)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
-				data.Width = width;
-				data.Height = height;
+		data.Width = width;
+		data.Height = height;
 
-				WindowResizeEvent event(width, height);
-				data.EventCallback(event);
+		WindowResizeEvent event(width, height);
+		data.EventCallback(event);
 			});
 
 		glfwSetWindowIconifyCallback(windowHandle, [](GLFWwindow* window, int iconified)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
-				if (iconified)
-					data.Mode = WindowMode::Minimized;
-				else
-					data.Mode = WindowMode::Default;
+		if (iconified)
+			data.Mode = WindowMode::Minimized;
+		else
+			data.Mode = WindowMode::Default;
 			});
 
 		glfwSetWindowMaximizeCallback(windowHandle, [](GLFWwindow* window, int maximized)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
-				if (maximized)
-					data.Mode = WindowMode::Minimized;
-				else
-					data.Mode = WindowMode::Default;
+		if (maximized)
+			data.Mode = WindowMode::Minimized;
+		else
+			data.Mode = WindowMode::Default;
 			});
 
 		glfwSetKeyCallback(windowHandle, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				switch (action)
-				{
-				case GLFW_PRESS:
-				{
-					KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), false);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE:
-				{
-					KeyReleasedEvent event(GLFWKeyCodeToAthenaKeyCode(key));
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_REPEAT:
-				{
-					KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), true);
-					data.EventCallback(event);
-					break;
-				}
-				}
+		switch (action)
+		{
+		case GLFW_PRESS:
+		{
+			KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), false);
+			data.EventCallback(event);
+			break;
+		}
+		case GLFW_RELEASE:
+		{
+			KeyReleasedEvent event(GLFWKeyCodeToAthenaKeyCode(key));
+			data.EventCallback(event);
+			break;
+		}
+		case GLFW_REPEAT:
+		{
+			KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), true);
+			data.EventCallback(event);
+			break;
+		}
+		}
 			});
 
 		glfwSetCharCallback(windowHandle, [](GLFWwindow* window, unsigned int character)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				KeyTypedEvent event(static_cast<Keyboard::Key>(UnicodeToASCII(character)));
-				data.EventCallback(event);
+		KeyTypedEvent event(static_cast<Keyboard::Key>(UnicodeToASCII(character)));
+		data.EventCallback(event);
 			});
 
 		glfwSetMouseButtonCallback(windowHandle, [](GLFWwindow* window, int button, int action, int modes)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				switch (action)
-				{
-				case GLFW_PRESS:
-				{
-					MouseButtonPressedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE:
-				{
-					MouseButtonReleasedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
-					data.EventCallback(event);
-					break;
-				}
-				}
+		switch (action)
+		{
+		case GLFW_PRESS:
+		{
+			MouseButtonPressedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
+			data.EventCallback(event);
+			break;
+		}
+		case GLFW_RELEASE:
+		{
+			MouseButtonReleasedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
+			data.EventCallback(event);
+			break;
+		}
+		}
 			});
 
 		glfwSetScrollCallback(windowHandle, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				MouseScrolledEvent event((float)xOffset, (float)yOffset);
-				data.EventCallback(event);
+		MouseScrolledEvent event((float)xOffset, (float)yOffset);
+		data.EventCallback(event);
 			});
 
 		glfwSetCursorPosCallback(windowHandle, [](GLFWwindow* window, double x, double y)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-				MouseMovedEvent event((float)x, (float)y);
-				data.EventCallback(event);
+		MouseMovedEvent event((float)x, (float)y);
+		data.EventCallback(event);
 			});
 	}
 
@@ -215,6 +215,19 @@ namespace Athena
 	{
 		m_Context->SetVSync(enabled);
 		m_Data.VSync = enabled;
+	}
+
+	void Window::HideCursor(bool hide)
+	{
+		if (hide)
+			glfwSetInputMode((GLFWwindow*)m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode((GLFWwindow*)m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+	void Window::SetCursorPosition(Vector2 position)
+	{
+		glfwSetCursorPos((GLFWwindow*)m_WindowHandle, position.x, position.y);
 	}
 
 	void Window::SetWindowMode(WindowMode mode)

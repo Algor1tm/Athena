@@ -22,8 +22,6 @@ namespace Athena
 		friend class ViewportPanel;
 
 	public:
-		ImGuizmoLayer(EditorCamera* camera);
-
 		void OnImGuiRender();
 		void OnEvent(Event& event);
 

@@ -7,7 +7,6 @@
 
 #include "Athena/Input/Events/ApplicationEvent.h"
 
-#include "Athena/Renderer/OrthographicCamera.h"
 #include "Athena/Renderer/RendererAPI.h"
 
 

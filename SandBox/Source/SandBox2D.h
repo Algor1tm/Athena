@@ -21,7 +21,7 @@ namespace Athena
 		Ref<Texture2D> m_SpriteSheet;
 		Texture2DInstance m_Water, m_Dirt, m_Barrel;
 
-		OrthographicCameraController m_CameraController;
+		OrthographicCamera m_CameraController;
 
 		std::unordered_map<char, Texture2DInstance> m_TextureMap;
 	};

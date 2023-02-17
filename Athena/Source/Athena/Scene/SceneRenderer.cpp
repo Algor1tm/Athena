@@ -19,7 +19,7 @@ namespace Athena
 
 	void SceneRenderer::Render(Scene* scene, const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
 	{
-		Renderer2D::BeginScene(viewMatrix * projectionMatrix);
+		Renderer2D::BeginScene(viewMatrix, projectionMatrix);
 
 		auto quads = scene->GetAllEntitiesWith<TransformComponent, SpriteComponent>();
 		for (auto entity : quads)
@@ -91,8 +91,7 @@ namespace Athena
 		Matrix4 viewMatrix = camera.GetViewMatrix();
 		Matrix4 projectionMatrix = camera.GetProjectionMatrix();
 
-		Matrix4 viewProjection = viewMatrix * projectionMatrix;
-		Renderer2D::BeginScene(viewProjection);
+		Renderer2D::BeginScene(viewMatrix, projectionMatrix);
 
 		auto quads = scene->GetAllEntitiesWith<TransformComponent, SpriteComponent>();
 		for (auto entity : quads)

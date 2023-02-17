@@ -17,7 +17,7 @@ namespace Athena
 		static void Init();
 		static void Shutdown();
 
-		static void BeginScene(const Matrix4& cameraViewProjection);
+		static void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 		static void EndScene();
 		static void Flush();
 

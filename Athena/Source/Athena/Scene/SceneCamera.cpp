@@ -26,12 +26,12 @@ namespace Athena
 			float orthoBottom = -m_OrthoData.Size * 0.5f;
 			float orthoTop = m_OrthoData.Size * 0.5f;
 
-			SetProjection(Math::Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthoData.NearClip, m_OrthoData.FarClip));
+			m_ProjectionMatrix = Math::Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, m_OrthoData.NearClip, m_OrthoData.FarClip);
 		}
 		else if (m_ProjectionType == ProjectionType::Perspective)
 		{
-			SetProjection(Math::Perspective(m_PerspectiveData.VerticalFOV, m_AspecRatio,
-				m_PerspectiveData.NearClip, m_PerspectiveData.FarClip));
+			m_ProjectionMatrix = Math::Perspective(m_PerspectiveData.VerticalFOV, m_AspecRatio,
+				m_PerspectiveData.NearClip, m_PerspectiveData.FarClip);
 		}
 	}
 }

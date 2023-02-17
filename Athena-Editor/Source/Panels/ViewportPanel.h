@@ -20,6 +20,7 @@ namespace Athena
 		bool IsHovered = false;
 		Vector2u Size = { 0, 0 };
 		Vector2 Bounds[2] = {};
+		Vector2 Position = { 0, 0 };
 
 		Ref<Framebuffer> AttachedFramebuffer;
 		uint32 AttachmentIndex;

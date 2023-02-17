@@ -49,7 +49,7 @@ namespace Athena
 		Renderer2D::ResetStats();
 		RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 
-		Renderer2D::BeginScene(m_CameraController.GetCamera().GetViewProjectionMatrix());
+		Renderer2D::BeginScene(m_CameraController.GetViewMatrix(), m_CameraController.GetProjectionMatrix());
 
 		uint32_t mapHeight = (uint32_t)strlen(s_MapTiles) / s_MapWidth;
 		for (uint32_t y = 0; y < mapHeight; ++y)

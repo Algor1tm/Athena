@@ -59,7 +59,8 @@ namespace Athena
 		void OpenScene(const FilePath& path);
 
 	private:
-		EditorCamera m_EditorCamera;
+		Ref<EditorCamera> m_EditorCamera;
+		bool m_HideCursor = false;
 		Entity m_SelectedEntity = {};
 
 		ImGuizmoLayer m_ImGuizmoLayer;
@@ -68,7 +69,7 @@ namespace Athena
 		Ref<ViewportPanel> m_MainViewport;
 		Ref<MenuBarPanel> m_MainMenuBar;
 		Ref<SceneHierarchyPanel> m_SceneHierarchy;
-		Ref<SettingsPanel> m_EditorSettings;
+		Ref<SettingsPanel> m_SettingsPanel;
 
 		enum class SceneState
 		{

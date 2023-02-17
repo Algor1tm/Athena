@@ -9,12 +9,6 @@
 
 namespace Athena
 {
-	ImGuizmoLayer::ImGuizmoLayer(EditorCamera* camera)
-		: m_pCamera(camera)
-	{
-
-	}
-
 	void ImGuizmoLayer::OnImGuiRender() 
 	{
 		if (m_pCamera && m_pViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<DirectionalLightComponent>())

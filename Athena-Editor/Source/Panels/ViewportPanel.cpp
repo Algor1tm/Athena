@@ -25,6 +25,7 @@ namespace Athena
         ImVec2 viewportMinRegion = ImGui::GetWindowContentRegionMin();
         ImVec2 viewportMaxRegion = ImGui::GetWindowContentRegionMax();
         ImVec2 viewportOffset = ImGui::GetWindowPos();
+        m_Description.Position = { viewportOffset.x, viewportOffset.y };
         m_Description.Bounds[0] = { viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y };
         m_Description.Bounds[1] = { viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y };
 

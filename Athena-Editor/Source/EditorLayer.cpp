@@ -27,9 +27,12 @@
 namespace Athena
 {
     EditorLayer::EditorLayer()
-        : Layer("SandBox2D"), m_EditorCamera(Math::Radians(30.f), 16.f / 9.f, 0.1f, 10000.f),
-        m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn"), m_ImGuizmoLayer(&m_EditorCamera)
+        : Layer("EditorLayer"),
+        m_TemporaryEditorScenePath("Resources/Tmp/EditorScene.atn")
     {
+        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(30.f), 16.f / 9.f, 0.1f, 100000.f);
+        m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
+
         m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");
         m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/SimulationIcon.png");
         m_StopIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/StopIcon.png");
@@ -43,13 +46,8 @@ namespace Athena
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
 
-        m_EditorCamera.SetDistance(1000.f);
-
 #if 1
         OpenScene("Assets/Scenes/PBR_Example.atn");
-        m_EditorCamera.SetDistance(3400.f);
-        m_EditorCamera.SetPitch(0.356f);
-        m_EditorCamera.SetYaw(-4.2);
 #endif
 
         m_SceneHierarchy->SetContext(m_EditorScene);
@@ -70,7 +68,7 @@ namespace Athena
             (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
         {
             framebuffer->Resize(vpDesc.Size.x, vpDesc.Size.y);
-            m_EditorCamera.SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
+            m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
                 
             m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
@@ -87,10 +85,10 @@ namespace Athena
         {
         case SceneState::Edit:
         {
-            if (vpDesc.IsHovered && !ImGuizmo::IsUsing())
-                m_EditorCamera.OnUpdate(frameTime);
+            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+                m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateEditor(frameTime, m_EditorCamera); 
+            m_ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera); 
             break;
         }
         case SceneState::Play:
@@ -100,10 +98,10 @@ namespace Athena
         }
         case SceneState::Simulation:
         {
-            if (vpDesc.IsHovered && !ImGuizmo::IsUsing())
-                m_EditorCamera.OnUpdate(frameTime);
+            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+                m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateSimulation(frameTime, m_EditorCamera);
+            m_ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
             break;
         }
         }
@@ -143,6 +141,8 @@ namespace Athena
         m_PanelManager.OnImGuiRender();
 
         ImGui::End();
+
+		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().m_CameraSpeedLevel);
     }
 
     void EditorLayer::SelectEntity(Entity entity)
@@ -248,8 +248,8 @@ namespace Athena
 
         m_PanelManager.AddPanel(m_MainViewport, false);
 
-		m_EditorSettings = CreateRef<SettingsPanel>("Settings");
-		m_PanelManager.AddPanel(m_EditorSettings, Keyboard::I);
+        m_SettingsPanel = CreateRef<SettingsPanel>("Settings");
+		m_PanelManager.AddPanel(m_SettingsPanel, Keyboard::I);
 
         m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
         m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
@@ -291,15 +291,15 @@ namespace Athena
             Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
             auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-            Matrix4 viewProjection = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix()) * runtimeCamera.GetProjectionMatrix();
-            Renderer2D::BeginScene(viewProjection);
+            Matrix4 view = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix());
+            Renderer2D::BeginScene(view, runtimeCamera.GetProjectionMatrix());
         }
         else
         {
-            Renderer2D::BeginScene(m_EditorCamera.GetViewProjectionMatrix());
+            Renderer2D::BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
         }
 
-        if (m_EditorSettings->GetEditorSettings().m_ShowPhysicsColliders)
+        if (m_SettingsPanel->GetEditorSettings().m_ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
@@ -338,7 +338,7 @@ namespace Athena
 
             if (m_SelectedEntity.HasComponent<CameraComponent>())
             {
-                float scale = m_EditorCamera.GetDistance() / 10.f;
+                float scale = 1.f;
                 Renderer2D::DrawRect(Math::ScaleMatrix(Vector3(scale, scale, 1.f)) * transform.AsMatrix(), color, 1);
             }
             else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
@@ -433,10 +433,27 @@ namespace Athena
     void EditorLayer::OnEvent(Event& event)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        if ((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && vpDesc.IsHovered && !ImGuizmo::IsUsing())
+        if ((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
         {
-            m_EditorCamera.OnEvent(event);
-            m_ImGuizmoLayer.OnEvent(event);
+            bool rightMB = Input::IsMouseButtonPressed(Mouse::Right);
+
+            if (vpDesc.IsHovered)
+            {
+				m_ImGuizmoLayer.OnEvent(event);
+				m_EditorCamera->OnEvent(event);
+
+                if(rightMB && !m_HideCursor)
+				{
+					m_HideCursor = true;
+					Application::Get().GetWindow().HideCursor(m_HideCursor);
+				}
+            }
+
+            if (!rightMB && m_HideCursor)
+            {
+				m_HideCursor = false;
+				Application::Get().GetWindow().HideCursor(m_HideCursor);
+            }
         }
 
         m_PanelManager.OnEvent(event);

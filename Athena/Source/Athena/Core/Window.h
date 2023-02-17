@@ -4,6 +4,8 @@
 
 #include "Athena/Input/Events/Event.h"
 
+#include "Athena/Math/Vector.h"
+
 
 namespace Athena
 {
@@ -56,6 +58,9 @@ namespace Athena
 
 		void SetWindowMode(WindowMode mode);
 		inline WindowMode GetWindowMode() const { return m_Data.Mode; }
+
+		void HideCursor(bool hide);
+		void SetCursorPosition(Vector2 position);
 
 		const Ref<GraphicsContext>& GetGraphicsContext() const { return m_Context; }
 

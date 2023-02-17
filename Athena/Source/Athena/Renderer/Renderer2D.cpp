@@ -197,9 +197,9 @@ namespace Athena
 		delete[] s_Data.LineVertexBufferBase;
 	}
 
-	void Renderer2D::BeginScene(const Matrix4& cameraViewProjection)
+	void Renderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
 	{
-		s_Data.CameraBuffer.ViewProjection = cameraViewProjection;
+		s_Data.CameraBuffer.ViewProjection = viewMatrix * projectionMatrix;
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
 
 		StartBatch();

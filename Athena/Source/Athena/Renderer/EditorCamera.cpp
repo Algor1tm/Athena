@@ -256,6 +256,7 @@ namespace Athena
 	void FirstPersonCamera::OnUpdate(Time frameTime)
 	{
 		Vector2 delta = UpdateMousePosition(frameTime) * RotationSpeed();
+		delta = Math::Clamp(delta, -0.1f, 0.1f);
 
 		if (Input::IsMouseButtonPressed(Mouse::Right))
 		{
@@ -321,12 +322,12 @@ namespace Athena
 
 	float FirstPersonCamera::MoveSpeed() const
 	{
-		return 10000.f * m_MoveSpeedLevel;
+		return 7000.f * m_MoveSpeedLevel;
 	}
 
 	float FirstPersonCamera::RotationSpeed() const
 	{
-		return 0.2f;
+		return 0.15f;
 	}
 
 	float FirstPersonCamera::ZoomSpeed() const

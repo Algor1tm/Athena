@@ -27,6 +27,7 @@ namespace Athena
 		virtual void OnEvent(Event& event) = 0;
 
 		virtual void SetViewportSize(uint32 width, uint32 height) = 0;
+		virtual Vector3 GetPosition() const = 0;
 
 		void SetMoveSpeedLevel(float level) { m_MoveSpeedLevel = level; }
 
@@ -48,7 +49,7 @@ namespace Athena
 
 		void EnableRotation(bool enable) { m_EnableRotation = enable; }
 
-		inline const Vector3& GetPosition() const { return m_Position; }
+		virtual Vector3 GetPosition() const override { return m_Position; }
 		inline float GetRotation() const { return m_Rotation; }
 
 		inline void SetPosition(const Vector3& position) { m_Position = position; RecalculateView(); }
@@ -134,6 +135,8 @@ namespace Athena
 
 		virtual void SetViewportSize(uint32 width, uint32 height) override;
 
+		virtual Vector3 GetPosition() const override { return CalculatePosition(); }
+
 		inline void Pan(const Vector3& offset) { m_FocalPoint += offset; }
 
 	private:
@@ -168,6 +171,8 @@ namespace Athena
 		virtual void OnEvent(Event& event) override;
 
 		virtual void SetViewportSize(uint32 width, uint32 height) override;
+
+		virtual Vector3 GetPosition() const override { return m_Position; }
 
 	private:
 		void RecalculateProjection();

@@ -40,6 +40,8 @@ namespace Athena
 
 	private:
 		void SelectEntity(Entity entity);
+		Entity DuplicateEntity(Entity entity);
+
 		void InitializePanels();
 		void RenderOverlay();
 
@@ -79,7 +81,6 @@ namespace Athena
 		SceneState m_SceneState = SceneState::Edit;
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		FilePath m_TemporaryEditorScenePath;
 		FilePath m_CurrentScenePath;
 
 		Ref<Texture2D> m_PlayIcon;

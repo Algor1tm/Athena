@@ -29,6 +29,45 @@
 
 namespace Athena
 {
+	template<typename... Component>
+	static void CopyComponent(entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	{
+		([&]()
+			{
+				auto view = src.view<Component>();
+		for (auto srcEntity : view)
+		{
+			entt::entity dstEntity = enttMap.at(src.get<IDComponent>(srcEntity).ID);
+
+			auto& srcComponent = src.get<Component>(srcEntity);
+			dst.emplace_or_replace<Component>(dstEntity, srcComponent);
+		}
+			}(), ...);
+	}
+
+	template<typename... Component>
+	static void CopyComponent(ComponentGroup<Component...>, entt::registry& dst, entt::registry& src, const std::unordered_map<UUID, entt::entity>& enttMap)
+	{
+		CopyComponent<Component...>(dst, src, enttMap);
+	}
+
+	template<typename... Component>
+	static void CopyComponentIfExists(Entity dst, Entity src)
+	{
+		([&]()
+			{
+				if (src.HasComponent<Component>())
+				dst.AddOrReplaceComponent<Component>(src.GetComponent<Component>());
+			}(), ...);
+	}
+
+	template<typename... Component>
+	static void CopyComponentIfExists(ComponentGroup<Component...>, Entity dst, Entity src)
+	{
+		CopyComponentIfExists<Component...>(dst, src);
+	}
+
+
 	static b2BodyType AthenaRigidBody2DTypeToBox2D(Rigidbody2DComponent::BodyType type)
 	{
 		switch (type)
@@ -52,6 +91,35 @@ namespace Athena
 
 	}
 
+	Ref<Scene> Scene::Copy(Ref<Scene> other)
+	{
+		Ref<Scene> newScene = CreateRef<Scene>();
+
+		newScene->m_ViewportWidth = other->m_ViewportWidth;
+		newScene->m_ViewportHeight = other->m_ViewportHeight;
+
+		newScene->m_Environment = other->m_Environment;
+
+		auto& srcSceneRegistry = other->m_Registry;
+		auto& dstSceneRegistry = newScene->m_Registry;
+		std::unordered_map<UUID, entt::entity> enttMap;
+
+		// Create entities in new scene
+		auto idView = srcSceneRegistry.view<IDComponent>();
+		for (auto entity : idView)
+		{
+			UUID uuid = srcSceneRegistry.get<IDComponent>(entity).ID;
+			const auto& name = srcSceneRegistry.get<TagComponent>(entity).Tag;
+			Entity newEntity = newScene->CreateEntity(name, uuid);
+			enttMap[uuid] = (entt::entity)newEntity;
+		}
+
+		// Copy components (except IDComponent and TagComponent)
+		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, enttMap);
+
+		return newScene;
+	}
+
 	Entity Scene::CreateEntity(const String& name, UUID id)
 	{
 		Entity entity(m_Registry.create(), this);
@@ -73,6 +141,15 @@ namespace Athena
 	{
 		m_EntityMap.erase(entity.GetID());
 		m_Registry.destroy(entity);
+	}
+
+	Entity Scene::DuplicateEntity(Entity entity)
+	{
+		// Copy name because we're going to modify component data structure
+		String name = entity.GetName();
+		Entity newEntity = CreateEntity(name);
+		CopyComponentIfExists(AllComponents{}, newEntity, entity);
+		return newEntity;
 	}
 
 	Entity Scene::GetEntityByUUID(UUID uuid)
@@ -100,7 +177,7 @@ namespace Athena
 		auto view = m_Registry.view<StaticMeshComponent>();
 		for(auto entity : view)
 		{
-			auto meshComponent = view.get<StaticMeshComponent>(entity);
+			auto& meshComponent = view.get<StaticMeshComponent>(entity);
 			if (meshComponent.Mesh->HasAnimations())
 			{
 				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
@@ -114,7 +191,7 @@ namespace Athena
 	{
 		// Update scripts
 		{
-			auto view = m_Registry.view<ScriptComponent>();
+			auto& view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
 				Entity entity = { id, this };
@@ -139,7 +216,7 @@ namespace Athena
 		auto view = m_Registry.view<StaticMeshComponent>();
 		for (auto entity : view)
 		{
-			auto meshComponent = view.get<StaticMeshComponent>(entity);
+			auto& meshComponent = view.get<StaticMeshComponent>(entity);
 			if (meshComponent.Mesh->HasAnimations())
 			{
 				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);

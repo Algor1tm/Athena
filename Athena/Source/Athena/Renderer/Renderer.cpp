@@ -84,7 +84,8 @@ namespace Athena
 
 	struct RendererData
 	{
-		std::deque<DrawCallInfo> RenderQueue;
+		std::deque<DrawCallInfo> RenderQueue;	// TODO: maybe make class RenderQueue
+		uint32 RenderQueueLastSize = 0;
 		int32 RenderQueueLimit = -1;
 
 		Ref<Framebuffer> MainFramebuffer;
@@ -119,6 +120,8 @@ namespace Athena
 
 	static void RenderGeometryPass(ShaderEnum staticShader, ShaderEnum animShader)
 	{
+		if (s_Data.RenderQueueLastSize != s_Data.RenderQueue.size())
+			s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
 		if (s_Data.RenderQueueLimit < 0)
 			s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
 		auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
@@ -331,6 +334,7 @@ namespace Athena
 		s_Data.Stats.PointLightsCount += s_Data.LightDataBuffer.PointLightCount;
 
 
+		s_Data.RenderQueueLastSize = s_Data.RenderQueue.size();
 		s_Data.RenderQueue.clear();
 		s_Data.ActiveEnvironment = nullptr;
 

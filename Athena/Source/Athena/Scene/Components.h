@@ -140,6 +140,21 @@ namespace Athena
 	{
 		Ref<StaticMesh> Mesh;
 		bool Hide = false;
+
+		StaticMeshComponent() = default;
+
+		StaticMeshComponent(const StaticMeshComponent& other)
+		{
+			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
+			Hide = other.Hide;
+		}
+
+		StaticMeshComponent& operator=(const StaticMeshComponent& other)
+		{
+			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
+			Hide = other.Hide;
+			return *this;
+		}
 	};
 
 	struct DirectionalLightComponent
@@ -156,4 +171,16 @@ namespace Athena
 		float Radius = 10.f;
 		float FallOff = 1.f;
 	};
+
+
+	template<typename... Component>
+	struct ComponentGroup
+	{
+	};
+
+	using AllComponents =
+		ComponentGroup<TransformComponent, SpriteComponent,
+		CircleComponent, CameraComponent, ScriptComponent,
+		NativeScriptComponent, Rigidbody2DComponent, BoxCollider2DComponent,
+		CircleCollider2DComponent, StaticMeshComponent, DirectionalLightComponent, PointLightComponent>;
 }

@@ -46,10 +46,6 @@ namespace Athena
             ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
-            //auto cameraEntity = m_ActiveScene->GetPrimaryCameraEntity();
-            //const auto& camera = cameraEntity.GetComponent<CameraComponent>().Camera;
-            //const Matrix4& cameraProjection = camera.GetProjection();
-            //Matrix4 cameraView = Math::AffineInverse(cameraEntity.GetComponent<TransformComponent>().AsMatrix());
             const Matrix4& cameraProjection = m_pCamera->GetProjectionMatrix();
             const Matrix4& cameraView = m_pCamera->GetViewMatrix();
 
@@ -87,7 +83,7 @@ namespace Athena
 
     bool ImGuizmoLayer::OnKeyPressedEvent(KeyPressedEvent& event)
     {
-        if (m_pViewportPanel)
+        if (m_pViewportPanel && !Input::IsMouseButtonPressed(Mouse::Right))
         {
             auto& desc = m_pViewportPanel->GetDescription();
             switch (event.GetKeyCode())

@@ -557,7 +557,7 @@ namespace Athena::Math
 	template <typename T, uint32 Size>
 	constexpr float Distance(const Vector<T, Size>& left, const Vector<T, Size>& right)
 	{
-		return (left - right).GetLength();
+		return (left - right).Length();
 	}
 }
 

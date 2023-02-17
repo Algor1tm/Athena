@@ -70,7 +70,7 @@ namespace Athena
 		auto dirLights = scene->GetAllEntitiesWith<DirectionalLightComponent>();
 		for (auto entity : dirLights)
 		{
-			auto light = dirLights.get<DirectionalLightComponent>(entity);
+			auto& light = dirLights.get<DirectionalLightComponent>(entity);
 			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}
@@ -142,7 +142,7 @@ namespace Athena
 		auto dirLights = scene->GetAllEntitiesWith<DirectionalLightComponent>();
 		for(auto entity: dirLights)
 		{
-			auto light = dirLights.get<DirectionalLightComponent>(entity);
+			auto& light = dirLights.get<DirectionalLightComponent>(entity);
 			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}

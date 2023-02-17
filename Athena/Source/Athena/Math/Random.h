@@ -4,6 +4,7 @@
 #include "Athena/Math/TypesImpl/Vector2.h"
 #include "Athena/Math/TypesImpl/Vector3.h"
 #include "Athena/Math/TypesImpl/Vector4.h"
+
 #include "Limits.h"
 #include "Common.h"
 
@@ -15,11 +16,6 @@ namespace Athena::Math
 	class Random
 	{
 	public:
-		static void Init()
-		{
-			s_RandomEngine.seed(std::random_device()());
-		}
-
 		static float Float()
 		{
 			return (float)s_Distribution(s_RandomEngine) / (float)Math::MaxValue<internal_type>();
@@ -84,6 +80,7 @@ namespace Athena::Math
 		using internal_type = uint64;
 
 	private:
+		static std::random_device s_RandomDevice;
 		static std::mt19937_64 s_RandomEngine;
 		static std::uniform_int_distribution<internal_type> s_Distribution;
 	};

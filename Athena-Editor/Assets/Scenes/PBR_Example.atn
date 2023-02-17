@@ -1,40 +1,34 @@
 Scene: PBR_Example
 Entities:
   - IDComponent:
-      ID: 14514284786278117030
+      ID: 9951328475622812222
     TagComponent:
-      Tag: PointLight
+      Tag: Camera
     TransformComponent:
-      Translation: [-18.762085, 287.624725, 365.556885]
-      Rotation: [0, -0, 0]
-      Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 0, 1, 1]
-      Intensity: 1500
-      Radius: 2150
-      FallOff: 1
+      Translation: [-1033.76343, 924.523071, -254.927216]
+      Rotation: [2.42100859, -1.47435892, -3.04366446]
+      Scale: [0.999999344, 0.999999583, 0.999999583]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.785398185
+        PerspectiveNearClip: 0.00999999978
+        PerspectiveFarClip: 10000
+        OrthographicSize: 10
+        OrthographicNearClip: -1
+        OrthographicFarClip: 1
+      Primary: true
+      FixedAspectRatio: false
   - IDComponent:
-      ID: 14514284786278117030
+      ID: 1451428478627811703
     TagComponent:
-      Tag: DirectionalLight
+      Tag: BlenderScene
     TransformComponent:
-      Translation: [326.079224, 0, 0]
-      Rotation: [0, -0, 0]
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Direction: [-1.5, -0.75, -1.10000002]
-      Intensity: 1
-  - IDComponent:
-      ID: 14514284786278117030
-    TagComponent:
-      Tag: Spiderman
-    TransformComponent:
-      Translation: [-212.375305, 48.6798553, 638.903564]
-      Rotation: [-3.1415925, 0.475432873, -3.1415925]
-      Scale: [289.284058, 289.283478, 289.284058]
     StaticMeshComponent:
-      FilePath: Assets\Meshes\Spiderman\Spiderman.fbx
+      FilePath: Assets\Meshes\BlenderScene.fbx
       Hide: false
   - IDComponent:
       ID: 4620546740167642908
@@ -48,16 +42,41 @@ Entities:
       FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
       Hide: false
   - IDComponent:
-      ID: 14514284786278117030
+      ID: 8921477777777811111
     TagComponent:
-      Tag: BlenderScene
+      Tag: Spiderman
     TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Translation: [-212.375305, 48.6798553, 638.903564]
+      Rotation: [-3.1415925, 0.475432873, -3.1415925]
+      Scale: [289.284058, 289.283478, 289.284058]
     StaticMeshComponent:
-      FilePath: Assets\Meshes\BlenderScene.fbx
+      FilePath: Assets\Meshes\Spiderman\Spiderman.fbx
       Hide: false
+  - IDComponent:
+      ID: 8441479921366816231
+    TagComponent:
+      Tag: DirectionalLight
+    TransformComponent:
+      Translation: [326.079224, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Direction: [-1.5, -0.75, -1.10000002]
+      Intensity: 1
+  - IDComponent:
+      ID: 6676222333621811702
+    TagComponent:
+      Tag: PointLight
+    TransformComponent:
+      Translation: [-18.762085, 287.624725, 365.556885]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 1, 1]
+      Intensity: 1500
+      Radius: 1280
+      FallOff: 1
 Environment:
   Skybox:
     FilePath: Assets\EnvironmentMaps\Sun_Snow_4k.hdr

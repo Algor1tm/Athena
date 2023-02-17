@@ -76,7 +76,7 @@ namespace Athena
         Renderer2D::ResetStats();
 
         Renderer::BeginFrame();
-        Renderer::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+        RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
         // Clear our entity ID attachment to -1
         framebuffer->ClearAttachment(1, -1);
 
@@ -142,6 +142,7 @@ namespace Athena
         ImGui::End();
 
 		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().m_CameraSpeedLevel);
+        m_MainViewport->SetFramebuffer(Renderer::GetMainFramebuffer(), 0);
     }
 
     void EditorLayer::SelectEntity(Entity entity)

@@ -2,27 +2,22 @@
 
 #include <Athena.h>
 
+using namespace Athena;
 
-namespace Athena
+class SandBox2D : public Layer
 {
-	class SandBox2D : public Layer
-	{
-	public:
-		SandBox2D();
+public:
+	SandBox2D();
 
-		void OnAttach() override;
-		void OnDetach() override;
+	void OnAttach() override;
+	void OnDetach() override;
 
-		void OnUpdate(Time frameTime) override;
-		void OnImGuiRender() override;
-		void OnEvent(Event& event) override;
+	void OnUpdate(Time frameTime) override;
+	void OnEvent(Event& event) override;
 
-	private:
-		Ref<Texture2D> m_SpriteSheet;
-		Texture2DInstance m_Water, m_Dirt, m_Barrel;
+private:
+	bool OnWindowResize(WindowResizeEvent& event);
 
-		OrthographicCamera m_CameraController;
-
-		std::unordered_map<char, Texture2DInstance> m_TextureMap;
-	};
-}
+private:
+	Ref<Scene> m_PBRScene;
+};

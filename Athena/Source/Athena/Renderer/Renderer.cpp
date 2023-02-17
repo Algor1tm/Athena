@@ -105,8 +105,10 @@ namespace Athena
 		Ref<ShaderStorageBuffer> LightShaderStorageBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 
-		Renderer::Statistics Stats;
+		Antialising AntialisingMethod = Antialising::MSAA_4X;
+
 		DebugView CurrentDebugView = DebugView::NONE;
+		Renderer::Statistics Stats;
 
 		ShaderLibrary ShaderPack;
 		void BindShader(ShaderEnum shader) { ShaderPack.Get<Shader>(s_ShaderMap[shader])->Bind(); }
@@ -260,6 +262,7 @@ namespace Athena
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
+		s_Data.MainFramebuffer->Resize(width, height);
 		RenderCommand::SetViewport(0, 0, width, height);
 	}
 
@@ -353,6 +356,16 @@ namespace Athena
 		s_Data.MainFramebuffer->UnBind();
 	}
 
+	Ref<Framebuffer> Renderer::GetMainFramebuffer()
+	{
+		return s_Data.MainFramebuffer;
+	}
+
+	void Renderer::BlitToScreen()
+	{
+		s_Data.MainFramebuffer->BlitToScreen();
+	}
+
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
 	{
 		if (ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
@@ -412,16 +425,6 @@ namespace Athena
 		{
 			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr vertexBuffer!");
 		}
-	}
-
-	void Renderer::Clear(const LinearColor& color)
-	{
-		RenderCommand::Clear(color);
-	}
-
-	Ref<Framebuffer> Renderer::GetMainFramebuffer()
-	{
-		return s_Data.MainFramebuffer;
 	}
 
 	void Renderer::ReloadShaders()
@@ -526,14 +529,62 @@ namespace Athena
 		}
 	}
 
-	void Renderer::SetRenderQueueLimit(uint32 limit)
+	Antialising Renderer::GetAntialiasingMethod()
 	{
-		s_Data.RenderQueueLimit = limit;
+		return s_Data.AntialisingMethod;
+	}
+
+	void Renderer::SetAntialiasingMethod(Antialising method)
+	{
+		if (s_Data.AntialisingMethod == method)
+			return;
+
+		FramebufferDescription desc = s_Data.MainFramebuffer->GetDescription();
+
+		switch(method)
+		{
+		case Antialising::NONE:
+		{
+			desc.Samples = 1;
+			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			break;
+		}
+		case Antialising::MSAA_2X:
+		{
+			desc.Samples = 2;
+			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			break;
+		}
+		case Antialising::MSAA_4X:
+		{
+			desc.Samples = 4;
+			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			break;
+		}
+		case Antialising::MSAA_8X:
+		{
+			desc.Samples = 8;
+			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			break;
+		}
+		}
+
+		s_Data.AntialisingMethod = method;
+	}
+
+	DebugView Renderer::GetDebugView()
+	{
+		return s_Data.CurrentDebugView;
 	}
 
 	void Renderer::SetDebugView(DebugView view)
 	{
 		s_Data.CurrentDebugView = view;
+	}
+
+	void Renderer::SetRenderQueueLimit(uint32 limit)
+	{
+		s_Data.RenderQueueLimit = limit;
 	}
 
 	const Renderer::Statistics& Renderer::GetStatistics()

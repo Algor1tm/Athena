@@ -174,6 +174,18 @@ namespace Athena
 		}
 	}
 
+	void GLFramebuffer::BlitToScreen() const
+	{
+		if (IsMultisample())
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ColorAttachmentsResolved[0]);
+		else
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_ColorAttachments[0]);
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	}
+
 	void GLFramebuffer::CreateFramebufferObject(uint32* rendererID, bool resolved)
 	{
 		glCreateFramebuffers(1, rendererID);

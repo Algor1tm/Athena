@@ -1,57 +1,44 @@
 Scene: PBR_Example
 Entities:
   - IDComponent:
-      ID: 9951328475622812222
+      ID: 14287027665375615955
     TagComponent:
-      Tag: Camera
+      Tag: PointLight
     TransformComponent:
-      Translation: [-1033.76343, 924.523071, -254.927216]
-      Rotation: [2.42100859, -1.47435892, -3.04366446]
-      Scale: [0.999999344, 0.999999583, 0.999999583]
-    CameraComponent:
-      Camera:
-        ProjectionType: 0
-        PerspectiveFOV: 0.785398185
-        PerspectiveNearClip: 0.00999999978
-        PerspectiveFarClip: 10000
-        OrthographicSize: 10
-        OrthographicNearClip: -1
-        OrthographicFarClip: 1
-      Primary: true
-      FixedAspectRatio: false
-  - IDComponent:
-      ID: 1451428478627811703
-    TagComponent:
-      Tag: BlenderScene
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
+      Translation: [-18.762085, 264.030823, 351.933472]
+      Rotation: [0, -0, 0]
       Scale: [1, 1, 1]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\BlenderScene.fbx
-      Hide: false
+    PointLightComponent:
+      Color: [0, 0.126582384, 1, 1]
+      Intensity: 3000
+      Radius: 1280
+      FallOff: 1
   - IDComponent:
-      ID: 4620546740167642908
+      ID: 16057423673231542396
     TagComponent:
-      Tag: silly_dancing
+      Tag: PointLight
     TransformComponent:
-      Translation: [451.751648, 73.3511124, -367.715118]
-      Rotation: [-2.74959557e-08, -1.38929653, 3.03894382e-07]
-      Scale: [140.35437, 140.354126, 140.35437]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
-      Hide: false
+      Translation: [126.210617, 287.624725, -249.198029]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 1, 1]
+      Intensity: 1500
+      Radius: 1280
+      FallOff: 1
   - IDComponent:
-      ID: 8921477777777811111
+      ID: 14448246516750877137
     TagComponent:
-      Tag: Spiderman
+      Tag: PointLight
     TransformComponent:
-      Translation: [-212.375305, 48.6798553, 638.903564]
-      Rotation: [-3.1415925, 0.475432873, -3.1415925]
-      Scale: [289.284058, 289.283478, 289.284058]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\Spiderman\Spiderman.fbx
-      Hide: false
+      Translation: [407.636261, 126.828178, 295.421021]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 1500
+      Radius: 1280
+      FallOff: 1
   - IDComponent:
       ID: 8441479921366816231
     TagComponent:
@@ -65,18 +52,57 @@ Entities:
       Direction: [-1.5, -0.75, -1.10000002]
       Intensity: 1
   - IDComponent:
-      ID: 6676222333621811702
+      ID: 8921477777777811111
     TagComponent:
-      Tag: PointLight
+      Tag: Spiderman
     TransformComponent:
-      Translation: [-18.762085, 287.624725, 365.556885]
-      Rotation: [0, -0, 0]
+      Translation: [-212.375305, 48.6798553, 638.903564]
+      Rotation: [-3.1415925, 0.475432873, -3.1415925]
+      Scale: [289.284058, 289.283478, 289.284058]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Spiderman\Spiderman.fbx
+      Hide: false
+  - IDComponent:
+      ID: 4620546740167642908
+    TagComponent:
+      Tag: silly_dancing
+    TransformComponent:
+      Translation: [451.751648, 73.3511124, -367.715118]
+      Rotation: [-2.74959557e-08, -1.38929653, 3.03894382e-07]
+      Scale: [140.35437, 140.354126, 140.35437]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
+      Hide: false
+  - IDComponent:
+      ID: 1451428478627811703
+    TagComponent:
+      Tag: BlenderScene
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    PointLightComponent:
-      Color: [1, 0, 1, 1]
-      Intensity: 1500
-      Radius: 1280
-      FallOff: 1
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\BlenderScene.fbx
+      Hide: false
+  - IDComponent:
+      ID: 9951328475622812222
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [-1439.52417, 592.363892, -1147.38806]
+      Rotation: [2.94080901, -0.882228673, 3.1415925]
+      Scale: [0.999999404, 1, 0.99999696]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.52359879
+        PerspectiveNearClip: 0.00999999978
+        PerspectiveFarClip: 10000
+        OrthographicSize: 10
+        OrthographicNearClip: -1
+        OrthographicFarClip: 1
+      Primary: true
+      FixedAspectRatio: false
 Environment:
   Skybox:
     FilePath: Assets\EnvironmentMaps\Sun_Snow_4k.hdr

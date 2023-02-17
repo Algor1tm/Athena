@@ -51,6 +51,14 @@ namespace Athena
 		BONES_DATA = 5
 	};
 
+	enum class Antialising
+	{
+		NONE = 0,
+		MSAA_2X = 1,
+		MSAA_4X = 2,
+		MSAA_8X = 3,
+	};
+
 	enum class DebugView
 	{
 		NONE = 0,
@@ -74,22 +82,27 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
+		static Ref<Framebuffer> GetMainFramebuffer();
+		static void BlitToScreen();
+
 		static void SubmitLight(const DirectionalLight& dirLight);
 		static void SubmitLight(const PointLight& pointLight);
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
-		static void Clear(const LinearColor& color);
-		static Ref<Framebuffer> GetMainFramebuffer();
-
 		static void ReloadShaders();
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 
-		static void SetRenderQueueLimit(uint32 limit);
+		static Antialising GetAntialiasingMethod();
+		static void SetAntialiasingMethod(Antialising method);
+
+		static DebugView GetDebugView();
 		static void SetDebugView(DebugView view);
+
+		static void SetRenderQueueLimit(uint32 limit);
 
 		struct Statistics
 		{

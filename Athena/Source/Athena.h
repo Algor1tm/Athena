@@ -55,7 +55,6 @@
 #include "Athena/Renderer/Renderer2D.h"
 
 #include "Athena/Renderer/EditorCamera.h"
-#include "Athena/Renderer/OrthographicCamera.h"
 
 
 // --------Scene--------------------

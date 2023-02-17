@@ -52,5 +52,6 @@ namespace Athena
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) = 0;
 
 		virtual void ResolveMutlisampling() = 0;
+		virtual void BlitToScreen() const = 0;
 	};
 }

@@ -10,13 +10,15 @@ namespace Athena
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, bool rotation)
 		: m_Position(0.f), m_Rotation(0.f), m_EnableRotation(rotation)
 	{
-		SetProjection(left, right, bottom, top);
+		RecalculateView();
+		RecalculateProjection();
 	}
 
 	OrthographicCamera::OrthographicCamera(float aspectRatio, bool rotation)
 		: m_AspectRatio(aspectRatio), m_EnableRotation(rotation)
 	{
-		SetProjection(-m_ZoomLevel * m_AspectRatio, m_ZoomLevel * m_AspectRatio, -m_ZoomLevel, m_ZoomLevel);
+		RecalculateView();
+		RecalculateProjection();
 	}
 
 	void OrthographicCamera::SetProjection(float left, float right, float bottom, float top)
@@ -28,6 +30,11 @@ namespace Athena
 	{
 		Matrix4 transform = Math::RotateMatrix(m_Rotation, Vector3(0, 0, 1)) * Math::TranslateMatrix(m_Position);
 		m_ViewMatrix = Math::AffineInverse(transform);
+	}
+
+	void OrthographicCamera::RecalculateProjection()
+	{
+		SetProjection(-m_ZoomLevel * m_AspectRatio, m_ZoomLevel * m_AspectRatio, -m_ZoomLevel, m_ZoomLevel);
 	}
 
 	void OrthographicCamera::OnUpdate(Time frameTime)
@@ -50,6 +57,8 @@ namespace Athena
 			else if (Input::IsKeyPressed(Keyboard::E))
 				m_Rotation -= m_CameraRotationSpeed * seconds;
 		}
+
+		RecalculateView();
 	}
 
 	void OrthographicCamera::OnEvent(Event& event)
@@ -70,7 +79,7 @@ namespace Athena
 		m_ZoomLevel = Math::Max(m_ZoomLevel, 0.2f);
 		m_CameraSpeed = m_ZoomLevel * 1.5f;
 
-		RecalculateView();
+		RecalculateProjection();
 
 		return false;
 	}

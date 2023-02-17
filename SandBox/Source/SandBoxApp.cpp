@@ -3,30 +3,27 @@
 
 #include "SandBox2D.h"
 
-#include "Athena/Core/PlatformUtils.h"
-#include "Athena/Renderer/GPUBuffers.h"
+using namespace Athena;
 
-#include <ImGui/imgui.h>
+
+class SandBox : public Application
+{
+public:
+	SandBox(const ApplicationDescription& appdesc)
+		: Application(appdesc)
+	{
+		PushLayer(CreateRef<SandBox2D>());
+	}
+
+	~SandBox()
+	{
+
+	}
+};
 
 
 namespace Athena
 {
-	class SandBox : public Application
-	{
-	public:
-		SandBox(const ApplicationDescription& appdesc)
-			: Application(appdesc)
-		{
-			PushLayer(CreateRef<SandBox2D>());
-		}
-
-		~SandBox()
-		{
-
-		}
-	};
-
-
 	Application* CreateApplication()
 	{
 		ApplicationDescription appdesc;
@@ -38,7 +35,7 @@ namespace Athena
 		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
 		appdesc.API = RendererAPI::OpenGL;
 		appdesc.UseImGui = false;
-		appdesc.UseConsole = true;
+		appdesc.UseConsole = false;
 		appdesc.WorkingDirectory = "../Athena-Editor";
 		appdesc.ScriptsFolder = "Assets/Scripts";
 

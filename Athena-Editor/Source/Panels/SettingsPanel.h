@@ -29,6 +29,5 @@ namespace Athena
 		EditorSettings m_EditorSettings;
 		int32 m_RenderQueueLimit = -1;
 		uint32 m_RenderGeometryCount = 0;
-		DebugView m_CurrentDebugView = DebugView::NONE;
 	};
 }

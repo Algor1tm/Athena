@@ -60,13 +60,14 @@ namespace Athena
 
 		virtual void SetViewportSize(uint32 width, uint32 height) override;
 
-		inline void SetZoomLevel(float level) { m_ZoomLevel = level; RecalculateView(); }
+		inline void SetZoomLevel(float level) { m_ZoomLevel = level; RecalculateProjection(); }
 		inline float GetZoomLevel() const { return m_ZoomLevel; }
 
 		inline void SetCameraSpeed(float speed) { m_CameraSpeed = speed; }
 		inline void SetCameraRotationSpeed(float speed) { m_CameraRotationSpeed = speed; }
 
 	private:
+		void RecalculateProjection();
 		void RecalculateView();
 
 		bool OnMouseScrolled(MouseScrolledEvent& event);

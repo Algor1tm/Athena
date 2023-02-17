@@ -29,6 +29,7 @@ namespace Athena
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) override;
 
 		virtual void ResolveMutlisampling() override;
+		virtual void BlitToScreen() const override;
 
 	private:
 		void DeleteAttachments();

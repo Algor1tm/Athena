@@ -11,6 +11,20 @@
 
 namespace Athena
 {
+	static std::string_view AntialisingToString(Antialising antialiasing)
+	{
+		switch (antialiasing)
+		{
+		case Antialising::NONE: return "None";
+		case Antialising::MSAA_2X: return "MSAA 2X";
+		case Antialising::MSAA_4X: return "MSAA 4X";
+		case Antialising::MSAA_8X: return "MSAA 8X";
+		}
+
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
+
 	static std::string_view DebugViewToString(DebugView view)
 	{
 		switch (view)
@@ -82,63 +96,80 @@ namespace Athena
 
 
 
-		if (ImGui::Begin("Renderer"))
+		ImGui::Begin("Renderer");
+		ImGui::PopStyleVar();
+
+		if (UI::BeginTreeNode("Debug"))
 		{
-			if (UI::BeginTreeNode("Debug"))
-			{
-				auto stats = Renderer::GetStatistics();
+			auto stats = Renderer::GetStatistics();
 
-				ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-				ImGui::Text("Directional Lights: %d", stats.DirectionalLightsCount);
-				ImGui::Text("Point Lights: %d", stats.PointLightsCount);
+			ImGui::Text("Draw Calls: %d", stats.DrawCalls);
+			ImGui::Text("Directional Lights: %d", stats.DirectionalLightsCount);
+			ImGui::Text("Point Lights: %d", stats.PointLightsCount);
 
-				ImGui::Spacing();
-				ImGui::Spacing();
+			ImGui::Spacing();
+			ImGui::Spacing();
 
-				if (m_RenderQueueLimit < 0 || m_RenderGeometryCount != stats.GeometryCount)
-					m_RenderQueueLimit = stats.GeometryCount;
+			if (m_RenderQueueLimit < 0 || m_RenderGeometryCount != stats.GeometryCount)
+				m_RenderQueueLimit = stats.GeometryCount;
 
-				m_RenderGeometryCount = stats.GeometryCount;
+			m_RenderGeometryCount = stats.GeometryCount;
 
-				ImGui::Text("RenderQueue");
-				ImGui::SameLine();
-				ImGui::SliderInt("##RenderQueue", &m_RenderQueueLimit, 0, stats.GeometryCount);
-				Renderer::SetRenderQueueLimit(m_RenderQueueLimit);
+			ImGui::Text("RenderQueue");
+			ImGui::SameLine();
+			ImGui::SliderInt("##RenderQueue", &m_RenderQueueLimit, 0, stats.GeometryCount);
+			Renderer::SetRenderQueueLimit(m_RenderQueueLimit);
 				
-				ImGui::Text("DebugView");
-				ImGui::SameLine();
+			ImGui::Text("DebugView");
+			ImGui::SameLine();
 
-				ImGui::PopStyleVar();
-				if (ImGui::BeginCombo("##DebugView", DebugViewToString(m_CurrentDebugView).data()))
+			if (ImGui::BeginCombo("##DebugView", DebugViewToString(Renderer::GetDebugView()).data()))
+			{
+				for (uint32 i = 0; i <= (uint32)DebugView::WIREFRAME; ++i)
 				{
-					for (uint32 i = 0; i <= (uint32)DebugView::WIREFRAME; ++i)
-					{
-						DebugView view = (DebugView)i;
+					DebugView view = (DebugView)i;
 
-						bool isSelected = view == m_CurrentDebugView;
-						UI::Selectable(DebugViewToString(view), &isSelected, [this, view]()
-							{
-								m_CurrentDebugView = view;
-								Renderer::SetDebugView(view);
-							});
+					bool isSelected = view == Renderer::GetDebugView();
+					UI::Selectable(DebugViewToString(view), &isSelected, [this, view]()
+						{
+							Renderer::SetDebugView(view);
+						});
 
-					}
-
-					ImGui::EndCombo();
 				}
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0.f });
 
-				ImGui::Spacing();
-				ImGui::Spacing();
-
-				ImGui::Text("Geometry Pass: %.3f", stats.GeometryPass.AsMilliseconds());
-				ImGui::Text("Skybox Pass: %.3f", stats.SkyboxPass.AsMilliseconds());
-
-				UI::EndTreeNode();
+				ImGui::EndCombo();
 			}
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ImGui::Text("Geometry Pass: %.3f", stats.GeometryPass.AsMilliseconds());
+			ImGui::Text("Skybox Pass: %.3f", stats.SkyboxPass.AsMilliseconds());
+
+			UI::EndTreeNode();
 		}
 
-		ImGui::PopStyleVar();
+		if (UI::BeginTreeNode("Other"))
+		{
+			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(Renderer::GetAntialiasingMethod()).data()))
+			{
+				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
+				{
+					Antialising antialiasing = (Antialising)i;
+
+					bool isSelected = antialiasing == Renderer::GetAntialiasingMethod();
+					UI::Selectable(AntialisingToString(antialiasing), &isSelected, [this, antialiasing]()
+						{
+							Renderer::SetAntialiasingMethod(antialiasing);
+						});
+
+				}
+
+				ImGui::EndCombo();
+			}
+
+			UI::EndTreeNode();
+		}
 
 		ImGui::End();
 	}

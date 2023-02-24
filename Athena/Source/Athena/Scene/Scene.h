@@ -53,9 +53,9 @@ namespace Athena
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 
-		void OnUpdateEditor(Time frameTime, EditorCamera& camera); 
+		void OnUpdateEditor(Time frameTime, const EditorCamera& camera); 
 		void OnUpdateRuntime(Time frameTime);
-		void OnUpdateSimulation(Time frameTime, EditorCamera& camera);
+		void OnUpdateSimulation(Time frameTime, const EditorCamera& camera);
 
 		void OnRuntimeStart();
 		void OnSimulationStart();
@@ -79,6 +79,9 @@ namespace Athena
 	private:
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
+
+		void RenderEditorScene(const EditorCamera& camera);
+		void RenderRuntimeScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

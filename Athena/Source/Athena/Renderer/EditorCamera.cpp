@@ -112,10 +112,10 @@ namespace Athena
 		m_ViewportHeight = (float)height;
 	}
 
-	Vector2 PerspectiveCameraBase::UpdateMousePosition(Time frameTime)
+	Vector2 PerspectiveCameraBase::UpdateMousePosition()
 	{
 		Vector2 mousePos = Input::GetMousePosition();
-		Vector2 delta = (mousePos - m_InitialMousePosition) * frameTime.AsSeconds();
+		Vector2 delta = (mousePos - m_InitialMousePosition);
 		m_InitialMousePosition = mousePos;
 
 		return delta;
@@ -175,7 +175,7 @@ namespace Athena
 
 	float MeshViewerCamera::RotationSpeed() const
 	{
-		return 0.3f;
+		return 0.003f;
 	}
 
 	float MeshViewerCamera::ZoomSpeed() const
@@ -189,7 +189,7 @@ namespace Athena
 
 	void MeshViewerCamera::OnUpdate(Time frameTime)
 	{
-		Vector2 delta = UpdateMousePosition(frameTime);
+		Vector2 delta = UpdateMousePosition();
 
 		if (Input::IsMouseButtonPressed(Mouse::Middle))
 		{
@@ -197,7 +197,7 @@ namespace Athena
 		}
 		else if (Input::IsMouseButtonPressed(Mouse::Right))
 		{
-			MouseRotate(delta * RotationSpeed());
+			MouseRotate(Math::Clamp(delta * RotationSpeed(), -0.1f, 0.1f));
 		}
 
 		RecalculateView();
@@ -264,7 +264,7 @@ namespace Athena
 
 	void FirstPersonCamera::OnUpdate(Time frameTime)
 	{
-		Vector2 delta = UpdateMousePosition(frameTime) * RotationSpeed();
+		Vector2 delta = UpdateMousePosition() * RotationSpeed();
 		delta = Math::Clamp(delta, -0.1f, 0.1f);
 
 		if (Input::IsMouseButtonPressed(Mouse::Right))
@@ -336,7 +336,7 @@ namespace Athena
 
 	float FirstPersonCamera::RotationSpeed() const
 	{
-		return 0.15f;
+		return 0.001f;
 	}
 
 	float FirstPersonCamera::ZoomSpeed() const

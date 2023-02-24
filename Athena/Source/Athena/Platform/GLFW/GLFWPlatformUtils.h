@@ -121,7 +121,7 @@ namespace Athena
 
 	double Platform::GetHighPrecisionTime()
 	{
-		double frequency = 0.0;
+		static double frequency = 0.0;
 		if (frequency == 0.0)
 		{
 			LARGE_INTEGER li;
@@ -140,6 +140,7 @@ namespace Athena
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
 		ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+
 		ofn.lStructSize = sizeof(OPENFILENAMEA);
 		ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow());
 		ofn.lpstrFile = szFile;
@@ -159,6 +160,7 @@ namespace Athena
 		OPENFILENAMEA ofn;
 		CHAR szFile[260] = { 0 };
 		ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+
 		ofn.lStructSize = sizeof(OPENFILENAMEA);
 		ofn.hwndOwner = glfwGetWin32Window((GLFWwindow*)Application::Get().GetWindow().GetNativeWindow());
 		ofn.lpstrFile = szFile;

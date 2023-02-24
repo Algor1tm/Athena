@@ -1,16 +1,15 @@
 #include "Renderer.h"
 
+#include "Athena/Math/Projections.h"
+#include "Athena/Math/Transforms.h"
+
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/RenderQueue.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
-
-#include "Athena/Math/Projections.h"
-#include "Athena/Math/Transforms.h"
-
-#include "Athena/Scene/SceneRenderer.h"
 
 #include <deque>
 
@@ -49,15 +48,6 @@ namespace Athena
 		{ DEBUG_WIREFRAME_ANIM, "DEBUG_WIREFRAME_ANIM" }
 	};
 
-	struct DrawCallInfo
-	{
-		Ref<VertexBuffer> VertexBuffer;
-		Ref<Material> Material;
-		Ref<Animator> Animator;
-		Matrix4 Transform;
-		int32 EntityID;
-	};
-
 	struct SceneData
 	{
 		Matrix4 ViewMatrix;
@@ -84,9 +74,7 @@ namespace Athena
 
 	struct RendererData
 	{
-		std::deque<DrawCallInfo> RenderQueue;	// TODO: maybe make class RenderQueue
-		uint32 RenderQueueLastSize = 0;
-		int32 RenderQueueLimit = -1;
+		RenderQueue GeometryQueue;
 
 		Ref<Framebuffer> MainFramebuffer;
 
@@ -122,67 +110,48 @@ namespace Athena
 
 	static void RenderGeometryPass(ShaderEnum staticShader, ShaderEnum animShader)
 	{
-		if (s_Data.RenderQueueLastSize != s_Data.RenderQueue.size())
-			s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
-		if (s_Data.RenderQueueLimit < 0)
-			s_Data.RenderQueueLimit = s_Data.RenderQueue.size();
-		auto end = s_Data.RenderQueueLimit < s_Data.RenderQueue.size() ? s_Data.RenderQueue.begin() + s_Data.RenderQueueLimit : s_Data.RenderQueue.end();
-
-		auto iter = s_Data.RenderQueue.begin();
 		// Render Static Meshes
 		s_Data.BindShader(staticShader);
 
-		Ref<Material> lastMaterial = nullptr;
-		while (iter != end)
+		while (s_Data.GeometryQueue.HasStaticMeshes())
 		{
-			auto& info = *iter;
-
-			if (info.Animator != nullptr)
-				break;
+			auto& info = s_Data.GeometryQueue.Pop();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
 			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
-			{
+			if (s_Data.GeometryQueue.UpdateMaterial())
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-				lastMaterial = info.Material;
-			}
 
 			RenderCommand::DrawTriangles(info.VertexBuffer);
 			s_Data.Stats.DrawCalls++;
-			iter++;
 		}
 
 		// Render Animated Meshes
-		if (iter != end)
-			s_Data.BindShader(animShader);
+		s_Data.BindShader(animShader);
 
-		Ref<Animator> lastAnimator;
-		while (iter != end)
+		while (s_Data.GeometryQueue.HasAnimMeshes())
 		{
-			auto& info = *iter;
+			auto& info = s_Data.GeometryQueue.Pop();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
 			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-			if (lastAnimator == nullptr || lastAnimator != info.Animator)
+			if (s_Data.GeometryQueue.UpdateAnimator())
 			{
 				const auto& boneTransforms = info.Animator->GetBoneTransforms();
 				s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
 			}
 
-			if (lastMaterial == nullptr || *lastMaterial != *info.Material)
+			if (s_Data.GeometryQueue.UpdateMaterial())
 			{
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
-				lastMaterial = info.Material;
 			}
 
 			RenderCommand::DrawTriangles(info.VertexBuffer);
 			s_Data.Stats.DrawCalls++;
-			iter++;
 		}
 	}
 
@@ -191,7 +160,6 @@ namespace Athena
 		RendererAPI::SetAPI(graphicsAPI);
 		RenderCommand::Init();
 		Renderer2D::Init();
-		SceneRenderer::Init();
 
 		FramebufferDescription fbDesc;
 		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
@@ -257,7 +225,6 @@ namespace Athena
 	void Renderer::Shutdown()
 	{
 		Renderer2D::Shutdown();
-		SceneRenderer::Shutdown();
 	}
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
@@ -283,15 +250,9 @@ namespace Athena
 		///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
 		Time start = timer.ElapsedTime();
 
-		if (!s_Data.RenderQueue.empty())
+		if (!s_Data.GeometryQueue.Empty())
 		{
-			std::sort(s_Data.RenderQueue.begin(), s_Data.RenderQueue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
-				{
-					if (left.Animator != right.Animator)
-						return left.Animator < right.Animator;
-
-					return left.Material->GetName() < right.Material->GetName();
-				});
+			s_Data.GeometryQueue.Sort();
 
 			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
@@ -332,13 +293,12 @@ namespace Athena
 		}
 		s_Data.Stats.SkyboxPass = timer.ElapsedTime() - start;
 
-		s_Data.Stats.GeometryCount += s_Data.RenderQueue.size();
+		s_Data.Stats.GeometryCount += s_Data.GeometryQueue.Size();
 		s_Data.Stats.DirectionalLightsCount += s_Data.LightDataBuffer.DirectionalLightCount;
 		s_Data.Stats.PointLightsCount += s_Data.LightDataBuffer.PointLightCount;
 
 
-		s_Data.RenderQueueLastSize = s_Data.RenderQueue.size();
-		s_Data.RenderQueue.clear();
+		s_Data.GeometryQueue.Clear();
 		s_Data.ActiveEnvironment = nullptr;
 
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
@@ -400,7 +360,7 @@ namespace Athena
 			info.Transform = transform;
 			info.EntityID = entityID;
 
-			s_Data.RenderQueue.push_back(info);
+			s_Data.GeometryQueue.Push(info);
 		}
 		else
 		{
@@ -419,7 +379,7 @@ namespace Athena
 			info.Transform = transform;
 			info.EntityID = entityID;
 
-			s_Data.RenderQueue.push_back(info);
+			s_Data.GeometryQueue.Push(info);
 		}
 		else
 		{
@@ -519,7 +479,7 @@ namespace Athena
 
 	void Renderer::RenderDebugView(DebugView view)
 	{
-		if (s_Data.RenderQueue.size() > 0)
+		if (!s_Data.GeometryQueue.Empty())
 		{
 			if (view == DebugView::NORMALS)
 				RenderGeometryPass(DEBUG_NORMALS_STATIC, DEBUG_NORMALS_ANIM);
@@ -584,7 +544,7 @@ namespace Athena
 
 	void Renderer::SetRenderQueueLimit(uint32 limit)
 	{
-		s_Data.RenderQueueLimit = limit;
+		s_Data.GeometryQueue.SetLimit(limit);
 	}
 
 	const Renderer::Statistics& Renderer::GetStatistics()

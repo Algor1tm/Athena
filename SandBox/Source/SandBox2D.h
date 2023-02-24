@@ -19,5 +19,5 @@ private:
 	bool OnWindowResize(WindowResizeEvent& event);
 
 private:
-	Ref<Scene> m_PBRScene;
+	Ref<Scene> m_Scene;
 };

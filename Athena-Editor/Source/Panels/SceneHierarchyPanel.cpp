@@ -213,6 +213,9 @@ namespace Athena
 						materials.push_back(material);
 					}
 				}
+
+				if (std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
+					m_ActiveMaterial = materials[0];
 			}
 		}
 		else

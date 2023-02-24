@@ -103,7 +103,7 @@ namespace Athena
 		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
 		void SetViewportSize(uint32 width, uint32 height);
 
-		Vector2 UpdateMousePosition(Time frameTime);
+		Vector2 UpdateMousePosition();
 
 		Vector3 GetUpDirection() const;
 		Vector3 GetRightDirection() const;

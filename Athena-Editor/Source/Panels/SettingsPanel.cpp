@@ -117,6 +117,7 @@ namespace Athena
 
 			ImGui::Text("RenderQueue");
 			ImGui::SameLine();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGui::SliderInt("##RenderQueue", &m_RenderQueueLimit, 0, stats.GeometryCount);
 			Renderer::SetRenderQueueLimit(m_RenderQueueLimit);
 				

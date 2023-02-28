@@ -13,7 +13,7 @@ namespace Athena
 	struct EditorSettings
 	{
 		bool m_ShowPhysicsColliders = false;
-		float m_CameraSpeedLevel = 0.5f;
+		float m_CameraSpeedLevel = 1.f;
 	};
 
 

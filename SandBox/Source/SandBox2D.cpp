@@ -11,7 +11,7 @@ SandBox2D::SandBox2D()
 
 void SandBox2D::OnAttach()
 {
-	FilePath path = "Assets/Scenes/PBR_Example.atn";
+	FilePath path = "Assets/Scenes/Default.atn";
 
 	m_Scene = CreateRef<Scene>();
 
@@ -47,9 +47,6 @@ void SandBox2D::OnUpdate(Time frameTime)
 bool SandBox2D::OnWindowResize(WindowResizeEvent& event)
 {
 	m_Scene->OnViewportResize(event.GetWidth(), event.GetHeight());
-
-	//const auto& desc = Renderer::GetMainFramebuffer()->GetDescription();
-	//m_Scene->OnViewportResize(desc.Width, desc.Height);
 
 	return false;
 }

@@ -184,7 +184,7 @@ namespace Athena
 	{
 		if (m_Compiled)
 		{
-			glDispatchCompute(x / m_WorkGroupSize.x, y / m_WorkGroupSize.y, z / m_WorkGroupSize.z);
+			glDispatchCompute(Math::Ceil((float)x / m_WorkGroupSize.x), Math::Ceil((float)y / m_WorkGroupSize.y), Math::Ceil((float)z / m_WorkGroupSize.z));
 			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 			//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_UNIFORM_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
 		}

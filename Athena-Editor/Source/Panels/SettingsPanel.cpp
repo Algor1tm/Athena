@@ -86,7 +86,7 @@ namespace Athena
 				ImGui::Text("Camera Speed");
 				ImGui::SameLine();
 				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.m_CameraSpeedLevel, 0.f, 1.f);
+				ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.m_CameraSpeedLevel, 0.f, 10.f);
 
 				UI::EndTreeNode();
 			}

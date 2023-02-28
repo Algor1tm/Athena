@@ -12,7 +12,7 @@ namespace Athena
 		m_Queue.push_back(info);
 	}
 
-	const DrawCallInfo& RenderQueue::Pop()
+	const DrawCallInfo& RenderQueue::Next()
 	{
 		m_CurrentIndex++;
 		return m_Queue[m_CurrentIndex - 1];

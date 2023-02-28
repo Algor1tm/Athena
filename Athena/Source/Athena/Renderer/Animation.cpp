@@ -90,10 +90,10 @@ namespace Athena
 	void Animation::GetBoneTransforms(float time, std::vector<Matrix4>& transforms)
 	{
 		const Bone& root = m_Skeleton->GetRootBone();
-		SetBoneTransform(root, Matrix4::Identity(), time, transforms);
+		ProcessBonesHierarchy(root, Matrix4::Identity(), time, transforms);
 	}
 
-	void Animation::SetBoneTransform(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms)
+	void Animation::ProcessBonesHierarchy(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms)
 	{
 		Matrix4 boneTransform = GetInterpolatedLocalTransform(bone.ID, time);
 		Matrix4 globalTransform = boneTransform * parentTransform;
@@ -104,7 +104,7 @@ namespace Athena
 
 		for (uint32 i = 0; i < bone.Children.size(); ++i)
 		{
-			SetBoneTransform(bone.Children[i], globalTransform, time, transforms);
+			ProcessBonesHierarchy(bone.Children[i], globalTransform, time, transforms);
 		}
 	}
 
@@ -127,16 +127,13 @@ namespace Athena
 		TranslationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
-			[](const TranslationKey& left, const TranslationKey& right) { return left.TimeStamp < right.TimeStamp; });
+			[](const TranslationKey& left, const TranslationKey& right) { return left.TimeStamp <= right.TimeStamp; });
 
 		iter--;
 		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
-		auto startIter = iter;
-		auto endIter = iter + 1;
-
-		const TranslationKey& start = *startIter;
-		const TranslationKey& end = *endIter;
+		const TranslationKey& start = *iter;
+		const TranslationKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
@@ -152,16 +149,13 @@ namespace Athena
 		RotationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
-			[](const RotationKey& left, const RotationKey& right) { return left.TimeStamp < right.TimeStamp; });
+			[](const RotationKey& left, const RotationKey& right) { return left.TimeStamp <= right.TimeStamp; });
 
 		iter--;
 		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
-		auto startIter = iter;
-		auto endIter = iter + 1;
-
-		const RotationKey& start = *startIter;
-		const RotationKey& end = *endIter;
+		const RotationKey& start = *iter;
+		const RotationKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
@@ -177,16 +171,13 @@ namespace Athena
 		ScaleKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
-			[](const ScaleKey& left, const ScaleKey& right) { return left.TimeStamp < right.TimeStamp; });
+			[](const ScaleKey& left, const ScaleKey& right) { return left.TimeStamp <= right.TimeStamp; });
 
 		iter--;
 		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
-		auto startIter = iter;
-		auto endIter = iter + 1;
-
-		const ScaleKey& start = *startIter;
-		const ScaleKey& end = *endIter;
+		const ScaleKey& start = *iter;
+		const ScaleKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);

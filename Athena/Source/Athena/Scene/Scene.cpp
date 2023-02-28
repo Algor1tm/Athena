@@ -174,7 +174,7 @@ namespace Athena
 	{
 		// Update Animations
 		auto view = m_Registry.view<StaticMeshComponent>();
-		for(auto entity : view)
+		for (auto entity : view)
 		{
 			auto& meshComponent = view.get<StaticMeshComponent>(entity);
 			if (meshComponent.Mesh->HasAnimations())

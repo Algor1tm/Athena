@@ -1,0 +1,100 @@
+Scene: Default
+Entities:
+  - IDComponent:
+      ID: 17196797334220725082
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [23.3378658, 7.31552744, -0.211175531]
+      Rotation: [2.89310122, 1.534446, -3.13837862]
+      Scale: [1, 0.999999702, 0.999995351]
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.52359879
+        PerspectiveNearClip: 0.00999999978
+        PerspectiveFarClip: 10000
+        OrthographicSize: 10
+        OrthographicNearClip: -1
+        OrthographicFarClip: 10
+      Primary: true
+      FixedAspectRatio: false
+  - IDComponent:
+      ID: 3148190026798035267
+    TagComponent:
+      Tag: PinkLight
+    TransformComponent:
+      Translation: [7.50940561, 4.60669899, -4.34297895]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.93670845, 0, 1, 1]
+      Intensity: 30
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
+      ID: 9434107904280492893
+    TagComponent:
+      Tag: StarWarsTrouper
+    TransformComponent:
+      Translation: [-2.29749608, 0.63625288, 5.81667376]
+      Rotation: [-3.1415925, 1.33179617, -3.1415925]
+      Scale: [1.44815016, 1.44815052, 1.44815016]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
+      Hide: false
+  - IDComponent:
+      ID: 2151942939999983161
+    TagComponent:
+      Tag: Primitives
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, -0, 0]
+      Scale: [0.147900015, 0.147900015, 0.147900015]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\BlenderScene.fbx
+      Hide: false
+  - IDComponent:
+      ID: 6684149830295041235
+    TagComponent:
+      Tag: GreenLight
+    TransformComponent:
+      Translation: [3.16600466, 3.90402031, 5.50082397]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0, 1, 0, 1]
+      Intensity: 30
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
+      ID: 2517320845403321880
+    TagComponent:
+      Tag: BlueLight
+    TransformComponent:
+      Translation: [-5.25229979, 4.22592306, 3.56423092]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0, 0, 1, 1]
+      Intensity: 30
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
+      ID: 2835139583361043602
+    TagComponent:
+      Tag: RedLight
+    TransformComponent:
+      Translation: [2.44086814, 4.63818932, -5.49453211]
+      Rotation: [0, -0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 30
+      Radius: 10
+      FallOff: 1
+Environment:
+  Skybox:
+    FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
+    Skybox LOD: 0.967999995
+    Exposure: 1

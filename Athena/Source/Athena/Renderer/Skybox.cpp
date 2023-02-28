@@ -27,7 +27,7 @@ namespace Athena
 	{
 		if (m_SkyboxMap)
 		{
-			m_SkyboxMap->Bind(TextureBinder::SKY_BOX);
+			m_SkyboxMap->Bind(TextureBinder::SKYBOX_MAP);
 			m_IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
 		}
 	}

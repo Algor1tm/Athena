@@ -46,7 +46,7 @@ namespace Athena
         m_ActiveScene = m_EditorScene;
 
 #if 1
-        OpenScene("Assets/Scenes/PBR_Example.atn");
+        OpenScene("Assets/Scenes/Default.atn");
 #endif
 
         m_SceneHierarchy->SetContext(m_EditorScene);

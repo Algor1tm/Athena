@@ -29,7 +29,9 @@ namespace Athena
 		RenderQueue() = default;
 
 		void Push(const DrawCallInfo& info);
-		const DrawCallInfo& Pop();
+		const DrawCallInfo& Next();
+
+		void Reset() { m_CurrentIndex = 0; m_LastMaterial = nullptr; m_LastAnimator = nullptr; }
 
 		void Clear();
 

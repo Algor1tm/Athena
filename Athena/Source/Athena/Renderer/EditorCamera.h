@@ -33,7 +33,7 @@ namespace Athena
 
 	protected:
 		Matrix4 m_ViewMatrix = Matrix4::Identity();
-		float m_MoveSpeedLevel = 0.5f;
+		float m_MoveSpeedLevel = 1.f;
 	};
 
 
@@ -186,6 +186,6 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
-		Vector3 m_Position = { 0.0f, 500.0f, 1000.0f };
+		Vector3 m_Position = { 0.0f, 5.0f, 10.0f };
 	};
 }

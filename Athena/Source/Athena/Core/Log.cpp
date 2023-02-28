@@ -29,7 +29,7 @@
 #include <fstream>
 
 // maximum mumber of lines the output console should have
-static const WORD MAX_CONSOLE_LINES = 500;
+static const WORD MAX_CONSOLE_LINES = 1000;
 
 static void RedirectIOToConsole()
 {

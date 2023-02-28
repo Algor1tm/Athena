@@ -115,7 +115,7 @@ namespace Athena
 
 		while (s_Data.GeometryQueue.HasStaticMeshes())
 		{
-			auto& info = s_Data.GeometryQueue.Pop();
+			auto& info = s_Data.GeometryQueue.Next();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
@@ -133,7 +133,7 @@ namespace Athena
 
 		while (s_Data.GeometryQueue.HasAnimMeshes())
 		{
-			auto& info = s_Data.GeometryQueue.Pop();
+			auto& info = s_Data.GeometryQueue.Next();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
@@ -269,6 +269,7 @@ namespace Athena
 		///////////////////////////// DEBUG VIEW /////////////////////////////
 		if (s_Data.CurrentDebugView != DebugView::NONE)
 		{
+			s_Data.GeometryQueue.Reset();
 			RenderDebugView(s_Data.CurrentDebugView);
 		}
 

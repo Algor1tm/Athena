@@ -91,7 +91,7 @@ namespace Athena
 		const Ref<Skeleton> GetSkeleton() const { return m_Skeleton; }
 
 	private:
-		void SetBoneTransform(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms);
+		void ProcessBonesHierarchy(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms);
 		Matrix4 GetInterpolatedLocalTransform(uint32 boneID, float time);
 
 		Vector3 GetInterpolatedTranslation(const std::vector<TranslationKey>& keys, float time);

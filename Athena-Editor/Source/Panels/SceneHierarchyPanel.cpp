@@ -181,6 +181,12 @@ namespace Athena
 							}
 							return true;
 						}
+						if (ImGui::Button("Delete"))
+						{
+							m_Context->GetEnvironment()->Skybox = nullptr;
+							return true;
+						}
+
 						return false;
 					});
 				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, ShaderLimits::MAX_SKYBOX_MAP_LOD - 1); });

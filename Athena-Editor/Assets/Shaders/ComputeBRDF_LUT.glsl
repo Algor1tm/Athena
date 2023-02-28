@@ -107,7 +107,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
 void main() 
 {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-    vec2 texCoord = vec2(texelCoord.x + 1, texelCoord.y) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
+    vec2 texCoord = vec2(texelCoord.x + 1, texelCoord.y) / vec2(gl_NumWorkGroups * gl_WorkGroupSize); // why x + 1 ???
 
     vec2 integratedBRDF = IntegrateBRDF(texCoord.x, texCoord.y);
 	

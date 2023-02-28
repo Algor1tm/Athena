@@ -36,7 +36,7 @@ namespace Athena
 		METALNESS_MAP = 3,
 		AMBIENT_OCCLUSION_MAP = 4,
 
-		SKY_BOX = 5,
+		SKYBOX_MAP = 5,
 		IRRADIANCE_MAP = 6,
 		BRDF_LUT = 7,
 	};

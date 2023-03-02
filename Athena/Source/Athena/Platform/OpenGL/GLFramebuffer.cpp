@@ -115,21 +115,59 @@ namespace Athena
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	void GLFramebuffer::BindColorAttachment(uint32 index, uint32 slot) const
+	{
+		if (index < m_ColorAttachments.size())
+		{
+			ATN_CORE_ERROR("Invalid index for color attachment!");
+			ATN_CORE_ASSERT(false);
+		}
+		else
+		{
+			glBindTextureUnit(slot, m_ColorAttachments[index]);
+		}
+	}
+
+	void GLFramebuffer::BindDepthAttachment(uint32 slot) const
+	{
+		if (m_DepthAttachmentDescription.Format == TextureFormat::NONE)
+		{
+			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
+			ATN_CORE_ASSERT(false);
+		}
+		else
+		{
+			glBindTextureUnit(slot, m_DepthAttachment);
+		}
+	}
+
 	void* GLFramebuffer::GetColorAttachmentRendererID(uint32 index) const
 	{ 
 		if (IsMultisample())
 		{
-			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "Subscript out of range");
+			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "Invalid index for color attachment!");
 			return reinterpret_cast<void*>((uint64)m_ColorAttachmentsResolved[index]);
 		}
 
-		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "Subscript out of range");
+		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "Invalid index for color attachment!");
 		return reinterpret_cast<void*>((uint64)m_ColorAttachments[index]); 
+	}
+
+	void* GLFramebuffer::GetDepthAttachmentRendererID() const
+	{
+		if (m_DepthAttachmentDescription.Format == TextureFormat::NONE)
+		{
+			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
+			ATN_CORE_ASSERT(false);
+			return 0;
+		}
+
+		return reinterpret_cast<void*>((uint64)m_DepthAttachment);
 	}
 
 	int GLFramebuffer::ReadPixel(uint32 attachmentIndex, int x, int y)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
+		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Invalid index for color attachment!");
 		glBindFramebuffer(GL_FRAMEBUFFER, IsMultisample() ? m_ResolvedFramebufferID : m_FramebufferID); 
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)attachmentIndex);
@@ -142,7 +180,7 @@ namespace Athena
 
 	void GLFramebuffer::ClearAttachment(uint32 attachmentIndex, int value)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Subscript out of range!");
+		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Invalid index for color attachment!");
 		
 		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
 		

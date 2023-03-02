@@ -37,9 +37,9 @@ Entities:
     TagComponent:
       Tag: StarWarsTrouper
     TransformComponent:
-      Translation: [-2.29749608, 0.63625288, 5.81667376]
+      Translation: [-1.5808593, 0.63625288, 4.1237092]
       Rotation: [-3.1415925, 1.33179617, -3.1415925]
-      Scale: [1.44815016, 1.44815052, 1.44815016]
+      Scale: [1.07163107, 1.07163143, 1.07163107]
     StaticMeshComponent:
       FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
       Hide: false
@@ -93,8 +93,20 @@ Entities:
       Intensity: 30
       Radius: 10
       FallOff: 1
+  - IDComponent:
+      ID: 14844919457741134000
+    TagComponent:
+      Tag: DirectionalLight
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Direction: [-1, -1, -1]
+      Intensity: 1
 Environment:
   Skybox:
     FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
-    Skybox LOD: 0.967999995
+    Skybox LOD: 0
     Exposure: 1

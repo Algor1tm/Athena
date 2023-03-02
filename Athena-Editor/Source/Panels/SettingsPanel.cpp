@@ -150,6 +150,15 @@ namespace Athena
 			UI::EndTreeNode();
 		}
 
+		if (UI::BeginTreeNode("Shadows"))
+		{
+			auto shadowMap = Renderer::GetShadowMapFramebuffer();
+			float size = ImGui::GetContentRegionAvail().x;
+			ImGui::Image(shadowMap->GetDepthAttachmentRendererID(), { size, size }, { 0, 1 }, { 1, 0 });
+
+			UI::EndTreeNode();
+		}
+
 		if (UI::BeginTreeNode("Other"))
 		{
 			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(Renderer::GetAntialiasingMethod()).data()))

@@ -5,7 +5,32 @@
 
 namespace Athena
 {
-	void GLMessageCallback(
+	static GLenum CullFaceToGLenum(CullFace face)
+	{
+		switch (face)
+		{
+		case CullFace::BACK: return GL_BACK;
+		case CullFace::FRONT: return GL_FRONT;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return GL_NONE;
+	}
+
+	static GLenum CullDirectionToGLenum(CullDirection direction)
+	{
+		switch (direction)
+		{
+		case CullDirection::CLOCKWISE: return GL_CW;
+		case CullDirection::COUNTER_CLOCKWISE: return GL_CCW;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return GL_NONE;
+	}
+
+
+	static void GLMessageCallback(
 		unsigned source,
 		unsigned type,
 		unsigned id,
@@ -72,5 +97,18 @@ namespace Athena
 	{
 		vertexBuffer->Bind();
 		glDrawArrays(GL_LINES, 0, vertexCount);
+	}
+
+	void GLRendererAPI::DisableCulling()
+	{
+		glDisable(GL_CULL_FACE);
+	}
+
+	void GLRendererAPI::SetCullMode(CullFace face, CullDirection direction) 
+	{
+		glEnable(GL_CULL_FACE);
+
+		glCullFace(CullFaceToGLenum(face));
+		glFrontFace(CullDirectionToGLenum(direction));
 	}
 }

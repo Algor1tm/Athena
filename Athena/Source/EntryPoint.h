@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Core.h"
-#include "Application.h"
+#include "Athena/Core/Core.h"
+#include "Athena/Core/Application.h"
 
 
 extern Athena::Application* Athena::CreateApplication();

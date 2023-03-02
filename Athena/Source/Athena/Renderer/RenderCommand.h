@@ -34,6 +34,16 @@ namespace Athena
 			s_RendererAPI->DrawLines(vertexBuffer, vertexCount);
 		}
 
+		static inline void DisableCulling()
+		{
+			s_RendererAPI->DisableCulling();
+		}
+
+		static inline void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE)
+		{
+			s_RendererAPI->SetCullMode(face, direction);
+		}
+
 	private:
 		static Scope<RendererAPI> s_RendererAPI;
 	};

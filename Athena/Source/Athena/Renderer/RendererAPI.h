@@ -9,6 +9,16 @@
 
 namespace Athena
 {
+	enum class CullFace
+	{
+		BACK, FRONT
+	};
+
+	enum class CullDirection
+	{
+		CLOCKWISE, COUNTER_CLOCKWISE
+	};
+
 	class ATHENA_API RendererAPI
 	{
 	public:
@@ -27,6 +37,9 @@ namespace Athena
 
 		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0) = 0;
 		virtual void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0) = 0;
+
+		virtual void DisableCulling() = 0;
+		virtual void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE) = 0;
 
 		static inline void SetAPI(RendererAPI::API api) { s_API = api; }
 		static inline API GetAPI() { return s_API; }

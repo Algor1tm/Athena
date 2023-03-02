@@ -26,6 +26,7 @@ layout(std140, binding = 2) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
+    bool u_Animated;
 };
 
 struct VertexOutput
@@ -44,16 +45,22 @@ layout (location = 0) out VertexOutput Output;
 
 void main()
 {
-    mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
-    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+    mat4 fullTransform = u_Transform;
+
+    if(bool(u_Animated))
     {
-        boneTransform += g_Bones[a_BoneIDs[i]] * a_Weights[i];
+        mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
+        for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+        {
+            boneTransform += g_Bones[a_BoneIDs[i]] * a_Weights[i];
+        }
+
+       fullTransform *= boneTransform;
     }
 
-    mat4 fullTransform = u_Transform * boneTransform;
-    vec4 animatedPos = fullTransform * vec4(a_Position, 1);
+    vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * animatedPos;
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
 
     Output.TexCoord = a_TexCoord;
     Output.Normal = normalize(vec3(fullTransform * vec4(a_Normal, 0)));
@@ -76,6 +83,7 @@ layout(std140, binding = 2) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
+    bool u_Animated;
 };
 
 layout(std140, binding = 3) uniform MaterialData

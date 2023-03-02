@@ -22,8 +22,13 @@ namespace Athena
 		virtual void Bind() override;
 		virtual void UnBind() override;
 
+		virtual void BindColorAttachment(uint32 index, uint32 slot = 0) const override;
+		virtual void BindDepthAttachment(uint32 slot = 0) const override;
+
 		virtual const FramebufferDescription& GetDescription() const override { return m_Description; }
+
 		virtual void* GetColorAttachmentRendererID(uint32 index = 0) const override;
+		virtual void* GetDepthAttachmentRendererID() const override;
 
 		virtual int ReadPixel(uint32 attachmentIndex, int x, int y) override;
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) override;

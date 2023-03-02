@@ -1,5 +1,5 @@
 #type VERTEX_SHADER
-#version 430 core
+#version 460 core
 
 layout (location = 0) in vec3 a_Position;
 
@@ -24,7 +24,7 @@ void main()
 
 
 #type FRAGMENT_SHADER
-#version 430 core
+#version 460 core
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;

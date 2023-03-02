@@ -1,4 +1,82 @@
-//#version 430 core
+#type VERTEX_SHADER
+#version 460 core
+
+#define MAX_NUM_BONES_PER_VERTEX 4
+#define MAX_NUM_BONES 512
+
+layout (location = 0) in vec3 a_Position;
+layout (location = 1) in vec2 a_TexCoord;
+layout (location = 2) in vec3 a_Normal;
+layout (location = 3) in vec3 a_Tangent;
+layout (location = 4) in vec3 a_Bitangent;
+layout (location = 5) in ivec4 a_BoneIDs;
+layout (location = 6) in vec4 a_Weights;
+
+layout(std140, binding = 1) uniform SceneData
+{
+	mat4 u_ViewMatrix;
+    mat4 u_ProjectionMatrix;
+    vec4 u_CameraPosition;
+    float u_SkyboxLOD;
+	float u_Exposure;
+};
+
+layout(std140, binding = 2) uniform EntityData
+{
+    mat4 u_Transform;
+    int u_EntityID;
+    bool u_Animated;
+};
+
+struct VertexOutput
+{
+    vec3 WorldPos;
+	vec2 TexCoord;
+    vec3 Normal;
+    mat3 TBN;
+};
+
+
+layout(std430, binding = 5) readonly buffer BoneTransforms
+{
+    mat4 g_Bones[MAX_NUM_BONES];
+};
+
+layout (location = 0) out VertexOutput Output;
+
+void main()
+{
+    mat4 fullTransform = u_Transform;
+
+    if(bool(u_Animated))
+    {
+        mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
+        for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+        {
+            boneTransform += g_Bones[a_BoneIDs[i]] * a_Weights[i];
+        }
+
+       fullTransform *= boneTransform;
+    }
+
+    vec4 transformedPos = fullTransform * vec4(a_Position, 1);
+
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
+
+    Output.WorldPos = vec3(transformedPos);
+    Output.TexCoord = a_TexCoord;
+    Output.Normal = normalize(vec3(fullTransform * vec4(a_Normal, 0)));
+
+    vec3 T = normalize(vec3(fullTransform * vec4(a_Tangent, 0)));
+    vec3 N = Output.Normal;
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = normalize(vec3(fullTransform * vec4(a_Bitangent, 0)));
+    Output.TBN = mat3(T, B, N);
+}
+
+
+#type FRAGMENT_SHADER
+#version 460 core
 
 #define PI 3.14159265358979323846
 
@@ -24,6 +102,7 @@ layout(std140, binding = 2) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
+    bool u_Animated;
 };
 
 layout(std140, binding = 3) uniform MaterialData
@@ -58,6 +137,7 @@ struct PointLight
 
 layout(std430, binding = 4) readonly buffer LightBuffer
 {
+    mat4 g_DirectionalLightSpaceMatrices[MAX_DIRECTIONAL_LIGHT_COUNT];
     DirectionalLight g_DirectionalLightBuffer[MAX_DIRECTIONAL_LIGHT_COUNT];
     int g_DirectionalLightCount;
 
@@ -74,6 +154,9 @@ layout(binding = 4) uniform sampler2D u_AmbientOcclusionMap;
 layout(binding = 5) uniform samplerCube u_SkyboxMap;
 layout(binding = 6) uniform samplerCube u_IrradianceMap;
 layout(binding = 7) uniform sampler2D   u_BRDF_LUT;
+
+layout(binding = 8) uniform sampler2D u_ShadowMap;
+
 
 struct VertexOutput
 {
@@ -154,9 +237,21 @@ vec3 ComputeRadiance(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
 
+float ComputeShadow(vec4 lightSpacePosition, vec3 normal, vec3 lightDir)
+{
+    vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
+    float closestDepth = texture(u_ShadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    float bias = max(0.02 * (1.0 - dot(normal, lightDir)), 0.005);
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
+}
 
 void main()
 {
+    ////////////////// PBR TEXTURES //////////////////
     vec4 albedo = u_Albedo;
     if(bool(u_UseAlbedoMap))
         albedo *= texture(u_AlbedoMap, Input.TexCoord);
@@ -197,22 +292,26 @@ void main()
     vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
 
     vec3 totalIrradiance = vec3(0.0);
-    
+    float shadow = 0.0;
 
+    ////////////////// DIRECTIONAL LIGHTS //////////////////
     for(int i = 0; i < g_DirectionalLightCount; ++i)
     {
         vec3 lightDirection = normalize(g_DirectionalLightBuffer[i].Direction);
         vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
-        totalIrradiance += ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+        vec4 lightSpaceFragPosition = g_DirectionalLightSpaceMatrices[i] * vec4(Input.WorldPos, 1);
+        float currentShadow = ComputeShadow(lightSpaceFragPosition, normal, -lightDirection);
+        shadow += currentShadow;
+
+        totalIrradiance += (1 - currentShadow) * ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
+    ////////////////// POINT LIGHTS //////////////////
     for(int i = 0; i < g_PointLightCount; ++i)
     {
         float distance = length(Input.WorldPos - g_PointLightBuffer[i].Position);
-
         vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (distance * distance);
-
         float factor = distance / g_PointLightBuffer[i].Radius;
 
         float attenuation = 0.0;
@@ -228,7 +327,7 @@ void main()
         totalIrradiance += ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
-
+   ////////////////// ENVIRONMENT MAP LIGHTNING //////////////////
     vec3 reflectedVec = reflect(-viewVector, normal); 
 
     float NdotV = max(dot(normal, viewVector), 0.0);
@@ -244,14 +343,17 @@ void main()
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
-    vec3 ambient = (absorbedLight * diffuse + specular) * ambientOcclusion;
 
+    vec3 ambient = ((1.0 - shadow) * absorbedLight * diffuse + specular) * ambientOcclusion;
     vec3 color = ambient + totalIrradiance;
 
+    ////////////////// TONE MAPPING //////////////////
     color = vec3(1.0) - exp(-color * u_Exposure);
-    color = pow(color, vec3(1.0/2.2)); 
+
+    ////////////////// GAMMA CORRECTION //////////////////
+    color = pow(color, vec3(1.0 / 2.2)); 
+
 
     out_Color = vec4(color, albedo.a);
-
     out_EntityID = u_EntityID;
 }

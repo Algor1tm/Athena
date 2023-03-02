@@ -1,5 +1,5 @@
+#include <EntryPoint.h>
 #include "Athena/Core/Application.h"
-#include <Athena/Core/EntryPoint.h>
 
 #include "SandBox2D.h"
 

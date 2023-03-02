@@ -45,8 +45,13 @@ namespace Athena
 		virtual void Bind() = 0;
 		virtual void UnBind() = 0;
 
+		virtual void BindColorAttachment(uint32 index, uint32 slot = 0) const = 0;
+		virtual void BindDepthAttachment(uint32 slot = 0) const = 0;
+
 		virtual const FramebufferDescription& GetDescription() const = 0;
+
 		virtual void* GetColorAttachmentRendererID(uint32 index = 0) const = 0;
+		virtual void* GetDepthAttachmentRendererID() const = 0;
 
 		virtual int ReadPixel(uint32 attachmentIndex, int x, int y) = 0;
 		virtual void ClearAttachment(uint32 attachmentIndex, int value) = 0;

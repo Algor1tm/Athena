@@ -39,6 +39,8 @@ namespace Athena
 		SKYBOX_MAP = 5,
 		IRRADIANCE_MAP = 6,
 		BRDF_LUT = 7,
+
+		SHADOW_MAP = 8
 	};
 
 	enum BufferBinder
@@ -84,6 +86,8 @@ namespace Athena
 
 		static Ref<Framebuffer> GetMainFramebuffer();
 		static void BlitToScreen();
+
+		static Ref<Framebuffer> GetShadowMapFramebuffer();
 
 		static void SubmitLight(const DirectionalLight& dirLight);
 		static void SubmitLight(const PointLight& pointLight);

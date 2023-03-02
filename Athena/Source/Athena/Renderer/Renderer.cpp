@@ -18,34 +18,30 @@ namespace Athena
 {
 	enum ShaderEnum
 	{
-		PBR_STATIC,
-		PBR_ANIM,
+		PBR,
+		SHADOW_MAP_GEN,
 		SKYBOX,
 
 		COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP,
 		COMPUTE_IRRADIANCE_MAP,
 		COMPUTE_PREFILTER_MAP,
 
-		DEBUG_NORMALS_STATIC,
-		DEBUG_NORMALS_ANIM,
-		DEBUG_WIREFRAME_STATIC,
-		DEBUG_WIREFRAME_ANIM
+		DEBUG_NORMALS,
+		DEBUG_WIREFRAME,
 	};
 
 	static std::unordered_map<ShaderEnum, String> s_ShaderMap
 	{
-		{ PBR_STATIC, "PBR_STATIC" },
-		{ PBR_ANIM, "PBR_ANIM" },
+		{ PBR, "PBR" },
+		{ SHADOW_MAP_GEN, "SHADOW_MAP_GEN" },
 		{ SKYBOX, "SKYBOX" },
 		  
 		{ COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP, "COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP" },
 		{ COMPUTE_IRRADIANCE_MAP, "COMPUTE_IRRADIANCE_MAP" },
 		{ COMPUTE_PREFILTER_MAP, "COMPUTE_PREFILTER_MAP" },
 		  
-		{ DEBUG_NORMALS_STATIC, "DEBUG_NORMALS_STATIC" },
-		{ DEBUG_NORMALS_ANIM, "DEBUG_NORMALS_ANIM" },
-		{ DEBUG_WIREFRAME_STATIC, "DEBUG_WIREFRAME_STATIC" },
-		{ DEBUG_WIREFRAME_ANIM, "DEBUG_WIREFRAME_ANIM" }
+		{ DEBUG_NORMALS, "DEBUG_NORMALS" },
+		{ DEBUG_WIREFRAME, "DEBUG_WIREFRAME" },
 	};
 
 	struct SceneData
@@ -61,10 +57,12 @@ namespace Athena
 	{
 		Matrix4 TransformMatrix;
 		int32 EntityID = -1;
+		bool Animated = false;
 	};
 
 	struct LightData
 	{
+		Matrix4 DirectionalLightSpaceMatrices[ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT];
 		DirectionalLight DirectionalLightBuffer[ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT];
 		uint32 DirectionalLightCount = 0;
 
@@ -74,9 +72,10 @@ namespace Athena
 
 	struct RendererData
 	{
-		RenderQueue GeometryQueue;
-
 		Ref<Framebuffer> MainFramebuffer;
+		Ref<Framebuffer> ShadowMap;
+
+		RenderQueue GeometryQueue;
 
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<Texture2D> BRDF_LUT;
@@ -104,14 +103,21 @@ namespace Athena
 		const uint32 SkyboxSize = 2048;
 		const uint32 IrradianceMapSize = 128;
 		const uint32 BRDF_LUTSize = 512;
+
+		const uint32 ShadowMapSize = 2048;
 	};
 
 	static RendererData s_Data;
 
-	static void RenderGeometryPass(ShaderEnum staticShader, ShaderEnum animShader)
+	static void RenderGeometryPass(ShaderEnum shader, bool useMaterials)
 	{
+		if (s_Data.GeometryQueue.Empty())
+			return;
+
+		s_Data.BindShader(shader);
+
 		// Render Static Meshes
-		s_Data.BindShader(staticShader);
+		s_Data.EntityDataBuffer.Animated = false;
 
 		while (s_Data.GeometryQueue.HasStaticMeshes())
 		{
@@ -121,7 +127,7 @@ namespace Athena
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
 			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-			if (s_Data.GeometryQueue.UpdateMaterial())
+			if (useMaterials && s_Data.GeometryQueue.UpdateMaterial())
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 
 			RenderCommand::DrawTriangles(info.VertexBuffer);
@@ -129,7 +135,7 @@ namespace Athena
 		}
 
 		// Render Animated Meshes
-		s_Data.BindShader(animShader);
+		s_Data.EntityDataBuffer.Animated = true;
 
 		while (s_Data.GeometryQueue.HasAnimMeshes())
 		{
@@ -145,7 +151,7 @@ namespace Athena
 				s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
 			}
 
-			if (s_Data.GeometryQueue.UpdateMaterial())
+			if (useMaterials && s_Data.GeometryQueue.UpdateMaterial())
 			{
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 			}
@@ -153,6 +159,8 @@ namespace Athena
 			RenderCommand::DrawTriangles(info.VertexBuffer);
 			s_Data.Stats.DrawCalls++;
 		}
+
+		s_Data.GeometryQueue.Reset();
 	}
 
 	void Renderer::Init(RendererAPI::API graphicsAPI)
@@ -169,19 +177,25 @@ namespace Athena
 
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
 
-		s_Data.ShaderPack.Load<IncludeShader>("PBR_FS", "Assets/Shaders/PBR_FS");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR_STATIC], "Assets/Shaders/PBR_Static");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR_ANIM], "Assets/Shaders/PBR_Anim");
+		fbDesc.Attachments = { TextureFormat::DEPTH32 };
+		fbDesc.Width = s_Data.ShadowMapSize;
+		fbDesc.Height = s_Data.ShadowMapSize;
+		fbDesc.Samples = 1;
+
+		s_Data.ShadowMap = Framebuffer::Create(fbDesc);
+
+
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR], "Assets/Shaders/PBR");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SHADOW_MAP_GEN], "Assets/Shaders/ShadowMap");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
 
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/ComputeEquirectangularToCubemap");
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_IRRADIANCE_MAP], "Assets/Shaders/ComputeIrradianceMap");
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP], "Assets/Shaders/ComputePrefilteredMap");
 							  
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS_STATIC], "Assets/Shaders/Debug/Normals_Static");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS_ANIM], "Assets/Shaders/Debug/Normals_Anim");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME_STATIC], "Assets/Shaders/Debug/Wireframe_Static");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME_ANIM], "Assets/Shaders/Debug/Wireframe_Anim");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS], "Assets/Shaders/Debug/Normals");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME], "Assets/Shaders/Debug/Wireframe");
+
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -195,11 +209,13 @@ namespace Athena
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
 
+
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
 		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderLimits::MAX_NUM_BONES, BufferBinder::BONES_DATA);
+
 
 		// Compute BRDF_LUT
 		uint32 width = s_Data.BRDF_LUTSize;
@@ -246,53 +262,78 @@ namespace Athena
 	void Renderer::EndScene()
 	{
 		Timer timer;
+		s_Data.GeometryQueue.Sort();
+
+		//////////////////////////// SHADOW MAP RENDER PASS ////////////////////////////
+		{
+			Matrix4 cameraView = s_Data.SceneDataBuffer.ViewMatrix;
+			s_Data.ShadowMap->Bind();
+			RenderCommand::Clear({ 1, 1, 1, 1 });
+
+			RenderCommand::SetCullMode(CullFace::FRONT);
+
+			for (uint32 i = 0; i < s_Data.LightDataBuffer.DirectionalLightCount; ++i)
+			{
+				s_Data.SceneDataBuffer.ViewMatrix = s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[i];
+				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+				RenderGeometryPass(SHADOW_MAP_GEN, false);
+			}
+
+			RenderCommand::SetCullMode(CullFace::BACK);
+
+			s_Data.SceneDataBuffer.ViewMatrix = cameraView;
+			s_Data.MainFramebuffer->Bind();
+		}
 
 		///////////////////////////// GEOMETRY RENDER PASS /////////////////////////////
-		Time start = timer.ElapsedTime();
-
-		if (!s_Data.GeometryQueue.Empty())
 		{
-			s_Data.GeometryQueue.Sort();
+			Time start = timer.ElapsedTime();
 
 			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
-			if (s_Data.ActiveEnvironment->Skybox)
+			if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->Skybox)
 				s_Data.ActiveEnvironment->Skybox->Bind();
 
 			s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
+			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
 
-			RenderGeometryPass(PBR_STATIC, PBR_ANIM);
+			RenderGeometryPass(PBR, true);
+
+			s_Data.Stats.GeometryPass = timer.ElapsedTime() - start;
 		}
-		s_Data.Stats.GeometryPass = timer.ElapsedTime() - start;
 
-		///////////////////////////// DEBUG VIEW /////////////////////////////
-		if (s_Data.CurrentDebugView != DebugView::NONE)
+		////////////////////////////////// DEBUG VIEW //////////////////////////////////
 		{
-			s_Data.GeometryQueue.Reset();
-			RenderDebugView(s_Data.CurrentDebugView);
+			if (s_Data.CurrentDebugView != DebugView::NONE)
+			{
+				RenderDebugView(s_Data.CurrentDebugView);
+			}
 		}
 
 		///////////////////////////// SKYBOX RENDER PASS /////////////////////////////
-		start = timer.ElapsedTime();
-		if (s_Data.ActiveEnvironment->Skybox)
 		{
-			s_Data.SceneDataBuffer.SkyboxLOD = s_Data.ActiveEnvironment->SkyboxLOD;
+			Time start = timer.ElapsedTime();
+			if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->Skybox)
+			{
+				s_Data.SceneDataBuffer.SkyboxLOD = s_Data.ActiveEnvironment->SkyboxLOD;
 
-			// Remove translation
-			s_Data.SceneDataBuffer.ViewMatrix[3][0] = 0;
-			s_Data.SceneDataBuffer.ViewMatrix[3][1] = 0;
-			s_Data.SceneDataBuffer.ViewMatrix[3][2] = 0;
+				// Remove translation
+				s_Data.SceneDataBuffer.ViewMatrix[3][0] = 0;
+				s_Data.SceneDataBuffer.ViewMatrix[3][1] = 0;
+				s_Data.SceneDataBuffer.ViewMatrix[3][2] = 0;
 
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 
-			s_Data.ActiveEnvironment->Skybox->Bind();
+				s_Data.ActiveEnvironment->Skybox->Bind();
 
-			s_Data.BindShader(SKYBOX);
-			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
-			s_Data.Stats.DrawCalls++;
+				s_Data.BindShader(SKYBOX);
+				RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
+				s_Data.Stats.DrawCalls++;
+			}
+			s_Data.Stats.SkyboxPass = timer.ElapsedTime() - start;
 		}
-		s_Data.Stats.SkyboxPass = timer.ElapsedTime() - start;
+
 
 		s_Data.Stats.GeometryCount += s_Data.GeometryQueue.Size();
 		s_Data.Stats.DirectionalLightsCount += s_Data.LightDataBuffer.DirectionalLightCount;
@@ -327,6 +368,11 @@ namespace Athena
 		s_Data.MainFramebuffer->BlitToScreen();
 	}
 
+	Ref<Framebuffer> Renderer::GetShadowMapFramebuffer()
+	{
+		return s_Data.ShadowMap;
+	}
+
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
 	{
 		if (ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
@@ -335,7 +381,14 @@ namespace Athena
 			return;
 		}
 
-		s_Data.LightDataBuffer.DirectionalLightBuffer[s_Data.LightDataBuffer.DirectionalLightCount] = dirLight;
+		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
+
+		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
+
+		Matrix4 projection = Math::Ortho(-15.f, 15.f, -15.f, 15.f, 0.1f, 50.f);
+		Matrix4 view = Math::LookAt(dirLight.Direction.GetNormalized() * 7.f, Vector3(0.f), Vector3(0.f, 1.f, 0.f));
+		s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[currentIndex] = view * projection;
+
 		s_Data.LightDataBuffer.DirectionalLightCount++;
 	}
 
@@ -343,7 +396,7 @@ namespace Athena
 	{
 		if (ShaderLimits::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
 		{
-			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} PointLights!", ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} PointLights!", ShaderLimits::MAX_POINT_LIGHT_COUNT);
 			return;
 		}
 
@@ -483,10 +536,10 @@ namespace Athena
 		if (!s_Data.GeometryQueue.Empty())
 		{
 			if (view == DebugView::NORMALS)
-				RenderGeometryPass(DEBUG_NORMALS_STATIC, DEBUG_NORMALS_ANIM);
-
+				RenderGeometryPass(DEBUG_NORMALS, false);
+			
 			else if (view == DebugView::WIREFRAME)
-				RenderGeometryPass(DEBUG_WIREFRAME_STATIC, DEBUG_WIREFRAME_ANIM);
+				RenderGeometryPass(DEBUG_WIREFRAME, false);
 		}
 	}
 

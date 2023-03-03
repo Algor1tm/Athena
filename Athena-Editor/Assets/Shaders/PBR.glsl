@@ -292,7 +292,6 @@ void main()
     vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
 
     vec3 totalIrradiance = vec3(0.0);
-    float shadow = 0.0;
 
     ////////////////// DIRECTIONAL LIGHTS //////////////////
     for(int i = 0; i < g_DirectionalLightCount; ++i)
@@ -301,10 +300,9 @@ void main()
         vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
         vec4 lightSpaceFragPosition = g_DirectionalLightSpaceMatrices[i] * vec4(Input.WorldPos, 1);
-        float currentShadow = ComputeShadow(lightSpaceFragPosition, normal, -lightDirection);
-        shadow += currentShadow;
+        float shadow = ComputeShadow(lightSpaceFragPosition, normal, -lightDirection);
 
-        totalIrradiance += (1 - currentShadow) * ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+        totalIrradiance += (1 - shadow) * ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
     ////////////////// POINT LIGHTS //////////////////
@@ -344,7 +342,7 @@ void main()
     vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
 
-    vec3 ambient = ((1.0 - shadow) * absorbedLight * diffuse + specular) * ambientOcclusion;
+    vec3 ambient = (absorbedLight * diffuse + specular) * ambientOcclusion;
     vec3 color = ambient + totalIrradiance;
 
     ////////////////// TONE MAPPING //////////////////

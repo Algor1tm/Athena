@@ -7,6 +7,8 @@
 
 #include "Panels/Panel.h"
 
+#include <UI/Widgets.h>
+
 #include <string_view>
 
 

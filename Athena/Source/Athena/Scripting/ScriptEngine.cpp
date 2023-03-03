@@ -207,7 +207,7 @@ namespace Athena
 		s_Data->ScriptsFolder = scriptsFolder;
 
 		py::module_ sys = py::module_::import("sys");
-		auto& path = sys.attr("path");
+		auto path = sys.attr("path");
 		path.attr("insert")(0, s_Data->ScriptsFolder.string().c_str());
 
 		const auto& modules = GetStringPyModules();

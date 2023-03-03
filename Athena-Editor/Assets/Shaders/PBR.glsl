@@ -1,8 +1,6 @@
 #type VERTEX_SHADER
 #version 460 core
 
-#define MAX_NUM_BONES_PER_VERTEX 4
-#define MAX_NUM_BONES 512
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
@@ -12,22 +10,6 @@ layout (location = 4) in vec3 a_Bitangent;
 layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
-layout(std140, binding = 1) uniform SceneData
-{
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_SkyboxLOD;
-	float u_Exposure;
-};
-
-layout(std140, binding = 2) uniform EntityData
-{
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
-
 struct VertexOutput
 {
     vec3 WorldPos;
@@ -36,13 +18,31 @@ struct VertexOutput
     mat3 TBN;
 };
 
+layout (location = 0) out VertexOutput Output;
 
-layout(std430, binding = 5) readonly buffer BoneTransforms
+
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
+{
+	mat4 u_ViewMatrix;
+    mat4 u_ProjectionMatrix;
+    vec4 u_CameraPosition;
+    float u_SkyboxLOD;
+	float u_Exposure;
+};
+
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
+{
+    mat4 u_Transform;
+    int u_EntityID;
+    bool u_Animated;
+};
+
+
+layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
     mat4 g_Bones[MAX_NUM_BONES];
 };
 
-layout (location = 0) out VertexOutput Output;
 
 void main()
 {
@@ -78,18 +78,22 @@ void main()
 #type FRAGMENT_SHADER
 #version 460 core
 
-#define PI 3.14159265358979323846
-
-#define MAX_SKYBOX_MAP_LOD 8
-
-#define MAX_DIRECTIONAL_LIGHT_COUNT 32
-#define MAX_POINT_LIGHT_COUNT 32
-
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
 
-layout(std140, binding = 1) uniform SceneData
+struct VertexOutput
+{
+    vec3 WorldPos;
+	vec2 TexCoord;
+    vec3 Normal;
+    mat3 TBN;
+};
+
+layout (location = 0) in VertexOutput Input;
+
+
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -98,14 +102,14 @@ layout(std140, binding = 1) uniform SceneData
 	float u_Exposure;
 };
 
-layout(std140, binding = 2) uniform EntityData
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
     bool u_Animated;
 };
 
-layout(std140, binding = 3) uniform MaterialData
+layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
 {
     vec4 u_Albedo;
     float u_Roughness;
@@ -135,7 +139,7 @@ struct PointLight
     float FallOff;
 };
 
-layout(std430, binding = 4) readonly buffer LightBuffer
+layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
 {
     mat4 g_DirectionalLightSpaceMatrices[MAX_DIRECTIONAL_LIGHT_COUNT];
     DirectionalLight g_DirectionalLightBuffer[MAX_DIRECTIONAL_LIGHT_COUNT];
@@ -145,28 +149,18 @@ layout(std430, binding = 4) readonly buffer LightBuffer
     int g_PointLightCount;
 };
 
-layout(binding = 0) uniform sampler2D u_AlbedoMap;
-layout(binding = 1) uniform sampler2D u_NormalMap;
-layout(binding = 2) uniform sampler2D u_RoughnessMap;
-layout(binding = 3) uniform sampler2D u_MetalnessMap;
-layout(binding = 4) uniform sampler2D u_AmbientOcclusionMap;
+layout(binding = ALBEDO_MAP_BINDER) uniform sampler2D u_AlbedoMap;
+layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
+layout(binding = ROUGHNESS_MAP_BINDER) uniform sampler2D u_RoughnessMap;
+layout(binding = METALNESS_MAP_BINDER) uniform sampler2D u_MetalnessMap;
+layout(binding = AO_MAP_BINDER) uniform sampler2D u_AmbientOcclusionMap;
 
-layout(binding = 5) uniform samplerCube u_SkyboxMap;
-layout(binding = 6) uniform samplerCube u_IrradianceMap;
-layout(binding = 7) uniform sampler2D   u_BRDF_LUT;
+layout(binding = SKYBOX_MAP_BINDER) uniform samplerCube u_SkyboxMap;
+layout(binding = IRRADIANCE_MAP_BINDER) uniform samplerCube u_IrradianceMap;
+layout(binding = BRDF_LUT_BINDER) uniform sampler2D   u_BRDF_LUT;
 
-layout(binding = 8) uniform sampler2D u_ShadowMap;
+layout(binding = SHADOW_MAP_BINDER) uniform sampler2D u_ShadowMap;
 
-
-struct VertexOutput
-{
-    vec3 WorldPos;
-	vec2 TexCoord;
-    vec3 Normal;
-    mat3 TBN;
-};
-
-layout (location = 0) in VertexOutput Input;
 
 
 float DistributionGGX(vec3 normal, vec3 halfWay, float roughness)
@@ -248,6 +242,7 @@ float ComputeShadow(vec4 lightSpacePosition, vec3 normal, vec3 lightDir)
 
     return shadow;
 }
+
 
 void main()
 {

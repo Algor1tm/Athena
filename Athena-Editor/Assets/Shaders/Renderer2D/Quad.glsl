@@ -9,7 +9,7 @@ layout (location = 4) in float a_TilingFactor;
 layout (location = 5) in int a_EntityID;
 
 
-layout(std140, binding = 0) uniform Camera
+layout(std140, binding = RENDERER2D_CAMERA_BUFFER_BINDER) uniform Camera
 {
 	mat4 u_ViewProjection;
 };

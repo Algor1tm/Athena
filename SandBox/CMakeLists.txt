@@ -12,7 +12,7 @@ add_executable(SandBox WIN32 ${SRC_FILES})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 
 EnableMultiProcessorCompilation(SandBox)
-set_property(TARGET SandBox PROPERTY CXX_STANDARD 17)
+set_property(TARGET SandBox PROPERTY CXX_STANDARD 20)
 set_property(TARGET SandBox PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  "${CMAKE_SOURCE_DIR}/SandBox")
 
 target_compile_definitions(SandBox PUBLIC

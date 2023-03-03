@@ -6,7 +6,7 @@ layout (location = 1) in vec4 a_Color;
 layout (location = 2) in int a_EntityID;
 
 
-layout(std140, binding = 0) uniform Camera
+layout(std140, binding = RENDERER2D_CAMERA_BUFFER_BINDER) uniform Camera
 {
 	mat4 u_ViewProjection;
 };

@@ -189,7 +189,7 @@ namespace Athena
 
 						return false;
 					});
-				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, ShaderLimits::MAX_SKYBOX_MAP_LOD - 1); });
+				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1); });
 				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 7); });
 
 				UI::EndDrawControllers();

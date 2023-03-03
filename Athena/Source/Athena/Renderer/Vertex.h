@@ -38,8 +38,8 @@ namespace Athena
 		Vector3 Normal;
 		Vector3 Tangent;
 		Vector3 Bitangent;
-		int BoneIDs[ShaderLimits::MAX_NUM_BONES_PER_VERTEX];
-		float Weights[ShaderLimits::MAX_NUM_BONES_PER_VERTEX];
+		int BoneIDs[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
+		float Weights[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
 
 		static inline BufferLayout GetLayout()
 		{

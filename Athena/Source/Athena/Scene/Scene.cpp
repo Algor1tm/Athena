@@ -190,7 +190,7 @@ namespace Athena
 	{
 		// Update scripts
 		{
-			auto& view = m_Registry.view<ScriptComponent>();
+			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
 				Entity entity = { id, this };

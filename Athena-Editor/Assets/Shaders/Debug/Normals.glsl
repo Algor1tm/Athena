@@ -13,7 +13,7 @@ layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
 
-layout(std140, binding = 1) uniform SceneData
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -22,7 +22,7 @@ layout(std140, binding = 1) uniform SceneData
 	float u_Exposure;
 };
 
-layout(std140, binding = 2) uniform EntityData
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
@@ -36,7 +36,7 @@ struct VertexOutput
     mat3 TBN;
 };
 
-layout(std430, binding = 5) readonly buffer BoneTransforms
+layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
     mat4 g_Bones[MAX_NUM_BONES];
 };
@@ -79,14 +79,14 @@ void main()
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
 
-layout(std140, binding = 2) uniform EntityData
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
     bool u_Animated;
 };
 
-layout(std140, binding = 3) uniform MaterialData
+layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
 {
     vec4 u_Albedo;
     float u_Roughness;
@@ -100,7 +100,7 @@ layout(std140, binding = 3) uniform MaterialData
     int u_UseAmbientOcclusionMap;
 };
 
-layout(binding = 1) uniform sampler2D u_NormalMap;
+layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
 
 struct VertexOutput
 {

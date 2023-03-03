@@ -68,7 +68,7 @@ namespace Athena
 		m_ShaderData.AmbientOcclusion = m_Description.AmbientOcclusion;
 
 		if (m_ShaderData.UseAlbedoMap = m_Description.UseAlbedoMap && m_Description.AlbedoMap)
-			m_Description.AlbedoMap->Bind(TextureBinder::ALBEDO_TEXTURE);
+			m_Description.AlbedoMap->Bind(TextureBinder::ALBEDO_MAP);
 
 		if (m_ShaderData.UseNormalMap = m_Description.UseNormalMap && m_Description.NormalMap)
 			m_Description.NormalMap->Bind(TextureBinder::NORMAL_MAP);

@@ -51,6 +51,7 @@ namespace Athena
 
 	protected:
 		std::unordered_map<ShaderType, String> PreProcess(const String& source);
+		void AddExternalDefines(String& source, ShaderType type);
 
 	protected:
 		String m_Name;

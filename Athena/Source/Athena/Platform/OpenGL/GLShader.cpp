@@ -192,8 +192,9 @@ namespace Athena
 
 	void GLComputeShader::Reload()
 	{
-		String result = FileSystem::ReadFile(m_FilePath);
-		Compile(result);
+		String sourceString = FileSystem::ReadFile(m_FilePath);
+		auto sources = PreProcess(sourceString);
+		Compile(sources);
 	}
 
 	void GLComputeShader::Bind() const
@@ -209,11 +210,8 @@ namespace Athena
 		glUseProgram(0);
 	}
 
-	bool GLComputeShader::Compile(const String& sourceString)
+	bool GLComputeShader::Compile(const std::unordered_map<ShaderType, String>& sources)
 	{
-		std::unordered_map<ShaderType, String> sources;
-		sources[ShaderType::COMPUTE_SHADER] = sourceString;
-
 		m_Compiled = CompileShaderSources(sources, m_Name, &m_RendererID);
 		return m_Compiled;
 	}

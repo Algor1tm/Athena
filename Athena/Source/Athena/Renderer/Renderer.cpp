@@ -62,11 +62,11 @@ namespace Athena
 
 	struct LightData
 	{
-		Matrix4 DirectionalLightSpaceMatrices[ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT];
-		DirectionalLight DirectionalLightBuffer[ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT];
+		Matrix4 DirectionalLightSpaceMatrices[ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT];
+		DirectionalLight DirectionalLightBuffer[ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT];
 		uint32 DirectionalLightCount = 0;
 
-		PointLight PointLightBuffer[ShaderLimits::MAX_POINT_LIGHT_COUNT];
+		PointLight PointLightBuffer[ShaderConstants::MAX_POINT_LIGHT_COUNT];
 		uint32 PointLightCount = 0;
 	};
 
@@ -214,7 +214,7 @@ namespace Athena
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
-		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderLimits::MAX_NUM_BONES, BufferBinder::BONES_DATA);
+		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderConstants::MAX_NUM_BONES, BufferBinder::BONES_DATA);
 
 
 		// Compute BRDF_LUT
@@ -375,9 +375,9 @@ namespace Athena
 
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
 	{
-		if (ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
+		if (ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
 		{
-			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} DirectionalLights!", ShaderLimits::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} DirectionalLights!", ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
 			return;
 		}
 
@@ -394,9 +394,9 @@ namespace Athena
 
 	void Renderer::SubmitLight(const PointLight& pointLight)
 	{
-		if (ShaderLimits::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
+		if (ShaderConstants::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
 		{
-			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} PointLights!", ShaderLimits::MAX_POINT_LIGHT_COUNT);
+			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} PointLights!", ShaderConstants::MAX_POINT_LIGHT_COUNT);
 			return;
 		}
 
@@ -472,7 +472,7 @@ namespace Athena
 			equirectangularToCubeMap->Execute(width, height, 6);
 
 			skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
-			skybox->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
+			skybox->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 		}
 
 		// Compute Irradiance Map
@@ -508,21 +508,21 @@ namespace Athena
 			cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 
 			prefilteredMap = Cubemap::Create(cubeMapDesc);
-			prefilteredMap->GenerateMipMap(ShaderLimits::MAX_SKYBOX_MAP_LOD);
+			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 
 			auto prefilteredCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP]);
 			prefilteredCompute->Bind();
 
 			skybox->Bind();
 
-			for (uint32 mip = 0; mip < ShaderLimits::MAX_SKYBOX_MAP_LOD; ++mip)
+			for (uint32 mip = 0; mip < ShaderConstants::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
 				prefilteredMap->BindAsImage(1, mip);
 
 				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
 				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
 
-				float roughness = (float)mip / (float)(ShaderLimits::MAX_SKYBOX_MAP_LOD - 1);
+				float roughness = (float)mip / (float)(ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
 				s_Data.SceneDataBuffer.SkyboxLOD = roughness;
 				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 

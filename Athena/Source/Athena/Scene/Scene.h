@@ -28,6 +28,7 @@ class b2World;
 namespace Athena
 {
 	class ATHENA_API Environment;
+	class Entity;
 
 
 	class ATHENA_API Scene

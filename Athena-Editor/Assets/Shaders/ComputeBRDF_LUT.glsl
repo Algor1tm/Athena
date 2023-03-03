@@ -1,11 +1,10 @@
+#type COMPUTE_SHADER
 #version 460
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(rg16f, binding = 0) uniform image2D u_BRDF_LUT;
 
-
-#define PI 3.14159265359
 
 float GeometrySchlickGGX(float NdotV, float roughness)
 {

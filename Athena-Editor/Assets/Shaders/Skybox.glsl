@@ -5,7 +5,7 @@ layout (location = 0) in vec3 a_Position;
 
 out vec3 TexCoords;
 
-layout(std140, binding = 1) uniform SceneData
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -31,7 +31,7 @@ layout(location = 1) out int out_EntityID;
 
 in vec3 TexCoords;
 
-layout(std140, binding = 1) uniform SceneData
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -40,7 +40,7 @@ layout(std140, binding = 1) uniform SceneData
 	float u_Exposure;
 };
 
-layout(binding = 5) uniform samplerCube u_Skybox;
+layout(binding = SKYBOX_MAP_BINDER) uniform samplerCube u_Skybox;
 
 void main()
 {

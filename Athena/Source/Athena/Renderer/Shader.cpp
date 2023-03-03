@@ -3,6 +3,8 @@
 #include "Athena/Platform/OpenGl/GLShader.h"
 #include "Renderer.h"
 
+#include <format>
+
 
 namespace Athena
 {
@@ -11,6 +13,7 @@ namespace Athena
 		if (type == "VERTEX_SHADER") return ShaderType::VERTEX_SHADER;
 		if (type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER") return ShaderType::FRAGMENT_SHADER;
 		if (type == "GEOMETRY_SHADER") return ShaderType::GEOMETRY_SHADER;
+		if (type == "COMPUTE_SHADER") return ShaderType::COMPUTE_SHADER;
 
 		ATN_CORE_ASSERT(false, "Unknown shader type!");
 		return ShaderType();
@@ -59,17 +62,77 @@ namespace Athena
 			uint64 eol = source.find_first_of("\r\n", pos);
 			ATN_CORE_ASSERT(eol != String::npos, "Syntax Error");
 			uint64 begin = pos + typeTokenLength + 1;
-			String type = source.substr(begin, eol - begin);
-			ATN_CORE_ASSERT(type == "VERTEX_SHADER" || type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER" || type == "GEOMETRY_SHADER",
+			String typeString = source.substr(begin, eol - begin);
+			ATN_CORE_ASSERT(typeString == "VERTEX_SHADER" || typeString == "FRAGMENT_SHADER" || 
+				typeString == "PIXEL_SHADER" || typeString == "GEOMETRY_SHADER" || typeString == "COMPUTE_SHADER",
 				"Invalid Shader Type specifier");
+			
+			ShaderType type = ShaderTypeFromString(typeString);
 
 			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
 			pos = source.find(typeToken, nextLinePos);
-			shaderSources[ShaderTypeFromString(type)] =
-				source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
+			shaderSources[type] = source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
+
+			AddExternalDefines(shaderSources[type], type);
 		}
 
 		return shaderSources;
+	}
+
+	void Shader::AddExternalDefines(String& source, ShaderType type)
+	{
+		const char* typeToken = "#version";
+		uint64 typeTokenLength = strlen(typeToken);
+		uint64 pos = source.find(typeToken, 0);
+		if (pos == String::npos)
+		{
+			ATN_CORE_ERROR("Shader '{}' does not have '#version' macro", GetName());
+			return;
+		}
+
+		uint64 eol = source.find_first_of("\r\n", pos);
+
+		String defines = "\r\n";
+		
+#define DEFINE(name, value) std::format("\r\n#define {} {}", name, value)
+
+		if (type == ShaderType::VERTEX_SHADER)
+		{
+			defines += DEFINE("MAX_NUM_BONES_PER_VERTEX", (int32_t)ShaderConstants::MAX_NUM_BONES_PER_VERTEX);
+			defines += DEFINE("MAX_NUM_BONES", (int32_t)ShaderConstants::MAX_NUM_BONES);
+		}
+
+		else if (type == ShaderType::FRAGMENT_SHADER)
+		{
+			defines += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
+			defines += DEFINE("MAX_POINT_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_POINT_LIGHT_COUNT);
+			defines += DEFINE("MAX_SKYBOX_MAP_LOD", (int32_t)ShaderConstants::MAX_SKYBOX_MAP_LOD);
+
+			defines += DEFINE("ALBEDO_MAP_BINDER", (int32_t)TextureBinder::ALBEDO_MAP);
+			defines += DEFINE("NORMAL_MAP_BINDER", (int32_t)TextureBinder::NORMAL_MAP);
+			defines += DEFINE("ROUGHNESS_MAP_BINDER", (int32_t)TextureBinder::ROUGHNESS_MAP);
+			defines += DEFINE("METALNESS_MAP_BINDER", (int32_t)TextureBinder::METALNESS_MAP);
+			defines += DEFINE("AO_MAP_BINDER", (int32_t)TextureBinder::AMBIENT_OCCLUSION_MAP);
+			defines += DEFINE("SKYBOX_MAP_BINDER", (int32_t)TextureBinder::SKYBOX_MAP);
+			defines += DEFINE("IRRADIANCE_MAP_BINDER", (int32_t)TextureBinder::IRRADIANCE_MAP);
+			defines += DEFINE("BRDF_LUT_BINDER", (int32_t)TextureBinder::BRDF_LUT);
+			defines += DEFINE("SHADOW_MAP_BINDER", (int32_t)TextureBinder::SHADOW_MAP);
+		}
+
+		defines += DEFINE("RENDERER2D_CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::RENDERER2D_CAMERA_DATA);
+		defines += DEFINE("SCENE_BUFFER_BINDER", (int32_t)BufferBinder::SCENE_DATA);
+		defines += DEFINE("ENTITY_BUFFER_BINDER", (int32_t)BufferBinder::ENTITY_DATA);
+		defines += DEFINE("MATERIAL_BUFFER_BINDER", (int32_t)BufferBinder::MATERIAL_DATA);
+		defines += DEFINE("LIGHT_BUFFER_BINDER", (int32_t)BufferBinder::LIGHT_DATA);
+		defines += DEFINE("BONES_BUFFER_BINDER", (int32_t)BufferBinder::BONES_DATA);
+
+		defines += DEFINE("PI", 3.14159265358979323846);
+
+		defines += "\r\n";
+
+#undef DEFINE
+
+		source.insert(eol, defines);
 	}
 
 

@@ -13,7 +13,7 @@ layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
 
-layout(std140, binding = 1) uniform SceneData
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -22,14 +22,14 @@ layout(std140, binding = 1) uniform SceneData
 	float u_Exposure;
 };
 
-layout(std140, binding = 2) uniform EntityData
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
     bool u_Animated;
 };
 
-layout(std430, binding = 5) readonly buffer BoneTransforms
+layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
     mat4 g_Bones[MAX_NUM_BONES];
 };
@@ -75,7 +75,7 @@ void main()
 #type FRAGMENT_SHADER
 #version 430 core
 
-layout(std140, binding = 2) uniform EntityData
+layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;

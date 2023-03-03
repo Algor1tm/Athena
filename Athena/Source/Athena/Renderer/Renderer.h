@@ -17,7 +17,7 @@ namespace Athena
 	class ATHENA_API Texture2D;
 	class ATHENA_API Cubemap;
 
-	enum ShaderLimits
+	enum ShaderConstants
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
 		MAX_POINT_LIGHT_COUNT = 32,
@@ -30,7 +30,7 @@ namespace Athena
 
 	enum TextureBinder
 	{
-		ALBEDO_TEXTURE = 0,
+		ALBEDO_MAP = 0,
 		NORMAL_MAP = 1,
 		ROUGHNESS_MAP = 2,
 		METALNESS_MAP = 3,

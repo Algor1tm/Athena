@@ -1,3 +1,4 @@
+#type COMPUTE_SHADER
 #version 460
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
@@ -6,7 +7,7 @@ layout(binding = 0) uniform samplerCube u_Skybox;
 layout(r11f_g11f_b10f, binding = 1) uniform imageCube u_PrefiliteredMap;
 
 
-layout(std140, binding = 1) uniform SceneData
+layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
@@ -15,7 +16,6 @@ layout(std140, binding = 1) uniform SceneData
 	float u_Exposure;
 };
 
-#define PI 3.14159265359
 
 float RadicalInverse_VdC(uint bits) 
 {

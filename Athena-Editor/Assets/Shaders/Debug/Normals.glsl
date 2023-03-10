@@ -122,11 +122,11 @@ void main()
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;
-        normal = normalize(Input.TBN * normal);
+        normal = Input.TBN * normal;
     }
     else
     {
-        normal = normalize(Input.Normal);
+        normal = Input.Normal;
     }
 
     out_Color = vec4(abs(normal), 1);

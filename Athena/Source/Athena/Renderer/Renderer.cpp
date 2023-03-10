@@ -237,16 +237,10 @@ namespace Athena
 			return;
 		}
 
-		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
-
-		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
-
-		Matrix4 projection = Math::Ortho(-15.f, 15.f, -15.f, 15.f, 0.1f, 50.f);
-		Matrix4 view = Math::LookAt(dirLight.Direction.GetNormalized() * 7.f, Vector3(0.f), Vector3(0.f, 1.f, 0.f));
-		//s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[currentIndex] = view * projection;
-
 		ComputeCascadeSpaceMatrices(dirLight);
 
+		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
+		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
 		s_Data.LightDataBuffer.DirectionalLightCount++;
 
 		s_Data.Stats.DirectionalLightsCount++;
@@ -403,7 +397,7 @@ namespace Athena
 	void Renderer::DebugViewPass()
 	{
 		if (s_Data.CurrentDebugView == DebugView::NORMALS)
-			RenderGeometry(DEBUG_NORMALS, false);
+			RenderGeometry(DEBUG_NORMALS, true);
 
 		else if (s_Data.CurrentDebugView == DebugView::WIREFRAME)
 			RenderGeometry(DEBUG_WIREFRAME, false);
@@ -501,7 +495,6 @@ namespace Athena
 
 			frustumCenter /= frustumCorners.size();
 
-#if 1
 			float radius = 0.0f;
 			for (uint32 j = 0; j < 8; ++j)
 			{
@@ -513,9 +506,8 @@ namespace Athena
 			Vector3 maxExtents = Vector3(radius);
 			Vector3 minExtents = -maxExtents;
 
-			Matrix4 lightView = Math::LookAt(frustumCenter + light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
-			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 
-				s_Data.ShadowSettings.NearPlaneOffset, maxExtents.z - minExtents.z + s_Data.ShadowSettings.FarPlaneOffset);
+			Matrix4 lightView = Math::LookAt(frustumCenter - light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
+			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -15.f, maxExtents.z - minExtents.z + 15.f);
 
 			Matrix4 lightSpace = lightView * lightProjection;
 			
@@ -532,30 +524,7 @@ namespace Athena
 			lightProjection[3] += roundOffset;
 
 			s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[layer] = lightView * lightProjection;
-			
-#else 
-			Matrix4 lightView = Math::LookAt(frustumCenter + light.Direction.GetNormalized(), frustumCenter, Vector3::Up());
 
-			Vector3 min = Vector3(Math::MaxValue<float>());
-			Vector3 max = Vector3(Math::MinValue<float>());
-			for (const auto& corner : frustumCorners)
-			{
-				const auto transformed = Vector3(corner * lightView);
-				min = Math::Min(min, transformed);
-				max = Math::Max(max, transformed);
-			}
-
-			// Tune this parameter according to the scene
-			const float zMult = 10.0f;
-
-			min.z *= min.z < 0 ? zMult : 1.f / zMult;
-			max.z *= max.z < 0 ? 1.f / zMult : zMult;
-
-			Matrix4 lightProjection = Math::Ortho(min.x, max.x, min.y, max.y, min.z, max.z);
-			Matrix4 lightSpace = lightView * lightProjection;
-
-			s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[layer] = lightSpace;
-#endif
 			lastSplit = split;
 		}
 	}

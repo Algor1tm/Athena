@@ -129,11 +129,11 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
 
 layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    vec4 CascadePlaneDistances;
-	float MaxShadowDistance;
-	float FadeOut;
-	float LightSize;
-	bool SoftShadows;
+    vec4 u_CascadePlaneDistances;
+	float u_MaxShadowDistance;
+	float u_FadeOut;
+	float u_LightSize;
+	bool u_SoftShadows;
 };
 
 struct DirectionalLight
@@ -244,35 +244,43 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
 
-float ComputeShadow(vec3 normal, vec3 lightDir)
+float ComputeShadow(vec3 normal, vec3 lightDir, float distanceFromCamera)
 {
+    float fade = 0.0;
+    if(distanceFromCamera > u_MaxShadowDistance)
+    {
+        // TODO: fade out effect
+        fade = 1.0;
+    }
+
+
     vec4 worldPosViewSpace = u_ViewMatrix * vec4(Input.WorldPos, 1.0);
     float depthValue = abs(worldPosViewSpace.z);
 
     int layer = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthValue < CascadePlaneDistances[i])
+        if(depthValue < u_CascadePlaneDistances[i])
         {
             layer = i;
             break;
         }
     }
 
-    vec4 lightSpacePosition = g_DirectionalLightSpaceMatrices[layer] * vec4(worldPosViewSpace.xyz, 1.0);
+    vec4 lightSpacePosition = g_DirectionalLightSpaceMatrices[layer] * vec4(Input.WorldPos, 1.0);
 
     vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
     float currentDepth = projCoords.z;
 
     if(currentDepth > 1.0) return 0.0;
 
-    float bias = max(0.02 * (1.0 - dot(normal, lightDir)), 0.005);
-    //bias *= layer == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / CascadePlaneDistances[layer] * 0.5;
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    bias *= layer == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / u_CascadePlaneDistances[layer] * 0.5;
 
     float closestDepth = texture(u_ShadowMap, vec3(projCoords.xy, layer)).r;
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
-    return shadow;
+    return (1 - fade) * shadow;
 }
 
 
@@ -288,30 +296,16 @@ void main()
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;
-        normal = normalize(Input.TBN * normal);
+        normal = Input.TBN * normal;
     }
     else
     {
-        normal = normalize(Input.Normal);
+        normal = Input.Normal;
     }
 
-    float roughness;
-    if(bool(u_UseRoughnessMap))
-        roughness = texture(u_RoughnessMap, Input.TexCoord).r;
-    else
-        roughness = u_Roughness;
-
-    float metalness;
-    if(bool(u_UseMetalnessMap))
-        metalness = texture(u_MetalnessMap, Input.TexCoord).r;
-    else
-        metalness = u_Metalness;
-
-    float ambientOcclusion;
-    if(bool(u_UseAmbientOcclusionMap))
-        ambientOcclusion = texture(u_AmbientOcclusionMap, Input.TexCoord).r;
-    else
-        ambientOcclusion = u_AmbientOcclusion;
+    float roughness = bool(u_UseRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Roughness;
+    float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Metalness;
+    float ambientOcclusion = bool(u_UseAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
     
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
     reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo.rgb, metalness);
@@ -326,17 +320,18 @@ void main()
         vec3 lightDirection = normalize(g_DirectionalLightBuffer[i].Direction);
         vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
-        float shadow = ComputeShadow(normal, -lightDirection);
-
+        float distanceFromCamera = distance(u_CameraPosition.xyz, Input.WorldPos);
+        float shadow = ComputeShadow(normal, -lightDirection, distanceFromCamera);
+        
         totalIrradiance += (1 - shadow) * LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
     ////////////////// POINT LIGHTS //////////////////
     for(int i = 0; i < g_PointLightCount; ++i)
     {
-        float distance = length(Input.WorldPos - g_PointLightBuffer[i].Position);
-        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (distance * distance);
-        float factor = distance / g_PointLightBuffer[i].Radius;
+        float distanceFromCamera = length(Input.WorldPos - g_PointLightBuffer[i].Position);
+        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (distanceFromCamera * distanceFromCamera);
+        float factor = distanceFromCamera / g_PointLightBuffer[i].Radius;
 
         float attenuation = 0.0;
         if(factor < 1.0)

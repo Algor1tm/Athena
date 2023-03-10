@@ -29,7 +29,7 @@ namespace Athena
     EditorLayer::EditorLayer()
         : Layer("EditorLayer")
     {
-        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(30.f), 16.f / 9.f, 0.1f, 200.f);
+        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(30.f), 16.f / 9.f, 0.1f, 500.f);
         m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
 
         m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");

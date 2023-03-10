@@ -18,6 +18,8 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
+    float u_NearClip;
+	float u_FarClip;
     float u_SkyboxLOD;
 	float u_Exposure;
 };
@@ -75,15 +77,16 @@ void main()
 #type FRAGMENT_SHADER
 #version 430 core
 
+layout(location = 0) out vec4 out_Color;
+layout(location = 1) out int out_EntityID;
+
+
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
     int u_EntityID;
     bool u_Animated;
 };
-
-layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
 
 void main()
 {

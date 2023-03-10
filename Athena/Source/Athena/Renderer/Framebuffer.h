@@ -29,7 +29,10 @@ namespace Athena
 
 	struct FramebufferDescription
 	{
-		uint32 Width = 0, Height = 0;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		uint32 Depth = 1;
+
 		FramebufferAttachmentDescription Attachments;
 		uint32 Samples = 1;
 	};

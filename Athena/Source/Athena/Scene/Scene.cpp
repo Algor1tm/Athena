@@ -226,7 +226,7 @@ namespace Athena
 		UpdatePhysics(frameTime);
 
 		// Choose camera
-		Camera* mainCamera = nullptr;
+		SceneCamera* mainCamera = nullptr;
 		TransformComponent cameraTransform;
 		{
 			auto group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
@@ -243,14 +243,11 @@ namespace Athena
 			}
 		}
 
-		// Render 2D
+		// Render 
 		{
 			if (mainCamera)
 			{
-				Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
-				Matrix4 projectionMatrix = (*mainCamera).GetProjectionMatrix();
-
-				RenderRuntimeScene(viewMatrix, projectionMatrix);
+				RenderRuntimeScene(*mainCamera, cameraTransform.AsMatrix());
 			}
 		}
 	}
@@ -412,7 +409,13 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(viewMatrix, projectionMatrix, m_Environment);
+		CameraInfo info;
+		info.ProjectionMatrix = projectionMatrix;
+		info.ViewMatrix = viewMatrix;
+		info.NearClip = camera.GetNearClip();
+		info.FarClip = camera.GetFarClip();
+
+		Renderer::BeginScene(info, m_Environment);
 
 		auto staticMeshes = GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : staticMeshes)
@@ -458,8 +461,12 @@ namespace Athena
 		Renderer::EndScene();
 	}
 
-	void Scene::RenderRuntimeScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
+	void Scene::RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform)
 	{
+		Matrix4 viewMatrix = Math::AffineInverse(transform);
+		Matrix4 projectionMatrix = camera.GetProjectionMatrix();
+
+
 		Renderer2D::BeginScene(viewMatrix, projectionMatrix);
 
 		auto quads = GetAllEntitiesWith<TransformComponent, SpriteComponent>();
@@ -481,7 +488,13 @@ namespace Athena
 		Renderer2D::EndScene();
 
 
-		Renderer::BeginScene(viewMatrix, projectionMatrix, m_Environment);
+		CameraInfo info;
+		info.ProjectionMatrix = projectionMatrix;
+		info.ViewMatrix = viewMatrix;
+		info.NearClip = camera.GetNearClip();
+		info.FarClip = camera.GetFarClip();
+
+		Renderer::BeginScene(info, m_Environment);
 
 		auto staticMeshes = GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
 		for (auto entity : staticMeshes)

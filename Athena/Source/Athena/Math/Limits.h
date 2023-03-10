@@ -34,7 +34,7 @@ namespace Athena::Math
 	template<typename T>
 	constexpr T MinValue()
 	{
-		return std::numeric_limits<T>::min();
+		return std::numeric_limits<T>::lowest();
 	}
 
 	template <typename T>

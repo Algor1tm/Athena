@@ -13,15 +13,6 @@ layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
-{
-	mat4 u_LightSpaceMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_SkyboxLOD;
-	float u_Exposure;
-};
-
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
     mat4 u_Transform;
@@ -52,8 +43,33 @@ void main()
 
     vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
-    gl_Position = u_LightSpaceMatrix * transformedPos;
+    gl_Position = transformedPos;
 }
+
+
+#type GEOMETRY_SHADER
+#version 460
+
+layout(triangles, invocations = SHADOW_CASCADES_COUNT) in;
+layout(triangle_strip, max_vertices = 3) out;
+    
+layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
+{
+    mat4 g_DirectionalLightSpaceMatrices[SHADOW_CASCADES_COUNT];
+};
+
+
+void main()
+{          
+    for (int i = 0; i < 3; ++i)
+    {
+        gl_Position = g_DirectionalLightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+        gl_Layer = gl_InvocationID;
+        EmitVertex();
+    }
+
+    EndPrimitive();
+} 
 
 
 #type FRAGMENT_SHADER

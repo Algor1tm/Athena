@@ -26,6 +26,8 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
+    float u_NearClip;
+	float u_FarClip;
     float u_SkyboxLOD;
 	float u_Exposure;
 };
@@ -98,6 +100,8 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
+    float u_NearClip;
+	float u_FarClip;
     float u_SkyboxLOD;
 	float u_Exposure;
 };
@@ -123,6 +127,15 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
     int u_UseAmbientOcclusionMap;
 };
 
+layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
+{
+    vec4 CascadePlaneDistances;
+	float MaxShadowDistance;
+	float FadeOut;
+	float LightSize;
+	bool SoftShadows;
+};
+
 struct DirectionalLight
 {
     vec4 Color;
@@ -141,7 +154,7 @@ struct PointLight
 
 layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
 {
-    mat4 g_DirectionalLightSpaceMatrices[MAX_DIRECTIONAL_LIGHT_COUNT];
+    mat4 g_DirectionalLightSpaceMatrices[SHADOW_CASCADES_COUNT];
     DirectionalLight g_DirectionalLightBuffer[MAX_DIRECTIONAL_LIGHT_COUNT];
     int g_DirectionalLightCount;
 
@@ -149,17 +162,17 @@ layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
     int g_PointLightCount;
 };
 
-layout(binding = ALBEDO_MAP_BINDER) uniform sampler2D u_AlbedoMap;
-layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
-layout(binding = ROUGHNESS_MAP_BINDER) uniform sampler2D u_RoughnessMap;
-layout(binding = METALNESS_MAP_BINDER) uniform sampler2D u_MetalnessMap;
-layout(binding = AO_MAP_BINDER) uniform sampler2D u_AmbientOcclusionMap;
+layout(binding = ALBEDO_MAP_BINDER)     uniform sampler2D u_AlbedoMap;
+layout(binding = NORMAL_MAP_BINDER)     uniform sampler2D u_NormalMap;
+layout(binding = ROUGHNESS_MAP_BINDER)  uniform sampler2D u_RoughnessMap;
+layout(binding = METALNESS_MAP_BINDER)  uniform sampler2D u_MetalnessMap;
+layout(binding = AO_MAP_BINDER)         uniform sampler2D u_AmbientOcclusionMap;
 
-layout(binding = SKYBOX_MAP_BINDER) uniform samplerCube u_SkyboxMap;
+layout(binding = SKYBOX_MAP_BINDER)     uniform samplerCube u_SkyboxMap;
 layout(binding = IRRADIANCE_MAP_BINDER) uniform samplerCube u_IrradianceMap;
-layout(binding = BRDF_LUT_BINDER) uniform sampler2D   u_BRDF_LUT;
+layout(binding = BRDF_LUT_BINDER)       uniform sampler2D u_BRDF_LUT;
 
-layout(binding = SHADOW_MAP_BINDER) uniform sampler2D u_ShadowMap;
+layout(binding = SHADOW_MAP_BINDER)     uniform sampler2DArray u_ShadowMap;
 
 
 
@@ -208,7 +221,7 @@ vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
 }  
 
-vec3 ComputeRadiance(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewVector, vec3 albedo, float metalness, float roughness, vec3 reflectivityAtZeroIncidence)
+vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewVector, vec3 albedo, float metalness, float roughness, vec3 reflectivityAtZeroIncidence)
 {
     vec3 negativeLightDir = -lightDirection;
     vec3 halfWayVector = normalize(viewVector + negativeLightDir);
@@ -231,13 +244,32 @@ vec3 ComputeRadiance(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
 
-float ComputeShadow(vec4 lightSpacePosition, vec3 normal, vec3 lightDir)
+float ComputeShadow(vec3 normal, vec3 lightDir)
 {
+    vec4 worldPosViewSpace = u_ViewMatrix * vec4(Input.WorldPos, 1.0);
+    float depthValue = abs(worldPosViewSpace.z);
+
+    int layer = SHADOW_CASCADES_COUNT;
+    for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
+    {
+        if(depthValue < CascadePlaneDistances[i])
+        {
+            layer = i;
+            break;
+        }
+    }
+
+    vec4 lightSpacePosition = g_DirectionalLightSpaceMatrices[layer] * vec4(worldPosViewSpace.xyz, 1.0);
+
     vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
-    float closestDepth = texture(u_ShadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
 
+    if(currentDepth > 1.0) return 0.0;
+
     float bias = max(0.02 * (1.0 - dot(normal, lightDir)), 0.005);
+    //bias *= layer == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / CascadePlaneDistances[layer] * 0.5;
+
+    float closestDepth = texture(u_ShadowMap, vec3(projCoords.xy, layer)).r;
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
@@ -294,10 +326,9 @@ void main()
         vec3 lightDirection = normalize(g_DirectionalLightBuffer[i].Direction);
         vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
-        vec4 lightSpaceFragPosition = g_DirectionalLightSpaceMatrices[i] * vec4(Input.WorldPos, 1);
-        float shadow = ComputeShadow(lightSpaceFragPosition, normal, -lightDirection);
+        float shadow = ComputeShadow(normal, -lightDirection);
 
-        totalIrradiance += (1 - shadow) * ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+        totalIrradiance += (1 - shadow) * LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
     ////////////////// POINT LIGHTS //////////////////
@@ -317,12 +348,10 @@ void main()
 
         vec3 lightRadiance = g_PointLightBuffer[i].Color.rgb * g_PointLightBuffer[i].Intensity * attenuation;
 
-        totalIrradiance += ComputeRadiance(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+        totalIrradiance += LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
    ////////////////// ENVIRONMENT MAP LIGHTNING //////////////////
-    vec3 reflectedVec = reflect(-viewVector, normal); 
-
     float NdotV = max(dot(normal, viewVector), 0.0);
 
     vec3 reflectedLight = FresnelSchlickRoughness(NdotV, reflectivityAtZeroIncidence, roughness); 
@@ -330,14 +359,17 @@ void main()
     absorbedLight *= 1.0 - metalness;
 
     vec3 irradiance = texture(u_IrradianceMap, normal).rgb;
-    vec3 diffuse = irradiance * albedo.rgb;
+    vec3 diffuseIBL = absorbedLight * irradiance;
+
+    vec3 reflectedVec = reflect(-viewVector, normal); 
 
     vec3 prefilteredColor = textureLod(u_SkyboxMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
-    vec3 specular = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
+    vec3 specularIBL = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
 
-    vec3 ambient = (absorbedLight * diffuse + specular) * ambientOcclusion;
+    ////////////////// MAIN COLOR //////////////////
+    vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion;
     vec3 color = ambient + totalIrradiance;
 
     ////////////////// TONE MAPPING //////////////////

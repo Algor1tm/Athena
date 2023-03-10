@@ -32,6 +32,7 @@ namespace Athena
 		case DebugView::NONE: return "None";
 		case DebugView::NORMALS: return "Normals";
 		case DebugView::WIREFRAME: return "Wireframe";
+		case DebugView::SHOW_CASCADES: return "ShowShadowCascades";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -73,15 +74,8 @@ namespace Athena
 
 			if (UI::BeginTreeNode("Renderer"))
 			{
-				UI::ShiftCursorX(2.f);
-				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-				if (ImGui::Button("Reload Shaders"))
-				{
-					Renderer::ReloadShaders();
-				}
-				ImGui::PopStyleVar();
-				ImGui::PopStyleColor();
+				//UI::ShiftCursorX(2.f);
+
 
 				ImGui::Text("Camera Speed");
 				ImGui::SameLine();
@@ -126,7 +120,7 @@ namespace Athena
 
 			if (ImGui::BeginCombo("##DebugView", DebugViewToString(Renderer::GetDebugView()).data()))
 			{
-				for (uint32 i = 0; i <= (uint32)DebugView::WIREFRAME; ++i)
+				for (uint32 i = 0; i <= (uint32)DebugView::SHOW_CASCADES; ++i)
 				{
 					DebugView view = (DebugView)i;
 
@@ -152,15 +146,22 @@ namespace Athena
 
 		if (UI::BeginTreeNode("Shadows"))
 		{
-			auto shadowMap = Renderer::GetShadowMapFramebuffer();
-			float size = ImGui::GetContentRegionAvail().x;
-			ImGui::Image(shadowMap->GetDepthAttachmentRendererID(), { size, size }, { 0, 1 }, { 1, 0 });
+			auto settings = Renderer::GetShadowSettings();
+			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.SoftShadows);
+			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.MaxDistance);
+			ImGui::Text("Fade Out     "); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.FadeOut);
+			ImGui::Text("Split Factor   "); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);
+			ImGui::Text("NearPlane Offset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlane Offset", &settings.NearPlaneOffset);
+			ImGui::Text("FarPlane Offset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlane Offset", &settings.FarPlaneOffset);
+			Renderer::SetShadowSettings(settings);
 
 			UI::EndTreeNode();
 		}
 
 		if (UI::BeginTreeNode("Other"))
 		{
+			ImGui::Text("Antialiasing");
+			ImGui::SameLine();
 			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(Renderer::GetAntialiasingMethod()).data()))
 			{
 				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
@@ -177,6 +178,18 @@ namespace Athena
 
 				ImGui::EndCombo();
 			}
+
+			ImGui::Text("Reload Shaders");
+			ImGui::SameLine();
+
+			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+			if (ImGui::Button("Reload Shaders"))
+			{
+				Renderer::ReloadShaders();
+			}
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
 
 			UI::EndTreeNode();
 		}

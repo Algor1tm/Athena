@@ -82,7 +82,7 @@ namespace Athena
 		void UpdatePhysics(Time frameTime);
 
 		void RenderEditorScene(const EditorCamera& camera);
-		void RenderRuntimeScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
+		void RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

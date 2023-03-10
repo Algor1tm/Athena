@@ -23,7 +23,9 @@ namespace Athena
 
 	void OrthographicCamera::SetProjection(float left, float right, float bottom, float top)
 	{
-		m_ProjectionMatrix = Math::Ortho(left, right, bottom, top, -1.f, 1.f);
+		m_NearClip = -1.f;
+		m_FarClip = 1.f;
+		m_ProjectionMatrix = Math::Ortho(left, right, bottom, top, m_NearClip, m_FarClip);
 	}
 
 	void OrthographicCamera::RecalculateView()
@@ -85,32 +87,6 @@ namespace Athena
 	}
 
 
-	PerspectiveCameraBase::PerspectiveCameraBase(float fov, float aspectRatio, float nearClip, float farClip)
-		: m_FOV(fov), m_AspectRatio(aspectRatio), m_NearClip(nearClip), m_FarClip(farClip)
-	{
-
-	}
-
-
-	Matrix4 PerspectiveCameraBase::GetViewMatrix(const Vector3& position)
-	{
-		Matrix4 view = Math::ToMat4(GetOrientation());
-		view = Math::AffineInverse(view.Translate(position));
-
-		return view;
-	}
-
-	Matrix4 PerspectiveCameraBase::GetProjectionMatrix()
-	{
-		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
-		return Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
-	}
-
-	void PerspectiveCameraBase::SetViewportSize(uint32 width, uint32 height)
-	{
-		m_ViewportWidth = (float)width;
-		m_ViewportHeight = (float)height;
-	}
 
 	Vector2 PerspectiveCameraBase::UpdateMousePosition()
 	{
@@ -144,7 +120,7 @@ namespace Athena
 
 
 	MeshViewerCamera::MeshViewerCamera(float fov, float aspectRatio, float nearClip, float farClip)
-		: PerspectiveCameraBase(fov, aspectRatio, nearClip, farClip)
+		: EditorCamera(nearClip, farClip), m_FOV(fov), m_AspectRatio(aspectRatio)
 	{
 		RecalculateProjection();
 		RecalculateView();
@@ -152,13 +128,16 @@ namespace Athena
 
 	void MeshViewerCamera::RecalculateProjection()
 	{
-		m_ProjectionMatrix = PerspectiveCameraBase::GetProjectionMatrix();
+		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
+		m_ProjectionMatrix = Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
 	}
 
 	void MeshViewerCamera::RecalculateView()
 	{
 		Vector3 position = CalculatePosition();
-		m_ViewMatrix = PerspectiveCameraBase::GetViewMatrix(position);
+
+		Matrix4 transform = Math::ToMat4(GetOrientation());
+		m_ViewMatrix = Math::AffineInverse(transform.Translate(position));
 	}
 
 	Vector2 MeshViewerCamera::PanSpeed() const
@@ -244,7 +223,9 @@ namespace Athena
 
 	void MeshViewerCamera::SetViewportSize(uint32 width, uint32 height)
 	{
-		PerspectiveCameraBase::SetViewportSize(width, height);
+		m_ViewportWidth = (float)width;
+		m_ViewportHeight = (float)height;
+
 		RecalculateProjection();
 	}
 
@@ -256,7 +237,7 @@ namespace Athena
 
 
 	FirstPersonCamera::FirstPersonCamera(float fov, float aspectRatio, float nearClip, float farClip)
-		: PerspectiveCameraBase(fov, aspectRatio, nearClip, farClip)
+		: EditorCamera(nearClip, farClip), m_FOV(fov), m_AspectRatio(aspectRatio)
 	{
 		RecalculateProjection();
 		RecalculateView();
@@ -294,9 +275,9 @@ namespace Athena
 				direction += Vector3::Down() / 1.5f;
 
 			m_Position += direction * frameTime.AsSeconds() * MoveSpeed();
-		}
 
-		RecalculateView();
+			RecalculateView();
+		}
 	}
 
 	void FirstPersonCamera::OnEvent(Event& event)
@@ -307,18 +288,21 @@ namespace Athena
 
 	void FirstPersonCamera::SetViewportSize(uint32 width, uint32 height)
 	{
-		PerspectiveCameraBase::SetViewportSize(width, height);
+		m_ViewportWidth = (float)width;
+		m_ViewportHeight = (float)height;
 		RecalculateProjection();
 	}
 
 	void FirstPersonCamera::RecalculateProjection()
 	{
-		m_ProjectionMatrix = PerspectiveCameraBase::GetProjectionMatrix();
+		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
+		m_ProjectionMatrix = Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
 	}
 
 	void FirstPersonCamera::RecalculateView()
 	{
-		m_ViewMatrix = PerspectiveCameraBase::GetViewMatrix(m_Position);
+		Matrix4 transform = Math::ToMat4(GetOrientation());
+		m_ViewMatrix = Math::AffineInverse(transform.Translate(m_Position));
 	}
 
 	bool FirstPersonCamera::OnMouseScroll(MouseScrolledEvent& event)

@@ -19,6 +19,9 @@ namespace Athena
 	class ATHENA_API EditorCamera : public Camera
 	{
 	public:
+		EditorCamera() = default;
+		EditorCamera(float nearClip, float farClip) : Camera(nearClip, farClip) {}
+
 		virtual ~EditorCamera() = default;
 
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
@@ -88,8 +91,6 @@ namespace Athena
 	class ATHENA_API PerspectiveCameraBase
 	{
 	public:
-		PerspectiveCameraBase(float fov, float aspectRatio, float nearClip, float farClip);
-
 		void SetPitch(float pitch) { m_Pitch = pitch; }
 		void SetYaw(float yaw) { m_Yaw = yaw; }
 
@@ -97,12 +98,6 @@ namespace Athena
 		float GetYaw() const { return m_Yaw; }
 
 	protected:
-		Matrix4 GetViewMatrix(const Vector3& position);
-		Matrix4 GetProjectionMatrix();
-
-		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
-		void SetViewportSize(uint32 width, uint32 height);
-
 		Vector2 UpdateMousePosition();
 
 		Vector3 GetUpDirection() const;
@@ -111,17 +106,13 @@ namespace Athena
 		Quaternion GetOrientation() const;
 
 	private:
-		float m_FOV = 45.0f; float m_AspectRatio = 1.778f;
-		float m_NearClip = 0.1f; float m_FarClip = 1000.0f;
-
 		float m_Yaw = 0.f, m_Pitch = 0.0f;
 
 		Vector2 m_InitialMousePosition = { 0.0f, 0.0f };
-		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 
 
-	class ATHENA_API MeshViewerCamera : public EditorCamera, PerspectiveCameraBase
+	class ATHENA_API MeshViewerCamera : public EditorCamera, public PerspectiveCameraBase
 	{
 	public:
 		MeshViewerCamera() = default;
@@ -134,6 +125,7 @@ namespace Athena
 		inline float GetDistance() const { return m_Distance; }
 		inline void SetDistance(float distance) { m_Distance = distance; }
 
+		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
 		virtual void SetViewportSize(uint32 width, uint32 height) override;
 
 		virtual Vector3 GetPosition() const override { return CalculatePosition(); }
@@ -157,12 +149,16 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
+		float m_FOV = 45.0f; float m_AspectRatio = 1.778f;
+
 		Vector3 m_FocalPoint = { 0.0f, 0.0f, 0.0f };
 		float m_Distance = 0.0f;
+
+		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 
 
-	class ATHENA_API FirstPersonCamera : public EditorCamera, PerspectiveCameraBase
+	class ATHENA_API FirstPersonCamera : public EditorCamera, public PerspectiveCameraBase
 	{
 	public:
 		FirstPersonCamera() = default;
@@ -171,6 +167,7 @@ namespace Athena
 		virtual void OnUpdate(Time frameTime) override;
 		virtual void OnEvent(Event& event) override;
 
+		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
 		virtual void SetViewportSize(uint32 width, uint32 height) override;
 
 		virtual Vector3 GetPosition() const override { return m_Position; }
@@ -186,6 +183,10 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
+		float m_FOV = 45.0f; float m_AspectRatio = 1.778f;
+
 		Vector3 m_Position = { 0.0f, 5.0f, 10.0f };
+
+		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 }

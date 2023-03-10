@@ -1,5 +1,8 @@
 #type VERTEX_SHADER
-#version 430 core
+#version 460 core
+
+#define MAX_NUM_BONES_PER_VERTEX 4
+#define MAX_NUM_BONES 512
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
@@ -9,15 +12,7 @@ layout (location = 4) in vec3 a_Bitangent;
 layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
-struct VertexOutput
-{
-	vec2 TexCoord;
-    vec3 Normal;
-    mat3 TBN;
-};
-
-layout (location = 0) out VertexOutput Output;
-
+layout(location = 0) out vec3 WorldPosViewSpace;
 
 layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
@@ -26,7 +21,7 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
     vec4 u_CameraPosition;
     float u_NearClip;
 	float u_FarClip;
-    float u_MipLevel;
+    float u_SkyboxLOD;
 	float u_Exposure;
 };
 
@@ -37,13 +32,10 @@ layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
     bool u_Animated;
 };
 
-
-
 layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
     mat4 g_Bones[MAX_NUM_BONES];
 };
-
 
 void main()
 {
@@ -62,18 +54,9 @@ void main()
 
     vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
+    WorldPosViewSpace = vec3(u_ViewMatrix * transformedPos);
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
-
-    Output.TexCoord = a_TexCoord;
-    Output.Normal = normalize(vec3(fullTransform * vec4(a_Normal, 0)));
-
-    vec3 T = normalize(vec3(fullTransform * vec4(a_Tangent, 0)));
-    vec3 N = Output.Normal;
-    T = normalize(T - dot(T, N) * N);
-    vec3 B = normalize(vec3(fullTransform * vec4(a_Bitangent, 0)));
-    Output.TBN = mat3(T, B, N);
 }
-
 
 #type FRAGMENT_SHADER
 #version 430 core
@@ -81,17 +64,7 @@ void main()
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
 
-struct VertexOutput
-{
-	vec2 TexCoord;
-    vec3 Normal;
-    mat3 TBN;
-};
-
-layout (location = 0) in VertexOutput Input;
-
-
-layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
+layout(location = 0) in vec3 WorldPosViewSpace;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
@@ -100,35 +73,47 @@ layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
     bool u_Animated;
 };
 
-layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
+layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_AmbientOcclusion;
-
-	int u_UseAlbedoMap;
-	int u_UseNormalMap;
-	int u_UseRoughnessMap;
-	int u_UseMetalnessMap;
-    int u_UseAmbientOcclusionMap;
+    vec4 CascadePlaneDistances;
+	float MaxShadowDistance;
+	float FadeOut;
+	float LightSize;
+	bool SoftShadows;
 };
 
 
 void main()
 {
-    vec3 normal;
-    if(bool(u_UseNormalMap))
+    float depthValue = abs(WorldPosViewSpace.z);
+
+    int layer = SHADOW_CASCADES_COUNT;
+    for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        normal = texture(u_NormalMap, Input.TexCoord).rgb;
-        normal = normal * 2 - 1;
-        normal = normalize(Input.TBN * normal);
-    }
-    else
-    {
-        normal = normalize(Input.Normal);
+        if(depthValue < CascadePlaneDistances[i])
+        {
+            layer = i;
+            break;
+        }
     }
 
-    out_Color = vec4(abs(normal), 1);
+    vec3 color = vec3(0.0, 0.0, 0.0);
+
+    if(layer == 0)
+        color = vec3(1.0, 0.0, 0.0);
+    else if(layer == 1)
+        color = vec3(0.0, 1.0, 0.0);
+    else if(layer == 2)
+        color = vec3(0.0, 0.0, 1.0);
+    else if(layer == 3)
+        color = vec3(1.0, 1.0, 0.0);
+    else if(layer == 4)
+        color = vec3(0.0, 1.0, 1.0);
+    else if(layer == 5)
+        color = vec3(1.0, 0.0, 1.0);
+    else if(layer == 6)
+        color = vec3(0.5, 0.5, 0.5);
+
+    out_Color = vec4(color, 1);
     out_EntityID = u_EntityID;
 }

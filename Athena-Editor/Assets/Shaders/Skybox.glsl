@@ -10,6 +10,8 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
+    float u_NearClip;
+	float u_FarClip;
     float u_SkyboxLOD;
 	float u_Exposure;
 };
@@ -36,6 +38,8 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
+    float u_NearClip;
+	float u_FarClip;
     float u_SkyboxLOD;
 	float u_Exposure;
 };

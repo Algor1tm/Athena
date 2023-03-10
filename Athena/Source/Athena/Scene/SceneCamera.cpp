@@ -19,6 +19,17 @@ namespace Athena
 
 	void SceneCamera::RecalculateProjection()
 	{
+		if (m_ProjectionType == ProjectionType::Perspective)
+		{
+			m_NearClip = m_PerspectiveData.NearClip;
+			m_FarClip = m_PerspectiveData.FarClip;
+		}
+		else if (m_ProjectionType == ProjectionType::Orthographic)
+		{
+			m_NearClip = m_OrthoData.NearClip;
+			m_FarClip = m_OrthoData.FarClip;
+		}
+
 		if (m_ProjectionType == ProjectionType::Orthographic)
 		{
 			float orthoLeft = -m_OrthoData.Size * m_AspecRatio * 0.5f;

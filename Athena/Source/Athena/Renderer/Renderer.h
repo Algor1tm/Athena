@@ -3,6 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
+#include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/RenderCommand.h"
 #include "Athena/Renderer/Environment.h"
 
@@ -17,15 +18,33 @@ namespace Athena
 	class ATHENA_API Texture2D;
 	class ATHENA_API Cubemap;
 
+	enum ShaderEnum
+	{
+		PBR,
+		SHADOW_MAP_GEN,
+		SKYBOX,
+
+		COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP,
+		COMPUTE_IRRADIANCE_MAP,
+		COMPUTE_PREFILTER_MAP,
+
+		DEBUG_NORMALS,
+		DEBUG_WIREFRAME,
+		DEBUG_SHOW_CASCADES
+	};
+
+
 	enum ShaderConstants
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
 		MAX_POINT_LIGHT_COUNT = 32,
 
+		SHADOW_CASCADES_COUNT = 4,
+
 		MAX_NUM_BONES_PER_VERTEX = 4,
 		MAX_NUM_BONES = 512,
 
-		MAX_SKYBOX_MAP_LOD = 8
+		MAX_SKYBOX_MAP_LOD = 8,
 	};
 
 	enum TextureBinder
@@ -49,8 +68,9 @@ namespace Athena
 		SCENE_DATA = 1,
 		ENTITY_DATA = 2,
 		MATERIAL_DATA = 3,
-		LIGHT_DATA = 4,
-		BONES_DATA = 5
+		SHADOWS_DATA = 4,
+		LIGHT_DATA = 5,
+		BONES_DATA = 6
 	};
 
 	enum class Antialising
@@ -65,20 +85,29 @@ namespace Athena
 	{
 		NONE = 0,
 		NORMALS = 1,
-		WIREFRAME = 2
+		WIREFRAME = 2,
+		SHOW_CASCADES = 3
+	};
+
+	struct ShadowSettings
+	{
+		bool SoftShadows = true;
+		float MaxDistance = 200.f;
+		float FadeOut = 15.f;
+		float ExponentialSplitFactor = 0.55f;
+		float NearPlaneOffset = -15.f;
+		float FarPlaneOffset = 15.f;
 	};
 
 	class ATHENA_API Renderer
 	{
-	public:
-
 	public:
 		static void Init(RendererAPI::API graphicsAPI);
 		static void Shutdown();
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix, const Ref<Environment>& environment);
+		static void BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment);
 		static void EndScene();
 
 		static void BeginFrame();
@@ -99,6 +128,9 @@ namespace Athena
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
+
+		static const ShadowSettings& GetShadowSettings();
+		static void SetShadowSettings(const ShadowSettings& settings);
 
 		static Antialising GetAntialiasingMethod();
 		static void SetAntialiasingMethod(Antialising method);
@@ -123,7 +155,14 @@ namespace Athena
 		static void ResetStats();
 
 	private:
-		static void RenderDebugView(DebugView view);
+		static void RenderGeometry(ShaderEnum shader, bool useMaterials);
 
+		static void ShadowMapPass();
+		static void GeometryPass();
+		static void DebugViewPass();
+		static void SkyboxPass();
+
+		static void ComputeCascadeSplits();
+		static void ComputeCascadeSpaceMatrices(const DirectionalLight& light);
 	};
 }

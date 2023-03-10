@@ -23,7 +23,7 @@ namespace Athena
 
 		//Depth/Stencil
 		DEPTH24STENCIL8,
-		DEPTH32
+		DEPTH32F
 	};
 
 	enum class TextureFilter

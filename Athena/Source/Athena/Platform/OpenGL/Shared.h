@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Renderer/Texture.h"
+
 #include <glad/glad.h>
 
 
@@ -14,7 +15,7 @@ namespace Athena
 		case TextureFormat::RGB16F: return GL_RGB16F;
 		case TextureFormat::RED_INTEGER: return GL_RED_INTEGER;
 		case TextureFormat::DEPTH24STENCIL8: return GL_DEPTH24_STENCIL8;
-		case TextureFormat::DEPTH32: return GL_DEPTH_COMPONENT32;
+		case TextureFormat::DEPTH32F: return GL_DEPTH_COMPONENT32;
 		}
 
 		ATN_CORE_ASSERT(false, "Unknown texture format!");
@@ -52,6 +53,13 @@ namespace Athena
 	{
 		switch (format)
 		{
+		case TextureFormat::RED_INTEGER:
+		{
+			internalFormat = GL_R32I;
+			dataFormat = GL_RED_INTEGER;
+			type = GL_UNSIGNED_BYTE;
+			break;
+		}
 		case TextureFormat::RG16F:
 		{
 			internalFormat = GL_RG16F;
@@ -87,12 +95,25 @@ namespace Athena
 			type = GL_FLOAT;
 			break;
 		}
-		default:
+		case TextureFormat::DEPTH24STENCIL8:
 		{
-			ATN_CORE_ASSERT(false, "Invalid texture format!");
+			internalFormat = GL_DEPTH24_STENCIL8;
+			dataFormat = GL_DEPTH_STENCIL;
+			type = GL_UNSIGNED_BYTE;
+			break;
 		}
+		case TextureFormat::DEPTH32F:
+		{
+			internalFormat = GL_DEPTH_COMPONENT32F;
+			dataFormat = GL_DEPTH;
+			type = GL_FLOAT;
+			break;
 		}
+		default: ATN_CORE_ASSERT(false, "Invalid texture format!");
+		}
+
 	}
+
 
 	inline bool GetGLFormats(int channels, bool HDR, bool sRGB, GLenum& internalFormat, GLenum& dataFormat)
 	{

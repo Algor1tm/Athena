@@ -12,7 +12,9 @@ layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 	mat4 u_ViewMatrix;
     mat4 u_ProjectionMatrix;
     vec4 u_CameraPosition;
-    float u_SkyboxLOD;  // MIP LEVEL (0 - 1)
+    float u_NearClip;
+	float u_FarClip;
+    float u_MipLevel;
 	float u_Exposure;
 };
 
@@ -24,7 +26,7 @@ float RadicalInverse_VdC(uint bits)
     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-    return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+    return float(bits) * 2.3283064365386963e-10; //  0x100000000
 }
 
 vec2 Hammersley(uint i, uint N)
@@ -91,7 +93,7 @@ void main()
     vec3 direction = CubeCoordToWorld(texelCoord);
 
     const float maxFloat = 3.402823466 * pow(10.0, 1.5);
-    float roughness = u_SkyboxLOD;
+    float roughness = u_MipLevel;
 
     vec3 N = direction;    
     vec3 R = N;
@@ -114,7 +116,7 @@ void main()
             float D = DistributionGGX(NdotH, roughness);
             float pdf = (D * NdotH / (4.0 * HdotV)) + 0.0001; 
 
-            float resolution = 2048;
+            float resolution = textureSize(u_Skybox, 0).x;
             float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
             float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
 

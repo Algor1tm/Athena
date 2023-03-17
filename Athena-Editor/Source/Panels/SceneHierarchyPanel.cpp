@@ -157,13 +157,13 @@ namespace Athena
 		{
 			if (UI::BeginDrawControllers())
 			{
-				UI::DrawController("Skybox", height, [this]() 
+				UI::DrawController("EnvironmentMap", height, [this]() 
 					{
 						String label;
-						Ref<Skybox> skybox = m_Context->GetEnvironment()->Skybox;
-						if (skybox)
+						Ref<EnvironmentMap> envMap = m_Context->GetEnvironment()->EnvironmentMap;
+						if (envMap)
 						{
-							const FilePath& envPath = skybox->GetFilePath();
+							const FilePath& envPath = envMap->GetFilePath();
 							label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
 						}
 						else
@@ -173,24 +173,29 @@ namespace Athena
 
 						if (ImGui::Button(label.data()))
 						{
-							FilePath filepath = FileDialogs::OpenFile("Skybox (*hdr)\0*.hdr\0");
+							FilePath filepath = FileDialogs::OpenFile("EnvironmentMap (*hdr)\0*.hdr\0");
 							if (!filepath.empty())
 							{
-								Ref<Skybox> skybox = Skybox::Create(filepath);
-								m_Context->GetEnvironment()->Skybox = skybox;
+								m_Context->GetEnvironment()->EnvironmentMap = EnvironmentMap::Create(filepath);
 							}
 							return true;
 						}
 						if (ImGui::Button("Delete"))
 						{
-							m_Context->GetEnvironment()->Skybox = nullptr;
+							m_Context->GetEnvironment()->EnvironmentMap = nullptr;
 							return true;
 						}
 
 						return false;
 					});
-				UI::DrawController("Skybox LOD", height, [&environment]() {return ImGui::SliderFloat("##SkyboxLOD", &environment->SkyboxLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1); });
-				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 7); });
+
+				UI::DrawController("Ambient Intensity", height, [&environment]() {return ImGui::SliderFloat("##Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f); });
+
+				UI::DrawController("Environment Map LOD", height, [&environment]() 
+					{return ImGui::SliderFloat("##Environment Map LOD", &environment->EnvironmentMapLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1); });
+
+				UI::DrawController("Exposure", height, [&environment]() {return ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 10); });
+				UI::DrawController("Gamma", height, [&environment]() {return ImGui::SliderFloat("##Gamma", &environment->Gamma, 0.000, 10); });
 
 				UI::EndDrawControllers();
 			}
@@ -930,7 +935,6 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
-					UI::DrawController("Direction", height, [&lightComponent]() { return ImGui::DragFloat3("##Direction", lightComponent.Direction.Data(), 0.05f); });
 					UI::DrawController("Intensity", height, [&lightComponent]() { return ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f); });
 
 					UI::EndDrawControllers();

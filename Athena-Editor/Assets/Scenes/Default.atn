@@ -29,7 +29,7 @@ Entities:
       Scale: [1, 1, 1]
     PointLightComponent:
       Color: [0.93670845, 0, 1, 1]
-      Intensity: 30
+      Intensity: 5
       Radius: 10
       FallOff: 1
   - IDComponent:
@@ -64,7 +64,7 @@ Entities:
       Scale: [1, 1, 1]
     PointLightComponent:
       Color: [0, 1, 0, 1]
-      Intensity: 30
+      Intensity: 5
       Radius: 10
       FallOff: 1
   - IDComponent:
@@ -77,7 +77,7 @@ Entities:
       Scale: [1, 1, 1]
     PointLightComponent:
       Color: [0, 0, 1, 1]
-      Intensity: 30
+      Intensity: 5
       Radius: 10
       FallOff: 1
   - IDComponent:
@@ -90,7 +90,7 @@ Entities:
       Scale: [1, 1, 1]
     PointLightComponent:
       Color: [1, 0, 0, 1]
-      Intensity: 30
+      Intensity: 5
       Radius: 10
       FallOff: 1
   - IDComponent:
@@ -99,14 +99,14 @@ Entities:
       Tag: DirectionalLight
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Rotation: [-0.618320286, -0.813000917, -0.290697783]
+      Scale: [0.999999881, 0.99999994, 0.99999994]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
-      Direction: [-2.1500001, -1.75, 0.850000024]
       Intensity: 1
 Environment:
-  Skybox:
-    FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
-    Skybox LOD: 0
-    Exposure: 1
+  EnvMap FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
+  Ambient Light Intensity: 1
+  EnvMap LOD: 0
+  Exposure: 1
+  Gamma: 2.20000005

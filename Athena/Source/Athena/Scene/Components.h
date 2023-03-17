@@ -160,7 +160,6 @@ namespace Athena
 	struct DirectionalLightComponent
 	{
 		LinearColor Color = LinearColor::White;
-		Vector3 Direction = Vector3(-1, -1, -1);
 		float Intensity = 1;
 	};
 

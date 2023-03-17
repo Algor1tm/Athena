@@ -150,14 +150,13 @@ namespace Athena
 		out << YAML::Key << "Environment";
 		out << YAML::BeginMap;
 
-		if (env->Skybox)
+		if (env->EnvironmentMap)
 		{
-			out << YAML::Key << "Skybox";
-			out << YAML::BeginMap;
-			out << YAML::Key << "FilePath" << env->Skybox->GetFilePath().string();
-			out << YAML::Key << "Skybox LOD" << YAML::Value << env->SkyboxLOD;
+			out << YAML::Key << "EnvMap FilePath" << env->EnvironmentMap->GetFilePath().string();
+			out << YAML::Key << "Ambient Light Intensity" << YAML::Value << env->AmbientLightIntensity;
+			out << YAML::Key << "EnvMap LOD" << YAML::Value << env->EnvironmentMapLOD;
 			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
-			out << YAML::EndMap;
+			out << YAML::Key << "Gamma" << YAML::Value << env->Gamma;
 		}
 
 		out << YAML::EndMap;
@@ -200,14 +199,11 @@ namespace Athena
 		const auto& envNode = data["Environment"];
 		if (envNode)
 		{
-			const auto& skyboxNode = envNode["Skybox"];
-			if (skyboxNode)
-			{
-				environment->Skybox = Skybox::Create(skyboxNode["FilePath"].as<String>());
-
-				environment->SkyboxLOD = skyboxNode["Skybox LOD"].as<float>();
-				environment->Exposure = skyboxNode["Exposure"].as<float>();
-			}
+			environment->EnvironmentMap = EnvironmentMap::Create(envNode["EnvMap FilePath"].as<String>());
+			environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
+			environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
+			environment->Exposure = envNode["Exposure"].as<float>();
+			environment->Gamma = envNode["Gamma"].as<float>();
 		}
 
 		m_Scene->SetEnvironment(environment);
@@ -386,7 +382,6 @@ namespace Athena
 						auto& lightComp = deserializedEntity.AddComponent<DirectionalLightComponent>();
 
 						lightComp.Color = directionalLightComponent["Color"].as<LinearColor>();
-						lightComp.Direction = directionalLightComponent["Direction"].as<Vector3>();
 						lightComp.Intensity = directionalLightComponent["Intensity"].as<float>();
 					}
 				}
@@ -555,7 +550,6 @@ namespace Athena
 			[](YAML::Emitter& output, const DirectionalLightComponent& lightComponent)
 			{
 				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
-				output << YAML::Key << "Direction" << YAML::Value << lightComponent.Direction;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 			});
 

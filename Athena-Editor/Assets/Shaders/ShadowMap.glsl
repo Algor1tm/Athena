@@ -1,8 +1,6 @@
 #type VERTEX_SHADER
 #version 460 core
 
-#define MAX_NUM_BONES_PER_VERTEX 4
-#define MAX_NUM_BONES 512
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
@@ -15,10 +13,10 @@ layout (location = 6) in vec4 a_Weights;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
@@ -28,9 +26,9 @@ layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 
 void main()
 {
-    mat4 fullTransform = u_Transform;
+    mat4 fullTransform = u_Entity.Transform;
 
-    if(bool(u_Animated))
+    if(bool(u_Entity.IsAnimated))
     {
         mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
         for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)

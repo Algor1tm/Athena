@@ -7,16 +7,11 @@ layout(binding = 0) uniform samplerCube u_Skybox;
 layout(r11f_g11f_b10f, binding = 1) uniform imageCube u_PrefiliteredMap;
 
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
+layout(std140, binding = ENVMAP_BUFFER_BINDER) uniform EnvMapData
 {
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_NearClip;
-	float u_FarClip;
-    float u_MipLevel;
-	float u_Exposure;
-};
+	float LOD;
+    float Intensity;
+} u_EnvMapData;
 
 
 float RadicalInverse_VdC(uint bits) 
@@ -93,7 +88,7 @@ void main()
     vec3 direction = CubeCoordToWorld(texelCoord);
 
     const float maxFloat = 3.402823466 * pow(10.0, 1.5);
-    float roughness = u_MipLevel;
+    float roughness = u_EnvMapData.LOD; // mip level
 
     vec3 N = direction;    
     vec3 R = N;

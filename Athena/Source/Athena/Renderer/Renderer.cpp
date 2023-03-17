@@ -29,22 +29,32 @@ namespace Athena
 		{ DEBUG_SHOW_CASCADES, "DEBUG_SHOW_CASCADES" },
 	};
 
-	struct SceneData
+	struct CameraData
 	{
 		Matrix4 ViewMatrix;
 		Matrix4 ProjectionMatrix;
 		Vector4 CameraPosition;
 		float NearClip;
 		float FarClip;
-		float SkyboxLOD = 0;
-		float Exposure = 1;
+	};
+
+	struct SceneData
+	{
+		float Exposure = 1.f;
+		float Gamma = 2.2f;
+	};
+
+	struct EnvironmentMapData
+	{
+		float EnvironmentMapLOD = 0.f;
+		float Intensity = 1.f;
 	};
 
 	struct EntityData
 	{
 		Matrix4 TransformMatrix;
 		int32 EntityID = -1;
-		bool Animated = false;
+		bool IsAnimated = false;
 	};
 
 	struct LightData
@@ -87,15 +97,20 @@ namespace Athena
 
 		Ref<Environment> ActiveEnvironment;
 
+		CameraData CameraDataBuffer;
 		SceneData SceneDataBuffer;
+		EnvironmentMapData EnvMapDataBuffer;
 		EntityData EntityDataBuffer;
 		LightData LightDataBuffer;
 		ShadowsData ShadowsDataBuffer;
 
+		Ref<ConstantBuffer> CameraConstantBuffer;
 		Ref<ConstantBuffer> SceneConstantBuffer;
+		Ref<ConstantBuffer> EnvMapConstantBuffer;
 		Ref<ConstantBuffer> EntityConstantBuffer;
 		Ref<ConstantBuffer> MaterialConstantBuffer;
 		Ref<ConstantBuffer> ShadowsConstantBuffer;
+
 		Ref<ShaderStorageBuffer> LightShaderStorageBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 
@@ -109,7 +124,7 @@ namespace Athena
 		ShaderLibrary ShaderPack;
 		void BindShader(ShaderEnum shader) { ShaderPack.Get<Shader>(s_ShaderMap[shader])->Bind(); }
 
-		const uint32 SkyboxResolution = 2048;
+		const uint32 EnvMapResolution = 2048;
 		const uint32 IrradianceMapResolution = 128;
 		const uint32 BRDF_LUTResolution = 512;
 
@@ -179,10 +194,13 @@ namespace Athena
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
 
 
+		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(CameraData), BufferBinder::CAMERA_DATA);
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
+		s_Data.EnvMapConstantBuffer = ConstantBuffer::Create(sizeof(EnvironmentMapData), BufferBinder::ENVIRONMENT_MAP_DATA);
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.ShadowsConstantBuffer = ConstantBuffer::Create(sizeof(ShadowsData), BufferBinder::SHADOWS_DATA);
+
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
 		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderConstants::MAX_NUM_BONES, BufferBinder::BONES_DATA);
 
@@ -223,12 +241,17 @@ namespace Athena
 	{
 		s_Data.ActiveEnvironment = environment;
 
-		s_Data.SceneDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
-		s_Data.SceneDataBuffer.ProjectionMatrix = cameraInfo.ProjectionMatrix;
-		s_Data.SceneDataBuffer.CameraPosition = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
-		s_Data.SceneDataBuffer.NearClip = cameraInfo.NearClip;
-		s_Data.SceneDataBuffer.FarClip = cameraInfo.FarClip;
+		s_Data.CameraDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
+		s_Data.CameraDataBuffer.ProjectionMatrix = cameraInfo.ProjectionMatrix;
+		s_Data.CameraDataBuffer.CameraPosition = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
+		s_Data.CameraDataBuffer.NearClip = cameraInfo.NearClip;
+		s_Data.CameraDataBuffer.FarClip = cameraInfo.FarClip;
+
 		s_Data.SceneDataBuffer.Exposure = s_Data.ActiveEnvironment->Exposure;
+		s_Data.SceneDataBuffer.Gamma = s_Data.ActiveEnvironment->Gamma;
+
+		s_Data.EnvMapDataBuffer.EnvironmentMapLOD = s_Data.ActiveEnvironment->EnvironmentMapLOD;
+		s_Data.EnvMapDataBuffer.Intensity = s_Data.ActiveEnvironment->AmbientLightIntensity;
 
 		ComputeCascadeSplits();
 	}
@@ -325,7 +348,7 @@ namespace Athena
 		s_Data.BindShader(shader);
 
 		// Render Static Meshes
-		s_Data.EntityDataBuffer.Animated = false;
+		s_Data.EntityDataBuffer.IsAnimated = false;
 
 		while (s_Data.GeometryQueue.HasStaticMeshes())
 		{
@@ -343,7 +366,7 @@ namespace Athena
 		}
 
 		// Render Animated Meshes
-		s_Data.EntityDataBuffer.Animated = true;
+		s_Data.EntityDataBuffer.IsAnimated = true;
 
 		while (s_Data.GeometryQueue.HasAnimMeshes())
 		{
@@ -395,25 +418,24 @@ namespace Athena
 
 	void Renderer::GeometryPass()
 	{
-		Timer timer;
-		Time start = timer.ElapsedTime();
-
 		s_Data.MainFramebuffer->Bind();
 
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 		s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
-		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->Skybox)
-			s_Data.ActiveEnvironment->Skybox->Bind();
+		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
+		{
+			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
+			s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
+		}
 
-		s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
 		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
 		s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
 		RenderGeometry(PBR, true);
-
-		s_Data.Stats.GeometryPass = timer.ElapsedTime() - start;
 	}
 
 	void Renderer::DebugViewPass()
@@ -430,34 +452,29 @@ namespace Athena
 
 	void Renderer::SkyboxPass()
 	{
-		Timer timer;
-		Time start = timer.ElapsedTime();
-
-		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->Skybox)
+		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
 		{
-			s_Data.SceneDataBuffer.SkyboxLOD = s_Data.ActiveEnvironment->SkyboxLOD;
-
 			// Remove translation
-			s_Data.SceneDataBuffer.ViewMatrix[3][0] = 0;
-			s_Data.SceneDataBuffer.ViewMatrix[3][1] = 0;
-			s_Data.SceneDataBuffer.ViewMatrix[3][2] = 0;
+			s_Data.CameraDataBuffer.ViewMatrix[3][0] = 0;
+			s_Data.CameraDataBuffer.ViewMatrix[3][1] = 0;
+			s_Data.CameraDataBuffer.ViewMatrix[3][2] = 0;
 
-			s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+			s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+			s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
-			s_Data.ActiveEnvironment->Skybox->Bind();
+			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
 
 			s_Data.BindShader(SKYBOX);
 
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 			s_Data.Stats.DrawCalls++;
 		}
-		s_Data.Stats.SkyboxPass = timer.ElapsedTime() - start;
 	}
 
 	void Renderer::ComputeCascadeSplits()
 	{
-		float cameraNear = s_Data.SceneDataBuffer.NearClip;
-		float cameraFar = s_Data.SceneDataBuffer.FarClip;
+		float cameraNear = s_Data.CameraDataBuffer.NearClip;
+		float cameraFar = s_Data.CameraDataBuffer.FarClip;
 
 		const float splitWeight = s_Data.ShadowSettings.ExponentialSplitFactor;
 
@@ -474,10 +491,10 @@ namespace Athena
 
 	void Renderer::ComputeCascadeSpaceMatrices(const DirectionalLight& light)
 	{
-		float cameraNear = s_Data.SceneDataBuffer.NearClip;
-		float cameraFar = s_Data.SceneDataBuffer.FarClip;
+		float cameraNear = s_Data.CameraDataBuffer.NearClip;
+		float cameraFar = s_Data.CameraDataBuffer.FarClip;
 
-		Matrix4 invCamera = Math::Inverse(s_Data.SceneDataBuffer.ViewMatrix * s_Data.SceneDataBuffer.ProjectionMatrix);
+		Matrix4 invCamera = Math::Inverse(s_Data.CameraDataBuffer.ViewMatrix * s_Data.CameraDataBuffer.ProjectionMatrix);
 
 		float lastSplit = 0.f;
 		float averageFrustumSize = 0.f;
@@ -565,8 +582,8 @@ namespace Athena
 		// Convert EquirectangularHDRMap to Cubemap
 		Ref<Cubemap> skybox;
 		{
-			uint32 width = s_Data.SkyboxResolution;
-			uint32 height = s_Data.SkyboxResolution;
+			uint32 width = s_Data.EnvMapResolution;
+			uint32 height = s_Data.EnvMapResolution;
 
 			CubemapDescription cubeMapDesc;
 			cubeMapDesc.Width = width;
@@ -610,8 +627,8 @@ namespace Athena
 
 		// Compute Prefiltered Skybox Map
 		{
-			uint32 width = s_Data.SkyboxResolution;
-			uint32 height = s_Data.SkyboxResolution;
+			uint32 width = s_Data.EnvMapResolution;
+			uint32 height = s_Data.EnvMapResolution;
 
 			CubemapDescription cubeMapDesc;
 			cubeMapDesc.Width = width;
@@ -622,8 +639,8 @@ namespace Athena
 			prefilteredMap = Cubemap::Create(cubeMapDesc);
 			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 
-			auto prefilteredCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER]);
-			prefilteredCompute->Bind();
+			auto filterMipCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER]);
+			filterMipCompute->Bind();
 
 			skybox->Bind();
 
@@ -635,10 +652,10 @@ namespace Athena
 				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
 
 				float roughness = (float)mip / (float)(ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
-				s_Data.SceneDataBuffer.SkyboxLOD = roughness;
-				s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+				s_Data.EnvMapDataBuffer.EnvironmentMapLOD = roughness;
+				s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
-				prefilteredCompute->Execute(mipWidth, mipHeight, 6);
+				filterMipCompute->Execute(mipWidth, mipHeight, 6);
 			}
 		}
 	}

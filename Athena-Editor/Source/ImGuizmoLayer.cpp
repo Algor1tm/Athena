@@ -11,34 +11,7 @@ namespace Athena
 {
 	void ImGuizmoLayer::OnImGuiRender() 
 	{
-		if (m_pCamera && m_pViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<DirectionalLightComponent>())
-		{
-			auto& desc = m_pViewportPanel->GetDescription();
-			ImGuizmo::SetOrthographic(false);
-			ImGuizmo::SetDrawlist();
-			ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
-				desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
-
-			const Matrix4& cameraProjection = m_pCamera->GetProjectionMatrix();
-			const Matrix4& cameraView = m_pCamera->GetViewMatrix();
-
-			auto& dirLight = m_ActiveEntity.GetComponent<DirectionalLightComponent>();
-           
-			Matrix4 transform = Math::ToMat4(Math::ToQuat(dirLight.Direction));
-
-			ImGuizmo::Manipulate(cameraView.Data(), cameraProjection.Data(),
-                ImGuizmo::OPERATION::ROTATE, ImGuizmo::LOCAL, transform.Data(),
-				nullptr, nullptr);
-
-			if (ImGuizmo::IsUsing())
-			{
-                Vector3 translation, rotation, scale;
-                Math::DecomposeTransform(transform, translation, rotation, scale);
-
-                dirLight.Direction = rotation;
-			}
-		}
-        else if (m_pCamera && m_pViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<TransformComponent>())
+        if (m_pCamera && m_pViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<TransformComponent>())
         {
             auto& desc = m_pViewportPanel->GetDescription();
             ImGuizmo::SetOrthographic(false);

@@ -138,9 +138,6 @@ namespace Athena
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			ImGui::Text("Geometry Pass: %.3f", stats.GeometryPass.AsMilliseconds());
-			ImGui::Text("Skybox Pass: %.3f", stats.SkyboxPass.AsMilliseconds());
-
 			UI::EndTreeNode();
 		}
 

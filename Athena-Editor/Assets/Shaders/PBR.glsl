@@ -21,24 +21,21 @@ struct VertexOutput
 layout (location = 0) out VertexOutput Output;
 
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
+layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_NearClip;
-	float u_FarClip;
-    float u_SkyboxLOD;
-	float u_Exposure;
-};
+	mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+    vec4 Position;
+    float NearClip;
+	float FarClip;
+} u_Camera;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
-
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
@@ -48,9 +45,9 @@ layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 
 void main()
 {
-    mat4 fullTransform = u_Transform;
+    mat4 fullTransform = u_Entity.Transform;
 
-    if(bool(u_Animated))
+    if(bool(u_Entity.IsAnimated))
     {
         mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
         for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
@@ -63,7 +60,7 @@ void main()
 
     vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
+    gl_Position = u_Camera.ProjectionMatrix * u_Camera.ViewMatrix * transformedPos;
 
     Output.WorldPos = vec3(transformedPos);
     Output.TexCoord = a_TexCoord;
@@ -98,39 +95,50 @@ struct VertexOutput
 layout (location = 0) in VertexOutput Input;
 
 
+layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
+{
+	mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+    vec4 Position;
+    float NearClip;
+	float FarClip;
+} u_Camera;
+
 layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
 {
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_NearClip;
-	float u_FarClip;
-    float u_SkyboxLOD;
-	float u_Exposure;
-};
+	float Exposure;
+    float Gamma;
+} u_Scene;
+
+
+layout(std140, binding = ENVMAP_BUFFER_BINDER) uniform EnvMapData
+{
+	float LOD;
+    float Intensity;
+} u_EnvMapData;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
 {
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_AmbientOcclusion;
+    vec4 Albedo;
+    float Roughness;
+    float Metalness;
+    float AmbientOcclusion;
 
-	int u_UseAlbedoMap;
-	int u_UseNormalMap;
-	int u_UseRoughnessMap;
-	int u_UseMetalnessMap;
-    int u_UseAmbientOcclusionMap;
-};
+	int UseAlbedoMap;
+	int UseNormalMap;
+	int UseRoughnessMap;
+	int UseMetalnessMap;
+    int UseAmbientOcclusionMap;
+} u_Material;
 
-struct CascadeSplitInfo
+struct Split
 {
     vec2 LightFrustumPlanes;
     float SplitDepth;
@@ -139,14 +147,14 @@ struct CascadeSplitInfo
 
 layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    mat4 u_LightViewProjMatrices[SHADOW_CASCADES_COUNT];
-    mat4 u_LightViewMatrices[SHADOW_CASCADES_COUNT];
-    CascadeSplitInfo u_CascadeSplits[SHADOW_CASCADES_COUNT];
-	float u_MaxShadowDistance;
-	float u_FadeOut;
-	float u_LightSize;
-	bool u_SoftShadows;
-};
+    mat4 LightViewProjMatrices[SHADOW_CASCADES_COUNT];
+    mat4 LightViewMatrices[SHADOW_CASCADES_COUNT];
+    Split CascadeSplits[SHADOW_CASCADES_COUNT];
+	float MaxDistance;
+	float FadeOut;
+	float LightSize;
+	bool SoftShadows;
+} u_Shadows;
 
 struct DirectionalLight
 {
@@ -173,19 +181,19 @@ layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
     int g_PointLightCount;
 };
 
+
 layout(binding = ALBEDO_MAP_BINDER)     uniform sampler2D u_AlbedoMap;
 layout(binding = NORMAL_MAP_BINDER)     uniform sampler2D u_NormalMap;
 layout(binding = ROUGHNESS_MAP_BINDER)  uniform sampler2D u_RoughnessMap;
 layout(binding = METALNESS_MAP_BINDER)  uniform sampler2D u_MetalnessMap;
 layout(binding = AO_MAP_BINDER)         uniform sampler2D u_AmbientOcclusionMap;
 
-layout(binding = SKYBOX_MAP_BINDER)     uniform samplerCube u_SkyboxMap;
+layout(binding = ENVIRONMENT_MAP_BINDER) uniform samplerCube u_EnvironmentMap;
 layout(binding = IRRADIANCE_MAP_BINDER) uniform samplerCube u_IrradianceMap;
 layout(binding = BRDF_LUT_BINDER)       uniform sampler2D u_BRDF_LUT;
 
 layout(binding = SHADOW_MAP_BINDER)     uniform sampler2DArray u_ShadowMap;
 layout(binding = PCF_SAMPLER_BINDER)    uniform sampler2DArrayShadow u_ShadowMapPCF;
-
 
 
 float DistributionGGX(vec3 normal, vec3 halfWay, float roughness)
@@ -259,9 +267,9 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
 float ShadowFading(float distanceFromCamera)
 {
     float fade = 1.0;
-    if(distanceFromCamera < u_MaxShadowDistance)
+    if(distanceFromCamera < u_Shadows.MaxDistance)
     {
-        fade = clamp(smoothstep(0.0, 1.0, (distanceFromCamera - (u_MaxShadowDistance - u_FadeOut)) / u_FadeOut), 0.0, 1.0);
+        fade = clamp(smoothstep(0.0, 1.0, (distanceFromCamera - (u_Shadows.MaxDistance - u_Shadows.FadeOut)) / u_Shadows.FadeOut), 0.0, 1.0);
         //fade = clamp(((distanceFromCamera - (u_MaxShadowDistance - u_FadeOut)) / u_FadeOut), 0.0, 1.0);
     }
 
@@ -306,12 +314,12 @@ float PCF_Filter(vec2 uv, float depthBiased, float filterRadiusUV, int cascade)
 
 float SoftShadow(vec3 projCoords, float bias, int cascade)
 {
-    vec4 viewPos = u_LightViewMatrices[cascade] * vec4(Input.WorldPos, 1.0);
+    vec4 viewPos = u_Shadows.LightViewMatrices[cascade] * vec4(Input.WorldPos, 1.0);
     float zReceiver = -viewPos.z / viewPos.w;
 
-    float lightNearPlane = u_CascadeSplits[cascade].LightFrustumPlanes.x;
-    float lightFarPlane = u_CascadeSplits[cascade].LightFrustumPlanes.y;
-    float lightSize = u_LightSize / float(pow(SHADOW_CASCADES_COUNT, cascade) * SHADOW_CASCADES_COUNT);
+    float lightNearPlane = u_Shadows.CascadeSplits[cascade].LightFrustumPlanes.x;
+    float lightFarPlane = u_Shadows.CascadeSplits[cascade].LightFrustumPlanes.y;
+    float lightSize = u_Shadows.LightSize / float(pow(SHADOW_CASCADES_COUNT, cascade) * SHADOW_CASCADES_COUNT);
 
     // STEP 1: blocker search 
     float searchWidth = lightSize * (zReceiver - lightNearPlane) / zReceiver;
@@ -348,16 +356,16 @@ float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fadin
     if(fading == 1.0)
         return 0.0;
 
-    vec4 lightSpacePosition = u_LightViewProjMatrices[cascade] * vec4(Input.WorldPos, 1.0);
+    vec4 lightSpacePosition = u_Shadows.LightViewProjMatrices[cascade] * vec4(Input.WorldPos, 1.0);
     vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
 
     if(projCoords.z > 1.0) return 0.0;
 
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    bias *= cascade == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / (u_CascadeSplits[cascade].SplitDepth * 0.5);
+    bias *= cascade == SHADOW_CASCADES_COUNT ? 1.0 / (u_Camera.FarClip * 0.5) : 1.0 / (u_Shadows.CascadeSplits[cascade].SplitDepth * 0.5);
 
     float shadowOcclusion;
-    if(u_SoftShadows)
+    if(u_Shadows.SoftShadows)
         shadowOcclusion = SoftShadow(projCoords, bias, cascade);
     else
         shadowOcclusion = HardShadow(projCoords, bias, cascade);
@@ -369,12 +377,12 @@ float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fadin
 void main()
 {
     ////////////////// PBR TEXTURES //////////////////
-    vec4 albedo = u_Albedo;
-    if(bool(u_UseAlbedoMap))
+    vec4 albedo = u_Material.Albedo;
+    if(bool(u_Material.UseAlbedoMap))
         albedo *= texture(u_AlbedoMap, Input.TexCoord);
 
     vec3 normal;
-    if(bool(u_UseNormalMap))
+    if(bool(u_Material.UseNormalMap))
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;
@@ -385,29 +393,29 @@ void main()
         normal = Input.Normal;
     }
 
-    float roughness = bool(u_UseRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Roughness;
-    float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Metalness;
-    float ambientOcclusion = bool(u_UseAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
+    float roughness = bool(u_Material.UseRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Material.Roughness;
+    float metalness = bool(u_Material.UseMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Material.Metalness;
+    float ambientOcclusion = bool(u_Material.UseAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
     
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
     reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo.rgb, metalness);
 
-    vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
+    vec3 viewVector = normalize(u_Camera.Position.xyz - Input.WorldPos);
 
     //////////////////////// LIGHTS ///////////////////////
-    float distanceFromCamera = distance(u_CameraPosition.xyz, Input.WorldPos);
+    float distanceFromCamera = distance(u_Camera.Position.xyz, Input.WorldPos);
     float shadowFade = ShadowFading(distanceFromCamera);
 
     vec3 totalIrradiance = vec3(0.0);
 
     ////////////////// DIRECTIONAL LIGHTS //////////////////
-    vec4 worldPosViewSpace = u_ViewMatrix * vec4(Input.WorldPos, 1.0);
+    vec4 worldPosViewSpace = u_Camera.ViewMatrix * vec4(Input.WorldPos, 1.0);
     float depthValue = abs(worldPosViewSpace.z);
 
     int cascade = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthValue < u_CascadeSplits[i].SplitDepth)
+        if(depthValue < u_Shadows.CascadeSplits[i].SplitDepth)
         {
             cascade = i;
             break;
@@ -429,7 +437,7 @@ void main()
     for(int i = 0; i < g_PointLightCount; ++i)
     {
         float dist = length(Input.WorldPos - g_PointLightBuffer[i].Position);
-        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (dist * dist);
+        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / dist;
         float factor = dist / g_PointLightBuffer[i].Radius;
 
         float attenuation = 0.0;
@@ -457,22 +465,22 @@ void main()
 
     vec3 reflectedVec = reflect(-viewVector, normal); 
 
-    vec3 prefilteredColor = textureLod(u_SkyboxMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
+    vec3 envMapReflectedColor = textureLod(u_EnvironmentMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
-    vec3 specularIBL = prefilteredColor * (reflectedLight * envBRDF.x + envBRDF.y);
+    vec3 specularIBL = envMapReflectedColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
 
     ////////////////// MAIN COLOR //////////////////
-    vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion;
+    vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
     vec3 color = ambient + totalIrradiance;
 
     ////////////////// TONE MAPPING //////////////////
-    color = vec3(1.0) - exp(-color * u_Exposure);
+    color = vec3(1.0) - exp(-color * u_Scene.Exposure);
 
     ////////////////// GAMMA CORRECTION //////////////////
-    color = pow(color, vec3(1.0 / 2.2)); 
+    color = pow(color, vec3(1.0 / u_Scene.Gamma)); 
 
 
     out_Color = vec4(color, albedo.a);
-    out_EntityID = u_EntityID;
+    out_EntityID = u_Entity.ID;
 }

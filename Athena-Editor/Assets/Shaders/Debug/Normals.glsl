@@ -1,5 +1,5 @@
 #type VERTEX_SHADER
-#version 430 core
+#version 460 core
 
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
@@ -19,25 +19,21 @@ struct VertexOutput
 layout (location = 0) out VertexOutput Output;
 
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
+layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_NearClip;
-	float u_FarClip;
-    float u_MipLevel;
-	float u_Exposure;
-};
+	mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+    vec4 Position;
+    float NearClip;
+	float FarClip;
+} u_Camera;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
-
-
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
@@ -47,9 +43,9 @@ layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 
 void main()
 {
-    mat4 fullTransform = u_Transform;
+    mat4 fullTransform = u_Entity.Transform;
 
-    if(bool(u_Animated))
+    if(bool(u_Entity.IsAnimated))
     {
         mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
         for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
@@ -62,7 +58,7 @@ void main()
 
     vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
+    gl_Position = u_Camera.ProjectionMatrix * u_Camera.ViewMatrix * transformedPos;
 
     Output.TexCoord = a_TexCoord;
     Output.Normal = normalize(vec3(fullTransform * vec4(a_Normal, 0)));
@@ -76,7 +72,7 @@ void main()
 
 
 #type FRAGMENT_SHADER
-#version 430 core
+#version 460 core
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
@@ -91,34 +87,35 @@ struct VertexOutput
 layout (location = 0) in VertexOutput Input;
 
 
-layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
-
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
 {
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_AmbientOcclusion;
+    vec4 Albedo;
+    float Roughness;
+    float Metalness;
+    float AmbientOcclusion;
 
-	int u_UseAlbedoMap;
-	int u_UseNormalMap;
-	int u_UseRoughnessMap;
-	int u_UseMetalnessMap;
-    int u_UseAmbientOcclusionMap;
-};
+	int UseAlbedoMap;
+	int UseNormalMap;
+	int UseRoughnessMap;
+	int UseMetalnessMap;
+    int UseAmbientOcclusionMap;
+} u_Material;
+
+
+layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
 
 
 void main()
 {
     vec3 normal;
-    if(bool(u_UseNormalMap))
+    if(bool(u_Material.UseNormalMap))
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;
@@ -130,5 +127,5 @@ void main()
     }
 
     out_Color = vec4(abs(normal), 1);
-    out_EntityID = u_EntityID;
+    out_EntityID = u_Entity.ID;
 }

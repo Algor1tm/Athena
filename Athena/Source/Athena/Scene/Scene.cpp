@@ -442,11 +442,12 @@ namespace Athena
 			}
 		}
 
-		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
+		auto dirLights = GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
 		for (auto entity : dirLights)
 		{
-			auto& light = dirLights.get<DirectionalLightComponent>(entity);
-			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
+			auto [transform, light] = dirLights.get<TransformComponent, DirectionalLightComponent>(entity);
+			Vector3 direction = Vector3::Forward() * Math::RotateMatrix(1.f, transform.Rotation.GetNormalized());
+			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}
 
@@ -521,11 +522,12 @@ namespace Athena
 			}
 		}
 
-		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
+		auto dirLights = GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
 		for (auto entity : dirLights)
 		{
-			auto& light = dirLights.get<DirectionalLightComponent>(entity);
-			DirectionalLight dirLight = { light.Color, light.Direction, light.Intensity };
+			auto [transform, light] = dirLights.get<TransformComponent, DirectionalLightComponent>(entity);
+			Vector3 direction = Vector3::Forward() * Math::RotateMatrix(1.f, transform.Rotation.GetNormalized());
+			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}
 

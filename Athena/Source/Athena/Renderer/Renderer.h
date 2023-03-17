@@ -55,7 +55,7 @@ namespace Athena
 		METALNESS_MAP = 3,
 		AMBIENT_OCCLUSION_MAP = 4,
 
-		SKYBOX_MAP = 5,
+		ENVIRONMENT_MAP = 5,
 		IRRADIANCE_MAP = 6,
 		BRDF_LUT = 7,
 
@@ -66,12 +66,14 @@ namespace Athena
 	enum BufferBinder
 	{
 		RENDERER2D_CAMERA_DATA = 0,
-		SCENE_DATA = 1,
-		ENTITY_DATA = 2,
-		MATERIAL_DATA = 3,
-		SHADOWS_DATA = 4,
-		LIGHT_DATA = 5,
-		BONES_DATA = 6
+		CAMERA_DATA = 1,
+		SCENE_DATA = 2,
+		ENVIRONMENT_MAP_DATA = 3,
+		ENTITY_DATA = 4,
+		MATERIAL_DATA = 5,
+		SHADOWS_DATA = 6,
+		LIGHT_DATA = 7,
+		BONES_DATA = 8
 	};
 
 	enum class Antialising
@@ -142,9 +144,6 @@ namespace Athena
 
 		struct Statistics
 		{
-			Time GeometryPass;
-			Time SkyboxPass;
-
 			uint32 GeometryCount = 0;
 			uint32 PointLightsCount = 0;
 			uint32 DirectionalLightsCount = 0;

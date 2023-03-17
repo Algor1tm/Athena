@@ -1,9 +1,6 @@
 #type VERTEX_SHADER
 #version 460 core
 
-#define MAX_NUM_BONES_PER_VERTEX 4
-#define MAX_NUM_BONES 512
-
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
 layout (location = 2) in vec3 a_Normal;
@@ -12,36 +9,41 @@ layout (location = 4) in vec3 a_Bitangent;
 layout (location = 5) in ivec4 a_BoneIDs;
 layout (location = 6) in vec4 a_Weights;
 
-layout(location = 0) out vec3 WorldPosViewSpace;
-
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
+struct VertexOutput
 {
-	mat4 u_ViewMatrix;
-    mat4 u_ProjectionMatrix;
-    vec4 u_CameraPosition;
-    float u_NearClip;
-	float u_FarClip;
-    float u_SkyboxLOD;
-	float u_Exposure;
+    float Depth;
 };
+
+layout(location = 0) out VertexOutput Output;
+
+
+layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
+{
+	mat4 ViewMatrix;
+    mat4 ProjectionMatrix;
+    vec4 Position;
+    float NearClip;
+	float FarClip;
+} u_Camera;
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
 layout(std430, binding = BONES_BUFFER_BINDER) readonly buffer BoneTransforms
 {
     mat4 g_Bones[MAX_NUM_BONES];
 };
 
+
 void main()
 {
-    mat4 fullTransform = u_Transform;
+    mat4 fullTransform = u_Entity.Transform;
 
-    if(bool(u_Animated))
+    if(bool(u_Entity.IsAnimated))
     {
         mat4 boneTransform = g_Bones[a_BoneIDs[0]] * a_Weights[0];
         for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
@@ -54,52 +56,57 @@ void main()
 
     vec4 transformedPos = fullTransform * vec4(a_Position, 1);
 
-    WorldPosViewSpace = vec3(u_ViewMatrix * transformedPos);
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * transformedPos;
+    Output.Depth = abs(vec3(u_Camera.ViewMatrix * transformedPos).z);
+
+    gl_Position = u_Camera.ProjectionMatrix * u_Camera.ViewMatrix * transformedPos;
 }
 
 #type FRAGMENT_SHADER
-#version 430 core
+#version 460 core
 
 layout(location = 0) out vec4 out_Color;
 layout(location = 1) out int out_EntityID;
 
-layout(location = 0) in vec3 WorldPosViewSpace;
+struct VertexOutput
+{
+    float Depth;
+};
+
+layout(location = 0) in VertexOutput Input;
+
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
-    mat4 u_Transform;
-    int u_EntityID;
-    bool u_Animated;
-};
+    mat4 Transform;
+    int ID;
+    bool IsAnimated;
+} u_Entity;
 
-struct CascadeSplitInfo
+struct Split
 {
+    vec2 LightFrustumPlanes;
     float SplitDepth;
-    vec2 FrustumPlanes;
     float _Padding;
 };
 
 layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    mat4 u_LightViewProjMatrices[SHADOW_CASCADES_COUNT];
-    mat4 u_LightViewMatrices[SHADOW_CASCADES_COUNT];
-    CascadeSplitInfo u_CascadeSplits[SHADOW_CASCADES_COUNT];
-	float u_MaxShadowDistance;
-	float u_FadeOut;
-	float u_LightSize;
-	bool u_SoftShadows;
-};
+    mat4 LightViewProjMatrices[SHADOW_CASCADES_COUNT];
+    mat4 LightViewMatrices[SHADOW_CASCADES_COUNT];
+    Split CascadeSplits[SHADOW_CASCADES_COUNT];
+	float MaxDistance;
+	float FadeOut;
+	float LightSize;
+	bool SoftShadows;
+} u_Shadows;
 
 
 void main()
 {
-    float depthValue = abs(WorldPosViewSpace.z);
-
     int layer = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthValue < u_CascadeSplits[i].SplitDepth)
+        if(Input.Depth < u_Shadows.CascadeSplits[i].SplitDepth)
         {
             layer = i;
             break;
@@ -124,5 +131,5 @@ void main()
         color = vec3(0.5, 0.5, 0.5);
 
     out_Color = vec4(color, 1);
-    out_EntityID = u_EntityID;
+    out_EntityID = u_Entity.ID;
 }

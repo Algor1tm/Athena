@@ -275,9 +275,9 @@ namespace Athena
 				direction += Vector3::Down() / 1.5f;
 
 			m_Position += direction * frameTime.AsSeconds() * MoveSpeed();
-
-			RecalculateView();
 		}
+
+		RecalculateView();
 	}
 
 	void FirstPersonCamera::OnEvent(Event& event)

@@ -12,12 +12,12 @@ namespace Athena
 	{
 		switch (target)
 		{
-		case CubemapTarget::TEXTURE_CUBE_MAP_POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-		case CubemapTarget::TEXTURE_CUBE_MAP_NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
-		case CubemapTarget::TEXTURE_CUBE_MAP_POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
-		case CubemapTarget::TEXTURE_CUBE_MAP_NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
-		case CubemapTarget::TEXTURE_CUBE_MAP_POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
-		case CubemapTarget::TEXTURE_CUBE_MAP_NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+		case CubemapTarget::POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+		case CubemapTarget::NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+		case CubemapTarget::POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+		case CubemapTarget::NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+		case CubemapTarget::POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
+		case CubemapTarget::NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
 		}
 
 		ATN_CORE_ASSERT(false, "Unknown texture target!");

@@ -4,6 +4,8 @@
 
 #include "Athena/Math/Vector.h"
 
+#include "Athena/Renderer/Color.h"
+
 #include <array>
 
 
@@ -37,8 +39,9 @@ namespace Athena
 	{
 		REPEAT = 1,
 		CLAMP_TO_EDGE = 2,
-		MIRRORED_REPEAT = 3,
-		MIRRORED_CLAMP_TO_EDGE = 4
+		CLAMP_TO_BORDER = 3,
+		MIRRORED_REPEAT = 4,
+		MIRRORED_CLAMP_TO_EDGE = 5
 	};
 
 	class ATHENA_API Texture
@@ -123,12 +126,12 @@ namespace Athena
 
 	enum class CubemapTarget
 	{
-		TEXTURE_CUBE_MAP_POSITIVE_X = 1,
-		TEXTURE_CUBE_MAP_NEGATIVE_X = 2,
-		TEXTURE_CUBE_MAP_POSITIVE_Y = 3,
-		TEXTURE_CUBE_MAP_NEGATIVE_Y = 4,
-		TEXTURE_CUBE_MAP_POSITIVE_Z = 5,
-		TEXTURE_CUBE_MAP_NEGATIVE_Z = 6,
+		POSITIVE_X = 1,
+		NEGATIVE_X = 2,
+		POSITIVE_Y = 3,
+		NEGATIVE_Y = 4,
+		POSITIVE_Z = 5,
+		NEGATIVE_Z = 6,
 	};
 
 	struct CubemapDescription
@@ -153,5 +156,38 @@ namespace Athena
 
 		virtual void GenerateMipMap(uint32 maxLevel) = 0;
 		virtual void SetFilters(TextureFilter min, TextureFilter mag) = 0;
+	};
+
+
+	enum class TextureCompareMode
+	{
+		NONE = 0, 
+		REF = 1
+	};
+
+	enum class TextureCompareFunc
+	{
+		NONE = 0,
+		LEQUAL = 1
+	};
+
+	struct TextureSamplerDescription
+	{
+		TextureFilter MinFilter = TextureFilter::LINEAR;
+		TextureFilter MagFilter = TextureFilter::LINEAR;
+		TextureWrap Wrap = TextureWrap::REPEAT;
+
+		LinearColor BorderColor = LinearColor::White;
+
+		TextureCompareMode CompareMode = TextureCompareMode::NONE;
+		TextureCompareFunc CompareFunc = TextureCompareFunc::NONE;
+	};
+
+	class ATHENA_API TextureSampler
+	{
+	public:
+		static Ref<TextureSampler> Create(const TextureSamplerDescription& desc);
+		
+		virtual void Bind(uint32 slot = 0) const = 0;
 	};
 }

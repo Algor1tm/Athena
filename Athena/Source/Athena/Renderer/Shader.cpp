@@ -81,7 +81,7 @@ namespace Athena
 
 	void Shader::AddExternalDefines(String& source, ShaderType type)
 	{
-		const char* typeToken = "#version";
+		const char* typeToken = "#version";			// TODO: fix
 		uint64 typeTokenLength = strlen(typeToken);
 		uint64 pos = source.find(typeToken, 0);
 		if (pos == String::npos)
@@ -107,6 +107,7 @@ namespace Athena
 			defines += DEFINE("IRRADIANCE_MAP_BINDER", (int32_t)TextureBinder::IRRADIANCE_MAP);
 			defines += DEFINE("BRDF_LUT_BINDER", (int32_t)TextureBinder::BRDF_LUT);
 			defines += DEFINE("SHADOW_MAP_BINDER", (int32_t)TextureBinder::SHADOW_MAP);
+			defines += DEFINE("PCF_SAMPLER_BINDER", (int32_t)TextureBinder::PCF_SAMPLER);
 		}
 
 		defines += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);

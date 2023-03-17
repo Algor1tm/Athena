@@ -7,6 +7,9 @@
 
 namespace Athena
 {
+	typedef unsigned int GLenum;
+
+
 	inline GLenum TextureFormatToGLenum(TextureFormat format)
 	{
 		switch (format)
@@ -28,6 +31,7 @@ namespace Athena
 		{
 		case TextureWrap::REPEAT: return GL_REPEAT;
 		case TextureWrap::CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+		case TextureWrap::CLAMP_TO_BORDER: return GL_CLAMP_TO_BORDER;
 		case TextureWrap::MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
 		case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return GL_MIRROR_CLAMP_TO_EDGE;
 		}
@@ -46,6 +50,28 @@ namespace Athena
 		}
 
 		ATN_CORE_ASSERT(false, "Unknown texture filter!");
+		return GL_NONE;
+	}
+
+	inline GLenum AthenaTextureCompareModeToGLenum(TextureCompareMode mode)
+	{
+		switch (mode)
+		{
+		case TextureCompareMode::REF: return GL_COMPARE_REF_TO_TEXTURE;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown texture compare mode!");
+		return GL_NONE;
+	}
+
+	inline GLenum AthenaTextureCompareFuncToGLenum(TextureCompareFunc func)
+	{
+		switch (func)
+		{
+		case TextureCompareFunc::LEQUAL: return GL_LEQUAL;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown texture compare func!");
 		return GL_NONE;
 	}
 

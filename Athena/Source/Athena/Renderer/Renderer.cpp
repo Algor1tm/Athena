@@ -20,9 +20,9 @@ namespace Athena
 		{ SHADOW_MAP_GEN, "SHADOW_MAP_GEN" },
 		{ SKYBOX, "SKYBOX" },
 
-		{ COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP, "COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP" },
-		{ COMPUTE_IRRADIANCE_MAP, "COMPUTE_IRRADIANCE_MAP" },
-		{ COMPUTE_PREFILTER_MAP, "COMPUTE_PREFILTER_MAP" },
+		{ EQUIRECTANGULAR_TO_CUBEMAP, "EQUIRECTANGULAR_TO_CUBEMAP" },
+		{ IRRADIANCE_MAP_CONVOLUTION, "IRRADIANCE_MAP_CONVOLUTION" },
+		{ ENVIRONMENT_MIP_FILTER, "ENVIRONMENT_MIP_FILTER" },
 
 		{ DEBUG_NORMALS, "DEBUG_NORMALS" },
 		{ DEBUG_WIREFRAME, "DEBUG_WIREFRAME" },
@@ -49,7 +49,6 @@ namespace Athena
 
 	struct LightData
 	{
-		Matrix4 DirectionalLightSpaceMatrices[ShaderConstants::SHADOW_CASCADES_COUNT];
 		DirectionalLight DirectionalLightBuffer[ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT];
 		uint32 DirectionalLightCount = 0;
 
@@ -59,7 +58,16 @@ namespace Athena
 
 	struct ShadowsData
 	{
-		float CascadeSplits[ShaderConstants::SHADOW_CASCADES_COUNT];
+		struct CascadeSplitInfo
+		{
+			Vector2 LightFrustumPlanes;
+			float SplitDepth;
+			float __Padding;
+		};
+
+		Matrix4 LightViewProjMatrices[ShaderConstants::SHADOW_CASCADES_COUNT];
+		Matrix4 LightViewMatrices[ShaderConstants::SHADOW_CASCADES_COUNT];
+		CascadeSplitInfo CascadeSplits[ShaderConstants::SHADOW_CASCADES_COUNT];
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
 		float LightSize = 0.5f;
@@ -70,6 +78,7 @@ namespace Athena
 	{
 		Ref<Framebuffer> MainFramebuffer;
 		Ref<Framebuffer> ShadowMap;
+		Ref<TextureSampler> PCF_Sampler;
 
 		RenderQueue GeometryQueue;
 
@@ -132,14 +141,25 @@ namespace Athena
 
 		s_Data.ShadowMap = Framebuffer::Create(fbDesc);
 
+		TextureSamplerDescription samplerDesc;
+		samplerDesc.MinFilter = TextureFilter::LINEAR;
+		samplerDesc.MagFilter = TextureFilter::LINEAR;
+		samplerDesc.Wrap = TextureWrap::CLAMP_TO_BORDER;
+		samplerDesc.BorderColor = LinearColor::White;
+		samplerDesc.CompareMode = TextureCompareMode::REF;
+		samplerDesc.CompareFunc = TextureCompareFunc::LEQUAL;
+
+		s_Data.PCF_Sampler = TextureSampler::Create(samplerDesc);
+
+		s_Data.ShaderPack.Load<IncludeShader>("PoissonDisk", "Assets/Shaders/PoissonDisk");
 
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR], "Assets/Shaders/PBR");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SHADOW_MAP_GEN], "Assets/Shaders/ShadowMap");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
 
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/ComputeEquirectangularToCubemap");
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_IRRADIANCE_MAP], "Assets/Shaders/ComputeIrradianceMap");
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP], "Assets/Shaders/ComputePrefilteredMap");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/EquirectangularToCubemap");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[IRRADIANCE_MAP_CONVOLUTION], "Assets/Shaders/IrradianceMapConvolution");
+		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER], "Assets/Shaders/EnvironmentMipFilter");
 
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS], "Assets/Shaders/Debug/Normals");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME], "Assets/Shaders/Debug/Wireframe");
@@ -179,7 +199,7 @@ namespace Athena
 
 		s_Data.BRDF_LUT = Texture2D::Create(brdf_lutDesc);
 
-		Ref<ComputeShader> ComputeBRDF_LUTShader = ComputeShader::Create("Assets/Shaders/ComputeBRDF_LUT");
+		Ref<ComputeShader> ComputeBRDF_LUTShader = ComputeShader::Create("Assets/Shaders/BRDF_LUT");
 		ComputeBRDF_LUTShader->Bind();
 
 		s_Data.BRDF_LUT->BindAsImage();
@@ -236,8 +256,6 @@ namespace Athena
 			ATN_CORE_WARN("Renderer::SubmitLight: Attempt to submit more than {} DirectionalLights!", ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
 			return;
 		}
-
-		ComputeCascadeSpaceMatrices(dirLight);
 
 		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
 		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
@@ -359,10 +377,16 @@ namespace Athena
 		RenderCommand::Clear({ 1, 1, 1, 1 });
 		RenderCommand::SetCullMode(CullFace::FRONT);
 
-		s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
+		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.ShadowSettings.SoftShadows;
+		s_Data.ShadowsDataBuffer.LightSize = s_Data.ShadowSettings.LightSize;
+		s_Data.ShadowsDataBuffer.MaxDistance = s_Data.ShadowSettings.MaxDistance;
+		s_Data.ShadowsDataBuffer.FadeOut = s_Data.ShadowSettings.FadeOut;
 
-		for (uint32 i = 0; i < s_Data.LightDataBuffer.DirectionalLightCount; ++i)
+		if( s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
 		{
+			ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
+			s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
+
 			RenderGeometry(SHADOW_MAP_GEN, false);
 		}
 
@@ -377,17 +401,15 @@ namespace Athena
 		s_Data.MainFramebuffer->Bind();
 
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
-
-		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.ShadowSettings.SoftShadows;
-		s_Data.ShadowsDataBuffer.MaxDistance = s_Data.ShadowSettings.MaxDistance;
-		s_Data.ShadowsDataBuffer.FadeOut = s_Data.ShadowSettings.FadeOut;
-		s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
+		s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
 		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->Skybox)
 			s_Data.ActiveEnvironment->Skybox->Bind();
 
 		s_Data.BRDF_LUT->Bind(TextureBinder::BRDF_LUT);
 		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
+		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
+		s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
 		RenderGeometry(PBR, true);
 
@@ -446,7 +468,7 @@ namespace Athena
 			float uniform = Math::Lerp(cameraNear, cameraFar, percent); 
 			float split = Math::Lerp(uniform, log, splitWeight);
 
-			s_Data.ShadowsDataBuffer.CascadeSplits[i] = split;
+			s_Data.ShadowsDataBuffer.CascadeSplits[i].SplitDepth = split;
 		}
 	}
 
@@ -456,11 +478,13 @@ namespace Athena
 		float cameraFar = s_Data.SceneDataBuffer.FarClip;
 
 		Matrix4 invCamera = Math::Inverse(s_Data.SceneDataBuffer.ViewMatrix * s_Data.SceneDataBuffer.ProjectionMatrix);
+
 		float lastSplit = 0.f;
+		float averageFrustumSize = 0.f;
 
 		for (uint32 layer = 0; layer < ShaderConstants::SHADOW_CASCADES_COUNT; ++layer)
 		{
-			float split = (s_Data.ShadowsDataBuffer.CascadeSplits[layer] - cameraNear) / (cameraFar - cameraNear); // range (0, 1)
+			float split = (s_Data.ShadowsDataBuffer.CascadeSplits[layer].SplitDepth - cameraNear) / (cameraFar - cameraNear); // range (0, 1)
 
 			std::array<Vector3, 8> frustumCorners = {
 				//Near face
@@ -496,7 +520,7 @@ namespace Athena
 			frustumCenter /= frustumCorners.size();
 
 			float radius = 0.0f;
-			for (uint32 j = 0; j < 8; ++j)
+			for (uint32 j = 0; j < frustumCorners.size(); ++j)
 			{
 				float distance = (frustumCorners[j] - frustumCenter).Length();
 				radius = Math::Max(radius, distance);
@@ -507,7 +531,7 @@ namespace Athena
 			Vector3 minExtents = -maxExtents;
 
 			Matrix4 lightView = Math::LookAt(frustumCenter - light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
-			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -15.f, maxExtents.z - minExtents.z + 15.f);
+			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.f, maxExtents.z - minExtents.z);
 
 			Matrix4 lightSpace = lightView * lightProjection;
 			
@@ -523,10 +547,17 @@ namespace Athena
 
 			lightProjection[3] += roundOffset;
 
-			s_Data.LightDataBuffer.DirectionalLightSpaceMatrices[layer] = lightView * lightProjection;
+			s_Data.ShadowsDataBuffer.LightViewProjMatrices[layer] = lightView * lightProjection;
+			s_Data.ShadowsDataBuffer.LightViewMatrices[layer] = lightView;
+
+			s_Data.ShadowsDataBuffer.CascadeSplits[layer].LightFrustumPlanes = { minExtents.z, maxExtents.z };
+
+			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.x - minExtents.x);
 
 			lastSplit = split;
 		}
+
+		s_Data.ShadowsDataBuffer.LightSize /= averageFrustumSize;
 	}
 
 	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap)
@@ -548,7 +579,7 @@ namespace Athena
 			equirectangularHDRMap->Bind();
 			skybox->BindAsImage(1);
 
-			auto equirectangularToCubeMap = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP]);
+			auto equirectangularToCubeMap = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[EQUIRECTANGULAR_TO_CUBEMAP]);
 			equirectangularToCubeMap->Bind();
 			equirectangularToCubeMap->Execute(width, height, 6);
 
@@ -572,7 +603,7 @@ namespace Athena
 			skybox->Bind();
 			irradianceMap->BindAsImage(1);
 
-			auto irradianceCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_IRRADIANCE_MAP]);
+			auto irradianceCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[IRRADIANCE_MAP_CONVOLUTION]);
 			irradianceCompute->Bind();
 			irradianceCompute->Execute(width, height, 6);
 		}
@@ -591,7 +622,7 @@ namespace Athena
 			prefilteredMap = Cubemap::Create(cubeMapDesc);
 			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 
-			auto prefilteredCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[COMPUTE_PREFILTER_MAP]);
+			auto prefilteredCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER]);
 			prefilteredCompute->Bind();
 
 			skybox->Bind();

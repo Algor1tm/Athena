@@ -4,6 +4,7 @@
 
 #include "Athena/Platform/OpenGL/GLTexture2D.h"
 #include "Athena/Platform/OpenGL/GLCubemap.h"
+#include "Athena/Platform/OpenGL/GLTextureSampler.h"
 
 #include "Athena/Renderer/Renderer.h"
 
@@ -86,6 +87,20 @@ namespace Athena
 		{
 		case RendererAPI::API::OpenGL:
 			return CreateRef<GLCubemap>(desc); break;
+		case RendererAPI::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
+
+	Ref<TextureSampler> TextureSampler::Create(const TextureSamplerDescription& desc)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case RendererAPI::API::OpenGL:
+			return CreateRef<GLTextureSampler>(desc); break;
 		case RendererAPI::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

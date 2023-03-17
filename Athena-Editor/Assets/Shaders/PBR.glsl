@@ -79,6 +79,9 @@ void main()
 
 #type FRAGMENT_SHADER
 #version 460 core
+#extension GL_ARB_shading_language_include : require
+
+#include "/PoissonDisk.glsl"
 
 
 layout(location = 0) out vec4 out_Color;
@@ -127,9 +130,18 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
     int u_UseAmbientOcclusionMap;
 };
 
+struct CascadeSplitInfo
+{
+    vec2 LightFrustumPlanes;
+    float SplitDepth;
+    float _Padding;
+};
+
 layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    vec4 u_CascadePlaneDistances;
+    mat4 u_LightViewProjMatrices[SHADOW_CASCADES_COUNT];
+    mat4 u_LightViewMatrices[SHADOW_CASCADES_COUNT];
+    CascadeSplitInfo u_CascadeSplits[SHADOW_CASCADES_COUNT];
 	float u_MaxShadowDistance;
 	float u_FadeOut;
 	float u_LightSize;
@@ -154,7 +166,6 @@ struct PointLight
 
 layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
 {
-    mat4 g_DirectionalLightSpaceMatrices[SHADOW_CASCADES_COUNT];
     DirectionalLight g_DirectionalLightBuffer[MAX_DIRECTIONAL_LIGHT_COUNT];
     int g_DirectionalLightCount;
 
@@ -173,6 +184,7 @@ layout(binding = IRRADIANCE_MAP_BINDER) uniform samplerCube u_IrradianceMap;
 layout(binding = BRDF_LUT_BINDER)       uniform sampler2D u_BRDF_LUT;
 
 layout(binding = SHADOW_MAP_BINDER)     uniform sampler2DArray u_ShadowMap;
+layout(binding = PCF_SAMPLER_BINDER)    uniform sampler2DArrayShadow u_ShadowMapPCF;
 
 
 
@@ -243,44 +255,114 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
 
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
-
-float ComputeShadow(vec3 normal, vec3 lightDir, float distanceFromCamera)
+ 
+float ShadowFading(float distanceFromCamera)
 {
-    float fade = 0.0;
-    if(distanceFromCamera > u_MaxShadowDistance)
+    float fade = 1.0;
+    if(distanceFromCamera < u_MaxShadowDistance)
     {
-        // TODO: fade out effect
-        fade = 1.0;
+        fade = clamp(smoothstep(0.0, 1.0, (distanceFromCamera - (u_MaxShadowDistance - u_FadeOut)) / u_FadeOut), 0.0, 1.0);
+        //fade = clamp(((distanceFromCamera - (u_MaxShadowDistance - u_FadeOut)) / u_FadeOut), 0.0, 1.0);
     }
 
+    return fade;
+}
 
-    vec4 worldPosViewSpace = u_ViewMatrix * vec4(Input.WorldPos, 1.0);
-    float depthValue = abs(worldPosViewSpace.z);
+void FindBlocker(out float avgBlockerDepth, out int numBlockers, vec2 uv, float depthBiased, float searchWidth, int cascade)
+{
+    float blockerSum = 0;
+    numBlockers = 0;
 
-    int layer = SHADOW_CASCADES_COUNT;
-    for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
+    for(int i = 0; i < 64; ++i)
     {
-        if(depthValue < u_CascadePlaneDistances[i])
+        vec2 offset = PoissonDisk64[i] * searchWidth;
+        float shadowMapDepth = texture(u_ShadowMap, vec3(uv.xy + offset, cascade)).r;
+        if(shadowMapDepth < depthBiased)
         {
-            layer = i;
-            break;
+            blockerSum += shadowMapDepth;
+            numBlockers++;
         }
     }
 
-    vec4 lightSpacePosition = g_DirectionalLightSpaceMatrices[layer] * vec4(Input.WorldPos, 1.0);
+    avgBlockerDepth = blockerSum / numBlockers;
+}
 
-    vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
+float PenumbraSize(float zReceiver, float zBlocker)
+{
+    return (zReceiver - zBlocker) / zBlocker;
+}
+
+float PCF_Filter(vec2 uv, float depthBiased, float filterRadiusUV, int cascade)
+{
+    float sum = 0.0;
+    for(int i = 0; i < 64; ++i)
+    {
+        vec2 offset = PoissonDisk64[i] * filterRadiusUV;
+        sum += texture(u_ShadowMapPCF, vec4(uv.xy + offset, cascade, depthBiased));
+    }
+
+    return sum / 64;   
+}
+
+float SoftShadow(vec3 projCoords, float bias, int cascade)
+{
+    vec4 viewPos = u_LightViewMatrices[cascade] * vec4(Input.WorldPos, 1.0);
+    float zReceiver = -viewPos.z / viewPos.w;
+
+    float lightNearPlane = u_CascadeSplits[cascade].LightFrustumPlanes.x;
+    float lightFarPlane = u_CascadeSplits[cascade].LightFrustumPlanes.y;
+    float lightSize = u_LightSize / float(pow(SHADOW_CASCADES_COUNT, cascade) * SHADOW_CASCADES_COUNT);
+
+    // STEP 1: blocker search 
+    float searchWidth = lightSize * (zReceiver - lightNearPlane) / zReceiver;
+    float depthBiased = projCoords.z - bias;
+    float avgBlockerDepth = 0;
+    int numBlockers = 0;
+    FindBlocker(avgBlockerDepth, numBlockers, projCoords.xy, depthBiased, searchWidth, cascade);
+
+    if(numBlockers < 1)
+        return 1.0;
+
+    float shadowDist = depthBiased - avgBlockerDepth;
+    // STEP 2: penumbra size
+    // Convert to view space
+    avgBlockerDepth = lightFarPlane * lightNearPlane / (lightFarPlane - avgBlockerDepth * (lightFarPlane - lightNearPlane));
+    float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
+    float filterRadiusUV =  penumbraRatio * lightSize * lightNearPlane / zReceiver;
+    filterRadiusUV = filterRadiusUV * (1 * shadowDist / depthBiased);
+
+    // STEP 3: filtering 
+    return PCF_Filter(projCoords.xy, projCoords.z - bias, filterRadiusUV, cascade);
+}
+
+float HardShadow(vec3 projCoords, float bias, int cascade)
+{
     float currentDepth = projCoords.z;
+    float shadowOcclusion = texture(u_ShadowMapPCF, vec4(projCoords.xy, cascade, currentDepth - bias));
 
-    if(currentDepth > 1.0) return 0.0;
+    return shadowOcclusion;
+}
+
+float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fading)
+{
+    if(fading == 1.0)
+        return 0.0;
+
+    vec4 lightSpacePosition = u_LightViewProjMatrices[cascade] * vec4(Input.WorldPos, 1.0);
+    vec3 projCoords = 0.5 * lightSpacePosition.xyz / lightSpacePosition.w + 0.5;
+
+    if(projCoords.z > 1.0) return 0.0;
 
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    bias *= layer == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / u_CascadePlaneDistances[layer] * 0.5;
+    bias *= cascade == SHADOW_CASCADES_COUNT ? 1.0 / (u_FarClip * 0.5) : 1.0 / (u_CascadeSplits[cascade].SplitDepth * 0.5);
 
-    float closestDepth = texture(u_ShadowMap, vec3(projCoords.xy, layer)).r;
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadowOcclusion;
+    if(u_SoftShadows)
+        shadowOcclusion = SoftShadow(projCoords, bias, cascade);
+    else
+        shadowOcclusion = HardShadow(projCoords, bias, cascade);
 
-    return (1 - fade) * shadow;
+    return (1 - fading) * (1 - shadowOcclusion);
 }
 
 
@@ -312,26 +394,43 @@ void main()
 
     vec3 viewVector = normalize(u_CameraPosition.xyz - Input.WorldPos);
 
+    //////////////////////// LIGHTS ///////////////////////
+    float distanceFromCamera = distance(u_CameraPosition.xyz, Input.WorldPos);
+    float shadowFade = ShadowFading(distanceFromCamera);
+
     vec3 totalIrradiance = vec3(0.0);
 
     ////////////////// DIRECTIONAL LIGHTS //////////////////
+    vec4 worldPosViewSpace = u_ViewMatrix * vec4(Input.WorldPos, 1.0);
+    float depthValue = abs(worldPosViewSpace.z);
+
+    int cascade = SHADOW_CASCADES_COUNT;
+    for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
+    {
+        if(depthValue < u_CascadeSplits[i].SplitDepth)
+        {
+            cascade = i;
+            break;
+        }
+    }
+
     for(int i = 0; i < g_DirectionalLightCount; ++i)
     {
         vec3 lightDirection = normalize(g_DirectionalLightBuffer[i].Direction);
         vec3 lightRadiance = vec3(g_DirectionalLightBuffer[i].Color) * g_DirectionalLightBuffer[i].Intensity;
 
-        float distanceFromCamera = distance(u_CameraPosition.xyz, Input.WorldPos);
-        float shadow = ComputeShadow(normal, -lightDirection, distanceFromCamera);
-        
-        totalIrradiance += (1 - shadow) * LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
+        float shadow = ComputeCascadedShadow(normal, -lightDirection, cascade, shadowFade);
+
+        if(shadow < 1.0)
+            totalIrradiance += (1 - shadow) * LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
     ////////////////// POINT LIGHTS //////////////////
     for(int i = 0; i < g_PointLightCount; ++i)
     {
-        float distanceFromCamera = length(Input.WorldPos - g_PointLightBuffer[i].Position);
-        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (distanceFromCamera * distanceFromCamera);
-        float factor = distanceFromCamera / g_PointLightBuffer[i].Radius;
+        float dist = length(Input.WorldPos - g_PointLightBuffer[i].Position);
+        vec3 lightDirection = (Input.WorldPos - g_PointLightBuffer[i].Position) / (dist * dist);
+        float factor = dist / g_PointLightBuffer[i].Radius;
 
         float attenuation = 0.0;
         if(factor < 1.0)
@@ -346,7 +445,7 @@ void main()
         totalIrradiance += LightContribution(lightDirection, lightRadiance, normal, viewVector, albedo.rgb, metalness, roughness, reflectivityAtZeroIncidence);
     }
 
-   ////////////////// ENVIRONMENT MAP LIGHTNING //////////////////
+    ////////////////// ENVIRONMENT MAP LIGHTNING //////////////////
     float NdotV = max(dot(normal, viewVector), 0.0);
 
     vec3 reflectedLight = FresnelSchlickRoughness(NdotV, reflectivityAtZeroIncidence, roughness); 

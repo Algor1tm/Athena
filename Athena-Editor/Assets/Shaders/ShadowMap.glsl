@@ -53,9 +53,9 @@ void main()
 layout(triangles, invocations = SHADOW_CASCADES_COUNT) in;
 layout(triangle_strip, max_vertices = 3) out;
     
-layout(std430, binding = LIGHT_BUFFER_BINDER) readonly buffer LightBuffer
+layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    mat4 g_DirectionalLightSpaceMatrices[SHADOW_CASCADES_COUNT];
+    mat4 u_LightViewProjMatrices[SHADOW_CASCADES_COUNT];
 };
 
 
@@ -63,7 +63,7 @@ void main()
 {          
     for (int i = 0; i < 3; ++i)
     {
-        gl_Position = g_DirectionalLightSpaceMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+        gl_Position = u_LightViewProjMatrices[gl_InvocationID] * gl_in[i].gl_Position;
         gl_Layer = gl_InvocationID;
         EmitVertex();
     }

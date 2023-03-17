@@ -24,9 +24,9 @@ namespace Athena
 		SHADOW_MAP_GEN,
 		SKYBOX,
 
-		COMPUTE_EQUIRECTANGULAR_TO_CUBEMAP,
-		COMPUTE_IRRADIANCE_MAP,
-		COMPUTE_PREFILTER_MAP,
+		EQUIRECTANGULAR_TO_CUBEMAP,
+		IRRADIANCE_MAP_CONVOLUTION,
+		ENVIRONMENT_MIP_FILTER,
 
 		DEBUG_NORMALS,
 		DEBUG_WIREFRAME,
@@ -59,7 +59,8 @@ namespace Athena
 		IRRADIANCE_MAP = 6,
 		BRDF_LUT = 7,
 
-		SHADOW_MAP = 8
+		SHADOW_MAP = 8,
+		PCF_SAMPLER = 9
 	};
 
 	enum BufferBinder
@@ -92,9 +93,10 @@ namespace Athena
 	struct ShadowSettings
 	{
 		bool SoftShadows = true;
+		float LightSize = 0.5f;
 		float MaxDistance = 200.f;
 		float FadeOut = 15.f;
-		float ExponentialSplitFactor = 0.8f;
+		float ExponentialSplitFactor = 0.91f;
 	};
 
 	class ATHENA_API Renderer

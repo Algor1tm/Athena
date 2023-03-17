@@ -73,13 +73,22 @@ layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
     bool u_Animated;
 };
 
+struct CascadeSplitInfo
+{
+    float SplitDepth;
+    vec2 FrustumPlanes;
+    float _Padding;
+};
+
 layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 {
-    vec4 CascadePlaneDistances;
-	float MaxShadowDistance;
-	float FadeOut;
-	float LightSize;
-	bool SoftShadows;
+    mat4 u_LightViewProjMatrices[SHADOW_CASCADES_COUNT];
+    mat4 u_LightViewMatrices[SHADOW_CASCADES_COUNT];
+    CascadeSplitInfo u_CascadeSplits[SHADOW_CASCADES_COUNT];
+	float u_MaxShadowDistance;
+	float u_FadeOut;
+	float u_LightSize;
+	bool u_SoftShadows;
 };
 
 
@@ -90,7 +99,7 @@ void main()
     int layer = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthValue < CascadePlaneDistances[i])
+        if(depthValue < u_CascadeSplits[i].SplitDepth)
         {
             layer = i;
             break;

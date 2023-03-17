@@ -148,6 +148,7 @@ namespace Athena
 		{
 			auto settings = Renderer::GetShadowSettings();
 			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.SoftShadows);
+			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.LightSize, 0.025f);
 			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.MaxDistance);
 			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.FadeOut);
 			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);

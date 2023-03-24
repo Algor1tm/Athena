@@ -128,7 +128,7 @@ namespace Athena
 		const uint32 IrradianceMapResolution = 128;
 		const uint32 BRDF_LUTResolution = 512;
 
-		const uint32 ShadowMapResolution = 2048;
+		const uint32 ShadowMapResolution = 1024;
 	};
 
 	static RendererData s_Data;
@@ -546,6 +546,9 @@ namespace Athena
 
 			Vector3 maxExtents = Vector3(radius);
 			Vector3 minExtents = -maxExtents;
+
+			minExtents.z += s_Data.ShadowSettings.NearPlaneOffset;
+			maxExtents.z += s_Data.ShadowSettings.FarPlaneOffset;
 
 			Matrix4 lightView = Math::LookAt(frustumCenter - light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
 			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.f, maxExtents.z - minExtents.z);

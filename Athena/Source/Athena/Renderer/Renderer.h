@@ -99,6 +99,8 @@ namespace Athena
 		float MaxDistance = 200.f;
 		float FadeOut = 15.f;
 		float ExponentialSplitFactor = 0.91f;
+		float NearPlaneOffset = -15.f;
+		float FarPlaneOffset = 15.f;
 	};
 
 	class ATHENA_API Renderer

@@ -270,10 +270,23 @@ float ShadowFading(float distanceFromCamera)
     if(distanceFromCamera < u_Shadows.MaxDistance)
     {
         fade = clamp(smoothstep(0.0, 1.0, (distanceFromCamera - (u_Shadows.MaxDistance - u_Shadows.FadeOut)) / u_Shadows.FadeOut), 0.0, 1.0);
-        //fade = clamp(((distanceFromCamera - (u_MaxShadowDistance - u_FadeOut)) / u_FadeOut), 0.0, 1.0);
     }
 
     return fade;
+}
+
+float SamplePCF(vec2 uv, float depthBiased, int cascade)
+{
+    return texture(u_ShadowMapPCF, vec4(uv, cascade, depthBiased));
+}
+
+float SampleHard(vec2 uv, float depthBiased, int cascade)
+{
+    float shadowMapDepth = texture(u_ShadowMap, vec3(uv, cascade)).r;
+    if(shadowMapDepth < depthBiased)
+        return 0.0;
+
+    return 1.0;
 }
 
 void FindBlocker(out float avgBlockerDepth, out int numBlockers, vec2 uv, float depthBiased, float searchWidth, int cascade)
@@ -306,7 +319,7 @@ float PCF_Filter(vec2 uv, float depthBiased, float filterRadiusUV, int cascade)
     for(int i = 0; i < 64; ++i)
     {
         vec2 offset = PoissonDisk64[i] * filterRadiusUV;
-        sum += texture(u_ShadowMapPCF, vec4(uv.xy + offset, cascade, depthBiased));
+        sum += SamplePCF(uv.xy + offset, depthBiased, cascade);
     }
 
     return sum / 64;   
@@ -319,25 +332,25 @@ float SoftShadow(vec3 projCoords, float bias, int cascade)
 
     float lightNearPlane = u_Shadows.CascadeSplits[cascade].LightFrustumPlanes.x;
     float lightFarPlane = u_Shadows.CascadeSplits[cascade].LightFrustumPlanes.y;
-    float lightSize = u_Shadows.LightSize / float(pow(SHADOW_CASCADES_COUNT, cascade) * SHADOW_CASCADES_COUNT);
+    float lightSize = u_Shadows.LightSize;
+
+    float depthBiased = projCoords.z - bias;
 
     // STEP 1: blocker search 
     float searchWidth = lightSize * (zReceiver - lightNearPlane) / zReceiver;
-    float depthBiased = projCoords.z - bias;
     float avgBlockerDepth = 0;
     int numBlockers = 0;
     FindBlocker(avgBlockerDepth, numBlockers, projCoords.xy, depthBiased, searchWidth, cascade);
 
+    numBlockers -= 1;
     if(numBlockers < 1)
         return 1.0;
 
-    float shadowDist = depthBiased - avgBlockerDepth;
     // STEP 2: penumbra size
     // Convert to view space
     avgBlockerDepth = lightFarPlane * lightNearPlane / (lightFarPlane - avgBlockerDepth * (lightFarPlane - lightNearPlane));
     float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
     float filterRadiusUV =  penumbraRatio * lightSize * lightNearPlane / zReceiver;
-    filterRadiusUV = filterRadiusUV * (1 * shadowDist / depthBiased);
 
     // STEP 3: filtering 
     return PCF_Filter(projCoords.xy, projCoords.z - bias, filterRadiusUV, cascade);
@@ -345,10 +358,9 @@ float SoftShadow(vec3 projCoords, float bias, int cascade)
 
 float HardShadow(vec3 projCoords, float bias, int cascade)
 {
-    float currentDepth = projCoords.z;
-    float shadowOcclusion = texture(u_ShadowMapPCF, vec4(projCoords.xy, cascade, currentDepth - bias));
+    float depthBiased = projCoords.z - bias;
 
-    return shadowOcclusion;
+    return SamplePCF(projCoords.xy, depthBiased, cascade);
 }
 
 float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fading)
@@ -361,8 +373,7 @@ float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fadin
 
     if(projCoords.z > 1.0) return 0.0;
 
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    bias *= cascade == SHADOW_CASCADES_COUNT ? 1.0 / (u_Camera.FarClip * 0.5) : 1.0 / (u_Shadows.CascadeSplits[cascade].SplitDepth * 0.5);
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.001);
 
     float shadowOcclusion;
     if(u_Shadows.SoftShadows)

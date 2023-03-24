@@ -149,6 +149,8 @@ namespace Athena
 			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.MaxDistance);
 			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.FadeOut);
 			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);
+			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.NearPlaneOffset);
+			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.FarPlaneOffset);
 			Renderer::SetShadowSettings(settings);
 
 			UI::EndTreeNode();

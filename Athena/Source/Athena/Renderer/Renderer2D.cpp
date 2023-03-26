@@ -180,7 +180,7 @@ namespace Athena
 		for (int32 i = 0; i < std::size(samplers); ++i)
 			samplers[i] = i;
 
-		s_Data.TextureSlots[0] = Texture2D::WhiteTexture();
+		s_Data.TextureSlots[0] = Renderer::GetWhiteTexture();
 
 		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };

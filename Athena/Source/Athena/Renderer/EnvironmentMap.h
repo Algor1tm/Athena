@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	class ATHENA_API Cubemap;
+	class ATHENA_API TextureCube;
 
 	class ATHENA_API EnvironmentMap
 	{
@@ -16,8 +16,8 @@ namespace Athena
 		const FilePath& GetFilePath() { return m_FilePath; };
 
 	private:
-		Ref<Cubemap> m_PrefilteredMap;
-		Ref<Cubemap> m_IrradianceMap;
+		Ref<TextureCube> m_PrefilteredMap;
+		Ref<TextureCube> m_IrradianceMap;
 
 		FilePath m_FilePath;
 	};

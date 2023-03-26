@@ -9,11 +9,13 @@ typedef unsigned int GLenum;
 
 namespace Athena
 {
-	class ATHENA_API GLCubemap : public Cubemap
+	class ATHENA_API GLTextureCube : public TextureCube
 	{
 	public:
-		GLCubemap(const CubemapDescription& desc);
-		~GLCubemap();
+		GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerDescription& samplerDesc);
+		GLTextureCube(TextureFormat format, uint32 width, uint32 height, const TextureSamplerDescription& samplerDesc);
+
+		~GLTextureCube();
 
 		virtual void Bind(uint32 slot = 0) const override;
 		virtual bool IsLoaded() const override;
@@ -24,9 +26,7 @@ namespace Athena
 		virtual void SetFilters(TextureFilter min, TextureFilter mag) override;
 
 	private:
-		void LoadFromFile(const CubemapDescription& desc);
-		void PreAllocate(const CubemapDescription& desc);
-		void ApplyTexParameters(const CubemapDescription& desc);
+		void CreateSampler(const TextureSamplerDescription& desc);
 
 	private:
 		GLenum m_GLRendererID;

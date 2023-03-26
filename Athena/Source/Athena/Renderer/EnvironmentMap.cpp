@@ -11,9 +11,7 @@ namespace Athena
 		Ref<EnvironmentMap> result = CreateRef<EnvironmentMap>();
 		result->m_FilePath = hdrMap;
 
-		Texture2DDescription desc;
-		desc.TexturePath = hdrMap;
-		Ref<Texture2D> equirectangularMap = Texture2D::Create(desc);
+		Ref<Texture2D> equirectangularMap = Texture2D::Create(hdrMap);
 
 		if (equirectangularMap->IsLoaded())
 		{

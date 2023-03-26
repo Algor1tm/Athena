@@ -270,7 +270,7 @@ namespace Athena
 
 			if (open && UI::BeginDrawControllers())
 			{
-				void* whiteTexRendererID = Texture2D::WhiteTexture()->GetRendererID();
+				void* whiteTexRendererID = Renderer::GetWhiteTexture()->GetRendererID();
 
 				ImGui::PushID("Albedo");
 				UI::DrawController("Albedo", 50.f, [&matDesc, whiteTexRendererID]
@@ -723,7 +723,7 @@ namespace Athena
 							ImGui::SetCursorPos({cursor.x, cursor.y + imageSize / 1.8f});
 							if (ImGui::Button("Reset"))
 							{
-								sprite.Texture = Texture2D::WhiteTexture();
+								sprite.Texture = Renderer::GetWhiteTexture();
 							}
 
 							return false;

@@ -51,11 +51,10 @@ namespace Athena
 			const aiTexture* embeddedTex = aiscene->GetEmbeddedTexture(texFilepath.C_Str());
 			if (embeddedTex)
 			{
-				Texture2DDescription texDesc;
-				texDesc.Data = embeddedTex->pcData;
-				texDesc.Width = embeddedTex->mWidth;
-				texDesc.Height = embeddedTex->mHeight;
-				result = Texture2D::Create(texDesc);
+				void* data = embeddedTex->pcData;
+				uint32 width = embeddedTex->mWidth;
+				uint32 height = embeddedTex->mHeight;
+				result = Texture2D::Create(data, width, height);
 			}
 			else
 			{

@@ -93,8 +93,9 @@ namespace Athena
 		RenderQueue GeometryQueue;
 
 		Ref<VertexBuffer> CubeVertexBuffer;
-		Ref<Texture2D> BRDF_LUT;
+		Ref<Texture2D> WhiteTexture;
 
+		Ref<Texture2D> BRDF_LUT;
 		Ref<Environment> ActiveEnvironment;
 
 		CameraData CameraDataBuffer;
@@ -128,7 +129,7 @@ namespace Athena
 		const uint32 IrradianceMapResolution = 128;
 		const uint32 BRDF_LUTResolution = 512;
 
-		const uint32 ShadowMapResolution = 1024;
+		const uint32 ShadowMapResolution = 2048;
 	};
 
 	static RendererData s_Data;
@@ -138,7 +139,6 @@ namespace Athena
 	{
 		RendererAPI::SetAPI(graphicsAPI);
 		RenderCommand::Init();
-		Renderer2D::Init();
 
 		FramebufferDescription fbDesc;
 		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
@@ -205,17 +205,20 @@ namespace Athena
 		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderConstants::MAX_NUM_BONES, BufferBinder::BONES_DATA);
 
 
+		s_Data.WhiteTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
+		uint32 whiteTextureData = 0xffffffff;
+		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
+
 		// Compute BRDF_LUT
 		uint32 width = s_Data.BRDF_LUTResolution;
 		uint32 height = s_Data.BRDF_LUTResolution;
 
-		Texture2DDescription brdf_lutDesc;
-		brdf_lutDesc.Width = width;
-		brdf_lutDesc.Height = height;
-		brdf_lutDesc.Format = TextureFormat::RG16F;
-		brdf_lutDesc.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		TextureSamplerDescription sampler;
+		sampler.MinFilter = TextureFilter::LINEAR;
+		sampler.MagFilter = TextureFilter::LINEAR;
+		sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-		s_Data.BRDF_LUT = Texture2D::Create(brdf_lutDesc);
+		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, sampler);
 
 		Ref<ComputeShader> ComputeBRDF_LUTShader = ComputeShader::Create("Assets/Shaders/BRDF_LUT");
 		ComputeBRDF_LUTShader->Bind();
@@ -224,6 +227,8 @@ namespace Athena
 		ComputeBRDF_LUTShader->Execute(width, height);
 
 		ComputeBRDF_LUTShader->UnBind();
+
+		Renderer2D::Init();
 	}
 
 	void Renderer::Shutdown()
@@ -580,21 +585,20 @@ namespace Athena
 		s_Data.ShadowsDataBuffer.LightSize /= averageFrustumSize;
 	}
 
-	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap)
+	void Renderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap)
 	{
 		// Convert EquirectangularHDRMap to Cubemap
-		Ref<Cubemap> skybox;
+		Ref<TextureCube> skybox;
 		{
 			uint32 width = s_Data.EnvMapResolution;
 			uint32 height = s_Data.EnvMapResolution;
 
-			CubemapDescription cubeMapDesc;
-			cubeMapDesc.Width = width;
-			cubeMapDesc.Height = height;
-			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
-			cubeMapDesc.MinFilter = TextureFilter::LINEAR;
+			TextureSamplerDescription sampler;
+			sampler.MinFilter = TextureFilter::LINEAR;
+			sampler.MagFilter = TextureFilter::LINEAR;
+			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			skybox = Cubemap::Create(cubeMapDesc);
+			skybox = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 
 			equirectangularHDRMap->Bind();
 			skybox->BindAsImage(1);
@@ -612,13 +616,12 @@ namespace Athena
 			uint32 width = s_Data.IrradianceMapResolution;
 			uint32 height = s_Data.IrradianceMapResolution;
 
-			CubemapDescription cubeMapDesc;
-			cubeMapDesc.Width = width;
-			cubeMapDesc.Height = height;
-			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
-			cubeMapDesc.MinFilter = TextureFilter::LINEAR;
+			TextureSamplerDescription sampler;
+			sampler.MinFilter = TextureFilter::LINEAR;
+			sampler.MagFilter = TextureFilter::LINEAR;
+			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			irradianceMap = Cubemap::Create(cubeMapDesc);
+			irradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 
 			skybox->Bind();
 			irradianceMap->BindAsImage(1);
@@ -633,13 +636,12 @@ namespace Athena
 			uint32 width = s_Data.EnvMapResolution;
 			uint32 height = s_Data.EnvMapResolution;
 
-			CubemapDescription cubeMapDesc;
-			cubeMapDesc.Width = width;
-			cubeMapDesc.Height = height;
-			cubeMapDesc.Format = TextureFormat::R11F_G11F_B10F;
-			cubeMapDesc.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
+			TextureSamplerDescription sampler;
+			sampler.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
+			sampler.MagFilter = TextureFilter::LINEAR;
+			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			prefilteredMap = Cubemap::Create(cubeMapDesc);
+			prefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 
 			auto filterMipCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER]);
@@ -661,6 +663,11 @@ namespace Athena
 				filterMipCompute->Execute(mipWidth, mipHeight, 6);
 			}
 		}
+	}
+
+	Ref<Texture2D> Renderer::GetWhiteTexture()
+	{
+		return s_Data.WhiteTexture;
 	}
 
 	void Renderer::BeginFrame()

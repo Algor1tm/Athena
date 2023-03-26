@@ -7,8 +7,9 @@
 #include "Athena/Math/TypeCasts.h"
 
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Mesh.h"
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Texture.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -51,7 +52,7 @@ namespace Athena
 		float TilingFactor;
 
 		SpriteComponent(const LinearColor& color = LinearColor::White)
-			: Color(color), Texture(Texture2D::WhiteTexture()), TilingFactor(1.f) {}
+			: Color(color), Texture(Renderer::GetWhiteTexture()), TilingFactor(1.f) {}
 
 		SpriteComponent(const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
 			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}

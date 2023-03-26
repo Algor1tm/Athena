@@ -16,7 +16,7 @@ namespace Athena
 	class ATHENA_API VertexBuffer;
 	class ATHENA_API Material;
 	class ATHENA_API Texture2D;
-	class ATHENA_API Cubemap;
+	class ATHENA_API TextureCube;
 
 	enum ShaderEnum
 	{
@@ -129,7 +129,9 @@ namespace Athena
 		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
 		static void ReloadShaders();
-		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<Cubemap>& prefilteredMap, Ref<Cubemap>& irradianceMap);
+		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap);
+
+		static Ref<Texture2D> GetWhiteTexture();
 
 		static inline RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 

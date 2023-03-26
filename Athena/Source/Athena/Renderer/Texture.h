@@ -44,6 +44,31 @@ namespace Athena
 		MIRRORED_CLAMP_TO_EDGE = 5
 	};
 
+	enum class TextureCompareMode
+	{
+		NONE = 0,
+		REF = 1
+	};
+
+	enum class TextureCompareFunc
+	{
+		NONE = 0,
+		LEQUAL = 1
+	};
+
+	struct TextureSamplerDescription
+	{
+		TextureFilter MinFilter = TextureFilter::LINEAR;
+		TextureFilter MagFilter = TextureFilter::LINEAR;
+		TextureWrap Wrap = TextureWrap::REPEAT;
+
+		LinearColor BorderColor = LinearColor::Black;
+
+		TextureCompareMode CompareMode = TextureCompareMode::NONE;
+		TextureCompareFunc CompareFunc = TextureCompareFunc::NONE;
+	};
+
+
 	class ATHENA_API Texture
 	{
 	public:
@@ -61,35 +86,17 @@ namespace Athena
 	};
 
 
-	struct Texture2DDescription
-	{
-		Texture2DDescription() = default;
-
-		Texture2DDescription(const FilePath& path)
-			: TexturePath(path) {}
-
-		Texture2DDescription(const char* path)
-			: TexturePath(path) {}
-
-		FilePath TexturePath;
-
-		const void* Data = nullptr;
-		uint32 Width = 0;
-		uint32 Height = 0;
-
-		TextureFormat Format = TextureFormat::RGBA8;
-		bool sRGB = false;
-
-		TextureFilter MinFilter = TextureFilter::LINEAR;
-		TextureFilter MagFilter = TextureFilter::LINEAR;
-		TextureWrap Wrap = TextureWrap::REPEAT;
-	};
-
 	class ATHENA_API Texture2D: public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(const Texture2DDescription& desc);
-		static Ref<Texture2D> WhiteTexture();
+		static Ref<Texture2D> Create(const FilePath& path, 
+			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+
+		static Ref<Texture2D> Create(const void* Data, uint32 Width, uint32 Height, 
+			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+
+		static Ref<Texture2D> Create(TextureFormat Format, uint32 Width, uint32 Height, 
+			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
 
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
@@ -98,9 +105,6 @@ namespace Athena
 		virtual const FilePath& GetFilePath() const = 0;
 
 		bool operator==(const Texture2D& other) const { return GetRendererID() == other.GetRendererID(); }
-
-	private:
-		static Ref<Texture2D> m_WhiteTexture;
 	};
 
 	class ATHENA_API Texture2DInstance
@@ -124,7 +128,7 @@ namespace Athena
 	};
 
 
-	enum class CubemapTarget
+	enum class TextureCubeTarget
 	{
 		POSITIVE_X = 1,
 		NEGATIVE_X = 2,
@@ -134,53 +138,17 @@ namespace Athena
 		NEGATIVE_Z = 6,
 	};
 
-	struct CubemapDescription
-	{
-		std::array<std::pair<CubemapTarget, FilePath>, 6> Faces;
-
-		uint32 Width = 0;
-		uint32 Height = 0;
-
-		TextureFormat Format = TextureFormat::RGBA8;
-		bool sRGB = false;
-
-		TextureFilter MinFilter = TextureFilter::LINEAR;
-		TextureFilter MagFilter = TextureFilter::LINEAR;
-		TextureWrap Wrap = TextureWrap::CLAMP_TO_EDGE;
-	};
-
-	class ATHENA_API Cubemap: public Texture
+	class ATHENA_API TextureCube: public Texture
 	{
 	public:
-		static Ref<Cubemap> Create(const CubemapDescription& desc);
+		static Ref<TextureCube> Create(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, 
+			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+
+		static Ref<TextureCube> Create(TextureFormat format, uint32 width, uint32 height, 
+			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
 
 		virtual void GenerateMipMap(uint32 maxLevel) = 0;
 		virtual void SetFilters(TextureFilter min, TextureFilter mag) = 0;
-	};
-
-
-	enum class TextureCompareMode
-	{
-		NONE = 0, 
-		REF = 1
-	};
-
-	enum class TextureCompareFunc
-	{
-		NONE = 0,
-		LEQUAL = 1
-	};
-
-	struct TextureSamplerDescription
-	{
-		TextureFilter MinFilter = TextureFilter::LINEAR;
-		TextureFilter MagFilter = TextureFilter::LINEAR;
-		TextureWrap Wrap = TextureWrap::REPEAT;
-
-		LinearColor BorderColor = LinearColor::White;
-
-		TextureCompareMode CompareMode = TextureCompareMode::NONE;
-		TextureCompareFunc CompareFunc = TextureCompareFunc::NONE;
 	};
 
 	class ATHENA_API TextureSampler

@@ -427,7 +427,7 @@ namespace Athena
 				const auto& subMeshes = meshComponent.Mesh->GetAllSubMeshes();
 				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
-					Ref<Material> material = MaterialManager::GetMaterial(subMeshes[i].MaterialName);
+					Ref<Material> material = MaterialManager::Get(subMeshes[i].MaterialName);
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
 					if (animator != nullptr && animator->IsPlaying())
@@ -507,7 +507,7 @@ namespace Athena
 				const auto& subMeshes = meshComponent.Mesh->GetAllSubMeshes();
 				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
-					Ref<Material> material = MaterialManager::GetMaterial(subMeshes[i].MaterialName);
+					Ref<Material> material = MaterialManager::Get(subMeshes[i].MaterialName);
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
 					if (animator != nullptr && animator->IsPlaying())

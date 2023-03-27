@@ -47,7 +47,7 @@
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Skybox.h"
+#include "Athena/Renderer/EnvironmentMap.h"
 #include "Athena/Renderer/Texture.h"
 
 #include "Athena/Renderer/RenderCommand.h"

@@ -9,10 +9,9 @@ namespace Athena
 	std::unordered_map<String, Ref<Material>> MaterialManager::m_Materials;
 
 
-	Ref<Material> MaterialManager::CreateMaterial(const MaterialDescription& desc, const String& name)
+	Ref<Material> MaterialManager::CreateMaterial(const String& name)
 	{
 		Ref<Material> material = CreateRef<Material>();
-		material->m_Description = desc;
 
 		if (m_Materials.find(name) != m_Materials.end())
 		{
@@ -36,7 +35,12 @@ namespace Athena
 		return material;
 	}
 
-	Ref<Material> MaterialManager::GetMaterial(const String& name)
+	bool MaterialManager::Exists(const String& name)
+	{
+		return m_Materials.find(name) != m_Materials.end();
+	}
+
+	Ref<Material> MaterialManager::Get(const String& name)
 	{
 		if (m_Materials.find(name) == m_Materials.end())
 		{
@@ -48,7 +52,7 @@ namespace Athena
 		}
 	}
 
-	void MaterialManager::DeleteMaterial(const String& name)
+	void MaterialManager::Delete(const String& name)
 	{
 		if (m_Materials.find(name) == m_Materials.end())
 		{
@@ -60,28 +64,53 @@ namespace Athena
 		}
 	}
 
+	void Material::Set(MaterialTexture textureType, const Ref<Texture2D>& texture)
+	{
+		m_TextureMap[textureType] = { texture, true };
+	}
+
+	Ref<Texture2D> Material::Get(MaterialTexture textureType)
+	{
+		if (m_TextureMap.find(textureType) == m_TextureMap.end())
+			return nullptr;
+
+		return m_TextureMap.at(textureType).Texture;
+	}
+
+	bool Material::IsEnabled(MaterialTexture textureType) const
+	{
+		if (m_TextureMap.find(textureType) == m_TextureMap.end())
+			return false;
+
+		return m_TextureMap.at(textureType).IsEnabled;
+	}
+
+	void Material::Enable(MaterialTexture textureType, bool enable)
+	{
+		if (m_TextureMap.find(textureType) != m_TextureMap.end())
+			m_TextureMap.at(textureType).IsEnabled = enable;
+	}
+
 	const Material::ShaderData& Material::Bind()
 	{
-		m_ShaderData.Albedo = m_Description.Albedo;
-		m_ShaderData.Roughness = m_Description.Roughness;
-		m_ShaderData.Metalness = m_Description.Metalness;
-		m_ShaderData.AmbientOcclusion = m_Description.AmbientOcclusion;
-
-		if (m_ShaderData.UseAlbedoMap = m_Description.UseAlbedoMap && m_Description.AlbedoMap)
-			m_Description.AlbedoMap->Bind(TextureBinder::ALBEDO_MAP);
-
-		if (m_ShaderData.UseNormalMap = m_Description.UseNormalMap && m_Description.NormalMap)
-			m_Description.NormalMap->Bind(TextureBinder::NORMAL_MAP);
-
-		if (m_ShaderData.UseRoughnessMap = m_Description.UseRoughnessMap && m_Description.RoughnessMap)
-			m_Description.RoughnessMap->Bind(TextureBinder::ROUGHNESS_MAP);
-
-		if (m_ShaderData.UseMetalnessMap = m_Description.UseMetalnessMap && m_Description.MetalnessMap)
-			m_Description.MetalnessMap->Bind(TextureBinder::METALNESS_MAP);
-
-		if (m_ShaderData.UseAmbientOcclusionMap = m_Description.UseAmbientOcclusionMap && m_Description.AmbientOcclusionMap)
-			m_Description.AmbientOcclusionMap->Bind(TextureBinder::AMBIENT_OCCLUSION_MAP);
+		BindTexture(MaterialTexture::ALBEDO_MAP, TextureBinder::ALBEDO_MAP, &m_ShaderData.EnableAlbedoMap);
+		BindTexture(MaterialTexture::NORMAL_MAP, TextureBinder::NORMAL_MAP, &m_ShaderData.EnableNormalMap);
+		BindTexture(MaterialTexture::ROUGHNESS_MAP, TextureBinder::ROUGHNESS_MAP, &m_ShaderData.EnableRoughnessMap);
+		BindTexture(MaterialTexture::METALNESS_MAP, TextureBinder::METALNESS_MAP, &m_ShaderData.EnableMetalnessMap);
+		BindTexture(MaterialTexture::AMBIENT_OCCLUSION_MAP, TextureBinder::AMBIENT_OCCLUSION_MAP, &m_ShaderData.EnableAmbientOcclusionMap);
 
 		return m_ShaderData;
+	}
+
+	void Material::BindTexture(MaterialTexture textureType, TextureBinder binder, int* isEnabled)
+	{
+		if (m_TextureMap.find(textureType) != m_TextureMap.end())
+		{
+			*isEnabled = m_TextureMap.at(textureType).IsEnabled;
+			if (*isEnabled)
+			{
+				m_TextureMap.at(textureType).Texture->Bind();
+			}
+		}
 	}
 }

@@ -80,48 +80,48 @@ namespace Athena
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		if (result = MaterialManager::GetMaterial(materialName))
-			return result;
+		if (MaterialManager::Exists(materialName))
+			return MaterialManager::Get(materialName);
 
-		MaterialDescription desc;
+		result = MaterialManager::CreateMaterial(materialName);
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-			desc.Albedo = Vector3(color.r, color.g, color.b);
+			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
 		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-			desc.Albedo = Vector3(color.r, color.g, color.b);
+			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
 
 		float roughness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
-			desc.Roughness = roughness;
+			result->Set(MaterialUniform::ROUGHNESS, roughness);
 
 		float metalness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-			desc.Metalness = metalness;
+			result->Set(MaterialUniform::METALNESS, metalness);
 
+		Ref<Texture2D> texture;
 
-		if (desc.AlbedoMap = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
-			desc.UseAlbedoMap = true;
-		else if (desc.AlbedoMap = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
-			desc.UseAlbedoMap = true;
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
+			result->Set(MaterialTexture::ALBEDO_MAP, texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
+			result->Set(MaterialTexture::ALBEDO_MAP, texture);
 
-		if (desc.NormalMap = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
-			desc.UseNormalMap = true;
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
+			result->Set(MaterialTexture::NORMAL_MAP, texture);
 
-		if (desc.RoughnessMap = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
-			desc.UseRoughnessMap = true;
-		else if (desc.RoughnessMap = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
-			desc.UseRoughnessMap = true;
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
+			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
+			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
 
-		if (desc.MetalnessMap = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
-			desc.UseMetalnessMap = true;
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
+			result->Set(MaterialTexture::METALNESS_MAP, texture);
 
-		if (desc.AmbientOcclusionMap = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
-			desc.UseAmbientOcclusionMap = true;
-		else if (desc.AmbientOcclusionMap = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
-			desc.UseAmbientOcclusionMap = true;
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
+			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
+			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
 
-		result = MaterialManager::CreateMaterial(desc, materialName);
 		return result;
 	}
 

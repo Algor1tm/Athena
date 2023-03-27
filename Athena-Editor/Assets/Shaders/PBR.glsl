@@ -129,13 +129,12 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
     vec4 Albedo;
     float Roughness;
     float Metalness;
-    float AmbientOcclusion;
 
-	int UseAlbedoMap;
-	int UseNormalMap;
-	int UseRoughnessMap;
-	int UseMetalnessMap;
-    int UseAmbientOcclusionMap;
+	int EnableAlbedoMap;
+	int EnableNormalMap;
+	int EnableRoughnessMap;
+	int EnableMetalnessMap;
+    int EnableAmbientOcclusionMap;
 } u_Material;
 
 struct Split
@@ -373,7 +372,7 @@ float ComputeCascadedShadow(vec3 normal, vec3 lightDir, int cascade, float fadin
 
     if(projCoords.z > 1.0) return 0.0;
 
-    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.001);
+    float bias = max(0.001 * (1.0 - dot(normal, lightDir)), 0.001);
 
     float shadowOcclusion;
     if(u_Shadows.SoftShadows)
@@ -389,11 +388,11 @@ void main()
 {
     ////////////////// PBR TEXTURES //////////////////
     vec4 albedo = u_Material.Albedo;
-    if(bool(u_Material.UseAlbedoMap))
+    if(bool(u_Material.EnableAlbedoMap))
         albedo *= texture(u_AlbedoMap, Input.TexCoord);
 
     vec3 normal;
-    if(bool(u_Material.UseNormalMap))
+    if(bool(u_Material.EnableNormalMap))
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;
@@ -404,9 +403,9 @@ void main()
         normal = Input.Normal;
     }
 
-    float roughness = bool(u_Material.UseRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Material.Roughness;
-    float metalness = bool(u_Material.UseMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Material.Metalness;
-    float ambientOcclusion = bool(u_Material.UseAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
+    float roughness = bool(u_Material.EnableRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Material.Roughness;
+    float metalness = bool(u_Material.EnableMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Material.Metalness;
+    float ambientOcclusion = bool(u_Material.EnableAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
     
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
     reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo.rgb, metalness);

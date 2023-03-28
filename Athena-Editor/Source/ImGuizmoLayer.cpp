@@ -4,6 +4,8 @@
 
 #include "Athena/Input/Input.h"
 
+#include "Athena/Scene/Components.h"
+
 #include "Panels/ViewportPanel.h"
 
 

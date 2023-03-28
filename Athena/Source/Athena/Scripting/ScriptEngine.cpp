@@ -1,5 +1,6 @@
-#include "ScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
+#include "Athena/Scene/Components.h"
 
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS

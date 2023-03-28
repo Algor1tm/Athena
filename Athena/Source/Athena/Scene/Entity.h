@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/UUID.h"
+
+#include "Athena/Math/Matrix.h"
 
 #include "Athena/Scene/Scene.h"
-#include "Athena/Scene/Components.h"
-
-#include "Athena/Scripting/PublicScriptEngine.h"
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -20,7 +20,7 @@
 
 namespace Athena
 {
-	class Entity
+	class ATHENA_API Entity
 	{
 	public:
 		Entity() = default;
@@ -78,12 +78,13 @@ namespace Athena
 			return m_Scene->m_Registry.all_of<T>(m_EntityHandle);
 		}
 
+		UUID GetID() const;
+		const String& GetName() const;
+		Matrix4 GetWorldTransform() const;
+
 		operator bool() const { return m_EntityHandle != entt::null; }
 		operator uint32() const  { return (uint32)m_EntityHandle; }
 		operator entt::entity() const { return m_EntityHandle; }
-
-		UUID GetID() const { return GetComponent<IDComponent>().ID; }
-		const String& GetName() const { return GetComponent<TagComponent>().Tag; }
 
 		bool operator==(const Entity entity) const 
 		{ 
@@ -99,23 +100,4 @@ namespace Athena
 		entt::entity m_EntityHandle = entt::null;
 		Scene* m_Scene = nullptr;
 	};
-
-
-	template <typename T>
-	void Scene::OnComponentAdd(Entity entity, T& component) {}
-
-	template<typename T>
-	void Scene::OnComponentRemove(Entity entity, T& component) {}
-
-	template <>
-	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
-	{
-		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
-	}
-
-	template <>
-	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity, ScriptComponent& component)
-	{
-		PublicScriptEngine::OnScriptComponentRemove(entity);
-	}
 }

@@ -11,7 +11,10 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Texture.h"
 
+#include "Athena/Scene/Entity.h"
 #include "Athena/Scene/SceneCamera.h"
+
+#include "Athena/Scripting/PublicScriptEngine.h"
 
 
 namespace Athena
@@ -43,6 +46,16 @@ namespace Athena
 		{
 			return Math::ToMat4(Math::ToQuat(Rotation)).Scale(Scale).Translate(Translation);
 		}
+	};
+
+	struct ParentComponent
+	{
+		std::vector<Entity> Children;
+	};
+
+	struct ChildComponent
+	{
+		Entity Parent;
 	};
 
 	struct SpriteComponent
@@ -183,4 +196,23 @@ namespace Athena
 		CircleComponent, CameraComponent, ScriptComponent,
 		NativeScriptComponent, Rigidbody2DComponent, BoxCollider2DComponent,
 		CircleCollider2DComponent, StaticMeshComponent, DirectionalLightComponent, PointLightComponent>;
+
+
+	template <typename T>
+	inline void Scene::OnComponentAdd(Entity entity, T& component) {}
+
+	template<typename T>
+	inline void Scene::OnComponentRemove(Entity entity, T& component) {}
+
+	template <>
+	inline void Scene::OnComponentAdd<CameraComponent>(Entity entity, CameraComponent& camera)
+	{
+		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+	}
+
+	template <>
+	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity, ScriptComponent& component)
+	{
+		PublicScriptEngine::OnScriptComponentRemove(entity);
+	}
 }

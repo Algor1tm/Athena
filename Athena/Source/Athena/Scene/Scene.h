@@ -8,7 +8,7 @@
 #include "Athena/Renderer/Environment.h"
 #include "Athena/Renderer/Material.h"
 
-#include "Athena/Scene/Components.h" 
+#include "Athena/Scene/SceneCamera.h"
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -28,15 +28,13 @@ class b2World;
 namespace Athena
 {
 	class ATHENA_API Environment;
-	class Entity;
+	class ATHENA_API Entity;
 
 
 	class ATHENA_API Scene
 	{
 	public:
-		friend class Entity;
-		friend class ScriptEntity;
-		friend class SceneHierarchyPanel;
+		friend class ATHENA_API Entity;
 		friend class ATHENA_API SceneSerializer;
 
 	public:
@@ -45,10 +43,13 @@ namespace Athena
 
 		static Ref<Scene> Copy(Ref<Scene> scene);
 
+		Entity GetRootEntity();
+
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);
+		void MakeParent(Entity parent, Entity child);
 
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
@@ -82,6 +83,9 @@ namespace Athena
 
 		void RenderEditorScene(const EditorCamera& camera);
 		void RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform);
+		void RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far);
+
+		Matrix4 GetWorldTransform(entt::entity entity);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);
@@ -91,6 +95,8 @@ namespace Athena
 
 	private:
 		String m_Name;
+
+		UUID m_RootEntity;	// TODO: must be type 'Entity' (currently cant include Entity.h)
 
 		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;

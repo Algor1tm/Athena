@@ -1,7 +1,10 @@
 #include "Athena/Core/Log.h"
+
 #include "Athena/Input/Input.h"
 
 #include "Athena/Scripting/ScriptEngine.h"
+
+#include "Athena/Scene/Components.h"
 
 #include <Box2D/b2_body.h>
 

@@ -38,26 +38,31 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		if (ImGui::Begin("Environment"))
-		{
-			DrawEnvironment(m_Context->GetEnvironment());
-		}
+		DrawEnvironmentEditor(m_Context->GetEnvironment());
 
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
+		ImGui::Begin("Materials Editor");
+		if (m_SelectionContext)
+		{
+			DrawMaterialsEditor();
+		}
 		ImGui::PopStyleVar();
 		ImGui::End();
 
+		DrawEntitiesHierarchy();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		if (ImGui::Begin("Materials"))
+		ImGui::Begin("Properties");
+		if (m_SelectionContext)
 		{
-			DrawMaterials();
+			DrawAllComponents(m_SelectionContext);
 		}
-
 		ImGui::PopStyleVar();
 		ImGui::End();
+	}
 
-
+	void SceneHierarchyPanel::DrawEntitiesHierarchy()
+	{
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetDarkColor());
 		ImGui::Begin("Scene Hierarchy");
@@ -69,12 +74,14 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Header, color);
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
 
-		m_Context->m_Registry.each([=](auto entityID)
-			{
-				Entity entity(entityID, m_Context.get());
+		Entity root = m_Context->GetRootEntity();
+		const std::vector<Entity>& children = root.GetComponent<ParentComponent>().Children;
+		for (auto entity : children)
+		{
+			DrawEntityNode(entity);
+		}
 
-				DrawEntityNode(entity);
-			});
+
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar();
 
@@ -92,36 +99,31 @@ namespace Athena
 			ImGui::EndPopup();
 		}
 		ImGui::End();
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		if (ImGui::Begin("Properties"))
-		{
-			if (m_SelectionContext)
-			{
-				DrawAllComponents(m_SelectionContext);
-			}
-		}
-
-		ImGui::PopStyleVar();
-		ImGui::End();
 	}
 
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
+		bool selected = m_SelectionContext == entity;
+		bool hasChildren = !entity.GetComponent<ParentComponent>().Children.empty();
 
-		ImGuiTreeNodeFlags flags = ((m_SelectionContext == entity) ? ImGuiTreeNodeFlags_Selected : 0);
-		flags |= ImGuiTreeNodeFlags_OpenOnArrow;
-		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-		flags |= ImGuiTreeNodeFlags_FramePadding;
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
+			ImGuiTreeNodeFlags_OpenOnDoubleClick |
+			ImGuiTreeNodeFlags_SpanAvailWidth |
+			ImGuiTreeNodeFlags_FramePadding;
 
-		bool selectedEntity = m_SelectionContext == entity;
-		if(selectedEntity)
+		if (selected)
+			flags |= ImGuiTreeNodeFlags_Selected;
+
+		if (!hasChildren)
+			flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+		if(selected)
 			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::GetStyle().Colors[ImGuiCol_ResizeGripActive]);
 
 		bool opened = ImGui::TreeNodeEx((void*)(uint64)(uint32)entity, flags, tag.data());
 
-		if (selectedEntity)
+		if (selected)
 			ImGui::PopStyleColor();
 
 		if (ImGui::IsItemClicked())
@@ -132,13 +134,29 @@ namespace Athena
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
 		{
+			if (m_SelectionContext && !selected && ImGui::MenuItem("Add to children"))
+			{
+				Entity parent = entity;
+				Entity child = m_SelectionContext;
+				m_Context->MakeParent(parent, child);
+			}
+
 			if (ImGui::MenuItem("Delete Entity"))
 				entityDeleted = true;
 
 			ImGui::EndPopup();
 		}
 
-		if (opened)
+		if (opened && hasChildren)
+		{
+			const std::vector<Entity>& children = entity.GetComponent<ParentComponent>().Children;
+			for (auto entity : children)
+			{
+				DrawEntityNode(entity);
+			}
+		}
+
+		if (opened && hasChildren)
 			ImGui::TreePop();
 
 		if (entityDeleted)
@@ -149,8 +167,11 @@ namespace Athena
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEnvironment(const Ref<Environment>& environment)
+	void SceneHierarchyPanel::DrawEnvironmentEditor(const Ref<Environment>& environment)
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
+		ImGui::Begin("Environment");
+
 		float height = ImGui::GetFrameHeight();
 
 		if (UI::BeginTreeNode("Environment"))
@@ -202,36 +223,32 @@ namespace Athena
 
 			UI::EndTreeNode();
 		}
+
+		ImGui::PopStyleVar();
+		ImGui::End();
 	}
 
-	void SceneHierarchyPanel::DrawMaterials()
+	void SceneHierarchyPanel::DrawMaterialsEditor()
 	{
 		float height = ImGui::GetFrameHeight();
 
 		std::vector<String> materials;
-		if (m_SelectionContext)
+		if(m_SelectionContext.HasComponent<StaticMeshComponent>())
 		{
-			if(m_SelectionContext.HasComponent<StaticMeshComponent>())
+			auto mesh = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh;
+			const auto& subMeshes = mesh->GetAllSubMeshes();
+			materials.reserve(subMeshes.size());
+			for (uint32 i = 0; i < subMeshes.size(); ++i)
 			{
-				auto mesh = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh;
-				const auto& subMeshes = mesh->GetAllSubMeshes();
-				materials.reserve(subMeshes.size());
-				for (uint32 i = 0; i < subMeshes.size(); ++i)
+				const String& material = subMeshes[i].MaterialName;
+				if (std::find(materials.begin(), materials.end(), material) == materials.end())
 				{
-					const String& material = subMeshes[i].MaterialName;
-					if (std::find(materials.begin(), materials.end(), material) == materials.end())
-					{
-						materials.push_back(material);
-					}
+					materials.push_back(material);
 				}
-
-				if (std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
-					m_ActiveMaterial = materials[0];
 			}
-		}
-		else
-		{
-			m_ActiveMaterial.clear();
+
+			if (std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
+				m_ActiveMaterial = materials[0];
 		}
 
 		if (!materials.empty())
@@ -954,7 +971,7 @@ namespace Athena
 					UI::DrawController("Color", height, [&lightComponent]() { return ImGui::ColorEdit3("##Color", lightComponent.Color.Data()); });
 					UI::DrawController("Intensity", height, [&lightComponent]() { return ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 1.f, 0.f, 10000.f);  });
 
-					UI::DrawController("Radius", height, [&lightComponent]() {  return ImGui::DragFloat("##Radius", &lightComponent.Radius, 5.f, 0.f, 10000.f); });
+					UI::DrawController("Radius", height, [&lightComponent]() {  return ImGui::DragFloat("##Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f); });
 
 					UI::DrawController("FallOff", height, [&lightComponent]() {  return ImGui::DragFloat("##FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);  });
 

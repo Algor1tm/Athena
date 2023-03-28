@@ -30,10 +30,11 @@ namespace Athena
 		Entity GetSelectedEntity() const { return m_SelectionContext; }
 
 	private:
+		void DrawEntitiesHierarchy();
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
-		void DrawEnvironment(const Ref<Environment>& environment);
-		void DrawMaterials();
+		void DrawEnvironmentEditor(const Ref<Environment>& environment);
+		void DrawMaterialsEditor();
 
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);

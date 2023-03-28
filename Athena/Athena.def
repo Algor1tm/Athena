@@ -20,6 +20,7 @@ EXPORTS
 	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
 	?ImageButton@ImGui@@YA_NPEAXAEBUImVec2@@11HAEBUImVec4@@2@Z
 	?ImageButton@ImGui@@YA_NPEBDPEAXAEBUImVec2@@22AEBUImVec4@@3@Z
+	?Indent@ImGui@@YAXM@Z
 	?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
 	?IsAnyItemActive@ImGui@@YA_NXZ
 	?IsItemClicked@ImGui@@YA_NH@Z
@@ -37,6 +38,7 @@ EXPORTS
 	?SliderFloat@ImGui@@YA_NPEBDPEAMMM0H@Z
 	?TableSetColumnIndex@ImGui@@YA_NH@Z
 	?TreeNodeEx@ImGui@@YA_NPEBDH0ZZ
+	?TreeNodeEx@ImGui@@YA_NPEBDH@Z
 	?GetCursorPosX@ImGui@@YAMXZ
 	?GetCursorPosY@ImGui@@YAMXZ
 	?Selectable@ImGui@@YA_NPEBD_NHAEBUImVec2@@@Z
@@ -97,7 +99,9 @@ EXPORTS
 	?TableNextRow@ImGui@@YAXHM@Z
 	?Text@ImGui@@YAXPEBDZZ
 	?TextWrapped@ImGui@@YAXPEBDZZ
+	?TreeNode@ImGui@@YA_NPEBD@Z
 	?TreePop@ImGui@@YAXXZ
+	?Unindent@ImGui@@YAXM@Z
 
 	?IsOver@ImGuizmo@@YA_NXZ
 	?IsUsing@ImGuizmo@@YA_NXZ

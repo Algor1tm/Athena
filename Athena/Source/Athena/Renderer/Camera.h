@@ -7,8 +7,8 @@ namespace Athena
 {
 	struct CameraInfo
 	{
-		Matrix4 ProjectionMatrix;
 		Matrix4 ViewMatrix;
+		Matrix4 ProjectionMatrix;
 		float NearClip;
 		float FarClip;
 	};

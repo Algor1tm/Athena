@@ -75,12 +75,7 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
 
 		Entity root = m_Context->GetRootEntity();
-		const std::vector<Entity>& children = root.GetComponent<ParentComponent>().Children;
-		for (auto entity : children)
-		{
-			DrawEntityNode(entity);
-		}
-
+		DrawEntityNode(root, true);
 
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar();
@@ -101,16 +96,19 @@ namespace Athena
 		ImGui::End();
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity)
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity, bool open)
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
 		bool selected = m_SelectionContext == entity;
-		bool hasChildren = !entity.GetComponent<ParentComponent>().Children.empty();
+		bool hasChildren = entity.HasChildren();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_OpenOnDoubleClick |
 			ImGuiTreeNodeFlags_SpanAvailWidth |
 			ImGuiTreeNodeFlags_FramePadding;
+
+		if (open)
+			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		if (selected)
 			flags |= ImGuiTreeNodeFlags_Selected;
@@ -129,6 +127,27 @@ namespace Athena
 		if (ImGui::IsItemClicked())
 		{
 			m_SelectionContext = entity;
+		}
+
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("SCENE_HIERARCHY_ENTITY", &entity, sizeof(entity));
+			ImGui::Text(tag.c_str());
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SCENE_HIERARCHY_ENTITY"))
+			{
+				Entity payloadEntity = *(Entity*)payload->Data;
+				if (payloadEntity != entity)
+				{
+					m_Context->MakeParent(entity, payloadEntity);
+				}
+			}
+
+			ImGui::EndDragDropTarget();
 		}
 
 		bool entityDeleted = false;
@@ -286,40 +305,45 @@ namespace Athena
 
 			if (open && UI::BeginDrawControllers())
 			{
-				void* whiteTexRendererID = Renderer::GetWhiteTexture()->GetRendererID();
+				DrawMaterialProperty(material, "Albedo", "Color", MaterialTexture::ALBEDO_MAP, MaterialUniform::ALBEDO);
+				DrawMaterialProperty(material, "Normal Map", "", MaterialTexture::NORMAL_MAP, (MaterialUniform)0);
+				DrawMaterialProperty(material, "Roughness", "Roughness", MaterialTexture::ROUGHNESS_MAP, MaterialUniform::ROUGHNESS);
+				DrawMaterialProperty(material, "Metalness", "Metalness", MaterialTexture::METALNESS_MAP, MaterialUniform::METALNESS);
+				DrawMaterialProperty(material, "Ambient Occlusion", "", MaterialTexture::AMBIENT_OCCLUSION_MAP, (MaterialUniform)0);
+				//void* whiteTexRendererID = Renderer::GetWhiteTexture()->GetRendererID();
 
-				ImGui::PushID("Albedo");
-				UI::DrawController("Albedo", 50.f, [&material, whiteTexRendererID]
-					{
-						float imageSize = 45.f;
-						
-						Ref<Texture2D> albedoMap = material->Get(MaterialTexture::ALBEDO_MAP);
-						void* rendererID = albedoMap ? albedoMap->GetRendererID() : whiteTexRendererID;
+				//ImGui::PushID("Albedo");
+				//UI::DrawController("Albedo", 50.f, [&material, whiteTexRendererID]
+				//	{
+				//		float imageSize = 45.f;
+				//		
+				//		Ref<Texture2D> albedoMap = material->Get(MaterialTexture::ALBEDO_MAP);
+				//		void* rendererID = albedoMap ? albedoMap->GetRendererID() : whiteTexRendererID;
 
-						if (ImGui::ImageButton("##AlbedoMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
-						{
-							FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-							if (!path.empty())
-							{
-								albedoMap = Texture2D::Create(path);
-								material->Set(MaterialTexture::ALBEDO_MAP, albedoMap);
-							}
-						}
-						ImGui::SameLine();
+				//		if (ImGui::ImageButton("##AlbedoMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+				//		{
+				//			FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+				//			if (!path.empty())
+				//			{
+				//				albedoMap = Texture2D::Create(path);
+				//				material->Set(MaterialTexture::ALBEDO_MAP, albedoMap);
+				//			}
+				//		}
+				//		ImGui::SameLine();
 
-						bool enableAlbedoMap = material->IsEnabled(MaterialTexture::ALBEDO_MAP);
-						ImGui::Checkbox("Enable", &enableAlbedoMap);
-						material->Enable(MaterialTexture::ALBEDO_MAP, enableAlbedoMap);
+				//		bool enableAlbedoMap = material->IsEnabled(MaterialTexture::ALBEDO_MAP);
+				//		ImGui::Checkbox("Enable", &enableAlbedoMap);
+				//		material->Enable(MaterialTexture::ALBEDO_MAP, enableAlbedoMap);
 
-						ImGui::SameLine();
+				//		ImGui::SameLine();
 
-						Vector3 albedo = material->Get<Vector3>(MaterialUniform::ALBEDO);
-						ImGui::ColorEdit3("Color", albedo.Data(), ImGuiColorEditFlags_NoInputs);
-						material->Set(MaterialUniform::ALBEDO, albedo);
+				//		Vector3 albedo = material->Get<Vector3>(MaterialUniform::ALBEDO);
+				//		ImGui::ColorEdit3("Color", albedo.Data(), ImGuiColorEditFlags_NoInputs);
+				//		material->Set(MaterialUniform::ALBEDO, albedo);
 
-						return true;
-					});
-				ImGui::PopID();
+				//		return true;
+				//	});
+				//ImGui::PopID();
 				//ImGui::PushID("Normal");
 				//UI::DrawController("Normals", 50.f, [&matDesc, whiteTexRendererID]
 				//	{
@@ -437,6 +461,54 @@ namespace Athena
 				ImGui::Spacing();
 			}
 		}
+	}
+
+	void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType)
+	{
+		ImGui::PushID(name.data());
+		UI::DrawController(name.data(), 50.f, [&]
+			{
+				float imageSize = 45.f;
+
+				Ref<Texture2D> albedoMap = mat->Get(texType);
+				void* rendererID = albedoMap ? albedoMap->GetRendererID() : Renderer::GetWhiteTexture()->GetRendererID();
+
+				if (ImGui::ImageButton("##MaterialMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+				{
+					FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+					if (!path.empty())
+					{
+						albedoMap = Texture2D::Create(path);
+						mat->Set(texType, albedoMap);
+					}
+				}
+				ImGui::SameLine();
+
+				bool enableAlbedoMap = mat->IsEnabled(texType);
+				ImGui::Checkbox("Enable", &enableAlbedoMap);
+				mat->Enable(texType, enableAlbedoMap);
+
+				if (uniformName.empty())
+					return true;
+
+				ImGui::SameLine();
+				if (uniformType == MaterialUniform::ALBEDO)
+				{
+					Vector3 albedo = mat->Get<Vector3>(uniformType);
+					ImGui::ColorEdit3(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs);
+					mat->Set(uniformType, albedo);
+				}
+				else
+				{
+					float uniform = mat->Get<float>(uniformType);
+					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f);
+					mat->Set(uniformType, uniform);
+				}
+
+				return true;
+			});
+		ImGui::PopID();
 	}
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)

@@ -45,6 +45,7 @@ namespace Athena
 
 		Entity GetRootEntity();
 
+		Entity CreateEntity(const String& name, UUID id, Entity parent);
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);

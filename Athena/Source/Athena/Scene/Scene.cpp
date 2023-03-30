@@ -36,7 +36,11 @@ namespace Athena
 				auto view = src.view<Component>();
 				for (auto srcEntity : view)
 				{
-					entt::entity dstEntity = enttMap.at(src.get<IDComponent>(srcEntity).ID);
+					UUID id = src.get<IDComponent>(srcEntity).ID;
+					if (enttMap.find(id) == enttMap.end()) // Root entity
+						continue;
+
+					entt::entity dstEntity = enttMap.at(id);
 
 					auto& srcComponent = src.get<Component>(srcEntity);
 					dst.emplace_or_replace<Component>(dstEntity, srcComponent);
@@ -56,7 +60,7 @@ namespace Athena
 		([&]()
 			{
 				if (src.HasComponent<Component>())
-				dst.AddOrReplaceComponent<Component>(src.GetComponent<Component>());
+					dst.AddOrReplaceComponent<Component>(src.GetComponent<Component>());
 			}(), ...);
 	}
 
@@ -79,6 +83,21 @@ namespace Athena
 		return (b2BodyType)0;
 	}
 
+	static void DeleteFromChildren(std::vector<Entity>& children, Entity parent, Entity child)
+	{
+		auto iter = std::find(children.begin(), children.end(), child);
+		if (iter != children.end())
+		{
+			children.erase(iter);
+		}
+		else
+		{
+			const String& childTag = child.GetComponent<TagComponent>().Tag;
+			const String& parentTag = parent.GetComponent<TagComponent>().Tag;
+			ATN_CORE_WARN("Attempt to delete entity '{}' from children of entity '{}'", childTag, parentTag);
+		}
+	}
+
 	Scene::Scene(const String& name)
 		: m_Name(name)
 	{
@@ -86,7 +105,7 @@ namespace Athena
 
 		Entity rootEntity(m_Registry.create(), this);
 		m_RootEntity = rootEntity.AddComponent<IDComponent>().ID;
-		rootEntity.AddComponent<TagComponent>("Root Entity");
+		rootEntity.AddComponent<TagComponent>("Scene Root");
 		rootEntity.AddComponent<TransformComponent>();
 		rootEntity.AddComponent<ParentComponent>();
 
@@ -109,20 +128,19 @@ namespace Athena
 
 		auto& srcSceneRegistry = other->m_Registry;
 		auto& dstSceneRegistry = newScene->m_Registry;
-		std::unordered_map<UUID, entt::entity> enttMap;
 
-		// Create entities in new scene
 		auto idView = srcSceneRegistry.view<IDComponent>();
 		for (auto entity : idView)
 		{
 			UUID uuid = srcSceneRegistry.get<IDComponent>(entity).ID;
+			if (uuid == other->m_RootEntity)
+				continue;
+
 			const auto& name = srcSceneRegistry.get<TagComponent>(entity).Tag;
 			Entity newEntity = newScene->CreateEntity(name, uuid);
-			enttMap[uuid] = (entt::entity)newEntity;
 		}
 
-		// Copy components (except IDComponent and TagComponent)
-		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, enttMap);
+		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, newScene->m_EntityMap);
 
 		return newScene;
 	}
@@ -132,24 +150,28 @@ namespace Athena
 		return { m_EntityMap.at(m_RootEntity), this };
 	}
 
-	Entity Scene::CreateEntity(const String& name, UUID id)
+	Entity Scene::CreateEntity(const String& name, UUID id, Entity parent)
 	{
-		Entity root = GetRootEntity();
-
 		Entity entity(m_Registry.create(), this);
 		entity.AddComponent<IDComponent>(id);
 		entity.AddComponent<TagComponent>(name);
 		entity.AddComponent<TransformComponent>();
 		entity.AddComponent<ParentComponent>();
 
-		auto& rootChildren = root.GetComponent<ParentComponent>().Children;
-		rootChildren.push_back(entity);
+		auto& parentChildren = parent.GetComponent<ParentComponent>().Children;
+		parentChildren.push_back(entity);
 
-		entity.AddComponent<ChildComponent>().Parent = root;
+		entity.AddComponent<ChildComponent>().Parent = parent;
 
 		m_EntityMap[id] = entity;
-		
+
 		return entity;
+	}
+
+	Entity Scene::CreateEntity(const String& name, UUID id)
+	{
+		Entity root = GetRootEntity();
+		return CreateEntity(name, id, root);
 	}
 
 	Entity Scene::CreateEntity(const String& name)
@@ -159,11 +181,17 @@ namespace Athena
 
 	void Scene::DestroyEntity(Entity entity)
 	{
+		if (entity.HasChildren())
+		{
+			auto& children = entity.GetComponent<ParentComponent>().Children;
+			for (Entity e : children)
+				DestroyEntity(e);
+		}
+
 		Entity parent = entity.GetComponent<ChildComponent>().Parent;
 		auto& children = parent.GetComponent<ParentComponent>().Children;
 
-		auto iter = std::find(children.begin(), children.end(), entity);
-		children.erase(iter);
+		DeleteFromChildren(children, parent, entity);
 
 		m_EntityMap.erase(entity.GetID());
 		m_Registry.destroy(entity);
@@ -171,21 +199,50 @@ namespace Athena
 
 	Entity Scene::DuplicateEntity(Entity entity)
 	{
+		if (entity == GetRootEntity())
+		{
+			ATN_CORE_WARN("Cannot duplicate Root Entity!");
+			return {};
+		}
+
 		// Copy name because we're going to modify component data structure
+		Entity entityParent = entity.GetComponent<ChildComponent>().Parent;
+
 		String name = entity.GetName();
-		Entity newEntity = CreateEntity(name);
+		Entity newEntity = CreateEntity(name, UUID(), entityParent);
 		CopyComponentIfExists(AllComponents{}, newEntity, entity);
+
+		if (entity.HasChildren())
+		{
+			// Copy because next calls of DuplicateEntity in for-loop can reallocate this array
+			std::vector<Entity> children = entity.GetComponent<ParentComponent>().Children;
+
+			// Clear new children because, ParentComponent copied in CopyComponentIfExists
+			std::vector<Entity>& newChildren = newEntity.GetComponent<ParentComponent>().Children;
+			newChildren.clear();
+
+			for (Entity child : children)
+			{
+				Entity newChild = DuplicateEntity(child);
+				MakeParent(newEntity, newChild);
+			}
+		}
+
 		return newEntity;
 	}
 
 	void Scene::MakeParent(Entity parent, Entity child)
 	{
+		if (child == GetRootEntity())
+		{
+			ATN_CORE_WARN("Cannot change parent of Root Entity!");
+			return;
+		}
+
 		Entity& oldParent = child.GetComponent<ChildComponent>().Parent;
 		auto& oldParentChildren = oldParent.GetComponent<ParentComponent>().Children;
 
-		auto iter = std::find(oldParentChildren.begin(), oldParentChildren.end(), child);
-		oldParentChildren.erase(iter);
-
+		DeleteFromChildren(oldParentChildren, oldParent, child);
 		oldParent = parent;
 
 		auto& children = parent.GetComponent<ParentComponent>().Children;

@@ -35,7 +35,7 @@ namespace Athena
 	struct TransformComponent
 	{
 		Vector3 Translation = { 0.f, 0.f, 0.f };
-		Vector3 Rotation = { 0.f, 0.f, 0.f };  // Radians
+		Vector3 Rotation = { 0.f, 0.f, 0.f }; 
 		Vector3 Scale = { 1.f, 1.f, 1.f }; 
 
 		TransformComponent() = default;
@@ -192,10 +192,11 @@ namespace Athena
 	};
 
 	using AllComponents =
-		ComponentGroup<TransformComponent, SpriteComponent,
-		CircleComponent, CameraComponent, ScriptComponent,
-		NativeScriptComponent, Rigidbody2DComponent, BoxCollider2DComponent,
-		CircleCollider2DComponent, StaticMeshComponent, DirectionalLightComponent, PointLightComponent>;
+		ComponentGroup<TransformComponent, ParentComponent, ChildComponent,
+		SpriteComponent, CircleComponent, CameraComponent, 
+		ScriptComponent, NativeScriptComponent, 
+		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
+		StaticMeshComponent, DirectionalLightComponent, PointLightComponent>;
 
 
 	template <typename T>

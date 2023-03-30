@@ -109,8 +109,12 @@ namespace Athena
 			*isEnabled = m_TextureMap.at(textureType).IsEnabled;
 			if (*isEnabled)
 			{
-				m_TextureMap.at(textureType).Texture->Bind();
+				m_TextureMap.at(textureType).Texture->Bind(binder);
 			}
+		}
+		else
+		{
+			*isEnabled = false;
 		}
 	}
 }

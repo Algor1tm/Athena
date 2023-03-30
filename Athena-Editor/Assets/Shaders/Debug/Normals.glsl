@@ -99,13 +99,12 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
     vec4 Albedo;
     float Roughness;
     float Metalness;
-    float AmbientOcclusion;
 
-	int UseAlbedoMap;
-	int UseNormalMap;
-	int UseRoughnessMap;
-	int UseMetalnessMap;
-    int UseAmbientOcclusionMap;
+	int EnableAlbedoMap;
+	int EnableNormalMap;
+	int EnableRoughnessMap;
+	int EnableMetalnessMap;
+    int EnableAmbientOcclusionMap;
 } u_Material;
 
 
@@ -115,7 +114,7 @@ layout(binding = NORMAL_MAP_BINDER) uniform sampler2D u_NormalMap;
 void main()
 {
     vec3 normal;
-    if(bool(u_Material.UseNormalMap))
+    if(bool(u_Material.EnableNormalMap))
     {
         normal = texture(u_NormalMap, Input.TexCoord).rgb;
         normal = normal * 2 - 1;

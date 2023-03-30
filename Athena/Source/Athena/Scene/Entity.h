@@ -80,6 +80,7 @@ namespace Athena
 
 		UUID GetID() const;
 		const String& GetName() const;
+		bool HasChildren() const;
 		Matrix4 GetWorldTransform() const;
 
 		operator bool() const { return m_EntityHandle != entt::null; }

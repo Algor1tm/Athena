@@ -31,10 +31,12 @@ namespace Athena
 
 	private:
 		void DrawEntitiesHierarchy();
-		void DrawEntityNode(Entity entity);
+		void DrawEntityNode(Entity entity, bool open = false);
 		void DrawAllComponents(Entity entity);
 		void DrawEnvironmentEditor(const Ref<Environment>& environment);
+
 		void DrawMaterialsEditor();
+		void DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType);
 
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);

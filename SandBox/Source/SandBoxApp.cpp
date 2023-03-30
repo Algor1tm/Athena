@@ -34,8 +34,8 @@ namespace Athena
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
 		appdesc.API = RendererAPI::OpenGL;
-		appdesc.UseImGui = false;
-		appdesc.UseConsole = false;
+		appdesc.EnableImGui = false;
+		appdesc.EnableConsole = false;
 		appdesc.WorkingDirectory = "../Athena-Editor";
 		appdesc.ScriptsFolder = "Assets/Scripts";
 

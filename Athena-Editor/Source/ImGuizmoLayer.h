@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Input/Events/KeyEvent.h"
+#include "Athena/Input/KeyEvent.h"
 
 #include "Athena/Scene/Entity.h"
 

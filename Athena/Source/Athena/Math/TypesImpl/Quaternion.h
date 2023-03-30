@@ -32,6 +32,18 @@ namespace Athena::Math
 			  z(static_cast<T>(_z)) {}
 
 		template <typename Q>
+		constexpr Quaternion(const Vector<Q, 3>& eulerAngles)
+		{
+			Vector<Q, 3> c = Math::Cos(eulerAngles * Q(0.5f));
+			Vector<Q, 3> s = Math::Sin(eulerAngles * Q(0.5f));
+
+			w = c.x * c.y * c.z + s.x * s.y * s.z;
+			x = s.x * c.y * c.z - c.x * s.y * s.z;
+			y = c.x * s.y * c.z + s.x * c.y * s.z;
+			z = c.x * c.y * s.z - s.x * s.y * c.z;
+		}
+
+		template <typename Q>
 		constexpr Quaternion(const Vector<Q, 4>& vec4)
 			: w(static_cast<T>(vec4.x)),
 			  x(static_cast<T>(vec4.y)),
@@ -126,6 +138,22 @@ namespace Athena::Math
 		inline Quaternion GetRotated(T angle, const Vector<T, 3>& axis) const
 		{
 			return Quaternion(*this).Rotate(angle, axis);
+		}
+
+		inline Vector3 EulerAngles() const
+		{
+			float sqw = w * w;
+			float sqx = x * x;
+			float sqy = y * y;
+			float sqz = z * z;
+
+			Vector3 result;
+
+			result.x = Math::Atan2(T(2.f) * (y * z + x * w), (-sqx - sqy + sqz + sqw));
+			result.y = Math::Asin(T(-2.f) * (x * z - y * w));
+			result.z = Math::Atan2(T(2.f) * (x * y + z * w), (sqx - sqy - sqz + sqw));
+
+			return result;
 		}
 
 // -------------Operators-------------------------------------

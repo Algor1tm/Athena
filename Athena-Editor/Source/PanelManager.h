@@ -2,8 +2,8 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Input/Events/Event.h"
-#include "Athena/Input/Events/KeyEvent.h"
+#include "Athena/Input/Event.h"
+#include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/Keyboard.h"
 
 #include <unordered_map>

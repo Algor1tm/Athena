@@ -94,6 +94,7 @@ namespace Athena
 
 	struct ShadowSettings
 	{
+		bool EnableShadows = true;
 		bool SoftShadows = true;
 		float LightSize = 0.5f;
 		float MaxDistance = 200.f;
@@ -125,8 +126,7 @@ namespace Athena
 		static void SubmitLight(const DirectionalLight& dirLight);
 		static void SubmitLight(const PointLight& pointLight);
 
-		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
-		static void SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
 		static void ReloadShaders();
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap);

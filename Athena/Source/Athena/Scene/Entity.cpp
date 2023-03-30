@@ -20,15 +20,22 @@ namespace Athena
 		return GetComponent<ParentComponent>().Children.size() > 0;
 	}
 
-	Matrix4 Entity::GetWorldTransform() const
+	TransformComponent Entity::GetWorldTransform() const
 	{
 		if (HasComponent<ChildComponent>())
 		{
 			Entity parent = GetComponent<ChildComponent>().Parent;
-			Matrix4 parentTransform = parent.GetWorldTransform();
-			return parentTransform * GetComponent<TransformComponent>().AsMatrix();
+			const TransformComponent& parentTransform = parent.GetWorldTransform();
+			const TransformComponent& currentTransform = GetComponent<TransformComponent>();
+
+			TransformComponent combined;
+			combined.Translation = parentTransform.Translation + currentTransform.Translation;
+			combined.Rotation = parentTransform.Rotation * currentTransform.Rotation;
+			combined.Scale = parentTransform.Scale * currentTransform.Scale;
+
+			return combined;
 		}
 
-		return GetComponent<TransformComponent>().AsMatrix();
+		return GetComponent<TransformComponent>();
 	}
 }

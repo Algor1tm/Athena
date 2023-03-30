@@ -2,8 +2,8 @@
 
 #include "Athena/Core/Layer.h"
 
-#include "Athena/Input/Events/KeyEvent.h"
-#include "Athena/Input/Events/MouseEvent.h"
+#include "Athena/Input/KeyEvent.h"
+#include "Athena/Input/MouseEvent.h"
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Editorcamera.h"

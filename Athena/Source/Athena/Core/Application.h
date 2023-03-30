@@ -5,7 +5,7 @@
 #include "Athena/Core/LayerStack.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/Input/Events/ApplicationEvent.h"
+#include "Athena/Input/ApplicationEvent.h"
 
 #include "Athena/Renderer/RendererAPI.h"
 
@@ -19,8 +19,8 @@ namespace Athena
 	{
 		WindowDescription WindowDesc;
 		RendererAPI::API API = RendererAPI::OpenGL;
-		bool UseImGui = true;
-		bool UseConsole = true;
+		bool EnableImGui = true;
+		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
 		FilePath ScriptsFolder = FilePath();
 	};

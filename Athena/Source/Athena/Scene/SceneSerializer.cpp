@@ -1,4 +1,6 @@
-#include "SceneSerializer.h"
+#include "Athena/Scene/SceneSerializer.h"
+
+#include "Athena/Core/FileSystem.h"
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
@@ -68,6 +70,33 @@ namespace YAML
 	};
 
 	template <>
+	struct convert<Athena::Quaternion>
+	{
+		static Node encode(const Athena::Quaternion& quat)
+		{
+			Node node;
+			node.push_back(quat.w);
+			node.push_back(quat.x);
+			node.push_back(quat.y);
+			node.push_back(quat.z);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+
+		static bool decode(const Node& node, Athena::Quaternion& quat)
+		{
+			if (!node.IsSequence() || node.size() != 4)
+				return false;
+
+			quat.w = node[0].as<float>();
+			quat.x = node[1].as<float>();
+			quat.y = node[2].as<float>();
+			quat.z = node[3].as<float>();
+			return true;
+		}
+	};
+
+	template <>
 	struct convert<Athena::LinearColor>
 	{
 		static Node encode(const Athena::LinearColor& color)
@@ -106,6 +135,14 @@ namespace YAML
 	{
 		out << Flow;
 		out << BeginSeq << vec3.x << vec3.y << vec3.z << EndSeq;
+
+		return out;
+	}
+
+	Emitter& operator<<(Emitter& out, const Athena::Quaternion& quat)
+	{
+		out << Flow;
+		out << BeginSeq << quat.w << quat.x << quat.y << quat.z << EndSeq;
 
 		return out;
 	}
@@ -199,7 +236,10 @@ namespace Athena
 		const auto& envNode = data["Environment"];
 		if (envNode)
 		{
-			environment->EnvironmentMap = EnvironmentMap::Create(envNode["EnvMap FilePath"].as<String>());
+			FilePath envPath = envNode["EnvMap FilePath"].as<String>();
+			if(!envPath.empty())
+				environment->EnvironmentMap = EnvironmentMap::Create(envPath);
+
 			environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
 			environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
 			environment->Exposure = envNode["Exposure"].as<float>();
@@ -236,7 +276,7 @@ namespace Athena
 					{
 						auto& transform = deserializedEntity.GetComponent<TransformComponent>();
 						transform.Translation = transformComponentNode["Translation"].as<Vector3>();
-						transform.Rotation = transformComponentNode["Rotation"].as<Vector3>();
+						transform.Rotation = transformComponentNode["Rotation"].as<Quaternion>();
 						transform.Scale = transformComponentNode["Scale"].as<Vector3>();
 					}
 				}

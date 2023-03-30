@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Layer.h"
 
-#include "Athena/Input/Events/Event.h"
+#include "Athena/Input/Event.h"
 
 
 namespace Athena

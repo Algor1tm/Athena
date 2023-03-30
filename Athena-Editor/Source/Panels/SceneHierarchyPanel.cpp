@@ -575,7 +575,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawVec3Controller("Translation", transform.Translation, 0.0f, height);
-					Vector3 degrees = Math::Degrees(transform.Rotation);
+					Vector3 degrees = Math::Degrees(transform.Rotation.EulerAngles());
 					UI::DrawVec3Controller("Rotation", degrees, 0.0f, height);
 					transform.Rotation = Math::Radians(degrees);
 					UI::DrawVec3Controller("Scale", transform.Scale, 1.0f, height);

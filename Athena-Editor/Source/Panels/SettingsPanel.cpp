@@ -144,6 +144,7 @@ namespace Athena
 		if (UI::BeginTreeNode("Shadows"))
 		{
 			auto settings = Renderer::GetShadowSettings();
+			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.EnableShadows);
 			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.SoftShadows);
 			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.LightSize, 0.025f);
 			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.MaxDistance);

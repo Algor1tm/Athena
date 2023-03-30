@@ -306,26 +306,7 @@ namespace Athena
 		s_Data.Stats.PointLightsCount ++;
 	}
 
-	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform, int32 entityID)
-	{
-		if (vertexBuffer)
-		{
-			DrawCallInfo info;
-			info.VertexBuffer = vertexBuffer;
-			info.Material = material;
-			info.Transform = transform;
-			info.EntityID = entityID;
-
-			s_Data.GeometryQueue.Push(info);
-			s_Data.Stats.GeometryCount++;
-		}
-		else
-		{
-			ATN_CORE_WARN("Renderer::Submit(): Attempt to submit nullptr vertexBuffer!");
-		}
-	}
-
-	void Renderer::SubmitWithAnimation(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
+	void Renderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
 	{
 		if (vertexBuffer)
 		{
@@ -410,20 +391,19 @@ namespace Athena
 		s_Data.ShadowsDataBuffer.MaxDistance = s_Data.ShadowSettings.MaxDistance;
 		s_Data.ShadowsDataBuffer.FadeOut = s_Data.ShadowSettings.FadeOut;
 
-		if( s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
+		if(s_Data.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
 		{
 			ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
 			s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
 
 			RenderGeometry(SHADOW_MAP_GEN, false);
 		}
-
-		RenderCommand::SetCullMode(CullFace::BACK);
 	}
 
 	void Renderer::GeometryPass()
 	{
 		s_Data.MainFramebuffer->Bind();
+		RenderCommand::SetCullMode(CullFace::BACK);
 
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
@@ -729,26 +709,38 @@ namespace Athena
 		{
 		case Antialising::NONE:
 		{
-			desc.Samples = 1;
-			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			if (desc.Samples != 1)
+			{
+				desc.Samples = 1;
+				s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			}
 			break;
 		}
 		case Antialising::MSAA_2X:
 		{
-			desc.Samples = 2;
-			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			if (desc.Samples != 2)
+			{
+				desc.Samples = 2;
+				s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			}
 			break;
 		}
 		case Antialising::MSAA_4X:
 		{
-			desc.Samples = 4;
-			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			if (desc.Samples != 4)
+			{
+				desc.Samples = 4;
+				s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			}
 			break;
 		}
 		case Antialising::MSAA_8X:
 		{
-			desc.Samples = 8;
-			s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			if (desc.Samples != 8)
+			{
+				desc.Samples = 8;
+				s_Data.MainFramebuffer = Framebuffer::Create(desc);
+			}
 			break;
 		}
 		}

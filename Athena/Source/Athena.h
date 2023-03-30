@@ -16,10 +16,10 @@
 
 
 // --------Input--------------------
-#include "Athena/Input/Events/ApplicationEvent.h"
-#include "Athena/Input/Events/Event.h"
-#include "Athena/Input/Events/KeyEvent.h"
-#include "Athena/Input/Events/MouseEvent.h"
+#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/Event.h"
+#include "Athena/Input/KeyEvent.h"
+#include "Athena/Input/MouseEvent.h"
 
 #include "Athena/Input/Input.h"
 #include "Athena/Input/Keyboard.h"

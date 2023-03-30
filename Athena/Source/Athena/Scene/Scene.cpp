@@ -539,14 +539,10 @@ namespace Athena
 					Ref<Material> material = MaterialManager::Get(subMeshes[i].MaterialName);
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
-					if (animator != nullptr && animator->IsPlaying())
-					{
-						Renderer::SubmitWithAnimation(subMeshes[i].VertexBuffer, material, animator->IsPlaying() ? animator : nullptr, transform.AsMatrix(), (int32)entity);
-					}
+					if(animator != nullptr && animator->IsPlaying())
+						Renderer::Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
 					else
-					{
-						Renderer::Submit(subMeshes[i].VertexBuffer, material, transform.AsMatrix(), (int32)entity);
-					}
+						Renderer::Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
 				}
 			}
 		}
@@ -555,7 +551,7 @@ namespace Athena
 		for (auto entity : dirLights)
 		{
 			auto [transform, light] = dirLights.get<TransformComponent, DirectionalLightComponent>(entity);
-			Vector3 direction = Vector3::Forward() * Math::RotateMatrix(1.f, transform.Rotation.GetNormalized());
+			Vector3 direction = transform.Rotation * Vector3::Forward();
 			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}
@@ -571,7 +567,7 @@ namespace Athena
 		Renderer::EndScene();
 	}
 
-	Matrix4 Scene::GetWorldTransform(entt::entity enttentity)
+	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)
 	{
 		Entity entity = { enttentity, this };
 		return entity.GetWorldTransform();

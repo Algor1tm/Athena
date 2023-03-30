@@ -3,8 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
-#include "Athena/Input/Events/Event.h"
-#include "Athena/Input/Events/MouseEvent.h"
+#include "Athena/Input/Event.h"
+#include "Athena/Input/MouseEvent.h"
 
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Vector.h"

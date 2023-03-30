@@ -51,7 +51,7 @@ namespace py = pybind11;
 namespace Athena
 {
 #pragma region LOG
-    class PyLog
+    class Python_Log
     {
     public:
         static void Trace(const std::string& message)
@@ -84,7 +84,7 @@ namespace Athena
 
 
 #pragma region INPUT
-    class PyInput
+    class Python_Input
     {
     public:
         static bool IsKeyPressed(uint16 keyCode)
@@ -107,10 +107,10 @@ namespace Athena
 
 
 #pragma region COMPONENTS
-    class PyComponent
+    class Python_Component
     {
     public:
-        PyComponent(UUID id = 0)
+        Python_Component(UUID id = 0)
             : _EntityID(id) {}
 
     protected:
@@ -127,11 +127,11 @@ namespace Athena
         UUID _EntityID;
     };
 
-    class PyTransformComponent : public PyComponent
+    class Python_TransformComponent : public Python_Component
     {
     public:
-        PyTransformComponent(UUID id = 0)
-            : PyComponent(id) {}
+        Python_TransformComponent(UUID id = 0)
+            : Python_Component(id) {}
 
         bool _HasThisComponent() { return GetEntity().HasComponent<TransformComponent>(); }
 
@@ -141,15 +141,15 @@ namespace Athena
         void SetScale(const Vector3& scale) { GetEntity().GetComponent<TransformComponent>().Scale = scale; }
         const Vector3& GetScale() { return GetEntity().GetComponent<TransformComponent>().Scale; }
         
-        void SetRotation(const Vector3& rotation) { GetEntity().GetComponent<TransformComponent>().Rotation = rotation; }
-        const Vector3& GetRotation() { return GetEntity().GetComponent<TransformComponent>().Rotation; }
+        void SetRotation(const Quaternion& rotation) { GetEntity().GetComponent<TransformComponent>().Rotation = rotation; }
+        const Quaternion& GetRotation() { return GetEntity().GetComponent<TransformComponent>().Rotation; }
     };
 
-    class PyRigidbody2DComponent : public PyComponent
+    class Python_Rigidbody2DComponent : public Python_Component
     {
     public:
-        PyRigidbody2DComponent(UUID id = 0)
-            : PyComponent(id) {}
+        Python_Rigidbody2DComponent(UUID id = 0)
+            : Python_Component(id) {}
 
 
         bool _HasThisComponent() { return GetEntity().HasComponent<Rigidbody2DComponent>(); }
@@ -201,7 +201,7 @@ namespace Athena
         handle.doc() = "Internal Athena Core Calls";
 
 
-#pragma region VECTORS
+#pragma region MATH
         py::class_<Vector2>(handle, "Vector2")
             .def(py::init([]() {return Vector2(0, 0); }))
             .def(py::init<float, float>())
@@ -245,24 +245,34 @@ namespace Athena
             .def("Normalize", &Vector4::Normalize)
             .def("Dot", (float (*)(const Vector4&, const Vector4&))Math::Dot)
             .def("__repr__", [](Vector4 vec4) { return Athena::ToString(vec4); });
-#pragma endregion VECTORS
+
+        py::class_<Quaternion>(handle, "Quaternion")
+            .def(py::init([]() {return Quaternion(1, 0, 0, 0); }))
+            .def(py::init<Vector3>())
+            .def(py::init<Vector4>())
+            .def_readwrite("w", &Quaternion::w)
+            .def_readwrite("x", &Quaternion::x)
+            .def_readwrite("y", &Quaternion::y)
+            .def_readwrite("z", &Quaternion::z)
+            .def("__repr__", [](Quaternion quat) { return Athena::ToString(quat); });
+#pragma endregion MATH
 
 
 #pragma region LOG
-        py::class_<PyLog>(handle, "Log")
-            .def("Trace", static_cast<void (*)(const std::string&)>(PyLog::Trace))
-            .def("Info", static_cast<void (*)(const std::string&)>(PyLog::Info))
-            .def("Warn", static_cast<void (*)(const std::string&)>(PyLog::Warn))
-            .def("Error", static_cast<void (*)(const std::string&)>(PyLog::Error))
-            .def("Fatal", static_cast<void (*)(const std::string&)>(PyLog::Fatal));
+        py::class_<Python_Log>(handle, "Log")
+            .def("Trace", static_cast<void (*)(const std::string&)>(Python_Log::Trace))
+            .def("Info", static_cast<void (*)(const std::string&)>(Python_Log::Info))
+            .def("Warn", static_cast<void (*)(const std::string&)>(Python_Log::Warn))
+            .def("Error", static_cast<void (*)(const std::string&)>(Python_Log::Error))
+            .def("Fatal", static_cast<void (*)(const std::string&)>(Python_Log::Fatal));
 #pragma endregion LOG
 
 
 #pragma region INPUT
-        py::class_<PyInput>(handle, "Input")
-            .def("IsKeyPressed", static_cast<bool (*)(uint16)>(PyInput::IsKeyPressed))
-            .def("IsMouseButtonPressed", static_cast<bool (*)(uint16)>(PyInput::IsMouseButtonPressed))
-            .def("GetMousePosition", static_cast<Vector2 (*)()>(PyInput::GetMousePosition));
+        py::class_<Python_Input>(handle, "Input")
+            .def("IsKeyPressed", static_cast<bool (*)(uint16)>(Python_Input::IsKeyPressed))
+            .def("IsMouseButtonPressed", static_cast<bool (*)(uint16)>(Python_Input::IsMouseButtonPressed))
+            .def("GetMousePosition", static_cast<Vector2 (*)()>(Python_Input::GetMousePosition));
 #pragma endregion INPUT
 
 
@@ -287,25 +297,24 @@ namespace Athena
 
 
 #pragma region COMPONENTS
-        py::class_<PyComponent>(handle, "Component")
+        py::class_<Python_Component>(handle, "Component")
             .def(py::init<>())
             .def(py::init<UUID>());
 
-        py::class_<PyTransformComponent, PyComponent>(handle, "TransformComponent")
+        py::class_<Python_TransformComponent, Python_Component>(handle, "TransformComponent")
             .def(py::init<>())
             .def(py::init<UUID>())
-            .def("_HasThisComponent", &PyTransformComponent::_HasThisComponent)
-            .def_property("Translation", &PyTransformComponent::GetTranslation, &PyTransformComponent::SetTranslation)
-            .def_property("Scale", &PyTransformComponent::GetScale, &PyTransformComponent::SetScale)
-            .def_property("Rotation", &PyTransformComponent::GetRotation, &PyTransformComponent::SetRotation);
+            .def("_HasThisComponent", &Python_TransformComponent::_HasThisComponent)
+            .def_property("Translation", &Python_TransformComponent::GetTranslation, &Python_TransformComponent::SetTranslation)
+            .def_property("Scale", &Python_TransformComponent::GetScale, &Python_TransformComponent::SetScale)
+            .def_property("Rotation", &Python_TransformComponent::GetRotation, &Python_TransformComponent::SetRotation);
 
-        py::class_<PyRigidbody2DComponent, PyComponent>(handle, "Rigidbody2DComponent")
+        py::class_<Python_Rigidbody2DComponent, Python_Component>(handle, "Rigidbody2DComponent")
             .def(py::init<>())
             .def(py::init<UUID>())
-            .def("_HasThisComponent", &PyRigidbody2DComponent::_HasThisComponent)
-            .def("ApplyLinearImpulse", &PyRigidbody2DComponent::ApplyLinearImpulse)
-            .def("ApplyLinearImpulseToCenter", &PyRigidbody2DComponent::ApplyLinearImpulseToCenter);
+            .def("_HasThisComponent", &Python_Rigidbody2DComponent::_HasThisComponent)
+            .def("ApplyLinearImpulse", &Python_Rigidbody2DComponent::ApplyLinearImpulse)
+            .def("ApplyLinearImpulseToCenter", &Python_Rigidbody2DComponent::ApplyLinearImpulseToCenter);
 #pragma endregion COMPONENTS
     }
 }
-

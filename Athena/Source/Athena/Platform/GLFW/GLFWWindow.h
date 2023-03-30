@@ -4,9 +4,9 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/Input/Events/ApplicationEvent.h"
-#include "Athena/Input/Events/KeyEvent.h"
-#include "Athena/Input/Events/MouseEvent.h"
+#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/KeyEvent.h"
+#include "Athena/Input/MouseEvent.h"
 
 #include  "Athena/Platform/OpenGL/GLGraphicsContext.h"
 

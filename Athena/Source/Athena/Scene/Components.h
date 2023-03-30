@@ -35,7 +35,7 @@ namespace Athena
 	struct TransformComponent
 	{
 		Vector3 Translation = { 0.f, 0.f, 0.f };
-		Vector3 Rotation = { 0.f, 0.f, 0.f }; 
+		Quaternion Rotation = { 1.f, 0.f, 0.f, 0.f }; 
 		Vector3 Scale = { 1.f, 1.f, 1.f }; 
 
 		TransformComponent() = default;
@@ -44,7 +44,7 @@ namespace Athena
 
 		Matrix4 AsMatrix() const
 		{
-			return Math::ToMat4(Math::ToQuat(Rotation)).Scale(Scale).Translate(Translation);
+			return Math::ToMat4(Rotation).Scale(Scale).Translate(Translation);
 		}
 	};
 

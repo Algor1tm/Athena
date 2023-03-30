@@ -359,7 +359,7 @@ namespace Athena
             {
                 float distance = Math::Distance(m_EditorCamera->GetPosition(), transform.Translation);
                 float scale = 0.1f * distance;
-                Matrix4 rectTransform = Math::ToMat4(Math::ToQuat(transform.Rotation)).Scale({ scale, scale, scale }).Translate(transform.Translation);
+                Matrix4 rectTransform = Math::ToMat4(transform.Rotation).Scale({ scale, scale, scale }).Translate(transform.Translation);
                 Renderer2D::DrawRect(rectTransform, color, 1);
             }
             else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())

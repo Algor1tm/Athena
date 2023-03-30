@@ -32,8 +32,8 @@ namespace Athena
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "Resources/Icons/Logo/no-background";
 		appdesc.API = RendererAPI::OpenGL;
-		appdesc.UseConsole = true;
-		appdesc.UseImGui = true;
+		appdesc.EnableConsole = true;
+		appdesc.EnableImGui = true;
 		appdesc.WorkingDirectory = FilePath();
 		appdesc.ScriptsFolder = "Assets/Scripts";
 

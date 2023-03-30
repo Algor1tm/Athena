@@ -26,7 +26,7 @@ namespace Athena
 		if (appdesc.WorkingDirectory != FilePath())
 			FileSystem::SetWorkingDirectory(appdesc.WorkingDirectory);
 
-		appdesc.UseConsole ? Log::Init() : Log::InitWithoutConsole();
+		appdesc.EnableConsole ? Log::Init() : Log::InitWithoutConsole();
 			
 		m_Window = Window::Create(appdesc.WindowDesc);
 		Renderer::Init(appdesc.API);
@@ -36,7 +36,7 @@ namespace Athena
 		if (m_Window->GetWindowMode() != WindowMode::Default)
 			Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
 
-		if (appdesc.UseImGui)
+		if (appdesc.EnableImGui)
 		{
 			m_ImGuiLayer = ImGuiLayer::Create();
 			PushOverlay(m_ImGuiLayer);

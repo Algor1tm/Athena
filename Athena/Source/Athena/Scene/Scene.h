@@ -30,6 +30,8 @@ namespace Athena
 	class ATHENA_API Environment;
 	class ATHENA_API Entity;
 
+	class TransformComponent;
+
 
 	class ATHENA_API Scene
 	{
@@ -86,7 +88,7 @@ namespace Athena
 		void RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform);
 		void RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far);
 
-		Matrix4 GetWorldTransform(entt::entity entity);
+		TransformComponent GetWorldTransform(entt::entity entity);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

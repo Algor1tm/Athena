@@ -24,8 +24,7 @@ namespace Athena
 	{
 		if (HasComponent<ChildComponent>())
 		{
-			Entity parent = GetComponent<ChildComponent>().Parent;
-			const TransformComponent& parentTransform = parent.GetWorldTransform();
+			const TransformComponent& parentTransform = GetComponent<ChildComponent>().Parent.GetWorldTransform();
 			const TransformComponent& currentTransform = GetComponent<TransformComponent>();
 
 			TransformComponent combined;

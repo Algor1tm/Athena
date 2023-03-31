@@ -187,9 +187,10 @@ namespace Athena
 		out << YAML::Key << "Environment";
 		out << YAML::BeginMap;
 
-		if (env->EnvironmentMap)
+		if (env)
 		{
-			out << YAML::Key << "EnvMap FilePath" << env->EnvironmentMap->GetFilePath().string();
+			String filepath = env->EnvironmentMap ? env->EnvironmentMap->GetFilePath().string() : "";
+			out << YAML::Key << "EnvMap FilePath" << filepath;
 			out << YAML::Key << "Ambient Light Intensity" << YAML::Value << env->AmbientLightIntensity;
 			out << YAML::Key << "EnvMap LOD" << YAML::Value << env->EnvironmentMapLOD;
 			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
@@ -268,7 +269,16 @@ namespace Athena
 						name = tagComponentNode["Tag"].as<String>();
 				}
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
+				Entity deserializedEntity;
+				if (name == "Scene Root")
+				{
+					deserializedEntity = m_Scene->GetRootEntity();
+					m_Scene->SetEntityUUID(deserializedEntity, uuid);
+				}
+				else
+				{
+					deserializedEntity = m_Scene->CreateEntity(name, uuid);
+				}
 
 				{
 					const auto& transformComponentNode = entityNode["TransformComponent"];
@@ -438,6 +448,30 @@ namespace Athena
 					}
 				}
 			}
+
+			for (const auto& entityNode : entities)
+			{
+				uint64 uuid = 0;
+				{
+					const auto& uuidComponentNode = entityNode["IDComponent"];
+					if (uuidComponentNode)
+						uuid = uuidComponentNode["ID"].as<uint64>();
+				}
+
+				Entity entity = m_Scene->GetEntityByUUID(uuid);
+				
+				{
+					const auto& childComponentNode = entityNode["ChildComponent"];
+					if (childComponentNode)
+					{
+						UUID parentID = childComponentNode["Parent"].as<uint64>();
+						Entity parent = m_Scene->GetEntityByUUID(parentID);
+
+						if (parent)
+							m_Scene->MakeParent(parent, entity);
+					}
+				}
+			}
 		}
 
 		return true;
@@ -490,6 +524,13 @@ namespace Athena
 				output << YAML::Key << "Translation" << YAML::Value << transform.Translation;
 				output << YAML::Key << "Rotation" << YAML::Value << transform.Rotation;
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
+			});
+
+		SerializeComponent<ChildComponent>(out, "ChildComponent", entity,
+			[](YAML::Emitter& output, const ChildComponent& childCmp)
+			{
+				uint64 parentID = (uint64)childCmp.Parent.GetComponent<IDComponent>().ID;
+				output << YAML::Key << "Parent" << YAML::Value << parentID;
 			});
 
 		SerializeComponent<ScriptComponent>(out, "ScriptComponent", entity,

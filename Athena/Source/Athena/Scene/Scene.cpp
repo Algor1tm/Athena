@@ -249,6 +249,12 @@ namespace Athena
 		children.push_back(child);
 	}
 
+	void Scene::SetEntityUUID(Entity entity, UUID newID)
+	{
+		entity.GetComponent<IDComponent>().ID = newID;
+		m_EntityMap[newID] = entity;
+	}
+
 	Entity Scene::GetEntityByUUID(UUID uuid)
 	{
 		ATN_CORE_ASSERT(m_EntityMap.find(uuid) != m_EntityMap.end());
@@ -327,15 +333,15 @@ namespace Athena
 		SceneCamera* mainCamera = nullptr;
 		TransformComponent cameraTransform;
 		{
-			auto group = m_Registry.group<CameraComponent>(entt::get<TransformComponent>);
-			for (auto entity : group)
+			auto cameras = m_Registry.view<CameraComponent>();
+			for (auto entity : cameras)
 			{
-				auto [camera, transformComponent] = group.get<CameraComponent, TransformComponent>(entity);
+				auto& camera = cameras.get<CameraComponent>(entity);
 
 				if (camera.Primary)
 				{
 					mainCamera = &camera.Camera;
-					cameraTransform = transformComponent;
+					cameraTransform = GetWorldTransform(entity);
 					break;
 				}
 			}
@@ -417,14 +423,15 @@ namespace Athena
 	void Scene::OnPhysics2DStart()
 	{
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
-		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([this](auto entityID, auto& rb2d, auto& transform)
+		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
 			{
 				Entity entity = Entity(entityID, this);
+				TransformComponent transform = entity.GetWorldTransform();
 
 				b2BodyDef bodyDef;
 				bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
 				bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
-				bodyDef.angle = transform.Rotation.z;
+				bodyDef.angle = transform.Rotation.EulerAngles().z;
 
 				b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
 				body->SetFixedRotation(rb2d.FixedRotation);
@@ -471,14 +478,26 @@ namespace Athena
 		constexpr uint32 positionIterations = 2;
 		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
-		m_Registry.view<Rigidbody2DComponent, TransformComponent>().each([](auto entityID, auto& rb2d, auto& transform)
-			{
-				b2Body* body = reinterpret_cast<b2Body*>(rb2d.RuntimeBody);
-				const auto& position = body->GetPosition();
-				transform.Translation.x = position.x;
-				transform.Translation.y = position.y;
-				transform.Rotation.z = body->GetAngle();
-			});
+		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent>();
+		for (auto entityID : rigidBodies2D)
+		{
+			Entity entity = { entityID, this };
+			TransformComponent oldWorldTransform = entity.GetWorldTransform();
+			TransformComponent newWorldTransform = oldWorldTransform;
+
+			const auto& rb2D = rigidBodies2D.get<Rigidbody2DComponent>(entity);
+
+			b2Body* body = reinterpret_cast<b2Body*>(rb2D.RuntimeBody);
+			const auto& position = body->GetPosition();
+			newWorldTransform.Translation.x = position.x;
+			newWorldTransform.Translation.y = position.y;
+
+			Vector3 eulerAngles = oldWorldTransform.Rotation.EulerAngles();
+			eulerAngles.z = body->GetAngle();
+			newWorldTransform.Rotation = Quaternion(eulerAngles);
+
+			entity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, oldWorldTransform);
+		}
 	}
 
 	void Scene::RenderEditorScene(const EditorCamera& camera)
@@ -505,18 +524,20 @@ namespace Athena
 	{
 		Renderer2D::BeginScene(view, proj);
 
-		auto quads = GetAllEntitiesWith<TransformComponent, SpriteComponent>();
+		auto quads = GetAllEntitiesWith<SpriteComponent>();
 		for (auto entity : quads)
 		{
-			auto [transform, sprite] = quads.get<TransformComponent, SpriteComponent>(entity);
+			auto transform = GetWorldTransform(entity);
+			const auto& sprite = quads.get<SpriteComponent>(entity);
 
 			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 		}
 
-		auto circles = GetAllEntitiesWith<TransformComponent, CircleComponent>();
+		auto circles = GetAllEntitiesWith<CircleComponent>();
 		for (auto entity : circles)
 		{
-			auto [transform, circle] = circles.get<TransformComponent, CircleComponent>(entity);
+			auto transform = GetWorldTransform(entity);
+			const auto& circle = circles.get<CircleComponent>(entity);
 
 			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
 		}
@@ -526,10 +547,11 @@ namespace Athena
 
 		Renderer::BeginScene({ view, proj, near, far }, m_Environment);
 
-		auto staticMeshes = GetAllEntitiesWith<TransformComponent, StaticMeshComponent>();
+		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
 		for (auto entity : staticMeshes)
 		{
-			auto [transform, meshComponent] = staticMeshes.get<TransformComponent, StaticMeshComponent>(entity);
+			auto transform = GetWorldTransform(entity);
+			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
 
 			if (!meshComponent.Hide)
 			{
@@ -547,19 +569,23 @@ namespace Athena
 			}
 		}
 
-		auto dirLights = GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
+		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
 		for (auto entity : dirLights)
 		{
-			auto [transform, light] = dirLights.get<TransformComponent, DirectionalLightComponent>(entity);
+			auto transform = GetWorldTransform(entity);
+			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
+
 			Vector3 direction = transform.Rotation * Vector3::Forward();
 			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
 			Renderer::SubmitLight(dirLight);
 		}
 
-		auto pointLights = GetAllEntitiesWith<TransformComponent, PointLightComponent>();
+		auto pointLights = GetAllEntitiesWith<PointLightComponent>();
 		for (auto entity : pointLights)
 		{
-			auto [transform, light] = pointLights.get<TransformComponent, PointLightComponent>(entity);
+			auto transform = GetWorldTransform(entity);
+			const auto& light = pointLights.get<PointLightComponent>(entity);
+
 			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
 			Renderer::SubmitLight(pointLight);
 		}

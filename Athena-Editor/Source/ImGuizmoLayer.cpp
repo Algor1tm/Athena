@@ -24,8 +24,8 @@ namespace Athena
             const Matrix4& cameraProjection = m_pCamera->GetProjectionMatrix();
             const Matrix4& cameraView = m_pCamera->GetViewMatrix();
 
-            auto& tc = m_ActiveEntity.GetComponent<TransformComponent>();
-            Matrix4 transform = tc.AsMatrix();
+            TransformComponent worldTransform = m_ActiveEntity.GetWorldTransform();
+            Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
 
             bool snap = Input::IsKeyPressed(Keyboard::LCtrl);
             float snapValue = 0.5f;
@@ -35,17 +35,20 @@ namespace Athena
             Vector3 snapValues = Vector3(snapValue);
 
             ImGuizmo::Manipulate(cameraView.Data(), cameraProjection.Data(),
-                m_GuizmoOperation, ImGuizmo::LOCAL, transform.Data(),
+                m_GuizmoOperation, ImGuizmo::LOCAL, worldTransformMatrix.Data(),
                 nullptr, snap ? snapValues.Data() : nullptr);
 
             if (ImGuizmo::IsUsing())
             {
                 Vector3 translation, rotation, scale;
-                Math::DecomposeTransform(transform, translation, rotation, scale);
+                Math::DecomposeTransform(worldTransformMatrix, translation, rotation, scale);
 
-                tc.Translation = translation;
-                tc.Rotation = rotation;
-                tc.Scale = scale;
+                TransformComponent newWorldTransform;
+                newWorldTransform.Translation = translation;
+                newWorldTransform.Rotation = rotation;
+                newWorldTransform.Scale = scale;
+
+                m_ActiveEntity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, worldTransform);
             }
         }
 	}

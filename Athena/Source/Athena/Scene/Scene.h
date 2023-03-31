@@ -54,6 +54,7 @@ namespace Athena
 		Entity DuplicateEntity(Entity entity);
 		void MakeParent(Entity parent, Entity child);
 
+		void SetEntityUUID(Entity entity, UUID newID);
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 

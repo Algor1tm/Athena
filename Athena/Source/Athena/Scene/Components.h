@@ -35,8 +35,8 @@ namespace Athena
 	struct TransformComponent
 	{
 		Vector3 Translation = { 0.f, 0.f, 0.f };
-		Quaternion Rotation = { 1.f, 0.f, 0.f, 0.f }; 
-		Vector3 Scale = { 1.f, 1.f, 1.f }; 
+		Quaternion Rotation = { 1.f, 0.f, 0.f, 0.f };
+		Vector3 Scale = { 1.f, 1.f, 1.f };
 
 		TransformComponent() = default;
 		TransformComponent(const Vector3& position)
@@ -45,6 +45,27 @@ namespace Athena
 		Matrix4 AsMatrix() const
 		{
 			return Math::ToMat4(Rotation).Scale(Scale).Translate(Translation);
+		}
+
+		TransformComponent Inverse() const
+		{
+			TransformComponent result;
+			result.Translation = -Translation;
+			result.Rotation = Rotation.GetInversed();
+			result.Scale = Vector3(1.f) / Scale;
+
+			return result;
+		}
+
+		TransformComponent& UpdateFromWorldTransforms(const TransformComponent& newWorldTransform, const TransformComponent& oldWorldTransform)
+		{
+			TransformComponent inverseOldWorldTransform = oldWorldTransform.Inverse();
+
+			Translation = Translation + (inverseOldWorldTransform.Translation + newWorldTransform.Translation);
+			Rotation = Rotation * (inverseOldWorldTransform.Rotation * newWorldTransform.Rotation);
+			Scale = Scale * (inverseOldWorldTransform.Scale * newWorldTransform.Scale);
+
+			return *this;
 		}
 	};
 

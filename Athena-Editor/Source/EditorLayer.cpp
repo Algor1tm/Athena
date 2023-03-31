@@ -353,20 +353,20 @@ namespace Athena
         if (m_SelectedEntity)
         {
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
-            const TransformComponent& transform = m_SelectedEntity.GetComponent<TransformComponent>();
+            TransformComponent worldTransform = m_SelectedEntity.GetWorldTransform();
 
             if (m_SelectedEntity.HasComponent<CameraComponent>())
             {
-                float distance = Math::Distance(m_EditorCamera->GetPosition(), transform.Translation);
+                float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
                 float scale = 0.1f * distance;
-                Matrix4 rectTransform = Math::ToMat4(transform.Rotation).Scale({ scale, scale, scale }).Translate(transform.Translation);
+                Matrix4 rectTransform = Math::ToMat4(worldTransform.Rotation).Scale({ scale, scale, scale }).Translate(worldTransform.Translation);
                 Renderer2D::DrawRect(rectTransform, color, 1);
             }
             else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
             {
                 const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
                 
-                AABB transformedBox = box.Transform(transform.AsMatrix());
+                AABB transformedBox = box.Transform(worldTransform.AsMatrix());
 
                 Vector3 min = transformedBox.GetMinPoint();
                 Vector3 max = transformedBox.GetMaxPoint();
@@ -392,11 +392,11 @@ namespace Athena
             }
             else if(m_SelectedEntity.HasComponent<SpriteComponent>() || m_SelectedEntity.HasComponent<CircleComponent>())
             {
-                Renderer2D::DrawRect(transform.AsMatrix(), color, 8.f);
+                Renderer2D::DrawRect(worldTransform.AsMatrix(), color, 8.f);
             }
             else if (m_SelectedEntity.HasComponent<PointLightComponent>())
             {
-                const Vector3& position = transform.Translation;
+                const Vector3& position = worldTransform.Translation;
                 float radius = m_SelectedEntity.GetComponent<PointLightComponent>().Radius;
 
                 constexpr float step = Math::Radians(10.f);

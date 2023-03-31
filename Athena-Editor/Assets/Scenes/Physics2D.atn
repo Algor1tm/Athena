@@ -8,6 +8,8 @@ Entities:
       Translation: [1.20623374, 2.22375774, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.300000012, 0.300000012, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     CircleComponent:
       Color: [1, 0.419607848, 1, 1]
       Thickness: 0.280000001
@@ -30,6 +32,8 @@ Entities:
       Translation: [-0.684216499, 1.60174191, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.249983385, 0.249983385, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     ScriptComponent:
       Name: Player
     SpriteComponent:
@@ -59,6 +63,8 @@ Entities:
       Translation: [0.83119148, 0.716150045, 0]
       Rotation: [0.952876866, 0, 0, 0.303357393]
       Scale: [1.48494434, 0.149999946, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 1]
       Texture: ""
@@ -86,6 +92,8 @@ Entities:
       Translation: [-0.901905596, 1.03991985, 0]
       Rotation: [0.966474414, 0, -0, -0.256762832]
       Scale: [1.44000006, 0.150894597, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 1]
       Texture: ""
@@ -113,6 +121,8 @@ Entities:
       Translation: [0, 0.734100044, 3.13647175]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     ScriptComponent:
       Name: Camera
     CameraComponent:
@@ -134,6 +144,8 @@ Entities:
       Translation: [0, -0.402108133, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [3.51358891, 0.211729363, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 1]
       Texture: ""
@@ -161,6 +173,8 @@ Entities:
       Translation: [0.546132624, 1.83025706, 0]
       Rotation: [0.707107842, 0, -0, -0.707105696]
       Scale: [0.299988776, 0.299988776, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 0.371308029, 0.371308029, 1]
       Texture: ""
@@ -188,6 +202,8 @@ Entities:
       Translation: [-2.0226512, 0.84603548, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.0548807308, 2.74392557, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 0.313725501]
       Texture: ""
@@ -215,6 +231,8 @@ Entities:
       Translation: [1.97996998, 0.831014991, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.0500000007, 2.74000001, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 0.313725501]
       Texture: ""
@@ -242,6 +260,8 @@ Entities:
       Translation: [0, 2.39135695, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [3.86834574, 0.0500000007, 1]
+    ChildComponent:
+      Parent: 15931751826525104939
     SpriteComponent:
       Color: [1, 1, 1, 0.313725501]
       Texture: ""
@@ -262,7 +282,7 @@ Entities:
       Restitution: 0
       RestitutionThreshold: 0.5
   - IDComponent:
-      ID: 6048683652377652527
+      ID: 15931751826525104939
     TagComponent:
       Tag: Scene Root
     TransformComponent:

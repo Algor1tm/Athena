@@ -51,6 +51,64 @@ namespace Athena::Math
 			  z(static_cast<T>(vec4.w)) {}
 
 
+		template <typename Q>
+		constexpr Quaternion(const Matrix<Q, 4, 4>& mat4)
+		{
+			T fourXSquaredMinus1 = mat4[0][0] - mat4[1][1] - mat4[2][2];
+			T fourYSquaredMinus1 = mat4[1][1] - mat4[0][0] - mat4[2][2];
+			T fourZSquaredMinus1 = mat4[2][2] - mat4[0][0] - mat4[1][1];
+			T fourWSquaredMinus1 = mat4[0][0] + mat4[1][1] + mat4[2][2];
+
+			int biggestIndex = 0;
+			T fourBiggestSquaredMinus1 = fourWSquaredMinus1;
+			if (fourXSquaredMinus1 > fourBiggestSquaredMinus1)
+			{
+				fourBiggestSquaredMinus1 = fourXSquaredMinus1;
+				biggestIndex = 1;
+			}
+			if (fourYSquaredMinus1 > fourBiggestSquaredMinus1)
+			{
+				fourBiggestSquaredMinus1 = fourYSquaredMinus1;
+				biggestIndex = 2;
+			}
+			if (fourZSquaredMinus1 > fourBiggestSquaredMinus1)
+			{
+				fourBiggestSquaredMinus1 = fourZSquaredMinus1;
+				biggestIndex = 3;
+			}
+
+			T biggestVal = Math::Sqrt(fourBiggestSquaredMinus1 + static_cast<T>(1)) * static_cast<T>(0.5);
+			T mult = static_cast<T>(0.25) / biggestVal;
+
+			switch (biggestIndex)
+			{
+			case 0:
+				w = biggestVal;
+				x = (mat4[1][2] - mat4[2][1]) * mult;
+				y = (mat4[2][0] - mat4[0][2]) * mult;
+				z = (mat4[0][1] - mat4[1][0]) * mult;
+				break;
+			case 1:
+				w = (mat4[1][2] - mat4[2][1]) * mult;
+				x = biggestVal;
+				y = (mat4[0][1] + mat4[1][0]) * mult;
+				z = (mat4[2][0] + mat4[0][2]) * mult;
+				break;
+			case 2:
+				w = (mat4[2][0] - mat4[0][2]) * mult;
+				x = (mat4[0][1] + mat4[1][0]) * mult;
+				y = biggestVal;
+				z = (mat4[1][2] + mat4[2][1]) * mult;
+				break;
+			case 3:
+				w = (mat4[0][1] - mat4[1][0]) * mult;
+				x = (mat4[2][0] + mat4[0][2]) * mult;
+				y = (mat4[1][2] + mat4[2][1]) * mult;
+				z = biggestVal;
+				break;
+			}
+		}
+
 // -------------Public Methods-------------------------------------
 	public:
 		constexpr uint32 Size() const
@@ -152,6 +210,39 @@ namespace Athena::Math
 			result.x = Math::Atan2(T(2.f) * (y * z + x * w), (-sqx - sqy + sqz + sqw));
 			result.y = Math::Asin(T(-2.f) * (x * z - y * w));
 			result.z = Math::Atan2(T(2.f) * (x * y + z * w), (sqx - sqy - sqz + sqw));
+
+			return result;
+		}
+
+		inline Matrix<T, 4, 4> AsMatrix() const
+		{
+			Matrix<T, 4, 4> result;
+			T qxx(x * x);
+			T qyy(y * y);
+			T qzz(z * z);
+			T qxz(x * z);
+			T qxy(x * y);
+			T qyz(y * z);
+			T qwx(w * x);
+			T qwy(w * y);
+			T qwz(w * z);
+
+			result[0][0] = T(1) - T(2) * (qyy + qzz);
+			result[0][1] = T(2) * (qxy + qwz);
+			result[0][2] = T(2) * (qxz - qwy);
+			result[0][3] = T(0);
+
+			result[1][0] = T(2) * (qxy - qwz);
+			result[1][1] = T(1) - T(2) * (qxx + qzz);
+			result[1][2] = T(2) * (qyz + qwx);
+			result[1][3] = T(0);
+
+			result[2][0] = T(2) * (qxz + qwy);
+			result[2][1] = T(2) * (qyz - qwx);
+			result[2][2] = T(1) - T(2) * (qxx + qyy);
+			result[2][3] = T(0);
+
+			result[3] = Vector<T, 4>(0, 0, 0, 1);
 
 			return result;
 		}

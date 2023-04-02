@@ -24,6 +24,16 @@ namespace Athena::Math
 	}
 
 	template <typename T>
+	constexpr Matrix<T, 4, 4> ScaleMatrix(const Vector<T, 3>& vec3)
+	{
+		Matrix<T, 4, 4> out = Matrix<T, 4, 4>::Identity();
+		out[0][0] = vec3.x;
+		out[1][1] = vec3.y;
+		out[2][2] = vec3.z;
+		return out;
+	}
+
+	template <typename T>
 	inline Matrix<T, 4, 4> RotateMatrix(float radians, const Vector<T, 3>& axis)
 	{
 		T c = Math::Cos(radians);
@@ -43,7 +53,7 @@ namespace Athena::Math
 		rotateMat[2][0] = temp[2] * axis[0] + s * axis[1];
 		rotateMat[2][1] = temp[2] * axis[1] - s * axis[0];
 		rotateMat[2][2] = c + temp[2] * axis[2];
-		
+
 		const Matrix<T, 4, 4> m = Matrix<T, 4, 4>::Identity();
 		Matrix<T, 4, 4> Result;
 		Result[0] = m[0] * rotateMat[0][0] + m[1] * rotateMat[0][1] + m[2] * rotateMat[0][2];
@@ -55,30 +65,46 @@ namespace Athena::Math
 	}
 
 	template <typename T>
-	constexpr Matrix<T, 4, 4> ScaleMatrix(const Vector<T, 3>& vec3)
+	inline Matrix<T, 4, 4> RotateMatrix(const Quaternion<T>& quat)
 	{
-		Matrix<T, 4, 4> out = Matrix<T, 4, 4>::Identity();
-		out[0][0] = vec3.x;
-		out[1][1] = vec3.y;
-		out[2][2] = vec3.z;
-		return out;
+		return quat.AsMatrix();
 	}
 
 	template <typename T>
-	inline Quaternion<T> RotateQuat(T radians, const Vector<T, 3>& axis)
+	inline Matrix<T, 4, 4> RotateMatrix(const Vector<T, 3>& eulerAngles)
 	{
-		Vector<T, 3> tmp = axis;
+		T c1 = Math::Cos(-eulerAngles.x);
+		T c2 = Math::Cos(-eulerAngles.y);
+		T c3 = Math::Cos(-eulerAngles.z);
+		T s1 = Math::Sin(-eulerAngles.x);
+		T s2 = Math::Sin(-eulerAngles.y);
+		T s3 = Math::Sin(-eulerAngles.z);
 
-		T len = tmp.Length();
-		if (Math::Abs(len - static_cast<T>(1.f)) > static_cast<T>(0.001f))
-		{
-			T oneOverLen = static_cast<T>(1) / len;
-			tmp *= oneOverLen;
-		}
+		Matrix<T, 4, 4> result;
 
-		T sin = Math::Sin(radians * static_cast<T>(0.5));
+		result[0][0] = c2 * c3;
+		result[0][1] = -c1 * s3 + s1 * s2 * c3;
+		result[0][2] = s1 * s3 + c1 * s2 * c3;
+		result[0][3] = static_cast<T>(0);
+		result[1][0] = c2 * s3;
+		result[1][1] = c1 * c3 + s1 * s2 * s3;
+		result[1][2] = -s1 * c3 + c1 * s2 * s3;
+		result[1][3] = static_cast<T>(0);
+		result[2][0] = -s2;
+		result[2][1] = s1 * c2;
+		result[2][2] = c1 * c2;
+		result[2][3] = static_cast<T>(0);
+		result[3][0] = static_cast<T>(0);
+		result[3][1] = static_cast<T>(0);
+		result[3][2] = static_cast<T>(0);
+		result[3][3] = static_cast<T>(1);
+		return result;
+	}
 
-		return Quaternion<T>(Math::Cos(radians * static_cast<T>(0.5)), tmp.x * sin, tmp.y * sin, tmp.z * sin);
+	template <typename T>
+	inline Matrix<T, 4, 4> ConstructTransform(const Vector<T, 3>& translation, const Vector<T, 3>& scale, const Quaternion<T>& rotation)
+	{
+		return RotateMatrix(rotation).Translate(translation).Scale(scale);
 	}
 
 	template <typename T>
@@ -109,37 +135,6 @@ namespace Athena::Math
 			rotation.x = Math::Atan2(-rows[2][0], rows[1][1]);
 			rotation.z = 0;
 		}
-	}
-
-	template <typename T>
-	inline Matrix<T, 4, 4> EulerAngles(T x, T y, T z)
-	{
-		T c1 = Math::Cos(-x);
-		T c2 = Math::Cos(-y);
-		T c3 = Math::Cos(-z);
-		T s1 = Math::Sin(-x);
-		T s2 = Math::Sin(-y);
-		T s3 = Math::Sin(-z);
-
-		Matrix<T, 4, 4> Result;
-
-		Result[0][0] = c2 * c3;
-		Result[0][1] = -c1 * s3 + s1 * s2 * c3;
-		Result[0][2] = s1 * s3 + c1 * s2 * c3;
-		Result[0][3] = static_cast<T>(0);
-		Result[1][0] = c2 * s3;
-		Result[1][1] = c1 * c3 + s1 * s2 * s3;
-		Result[1][2] = -s1 * c3 + c1 * s2 * s3;
-		Result[1][3] = static_cast<T>(0);
-		Result[2][0] = -s2;
-		Result[2][1] = s1 * c2;
-		Result[2][2] = c1 * c2;
-		Result[2][3] = static_cast<T>(0);
-		Result[3][0] = static_cast<T>(0);
-		Result[3][1] = static_cast<T>(0);
-		Result[3][2] = static_cast<T>(0);
-		Result[3][3] = static_cast<T>(1);
-		return Result;
 	}
 
 	template <typename T>

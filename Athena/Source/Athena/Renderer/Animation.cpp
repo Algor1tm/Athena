@@ -116,7 +116,7 @@ namespace Athena
 		Quaternion rotation = GetInterpolatedRotation(keyFrames.RotationKeys, time);
 		Vector3 scale = GetInterpolatedScale(keyFrames.ScaleKeys, time);
 
-		return Math::ToMat4(rotation).Scale(scale).Translate(translation);
+		return Math::ConstructTransform(translation, scale, rotation);
 	}
 	
 	Vector3 Animation::GetInterpolatedTranslation(const std::vector<TranslationKey>& keys, float time)

@@ -15,7 +15,8 @@ namespace Athena
 		GLTextureSampler(const TextureSamplerDescription& desc);
 		~GLTextureSampler();
 
-		virtual void Bind(uint32 slot = 0) const override;
+		virtual void Bind(uint32 slot) const override;
+		virtual void UnBind(uint32 slot) const override;
 
 	private:
 		GLenum m_RendererID;

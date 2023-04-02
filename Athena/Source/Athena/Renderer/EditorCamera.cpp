@@ -114,7 +114,7 @@ namespace Athena
 
 	Quaternion PerspectiveCameraBase::GetOrientation() const
 	{
-		return Math::ToQuat(Vector3(-m_Pitch, -m_Yaw, 0.0f));
+		return Quaternion(Vector3(-m_Pitch, -m_Yaw, 0.0f));
 	}
 
 
@@ -136,7 +136,7 @@ namespace Athena
 	{
 		Vector3 position = CalculatePosition();
 
-		Matrix4 transform = Math::ToMat4(GetOrientation());
+		Matrix4 transform = GetOrientation().AsMatrix();
 		m_ViewMatrix = Math::AffineInverse(transform.Translate(position));
 	}
 
@@ -301,7 +301,7 @@ namespace Athena
 
 	void FirstPersonCamera::RecalculateView()
 	{
-		Matrix4 transform = Math::ToMat4(GetOrientation());
+		Matrix4 transform = GetOrientation().AsMatrix();
 		m_ViewMatrix = Math::AffineInverse(transform.Translate(m_Position));
 	}
 

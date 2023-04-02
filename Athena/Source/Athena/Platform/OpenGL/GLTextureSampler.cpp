@@ -34,4 +34,9 @@ namespace Athena
 	{
 		glBindSampler(slot, m_RendererID);
 	}
+
+	void GLTextureSampler::UnBind(uint32 slot) const
+	{
+		glBindSampler(slot, 0);
+	}
 }

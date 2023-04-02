@@ -359,7 +359,7 @@ namespace Athena
             {
                 float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
                 float scale = 0.1f * distance;
-                Matrix4 rectTransform = Math::ToMat4(worldTransform.Rotation).Scale({ scale, scale, scale }).Translate(worldTransform.Translation);
+                Matrix4 rectTransform = Math::ConstructTransform(worldTransform.Translation, {scale, scale, scale}, worldTransform.Rotation);
                 Renderer2D::DrawRect(rectTransform, color, 1);
             }
             else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
@@ -528,7 +528,7 @@ namespace Athena
         case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
         case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
         case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
-
+        
             //Entities
 		case Keyboard::D: if (ctrl) DuplicateEntity(m_SelectedEntity); break;
         case Keyboard::Escape: if (m_SelectedEntity) SelectEntity({});; break;

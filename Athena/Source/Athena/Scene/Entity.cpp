@@ -25,14 +25,15 @@ namespace Athena
 		if (HasComponent<ChildComponent>())
 		{
 			const TransformComponent& parentTransform = GetComponent<ChildComponent>().Parent.GetWorldTransform();
-			const TransformComponent& currentTransform = GetComponent<TransformComponent>();
+			const TransformComponent& localTransform = GetComponent<TransformComponent>();
 
-			TransformComponent combined;
-			combined.Translation = parentTransform.Translation + currentTransform.Translation;
-			combined.Rotation = parentTransform.Rotation * currentTransform.Rotation;
-			combined.Scale = parentTransform.Scale * currentTransform.Scale;
+			TransformComponent worldTransform;
 
-			return combined;
+			worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
+			worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
+			worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+
+			return worldTransform;
 		}
 
 		return GetComponent<TransformComponent>();

@@ -269,7 +269,8 @@ namespace Athena
 		GeometryPass();
 		DebugViewPass();
 		SkyboxPass();
-
+		
+		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 		s_Data.GeometryQueue.Clear();
 		s_Data.ActiveEnvironment = nullptr;
 

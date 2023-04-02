@@ -44,7 +44,7 @@ namespace Athena
 
 		Matrix4 AsMatrix() const
 		{
-			return Math::ToMat4(Rotation).Scale(Scale).Translate(Translation);
+			return Math::ConstructTransform(Translation, Scale, Rotation);
 		}
 
 		TransformComponent Inverse() const

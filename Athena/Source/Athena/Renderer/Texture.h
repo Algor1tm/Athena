@@ -156,6 +156,7 @@ namespace Athena
 	public:
 		static Ref<TextureSampler> Create(const TextureSamplerDescription& desc);
 		
-		virtual void Bind(uint32 slot = 0) const = 0;
+		virtual void Bind(uint32 slot) const = 0;
+		virtual void UnBind(uint32 slot) const = 0;
 	};
 }

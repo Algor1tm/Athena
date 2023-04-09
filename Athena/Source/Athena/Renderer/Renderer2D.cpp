@@ -13,35 +13,33 @@ namespace Athena
 	struct QuadVertex
 	{
 		Vector3 Position;
+		int EntityID = 0;
 		LinearColor Color;
 		Vector2 TexCoord;
 		float TexIndex;
 		float TilingFactor;
-
-		int EntityID = 0;
 	};
 
 	struct CircleVertex
 	{
 		Vector3 WorldPosition;
+		int EntityID = 0;
 		Vector3 LocalPosition;
 		LinearColor Color;
 		float Thickness;
 		float Fade;
-
-		int EntityID = 0;
 	};
 
 	struct LineVertex
 	{
 		Vector3 Position;
-		LinearColor Color;
-
 		int EntityID = 0;
+		LinearColor Color;
 	};
 
 	struct Renderer2DData
 	{
+		// Max Geometry per batch
 		static const uint32 MaxQuads = 500;
 		static const uint32 MaxQuadVertices = MaxQuads * 4;
 		static const uint32 MaxCircles = 300;
@@ -86,20 +84,23 @@ namespace Athena
 		};
 		CameraData CameraBuffer;
 		Ref<ConstantBuffer> CameraConstantBuffer;
+
+		Ref<Shader> EntityIDShader;
+		bool DrawEntityID = false;
 	};
 
 	static Renderer2DData s_Data;
 
 	void Renderer2D::Init()
 	{
-		BufferLayout layout = 
+		BufferLayout layout =
 		{
 			{ ShaderDataType::Float3, "a_Position"     },
+			{ ShaderDataType::Int,    "a_EntityID"     },
 			{ ShaderDataType::Float4, "a_Color"        },
 			{ ShaderDataType::Float2, "a_TexCoord"     },
 			{ ShaderDataType::Float,  "a_TexIndex"     },
 			{ ShaderDataType::Float,  "a_TilingFactor" },
-			{ ShaderDataType::Int,    "a_EntityID"     } 
 		};
 
 		s_Data.QuadShader = Shader::Create("Assets/Shaders/Renderer2D/Quad");
@@ -133,14 +134,14 @@ namespace Athena
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vBufferDesc);
 
-		layout = 
+		layout =
 		{
 			{ ShaderDataType::Float3, "a_WorldPosition"  },
+			{ ShaderDataType::Int,    "a_EntityID"       },
 			{ ShaderDataType::Float3, "a_LocalPosition"  },
-			{ ShaderDataType::Float4, "a_Color"     },
-			{ ShaderDataType::Float,  "a_Thickness" },
-			{ ShaderDataType::Float,  "a_Fade"      },
-			{ ShaderDataType::Int,    "a_EntityID"  } 
+			{ ShaderDataType::Float4, "a_Color"			 },
+			{ ShaderDataType::Float,  "a_Thickness"		 },
+			{ ShaderDataType::Float,  "a_Fade"			 },
 		};
 
 		s_Data.CircleShader = Shader::Create("Assets/Shaders/Renderer2D/Circle");
@@ -156,11 +157,11 @@ namespace Athena
 		s_Data.CircleVertexBufferBase = new CircleVertex[Renderer2DData::MaxCircleVertices];
 
 
-		layout = 
+		layout =
 		{
 			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Int,    "a_EntityID" },
 			{ ShaderDataType::Float4, "a_Color"    },
-			{ ShaderDataType::Int,    "a_EntityID" }
 		};
 
 		s_Data.LineShader = Shader::Create("Assets/Shaders/Renderer2D/Line");
@@ -176,10 +177,6 @@ namespace Athena
 		s_Data.LineVertexBufferBase = new LineVertex[Renderer2DData::MaxLineVertices];
 
 
-		int32 samplers[Renderer2DData::MaxTextureSlots];
-		for (int32 i = 0; i < std::size(samplers); ++i)
-			samplers[i] = i;
-
 		s_Data.TextureSlots[0] = Renderer::GetWhiteTexture();
 
 		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
@@ -188,6 +185,9 @@ namespace Athena
 		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 
 		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
+
+
+		s_Data.EntityIDShader = Shader::Create("Assets/Shaders/Renderer2D/EntityID");
 	}
 
 	void Renderer2D::Shutdown()
@@ -195,6 +195,11 @@ namespace Athena
 		delete[] s_Data.QuadVertexBufferBase;
 		delete[] s_Data.CircleVertexBufferBase;
 		delete[] s_Data.LineVertexBufferBase;
+	}
+
+	void Renderer2D::EntityIDEnable(bool enable)
+	{
+		s_Data.DrawEntityID = enable;
 	}
 
 	void Renderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
@@ -212,15 +217,22 @@ namespace Athena
 
 	void Renderer2D::Flush()
 	{
+		if (s_Data.DrawEntityID)
+			s_Data.EntityIDShader->Bind();
+
 		if (s_Data.QuadIndexCount)
 		{
 			uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
 
-			for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
-				s_Data.TextureSlots[i]->Bind(i);
+			if (!s_Data.DrawEntityID)
+			{
+				for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
+					s_Data.TextureSlots[i]->Bind(i);
 
-			s_Data.QuadShader->Bind();
+				s_Data.QuadShader->Bind();
+			}
+
 			RenderCommand::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
@@ -230,7 +242,9 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.CircleVertexBufferPointer - (byte*)s_Data.CircleVertexBufferBase;
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
 
-			s_Data.CircleShader->Bind();
+			if (!s_Data.DrawEntityID)
+				s_Data.CircleShader->Bind();
+
 			RenderCommand::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
@@ -240,7 +254,9 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.LineVertexBufferPointer - (byte*)s_Data.LineVertexBufferBase;
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
-			s_Data.LineShader->Bind();
+			if (!s_Data.DrawEntityID)
+				s_Data.LineShader->Bind();
+
 			RenderCommand::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
 			s_Data.Stats.DrawCalls++;
 		}

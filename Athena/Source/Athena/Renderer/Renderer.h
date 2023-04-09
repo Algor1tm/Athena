@@ -23,6 +23,7 @@ namespace Athena
 		PBR,
 		SHADOW_MAP_GEN,
 		SKYBOX,
+		ENTITY_ID,
 
 		EQUIRECTANGULAR_TO_CUBEMAP,
 		IRRADIANCE_MAP_CONVOLUTION,
@@ -115,13 +116,16 @@ namespace Athena
 		static void BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment);
 		static void EndScene();
 
+		static void BeginEntityIDPass();
+		static void FlushEntityIDs();
+		static void EndEntityIDPass();
+
 		static void BeginFrame();
 		static void EndFrame();
 
-		static Ref<Framebuffer> GetMainFramebuffer();
+		static Ref<Framebuffer> GetEntityIDFramebuffer();
+		static Ref<Framebuffer> GetFinalFramebuffer();
 		static void BlitToScreen();
-
-		static Ref<Framebuffer> GetShadowMapFramebuffer();
 
 		static void SubmitLight(const DirectionalLight& dirLight);
 		static void SubmitLight(const PointLight& pointLight);

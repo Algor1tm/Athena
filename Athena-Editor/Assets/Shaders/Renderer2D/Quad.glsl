@@ -1,12 +1,11 @@
 #type VERTEX_SHADER
-#version 430 core
+#version 460 core
 
 layout (location = 0) in vec3 a_Position;
-layout (location = 1) in vec4 a_Color;
-layout (location = 2) in vec2 a_TexCoord;
-layout (location = 3) in float a_TexIndex;
-layout (location = 4) in float a_TilingFactor;
-layout (location = 5) in int a_EntityID;
+layout (location = 2) in vec4 a_Color;
+layout (location = 3) in vec2 a_TexCoord;
+layout (location = 4) in float a_TexIndex;
+layout (location = 5) in float a_TilingFactor;
 
 
 layout(std140, binding = RENDERER2D_CAMERA_BUFFER_BINDER) uniform Camera
@@ -23,7 +22,6 @@ struct VertexOutput
 
 layout (location = 0) out VertexOutput Output;
 layout (location = 3) flat out float v_TexIndex;
-layout (location = 4) flat out int v_EntityID;
 
 
 void main()
@@ -32,7 +30,6 @@ void main()
 	Output.TexCoord = a_TexCoord;
 	Output.TilingFactor = a_TilingFactor;
 	v_TexIndex = a_TexIndex;
-	v_EntityID = a_EntityID;
 
 	gl_Position = u_ViewProjection * vec4(a_Position, 1);
 }
@@ -42,7 +39,6 @@ void main()
 #version 430 core
 			
 layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
 
 struct FragmentInput
 {
@@ -53,7 +49,6 @@ struct FragmentInput
 
 layout (location = 0) in FragmentInput Input;
 layout (location = 3) flat in float v_TexIndex;
-layout (location = 4) flat in int v_EntityID;
 
 
 layout (binding = 0) uniform sampler2D u_Texture[32];
@@ -98,9 +93,5 @@ void main()
 		case 31: TexColor *= texture(u_Texture[31], Input.TexCoord * Input.TilingFactor); break;
 	}
 
-	if (TexColor.a == 0.0)
-		discard;
-
 	out_Color = TexColor;
-	out_EntityID = v_EntityID;
 }

@@ -27,6 +27,7 @@ namespace Athena
 		{ DEBUG_NORMALS, "DEBUG_NORMALS" },
 		{ DEBUG_WIREFRAME, "DEBUG_WIREFRAME" },
 		{ DEBUG_SHOW_CASCADES, "DEBUG_SHOW_CASCADES" },
+		{ ENTITY_ID, "ENTITY_ID" }
 	};
 
 	struct CameraData
@@ -88,6 +89,8 @@ namespace Athena
 	{
 		Ref<Framebuffer> MainFramebuffer;
 		Ref<Framebuffer> ShadowMap;
+		Ref<Framebuffer> EntityIDFramebuffer;
+
 		Ref<TextureSampler> PCF_Sampler;
 
 		RenderQueue GeometryQueue;
@@ -141,9 +144,10 @@ namespace Athena
 		RenderCommand::Init();
 
 		FramebufferDescription fbDesc;
-		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
+		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
+		fbDesc.Layers = 1;
 		fbDesc.Samples = 4;
 
 		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
@@ -151,10 +155,18 @@ namespace Athena
 		fbDesc.Attachments = { TextureFormat::DEPTH32F };
 		fbDesc.Width = s_Data.ShadowMapResolution;
 		fbDesc.Height = s_Data.ShadowMapResolution;
-		fbDesc.Depth = ShaderConstants::SHADOW_CASCADES_COUNT;
+		fbDesc.Layers = ShaderConstants::SHADOW_CASCADES_COUNT;
 		fbDesc.Samples = 1;
 
 		s_Data.ShadowMap = Framebuffer::Create(fbDesc);
+
+		fbDesc.Attachments = { TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
+		fbDesc.Width = 1280;
+		fbDesc.Height = 720;
+		fbDesc.Layers = 1;
+		fbDesc.Samples = 1;
+
+		s_Data.EntityIDFramebuffer = Framebuffer::Create(fbDesc);
 
 		TextureSamplerDescription samplerDesc;
 		samplerDesc.MinFilter = TextureFilter::LINEAR;
@@ -172,6 +184,8 @@ namespace Athena
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SHADOW_MAP_GEN], "Assets/Shaders/ShadowMap");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
 
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[ENTITY_ID], "Assets/Shaders/EntityID");
+
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/EquirectangularToCubemap");
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[IRRADIANCE_MAP_CONVOLUTION], "Assets/Shaders/IrradianceMapConvolution");
 		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER], "Assets/Shaders/EnvironmentMipFilter");
@@ -179,7 +193,6 @@ namespace Athena
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS], "Assets/Shaders/Debug/Normals");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME], "Assets/Shaders/Debug/Wireframe");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_SHOW_CASCADES], "Assets/Shaders/Debug/ShowCascades");
-
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -239,11 +252,12 @@ namespace Athena
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
 		s_Data.MainFramebuffer->Resize(width, height);
-		RenderCommand::SetViewport(0, 0, width, height);
+		s_Data.EntityIDFramebuffer->Resize(width, height);
 	}
 
 	void Renderer::BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment)
 	{
+		s_Data.GeometryQueue.Clear();
 		s_Data.ActiveEnvironment = environment;
 
 		s_Data.CameraDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
@@ -263,19 +277,42 @@ namespace Athena
 
 	void Renderer::EndScene()
 	{
-		s_Data.GeometryQueue.Sort();
-
 		ShadowMapPass();
 		GeometryPass();
 		DebugViewPass();
 		SkyboxPass();
-		
+
+		s_Data.MainFramebuffer->UnBind();
 		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
-		s_Data.GeometryQueue.Clear();
 		s_Data.ActiveEnvironment = nullptr;
 
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
 		s_Data.LightDataBuffer.PointLightCount = 0;
+	}
+
+	void Renderer::BeginEntityIDPass()
+	{
+		s_Data.EntityIDFramebuffer->Bind();
+		RenderCommand::Clear(LinearColor::White);
+		s_Data.EntityIDFramebuffer->ClearAttachment(0, -1);
+	}
+
+	void Renderer::EndEntityIDPass()
+	{
+		s_Data.EntityIDFramebuffer->UnBind();
+	}
+
+	void Renderer::FlushEntityIDs()
+	{
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+		RenderGeometry(ShaderEnum::ENTITY_ID, false);
+	}
+
+	void Renderer::BeginFrame() {}
+	void Renderer::EndFrame()
+	{
+		s_Data.MainFramebuffer->ResolveMutlisampling();
+		s_Data.MainFramebuffer->UnBind();
 	}
 
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
@@ -404,6 +441,7 @@ namespace Athena
 	void Renderer::GeometryPass()
 	{
 		s_Data.MainFramebuffer->Bind();
+		RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
 		RenderCommand::SetCullMode(CullFace::BACK);
 
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
@@ -421,6 +459,7 @@ namespace Athena
 		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
 		s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
+		s_Data.GeometryQueue.Sort();
 		RenderGeometry(PBR, true);
 	}
 
@@ -440,12 +479,15 @@ namespace Athena
 	{
 		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
 		{
+			Matrix4 ogViewMatrix = s_Data.CameraDataBuffer.ViewMatrix;
 			// Remove translation
 			s_Data.CameraDataBuffer.ViewMatrix[3][0] = 0;
 			s_Data.CameraDataBuffer.ViewMatrix[3][1] = 0;
 			s_Data.CameraDataBuffer.ViewMatrix[3][2] = 0;
 
 			s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+			s_Data.CameraDataBuffer.ViewMatrix = ogViewMatrix;
+
 			s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
 			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
@@ -651,18 +693,12 @@ namespace Athena
 		return s_Data.WhiteTexture;
 	}
 
-	void Renderer::BeginFrame()
+	Ref<Framebuffer> Renderer::GetEntityIDFramebuffer()
 	{
-		s_Data.MainFramebuffer->Bind();
+		return s_Data.EntityIDFramebuffer;
 	}
 
-	void Renderer::EndFrame()
-	{
-		s_Data.MainFramebuffer->ResolveMutlisampling();
-		s_Data.MainFramebuffer->UnBind();
-	}
-
-	Ref<Framebuffer> Renderer::GetMainFramebuffer()
+	Ref<Framebuffer> Renderer::GetFinalFramebuffer()
 	{
 		return s_Data.MainFramebuffer;
 	}
@@ -670,11 +706,6 @@ namespace Athena
 	void Renderer::BlitToScreen()
 	{
 		s_Data.MainFramebuffer->BlitToScreen();
-	}
-
-	Ref<Framebuffer> Renderer::GetShadowMapFramebuffer()
-	{
-		return s_Data.ShadowMap;
 	}
 
 	void Renderer::ReloadShaders()

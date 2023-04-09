@@ -508,6 +508,36 @@ namespace Athena
 		float far = camera.GetFarClip();
 
 		RenderScene(viewMatrix, projectionMatrix, near, far);
+
+		// Render Entity IDs
+		Renderer::BeginEntityIDPass();
+		Renderer::FlushEntityIDs();
+
+		Renderer2D::EntityIDEnable(true);
+		Renderer2D::BeginScene(viewMatrix, projectionMatrix);
+
+		auto quads = GetAllEntitiesWith<SpriteComponent>();
+		for (auto entity : quads)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& sprite = quads.get<SpriteComponent>(entity);
+
+			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
+		}
+
+		auto circles = GetAllEntitiesWith<CircleComponent>();
+		for (auto entity : circles)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& circle = circles.get<CircleComponent>(entity);
+
+			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
+		}
+
+		Renderer2D::EndScene();
+		Renderer2D::EntityIDEnable(false);
+
+		Renderer::EndEntityIDPass();
 	}
 
 	void Scene::RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform)
@@ -522,29 +552,6 @@ namespace Athena
 
 	void Scene::RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
-		Renderer2D::BeginScene(view, proj);
-
-		auto quads = GetAllEntitiesWith<SpriteComponent>();
-		for (auto entity : quads)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& sprite = quads.get<SpriteComponent>(entity);
-
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-		}
-
-		auto circles = GetAllEntitiesWith<CircleComponent>();
-		for (auto entity : circles)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& circle = circles.get<CircleComponent>(entity);
-
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
-		}
-
-		Renderer2D::EndScene();
-
-
 		Renderer::BeginScene({ view, proj, near, far }, m_Environment);
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
@@ -591,6 +598,31 @@ namespace Athena
 		}
 
 		Renderer::EndScene();
+
+
+		Renderer::GetFinalFramebuffer()->Bind();
+
+		Renderer2D::BeginScene(view, proj);
+
+		auto quads = GetAllEntitiesWith<SpriteComponent>();
+		for (auto entity : quads)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& sprite = quads.get<SpriteComponent>(entity);
+
+			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+		}
+
+		auto circles = GetAllEntitiesWith<CircleComponent>();
+		for (auto entity : circles)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& circle = circles.get<CircleComponent>(entity);
+
+			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
+		}
+
+		Renderer2D::EndScene();
 	}
 
 	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)

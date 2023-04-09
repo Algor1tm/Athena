@@ -82,7 +82,6 @@ void main()
 
 
 layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
 
 struct VertexOutput
 {
@@ -490,7 +489,5 @@ void main()
     ////////////////// GAMMA CORRECTION //////////////////
     color = pow(color, vec3(1.0 / u_Scene.Gamma)); 
 
-
     out_Color = vec4(color, albedo.a);
-    out_EntityID = u_Entity.ID;
 }

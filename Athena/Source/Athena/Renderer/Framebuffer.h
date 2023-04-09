@@ -31,7 +31,7 @@ namespace Athena
 	{
 		uint32 Width = 1;
 		uint32 Height = 1;
-		uint32 Depth = 1;
+		uint32 Layers = 1;
 
 		FramebufferAttachmentDescription Attachments;
 		uint32 Samples = 1;

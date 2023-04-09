@@ -34,7 +34,6 @@ void main()
 #version 460 core
 
 layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
 
 struct VertexOutput
 {
@@ -69,6 +68,4 @@ void main()
     envColor = pow(envColor, vec3(1.0 / 2.2)); 
 
     out_Color = vec4(envColor, 1);
-
-    out_EntityID = -1;
 }

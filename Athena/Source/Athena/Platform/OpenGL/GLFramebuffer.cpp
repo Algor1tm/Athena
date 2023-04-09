@@ -250,30 +250,30 @@ namespace Athena
 		if (!m_ColorAttachmentDescriptions.empty())
 		{
 			attachments.resize(m_ColorAttachmentDescriptions.size());
-			CreateTextures(multisample, m_Description.Depth, attachments.data(), attachments.size());
+			CreateTextures(multisample, m_Description.Layers, attachments.data(), attachments.size());
 			//Attachments
 			for (uint32 i = 0; i < attachments.size(); ++i)
 			{
-				BindTexture(multisample, m_Description.Depth, attachments[i]);
+				BindTexture(multisample, m_Description.Layers, attachments[i]);
 
 				GLenum internalFormat, dataFormat, dataType;
 				AthenaFormatToGLenum(m_ColorAttachmentDescriptions[i].Format, internalFormat, dataFormat, dataType);
 				
-				AttachColorTexture(attachments[i], samples, internalFormat, dataFormat, dataType, m_Description.Width, m_Description.Height, m_Description.Depth, i);
+				AttachColorTexture(attachments[i], samples, internalFormat, dataFormat, dataType, m_Description.Width, m_Description.Height, m_Description.Layers, i);
 			}
 		}
 
 		if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
 		{
-			CreateTextures(multisample, m_Description.Depth, &m_DepthAttachment, 1);
-			BindTexture(multisample, m_Description.Depth, m_DepthAttachment);
+			CreateTextures(multisample, m_Description.Layers, &m_DepthAttachment, 1);
+			BindTexture(multisample, m_Description.Layers, m_DepthAttachment);
 
 			GLenum internalFormat, dataFormat, dataType;
 			AthenaFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
 
 			GLenum attachmentType = GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
 
-			AttachDepthTexture(m_DepthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Depth);
+			AttachDepthTexture(m_DepthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Layers);
 		}
 
 		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");

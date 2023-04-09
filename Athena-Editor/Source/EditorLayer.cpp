@@ -60,13 +60,13 @@ namespace Athena
     void EditorLayer::OnUpdate(Time frameTime)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        const auto& framebuffer = Renderer::GetMainFramebuffer();
+        const auto& framebuffer = Renderer::GetFinalFramebuffer();
         const auto& framebufferDesc = framebuffer->GetDescription();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
         {
-            framebuffer->Resize(vpDesc.Size.x, vpDesc.Size.y);
+            Renderer::OnWindowResized(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
                 
             m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
@@ -76,9 +76,6 @@ namespace Athena
         Renderer2D::ResetStats();
 
         Renderer::BeginFrame();
-        RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
-        // Clear our entity ID attachment to -1
-        framebuffer->ClearAttachment(1, -1);
 
         switch (m_SceneState)
         {
@@ -105,11 +102,10 @@ namespace Athena
         }
         }
 
-        if (m_SceneState != SceneState::Play)
-            SelectEntity(m_SceneHierarchy->GetSelectedEntity());
-
         RenderOverlay();
         Renderer::EndFrame();
+
+        SelectEntity(m_SceneHierarchy->GetSelectedEntity());
     }
 
     void EditorLayer::OnImGuiRender()
@@ -142,7 +138,7 @@ namespace Athena
         ImGui::End();
 
 		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().m_CameraSpeedLevel);
-        m_MainViewport->SetFramebuffer(Renderer::GetMainFramebuffer(), 0);
+        m_MainViewport->SetFramebuffer(Renderer::GetFinalFramebuffer(), 0);
     }
 
     void EditorLayer::SelectEntity(Entity entity)
@@ -217,7 +213,7 @@ namespace Athena
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
 
         m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
-        m_MainViewport->SetFramebuffer(Renderer::GetMainFramebuffer(), 0);
+        m_MainViewport->SetFramebuffer(Renderer::GetFinalFramebuffer(), 0);
         m_MainViewport->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
@@ -288,7 +284,7 @@ namespace Athena
 
         if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
         {
-            int pixelData = Renderer::GetMainFramebuffer()->ReadPixel(1, mouseX, mouseY);
+            int pixelData = Renderer::GetEntityIDFramebuffer()->ReadPixel(0, mouseX, mouseY);
             if (pixelData != -1)
                 return { (entt::entity)pixelData, m_EditorScene.get() };
         }
@@ -298,6 +294,8 @@ namespace Athena
 
     void EditorLayer::RenderOverlay()
     {
+        Renderer::GetFinalFramebuffer()->Bind();
+
         if (m_SceneState == SceneState::Play)
         {
             Entity camera = m_ActiveScene->GetPrimaryCameraEntity();

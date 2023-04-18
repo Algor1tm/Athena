@@ -43,19 +43,11 @@ struct VertexOutput
 layout (location = 0) in VertexOutput Input;
 
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
-{
-	float Exposure;
-    float Gamma;
-} u_Scene;
-
-
 layout(std140, binding = ENVMAP_BUFFER_BINDER) uniform EnvMapData
 {
 	float LOD;
     float Intensity;
 } u_EnvMapData;
-
 
 layout(binding = ENVIRONMENT_MAP_BINDER) uniform samplerCube u_EnvironmentMap;
 
@@ -63,9 +55,6 @@ layout(binding = ENVIRONMENT_MAP_BINDER) uniform samplerCube u_EnvironmentMap;
 void main()
 {
     vec3 envColor = textureLod(u_EnvironmentMap, Input.TexCoords, u_EnvMapData.LOD).rgb;
-
-    envColor = vec3(1.0) - exp(-envColor * u_Scene.Exposure);
-    envColor = pow(envColor, vec3(1.0 / 2.2)); 
 
     out_Color = vec4(envColor, 1);
 }

@@ -100,13 +100,6 @@ namespace Athena
 			type = GL_FLOAT;
 			break;
 		}
-		case TextureFormat::RGBA8:
-		{
-			internalFormat = GL_RGBA8;
-			dataFormat = GL_RGBA;
-			type = GL_UNSIGNED_BYTE;
-			break;
-		}
 		case TextureFormat::RGB16F:
 		{
 			internalFormat = GL_RGB16F;
@@ -119,6 +112,20 @@ namespace Athena
 			internalFormat = GL_RGB32F;
 			dataFormat = GL_RGB;
 			type = GL_FLOAT;
+			break;
+		}
+		case TextureFormat::RGBA16F:
+		{
+			internalFormat = GL_RGBA16F;
+			dataFormat = GL_RGBA;
+			type = GL_FLOAT;
+			break;
+		}
+		case TextureFormat::RGBA8:
+		{
+			internalFormat = GL_RGBA8;
+			dataFormat = GL_RGBA;
+			type = GL_UNSIGNED_BYTE;
 			break;
 		}
 		case TextureFormat::DEPTH24STENCIL8:

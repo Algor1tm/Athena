@@ -103,13 +103,6 @@ layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 	float FarClip;
 } u_Camera;
 
-layout(std140, binding = SCENE_BUFFER_BINDER) uniform SceneData
-{
-	float Exposure;
-    float Gamma;
-} u_Scene;
-
-
 layout(std140, binding = ENVMAP_BUFFER_BINDER) uniform EnvMapData
 {
 	float LOD;
@@ -482,12 +475,6 @@ void main()
     ////////////////// MAIN COLOR //////////////////
     vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
     vec3 color = ambient + totalIrradiance;
-
-    ////////////////// TONE MAPPING //////////////////
-    color = vec3(1.0) - exp(-color * u_Scene.Exposure);
-
-    ////////////////// GAMMA CORRECTION //////////////////
-    color = pow(color, vec3(1.0 / u_Scene.Gamma)); 
 
     out_Color = vec4(color, albedo.a);
 }

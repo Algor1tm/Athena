@@ -129,16 +129,32 @@ namespace Athena
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void GLFramebuffer::BindColorAttachment(uint32 index, uint32 slot) const
+	void GLFramebuffer::BindColorAttachmentAsImage(uint32 index, uint32 slot) const
 	{
-		if (index < m_ColorAttachments.size())
+		if (index >= m_ColorAttachments.size())
 		{
 			ATN_CORE_ERROR("Invalid index for color attachment!");
 			ATN_CORE_ASSERT(false);
 		}
 		else
 		{
-			glBindTextureUnit(slot, m_ColorAttachments[index]);
+			GLenum internalFormat, dataFormat, dataType;
+			AthenaFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
+
+			glBindImageTexture(slot, m_ColorAttachments[index], 0, GL_TRUE, 0, GL_WRITE_ONLY, internalFormat);
+		}
+	}
+
+	void GLFramebuffer::BindColorAttachment(uint32 index, uint32 slot) const
+	{
+		if (index >= m_ColorAttachments.size())
+		{
+			ATN_CORE_ERROR("Invalid index for color attachment!");
+			ATN_CORE_ASSERT(false);
+		}
+		else
+		{
+			glBindTextureUnit(slot, m_ColorAttachmentsResolved[index]);
 		}
 	}
 

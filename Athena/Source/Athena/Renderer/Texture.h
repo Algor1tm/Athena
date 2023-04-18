@@ -16,11 +16,14 @@ namespace Athena
 		NONE = 0,
 
 		// Color
+		RGBA8,
+
 		RG16F,
 		R11F_G11F_B10F,
-		RGBA8,
 		RGB16F,
 		RGB32F,
+		RGBA16F,
+
 		RED_INTEGER,
 
 		//Depth/Stencil

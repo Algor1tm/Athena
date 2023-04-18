@@ -19,6 +19,7 @@ namespace Athena
 		{ PBR, "PBR" },
 		{ SHADOW_MAP_GEN, "SHADOW_MAP_GEN" },
 		{ SKYBOX, "SKYBOX" },
+		{ SCENE_COMPOSITE, "SCENE_COMPOSITE" },
 
 		{ EQUIRECTANGULAR_TO_CUBEMAP, "EQUIRECTANGULAR_TO_CUBEMAP" },
 		{ IRRADIANCE_MAP_CONVOLUTION, "IRRADIANCE_MAP_CONVOLUTION" },
@@ -87,7 +88,8 @@ namespace Athena
 
 	struct RendererData
 	{
-		Ref<Framebuffer> MainFramebuffer;
+		Ref<Framebuffer> HDRFramebuffer;
+		Ref<Framebuffer> FinalFramebuffer;
 		Ref<Framebuffer> ShadowMap;
 		Ref<Framebuffer> EntityIDFramebuffer;
 
@@ -96,6 +98,7 @@ namespace Athena
 		RenderQueue GeometryQueue;
 
 		Ref<VertexBuffer> CubeVertexBuffer;
+		Ref<VertexBuffer> QuadVertexBuffer;
 		Ref<Texture2D> WhiteTexture;
 
 		Ref<Texture2D> BRDF_LUT;
@@ -144,13 +147,21 @@ namespace Athena
 		RenderCommand::Init();
 
 		FramebufferDescription fbDesc;
+		fbDesc.Attachments = { TextureFormat::RGBA16F, TextureFormat::DEPTH24STENCIL8 };
+		fbDesc.Width = 1280;
+		fbDesc.Height = 720;
+		fbDesc.Layers = 1;
+		fbDesc.Samples = 4;
+
+		s_Data.HDRFramebuffer = Framebuffer::Create(fbDesc);
+
 		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Layers = 1;
 		fbDesc.Samples = 4;
 
-		s_Data.MainFramebuffer = Framebuffer::Create(fbDesc);
+		s_Data.FinalFramebuffer = Framebuffer::Create(fbDesc);
 
 		fbDesc.Attachments = { TextureFormat::DEPTH32F };
 		fbDesc.Width = s_Data.ShadowMapResolution;
@@ -183,6 +194,7 @@ namespace Athena
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR], "Assets/Shaders/PBR");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SHADOW_MAP_GEN], "Assets/Shaders/ShadowMap");
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
+		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SCENE_COMPOSITE], "Assets/Shaders/SceneComposite");
 
 		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[ENTITY_ID], "Assets/Shaders/EntityID");
 
@@ -205,7 +217,21 @@ namespace Athena
 		cubeVBdesc.Usage = BufferUsage::STATIC;
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
+	
+		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
+		float quadVertices[] = { -1.f, -1.f,  0.f, 0.f, 
+								  1.f, -1.f,  1.f, 0.f, 
+								  1.f,  1.f,  1.f, 1.f, 
+								 -1.f,  1.f,  0.f, 1.f, };
 
+		VertexBufferDescription quadVBDesc;
+		quadVBDesc.Data = quadVertices;
+		quadVBDesc.Size = sizeof(quadVertices);
+		quadVBDesc.Layout = { { ShaderDataType::Float2, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
+		quadVBDesc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
+		quadVBDesc.Usage = BufferUsage::STATIC;
+
+		s_Data.QuadVertexBuffer = VertexBuffer::Create(quadVBDesc);
 
 		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(CameraData), BufferBinder::CAMERA_DATA);
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
@@ -251,7 +277,8 @@ namespace Athena
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
-		s_Data.MainFramebuffer->Resize(width, height);
+		s_Data.HDRFramebuffer->Resize(width, height);
+		s_Data.FinalFramebuffer->Resize(width, height);
 		s_Data.EntityIDFramebuffer->Resize(width, height);
 	}
 
@@ -281,8 +308,9 @@ namespace Athena
 		GeometryPass();
 		DebugViewPass();
 		SkyboxPass();
+		SceneCompositePass();
 
-		s_Data.MainFramebuffer->UnBind();
+		s_Data.FinalFramebuffer->UnBind();
 		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 		s_Data.ActiveEnvironment = nullptr;
 
@@ -311,8 +339,8 @@ namespace Athena
 	void Renderer::BeginFrame() {}
 	void Renderer::EndFrame()
 	{
-		s_Data.MainFramebuffer->ResolveMutlisampling();
-		s_Data.MainFramebuffer->UnBind();
+		s_Data.FinalFramebuffer->ResolveMutlisampling();
+		s_Data.FinalFramebuffer->UnBind();
 	}
 
 	void Renderer::SubmitLight(const DirectionalLight& dirLight)
@@ -421,7 +449,7 @@ namespace Athena
 	void Renderer::ShadowMapPass()
 	{
 		s_Data.ShadowMap->Bind();
-		RenderCommand::Clear({ 1, 1, 1, 1 });
+		RenderCommand::Clear(LinearColor::White);
 		RenderCommand::SetCullMode(CullFace::FRONT);
 
 		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.ShadowSettings.SoftShadows;
@@ -440,8 +468,8 @@ namespace Athena
 
 	void Renderer::GeometryPass()
 	{
-		s_Data.MainFramebuffer->Bind();
-		RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+		s_Data.HDRFramebuffer->Bind();
+		RenderCommand::Clear(LinearColor::Black);
 		RenderCommand::SetCullMode(CullFace::BACK);
 
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
@@ -479,14 +507,14 @@ namespace Athena
 	{
 		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
 		{
-			Matrix4 ogViewMatrix = s_Data.CameraDataBuffer.ViewMatrix;
+			Matrix4 originalViewMatrix = s_Data.CameraDataBuffer.ViewMatrix;
 			// Remove translation
 			s_Data.CameraDataBuffer.ViewMatrix[3][0] = 0;
 			s_Data.CameraDataBuffer.ViewMatrix[3][1] = 0;
 			s_Data.CameraDataBuffer.ViewMatrix[3][2] = 0;
 
 			s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
-			s_Data.CameraDataBuffer.ViewMatrix = ogViewMatrix;
+			s_Data.CameraDataBuffer.ViewMatrix = originalViewMatrix;
 
 			s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
@@ -497,6 +525,21 @@ namespace Athena
 			RenderCommand::DrawTriangles(s_Data.CubeVertexBuffer);
 			s_Data.Stats.DrawCalls++;
 		}
+	}
+
+	void Renderer::SceneCompositePass()
+	{
+		s_Data.HDRFramebuffer->ResolveMutlisampling();
+
+		s_Data.FinalFramebuffer->Bind();
+		RenderCommand::Clear(LinearColor::Black);
+
+		s_Data.BindShader(SCENE_COMPOSITE);
+
+		s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+		s_Data.HDRFramebuffer->BindDepthAttachment(1);
+
+		RenderCommand::DrawTriangles(s_Data.QuadVertexBuffer);
 	}
 
 	void Renderer::ComputeCascadeSplits()
@@ -700,12 +743,12 @@ namespace Athena
 
 	Ref<Framebuffer> Renderer::GetFinalFramebuffer()
 	{
-		return s_Data.MainFramebuffer;
+		return s_Data.FinalFramebuffer;
 	}
 
 	void Renderer::BlitToScreen()
 	{
-		s_Data.MainFramebuffer->BlitToScreen();
+		s_Data.FinalFramebuffer->BlitToScreen();
 	}
 
 	void Renderer::ReloadShaders()
@@ -735,44 +778,41 @@ namespace Athena
 		if (s_Data.AntialisingMethod == method)
 			return;
 
-		FramebufferDescription desc = s_Data.MainFramebuffer->GetDescription();
+		FramebufferDescription hdrFBDesc = s_Data.HDRFramebuffer->GetDescription();
+		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
 
 		switch(method)
 		{
 		case Antialising::NONE:
 		{
-			if (desc.Samples != 1)
-			{
-				desc.Samples = 1;
-				s_Data.MainFramebuffer = Framebuffer::Create(desc);
-			}
+			hdrFBDesc.Samples = 1;
+			finalFBDesc.Samples = 1;
+			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
 			break;
 		}
 		case Antialising::MSAA_2X:
 		{
-			if (desc.Samples != 2)
-			{
-				desc.Samples = 2;
-				s_Data.MainFramebuffer = Framebuffer::Create(desc);
-			}
+			hdrFBDesc.Samples = 2;
+			finalFBDesc.Samples = 2;
+			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
 			break;
 		}
 		case Antialising::MSAA_4X:
 		{
-			if (desc.Samples != 4)
-			{
-				desc.Samples = 4;
-				s_Data.MainFramebuffer = Framebuffer::Create(desc);
-			}
+			hdrFBDesc.Samples = 4;
+			finalFBDesc.Samples = 4;
+			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
 			break;
 		}
 		case Antialising::MSAA_8X:
 		{
-			if (desc.Samples != 8)
-			{
-				desc.Samples = 8;
-				s_Data.MainFramebuffer = Framebuffer::Create(desc);
-			}
+			hdrFBDesc.Samples = 8;
+			finalFBDesc.Samples = 8;
+			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
 			break;
 		}
 		}

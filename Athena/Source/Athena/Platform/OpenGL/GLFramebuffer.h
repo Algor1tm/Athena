@@ -22,6 +22,7 @@ namespace Athena
 		virtual void Bind() override;
 		virtual void UnBind() override;
 
+		virtual void BindColorAttachmentAsImage(uint32 index, uint32 slot = 0) const override;
 		virtual void BindColorAttachment(uint32 index, uint32 slot = 0) const override;
 		virtual void BindDepthAttachment(uint32 slot = 0) const override;
 

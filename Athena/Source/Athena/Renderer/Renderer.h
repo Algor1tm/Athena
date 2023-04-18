@@ -23,7 +23,7 @@ namespace Athena
 		PBR,
 		SHADOW_MAP_GEN,
 		SKYBOX,
-		ENTITY_ID,
+		SCENE_COMPOSITE,
 
 		EQUIRECTANGULAR_TO_CUBEMAP,
 		IRRADIANCE_MAP_CONVOLUTION,
@@ -31,7 +31,8 @@ namespace Athena
 
 		DEBUG_NORMALS,
 		DEBUG_WIREFRAME,
-		DEBUG_SHOW_CASCADES
+		DEBUG_SHOW_CASCADES,
+		ENTITY_ID,
 	};
 
 
@@ -168,6 +169,7 @@ namespace Athena
 		static void GeometryPass();
 		static void DebugViewPass();
 		static void SkyboxPass();
+		static void SceneCompositePass();
 
 		static void ComputeCascadeSplits();
 		static void ComputeCascadeSpaceMatrices(const DirectionalLight& light);

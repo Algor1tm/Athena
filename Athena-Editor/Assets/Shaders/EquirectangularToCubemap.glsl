@@ -10,7 +10,7 @@ layout(r11f_g11f_b10f, binding = 1) uniform imageCube u_Skybox;
 vec2 SampleSphericalMap(vec3 pos)
 {
     vec2 uv = vec2(atan(pos.z, pos.x), asin(pos.y));
-    uv *= vec2(0.1591, 0.3183);  // vec2(1 / (2 * pi), 1 / pi)
+    uv *= vec2(1 / (2 * PI), 1 / PI);
     uv += 0.5;
     return uv;
 }

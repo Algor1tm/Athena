@@ -9,10 +9,10 @@
 
 namespace Athena
 {
-	class ATHENA_API Renderer2D
+	class ATHENA_API SceneRenderer2D
 	{
 	public:
-		Renderer2D() = delete;
+		SceneRenderer2D() = delete;
 
 		static void Init();
 		static void Shutdown();

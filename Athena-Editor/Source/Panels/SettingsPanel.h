@@ -3,8 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
-#include "Athena/Renderer/Renderer.h"
-
 #include "Panels/Panel.h"
 
 

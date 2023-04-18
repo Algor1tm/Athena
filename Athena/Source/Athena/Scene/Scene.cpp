@@ -2,8 +2,8 @@
 
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Environment.h"
-#include "Athena/Renderer/Renderer2D.h"
-#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/SceneRenderer2D.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
@@ -510,11 +510,11 @@ namespace Athena
 		RenderScene(viewMatrix, projectionMatrix, near, far);
 
 		// Render Entity IDs
-		Renderer::BeginEntityIDPass();
-		Renderer::FlushEntityIDs();
+		SceneRenderer::BeginEntityIDPass();
+		SceneRenderer::FlushEntityIDs();
 
-		Renderer2D::EntityIDEnable(true);
-		Renderer2D::BeginScene(viewMatrix, projectionMatrix);
+		SceneRenderer2D::EntityIDEnable(true);
+		SceneRenderer2D::BeginScene(viewMatrix, projectionMatrix);
 
 		auto quads = GetAllEntitiesWith<SpriteComponent>();
 		for (auto entity : quads)
@@ -522,7 +522,7 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
+			SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
 		}
 
 		auto circles = GetAllEntitiesWith<CircleComponent>();
@@ -531,13 +531,13 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& circle = circles.get<CircleComponent>(entity);
 
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
+			SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
 		}
 
-		Renderer2D::EndScene();
-		Renderer2D::EntityIDEnable(false);
+		SceneRenderer2D::EndScene();
+		SceneRenderer2D::EntityIDEnable(false);
 
-		Renderer::EndEntityIDPass();
+		SceneRenderer::EndEntityIDPass();
 	}
 
 	void Scene::RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform)
@@ -552,7 +552,7 @@ namespace Athena
 
 	void Scene::RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
-		Renderer::BeginScene({ view, proj, near, far }, m_Environment);
+		SceneRenderer::BeginScene({ view, proj, near, far }, m_Environment);
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
 		for (auto entity : staticMeshes)
@@ -569,9 +569,9 @@ namespace Athena
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
 					if(animator != nullptr && animator->IsPlaying())
-						Renderer::Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
+						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
 					else
-						Renderer::Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
+						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
 				}
 			}
 		}
@@ -584,7 +584,7 @@ namespace Athena
 
 			Vector3 direction = transform.Rotation * Vector3::Forward();
 			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
-			Renderer::SubmitLight(dirLight);
+			SceneRenderer::SubmitLight(dirLight);
 		}
 
 		auto pointLights = GetAllEntitiesWith<PointLightComponent>();
@@ -594,15 +594,15 @@ namespace Athena
 			const auto& light = pointLights.get<PointLightComponent>(entity);
 
 			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
-			Renderer::SubmitLight(pointLight);
+			SceneRenderer::SubmitLight(pointLight);
 		}
 
-		Renderer::EndScene();
+		SceneRenderer::EndScene();
 
 
-		Renderer::GetFinalFramebuffer()->Bind();
+		SceneRenderer::GetFinalFramebuffer()->Bind();
 
-		Renderer2D::BeginScene(view, proj);
+		SceneRenderer2D::BeginScene(view, proj);
 
 		auto quads = GetAllEntitiesWith<SpriteComponent>();
 		for (auto entity : quads)
@@ -610,7 +610,7 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			Renderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+			SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 		}
 
 		auto circles = GetAllEntitiesWith<CircleComponent>();
@@ -619,10 +619,10 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& circle = circles.get<CircleComponent>(entity);
 
-			Renderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
+			SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
 		}
 
-		Renderer2D::EndScene();
+		SceneRenderer2D::EndScene();
 	}
 
 	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)

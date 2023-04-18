@@ -1,9 +1,9 @@
-#include "Renderer2D.h"
+#include "SceneRenderer2D.h"
 
 #include "Athena/Math/Transforms.h"
 
 #include "Athena/Renderer/GPUBuffers.h"
-#include "Athena/Renderer/RenderCommand.h"
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Shader.h"
 
@@ -37,7 +37,7 @@ namespace Athena
 		LinearColor Color;
 	};
 
-	struct Renderer2DData
+	struct SceneRenderer2DData
 	{
 		// Max Geometry per batch
 		static const uint32 MaxQuads = 500;
@@ -76,7 +76,7 @@ namespace Athena
 
 		Vector4 QuadVertexPositions[4];
 
-		Renderer2D::Statistics Stats;
+		SceneRenderer2D::Statistics Stats;
 
 		struct CameraData
 		{
@@ -89,9 +89,9 @@ namespace Athena
 		bool DrawEntityID = false;
 	};
 
-	static Renderer2DData s_Data;
+	static SceneRenderer2DData s_Data;
 
-	void Renderer2D::Init()
+	void SceneRenderer2D::Init()
 	{
 		BufferLayout layout =
 		{
@@ -105,11 +105,11 @@ namespace Athena
 
 		s_Data.QuadShader = Shader::Create("Assets/Shaders/Renderer2D/Quad");
 
-		s_Data.QuadVertexBufferBase = new QuadVertex[Renderer2DData::MaxQuadVertices];
+		s_Data.QuadVertexBufferBase = new QuadVertex[SceneRenderer2DData::MaxQuadVertices];
 
-		uint32* indices = new uint32[Renderer2DData::MaxIndices];
+		uint32* indices = new uint32[SceneRenderer2DData::MaxIndices];
 		uint32 offset = 0;
-		for (uint32 i = 0; i < Renderer2DData::MaxIndices; i += 6)
+		for (uint32 i = 0; i < SceneRenderer2DData::MaxIndices; i += 6)
 		{
 			indices[i + 0] = offset + 0;
 			indices[i + 1] = offset + 1;
@@ -122,12 +122,12 @@ namespace Athena
 			offset += 4;
 		}
 
-		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, Renderer2DData::MaxIndices);
+		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, SceneRenderer2DData::MaxIndices);
 		delete[] indices;
 
 		VertexBufferDescription vBufferDesc;
 		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = Renderer2DData::MaxQuadVertices * sizeof(QuadVertex);
+		vBufferDesc.Size = SceneRenderer2DData::MaxQuadVertices * sizeof(QuadVertex);
 		vBufferDesc.Layout = layout;
 		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
@@ -147,14 +147,14 @@ namespace Athena
 		s_Data.CircleShader = Shader::Create("Assets/Shaders/Renderer2D/Circle");
 
 		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = Renderer2DData::MaxCircles * sizeof(CircleVertex);
+		vBufferDesc.Size = SceneRenderer2DData::MaxCircles * sizeof(CircleVertex);
 		vBufferDesc.Layout = layout;
 		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
 
 		s_Data.CircleVertexBuffer = VertexBuffer::Create(vBufferDesc);
 
-		s_Data.CircleVertexBufferBase = new CircleVertex[Renderer2DData::MaxCircleVertices];
+		s_Data.CircleVertexBufferBase = new CircleVertex[SceneRenderer2DData::MaxCircleVertices];
 
 
 		layout =
@@ -167,14 +167,14 @@ namespace Athena
 		s_Data.LineShader = Shader::Create("Assets/Shaders/Renderer2D/Line");
 
 		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = Renderer2DData::MaxLines * sizeof(LineVertex);
+		vBufferDesc.Size = SceneRenderer2DData::MaxLines * sizeof(LineVertex);
 		vBufferDesc.Layout = layout;
 		vBufferDesc.IndexBuffer = indexBuffer;
 		vBufferDesc.Usage = BufferUsage::DYNAMIC;
 
 		s_Data.LineVertexBuffer = VertexBuffer::Create(vBufferDesc);
 
-		s_Data.LineVertexBufferBase = new LineVertex[Renderer2DData::MaxLineVertices];
+		s_Data.LineVertexBufferBase = new LineVertex[SceneRenderer2DData::MaxLineVertices];
 
 
 		s_Data.TextureSlots[0] = Renderer::GetWhiteTexture();
@@ -184,38 +184,38 @@ namespace Athena
 		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
 		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 
-		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(Renderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
+		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(SceneRenderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
 
 
 		s_Data.EntityIDShader = Shader::Create("Assets/Shaders/Renderer2D/EntityID");
 	}
 
-	void Renderer2D::Shutdown()
+	void SceneRenderer2D::Shutdown()
 	{
 		delete[] s_Data.QuadVertexBufferBase;
 		delete[] s_Data.CircleVertexBufferBase;
 		delete[] s_Data.LineVertexBufferBase;
 	}
 
-	void Renderer2D::EntityIDEnable(bool enable)
+	void SceneRenderer2D::EntityIDEnable(bool enable)
 	{
 		s_Data.DrawEntityID = enable;
 	}
 
-	void Renderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
+	void SceneRenderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
 	{
 		s_Data.CameraBuffer.ViewProjection = viewMatrix * projectionMatrix;
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(Renderer2DData::CameraData));
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(SceneRenderer2DData::CameraData));
 
 		StartBatch();
 	}
 
-	void Renderer2D::EndScene()
+	void SceneRenderer2D::EndScene()
 	{
 		Flush();
 	}
 
-	void Renderer2D::Flush()
+	void SceneRenderer2D::Flush()
 	{
 		if (s_Data.DrawEntityID)
 			s_Data.EntityIDShader->Bind();
@@ -233,7 +233,7 @@ namespace Athena
 				s_Data.QuadShader->Bind();
 			}
 
-			RenderCommand::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
+			Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 
@@ -245,7 +245,7 @@ namespace Athena
 			if (!s_Data.DrawEntityID)
 				s_Data.CircleShader->Bind();
 
-			RenderCommand::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
+			Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 
@@ -257,12 +257,12 @@ namespace Athena
 			if (!s_Data.DrawEntityID)
 				s_Data.LineShader->Bind();
 
-			RenderCommand::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
+			Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
 			s_Data.Stats.DrawCalls++;
 		}
 	}
 
-	void Renderer2D::StartBatch()
+	void SceneRenderer2D::StartBatch()
 	{
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVertexBufferPointer = s_Data.QuadVertexBufferBase;
@@ -275,42 +275,42 @@ namespace Athena
 		s_Data.LineVertexBufferPointer = s_Data.LineVertexBufferBase;
 	}
 
-	void Renderer2D::NextBatch()
+	void SceneRenderer2D::NextBatch()
 	{
 		Flush();
 		StartBatch();
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color)
+	void SceneRenderer2D::DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
+	void SceneRenderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
 	{
 		Matrix4 transform = Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
+	void SceneRenderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
+	void SceneRenderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -318,12 +318,12 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -331,9 +331,9 @@ namespace Athena
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int32 entityID)
+	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color, int32 entityID)
 	{
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= SceneRenderer2DData::MaxIndices)
 			NextBatch();
 
 		constexpr uint32 QuadVertexCount = 4;
@@ -357,9 +357,9 @@ namespace Athena
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int32 entityID)
+	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int32 entityID)
 	{
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= SceneRenderer2DData::MaxIndices)
 			NextBatch();
 
 		constexpr uint32 QuadVertexCount = 4;
@@ -377,7 +377,7 @@ namespace Athena
 
 		if (textureIndex == 0.0f)
 		{
-			if (s_Data.TextureSlotIndex >= Renderer2DData::MaxTextureSlots)
+			if (s_Data.TextureSlotIndex >= SceneRenderer2DData::MaxTextureSlots)
 				NextBatch();
 
 			textureIndex = (float)s_Data.TextureSlotIndex;
@@ -402,9 +402,9 @@ namespace Athena
 	}
 
 
-	void Renderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade, int32 entityID)
+	void SceneRenderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade, int32 entityID)
 	{
-		if (s_Data.CircleIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.CircleIndexCount >= SceneRenderer2DData::MaxIndices)
 			NextBatch();
 
 		for (uint32 i = 0; i < 4; ++i)
@@ -423,11 +423,11 @@ namespace Athena
 		s_Data.Stats.CircleCount++;
 	}
 
-	void Renderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int32 entityID)
+	void SceneRenderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int32 entityID)
 	{
 		if (width > 0.f && width <= 1.f)
 		{
-			if (s_Data.LineVertexCount >= Renderer2DData::MaxIndices)
+			if (s_Data.LineVertexCount >= SceneRenderer2DData::MaxIndices)
 				NextBatch();
 
 			s_Data.LineVertexBufferPointer->Position = p0;
@@ -451,7 +451,7 @@ namespace Athena
 
 			Vector3 positions[4] = { p1 - normal, p1 + normal, p0 + normal, p0 - normal };
 
-			if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+			if (s_Data.QuadIndexCount >= SceneRenderer2DData::MaxIndices)
 				NextBatch();
 
 			constexpr uint32 QuadVertexCount = 4;
@@ -476,7 +476,7 @@ namespace Athena
 		}
 	}
 
-	void Renderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, float lineWidth, int32 entityID)
+	void SceneRenderer2D::DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color, float lineWidth, int32 entityID)
 	{
 		Vector3 p0 = Vector3(position.x - size.x * 0.5f, position.y - size.y * 0.5f, position.z);
 		Vector3 p1 = Vector3(position.x + size.x * 0.5f, position.y - size.y * 0.5f, position.z);
@@ -489,7 +489,7 @@ namespace Athena
 		DrawLine(p3, p0, color, lineWidth, entityID);
 	}
 
-	void Renderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int32 entityID)
+	void SceneRenderer2D::DrawRect(const Matrix4& transform, const LinearColor& color, float lineWidth, int32 entityID)
 	{
 		Vector3 lineVertices[4];
 		for (uint32 i = 0; i < 4; ++i)
@@ -501,14 +501,14 @@ namespace Athena
 		DrawLine(lineVertices[3], lineVertices[0], color, lineWidth, entityID);
 	}
 
-	void Renderer2D::ReloadShaders()
+	void SceneRenderer2D::ReloadShaders()
 	{
 		s_Data.QuadShader->Reload();
 		s_Data.CircleShader->Reload();
 		s_Data.LineShader->Reload();
 	}
 
-	void Renderer2D::ResetStats()
+	void SceneRenderer2D::ResetStats()
 	{
 		s_Data.Stats.DrawCalls = 0;
 		s_Data.Stats.QuadCount = 0;
@@ -516,7 +516,7 @@ namespace Athena
 		s_Data.Stats.LineCount = 0;
 	}
 
-	const Renderer2D::Statistics& Renderer2D::GetStatistics()
+	const SceneRenderer2D::Statistics& SceneRenderer2D::GetStatistics()
 	{
 		return s_Data.Stats;
 	}

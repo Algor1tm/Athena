@@ -7,7 +7,7 @@
 
 #include "Athena/Input/ApplicationEvent.h"
 
-#include "Athena/Renderer/RendererAPI.h"
+#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena
@@ -18,7 +18,7 @@ namespace Athena
 	struct ApplicationDescription
 	{
 		WindowDescription WindowDesc;
-		RendererAPI::API API = RendererAPI::OpenGL;
+		Renderer::API API = Renderer::OpenGL;
 		bool EnableImGui = true;
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();

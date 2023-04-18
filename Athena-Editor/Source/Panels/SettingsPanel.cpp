@@ -1,6 +1,6 @@
 #include "SettingsPanel.h"
 
-#include "Athena/Renderer/Renderer2D.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scripting/PublicScriptEngine.h"
 
@@ -95,7 +95,7 @@ namespace Athena
 
 		if (UI::BeginTreeNode("Debug"))
 		{
-			auto stats = Renderer::GetStatistics();
+			auto stats = SceneRenderer::GetStatistics();
 
 			ImGui::Text("Draw Calls: %d", stats.DrawCalls);
 			ImGui::Text("Directional Lights: %d", stats.DirectionalLightsCount);
@@ -113,21 +113,21 @@ namespace Athena
 			ImGui::SameLine();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 			ImGui::SliderInt("##RenderQueue", &m_RenderQueueLimit, 0, stats.GeometryCount);
-			Renderer::SetRenderQueueLimit(m_RenderQueueLimit);
+			SceneRenderer::SetRenderQueueLimit(m_RenderQueueLimit);
 				
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			if (ImGui::BeginCombo("##DebugView", DebugViewToString(Renderer::GetDebugView()).data()))
+			if (ImGui::BeginCombo("##DebugView", DebugViewToString(SceneRenderer::GetDebugView()).data()))
 			{
 				for (uint32 i = 0; i <= (uint32)DebugView::SHOW_CASCADES; ++i)
 				{
 					DebugView view = (DebugView)i;
 
-					bool isSelected = view == Renderer::GetDebugView();
+					bool isSelected = view == SceneRenderer::GetDebugView();
 					UI::Selectable(DebugViewToString(view), &isSelected, [this, view]()
 						{
-							Renderer::SetDebugView(view);
+							SceneRenderer::SetDebugView(view);
 						});
 
 				}
@@ -143,7 +143,7 @@ namespace Athena
 
 		if (UI::BeginTreeNode("Shadows"))
 		{
-			auto settings = Renderer::GetShadowSettings();
+			auto settings = SceneRenderer::GetShadowSettings();
 			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.EnableShadows);
 			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.SoftShadows);
 			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.LightSize, 0.025f);
@@ -152,7 +152,7 @@ namespace Athena
 			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);
 			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.NearPlaneOffset);
 			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.FarPlaneOffset);
-			Renderer::SetShadowSettings(settings);
+			SceneRenderer::SetShadowSettings(settings);
 
 			UI::EndTreeNode();
 		}
@@ -161,16 +161,16 @@ namespace Athena
 		{
 			ImGui::Text("Antialiasing");
 			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(Renderer::GetAntialiasingMethod()).data()))
+			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(SceneRenderer::GetAntialiasingMethod()).data()))
 			{
 				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
 				{
 					Antialising antialiasing = (Antialising)i;
 
-					bool isSelected = antialiasing == Renderer::GetAntialiasingMethod();
+					bool isSelected = antialiasing == SceneRenderer::GetAntialiasingMethod();
 					UI::Selectable(AntialisingToString(antialiasing), &isSelected, [this, antialiasing]()
 						{
-							Renderer::SetAntialiasingMethod(antialiasing);
+							SceneRenderer::SetAntialiasingMethod(antialiasing);
 						});
 
 				}
@@ -185,7 +185,7 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 			if (ImGui::Button("Reload Shaders"))
 			{
-				Renderer::ReloadShaders();
+				SceneRenderer::ReloadShaders();
 			}
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();

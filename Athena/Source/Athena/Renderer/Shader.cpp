@@ -26,9 +26,9 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLShader>(stem.concat(L".glsl")); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -40,9 +40,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLShader>(name, vertexSrc, fragmentSrc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -143,9 +143,9 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLIncludeShader>(stem.concat(L".glsl")); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -160,9 +160,9 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLComputeShader>(stem.concat(L".glsl"), workGroupSize); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 

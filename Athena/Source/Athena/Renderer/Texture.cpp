@@ -17,9 +17,9 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTexture2D>(path, sRGB, samplerDesc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -31,9 +31,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTexture2D>(data, width, height, sRGB, samplerDesc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -45,9 +45,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTexture2D>(format, width, height, samplerDesc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -93,9 +93,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTextureCube>(faces, sRGB, samplerDesc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -107,9 +107,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTextureCube>(format, width, height, samplerDesc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
@@ -121,9 +121,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLTextureSampler>(desc); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 

@@ -1,7 +1,7 @@
 #include "EnvironmentMap.h"
 
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 
 namespace Athena
@@ -15,7 +15,7 @@ namespace Athena
 
 		if (equirectangularMap->IsLoaded())
 		{
-			Renderer::PreProcessEnvironmentMap(equirectangularMap, result->m_PrefilteredMap, result->m_IrradianceMap);
+			SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, result->m_PrefilteredMap, result->m_IrradianceMap);
 		}
 
 		return result;

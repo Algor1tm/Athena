@@ -29,9 +29,9 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			imguiLayer->m_ImGuiImpl = CreateScope<GLImGuiLayerImpl>(); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); break;
 		default:
 			ATN_CORE_ASSERT(false, "Unknown RendererAPI!"); break;

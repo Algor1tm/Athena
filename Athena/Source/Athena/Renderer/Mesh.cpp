@@ -5,7 +5,6 @@
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
-#include "Athena/Renderer/Vertex.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
@@ -188,7 +187,7 @@ namespace Athena
 		VertexBufferDescription vBufferDesc;
 		vBufferDesc.Data = vertices.data();
 		vBufferDesc.Size = vertices.size() * sizeof(StaticVertex);
-		vBufferDesc.Layout = StaticVertex::GetLayout();
+		vBufferDesc.Layout = Renderer::GetStaticVertexLayout();
 		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
 		vBufferDesc.Usage = BufferUsage::STATIC;
 
@@ -267,7 +266,7 @@ namespace Athena
 		VertexBufferDescription vBufferDesc;
 		vBufferDesc.Data = vertices.data();
 		vBufferDesc.Size = vertices.size() * sizeof(AnimVertex);
-		vBufferDesc.Layout = AnimVertex::GetLayout();
+		vBufferDesc.Layout = Renderer::GetAnimVertexLayout();
 		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
 		vBufferDesc.Usage = BufferUsage::STATIC;
 

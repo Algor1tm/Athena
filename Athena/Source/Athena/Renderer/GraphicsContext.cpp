@@ -11,9 +11,9 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case RendererAPI::API::OpenGL:
+		case Renderer::API::OpenGL:
 			return CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(windowHandle)); break;
-		case RendererAPI::API::None:
+		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 

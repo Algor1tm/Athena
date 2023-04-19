@@ -18,23 +18,6 @@ namespace Athena
 	class ATHENA_API Texture2D;
 	class ATHENA_API TextureCube;
 
-	enum ShaderEnum
-	{
-		PBR,
-		SHADOW_MAP_GEN,
-		SKYBOX,
-		SCENE_COMPOSITE,
-
-		EQUIRECTANGULAR_TO_CUBEMAP,
-		IRRADIANCE_MAP_CONVOLUTION,
-		ENVIRONMENT_MIP_FILTER,
-
-		DEBUG_NORMALS,
-		DEBUG_WIREFRAME,
-		DEBUG_SHOW_CASCADES,
-		ENTITY_ID,
-	};
-
 	enum class Antialising
 	{
 		NONE = 0,
@@ -90,7 +73,6 @@ namespace Athena
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
-		static void ReloadShaders();
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap);
 
 		static const ShadowSettings& GetShadowSettings();
@@ -116,7 +98,7 @@ namespace Athena
 		static void ResetStats();
 
 	private:
-		static void RenderGeometry(ShaderEnum shader, bool useMaterials);
+		static void RenderGeometry(std::string_view shader, bool useMaterials);
 
 		static void ShadowMapPass();
 		static void GeometryPass();

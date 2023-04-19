@@ -34,14 +34,12 @@ void SandBox2D::OnDetach()
 
 void SandBox2D::OnUpdate(Time frameTime)
 {
-	Renderer::BeginFrame();
-
-	RenderCommand::Clear({ 0.1f, 0.1f, 0.1f, 1 });
+	SceneRenderer::BeginFrame();
 
 	m_Scene->OnUpdateRuntime(frameTime);
 
-	Renderer::EndFrame();
-	Renderer::BlitToScreen();
+	SceneRenderer::EndFrame();
+	SceneRenderer::BlitToScreen();
 }
 
 bool SandBox2D::OnWindowResize(WindowResizeEvent& event)

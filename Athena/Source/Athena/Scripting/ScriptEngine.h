@@ -59,11 +59,12 @@ namespace Athena
 		py::object m_PyInstance;
 	};
 
+	struct ScriptConfig;
 
 	class ScriptEngine
 	{
 	public:
-		static void Init(const FilePath& scriptsFolder);
+		static void Init(const ScriptConfig& config);
 		static void Shutdown();
 
 		static void ReloadScripts();

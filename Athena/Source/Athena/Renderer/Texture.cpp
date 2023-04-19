@@ -13,8 +13,6 @@ namespace Athena
 {
 	Ref<Texture2D> Texture2D::Create(const FilePath& path, bool sRGB, const TextureSamplerDescription& samplerDesc)
 	{
-		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Texture2D!");
-
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:

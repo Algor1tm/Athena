@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Window.h"
 
 #include "Athena/Input/ApplicationEvent.h"
@@ -178,14 +179,24 @@ namespace Athena
 
 		window->SetWindowMode(desc.Mode);
 
-		if (desc.Icon != FilePath())
+		if (!FileSystem::Exists(desc.Icon))
 		{
 			GLFWimage image;
 			String imagePath = desc.Icon.string() + ".png";			// TODO: Make more customizable
 			image.pixels = stbi_load(imagePath.c_str(), &image.width, &image.height, 0, 4);
-			ATN_CORE_ASSERT(image.pixels, "Failed to load icon");
-			glfwSetWindowIcon(hWnd, 1, &image);
-			stbi_image_free(image.pixels);
+			if (image.pixels)
+			{
+				glfwSetWindowIcon(hWnd, 1, &image);
+				stbi_image_free(image.pixels);
+			}
+			else
+			{
+				ATN_CORE_ERROR("GLFWwindow: failed to load icon from {}!", desc.Icon);
+			}
+		}
+		else if(!desc.Icon.empty())
+		{
+			ATN_CORE_ERROR("GLFWwindow: invalid filepath for icon '{}'!", desc.Icon);
 		}
 
 		return window;

@@ -43,7 +43,7 @@ namespace Athena
 
 			if (!data)
 			{
-				ATN_CORE_ERROR("Failed to load texture for Cubemap! (path = '{0}')", path);
+				ATN_CORE_ERROR("Failed to load texture for Cubemap from {}!", path);
 				m_IsLoaded = false;
 				break;
 			}

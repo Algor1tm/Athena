@@ -9,20 +9,26 @@
 
 #include "Athena/Renderer/Renderer.h"
 
+#include "Athena/Scripting/PublicScriptEngine.h"
+
 
 namespace Athena
 {
 	class ATHENA_API ImGuiLayer;
 
-
-	struct ApplicationDescription
+	struct AppConfig
 	{
-		WindowDescription WindowDesc;
-		Renderer::API API = Renderer::OpenGL;
 		bool EnableImGui = true;
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
-		FilePath ScriptsFolder = FilePath();
+	};
+
+	struct ApplicationDescription
+	{
+		RendererConfig RendererConfig;
+		ScriptConfig ScriptConfig;
+		WindowDescription WindowDesc;
+		AppConfig AppConfig;
 	};
 
 
@@ -63,6 +69,7 @@ namespace Athena
 		bool OnWindowClose(WindowCloseEvent& event);
 		bool OnWindowResized(WindowResizeEvent& event);
 
+	private:
 		Scope<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;
@@ -78,4 +85,3 @@ namespace Athena
 	// Defined by user
 	Application* CreateApplication();
 }
-

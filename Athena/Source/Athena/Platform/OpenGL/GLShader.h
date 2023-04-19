@@ -21,6 +21,7 @@ namespace Athena
 
 	private:
 		bool Compile(const std::unordered_map<ShaderType, String>& shaderSources);
+		void AddGlobalDefines(String& shaderSource);
 
 	private:
 		uint32 m_RendererID = 0;
@@ -35,27 +36,8 @@ namespace Athena
 		virtual ~GLIncludeShader();
 
 		virtual void Reload() override;
-	};
-
-
-	class ATHENA_API GLComputeShader : public ComputeShader
-	{
-	public:
-		GLComputeShader(const FilePath& path, const Vector3i& workGroupSize = { 8, 4, 1 });
-		virtual ~GLComputeShader();
-
-		virtual void Execute(uint32 x, uint32 y, uint32 z = 1) override;
-		virtual void Reload() override;
-
-		virtual void Bind() const override;
-		virtual void UnBind() const override;
 
 	private:
-		bool Compile(const std::unordered_map<ShaderType, String>& source);
-
-	private:
-		uint32 m_RendererID = 0;
-		bool m_Compiled = false;
-		Vector3i m_WorkGroupSize;
+		bool m_IsLoaded = false;
 	};
 }

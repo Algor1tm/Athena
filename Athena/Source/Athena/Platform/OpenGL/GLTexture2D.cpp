@@ -59,7 +59,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load Texture2D!(path = '{0}')", m_FilePath);
+			ATN_CORE_ERROR("Failed to load Texture2D from {}!)", m_FilePath);
 		}
 	}
 

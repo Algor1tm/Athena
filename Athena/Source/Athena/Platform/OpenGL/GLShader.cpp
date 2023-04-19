@@ -1,6 +1,7 @@
 #include "GLShader.h"
 
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/Renderer.h"
 
 #include <glad/glad.h>
 
@@ -54,6 +55,8 @@ namespace Athena
 						glDeleteShader(id);
 				}
 
+				glDeleteProgram(*program);
+
 				ATN_CORE_ERROR("{0} '{1}' compilation failed!", ShaderTypeToString(glType), name);
 				ATN_CORE_WARN("Errors/Warnings:\n{}", infoLog.data());
 
@@ -79,8 +82,10 @@ namespace Athena
 			for (auto id : shaderIDs)
 				glDeleteShader(id);
 
-			ATN_CORE_ERROR("{0}", infoLog.data());
-			ATN_CORE_ASSERT(false, "Program linking failure!");
+			glDeleteProgram(*program);
+
+			ATN_CORE_ERROR("{0} linking failed!", name);
+			ATN_CORE_ERROR("Errors/Warnings: \n{0}", infoLog.data());
 
 			return false;
 		}
@@ -94,8 +99,6 @@ namespace Athena
 
 	GLShader::GLShader(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Shader");
-
 		m_FilePath = path;
 		m_Name = m_FilePath.stem().string();
 
@@ -114,7 +117,8 @@ namespace Athena
 
 	GLShader::~GLShader()
 	{
-		glDeleteProgram(m_RendererID);
+		if(m_Compiled)
+			glDeleteProgram(m_RendererID);
 	}
 
 	bool GLShader::Compile(const std::unordered_map<ShaderType, String>& shaderSources)
@@ -125,8 +129,19 @@ namespace Athena
 
 	void GLShader::Reload()
 	{
+		if (!FileSystem::Exists(m_FilePath))
+		{
+			ATN_CORE_WARN("Invalid filepath for shader {}", m_FilePath);
+			m_Compiled = false;
+			return;
+		}
+
 		String result = FileSystem::ReadFile(m_FilePath);
 		auto shaderSources = PreProcess(result);
+
+		for (auto& shaderSource : shaderSources)
+			AddGlobalDefines(shaderSource.second);
+
 		Compile(shaderSources);
 	}
 
@@ -143,76 +158,47 @@ namespace Athena
 		glUseProgram(0);
 	}
 
+	void GLShader::AddGlobalDefines(String& shaderSource)
+	{
+		const char* token = "#version";
+		uint64 pos = shaderSource.find(token, 0);
+
+		if (pos == String::npos)
+			return;
+
+		uint64 eol = shaderSource.find_first_of("\r\n", pos);
+		shaderSource.insert(eol, Renderer::GetGlobalShaderMacroses());
+	}
+
 
 	GLIncludeShader::GLIncludeShader(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Shader");
-
 		m_FilePath = path;
 		Reload();
 	}
 
 	GLIncludeShader::~GLIncludeShader()
 	{
-		glDeleteNamedStringARB(m_Name.size(), m_Name.c_str());
+		if(m_IsLoaded)
+			glDeleteNamedStringARB(m_Name.size(), m_Name.c_str());
 	}
 
 	void GLIncludeShader::Reload()
 	{
+		if (!FileSystem::Exists(m_FilePath))
+		{
+			ATN_CORE_WARN("Invalid filepath for shader '{}'", m_FilePath);
+			m_IsLoaded = false;
+			return;
+		}
+
+		if(m_IsLoaded)
+			glDeleteNamedStringARB(m_Name.size(), m_Name.c_str());
+
 		String source = FileSystem::ReadFile(m_FilePath);
 		m_Name = "/" + m_FilePath.filename().string();
 
 		glNamedStringARB(GL_SHADER_INCLUDE_ARB, m_Name.size(), m_Name.c_str(), source.size(), source.c_str());
-	}
-
-
-	GLComputeShader::GLComputeShader(const FilePath& path, const Vector3i& workGroupSize)
-	{
-		ATN_CORE_ASSERT(FileSystem::Exists(path), "Invalid filepath for Shader");
-
-		m_WorkGroupSize = workGroupSize;
-		m_FilePath = path;
-		Reload();
-	}
-
-	GLComputeShader::~GLComputeShader()
-	{
-		glDeleteProgram(m_RendererID);
-	}
-
-	void GLComputeShader::Execute(uint32 x, uint32 y, uint32 z)
-	{
-		if (m_Compiled)
-		{
-			glDispatchCompute(Math::Ceil((float)x / m_WorkGroupSize.x), Math::Ceil((float)y / m_WorkGroupSize.y), Math::Ceil((float)z / m_WorkGroupSize.z));
-			glMemoryBarrier(GL_ALL_BARRIER_BITS);
-			//glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_UNIFORM_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT | GL_FRAMEBUFFER_BARRIER_BIT);
-		}
-	}
-
-	void GLComputeShader::Reload()
-	{
-		String sourceString = FileSystem::ReadFile(m_FilePath);
-		auto sources = PreProcess(sourceString);
-		Compile(sources);
-	}
-
-	void GLComputeShader::Bind() const
-	{
-		if (m_Compiled)
-			glUseProgram(m_RendererID);
-		else
-			glUseProgram(0);
-	}
-
-	void GLComputeShader::UnBind() const
-	{
-		glUseProgram(0);
-	}
-
-	bool GLComputeShader::Compile(const std::unordered_map<ShaderType, String>& sources)
-	{
-		m_Compiled = CompileShaderSources(sources, m_Name, &m_RendererID);
-		return m_Compiled;
+		m_IsLoaded = true;
 	}
 }

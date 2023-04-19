@@ -5,6 +5,7 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Scene/Scene.h"
 
+#include "EditorLayer.h"
 #include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
@@ -16,10 +17,12 @@ namespace Athena
     MenuBarPanel::MenuBarPanel(std::string_view name)
         : Panel(name)
 	{
-		m_CloseButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/CloseButton.png");
-		m_MinimizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MinimizeButton.png");
-		m_RestoreDownButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/RestoreDownButton.png");
-		m_MaximizeButton = Texture2D::Create("Resources/Icons/Editor/MenuBar/MaximizeButton.png");
+        const FilePath& resources = EditorLayer::Get().GetConfig().EditorResources;
+
+		m_CloseButton = Texture2D::Create(resources / "Icons/Editor/MenuBar/CloseButton.png");
+		m_MinimizeButton = Texture2D::Create(resources / "Icons/Editor/MenuBar/MinimizeButton.png");
+		m_RestoreDownButton = Texture2D::Create(resources / "Icons/Editor/MenuBar/RestoreDownButton.png");
+		m_MaximizeButton = Texture2D::Create(resources / "Icons/Editor/MenuBar/MaximizeButton.png");
 	}
 
     void MenuBarPanel::AddMenuItem(std::string_view text, const std::function<void()>& callback)

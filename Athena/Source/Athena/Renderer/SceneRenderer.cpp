@@ -14,23 +14,6 @@
 
 namespace Athena
 {
-	static std::unordered_map<ShaderEnum, String> s_ShaderMap
-	{
-		{ PBR, "PBR" },
-		{ SHADOW_MAP_GEN, "SHADOW_MAP_GEN" },
-		{ SKYBOX, "SKYBOX" },
-		{ SCENE_COMPOSITE, "SCENE_COMPOSITE" },
-
-		{ EQUIRECTANGULAR_TO_CUBEMAP, "EQUIRECTANGULAR_TO_CUBEMAP" },
-		{ IRRADIANCE_MAP_CONVOLUTION, "IRRADIANCE_MAP_CONVOLUTION" },
-		{ ENVIRONMENT_MIP_FILTER, "ENVIRONMENT_MIP_FILTER" },
-
-		{ DEBUG_NORMALS, "DEBUG_NORMALS" },
-		{ DEBUG_WIREFRAME, "DEBUG_WIREFRAME" },
-		{ DEBUG_SHOW_CASCADES, "DEBUG_SHOW_CASCADES" },
-		{ ENTITY_ID, "ENTITY_ID" }
-	};
-
 	struct CameraData
 	{
 		Matrix4 ViewMatrix;
@@ -123,9 +106,6 @@ namespace Athena
 		DebugView CurrentDebugView = DebugView::NONE;
 		SceneRenderer::Statistics Stats;
 
-		ShaderLibrary ShaderPack;
-		void BindShader(ShaderEnum shader) { ShaderPack.Get<Shader>(s_ShaderMap[shader])->Bind(); }
-
 		const uint32 EnvMapResolution = 2048;
 		const uint32 IrradianceMapResolution = 128;
 
@@ -179,23 +159,6 @@ namespace Athena
 		samplerDesc.CompareFunc = TextureCompareFunc::LEQUAL;
 
 		s_Data.PCF_Sampler = TextureSampler::Create(samplerDesc);
-
-		s_Data.ShaderPack.Load<IncludeShader>("PoissonDisk", "Assets/Shaders/PoissonDisk");
-
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[PBR], "Assets/Shaders/PBR");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SHADOW_MAP_GEN], "Assets/Shaders/ShadowMap");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SKYBOX], "Assets/Shaders/Skybox");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[SCENE_COMPOSITE], "Assets/Shaders/SceneComposite");
-
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[ENTITY_ID], "Assets/Shaders/EntityID");
-
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[EQUIRECTANGULAR_TO_CUBEMAP], "Assets/Shaders/EquirectangularToCubemap");
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[IRRADIANCE_MAP_CONVOLUTION], "Assets/Shaders/IrradianceMapConvolution");
-		s_Data.ShaderPack.Load<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER], "Assets/Shaders/EnvironmentMipFilter");
-
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_NORMALS], "Assets/Shaders/Debug/Normals");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_WIREFRAME], "Assets/Shaders/Debug/Wireframe");
-		s_Data.ShaderPack.Load<Shader>(s_ShaderMap[DEBUG_SHOW_CASCADES], "Assets/Shaders/Debug/ShowCascades");
 
 		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(CameraData), BufferBinder::CAMERA_DATA);
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
@@ -271,7 +234,7 @@ namespace Athena
 	void SceneRenderer::FlushEntityIDs()
 	{
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
-		RenderGeometry(ShaderEnum::ENTITY_ID, false);
+		RenderGeometry("EntityID", false);
 	}
 
 	void SceneRenderer::BeginFrame() {}
@@ -330,12 +293,12 @@ namespace Athena
 		}
 	}
 
-	void SceneRenderer::RenderGeometry(ShaderEnum shader, bool useMaterials)
+	void SceneRenderer::RenderGeometry(std::string_view shader, bool useMaterials)
 	{
 		if (s_Data.GeometryQueue.Empty())
 			return;
 
-		s_Data.BindShader(shader);
+		Renderer::BindShader(shader);
 
 		// Render Static Meshes
 		s_Data.EntityDataBuffer.IsAnimated = false;
@@ -400,7 +363,7 @@ namespace Athena
 			ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
 			s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
 
-			RenderGeometry(SHADOW_MAP_GEN, false);
+			RenderGeometry("DirShadowMap", false);
 		}
 	}
 
@@ -426,19 +389,19 @@ namespace Athena
 		s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
 		s_Data.GeometryQueue.Sort();
-		RenderGeometry(PBR, true);
+		RenderGeometry("PBR", true);
 	}
 
 	void SceneRenderer::DebugViewPass()
 	{
 		if (s_Data.CurrentDebugView == DebugView::NORMALS)
-			RenderGeometry(DEBUG_NORMALS, true);
+			RenderGeometry("Debug_Normals", true);
 
 		else if (s_Data.CurrentDebugView == DebugView::WIREFRAME)
-			RenderGeometry(DEBUG_WIREFRAME, false);
+			RenderGeometry("Debug_Wireframe", false);
 
 		else if (s_Data.CurrentDebugView == DebugView::SHOW_CASCADES)
-			RenderGeometry(DEBUG_SHOW_CASCADES, false);
+			RenderGeometry("Debug_ShowCascades", false);
 	}
 
 	void SceneRenderer::SkyboxPass()
@@ -458,7 +421,7 @@ namespace Athena
 
 			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
 
-			s_Data.BindShader(SKYBOX);
+			Renderer::BindShader("Skybox");
 
 			Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
 			s_Data.Stats.DrawCalls++;
@@ -472,7 +435,7 @@ namespace Athena
 		s_Data.FinalFramebuffer->Bind();
 		Renderer::Clear(LinearColor::Black);
 
-		s_Data.BindShader(SCENE_COMPOSITE);
+		Renderer::BindShader("SceneComposite");
 
 		s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
 		s_Data.HDRFramebuffer->BindDepthAttachment(1);
@@ -607,9 +570,8 @@ namespace Athena
 			equirectangularHDRMap->Bind();
 			skybox->BindAsImage(1);
 
-			auto equirectangularToCubeMap = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[EQUIRECTANGULAR_TO_CUBEMAP]);
-			equirectangularToCubeMap->Bind();
-			equirectangularToCubeMap->Execute(width, height, 6);
+			Renderer::BindShader("EquirectangularToCubemap");
+			Renderer::Dispatch(width, height, 6);
 
 			skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
 			skybox->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
@@ -630,9 +592,8 @@ namespace Athena
 			skybox->Bind();
 			irradianceMap->BindAsImage(1);
 
-			auto irradianceCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[IRRADIANCE_MAP_CONVOLUTION]);
-			irradianceCompute->Bind();
-			irradianceCompute->Execute(width, height, 6);
+			Renderer::BindShader("IrradianceMapConvolution");
+			Renderer::Dispatch(width, height, 6);
 		}
 
 		// Compute Prefiltered Skybox Map
@@ -648,9 +609,7 @@ namespace Athena
 			prefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 
-			auto filterMipCompute = s_Data.ShaderPack.Get<ComputeShader>(s_ShaderMap[ENVIRONMENT_MIP_FILTER]);
-			filterMipCompute->Bind();
-
+			Renderer::BindShader("EnvironmentMipFilter");
 			skybox->Bind();
 
 			for (uint32 mip = 0; mip < ShaderConstants::MAX_SKYBOX_MAP_LOD; ++mip)
@@ -664,7 +623,7 @@ namespace Athena
 				s_Data.EnvMapDataBuffer.EnvironmentMapLOD = roughness;
 				s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
-				filterMipCompute->Execute(mipWidth, mipHeight, 6);
+				Renderer::Dispatch(mipWidth, mipHeight, 6);
 			}
 		}
 	}
@@ -682,13 +641,6 @@ namespace Athena
 	void SceneRenderer::BlitToScreen()
 	{
 		s_Data.FinalFramebuffer->BlitToScreen();
-	}
-
-	void SceneRenderer::ReloadShaders()
-	{
-		SceneRenderer2D::ReloadShaders();
-
-		s_Data.ShaderPack.Reload();
 	}
 
 	const ShadowSettings& SceneRenderer::GetShadowSettings()

@@ -9,6 +9,13 @@ namespace Athena
 {
 	class Entity;
 
+	struct ScriptConfig
+	{
+		FilePath ScriptsFolder;
+	};
+
+	// TODO: ScriptEngine -> PrivateScriptEngine, PublicScriptEngine -> ScriptEngine
+	// If include ScriptEngine.h pybind will try to link Python.dll
 	class ATHENA_API PublicScriptEngine
 	{
 	public:

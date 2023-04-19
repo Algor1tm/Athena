@@ -49,11 +49,9 @@
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/EnvironmentMap.h"
 #include "Athena/Renderer/Texture.h"
-
-#include "Athena/Renderer/RenderCommand.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/Renderer2D.h"
-
+#include "Athena/Renderer/SceneRenderer.h"
+#include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/EditorCamera.h"
 
 

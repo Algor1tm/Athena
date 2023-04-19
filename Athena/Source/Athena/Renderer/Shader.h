@@ -51,7 +51,6 @@ namespace Athena
 
 	protected:
 		std::unordered_map<ShaderType, String> PreProcess(const String& source);
-		void AddExternalDefines(String& source, ShaderType type);
 
 	protected:
 		String m_Name;
@@ -71,36 +70,23 @@ namespace Athena
 	};
 
 
-	class ATHENA_API ComputeShader : public Shader 
-	{
-	public:
-		static Ref<ComputeShader> Create(const FilePath& path, const Vector3i& workGroupSize = { 8, 4, 1 });
-		virtual ~ComputeShader() = default;
-
-		virtual void Execute(uint32 x, uint32 y, uint32 z = 1) = 0;
-	};
-
-
 	class ATHENA_API ShaderLibrary
 	{
 	public:
-		void Add(const String& name, const Ref<IncludeShader>& shader);
 		void Add(const String& name, const Ref<Shader>& shader);
-		void Add(const String& name, const Ref<ComputeShader>& shader);
+		void AddIncludeShader(const String& name, const Ref<IncludeShader>& shader);
 
-		template <typename T>
-		Ref<T> Load(const String& name, const FilePath& path);
+		Ref<Shader> Load(const String& name, const FilePath& path);
+		Ref<IncludeShader> LoadIncludeShader(const String& name, const FilePath& path);
 		
-		template <typename T>
-		Ref<T> Get(const String& name);
+		Ref<Shader> Get(const String& name);
 
 		bool Exists(const String& name);
 
 		void Reload();
 
 	private:
-		std::unordered_map<String, Ref<IncludeShader>> m_IncludeShaders;
 		std::unordered_map<String, Ref<Shader>> m_Shaders;
-		std::unordered_map<String, Ref<ComputeShader>> m_ComputeShaders;
+		std::unordered_map<String, Ref<IncludeShader>> m_IncludeShaders;
 	};
 }

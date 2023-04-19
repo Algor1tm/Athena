@@ -25,11 +25,16 @@ namespace Athena
 	class SceneHierarchyPanel;
 	class SettingsPanel;
 
+	struct EditorConfig
+	{
+		FilePath EditorResources;
+	};
+
 
 	class EditorLayer : public Layer
 	{
 	public:
-		EditorLayer();
+		EditorLayer(const EditorConfig& config);
 
 		void OnAttach() override;
 		void OnDetach() override;
@@ -37,6 +42,9 @@ namespace Athena
 		void OnUpdate(Time frameTime) override;
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
+
+		static EditorLayer& Get() { return *s_Instance; }
+		const EditorConfig& GetConfig() { return m_Config; }
 
 	private:
 		void SelectEntity(Entity entity);
@@ -61,6 +69,10 @@ namespace Athena
 		void OpenScene(const FilePath& path);
 
 	private:
+		static EditorLayer* s_Instance;
+
+	private:
+		EditorConfig m_Config;
 		Ref<EditorCamera> m_EditorCamera;
 		bool m_HideCursor = false;
 		Entity m_SelectedEntity = {};

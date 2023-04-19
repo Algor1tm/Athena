@@ -99,6 +99,12 @@ namespace Athena
 		glDrawArrays(GL_LINES, 0, vertexCount);
 	}
 
+	void GLRendererAPI::Dispatch(uint32 x, uint32 y, uint32 z, Vector3 workGroupSize)
+	{
+		glDispatchCompute(Math::Ceil((float)x / workGroupSize.x), Math::Ceil((float)y / workGroupSize.y), Math::Ceil((float)z / workGroupSize.z));
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	}
+
 	void GLRendererAPI::DisableCulling()
 	{
 		glDisable(GL_CULL_FACE);

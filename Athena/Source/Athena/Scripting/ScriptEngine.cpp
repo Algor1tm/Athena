@@ -1,4 +1,7 @@
 #include "Athena/Scripting/ScriptEngine.h"
+#include "Athena/Scripting/PublicScriptEngine.h"
+
+#include "Athena/Core/FileSystem.h"
 
 #include "Athena/Scene/Components.h"
 
@@ -85,6 +88,9 @@ namespace Athena
 
 	static std::vector<String> GetStringPyModules()
 	{
+		if (!FileSystem::Exists(s_Data->ScriptsFolder))
+			return {};
+
 		std::vector<String> modules;
 
 		for (const auto& dirEntry : std::filesystem::directory_iterator(s_Data->ScriptsFolder))
@@ -202,10 +208,15 @@ namespace Athena
 
 
 
-	void ScriptEngine::Init(const FilePath& scriptsFolder)
+	void ScriptEngine::Init(const ScriptConfig& config)
 	{
 		s_Data = new ScriptEngineData();
-		s_Data->ScriptsFolder = scriptsFolder;
+		s_Data->ScriptsFolder = config.ScriptsFolder;
+
+		if (!FileSystem::Exists(config.ScriptsFolder))
+		{
+			ATN_CORE_ERROR("ScriptEngine:Scripts folder does not exists '{}'!", config.ScriptsFolder);
+		}
 
 		py::module_ sys = py::module_::import("sys");
 		auto path = sys.attr("path");
@@ -232,7 +243,7 @@ namespace Athena
 			else
 			{
 				s_Data->PythonModules.at(strModule).reload();
-				ATN_CORE_INFO("Reload python module {0}.{1}", strModule,"py");
+				ATN_CORE_INFO("ScriptEngine:Reload python module {0}.{1}", strModule,"py");
 			}
 		}
 
@@ -299,17 +310,26 @@ namespace Athena
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
-		auto& instance = s_Data->EntityInstances[entity.GetID()] = ScriptInstance(s_Data->EntityClasses.at(sc.Name), entity);
+		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+			s_Data->EntityInstances[entity.GetID()] = ScriptInstance(s_Data->EntityClasses.at(sc.Name), entity);
+		else
+			ATN_CORE_WARN("ScriptEngine: script class '{}' does not exists!", sc.Name);
 	}
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		s_Data->EntityInstances[entity.GetID()].InvokeOnCreate();
+		auto& sc = entity.GetComponent<ScriptComponent>();
+
+		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+			s_Data->EntityInstances[entity.GetID()].InvokeOnCreate();
 	}
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
-		s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
+		auto& sc = entity.GetComponent<ScriptComponent>();
+
+		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+			s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
 	}
 
 	void ScriptEngine::OnScriptComponentRemove(Entity entity)

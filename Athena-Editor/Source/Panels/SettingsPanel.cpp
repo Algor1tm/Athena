@@ -1,6 +1,7 @@
 #include "SettingsPanel.h"
 
 #include "Athena/Renderer/SceneRenderer.h"
+#include "Athena/Renderer/Shader.h"
 
 #include "Athena/Scripting/PublicScriptEngine.h"
 
@@ -185,7 +186,7 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 			if (ImGui::Button("Reload Shaders"))
 			{
-				SceneRenderer::ReloadShaders();
+				Renderer::GetShaderLibrary()->Reload();
 			}
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();

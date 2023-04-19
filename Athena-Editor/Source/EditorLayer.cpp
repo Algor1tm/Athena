@@ -1,6 +1,7 @@
 #include "EditorLayer.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 
 #include "Athena/ImGui/ImGuiLayer.h"
@@ -26,20 +27,45 @@
 
 namespace Athena
 {
-    EditorLayer::EditorLayer()
-        : Layer("EditorLayer")
+    EditorLayer* EditorLayer::s_Instance = nullptr;
+
+
+    EditorLayer::EditorLayer(const EditorConfig& config)
+        : Layer("EditorLayer"), m_Config(config)
     {
+        ATN_CORE_ASSERT(s_Instance == nullptr, "EditorLayer already exists!");
+        s_Instance = this;
+
+        const FilePath& resources = m_Config.EditorResources;
+
+        m_PlayIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/PlayIcon.png");
+        m_SimulationIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/SimulationIcon.png");
+        m_StopIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/StopIcon.png");
+
         m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f);
         m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
-
-        m_PlayIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/PlayIcon.png");
-        m_SimulationIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/SimulationIcon.png");
-        m_StopIcon = Texture2D::Create("Resources/Icons/Editor/MenuBar/StopIcon.png");
     }
 
     void EditorLayer::OnAttach()
     {
         Application::Get().GetImGuiLayer()->BlockEvents(false);
+
+        const FilePath& resources = m_Config.EditorResources;
+        FilePath boldFont = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
+        FilePath mediumFont = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
+
+        ImGuiIO& io = ImGui::GetIO();
+        if (FileSystem::Exists(boldFont))
+            io.Fonts->AddFontFromFileTTF(boldFont.string().c_str(), 16.f);
+        else
+            ATN_CORE_ERROR("EditorLayer: Failed to load bold UI font!");
+
+        if (FileSystem::Exists(boldFont))
+            io.FontDefault = io.Fonts->AddFontFromFileTTF(mediumFont.string().c_str(), 16.f);
+        else
+            ATN_CORE_ERROR("EditorLayer: Failed to load medium UI font!");
+
+
         InitializePanels();
 
         m_EditorScene = CreateRef<Scene>();
@@ -162,7 +188,7 @@ namespace Athena
     void EditorLayer::InitializePanels()
     {
         m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
-        m_MainMenuBar->SetLogoIcon(Texture2D::Create("Resources/Icons/Editor/MenuBar/Logo-no-background.png"));
+        m_MainMenuBar->SetLogoIcon(Texture2D::Create(m_Config.EditorResources / "Icons/Editor/MenuBar/Logo-no-background.png"));
         m_MainMenuBar->AddMenuItem("File", [this]()
             {
                 if (ImGui::MenuItem("New", "Ctrl+N", false))

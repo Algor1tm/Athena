@@ -4,6 +4,8 @@
 
 #include "UI/Widgets.h"
 
+#include "EditorLayer.h"
+
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
 
@@ -15,10 +17,12 @@ namespace Athena
 	ContentBrowserPanel::ContentBrowserPanel(std::string_view name)
 		: Panel(name)
 	{
-		m_FolderIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FolderIcon.png");
-		m_FileIcon = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/FileIcon.png");
-		m_BackButton = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/BackButton.png");
-		m_ForwardButton = Texture2D::Create("Resources/Icons/Editor/ContentBrowser/ForwardButton.png");
+		const FilePath& resources = EditorLayer::Get().GetConfig().EditorResources;
+
+		m_FolderIcon = Texture2D::Create(resources / "Icons/Editor/ContentBrowser/FolderIcon.png");
+		m_FileIcon = Texture2D::Create(resources / "Icons/Editor/ContentBrowser/FileIcon.png");
+		m_BackButton = Texture2D::Create(resources / "Icons/Editor/ContentBrowser/BackButton.png");
+		m_ForwardButton = Texture2D::Create(resources / "Icons/Editor/ContentBrowser/ForwardButton.png");
 
 		m_LastDirectory = m_CurrentDirectory = m_AssetDirectory;
 	}

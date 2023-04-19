@@ -1,5 +1,6 @@
 LIBRARY Athena
 EXPORTS	
+	?AddFontFromFileTTF@ImFontAtlas@@QEAAPEAUImFont@@PEBDMPEBUImFontConfig@@PEBG@Z
 	?Begin@ImGui@@YA_NPEBDPEA_NH@Z
 	?End@ImGui@@YAXXZ
 	?BeginCombo@ImGui@@YA_NPEBD0H@Z

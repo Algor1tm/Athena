@@ -2,9 +2,9 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/RendererAPI.h"
-#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/RendererAPI.h"
 
 
 namespace Athena
@@ -71,6 +71,8 @@ namespace Athena
 		float Weights[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
 	};
 
+	class ATHENA_API ShaderLibrary;
+	struct RendererConfig;
 
 	class ATHENA_API Renderer
 	{
@@ -82,10 +84,14 @@ namespace Athena
 		};
 
 	public:
-		static void Init(Renderer::API api);
+		static void Init(const RendererConfig& config);
 		static void Shutdown();
 
 		static Renderer::API GetAPI();
+		
+		static void BindShader(std::string_view name);
+		static Ref<ShaderLibrary> GetShaderLibrary();
+		static const String& GetGlobalShaderMacroses();
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
@@ -95,6 +101,8 @@ namespace Athena
 
 		static void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0);
 		static void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0);
+
+		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3 workGroupSize = { 8, 4, 1 });
 
 		static void DisableCulling();
 		static void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE);
@@ -107,5 +115,11 @@ namespace Athena
 
 		static BufferLayout GetStaticVertexLayout();
 		static BufferLayout GetAnimVertexLayout();
+	};
+
+	struct RendererConfig
+	{
+		Renderer::API API = Renderer::API::OpenGL;
+		FilePath ShaderPack;
 	};
 }

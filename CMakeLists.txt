@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.16)
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
 set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
-set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Shaders")
+set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Shaders")
 
 # Enable in cross-platform way multi-processor compilation
 macro(EnableMultiProcessorCompilation TARGET_NAME)

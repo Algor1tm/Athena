@@ -14,6 +14,9 @@ namespace Athena
 		Scope<RendererAPI> RendererAPI;
 		Renderer::API API = Renderer::API::None;
 		
+		Ref<ShaderLibrary> ShaderPack;
+		String GlobalShaderMacroses;
+
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
@@ -24,11 +27,11 @@ namespace Athena
 
 	RendererData s_Data;
 
-	void Renderer::Init(Renderer::API api)
+	void Renderer::Init(const RendererConfig& config)
 	{
 		ATN_CORE_ASSERT(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
-		switch (api)
+		switch (config.API)
 		{
 		case Renderer::API::OpenGL:
 			s_Data.RendererAPI = CreateScope<GLRendererAPI>(); break;
@@ -36,8 +39,70 @@ namespace Athena
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
 
-		s_Data.API = api;
+		s_Data.API = config.API;
 		s_Data.RendererAPI->Init();
+
+#define DEFINE(name, value) std::format("\r\n#define {} {}", name, value)
+
+		s_Data.GlobalShaderMacroses += DEFINE("ALBEDO_MAP_BINDER", (int32_t)TextureBinder::ALBEDO_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("NORMAL_MAP_BINDER", (int32_t)TextureBinder::NORMAL_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("ROUGHNESS_MAP_BINDER", (int32_t)TextureBinder::ROUGHNESS_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("METALNESS_MAP_BINDER", (int32_t)TextureBinder::METALNESS_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("AO_MAP_BINDER", (int32_t)TextureBinder::AMBIENT_OCCLUSION_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("ENVIRONMENT_MAP_BINDER", (int32_t)TextureBinder::ENVIRONMENT_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("IRRADIANCE_MAP_BINDER", (int32_t)TextureBinder::IRRADIANCE_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("BRDF_LUT_BINDER", (int32_t)TextureBinder::BRDF_LUT);
+		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_MAP_BINDER", (int32_t)TextureBinder::SHADOW_MAP);
+		s_Data.GlobalShaderMacroses += DEFINE("PCF_SAMPLER_BINDER", (int32_t)TextureBinder::PCF_SAMPLER);
+		
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_POINT_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_POINT_LIGHT_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_CASCADES_COUNT", (int32_t)ShaderConstants::SHADOW_CASCADES_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES_PER_VERTEX", (int32_t)ShaderConstants::MAX_NUM_BONES_PER_VERTEX);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES", (int32_t)ShaderConstants::MAX_NUM_BONES);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_SKYBOX_MAP_LOD", (int32_t)ShaderConstants::MAX_SKYBOX_MAP_LOD);
+
+		s_Data.GlobalShaderMacroses += DEFINE("RENDERER2D_CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::RENDERER2D_CAMERA_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::CAMERA_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("SCENE_BUFFER_BINDER", (int32_t)BufferBinder::SCENE_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("ENVMAP_BUFFER_BINDER", (int32_t)BufferBinder::ENVIRONMENT_MAP_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("ENTITY_BUFFER_BINDER", (int32_t)BufferBinder::ENTITY_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("MATERIAL_BUFFER_BINDER", (int32_t)BufferBinder::MATERIAL_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("SHADOWS_BUFFER_BINDER", (int32_t)BufferBinder::SHADOWS_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("LIGHT_BUFFER_BINDER", (int32_t)BufferBinder::LIGHT_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("BONES_BUFFER_BINDER", (int32_t)BufferBinder::BONES_DATA);
+
+		s_Data.GlobalShaderMacroses += DEFINE("PI", 3.14159265358979323846);
+
+		s_Data.GlobalShaderMacroses += "\r\n";
+
+#undef DEFINE
+
+		s_Data.ShaderPack = CreateRef<ShaderLibrary>();
+
+		s_Data.ShaderPack->LoadIncludeShader("PoissonDisk", config.ShaderPack / "PoissonDisk");
+
+		s_Data.ShaderPack->Load("PBR", config.ShaderPack / "PBR");
+		s_Data.ShaderPack->Load("DirShadowMap", config.ShaderPack / "DirShadowMap");
+		s_Data.ShaderPack->Load("Skybox", config.ShaderPack / "Skybox");
+		s_Data.ShaderPack->Load("SceneComposite", config.ShaderPack / "SceneComposite");
+
+		s_Data.ShaderPack->Load("EntityID", config.ShaderPack / "EntityID");
+
+		s_Data.ShaderPack->Load("EquirectangularToCubemap", config.ShaderPack / "EquirectangularToCubemap");
+		s_Data.ShaderPack->Load("IrradianceMapConvolution", config.ShaderPack / "IrradianceMapConvolution");
+		s_Data.ShaderPack->Load("EnvironmentMipFilter", config.ShaderPack / "EnvironmentMipFilter");
+		s_Data.ShaderPack->Load("BRDF_LUT", config.ShaderPack / "BRDF_LUT");
+
+		s_Data.ShaderPack->Load("Debug_Normals", config.ShaderPack / "Debug/Normals");
+		s_Data.ShaderPack->Load("Debug_Wireframe", config.ShaderPack / "Debug/Wireframe");
+		s_Data.ShaderPack->Load("Debug_ShowCascades", config.ShaderPack / "Debug/ShowCascades");
+
+		s_Data.ShaderPack->Load("Renderer2D_Quad", config.ShaderPack / "Renderer2D/Quad");
+		s_Data.ShaderPack->Load("Renderer2D_Circle", config.ShaderPack / "Renderer2D/Circle");
+		s_Data.ShaderPack->Load("Renderer2D_Line", config.ShaderPack / "Renderer2D/Line");
+		s_Data.ShaderPack->Load("Renderer2D_EntityID", config.ShaderPack / "Renderer2D/EntityID");
+
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
@@ -74,6 +139,7 @@ namespace Athena
 		uint32 width = s_Data.BRDF_LUTResolution;
 		uint32 height = s_Data.BRDF_LUTResolution;
 
+
 		TextureSamplerDescription sampler;
 		sampler.MinFilter = TextureFilter::LINEAR;
 		sampler.MagFilter = TextureFilter::LINEAR;
@@ -81,11 +147,11 @@ namespace Athena
 
 		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, sampler);
 
-		Ref<ComputeShader> ComputeBRDF_LUTShader = ComputeShader::Create("Assets/Shaders/BRDF_LUT");
+		Ref<Shader> ComputeBRDF_LUTShader = GetShaderLibrary()->Get("BRDF_LUT");
 		ComputeBRDF_LUTShader->Bind();
 
 		s_Data.BRDF_LUT->BindAsImage();
-		ComputeBRDF_LUTShader->Execute(width, height);
+		Renderer::Dispatch(width, height);
 
 		ComputeBRDF_LUTShader->UnBind();
 
@@ -102,6 +168,21 @@ namespace Athena
 	Renderer::API Renderer::GetAPI()
 	{
 		return s_Data.API;
+	}
+
+	void Renderer::BindShader(std::string_view name)
+	{
+		GetShaderLibrary()->Get(name.data())->Bind();
+	}
+
+	Ref<ShaderLibrary> Renderer::GetShaderLibrary()
+	{
+		return s_Data.ShaderPack;
+	}
+
+	const String& Renderer::GetGlobalShaderMacroses()
+	{
+		return s_Data.GlobalShaderMacroses;
 	}
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
@@ -127,6 +208,11 @@ namespace Athena
 	void Renderer::DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount)
 	{
 		s_Data.RendererAPI->DrawLines(vertexBuffer, vertexCount);
+	}
+
+	void Renderer::Dispatch(uint32 x, uint32 y, uint32 z, Vector3 workGroupSize)
+	{
+		s_Data.RendererAPI->Dispatch(x, y, z, workGroupSize);
 	}
 
 	void Renderer::DisableCulling()

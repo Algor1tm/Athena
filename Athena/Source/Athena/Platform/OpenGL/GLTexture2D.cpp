@@ -1,6 +1,6 @@
 #include "GLTexture2D.h"
 
-#include "Athena/Platform/OpenGL/Shared.h"
+#include "Athena/Platform/OpenGL/GLUtils.h"
 
 #include <glad/glad.h>
 #include <stb_image/stb_image.h>
@@ -32,7 +32,7 @@ namespace Athena
 			m_Width = width;
 			m_Height = height;
 
-			if (!GetGLFormats(channels, HDR, sRGB, m_InternalFormat, m_DataFormat))
+			if (!Utils::GetGLFormats(channels, HDR, sRGB, m_InternalFormat, m_DataFormat))
 			{
 				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", filepath, channels);
 				stbi_image_free(data);
@@ -77,7 +77,7 @@ namespace Athena
 			m_Width = width;
 			m_Height = height;
 
-			if (!GetGLFormats(channels, false, sRGB, m_InternalFormat, m_DataFormat))
+			if (!Utils::GetGLFormats(channels, false, sRGB, m_InternalFormat, m_DataFormat))
 			{
 				ATN_CORE_ERROR("Texture format not supported(channels = {})", channels);
 				stbi_image_free(data);
@@ -114,7 +114,7 @@ namespace Athena
 		m_Height = Height;
 
 		GLenum type;
-		AthenaFormatToGLenum(Format, m_InternalFormat, m_DataFormat, type);
+		Utils::TextureFormatToGLenum(Format, m_InternalFormat, m_DataFormat, type);
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_GLRendererID);
 		m_RendererID = m_GLRendererID;
@@ -162,13 +162,13 @@ namespace Athena
 
 	void GLTexture2D::CreateSampler(const TextureSamplerDescription& desc)
 	{
-		GLenum minfilter = AthenaTextureFilterToGLenum(desc.MinFilter);
-		GLenum magfilter = AthenaTextureFilterToGLenum(desc.MagFilter);
+		GLenum minfilter = Utils::TextureFilterToGLenum(desc.MinFilter);
+		GLenum magfilter = Utils::TextureFilterToGLenum(desc.MagFilter);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);
 
-		GLenum wrap = AthenaTextureWrapToGLenum(desc.Wrap);
+		GLenum wrap = Utils::TextureWrapToGLenum(desc.Wrap);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
@@ -176,10 +176,10 @@ namespace Athena
 		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, desc.BorderColor.Data());
 
 		if (desc.CompareMode != TextureCompareMode::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, AthenaTextureCompareModeToGLenum(desc.CompareMode));
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(desc.CompareMode));
 
 		if (desc.CompareFunc != TextureCompareFunc::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, AthenaTextureCompareFuncToGLenum(desc.CompareFunc));
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(desc.CompareFunc));
 
 		if(desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
 			glGenerateTextureMipmap(m_GLRendererID);

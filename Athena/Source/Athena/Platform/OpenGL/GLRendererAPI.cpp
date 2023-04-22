@@ -1,35 +1,12 @@
 #include "GLRendererAPI.h"
 
+#include "Athena/Platform/OpenGL/GLUtils.h"
+
 #include <glad/glad.h>
 
 
 namespace Athena
 {
-	static GLenum CullFaceToGLenum(CullFace face)
-	{
-		switch (face)
-		{
-		case CullFace::BACK: return GL_BACK;
-		case CullFace::FRONT: return GL_FRONT;
-		}
-
-		ATN_CORE_ASSERT(false);
-		return GL_NONE;
-	}
-
-	static GLenum CullDirectionToGLenum(CullDirection direction)
-	{
-		switch (direction)
-		{
-		case CullDirection::CLOCKWISE: return GL_CW;
-		case CullDirection::COUNTER_CLOCKWISE: return GL_CCW;
-		}
-
-		ATN_CORE_ASSERT(false);
-		return GL_NONE;
-	}
-
-
 	static void GLMessageCallback(
 		unsigned source,
 		unsigned type,
@@ -114,7 +91,7 @@ namespace Athena
 	{
 		glEnable(GL_CULL_FACE);
 
-		glCullFace(CullFaceToGLenum(face));
-		glFrontFace(CullDirectionToGLenum(direction));
+		glCullFace(Utils::CullFaceToGLenum(face));
+		glFrontFace(Utils::CullDirectionToGLenum(direction));
 	}
 }

@@ -1,6 +1,6 @@
 #include "GLTextureCube.h"
 
-#include "Athena/Platform/OpenGL/Shared.h"
+#include "Athena/Platform/OpenGL/GLUtils.h"
 
 #include <glad/glad.h>
 #include <stb_image/stb_image.h>
@@ -8,23 +8,6 @@
 
 namespace Athena
 {
-	static inline GLenum GLTextureCubeTarget(TextureCubeTarget target)
-	{
-		switch (target)
-		{
-		case TextureCubeTarget::POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-		case TextureCubeTarget::NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
-		case TextureCubeTarget::POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
-		case TextureCubeTarget::NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
-		case TextureCubeTarget::POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
-		case TextureCubeTarget::NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown texture target!");
-		return GL_NONE;
-	}
-
-
 	GLTextureCube::GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerDescription& samplerDesc)
 	{
 		stbi_set_flip_vertically_on_load(false);
@@ -49,7 +32,7 @@ namespace Athena
 			}
 
 			GLenum internalFormat = 0, dataFormat = 0;
-			if (!GetGLFormats(channels, false, sRGB, internalFormat, dataFormat))
+			if (!Utils::GetGLFormats(channels, false, sRGB, internalFormat, dataFormat))
 			{
 				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", path, channels);
 				m_IsLoaded = false;
@@ -60,7 +43,7 @@ namespace Athena
 			m_InternalFormat = internalFormat;
 			m_DataFormat = dataFormat;
 
-			glTexImage2D(GLTextureCubeTarget(target), 0, m_InternalFormat, width, height, 0, m_DataFormat, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(Utils::TextureCubeTargetToGLenum(target), 0, m_InternalFormat, width, height, 0, m_DataFormat, GL_UNSIGNED_BYTE, data);
 
 			stbi_image_free(data);
 		}
@@ -76,7 +59,7 @@ namespace Athena
 		CreateSampler(samplerDesc);
 
 		GLenum internalFormat, dataFormat, type;
-		AthenaFormatToGLenum(format, internalFormat, dataFormat, type);
+		Utils::TextureFormatToGLenum(format, internalFormat, dataFormat, type);
 
 		m_InternalFormat = internalFormat;
 		m_DataFormat = dataFormat;
@@ -108,13 +91,13 @@ namespace Athena
 
 	void GLTextureCube::CreateSampler(const TextureSamplerDescription& desc)
 	{
-		GLenum minfilter = AthenaTextureFilterToGLenum(desc.MinFilter);
-		GLenum magfilter = AthenaTextureFilterToGLenum(desc.MagFilter);
+		GLenum minfilter = Utils::TextureFilterToGLenum(desc.MinFilter);
+		GLenum magfilter = Utils::TextureFilterToGLenum(desc.MagFilter);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);
 
-		GLenum wrap = AthenaTextureWrapToGLenum(desc.Wrap);
+		GLenum wrap = Utils::TextureWrapToGLenum(desc.Wrap);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
@@ -123,10 +106,10 @@ namespace Athena
 		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, desc.BorderColor.Data());
 
 		if (desc.CompareMode != TextureCompareMode::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, AthenaTextureCompareModeToGLenum(desc.CompareMode));
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(desc.CompareMode));
 
 		if (desc.CompareFunc != TextureCompareFunc::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, AthenaTextureCompareFuncToGLenum(desc.CompareFunc));
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(desc.CompareFunc));
 
 		if (desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
 			glGenerateTextureMipmap(m_GLRendererID);
@@ -147,8 +130,8 @@ namespace Athena
 
 	void GLTextureCube::SetFilters(TextureFilter min, TextureFilter mag)
 	{
-		GLenum minfilter = AthenaTextureFilterToGLenum(min);
-		GLenum magfilter = AthenaTextureFilterToGLenum(mag);
+		GLenum minfilter = Utils::TextureFilterToGLenum(min);
+		GLenum magfilter = Utils::TextureFilterToGLenum(mag);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);

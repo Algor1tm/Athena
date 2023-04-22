@@ -1,6 +1,6 @@
 #include "GLFramebuffer.h"
 
-#include "Athena/Platform/OpenGL/Shared.h"
+#include "Athena/Platform/OpenGL/GLUtils.h"
 
 #include <glad/glad.h>
 
@@ -27,30 +27,6 @@ namespace Athena
 		glBindTexture(GLTextureTarget(multisample, depth), id);
 	}
 
-	static bool IsDepthFormat(TextureFormat format)
-	{
-		switch (format)
-		{
-			case TextureFormat::DEPTH24STENCIL8: return true;
-			case TextureFormat::DEPTH32F: return true;
-		}
-
-		return false;
-	}
-
-	static GLenum GetDepthAttachmentType(TextureFormat format)
-	{
-		switch (format)
-		{
-		case TextureFormat::DEPTH24STENCIL8: return GL_DEPTH_STENCIL_ATTACHMENT;
-		case TextureFormat::DEPTH32F: return GL_DEPTH_ATTACHMENT;
-		}
-
-		ATN_CORE_ASSERT(false);
-		return GL_NONE;
-	}
-
-
 	GLFramebuffer::GLFramebuffer(const FramebufferDescription& desc)
 		: m_Description(desc)
 	{
@@ -58,7 +34,7 @@ namespace Athena
 
 		for (auto format : desc.Attachments.Attachments)
 		{
-			if (!IsDepthFormat(format.Format))
+			if (!Utils::IsDepthFormat(format.Format))
 				m_ColorAttachmentDescriptions.emplace_back(format);
 			else
 				m_DepthAttachmentDescription = format;
@@ -139,7 +115,7 @@ namespace Athena
 		else
 		{
 			GLenum internalFormat, dataFormat, dataType;
-			AthenaFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
+			Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
 
 			glBindImageTexture(slot, m_ColorAttachments[index], 0, GL_TRUE, 0, GL_WRITE_ONLY, internalFormat);
 		}
@@ -217,7 +193,7 @@ namespace Athena
 		
 		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
 		
-		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, TextureFormatToGLenum(desc.Format), GL_INT, &value);
+		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, Utils::TextureFormatToGLenum(desc.Format), GL_INT, &value);
 	}
 
 	void GLFramebuffer::DeleteAttachments()
@@ -288,7 +264,7 @@ namespace Athena
 				BindTexture(multisample, m_Description.Layers, attachments[i]);
 
 				GLenum internalFormat, dataFormat, dataType;
-				AthenaFormatToGLenum(m_ColorAttachmentDescriptions[i].Format, internalFormat, dataFormat, dataType);
+				Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[i].Format, internalFormat, dataFormat, dataType);
 				
 				AttachColorTexture(attachments[i], samples, internalFormat, dataFormat, dataType, m_Description.Width, m_Description.Height, m_Description.Layers, i);
 			}
@@ -302,9 +278,9 @@ namespace Athena
 			BindTexture(multisample, m_Description.Layers, depthAttachment);
 
 			GLenum internalFormat, dataFormat, dataType;
-			AthenaFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
+			Utils::TextureFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
 
-			GLenum attachmentType = GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
+			GLenum attachmentType = Utils::GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
 
 			AttachDepthTexture(depthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Layers);
 		}

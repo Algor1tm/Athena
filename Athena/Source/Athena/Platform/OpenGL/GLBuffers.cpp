@@ -1,31 +1,12 @@
 #include "GLBuffers.h"
 
+#include "Athena/Platform/OpenGL/GLUtils.h"
+
 #include <glad/glad.h>
 
 
 namespace Athena
 {
-	static GLenum ShaderDataTypeToGLBaseType(ShaderDataType type)
-	{
-		switch (type)
-		{
-		case ShaderDataType::Float:  return GL_FLOAT;
-		case ShaderDataType::Float2: return GL_FLOAT;
-		case ShaderDataType::Float3: return GL_FLOAT;
-		case ShaderDataType::Float4: return GL_FLOAT;
-		case ShaderDataType::Mat3:	 return GL_FLOAT;
-		case ShaderDataType::Mat4:   return GL_FLOAT;
-		case ShaderDataType::Int:    return GL_INT;
-		case ShaderDataType::Int2:   return GL_INT;
-		case ShaderDataType::Int3:   return GL_INT;
-		case ShaderDataType::Int4:   return GL_INT;
-		case ShaderDataType::Bool:   return GL_BOOL;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
-		return 0;
-	}
-
 	/////////////////////////////////////////////////////////
 	///////////////////// VertexBuffer /////////////////////
 	/////////////////////////////////////////////////////////
@@ -87,7 +68,7 @@ namespace Athena
 				glEnableVertexAttribArray(vertexBufferIndex);
 				glVertexAttribPointer(vertexBufferIndex,
 					element.GetComponentCount(),
-					ShaderDataTypeToGLBaseType(element.Type),
+					Utils::ShaderDataTypeToGLBaseType(element.Type),
 					element.Normalized ? GL_TRUE : GL_FALSE,
 					layout.GetStride(),
 					reinterpret_cast<const void*>((uint64)element.Offset));
@@ -104,7 +85,7 @@ namespace Athena
 				glEnableVertexAttribArray(vertexBufferIndex);
 				glVertexAttribIPointer(vertexBufferIndex,
 					element.GetComponentCount(),
-					ShaderDataTypeToGLBaseType(element.Type),
+					Utils::ShaderDataTypeToGLBaseType(element.Type),
 					layout.GetStride(),
 					reinterpret_cast<const void*>((uint64)element.Offset));
 
@@ -120,7 +101,7 @@ namespace Athena
 					glEnableVertexAttribArray(vertexBufferIndex);
 					glVertexAttribPointer(vertexBufferIndex,
 						count,
-						ShaderDataTypeToGLBaseType(element.Type),
+						Utils::ShaderDataTypeToGLBaseType(element.Type),
 						element.Normalized ? GL_TRUE : GL_FALSE,
 						layout.GetStride(),
 						reinterpret_cast<const void*>((uint64)element.Offset + sizeof(float) * count * i));

@@ -1,5 +1,7 @@
 #include "GLShader.h"
 
+#include "Athena/Platform/OpenGL/GLUtils.h"
+
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Renderer.h"
 
@@ -8,20 +10,6 @@
 
 namespace Athena
 {
-	static GLenum ShaderTypeToGLenum(ShaderType type)
-	{
-		switch (type)
-		{
-		case ShaderType::VERTEX_SHADER: return GL_VERTEX_SHADER;
-		case ShaderType::FRAGMENT_SHADER: return GL_FRAGMENT_SHADER;
-		case ShaderType::GEOMETRY_SHADER: return GL_GEOMETRY_SHADER;
-		case ShaderType::COMPUTE_SHADER: return GL_COMPUTE_SHADER;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown shader type!");
-		return 0;
-	}
-
 	static bool CompileShaderSources(const std::unordered_map<ShaderType, String>& shaderSources, const String& name, GLuint* program)
 	{
 		*program = glCreateProgram();
@@ -31,7 +19,7 @@ namespace Athena
 
 		for (auto&& [glType, sourceString] : shaderSources)
 		{
-			GLuint shader = glCreateShader(ShaderTypeToGLenum(glType));
+			GLuint shader = glCreateShader(Utils::ShaderTypeToGLenum(glType));
 
 			const char* source = sourceString.c_str();
 

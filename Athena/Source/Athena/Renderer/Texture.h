@@ -16,6 +16,7 @@ namespace Athena
 		NONE = 0,
 
 		// Color
+		RGB8,
 		RGBA8,
 
 		RG16F,
@@ -23,6 +24,7 @@ namespace Athena
 		RGB16F,
 		RGB32F,
 		RGBA16F,
+		RGBA32F,
 
 		RED_INTEGER,
 

@@ -94,9 +94,8 @@ namespace Athena
 		s_Data.ShaderPack->Load("EnvironmentMipFilter", config.ShaderPack / "EnvironmentMipFilter");
 		s_Data.ShaderPack->Load("BRDF_LUT", config.ShaderPack / "BRDF_LUT");
 
-		s_Data.ShaderPack->Load("Debug_Normals", config.ShaderPack / "Debug/Normals");
 		s_Data.ShaderPack->Load("Debug_Wireframe", config.ShaderPack / "Debug/Wireframe");
-		s_Data.ShaderPack->Load("Debug_ShowCascades", config.ShaderPack / "Debug/ShowCascades");
+		s_Data.ShaderPack->Load("Debug_ShadowCascades", config.ShaderPack / "Debug/ShadowCascades");
 
 		s_Data.ShaderPack->Load("Renderer2D_Quad", config.ShaderPack / "Renderer2D/Quad");
 		s_Data.ShaderPack->Load("Renderer2D_Circle", config.ShaderPack / "Renderer2D/Circle");

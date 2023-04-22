@@ -75,8 +75,6 @@ void main()
 #version 460 core
 
 layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
-
 
 layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 {
@@ -89,5 +87,4 @@ layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
 void main()
 {
     out_Color = vec4(0.2, 0.9, 0.3, 1);
-    out_EntityID = u_Entity.ID;
 }

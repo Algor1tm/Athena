@@ -207,12 +207,11 @@ namespace Athena
 	{
 		ShadowMapPass();
 		GeometryPass();
-		DebugViewPass();
 		SkyboxPass();
 		SceneCompositePass();
+		DebugViewPass();
 
 		s_Data.FinalFramebuffer->UnBind();
-		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 		s_Data.ActiveEnvironment = nullptr;
 
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
@@ -390,18 +389,8 @@ namespace Athena
 
 		s_Data.GeometryQueue.Sort();
 		RenderGeometry("PBR", true);
-	}
 
-	void SceneRenderer::DebugViewPass()
-	{
-		if (s_Data.CurrentDebugView == DebugView::NORMALS)
-			RenderGeometry("Debug_Normals", true);
-
-		else if (s_Data.CurrentDebugView == DebugView::WIREFRAME)
-			RenderGeometry("Debug_Wireframe", false);
-
-		else if (s_Data.CurrentDebugView == DebugView::SHOW_CASCADES)
-			RenderGeometry("Debug_ShowCascades", false);
+		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 	}
 
 	void SceneRenderer::SkyboxPass()
@@ -441,6 +430,18 @@ namespace Athena
 		s_Data.HDRFramebuffer->BindDepthAttachment(1);
 
 		Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
+	}
+
+	void SceneRenderer::DebugViewPass()
+	{
+		s_Data.FinalFramebuffer->Bind();
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+
+		if (s_Data.CurrentDebugView == DebugView::WIREFRAME)
+			RenderGeometry("Debug_Wireframe", false);
+
+		else if (s_Data.CurrentDebugView == DebugView::SHADOW_CASCADES)
+			RenderGeometry("Debug_ShadowCascades", false);
 	}
 
 	void SceneRenderer::ComputeCascadeSplits()

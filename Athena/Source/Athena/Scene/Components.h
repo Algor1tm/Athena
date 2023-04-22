@@ -19,6 +19,8 @@
 
 namespace Athena
 {
+	class ATHENA_API Scene;
+
 	struct IDComponent
 	{
 		UUID ID;
@@ -67,6 +69,11 @@ namespace Athena
 
 			return *this;
 		}
+	};
+
+	struct RootComponent
+	{
+		Scene* SceneRef;
 	};
 
 	struct ParentComponent

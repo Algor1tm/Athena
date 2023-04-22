@@ -29,9 +29,8 @@ namespace Athena
 	enum class DebugView
 	{
 		NONE = 0,
-		NORMALS = 1,
-		WIREFRAME = 2,
-		SHOW_CASCADES = 3
+		WIREFRAME = 1,
+		SHADOW_CASCADES = 2
 	};
 
 	struct ShadowSettings

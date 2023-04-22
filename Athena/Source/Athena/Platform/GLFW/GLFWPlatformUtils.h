@@ -186,7 +186,7 @@ namespace Athena
 
 	double Platform::GetHighPrecisionTime()
 	{
-		ATN_CORE_ERROR("Athena does not support 'Platform::CurrentTime()' function on current platform");
+		ATN_CORE_ERROR("Athena does not support 'Platform::GetHighPrecisionTime()' function on current platform");
 	}
 
 	FilePath FileDialogs::OpenFile(std::string_view filter)

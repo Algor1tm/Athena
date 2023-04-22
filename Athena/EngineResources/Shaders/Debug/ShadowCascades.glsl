@@ -65,7 +65,6 @@ void main()
 #version 460 core
 
 layout(location = 0) out vec4 out_Color;
-layout(location = 1) out int out_EntityID;
 
 struct VertexOutput
 {
@@ -73,14 +72,6 @@ struct VertexOutput
 };
 
 layout(location = 0) in VertexOutput Input;
-
-
-layout(std140, binding = ENTITY_BUFFER_BINDER) uniform EntityData
-{
-    mat4 Transform;
-    int ID;
-    bool IsAnimated;
-} u_Entity;
 
 struct Split
 {
@@ -103,6 +94,15 @@ layout(std140, binding = SHADOWS_BUFFER_BINDER) uniform ShadowsData
 
 void main()
 {
+    const vec3 debugColors[7] = vec3[](
+        vec3(1.0, 0.0, 0.0), 
+        vec3(0.0, 1.0, 0.0), 
+        vec3(0.0, 0.0, 1.0), 
+        vec3(1.0, 1.0, 0.0),
+        vec3(0.0, 1.0, 1.0),
+        vec3(1.0, 0.0, 1.0),
+        vec3(0.0, 0.0, 0.0));
+
     int layer = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
@@ -113,23 +113,5 @@ void main()
         }
     }
 
-    vec3 color = vec3(0.0, 0.0, 0.0);
-
-    if(layer == 0)
-        color = vec3(1.0, 0.0, 0.0);
-    else if(layer == 1)
-        color = vec3(0.0, 1.0, 0.0);
-    else if(layer == 2)
-        color = vec3(0.0, 0.0, 1.0);
-    else if(layer == 3)
-        color = vec3(1.0, 1.0, 0.0);
-    else if(layer == 4)
-        color = vec3(0.0, 1.0, 1.0);
-    else if(layer == 5)
-        color = vec3(1.0, 0.0, 1.0);
-    else if(layer == 6)
-        color = vec3(0.5, 0.5, 0.5);
-
-    out_Color = vec4(color, 1);
-    out_EntityID = u_Entity.ID;
+    out_Color = vec4(debugColors[layer], 0.2);
 }

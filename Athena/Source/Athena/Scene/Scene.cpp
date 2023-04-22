@@ -2,6 +2,7 @@
 
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/SceneRenderer.h"
 
@@ -37,9 +38,6 @@ namespace Athena
 				for (auto srcEntity : view)
 				{
 					UUID id = src.get<IDComponent>(srcEntity).ID;
-					if (enttMap.find(id) == enttMap.end()) // Root entity
-						continue;
-
 					entt::entity dstEntity = enttMap.at(id);
 
 					auto& srcComponent = src.get<Component>(srcEntity);
@@ -104,12 +102,13 @@ namespace Athena
 		m_Environment = CreateRef<Environment>();
 
 		Entity rootEntity(m_Registry.create(), this);
-		m_RootEntity = rootEntity.AddComponent<IDComponent>().ID;
+		rootEntity.AddComponent<IDComponent>();
 		rootEntity.AddComponent<TagComponent>("Scene Root");
+		rootEntity.AddComponent<RootComponent>().SceneRef = this;
 		rootEntity.AddComponent<TransformComponent>();
 		rootEntity.AddComponent<ParentComponent>();
 
-		m_EntityMap[m_RootEntity] = rootEntity;
+		m_EntityMap[rootEntity.GetID()] = rootEntity;
 	}
 
 	Scene::~Scene()
@@ -129,15 +128,22 @@ namespace Athena
 		auto& srcSceneRegistry = other->m_Registry;
 		auto& dstSceneRegistry = newScene->m_Registry;
 
+		entt::entity srcRoot = other->GetRootEntity();
 		auto idView = srcSceneRegistry.view<IDComponent>();
 		for (auto entity : idView)
 		{
 			UUID uuid = srcSceneRegistry.get<IDComponent>(entity).ID;
-			if (uuid == other->m_RootEntity)
-				continue;
-
 			const auto& name = srcSceneRegistry.get<TagComponent>(entity).Tag;
-			Entity newEntity = newScene->CreateEntity(name, uuid);
+			if (entity == srcRoot)
+			{
+				Entity dstRoot = newScene->GetRootEntity();
+				dstRoot.GetComponent<TagComponent>().Tag = name;
+				newScene->SetEntityUUID(dstRoot, uuid);
+			}
+			else
+			{
+				Entity newEntity = newScene->CreateEntity(name, uuid);
+			}
 		}
 
 		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, newScene->m_EntityMap);
@@ -147,7 +153,10 @@ namespace Athena
 
 	Entity Scene::GetRootEntity()
 	{
-		return { m_EntityMap.at(m_RootEntity), this };
+		auto rootComponentView = GetAllEntitiesWith<RootComponent>();
+		ATN_CORE_ASSERT(rootComponentView.size() == 1);
+
+		return { rootComponentView[0], this };
 	}
 
 	Entity Scene::CreateEntity(const String& name, UUID id, Entity parent)
@@ -235,7 +244,7 @@ namespace Athena
 	{
 		if (child == GetRootEntity())
 		{
-			ATN_CORE_WARN("Cannot change parent of Root Entity!");
+			ATN_CORE_WARN("Attempt to set parent of scene root!");
 			return;
 		}
 

@@ -60,7 +60,7 @@ namespace Athena
         else
             ATN_CORE_ERROR("EditorLayer: Failed to load bold UI font!");
 
-        if (FileSystem::Exists(boldFont))
+        if (FileSystem::Exists(mediumFont))
             io.FontDefault = io.Fonts->AddFontFromFileTTF(mediumFont.string().c_str(), 16.f);
         else
             ATN_CORE_ERROR("EditorLayer: Failed to load medium UI font!");
@@ -246,7 +246,7 @@ namespace Athena
                     std::string_view path = (const char*)payload->Data;
                     FilePath ext = FilePath(path).extension();
                     //Scene Drag/Drop
-                    if (ext == ".atn\0")
+                    if (m_SceneState == SceneState::Edit && ext == ".atn\0")
                     {
                         OpenScene(path.data());
                     }

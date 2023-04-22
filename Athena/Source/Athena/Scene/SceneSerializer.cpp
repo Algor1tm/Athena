@@ -269,16 +269,19 @@ namespace Athena
 						name = tagComponentNode["Tag"].as<String>();
 				}
 
-				Entity deserializedEntity;
-				if (name == "Scene Root")
+				bool isRoot = false;
 				{
-					deserializedEntity = m_Scene->GetRootEntity();
-					m_Scene->SetEntityUUID(deserializedEntity, uuid);
+					const auto& rootComponentNode = entityNode["RootComponent"];
+					if (rootComponentNode)
+					{
+						Entity root = m_Scene->GetRootEntity();
+						root.GetComponent<TagComponent>().Tag = name;
+						m_Scene->SetEntityUUID(root, uuid);
+						isRoot = true;
+					}
 				}
-				else
-				{
-					deserializedEntity = m_Scene->CreateEntity(name, uuid);
-				}
+
+				Entity deserializedEntity = isRoot ? m_Scene->GetRootEntity() : m_Scene->CreateEntity(name, uuid);
 
 				{
 					const auto& transformComponentNode = entityNode["TransformComponent"];
@@ -524,6 +527,12 @@ namespace Athena
 				output << YAML::Key << "Translation" << YAML::Value << transform.Translation;
 				output << YAML::Key << "Rotation" << YAML::Value << transform.Rotation;
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
+			});
+
+		SerializeComponent<RootComponent>(out, "RootComponent", entity,
+			[](YAML::Emitter& output, const RootComponent& childCmp)
+			{
+
 			});
 
 		SerializeComponent<ChildComponent>(out, "ChildComponent", entity,

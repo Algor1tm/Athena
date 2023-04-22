@@ -289,6 +289,8 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
+    RootComponent:
+      {}
 Environment:
   EnvMap FilePath: ""
   Ambient Light Intensity: 1

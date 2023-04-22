@@ -57,5 +57,6 @@ namespace Athena
 
 		FramebufferTextureDescription m_DepthAttachmentDescription = TextureFormat::NONE;
 		uint32 m_DepthAttachment;
+		uint32 m_DepthAttachmentResolved;   // if not multisample - invalid
 	};
 }

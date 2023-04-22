@@ -154,7 +154,7 @@ namespace Athena
 		}
 		else
 		{
-			glBindTextureUnit(slot, m_ColorAttachmentsResolved[index]);
+			glBindTextureUnit(slot, IsMultisample() ? m_ColorAttachmentsResolved[index] : m_ColorAttachments[index]);
 		}
 	}
 
@@ -167,7 +167,7 @@ namespace Athena
 		}
 		else
 		{
-			glBindTextureUnit(slot, m_DepthAttachment);
+			glBindTextureUnit(slot, IsMultisample() ? m_DepthAttachmentResolved : m_DepthAttachment);
 		}
 	}
 
@@ -191,6 +191,9 @@ namespace Athena
 			ATN_CORE_ASSERT(false);
 			return 0;
 		}
+
+		if (IsMultisample())
+			return reinterpret_cast<void*>((uint64)m_DepthAttachmentResolved);
 
 		return reinterpret_cast<void*>((uint64)m_DepthAttachment);
 	}
@@ -220,10 +223,14 @@ namespace Athena
 	void GLFramebuffer::DeleteAttachments()
 	{
 		glDeleteFramebuffers(1, &m_FramebufferID);
+
 		glDeleteTextures((GLsizei)m_ColorAttachments.size(), m_ColorAttachments.data());
 		if (IsMultisample())
 			glDeleteTextures((GLsizei)m_ColorAttachmentsResolved.size(), m_ColorAttachmentsResolved.data());
+
 		glDeleteTextures(1, &m_DepthAttachment);
+		if (IsMultisample())
+			glDeleteTextures(1, &m_DepthAttachmentResolved);
 	}
 
 	void GLFramebuffer::ResolveMutlisampling()
@@ -238,6 +245,14 @@ namespace Athena
 				glDrawBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
 
 				glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
+
+			if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
+			{
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_ResolvedFramebufferID);
+
+				glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 			}
 		}
 	}
@@ -279,17 +294,19 @@ namespace Athena
 			}
 		}
 
+		uint32& depthAttachment = resolved ? m_DepthAttachmentResolved : m_DepthAttachment;
+
 		if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
 		{
-			CreateTextures(multisample, m_Description.Layers, &m_DepthAttachment, 1);
-			BindTexture(multisample, m_Description.Layers, m_DepthAttachment);
+			CreateTextures(multisample, m_Description.Layers, &depthAttachment, 1);
+			BindTexture(multisample, m_Description.Layers, depthAttachment);
 
 			GLenum internalFormat, dataFormat, dataType;
 			AthenaFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
 
 			GLenum attachmentType = GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
 
-			AttachDepthTexture(m_DepthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Layers);
+			AttachDepthTexture(depthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Layers);
 		}
 
 		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");

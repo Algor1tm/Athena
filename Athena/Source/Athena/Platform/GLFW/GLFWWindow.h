@@ -179,11 +179,10 @@ namespace Athena
 
 		window->SetWindowMode(desc.Mode);
 
-		if (!FileSystem::Exists(desc.Icon))
+		if (FileSystem::Exists(desc.Icon))
 		{
 			GLFWimage image;
-			String imagePath = desc.Icon.string() + ".png";			// TODO: Make more customizable
-			image.pixels = stbi_load(imagePath.c_str(), &image.width, &image.height, 0, 4);
+			image.pixels = stbi_load(desc.Icon.string().c_str(), &image.width, &image.height, 0, 4);
 			if (image.pixels)
 			{
 				glfwSetWindowIcon(hWnd, 1, &image);

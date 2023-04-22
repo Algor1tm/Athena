@@ -31,9 +31,8 @@ namespace Athena
 		switch (view)
 		{
 		case DebugView::NONE: return "None";
-		case DebugView::NORMALS: return "Normals";
 		case DebugView::WIREFRAME: return "Wireframe";
-		case DebugView::SHOW_CASCADES: return "ShowShadowCascades";
+		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -75,9 +74,6 @@ namespace Athena
 
 			if (UI::BeginTreeNode("Renderer"))
 			{
-				//UI::ShiftCursorX(2.f);
-
-
 				ImGui::Text("Camera Speed");
 				ImGui::SameLine();
 				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
@@ -121,7 +117,7 @@ namespace Athena
 
 			if (ImGui::BeginCombo("##DebugView", DebugViewToString(SceneRenderer::GetDebugView()).data()))
 			{
-				for (uint32 i = 0; i <= (uint32)DebugView::SHOW_CASCADES; ++i)
+				for (uint32 i = 0; i <= (uint32)DebugView::SHADOW_CASCADES; ++i)
 				{
 					DebugView view = (DebugView)i;
 

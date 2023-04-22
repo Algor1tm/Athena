@@ -6,7 +6,6 @@
 
 #include "Athena/Renderer/EditorCamera.h"
 #include "Athena/Renderer/Environment.h"
-#include "Athena/Renderer/Material.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -99,8 +98,6 @@ namespace Athena
 
 	private:
 		String m_Name;
-
-		UUID m_RootEntity;	// TODO: must be type 'Entity' (currently cant include Entity.h)
 
 		entt::registry m_Registry;
 		std::unordered_map<UUID, entt::entity> m_EntityMap;

@@ -72,6 +72,6 @@ namespace Athena::UI
 			ImGui::PopStyleColor(3);
 	}
 
-	bool BeginTreeNode(std::string_view label);
+	bool BeginTreeNode(std::string_view label, bool defaultOpen = true);
 	void EndTreeNode();
 }

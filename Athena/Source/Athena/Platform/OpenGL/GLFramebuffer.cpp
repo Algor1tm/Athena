@@ -30,9 +30,9 @@ namespace Athena
 	GLFramebuffer::GLFramebuffer(const FramebufferDescription& desc)
 		: m_Description(desc)
 	{
-		m_ColorAttachmentDescriptions.reserve(desc.Attachments.Attachments.size());
+		m_ColorAttachmentDescriptions.reserve(desc.Attachments.size());
 
-		for (auto format : desc.Attachments.Attachments)
+		for (auto format : desc.Attachments)
 		{
 			if (!Utils::IsDepthFormat(format.Format))
 				m_ColorAttachmentDescriptions.emplace_back(format);
@@ -105,7 +105,7 @@ namespace Athena
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void GLFramebuffer::BindColorAttachmentAsImage(uint32 index, uint32 slot) const
+	void GLFramebuffer::BindColorAttachmentAsImage(uint32 index, uint32 slot, uint32 mipLevel) const
 	{
 		if (index >= m_ColorAttachments.size())
 		{
@@ -117,7 +117,7 @@ namespace Athena
 			GLenum internalFormat, dataFormat, dataType;
 			Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
 
-			glBindImageTexture(slot, m_ColorAttachments[index], 0, GL_TRUE, 0, GL_WRITE_ONLY, internalFormat);
+			glBindImageTexture(slot, m_ColorAttachments[index], mipLevel, GL_FALSE, 0, GL_READ_WRITE, internalFormat);
 		}
 	}
 
@@ -262,11 +262,7 @@ namespace Athena
 			for (uint32 i = 0; i < attachments.size(); ++i)
 			{
 				BindTexture(multisample, m_Description.Layers, attachments[i]);
-
-				GLenum internalFormat, dataFormat, dataType;
-				Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[i].Format, internalFormat, dataFormat, dataType);
-				
-				AttachColorTexture(attachments[i], samples, internalFormat, dataFormat, dataType, m_Description.Width, m_Description.Height, m_Description.Layers, i);
+				AttachColorTexture(attachments[i], samples, i);
 			}
 		}
 
@@ -277,76 +273,97 @@ namespace Athena
 			CreateTextures(multisample, m_Description.Layers, &depthAttachment, 1);
 			BindTexture(multisample, m_Description.Layers, depthAttachment);
 
-			GLenum internalFormat, dataFormat, dataType;
-			Utils::TextureFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
-
-			GLenum attachmentType = Utils::GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
-
-			AttachDepthTexture(depthAttachment, samples, internalFormat, attachmentType, m_Description.Width, m_Description.Height, m_Description.Layers);
+			AttachDepthTexture(depthAttachment, samples);
 		}
 
 		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 
-	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, GLenum internalFormat, GLenum format, GLenum dataType, uint32 width, uint32 height, uint32 depth, uint32 index)
+	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, uint32 index)
 	{
+		uint32 width = m_Description.Width;
+		uint32 height = m_Description.Height;
+		uint32 layers = m_Description.Layers;
+
+		bool generateMipMap = samples == 1 && m_ColorAttachmentDescriptions[index].GenerateMipMap;
+
+		GLenum internalFormat, dataFormat, dataType;
+		Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
+
 		if (samples > 1)
 		{
-			if (depth > 1)
-				glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, samples, internalFormat, width, height, depth, GL_FALSE);
+			if (layers > 1)
+				glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, samples, internalFormat, width, height, layers, GL_FALSE);
 			else
 				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, GL_FALSE);
 		}
 		else
 		{
-			if(depth > 1)
-				glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalFormat, width, height, depth, 0, format, dataType, nullptr);
+			if(layers > 1)
+				glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalFormat, width, height, layers, 0, dataFormat, dataType, nullptr);
 			else
-				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, nullptr);
+				glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, dataType, nullptr);
 
-			GLenum target = depth > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
+			GLenum target = layers > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
 
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, generateMipMap ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			if (generateMipMap)
+				glGenerateMipmap(target);
 		}
 
-		if(depth > 1)
+		if(layers > 1)
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, id, 0);
 		else
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, GLTextureTarget(samples > 1, depth), id, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)index, GLTextureTarget(samples > 1, layers), id, 0);
 	}
 
-	void GLFramebuffer::AttachDepthTexture(uint32 id, uint32 samples, GLenum format, GLenum attachmentType, uint32 width, uint32 height, uint32 depth)
+	void GLFramebuffer::AttachDepthTexture(uint32 id, uint32 samples)
 	{
+		uint32 width = m_Description.Width;
+		uint32 height = m_Description.Height;
+		uint32 layers = m_Description.Layers;
+
+		bool generateMipMap = m_DepthAttachmentDescription.GenerateMipMap;
+
+		GLenum internalFormat, dataFormat, dataType;
+		Utils::TextureFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
+
+		GLenum attachmentType = Utils::GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
+
 		if (samples > 1)
 		{
-			if (depth > 1)
-				glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, samples, format, width, height, depth, GL_FALSE);
+			if (layers > 1)
+				glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, samples, internalFormat, width, height, layers, GL_FALSE);
 			else
-				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, format, width, height, GL_FALSE);
+				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, GL_FALSE);
 		}
 		else
 		{
-			if(depth > 1)
-				glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, format, width, height, depth);
+			if(layers > 1)
+				glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, internalFormat, width, height, layers);
 			else
-				glTexStorage2D(GL_TEXTURE_2D, 1, format, width, height);
+				glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, width, height);
 
-			GLenum target = depth > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
+			GLenum target = layers > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
 
 			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+			if (samples == 1 && generateMipMap)
+				glGenerateMipmap(target);
 		}
 
-		if (depth > 1)
+		if (layers > 1)
 			glFramebufferTexture(GL_FRAMEBUFFER, attachmentType, id, 0);
 		else
-			glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1, depth), id, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, attachmentType, GLTextureTarget(samples > 1, layers), id, 0);
 	}
 }

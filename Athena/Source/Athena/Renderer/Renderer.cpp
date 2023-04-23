@@ -71,11 +71,12 @@ namespace Athena
 		s_Data.GlobalShaderMacroses += DEFINE("SHADOWS_BUFFER_BINDER", (int32_t)BufferBinder::SHADOWS_DATA);
 		s_Data.GlobalShaderMacroses += DEFINE("LIGHT_BUFFER_BINDER", (int32_t)BufferBinder::LIGHT_DATA);
 		s_Data.GlobalShaderMacroses += DEFINE("BONES_BUFFER_BINDER", (int32_t)BufferBinder::BONES_DATA);
+		s_Data.GlobalShaderMacroses += DEFINE("BLOOM_BUFFER_BINDER", (int32_t)BufferBinder::BLOOM_DATA);
 
 		s_Data.GlobalShaderMacroses += DEFINE("PI", 3.14159265358979323846);
 
 		s_Data.GlobalShaderMacroses += "\r\n";
-
+		
 #undef DEFINE
 
 		s_Data.ShaderPack = CreateRef<ShaderLibrary>();
@@ -85,6 +86,8 @@ namespace Athena
 		s_Data.ShaderPack->Load("PBR", config.ShaderPack / "PBR");
 		s_Data.ShaderPack->Load("DirShadowMap", config.ShaderPack / "DirShadowMap");
 		s_Data.ShaderPack->Load("Skybox", config.ShaderPack / "Skybox");
+		s_Data.ShaderPack->Load("BloomDownsample", config.ShaderPack / "BloomDownsample");
+		s_Data.ShaderPack->Load("BloomUpsample", config.ShaderPack / "BloomUpsample");
 		s_Data.ShaderPack->Load("SceneComposite", config.ShaderPack / "SceneComposite");
 
 		s_Data.ShaderPack->Load("EntityID", config.ShaderPack / "EntityID");
@@ -209,7 +212,7 @@ namespace Athena
 		s_Data.RendererAPI->DrawLines(vertexBuffer, vertexCount);
 	}
 
-	void Renderer::Dispatch(uint32 x, uint32 y, uint32 z, Vector3 workGroupSize)
+	void Renderer::Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize)
 	{
 		s_Data.RendererAPI->Dispatch(x, y, z, workGroupSize);
 	}

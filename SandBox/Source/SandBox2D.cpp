@@ -39,7 +39,7 @@ void SandBox2D::OnUpdate(Time frameTime)
 	m_Scene->OnUpdateRuntime(frameTime);
 
 	SceneRenderer::EndFrame();
-	SceneRenderer::BlitToScreen();
+	SceneRenderer::GetFinalFramebuffer()->BlitToScreen();
 }
 
 bool SandBox2D::OnWindowResize(WindowResizeEvent& event)

@@ -48,7 +48,8 @@ namespace Athena
 		MATERIAL_DATA = 5,
 		SHADOWS_DATA = 6,
 		LIGHT_DATA = 7,
-		BONES_DATA = 8
+		BONES_DATA = 8,
+		BLOOM_DATA = 9
 	};
 
 	struct StaticVertex
@@ -102,7 +103,7 @@ namespace Athena
 		static void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0);
 		static void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0);
 
-		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3 workGroupSize = { 8, 4, 1 });
+		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3i workGroupSize = { 8, 4, 1 });
 
 		static void DisableCulling();
 		static void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE);

@@ -115,14 +115,16 @@ namespace Athena::UI
 	}
 
 
-	bool BeginTreeNode(std::string_view label)
+	bool BeginTreeNode(std::string_view label, bool defaultOpen)
 	{
-		static const ImGuiTreeNodeFlags flags =
+		ImGuiTreeNodeFlags flags =
 			ImGuiTreeNodeFlags_AllowItemOverlap |
 			ImGuiTreeNodeFlags_SpanAvailWidth |
 			ImGuiTreeNodeFlags_Framed |
-			ImGuiTreeNodeFlags_FramePadding |
-			ImGuiTreeNodeFlags_DefaultOpen;
+			ImGuiTreeNodeFlags_FramePadding;
+
+		if (defaultOpen)
+			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });

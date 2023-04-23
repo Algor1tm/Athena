@@ -86,8 +86,7 @@ namespace Athena
 		ImGui::End();
 
 
-
-		ImGui::Begin("Renderer");
+		ImGui::Begin("SceneRenderer");
 		ImGui::PopStyleVar();
 
 		if (UI::BeginTreeNode("Debug"))
@@ -101,30 +100,29 @@ namespace Athena
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			if (m_RenderQueueLimit < 0 || m_RenderGeometryCount != stats.GeometryCount)
-				m_RenderQueueLimit = stats.GeometryCount;
-
-			m_RenderGeometryCount = stats.GeometryCount;
+			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
 			ImGui::Text("RenderQueue");
 			ImGui::SameLine();
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-			ImGui::SliderInt("##RenderQueue", &m_RenderQueueLimit, 0, stats.GeometryCount);
-			SceneRenderer::SetRenderQueueLimit(m_RenderQueueLimit);
+
+			int limit = stats.GeometryCount;
+			ImGui::SliderInt("##RenderQueue", &limit, 0, stats.GeometryCount);
+			settings.RenderQueueLimit = limit;
 				
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			if (ImGui::BeginCombo("##DebugView", DebugViewToString(SceneRenderer::GetDebugView()).data()))
+			if (ImGui::BeginCombo("##DebugView", DebugViewToString(settings.DebugView).data()))
 			{
 				for (uint32 i = 0; i <= (uint32)DebugView::SHADOW_CASCADES; ++i)
 				{
 					DebugView view = (DebugView)i;
 
-					bool isSelected = view == SceneRenderer::GetDebugView();
-					UI::Selectable(DebugViewToString(view), &isSelected, [this, view]()
+					bool isSelected = view == settings.DebugView;
+					UI::Selectable(DebugViewToString(view), &isSelected, [this, view, &settings]()
 						{
-							SceneRenderer::SetDebugView(view);
+							settings.DebugView = view;
 						});
 
 				}
@@ -138,36 +136,56 @@ namespace Athena
 			UI::EndTreeNode();
 		}
 
-		if (UI::BeginTreeNode("Shadows"))
+		if (UI::BeginTreeNode("Shadows", false))
 		{
-			auto settings = SceneRenderer::GetShadowSettings();
-			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.EnableShadows);
-			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.SoftShadows);
-			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.LightSize, 0.025f);
-			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.MaxDistance);
-			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.FadeOut);
-			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);
-			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.NearPlaneOffset);
-			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.FarPlaneOffset);
-			SceneRenderer::SetShadowSettings(settings);
+			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+
+			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.ShadowSettings.EnableShadows);
+			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.ShadowSettings.SoftShadows);
+			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.ShadowSettings.LightSize, 0.025f);
+			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.ShadowSettings.MaxDistance);
+			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.ShadowSettings.FadeOut);
+			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ShadowSettings.ExponentialSplitFactor, 0.f, 1.f);
+			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.ShadowSettings.NearPlaneOffset);
+			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.ShadowSettings.FarPlaneOffset);
 
 			UI::EndTreeNode();
 		}
 
-		if (UI::BeginTreeNode("Other"))
+		if (UI::BeginTreeNode("Bloom", false))
 		{
+			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+
+			ImGui::Text("Enable Bloom"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.BloomSettings.EnableBloom);
+			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f);
+			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f);
+			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.1f);
+			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f);
+
+			ImGui::Text("Dirt Texture"); 
+			ImGui::SameLine();
+			auto dirtTexture = settings.BloomSettings.DirtTexture ? settings.BloomSettings.DirtTexture : Renderer::GetWhiteTexture();
+			ImGui::Image(dirtTexture->GetRendererID(), { 50, 50 });
+
+			UI::EndTreeNode();
+		}
+
+		if (UI::BeginTreeNode("Other", false))
+		{
+			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+
 			ImGui::Text("Antialiasing");
 			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(SceneRenderer::GetAntialiasingMethod()).data()))
+			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(settings.AntialisingMethod).data()))
 			{
 				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
 				{
-					Antialising antialiasing = (Antialising)i;
+					Antialising antialising = (Antialising)i;
 
-					bool isSelected = antialiasing == SceneRenderer::GetAntialiasingMethod();
-					UI::Selectable(AntialisingToString(antialiasing), &isSelected, [this, antialiasing]()
+					bool isSelected = antialising == settings.AntialisingMethod;
+					UI::Selectable(AntialisingToString(antialising), &isSelected, [this, antialising, &settings]()
 						{
-							SceneRenderer::SetAntialiasingMethod(antialiasing);
+							settings.AntialisingMethod = antialising;
 						});
 
 				}

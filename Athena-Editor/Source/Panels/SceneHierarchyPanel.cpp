@@ -356,6 +356,10 @@ namespace Athena
 					Vector3 albedo = mat->Get<Vector3>(uniformType);
 					ImGui::ColorEdit3(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs);
 					mat->Set(uniformType, albedo);
+
+					float emission = mat->Get<float>(MaterialUniform::EMISSION);
+					ImGui::DragFloat("Emission", &emission);
+					mat->Set(MaterialUniform::EMISSION, emission);
 				}
 				else
 				{

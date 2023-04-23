@@ -45,6 +45,25 @@ namespace Athena
 		float FarPlaneOffset = 15.f;
 	};
 
+	struct BloomSettings
+	{
+		bool EnableBloom = true;
+		float Intensity = 1;
+		float Threshold = 1.5;
+		float Knee = 0.1;
+		float DirtIntensity = 1;
+		Ref<Texture2D> DirtTexture;
+	};
+
+	struct SceneRendererSettings
+	{
+		ShadowSettings ShadowSettings;
+		BloomSettings BloomSettings;
+		DebugView DebugView = DebugView::NONE;
+		Antialising AntialisingMethod = Antialising::NONE;
+		uint32 RenderQueueLimit;
+	};
+
 	class ATHENA_API SceneRenderer
 	{
 	public:
@@ -65,7 +84,6 @@ namespace Athena
 
 		static Ref<Framebuffer> GetEntityIDFramebuffer();
 		static Ref<Framebuffer> GetFinalFramebuffer();
-		static void BlitToScreen();
 
 		static void SubmitLight(const DirectionalLight& dirLight);
 		static void SubmitLight(const PointLight& pointLight);
@@ -74,16 +92,7 @@ namespace Athena
 
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap);
 
-		static const ShadowSettings& GetShadowSettings();
-		static void SetShadowSettings(const ShadowSettings& settings);
-
-		static Antialising GetAntialiasingMethod();
-		static void SetAntialiasingMethod(Antialising method);
-
-		static DebugView GetDebugView();
-		static void SetDebugView(DebugView view);
-
-		static void SetRenderQueueLimit(uint32 limit);
+		static SceneRendererSettings& GetSettings();
 
 		struct Statistics
 		{
@@ -101,9 +110,10 @@ namespace Athena
 
 		static void ShadowMapPass();
 		static void GeometryPass();
-		static void DebugViewPass();
 		static void SkyboxPass();
+		static void BloomPass();
 		static void SceneCompositePass();
+		static void DebugViewPass();
 
 		static void ComputeCascadeSplits();
 		static void ComputeCascadeSpaceMatrices(const DirectionalLight& light);

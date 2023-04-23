@@ -121,6 +121,7 @@ layout(std140, binding = MATERIAL_BUFFER_BINDER) uniform MaterialData
     vec4 Albedo;
     float Roughness;
     float Metalness;
+    float Emission;
 
 	int EnableAlbedoMap;
 	int EnableNormalMap;
@@ -397,6 +398,7 @@ void main()
 
     float roughness = bool(u_Material.EnableRoughnessMap) ? texture(u_RoughnessMap, Input.TexCoord).r : u_Material.Roughness;
     float metalness = bool(u_Material.EnableMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Material.Metalness;
+    float emission = u_Material.Emission;
     float ambientOcclusion = bool(u_Material.EnableAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
     
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
@@ -473,7 +475,7 @@ void main()
 
 
     ////////////////// MAIN COLOR //////////////////
-    vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
+    vec3 ambient = (diffuseIBL * albedo.rgb * emission + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
     vec3 color = ambient + totalIrradiance;
 
     out_Color = vec4(color, albedo.a);

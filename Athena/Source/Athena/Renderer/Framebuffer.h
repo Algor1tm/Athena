@@ -10,30 +10,22 @@
 
 namespace Athena
 {
-	struct FramebufferTextureDescription
-	{
-		FramebufferTextureDescription(TextureFormat format = TextureFormat::NONE)
-			: Format(format) {}
-
-		TextureFormat Format;
-	};
-	
 	struct FramebufferAttachmentDescription
 	{
-		FramebufferAttachmentDescription() = default;
-		FramebufferAttachmentDescription(const std::initializer_list<FramebufferTextureDescription>& attachments)
-			: Attachments(attachments) {}
+		FramebufferAttachmentDescription(TextureFormat format = TextureFormat::NONE, bool generateMipMap = false)
+			: Format(format), GenerateMipMap(generateMipMap) {}
 
-		std::vector<FramebufferTextureDescription> Attachments;
+		TextureFormat Format;
+		bool GenerateMipMap;
 	};
-
+	
 	struct FramebufferDescription
 	{
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
 
-		FramebufferAttachmentDescription Attachments;
+		std::vector<FramebufferAttachmentDescription> Attachments;
 		uint32 Samples = 1;
 	};
 
@@ -48,7 +40,7 @@ namespace Athena
 		virtual void Bind() = 0;
 		virtual void UnBind() = 0;
 
-		virtual void BindColorAttachmentAsImage(uint32 index, uint32 slot = 0) const = 0;
+		virtual void BindColorAttachmentAsImage(uint32 index, uint32 slot = 0, uint32 mipLevel = 0) const = 0;
 		virtual void BindColorAttachment(uint32 index, uint32 slot = 0) const = 0;
 		virtual void BindDepthAttachment(uint32 slot = 0) const = 0;
 

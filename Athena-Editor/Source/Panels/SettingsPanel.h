@@ -25,7 +25,5 @@ namespace Athena
 
 	private:
 		EditorSettings m_EditorSettings;
-		int32 m_RenderQueueLimit = -1;
-		uint32 m_RenderGeometryCount = 0;
 	};
 }

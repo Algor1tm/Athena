@@ -24,7 +24,8 @@ namespace Athena
 	{
 		ALBEDO,
 		ROUGHNESS,
-		METALNESS
+		METALNESS,
+		EMISSION
 	};
 
 	class ATHENA_API MaterialManager
@@ -52,9 +53,10 @@ namespace Athena
 	public:
 		struct ShaderData
 		{
-			LinearColor Albedo;
-			float Roughness;
-			float Metalness;
+			LinearColor Albedo = LinearColor::White;
+			float Roughness = 0.7f;
+			float Metalness = 0.f;
+			float Emission = 1.f;
 
 			int EnableAlbedoMap;
 			int EnableNormalMap;
@@ -112,6 +114,7 @@ namespace Athena
 		{
 		case MaterialUniform::ROUGHNESS: m_ShaderData.Roughness = value; break;
 		case MaterialUniform::METALNESS: m_ShaderData.Metalness = value; break;
+		case MaterialUniform::EMISSION: m_ShaderData.Emission = value; break;
 		default: ATN_CORE_ERROR("Invalid uniform in Material::Set<float>");
 		}
 	}
@@ -133,6 +136,7 @@ namespace Athena
 		{
 		case MaterialUniform::ROUGHNESS: return m_ShaderData.Roughness;
 		case MaterialUniform::METALNESS: return m_ShaderData.Metalness;
+		case MaterialUniform::EMISSION:  return m_ShaderData.Emission;
 		default: ATN_CORE_ERROR("Invalid uniform in Material::Get<float>");
 		}
 

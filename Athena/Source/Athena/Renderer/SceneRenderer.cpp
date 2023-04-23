@@ -69,6 +69,17 @@ namespace Athena
 		bool SoftShadows = true;
 	};
 
+	struct BloomData
+	{
+		float Intensity;
+		float Threshold;
+		float Knee;
+		float DirtIntensity;
+		Vector2 TexelSize;
+		bool EnableThreshold;
+		int32 MipLevel;
+	};
+
 	struct SceneRendererData
 	{
 		Ref<Framebuffer> HDRFramebuffer;
@@ -88,6 +99,7 @@ namespace Athena
 		EntityData EntityDataBuffer;
 		LightData LightDataBuffer;
 		ShadowsData ShadowsDataBuffer;
+		BloomData BloomDataBuffer;
 
 		Ref<ConstantBuffer> CameraConstantBuffer;
 		Ref<ConstantBuffer> SceneConstantBuffer;
@@ -95,15 +107,12 @@ namespace Athena
 		Ref<ConstantBuffer> EntityConstantBuffer;
 		Ref<ConstantBuffer> MaterialConstantBuffer;
 		Ref<ConstantBuffer> ShadowsConstantBuffer;
+		Ref<ConstantBuffer> BloomConstantBuffer;
 
 		Ref<ShaderStorageBuffer> LightShaderStorageBuffer;
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 
-		ShadowSettings ShadowSettings;
-
-		Antialising AntialisingMethod = Antialising::MSAA_4X;
-
-		DebugView CurrentDebugView = DebugView::NONE;
+		SceneRendererSettings Settings;
 		SceneRenderer::Statistics Stats;
 
 		const uint32 EnvMapResolution = 2048;
@@ -118,12 +127,12 @@ namespace Athena
 	void SceneRenderer::Init()
 	{
 		FramebufferDescription fbDesc;
-		fbDesc.Attachments = { TextureFormat::RGBA16F, TextureFormat::DEPTH24STENCIL8 };
+		fbDesc.Attachments = { { TextureFormat::RGBA16F, true }, TextureFormat::DEPTH24STENCIL8 };
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Layers = 1;
 		fbDesc.Samples = 4;
-
+		 
 		s_Data.HDRFramebuffer = Framebuffer::Create(fbDesc);
 
 		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
@@ -166,6 +175,7 @@ namespace Athena
 		s_Data.EntityConstantBuffer = ConstantBuffer::Create(sizeof(EntityData), BufferBinder::ENTITY_DATA);
 		s_Data.MaterialConstantBuffer = ConstantBuffer::Create(sizeof(Material::ShaderData), BufferBinder::MATERIAL_DATA);
 		s_Data.ShadowsConstantBuffer = ConstantBuffer::Create(sizeof(ShadowsData), BufferBinder::SHADOWS_DATA);
+		s_Data.BloomConstantBuffer = ConstantBuffer::Create(sizeof(BloomData), BufferBinder::BLOOM_DATA);
 
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
 		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderConstants::MAX_NUM_BONES, BufferBinder::BONES_DATA);
@@ -186,6 +196,8 @@ namespace Athena
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment)
 	{
 		s_Data.GeometryQueue.Clear();
+		s_Data.GeometryQueue.SetLimit(s_Data.Settings.RenderQueueLimit);
+
 		s_Data.ActiveEnvironment = environment;
 
 		s_Data.CameraDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
@@ -200,7 +212,29 @@ namespace Athena
 		s_Data.EnvMapDataBuffer.EnvironmentMapLOD = s_Data.ActiveEnvironment->EnvironmentMapLOD;
 		s_Data.EnvMapDataBuffer.Intensity = s_Data.ActiveEnvironment->AmbientLightIntensity;
 
+		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.Settings.ShadowSettings.SoftShadows;
+		s_Data.ShadowsDataBuffer.LightSize = s_Data.Settings.ShadowSettings.LightSize;
+		s_Data.ShadowsDataBuffer.MaxDistance = s_Data.Settings.ShadowSettings.MaxDistance;
+		s_Data.ShadowsDataBuffer.FadeOut = s_Data.Settings.ShadowSettings.FadeOut;
+
+		s_Data.BloomDataBuffer.Intensity = s_Data.Settings.BloomSettings.Intensity;
+		s_Data.BloomDataBuffer.Threshold = s_Data.Settings.BloomSettings.Threshold;
+		s_Data.BloomDataBuffer.Knee = s_Data.Settings.BloomSettings.Knee;
+		s_Data.BloomDataBuffer.DirtIntensity = s_Data.Settings.BloomSettings.DirtIntensity;
+
 		ComputeCascadeSplits();
+
+		FramebufferDescription hdrFBDesc = s_Data.HDRFramebuffer->GetDescription();
+		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
+
+		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
+		if (samples != hdrFBDesc.Samples)
+		{
+			hdrFBDesc.Samples = samples;
+			finalFBDesc.Samples = samples;
+			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
+		}
 	}
 
 	void SceneRenderer::EndScene()
@@ -208,6 +242,7 @@ namespace Athena
 		ShadowMapPass();
 		GeometryPass();
 		SkyboxPass();
+		BloomPass();
 		SceneCompositePass();
 		DebugViewPass();
 
@@ -352,12 +387,7 @@ namespace Athena
 		Renderer::Clear(LinearColor::White);
 		Renderer::SetCullMode(CullFace::FRONT);
 
-		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.ShadowSettings.SoftShadows;
-		s_Data.ShadowsDataBuffer.LightSize = s_Data.ShadowSettings.LightSize;
-		s_Data.ShadowsDataBuffer.MaxDistance = s_Data.ShadowSettings.MaxDistance;
-		s_Data.ShadowsDataBuffer.FadeOut = s_Data.ShadowSettings.FadeOut;
-
-		if(s_Data.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
+		if(s_Data.Settings.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
 		{
 			ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
 			s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
@@ -417,10 +447,85 @@ namespace Athena
 		}
 	}
 
-	void SceneRenderer::SceneCompositePass()
+	void SceneRenderer::BloomPass()
 	{
 		s_Data.HDRFramebuffer->ResolveMutlisampling();
 
+		if (s_Data.Settings.BloomSettings.EnableBloom)
+		{
+			const FramebufferDescription& hdrfbDesc = s_Data.HDRFramebuffer->GetDescription();
+
+			uint32 mipLevels = 1;
+			Vector2u mipSize = { hdrfbDesc.Width / 2, hdrfbDesc.Height / 2 };
+
+			// Compute mip levels
+			{
+				const uint32 maxIterations = 16;
+				const uint32 downSampleLimit = 16;
+
+				uint32 width = hdrfbDesc.Width;
+				uint32 height = hdrfbDesc.Height;
+
+				for (uint8 i = 0; i < maxIterations; ++i)
+				{
+					width = width / 2;
+					height = height / 2;
+
+					if (width < downSampleLimit || height < downSampleLimit) 
+						break;
+
+					++mipLevels;
+				}
+
+				mipLevels += 1;
+			}
+
+			// Downsample
+			{
+				Renderer::BindShader("BloomDownsample");
+				s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+
+				for (uint8 i = 0; i < mipLevels - 1; ++i)
+				{
+					s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+					s_Data.BloomDataBuffer.MipLevel = i;
+					s_Data.BloomDataBuffer.EnableThreshold = i == 0;
+
+					s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i + 1);
+					s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
+
+					Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+					mipSize = mipSize / 2u;
+				}
+			}
+
+			// Upsample
+			{
+				Renderer::BindShader("BloomUpsample");
+				s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+
+				if (s_Data.Settings.BloomSettings.DirtTexture)
+					s_Data.Settings.BloomSettings.DirtTexture->Bind(2);
+
+				for (uint8 i = mipLevels - 1; i >= 1; --i)
+				{
+					mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Width) / Math::Pow<float>(2.f, i - 1)));
+					mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Height) / Math::Pow<float>(2.f, i - 1)));
+
+					s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+					s_Data.BloomDataBuffer.MipLevel = i;
+
+					s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i - 1);
+					s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
+
+					Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+				}
+			}
+		}
+	}
+
+	void SceneRenderer::SceneCompositePass()
+	{
 		s_Data.FinalFramebuffer->Bind();
 		Renderer::Clear(LinearColor::Black);
 
@@ -430,6 +535,7 @@ namespace Athena
 		s_Data.HDRFramebuffer->BindDepthAttachment(1);
 
 		Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
+		s_Data.Stats.DrawCalls++;
 	}
 
 	void SceneRenderer::DebugViewPass()
@@ -437,10 +543,10 @@ namespace Athena
 		s_Data.FinalFramebuffer->Bind();
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
 
-		if (s_Data.CurrentDebugView == DebugView::WIREFRAME)
+		if (s_Data.Settings.DebugView == DebugView::WIREFRAME)
 			RenderGeometry("Debug_Wireframe", false);
 
-		else if (s_Data.CurrentDebugView == DebugView::SHADOW_CASCADES)
+		else if (s_Data.Settings.DebugView == DebugView::SHADOW_CASCADES)
 			RenderGeometry("Debug_ShadowCascades", false);
 	}
 
@@ -449,7 +555,7 @@ namespace Athena
 		float cameraNear = s_Data.CameraDataBuffer.NearClip;
 		float cameraFar = s_Data.CameraDataBuffer.FarClip;
 
-		const float splitWeight = s_Data.ShadowSettings.ExponentialSplitFactor;
+		const float splitWeight = s_Data.Settings.ShadowSettings.ExponentialSplitFactor;
 
 		for (uint32 i = 0; i < ShaderConstants::SHADOW_CASCADES_COUNT; ++i)
 		{
@@ -520,8 +626,8 @@ namespace Athena
 			Vector3 maxExtents = Vector3(radius);
 			Vector3 minExtents = -maxExtents;
 
-			minExtents.z += s_Data.ShadowSettings.NearPlaneOffset;
-			maxExtents.z += s_Data.ShadowSettings.FarPlaneOffset;
+			minExtents.z += s_Data.Settings.ShadowSettings.NearPlaneOffset;
+			maxExtents.z += s_Data.Settings.ShadowSettings.FarPlaneOffset;
 
 			Matrix4 lightView = Math::LookAt(frustumCenter - light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
 			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.f, maxExtents.z - minExtents.z);
@@ -639,86 +745,9 @@ namespace Athena
 		return s_Data.FinalFramebuffer;
 	}
 
-	void SceneRenderer::BlitToScreen()
+	SceneRendererSettings& SceneRenderer::GetSettings()
 	{
-		s_Data.FinalFramebuffer->BlitToScreen();
-	}
-
-	const ShadowSettings& SceneRenderer::GetShadowSettings()
-	{
-		return s_Data.ShadowSettings;
-	}
-
-	void SceneRenderer::SetShadowSettings(const ShadowSettings& settings)
-	{
-		s_Data.ShadowSettings = settings;
-	}
-
-	Antialising SceneRenderer::GetAntialiasingMethod()
-	{
-		return s_Data.AntialisingMethod;
-	}
-
-	void SceneRenderer::SetAntialiasingMethod(Antialising method)
-	{
-		if (s_Data.AntialisingMethod == method)
-			return;
-
-		FramebufferDescription hdrFBDesc = s_Data.HDRFramebuffer->GetDescription();
-		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
-
-		switch(method)
-		{
-		case Antialising::NONE:
-		{
-			hdrFBDesc.Samples = 1;
-			finalFBDesc.Samples = 1;
-			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
-			break;
-		}
-		case Antialising::MSAA_2X:
-		{
-			hdrFBDesc.Samples = 2;
-			finalFBDesc.Samples = 2;
-			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
-			break;
-		}
-		case Antialising::MSAA_4X:
-		{
-			hdrFBDesc.Samples = 4;
-			finalFBDesc.Samples = 4;
-			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
-			break;
-		}
-		case Antialising::MSAA_8X:
-		{
-			hdrFBDesc.Samples = 8;
-			finalFBDesc.Samples = 8;
-			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
-			break;
-		}
-		}
-
-		s_Data.AntialisingMethod = method;
-	}
-
-	DebugView SceneRenderer::GetDebugView()
-	{
-		return s_Data.CurrentDebugView;
-	}
-
-	void SceneRenderer::SetDebugView(DebugView view)
-	{
-		s_Data.CurrentDebugView = view;
-	}
-
-	void SceneRenderer::SetRenderQueueLimit(uint32 limit)
-	{
-		s_Data.GeometryQueue.SetLimit(limit);
+		return s_Data.Settings;
 	}
 
 	const SceneRenderer::Statistics& SceneRenderer::GetStatistics()

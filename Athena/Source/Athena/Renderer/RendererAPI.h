@@ -31,7 +31,7 @@ namespace Athena
 		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0) = 0;
 		virtual void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0) = 0;
 
-		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3 workGroupSize) = 0;
+		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize) = 0;
 
 		virtual void DisableCulling() = 0;
 		virtual void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE) = 0;

@@ -51,7 +51,7 @@ namespace Athena
 		float Intensity = 1;
 		float Threshold = 1.5;
 		float Knee = 0.1;
-		float DirtIntensity = 1;
+		float DirtIntensity = 2;
 		Ref<Texture2D> DirtTexture;
 	};
 
@@ -60,7 +60,7 @@ namespace Athena
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
 		DebugView DebugView = DebugView::NONE;
-		Antialising AntialisingMethod = Antialising::NONE;
+		Antialising AntialisingMethod = Antialising::MSAA_2X;
 		uint32 RenderQueueLimit;
 	};
 

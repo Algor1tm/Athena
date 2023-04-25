@@ -63,6 +63,15 @@ namespace Athena
 		{
 			TransformComponent inverseOldWorldTransform = oldWorldTransform.Inverse();
 
+			// TODO: fix(when parent rotated translation is wrong)
+			// 
+			//// newParentTransform == oldParentTransform
+			//TransformComponent parentTransform;
+			////parentTransform.Translation = -Translation + oldWorldTransform.Translation;
+			//parentTransform.Rotation = Rotation.GetInversed() * oldWorldTransform.Rotation;
+			////
+			////Translation = parentTransform.Rotation.GetInversed() * (newWorldTransform.Translation - parentTransform.Translation);
+
 			Translation = Translation + (inverseOldWorldTransform.Translation + newWorldTransform.Translation);
 			Rotation = Rotation * (inverseOldWorldTransform.Rotation * newWorldTransform.Rotation);
 			Scale = Scale * (inverseOldWorldTransform.Scale * newWorldTransform.Scale);
@@ -73,7 +82,7 @@ namespace Athena
 
 	struct RootComponent
 	{
-		Scene* SceneRef;
+		Scene* SceneRef;  // not used
 	};
 
 	struct ParentComponent

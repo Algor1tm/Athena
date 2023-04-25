@@ -17,9 +17,9 @@ namespace Athena
 		switch (antialiasing)
 		{
 		case Antialising::NONE: return "None";
-		case Antialising::MSAA_2X: return "MSAA 2X";
-		case Antialising::MSAA_4X: return "MSAA 4X";
-		case Antialising::MSAA_8X: return "MSAA 8X";
+		case Antialising::MSAA_2X: return "MSAA 2X (2D Only)";
+		case Antialising::MSAA_4X: return "MSAA 4X (2D Only)";
+		case Antialising::MSAA_8X: return "MSAA 8X (2D Only)";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -152,25 +152,30 @@ namespace Athena
 			UI::EndTreeNode();
 		}
 
-		if (UI::BeginTreeNode("Bloom", false))
+		if (UI::BeginTreeNode("Bloom"))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
 			ImGui::Text("Enable Bloom"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.BloomSettings.EnableBloom);
-			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f);
-			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f);
-			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.1f);
-			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f);
+			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f, 0, 10);
+			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f, 0, 10);
+			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.1f, 0, 10);
+			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f, 0, 200);
 
 			ImGui::Text("Dirt Texture"); 
 			ImGui::SameLine();
 			auto dirtTexture = settings.BloomSettings.DirtTexture ? settings.BloomSettings.DirtTexture : Renderer::GetWhiteTexture();
-			ImGui::Image(dirtTexture->GetRendererID(), { 50, 50 });
+			if (ImGui::ImageButton(dirtTexture->GetRendererID(), { 50, 50 }))
+			{
+				FilePath path = FileDialogs::OpenFile("DirtTexture (*png)\0*.png\0");
+				if (!path.empty())
+					settings.BloomSettings.DirtTexture = Texture2D::Create(path);
+			}
 
 			UI::EndTreeNode();
 		}
 
-		if (UI::BeginTreeNode("Other", false))
+		if (UI::BeginTreeNode("Other"))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 

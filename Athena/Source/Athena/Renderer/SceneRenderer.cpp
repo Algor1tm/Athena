@@ -115,7 +115,7 @@ namespace Athena
 		SceneRendererSettings Settings;
 		SceneRenderer::Statistics Stats;
 
-		const uint32 EnvMapResolution = 2048;
+		const uint32 EnvMapResolution = 1024;
 		const uint32 IrradianceMapResolution = 128;
 
 		const uint32 ShadowMapResolution = 2048;
@@ -131,7 +131,7 @@ namespace Athena
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Layers = 1;
-		fbDesc.Samples = 4;
+		fbDesc.Samples = 1;
 		 
 		s_Data.HDRFramebuffer = Framebuffer::Create(fbDesc);
 
@@ -139,7 +139,7 @@ namespace Athena
 		fbDesc.Width = 1280;
 		fbDesc.Height = 720;
 		fbDesc.Layers = 1;
-		fbDesc.Samples = 4;
+		fbDesc.Samples = 1;
 
 		s_Data.FinalFramebuffer = Framebuffer::Create(fbDesc);
 
@@ -224,15 +224,12 @@ namespace Athena
 
 		ComputeCascadeSplits();
 
-		FramebufferDescription hdrFBDesc = s_Data.HDRFramebuffer->GetDescription();
 		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
 
 		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
-		if (samples != hdrFBDesc.Samples)
+		if (samples != finalFBDesc.Samples)
 		{
-			hdrFBDesc.Samples = samples;
 			finalFBDesc.Samples = samples;
-			s_Data.HDRFramebuffer = Framebuffer::Create(hdrFBDesc);
 			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
 		}
 	}
@@ -449,8 +446,6 @@ namespace Athena
 
 	void SceneRenderer::BloomPass()
 	{
-		s_Data.HDRFramebuffer->ResolveMutlisampling();
-
 		if (s_Data.Settings.BloomSettings.EnableBloom)
 		{
 			const FramebufferDescription& hdrfbDesc = s_Data.HDRFramebuffer->GetDescription();
@@ -461,7 +456,7 @@ namespace Athena
 			// Compute mip levels
 			{
 				const uint32 maxIterations = 16;
-				const uint32 downSampleLimit = 16;
+				const uint32 downSampleLimit = 10;
 
 				uint32 width = hdrfbDesc.Width;
 				uint32 height = hdrfbDesc.Height;

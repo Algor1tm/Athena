@@ -475,8 +475,8 @@ void main()
 
 
     ////////////////// MAIN COLOR //////////////////
-    vec3 ambient = (diffuseIBL * albedo.rgb * emission + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
-    vec3 color = ambient + totalIrradiance;
+    vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
+    vec3 color = (ambient + totalIrradiance) * emission;
 
     out_Color = vec4(color, albedo.a);
 }

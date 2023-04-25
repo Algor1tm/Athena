@@ -31,13 +31,21 @@ namespace Athena
 		py::object Instantiate(Entity entity);
 		py::object GetMethod(const String& name);
 
+		py::object GetOnCreateMethod() { return m_OnCreateMethod; }
+		py::object GetOnUpdateMethod() { return m_OnUpdateMethod; }
+
 		py::object GetInternalClass() { return m_PyClass; }
+		bool IsLoaded() const { return m_IsLoaded; }
 
 		const ScriptFieldsDescription& GetFieldsDescription() const { return m_FieldsDescription; }
 
 	private:
 		py::object m_PyClass;
+		py::object m_OnCreateMethod;
+		py::object m_OnUpdateMethod;
+
 		ScriptFieldsDescription m_FieldsDescription;
+		bool m_IsLoaded = false;
 	};
 
 	class ScriptInstance
@@ -53,9 +61,6 @@ namespace Athena
 
 	private:
 		ScriptClass m_ScriptClass;
-		py::object m_OnCreateMethod;
-		py::object m_OnUpdateMethod;
-
 		py::object m_PyInstance;
 	};
 

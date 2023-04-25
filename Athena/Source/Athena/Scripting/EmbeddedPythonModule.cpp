@@ -204,6 +204,7 @@ namespace Athena
 #pragma region MATH
         py::class_<Vector2>(handle, "Vector2")
             .def(py::init([]() {return Vector2(0, 0); }))
+            .def(py::init<float>())
             .def(py::init<float, float>())
             .def_readwrite("x", &Vector2::x)
             .def_readwrite("y", &Vector2::y)
@@ -217,6 +218,7 @@ namespace Athena
 
         py::class_<Vector3>(handle, "Vector3")
             .def(py::init([]() {return Vector3(0, 0, 0); }))
+            .def(py::init<float>())
             .def(py::init<float, float, float>())
             .def(py::init<Vector2, float>())
             .def(py::init<float, Vector2>())
@@ -228,10 +230,19 @@ namespace Athena
             .def("Normalize", &Vector3::Normalize)
             .def("Dot", (float (*)(const Vector3&, const Vector3&))Math::Dot)
             .def("Cross", (Vector3(*)(const Vector3&, const Vector3&))Math::Cross)
+
+            .def_property_readonly_static("up", [](py::object) {return Vector3::Up(); })
+            .def_property_readonly_static("down", [](py::object) {return Vector3::Down(); })
+            .def_property_readonly_static("left", [](py::object) {return Vector3::Left(); })
+            .def_property_readonly_static("right", [](py::object) {return Vector3::Right(); })
+            .def_property_readonly_static("forward", [](py::object) {return Vector3::Forward(); })
+            .def_property_readonly_static("back", [](py::object) {return Vector3::Back(); })
+
             .def("__repr__", [](Vector3 vec3) { return Athena::ToString(vec3); });
 
         py::class_<Vector4>(handle, "Vector4")
             .def(py::init([]() {return Vector4(0, 0, 0, 0); }))
+            .def(py::init<float>())
             .def(py::init<float, float, float, float>())
             .def(py::init<Vector2, Vector2>())
             .def(py::init<float, Vector3>())
@@ -254,6 +265,16 @@ namespace Athena
             .def_readwrite("x", &Quaternion::x)
             .def_readwrite("y", &Quaternion::y)
             .def_readwrite("z", &Quaternion::z)
+            .def(py::self * py::self)
+            .def(py::self *= py::self)
+            .def(py::self == py::self) 
+            .def(py::self != py::self)
+            .def(py::self * Vector3())  
+            .def("Length", &Quaternion::Length)
+            .def("Normalize", &Quaternion::Normalize)
+            .def("Inverse", &Quaternion::Inverse)
+            .def("Conjugate", &Quaternion::Conjugate)
+            .def("AsEulerAngles", &Quaternion::AsEulerAngles)
             .def("__repr__", [](Quaternion quat) { return Athena::ToString(quat); });
 #pragma endregion MATH
 
@@ -305,9 +326,9 @@ namespace Athena
             .def(py::init<>())
             .def(py::init<UUID>())
             .def("_HasThisComponent", &Python_TransformComponent::_HasThisComponent)
-            .def_property("Translation", &Python_TransformComponent::GetTranslation, &Python_TransformComponent::SetTranslation)
-            .def_property("Scale", &Python_TransformComponent::GetScale, &Python_TransformComponent::SetScale)
-            .def_property("Rotation", &Python_TransformComponent::GetRotation, &Python_TransformComponent::SetRotation);
+            .def_property("translation", &Python_TransformComponent::GetTranslation, &Python_TransformComponent::SetTranslation)
+            .def_property("scale", &Python_TransformComponent::GetScale, &Python_TransformComponent::SetScale)
+            .def_property("rotation", &Python_TransformComponent::GetRotation, &Python_TransformComponent::SetRotation);
 
         py::class_<Python_Rigidbody2DComponent, Python_Component>(handle, "Rigidbody2DComponent")
             .def(py::init<>())

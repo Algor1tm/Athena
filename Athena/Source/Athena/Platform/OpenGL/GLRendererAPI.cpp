@@ -16,6 +16,11 @@ namespace Athena
 		const char* message,
 		const void* userParam)
 	{
+		// HACK
+		const char* messageToAvoid = "Program/shader state performance warning:";
+		if (length >= strlen(messageToAvoid) && strncmp(message, messageToAvoid, strlen(messageToAvoid)) == 0)
+			return;
+
 		switch (severity)
 		{
 		case GL_DEBUG_SEVERITY_HIGH:         ATN_CORE_FATAL(message); return;

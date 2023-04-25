@@ -47,45 +47,21 @@ namespace Athena
 
 	void SettingsPanel::OnImGuiRender()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0.f });
+
 		if (ImGui::Begin("Editor Settings"))
 		{
-			if (UI::BeginTreeNode("Physics"))
-			{
-				UI::ShiftCursorY(2.f);
-				UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.m_ShowPhysicsColliders); });
-				UI::EndTreeNode();
-			}
+			UI::ShiftCursorY(2.f);
+			UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.ShowPhysicsColliders); });
 
-			if (UI::BeginTreeNode("Scripting"))
-			{
-				UI::ShiftCursorY(2.f);
-				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-				if (ImGui::Button("Reload Scripts"))
-				{
-					PublicScriptEngine::ReloadScripts();
-				}
-				ImGui::PopStyleVar();
-				ImGui::PopStyleColor();
-
-				UI::EndTreeNode();
-			}
-
-			if (UI::BeginTreeNode("Renderer"))
-			{
-				ImGui::Text("Camera Speed");
-				ImGui::SameLine();
-				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-				ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.m_CameraSpeedLevel, 0.f, 10.f);
-
-				UI::EndTreeNode();
-			}
+			ImGui::Text("Camera Speed");
+			ImGui::SameLine();
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+			ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.CameraSpeedLevel, 0.f, 10.f);
 		}
 
 		ImGui::End();
 
-
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0.f });
 		ImGui::Begin("SceneRenderer");
 		ImGui::PopStyleVar();
 
@@ -212,6 +188,24 @@ namespace Athena
 
 			UI::EndTreeNode();
 		}
+
+		ImGui::End();
+
+		ImGui::Begin("ScriptEngine");
+		
+		ImGui::Text("Reload Scripts On Start");
+		ImGui::SameLine();
+		ImGui::Checkbox("##OnStart", &m_EditorSettings.ReloadScriptsOnStart);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+		if (ImGui::Button("Reload All Scripts"))
+		{
+			PublicScriptEngine::ReloadScripts();
+		}
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
 
 		ImGui::End();
 	}

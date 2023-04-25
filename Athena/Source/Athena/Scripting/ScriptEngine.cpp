@@ -112,48 +112,81 @@ namespace Athena
 		return modules;
 	}
 
-	static void ImportAndAddModule(const String& name)
+	static bool ImportAndAddModule(const String& name)
 	{
-		py::module_ check = s_Data->PythonModules[name] = py::module_::import(name.c_str());
-		if (check)
-			ATN_CORE_INFO("Successfuly load python module '{0}.{1}'", name, "py");
-		else
-			ATN_CORE_FATAL("Failed to load python module '{0}.{1}' !", name, "py");
+		try
+		{
+			s_Data->PythonModules[name] = py::module_::import(name.c_str());
+			return true;
+		}
+		catch (std::exception& exception)
+		{
+			s_Data->PythonModules.erase(name);
+			ATN_CORE_ERROR("[ScriptEngine] LoadModule exception: \n{}!", exception.what());
+			return false;
+		}
 	}
 
+	static String GetPythonFieldType(const String& name, py::object pyClass)
+	{
+		return py::cast<std::string>(pyClass.attr(name.c_str()).attr("__class__").attr("__name__"));
+	}
+
+	static bool IsValidFieldName(const String& name, py::object pyClass, const String& className)
+	{
+		if (name.at(0) != '_') // is public
+		{
+			String type = GetPythonFieldType(name, pyClass);
+			if (type != "function")	// is not function
+			{
+				if (s_ScriptFieldTypeMap.find(type) != s_ScriptFieldTypeMap.end()) // has appropritate c++ type
+				{
+					return true;
+				}
+				ATN_CORE_WARN("Unknown field type: {0} ({1}), class - {2}", name, type, className);
+			}
+		}
+
+		return false;
+	}
 
 
 	ScriptClass::ScriptClass(const String& className)
 	{
 		py::module_ pyModule = s_Data->PythonModules.at(className);
 
-		m_PyClass = pyModule.attr(className.data());
-		ATN_CORE_ASSERT(m_PyClass, "Failed to load script class!");
+		try
+		{
+			m_PyClass = pyModule.attr(className.data());
+		}
+		catch (std::exception& exception)
+		{
+			ATN_CORE_ERROR("[ScriptEngine] ScriptClass exception: \n{}!", exception.what());
+			return;
+		}
+
+		m_IsLoaded = true;
+
+		m_OnCreateMethod = GetMethod("OnCreate");
+		m_OnUpdateMethod = GetMethod("OnUpdate");
 
 		py::dict fields = py::cast<py::dict>(m_PyClass.attr("__dict__"));
 		for (const auto& [nameHandle, initialValue] : fields)
 		{
 			std::string name = py::cast<std::string>(nameHandle);
-			if (name.at(0) != '_')
+			if (IsValidFieldName(name, m_PyClass, className))
 			{
-				std::string type = py::cast<std::string>(m_PyClass.attr(name.c_str()).attr("__class__").attr("__name__"));
-				if (type != "function")
-				{
-					if (s_ScriptFieldTypeMap.find(type) == s_ScriptFieldTypeMap.end())
-					{
-						ATN_CORE_WARN("Unknown field type: {0} ({1}), class - {2}", name, type, className);
-						continue;
-					}
+				String type = GetPythonFieldType(name, m_PyClass);
 
-					ScriptField fieldDesc;
-					fieldDesc.Name = name;
-					fieldDesc.Type = s_ScriptFieldTypeMap.at(type);
-					GetInternalValue(initialValue, fieldDesc.Type, fieldDesc.Storage.m_Buffer);
+				ScriptField fieldDesc;
+				fieldDesc.Name = name;
+				fieldDesc.Type = s_ScriptFieldTypeMap.at(type);
+				GetInternalValue(initialValue, fieldDesc.Type, fieldDesc.Storage.m_Buffer);
 
-					m_FieldsDescription[name] = fieldDesc;
-				}
+				m_FieldsDescription[name] = fieldDesc;
 			}
 		}
+
 	}
 
 	py::object ScriptClass::Instantiate(Entity entity)
@@ -163,9 +196,20 @@ namespace Athena
 
 	py::object ScriptClass::GetMethod(const String& name)
 	{
-		py::object method = m_PyClass.attr(name.data());
-		ATN_CORE_ASSERT(method, "Failed to load method!");
-		return method;
+		try
+		{
+			if (IsLoaded())
+			{
+				py::object method = m_PyClass.attr(name.data());
+				return method;
+			}
+		}
+		catch (std::exception& exception)
+		{
+			ATN_CORE_ERROR("[ScriptEngine] ScriptClass exception: \n{}!", exception.what());
+		}
+
+		return py::object();
 	}
 
 
@@ -173,9 +217,6 @@ namespace Athena
 	ScriptInstance::ScriptInstance(ScriptClass scriptClass, Entity entity)
 		: m_ScriptClass(scriptClass)
 	{
-		m_OnCreateMethod = m_ScriptClass.GetMethod("OnCreate");
-		m_OnUpdateMethod = m_ScriptClass.GetMethod("OnUpdate");
-
 		m_PyInstance = m_ScriptClass.Instantiate(entity);
 
 		UUID entityID = entity.GetID();
@@ -193,12 +234,16 @@ namespace Athena
 
 	void ScriptInstance::InvokeOnCreate()
 	{
-		m_OnCreateMethod(m_PyInstance);
+		py::object onCreate = m_ScriptClass.GetOnCreateMethod();
+		if (onCreate)
+			onCreate(m_PyInstance);
 	}
 
 	void ScriptInstance::InvokeOnUpdate(Time frameTime)
 	{
-		m_OnUpdateMethod(m_PyInstance, frameTime);
+		py::object onUpdate = m_ScriptClass.GetOnUpdateMethod();
+		if (onUpdate)
+			onUpdate(m_PyInstance, frameTime);
 	}
 
 	py::object ScriptInstance::GetInternalInstance()
@@ -225,8 +270,8 @@ namespace Athena
 		const auto& modules = GetStringPyModules();
 		for (const auto& strModule : modules)
 		{
-			ImportAndAddModule(strModule);
-			s_Data->EntityClasses[strModule] = ScriptClass(strModule);
+			if(ImportAndAddModule(strModule))
+				s_Data->EntityClasses[strModule] = ScriptClass(strModule);
 		}
 	}
 
@@ -243,7 +288,7 @@ namespace Athena
 			else
 			{
 				s_Data->PythonModules.at(strModule).reload();
-				ATN_CORE_INFO("ScriptEngine:Reload python module {0}.{1}", strModule,"py");
+				ATN_CORE_INFO("ScriptEngine:Reload python module {0}.{1}", strModule, "py");
 			}
 		}
 
@@ -310,26 +355,49 @@ namespace Athena
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
-		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
-			s_Data->EntityInstances[entity.GetID()] = ScriptInstance(s_Data->EntityClasses.at(sc.Name), entity);
-		else
-			ATN_CORE_WARN("ScriptEngine: script class '{}' does not exists!", sc.Name);
+		try
+		{
+			if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+			{
+				const ScriptClass& scriptClass = s_Data->EntityClasses.at(sc.Name);
+				if(scriptClass.IsLoaded())
+					s_Data->EntityInstances[entity.GetID()] = ScriptInstance(scriptClass, entity);
+			}
+		}
+		catch (std::exception& exception)
+		{
+			ATN_CORE_ERROR("[ScriptEngine] InstantiateEntity exception: \n{}!", exception.what());
+		}
 	}
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
-		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
-			s_Data->EntityInstances[entity.GetID()].InvokeOnCreate();
+		try
+		{
+			if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+				s_Data->EntityInstances[entity.GetID()].InvokeOnCreate();
+		}
+		catch (std::exception& exception)
+		{
+			ATN_CORE_ERROR("[ScriptEngine] OnCreateEntity exception: \n{}!", exception.what());
+		}
 	}
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
-		if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
-			s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
+		try
+		{
+			if (s_Data->EntityClasses.find(sc.Name) != s_Data->EntityClasses.end())
+				s_Data->EntityInstances[entity.GetID()].InvokeOnUpdate(frameTime);
+		}
+		catch (std::exception& exception)
+		{
+			ATN_CORE_ERROR("[ScriptEngine] OnUpdateEntity exception: \n{}!", exception.what());
+		}
 	}
 
 	void ScriptEngine::OnScriptComponentRemove(Entity entity)

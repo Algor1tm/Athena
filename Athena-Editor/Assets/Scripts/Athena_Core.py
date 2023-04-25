@@ -19,6 +19,7 @@ from Entity import Entity
 
 ###############  Math  ##################
 from Internal import Vector2, Vector3, Vector4
+from Internal import Quaternion
 
 ###############  Core  ##################
 from Internal import Log

@@ -440,7 +440,7 @@ namespace Athena
 				b2BodyDef bodyDef;
 				bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
 				bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
-				bodyDef.angle = transform.Rotation.EulerAngles().z;
+				bodyDef.angle = transform.Rotation.AsEulerAngles().z;
 
 				b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
 				body->SetFixedRotation(rb2d.FixedRotation);
@@ -501,7 +501,7 @@ namespace Athena
 			newWorldTransform.Translation.x = position.x;
 			newWorldTransform.Translation.y = position.y;
 
-			Vector3 eulerAngles = oldWorldTransform.Rotation.EulerAngles();
+			Vector3 eulerAngles = oldWorldTransform.Rotation.AsEulerAngles();
 			eulerAngles.z = body->GetAngle();
 			newWorldTransform.Rotation = Quaternion(eulerAngles);
 

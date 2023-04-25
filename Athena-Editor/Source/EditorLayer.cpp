@@ -162,7 +162,7 @@ namespace Athena
 
         ImGui::End();
 
-		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().m_CameraSpeedLevel);
+		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
         m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
     }
 
@@ -341,7 +341,7 @@ namespace Athena
             SceneRenderer2D::BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
         }
 
-        if (m_SettingsPanel->GetEditorSettings().m_ShowPhysicsColliders)
+        if (m_SettingsPanel->GetEditorSettings().ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();

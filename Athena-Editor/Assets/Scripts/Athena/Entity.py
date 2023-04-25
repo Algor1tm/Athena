@@ -25,7 +25,7 @@ class Entity:
         if(Entity_ExistsScriptInstance(self._ID)):
             return Entity_GetScriptInstance(self._ID)
 
-        return self;
+        return self
 
     @staticmethod
     def FindEntityByName(name):

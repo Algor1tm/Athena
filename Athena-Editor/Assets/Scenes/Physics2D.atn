@@ -35,7 +35,7 @@ Entities:
     ChildComponent:
       Parent: 15931751826525104939
     ScriptComponent:
-      Name: Player
+      Name: Player2D
     SpriteComponent:
       Color: [1, 0.608716488, 0.0632911325, 1]
       Texture: ""
@@ -124,7 +124,7 @@ Entities:
     ChildComponent:
       Parent: 15931751826525104939
     ScriptComponent:
-      Name: Camera
+      Name: Camera2D
     CameraComponent:
       Camera:
         ProjectionType: 0

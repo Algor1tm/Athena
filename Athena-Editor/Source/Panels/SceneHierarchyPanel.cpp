@@ -438,7 +438,7 @@ namespace Athena
 				if (UI::BeginDrawControllers())
 				{
 					UI::DrawVec3Controller("Translation", transform.Translation, 0.0f, height);
-					Vector3 degrees = Math::Degrees(transform.Rotation.EulerAngles());
+					Vector3 degrees = Math::Degrees(transform.Rotation.AsEulerAngles());
 					UI::DrawVec3Controller("Rotation", degrees, 0.0f, height);
 					transform.Rotation = Math::Radians(degrees);
 					UI::DrawVec3Controller("Scale", transform.Scale, 1.0f, height);
@@ -495,6 +495,8 @@ namespace Athena
 
 					for (const auto& [name, field] : fieldsDesc)
 					{
+						ImGui::PushID(name.c_str());
+
 						auto& fieldStorage = fieldMap[name];
 						if (field.Type == ScriptFieldType::Int)
 						{
@@ -532,6 +534,8 @@ namespace Athena
 							if (UI::DrawController(name.data(), height, [&data]() { return ImGui::DragFloat4("##Vector4", data.Data()); }))
 								fieldStorage.SetValue(data);
 						}
+
+						ImGui::PopID();
 					}
 
 					UI::EndDrawControllers();

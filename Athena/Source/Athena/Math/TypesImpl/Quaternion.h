@@ -177,28 +177,7 @@ namespace Athena::Math
 			return Quaternion(w, -x, -y, -z);
 		}
 
-		inline Quaternion& Rotate(T radians, const Vector<T, 3>& axis)
-		{
-			Vector<T, 3> tmp = axis;
-
-			T len = tmp.Length();
-			if (Math::Abs(len - static_cast<T>(1.f)) > static_cast<T>(0.001f))
-			{
-				T oneOverLen = static_cast<T>(1) / len;
-				tmp *= oneOverLen;
-			}
-
-			T sin = Math::Sin(radians * static_cast<T>(0.5));
-
-			return *this *= Quaternion(Math::Cos(radians * static_cast<T>(0.5)), tmp.x * sin, tmp.y * sin, tmp.z * sin);
-		}
-
-		inline Quaternion GetRotated(T angle, const Vector<T, 3>& axis) const
-		{
-			return Quaternion(*this).Rotate(angle, axis);
-		}
-
-		inline Vector3 EulerAngles() const
+		inline Vector3 AsEulerAngles() const
 		{
 			float sqw = w * w;
 			float sqx = x * x;

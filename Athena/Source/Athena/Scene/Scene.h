@@ -64,6 +64,8 @@ namespace Athena
 		void OnRuntimeStart();
 		void OnSimulationStart();
 
+		void LoadAllScripts();
+
 		void OnViewportResize(uint32 width, uint32 height);
 
 		void SetSceneName(const String& name) { m_Name = name; }

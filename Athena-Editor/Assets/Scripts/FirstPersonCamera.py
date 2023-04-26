@@ -11,8 +11,8 @@ def Sign(value):
 
 class FirstPersonCamera(Entity):
     _initialMousePosition = Vector2()
-    yaw = 0.0
-    pitch = 0.0
+    yaw = -1.55
+    pitch = 0.1
 
     moveSpeed = 50.0
     rotationSpeed = 0.002 

@@ -9,7 +9,7 @@
 
 #include "Athena/Renderer/Renderer.h"
 
-#include "Athena/Scripting/PublicScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 
 namespace Athena

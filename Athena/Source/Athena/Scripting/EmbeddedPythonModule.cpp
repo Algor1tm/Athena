@@ -2,7 +2,7 @@
 
 #include "Athena/Input/Input.h"
 
-#include "Athena/Scripting/ScriptEngine.h"
+#include "Athena/Scripting/PrivateScriptEngine.h"
 
 #include "Athena/Scene/Components.h"
 
@@ -24,6 +24,9 @@
 namespace py = pybind11;
 
 #define ADD_INTERNAL_FUNCTION(Name) handle.def(ATN_STRINGIFY_MACRO(Name), &Athena::Name)
+
+#define DEF_METHOD(_class, method)  .def(ATN_STRINGIFY_MACRO(method), &_class::method)
+#define DEF_TO_STRING(_class)       .def("__repr__", [](_class value) { return Athena::ToString(value); })
 
 #define DEF_MATH_OPERATORS()        .def(py::self + py::self)   \
                                     .def(py::self - py::self)   \
@@ -116,7 +119,7 @@ namespace Athena
     protected:
         Entity GetEntity()
         {
-            Scene* scene = ScriptEngine::GetSceneContext();
+            Scene* scene = PrivateScriptEngine::GetSceneContext();
             ATN_CORE_ASSERT(scene);
             Entity entity = scene->GetEntityByUUID(_EntityID);
             ATN_CORE_ASSERT(entity);
@@ -178,7 +181,7 @@ namespace Athena
 #pragma region UTILS
     static UUID Entity_FindEntityByName(const std::string& name)
     {
-        Scene* scene = ScriptEngine::GetSceneContext();
+        Scene* scene = PrivateScriptEngine::GetSceneContext();
         ATN_CORE_ASSERT(scene);
         Entity entity = scene->FindEntityByName(name);
         ATN_CORE_ASSERT(entity);
@@ -187,12 +190,12 @@ namespace Athena
 
     static py::object Entity_GetScriptInstance(UUID uuid)
     {
-        return ScriptEngine::GetScriptInstance(uuid).GetInternalInstance();
+        return PrivateScriptEngine::GetScriptInstance(uuid).GetInternalInstance();
     }
 
     static bool Entity_ExistsScriptInstance(UUID uuid)
     {
-        return ScriptEngine::EntityInstanceExists(uuid);
+        return PrivateScriptEngine::EntityInstanceExists(uuid);
     }
 #pragma endregion UTILS
 
@@ -209,11 +212,11 @@ namespace Athena
             .def_readwrite("x", &Vector2::x)
             .def_readwrite("y", &Vector2::y)
             DEF_MATH_OPERATORS()
-            .def("Length", &Vector2::Length)
-            .def("Normalize", &Vector2::Normalize)
+            DEF_METHOD(Vector2, Length)
+            DEF_METHOD(Vector2, Normalize)
             .def("Dot", (float (*)(const Vector2&, const Vector2&))Math::Dot)
             .def("Cross", (float (*)(const Vector2&, const Vector2&))Math::Cross)
-            .def("__repr__", [](const Vector2& vec2) { return Athena::ToString(vec2); });
+            DEF_TO_STRING(Vector2);
 
 
         py::class_<Vector3>(handle, "Vector3")
@@ -226,8 +229,8 @@ namespace Athena
             .def_readwrite("y", &Vector3::y)
             .def_readwrite("z", &Vector3::z)
             DEF_MATH_OPERATORS()
-            .def("Length", &Vector3::Length)
-            .def("Normalize", &Vector3::Normalize)
+            DEF_METHOD(Vector3, Length)
+            DEF_METHOD(Vector3, Normalize)
             .def("Dot", (float (*)(const Vector3&, const Vector3&))Math::Dot)
             .def("Cross", (Vector3(*)(const Vector3&, const Vector3&))Math::Cross)
 
@@ -238,7 +241,7 @@ namespace Athena
             .def_property_readonly_static("forward", [](py::object) {return Vector3::Forward(); })
             .def_property_readonly_static("back", [](py::object) {return Vector3::Back(); })
 
-            .def("__repr__", [](Vector3 vec3) { return Athena::ToString(vec3); });
+            DEF_TO_STRING(Vector3);
 
         py::class_<Vector4>(handle, "Vector4")
             .def(py::init([]() {return Vector4(0, 0, 0, 0); }))
@@ -252,10 +255,10 @@ namespace Athena
             .def_readwrite("z", &Vector4::z)
             .def_readwrite("w", &Vector4::w)
             DEF_MATH_OPERATORS()
-            .def("Length", &Vector4::Length)
-            .def("Normalize", &Vector4::Normalize)
+            DEF_METHOD(Vector4, Length)
+            DEF_METHOD(Vector4, Normalize)
             .def("Dot", (float (*)(const Vector4&, const Vector4&))Math::Dot)
-            .def("__repr__", [](Vector4 vec4) { return Athena::ToString(vec4); });
+            DEF_TO_STRING(Vector4);
 
         py::class_<Quaternion>(handle, "Quaternion")
             .def(py::init([]() {return Quaternion(1, 0, 0, 0); }))
@@ -270,30 +273,30 @@ namespace Athena
             .def(py::self == py::self) 
             .def(py::self != py::self)
             .def(py::self * Vector3())  
-            .def("Length", &Quaternion::Length)
-            .def("Normalize", &Quaternion::Normalize)
-            .def("Inverse", &Quaternion::Inverse)
-            .def("Conjugate", &Quaternion::Conjugate)
-            .def("AsEulerAngles", &Quaternion::AsEulerAngles)
-            .def("__repr__", [](Quaternion quat) { return Athena::ToString(quat); });
+            DEF_METHOD(Quaternion, Length)
+            DEF_METHOD(Quaternion, Normalize)
+            DEF_METHOD(Quaternion, Inverse)
+            DEF_METHOD(Quaternion, Conjugate)
+            DEF_METHOD(Quaternion, AsEulerAngles)
+            DEF_TO_STRING(Quaternion);
 #pragma endregion MATH
 
 
 #pragma region LOG
         py::class_<Python_Log>(handle, "Log")
-            .def("Trace", static_cast<void (*)(const std::string&)>(Python_Log::Trace))
-            .def("Info", static_cast<void (*)(const std::string&)>(Python_Log::Info))
-            .def("Warn", static_cast<void (*)(const std::string&)>(Python_Log::Warn))
-            .def("Error", static_cast<void (*)(const std::string&)>(Python_Log::Error))
-            .def("Fatal", static_cast<void (*)(const std::string&)>(Python_Log::Fatal));
+            .def("Trace", Python_Log::Trace)
+            .def("Info", Python_Log::Info)
+            .def("Warn", Python_Log::Warn)
+            .def("Error", Python_Log::Error)
+            .def("Fatal", Python_Log::Fatal);
 #pragma endregion LOG
 
 
 #pragma region INPUT
         py::class_<Python_Input>(handle, "Input")
-            .def("IsKeyPressed", static_cast<bool (*)(uint16)>(Python_Input::IsKeyPressed))
-            .def("IsMouseButtonPressed", static_cast<bool (*)(uint16)>(Python_Input::IsMouseButtonPressed))
-            .def("GetMousePosition", static_cast<Vector2 (*)()>(Python_Input::GetMousePosition));
+            .def("IsKeyPressed", Python_Input::IsKeyPressed)
+            .def("IsMouseButtonPressed", Python_Input::IsMouseButtonPressed)
+            .def("GetMousePosition", Python_Input::GetMousePosition);
 #pragma endregion INPUT
 
 
@@ -333,9 +336,9 @@ namespace Athena
         py::class_<Python_Rigidbody2DComponent, Python_Component>(handle, "Rigidbody2DComponent")
             .def(py::init<>())
             .def(py::init<UUID>())
-            .def("_HasThisComponent", &Python_Rigidbody2DComponent::_HasThisComponent)
-            .def("ApplyLinearImpulse", &Python_Rigidbody2DComponent::ApplyLinearImpulse)
-            .def("ApplyLinearImpulseToCenter", &Python_Rigidbody2DComponent::ApplyLinearImpulseToCenter);
+            DEF_METHOD(Python_Rigidbody2DComponent, _HasThisComponent)
+            DEF_METHOD(Python_Rigidbody2DComponent, ApplyLinearImpulse)
+            DEF_METHOD(Python_Rigidbody2DComponent, ApplyLinearImpulseToCenter);
 #pragma endregion COMPONENTS
     }
 }

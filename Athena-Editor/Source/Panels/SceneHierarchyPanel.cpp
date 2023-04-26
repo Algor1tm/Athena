@@ -10,7 +10,7 @@
 
 #include "Athena/Scene/Components.h"
 
-#include "Athena/Scripting/PublicScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 #include "UI/Widgets.h"
 
@@ -456,7 +456,7 @@ namespace Athena
 					if (UI::DrawController("ScriptName", height, [&script]()
 						{ return ImGui::BeginCombo("##Scripts", script.Name.data()); }))
 					{
-						auto modules = PublicScriptEngine::GetAvailableModules();
+						auto modules = ScriptEngine::GetAvailableModules();
 						auto currentName = std::string_view(script.Name.data());
 
 						for (const auto& moduleName : modules)
@@ -475,29 +475,20 @@ namespace Athena
 						ImGui::EndCombo();
 					}
 
-					if (script.Name.empty())
+					if (!ScriptEngine::ExistsScript(script.Name))
 					{
 						UI::EndDrawControllers();
 						return;
 					}
 
-					const ScriptFieldsDescription& fieldsDesc = PublicScriptEngine::GetFieldsDescription(script.Name);
-					ScriptFieldMap& fieldMap = PublicScriptEngine::GetScriptFieldMap(entity);
-
-					if (!fieldsDesc.empty() && fieldMap.empty())	// TODO: Move to ScriptEngine
-					{												
-						for (const auto& [name, field] : fieldsDesc)	// fill FieldMap
-						{
-							ScriptFieldStorage& storage = fieldMap[name];
-							storage = field.Storage;
-						}
-					}
+					const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
+					ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);
 
 					for (const auto& [name, field] : fieldsDesc)
 					{
 						ImGui::PushID(name.c_str());
 
-						auto& fieldStorage = fieldMap[name];
+						auto& fieldStorage = fieldMap.at(name);
 						if (field.Type == ScriptFieldType::Int)
 						{
 							int data = fieldStorage.GetValue<int>();

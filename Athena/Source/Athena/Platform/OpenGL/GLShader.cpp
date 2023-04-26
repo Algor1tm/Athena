@@ -93,6 +93,14 @@ namespace Athena
 		Reload();
 	}
 
+	GLShader::GLShader(const FilePath& path, const String& name)
+	{
+		m_FilePath = path;
+		m_Name = name;
+
+		Reload();
+	}
+
 	GLShader::GLShader(const String& name, const String& vertexSrc, const String& fragmentSrc)
 	{
 		m_Name = name;
@@ -130,7 +138,10 @@ namespace Athena
 		for (auto& shaderSource : shaderSources)
 			AddGlobalDefines(shaderSource.second);
 
-		Compile(shaderSources);
+		if (Compile(shaderSources))
+		{
+			ATN_CORE_WARN("[GLShader] Successfully compile OpenGL Shader '{}'", m_Name);
+		}
 	}
 
 	void GLShader::Bind() const

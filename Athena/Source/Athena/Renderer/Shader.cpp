@@ -35,6 +35,22 @@ namespace Athena
 		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
+	
+	Ref<Shader> Shader::Create(const FilePath& path, const String& name)
+	{
+		FilePath stem = path;
+
+		switch (Renderer::GetAPI())
+		{
+		case Renderer::API::OpenGL:
+			return CreateRef<GLShader>(stem.concat(L".glsl"), name); break;
+		case Renderer::API::None:
+			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
+		return nullptr;
+	}
 
 	Ref<Shader> Shader::Create(const String& name, const String& vertexSrc, const String& fragmentSrc)
 	{
@@ -115,7 +131,7 @@ namespace Athena
 
 	Ref<Shader> ShaderLibrary::Load(const String& name, const FilePath& path)
 	{
-		auto shader = Shader::Create(path);
+		auto shader = Shader::Create(path, name);
 		Add(name, shader);
 		return shader;
 	}

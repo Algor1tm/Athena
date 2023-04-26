@@ -14,7 +14,7 @@
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/SceneCamera.h"
 
-#include "Athena/Scripting/PublicScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 
 namespace Athena
@@ -251,6 +251,6 @@ namespace Athena
 	template <>
 	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity, ScriptComponent& component)
 	{
-		PublicScriptEngine::OnScriptComponentRemove(entity);
+		ScriptEngine::UnLoadScript(component.Name, entity);
 	}
 }

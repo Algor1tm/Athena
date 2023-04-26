@@ -38,6 +38,7 @@ namespace Athena
 		//     if RendererAPI = Direct3D extension will be .hlsl
 		//     if RendererAPI = OpenGL extension will be .glsl
 		static Ref<Shader> Create(const FilePath& path);
+		static Ref<Shader> Create(const FilePath& path, const String& name);
 		static Ref<Shader> Create(const String& name, const String& vertexSrc, const String& fragmentSrc);
 
 		virtual ~Shader() = default;

@@ -12,7 +12,7 @@ namespace Athena
 		AthenaEditor(const ApplicationDescription& appdesc)
 			: Application(appdesc)
 		{
-			
+
 		}
 
 		~AthenaEditor()

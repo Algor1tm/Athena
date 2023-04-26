@@ -451,12 +451,15 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
+        if (m_SettingsPanel->GetEditorSettings().ReloadScriptsOnStart)
+        {
+            m_ActiveScene->LoadAllScripts();
+        }
+
         const auto& vpDesc = m_MainViewport->GetDescription();
 
         if (m_SceneState == SceneState::Simulation)
             OnSceneStop();
-
-        SelectEntity({});
 
         m_SceneState = SceneState::Play;
 

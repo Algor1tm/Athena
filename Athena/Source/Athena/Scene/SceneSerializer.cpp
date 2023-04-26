@@ -477,6 +477,8 @@ namespace Athena
 			}
 		}
 
+		m_Scene->LoadAllScripts();
+
 		return true;
 	}
 

@@ -3,7 +3,9 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
 
-#include "Athena/Scripting/PublicScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
+
+#include "EditorLayer.h"
 
 #include "UI/Widgets.h"
 
@@ -201,7 +203,7 @@ namespace Athena
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 		if (ImGui::Button("Reload All Scripts"))
 		{
-			PublicScriptEngine::ReloadScripts();
+			EditorLayer::Get().GetActiveScene()->LoadAllScripts();
 		}
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor();

@@ -46,6 +46,8 @@ namespace Athena
 		static EditorLayer& Get() { return *s_Instance; }
 		const EditorConfig& GetConfig() { return m_Config; }
 
+		Ref<Scene> GetActiveScene() { return m_ActiveScene; }
+
 	private:
 		void SelectEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);

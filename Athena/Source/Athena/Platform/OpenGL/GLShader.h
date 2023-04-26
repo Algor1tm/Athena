@@ -11,6 +11,7 @@ namespace Athena
 	{
 	public:
 		GLShader(const FilePath& path);
+		GLShader(const FilePath& path, const String& name);
 		GLShader(const String& name, const String& vertexSrc, const String& fragmentSrc);
 		virtual ~GLShader();
 

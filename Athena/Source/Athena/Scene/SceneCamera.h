@@ -23,7 +23,7 @@ namespace Athena
 		struct PerspectiveDescription
 		{
 			float VerticalFOV = Math::Radians(45.f);
-			float NearClip = 0.01f;
+			float NearClip = 0.1f;
 			float FarClip = 1000.f;
 		};
 

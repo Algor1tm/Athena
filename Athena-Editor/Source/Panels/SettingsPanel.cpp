@@ -80,14 +80,6 @@ namespace Athena
 
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
-			ImGui::Text("RenderQueue");
-			ImGui::SameLine();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-
-			int limit = stats.GeometryCount;
-			ImGui::SliderInt("##RenderQueue", &limit, 0, stats.GeometryCount);
-			settings.RenderQueueLimit = limit;
-				
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
@@ -102,7 +94,6 @@ namespace Athena
 						{
 							settings.DebugView = view;
 						});
-
 				}
 
 				ImGui::EndCombo();

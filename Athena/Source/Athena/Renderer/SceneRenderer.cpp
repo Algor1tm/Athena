@@ -196,7 +196,6 @@ namespace Athena
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment)
 	{
 		s_Data.GeometryQueue.Clear();
-		s_Data.GeometryQueue.SetLimit(s_Data.Settings.RenderQueueLimit);
 
 		s_Data.ActiveEnvironment = environment;
 

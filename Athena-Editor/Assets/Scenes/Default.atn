@@ -1,81 +1,30 @@
 Scene: Default
 Entities:
   - IDComponent:
-      ID: 17196797334220725082
+      ID: 14844919457741134000
     TagComponent:
-      Tag: Camera
-    TransformComponent:
-      Translation: [23.3378658, 7.31552744, -0.211175531]
-      Rotation: [-0.688643873, 0.0871698409, -0.714152932, -0.0903140157]
-      Scale: [1, 0.999999702, 0.999995351]
-    ChildComponent:
-      Parent: 6292570374589452764
-    ScriptComponent:
-      Name: FirstPersonCamera
-    CameraComponent:
-      Camera:
-        ProjectionType: 0
-        PerspectiveFOV: 0.52359879
-        PerspectiveNearClip: 0.00999999978
-        PerspectiveFarClip: 10000
-        OrthographicSize: 10
-        OrthographicNearClip: -1
-        OrthographicFarClip: 10
-      Primary: true
-      FixedAspectRatio: false
-  - IDComponent:
-      ID: 3148190026798035267
-    TagComponent:
-      Tag: PinkLight
-    TransformComponent:
-      Translation: [7.50940561, 5.16589022, -4.34297895]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ChildComponent:
-      Parent: 2151942939999983161
-    PointLightComponent:
-      Color: [0.93670845, 0, 1, 1]
-      Intensity: 5
-      Radius: 10
-      FallOff: 1
-  - IDComponent:
-      ID: 9434107904280492893
-    TagComponent:
-      Tag: StarWarsTrouper
-    TransformComponent:
-      Translation: [-3.89203954, 0.348539472, 5.32893705]
-      Rotation: [0.617765903, -1.27286555e-08, 0.786362052, -1.27286555e-08]
-      Scale: [8.59394741, 8.59394741, 8.59394741]
-    ChildComponent:
-      Parent: 2151942939999983161
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
-      Hide: false
-  - IDComponent:
-      ID: 2151942939999983161
-    TagComponent:
-      Tag: Primitives
+      Tag: DirectionalLight
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [0.147900015, 0.147900015, 0.147900015]
+      Rotation: [0.848312557, -0.331071168, -0.332202762, -0.245762154]
+      Scale: [0.999999881, 0.99999994, 0.99999994]
     ChildComponent:
       Parent: 6292570374589452764
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\BlenderScene.fbx
-      Hide: false
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
   - IDComponent:
-      ID: 6684149830295041235
+      ID: 2835139583361043602
     TagComponent:
-      Tag: GreenLight
+      Tag: RedLight
     TransformComponent:
-      Translation: [3.16600466, 3.90402031, 5.50082397]
+      Translation: [2.44086814, 4.63818932, -5.49453211]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     ChildComponent:
       Parent: 2151942939999983161
     PointLightComponent:
-      Color: [0, 1, 0, 1]
+      Color: [1, 0, 0, 1]
       Intensity: 5
       Radius: 10
       FallOff: 1
@@ -95,33 +44,84 @@ Entities:
       Radius: 10
       FallOff: 1
   - IDComponent:
-      ID: 2835139583361043602
+      ID: 6684149830295041235
     TagComponent:
-      Tag: RedLight
+      Tag: GreenLight
     TransformComponent:
-      Translation: [2.44086814, 4.63818932, -5.49453211]
+      Translation: [3.16600466, 3.90402031, 5.50082397]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     ChildComponent:
       Parent: 2151942939999983161
     PointLightComponent:
-      Color: [1, 0, 0, 1]
+      Color: [0, 1, 0, 1]
       Intensity: 5
       Radius: 10
       FallOff: 1
   - IDComponent:
-      ID: 14844919457741134000
+      ID: 2151942939999983161
     TagComponent:
-      Tag: DirectionalLight
+      Tag: Primitives
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0.848312557, -0.331071168, -0.332202762, -0.245762154]
-      Scale: [0.999999881, 0.99999994, 0.99999994]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.147900015, 0.147900015, 0.147900015]
     ChildComponent:
       Parent: 6292570374589452764
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\BlenderScene.fbx
+      Hide: false
+  - IDComponent:
+      ID: 9434107904280492893
+    TagComponent:
+      Tag: StarWarsTrouper
+    TransformComponent:
+      Translation: [-3.89203954, 0.348539472, 5.32893705]
+      Rotation: [0.617765903, -1.27286555e-08, 0.786362052, -1.27286555e-08]
+      Scale: [8.59394741, 8.59394741, 8.59394741]
+    ChildComponent:
+      Parent: 2151942939999983161
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
+      Hide: false
+  - IDComponent:
+      ID: 3148190026798035267
+    TagComponent:
+      Tag: PinkLight
+    TransformComponent:
+      Translation: [7.50940561, 5.16589022, -4.34297895]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ChildComponent:
+      Parent: 2151942939999983161
+    PointLightComponent:
+      Color: [0.93670845, 0, 1, 1]
+      Intensity: 5
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
+      ID: 17196797334220725082
+    TagComponent:
+      Tag: Camera
+    TransformComponent:
+      Translation: [23.3378658, 7.31552744, -0.211175531]
+      Rotation: [-0.688643873, 0.0871698409, -0.714152932, -0.0903140157]
+      Scale: [1, 0.999999702, 0.999995351]
+    ChildComponent:
+      Parent: 6292570374589452764
+    ScriptComponent:
+      Name: FirstPersonCamera
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 0.52359879
+        PerspectiveNearClip: 0.100000001
+        PerspectiveFarClip: 1000
+        OrthographicSize: 10
+        OrthographicNearClip: -1
+        OrthographicFarClip: 10
+      Primary: true
+      FixedAspectRatio: false
   - IDComponent:
       ID: 6292570374589452764
     TagComponent:

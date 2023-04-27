@@ -61,7 +61,6 @@ namespace Athena
 		BloomSettings BloomSettings;
 		DebugView DebugView = DebugView::NONE;
 		Antialising AntialisingMethod = Antialising::MSAA_2X;
-		uint32 RenderQueueLimit;
 	};
 
 	class ATHENA_API SceneRenderer

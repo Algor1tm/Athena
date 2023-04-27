@@ -46,18 +46,11 @@ namespace Athena
 		bool UpdateMaterial();
 		bool UpdateAnimator();
 
-		void SetLimit(uint32 limit)
-		{
-			m_Limit = limit;
-		}
-
 	private:
 		bool CheckLimit() const;
 
 	private:
 		std::deque<DrawCallInfo> m_Queue;
-		int32 m_Limit = -1;
-		uint32 m_LastSize = 0;
 		uint32 m_CurrentIndex = 0;
 
 		Ref<Material> m_LastMaterial;

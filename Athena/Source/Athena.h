@@ -65,4 +65,4 @@
 
 
 // --------Scripting--------------------
-#include "Athena/Scripting/PublicScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"

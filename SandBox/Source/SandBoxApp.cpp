@@ -28,6 +28,10 @@ namespace Athena
 	{
 		ApplicationDescription appdesc;
 
+		appdesc.AppConfig.EnableImGui = false;
+		appdesc.AppConfig.EnableConsole = false;
+		appdesc.AppConfig.WorkingDirectory = "../Athena-Editor";
+
 		appdesc.RendererConfig.API = Renderer::API::OpenGL;
 		appdesc.RendererConfig.ShaderPack = "../Athena/EngineResources/Shaders";
 
@@ -39,10 +43,6 @@ namespace Athena
 		appdesc.WindowDesc.VSync = true;
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "EditorResources/Icons/Logo/no-background";
-
-		appdesc.AppConfig.EnableImGui = false;
-		appdesc.AppConfig.EnableConsole = false;
-		appdesc.AppConfig.WorkingDirectory = "../Athena-Editor";
 
 		return new SandBox(appdesc);
 	}

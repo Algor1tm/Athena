@@ -20,10 +20,6 @@ namespace Athena
 
 	void RenderQueue::Clear()
 	{
-		if (m_LastSize != m_Queue.size())
-			m_Limit = m_Queue.size();
-
-		m_LastSize = m_Queue.size();
 		m_LastMaterial = nullptr;
 		m_LastAnimator = nullptr;
 		m_CurrentIndex = 0;
@@ -48,7 +44,7 @@ namespace Athena
 
 	bool RenderQueue::HasAnimMeshes() const
 	{
-		return CheckLimit();
+		return CheckLimit() && m_Queue[m_CurrentIndex].Animator != nullptr;
 	}
 
 	bool RenderQueue::UpdateMaterial()
@@ -75,10 +71,6 @@ namespace Athena
 
 	bool RenderQueue::CheckLimit() const
 	{
-		if (m_LastSize != m_Queue.size() || m_Limit < 0)
-			return m_CurrentIndex < m_Queue.size();
-		
-		uint32 size = Math::Min((uint32)m_Limit, (uint32)m_Queue.size());
-		return m_CurrentIndex < size;
+		return m_CurrentIndex < m_Queue.size();
 	}
 }

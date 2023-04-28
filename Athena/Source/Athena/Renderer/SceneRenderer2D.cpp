@@ -4,7 +4,7 @@
 
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
 
 
@@ -70,8 +70,6 @@ namespace Athena
 		uint32 TextureSlotIndex = 1; // 0 - white texture
 
 		Vector4 QuadVertexPositions[4];
-
-		SceneRenderer2D::Statistics Stats;
 
 		struct CameraData
 		{
@@ -192,12 +190,30 @@ namespace Athena
 		s_Data.CameraBuffer.ViewProjection = viewMatrix * projectionMatrix;
 		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(SceneRenderer2DData::CameraData));
 
+		if (!s_Data.DrawEntityID)
+		{
+			RenderPass renderPass;
+			renderPass.TargetFramebuffer = SceneRenderer::GetFinalFramebuffer();
+			renderPass.ClearBit = CLEAR_NONE_BIT;
+			renderPass.Name = "2D Pass";
+
+			Renderer::BeginRenderPass(renderPass);
+		}
+
 		StartBatch();
 	}
 
 	void SceneRenderer2D::EndScene()
 	{
-		Flush();
+		if (s_Data.DrawEntityID)	// TODO: Remove
+		{
+			FlushEntityIDs();
+		}
+		else
+		{
+			Flush();
+			Renderer::EndRenderPass();
+		}
 	}
 
 	void SceneRenderer2D::Flush()
@@ -210,16 +226,11 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
 
-			if (!s_Data.DrawEntityID)
-			{
-				for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
-					s_Data.TextureSlots[i]->Bind(i);
+			for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
+				s_Data.TextureSlots[i]->Bind(i);
 
-				Renderer::BindShader("Renderer2D_Quad");
-			}
-
+			Renderer::BindShader("Renderer2D_Quad");
 			Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
-			s_Data.Stats.DrawCalls++;
 		}
 
 		if (s_Data.CircleIndexCount)
@@ -227,11 +238,8 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.CircleVertexBufferPointer - (byte*)s_Data.CircleVertexBufferBase;
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
 
-			if (!s_Data.DrawEntityID)
-				Renderer::BindShader("Renderer2D_Circle");
-
+			Renderer::BindShader("Renderer2D_Circle");
 			Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
-			s_Data.Stats.DrawCalls++;
 		}
 
 		if (s_Data.LineVertexCount)
@@ -239,11 +247,37 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.LineVertexBufferPointer - (byte*)s_Data.LineVertexBufferBase;
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
-			if (!s_Data.DrawEntityID)
-				Renderer::BindShader("Renderer2D_Line");
+			Renderer::BindShader("Renderer2D_Line");
+			Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
+		}
+	}
+
+	void SceneRenderer2D::FlushEntityIDs()
+	{
+		Renderer::BindShader("Renderer2D_EntityID");
+
+		if (s_Data.QuadIndexCount)
+		{
+			uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
+			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
+
+			Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
+		}
+
+		if (s_Data.CircleIndexCount)
+		{
+			uint64 dataSize = (byte*)s_Data.CircleVertexBufferPointer - (byte*)s_Data.CircleVertexBufferBase;
+			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
+
+			Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
+		}
+
+		if (s_Data.LineVertexCount)
+		{
+			uint64 dataSize = (byte*)s_Data.LineVertexBufferPointer - (byte*)s_Data.LineVertexBufferBase;
+			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
 			Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
-			s_Data.Stats.DrawCalls++;
 		}
 	}
 
@@ -262,7 +296,11 @@ namespace Athena
 
 	void SceneRenderer2D::NextBatch()
 	{
-		Flush();
+		if (s_Data.DrawEntityID)
+			FlushEntityIDs();
+		else
+			Flush();
+
 		StartBatch();
 	}
 
@@ -338,8 +376,6 @@ namespace Athena
 		}
 
 		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
 	}
 
 	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int32 entityID)
@@ -382,8 +418,6 @@ namespace Athena
 		}
 
 		s_Data.QuadIndexCount += 6;
-
-		s_Data.Stats.QuadCount++;
 	}
 
 
@@ -404,8 +438,6 @@ namespace Athena
 		}
 
 		s_Data.CircleIndexCount += 6;
-
-		s_Data.Stats.CircleCount++;
 	}
 
 	void SceneRenderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color, float width, int32 entityID)
@@ -426,8 +458,6 @@ namespace Athena
 			s_Data.LineVertexBufferPointer++;
 
 			s_Data.LineVertexCount += 2;
-
-			s_Data.Stats.LineCount++;
 		}
 		else if(width > 1.f)
 		{
@@ -456,8 +486,6 @@ namespace Athena
 			}
 
 			s_Data.QuadIndexCount += 6;
-
-			s_Data.Stats.QuadCount++;
 		}
 	}
 
@@ -484,18 +512,5 @@ namespace Athena
 		DrawLine(lineVertices[1], lineVertices[2], color, lineWidth, entityID);
 		DrawLine(lineVertices[2], lineVertices[3], color, lineWidth, entityID);
 		DrawLine(lineVertices[3], lineVertices[0], color, lineWidth, entityID);
-	}
-
-	void SceneRenderer2D::ResetStats()
-	{
-		s_Data.Stats.DrawCalls = 0;
-		s_Data.Stats.QuadCount = 0;
-		s_Data.Stats.CircleCount = 0;
-		s_Data.Stats.LineCount = 0;
-	}
-
-	const SceneRenderer2D::Statistics& SceneRenderer2D::GetStatistics()
-	{
-		return s_Data.Stats;
 	}
 }

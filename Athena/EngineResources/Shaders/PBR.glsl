@@ -1,7 +1,6 @@
 #type VERTEX_SHADER
 #version 460 core
 
-
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
 layout (location = 2) in vec3 a_Normal;
@@ -25,6 +24,7 @@ layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
 	mat4 ViewMatrix;
     mat4 ProjectionMatrix;
+    mat4 RotationViewMatrix;
     vec4 Position;
     float NearClip;
 	float FarClip;
@@ -80,6 +80,7 @@ void main()
 
 #include "/PoissonDisk.glsl"
 
+#define SOFT_SHADOW_SAMPLES 32
 
 layout(location = 0) out vec4 out_Color;
 
@@ -98,6 +99,7 @@ layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
 	mat4 ViewMatrix;
     mat4 ProjectionMatrix;
+    mat4 RotationViewMatrix;
     vec4 Position;
     float NearClip;
 	float FarClip;
@@ -281,14 +283,25 @@ float SampleHard(vec2 uv, float depthBiased, int cascade)
     return 1.0;
 }
 
+vec2 GetOffset(int i)
+{
+    #if (SOFT_SHADOW_SAMPLES == 16)
+        return PoissonDisk16[i];
+    #elif (SOFT_SHADOW_SAMPLES == 32)
+        return PoissonDisk32[i];
+    #elif (SOFT_SHADOW_SAMPLES == 64)
+        return PoissonDisk64[i];
+    #endif
+}
+
 void FindBlocker(out float avgBlockerDepth, out int numBlockers, vec2 uv, float depthBiased, float searchWidth, int cascade)
 {
     float blockerSum = 0;
     numBlockers = 0;
 
-    for(int i = 0; i < 64; ++i)
+    for(int i = 0; i < SOFT_SHADOW_SAMPLES; ++i)
     {
-        vec2 offset = PoissonDisk64[i] * searchWidth;
+        vec2 offset = GetOffset(i) * searchWidth;
         float shadowMapDepth = texture(u_ShadowMap, vec3(uv.xy + offset, cascade)).r;
         if(shadowMapDepth < depthBiased)
         {
@@ -308,13 +321,13 @@ float PenumbraSize(float zReceiver, float zBlocker)
 float PCF_Filter(vec2 uv, float depthBiased, float filterRadiusUV, int cascade)
 {
     float sum = 0.0;
-    for(int i = 0; i < 64; ++i)
+    for(int i = 0; i < SOFT_SHADOW_SAMPLES; ++i)
     {
-        vec2 offset = PoissonDisk64[i] * filterRadiusUV;
+        vec2 offset = GetOffset(i) * filterRadiusUV;
         sum += SamplePCF(uv.xy + offset, depthBiased, cascade);
     }
 
-    return sum / 64;   
+    return sum / SOFT_SHADOW_SAMPLES;   
 }
 
 float SoftShadow(vec3 projCoords, float bias, int cascade)
@@ -400,7 +413,7 @@ void main()
     float metalness = bool(u_Material.EnableMetalnessMap) ? texture(u_MetalnessMap, Input.TexCoord).r : u_Material.Metalness;
     float emission = u_Material.Emission;
     float ambientOcclusion = bool(u_Material.EnableAmbientOcclusionMap) ? texture(u_AmbientOcclusionMap, Input.TexCoord).r : 1.0;
-    
+
     vec3 reflectivityAtZeroIncidence = vec3(0.04);
     reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo.rgb, metalness);
 
@@ -476,7 +489,7 @@ void main()
 
     ////////////////// MAIN COLOR //////////////////
     vec3 ambient = (diffuseIBL * albedo.rgb + specularIBL) * ambientOcclusion * u_EnvMapData.Intensity;
-    vec3 color = (ambient + totalIrradiance) * emission;
+    vec3 color = (ambient + totalIrradiance) + albedo.rgb * emission;
 
     out_Color = vec4(color, albedo.a);
 }

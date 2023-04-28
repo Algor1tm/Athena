@@ -98,7 +98,7 @@ namespace Athena
             m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
-        SceneRenderer::ResetStats();
+        Renderer::ResetStats();
 
         SceneRenderer::BeginFrame();
 
@@ -319,8 +319,6 @@ namespace Athena
 
     void EditorLayer::RenderOverlay()
     {
-        SceneRenderer::GetFinalFramebuffer()->Bind();
-
         if (m_SceneState == SceneState::Play)
         {
             Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
@@ -617,10 +615,12 @@ namespace Athena
             OnSceneStop();
 
         m_CurrentScenePath = FilePath();
+
+        m_RuntimeScene = nullptr;
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
+
         m_SceneHierarchy->SetContext(m_ActiveScene);
-        m_SceneHierarchy->SetSelectedEntity(Entity{});
         SelectEntity(Entity{});
 
         ATN_CORE_TRACE("Successfully created new scene");
@@ -669,6 +669,7 @@ namespace Athena
         {
             m_CurrentScenePath = path;
 
+            m_RuntimeScene = nullptr;
             m_EditorScene = newScene;
             m_ActiveScene = newScene;
 

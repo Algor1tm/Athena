@@ -64,6 +64,14 @@ namespace Athena::Math
 				m_Array[i] = static_cast<T>(other[i]);
 		}
 
+		template <typename U>
+		constexpr Matrix(const Matrix<U, 3, 3>& other)
+		{
+			m_Array[0] = Vector<T, 4>(other[0], 0);
+			m_Array[1] = Vector<T, 4>(other[1], 0);
+			m_Array[2] = Vector<T, 4>(other[2], 0);
+			m_Array[3] = Vector<T, 4>(0, 0, 0, 1);
+		}
 
 		template <typename U>
 		constexpr Matrix<T, Size4, Size4>& operator=(const Matrix<U, Size4, Size4>& other)
@@ -189,6 +197,25 @@ namespace Athena::Math
 			rotateMat[3][3] = T(1);
 
 			return *this *= rotateMat;
+		}
+
+		Matrix<T, 3, 3> AsMatrix3() const
+		{
+			Matrix<T, 3, 3> mat3;
+
+			mat3[0].x = m_Array[0].x;
+			mat3[0].y = m_Array[0].y;
+			mat3[0].z = m_Array[0].z;
+
+			mat3[1].x = m_Array[1].x;
+			mat3[1].y = m_Array[1].y;
+			mat3[1].z = m_Array[1].z;
+
+			mat3[2].x = m_Array[2].x;
+			mat3[2].y = m_Array[2].y;
+			mat3[2].z = m_Array[2].z;
+
+			return mat3;
 		}
 
 // -------------Operators-------------------------------------

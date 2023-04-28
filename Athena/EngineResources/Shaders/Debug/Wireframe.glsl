@@ -15,6 +15,7 @@ layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
 	mat4 ViewMatrix;
     mat4 ProjectionMatrix;
+    mat4 RotationViewMatrix;
     vec4 Position;
     float NearClip;
 	float FarClip;

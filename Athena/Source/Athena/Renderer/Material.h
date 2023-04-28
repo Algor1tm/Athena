@@ -56,7 +56,7 @@ namespace Athena
 			LinearColor Albedo = LinearColor::White;
 			float Roughness = 0.7f;
 			float Metalness = 0.f;
-			float Emission = 1.f;
+			float Emission = 0.f;
 
 			int EnableAlbedoMap;
 			int EnableNormalMap;

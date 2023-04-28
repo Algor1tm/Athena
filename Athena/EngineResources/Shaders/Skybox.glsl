@@ -15,6 +15,7 @@ layout(std140, binding = CAMERA_BUFFER_BINDER) uniform CameraData
 {
 	mat4 ViewMatrix;
     mat4 ProjectionMatrix;
+    mat4 RotationViewMatrix;
     vec4 Position;
     float NearClip;
 	float FarClip;
@@ -25,7 +26,7 @@ void main()
 {
     Output.TexCoords = a_Position;
 
-    vec4 pos = u_Camera.ProjectionMatrix * u_Camera.ViewMatrix * vec4(a_Position, 1);
+    vec4 pos = u_Camera.ProjectionMatrix * u_Camera.RotationViewMatrix * vec4(a_Position, 1);
     gl_Position = pos.xyww;
 }
 

@@ -97,7 +97,6 @@ namespace Athena
 	void GLFramebuffer::Bind()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferID);
-		glViewport(0, 0, m_Description.Width, m_Description.Height);
 	}
 
 	void GLFramebuffer::UnBind()

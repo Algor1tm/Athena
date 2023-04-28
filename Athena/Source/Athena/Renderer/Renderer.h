@@ -96,17 +96,18 @@ namespace Athena
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void SetViewport(uint32 x, uint32 y, uint32 width, uint32 height);
+		static void BindPipeline(const Pipeline& pipeline);
 
-		static void Clear(const LinearColor& color);
+		static void BeginRenderPass(const RenderPass& pass) ;
+		static void EndRenderPass();
+
+		static void BeginComputePass(const ComputePass& pass);
+		static void EndComputePass();
 
 		static void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0);
 		static void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0);
 
 		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3i workGroupSize = { 8, 4, 1 });
-
-		static void DisableCulling();
-		static void SetCullMode(CullFace face = CullFace::BACK, CullDirection direction = CullDirection::COUNTER_CLOCKWISE);
 
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();
@@ -116,6 +117,19 @@ namespace Athena
 
 		static BufferLayout GetStaticVertexLayout();
 		static BufferLayout GetAnimVertexLayout();
+
+		struct Statistics
+		{
+			uint32 DrawCalls = 0;
+			uint32 DispatchCalls = 0;
+			uint32 ShadersBinded = 0;
+			uint32 PipelinesBinded = 0;
+			uint32 RenderPasses = 0;
+			uint32 ComputePasses = 0;
+		};
+
+		static const Statistics& GetStatistics();
+		static void ResetStats();
 	};
 
 	struct RendererConfig

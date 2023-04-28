@@ -74,9 +74,7 @@ namespace Athena
 		static void BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment);
 		static void EndScene();
 
-		static void BeginEntityIDPass();
 		static void FlushEntityIDs();
-		static void EndEntityIDPass();
 
 		static void BeginFrame();
 		static void EndFrame();
@@ -93,23 +91,11 @@ namespace Athena
 
 		static SceneRendererSettings& GetSettings();
 
-		struct Statistics
-		{
-			uint32 GeometryCount = 0;
-			uint32 PointLightsCount = 0;
-			uint32 DirectionalLightsCount = 0;
-			uint32 DrawCalls = 0;
-		};
-
-		static const Statistics& GetStatistics();
-		static void ResetStats();
-
 	private:
 		static void RenderGeometry(std::string_view shader, bool useMaterials);
 
 		static void ShadowMapPass();
 		static void GeometryPass();
-		static void SkyboxPass();
 		static void BloomPass();
 		static void SceneCompositePass();
 		static void DebugViewPass();

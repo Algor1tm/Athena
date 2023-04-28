@@ -7,7 +7,7 @@
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
-#include "Athena/Renderer/RenderQueue.h"
+#include "Athena/Renderer/RenderList.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
 
@@ -18,7 +18,8 @@ namespace Athena
 	{
 		Matrix4 ViewMatrix;
 		Matrix4 ProjectionMatrix;
-		Vector4 CameraPosition;
+		Matrix4 RotationViewMatrix;
+		Vector4 Position;
 		float NearClip;
 		float FarClip;
 	};
@@ -89,7 +90,7 @@ namespace Athena
 
 		Ref<TextureSampler> PCF_Sampler;
 
-		RenderQueue GeometryQueue;
+		RenderList MeshList;
 
 		Ref<Environment> ActiveEnvironment;
 
@@ -113,7 +114,6 @@ namespace Athena
 		Ref<ShaderStorageBuffer> BoneTransformsShaderStorageBuffer;
 
 		SceneRendererSettings Settings;
-		SceneRenderer::Statistics Stats;
 
 		const uint32 EnvMapResolution = 1024;
 		const uint32 IrradianceMapResolution = 128;
@@ -195,13 +195,14 @@ namespace Athena
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment)
 	{
-		s_Data.GeometryQueue.Clear();
+		s_Data.MeshList.Clear();
 
 		s_Data.ActiveEnvironment = environment;
 
 		s_Data.CameraDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
 		s_Data.CameraDataBuffer.ProjectionMatrix = cameraInfo.ProjectionMatrix;
-		s_Data.CameraDataBuffer.CameraPosition = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
+		s_Data.CameraDataBuffer.RotationViewMatrix = cameraInfo.ViewMatrix.AsMatrix3();
+		s_Data.CameraDataBuffer.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
 		s_Data.CameraDataBuffer.NearClip = cameraInfo.NearClip;
 		s_Data.CameraDataBuffer.FarClip = cameraInfo.FarClip;
 
@@ -223,6 +224,11 @@ namespace Athena
 
 		ComputeCascadeSplits();
 
+		// Per frame buffers
+		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
+		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
+
 		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
 
 		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
@@ -237,33 +243,18 @@ namespace Athena
 	{
 		ShadowMapPass();
 		GeometryPass();
-		SkyboxPass();
 		BloomPass();
 		SceneCompositePass();
 		DebugViewPass();
 
-		s_Data.FinalFramebuffer->UnBind();
 		s_Data.ActiveEnvironment = nullptr;
 
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
 		s_Data.LightDataBuffer.PointLightCount = 0;
 	}
 
-	void SceneRenderer::BeginEntityIDPass()
-	{
-		s_Data.EntityIDFramebuffer->Bind();
-		Renderer::Clear(LinearColor::White);
-		s_Data.EntityIDFramebuffer->ClearAttachment(0, -1);
-	}
-
-	void SceneRenderer::EndEntityIDPass()
-	{
-		s_Data.EntityIDFramebuffer->UnBind();
-	}
-
 	void SceneRenderer::FlushEntityIDs()
 	{
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
 		RenderGeometry("EntityID", false);
 	}
 
@@ -285,8 +276,6 @@ namespace Athena
 		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
 		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
 		s_Data.LightDataBuffer.DirectionalLightCount++;
-
-		s_Data.Stats.DirectionalLightsCount++;
 	}
 
 	void SceneRenderer::SubmitLight(const PointLight& pointLight)
@@ -299,8 +288,6 @@ namespace Athena
 
 		s_Data.LightDataBuffer.PointLightBuffer[s_Data.LightDataBuffer.PointLightCount] = pointLight;
 		s_Data.LightDataBuffer.PointLightCount++;
-
-		s_Data.Stats.PointLightsCount ++;
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
@@ -314,8 +301,7 @@ namespace Athena
 			info.Transform = transform;
 			info.EntityID = entityID;
 
-			s_Data.GeometryQueue.Push(info);
-			s_Data.Stats.GeometryCount++;
+			s_Data.MeshList.Push(info);
 		}
 		else
 		{
@@ -325,7 +311,7 @@ namespace Athena
 
 	void SceneRenderer::RenderGeometry(std::string_view shader, bool useMaterials)
 	{
-		if (s_Data.GeometryQueue.Empty())
+		if (s_Data.MeshList.Empty())
 			return;
 
 		Renderer::BindShader(shader);
@@ -333,215 +319,240 @@ namespace Athena
 		// Render Static Meshes
 		s_Data.EntityDataBuffer.IsAnimated = false;
 
-		while (s_Data.GeometryQueue.HasStaticMeshes())
+		while (s_Data.MeshList.HasStaticMeshes())
 		{
-			auto& info = s_Data.GeometryQueue.Next();
+			auto& info = s_Data.MeshList.Next();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
 			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-			if (useMaterials && s_Data.GeometryQueue.UpdateMaterial())
+			if (useMaterials && s_Data.MeshList.UpdateMaterial())
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 
 			Renderer::DrawTriangles(info.VertexBuffer);
-			s_Data.Stats.DrawCalls++;
 		}
 
 		// Render Animated Meshes
 		s_Data.EntityDataBuffer.IsAnimated = true;
 
-		while (s_Data.GeometryQueue.HasAnimMeshes())
+		while (s_Data.MeshList.HasAnimMeshes())
 		{
-			auto& info = s_Data.GeometryQueue.Next();
+			auto& info = s_Data.MeshList.Next();
 
 			s_Data.EntityDataBuffer.TransformMatrix = info.Transform;
 			s_Data.EntityDataBuffer.EntityID = info.EntityID;
 			s_Data.EntityConstantBuffer->SetData(&s_Data.EntityDataBuffer, sizeof(EntityData));
 
-			if (s_Data.GeometryQueue.UpdateAnimator())
+			if (s_Data.MeshList.UpdateAnimator())
 			{
 				const auto& boneTransforms = info.Animator->GetBoneTransforms();
 				s_Data.BoneTransformsShaderStorageBuffer->SetData(boneTransforms.data(), sizeof(Matrix4) * boneTransforms.size());
 			}
 
-			if (useMaterials && s_Data.GeometryQueue.UpdateMaterial())
+			if (useMaterials && s_Data.MeshList.UpdateMaterial())
 			{
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 			}
 
 			Renderer::DrawTriangles(info.VertexBuffer);
-			s_Data.Stats.DrawCalls++;
 		}
 
-		s_Data.GeometryQueue.Reset();
+		s_Data.MeshList.Reset();
 	}
 
 	void SceneRenderer::ShadowMapPass()
 	{
-		s_Data.ShadowMap->Bind();
-		Renderer::Clear(LinearColor::White);
-		Renderer::SetCullMode(CullFace::FRONT);
+		Pipeline pipeline;
+		pipeline.CullFace = CullFace::FRONT;
+		pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
+		pipeline.BlendFunc = BlendFunc::NONE;
+		pipeline.DepthFunc = DepthFunc::LEQUAL;
 
-		if(s_Data.Settings.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
+		Renderer::BindPipeline(pipeline);
+
+		RenderPass renderPass;
+		renderPass.TargetFramebuffer = s_Data.ShadowMap;
+		renderPass.ClearBit = CLEAR_DEPTH_BIT;
+		renderPass.Name = "ShadowMapPass";
+
+		Renderer::BeginRenderPass(renderPass);
 		{
-			ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
-			s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
+			if (s_Data.Settings.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
+			{
+				ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
+				s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
 
-			RenderGeometry("DirShadowMap", false);
+				RenderGeometry("DirShadowMap", false);
+			}
 		}
+		Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::GeometryPass()
 	{
-		s_Data.HDRFramebuffer->Bind();
-		Renderer::Clear(LinearColor::Black);
-		Renderer::SetCullMode(CullFace::BACK);
+		Pipeline pipeline;
+		pipeline.CullFace = CullFace::BACK;
+		pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
+		pipeline.BlendFunc = BlendFunc::ONE_MINUS_SRC_ALPHA;
+		pipeline.DepthFunc = DepthFunc::LEQUAL;
 
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
-		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
-		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
-		s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
+		Renderer::BindPipeline(pipeline);
 
-		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
+		RenderPass renderPass;
+		renderPass.TargetFramebuffer = s_Data.HDRFramebuffer;
+		renderPass.ClearBit = CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
+		renderPass.ClearColor = LinearColor::Black;
+		renderPass.Name = "GeometryPass";
+
+		Renderer::BeginRenderPass(renderPass);
 		{
-			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
-			Renderer::GetBRDF_LUT()->Bind(TextureBinder::BRDF_LUT);
+			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
+
+			if (s_Data.ActiveEnvironment->EnvironmentMap)
+			{
+				s_Data.ActiveEnvironment->EnvironmentMap->Bind();
+				Renderer::GetBRDF_LUT()->Bind(TextureBinder::BRDF_LUT);
+			}
+
+			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
+			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
+			s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
+
+			s_Data.MeshList.Sort();
+			RenderGeometry("PBR", true);
+
+			s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
+
+
+			if (s_Data.ActiveEnvironment->EnvironmentMap)
+			{
+				Renderer::BindShader("Skybox");
+				Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
+			}
 		}
-
-		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
-		s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
-		s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
-
-		s_Data.GeometryQueue.Sort();
-		RenderGeometry("PBR", true);
-
-		s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
-	}
-
-	void SceneRenderer::SkyboxPass()
-	{
-		if (s_Data.ActiveEnvironment && s_Data.ActiveEnvironment->EnvironmentMap)
-		{
-			Matrix4 originalViewMatrix = s_Data.CameraDataBuffer.ViewMatrix;
-			// Remove translation
-			s_Data.CameraDataBuffer.ViewMatrix[3][0] = 0;
-			s_Data.CameraDataBuffer.ViewMatrix[3][1] = 0;
-			s_Data.CameraDataBuffer.ViewMatrix[3][2] = 0;
-
-			s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
-			s_Data.CameraDataBuffer.ViewMatrix = originalViewMatrix;
-
-			s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
-
-			s_Data.ActiveEnvironment->EnvironmentMap->Bind();
-
-			Renderer::BindShader("Skybox");
-
-			Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
-			s_Data.Stats.DrawCalls++;
-		}
+		Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::BloomPass()
 	{
-		if (s_Data.Settings.BloomSettings.EnableBloom)
+		if (!s_Data.Settings.BloomSettings.EnableBloom)
+			return;
+
+		const FramebufferDescription& hdrfbDesc = s_Data.HDRFramebuffer->GetDescription();
+
+		uint32 mipLevels = 1;
+		Vector2u mipSize = { hdrfbDesc.Width / 2, hdrfbDesc.Height / 2 };
+
+		// Compute mip levels
 		{
-			const FramebufferDescription& hdrfbDesc = s_Data.HDRFramebuffer->GetDescription();
+			const uint32 maxIterations = 16;
+			const uint32 downSampleLimit = 10;
 
-			uint32 mipLevels = 1;
-			Vector2u mipSize = { hdrfbDesc.Width / 2, hdrfbDesc.Height / 2 };
+			uint32 width = hdrfbDesc.Width;
+			uint32 height = hdrfbDesc.Height;
 
-			// Compute mip levels
+			for (uint8 i = 0; i < maxIterations; ++i)
 			{
-				const uint32 maxIterations = 16;
-				const uint32 downSampleLimit = 10;
+				width = width / 2;
+				height = height / 2;
 
-				uint32 width = hdrfbDesc.Width;
-				uint32 height = hdrfbDesc.Height;
+				if (width < downSampleLimit || height < downSampleLimit) 
+					break;
 
-				for (uint8 i = 0; i < maxIterations; ++i)
-				{
-					width = width / 2;
-					height = height / 2;
-
-					if (width < downSampleLimit || height < downSampleLimit) 
-						break;
-
-					++mipLevels;
-				}
-
-				mipLevels += 1;
+				++mipLevels;
 			}
 
-			// Downsample
+			mipLevels += 1;
+		}
+
+		ComputePass computePass;
+		computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | FRAMEBUFFER_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
+		computePass.Name = "Bloom";
+
+		Renderer::BeginComputePass(computePass);
+		// Downsample
+		{
+			Renderer::BindShader("BloomDownsample");
+			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+
+			for (uint8 i = 0; i < mipLevels - 1; ++i)
 			{
-				Renderer::BindShader("BloomDownsample");
-				s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+				s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+				s_Data.BloomDataBuffer.MipLevel = i;
+				s_Data.BloomDataBuffer.EnableThreshold = i == 0;
 
-				for (uint8 i = 0; i < mipLevels - 1; ++i)
-				{
-					s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
-					s_Data.BloomDataBuffer.MipLevel = i;
-					s_Data.BloomDataBuffer.EnableThreshold = i == 0;
+				s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i + 1);
+				s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
 
-					s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i + 1);
-					s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
-
-					Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
-					mipSize = mipSize / 2u;
-				}
-			}
-
-			// Upsample
-			{
-				Renderer::BindShader("BloomUpsample");
-				s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
-
-				if (s_Data.Settings.BloomSettings.DirtTexture)
-					s_Data.Settings.BloomSettings.DirtTexture->Bind(2);
-
-				for (uint8 i = mipLevels - 1; i >= 1; --i)
-				{
-					mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Width) / Math::Pow<float>(2.f, i - 1)));
-					mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Height) / Math::Pow<float>(2.f, i - 1)));
-
-					s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
-					s_Data.BloomDataBuffer.MipLevel = i;
-
-					s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i - 1);
-					s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
-
-					Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
-				}
+				Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+				mipSize = mipSize / 2u;
 			}
 		}
+
+		// Upsample
+		{
+			Renderer::BindShader("BloomUpsample");
+			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+
+			if (s_Data.Settings.BloomSettings.DirtTexture)
+				s_Data.Settings.BloomSettings.DirtTexture->Bind(2);
+
+			for (uint8 i = mipLevels - 1; i >= 1; --i)
+			{
+				mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Width) / Math::Pow<float>(2.f, i - 1)));
+				mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Height) / Math::Pow<float>(2.f, i - 1)));
+
+				s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+				s_Data.BloomDataBuffer.MipLevel = i;
+
+				s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i - 1);
+				s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
+
+				Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+			}
+		}
+		Renderer::EndComputePass();
 	}
 
 	void SceneRenderer::SceneCompositePass()
 	{
-		s_Data.FinalFramebuffer->Bind();
-		Renderer::Clear(LinearColor::Black);
+		RenderPass renderPass;
+		renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
+		renderPass.ClearBit = CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
+		renderPass.Name = "SceneComposite";
 
-		Renderer::BindShader("SceneComposite");
+		Renderer::BeginRenderPass(renderPass);
+		{
+			Renderer::BindShader("SceneComposite");
 
-		s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
-		s_Data.HDRFramebuffer->BindDepthAttachment(1);
+			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+			s_Data.HDRFramebuffer->BindDepthAttachment(1);
 
-		Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
-		s_Data.Stats.DrawCalls++;
+			Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
+		}
+		Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::DebugViewPass()
 	{
-		s_Data.FinalFramebuffer->Bind();
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+		if (s_Data.Settings.DebugView == DebugView::NONE)
+			return;
 
-		if (s_Data.Settings.DebugView == DebugView::WIREFRAME)
-			RenderGeometry("Debug_Wireframe", false);
+		RenderPass renderPass;
+		renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
+		renderPass.ClearBit = CLEAR_NONE_BIT;
+		renderPass.Name = "DebugView";
+		
+		Renderer::BeginRenderPass(renderPass);
+		{
+			if (s_Data.Settings.DebugView == DebugView::WIREFRAME)
+				RenderGeometry("Debug_Wireframe", false);
 
-		else if (s_Data.Settings.DebugView == DebugView::SHADOW_CASCADES)
-			RenderGeometry("Debug_ShadowCascades", false);
+			else if (s_Data.Settings.DebugView == DebugView::SHADOW_CASCADES)
+				RenderGeometry("Debug_ShadowCascades", false);
+		}
+		Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::ComputeCascadeSplits()
@@ -655,6 +666,11 @@ namespace Athena
 
 	void SceneRenderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap)
 	{
+		ComputePass computePass;
+		computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
+		computePass.Name = "PreProcessEnvironmentMap";
+
+		Renderer::BeginComputePass(computePass);
 		// Convert EquirectangularHDRMap to Cubemap
 		Ref<TextureCube> skybox;
 		{
@@ -727,6 +743,8 @@ namespace Athena
 				Renderer::Dispatch(mipWidth, mipHeight, 6);
 			}
 		}
+
+		Renderer::EndComputePass();
 	}
 
 	Ref<Framebuffer> SceneRenderer::GetEntityIDFramebuffer()
@@ -742,20 +760,5 @@ namespace Athena
 	SceneRendererSettings& SceneRenderer::GetSettings()
 	{
 		return s_Data.Settings;
-	}
-
-	const SceneRenderer::Statistics& SceneRenderer::GetStatistics()
-	{
-		return s_Data.Stats;
-	}
-
-	void SceneRenderer::ResetStats() 
-	{
-		SceneRenderer2D::ResetStats();
-
-		s_Data.Stats.DrawCalls = 0;
-		s_Data.Stats.GeometryCount = 0;
-		s_Data.Stats.PointLightsCount = 0;
-		s_Data.Stats.DirectionalLightsCount = 0;
 	}
 }

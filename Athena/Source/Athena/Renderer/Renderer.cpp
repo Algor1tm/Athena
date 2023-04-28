@@ -17,6 +17,8 @@ namespace Athena
 		Ref<ShaderLibrary> ShaderPack;
 		String GlobalShaderMacroses;
 
+		Renderer::Statistics Stats;
+
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
@@ -149,13 +151,20 @@ namespace Athena
 
 		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, sampler);
 
-		Ref<Shader> ComputeBRDF_LUTShader = GetShaderLibrary()->Get("BRDF_LUT");
-		ComputeBRDF_LUTShader->Bind();
+		ComputePass computePass;
+		computePass.Name = "BRDF_LUT";
 
-		s_Data.BRDF_LUT->BindAsImage();
-		Renderer::Dispatch(width, height);
+		Renderer::BeginComputePass(computePass);
+		{
+			Ref<Shader> ComputeBRDF_LUTShader = GetShaderLibrary()->Get("BRDF_LUT");
+			ComputeBRDF_LUTShader->Bind();
 
-		ComputeBRDF_LUTShader->UnBind();
+			s_Data.BRDF_LUT->BindAsImage();
+			Renderer::Dispatch(width, height);
+
+			ComputeBRDF_LUTShader->UnBind();
+		}
+		Renderer::EndComputePass();
 
 		SceneRenderer::Init();
 		SceneRenderer2D::Init();
@@ -175,6 +184,7 @@ namespace Athena
 	void Renderer::BindShader(std::string_view name)
 	{
 		GetShaderLibrary()->Get(name.data())->Bind();
+		s_Data.Stats.ShadersBinded++;
 	}
 
 	Ref<ShaderLibrary> Renderer::GetShaderLibrary()
@@ -192,39 +202,60 @@ namespace Athena
 		SceneRenderer::OnWindowResized(width, height);
 	}
 
-	void Renderer::SetViewport(uint32 x, uint32 y, uint32 width, uint32 height)
+	void Renderer::BindPipeline(const Pipeline& pipeline)
 	{
-		s_Data.RendererAPI->SetViewport(x, y, width, height);
+		s_Data.RendererAPI->BindPipeline(pipeline);
+		s_Data.Stats.PipelinesBinded++;
 	}
 
-	void Renderer::Clear(const LinearColor& color)
+	void Renderer::BeginRenderPass(const RenderPass& pass)
 	{
-		s_Data.RendererAPI->Clear(color);
+		s_Data.RendererAPI->BeginRenderPass(pass);
+	}
+
+	void Renderer::EndRenderPass()
+	{
+		s_Data.RendererAPI->EndRenderPass();
+		s_Data.Stats.RenderPasses++;
+	}
+
+	void Renderer::BeginComputePass(const ComputePass& pass)
+	{
+		s_Data.RendererAPI->BeginComputePass(pass);
+	}
+
+	void Renderer::EndComputePass()
+	{
+		s_Data.RendererAPI->EndComputePass();
+		s_Data.Stats.ComputePasses++;
 	}
 
 	void Renderer::DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount)
 	{
 		s_Data.RendererAPI->DrawTriangles(vertexBuffer, indexCount);
+		s_Data.Stats.DrawCalls++;
 	}
 
 	void Renderer::DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount)
 	{
 		s_Data.RendererAPI->DrawLines(vertexBuffer, vertexCount);
+		s_Data.Stats.DrawCalls++;
 	}
 
 	void Renderer::Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize)
 	{
 		s_Data.RendererAPI->Dispatch(x, y, z, workGroupSize);
+		s_Data.Stats.DispatchCalls++;
 	}
 
-	void Renderer::DisableCulling()
+	const Renderer::Statistics& Renderer::GetStatistics()
 	{
-		s_Data.RendererAPI->DisableCulling();
+		return s_Data.Stats;
 	}
 
-	void Renderer::SetCullMode(CullFace face, CullDirection direction)
+	void Renderer::ResetStats()
 	{
-		s_Data.RendererAPI->SetCullMode(face, direction);
+		s_Data.Stats = Renderer::Statistics();
 	}
 
 	Ref<Texture2D> Renderer::GetBRDF_LUT()

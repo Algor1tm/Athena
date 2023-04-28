@@ -87,6 +87,22 @@ namespace Athena::Utils
 		return GL_NONE;
 	}
 
+	inline GLenum TextureCubeTargetToGLenum(TextureCubeTarget target)
+	{
+		switch (target)
+		{
+		case TextureCubeTarget::POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+		case TextureCubeTarget::NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+		case TextureCubeTarget::POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+		case TextureCubeTarget::NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+		case TextureCubeTarget::POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
+		case TextureCubeTarget::NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown texture target!");
+		return GL_NONE;
+	}
+
 	inline void TextureFormatToGLenum(TextureFormat format, GLenum& internalFormat, GLenum& dataFormat, GLenum& type)
 	{
 		switch (format)
@@ -228,22 +244,6 @@ namespace Athena::Utils
 		return GL_NONE;
 	}
 
-	inline GLenum TextureCubeTargetToGLenum(TextureCubeTarget target)
-	{
-		switch (target)
-		{
-		case TextureCubeTarget::POSITIVE_X: return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-		case TextureCubeTarget::NEGATIVE_X: return GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
-		case TextureCubeTarget::POSITIVE_Y: return GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
-		case TextureCubeTarget::NEGATIVE_Y: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
-		case TextureCubeTarget::POSITIVE_Z: return GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
-		case TextureCubeTarget::NEGATIVE_Z: return GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown texture target!");
-		return GL_NONE;
-	}
-
 	inline GLenum ShaderDataTypeToGLBaseType(ShaderDataType type)
 	{
 		switch (type)
@@ -262,6 +262,20 @@ namespace Athena::Utils
 		}
 
 		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		return 0;
+	}
+
+	inline GLenum ShaderTypeToGLenum(ShaderType type)
+	{
+		switch (type)
+		{
+		case ShaderType::VERTEX_SHADER: return GL_VERTEX_SHADER;
+		case ShaderType::FRAGMENT_SHADER: return GL_FRAGMENT_SHADER;
+		case ShaderType::GEOMETRY_SHADER: return GL_GEOMETRY_SHADER;
+		case ShaderType::COMPUTE_SHADER: return GL_COMPUTE_SHADER;
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown shader type!");
 		return 0;
 	}
 
@@ -289,17 +303,26 @@ namespace Athena::Utils
 		return GL_NONE;
 	}
 
-	inline GLenum ShaderTypeToGLenum(ShaderType type)
+	inline GLenum DepthFuncToGLenum(DepthFunc depthFunc)
 	{
-		switch (type)
+		switch (depthFunc)
 		{
-		case ShaderType::VERTEX_SHADER: return GL_VERTEX_SHADER;
-		case ShaderType::FRAGMENT_SHADER: return GL_FRAGMENT_SHADER;
-		case ShaderType::GEOMETRY_SHADER: return GL_GEOMETRY_SHADER;
-		case ShaderType::COMPUTE_SHADER: return GL_COMPUTE_SHADER;
+		case DepthFunc::LESS: return GL_LESS;
+		case DepthFunc::LEQUAL: return GL_LEQUAL;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown shader type!");
-		return 0;
+		ATN_CORE_ASSERT(false);
+		return GL_NONE;
+	}
+
+	inline GLenum BlendFuncToGLenum(BlendFunc blendFunc)
+	{
+		switch (blendFunc)
+		{
+		case BlendFunc::ONE_MINUS_SRC_ALPHA: return GL_ONE_MINUS_SRC_ALPHA;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return GL_NONE;
 	}
 }

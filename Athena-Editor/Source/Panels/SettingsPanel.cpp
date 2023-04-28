@@ -69,11 +69,14 @@ namespace Athena
 
 		if (UI::BeginTreeNode("Debug"))
 		{
-			auto stats = SceneRenderer::GetStatistics();
+			auto stats = Renderer::GetStatistics();
 
 			ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-			ImGui::Text("Directional Lights: %d", stats.DirectionalLightsCount);
-			ImGui::Text("Point Lights: %d", stats.PointLightsCount);
+			ImGui::Text("Dispatch Calls: %d", stats.DispatchCalls);
+			ImGui::Text("Shaders Binded: %d", stats.ShadersBinded);
+			ImGui::Text("Pipelines Binded: %d", stats.PipelinesBinded);
+			ImGui::Text("Render Passes: %d", stats.RenderPasses);
+			ImGui::Text("Compute Passes: %d", stats.ComputePasses);
 
 			ImGui::Spacing();
 			ImGui::Spacing();
@@ -128,7 +131,7 @@ namespace Athena
 			ImGui::Text("Enable Bloom"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.BloomSettings.EnableBloom);
 			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f, 0, 10);
 			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f, 0, 10);
-			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.1f, 0, 10);
+			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.05f, 0, 10);
 			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f, 0, 200);
 
 			ImGui::Text("Dirt Texture"); 
@@ -144,7 +147,7 @@ namespace Athena
 			UI::EndTreeNode();
 		}
 
-		if (UI::BeginTreeNode("Other"))
+		if (UI::BeginTreeNode("Other", false))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 

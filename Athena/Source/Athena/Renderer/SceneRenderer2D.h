@@ -21,6 +21,7 @@ namespace Athena
 		static void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 		static void EndScene();
 		static void Flush();
+		static void FlushEntityIDs();
 
 		static void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		static void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
@@ -41,21 +42,6 @@ namespace Athena
 
 		static void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int32 entityID = -1);
 		static void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White, float lineWidth = 1.f, int32 entityID = -1);
-
-		// Stats
-		struct Statistics
-		{
-			uint32 DrawCalls = 0;
-			uint32 QuadCount = 0;
-			uint32 CircleCount = 0;
-			uint32 LineCount = 0;
-
-			uint32 GetTotalVertexCount() { return QuadCount * 4 + CircleCount * 4 + LineCount * 2; }
-			uint32 GetTotalIndexCount() { return QuadCount * 6 + CircleCount * 6 + LineCount * 2; }
-		};
-
-		static void ResetStats();
-		static const Statistics& GetStatistics();
 
 	private:
 		static void StartBatch();

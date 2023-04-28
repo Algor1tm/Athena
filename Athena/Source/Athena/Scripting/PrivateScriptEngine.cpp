@@ -309,7 +309,10 @@ namespace Athena
 
 	void PrivateScriptEngine::ReloadScript(const String& name, Entity entity)
 	{
-		if (!ReloadModule(name))
+		bool exists = s_Data->EntityClasses.find(name) == s_Data->EntityClasses.end() ||
+			s_Data->EntityScriptFields.find(entity.GetID()) == s_Data->EntityScriptFields.end();
+
+		if (exists || !ReloadModule(name))
 		{
 			UnloadScript(name, entity);
 			return;
@@ -453,9 +456,12 @@ namespace Athena
 	{
 		std::vector<String> modules;
 
-		for (const auto& [name, _] : s_Data->PythonModules)
+		for (const auto& dirEntry : std::filesystem::directory_iterator(s_Data->ScriptsFolder))
 		{
-			modules.push_back(name);
+			const auto& relativePath = dirEntry.path();
+			const auto& filename = dirEntry.path().stem().string();
+
+			modules.push_back(filename);
 		}
 
 		return modules;

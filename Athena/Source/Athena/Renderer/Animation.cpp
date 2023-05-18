@@ -47,13 +47,18 @@ namespace Athena
 		m_BoneOffsetMatrices.at(id) = transform;
 	}
 
+	void Skeleton::SetBoneOffsetMatrix(uint32 id, const Matrix4& transform)
+	{
+		m_BoneOffsetMatrices.at(id) = transform;
+	}
+
 	uint32 Skeleton::GetBoneID(const String& name) const
 	{
 		std::stack<const Bone*> boneStack;
 		boneStack.push(&m_RootBone);
 
 		while (!boneStack.empty())
-	{
+		{
 			const Bone* bone = boneStack.top();
 			boneStack.pop();
 
@@ -62,7 +67,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < bone->Children.size(); ++i)
 				boneStack.push(&bone->Children[i]);
-	}
+		}
 
 		ATN_CORE_ASSERT(false, "Invalid name for bone");
 		return -1;
@@ -154,8 +159,20 @@ namespace Athena
 		iter--;
 		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
-		const RotationKey& start = *iter;
-		const RotationKey& end = *(iter + 1);
+		RotationKey start = *iter;
+		RotationKey end = *(iter + 1);
+
+		//if (start.Value.w < 0)
+		//{
+		//	start.Value.w = -start.Value.w;
+		//	start.Value.Conjugate();
+		//}
+		//
+		//if (end.Value.w < 0)
+		//{
+		//	end.Value.w = -end.Value.w;
+		//	end.Value.Conjugate();
+		//}
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);

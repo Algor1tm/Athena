@@ -383,6 +383,7 @@ namespace Athena
 				ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
 				s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
 
+				s_Data.MeshList.Sort();
 				RenderGeometry("DirShadowMap", false);
 			}
 		}
@@ -419,7 +420,6 @@ namespace Athena
 			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
 			s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
-			s_Data.MeshList.Sort();
 			RenderGeometry("PBR", true);
 
 			s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);

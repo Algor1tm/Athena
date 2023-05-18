@@ -25,15 +25,32 @@ namespace Athena::Math
 	{
 		T cosTheta = Math::Dot(a, b);
 
-		if (cosTheta > static_cast<T>(1) - static_cast<T>(0.001f))
+		Quaternion<T> result = b;
+		if (cosTheta < static_cast<T>(0))
 		{
-			return Math::Lerp(a, b, t);
+			cosTheta = -cosTheta;
+			result.w = -result.w;
+			result.x = -result.x;
+			result.y = -result.y;
+			result.z = -result.z;
+		}
+
+		T scaleA, scaleB;
+		if (cosTheta > static_cast<T>(1) - static_cast<T>(0.0001))
+		{
+			scaleA = static_cast<T>(1) - t;
+			scaleB = t;
 		}
 		else
 		{
 			T angle = Math::Acos(cosTheta);
-			return (Math::Sin((static_cast<T>(1) - t) * angle) * a + Math::Sin(t * angle) * b) / Math::Sin(angle);
+			T sinAngle = Math::Sin(angle);
+			scaleA = Math::Sin((static_cast<T>(1) - t) * angle) / sinAngle;
+			scaleB = Math::Sin(t * angle) / sinAngle;
 		}
+
+		result = scaleA * a + scaleB * result;
+		return result;
 	}
 
 	template <typename T>

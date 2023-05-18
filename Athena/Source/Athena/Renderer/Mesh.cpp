@@ -98,6 +98,11 @@ namespace Athena
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
 			result->Set(MaterialUniform::METALNESS, metalness);
 
+		float emission;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
+			result->Set(MaterialUniform::EMISSION, emission);
+		
+
 		Ref<Texture2D> texture;
 
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
@@ -204,8 +209,9 @@ namespace Athena
 			for (uint32 i = 0; i < aimesh->mNumBones; ++i)
 			{
 				aiBone* aibone = aimesh->mBones[i];
-				skeleton->SetBoneOffsetMatrix(aibone->mName.C_Str(), ConvertaiMatrix4x4(aibone->mOffsetMatrix));
 				uint32 boneID = skeleton->GetBoneID(aibone->mName.C_Str());
+
+				skeleton->SetBoneOffsetMatrix(boneID, ConvertaiMatrix4x4(aibone->mOffsetMatrix));
 
 				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
 				{

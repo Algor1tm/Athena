@@ -11,7 +11,7 @@ SandBox2D::SandBox2D()
 
 void SandBox2D::OnAttach()
 {
-	FilePath path = "Assets/Scenes/Default.atn";
+	FilePath path = "Assets/Scenes/Sponza.atn";
 
 	m_Scene = CreateRef<Scene>();
 

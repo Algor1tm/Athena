@@ -120,9 +120,9 @@ namespace Athena::Math
 		scale.y = rows[1].Length();
 		scale.z = rows[2].Length();
 
-		rows[0].Normalize(); 
-		rows[1].Normalize();
-		rows[2].Normalize();
+		rows[0] /= scale.x; 
+		rows[1] /= scale.y;
+		rows[2] /= scale.z;
 
 		rotation.y = Math::Asin(-rows[0][2]);
 		if (Math::Cos(rotation.y) != 0)

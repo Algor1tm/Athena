@@ -1,6 +1,10 @@
 # Athena
 Athena is an early-stage Game Engine with a high emphasis on Rendering.   
-Currently working on Windows platform.   
+Currently working on Windows platform.  
+
+![Editor-DirtTexture-Bloom](https://github.com/Algor1tm/Athena/assets/68811145/5a9d273a-873b-47fa-a3e6-ac296984e63f)
+
+![Sponza](https://github.com/Algor1tm/Athena/assets/68811145/47bec676-acd3-4769-9936-0ab87812bdf7)
 
 # MainFeatures
 

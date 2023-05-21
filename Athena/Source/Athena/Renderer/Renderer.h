@@ -111,6 +111,7 @@ namespace Athena
 
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();
+		static Ref<Texture2D> GetBlackTexture();
 
 		static Ref<VertexBuffer> GetCubeVertexBuffer();
 		static Ref<VertexBuffer> GetQuadVertexBuffer();

@@ -4,10 +4,10 @@
 
 using namespace Athena;
 
-class SandBox2D : public Layer
+class SandBoxLayer : public Layer
 {
 public:
-	SandBox2D();
+	SandBoxLayer(const FilePath& scenePath);
 
 	void OnAttach() override;
 	void OnDetach() override;
@@ -20,4 +20,5 @@ private:
 
 private:
 	Ref<Scene> m_Scene;
+	FilePath m_ScenePath;
 };

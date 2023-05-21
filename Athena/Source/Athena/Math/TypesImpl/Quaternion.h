@@ -353,7 +353,7 @@ namespace Athena::Math
 	}
 
 	template <typename T>
-	constexpr Quaternion<T> operator*(const Vector<T, 3> vec, const Quaternion<T>& quat)
+	constexpr Vector<T, 3> operator*(const Vector<T, 3> vec, const Quaternion<T>& quat)
 	{
 		return quat.GetInversed() * vec;
 	}

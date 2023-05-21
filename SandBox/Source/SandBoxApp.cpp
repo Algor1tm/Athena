@@ -1,7 +1,7 @@
 #include <EntryPoint.h>
 #include "Athena/Core/Application.h"
 
-#include "SandBox2D.h"
+#include "SandBoxLayer.h"
 
 using namespace Athena;
 
@@ -12,7 +12,7 @@ public:
 	SandBox(const ApplicationDescription& appdesc)
 		: Application(appdesc)
 	{
-		PushLayer(CreateRef<SandBox2D>());
+
 	}
 
 	~SandBox()
@@ -44,6 +44,13 @@ namespace Athena
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "EditorResources/Icons/Logo/no-background";
 
-		return new SandBox(appdesc);
+		Application* app = new SandBox(appdesc);
+
+
+		FilePath scene = "Assets/Scenes/Sponza.atn";
+
+		app->PushLayer(CreateRef<SandBoxLayer>(scene));
+
+		return app;
 	}
 }

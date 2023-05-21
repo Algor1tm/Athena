@@ -222,6 +222,9 @@ namespace Athena
 		s_Data.BloomDataBuffer.Knee = s_Data.Settings.BloomSettings.Knee;
 		s_Data.BloomDataBuffer.DirtIntensity = s_Data.Settings.BloomSettings.DirtIntensity;
 
+		if (s_Data.Settings.BloomSettings.DirtTexture == nullptr)
+			s_Data.Settings.BloomSettings.DirtTexture = Renderer::GetBlackTexture();
+
 		ComputeCascadeSplits();
 
 		// Per frame buffers
@@ -231,6 +234,7 @@ namespace Athena
 
 		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
 
+		// TODO: remove hack
 		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
 		if (samples != finalFBDesc.Samples)
 		{
@@ -424,9 +428,11 @@ namespace Athena
 
 			s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 
-
 			if (s_Data.ActiveEnvironment->EnvironmentMap)
 			{
+				s_Data.CameraDataBuffer.ProjectionMatrix;
+				s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+
 				Renderer::BindShader("Skybox");
 				Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
 			}
@@ -717,29 +723,29 @@ namespace Athena
 		{
 			uint32 width = s_Data.EnvMapResolution;
 			uint32 height = s_Data.EnvMapResolution;
-
+		
 			TextureSamplerDescription sampler;
 			sampler.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 			sampler.MagFilter = TextureFilter::LINEAR;
 			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
-
+		
 			prefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
-
+		
 			Renderer::BindShader("EnvironmentMipFilter");
 			skybox->Bind();
-
+		
 			for (uint32 mip = 0; mip < ShaderConstants::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
 				prefilteredMap->BindAsImage(1, mip);
-
+		
 				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
 				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
-
+		
 				float roughness = (float)mip / (float)(ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
 				s_Data.EnvMapDataBuffer.EnvironmentMapLOD = roughness;
 				s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
-
+		
 				Renderer::Dispatch(mipWidth, mipHeight, 6);
 			}
 		}

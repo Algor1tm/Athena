@@ -21,7 +21,7 @@ namespace Athena
 	void GLImGuiLayerImpl::Init(void* windowHandle)
 	{
 		ImGui_ImplGlfw_InitForOpenGL(reinterpret_cast<GLFWwindow*>(windowHandle), true);
-		ImGui_ImplOpenGL3_Init("#version 410");
+		ImGui_ImplOpenGL3_Init("#version 460");
 	}
 
 	void GLImGuiLayerImpl::Shutdown()

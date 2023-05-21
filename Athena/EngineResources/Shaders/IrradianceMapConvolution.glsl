@@ -30,6 +30,7 @@ void main()
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
     vec3 direction = CubeCoordToWorld(texelCoord);
 
+    // TODO: Remove 
     const float maxFloat = 3.402823466 * pow(10.0, 1.65);
 
     // the sample direction equals the hemisphere's orientation 

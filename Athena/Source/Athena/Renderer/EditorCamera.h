@@ -149,7 +149,8 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
-		float m_FOV = 45.0f; float m_AspectRatio = 1.778f;
+		float m_FOV = Math::PI<float>() / 2.f;
+		float m_AspectRatio = 1.778f;
 
 		Vector3 m_FocalPoint = { 0.0f, 0.0f, 0.0f };
 		float m_Distance = 0.0f;
@@ -183,7 +184,8 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
-		float m_FOV = 45.0f; float m_AspectRatio = 1.778f;
+		float m_FOV = Math::PI<float>() / 2.f; 
+		float m_AspectRatio = 1.778f;
 
 		Vector3 m_Position = { 0.0f, 5.0f, 10.0f };
 

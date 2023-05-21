@@ -38,7 +38,7 @@ namespace Athena
 		appdesc.WindowDesc.Width = 1600;
 		appdesc.WindowDesc.Height = 900;
 		appdesc.WindowDesc.Title = "Athena Editor";
-		appdesc.WindowDesc.VSync = true;
+		appdesc.WindowDesc.VSync = false;
 		appdesc.WindowDesc.Mode = WindowMode::Maximized;
 		appdesc.WindowDesc.Icon = "EditorResources/Icons/Logo/no-background.png";
 

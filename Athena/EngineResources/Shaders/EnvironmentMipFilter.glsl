@@ -87,7 +87,9 @@ void main()
     ivec3 texelCoord = ivec3(gl_GlobalInvocationID.xyz);
     vec3 direction = CubeCoordToWorld(texelCoord);
 
+    // TODO: Remove 
     const float maxFloat = 3.402823466 * pow(10.0, 1.5);
+
     float roughness = u_EnvMapData.LOD; // mip level
 
     vec3 N = direction;    
@@ -104,10 +106,11 @@ void main()
         vec3 L  = normalize(2.0 * dot(V, H) * H - V);
 
         float NdotL = max(dot(N, L), 0.0);
-        float NdotH = max(dot(N, H), 0.0);
-        float HdotV = max(dot(H, V), 0.0);
         if(NdotL > 0.0)
         {
+            float NdotH = max(dot(N, H), 0.0);
+            float HdotV = max(dot(H, V), 0.0);
+
             float D = DistributionGGX(NdotH, roughness);
             float pdf = (D * NdotH / (4.0 * HdotV)) + 0.0001; 
 
@@ -117,7 +120,7 @@ void main()
 
             float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
 
-            prefilteredColor += clamp(textureLod(u_Skybox, L, mipLevel).rgb, 0, maxFloat) * NdotL;
+            prefilteredColor += textureLod(u_Skybox, L, mipLevel).rgb * NdotL;
             totalWeight      += NdotL;
         }
     }

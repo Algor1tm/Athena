@@ -20,6 +20,7 @@ namespace Athena
 		Renderer::Statistics Stats;
 
 		Ref<Texture2D> WhiteTexture;
+		Ref<Texture2D> BlackTexture;
 		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<VertexBuffer> QuadVertexBuffer;
@@ -139,6 +140,10 @@ namespace Athena
 		s_Data.WhiteTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
 		uint32 whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
+
+		s_Data.BlackTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
+		uint32 blackTextureData = 0xff000000;
+		s_Data.BlackTexture->SetData(&blackTextureData, sizeof(uint32));
 
 		uint32 width = s_Data.BRDF_LUTResolution;
 		uint32 height = s_Data.BRDF_LUTResolution;
@@ -266,6 +271,11 @@ namespace Athena
 	Ref<Texture2D> Renderer::GetWhiteTexture()
 	{
 		return s_Data.WhiteTexture;
+	}
+
+	Ref<Texture2D> Renderer::GetBlackTexture()
+	{
+		return s_Data.BlackTexture;
 	}
 
 	Ref<VertexBuffer> Renderer::GetCubeVertexBuffer()

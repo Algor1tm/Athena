@@ -80,7 +80,7 @@ void main()
 
 #include "/PoissonDisk.glsl"
 
-#define SOFT_SHADOW_SAMPLES 32
+#define SOFT_SHADOW_SAMPLES 16
 
 layout(location = 0) out vec4 out_Color;
 
@@ -283,7 +283,7 @@ float SampleHard(vec2 uv, float depthBiased, int cascade)
     return 1.0;
 }
 
-vec2 GetOffset(int i)
+vec2 SamplePoissonDisk(int i)
 {
     #if (SOFT_SHADOW_SAMPLES == 16)
         return PoissonDisk16[i];
@@ -301,7 +301,7 @@ void FindBlocker(out float avgBlockerDepth, out int numBlockers, vec2 uv, float 
 
     for(int i = 0; i < SOFT_SHADOW_SAMPLES; ++i)
     {
-        vec2 offset = GetOffset(i) * searchWidth;
+        vec2 offset = SamplePoissonDisk(i) * searchWidth;
         float shadowMapDepth = texture(u_ShadowMap, vec3(uv.xy + offset, cascade)).r;
         if(shadowMapDepth < depthBiased)
         {
@@ -323,7 +323,7 @@ float PCF_Filter(vec2 uv, float depthBiased, float filterRadiusUV, int cascade)
     float sum = 0.0;
     for(int i = 0; i < SOFT_SHADOW_SAMPLES; ++i)
     {
-        vec2 offset = GetOffset(i) * filterRadiusUV;
+        vec2 offset = SamplePoissonDisk(i) * filterRadiusUV;
         sum += SamplePCF(uv.xy + offset, depthBiased, cascade);
     }
 

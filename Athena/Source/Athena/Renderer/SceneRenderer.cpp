@@ -115,9 +115,6 @@ namespace Athena
 
 		SceneRendererSettings Settings;
 
-		const uint32 EnvMapResolution = 1024;
-		const uint32 IrradianceMapResolution = 128;
-
 		const uint32 ShadowMapResolution = 2048;
 	};
 
@@ -670,7 +667,7 @@ namespace Athena
 		s_Data.ShadowsDataBuffer.LightSize /= averageFrustumSize;
 	}
 
-	void SceneRenderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap)
+	void SceneRenderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, EnvironmentMap* envMap)
 	{
 		ComputePass computePass;
 		computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
@@ -680,8 +677,8 @@ namespace Athena
 		// Convert EquirectangularHDRMap to Cubemap
 		Ref<TextureCube> skybox;
 		{
-			uint32 width = s_Data.EnvMapResolution;
-			uint32 height = s_Data.EnvMapResolution;
+			uint32 width = envMap->m_Resolution;
+			uint32 height = envMap->m_Resolution;
 
 			TextureSamplerDescription sampler;
 			sampler.MinFilter = TextureFilter::LINEAR;
@@ -702,18 +699,18 @@ namespace Athena
 
 		// Compute Irradiance Map
 		{
-			uint32 width = s_Data.IrradianceMapResolution;
-			uint32 height = s_Data.IrradianceMapResolution;
+			uint32 width = envMap->m_IrradianceResolution;
+			uint32 height = envMap->m_IrradianceResolution;
 
 			TextureSamplerDescription sampler;
 			sampler.MinFilter = TextureFilter::LINEAR;
 			sampler.MagFilter = TextureFilter::LINEAR;
 			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			irradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
+			envMap->m_IrradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
 
 			skybox->Bind();
-			irradianceMap->BindAsImage(1);
+			envMap->m_IrradianceMap->BindAsImage(1);
 
 			Renderer::BindShader("IrradianceMapConvolution");
 			Renderer::Dispatch(width, height, 6);
@@ -721,23 +718,23 @@ namespace Athena
 
 		// Compute Prefiltered Skybox Map
 		{
-			uint32 width = s_Data.EnvMapResolution;
-			uint32 height = s_Data.EnvMapResolution;
+			uint32 width = envMap->m_Resolution;
+			uint32 height = envMap->m_Resolution;
 		
 			TextureSamplerDescription sampler;
 			sampler.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
 			sampler.MagFilter = TextureFilter::LINEAR;
 			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 		
-			prefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
-			prefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
+			envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
+			envMap->m_PrefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 		
 			Renderer::BindShader("EnvironmentMipFilter");
 			skybox->Bind();
 		
 			for (uint32 mip = 0; mip < ShaderConstants::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
-				prefilteredMap->BindAsImage(1, mip);
+				envMap->m_PrefilteredMap->BindAsImage(1, mip);
 		
 				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
 				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);

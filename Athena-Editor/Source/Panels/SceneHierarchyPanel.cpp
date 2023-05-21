@@ -229,6 +229,26 @@ namespace Athena
 						return false;
 					});
 
+				if (UI::DrawController("Resolution", height, [&environment]()
+					{ return ImGui::BeginCombo("##Resolution", std::to_string(environment->EnvironmentMap->GetResolution()).data()); }))
+				{
+					for (uint32 resolution = 256; resolution <= 4096; resolution *= 2)
+					{
+						String valueStr = std::to_string(resolution);
+						bool isSelected = valueStr == std::to_string(environment->EnvironmentMap->GetResolution()).data();
+
+						UI::Selectable(valueStr.data(), &isSelected, [&environment, resolution]()
+							{
+								environment->EnvironmentMap->SetResolution(resolution);
+							});
+
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+
 				UI::DrawController("Ambient Intensity", height, [&environment]() {return ImGui::SliderFloat("##Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f); });
 
 				UI::DrawController("Environment Map LOD", height, [&environment]() 

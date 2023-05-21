@@ -87,7 +87,7 @@ namespace Athena
 
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 
-		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, Ref<TextureCube>& prefilteredMap, Ref<TextureCube>& irradianceMap);
+		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, EnvironmentMap* envMap);
 
 		static SceneRendererSettings& GetSettings();
 

@@ -11,12 +11,7 @@ namespace Athena
 		Ref<EnvironmentMap> result = CreateRef<EnvironmentMap>();
 		result->m_FilePath = hdrMap;
 
-		Ref<Texture2D> equirectangularMap = Texture2D::Create(hdrMap);
-
-		if (equirectangularMap->IsLoaded())
-		{
-			SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, result->m_PrefilteredMap, result->m_IrradianceMap);
-		}
+		result->Load();
 
 		return result;
 	}
@@ -27,6 +22,22 @@ namespace Athena
 		{
 			m_PrefilteredMap->Bind(TextureBinder::ENVIRONMENT_MAP);
 			m_IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
+		}
+	}
+
+	void EnvironmentMap::SetResolution(uint32 resolution)
+	{
+		m_Resolution = resolution;
+		Load();
+	}
+
+	void EnvironmentMap::Load()
+	{
+		Ref<Texture2D> equirectangularMap = Texture2D::Create(m_FilePath);
+
+		if (equirectangularMap->IsLoaded())
+		{
+			SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, this);
 		}
 	}
 }

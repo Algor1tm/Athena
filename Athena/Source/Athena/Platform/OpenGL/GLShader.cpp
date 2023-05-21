@@ -127,7 +127,7 @@ namespace Athena
 	{
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			ATN_CORE_WARN("Invalid filepath for shader {}", m_FilePath);
+			ATN_CORE_ERROR("Invalid filepath for shader {}", m_FilePath);
 			m_Compiled = false;
 			return;
 		}
@@ -186,7 +186,7 @@ namespace Athena
 	{
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			ATN_CORE_WARN("Invalid filepath for shader '{}'", m_FilePath);
+			ATN_CORE_ERROR("Invalid filepath for shader '{}'", m_FilePath);
 			m_IsLoaded = false;
 			return;
 		}

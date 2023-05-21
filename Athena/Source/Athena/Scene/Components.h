@@ -65,15 +65,11 @@ namespace Athena
 
 			// newParentTransform == oldParentTransform
 			TransformComponent parentTransform;
-			parentTransform.Translation = -Translation + oldWorldTransform.Translation;
 			parentTransform.Rotation = oldWorldTransform.Rotation * Rotation.GetInversed();
+			parentTransform.Translation = -(parentTransform.Rotation * Translation) + oldWorldTransform.Translation;
 			parentTransform.Scale = (Vector3(1.f) / Scale) * oldWorldTransform.Scale;
 
-			// TODO: fix(when parent rotated translation is wrong)
-
-			//Translation = parentTransform.Rotation.GetInversed() * (- parentTransform.Translation + newWorldTransform.Translation);
-
-			Translation = (-parentTransform.Translation + newWorldTransform.Translation);
+			Translation = parentTransform.Rotation.GetInversed() * (-parentTransform.Translation + newWorldTransform.Translation);
 			Rotation = parentTransform.Rotation.GetInversed() * newWorldTransform.Rotation;
 			Scale = (Vector3(1.f) / parentTransform.Scale) * newWorldTransform.Scale;
 

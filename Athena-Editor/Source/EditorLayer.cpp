@@ -42,7 +42,7 @@ namespace Athena
         m_SimulationIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/SimulationIcon.png");
         m_StopIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/StopIcon.png");
 
-        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(30.f), 16.f / 9.f, 0.1f, 1000.f);
+        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
         m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
     }
 

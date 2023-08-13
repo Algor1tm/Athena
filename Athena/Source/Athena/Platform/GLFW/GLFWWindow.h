@@ -138,16 +138,16 @@ namespace Athena
 	}
 
 
-	Scope<Window> Window::Create(const WindowDescription& desc)
+	Scope<Window> Window::Create(const WindowCreateInfo& info)
 	{
 		Scope<Window> window = CreateScope<Window>();
 
 		WindowData windowData;
-		windowData.Width = desc.Width;
-		windowData.Height = desc.Height;
-		windowData.VSync = desc.VSync;
-		windowData.Title = desc.Title;
-		windowData.EventCallback = desc.EventCallback;
+		windowData.Width = info.Width;
+		windowData.Height = info.Height;
+		windowData.VSync = info.VSync;
+		windowData.Title = info.Title;
+		windowData.EventCallback = info.EventCallback;
 
 		window->m_Data = windowData;
 
@@ -177,12 +177,12 @@ namespace Athena
 		window->m_Context = CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(window->m_WindowHandle));;
 		window->SetVSync(window->m_Data.VSync);
 
-		window->SetWindowMode(desc.Mode);
+		window->SetWindowMode(info.Mode);
 
-		if (FileSystem::Exists(desc.Icon))
+		if (FileSystem::Exists(info.Icon))
 		{
 			GLFWimage image;
-			image.pixels = stbi_load(desc.Icon.string().c_str(), &image.width, &image.height, 0, 4);
+			image.pixels = stbi_load(info.Icon.string().c_str(), &image.width, &image.height, 0, 4);
 			if (image.pixels)
 			{
 				glfwSetWindowIcon(hWnd, 1, &image);
@@ -190,12 +190,12 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ERROR("GLFWwindow: failed to load icon from {}!", desc.Icon);
+				ATN_CORE_ERROR("GLFWwindow: failed to load icon from {}!", info.Icon);
 			}
 		}
-		else if(!desc.Icon.empty())
+		else if(!info.Icon.empty())
 		{
-			ATN_CORE_ERROR("GLFWwindow: invalid filepath for icon '{}'!", desc.Icon);
+			ATN_CORE_ERROR("GLFWwindow: invalid filepath for icon '{}'!", info.Icon);
 		}
 
 		return window;

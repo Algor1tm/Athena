@@ -9,8 +9,8 @@ namespace Athena
 	class AthenaEditor : public Application
 	{
 	public:
-		AthenaEditor(const ApplicationDescription& appdesc)
-			: Application(appdesc)
+		AthenaEditor(const ApplicationCreateInfo& appinfo)
+			: Application(appinfo)
 		{
 
 		}
@@ -24,25 +24,25 @@ namespace Athena
 
 	Application* CreateApplication()
 	{
-		ApplicationDescription appdesc;
+		ApplicationCreateInfo appinfo;
 
-		appdesc.AppConfig.EnableConsole = true;
-		appdesc.AppConfig.EnableImGui = true;
-		appdesc.AppConfig.WorkingDirectory = "";
+		appinfo.AppConfig.EnableConsole = true;
+		appinfo.AppConfig.EnableImGui = true;
+		appinfo.AppConfig.WorkingDirectory = "";
 
-		appdesc.RendererConfig.API = Renderer::API::OpenGL;
-		appdesc.RendererConfig.ShaderPack = "../Athena/EngineResources/Shaders";
+		appinfo.RendererConfig.API = Renderer::API::OpenGL;
+		appinfo.RendererConfig.ShaderPack = "../Athena/EngineResources/Shaders";
 
-		appdesc.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
 
-		appdesc.WindowDesc.Width = 1600;
-		appdesc.WindowDesc.Height = 900;
-		appdesc.WindowDesc.Title = "Athena Editor";
-		appdesc.WindowDesc.VSync = false;
-		appdesc.WindowDesc.Mode = WindowMode::Maximized;
-		appdesc.WindowDesc.Icon = "EditorResources/Icons/Logo/no-background.png";
+		appinfo.WindowInfo.Width = 1600;
+		appinfo.WindowInfo.Height = 900;
+		appinfo.WindowInfo.Title = "Athena Editor";
+		appinfo.WindowInfo.VSync = false;
+		appinfo.WindowInfo.Mode = WindowMode::Maximized;
+		appinfo.WindowInfo.Icon = "EditorResources/Icons/Logo/no-background.png";
 
-		Application* application = new AthenaEditor(appdesc);
+		Application* application = new AthenaEditor(appinfo);
 		
 		EditorConfig editorConfig;
 		editorConfig.EditorResources = "EditorResources/";

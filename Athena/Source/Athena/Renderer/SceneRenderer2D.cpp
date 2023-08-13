@@ -115,14 +115,14 @@ namespace Athena
 		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, SceneRenderer2DData::MaxIndices);
 		delete[] indices;
 
-		VertexBufferDescription vBufferDesc;
-		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = SceneRenderer2DData::MaxQuadVertices * sizeof(QuadVertex);
-		vBufferDesc.Layout = layout;
-		vBufferDesc.IndexBuffer = indexBuffer;
-		vBufferDesc.Usage = BufferUsage::DYNAMIC;
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Data = nullptr;
+		vertexBufferInfo.Size = SceneRenderer2DData::MaxQuadVertices * sizeof(QuadVertex);
+		vertexBufferInfo.Layout = layout;
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(vBufferDesc);
+		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 		layout =
 		{
@@ -134,16 +134,15 @@ namespace Athena
 			{ ShaderDataType::Float,  "a_Fade"			 },
 		};
 
-		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = SceneRenderer2DData::MaxCircles * sizeof(CircleVertex);
-		vBufferDesc.Layout = layout;
-		vBufferDesc.IndexBuffer = indexBuffer;
-		vBufferDesc.Usage = BufferUsage::DYNAMIC;
+		vertexBufferInfo.Data = nullptr;
+		vertexBufferInfo.Size = SceneRenderer2DData::MaxCircles * sizeof(CircleVertex);
+		vertexBufferInfo.Layout = layout;
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.CircleVertexBuffer = VertexBuffer::Create(vBufferDesc);
+		s_Data.CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 		s_Data.CircleVertexBufferBase = new CircleVertex[SceneRenderer2DData::MaxCircleVertices];
-
 
 		layout =
 		{
@@ -152,13 +151,13 @@ namespace Athena
 			{ ShaderDataType::Float4, "a_Color"    },
 		};
 
-		vBufferDesc.Data = nullptr;
-		vBufferDesc.Size = SceneRenderer2DData::MaxLines * sizeof(LineVertex);
-		vBufferDesc.Layout = layout;
-		vBufferDesc.IndexBuffer = indexBuffer;
-		vBufferDesc.Usage = BufferUsage::DYNAMIC;
+		vertexBufferInfo.Data = nullptr;
+		vertexBufferInfo.Size = SceneRenderer2DData::MaxLines * sizeof(LineVertex);
+		vertexBufferInfo.Layout = layout;
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.LineVertexBuffer = VertexBuffer::Create(vBufferDesc);
+		s_Data.LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 		s_Data.LineVertexBufferBase = new LineVertex[SceneRenderer2DData::MaxLineVertices];
 

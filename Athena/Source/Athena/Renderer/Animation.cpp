@@ -73,20 +73,20 @@ namespace Athena
 		return -1;
 	}
 
-	Ref<Animation> Animation::Create(const AnimationDescription& desc)
+	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
 	{
-		ATN_CORE_ASSERT(desc.BoneNameToKeyFramesMap.size() == desc.Skeleton->GetBoneCount(), "Invalid AnimationDescription!");
+		ATN_CORE_ASSERT(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount(), "Invalid AnimationDescription!");
 
 		Ref<Animation> result = CreateRef<Animation>();
 
-		result->m_Name = desc.Name;
-		result->m_Duration = desc.Duration;
-		result->m_TicksPerSecond = desc.TicksPerSecond;
-		result->m_Skeleton = desc.Skeleton;
+		result->m_Name = info.Name;
+		result->m_Duration = info.Duration;
+		result->m_TicksPerSecond = info.TicksPerSecond;
+		result->m_Skeleton = info.Skeleton;
 
-		for (const auto& [name, keyframes] : desc.BoneNameToKeyFramesMap)
+		for (const auto& [name, keyframes] : info.BoneNameToKeyFramesMap)
 		{
-			result->m_BoneIDToKeyFramesMap[desc.Skeleton->GetBoneID(name)] = keyframes;
+			result->m_BoneIDToKeyFramesMap[info.Skeleton->GetBoneID(name)] = keyframes;
 		}
 
 		return result;

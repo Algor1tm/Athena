@@ -123,48 +123,48 @@ namespace Athena
 
 	void SceneRenderer::Init()
 	{
-		FramebufferDescription fbDesc;
-		fbDesc.Attachments = { { TextureFormat::RGBA16F, true }, TextureFormat::DEPTH24STENCIL8 };
-		fbDesc.Width = 1280;
-		fbDesc.Height = 720;
-		fbDesc.Layers = 1;
-		fbDesc.Samples = 1;
+		FramebufferCreateInfo fbInfo;
+		fbInfo.Attachments = { { TextureFormat::RGBA16F, true }, TextureFormat::DEPTH24STENCIL8 };
+		fbInfo.Width = 1280;
+		fbInfo.Height = 720;
+		fbInfo.Layers = 1;
+		fbInfo.Samples = 1;
 		 
-		s_Data.HDRFramebuffer = Framebuffer::Create(fbDesc);
+		s_Data.HDRFramebuffer = Framebuffer::Create(fbInfo);
 
-		fbDesc.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
-		fbDesc.Width = 1280;
-		fbDesc.Height = 720;
-		fbDesc.Layers = 1;
-		fbDesc.Samples = 1;
+		fbInfo.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
+		fbInfo.Width = 1280;
+		fbInfo.Height = 720;
+		fbInfo.Layers = 1;
+		fbInfo.Samples = 1;
 
-		s_Data.FinalFramebuffer = Framebuffer::Create(fbDesc);
+		s_Data.FinalFramebuffer = Framebuffer::Create(fbInfo);
 
-		fbDesc.Attachments = { TextureFormat::DEPTH32F };
-		fbDesc.Width = s_Data.ShadowMapResolution;
-		fbDesc.Height = s_Data.ShadowMapResolution;
-		fbDesc.Layers = ShaderConstants::SHADOW_CASCADES_COUNT;
-		fbDesc.Samples = 1;
+		fbInfo.Attachments = { TextureFormat::DEPTH32F };
+		fbInfo.Width = s_Data.ShadowMapResolution;
+		fbInfo.Height = s_Data.ShadowMapResolution;
+		fbInfo.Layers = ShaderConstants::SHADOW_CASCADES_COUNT;
+		fbInfo.Samples = 1;
 
-		s_Data.ShadowMap = Framebuffer::Create(fbDesc);
+		s_Data.ShadowMap = Framebuffer::Create(fbInfo);
 
-		fbDesc.Attachments = { TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
-		fbDesc.Width = 1280;
-		fbDesc.Height = 720;
-		fbDesc.Layers = 1;
-		fbDesc.Samples = 1;
+		fbInfo.Attachments = { TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
+		fbInfo.Width = 1280;
+		fbInfo.Height = 720;
+		fbInfo.Layers = 1;
+		fbInfo.Samples = 1;
 
-		s_Data.EntityIDFramebuffer = Framebuffer::Create(fbDesc);
+		s_Data.EntityIDFramebuffer = Framebuffer::Create(fbInfo);
 
-		TextureSamplerDescription samplerDesc;
-		samplerDesc.MinFilter = TextureFilter::LINEAR;
-		samplerDesc.MagFilter = TextureFilter::LINEAR;
-		samplerDesc.Wrap = TextureWrap::CLAMP_TO_BORDER;
-		samplerDesc.BorderColor = LinearColor::White;
-		samplerDesc.CompareMode = TextureCompareMode::REF;
-		samplerDesc.CompareFunc = TextureCompareFunc::LEQUAL;
+		TextureSamplerCreateInfo samplerInfo;
+		samplerInfo.MinFilter = TextureFilter::LINEAR;
+		samplerInfo.MagFilter = TextureFilter::LINEAR;
+		samplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
+		samplerInfo.BorderColor = LinearColor::White;
+		samplerInfo.CompareMode = TextureCompareMode::REF;
+		samplerInfo.CompareFunc = TextureCompareFunc::LEQUAL;
 
-		s_Data.PCF_Sampler = TextureSampler::Create(samplerDesc);
+		s_Data.PCF_Sampler = TextureSampler::Create(samplerInfo);
 
 		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(CameraData), BufferBinder::CAMERA_DATA);
 		s_Data.SceneConstantBuffer = ConstantBuffer::Create(sizeof(SceneData), BufferBinder::SCENE_DATA);
@@ -229,14 +229,14 @@ namespace Athena
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
-		FramebufferDescription finalFBDesc = s_Data.FinalFramebuffer->GetDescription();
+		FramebufferCreateInfo finalFBInfo = s_Data.FinalFramebuffer->GetCreateInfo();
 
 		// TODO: remove hack
 		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
-		if (samples != finalFBDesc.Samples)
+		if (samples != finalFBInfo.Samples)
 		{
-			finalFBDesc.Samples = samples;
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBDesc);
+			finalFBInfo.Samples = samples;
+			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBInfo);
 		}
 	}
 
@@ -442,18 +442,18 @@ namespace Athena
 		if (!s_Data.Settings.BloomSettings.EnableBloom)
 			return;
 
-		const FramebufferDescription& hdrfbDesc = s_Data.HDRFramebuffer->GetDescription();
+		const FramebufferCreateInfo& hdrfbInfo = s_Data.HDRFramebuffer->GetCreateInfo();
 
 		uint32 mipLevels = 1;
-		Vector2u mipSize = { hdrfbDesc.Width / 2, hdrfbDesc.Height / 2 };
+		Vector2u mipSize = { hdrfbInfo.Width / 2, hdrfbInfo.Height / 2 };
 
 		// Compute mip levels
 		{
 			const uint32 maxIterations = 16;
 			const uint32 downSampleLimit = 10;
 
-			uint32 width = hdrfbDesc.Width;
-			uint32 height = hdrfbDesc.Height;
+			uint32 width = hdrfbInfo.Width;
+			uint32 height = hdrfbInfo.Height;
 
 			for (uint8 i = 0; i < maxIterations; ++i)
 			{
@@ -503,8 +503,8 @@ namespace Athena
 
 			for (uint8 i = mipLevels - 1; i >= 1; --i)
 			{
-				mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Width) / Math::Pow<float>(2.f, i - 1)));
-				mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbDesc.Height) / Math::Pow<float>(2.f, i - 1)));
+				mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Width) / Math::Pow<float>(2.f, i - 1)));
+				mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Height) / Math::Pow<float>(2.f, i - 1)));
 
 				s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
 				s_Data.BloomDataBuffer.MipLevel = i;
@@ -680,12 +680,12 @@ namespace Athena
 			uint32 width = envMap->m_Resolution;
 			uint32 height = envMap->m_Resolution;
 
-			TextureSamplerDescription sampler;
-			sampler.MinFilter = TextureFilter::LINEAR;
-			sampler.MagFilter = TextureFilter::LINEAR;
-			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			TextureSamplerCreateInfo samplerInfo;
+			samplerInfo.MinFilter = TextureFilter::LINEAR;
+			samplerInfo.MagFilter = TextureFilter::LINEAR;
+			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			skybox = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
+			skybox = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
 
 			equirectangularHDRMap->Bind();
 			skybox->BindAsImage(1);
@@ -702,12 +702,12 @@ namespace Athena
 			uint32 width = envMap->m_IrradianceResolution;
 			uint32 height = envMap->m_IrradianceResolution;
 
-			TextureSamplerDescription sampler;
-			sampler.MinFilter = TextureFilter::LINEAR;
-			sampler.MagFilter = TextureFilter::LINEAR;
-			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			TextureSamplerCreateInfo samplerInfo;
+			samplerInfo.MinFilter = TextureFilter::LINEAR;
+			samplerInfo.MagFilter = TextureFilter::LINEAR;
+			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			envMap->m_IrradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
+			envMap->m_IrradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
 
 			skybox->Bind();
 			envMap->m_IrradianceMap->BindAsImage(1);
@@ -721,12 +721,12 @@ namespace Athena
 			uint32 width = envMap->m_Resolution;
 			uint32 height = envMap->m_Resolution;
 		
-			TextureSamplerDescription sampler;
-			sampler.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-			sampler.MagFilter = TextureFilter::LINEAR;
-			sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			TextureSamplerCreateInfo samplerInfo;
+			samplerInfo.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
+			samplerInfo.MagFilter = TextureFilter::LINEAR;
+			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 		
-			envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, sampler);
+			envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
 			envMap->m_PrefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
 		
 			Renderer::BindShader("EnvironmentMipFilter");

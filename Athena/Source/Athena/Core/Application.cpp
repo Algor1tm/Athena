@@ -17,26 +17,26 @@ namespace Athena
 {
 	Application* Application::s_Instance = nullptr;
 
-	Application::Application(const ApplicationDescription& appdesc)
+	Application::Application(const ApplicationCreateInfo& appinfo)
 		: m_Running(true), m_Minimized(false)
 	{
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
-		if (appdesc.AppConfig.WorkingDirectory != FilePath())
-			FileSystem::SetWorkingDirectory(appdesc.AppConfig.WorkingDirectory);
+		if (appinfo.AppConfig.WorkingDirectory != FilePath())
+			FileSystem::SetWorkingDirectory(appinfo.AppConfig.WorkingDirectory);
 
-		appdesc.AppConfig.EnableConsole ? Log::Init() : Log::InitWithoutConsole();
+		appinfo.AppConfig.EnableConsole ? Log::Init() : Log::InitWithoutConsole();
 			
-		m_Window = Window::Create(appdesc.WindowDesc);
-		Renderer::Init(appdesc.RendererConfig);
+		m_Window = Window::Create(appinfo.WindowInfo);
+		Renderer::Init(appinfo.RendererConfig);
 
 		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
 
 		if (m_Window->GetWindowMode() != WindowMode::Default)
 			Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
 
-		if (appdesc.AppConfig.EnableImGui)
+		if (appinfo.AppConfig.EnableImGui)
 		{
 			m_ImGuiLayer = ImGuiLayer::Create();
 			PushOverlay(m_ImGuiLayer);
@@ -46,7 +46,7 @@ namespace Athena
 			m_ImGuiLayer = nullptr;
 		}
 
-		ScriptEngine::Init(appdesc.ScriptConfig);
+		ScriptEngine::Init(appinfo.ScriptConfig);
 	}
 
 	Application::~Application()

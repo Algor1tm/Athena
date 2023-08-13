@@ -8,14 +8,14 @@
 
 namespace Athena
 {
-	GLTextureCube::GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	GLTextureCube::GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		stbi_set_flip_vertically_on_load(false);
 
 		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
 		m_RendererID = m_GLRendererID;
 
-		CreateSampler(samplerDesc);
+		CreateSampler(samplerInfo);
 
 		for (const auto& [target, path] : faces)
 		{
@@ -51,12 +51,12 @@ namespace Athena
 		m_IsLoaded = true;
 	}
 
-	GLTextureCube::GLTextureCube(TextureFormat format, uint32 width, uint32 height, const TextureSamplerDescription& samplerDesc)
+	GLTextureCube::GLTextureCube(TextureFormat format, uint32 width, uint32 height, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_GLRendererID);
 		m_RendererID = m_GLRendererID;
 
-		CreateSampler(samplerDesc);
+		CreateSampler(samplerInfo);
 
 		GLenum internalFormat, dataFormat, type;
 		Utils::TextureFormatToGLenum(format, internalFormat, dataFormat, type);
@@ -89,29 +89,29 @@ namespace Athena
 		return m_IsLoaded;
 	}
 
-	void GLTextureCube::CreateSampler(const TextureSamplerDescription& desc)
+	void GLTextureCube::CreateSampler(const TextureSamplerCreateInfo& info)
 	{
-		GLenum minfilter = Utils::TextureFilterToGLenum(desc.MinFilter);
-		GLenum magfilter = Utils::TextureFilterToGLenum(desc.MagFilter);
+		GLenum minfilter = Utils::TextureFilterToGLenum(info.MinFilter);
+		GLenum magfilter = Utils::TextureFilterToGLenum(info.MagFilter);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);
 
-		GLenum wrap = Utils::TextureWrapToGLenum(desc.Wrap);
+		GLenum wrap = Utils::TextureWrapToGLenum(info.Wrap);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_R, wrap);
 
-		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, desc.BorderColor.Data());
+		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, info.BorderColor.Data());
 
-		if (desc.CompareMode != TextureCompareMode::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(desc.CompareMode));
+		if (info.CompareMode != TextureCompareMode::NONE)
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(info.CompareMode));
 
-		if (desc.CompareFunc != TextureCompareFunc::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(desc.CompareFunc));
+		if (info.CompareFunc != TextureCompareFunc::NONE)
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(info.CompareFunc));
 
-		if (desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
+		if (info.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || info.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
 			glGenerateTextureMipmap(m_GLRendererID);
 	}
 

@@ -11,12 +11,12 @@
 
 namespace Athena
 {
-	Ref<Texture2D> Texture2D::Create(const FilePath& path, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	Ref<Texture2D> Texture2D::Create(const FilePath& path, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(path, sRGB, samplerDesc); break;
+			return CreateRef<GLTexture2D>(path, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -25,12 +25,12 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const void* data, uint32 width, uint32 height, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	Ref<Texture2D> Texture2D::Create(const void* data, uint32 width, uint32 height, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(data, width, height, sRGB, samplerDesc); break;
+			return CreateRef<GLTexture2D>(data, width, height, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -39,12 +39,12 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(TextureFormat format, uint32 width, uint32 height, const TextureSamplerDescription& samplerDesc)
+	Ref<Texture2D> Texture2D::Create(TextureFormat format, uint32 width, uint32 height, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(format, width, height, samplerDesc); break;
+			return CreateRef<GLTexture2D>(format, width, height, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -87,12 +87,12 @@ namespace Athena
 		m_TexCoords[3] = { min.x / width, max.y / height };
 	}
 
-	Ref<TextureCube> TextureCube::Create(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	Ref<TextureCube> TextureCube::Create(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureCube>(faces, sRGB, samplerDesc); break;
+			return CreateRef<GLTextureCube>(faces, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -101,12 +101,12 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<TextureCube> TextureCube::Create(TextureFormat format, uint32 width, uint32 height, const TextureSamplerDescription& samplerDesc)
+	Ref<TextureCube> TextureCube::Create(TextureFormat format, uint32 width, uint32 height, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureCube>(format, width, height, samplerDesc); break;
+			return CreateRef<GLTextureCube>(format, width, height, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -115,12 +115,12 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<TextureSampler> TextureSampler::Create(const TextureSamplerDescription& desc)
+	Ref<TextureSampler> TextureSampler::Create(const TextureSamplerCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureSampler>(desc); break;
+			return CreateRef<GLTextureSampler>(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

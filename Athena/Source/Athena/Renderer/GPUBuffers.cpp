@@ -22,14 +22,14 @@ namespace Athena
 	}
 
 
-	Ref<VertexBuffer> VertexBuffer::Create(const VertexBufferDescription& desc)
+	Ref<VertexBuffer> VertexBuffer::Create(const VertexBufferCreateInfo& info)
 	{
-		ATN_CORE_ASSERT(!(desc.Usage == BufferUsage::STATIC && desc.Data == nullptr), "Invalid vertex buffer data!");
+		ATN_CORE_ASSERT(!(info.Usage == BufferUsage::STATIC && info.Data == nullptr), "Invalid vertex buffer data!");
 
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLVertexBuffer>(desc); break;
+			return CreateRef<GLVertexBuffer>(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

@@ -12,7 +12,7 @@ namespace Athena
 	class ATHENA_API GLTextureSampler : public TextureSampler
 	{
 	public:
-		GLTextureSampler(const TextureSamplerDescription& desc);
+		GLTextureSampler(const TextureSamplerCreateInfo& info);
 		~GLTextureSampler();
 
 		virtual void Bind(uint32 slot) const override;

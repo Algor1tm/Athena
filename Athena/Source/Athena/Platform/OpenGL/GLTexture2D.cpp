@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	GLTexture2D::GLTexture2D(const FilePath& filepath, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	GLTexture2D::GLTexture2D(const FilePath& filepath, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 		: m_FilePath(filepath)
 	{
 		int width, height, channels;
@@ -43,7 +43,7 @@ namespace Athena
 			m_RendererID = m_GLRendererID;
 			glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);
 
-			CreateSampler(samplerDesc);
+			CreateSampler(samplerInfo);
 
 			glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, HDR ? GL_FLOAT : GL_UNSIGNED_BYTE, data);
 
@@ -63,7 +63,7 @@ namespace Athena
 		}
 	}
 
-	GLTexture2D::GLTexture2D(const void* Data, uint32 Width, uint32 Height, bool sRGB, const TextureSamplerDescription& samplerDesc)
+	GLTexture2D::GLTexture2D(const void* Data, uint32 Width, uint32 Height, bool sRGB, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
@@ -88,7 +88,7 @@ namespace Athena
 			m_RendererID = m_GLRendererID;
 			glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);
 
-			CreateSampler(samplerDesc);
+			CreateSampler(samplerInfo);
 
 			glTextureSubImage2D(m_GLRendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
 
@@ -108,7 +108,7 @@ namespace Athena
 		}
 	}
 
-	GLTexture2D::GLTexture2D(TextureFormat Format, uint32 Width, uint32 Height, const TextureSamplerDescription& samplerDesc)
+	GLTexture2D::GLTexture2D(TextureFormat Format, uint32 Width, uint32 Height, const TextureSamplerCreateInfo& samplerInfo)
 	{
 		m_Width = Width;
 		m_Height = Height;
@@ -120,7 +120,7 @@ namespace Athena
 		m_RendererID = m_GLRendererID;
 		glTextureStorage2D(m_GLRendererID, 1, m_InternalFormat, m_Width, m_Height);
 
-		CreateSampler(samplerDesc);
+		CreateSampler(samplerInfo);
 
 		m_IsLoaded = true;
 	}
@@ -160,28 +160,28 @@ namespace Athena
 		}
 	}
 
-	void GLTexture2D::CreateSampler(const TextureSamplerDescription& desc)
+	void GLTexture2D::CreateSampler(const TextureSamplerCreateInfo& info)
 	{
-		GLenum minfilter = Utils::TextureFilterToGLenum(desc.MinFilter);
-		GLenum magfilter = Utils::TextureFilterToGLenum(desc.MagFilter);
+		GLenum minfilter = Utils::TextureFilterToGLenum(info.MinFilter);
+		GLenum magfilter = Utils::TextureFilterToGLenum(info.MagFilter);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MIN_FILTER, minfilter);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_MAG_FILTER, magfilter);
 
-		GLenum wrap = Utils::TextureWrapToGLenum(desc.Wrap);
+		GLenum wrap = Utils::TextureWrapToGLenum(info.Wrap);
 
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_S, wrap);
 		glTextureParameteri(m_GLRendererID, GL_TEXTURE_WRAP_T, wrap);
 
-		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, desc.BorderColor.Data());
+		glTextureParameterfv(m_GLRendererID, GL_TEXTURE_BORDER_COLOR, info.BorderColor.Data());
 
-		if (desc.CompareMode != TextureCompareMode::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(desc.CompareMode));
+		if (info.CompareMode != TextureCompareMode::NONE)
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_MODE, Utils::TextureCompareModeToGLenum(info.CompareMode));
 
-		if (desc.CompareFunc != TextureCompareFunc::NONE)
-			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(desc.CompareFunc));
+		if (info.CompareFunc != TextureCompareFunc::NONE)
+			glTextureParameteri(m_GLRendererID, GL_TEXTURE_COMPARE_FUNC, Utils::TextureCompareFuncToGLenum(info.CompareFunc));
 
-		if(desc.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || desc.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
+		if(info.MinFilter == TextureFilter::LINEAR_MIPMAP_LINEAR || info.MagFilter == TextureFilter::LINEAR_MIPMAP_LINEAR)
 			glGenerateTextureMipmap(m_GLRendererID);
 	}
 }

@@ -22,7 +22,6 @@ namespace Athena
 		Keyboard::Key HotKey = Keyboard::Escape;
 	};
 
-
 	class PanelManager
 	{
 	public:

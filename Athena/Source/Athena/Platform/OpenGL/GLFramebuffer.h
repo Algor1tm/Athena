@@ -12,7 +12,7 @@ namespace Athena
 	class ATHENA_API GLFramebuffer: public Framebuffer
 	{
 	public:
-		GLFramebuffer(const FramebufferDescription& desc);
+		GLFramebuffer(const FramebufferCreateInfo& info);
 		virtual ~GLFramebuffer();
 
 		void Recreate();
@@ -26,7 +26,7 @@ namespace Athena
 		virtual void BindColorAttachment(uint32 index, uint32 slot = 0) const override;
 		virtual void BindDepthAttachment(uint32 slot = 0) const override;
 
-		virtual const FramebufferDescription& GetDescription() const override { return m_Description; }
+		virtual const FramebufferCreateInfo& GetCreateInfo() const override { return m_CreateInfo; }
 
 		virtual void* GetColorAttachmentRendererID(uint32 index = 0) const override;
 		virtual void* GetDepthAttachmentRendererID() const override;
@@ -44,18 +44,18 @@ namespace Athena
 
 		void CreateFramebufferObject(uint32* rendererID, bool resolved);
 
-		bool IsMultisample() const { return m_Description.Samples > 1; }
+		bool IsMultisample() const { return m_CreateInfo.Samples > 1; }
 
 	private:
 		uint32 m_FramebufferID = 0;		
 		uint32 m_ResolvedFramebufferID = 0;		// if not multisample - invalid
-		FramebufferDescription m_Description;
+		FramebufferCreateInfo m_CreateInfo;
 
-		std::vector<FramebufferAttachmentDescription> m_ColorAttachmentDescriptions;
+		std::vector<FramebufferAttachmentCreateInfo> m_ColorAttachmentCreateInfos;
 		std::vector<uint32> m_ColorAttachments;
 		std::vector<uint32> m_ColorAttachmentsResolved; // if not multisample - invalid
 
-		FramebufferAttachmentDescription m_DepthAttachmentDescription = TextureFormat::NONE;
+		FramebufferAttachmentCreateInfo m_DepthAttachmentCreateInfo = TextureFormat::NONE;
 		uint32 m_DepthAttachment;
 		uint32 m_DepthAttachmentResolved;   // if not multisample - invalid
 	};

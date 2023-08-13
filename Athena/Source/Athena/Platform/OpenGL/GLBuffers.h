@@ -10,7 +10,7 @@ namespace Athena
 	class ATHENA_API GLVertexBuffer: public VertexBuffer
 	{
 	public:
-		GLVertexBuffer(const VertexBufferDescription& desc);
+		GLVertexBuffer(const VertexBufferCreateInfo& info);
 		virtual ~GLVertexBuffer();
 
 		virtual void Bind() const override;

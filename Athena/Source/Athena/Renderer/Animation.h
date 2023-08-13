@@ -70,7 +70,7 @@ namespace Athena
 		std::vector<ScaleKey> ScaleKeys;
 	};
 
-	struct AnimationDescription
+	struct AnimationCreateInfo
 	{
 		String Name;
 		float Duration = 0;
@@ -82,7 +82,7 @@ namespace Athena
 	class ATHENA_API Animation
 	{
 	public:
-		static Ref<Animation> Create(const AnimationDescription& desc);
+		static Ref<Animation> Create(const AnimationCreateInfo& info);
 
 		void GetBoneTransforms(float time, std::vector<Matrix4>& transforms);
 

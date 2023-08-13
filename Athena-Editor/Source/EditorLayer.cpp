@@ -87,10 +87,10 @@ namespace Athena
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
         const auto& framebuffer = SceneRenderer::GetFinalFramebuffer();
-        const auto& framebufferDesc = framebuffer->GetDescription();
+        const auto& framebufferInfo = framebuffer->GetCreateInfo();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
-            (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
+            (framebufferInfo.Width != vpDesc.Size.x || framebufferInfo.Height != vpDesc.Size.y))
         {
             SceneRenderer::OnWindowResized(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);

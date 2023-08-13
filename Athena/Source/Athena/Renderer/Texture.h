@@ -61,7 +61,7 @@ namespace Athena
 		LEQUAL = 1
 	};
 
-	struct TextureSamplerDescription
+	struct TextureSamplerCreateInfo
 	{
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;
@@ -95,13 +95,13 @@ namespace Athena
 	{
 	public:
 		static Ref<Texture2D> Create(const FilePath& path, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+			bool sRGB = false, const TextureSamplerCreateInfo& samplerInfo = TextureSamplerCreateInfo());
 
 		static Ref<Texture2D> Create(const void* Data, uint32 Width, uint32 Height, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+			bool sRGB = false, const TextureSamplerCreateInfo& samplerInfo = TextureSamplerCreateInfo());
 
 		static Ref<Texture2D> Create(TextureFormat Format, uint32 Width, uint32 Height, 
-			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+			const TextureSamplerCreateInfo& samplerInfo = TextureSamplerCreateInfo());
 
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
@@ -147,10 +147,10 @@ namespace Athena
 	{
 	public:
 		static Ref<TextureCube> Create(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+			bool sRGB = false, const TextureSamplerCreateInfo& samplerInfo = TextureSamplerCreateInfo());
 
 		static Ref<TextureCube> Create(TextureFormat format, uint32 width, uint32 height, 
-			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+			const TextureSamplerCreateInfo& samplerInfo = TextureSamplerCreateInfo());
 
 		virtual void GenerateMipMap(uint32 maxLevel) = 0;
 		virtual void SetFilters(TextureFilter min, TextureFilter mag) = 0;
@@ -159,7 +159,7 @@ namespace Athena
 	class ATHENA_API TextureSampler
 	{
 	public:
-		static Ref<TextureSampler> Create(const TextureSamplerDescription& desc);
+		static Ref<TextureSampler> Create(const TextureSamplerCreateInfo& info);
 		
 		virtual void Bind(uint32 slot) const = 0;
 		virtual void UnBind(uint32 slot) const = 0;

@@ -12,8 +12,8 @@ namespace Athena
 	class ATHENA_API GLTextureCube : public TextureCube
 	{
 	public:
-		GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerDescription& samplerDesc);
-		GLTextureCube(TextureFormat format, uint32 width, uint32 height, const TextureSamplerDescription& samplerDesc);
+		GLTextureCube(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, bool sRGB, const TextureSamplerCreateInfo& samplerInfo);
+		GLTextureCube(TextureFormat format, uint32 width, uint32 height, const TextureSamplerCreateInfo& samplerInfo);
 
 		~GLTextureCube();
 
@@ -26,7 +26,7 @@ namespace Athena
 		virtual void SetFilters(TextureFilter min, TextureFilter mag) override;
 
 	private:
-		void CreateSampler(const TextureSamplerDescription& desc);
+		void CreateSampler(const TextureSamplerCreateInfo& info);
 
 	private:
 		GLenum m_GLRendererID;

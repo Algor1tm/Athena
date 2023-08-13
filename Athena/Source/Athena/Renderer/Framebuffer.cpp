@@ -7,12 +7,12 @@
 
 namespace Athena
 {
-	Ref<Framebuffer> Framebuffer::Create(const FramebufferDescription& desc)
+	Ref<Framebuffer> Framebuffer::Create(const FramebufferCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLFramebuffer>(desc); break;
+			return CreateRef<GLFramebuffer>(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

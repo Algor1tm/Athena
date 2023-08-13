@@ -27,17 +27,17 @@ namespace Athena
 		glBindTexture(GLTextureTarget(multisample, depth), id);
 	}
 
-	GLFramebuffer::GLFramebuffer(const FramebufferDescription& desc)
-		: m_Description(desc)
+	GLFramebuffer::GLFramebuffer(const FramebufferCreateInfo& info)
+		: m_CreateInfo(info)
 	{
-		m_ColorAttachmentDescriptions.reserve(desc.Attachments.size());
+		m_ColorAttachmentCreateInfos.reserve(info.Attachments.size());
 
-		for (auto format : desc.Attachments)
+		for (auto format : info.Attachments)
 		{
 			if (!Utils::IsDepthFormat(format.Format))
-				m_ColorAttachmentDescriptions.emplace_back(format);
+				m_ColorAttachmentCreateInfos.emplace_back(format);
 			else
-				m_DepthAttachmentDescription = format;
+				m_DepthAttachmentCreateInfo = format;
 		}
 
 		Recreate();
@@ -88,8 +88,8 @@ namespace Athena
 			return;
 		}
 
-		m_Description.Width = width;
-		m_Description.Height = height;
+		m_CreateInfo.Width = width;
+		m_CreateInfo.Height = height;
 
 		Recreate();
 	}
@@ -114,7 +114,7 @@ namespace Athena
 		else
 		{
 			GLenum internalFormat, dataFormat, dataType;
-			Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
+			Utils::TextureFormatToGLenum(m_ColorAttachmentCreateInfos[index].Format, internalFormat, dataFormat, dataType);
 
 			glBindImageTexture(slot, m_ColorAttachments[index], mipLevel, GL_FALSE, 0, GL_READ_WRITE, internalFormat);
 		}
@@ -135,7 +135,7 @@ namespace Athena
 
 	void GLFramebuffer::BindDepthAttachment(uint32 slot) const
 	{
-		if (m_DepthAttachmentDescription.Format == TextureFormat::NONE)
+		if (m_DepthAttachmentCreateInfo.Format == TextureFormat::NONE)
 		{
 			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
 			ATN_CORE_ASSERT(false);
@@ -160,7 +160,7 @@ namespace Athena
 
 	void* GLFramebuffer::GetDepthAttachmentRendererID() const
 	{
-		if (m_DepthAttachmentDescription.Format == TextureFormat::NONE)
+		if (m_DepthAttachmentCreateInfo.Format == TextureFormat::NONE)
 		{
 			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
 			ATN_CORE_ASSERT(false);
@@ -190,7 +190,7 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Invalid index for color attachment!");
 		
-		auto& desc = m_ColorAttachmentDescriptions[attachmentIndex];
+		auto& desc = m_ColorAttachmentCreateInfos[attachmentIndex];
 		
 		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, Utils::TextureFormatToGLenum(desc.Format), GL_INT, &value);
 	}
@@ -212,22 +212,22 @@ namespace Athena
 	{
 		if (IsMultisample())
 		{
-			for (uint32 i = 0; i < m_ColorAttachmentDescriptions.size(); ++i)
+			for (uint32 i = 0; i < m_ColorAttachmentCreateInfos.size(); ++i)
 			{
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
 				glReadBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_ResolvedFramebufferID);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0 + (GLenum)i);
 
-				glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, m_CreateInfo.Width, m_CreateInfo.Height, 0, 0, m_CreateInfo.Width, m_CreateInfo.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 			}
 
-			if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
+			if (m_DepthAttachmentCreateInfo.Format != TextureFormat::NONE)
 			{
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_ResolvedFramebufferID);
 
-				glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, m_CreateInfo.Width, m_CreateInfo.Height, 0, 0, m_CreateInfo.Width, m_CreateInfo.Height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 			}
 		}
 	}
@@ -240,7 +240,7 @@ namespace Athena
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FramebufferID);
 
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(0, 0, m_Description.Width, m_Description.Height, 0, 0, m_Description.Width, m_Description.Height,
+		glBlitFramebuffer(0, 0, m_CreateInfo.Width, m_CreateInfo.Height, 0, 0, m_CreateInfo.Width, m_CreateInfo.Height,
 			GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	}
 
@@ -249,28 +249,28 @@ namespace Athena
 		glCreateFramebuffers(1, rendererID);
 		glBindFramebuffer(GL_FRAMEBUFFER, *rendererID);
 
-		uint32 samples = resolved ? 1 : m_Description.Samples;
+		uint32 samples = resolved ? 1 : m_CreateInfo.Samples;
 		bool multisample = samples > 1;
 		std::vector<uint32>& attachments = resolved ? m_ColorAttachmentsResolved : m_ColorAttachments;
 
-		if (!m_ColorAttachmentDescriptions.empty())
+		if (!m_ColorAttachmentCreateInfos.empty())
 		{
-			attachments.resize(m_ColorAttachmentDescriptions.size());
-			CreateTextures(multisample, m_Description.Layers, attachments.data(), attachments.size());
+			attachments.resize(m_ColorAttachmentCreateInfos.size());
+			CreateTextures(multisample, m_CreateInfo.Layers, attachments.data(), attachments.size());
 			//Attachments
 			for (uint32 i = 0; i < attachments.size(); ++i)
 			{
-				BindTexture(multisample, m_Description.Layers, attachments[i]);
+				BindTexture(multisample, m_CreateInfo.Layers, attachments[i]);
 				AttachColorTexture(attachments[i], samples, i);
 			}
 		}
 
 		uint32& depthAttachment = resolved ? m_DepthAttachmentResolved : m_DepthAttachment;
 
-		if (m_DepthAttachmentDescription.Format != TextureFormat::NONE)
+		if (m_DepthAttachmentCreateInfo.Format != TextureFormat::NONE)
 		{
-			CreateTextures(multisample, m_Description.Layers, &depthAttachment, 1);
-			BindTexture(multisample, m_Description.Layers, depthAttachment);
+			CreateTextures(multisample, m_CreateInfo.Layers, &depthAttachment, 1);
+			BindTexture(multisample, m_CreateInfo.Layers, depthAttachment);
 
 			AttachDepthTexture(depthAttachment, samples);
 		}
@@ -280,14 +280,14 @@ namespace Athena
 
 	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, uint32 index)
 	{
-		uint32 width = m_Description.Width;
-		uint32 height = m_Description.Height;
-		uint32 layers = m_Description.Layers;
+		uint32 width = m_CreateInfo.Width;
+		uint32 height = m_CreateInfo.Height;
+		uint32 layers = m_CreateInfo.Layers;
 
-		bool generateMipMap = samples == 1 && m_ColorAttachmentDescriptions[index].GenerateMipMap;
+		bool generateMipMap = samples == 1 && m_ColorAttachmentCreateInfos[index].GenerateMipMap;
 
 		GLenum internalFormat, dataFormat, dataType;
-		Utils::TextureFormatToGLenum(m_ColorAttachmentDescriptions[index].Format, internalFormat, dataFormat, dataType);
+		Utils::TextureFormatToGLenum(m_ColorAttachmentCreateInfos[index].Format, internalFormat, dataFormat, dataType);
 
 		if (samples > 1)
 		{
@@ -323,16 +323,16 @@ namespace Athena
 
 	void GLFramebuffer::AttachDepthTexture(uint32 id, uint32 samples)
 	{
-		uint32 width = m_Description.Width;
-		uint32 height = m_Description.Height;
-		uint32 layers = m_Description.Layers;
+		uint32 width = m_CreateInfo.Width;
+		uint32 height = m_CreateInfo.Height;
+		uint32 layers = m_CreateInfo.Layers;
 
-		bool generateMipMap = m_DepthAttachmentDescription.GenerateMipMap;
+		bool generateMipMap = m_DepthAttachmentCreateInfo.GenerateMipMap;
 
 		GLenum internalFormat, dataFormat, dataType;
-		Utils::TextureFormatToGLenum(m_DepthAttachmentDescription.Format, internalFormat, dataFormat, dataType);
+		Utils::TextureFormatToGLenum(m_DepthAttachmentCreateInfo.Format, internalFormat, dataFormat, dataType);
 
-		GLenum attachmentType = Utils::GetDepthAttachmentType(m_DepthAttachmentDescription.Format);
+		GLenum attachmentType = Utils::GetDepthAttachmentType(m_DepthAttachmentCreateInfo.Format);
 
 		if (samples > 1)
 		{

@@ -312,17 +312,17 @@ namespace Athena
 
 						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
 
-						SceneCamera::PerspectiveDescription perspectiveDesc;
-						perspectiveDesc.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
-						perspectiveDesc.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
-						perspectiveDesc.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
-						cc.Camera.SetPerspectiveData(perspectiveDesc);
+						SceneCamera::PerspectiveData perspectiveData;
+						perspectiveData.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
+						perspectiveData.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
+						perspectiveData.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
+						cc.Camera.SetPerspectiveData(perspectiveData);
 
-						SceneCamera::OrthographicDescription orthoDesc;
-						orthoDesc.Size = cameraPropsNode["OrthographicSize"].as<float>();
-						orthoDesc.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
-						orthoDesc.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
-						cc.Camera.SetOrthographicData(orthoDesc);
+						SceneCamera::OrthographicData orthoData;
+						orthoData.Size = cameraPropsNode["OrthographicSize"].as<float>();
+						orthoData.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
+						orthoData.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
+						cc.Camera.SetOrthographicData(orthoData);
 
 						cc.Primary = cameraComponentNode["Primary"].as<bool>();
 						cc.FixedAspectRatio = cameraComponentNode["FixedAspectRatio"].as<bool>();

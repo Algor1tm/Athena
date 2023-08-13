@@ -11,16 +11,16 @@ namespace Athena
 	///////////////////// VertexBuffer /////////////////////
 	/////////////////////////////////////////////////////////
 
-	GLVertexBuffer::GLVertexBuffer(const VertexBufferDescription& desc)
+	GLVertexBuffer::GLVertexBuffer(const VertexBufferCreateInfo& info)
 	{
 		glCreateVertexArrays(1, &m_VertexArrayRendererID);
 
 		glCreateBuffers(1, &m_RendererID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
-		glBufferData(GL_ARRAY_BUFFER, desc.Size, desc.Data, desc.Usage == BufferUsage::STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, info.Size, info.Data, info.Usage == BufferUsage::STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
 
-		SetLayout(desc.Layout);
-		SetIndexBuffer(desc.IndexBuffer);
+		SetLayout(info.Layout);
+		SetIndexBuffer(info.IndexBuffer);
 
 		glBindVertexArray(0);
 	}

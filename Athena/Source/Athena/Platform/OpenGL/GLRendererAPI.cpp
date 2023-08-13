@@ -86,10 +86,10 @@ namespace Athena
 	void GLRendererAPI::BeginRenderPass(const RenderPass& pass)
 	{
 		m_CurrentRenderPass = pass;
-		const auto& fbDesc = pass.TargetFramebuffer->GetDescription();
+		const auto& fbInfo = pass.TargetFramebuffer->GetCreateInfo();
 
 		pass.TargetFramebuffer->Bind();
-		glViewport(0, 0, fbDesc.Width, fbDesc.Height);
+		glViewport(0, 0, fbInfo.Width, fbInfo.Height);
 
 		if (pass.ClearBit != CLEAR_NONE_BIT)
 		{

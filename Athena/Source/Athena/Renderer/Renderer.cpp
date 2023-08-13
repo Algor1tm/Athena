@@ -112,14 +112,14 @@ namespace Athena
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
 
-		VertexBufferDescription cubeVBdesc;
-		cubeVBdesc.Data = cubeVertices;
-		cubeVBdesc.Size = sizeof(cubeVertices);
-		cubeVBdesc.Layout = { { ShaderDataType::Float3, "a_Position" } };
-		cubeVBdesc.IndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
-		cubeVBdesc.Usage = BufferUsage::STATIC;
+		VertexBufferCreateInfo cubeVBinfo;
+		cubeVBinfo.Data = cubeVertices;
+		cubeVBinfo.Size = sizeof(cubeVertices);
+		cubeVBinfo.Layout = { { ShaderDataType::Float3, "a_Position" } };
+		cubeVBinfo.IndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
+		cubeVBinfo.Usage = BufferUsage::STATIC;
 
-		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
+		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBinfo);
 
 
 		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -128,14 +128,14 @@ namespace Athena
 								  1.f,  1.f,  1.f, 1.f,
 								 -1.f,  1.f,  0.f, 1.f, };
 
-		VertexBufferDescription quadVBDesc;
-		quadVBDesc.Data = quadVertices;
-		quadVBDesc.Size = sizeof(quadVertices);
-		quadVBDesc.Layout = { { ShaderDataType::Float2, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
-		quadVBDesc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
-		quadVBDesc.Usage = BufferUsage::STATIC;
+		VertexBufferCreateInfo quadVBinfo;
+		quadVBinfo.Data = quadVertices;
+		quadVBinfo.Size = sizeof(quadVertices);
+		quadVBinfo.Layout = { { ShaderDataType::Float2, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
+		quadVBinfo.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
+		quadVBinfo.Usage = BufferUsage::STATIC;
 
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(quadVBDesc);
+		s_Data.QuadVertexBuffer = VertexBuffer::Create(quadVBinfo);
 
 		s_Data.WhiteTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
 		uint32 whiteTextureData = 0xffffffff;
@@ -149,12 +149,12 @@ namespace Athena
 		uint32 height = s_Data.BRDF_LUTResolution;
 
 
-		TextureSamplerDescription sampler;
-		sampler.MinFilter = TextureFilter::LINEAR;
-		sampler.MagFilter = TextureFilter::LINEAR;
-		sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		TextureSamplerCreateInfo samplerInfo;
+		samplerInfo.MinFilter = TextureFilter::LINEAR;
+		samplerInfo.MagFilter = TextureFilter::LINEAR;
+		samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, sampler);
+		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, samplerInfo);
 
 		ComputePass computePass;
 		computePass.Name = "BRDF_LUT";

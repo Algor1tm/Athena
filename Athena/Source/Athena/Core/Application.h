@@ -23,11 +23,11 @@ namespace Athena
 		FilePath WorkingDirectory = FilePath();
 	};
 
-	struct ApplicationDescription
+	struct ApplicationCreateInfo
 	{
 		RendererConfig RendererConfig;
 		ScriptConfig ScriptConfig;
-		WindowDescription WindowDesc;
+		WindowCreateInfo WindowInfo;
 		AppConfig AppConfig;
 	};
 
@@ -38,7 +38,7 @@ namespace Athena
 		struct Statistics;
 
 	public:
-		Application(const ApplicationDescription& appdesc);
+		Application(const ApplicationCreateInfo& appinfo);
 		virtual ~Application();
 
 		void Run();

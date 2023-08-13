@@ -20,7 +20,7 @@ namespace Athena
 		Fullscreen = 3
 	};
 
-	struct WindowDescription
+	struct WindowCreateInfo
 	{
 		using EventCallbackFn = std::function<void(Event&)>;
 
@@ -37,7 +37,7 @@ namespace Athena
 	class ATHENA_API Window
 	{
 	public:
-		static Scope<Window> Create(const WindowDescription& desc);
+		static Scope<Window> Create(const WindowCreateInfo& desc);
 
 		~Window();
 		
@@ -46,7 +46,7 @@ namespace Athena
 		inline uint32 GetWidth() const { return m_Data.Width; }
 		inline uint32 GetHeight() const { return m_Data.Height; }
 
-		inline void SetEventCallback(const WindowDescription::EventCallbackFn& callback)
+		inline void SetEventCallback(const WindowCreateInfo::EventCallbackFn& callback)
 		{
 			m_Data.EventCallback = callback;
 		}
@@ -73,7 +73,7 @@ namespace Athena
 			String Title = "Athena App";
 			WindowMode Mode = WindowMode::Default;
 
-			WindowDescription::EventCallbackFn EventCallback = [](Event&) {};
+			WindowCreateInfo::EventCallbackFn EventCallback = [](Event&) {};
 		};
 
 	private:

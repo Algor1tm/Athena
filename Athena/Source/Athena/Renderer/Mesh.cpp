@@ -189,14 +189,14 @@ namespace Athena
 			}
 		}
 
-		VertexBufferDescription vBufferDesc;
-		vBufferDesc.Data = vertices.data();
-		vBufferDesc.Size = vertices.size() * sizeof(StaticVertex);
-		vBufferDesc.Layout = Renderer::GetStaticVertexLayout();
-		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
-		vBufferDesc.Usage = BufferUsage::STATIC;
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
+		vertexBufferInfo.Layout = Renderer::GetStaticVertexLayout();
+		vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
+		vertexBufferInfo.Usage = BufferUsage::STATIC;
 
-		return VertexBuffer::Create(vBufferDesc);
+		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
 	static Ref<VertexBuffer> LoadAnimVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform, const Ref<Skeleton>& skeleton)
@@ -269,14 +269,14 @@ namespace Athena
 			}
 		}
 
-		VertexBufferDescription vBufferDesc;
-		vBufferDesc.Data = vertices.data();
-		vBufferDesc.Size = vertices.size() * sizeof(AnimVertex);
-		vBufferDesc.Layout = Renderer::GetAnimVertexLayout();
-		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
-		vBufferDesc.Usage = BufferUsage::STATIC;
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
+		vertexBufferInfo.Layout = Renderer::GetAnimVertexLayout();
+		vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
+		vertexBufferInfo.Usage = BufferUsage::STATIC;
 
-		return VertexBuffer::Create(vBufferDesc);
+		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
 	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<Skeleton> skeleton, AABB& aabb)
@@ -343,18 +343,18 @@ namespace Athena
 
 	static Ref<Animation> LoadAnimation(const aiAnimation* aianimation, const Ref<Skeleton>& skeleton)
 	{
-		AnimationDescription desc;
-		desc.Name = aianimation->mName.C_Str();
-		desc.Duration = aianimation->mDuration;
-		desc.TicksPerSecond = aianimation->mTicksPerSecond;
-		desc.Skeleton = skeleton;
+		AnimationCreateInfo info;
+		info.Name = aianimation->mName.C_Str();
+		info.Duration = aianimation->mDuration;
+		info.TicksPerSecond = aianimation->mTicksPerSecond;
+		info.Skeleton = skeleton;
 
 		if (aianimation->mNumChannels > ShaderConstants::MAX_NUM_BONES)
 		{
-			ATN_CORE_ERROR("Animation '{}' has more than {} bones, other bones will be discarded", desc.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
+			ATN_CORE_ERROR("Animation '{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
 		}
 
-		desc.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
+		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
 		{
 			aiNodeAnim* channel = aianimation->mChannels[i];
@@ -381,10 +381,10 @@ namespace Athena
 				keyFrames.ScaleKeys[j].Value = ConvertaiVector3D(channel->mScalingKeys[j].mValue);
 			}
 
-			desc.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
+			info.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
 		}
 
-		return Animation::Create(desc);
+		return Animation::Create(info);
 	}
 
 	void StaticMesh::ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform)

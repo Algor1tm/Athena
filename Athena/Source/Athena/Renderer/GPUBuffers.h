@@ -127,7 +127,7 @@ namespace Athena
 		DYNAMIC
 	};
 
-	struct VertexBufferDescription
+	struct VertexBufferCreateInfo
 	{
 		const void* Data;
 		uint32 Size;
@@ -139,7 +139,7 @@ namespace Athena
 	class ATHENA_API VertexBuffer
 	{
 	public:
-		static Ref<VertexBuffer> Create(const VertexBufferDescription& desc);
+		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
 		virtual ~VertexBuffer() = default;
 
 		virtual void Bind() const = 0;

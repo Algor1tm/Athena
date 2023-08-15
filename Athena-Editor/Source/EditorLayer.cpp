@@ -158,7 +158,7 @@ namespace Athena
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         }
 
-        m_PanelManager.OnImGuiRender();
+        //m_PanelManager.OnImGuiRender();
 
         ImGui::End();
 

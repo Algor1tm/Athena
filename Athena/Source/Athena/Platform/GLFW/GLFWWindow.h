@@ -124,16 +124,16 @@ namespace Athena
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-		MouseScrolledEvent event((float)xOffset, (float)yOffset);
-		data.EventCallback(event);
+				MouseScrolledEvent event((float)xOffset, (float)yOffset);
+				data.EventCallback(event);
 			});
 
 		glfwSetCursorPosCallback(windowHandle, [](GLFWwindow* window, double x, double y)
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-		MouseMovedEvent event((float)x, (float)y);
-		data.EventCallback(event);
+				MouseMovedEvent event((float)x, (float)y);
+				data.EventCallback(event);
 			});
 	}
 
@@ -156,6 +156,9 @@ namespace Athena
 			int success = glfwInit();
 			ATN_CORE_ASSERT(success, "Could not intialize GLFW");
 			ATN_CORE_INFO("Init GLFW");
+
+			glfwWindowHint(GLFW_TITLEBAR, info.CustomTitlebar ? GLFW_FALSE : GLFW_TRUE);
+
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
 
@@ -170,6 +173,8 @@ namespace Athena
 		m_WindowCount++;
 
 		ATN_CORE_INFO("Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
+
+		glfwSetWindowAttrib(hWnd, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
 		glfwSetWindowUserPointer(hWnd, &window->m_Data);
 		SetEventCallbacks(hWnd);

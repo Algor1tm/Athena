@@ -29,6 +29,8 @@ namespace Athena
 		String Title = "Athena App";
 		bool VSync = true;
 		WindowMode Mode = WindowMode::Default;
+		bool CustomTitlebar = false;
+		bool WindowResizeable = true;
 		FilePath Icon;
 
 		EventCallbackFn EventCallback = [](Event&) {};

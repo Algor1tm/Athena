@@ -5,9 +5,9 @@
 
 #include "Athena/Scripting/ScriptEngine.h"
 
-#include "EditorLayer.h"
+#include "Athena/UI/Widgets.h"
 
-#include "UI/Widgets.h"
+#include "EditorLayer.h"
 
 #include <ImGui/imgui.h>
 
@@ -28,6 +28,24 @@ namespace Athena
 		return "";
 	}
 
+	static Antialising StringToAntialising(std::string_view str)
+	{
+		if(str == "None")
+			return Antialising::NONE;
+
+		if(str == "MSAA 2X (2D Only)")
+			return Antialising::MSAA_2X;
+
+		if (str == "MSAA 4X (2D Only)")
+			return Antialising::MSAA_4X;
+
+		if (str == "MSAA 8X (2D Only)")
+			return Antialising::MSAA_8X;
+
+		ATN_CORE_ASSERT(false);
+		return (Antialising)0;
+	}
+
 	static std::string_view DebugViewToString(DebugView view)
 	{
 		switch (view)
@@ -39,6 +57,21 @@ namespace Athena
 
 		ATN_CORE_ASSERT(false);
 		return "";
+	}
+
+	static DebugView StringToDebugView(std::string_view str)
+	{
+		if (str == "None")
+			return DebugView::NONE;
+
+		if (str == "Wireframe")
+			return DebugView::WIREFRAME;
+
+		if (str == "ShadowCascades")
+			return DebugView::SHADOW_CASCADES;
+
+		ATN_CORE_ASSERT(false);
+		return (DebugView)0;
 	}
 
 	SettingsPanel::SettingsPanel(std::string_view name)
@@ -53,7 +86,7 @@ namespace Athena
 		if (ImGui::Begin("Editor Settings"))
 		{
 			UI::ShiftCursorY(2.f);
-			UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.ShowPhysicsColliders); });
+			ImGui::Text("Show Physics Colliders"); ImGui::SameLine(); ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.ShowPhysicsColliders);
 
 			ImGui::Text("Camera Speed");
 			ImGui::SameLine();
@@ -67,7 +100,7 @@ namespace Athena
 		ImGui::Begin("SceneRenderer");
 		ImGui::PopStyleVar();
 
-		if (UI::BeginTreeNode("Debug"))
+		if (UI::TreeNode("Debug"))
 		{
 			auto stats = Renderer::GetStatistics();
 
@@ -86,29 +119,20 @@ namespace Athena
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			if (ImGui::BeginCombo("##DebugView", DebugViewToString(settings.DebugView).data()))
+			std::string_view views[] = { "None", "Wireframe", "ShadowCascades" };
+			std::string_view selected = DebugViewToString(settings.DebugView);
+			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{
-				for (uint32 i = 0; i <= (uint32)DebugView::SHADOW_CASCADES; ++i)
-				{
-					DebugView view = (DebugView)i;
-
-					bool isSelected = view == settings.DebugView;
-					UI::Selectable(DebugViewToString(view), &isSelected, [this, view, &settings]()
-						{
-							settings.DebugView = view;
-						});
-				}
-
-				ImGui::EndCombo();
+				settings.DebugView = StringToDebugView(selected);
 			}
 
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
-		if (UI::BeginTreeNode("Shadows", false))
+		if (UI::TreeNode("Shadows", false))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
@@ -121,10 +145,10 @@ namespace Athena
 			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.ShadowSettings.NearPlaneOffset);
 			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.ShadowSettings.FarPlaneOffset);
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
-		if (UI::BeginTreeNode("Bloom"))
+		if (UI::TreeNode("Bloom"))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
@@ -144,30 +168,21 @@ namespace Athena
 					settings.BloomSettings.DirtTexture = Texture2D::Create(path);
 			}
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
-		if (UI::BeginTreeNode("Other", false))
+		if (UI::TreeNode("Other", false))
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
 			ImGui::Text("Antialiasing");
 			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(settings.AntialisingMethod).data()))
+
+			std::string_view views[] = { "None", "MSAA 2X (2D Only)", "MSAA 4X (2D Only)", "MSAA 8X (2D Only)"};
+			std::string_view selected = AntialisingToString(settings.AntialisingMethod);
+			if (UI::ComboBox("##Antialiasing", views, std::size(views), &selected))
 			{
-				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
-				{
-					Antialising antialising = (Antialising)i;
-
-					bool isSelected = antialising == settings.AntialisingMethod;
-					UI::Selectable(AntialisingToString(antialising), &isSelected, [this, antialising, &settings]()
-						{
-							settings.AntialisingMethod = antialising;
-						});
-
-				}
-
-				ImGui::EndCombo();
+				settings.AntialisingMethod = StringToAntialising(selected);
 			}
 
 			ImGui::Text("Reload Shaders");
@@ -182,7 +197,7 @@ namespace Athena
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
 		ImGui::End();

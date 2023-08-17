@@ -40,7 +40,7 @@ namespace Athena
 		appinfo.WindowInfo.Title = "Athena Editor";
 		appinfo.WindowInfo.VSync = false;
 		appinfo.WindowInfo.Mode = WindowMode::Default;
-		appinfo.WindowInfo.CustomTitlebar = true;
+		appinfo.WindowInfo.CustomTitlebar = false;
 		appinfo.WindowInfo.WindowResizeable = true;
 		appinfo.WindowInfo.Icon = "EditorResources/Icons/Logo/no-background.png";
 

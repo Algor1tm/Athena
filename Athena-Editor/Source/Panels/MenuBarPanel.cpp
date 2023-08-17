@@ -6,7 +6,7 @@
 #include "Athena/Scene/Scene.h"
 
 #include "EditorLayer.h"
-#include "UI/Widgets.h"
+#include "Athena/UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>

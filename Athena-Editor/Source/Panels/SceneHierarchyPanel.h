@@ -9,7 +9,7 @@
 
 #include "Panels/Panel.h"
 
-#include <UI/Widgets.h>
+#include "Athena/UI/Widgets.h"
 
 #include <string_view>
 
@@ -68,14 +68,13 @@ namespace Athena
 
 			float lineHeight = ImGui::GetFrameHeight();
 
-			bool open = UI::BeginTreeNode(name.data());
+			bool open = UI::TreeNode(name.data());
 
 			bool removeComponent = false;
 
 			ImGui::SameLine(regionAvail.x - lineHeight);
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-			UI::ShiftCursorY(1.f);
-			UI::ShiftCursorX(1.f);
+			UI::ShiftCursor(1.f, 1.f);
 			if (ImGui::Button("...", { lineHeight - 2.f, lineHeight - 2.f }))
 				ImGui::OpenPopup("ComponentSettings");
 			ImGui::PopStyleVar();
@@ -93,7 +92,7 @@ namespace Athena
 			if (open)
 			{
 				uiFunction(entity.GetComponent<Component>());
-				UI::EndTreeNode();
+				UI::TreePop();
 				ImGui::Spacing();
 			}
 

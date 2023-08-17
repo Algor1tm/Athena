@@ -2,7 +2,7 @@
 
 #include "Athena/Renderer/Texture.h"
 
-#include "UI/Widgets.h"
+#include "Athena/UI/Widgets.h"
 
 #include "EditorLayer.h"
 

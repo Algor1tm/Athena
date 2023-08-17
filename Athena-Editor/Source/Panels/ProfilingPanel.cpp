@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Application.h"
 
-#include "UI/Widgets.h"
+#include "Athena/UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 
@@ -21,7 +21,7 @@ namespace Athena
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
         if (ImGui::Begin("Profiling"))
         {
-            if (UI::BeginTreeNode("Platform"))
+            if (UI::TreeNode("Platform"))
             {
                 ImGui::Text("CPU: ");
 				ImGui::Text(m_SystemInfo.CPUBrandString.c_str());
@@ -40,10 +40,10 @@ namespace Athena
 				ImGui::Text("Vendor: %s", m_GPUInfo.Vendor.c_str());
 				ImGui::Text("VRAM: %d MB", m_GPUInfo.TotalPhysicalMemoryKB / 1024);
 
-                UI::EndTreeNode();
+                UI::TreePop();
             }
 
-            if (UI::BeginTreeNode("Performance"))
+            if (UI::TreeNode("Performance"))
             {
                 auto appstats = Application::Get().GetStatistics();
                 
@@ -60,7 +60,7 @@ namespace Athena
                 if (newVsync != vsync)
                     Application::Get().GetWindow().SetVSync(newVsync);
 
-                UI::EndTreeNode();
+                UI::TreePop();
             }
 
         }

@@ -136,7 +136,7 @@ namespace Athena
     void EditorLayer::OnImGuiRender()
     {
         static bool dockSpaceOpen = true;
-        static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
+        static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -158,7 +158,7 @@ namespace Athena
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         }
 
-        //m_PanelManager.OnImGuiRender();
+        m_PanelManager.OnImGuiRender();
 
         ImGui::End();
 

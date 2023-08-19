@@ -1,14 +1,16 @@
 LIBRARY Athena
 EXPORTS	
 	?AddFontFromFileTTF@ImFontAtlas@@QEAAPEAUImFont@@PEBDMPEBUImFontConfig@@PEBG@Z
+	?AddRect@ImDrawList@@QEAAXAEBUImVec2@@0IMHM@Z
+	?AddRectFilled@ImDrawList@@QEAAXAEBUImVec2@@0IMH@Z
 	?Begin@ImGui@@YA_NPEBDPEA_NH@Z
-	?End@ImGui@@YAXXZ
 	?BeginCombo@ImGui@@YA_NPEBD0H@Z
 	?BeginDragDropSource@ImGui@@YA_NH@Z
 	?BeginDragDropTarget@ImGui@@YA_NXZ
 	?BeginPopup@ImGui@@YA_NPEBDH@Z	
 	?BeginPopupContextItem@ImGui@@YA_NPEBDH@Z
 	?BeginTable@ImGui@@YA_NPEBDHHAEBUImVec2@@M@Z
+	?BeginHorizontal@ImGui@@YAXPEBDAEBUImVec2@@M@Z
 	?Button@ImGui@@YA_NPEBDAEBUImVec2@@@Z
 	?Checkbox@ImGui@@YA_NPEBDPEA_N@Z	
 	?ColorPicker3@ImGui@@YA_NPEBDQEAMH@Z
@@ -19,13 +21,17 @@ EXPORTS
 	?DragFloat3@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragFloat4@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
+	?End@ImGui@@YAXXZ
+	?EndHorizontal@ImGui@@YAXXZ
 	?ImageButton@ImGui@@YA_NPEAXAEBUImVec2@@11HAEBUImVec4@@2@Z
 	?ImageButton@ImGui@@YA_NPEBDPEAXAEBUImVec2@@22AEBUImVec4@@3@Z
 	?Indent@ImGui@@YAXM@Z
 	?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
+	?InvisibleButton@ImGui@@YA_NPEBDAEBUImVec2@@H@Z
 	?IsAnyItemActive@ImGui@@YA_NXZ
 	?IsItemClicked@ImGui@@YA_NH@Z
 	?IsItemDeactivatedAfterEdit@ImGui@@YA_NXZ
+	?IsItemHovered@ImGui@@YA_NH@Z
 	?IsMouseClicked@ImGui@@YA_NH_N@Z
 	?IsMouseDown@ImGui@@YA_NH@Z
 	?BeginPopupContextWindow@ImGui@@YA_NPEBDH@Z
@@ -40,11 +46,15 @@ EXPORTS
 	?TableSetColumnIndex@ImGui@@YA_NH@Z
 	?TreeNodeEx@ImGui@@YA_NPEBDH0ZZ
 	?TreeNodeEx@ImGui@@YA_NPEBDH@Z
+	?GetBackgroundDrawList@ImGui@@YAPEAUImDrawList@@XZ
 	?GetCursorPosX@ImGui@@YAMXZ
 	?GetCursorPosY@ImGui@@YAMXZ
+	?GetCursorScreenPos@ImGui@@YA?AUImVec2@@XZ
 	?Selectable@ImGui@@YA_NPEBD_NHAEBUImVec2@@@Z
 	?TreeNodeEx@ImGui@@YA_NPEBXHPEBDZZ
 	?GetFrameHeight@ImGui@@YAMXZ
+	?GetFrameHeightWithSpacing@ImGui@@YAMXZ
+	?GetForegroundDrawList@ImGui@@YAPEAUImDrawList@@XZ
 	?GetTextLineHeight@ImGui@@YAMXZ
 	?GetIO@ImGui@@YAAEAUImGuiIO@@XZ
 	?AcceptDragDropPayload@ImGui@@YAPEBUImGuiPayload@@PEBDH@Z
@@ -56,6 +66,7 @@ EXPORTS
 	?GetCursorPos@ImGui@@YA?AUImVec2@@XZ
 	?GetMousePos@ImGui@@YA?AUImVec2@@XZ
 	?GetWindowHeight@ImGui@@YAMXZ
+	?GetWindowWidth@ImGui@@YAMXZ
 	?GetWindowContentRegionMax@ImGui@@YA?AUImVec2@@XZ
 	?GetWindowContentRegionMin@ImGui@@YA?AUImVec2@@XZ
 	?GetWindowPos@ImGui@@YA?AUImVec2@@XZ
@@ -103,6 +114,7 @@ EXPORTS
 	?TreeNode@ImGui@@YA_NPEBD@Z
 	?TreePop@ImGui@@YAXXZ
 	?Unindent@ImGui@@YAXM@Z
+	?GImGui@@3PEAUImGuiContext@@EA
 
 	?IsOver@ImGuizmo@@YA_NXZ
 	?IsUsing@ImGuizmo@@YA_NXZ

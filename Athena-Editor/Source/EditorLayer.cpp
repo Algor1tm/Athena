@@ -23,6 +23,7 @@
 #include "Panels/ViewportPanel.h"
 
 #include <ImGui/imgui.h>
+#include <ImGui/imgui_internal.h>
 
 
 namespace Athena
@@ -65,6 +66,8 @@ namespace Athena
         else
             ATN_CORE_ERROR("EditorLayer: Failed to load medium UI font!");
 
+
+        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar.IsHovered(); });
 
         InitializePanels();
 
@@ -135,35 +138,73 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-        static bool dockSpaceOpen = true;
-        static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+  //      static bool dockSpaceOpen = true;
+  //      static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+  //          ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        const ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
+  //      const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  //      ImGui::SetNextWindowPos(viewport->WorkPos);
+  //      ImGui::SetNextWindowSize(viewport->WorkSize);
+  //      ImGui::SetNextWindowViewport(viewport->ID);
+
+  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+  //      ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
+  //      ImGui::PopStyleVar(3);
+
+  //      ImGuiIO& io = ImGui::GetIO();
+  //      if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  //      {
+  //          ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+  //          ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+  //      }
+
+  //      m_PanelManager.OnImGuiRender();
+
+  //      ImGui::End();
+
+		//m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
+  //      m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
+
+        const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
+
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
         ImGui::SetNextWindowViewport(viewport->ID);
-
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
-        ImGui::PopStyleVar(3);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
+        ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
+
+        ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
+        ImGui::PopStyleColor(2);
+        ImGui::PopStyleVar(2);
+
+        ImGui::PopStyleVar(2);
+
+        m_Titlebar.OnImGuiRender();
+
+        ImGui::SetCursorPosY(m_Titlebar.GetHeight());
+        // Dockspace
         ImGuiIO& io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-        {
-            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-        }
-
-        m_PanelManager.OnImGuiRender();
+        ImGuiStyle& style = ImGui::GetStyle();
+        float minWinSizeX = style.WindowMinSize.x;
+        style.WindowMinSize.x = 300.0f;
+        ImGui::DockSpace(ImGui::GetID("MyDockspace"));
+        style.WindowMinSize.x = minWinSizeX;
 
         ImGui::End();
-
-		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
-        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
     }
 
     void EditorLayer::SelectEntity(Entity entity)

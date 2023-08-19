@@ -6,13 +6,13 @@
 #include "Athena/Input/MouseEvent.h"
 
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Editorcamera.h"
+#include "Athena/Renderer/EditorCamera.h"
 
 #include "Athena/Scene/Entity.h"
 
 #include "PanelManager.h"
-
 #include "ImGuizmoLayer.h"
+#include "Titlebar.h"
 
 
 namespace Athena
@@ -75,8 +75,11 @@ namespace Athena
 
 	private:
 		EditorConfig m_Config;
-		Ref<EditorCamera> m_EditorCamera;
+
+		Titlebar m_Titlebar;
 		bool m_HideCursor = false;
+
+		Ref<EditorCamera> m_EditorCamera;
 		Entity m_SelectedEntity = {};
 
 		ImGuizmoLayer m_ImGuizmoLayer;

@@ -150,7 +150,7 @@ namespace Athena
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_SelectionContext = {};
 
-		if (ImGui::BeginPopupContextWindow(0, 1, false))
+		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", false))
 		{
 			if (ImGui::MenuItem("Create Entity"))
 			{
@@ -352,16 +352,9 @@ namespace Athena
 				UI::EndPropertyTable();
 			}
 			
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
-
-			bool open = UI::TreeNode("Material");
-
-			ImGui::PopStyleVar(2);
-
 			Ref<Material> material = MaterialManager::Get(m_ActiveMaterial);
 
-			if (open && UI::BeginPropertyTable())
+			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
 			{
 				DrawMaterialProperty(material, "Albedo", "Color", MaterialTexture::ALBEDO_MAP, MaterialUniform::ALBEDO);
 				DrawMaterialProperty(material, "Normal Map", "", MaterialTexture::NORMAL_MAP, (MaterialUniform)0);
@@ -370,10 +363,6 @@ namespace Athena
 				DrawMaterialProperty(material, "Ambient Occlusion", "", MaterialTexture::AMBIENT_OCCLUSION_MAP, (MaterialUniform)0);
 
 				UI::EndPropertyTable();
-			}
-
-			if (open)
-			{
 				UI::TreePop();
 				ImGui::Spacing();
 			}

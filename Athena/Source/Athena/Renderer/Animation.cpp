@@ -162,18 +162,6 @@ namespace Athena
 		RotationKey start = *iter;
 		RotationKey end = *(iter + 1);
 
-		//if (start.Value.w < 0)
-		//{
-		//	start.Value.w = -start.Value.w;
-		//	start.Value.Conjugate();
-		//}
-		//
-		//if (end.Value.w < 0)
-		//{
-		//	end.Value.w = -end.Value.w;
-		//	end.Value.Conjugate();
-		//}
-
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
 		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 

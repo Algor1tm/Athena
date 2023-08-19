@@ -11,6 +11,8 @@ namespace Athena
 {
 	class ATHENA_API GraphicsContext;
 
+	using WindowEventCallback = std::function<void(Event&)>;
+	using TitlebarHitTestCallback = std::function<bool()>;
 
 	enum class WindowMode
 	{
@@ -22,8 +24,6 @@ namespace Athena
 
 	struct WindowCreateInfo
 	{
-		using EventCallbackFn = std::function<void(Event&)>;
-
 		uint32 Width = 1280; 
 		uint32 Height = 720;
 		String Title = "Athena App";
@@ -33,7 +33,7 @@ namespace Athena
 		bool WindowResizeable = true;
 		FilePath Icon;
 
-		EventCallbackFn EventCallback = [](Event&) {};
+		WindowEventCallback EventCallback = [](Event&) {};
 	};
 
 	class ATHENA_API Window
@@ -48,9 +48,14 @@ namespace Athena
 		inline uint32 GetWidth() const { return m_Data.Width; }
 		inline uint32 GetHeight() const { return m_Data.Height; }
 
-		inline void SetEventCallback(const WindowCreateInfo::EventCallbackFn& callback)
+		inline void SetEventCallback(const WindowEventCallback& callback)
 		{
 			m_Data.EventCallback = callback;
+		}
+
+		inline void SetTitlebarHitTestCallback(const TitlebarHitTestCallback& callback)
+		{
+			m_Data.TitlebarHitTest = callback;
 		}
 
 		void SetVSync(bool enabled);
@@ -74,8 +79,10 @@ namespace Athena
 			bool VSync = true;
 			String Title = "Athena App";
 			WindowMode Mode = WindowMode::Default;
+			bool CustomTitlebar = false;
 
-			WindowCreateInfo::EventCallbackFn EventCallback = [](Event&) {};
+			WindowEventCallback EventCallback = [](Event&) {};
+			TitlebarHitTestCallback TitlebarHitTest = []() {return false; };
 		};
 
 	private:

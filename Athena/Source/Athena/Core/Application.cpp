@@ -23,6 +23,9 @@ namespace Athena
 		ATN_CORE_ASSERT(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
+		m_Name = appinfo.AppConfig.Name;
+		m_EngineResourcesPath = appinfo.AppConfig.EngineResources;
+
 		if (appinfo.AppConfig.WorkingDirectory != FilePath())
 			FileSystem::SetWorkingDirectory(appinfo.AppConfig.WorkingDirectory);
 

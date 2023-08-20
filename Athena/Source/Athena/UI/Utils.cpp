@@ -5,14 +5,6 @@
 
 namespace Athena::UI
 {
-	void PushBoldFont()
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		auto& boldFont = io.Fonts->Fonts[0];
-
-		ImGui::PushFont(boldFont);
-	}
-
 	void ShiftCursorX(float offset)
 	{
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
@@ -32,5 +24,25 @@ namespace Athena::UI
 	const ImVec4& GetDarkColor()
 	{
 		return ImGui::GetStyle().Colors[ImGuiCol_TitleBg];
+	}
+
+	void PushFont(Fonts font)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImFont* imguiFont = io.FontDefault;
+
+		switch (font)
+		{
+		case Fonts::Default: imguiFont = io.FontDefault; break;
+		case Fonts::Bold: imguiFont = io.Fonts->Fonts[1]; break;
+		case Fonts::Default22: imguiFont = io.Fonts->Fonts[2]; break;
+		}
+
+		ImGui::PushFont(imguiFont);
+	}
+
+	void PopFont()
+	{
+		ImGui::PopFont();
 	}
 }

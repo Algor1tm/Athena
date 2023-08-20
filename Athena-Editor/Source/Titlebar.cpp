@@ -1,6 +1,7 @@
 #include "Titlebar.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/UI/Widgets.h";
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -8,6 +9,11 @@
 
 namespace Athena
 {
+    Titlebar::Titlebar(const String& name)
+    {
+        m_Name = name;
+    }
+
 	void Titlebar::OnImGuiRender()
 	{
         const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
@@ -32,7 +38,7 @@ namespace Athena
 
         ImGui::SetCursorPos(ImVec2(windowPadding.x, windowPadding.y + titlebarVerticalOffset)); // Reset cursor pos
         // DEBUG DRAG BOUNDS
-        fgDrawList->AddRect(ImGui::GetCursorScreenPos(), ImVec2(ImGui::GetCursorScreenPos().x + w - buttonsAreaWidth, ImGui::GetCursorScreenPos().y + m_Height), IM_COL32(222, 43, 43, 255));
+        //fgDrawList->AddRect(ImGui::GetCursorScreenPos(), ImVec2(ImGui::GetCursorScreenPos().x + w - buttonsAreaWidth, ImGui::GetCursorScreenPos().y + m_Height), IM_COL32(222, 43, 43, 255));
         ImGui::InvisibleButton("##TitlebarDragZone", ImVec2(w - buttonsAreaWidth, m_Height));
 
         m_Hovered = ImGui::IsItemHovered();
@@ -42,6 +48,19 @@ namespace Athena
             float windowMousePosY = ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y;
             if (windowMousePosY >= 0.0f && windowMousePosY <= 5.0f)
                 m_Hovered = true; // Account for the top-most pixels which don't register
+        }
+
+        {
+            // Centered Window title
+            ImVec2 currentCursorPos = ImGui::GetCursorPos();
+            ImVec2 textSize = ImGui::CalcTextSize(m_Name.c_str());
+            ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() * 0.5f - textSize.x * 0.5f, 2.0f + windowPadding.y + 2.0f));
+
+            UI::PushFont(UI::Fonts::Default22);
+            ImGui::Text("%s", m_Name.c_str()); // Draw title
+            UI::PopFont();
+
+            ImGui::SetCursorPos(currentCursorPos);
         }
 
         ImGui::EndHorizontal();

@@ -43,6 +43,8 @@ namespace Athena
         m_SimulationIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/SimulationIcon.png");
         m_StopIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/StopIcon.png");
 
+        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName());
+
         m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
         m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
     }
@@ -51,23 +53,7 @@ namespace Athena
     {
         Application::Get().GetImGuiLayer()->BlockEvents(false);
 
-        const FilePath& resources = m_Config.EditorResources;
-        FilePath boldFont = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
-        FilePath mediumFont = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
-
-        ImGuiIO& io = ImGui::GetIO();
-        if (FileSystem::Exists(boldFont))
-            io.Fonts->AddFontFromFileTTF(boldFont.string().c_str(), 16.f);
-        else
-            ATN_CORE_ERROR("EditorLayer: Failed to load bold UI font!");
-
-        if (FileSystem::Exists(mediumFont))
-            io.FontDefault = io.Fonts->AddFontFromFileTTF(mediumFont.string().c_str(), 16.f);
-        else
-            ATN_CORE_ERROR("EditorLayer: Failed to load medium UI font!");
-
-
-        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar.IsHovered(); });
+        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
 
         InitializePanels();
 
@@ -138,36 +124,6 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-  //      static bool dockSpaceOpen = true;
-  //      static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-  //          ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-  //      const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  //      ImGui::SetNextWindowPos(viewport->WorkPos);
-  //      ImGui::SetNextWindowSize(viewport->WorkSize);
-  //      ImGui::SetNextWindowViewport(viewport->ID);
-
-  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-  //      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-  //      ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
-  //      ImGui::PopStyleVar(3);
-
-  //      ImGuiIO& io = ImGui::GetIO();
-  //      if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-  //      {
-  //          ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-  //          ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-  //      }
-
-  //      m_PanelManager.OnImGuiRender();
-
-  //      ImGui::End();
-
-		//m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
-  //      m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
-
         const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
 
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
@@ -193,9 +149,9 @@ namespace Athena
 
         ImGui::PopStyleVar(2);
 
-        m_Titlebar.OnImGuiRender();
+        m_Titlebar->OnImGuiRender();
 
-        ImGui::SetCursorPosY(m_Titlebar.GetHeight());
+        ImGui::SetCursorPosY(m_Titlebar->GetHeight());
         // Dockspace
         ImGuiIO& io = ImGui::GetIO();
         ImGuiStyle& style = ImGui::GetStyle();
@@ -204,7 +160,12 @@ namespace Athena
         ImGui::DockSpace(ImGui::GetID("MyDockspace"));
         style.WindowMinSize.x = minWinSizeX;
 
+        m_PanelManager.OnImGuiRender();
+
         ImGui::End();
+
+        m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
+        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
     }
 
     void EditorLayer::SelectEntity(Entity entity)
@@ -228,52 +189,52 @@ namespace Athena
 
     void EditorLayer::InitializePanels()
     {
-        m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
-        m_MainMenuBar->SetLogoIcon(Texture2D::Create(m_Config.EditorResources / "Icons/Editor/MenuBar/Logo-no-background.png"));
-        m_MainMenuBar->AddMenuItem("File", [this]()
-            {
-                if (ImGui::MenuItem("New", "Ctrl+N", false))
-                    NewScene();
+        //m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
+        //m_MainMenuBar->SetLogoIcon(Texture2D::Create(m_Config.EditorResources / "Icons/Editor/MenuBar/Logo-no-background.png"));
+        //m_MainMenuBar->AddMenuItem("File", [this]()
+        //    {
+        //        if (ImGui::MenuItem("New", "Ctrl+N", false))
+        //            NewScene();
 
-                if (ImGui::MenuItem("Open...", "Ctrl+O", false))
-                    OpenScene();
+        //        if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+        //            OpenScene();
 
-                if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
-                    SaveSceneAs();
+        //        if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+        //            SaveSceneAs();
 
-                ImGui::Separator();
-                ImGui::Spacing();
+        //        ImGui::Separator();
+        //        ImGui::Spacing();
 
-                if (ImGui::MenuItem("Exit", NULL, false))
-                    Application::Get().Close();
-            });
+        //        if (ImGui::MenuItem("Exit", NULL, false))
+        //            Application::Get().Close();
+        //    });
 
-        m_MainMenuBar->AddMenuItem("View", [this]()
-            {
-                m_PanelManager.ImGuiRenderAsMenuItems();
-            });
+        //m_MainMenuBar->AddMenuItem("View", [this]()
+        //    {
+        //        m_PanelManager.ImGuiRenderAsMenuItems();
+        //    });
 
-        m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
-            {
-                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
+        //m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
+        //    {
+        //        currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
 
-                if (m_SceneState == SceneState::Edit)
-                    OnScenePlay();
-                else if (m_SceneState == SceneState::Play)
-                    OnSceneStop();
-            });
+        //        if (m_SceneState == SceneState::Edit)
+        //            OnScenePlay();
+        //        else if (m_SceneState == SceneState::Play)
+        //            OnSceneStop();
+        //    });
 
-        m_MainMenuBar->AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
-            {
-                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
+        //m_MainMenuBar->AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
+        //    {
+        //        currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
 
-                if (m_SceneState == SceneState::Edit)
-                    OnSceneSimulate();
-                else if (m_SceneState == SceneState::Simulation)
-                    OnSceneStop();
-            });
+        //        if (m_SceneState == SceneState::Edit)
+        //            OnSceneSimulate();
+        //        else if (m_SceneState == SceneState::Simulation)
+        //            OnSceneStop();
+        //    });
 
-        m_PanelManager.AddPanel(m_MainMenuBar, false);
+        //m_PanelManager.AddPanel(m_MainMenuBar, false);
 
 
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
@@ -613,12 +574,10 @@ namespace Athena
             if (currentMode == WindowMode::Fullscreen)
             {
                 window.SetWindowMode(WindowMode::Maximized);
-                m_MainMenuBar->UseWindowDefaultButtons(false);
             }
             else
             {
                 window.SetWindowMode(WindowMode::Fullscreen);
-                m_MainMenuBar->UseWindowDefaultButtons(true);
             }
             break;
         }
@@ -714,7 +673,6 @@ namespace Athena
             m_EditorScene = newScene;
             m_ActiveScene = newScene;
 
-            m_MainMenuBar->SetSceneRef(m_EditorScene);
             m_SceneHierarchy->SetContext(m_ActiveScene);
             SelectEntity({});
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());

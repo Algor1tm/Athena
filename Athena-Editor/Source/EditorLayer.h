@@ -76,7 +76,7 @@ namespace Athena
 	private:
 		EditorConfig m_Config;
 
-		Titlebar m_Titlebar;
+		Ref<Titlebar> m_Titlebar;
 		bool m_HideCursor = false;
 
 		Ref<EditorCamera> m_EditorCamera;
@@ -86,7 +86,6 @@ namespace Athena
 
 		PanelManager m_PanelManager;
 		Ref<ViewportPanel> m_MainViewport;
-		Ref<MenuBarPanel> m_MainMenuBar;
 		Ref<SceneHierarchyPanel> m_SceneHierarchy;
 		Ref<SettingsPanel> m_SettingsPanel;
 

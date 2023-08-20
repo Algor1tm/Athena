@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include "Athena/Core/Application.h"
+
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/Shader.h"
@@ -82,31 +84,33 @@ namespace Athena
 		
 #undef DEFINE
 
+		FilePath shaderPackModule = Application::Get().GetEngineResourcesPath() / "ShaderPack";
+
 		s_Data.ShaderPack = CreateRef<ShaderLibrary>();
 
-		s_Data.ShaderPack->LoadIncludeShader("PoissonDisk", config.ShaderPack / "PoissonDisk");
+		s_Data.ShaderPack->LoadIncludeShader("PoissonDisk", shaderPackModule / "PoissonDisk");
 
-		s_Data.ShaderPack->Load("PBR", config.ShaderPack / "PBR");
-		s_Data.ShaderPack->Load("DirShadowMap", config.ShaderPack / "DirShadowMap");
-		s_Data.ShaderPack->Load("Skybox", config.ShaderPack / "Skybox");
-		s_Data.ShaderPack->Load("BloomDownsample", config.ShaderPack / "BloomDownsample");
-		s_Data.ShaderPack->Load("BloomUpsample", config.ShaderPack / "BloomUpsample");
-		s_Data.ShaderPack->Load("SceneComposite", config.ShaderPack / "SceneComposite");
+		s_Data.ShaderPack->Load("PBR", shaderPackModule / "PBR");
+		s_Data.ShaderPack->Load("DirShadowMap", shaderPackModule / "DirShadowMap");
+		s_Data.ShaderPack->Load("Skybox", shaderPackModule / "Skybox");
+		s_Data.ShaderPack->Load("BloomDownsample", shaderPackModule / "BloomDownsample");
+		s_Data.ShaderPack->Load("BloomUpsample", shaderPackModule / "BloomUpsample");
+		s_Data.ShaderPack->Load("SceneComposite", shaderPackModule / "SceneComposite");
 
-		s_Data.ShaderPack->Load("EntityID", config.ShaderPack / "EntityID");
+		s_Data.ShaderPack->Load("EntityID", shaderPackModule / "EntityID");
 
-		s_Data.ShaderPack->Load("EquirectangularToCubemap", config.ShaderPack / "EquirectangularToCubemap");
-		s_Data.ShaderPack->Load("IrradianceMapConvolution", config.ShaderPack / "IrradianceMapConvolution");
-		s_Data.ShaderPack->Load("EnvironmentMipFilter", config.ShaderPack / "EnvironmentMipFilter");
-		s_Data.ShaderPack->Load("BRDF_LUT", config.ShaderPack / "BRDF_LUT");
+		s_Data.ShaderPack->Load("EquirectangularToCubemap", shaderPackModule / "EquirectangularToCubemap");
+		s_Data.ShaderPack->Load("IrradianceMapConvolution", shaderPackModule / "IrradianceMapConvolution");
+		s_Data.ShaderPack->Load("EnvironmentMipFilter", shaderPackModule / "EnvironmentMipFilter");
+		s_Data.ShaderPack->Load("BRDF_LUT", shaderPackModule / "BRDF_LUT");
 
-		s_Data.ShaderPack->Load("Debug_Wireframe", config.ShaderPack / "Debug/Wireframe");
-		s_Data.ShaderPack->Load("Debug_ShadowCascades", config.ShaderPack / "Debug/ShadowCascades");
+		s_Data.ShaderPack->Load("Debug_Wireframe", shaderPackModule / "Debug/Wireframe");
+		s_Data.ShaderPack->Load("Debug_ShadowCascades", shaderPackModule / "Debug/ShadowCascades");
 
-		s_Data.ShaderPack->Load("Renderer2D_Quad", config.ShaderPack / "Renderer2D/Quad");
-		s_Data.ShaderPack->Load("Renderer2D_Circle", config.ShaderPack / "Renderer2D/Circle");
-		s_Data.ShaderPack->Load("Renderer2D_Line", config.ShaderPack / "Renderer2D/Line");
-		s_Data.ShaderPack->Load("Renderer2D_EntityID", config.ShaderPack / "Renderer2D/EntityID");
+		s_Data.ShaderPack->Load("Renderer2D_Quad", shaderPackModule / "Renderer2D/Quad");
+		s_Data.ShaderPack->Load("Renderer2D_Circle", shaderPackModule / "Renderer2D/Circle");
+		s_Data.ShaderPack->Load("Renderer2D_Line", shaderPackModule / "Renderer2D/Line");
+		s_Data.ShaderPack->Load("Renderer2D_EntityID", shaderPackModule / "Renderer2D/EntityID");
 
 
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };

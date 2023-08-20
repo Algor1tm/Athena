@@ -136,6 +136,5 @@ namespace Athena
 	struct RendererConfig
 	{
 		Renderer::API API = Renderer::API::OpenGL;
-		FilePath ShaderPack;
 	};
 }

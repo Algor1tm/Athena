@@ -36,10 +36,11 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.8f, 0.1f, 0.15f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.9f, 0.2f, 0.2f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.8f, 0.1f, 0.15f, 1.f });
-		UI::PushBoldFont();
+
+		UI::PushFont(UI::Fonts::Bold);
 		if (ImGui::Button("X", buttonSize))
 			values.x = defaultValues;
-		ImGui::PopFont();
+		UI::PopFont();
 
 		ImGui::SameLine();
 		ImGui::PushItemWidth(dragWidth);
@@ -52,10 +53,11 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.2f, 0.7f, 0.2f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.3f, 0.8f, 0.3f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.2f, 0.7f, 0.2f, 1.f });
-		UI::PushBoldFont();
+
+		UI::PushFont(UI::Fonts::Bold);
 		if (ImGui::Button("Y", buttonSize))
 			values.y = defaultValues;
-		ImGui::PopFont();
+		UI::PopFont();
 
 		ImGui::SameLine();
 		ImGui::PushItemWidth(dragWidth);
@@ -68,10 +70,11 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.1f, 0.25f, 0.8f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.2f, 0.35f, 0.9f, 1.f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, { 0.1f, 0.25f, 0.8f, 1.f });
-		UI::PushBoldFont();
+
+		UI::PushFont(UI::Fonts::Bold);
 		if (ImGui::Button("Z", buttonSize))
 			values.z = defaultValues;
-		ImGui::PopFont();
+		UI::PopFont();
 
 		ImGui::SameLine();
 		ImGui::PushItemWidth(dragWidth);
@@ -150,7 +153,7 @@ namespace Athena
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_SelectionContext = {};
 
-		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", false))
+		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Create Entity"))
 			{
@@ -442,7 +445,7 @@ namespace Athena
 		}
 		else 
 		{
-			UI::PushBoldFont();
+			UI::PushFont(UI::Fonts::Bold);
 			ImGui::Text(tag.data());
 			ImGui::PopFont();
 		}

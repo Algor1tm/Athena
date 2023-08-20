@@ -18,17 +18,19 @@ namespace Athena
 
 	struct AppConfig
 	{
+		String Name = "";
 		bool EnableImGui = true;
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
+		FilePath EngineResources = FilePath();
 	};
 
 	struct ApplicationCreateInfo
 	{
+		AppConfig AppConfig;
 		RendererConfig RendererConfig;
 		ScriptConfig ScriptConfig;
 		WindowCreateInfo WindowInfo;
-		AppConfig AppConfig;
 	};
 
 
@@ -47,9 +49,12 @@ namespace Athena
 		void PushLayer(Ref<Layer> layer);
 		void PushOverlay(Ref<Layer> layer);
 
-		inline Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
-		inline Window& GetWindow() { return *m_Window; }
-		inline const Statistics& GetStatistics() const { return m_Statistics; }
+		const String& GetName() const { return m_Name; }
+		const FilePath& GetEngineResourcesPath() const { return m_EngineResourcesPath; }
+
+		Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
+		Window& GetWindow() { return *m_Window; }
+		const Statistics& GetStatistics() const { return m_Statistics; }
 
 		void Close();
 
@@ -70,6 +75,8 @@ namespace Athena
 		bool OnWindowResized(WindowResizeEvent& event);
 
 	private:
+		String m_Name;
+		FilePath m_EngineResourcesPath;
 		Scope<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;

@@ -1,6 +1,7 @@
 #include "ImGuiLayer.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/FileSystem.h"
 
 #include "Athena/Platform/OpenGL/GLImGuiLayerImpl.h"
 
@@ -12,6 +13,23 @@
 
 namespace Athena
 {
+	static ImFont* TryLoadImGuiFont(const FilePath& path, float size)
+	{
+		ImFont* font = nullptr;
+		bool loaded = false;
+		if (FileSystem::Exists(path))
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			font = io.Fonts->AddFontFromFileTTF(path.string().c_str(), size);
+			loaded = (bool)font;
+		}
+		
+		if(!loaded)
+			ATN_CORE_ERROR("[ImGuiLayer] Failed to load bold UI font!");
+
+		return font;
+	}
+
 	ImGuiLayer::ImGuiLayer()
 		: Layer("ImGuiLayer")
 	{
@@ -131,6 +149,15 @@ namespace Athena
 		ATN_CORE_INFO("Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
 		ATN_CORE_INFO("");
+
+
+		const FilePath& resources = app.GetEngineResourcesPath();
+		FilePath defaultFontPath = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
+		FilePath boldFontPath = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
+
+		io.FontDefault = TryLoadImGuiFont(defaultFontPath, 16.f);
+		TryLoadImGuiFont(boldFontPath, 16.f);
+		TryLoadImGuiFont(defaultFontPath, 22.f);
 	}
 
 	void ImGuiLayer::OnDetach()

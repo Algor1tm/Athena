@@ -10,6 +10,8 @@
 #include "Athena/UI/Utils.h"
 
 #include <ImGui/imgui.h>
+#include <ImGui/imgui_internal.h>
+
 
 #include <string_view>
 
@@ -32,4 +34,14 @@ namespace Athena::UI
 
 	ATHENA_API bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool ComboBox(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
+
+	ATHENA_API void ButtonImage(const Ref<Texture>& imageNormal, const Ref<Texture>& imageHovered, const Ref<Texture>& imagePressed,
+		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
+		ImVec2 rectMin, ImVec2 rectMax);
+	ATHENA_API void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
+
+	ATHENA_API bool BeginMenubar(const ImRect& barRectangle);
+	ATHENA_API void EndMenubar();
+
+	ATHENA_API void InvisibleItem(std::string_view id, ImVec2 size);
 }

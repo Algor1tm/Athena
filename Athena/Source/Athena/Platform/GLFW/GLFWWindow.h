@@ -280,18 +280,7 @@ namespace Athena
 		}
 		case WindowMode::Maximized:
 		{
-			int area_x, area_y, area_width, area_height;
-			glfwGetMonitorWorkarea(monitor, &area_x, &area_y, &area_width, &area_height);
-			m_Data.Width = area_width;
-			m_Data.Height = area_height;
-			glfwSetWindowPos(hWnd,
-				area_x,
-				area_y);
-			
-			glfwSetWindowSize(hWnd, m_Data.Width, m_Data.Height);
 			glfwMaximizeWindow(hWnd);
-			glfwShowWindow(hWnd);
-
 			break;
 		}
 		case WindowMode::Minimized:

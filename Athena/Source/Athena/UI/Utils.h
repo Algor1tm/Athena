@@ -11,6 +11,8 @@ namespace Athena::UI
 	ATHENA_API void ShiftCursorY(float offset);
 	ATHENA_API void ShiftCursor(float offsetX, float offsetY);
 
+	ATHENA_API ImColor MultiplyColorByScalar(const ImColor& color, float scalar);
+
 	ATHENA_API const ImVec4& GetDarkColor();
 
 	enum class Fonts

@@ -63,8 +63,9 @@ namespace Athena
 		ImGuiStyle& style = ImGui::GetStyle();
 		auto& colors = style.Colors;
 
-		style.FrameRounding = 3.f;
+		style.FrameRounding = 2.5f;
 		style.FrameBorderSize = 1.f;
+		style.ScrollbarSize = 11.f;
 
 
 		// Widgets Active Items

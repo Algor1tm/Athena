@@ -1,5 +1,7 @@
 #include "Utils.h"
 
+#include "Athena/Math/Common.h"
+
 #include <ImGui/imgui_internal.h>
 
 
@@ -19,6 +21,14 @@ namespace Athena::UI
 	{
 		ShiftCursorX(offsetX);
 		ShiftCursorY(offsetY);
+	}
+
+	ImColor MultiplyColorByScalar(const ImColor& color, float scalar)
+	{
+		const ImVec4& colRow = color.Value;
+		float hue, sat, val;
+		ImGui::ColorConvertRGBtoHSV(colRow.x, colRow.y, colRow.z, hue, sat, val);
+		return ImColor::HSV(hue, sat, Math::Min(val * scalar, 1.0f));
 	}
 
 	const ImVec4& GetDarkColor()

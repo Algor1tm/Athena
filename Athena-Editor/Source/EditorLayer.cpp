@@ -137,10 +137,10 @@ namespace Athena
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(0.0f, 0.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.0f, 200.0f, 0.0f, 0.0f });
         ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
         ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
@@ -150,8 +150,8 @@ namespace Athena
         ImGui::PopStyleVar(2);
 
         m_Titlebar->OnImGuiRender();
-
         ImGui::SetCursorPosY(m_Titlebar->GetHeight());
+
         // Dockspace
         ImGuiIO& io = ImGui::GetIO();
         ImGuiStyle& style = ImGui::GetStyle();
@@ -189,30 +189,34 @@ namespace Athena
 
     void EditorLayer::InitializePanels()
     {
-        //m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
-        //m_MainMenuBar->SetLogoIcon(Texture2D::Create(m_Config.EditorResources / "Icons/Editor/MenuBar/Logo-no-background.png"));
-        //m_MainMenuBar->AddMenuItem("File", [this]()
-        //    {
-        //        if (ImGui::MenuItem("New", "Ctrl+N", false))
-        //            NewScene();
+        m_Titlebar->SetMenubarCallback([this]()
+            {
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("New", "Ctrl+N", false))
+                        NewScene();
 
-        //        if (ImGui::MenuItem("Open...", "Ctrl+O", false))
-        //            OpenScene();
+                    if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+                        OpenScene();
 
-        //        if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
-        //            SaveSceneAs();
+                    if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+                        SaveSceneAs();
 
-        //        ImGui::Separator();
-        //        ImGui::Spacing();
+                    ImGui::Separator();
+                    ImGui::Spacing();
 
-        //        if (ImGui::MenuItem("Exit", NULL, false))
-        //            Application::Get().Close();
-        //    });
+                    if (ImGui::MenuItem("Exit", NULL, false))
+                        Application::Get().Close();
 
-        //m_MainMenuBar->AddMenuItem("View", [this]()
-        //    {
-        //        m_PanelManager.ImGuiRenderAsMenuItems();
-        //    });
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("View"))
+                {
+                    m_PanelManager.ImGuiRenderAsMenuItems();
+                    ImGui::EndMenu();
+                }
+            });
 
         //m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
         //    {

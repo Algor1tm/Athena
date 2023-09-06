@@ -1,28 +1,37 @@
 LIBRARY Athena
 EXPORTS	
 	?AddFontFromFileTTF@ImFontAtlas@@QEAAPEAUImFont@@PEBDMPEBUImFontConfig@@PEBG@Z
+	?AddImage@ImDrawList@@QEAAXPEAXAEBUImVec2@@111I@Z
 	?AddRect@ImDrawList@@QEAAXAEBUImVec2@@0IMHM@Z
 	?AddRectFilled@ImDrawList@@QEAAXAEBUImVec2@@0IMH@Z
 	?Begin@ImGui@@YA_NPEBDPEA_NH@Z
 	?BeginCombo@ImGui@@YA_NPEBD0H@Z
 	?BeginDragDropSource@ImGui@@YA_NH@Z
 	?BeginDragDropTarget@ImGui@@YA_NXZ
+	?BeginGroup@ImGui@@YAXXZ
 	?BeginPopup@ImGui@@YA_NPEBDH@Z	
 	?BeginPopupContextItem@ImGui@@YA_NPEBDH@Z
 	?BeginTable@ImGui@@YA_NPEBDHHAEBUImVec2@@M@Z
 	?BeginHorizontal@ImGui@@YAXPEBDAEBUImVec2@@M@Z
+	?BeginMenu@ImGui@@YA_NPEBD_N@Z
 	?Button@ImGui@@YA_NPEBDAEBUImVec2@@@Z
+	?CalcItemSize@ImGui@@YA?AUImVec2@@U2@MM@Z
 	?Checkbox@ImGui@@YA_NPEBDPEA_N@Z	
 	?ColorPicker3@ImGui@@YA_NPEBDQEAMH@Z
 	?ColorEdit3@ImGui@@YA_NPEBDQEAMH@Z
 	?ColorEdit4@ImGui@@YA_NPEBDQEAMH@Z
+	?ColorConvertFloat4ToU32@ImGui@@YAIAEBUImVec4@@@Z
 	?DragFloat@ImGui@@YA_NPEBDPEAMMMM0H@Z
 	?DragFloat2@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragFloat3@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragFloat4@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
 	?End@ImGui@@YAXXZ
+	?EndGroup@ImGui@@YAXXZ
 	?EndHorizontal@ImGui@@YAXXZ
+	?EndMenu@ImGui@@YAXXZ
+	?ItemAdd@ImGui@@YA_NAEBUImRect@@IPEBU2@H@Z
+	?ItemSize@ImGui@@YAXAEBUImVec2@@M@Z
 	?ImageButton@ImGui@@YA_NPEAXAEBUImVec2@@11HAEBUImVec4@@2@Z
 	?ImageButton@ImGui@@YA_NPEBDPEAXAEBUImVec2@@22AEBUImVec4@@3@Z
 	?Indent@ImGui@@YAXM@Z
@@ -56,11 +65,13 @@ EXPORTS
 	?GetFrameHeightWithSpacing@ImGui@@YAMXZ
 	?GetForegroundDrawList@ImGui@@YAPEAUImDrawList@@XZ
 	?GetTextLineHeight@ImGui@@YAMXZ
+	?GetItemRectMin@ImGui@@YA?AUImVec2@@XZ
 	?GetIO@ImGui@@YAAEAUImGuiIO@@XZ
 	?AcceptDragDropPayload@ImGui@@YAPEBUImGuiPayload@@PEBDH@Z
 	?GetStyle@ImGui@@YAAEAUImGuiStyle@@XZ	
 	?GetMainViewport@ImGui@@YAPEAUImGuiViewport@@XZ
 	?CalcTextSize@ImGui@@YA?AUImVec2@@PEBD0_NM@Z
+	?ResumeLayout@ImGui@@YAXXZ
 	?GetContentRegionAvail@ImGui@@YA?AUImVec2@@XZ	
 	?GetContentRegionMax@ImGui@@YA?AUImVec2@@XZ
 	?GetCursorPos@ImGui@@YA?AUImVec2@@XZ
@@ -73,6 +84,7 @@ EXPORTS
 	?GetWindowSize@ImGui@@YA?AUImVec2@@XZ
 	?DockSpace@ImGui@@YAIIAEBUImVec2@@HPEBUImGuiWindowClass@@@Z
 	?GetID@ImGui@@YAIPEBD@Z
+	?GetID@ImGuiWindow@@QEAAIPEBD0@Z
 	?CloseCurrentPopup@ImGui@@YAXXZ
 	?Columns@ImGui@@YAXHPEBD_N@Z
 	?EndColumns@ImGui@@YAXXZ
@@ -102,12 +114,15 @@ EXPORTS
 	?SetCursorPosX@ImGui@@YAXM@Z
 	?SetCursorPosY@ImGui@@YAXM@Z	
 	?SetItemDefaultFocus@ImGui@@YAXXZ
+	?SetItemAllowOverlap@ImGui@@YAXXZ
 	?SetKeyboardFocusHere@ImGui@@YAXH@Z
 	?SetNextItemWidth@ImGui@@YAXM@Z
 	?SetNextWindowPos@ImGui@@YAXAEBUImVec2@@H0@Z
 	?SetNextWindowSize@ImGui@@YAXAEBUImVec2@@H@Z
 	?SetNextWindowViewport@ImGui@@YAXI@Z
 	?Spacing@ImGui@@YAXXZ
+	?Spring@ImGui@@YAXMM@Z
+	?SuspendLayout@ImGui@@YAXXZ
 	?TableNextRow@ImGui@@YAXHM@Z
 	?Text@ImGui@@YAXPEBDZZ
 	?TextWrapped@ImGui@@YAXPEBDZZ

@@ -2,6 +2,8 @@
 
 #include "Athena/Core/Core.h"
 
+#include "Athena/Renderer/Texture.h"
+
 
 namespace Athena
 {
@@ -11,6 +13,7 @@ namespace Athena
 		Titlebar(const String& name);
 
 		void OnImGuiRender();
+		void SetMenubarCallback(const std::function<void()>& callback) { m_MenubarCallback = callback; }
 
 		bool IsHovered() { return m_Hovered; }
 		float GetHeight() { return m_Height; }
@@ -19,5 +22,8 @@ namespace Athena
 		String m_Name;
 		bool m_Hovered;
 		const float m_Height = 58.f;
+
+		std::function<void()> m_MenubarCallback;
+		std::unordered_map<std::string_view, Ref<Texture>> m_Icons;
 	};
 }

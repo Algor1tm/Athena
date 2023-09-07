@@ -39,7 +39,7 @@ namespace Athena
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;
 		appinfo.WindowInfo.Title = "Athena Editor";
-		appinfo.WindowInfo.VSync = false;
+		appinfo.WindowInfo.VSync = true;
 		appinfo.WindowInfo.Mode = WindowMode::Default;
 		appinfo.WindowInfo.CustomTitlebar = true;
 		appinfo.WindowInfo.WindowResizeable = true;

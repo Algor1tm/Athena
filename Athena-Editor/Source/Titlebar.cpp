@@ -157,7 +157,9 @@ namespace Athena
         UI::ShiftCursorY(8.0f);
         {
             if (ImGui::InvisibleButton("Close", ImVec2(buttonWidth, buttonHeight)))
+            {
                 Application::Get().Close();
+            }
 
             UI::ButtonImage(m_Icons.at("Close"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
         }

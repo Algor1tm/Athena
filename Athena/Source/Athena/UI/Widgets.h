@@ -43,5 +43,6 @@ namespace Athena::UI
 	ATHENA_API bool BeginMenubar(const ImRect& barRectangle);
 	ATHENA_API void EndMenubar();
 
+	ATHENA_API bool ButtonCentered(std::string_view label, const ImVec2& size = ImVec2(0, 0));
 	ATHENA_API void InvisibleItem(std::string_view id, ImVec2 size);
 }

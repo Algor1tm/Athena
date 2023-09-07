@@ -25,7 +25,7 @@ namespace Athena
 		void OnImGuiRender();
 		void OnEvent(Event& event);
 
-		void SetCamera(EditorCamera* camera) { m_pCamera = camera; }
+		void SetCamera(EditorCamera* camera) { m_Camera = camera; }
 		void SetActiveEntity(Entity entity) { m_ActiveEntity = entity; }
 
 	private:
@@ -34,8 +34,8 @@ namespace Athena
 	private:
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 
-		ViewportPanel* m_pViewportPanel = nullptr;
-		EditorCamera* m_pCamera = nullptr;
+		ViewportPanel* m_ViewportPanel = nullptr;
+		EditorCamera* m_Camera = nullptr;
 		Entity m_ActiveEntity;
 	};
 }

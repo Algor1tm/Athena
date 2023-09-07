@@ -43,12 +43,16 @@ namespace Athena
 		template <typename Func>
 		void SetDragDropCallback(const Func& callback) { m_DragDropCallback = callback; }
 
+		template <typename Func>
+		void SetUIOverlayCallback(const Func& callback) { m_UIOverlayCallback = callback; }
+
 		void SetImGuizmoLayer(ImGuizmoLayer* layer);
 
 	private:
-		ImGuizmoLayer* m_pImGuizmoLayer;
+		ImGuizmoLayer* m_ImGuizmoLayer;
 		ViewportDescription m_Description;
 
 		std::function<void()> m_DragDropCallback;
+		std::function<void()> m_UIOverlayCallback;
 	};
 }

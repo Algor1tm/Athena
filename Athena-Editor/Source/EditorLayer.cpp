@@ -132,22 +132,19 @@ namespace Athena
         ImGui::SetNextWindowPos(viewport->Pos);
         ImGui::SetNextWindowSize(viewport->Size);
         ImGui::SetNextWindowViewport(viewport->ID);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(0.0f, 0.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.0f, 200.0f, 0.0f, 0.0f });
-        ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
         ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
-        ImGui::PopStyleColor(2);
-        ImGui::PopStyleVar(2);
 
-        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(3);
 
         m_Titlebar->OnImGuiRender();
         ImGui::SetCursorPosY(m_Titlebar->GetHeight());
@@ -216,30 +213,36 @@ namespace Athena
                     m_PanelManager.ImGuiRenderAsMenuItems();
                     ImGui::EndMenu();
                 }
+
+                //if (ImGui::BeginMenu("Help"))
+                //{
+                //    static bool openPopup = false;
+                //    if (ImGui::MenuItem("About", NULL, false))
+                //    {
+                //        openPopup = true;
+                //    }
+
+                //    if (openPopup)
+                //    {
+                //        ImGui::OpenPopup("About");
+                //        openPopup = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+                //        if (openPopup)
+                //        {
+                //            ImGui::Text("Some Text");
+
+                //            if (UI::ButtonCentered("Close"))
+                //            {
+                //                openPopup = false;
+                //                ImGui::CloseCurrentPopup();
+                //            }
+
+                //            ImGui::EndPopup();
+                //        }
+                //    }
+                //    
+                //    ImGui::EndMenu();
+                //}
             });
-
-        //m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
-        //    {
-        //        currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
-
-        //        if (m_SceneState == SceneState::Edit)
-        //            OnScenePlay();
-        //        else if (m_SceneState == SceneState::Play)
-        //            OnSceneStop();
-        //    });
-
-        //m_MainMenuBar->AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
-        //    {
-        //        currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
-
-        //        if (m_SceneState == SceneState::Edit)
-        //            OnSceneSimulate();
-        //        else if (m_SceneState == SceneState::Simulation)
-        //            OnSceneStop();
-        //    });
-
-        //m_PanelManager.AddPanel(m_MainMenuBar, false);
-
 
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
 
@@ -283,6 +286,66 @@ namespace Athena
                         }
                     }
                 }
+            });
+
+        m_MainViewport->SetUIOverlayCallback([this]()
+            {
+                float windowPaddingY = 3.f;
+
+                ImColor rectColor = IM_COL32(0, 0, 0, 80);
+                ImVec2 rectPadding = { 0.f, 1.f };
+
+                float buttonPaddingX = 0.f;
+                ImVec2 buttonSize = { 28.f, 26.f };
+                int32 buttonCount = 2;
+
+                ImDrawList* drawList = ImGui::GetWindowDrawList();
+                float avail = ImGui::GetContentRegionAvail().x;
+
+                float fullSize = 2 * rectPadding.x + buttonCount * buttonSize.x + (buttonCount - 1) * buttonPaddingX;
+                ImVec2 rectMin = { (avail - fullSize) * 0.5f, windowPaddingY };
+                rectMin.x = avail * 0.5f;
+                rectMin.x += ImGui::GetCursorScreenPos().x;
+                rectMin.y += ImGui::GetCursorScreenPos().y;
+
+                drawList->AddRectFilled(rectMin, { rectMin.x + fullSize, rectMin.y + 2 * rectPadding.y + buttonSize.y }, rectColor, 4.f);
+
+                ImColor tintNormal = IM_COL32(255, 255, 255, 255);
+
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { buttonPaddingX, 0.f });
+                ImGui::SetCursorScreenPos({ rectMin.x + rectPadding.x, rectMin.y + rectPadding.y });
+
+                {
+                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation ? m_PlayIcon : m_StopIcon;
+
+                    if (ImGui::InvisibleButton("Play", buttonSize))
+                    {
+                        if (m_SceneState == SceneState::Edit)
+                            OnScenePlay();
+                        else if (m_SceneState == SceneState::Play)
+                            OnSceneStop();
+                    }
+
+                    UI::ButtonImage(icon, tintNormal, tintNormal, tintNormal);
+                }
+
+                ImGui::SameLine();
+
+                {
+                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play ? m_SimulationIcon : m_StopIcon;
+
+                    if (ImGui::InvisibleButton("Simulate", buttonSize))
+                    {
+                        if (m_SceneState == SceneState::Edit)
+                            OnSceneSimulate();
+                        else if (m_SceneState == SceneState::Simulation)
+                            OnSceneStop();
+                    }
+
+                    UI::ButtonImage(icon, tintNormal, tintNormal, tintNormal);
+                }
+
+                ImGui::PopStyleVar();
             });
 
         m_PanelManager.AddPanel(m_MainViewport, false);

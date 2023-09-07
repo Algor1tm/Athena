@@ -13,16 +13,16 @@ namespace Athena
 {
 	void ImGuizmoLayer::OnImGuiRender() 
 	{
-        if (m_pCamera && m_pViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<TransformComponent>())
+        if (m_Camera && m_ViewportPanel && m_ActiveEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_ActiveEntity.HasComponent<TransformComponent>())
         {
-            auto& desc = m_pViewportPanel->GetDescription();
+            auto& desc = m_ViewportPanel->GetDescription();
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
             ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
-            const Matrix4& cameraProjection = m_pCamera->GetProjectionMatrix();
-            const Matrix4& cameraView = m_pCamera->GetViewMatrix();
+            const Matrix4& cameraProjection = m_Camera->GetProjectionMatrix();
+            const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
             TransformComponent worldTransform = m_ActiveEntity.GetWorldTransform();
             Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
@@ -61,9 +61,9 @@ namespace Athena
 
     bool ImGuizmoLayer::OnKeyPressedEvent(KeyPressedEvent& event)
     {
-        if (m_pViewportPanel && !Input::IsMouseButtonPressed(Mouse::Right))
+        if (m_ViewportPanel && !Input::IsMouseButtonPressed(Mouse::Right))
         {
-            auto& desc = m_pViewportPanel->GetDescription();
+            auto& desc = m_ViewportPanel->GetDescription();
             switch (event.GetKeyCode())
             {
             case Keyboard::Q: if (m_ActiveEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;

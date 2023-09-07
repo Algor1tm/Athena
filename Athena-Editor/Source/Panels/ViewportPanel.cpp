@@ -22,6 +22,8 @@ namespace Athena
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
         ImGui::Begin("Viewport");
 
+        ImVec2 cursor = ImGui::GetCursorPos();
+
         ImVec2 viewportMinRegion = ImGui::GetWindowContentRegionMin();
         ImVec2 viewportMaxRegion = ImGui::GetWindowContentRegionMax();
         ImVec2 viewportOffset = ImGui::GetWindowPos();
@@ -48,9 +50,15 @@ namespace Athena
             ImGui::EndDragDropTarget();
         }
 
-        if (m_pImGuizmoLayer)
+        if (m_UIOverlayCallback)
         {
-            m_pImGuizmoLayer->OnImGuiRender();
+            ImGui::SetCursorPos(cursor);
+            m_UIOverlayCallback();
+        }
+
+        if (m_ImGuizmoLayer)
+        {
+            m_ImGuizmoLayer->OnImGuiRender();
         }
 
         ImGui::End();
@@ -59,7 +67,7 @@ namespace Athena
 
     void ViewportPanel::SetImGuizmoLayer(class ImGuizmoLayer* layer)
     {
-        m_pImGuizmoLayer = layer; 
-        m_pImGuizmoLayer->m_pViewportPanel = this; 
+        m_ImGuizmoLayer = layer;
+        m_ImGuizmoLayer->m_ViewportPanel = this;
     }
 }

@@ -276,6 +276,7 @@ namespace Athena
 		{
 		case WindowMode::Default:
 		{
+			glfwRestoreWindow(hWnd);
 			break;
 		}
 		case WindowMode::Maximized:

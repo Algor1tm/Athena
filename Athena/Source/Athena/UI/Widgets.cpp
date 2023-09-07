@@ -244,6 +244,20 @@ namespace Athena::UI
 		window->DC.MenuBarAppending = false;
 	}
 
+	bool ButtonCentered(std::string_view label, const ImVec2& size)
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
+		float avail = ImGui::GetContentRegionAvail().x;
+
+		float off = (avail - actualSize) * 0.5f;
+		if (off > 0.0f)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+		return ImGui::Button(label.data());
+	}
+
 	void InvisibleItem(std::string_view strID, ImVec2 itemSize)
 	{
 		ImGuiWindow* window = ImGui::GetCurrentWindow();

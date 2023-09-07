@@ -66,6 +66,7 @@ namespace Athena
 		style.FrameRounding = 2.5f;
 		style.FrameBorderSize = 1.f;
 		style.ScrollbarSize = 11.f;
+		style.WindowRounding = 5.f;
 
 
 		// Widgets Active Items
@@ -77,7 +78,7 @@ namespace Athena
 
 		// Docking
 		colors[ImGuiCol_DockingPreview] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		colors[ImGuiCol_DockingEmptyBg] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		//colors[ImGuiCol_DockingEmptyBg] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
 
 		// Frame BG
 		colors[ImGuiCol_FrameBg] = ImVec4{ 14.f / 255.f, 14.f / 255.f, 14.f / 255.f, 1.0f };

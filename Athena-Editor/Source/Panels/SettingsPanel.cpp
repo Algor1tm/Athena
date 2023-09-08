@@ -212,7 +212,7 @@ namespace Athena
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 		if (ImGui::Button("Reload All Scripts"))
 		{
-			EditorLayer::Get().GetActiveScene()->LoadAllScripts();
+			//EditorLayer::Get().GetActiveScene()->LoadAllScripts();
 		}
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor();

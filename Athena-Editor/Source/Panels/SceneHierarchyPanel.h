@@ -28,9 +28,6 @@ namespace Athena
 
 		virtual void OnImGuiRender() override;
 
-		void SetSelectedEntity(Entity entity);
-		Entity GetSelectedEntity() const { return m_SelectionContext; }
-
 	private:
 		void DrawEntitiesHierarchy();
 		void DrawEntityNode(Entity entity, bool open = false);
@@ -48,7 +45,6 @@ namespace Athena
 
 	private:
 		Ref<Scene> m_Context;
-		Entity m_SelectionContext;
 
 		String m_ActiveMaterial;
 		bool m_EditTagComponent = false;

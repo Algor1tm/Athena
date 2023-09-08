@@ -3,7 +3,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/UI/Widgets.h"
 
-#include "EditorLayer.h"
+#include "EditorResources.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -14,15 +14,6 @@ namespace Athena
     Titlebar::Titlebar(const String& name)
     {
         m_Name = name;
-
-        const FilePath& resources = EditorLayer::Get().GetConfig().EditorResources;
-
-        m_Icons["Logo"] = Texture2D::Create(resources / "Icons/Editor/MenuBar/LogoWhite.png");
-
-        m_Icons["Close"] = Texture2D::Create(resources / "Icons/Editor/MenuBar/CloseButton.png");
-        m_Icons["Minimize"] = Texture2D::Create(resources / "Icons/Editor/MenuBar/MinimizeButton.png");
-        m_Icons["Restore"] = Texture2D::Create(resources / "Icons/Editor/MenuBar/RestoreButton.png");
-        m_Icons["Maximize"] = Texture2D::Create(resources / "Icons/Editor/MenuBar/MaximizeButton.png");
     }
 
 	void Titlebar::OnImGuiRender()
@@ -53,7 +44,7 @@ namespace Athena
             const ImVec2 logoOffset(16.0f + windowPadding.x, 5.0f + windowPadding.y + titlebarVerticalOffset);
             const ImVec2 logoRectStart = { ImGui::GetItemRectMin().x + logoOffset.x, ImGui::GetItemRectMin().y + logoOffset.y };
             const ImVec2 logoRectMax = { logoRectStart.x + logoWidth, logoRectStart.y + logoHeight };
-            fgDrawList->AddImage(m_Icons.at("Logo")->GetRendererID(), logoRectStart, logoRectMax, { 0, 1 }, { 1, 0 });
+            fgDrawList->AddImage(EditorResources::GetIcon("Logo")->GetRendererID(), logoRectStart, logoRectMax, { 0, 1 }, { 1, 0 });
         }
 
         ImGui::BeginHorizontal("Titlebar", { ImGui::GetWindowWidth() - windowPadding.y * 2.0f, ImGui::GetFrameHeightWithSpacing() });
@@ -133,7 +124,7 @@ namespace Athena
                 window.SetWindowMode(WindowMode::Minimized);
             }
 
-            UI::ButtonImage(m_Icons.at("Minimize"), buttonColN, buttonColH, buttonColP);
+            UI::ButtonImage(EditorResources::GetIcon("Titlebar_Minimize"), buttonColN, buttonColH, buttonColP);
         }
 
 
@@ -149,7 +140,7 @@ namespace Athena
                     window.SetWindowMode(WindowMode::Maximized);
             }
 
-            UI::ButtonImage(isMaximized ? m_Icons.at("Restore") : m_Icons.at("Maximize"), buttonColN, buttonColH, buttonColP);
+            UI::ButtonImage(isMaximized ? EditorResources::GetIcon("Titlebar_Restore") : EditorResources::GetIcon("Titlebar_Maximize"), buttonColN, buttonColH, buttonColP);
         }
 
         // Close Button
@@ -161,7 +152,7 @@ namespace Athena
                 Application::Get().Close();
             }
 
-            UI::ButtonImage(m_Icons.at("Close"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
+            UI::ButtonImage(EditorResources::GetIcon("Titlebar_Close"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
         }
 
         ImGui::Spring(-1.0f, 18.0f);

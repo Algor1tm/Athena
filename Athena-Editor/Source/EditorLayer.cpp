@@ -17,10 +17,12 @@
 
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/SettingsPanel.h"
-#include "Panels/MenuBarPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ViewportPanel.h"
+
+#include "EditorResources.h"
+#include "SelectionManager.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -28,21 +30,9 @@
 
 namespace Athena
 {
-    EditorLayer* EditorLayer::s_Instance = nullptr;
-
-
     EditorLayer::EditorLayer(const EditorConfig& config)
         : Layer("EditorLayer"), m_Config(config)
     {
-        ATN_CORE_ASSERT(s_Instance == nullptr, "EditorLayer already exists!");
-        s_Instance = this;
-
-        const FilePath& resources = m_Config.EditorResources;
-
-        m_PlayIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/PlayIcon.png");
-        m_SimulationIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/SimulationIcon.png");
-        m_StopIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/StopIcon.png");
-
         m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName());
 
         m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
@@ -51,11 +41,13 @@ namespace Athena
 
     void EditorLayer::OnAttach()
     {
-        Application::Get().GetImGuiLayer()->BlockEvents(false);
+        EditorResources::Init(m_Config.EditorResources);
+        SelectionManager::Init();
 
+        Application::Get().GetImGuiLayer()->BlockEvents(false);
         Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
 
-        InitializePanels();
+        InitUI();
 
         m_EditorScene = CreateRef<Scene>();
         m_ActiveScene = m_EditorScene;
@@ -118,8 +110,6 @@ namespace Athena
 
         RenderOverlay();
         SceneRenderer::EndFrame();
-
-        SelectEntity(m_SceneHierarchy->GetSelectedEntity());
     }
 
     void EditorLayer::OnImGuiRender()
@@ -165,26 +155,19 @@ namespace Athena
         m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
     }
 
-    void EditorLayer::SelectEntity(Entity entity)
-    {
-        m_ImGuizmoLayer.SetActiveEntity(entity);
-        m_SceneHierarchy->SetSelectedEntity(entity);
-        m_SelectedEntity = entity;
-    }
-
     Entity EditorLayer::DuplicateEntity(Entity entity)
     {
-        if (entity)
+        if (entity && m_SceneState == SceneState::Edit)
         {
 			Entity newEntity = m_EditorScene->DuplicateEntity(entity);
-			SelectEntity(newEntity);
+			SelectionManager::SelectEntity(newEntity);
 			return newEntity;
         }
 
         return entity;
     }
 
-    void EditorLayer::InitializePanels()
+    void EditorLayer::InitUI()
     {
         m_Titlebar->SetMenubarCallback([this]()
             {
@@ -282,7 +265,7 @@ namespace Athena
                             Entity entity = m_ActiveScene->CreateEntity();
                             entity.GetComponent<TagComponent>().Tag = mesh->GetName();
                             entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-                            SelectEntity(entity);
+                            SelectionManager::SelectEntity(entity);
                         }
                     }
                 }
@@ -315,8 +298,12 @@ namespace Athena
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { buttonPaddingX, 0.f });
                 ImGui::SetCursorScreenPos({ rectMin.x + rectPadding.x, rectMin.y + rectPadding.y });
 
+                Ref<Texture2D> playIcon = EditorResources::GetIcon("Viewport_Play");
+                Ref<Texture2D> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
+                Ref<Texture2D> stopIcon = EditorResources::GetIcon("Viewport_Stop");
+
                 {
-                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation ? m_PlayIcon : m_StopIcon;
+                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation ? playIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Play", buttonSize))
                     {
@@ -332,7 +319,7 @@ namespace Athena
                 ImGui::SameLine();
 
                 {
-                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play ? m_SimulationIcon : m_StopIcon;
+                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play ? simulateIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Simulate", buttonSize))
                     {
@@ -439,22 +426,22 @@ namespace Athena
             }
         }
         
-
-        if (m_SelectedEntity)
+        Entity selectedEntity = SelectionManager::GetSelectedEntity();
+        if (selectedEntity)
         {
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
-            TransformComponent worldTransform = m_SelectedEntity.GetWorldTransform();
+            TransformComponent worldTransform = selectedEntity.GetWorldTransform();
 
-            if (m_SelectedEntity.HasComponent<CameraComponent>())
+            if (selectedEntity.HasComponent<CameraComponent>())
             {
                 float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
                 float scale = 0.1f * distance;
                 Matrix4 rectTransform = Math::ConstructTransform(worldTransform.Translation, {scale, scale, scale}, worldTransform.Rotation);
                 SceneRenderer2D::DrawRect(rectTransform, color, 1);
             }
-            else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
+            else if (selectedEntity.HasComponent<StaticMeshComponent>())
             {
-                const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
+                const AABB& box = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
                 
                 AABB transformedBox = box.Transform(worldTransform.AsMatrix());
 
@@ -480,14 +467,14 @@ namespace Athena
                 SceneRenderer2D::DrawLine(max, { max.x, max.y, min.z }, color);
                 SceneRenderer2D::DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color);
             }
-            else if(m_SelectedEntity.HasComponent<SpriteComponent>() || m_SelectedEntity.HasComponent<CircleComponent>())
+            else if(selectedEntity.HasComponent<SpriteComponent>() || selectedEntity.HasComponent<CircleComponent>())
             {
                 SceneRenderer2D::DrawRect(worldTransform.AsMatrix(), color, 8.f);
             }
-            else if (m_SelectedEntity.HasComponent<PointLightComponent>())
+            else if (selectedEntity.HasComponent<PointLightComponent>())
             {
                 const Vector3& position = worldTransform.Translation;
-                float radius = m_SelectedEntity.GetComponent<PointLightComponent>().Radius;
+                float radius = selectedEntity.GetComponent<PointLightComponent>().Radius;
 
                 constexpr float step = Math::Radians(10.f);
                 for (float angle = 0.f; angle < 2 * Math::PI<float>() - step; angle += step)
@@ -599,6 +586,7 @@ namespace Athena
         if (event.IsRepeat())
             return false;
 
+        Entity selectedEntity = SelectionManager::GetSelectedEntity();
         bool ctrl = Input::IsKeyPressed(Keyboard::LCtrl) || Input::IsKeyPressed(Keyboard::RCtrl);
 
         switch (event.GetKeyCode())
@@ -623,14 +611,14 @@ namespace Athena
         case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
         
             //Entities
-		case Keyboard::D: if (ctrl) DuplicateEntity(m_SelectedEntity); break;
-        case Keyboard::Escape: if (m_SelectedEntity) SelectEntity({});; break;
+		case Keyboard::D: if (ctrl) DuplicateEntity(selectedEntity); break;
+        case Keyboard::Escape: if (selectedEntity) SelectionManager::DeselectEntity(); break;
         case Keyboard::Delete:
         {
-            if (m_SelectedEntity && m_SceneState == SceneState::Edit)
+            if (selectedEntity && m_SceneState == SceneState::Edit)
             {
-                m_EditorScene->DestroyEntity(m_SelectedEntity);
-                SelectEntity({});
+                SelectionManager::DeselectEntity();
+                m_EditorScene->DestroyEntity(selectedEntity);
             }
             break;
         }
@@ -667,7 +655,7 @@ namespace Athena
                 Entity selectedEntity = GetEntityByCurrentMousePosition();
                 if (selectedEntity)
                 {
-                    SelectEntity(selectedEntity);
+                    SelectionManager::SelectEntity(selectedEntity);
                 }
             }
             break;
@@ -688,7 +676,7 @@ namespace Athena
         m_ActiveScene = m_EditorScene;
 
         m_SceneHierarchy->SetContext(m_ActiveScene);
-        SelectEntity(Entity{});
+        SelectionManager::DeselectEntity();
 
         ATN_CORE_TRACE("Successfully created new scene");
     }
@@ -741,7 +729,7 @@ namespace Athena
             m_ActiveScene = newScene;
 
             m_SceneHierarchy->SetContext(m_ActiveScene);
-            SelectEntity({});
+            SelectionManager::DeselectEntity();
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }
         else

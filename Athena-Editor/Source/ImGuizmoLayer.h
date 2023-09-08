@@ -26,7 +26,6 @@ namespace Athena
 		void OnEvent(Event& event);
 
 		void SetCamera(EditorCamera* camera) { m_Camera = camera; }
-		void SetActiveEntity(Entity entity) { m_ActiveEntity = entity; }
 
 	private:
 		bool OnKeyPressedEvent(KeyPressedEvent& event);
@@ -36,6 +35,5 @@ namespace Athena
 
 		ViewportPanel* m_ViewportPanel = nullptr;
 		EditorCamera* m_Camera = nullptr;
-		Entity m_ActiveEntity;
 	};
 }

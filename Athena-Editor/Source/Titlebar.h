@@ -24,6 +24,5 @@ namespace Athena
 		const float m_Height = 58.f;
 
 		std::function<void()> m_MenubarCallback;
-		std::unordered_map<std::string_view, Ref<Texture>> m_Icons;
 	};
 }

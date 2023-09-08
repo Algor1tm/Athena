@@ -14,6 +14,8 @@
 
 #include "Athena/UI/Widgets.h"
 
+#include "SelectionManager.h"
+
 #include <ImGui/imgui.h>
 
 
@@ -98,21 +100,16 @@ namespace Athena
 	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context)
 	{
 		m_Context = context;
-		m_SelectionContext = Entity{};
-	}
-
-	void SceneHierarchyPanel::SetSelectedEntity(Entity entity)
-	{
-		m_SelectionContext = entity;
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
+		Entity selectedEntity = SelectionManager::GetSelectedEntity();
 		DrawEnvironmentEditor(m_Context->GetEnvironment());
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Materials Editor");
-		if (m_SelectionContext)
+		if (selectedEntity)
 		{
 			DrawMaterialsEditor();
 		}
@@ -123,9 +120,9 @@ namespace Athena
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Properties");
-		if (m_SelectionContext)
+		if (selectedEntity)
 		{
-			DrawAllComponents(m_SelectionContext);
+			DrawAllComponents(selectedEntity);
 		}
 		ImGui::PopStyleVar();
 		ImGui::End();
@@ -151,14 +148,14 @@ namespace Athena
 		ImGui::PopStyleVar();
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
-			m_SelectionContext = {};
+			SelectionManager::DeselectEntity();
 
 		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Create Entity"))
 			{
 				Entity created = m_Context->CreateEntity();
-				m_SelectionContext = created;
+				SelectionManager::SelectEntity(created);
 			}
 
 			ImGui::EndPopup();
@@ -169,7 +166,7 @@ namespace Athena
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity, bool open)
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
-		bool selected = m_SelectionContext == entity;
+		bool selected = SelectionManager::GetSelectedEntity() == entity;
 		bool hasChildren = entity.HasChildren();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
@@ -196,7 +193,7 @@ namespace Athena
 
 		if (ImGui::IsItemClicked())
 		{
-			m_SelectionContext = entity;
+			SelectionManager::SelectEntity(entity);
 		}
 
 		if (ImGui::BeginDragDropSource())
@@ -220,13 +217,14 @@ namespace Athena
 			ImGui::EndDragDropTarget();
 		}
 
+		Entity selectedEntity = SelectionManager::GetSelectedEntity();
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
 		{
-			if (m_SelectionContext && !selected && ImGui::MenuItem("Add to children"))
+			if (selectedEntity && !selected && ImGui::MenuItem("Add to children"))
 			{
 				Entity parent = entity;
-				Entity child = m_SelectionContext;
+				Entity child = selectedEntity;
 				m_Context->MakeParent(parent, child);
 			}
 
@@ -251,8 +249,8 @@ namespace Athena
 		if (entityDeleted)
 		{
 			m_Context->DestroyEntity(entity);
-			if (m_SelectionContext == entity)
-				m_SelectionContext = {};
+			if (selectedEntity == entity)
+				SelectionManager::DeselectEntity();
 		}
 	}
 
@@ -323,10 +321,11 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawMaterialsEditor()
 	{
+		Entity selectedEntity = SelectionManager::GetSelectedEntity();
 		std::vector<String> materials;
-		if(m_SelectionContext.HasComponent<StaticMeshComponent>())
+		if(selectedEntity.HasComponent<StaticMeshComponent>())
 		{
-			auto mesh = m_SelectionContext.GetComponent<StaticMeshComponent>().Mesh;
+			auto mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
 			const auto& subMeshes = mesh->GetAllSubMeshes();
 			materials.reserve(subMeshes.size());
 			for (uint32 i = 0; i < subMeshes.size(); ++i)

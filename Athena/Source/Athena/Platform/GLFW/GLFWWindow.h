@@ -95,8 +95,8 @@ namespace Athena
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 
-			KeyTypedEvent event(static_cast<Keyboard::Key>(UnicodeToASCII(character)));
-			data.EventCallback(event);
+				KeyTypedEvent event(static_cast<Keyboard::Key>(UnicodeToASCII(character)));
+				data.EventCallback(event);
 			});
 
 		glfwSetMouseButtonCallback(windowHandle, [](GLFWwindow* window, int button, int action, int modes)

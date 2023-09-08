@@ -43,16 +43,12 @@ namespace Athena
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
 
-		static EditorLayer& Get() { return *s_Instance; }
-		const EditorConfig& GetConfig() { return m_Config; }
-
 		Ref<Scene> GetActiveScene() { return m_ActiveScene; }
 
 	private:
-		void SelectEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);
 
-		void InitializePanels();
+		void InitUI();
 		void RenderOverlay();
 
 		Entity GetEntityByCurrentMousePosition();
@@ -71,16 +67,12 @@ namespace Athena
 		void OpenScene(const FilePath& path);
 
 	private:
-		static EditorLayer* s_Instance;
-
-	private:
 		EditorConfig m_Config;
 
 		Ref<Titlebar> m_Titlebar;
 		bool m_HideCursor = false;
 
 		Ref<EditorCamera> m_EditorCamera;
-		Entity m_SelectedEntity = {};
 
 		ImGuizmoLayer m_ImGuizmoLayer;
 
@@ -98,9 +90,5 @@ namespace Athena
 		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;
-
-		Ref<Texture2D> m_PlayIcon;
-		Ref<Texture2D> m_StopIcon;
-		Ref<Texture2D> m_SimulationIcon;
 	};
 }

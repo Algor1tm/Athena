@@ -74,8 +74,8 @@ namespace Athena
 		return (DebugView)0;
 	}
 
-	SettingsPanel::SettingsPanel(std::string_view name)
-		: Panel(name)
+	SettingsPanel::SettingsPanel(std::string_view name, const Ref<EditorContext>& context)
+		: Panel(name, context)
 	{
 
 	}
@@ -212,7 +212,7 @@ namespace Athena
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 		if (ImGui::Button("Reload All Scripts"))
 		{
-			//EditorLayer::Get().GetActiveScene()->LoadAllScripts();
+			m_EditorCtx.ActiveScene->LoadAllScripts();
 		}
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor();

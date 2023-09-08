@@ -19,7 +19,7 @@ namespace Athena
 	class SettingsPanel: public Panel
 	{
 	public:
-		SettingsPanel(std::string_view name);
+		SettingsPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 		const EditorSettings& GetEditorSettings() { return m_EditorSettings; }

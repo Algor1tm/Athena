@@ -14,8 +14,8 @@
 
 namespace Athena
 {
-	ContentBrowserPanel::ContentBrowserPanel(std::string_view name)
-		: Panel(name)
+	ContentBrowserPanel::ContentBrowserPanel(std::string_view name, const Ref<EditorContext>& context)
+		: Panel(name, context)
 	{
 		m_LastDirectory = m_CurrentDirectory = m_AssetDirectory;
 	}

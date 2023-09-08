@@ -16,7 +16,7 @@ namespace Athena
 	class ProfilingPanel : public Panel
 	{
 	public:
-		ProfilingPanel(std::string_view name);
+		ProfilingPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 

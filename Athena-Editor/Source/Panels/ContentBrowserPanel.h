@@ -15,7 +15,7 @@ namespace Athena
 	class ContentBrowserPanel : public Panel
 	{
 	public:
-		ContentBrowserPanel(std::string_view name);
+		ContentBrowserPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 

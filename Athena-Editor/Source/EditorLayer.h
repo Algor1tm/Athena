@@ -11,6 +11,7 @@
 #include "Athena/Scene/Entity.h"
 
 #include "PanelManager.h"
+#include "EditorContext.h"
 #include "ImGuizmoLayer.h"
 #include "Titlebar.h"
 
@@ -30,7 +31,6 @@ namespace Athena
 		FilePath EditorResources;
 	};
 
-
 	class EditorLayer : public Layer
 	{
 	public:
@@ -42,8 +42,6 @@ namespace Athena
 		void OnUpdate(Time frameTime) override;
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
-
-		Ref<Scene> GetActiveScene() { return m_ActiveScene; }
 
 	private:
 		Entity DuplicateEntity(Entity entity);
@@ -69,25 +67,18 @@ namespace Athena
 	private:
 		EditorConfig m_Config;
 
+		Ref<EditorContext> m_EditorCtx;
+		Ref<EditorCamera> m_EditorCamera;
+		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
+
 		Ref<Titlebar> m_Titlebar;
 		bool m_HideCursor = false;
-
-		Ref<EditorCamera> m_EditorCamera;
-
-		ImGuizmoLayer m_ImGuizmoLayer;
 
 		PanelManager m_PanelManager;
 		Ref<ViewportPanel> m_MainViewport;
 		Ref<SceneHierarchyPanel> m_SceneHierarchy;
 		Ref<SettingsPanel> m_SettingsPanel;
 
-		enum class SceneState
-		{
-			Edit = 0, Play = 1, Simulation = 2
-		};
-
-		SceneState m_SceneState = SceneState::Edit;
-		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;
 	};

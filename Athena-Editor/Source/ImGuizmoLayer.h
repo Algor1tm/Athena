@@ -6,6 +6,8 @@
 
 #include "Athena/Scene/Entity.h"
 
+#include "EditorContext.h"
+
 #include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -22,10 +24,10 @@ namespace Athena
 		friend class ViewportPanel;
 
 	public:
+		ImGuizmoLayer(const Ref<EditorContext>& context, const Ref<EditorCamera>& camera);
+
 		void OnImGuiRender();
 		void OnEvent(Event& event);
-
-		void SetCamera(EditorCamera* camera) { m_Camera = camera; }
 
 	private:
 		bool OnKeyPressedEvent(KeyPressedEvent& event);
@@ -33,7 +35,9 @@ namespace Athena
 	private:
 		ImGuizmo::OPERATION m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
 
+		Ref<EditorContext> m_EditorCtx;
+		Ref<EditorCamera> m_Camera;
+
 		ViewportPanel* m_ViewportPanel = nullptr;
-		EditorCamera* m_Camera = nullptr;
 	};
 }

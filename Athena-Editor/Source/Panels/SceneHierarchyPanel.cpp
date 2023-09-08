@@ -14,8 +14,6 @@
 
 #include "Athena/UI/Widgets.h"
 
-#include "SelectionManager.h"
-
 #include <ImGui/imgui.h>
 
 
@@ -91,25 +89,18 @@ namespace Athena
 	}
 
 
-	SceneHierarchyPanel::SceneHierarchyPanel(std::string_view name, const Ref<Scene>& context)
-		: Panel(name)
+	SceneHierarchyPanel::SceneHierarchyPanel(std::string_view name, const Ref<EditorContext>& context)
+		: Panel(name, context)
 	{
-		SetContext(context);
-	}
-
-	void SceneHierarchyPanel::SetContext(const Ref<Scene>& context)
-	{
-		m_Context = context;
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
-		Entity selectedEntity = SelectionManager::GetSelectedEntity();
-		DrawEnvironmentEditor(m_Context->GetEnvironment());
+		DrawEnvironmentEditor(m_EditorCtx.ActiveScene->GetEnvironment());
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Materials Editor");
-		if (selectedEntity)
+		if (m_EditorCtx.SelectedEntity)
 		{
 			DrawMaterialsEditor();
 		}
@@ -120,9 +111,9 @@ namespace Athena
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Properties");
-		if (selectedEntity)
+		if (m_EditorCtx.SelectedEntity)
 		{
-			DrawAllComponents(selectedEntity);
+			DrawAllComponents(m_EditorCtx.SelectedEntity);
 		}
 		ImGui::PopStyleVar();
 		ImGui::End();
@@ -141,21 +132,21 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Header, color);
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
 
-		Entity root = m_Context->GetRootEntity();
+		Entity root = m_EditorCtx.ActiveScene->GetRootEntity();
 		DrawEntityNode(root, true);
 
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar();
 
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
-			SelectionManager::DeselectEntity();
+			m_EditorCtx.SelectedEntity = {};
 
 		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Create Entity"))
 			{
-				Entity created = m_Context->CreateEntity();
-				SelectionManager::SelectEntity(created);
+				Entity created = m_EditorCtx.ActiveScene->CreateEntity();
+				m_EditorCtx.SelectedEntity = created;
 			}
 
 			ImGui::EndPopup();
@@ -166,7 +157,7 @@ namespace Athena
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity, bool open)
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
-		bool selected = SelectionManager::GetSelectedEntity() == entity;
+		bool selected = m_EditorCtx.SelectedEntity == entity;
 		bool hasChildren = entity.HasChildren();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
@@ -193,7 +184,7 @@ namespace Athena
 
 		if (ImGui::IsItemClicked())
 		{
-			SelectionManager::SelectEntity(entity);
+			m_EditorCtx.SelectedEntity = entity;
 		}
 
 		if (ImGui::BeginDragDropSource())
@@ -210,14 +201,14 @@ namespace Athena
 				Entity payloadEntity = *(Entity*)payload->Data;
 				if (payloadEntity != entity)
 				{
-					m_Context->MakeParent(entity, payloadEntity);
+					m_EditorCtx.ActiveScene->MakeParent(entity, payloadEntity);
 				}
 			}
 
 			ImGui::EndDragDropTarget();
 		}
 
-		Entity selectedEntity = SelectionManager::GetSelectedEntity();
+		Entity selectedEntity = m_EditorCtx.SelectedEntity;
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
 		{
@@ -225,7 +216,7 @@ namespace Athena
 			{
 				Entity parent = entity;
 				Entity child = selectedEntity;
-				m_Context->MakeParent(parent, child);
+				m_EditorCtx.ActiveScene->MakeParent(parent, child);
 			}
 
 			if (ImGui::MenuItem("Delete Entity"))
@@ -248,9 +239,9 @@ namespace Athena
 
 		if (entityDeleted)
 		{
-			m_Context->DestroyEntity(entity);
+			m_EditorCtx.ActiveScene->DestroyEntity(entity);
 			if (selectedEntity == entity)
-				SelectionManager::DeselectEntity();
+				m_EditorCtx.SelectedEntity = {};
 		}
 	}
 
@@ -264,7 +255,7 @@ namespace Athena
 			UI::Property("EnvironmentMap");
 			{
 				String label;
-				Ref<EnvironmentMap> envMap = m_Context->GetEnvironment()->EnvironmentMap;
+				Ref<EnvironmentMap> envMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap;
 				if (envMap)
 				{
 					const FilePath& envPath = envMap->GetFilePath();
@@ -280,12 +271,12 @@ namespace Athena
 					FilePath filepath = FileDialogs::OpenFile("EnvironmentMap (*hdr)\0*.hdr\0");
 					if (!filepath.empty())
 					{
-						m_Context->GetEnvironment()->EnvironmentMap = EnvironmentMap::Create(filepath);
+						m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = EnvironmentMap::Create(filepath);
 					}
 				}
 				if (ImGui::Button("Delete"))
 				{
-					m_Context->GetEnvironment()->EnvironmentMap = nullptr;
+					m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = nullptr;
 				}
 			}
 
@@ -321,7 +312,7 @@ namespace Athena
 
 	void SceneHierarchyPanel::DrawMaterialsEditor()
 	{
-		Entity selectedEntity = SelectionManager::GetSelectedEntity();
+		Entity selectedEntity = m_EditorCtx.SelectedEntity;
 		std::vector<String> materials;
 		if(selectedEntity.HasComponent<StaticMeshComponent>())
 		{

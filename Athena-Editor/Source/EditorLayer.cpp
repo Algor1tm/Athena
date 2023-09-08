@@ -22,7 +22,6 @@
 #include "Panels/ViewportPanel.h"
 
 #include "EditorResources.h"
-#include "SelectionManager.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -33,30 +32,31 @@ namespace Athena
     EditorLayer::EditorLayer(const EditorConfig& config)
         : Layer("EditorLayer"), m_Config(config)
     {
-        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName());
 
-        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
-        m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
     }
 
     void EditorLayer::OnAttach()
     {
+        m_EditorCtx = CreateRef<EditorContext>();
+        m_EditorCtx->ActiveScene = nullptr;
+        m_EditorCtx->SceneState = SceneState::Edit;
+        m_EditorCtx->SelectedEntity = {};
+
+        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
+        m_ImGuizmoLayer = CreateRef<ImGuizmoLayer>(m_EditorCtx, m_EditorCamera);
+
+        m_EditorScene = CreateRef<Scene>();
+        m_EditorCtx->ActiveScene = m_EditorScene;
+
         EditorResources::Init(m_Config.EditorResources);
-        SelectionManager::Init();
 
         Application::Get().GetImGuiLayer()->BlockEvents(false);
         Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
 
         InitUI();
-
-        m_EditorScene = CreateRef<Scene>();
-        m_ActiveScene = m_EditorScene;
-
 #if 1
         OpenScene("Assets/Scenes/Default.atn");
 #endif
-
-        m_SceneHierarchy->SetContext(m_EditorScene);
     }
 
     void EditorLayer::OnDetach()
@@ -76,26 +76,26 @@ namespace Athena
             SceneRenderer::OnWindowResized(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
                 
-            m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
+            m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
         Renderer::ResetStats();
 
         SceneRenderer::BeginFrame();
 
-        switch (m_SceneState)
+        switch (m_EditorCtx->SceneState)
         {
         case SceneState::Edit:
         {
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera); 
+            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera);
             break;
         }
         case SceneState::Play:
         {
-            m_ActiveScene->OnUpdateRuntime(frameTime); 
+            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
             break;
         }
         case SceneState::Simulation:
@@ -103,7 +103,7 @@ namespace Athena
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
+            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
             break;
         }
         }
@@ -157,10 +157,10 @@ namespace Athena
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
     {
-        if (entity && m_SceneState == SceneState::Edit)
+        if (entity && m_EditorCtx->SceneState == SceneState::Edit)
         {
 			Entity newEntity = m_EditorScene->DuplicateEntity(entity);
-			SelectionManager::SelectEntity(newEntity);
+            m_EditorCtx->SelectedEntity = newEntity;
 			return newEntity;
         }
 
@@ -169,6 +169,8 @@ namespace Athena
 
     void EditorLayer::InitUI()
     {
+        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName());
+
         m_Titlebar->SetMenubarCallback([this]()
             {
                 if (ImGui::BeginMenu("File"))
@@ -227,9 +229,9 @@ namespace Athena
                 //}
             });
 
-        m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
+        m_MainViewport = CreateRef<ViewportPanel>("MainViewport", m_EditorCtx);
 
-        m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
+        m_MainViewport->SetImGuizmoLayer(m_ImGuizmoLayer);
         m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
         m_MainViewport->SetDragDropCallback([this]()
             {
@@ -238,12 +240,12 @@ namespace Athena
                     std::string_view path = (const char*)payload->Data;
                     FilePath ext = FilePath(path).extension();
                     //Scene Drag/Drop
-                    if (m_SceneState == SceneState::Edit && ext == ".atn\0")
+                    if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".atn\0")
                     {
                         OpenScene(path.data());
                     }
                     //Texture Drag/Drop on Entity
-                    else if (m_SceneState == SceneState::Edit && ext == ".png\0")
+                    else if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".png\0")
                     {
                         Entity target = GetEntityByCurrentMousePosition();
                         if (target != Entity{})
@@ -257,15 +259,15 @@ namespace Athena
                         }
                     }
                     // Mesh Drag/Drop
-                    else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+                    else if (m_EditorCtx->SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
                     {
                         Ref<StaticMesh> mesh = StaticMesh::Create(path);
                         if (mesh)
                         {
-                            Entity entity = m_ActiveScene->CreateEntity();
+                            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
                             entity.GetComponent<TagComponent>().Tag = mesh->GetName();
                             entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-                            SelectionManager::SelectEntity(entity);
+                            m_EditorCtx->SelectedEntity = entity;
                         }
                     }
                 }
@@ -303,13 +305,13 @@ namespace Athena
                 Ref<Texture2D> stopIcon = EditorResources::GetIcon("Viewport_Stop");
 
                 {
-                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation ? playIcon : stopIcon;
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Play", buttonSize))
                     {
-                        if (m_SceneState == SceneState::Edit)
+                        if (m_EditorCtx->SceneState == SceneState::Edit)
                             OnScenePlay();
-                        else if (m_SceneState == SceneState::Play)
+                        else if (m_EditorCtx->SceneState == SceneState::Play)
                             OnSceneStop();
                     }
 
@@ -319,13 +321,13 @@ namespace Athena
                 ImGui::SameLine();
 
                 {
-                    Ref<Texture2D> icon = m_SceneState == SceneState::Edit || m_SceneState == SceneState::Play ? simulateIcon : stopIcon;
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Simulate", buttonSize))
                     {
-                        if (m_SceneState == SceneState::Edit)
+                        if (m_EditorCtx->SceneState == SceneState::Edit)
                             OnSceneSimulate();
-                        else if (m_SceneState == SceneState::Simulation)
+                        else if (m_EditorCtx->SceneState == SceneState::Simulation)
                             OnSceneStop();
                     }
 
@@ -337,16 +339,16 @@ namespace Athena
 
         m_PanelManager.AddPanel(m_MainViewport, false);
 
-        m_SettingsPanel = CreateRef<SettingsPanel>("Settings");
+        m_SettingsPanel = CreateRef<SettingsPanel>("Settings", m_EditorCtx);
 		m_PanelManager.AddPanel(m_SettingsPanel, Keyboard::I);
 
-        m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
+        m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorCtx);
         m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
 
-        auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser");
+        auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser", m_EditorCtx);
         m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
 
-        auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
+        auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel", m_EditorCtx);
         m_PanelManager.AddPanel(profiling, Keyboard::K);
     }
 
@@ -375,9 +377,9 @@ namespace Athena
 
     void EditorLayer::RenderOverlay()
     {
-        if (m_SceneState == SceneState::Play)
+        if (m_EditorCtx->SceneState == SceneState::Play)
         {
-            Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
+            Entity camera = m_EditorCtx->ActiveScene->GetPrimaryCameraEntity();
             if (camera)
             {
 				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
@@ -426,7 +428,7 @@ namespace Athena
             }
         }
         
-        Entity selectedEntity = SelectionManager::GetSelectedEntity();
+        Entity selectedEntity = m_EditorCtx->SelectedEntity;
         if (selectedEntity)
         {
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
@@ -507,30 +509,29 @@ namespace Athena
     {
         if (m_SettingsPanel->GetEditorSettings().ReloadScriptsOnStart)
         {
-            m_ActiveScene->LoadAllScripts();
+            m_EditorCtx->ActiveScene->LoadAllScripts();
         }
 
         const auto& vpDesc = m_MainViewport->GetDescription();
 
-        if (m_SceneState == SceneState::Simulation)
+        if (m_EditorCtx->SceneState == SceneState::Simulation)
             OnSceneStop();
 
-        m_SceneState = SceneState::Play;
+        m_EditorCtx->SceneState = SceneState::Play;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnRuntimeStart();
-        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
-        m_ActiveScene = m_RuntimeScene;
+        m_EditorCtx->ActiveScene = m_RuntimeScene;
+        m_EditorCtx->SelectedEntity = {};
     }
 
     void EditorLayer::OnSceneStop()
     {
-        m_SceneState = SceneState::Edit;
+        m_EditorCtx->SceneState = SceneState::Edit;
 
-        m_ActiveScene = m_EditorScene;
-        m_SceneHierarchy->SetContext(m_EditorScene);
+        m_EditorCtx->ActiveScene = m_EditorScene;
         m_RuntimeScene = nullptr;
     }
 
@@ -538,26 +539,25 @@ namespace Athena
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
 
-        m_SceneState = SceneState::Simulation;
+        m_EditorCtx->SceneState = SceneState::Simulation;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnSimulationStart();
-        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
-        m_ActiveScene = m_RuntimeScene;
+        m_EditorCtx->ActiveScene = m_RuntimeScene;
     }
 
     void EditorLayer::OnEvent(Event& event)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        if ((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
+        if ((m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
         {
             bool rightMB = Input::IsMouseButtonPressed(Mouse::Right);
 
             if (vpDesc.IsHovered)
             {
-				m_ImGuizmoLayer.OnEvent(event);
+				m_ImGuizmoLayer->OnEvent(event);
 				m_EditorCamera->OnEvent(event);
 
                 if(rightMB && !m_HideCursor)
@@ -586,7 +586,6 @@ namespace Athena
         if (event.IsRepeat())
             return false;
 
-        Entity selectedEntity = SelectionManager::GetSelectedEntity();
         bool ctrl = Input::IsKeyPressed(Keyboard::LCtrl) || Input::IsKeyPressed(Keyboard::RCtrl);
 
         switch (event.GetKeyCode())
@@ -606,19 +605,19 @@ namespace Athena
         case Keyboard::N: if (ctrl) NewScene(); break;
         case Keyboard::O: if (ctrl) OpenScene(); break;
             
-        case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
-        case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
-        case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
+        case Keyboard::F4: if (m_EditorCtx->SceneState == SceneState::Play || m_EditorCtx->SceneState == SceneState::Simulation) OnSceneStop(); break;
+        case Keyboard::F5: if (m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) OnScenePlay(); break;
+        case Keyboard::F6: if (m_EditorCtx->SceneState == SceneState::Edit) OnSceneSimulate(); break;
         
             //Entities
-		case Keyboard::D: if (ctrl) DuplicateEntity(selectedEntity); break;
-        case Keyboard::Escape: if (selectedEntity) SelectionManager::DeselectEntity(); break;
+		case Keyboard::D: if (ctrl) DuplicateEntity(m_EditorCtx->SelectedEntity); break;
+        case Keyboard::Escape: m_EditorCtx->SelectedEntity = {}; break;
         case Keyboard::Delete:
         {
-            if (selectedEntity && m_SceneState == SceneState::Edit)
+            if (m_EditorCtx->SelectedEntity && m_EditorCtx->SceneState == SceneState::Edit)
             {
-                SelectionManager::DeselectEntity();
-                m_EditorScene->DestroyEntity(selectedEntity);
+                m_EditorCtx->SelectedEntity = {};
+                m_EditorScene->DestroyEntity(m_EditorCtx->SelectedEntity);
             }
             break;
         }
@@ -650,12 +649,12 @@ namespace Athena
         {
         case Mouse::Left:
         {
-            if (m_SceneState != SceneState::Play)
+            if (m_EditorCtx->SceneState != SceneState::Play)
             {
                 Entity selectedEntity = GetEntityByCurrentMousePosition();
                 if (selectedEntity)
                 {
-                    SelectionManager::SelectEntity(selectedEntity);
+                    m_EditorCtx->SelectedEntity = selectedEntity;
                 }
             }
             break;
@@ -666,24 +665,22 @@ namespace Athena
 
     void EditorLayer::NewScene()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
         m_CurrentScenePath = FilePath();
 
         m_RuntimeScene = nullptr;
         m_EditorScene = CreateRef<Scene>();
-        m_ActiveScene = m_EditorScene;
-
-        m_SceneHierarchy->SetContext(m_ActiveScene);
-        SelectionManager::DeselectEntity();
+        m_EditorCtx->ActiveScene = m_EditorScene;
+        m_EditorCtx->SelectedEntity = {};
 
         ATN_CORE_TRACE("Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
         FilePath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
@@ -695,14 +692,14 @@ namespace Athena
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
-        SceneSerializer serializer(m_ActiveScene);
+        SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
         ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string());
     }
 
     void EditorLayer::OpenScene()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
         FilePath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
@@ -714,7 +711,7 @@ namespace Athena
 
     void EditorLayer::OpenScene(const FilePath& path)
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
         Ref<Scene> newScene = CreateRef<Scene>();
@@ -726,10 +723,9 @@ namespace Athena
 
             m_RuntimeScene = nullptr;
             m_EditorScene = newScene;
-            m_ActiveScene = newScene;
+            m_EditorCtx->ActiveScene = newScene;
+            m_EditorCtx->SelectedEntity = {};
 
-            m_SceneHierarchy->SetContext(m_ActiveScene);
-            SelectionManager::DeselectEntity();
             ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
         }
         else

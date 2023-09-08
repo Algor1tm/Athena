@@ -11,8 +11,8 @@
 
 namespace Athena
 {
-    ViewportPanel::ViewportPanel(std::string_view name)
-        : Panel(name)
+    ViewportPanel::ViewportPanel(std::string_view name, const Ref<EditorContext>& context)
+        : Panel(name, context)
     {
 
     }
@@ -65,7 +65,7 @@ namespace Athena
         ImGui::PopStyleVar();
 	}
 
-    void ViewportPanel::SetImGuizmoLayer(class ImGuizmoLayer* layer)
+    void ViewportPanel::SetImGuizmoLayer(const Ref<ImGuizmoLayer>& layer)
     {
         m_ImGuizmoLayer = layer;
         m_ImGuizmoLayer->m_ViewportPanel = this;

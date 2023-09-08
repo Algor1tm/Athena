@@ -22,9 +22,7 @@ namespace Athena
 	class SceneHierarchyPanel : public Panel
 	{
 	public:
-		SceneHierarchyPanel(std::string_view name, const Ref<Scene>& context);
-
-		void SetContext(const Ref<Scene>& context);
+		SceneHierarchyPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 
@@ -44,8 +42,6 @@ namespace Athena
 		void DrawAddComponentEntry(Entity entity, std::string_view name);
 
 	private:
-		Ref<Scene> m_Context;
-
 		String m_ActiveMaterial;
 		bool m_EditTagComponent = false;
 	};

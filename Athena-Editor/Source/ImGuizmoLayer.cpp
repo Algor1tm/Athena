@@ -7,15 +7,19 @@
 #include "Athena/Scene/Components.h"
 
 #include "Panels/ViewportPanel.h"
-#include "SelectionManager.h"
 
 
 namespace Athena
 {
+    ImGuizmoLayer::ImGuizmoLayer(const Ref<EditorContext>& context, const Ref<EditorCamera>& camera)
+    {
+        m_EditorCtx = context;
+        m_Camera = camera;
+    }
+
 	void ImGuizmoLayer::OnImGuiRender() 
 	{
-        Entity selectedEntity = SelectionManager::GetSelectedEntity();
-        if (m_Camera && m_ViewportPanel && selectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && selectedEntity.HasComponent<TransformComponent>())
+        if (m_Camera && m_ViewportPanel && m_EditorCtx->SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_EditorCtx->SelectedEntity.HasComponent<TransformComponent>())
         {
             auto& desc = m_ViewportPanel->GetDescription();
             ImGuizmo::SetOrthographic(false);
@@ -26,7 +30,7 @@ namespace Athena
             const Matrix4& cameraProjection = m_Camera->GetProjectionMatrix();
             const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
-            TransformComponent worldTransform = selectedEntity.GetWorldTransform();
+            TransformComponent worldTransform = m_EditorCtx->SelectedEntity.GetWorldTransform();
             Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
 
             bool snap = Input::IsKeyPressed(Keyboard::LCtrl);
@@ -50,7 +54,7 @@ namespace Athena
                 newWorldTransform.Rotation = rotation;
                 newWorldTransform.Scale = scale;
 
-                selectedEntity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, worldTransform);
+                m_EditorCtx->SelectedEntity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, worldTransform);
             }
         }
 	}
@@ -65,14 +69,13 @@ namespace Athena
     {
         if (m_ViewportPanel && !Input::IsMouseButtonPressed(Mouse::Right))
         {
-            Entity selectedEntity = SelectionManager::GetSelectedEntity();
             auto& desc = m_ViewportPanel->GetDescription();
             switch (event.GetKeyCode())
             {
-            case Keyboard::Q: if (selectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
-            case Keyboard::W: if (selectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
-            case Keyboard::E: if (selectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
-            case Keyboard::R: if (selectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
+            case Keyboard::Q: if (m_EditorCtx->SelectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::BOUNDS); break;
+            case Keyboard::W: if (m_EditorCtx->SelectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE); break;
+            case Keyboard::E: if (m_EditorCtx->SelectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE); break;
+            case Keyboard::R: if (m_EditorCtx->SelectedEntity && (desc.IsHovered || desc.IsFocused))(m_GuizmoOperation = ImGuizmo::OPERATION::SCALE); break;
             }
         }
 

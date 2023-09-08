@@ -4,6 +4,7 @@
 #include "Athena/Math/Vector.h"
 
 #include "Panels/Panel.h"
+#include "ImGuizmoLayer.h"
 
 #include <functional>
 
@@ -11,7 +12,6 @@
 namespace Athena
 {
 	class Framebuffer;
-	class ImGuizmoLayer;
 
 
 	struct ViewportDescription
@@ -29,7 +29,7 @@ namespace Athena
 	class ViewportPanel: public Panel
 	{
 	public:
-		ViewportPanel(std::string_view name);
+		ViewportPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 
@@ -46,10 +46,10 @@ namespace Athena
 		template <typename Func>
 		void SetUIOverlayCallback(const Func& callback) { m_UIOverlayCallback = callback; }
 
-		void SetImGuizmoLayer(ImGuizmoLayer* layer);
+		void SetImGuizmoLayer(const Ref<ImGuizmoLayer>& layer);
 
 	private:
-		ImGuizmoLayer* m_ImGuizmoLayer;
+		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
 		ViewportDescription m_Description;
 
 		std::function<void()> m_DragDropCallback;

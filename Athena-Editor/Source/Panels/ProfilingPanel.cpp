@@ -9,8 +9,8 @@
 
 namespace Athena
 {
-    ProfilingPanel::ProfilingPanel(std::string_view name)
-        : Panel(name)
+    ProfilingPanel::ProfilingPanel(std::string_view name, const Ref<EditorContext>& context)
+        : Panel(name, context)
     {
         Platform::GetSystemInfo(&m_SystemInfo);
         Application::Get().GetWindow().GetGraphicsContext()->GetGPUInfo(&m_GPUInfo);

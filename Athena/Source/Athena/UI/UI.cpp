@@ -1,8 +1,52 @@
-#include "Widgets.h"
+#include "UI.h"
 
 
 namespace Athena::UI
 {
+	void PushFont(Fonts font)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImFont* imguiFont = io.FontDefault;
+
+		switch (font)
+		{
+		case Fonts::Default: imguiFont = io.FontDefault; break;
+		case Fonts::Bold: imguiFont = io.Fonts->Fonts[1]; break;
+		case Fonts::Default22: imguiFont = io.Fonts->Fonts[2]; break;
+		}
+
+		ImGui::PushFont(imguiFont);
+	}
+
+	void PopFont()
+	{
+		ImGui::PopFont();
+	}
+
+	void ShiftCursorX(float offset)
+	{
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+	}
+
+	void ShiftCursorY(float offset)
+	{
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset);
+	}
+
+	void ShiftCursor(float offsetX, float offsetY)
+	{
+		ShiftCursorX(offsetX);
+		ShiftCursorY(offsetY);
+	}
+
+	ImColor MultiplyColorByScalar(const ImColor& color, float scalar)
+	{
+		const ImVec4& colRow = color.Value;
+		float hue, sat, val;
+		ImGui::ColorConvertRGBtoHSV(colRow.x, colRow.y, colRow.z, hue, sat, val);
+		return ImColor::HSV(hue, sat, Math::Min(val * scalar, 1.0f));
+	}
+
 	bool TextInput(const String& label, String& destination, ImGuiInputTextFlags flags)
 	{
 		static char buffer[128];
@@ -90,6 +134,12 @@ namespace Athena::UI
 		Property(label, height);
 	}
 
+	void PropertyImage(std::string_view label) 
+	{
+		const float height = 50.f;
+		Property(label, height);
+	}
+
 	bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem)
 	{
 		bool itemSelected = false;
@@ -161,6 +211,11 @@ namespace Athena::UI
 	void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
 	{
 		ButtonImage(image, image, image, tintNormal, tintHovered, tintPressed, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+	}
+
+	void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
+	{
+		ImGui::Image(image->GetRendererID(), size, { 0, 1 }, { 1, 0 }, tint_col, border_col);
 	}
 
 	bool BeginMenubar(const ImRect& barRectangle)
@@ -255,7 +310,21 @@ namespace Athena::UI
 		if (off > 0.0f)
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
-		return ImGui::Button(label.data());
+		return ImGui::Button(label.data(), size);
+	}
+
+	void TextCentered(std::string_view label)
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
+		float avail = ImGui::GetContentRegionAvail().x;
+
+		float off = (avail - actualSize) * 0.5f;
+		if (off > 0.0f)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+		return ImGui::Text(label.data());
 	}
 
 	void InvisibleItem(std::string_view strID, ImVec2 itemSize)

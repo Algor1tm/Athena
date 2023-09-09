@@ -1,7 +1,9 @@
 #include "Titlebar.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/UI/Widgets.h"
+
+#include "Athena/UI/UI.h"
+#include "Athena/UI/Theme.h"
 
 #include "EditorResources.h"
 
@@ -11,9 +13,10 @@
 
 namespace Athena
 {
-    Titlebar::Titlebar(const String& name)
+    Titlebar::Titlebar(const String& name, const Ref<EditorContext>& editorCtx)
     {
         m_Name = name;
+        m_EditorCtx = editorCtx;
     }
 
 	void Titlebar::OnImGuiRender()
@@ -35,7 +38,7 @@ namespace Athena
                                      ImGui::GetCursorScreenPos().y + m_Height };
         auto* bgDrawList = ImGui::GetBackgroundDrawList();
         auto* fgDrawList = ImGui::GetForegroundDrawList();
-        bgDrawList->AddRectFilled(titlebarMin, titlebarMax, IM_COL32(21, 21, 21, 255));
+        bgDrawList->AddRectFilled(titlebarMin, titlebarMax, UI::GetTheme().Titlebar);
 
         // Logo
         {

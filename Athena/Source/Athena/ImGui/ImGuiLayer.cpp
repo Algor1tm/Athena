@@ -7,6 +7,7 @@
 
 #include "Athena/Renderer/Renderer.h"
 
+
 #include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -33,7 +34,7 @@ namespace Athena
 	ImGuiLayer::ImGuiLayer()
 		: Layer("ImGuiLayer")
 	{
-
+		
 	}
 
 	ImGuiLayer::~ImGuiLayer()
@@ -58,63 +59,74 @@ namespace Athena
 		return imguiLayer;
 	}
 
-	void ImGuiLayer::SetDarkTheme()
+	void ImGuiLayer::UpdateImGuiTheme()
 	{
 		ImGuiStyle& style = ImGui::GetStyle();
 		auto& colors = style.Colors;
 
-		style.FrameRounding = 2.5f;
-		style.FrameBorderSize = 1.f;
-		style.ScrollbarSize = 11.f;
-		style.WindowRounding = 5.f;
+		style.FrameRounding = m_Theme.Style.FrameRounding;
+		style.FrameBorderSize = m_Theme.Style.FrameBorderSize;
+		style.ScrollbarSize = m_Theme.Style.ScrollbarSize;
+		style.WindowRounding = m_Theme.Style.WindowRounding;
 
 
-		// Widgets Active Items
-		colors[ImGuiCol_SliderGrab] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		colors[ImGuiCol_SliderGrabActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		colors[ImGuiCol_ResizeGripHovered] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		colors[ImGuiCol_ResizeGripActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		colors[ImGuiCol_CheckMark] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		// Titlebar
+		colors[ImGuiCol_TitleBg] = ImColor(m_Theme.Titlebar);
+		colors[ImGuiCol_TitleBgActive] = ImColor(m_Theme.Titlebar);
 
 		// Docking
-		colors[ImGuiCol_DockingPreview] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
-		//colors[ImGuiCol_DockingEmptyBg] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 1.0f };
+		colors[ImGuiCol_DockingPreview] = ImColor(m_Theme.Accent);
 
 		// Frame BG
-		colors[ImGuiCol_FrameBg] = ImVec4{ 14.f / 255.f, 14.f / 255.f, 14.f / 255.f, 1.0f };
-		colors[ImGuiCol_FrameBgHovered] = ImVec4{ 51.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_FrameBgActive] = ImVec4{ 51.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+		colors[ImGuiCol_FrameBg] = ImColor(m_Theme.FrameBg);
+		colors[ImGuiCol_FrameBgHovered] = ImColor(m_Theme.FrameBgActive);
+		colors[ImGuiCol_FrameBgActive] = ImColor(m_Theme.FrameBgActive);
 
 		// Headers
-		colors[ImGuiCol_Header] = ImVec4{ 40.f / 255.f, 40.f / 255.f, 40.f / 255.f, 1.0f };
-		colors[ImGuiCol_HeaderHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_HeaderActive] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
+		colors[ImGuiCol_Header] = ImColor(m_Theme.Header);
+		colors[ImGuiCol_HeaderHovered] = ImColor(m_Theme.HeaderActive);
+		colors[ImGuiCol_HeaderActive] = ImColor(m_Theme.HeaderActive);
 
 		// Buttons
-		colors[ImGuiCol_Button] = ImVec4{ 41.f / 255.f, 41.f / 255.f, 41.f / 255.f, 1.0f };
-		colors[ImGuiCol_ButtonHovered] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		colors[ImGuiCol_ButtonActive] = ImVec4{ 53.f / 255.f, 51.f / 255.f, 51.f / 255.f, 1.0f };
-		
+		colors[ImGuiCol_Button] = ImColor(m_Theme.Button);
+		colors[ImGuiCol_ButtonHovered] = ImColor(m_Theme.ButtonActive);
+		colors[ImGuiCol_ButtonActive] = ImColor(m_Theme.ButtonActive);
+
+		// Slider
+		colors[ImGuiCol_SliderGrab] = ImColor(m_Theme.Accent);
+		colors[ImGuiCol_SliderGrabActive] = ImColor(m_Theme.Accent);
+
+		// Checkbox
+		colors[ImGuiCol_CheckMark] = ImColor(m_Theme.Accent);
+
+		// Text
+		colors[ImGuiCol_Text] = ImColor(m_Theme.Text);
+
+		// Resize Grip
+		colors[ImGuiCol_ResizeGripHovered] = ImColor(m_Theme.Accent);
+		colors[ImGuiCol_ResizeGripActive] = ImColor(m_Theme.Accent);
+
 		// Window
-		colors[ImGuiCol_WindowBg] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
+		colors[ImGuiCol_WindowBg] = ImColor(m_Theme.Background);
+		colors[ImGuiCol_PopupBg] = ImColor(m_Theme.BackgroundPopup);
 
 		// Tabs
-		colors[ImGuiCol_Tab] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabHovered] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 0.2f };
-		colors[ImGuiCol_TabActive] = ImVec4{ 0.f / 255.f, 112.f / 255.f, 224.f / 255.f, 0.2f };
-		colors[ImGuiCol_TabUnfocused] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
-		colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f };
+		colors[ImGuiCol_Tab] = ImColor(m_Theme.Tab);
+		colors[ImGuiCol_TabHovered] = ImColor(m_Theme.TabActive);
+		colors[ImGuiCol_TabActive] = ImColor(m_Theme.TabActive);
+		colors[ImGuiCol_TabUnfocused] = ImColor(m_Theme.Tab);
+		colors[ImGuiCol_TabUnfocusedActive] = ImColor(m_Theme.Tab);
 
 		// Title
-		colors[ImGuiCol_TitleBg] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
-		colors[ImGuiCol_TitleBgActive] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
-		colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 17.f / 255.f, 17.f / 255.f, 17.f / 255.f, 1.0f };
+		colors[ImGuiCol_TitleBg] = ImColor(m_Theme.BackgroundDark);
+		colors[ImGuiCol_TitleBgActive] = ImColor(m_Theme.BackgroundDark);
+		colors[ImGuiCol_TitleBgCollapsed] = ImColor(m_Theme.BackgroundDark);
 
 		// Lines
-		colors[ImGuiCol_Separator] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };
-		colors[ImGuiCol_TableBorderStrong] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };;
-		colors[ImGuiCol_TableBorderLight] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };;
-		colors[ImGuiCol_Border] = ImVec4{ 15.f / 255.f, 15.f / 255.f, 15.f / 255.f, 1.0f };
+		colors[ImGuiCol_Separator] = ImColor(m_Theme.BackgroundDark);
+		colors[ImGuiCol_TableBorderStrong] = ImColor(m_Theme.BackgroundDark);
+		colors[ImGuiCol_TableBorderLight] = ImColor(m_Theme.BackgroundDark);
+		colors[ImGuiCol_Border] = ImColor(m_Theme.BackgroundDark);
 	}
 
 	void ImGuiLayer::OnAttach()
@@ -142,7 +154,8 @@ namespace Athena
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
 		
-		SetDarkTheme();
+		m_Theme = UI::Theme::Dark();
+		UpdateImGuiTheme();
 
 		Application& app = Application::Get();
 

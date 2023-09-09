@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Application.h"
 
-#include "Athena/UI/Widgets.h"
+#include "Athena/UI/UI.h"
 
 #include <ImGui/imgui.h>
 

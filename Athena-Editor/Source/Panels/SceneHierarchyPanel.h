@@ -9,7 +9,7 @@
 
 #include "Panels/Panel.h"
 
-#include "Athena/UI/Widgets.h"
+#include "Athena/UI/UI.h"
 
 #include <string_view>
 

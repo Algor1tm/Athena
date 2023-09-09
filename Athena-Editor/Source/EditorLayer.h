@@ -48,6 +48,8 @@ namespace Athena
 
 		void InitUI();
 		void RenderOverlay();
+		void DrawAboutModal();
+		void DrawThemeEditor();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -81,5 +83,8 @@ namespace Athena
 
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;
+
+		bool m_AboutModalOpen = false;
+		bool m_ThemeEditorOpen = false;
 	};
 }

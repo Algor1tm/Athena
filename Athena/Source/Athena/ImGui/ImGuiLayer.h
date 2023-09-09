@@ -5,6 +5,8 @@
 
 #include "Athena/Input/Event.h"
 
+#include "Athena/UI/Theme.h"
+
 
 namespace Athena
 {
@@ -29,7 +31,8 @@ namespace Athena
 
 		static Ref<ImGuiLayer> Create();
 
-		void SetDarkTheme();
+		UI::Theme& GetTheme() { return m_Theme; }
+		void UpdateImGuiTheme();
 
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;
@@ -41,6 +44,7 @@ namespace Athena
 		void BlockEvents(bool block) { m_BlockEvents = block; }
 
 	private:
+		UI::Theme m_Theme;
 		bool m_BlockEvents = true;
 		float m_Time = 0.f;
 

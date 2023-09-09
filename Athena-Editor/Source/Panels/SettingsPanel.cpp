@@ -5,7 +5,8 @@
 
 #include "Athena/Scripting/ScriptEngine.h"
 
-#include "Athena/UI/Widgets.h"
+#include "Athena/UI/UI.h"
+#include "Athena/UI/Theme.h"
 
 #include "EditorLayer.h"
 
@@ -188,7 +189,7 @@ namespace Athena
 			ImGui::Text("Reload Shaders");
 			ImGui::SameLine();
 
-			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 			if (ImGui::Button("Reload Shaders"))
 			{
@@ -208,7 +209,7 @@ namespace Athena
 		ImGui::SameLine();
 		ImGui::Checkbox("##OnStart", &m_EditorSettings.ReloadScriptsOnStart);
 
-		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
 		if (ImGui::Button("Reload All Scripts"))
 		{

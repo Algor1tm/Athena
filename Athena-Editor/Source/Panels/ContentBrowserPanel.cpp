@@ -2,7 +2,8 @@
 
 #include "Athena/Renderer/Texture.h"
 
-#include "Athena/UI/Widgets.h"
+#include "Athena/UI/UI.h"
+#include "Athena/UI/Theme.h"
 
 #include "EditorResources.h"
 
@@ -25,7 +26,7 @@ namespace Athena
 		if (ImGui::Begin("Content Browser"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
-			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
+			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 
 			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetRendererID(), m_UndoButtonSize, {0, 1}, {1, 0}))
 			{
@@ -52,7 +53,7 @@ namespace Athena
 
 			ImGui::PushItemWidth(regionAvail.x * 0.15f);
 			String searchString;
-			UI::TextInputWithHint("Search...", searchString); // TODO: make this
+			UI::TextInputWithHint("Search...", searchString); // TODO: implement this
 
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();

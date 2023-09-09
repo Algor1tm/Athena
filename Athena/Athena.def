@@ -22,6 +22,7 @@ EXPORTS
 	?ColorEdit3@ImGui@@YA_NPEBDQEAMH@Z
 	?ColorEdit4@ImGui@@YA_NPEBDQEAMH@Z
 	?ColorConvertFloat4ToU32@ImGui@@YAIAEBUImVec4@@@Z
+	?ColorConvertU32ToFloat4@ImGui@@YA?AUImVec4@@I@Z
 	?DragFloat@ImGui@@YA_NPEBDPEAMMMM0H@Z
 	?DragFloat2@ImGui@@YA_NPEBDQEAMMMM0H@Z
 	?DragFloat3@ImGui@@YA_NPEBDQEAMMMM0H@Z
@@ -107,6 +108,7 @@ EXPORTS
 	?PushFont@ImGui@@YAXPEAUImFont@@@Z
 	?PushID@ImGui@@YAXPEBD@Z
 	?PushItemWidth@ImGui@@YAXM@Z
+	?PushStyleColor@ImGui@@YAXHI@Z
 	?PushStyleColor@ImGui@@YAXHAEBUImVec4@@@Z
 	?PushStyleVar@ImGui@@YAXHM@Z
 	?PushStyleVar@ImGui@@YAXHAEBUImVec2@@@Z

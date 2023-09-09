@@ -12,7 +12,8 @@
 
 #include "Athena/Scripting/ScriptEngine.h"
 
-#include "Athena/UI/Widgets.h"
+#include "Athena/UI/UI.h"
+#include "Athena/UI/Theme.h"
 
 #include <ImGui/imgui.h>
 
@@ -122,7 +123,7 @@ namespace Athena
 	void SceneHierarchyPanel::DrawEntitiesHierarchy()
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 0.f });
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetDarkColor());
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetTheme().BackgroundDark);
 		ImGui::Begin("Scene Hierarchy");
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
@@ -281,7 +282,8 @@ namespace Athena
 			}
 
 			const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
-			std::string_view selected = std::to_string(environment->EnvironmentMap->GetResolution()).data();
+			String selectedStr = std::to_string(environment->EnvironmentMap->GetResolution());
+			std::string_view selected = selectedStr.data();
 
 			UI::Property("Resolution");
 			if (UI::ComboBox("##Resolution", resolutions, std::size(resolutions), &selected))
@@ -365,7 +367,7 @@ namespace Athena
 	void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType)
 	{
 		ImGui::PushID(name.data());
-		UI::Property(name.data(), 50.f);
+		UI::PropertyImage(name.data());
 		{
 			float imageSize = 45.f;
 
@@ -652,11 +654,11 @@ namespace Athena
 					UI::Property("Tiling");
 					ImGui::SliderFloat("##Tiling", &sprite.TilingFactor, 1.f, 20.f);
 
-					UI::Property("Texture", 50.f);
+					UI::PropertyImage("Texture");
 					{
 						float imageSize = 45.f;
 
-						ImGui::Image(sprite.Texture.GetNativeTexture()->GetRendererID(), { imageSize, imageSize }, { 0, 1 }, { 1, 0 });
+						UI::Image(sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
 
 						if (ImGui::BeginDragDropTarget())
 						{

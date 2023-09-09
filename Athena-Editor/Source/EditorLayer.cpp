@@ -15,6 +15,8 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
+#include "Athena/UI/Theme.h"
+
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
@@ -149,6 +151,12 @@ namespace Athena
 
         m_PanelManager.OnImGuiRender();
 
+        if (m_AboutModalOpen)
+            DrawAboutModal();
+
+        if (m_ThemeEditorOpen)
+            DrawThemeEditor();
+
         ImGui::End();
 
         m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
@@ -169,7 +177,7 @@ namespace Athena
 
     void EditorLayer::InitUI()
     {
-        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName());
+        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName(), m_EditorCtx);
 
         m_Titlebar->SetMenubarCallback([this]()
             {
@@ -199,34 +207,25 @@ namespace Athena
                     ImGui::EndMenu();
                 }
 
-                //if (ImGui::BeginMenu("Help"))
-                //{
-                //    static bool openPopup = false;
-                //    if (ImGui::MenuItem("About", NULL, false))
-                //    {
-                //        openPopup = true;
-                //    }
+                if (ImGui::BeginMenu("Edit"))
+                {
+                    if (ImGui::MenuItem("Theme Editor"))
+                    {
+                        m_ThemeEditorOpen = !m_ThemeEditorOpen;
+                    }
 
-                //    if (openPopup)
-                //    {
-                //        ImGui::OpenPopup("About");
-                //        openPopup = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-                //        if (openPopup)
-                //        {
-                //            ImGui::Text("Some Text");
+                    ImGui::EndMenu();
+                }
 
-                //            if (UI::ButtonCentered("Close"))
-                //            {
-                //                openPopup = false;
-                //                ImGui::CloseCurrentPopup();
-                //            }
-
-                //            ImGui::EndPopup();
-                //        }
-                //    }
-                //    
-                //    ImGui::EndMenu();
-                //}
+                if (ImGui::BeginMenu("Help"))
+                {
+                    if (ImGui::MenuItem("About", NULL, false))
+                    {
+                        m_AboutModalOpen = true;
+                    }
+                    
+                    ImGui::EndMenu();
+                }
             });
 
         m_MainViewport = CreateRef<ViewportPanel>("MainViewport", m_EditorCtx);
@@ -277,10 +276,10 @@ namespace Athena
             {
                 float windowPaddingY = 3.f;
 
-                ImColor rectColor = IM_COL32(0, 0, 0, 80);
-                ImVec2 rectPadding = { 0.f, 1.f };
+                ImColor rectColor = IM_COL32(0, 0, 0, 70);
+                ImVec2 rectPadding = { -1.f, 0.f };
 
-                float buttonPaddingX = 0.f;
+                float buttonPaddingX = -1.f;
                 ImVec2 buttonSize = { 28.f, 26.f };
                 int32 buttonCount = 2;
 
@@ -503,6 +502,50 @@ namespace Athena
         }
 
         SceneRenderer2D::EndScene();
+    }
+
+    void EditorLayer::DrawAboutModal()
+    {
+        ImGui::OpenPopup("About");
+        m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        if (m_AboutModalOpen)
+        {
+            auto logo = EditorResources::GetIcon("Logo");
+            UI::Image(logo, { 48, 48 });
+
+            ImGui::SameLine();
+            UI::ShiftCursorX(20.0f);
+
+            ImGui::Text("Athena 3D Game Engine");
+
+            if (UI::ButtonCentered("Close"))
+            {
+                m_AboutModalOpen = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void EditorLayer::DrawThemeEditor()
+    {
+        ImGui::Begin("Theme Editor");
+
+        UI::Theme& theme = UI::GetTheme();
+
+        UI::ThemeEditor(theme);
+
+        if (ImGui::Button("Reset"))
+            theme = UI::Theme::Dark();
+
+        Application::Get().GetImGuiLayer()->UpdateImGuiTheme();
+
+        ImGui::SameLine();
+        if (ImGui::Button("Close"))
+            m_ThemeEditorOpen = false;
+
+        ImGui::End();
     }
 
     void EditorLayer::OnScenePlay()

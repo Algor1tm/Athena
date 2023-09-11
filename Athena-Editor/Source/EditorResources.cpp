@@ -11,21 +11,21 @@ namespace Athena
 	{
 		m_Path = path;
 
-		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/LogoWhite.png");
+		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/LogoWhite.png");
 
-		m_Icons["Titlebar_Close"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/CloseButton.png");
-		m_Icons["Titlebar_Minimize"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/MinimizeButton.png");
-		m_Icons["Titlebar_Restore"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/RestoreButton.png");
-		m_Icons["Titlebar_Maximize"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/MaximizeButton.png");
+		m_Icons["Titlebar_CloseWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/CloseWindow.png");
+		m_Icons["Titlebar_MinimizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png");
+		m_Icons["Titlebar_RestoreWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png");
+		m_Icons["Titlebar_MaximizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MaximizeWindow.png");
 
-		m_Icons["Viewport_Play"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/PlayIcon.png");
-		m_Icons["Viewport_Simulate"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/SimulationIcon.png");
-		m_Icons["Viewport_Stop"] = Texture2D::Create(m_Path / "Icons/Editor/MenuBar/StopIcon.png");
+		m_Icons["Viewport_Play"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Play.png");
+		m_Icons["Viewport_Simulate"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Simulate.png");
+		m_Icons["Viewport_Stop"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Stop.png");
 
-		m_Icons["ContentBrowser_Folder"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/FolderIcon.png");
-		m_Icons["ContentBrowser_File"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/FileIcon.png");
-		m_Icons["ContentBrowser_Undo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/BackButton.png");
-		m_Icons["ContentBrowser_Redo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/ForwardButton.png");
+		m_Icons["ContentBrowser_Folder"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Folder.png");
+		m_Icons["ContentBrowser_File"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/File.png");
+		m_Icons["ContentBrowser_Undo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Undo.png");
+		m_Icons["ContentBrowser_Redo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Redo.png");
 	}
 
 	const FilePath& EditorResources::GetPath()

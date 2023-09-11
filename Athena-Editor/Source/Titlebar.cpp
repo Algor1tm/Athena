@@ -109,8 +109,8 @@ namespace Athena
 
         // Window buttons
         const ImColor buttonDefault = IM_COL32(192, 192, 192, 255);
-        const ImU32 buttonColN = UI::MultiplyColorByScalar(buttonDefault, 0.9f);
-        const ImU32 buttonColH = UI::MultiplyColorByScalar(buttonDefault, 1.2f);
+        const ImU32 buttonColN = UI::MultiplyColorByScalar(UI::GetTheme().Text, 0.8f);
+        const ImU32 buttonColH = UI::MultiplyColorByScalar(UI::GetTheme().Text, 1.2f);
         const ImU32 buttonColP = IM_COL32(128, 128, 128, 255);
         const float buttonWidth = 14.0f;
         const float buttonHeight = 14.0f;
@@ -118,7 +118,6 @@ namespace Athena
         auto& window = Application::Get().GetWindow();
 
         // Minimize Button
-
         ImGui::Spring();
         UI::ShiftCursorY(8.0f);
         {
@@ -127,7 +126,7 @@ namespace Athena
                 window.SetWindowMode(WindowMode::Minimized);
             }
 
-            UI::ButtonImage(EditorResources::GetIcon("Titlebar_Minimize"), buttonColN, buttonColH, buttonColP);
+            UI::ButtonImage(EditorResources::GetIcon("Titlebar_MinimizeWindow"), buttonColN, buttonColH, buttonColP);
         }
 
 
@@ -143,7 +142,7 @@ namespace Athena
                     window.SetWindowMode(WindowMode::Maximized);
             }
 
-            UI::ButtonImage(isMaximized ? EditorResources::GetIcon("Titlebar_Restore") : EditorResources::GetIcon("Titlebar_Maximize"), buttonColN, buttonColH, buttonColP);
+            UI::ButtonImage(isMaximized ? EditorResources::GetIcon("Titlebar_RestoreWindow") : EditorResources::GetIcon("Titlebar_MaximizeWindow"), buttonColN, buttonColH, buttonColP);
         }
 
         // Close Button
@@ -155,7 +154,7 @@ namespace Athena
                 Application::Get().Close();
             }
 
-            UI::ButtonImage(EditorResources::GetIcon("Titlebar_Close"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
+            UI::ButtonImage(EditorResources::GetIcon("Titlebar_CloseWindow"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
         }
 
         ImGui::Spring(-1.0f, 18.0f);

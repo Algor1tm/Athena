@@ -199,13 +199,13 @@ namespace Athena::UI
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax)
 	{
-		auto* drawList = ImGui::GetForegroundDrawList();
+		auto* drawList = ImGui::GetWindowDrawList();
 		if (ImGui::IsItemActive())
-			drawList->AddImage(imagePressed->GetRendererID(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintPressed);
+			drawList->AddImage(imagePressed->GetRendererID(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintPressed);
 		else if (ImGui::IsItemHovered())
-			drawList->AddImage(imageHovered->GetRendererID(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintHovered);
+			drawList->AddImage(imageHovered->GetRendererID(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintHovered);
 		else
-			drawList->AddImage(imageNormal->GetRendererID(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
+			drawList->AddImage(imageNormal->GetRendererID(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintNormal);
 	}
 
 	void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)

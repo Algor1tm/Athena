@@ -13,7 +13,7 @@ namespace Athena
 	{
 		m_Path = path;
 
-		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/LogoWhite.png");
+		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Logo/LogoWhite.png");
 
 		m_Icons["Titlebar_CloseWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/CloseWindow.png");
 		m_Icons["Titlebar_MinimizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png");

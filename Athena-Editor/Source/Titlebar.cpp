@@ -102,14 +102,17 @@ namespace Athena
             std::string_view sceneName = m_EditorCtx->ActiveScene->GetSceneName();
             ImGui::SetCursorPos({ menubarOffsetX + 75.f, isMaximized ? -titlebarVerticalOffset : 0.f });
 
+            float rectOffsetY = -5.f; // Do not draw upper rounded corners
+            UI::ShiftCursorY(rectOffsetY);
+
             ImVec2 framePadding = { 15.f, 5.f };
             ImVec2 textSize = ImGui::CalcTextSize(sceneName.data());
-            ImVec2 itemSize = { textSize.x + framePadding.x * 2.f, textSize.y + framePadding.y * 2.f };
+            ImVec2 itemSize = { textSize.x + framePadding.x * 2.f, textSize.y + framePadding.y * 2.f - rectOffsetY };
 
             ImDrawList* list = ImGui::GetWindowDrawList();
             list->AddRect(ImGui::GetCursorScreenPos(), { ImGui::GetCursorScreenPos().x + itemSize.x, ImGui::GetCursorScreenPos().y + itemSize.y }, IM_COL32(61, 61, 61, 255), 5.f);
 
-            UI::ShiftCursor(framePadding.x, framePadding.y);
+            UI::ShiftCursor(framePadding.x, framePadding.y - rectOffsetY);
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32( 200, 200, 200, 255 ));
             ImGui::Text(sceneName.data());
             ImGui::PopStyleColor();

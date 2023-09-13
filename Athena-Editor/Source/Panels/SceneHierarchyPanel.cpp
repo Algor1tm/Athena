@@ -22,7 +22,7 @@ namespace Athena
 {
 	void DrawVec3Property(std::string_view label, Vector3& values, float defaultValues)
 	{
-		UI::Property(label);
+		UI::PropertyRow(label, ImGui::GetFrameHeight());
 
 		ImGui::PushID(label.data());
 
@@ -253,7 +253,7 @@ namespace Athena
 
 		if (UI::TreeNode("Environment") && UI::BeginPropertyTable())
 		{
-			UI::Property("EnvironmentMap");
+			UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
 			{
 				String label;
 				Ref<EnvironmentMap> envMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap;
@@ -285,24 +285,16 @@ namespace Athena
 			String selectedStr = std::to_string(environment->EnvironmentMap->GetResolution());
 			std::string_view selected = selectedStr.data();
 
-			UI::Property("Resolution");
-			if (UI::ComboBox("##Resolution", resolutions, std::size(resolutions), &selected))
+			if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
 			{
 				uint32 resolution = std::atoi(selected.data());
 				environment->EnvironmentMap->SetResolution(resolution);
 			}
 
-			UI::Property("Ambient Intensity");
-			ImGui::SliderFloat("##Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f);
-
-			UI::Property("Environment Map LOD");
-			ImGui::SliderFloat("##Environment Map LOD", &environment->EnvironmentMapLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
-
-			UI::Property("Exposure");
-			ImGui::SliderFloat("##Exposure", &environment->Exposure, 0.001, 10);
-
-			UI::Property("Gamma");
-			ImGui::SliderFloat("##Gamma", &environment->Gamma, 0.000, 10);
+			UI::PropertySlider("Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f);
+			UI::PropertySlider("Environment Map LOD", &environment->EnvironmentMapLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
+			UI::PropertySlider("Exposure", &environment->Exposure, 0.001, 10);
+			UI::PropertySlider("Gamma", &environment->Gamma, 0.000, 10);
 
 			UI::EndPropertyTable();
 			UI::TreePop();
@@ -341,8 +333,7 @@ namespace Athena
 
 			if (UI::BeginPropertyTable())
 			{
-				UI::Property("Material List");
-				UI::ComboBox("##Material List", materials.data(), materials.size(), &m_ActiveMaterial);;
+				UI::PropertyCombo("Material List", materials.data(), materials.size(), &m_ActiveMaterial);
 
 				UI::EndPropertyTable();
 			}
@@ -367,14 +358,11 @@ namespace Athena
 	void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType)
 	{
 		ImGui::PushID(name.data());
-		UI::PropertyImage(name.data());
 		{
 			float imageSize = 45.f;
-
 			Ref<Texture2D> albedoMap = mat->Get(texType);
-			void* rendererID = albedoMap ? albedoMap->GetRendererID() : Renderer::GetWhiteTexture()->GetRendererID();
 
-			if (ImGui::ImageButton("##MaterialMap", rendererID, { imageSize, imageSize }, { 0, 1 }, { 1, 0 }))
+			if (UI::PropertyImage(name.data(), albedoMap ? albedoMap : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
 			{
 				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 				if (!path.empty())
@@ -384,7 +372,7 @@ namespace Athena
 				}
 			}
 			ImGui::SameLine();
-
+			                                                                          
 			bool enableAlbedoMap = mat->IsEnabled(texType);
 			ImGui::Checkbox("Enable", &enableAlbedoMap);
 			mat->Enable(texType, enableAlbedoMap);
@@ -493,8 +481,7 @@ namespace Athena
 				{
 					auto modules = ScriptEngine::GetAvailableModules();
 
-					UI::Property("ScriptName");
-					UI::ComboBox("##ScriptName", modules.data(), modules.size(), &script.Name);
+					UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
 
 					if (!ScriptEngine::ExistsScript(script.Name))
 					{
@@ -507,48 +494,43 @@ namespace Athena
 
 					for (const auto& [name, field] : fieldsDesc)
 					{
-						ImGui::PushID(name.c_str());
-						UI::Property(name.data());
-
 						auto& fieldStorage = fieldMap.at(name);
 						if (field.Type == ScriptFieldType::Int)
 						{
 							int data = fieldStorage.GetValue<int>();
-							if (ImGui::DragInt("##int", &data))
+							if (UI::PropertyDrag(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
 						else if (field.Type == ScriptFieldType::Float)
 						{
 							float data = fieldStorage.GetValue<float>();
-							if (ImGui::DragFloat("##float", &data))
+							if (UI::PropertyDrag(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
 						else if (field.Type == ScriptFieldType::Bool)
 						{
 							bool data = fieldStorage.GetValue<bool>();
-							if (ImGui::Checkbox("##bool", &data))
+							if (UI::PropertyCheckbox(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
 						else if (field.Type == ScriptFieldType::Vector2)
 						{
 							Vector2 data = fieldStorage.GetValue<Vector2>();
-							if (ImGui::DragFloat2("##Vector2", data.Data()))
+							if (UI::PropertyDrag(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
 						else if (field.Type == ScriptFieldType::Vector3)
 						{
 							Vector3 data = fieldStorage.GetValue<Vector3>();
-							if (ImGui::DragFloat3("##Vector3", data.Data()))
+							if (UI::PropertyDrag(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
 						else if (field.Type == ScriptFieldType::Vector4)
 						{
 							Vector4 data = fieldStorage.GetValue<Vector4>();
-							if (ImGui::DragFloat4("##Vector4", data.Data()))
+							if (UI::PropertyDrag(name.c_str(), &data))
 								fieldStorage.SetValue(data);
 						}
-
-						ImGui::PopID();
 					}
 
 					UI::EndPropertyTable();
@@ -586,8 +568,7 @@ namespace Athena
 					std::string_view projTypesStrings[] = { "Orthographic", "Perspective" };
 					std::string_view currentTypeString = typeToStr(camera.GetProjectionType());
 
-					UI::Property("Projection");
-					if(UI::ComboBox("##Projection", projTypesStrings, std::size(projTypesStrings), &currentTypeString))
+					if(UI::PropertyCombo("Projection", projTypesStrings, std::size(projTypesStrings), &currentTypeString))
 					{
 						camera.SetProjectionType(strToType(currentTypeString));
 					}
@@ -597,15 +578,10 @@ namespace Athena
 						auto perspectiveDesc = camera.GetPerspectiveData();
 						bool used = false;
 
-						UI::Property("FOV");
 						float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
-						used = ImGui::SliderFloat("##FOV", &degreesFOV, 0.f, 360.f) || used;
-
-						UI::Property("NearClip");
-						used = ImGui::SliderFloat("##NearClip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
-
-						UI::Property("FarClip");
-						used = ImGui::SliderFloat("##FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
+						used = UI::PropertySlider("FOV", &degreesFOV, 0.f, 360.f) || used;
+						used = UI::PropertySlider("NearClip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
+						used = UI::PropertySlider("FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
 
 						if (used)
 						{
@@ -619,14 +595,9 @@ namespace Athena
 						auto orthoDesc = camera.GetOrthographicData();
 						bool used = false;
 
-						UI::Property("Size");
-						used = ImGui::DragFloat("##Size", &orthoDesc.Size, 0.1f) || used;
-
-						UI::Property("NearClip");
-						used = ImGui::SliderFloat("##NearClip", &orthoDesc.NearClip, -10.f, 0.f) || used;
-
-						UI::Property("FarClip");
-						used = ImGui::SliderFloat("##FarClip", &orthoDesc.FarClip, 0.f, 10.f) || used;
+						used = UI::PropertyDrag("Size", &orthoDesc.Size, 0.1f) || used;
+						used = UI::PropertySlider("NearClip", &orthoDesc.NearClip, -10.f, 0.f) || used;
+						used = UI::PropertySlider("FarClip", &orthoDesc.FarClip, 0.f, 10.f) || used;
 
 						if (used)
 						{
@@ -634,11 +605,8 @@ namespace Athena
 						}
 					}
 
-					UI::Property("Prmiary");
-					ImGui::Checkbox("##Primary", &cameraComponent.Primary);
-
-					UI::Property("FixedAspectRatio");
-					ImGui::Checkbox("##FixedAspectRatio", &cameraComponent.FixedAspectRatio);
+					UI::PropertyCheckbox("Primary", &cameraComponent.Primary);
+					UI::PropertyCheckbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
 
 					UI::EndPropertyTable();
 				}
@@ -648,17 +616,12 @@ namespace Athena
 			{
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Color");
-					ImGui::ColorEdit4("##Color", sprite.Color.Data());
+					UI::PropertyColor4("Color", sprite.Color.Data());
+					UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
 
-					UI::Property("Tiling");
-					ImGui::SliderFloat("##Tiling", &sprite.TilingFactor, 1.f, 20.f);
-
-					UI::PropertyImage("Texture");
 					{
 						float imageSize = 45.f;
-
-						UI::Image(sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
+						UI::PropertyImage("Texture", sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
 
 						if (ImGui::BeginDragDropTarget())
 						{
@@ -711,14 +674,9 @@ namespace Athena
 			{
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Color");
-					ImGui::ColorEdit4("##Color", circle.Color.Data());
-
-					UI::Property("Thickness");
-					ImGui::SliderFloat("##Thickness", &circle.Thickness, 0.f, 1.f);
-
-					UI::Property("Fade");
-					ImGui::SliderFloat("##Fade", &circle.Fade, 0.f, 1.f);
+					UI::PropertyColor4("Color", circle.Color.Data());
+					UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
+					UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
 
 					UI::EndPropertyTable();
 				}
@@ -758,14 +716,12 @@ namespace Athena
 					std::string_view bodyTypesStrings[] = { "Static", "Dynamic", "Kinematic"};
 					std::string_view currentBodyType = typeToStr(rb2d.Type);
 
-					UI::Property("BodyType");
-					if (UI::ComboBox("##BodyType", bodyTypesStrings, std::size(bodyTypesStrings), &currentBodyType))
+					if (UI::PropertyCombo("BodyType", bodyTypesStrings, std::size(bodyTypesStrings), &currentBodyType))
 					{
 						rb2d.Type = strToType(currentBodyType);
 					}
 
-					UI::Property("Fixed Rotation");
-					ImGui::Checkbox("##FixedRotation", &rb2d.FixedRotation);
+					UI::PropertyCheckbox("Fixed Rotation", &rb2d.FixedRotation);
 					
 					UI::EndPropertyTable();
 				}
@@ -776,23 +732,12 @@ namespace Athena
 			{
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Offset");
-					ImGui::DragFloat2("##Offset", bc2d.Offset.Data(), 0.1f);
-
-					UI::Property("Size");
-					ImGui::DragFloat2("##Size", bc2d.Size.Data(), 0.1f);
-
-					UI::Property("Density");
-					ImGui::SliderFloat("##Density", &bc2d.Density, 0.f, 1.f);
-
-					UI::Property("Friction");
-					ImGui::SliderFloat("##Friction", &bc2d.Friction, 0.f, 1.f);
-
-					UI::Property("Restitution");
-					ImGui::SliderFloat("##Restitution", &bc2d.Restitution, 0.f, 1.f);
-
-					UI::Property("RestitutionThreshold");
-					ImGui::SliderFloat("##RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
+					UI::PropertyDrag("Offset", bc2d.Offset.Data(), 0.1f);
+					UI::PropertyDrag("Size", bc2d.Size.Data(), 0.1f);
+					UI::PropertySlider("Density", &bc2d.Density, 0.f, 1.f);
+					UI::PropertySlider("Friction", &bc2d.Friction, 0.f, 1.f);
+					UI::PropertySlider("Restitution", &bc2d.Restitution, 0.f, 1.f);
+					UI::PropertySlider("RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
 
 					UI::EndPropertyTable();
 				}
@@ -802,23 +747,12 @@ namespace Athena
 			{
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Offset");
-					ImGui::DragFloat2("##Offset", cc2d.Offset.Data(), 0.1f);
-
-					UI::Property("Radius");
-					ImGui::DragFloat("##Radius", &cc2d.Radius, 0.1f);
-
-					UI::Property("Density");
-					ImGui::SliderFloat("##Density", &cc2d.Density, 0.f, 1.f);
-
-					UI::Property("Friction");
-					ImGui::SliderFloat("##Friction", &cc2d.Friction, 0.f, 1.f);
-
-					UI::Property("Restitution");
-					ImGui::SliderFloat("##Restitution", &cc2d.Restitution, 0.f, 1.f);
-
-					UI::Property("RestitutionThreshold");
-					ImGui::SliderFloat("##RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
+					UI::PropertyDrag("Offset", &cc2d.Offset, 0.1f);
+					UI::PropertyDrag("Radius", &cc2d.Radius, 0.1f);
+					UI::PropertySlider("Density", &cc2d.Density, 0.f, 1.f);
+					UI::PropertySlider("Friction", &cc2d.Friction, 0.f, 1.f);
+					UI::PropertySlider("Restitution", &cc2d.Restitution, 0.f, 1.f);
+					UI::PropertySlider("RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
 
 					UI::EndPropertyTable();
 				}
@@ -830,11 +764,8 @@ namespace Athena
 				{
 					String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
 
-					UI::Property("Mesh");
-					ImGui::Text(meshFilename.c_str());
-
-					UI::Property("Hide");
-					ImGui::Checkbox("##Hide", &meshComponent.Hide);
+					UI::PropertyText("Mesh", meshFilename.c_str());
+					UI::PropertyCheckbox("Hide", &meshComponent.Hide);
 
 					UI::EndPropertyTable();
 
@@ -853,19 +784,17 @@ namespace Athena
 							for (uint32 i = 0; i < animations.size(); ++i)
 								animNames[i] = animations[i]->GetName();
 
-							UI::Property("Animation List");
-							if (UI::ComboBox("##Animation List", animNames.data(), animNames.size(), &selectedAnim))
+							if (UI::PropertyCombo("Animation List", animNames.data(), animNames.size(), &selectedAnim))
 							{
 								uint32 index = std::distance(animNames.begin(), std::find(animNames.begin(), animNames.end(), selectedAnim));
 								Ref<Animation> anim = animations[index];
 								animator->PlayAnimation(anim);
 							}
 
-							UI::Property("Play");
 							{ 
 								bool playNow = active == animator->GetCurrentAnimation();
 								bool check = playNow;
-								ImGui::Checkbox("##Play", &check); 
+								UI::PropertyCheckbox("Play", &check);
 
 								if (check && !playNow)
 									animator->PlayAnimation(active);
@@ -897,11 +826,8 @@ namespace Athena
 			{
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Color");
-					ImGui::ColorEdit3("##Color", lightComponent.Color.Data());
-
-					UI::Property("Intensity");
-					ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+					UI::PropertyColor3("Color", lightComponent.Color.Data());
+					UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
 
 					UI::EndPropertyTable();
 				}
@@ -909,21 +835,12 @@ namespace Athena
 
 		DrawComponent<PointLightComponent>(entity, "PointLight", [](PointLightComponent& lightComponent)
 			{
-				float height = ImGui::GetFrameHeight();
-
 				if (UI::BeginPropertyTable())
 				{
-					UI::Property("Color");
-					ImGui::ColorEdit3("##Color", lightComponent.Color.Data());
-
-					UI::Property("Intensity");
-					ImGui::DragFloat("##Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
-
-					UI::Property("Radius");
-					ImGui::DragFloat("##Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
-
-					UI::Property("FallOff");
-					ImGui::DragFloat("##FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
+					UI::PropertyColor3("Color", lightComponent.Color.Data());
+					UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+					UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
+					UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
 
 					UI::EndPropertyTable();
 				}

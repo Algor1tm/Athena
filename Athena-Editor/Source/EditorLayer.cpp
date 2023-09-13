@@ -128,13 +128,15 @@ namespace Athena
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.0f, 200.0f, 0.0f, 0.0f });
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetTheme().Titlebar);
+        //ImGui::PushStyleColor(ImGuiCol_Border, UI::GetTheme().Accent);
 
         ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
 
+        //ImGui::PopStyleColor();
         ImGui::PopStyleColor();
         ImGui::PopStyleVar(3);
 
@@ -254,6 +256,7 @@ namespace Athena
                                 auto& sprite = target.GetComponent<SpriteComponent>();
                                 sprite.Texture = Texture2D::Create(FilePath(path));
                                 sprite.Color = LinearColor::White;
+                                m_EditorCtx->SelectedEntity = target;
                             }
                         }
                     }

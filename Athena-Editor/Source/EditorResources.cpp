@@ -1,5 +1,7 @@
 #include "EditorResources.h"
 
+#include "Athena/Renderer/Renderer.h"
+
 
 namespace Athena
 {
@@ -35,6 +37,12 @@ namespace Athena
 
 	Ref<Texture2D> EditorResources::GetIcon(std::string_view name)
 	{
+		if (m_Icons.find(name) == m_Icons.end())
+		{
+			ATN_CORE_WARN("[EditorResources] Failed to get icon with name '{}'", name);
+			return Renderer::GetWhiteTexture();
+		}
+
 		return m_Icons.at(name);
 	}
 }

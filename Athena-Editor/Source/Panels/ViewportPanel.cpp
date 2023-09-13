@@ -38,10 +38,7 @@ namespace Athena
         m_Description.Size = { viewportX, viewportY };
 
         void* texID = m_Description.AttachedFramebuffer->GetColorAttachmentRendererID(m_Description.AttachmentIndex);
-        if (Renderer::GetAPI() == Renderer::API::OpenGL)        // TODO: make better
-            ImGui::Image(texID, ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y), { 0, 1 }, { 1, 0 });
-        else
-            ImGui::Image(texID, ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
+        ImGui::Image(texID, ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y), { 0, 1 }, { 1, 0 });
 
         if (ImGui::BeginDragDropTarget())
         {

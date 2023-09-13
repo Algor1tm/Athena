@@ -47,17 +47,10 @@ namespace Athena::UI
 		UI::TextCentered("Style");
 		if (UI::BeginPropertyTable())
 		{
-			UI::Property("FrameRounding");
-			ImGui::DragFloat("##FrameRounding", &theme.Style.FrameRounding, 0.05f);
-
-			UI::Property("FrameBorderSize");
-			ImGui::DragFloat("##FrameBorderSize", &theme.Style.FrameBorderSize, 0.05f);
-
-			UI::Property("ScrollbarSize");
-			ImGui::DragFloat("##ScrollbarSize", &theme.Style.ScrollbarSize, 0.05f);
-
-			UI::Property("WindowRounding");
-			ImGui::DragFloat("##WindowRounding", &theme.Style.WindowRounding, 0.05f);
+			UI::PropertyDrag("FrameRounding", &theme.Style.FrameRounding, 0.05f);
+			UI::PropertyDrag("FrameBorderSize", &theme.Style.FrameBorderSize, 0.05f);
+			UI::PropertyDrag("ScrollbarSize", &theme.Style.ScrollbarSize, 0.05f);
+			UI::PropertyDrag("WindowRounding", &theme.Style.WindowRounding, 0.05f);
 
 			UI::EndPropertyTable();
 		}
@@ -68,64 +61,52 @@ namespace Athena::UI
 		{
 			ImVec4 color4;
 
-			UI::Property("Titlebar");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Titlebar);
-			ImGui::ColorEdit4("##Titlebar", &color4.x);
+			UI::PropertyColor4("Titlebar", &color4.x);
 			theme.Titlebar = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("Background");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Background);
-			ImGui::ColorEdit4("##Background", &color4.x);
+			UI::PropertyColor4("Background", &color4.x);
 			theme.Background = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("BackgroundDark");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.BackgroundDark);
-			ImGui::ColorEdit4("##BackgroundDark", &color4.x);
+			UI::PropertyColor4("BackgroundDark", &color4.x);
 			theme.BackgroundDark = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("BackgroundPopup");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.BackgroundPopup);
-			ImGui::ColorEdit4("##BackgroundPopup", &color4.x);
+			UI::PropertyColor4("BackgroundPopup", &color4.x);
 			theme.BackgroundPopup = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("Accent");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Accent);
-			ImGui::ColorEdit4("##Accent", &color4.x);
+			UI::PropertyColor4("Accent", &color4.x);
 			theme.Accent = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("Text");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Text);
-			ImGui::ColorEdit4("##Text", &color4.x);
+			UI::PropertyColor4("Text", &color4.x);
 			theme.Text = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("FrameBg");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.FrameBg);
-			ImGui::ColorEdit4("##FrameBg", &color4.x);
+			UI::PropertyColor4("FrameBg", &color4.x);
 			theme.FrameBg = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("FrameBgActive");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.FrameBgActive);
-			ImGui::ColorEdit4("##FrameBgActive", &color4.x);
+			UI::PropertyColor4("FrameBgActive", &color4.x);
 			theme.FrameBgActive = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("Button");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Button);
-			ImGui::ColorEdit4("##Button", &color4.x);
+			UI::PropertyColor4("Button", &color4.x);
 			theme.Button = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("ButtonActive");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.ButtonActive);
-			ImGui::ColorEdit4("##ButtonActive", &color4.x);
+			UI::PropertyColor4("ButtonActive", &color4.x);
 			theme.ButtonActive = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("Tab");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Tab);
-			ImGui::ColorEdit4("##Tab", &color4.x);
+			UI::PropertyColor4("Tab", &color4.x);
 			theme.Tab = ImGui::ColorConvertFloat4ToU32(color4);
 
-			UI::Property("TabActive");
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.TabActive);
-			ImGui::ColorEdit4("##TabActive", &color4.x);
+			UI::PropertyColor4("TabActive", &color4.x);
 			theme.TabActive = ImGui::ColorConvertFloat4ToU32(color4);
 
 			UI::EndPropertyTable();

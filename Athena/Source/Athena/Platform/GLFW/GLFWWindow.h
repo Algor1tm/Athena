@@ -59,7 +59,7 @@ namespace Athena
 			{
 				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 				if (maximized)
-					data.Mode = WindowMode::Minimized;
+					data.Mode = WindowMode::Maximized;
 				else
 					data.Mode = WindowMode::Default;
 			});

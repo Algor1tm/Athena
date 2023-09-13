@@ -44,7 +44,9 @@ namespace Athena
         {
             const int logoWidth = 48;
             const int logoHeight = 48;
-            const ImVec2 logoOffset(16.0f + windowPadding.x, 5.0f + windowPadding.y + titlebarVerticalOffset);
+            ImVec2 logoOffset(10.0f + windowPadding.x, 5.0f + windowPadding.y + titlebarVerticalOffset);
+            if (isMaximized)
+                logoOffset.y += 3.f;
             const ImVec2 logoRectStart = { ImGui::GetItemRectMin().x + logoOffset.x, ImGui::GetItemRectMin().y + logoOffset.y };
             const ImVec2 logoRectMax = { logoRectStart.x + logoWidth, logoRectStart.y + logoHeight };
             fgDrawList->AddImage(EditorResources::GetIcon("Logo")->GetRendererID(), logoRectStart, logoRectMax, { 0, 1 }, { 1, 0 });
@@ -66,14 +68,15 @@ namespace Athena
                 m_Hovered = true; // Account for the top-most pixels which don't register
         }
 
+        float menubarOffsetX = 0.f;
         // Draw Menubar
         if (m_MenubarCallback)
         {
             ImGui::SuspendLayout();
             {
                 ImGui::SetItemAllowOverlap();
-                const float logoHorizontalOffset = 16.0f * 2.0f + 48.0f + windowPadding.x;
-                ImGui::SetCursorPos(ImVec2(logoHorizontalOffset, 6.0f + titlebarVerticalOffset));
+                const float logoHorizontalOffset = 14.0f * 2.0f + 48.0f + windowPadding.x;
+                ImGui::SetCursorPos(ImVec2(logoHorizontalOffset, 4.0f ));
 
                 const ImRect menuBarRect = { ImGui::GetCursorPos(), { ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x, ImGui::GetFrameHeightWithSpacing() } };
 
@@ -83,6 +86,7 @@ namespace Athena
                     m_MenubarCallback();
                 }
 
+                menubarOffsetX = ImGui::GetCursorPos().x;
                 UI::EndMenubar();
                 ImGui::EndGroup();
 
@@ -93,14 +97,32 @@ namespace Athena
             ImGui::ResumeLayout();
         }
 
+        // Scene name
         {
-            // Centered Window title
+            std::string_view sceneName = m_EditorCtx->ActiveScene->GetSceneName();
+            ImGui::SetCursorPos({ menubarOffsetX + 75.f, isMaximized ? -titlebarVerticalOffset : 0.f });
+
+            ImVec2 framePadding = { 15.f, 5.f };
+            ImVec2 textSize = ImGui::CalcTextSize(sceneName.data());
+            ImVec2 itemSize = { textSize.x + framePadding.x * 2.f, textSize.y + framePadding.y * 2.f };
+
+            ImDrawList* list = ImGui::GetWindowDrawList();
+            list->AddRect(ImGui::GetCursorScreenPos(), { ImGui::GetCursorScreenPos().x + itemSize.x, ImGui::GetCursorScreenPos().y + itemSize.y }, IM_COL32(61, 61, 61, 255), 5.f);
+
+            UI::ShiftCursor(framePadding.x, framePadding.y);
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32( 200, 200, 200, 255 ));
+            ImGui::Text(sceneName.data());
+            ImGui::PopStyleColor();
+        }
+        
+        // Centered Window title
+        {
             ImVec2 currentCursorPos = ImGui::GetCursorPos();
             ImVec2 textSize = ImGui::CalcTextSize(m_Name.c_str());
             ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() * 0.5f - textSize.x * 0.5f, 2.0f + windowPadding.y + 2.0f));
 
             UI::PushFont(UI::Fonts::Default22);
-            ImGui::Text("%s", m_Name.c_str()); // Draw title
+            ImGui::Text("%s", m_Name.c_str());
             UI::PopFont();
 
             ImGui::SetCursorPos(currentCursorPos);
@@ -108,18 +130,18 @@ namespace Athena
 
 
         // Window buttons
-        const ImColor buttonDefault = IM_COL32(192, 192, 192, 255);
         const ImU32 buttonColN = UI::MultiplyColorByScalar(UI::GetTheme().Text, 0.8f);
         const ImU32 buttonColH = UI::MultiplyColorByScalar(UI::GetTheme().Text, 1.2f);
         const ImU32 buttonColP = IM_COL32(128, 128, 128, 255);
         const float buttonWidth = 14.0f;
         const float buttonHeight = 14.0f;
+        const float paddingY = isMaximized ? 16.f : 8.f;
 
         auto& window = Application::Get().GetWindow();
 
         // Minimize Button
         ImGui::Spring();
-        UI::ShiftCursorY(8.0f);
+        UI::ShiftCursorY(paddingY);
         {
             if (ImGui::InvisibleButton("Minimize", ImVec2(buttonWidth, buttonHeight)))
             {
@@ -132,7 +154,7 @@ namespace Athena
 
         // Maximize Button
         ImGui::Spring(-1.0f, 17.0f);
-        UI::ShiftCursorY(8.0f);
+        UI::ShiftCursorY(paddingY);
         {
             if (ImGui::InvisibleButton("Maximize", ImVec2(buttonWidth, buttonHeight)))
             {
@@ -147,14 +169,14 @@ namespace Athena
 
         // Close Button
         ImGui::Spring(-1.0f, 15.0f);
-        UI::ShiftCursorY(8.0f);
+        UI::ShiftCursorY(paddingY);
         {
             if (ImGui::InvisibleButton("Close", ImVec2(buttonWidth, buttonHeight)))
             {
                 Application::Get().Close();
             }
 
-            UI::ButtonImage(EditorResources::GetIcon("Titlebar_CloseWindow"), buttonDefault, UI::MultiplyColorByScalar(buttonDefault, 1.4f), buttonColP);
+            UI::ButtonImage(EditorResources::GetIcon("Titlebar_CloseWindow"), buttonColN, buttonColH, buttonColP);
         }
 
         ImGui::Spring(-1.0f, 18.0f);

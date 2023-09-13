@@ -13775,12 +13775,26 @@ const ImGuiPayload* ImGui::AcceptDragDropPayload(const char* type, ImGuiDragDrop
     g.DragDropAcceptIdCurr = g.DragDropTargetId;
     g.DragDropAcceptIdCurrRectSurface = r_surface;
     //IMGUI_DEBUG_LOG("AcceptDragDropPayload(): %08X: accept\n", g.DragDropTargetId);
+    
+    // NOTE: added by Athena
+    bool isTargetWindow = true;
+    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Min.x == window->ContentRegionRect.Min.x;
+    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Min.y == window->ContentRegionRect.Min.y;
+    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Max.x == window->ContentRegionRect.Max.x;
+    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Max.y == window->ContentRegionRect.Max.y;
+
+    ImVec2 offset = { 3.5f, 3.5f };
+    if (isTargetWindow)
+    {
+        offset.x = window->WindowPadding.x == 0.f ? -1.5f : 3.5f;
+        offset.y = window->WindowPadding.y == 0.f ? -1.5f : 3.5f;
+    }
 
     // Render default drop visuals
     payload.Preview = was_accepted_previously;
     flags |= (g.DragDropSourceFlags & ImGuiDragDropFlags_AcceptNoDrawDefaultRect); // Source can also inhibit the preview (useful for external sources that live for 1 frame)
     if (!(flags & ImGuiDragDropFlags_AcceptNoDrawDefaultRect) && payload.Preview)
-        window->DrawList->AddRect(r.Min - ImVec2(3.5f,3.5f), r.Max + ImVec2(3.5f, 3.5f), GetColorU32(ImGuiCol_DragDropTarget), 0.0f, 0, 2.0f);
+        window->DrawList->AddRect(r.Min - offset, r.Max + offset, GetColorU32(ImGuiCol_DragDropTarget), 0.0f, 0, 2.0f);
 
     g.DragDropAcceptFrameCount = g.FrameCount;
     payload.Delivery = was_accepted_previously && !IsMouseDown(g.DragDropMouseButton); // For extern drag sources affecting OS window focus, it's easier to just test !IsMouseDown() instead of IsMouseReleased()

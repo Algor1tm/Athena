@@ -112,9 +112,9 @@ namespace Athena::UI
 		ImGui::EndTable();
 	}
 
-	void Property(std::string_view label, float height)
+	void PropertyRow(std::string_view label, float height)
 	{
-		static float offset = 15.f;
+		const float offset = 15.f;
 
 		ImGui::TableNextRow(ImGuiTableRowFlags_None, height + offset);
 
@@ -128,16 +128,152 @@ namespace Athena::UI
 		ShiftCursorY(offset / 2.f);
 	}
 
-	void Property(std::string_view label)
+	bool PropertyDrag(std::string_view label, float* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
 	{
 		float height = ImGui::GetFrameHeight();
-		Property(label, height);
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::DragFloat("##Property", v, speed, min, max, format, flags);
+		ImGui::PopID();
+		return active;
 	}
 
-	void PropertyImage(std::string_view label) 
+	bool PropertyDrag(std::string_view label, Vector2* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
 	{
-		const float height = 50.f;
-		Property(label, height);
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::DragFloat2("##Property", v->Data(), speed, min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyDrag(std::string_view label, Vector3* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::DragFloat3("##Property", v->Data(), speed, min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyDrag(std::string_view label, Vector4* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::DragFloat4("##Property", v->Data(), speed, min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyDrag(std::string_view label, int* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::DragInt("##Property", v, speed, min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertySlider(std::string_view label, float* v, float min, float max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::SliderFloat("##Property", v, min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertySlider(std::string_view label, Vector2* v, float min, float max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::SliderFloat2("##Property", v->Data(), min, max, format, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyColor3(std::string_view label, float color[3], ImGuiColorEditFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::ColorEdit3("##Property", color, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyColor4(std::string_view label, float color[4], ImGuiColorEditFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::ColorEdit4("##Property", color, flags);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyCheckbox(std::string_view label, bool* v)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::Checkbox("##Property", v);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyCombo(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = UI::ComboBox("##Property", elems, elemsNum, selectedElem);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyCombo(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = UI::ComboBox("##Property", elems, elemsNum, selectedElem);
+		ImGui::PopID();
+		return active;
+	}
+
+	bool PropertyImage(std::string_view label, Ref<Texture2D> tex, ImVec2 size, float frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
+	{
+		PropertyRow(label, size.y + 5.f);
+
+		bool pressed = ImGui::ImageButton(tex->GetRendererID(), size, { 0, 1 }, { 1, 0 }, frame_padding, bg_col, tint_col);
+		return pressed;
+	}
+
+	void PropertyText(std::string_view label, std::string_view v)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::Text(v.data());
 	}
 
 	bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem)
@@ -216,6 +352,44 @@ namespace Athena::UI
 	void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 	{
 		ImGui::Image(image->GetRendererID(), size, { 0, 1 }, { 1, 0 }, tint_col, border_col);
+	}
+
+	bool ButtonCentered(std::string_view label, const ImVec2& size)
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
+		float avail = ImGui::GetContentRegionAvail().x;
+
+		float off = (avail - actualSize) * 0.5f;
+		if (off > 0.0f)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+		return ImGui::Button(label.data(), size);
+	}
+
+	void TextCentered(std::string_view label)
+	{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
+		float avail = ImGui::GetContentRegionAvail().x;
+
+		float off = (avail - actualSize) * 0.5f;
+		if (off > 0.0f)
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+		return ImGui::Text(label.data());
+	}
+
+	void InvisibleItem(std::string_view strID, ImVec2 itemSize)
+	{
+		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		const ImGuiID id = window->GetID(strID.data());
+		ImVec2 size = ImGui::CalcItemSize(itemSize, 0.0f, 0.0f);
+		const ImRect bb(window->DC.CursorPos, { window->DC.CursorPos.x + size.x, window->DC.CursorPos.y + size.y });
+		ImGui::ItemSize(size);
+		ImGui::ItemAdd(bb, id);
 	}
 
 	bool BeginMenubar(const ImRect& barRectangle)
@@ -297,43 +471,5 @@ namespace Athena::UI
 		window->DC.IsSameLine = false;
 		window->DC.NavLayerCurrent = ImGuiNavLayer_Main;
 		window->DC.MenuBarAppending = false;
-	}
-
-	bool ButtonCentered(std::string_view label, const ImVec2& size)
-	{
-		ImGuiStyle& style = ImGui::GetStyle();
-
-		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
-		float avail = ImGui::GetContentRegionAvail().x;
-
-		float off = (avail - actualSize) * 0.5f;
-		if (off > 0.0f)
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
-		return ImGui::Button(label.data(), size);
-	}
-
-	void TextCentered(std::string_view label)
-	{
-		ImGuiStyle& style = ImGui::GetStyle();
-
-		float actualSize = ImGui::CalcTextSize(label.data()).x + style.FramePadding.x * 2.0f;
-		float avail = ImGui::GetContentRegionAvail().x;
-
-		float off = (avail - actualSize) * 0.5f;
-		if (off > 0.0f)
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
-		return ImGui::Text(label.data());
-	}
-
-	void InvisibleItem(std::string_view strID, ImVec2 itemSize)
-	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
-		const ImGuiID id = window->GetID(strID.data());
-		ImVec2 size = ImGui::CalcItemSize(itemSize, 0.0f, 0.0f);
-		const ImRect bb(window->DC.CursorPos, { window->DC.CursorPos.x + size.x, window->DC.CursorPos.y + size.y });
-		ImGui::ItemSize(size);
-		ImGui::ItemAdd(bb, id);
 	}
 }

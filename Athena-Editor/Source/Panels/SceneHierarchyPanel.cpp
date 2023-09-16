@@ -636,7 +636,7 @@ namespace Athena
 								}
 								else
 								{
-									ATN_CORE_ERROR("Invalid Texture format");
+									ATN_ERROR_TAG("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
 								}
 							}
 							ImGui::EndDragDropTarget();
@@ -651,11 +651,6 @@ namespace Athena
 							{
 								sprite.Texture = Texture2D::Create(path);
 								sprite.Color = LinearColor::White;
-								ATN_CORE_INFO("Successfuly load Texture from '{0}'", path.string());
-							}
-							else
-							{
-								ATN_CORE_ERROR("Invalid filepath to load Texture '{0}'", path.string());
 							}
 						}
 

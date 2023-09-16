@@ -23,7 +23,7 @@ namespace Athena
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		ATN_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+		ATN_CORE_ERROR_TAG_("GLFWWindow", "Error({0}) : {1}", error, description);
 	}
 
 	static void SetEventCallbacks(GLFWwindow* windowHandle)
@@ -165,8 +165,8 @@ namespace Athena
 		if (m_WindowCount == 0)
 		{
 			int success = glfwInit();
-			ATN_CORE_ASSERT(success, "Could not intialize GLFW");
-			ATN_CORE_INFO("Init GLFW");
+			ATN_CORE_VERIFY(success, "Could not intialize GLFW");
+			ATN_CORE_INFO_TAG("GLFWWindow", "Init GLFW");
 
 			glfwWindowHint(GLFW_TITLEBAR, info.CustomTitlebar ? GLFW_FALSE : GLFW_TRUE);
 
@@ -183,7 +183,7 @@ namespace Athena
 
 		m_WindowCount++;
 
-		ATN_CORE_INFO("Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
+		ATN_CORE_INFO_TAG("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
 		glfwSetWindowAttrib(hWnd, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
@@ -206,12 +206,12 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ERROR("GLFWwindow: failed to load icon from {}!", info.Icon);
+				ATN_CORE_ERROR_TAG_("GLFWWindow", "failed to load icon from {}!", info.Icon);
 			}
 		}
 		else if(!info.Icon.empty())
 		{
-			ATN_CORE_ERROR("GLFWwindow: invalid filepath for icon '{}'!", info.Icon);
+			ATN_CORE_ERROR_TAG_("GLFWWindow", "invalid filepath for icon '{}'!", info.Icon);
 		}
 
 		return window;
@@ -222,12 +222,12 @@ namespace Athena
 		glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_WindowHandle));
 		--m_WindowCount;
 
-		ATN_CORE_INFO("Shutdown GLFW Window '{0}'", m_Data.Title);
+		ATN_CORE_INFO_TAG_("GLFWWindow", "Destroy Window '{0}'", m_Data.Title);
 
 		if (m_WindowCount <= 0)
 		{
 			glfwTerminate();
-			ATN_CORE_INFO("Shutdown GLFW");
+			ATN_CORE_INFO_TAG("GLFWWindow", "Shutdown GLFW");
 		}
 	}
 
@@ -433,7 +433,7 @@ namespace Athena
 		case 348: return Keyboard::Menu;
 		}
 
-		ATN_CORE_ERROR("Failed to match GLFW KeyCode with Athena KeyCode '{0}'", glfwKeyCode);
+		ATN_CORE_ERROR_TAG_("GLFWWindow", "Failed to match GLFW KeyCode with Athena KeyCode '{0}'", glfwKeyCode);
 		return Keyboard::Space;
 	}
 
@@ -448,7 +448,7 @@ namespace Athena
 		case 4: return Mouse::XButton2;
 		}
 
-		ATN_CORE_ERROR("Failed to match GLFW MouseCode with Athena MouseCode '{0}'", glfwMouseCode);
+		ATN_CORE_ERROR_TAG_("GLFWWindow", "Failed to match GLFW MouseCode with Athena MouseCode '{0}'", glfwMouseCode);
 		return Mouse::XButton1;
 	}
 }

@@ -721,7 +721,7 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
         m_EditorCtx->SelectedEntity = {};
 
-        ATN_CORE_TRACE("Successfully created new scene");
+        ATN_INFO_TAG("EditorLayer", "Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
@@ -733,14 +733,14 @@ namespace Athena
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.string());
+            ATN_ERROR_TAG_("EditorLayer", "Invalid filepath to save Scene '{}'", filepath.string());
     }
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
         SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string());
+        ATN_INFO_TAG_("EditorLayer", "Successfully saved Scene into '{}'", path.string());
     }
 
     void EditorLayer::OpenScene()
@@ -752,7 +752,7 @@ namespace Athena
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.string());
+            ATN_ERROR_TAG_("EditorLayer", "Invalid filepath to loaded Scene '{}'", filepath.string());
     }
 
     void EditorLayer::OpenScene(const FilePath& path)
@@ -772,11 +772,11 @@ namespace Athena
             m_EditorCtx->ActiveScene = newScene;
             m_EditorCtx->SelectedEntity = {};
 
-            ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
+            ATN_INFO_TAG_("EditorLayer", "Successfully load Scene from '{}'", path.string().data());
         }
         else
         {
-            ATN_CORE_ERROR("Failed to load Scene from '{0}'", path.string().data());
+            ATN_ERROR_TAG_("EditorLayer", "Failed to load Scene from '{}'", path.string().data());
         }
     }
 }

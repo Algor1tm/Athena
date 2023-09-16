@@ -65,7 +65,7 @@ namespace Athena
 				}
 				else
 				{
-					ATN_CORE_WARN("Failed to load texture at {}", path);
+					ATN_CORE_WARN_TAG_("StaticMesh", "Invalid texture filepath '{}'", path);
 				}
 			}
 		}
@@ -227,7 +227,7 @@ namespace Athena
 						}
 						else if (k == ShaderConstants::MAX_NUM_BONES_PER_VERTEX - 1)
 						{
-							ATN_CORE_WARN("Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+							ATN_CORE_WARN_TAG_("StaticMesh", "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
 								boneID, weight);
 						}
 					}
@@ -351,7 +351,7 @@ namespace Athena
 
 		if (aianimation->mNumChannels > ShaderConstants::MAX_NUM_BONES)
 		{
-			ATN_CORE_ERROR("Animation '{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
+			ATN_CORE_ERROR_TAG_("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
 		}
 
 		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
@@ -429,13 +429,16 @@ namespace Athena
 		if (aiscene == nullptr)
 		{
 			const char* error = aiGetErrorString();
-			ATN_CORE_ERROR("Importer3D Error: {0}", error);
+			ATN_CORE_ERROR_TAG_("StaticMesh", "Failed to load mesh from '{}'", path);
+			ATN_CORE_INFO("Error: {}", error);
 			return nullptr;
 		}
 
 		Ref<StaticMesh> result = CreateRef<StaticMesh>();
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
+
+		ATN_CORE_WARN_TAG_("StaticMesh", "Create static mesh from '{}'", path);
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
 		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());

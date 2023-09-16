@@ -210,7 +210,7 @@ namespace Athena
 	{
 		if (entity == GetRootEntity())
 		{
-			ATN_CORE_WARN("Cannot duplicate Root Entity!");
+			ATN_CORE_WARN_TAG("Scene", "Cannot duplicate Root Entity!");
 			return {};
 		}
 
@@ -244,7 +244,7 @@ namespace Athena
 	{
 		if (child == GetRootEntity())
 		{
-			ATN_CORE_WARN("Attempt to set parent of scene root!");
+			ATN_CORE_WARN_TAG("Scene", "Attempt to set parent of scene root!");
 			return;
 		}
 
@@ -266,7 +266,7 @@ namespace Athena
 
 	Entity Scene::GetEntityByUUID(UUID uuid)
 	{
-		ATN_CORE_ASSERT(m_EntityMap.find(uuid) != m_EntityMap.end());
+		ATN_CORE_VERIFY(m_EntityMap.find(uuid) != m_EntityMap.end());
 
 		return { m_EntityMap.at(uuid), this };
 	}

@@ -89,13 +89,13 @@ namespace Athena
 
 				if (NULL == buffer)
 				{
-					ATN_CORE_ERROR("Platform::GetSystemInfo: Allocation failure\n");
+					ATN_CORE_ERROR_TAG("Platform", "GetSystemInfo allocation failure\n");
 					return;
 				}
 			}
 			else
 			{
-				ATN_CORE_ERROR("Platform::GetSystemInfo: {}", GetLastError());
+				ATN_CORE_ERROR_TAG_("Platform", "GetSystemInfo: {}", GetLastError());
 				return;
 			}
 		}

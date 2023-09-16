@@ -26,7 +26,7 @@ namespace Athena
 		}
 		
 		if(!loaded)
-			ATN_CORE_ERROR("[ImGuiLayer] Failed to load bold UI font!");
+			ATN_CORE_ERROR_TAG_("ImGuiLayer", "Failed to load UI font '{}'!", path);
 
 		return font;
 	}
@@ -161,9 +161,8 @@ namespace Athena
 
 		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
 
-		ATN_CORE_INFO("Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
+		ATN_CORE_INFO_TAG_("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
-		ATN_CORE_INFO("");
 
 
 		const FilePath& resources = app.GetEngineResourcesPath();
@@ -180,8 +179,7 @@ namespace Athena
 		m_ImGuiImpl->Shutdown();
 		ImGui::DestroyContext();
 
-		ATN_CORE_INFO("");
-		ATN_CORE_INFO("Shutdown ImGui");
+		ATN_CORE_INFO_TAG("ImGuiLayer", "Shutdown ImGui");
 	}
 
 	void ImGuiLayer::OnEvent(Event& event)

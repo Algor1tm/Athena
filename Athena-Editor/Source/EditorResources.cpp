@@ -39,7 +39,7 @@ namespace Athena
 	{
 		if (m_Icons.find(name) == m_Icons.end())
 		{
-			ATN_CORE_WARN("[EditorResources] Failed to get icon with name '{}'", name);
+			ATN_WARN_TAG_("EditorResources", "Failed to get icon with name '{}'", name);
 			return Renderer::GetWhiteTexture();
 		}
 

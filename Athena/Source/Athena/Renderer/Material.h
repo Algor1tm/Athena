@@ -115,7 +115,7 @@ namespace Athena
 		case MaterialUniform::ROUGHNESS: m_ShaderData.Roughness = value; break;
 		case MaterialUniform::METALNESS: m_ShaderData.Metalness = value; break;
 		case MaterialUniform::EMISSION: m_ShaderData.Emission = value; break;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Set<float>");
+		default: ATN_CORE_ERROR_TAG("Material", "Invalid uniform in Material::Set<float>");
 		}
 	}
 
@@ -125,7 +125,7 @@ namespace Athena
 		switch (uniform)
 		{
 		case MaterialUniform::ALBEDO: m_ShaderData.Albedo = value; break;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Set<Vector3>");
+		default: ATN_CORE_ERROR_TAG("Material", "Invalid uniform in Material::Set<Vector3>");
 		}
 	}
 
@@ -137,7 +137,7 @@ namespace Athena
 		case MaterialUniform::ROUGHNESS: return m_ShaderData.Roughness;
 		case MaterialUniform::METALNESS: return m_ShaderData.Metalness;
 		case MaterialUniform::EMISSION:  return m_ShaderData.Emission;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Get<float>");
+		default: ATN_CORE_ERROR_TAG("Material", "Invalid uniform in Material::Get<float>");
 		}
 
 		return 0.f;
@@ -149,7 +149,7 @@ namespace Athena
 		switch (uniform)
 		{
 		case MaterialUniform::ALBEDO: return m_ShaderData.Albedo;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Get<Vector3>");
+		default: ATN_CORE_ERROR_TAG("Material", "Invalid uniform in Material::Get<Vector3>");
 		}
 
 		return Vector3(0.f);

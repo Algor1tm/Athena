@@ -84,7 +84,7 @@ namespace Athena
 	{
 		if (width == 0 || height == 0 || width > s_MaxFramebufferSize || height > s_MaxFramebufferSize)
 		{
-			ATN_CORE_WARN("Attempted to resize Framebuffer to invalid size ({0}, {1})", width, height);
+			ATN_CORE_WARN_TAG_("GLFramebuffer", "Attempted to resize Framebuffer to invalid size ({0}, {1})", width, height);
 			return;
 		}
 
@@ -108,8 +108,7 @@ namespace Athena
 	{
 		if (index >= m_ColorAttachments.size())
 		{
-			ATN_CORE_ERROR("Invalid index for color attachment!");
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_ERROR_TAG_("GLFramebuffer", "Invalid index for color attachment image'{}'!", index);
 		}
 		else
 		{
@@ -124,8 +123,7 @@ namespace Athena
 	{
 		if (index >= m_ColorAttachments.size())
 		{
-			ATN_CORE_ERROR("Invalid index for color attachment!");
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_ERROR_TAG_("GLFramebuffer", "Invalid index for color attachment '{}'!", index);
 		}
 		else
 		{
@@ -137,8 +135,7 @@ namespace Athena
 	{
 		if (m_DepthAttachmentCreateInfo.Format == TextureFormat::NONE)
 		{
-			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_ERROR_TAG("GLFramebuffer", "Framebuffer does not have depth attachment!");
 		}
 		else
 		{
@@ -150,11 +147,11 @@ namespace Athena
 	{ 
 		if (IsMultisample())
 		{
-			ATN_CORE_ASSERT(index < m_ColorAttachmentsResolved.size(), "Invalid index for color attachment!");
+			ATN_CORE_VERIFY(index < m_ColorAttachmentsResolved.size());
 			return reinterpret_cast<void*>((uint64)m_ColorAttachmentsResolved[index]);
 		}
 
-		ATN_CORE_ASSERT(index < m_ColorAttachments.size(), "Invalid index for color attachment!");
+		ATN_CORE_VERIFY(index < m_ColorAttachments.size());
 		return reinterpret_cast<void*>((uint64)m_ColorAttachments[index]); 
 	}
 
@@ -162,8 +159,7 @@ namespace Athena
 	{
 		if (m_DepthAttachmentCreateInfo.Format == TextureFormat::NONE)
 		{
-			ATN_CORE_ERROR("Framebuffer does not have depth attachment!");
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_ERROR_TAG("GLFramebuffer", "Framebuffer does not have depth attachment!");
 			return 0;
 		}
 
@@ -188,10 +184,9 @@ namespace Athena
 
 	void GLFramebuffer::ClearAttachment(uint32 attachmentIndex, int value)
 	{
-		ATN_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size(), "Invalid index for color attachment!");
+		ATN_CORE_VERIFY(attachmentIndex < m_ColorAttachments.size());
 		
 		auto& desc = m_ColorAttachmentCreateInfos[attachmentIndex];
-		
 		glClearTexImage(m_ColorAttachments[attachmentIndex], 0, Utils::TextureFormatToGLenum(desc.Format), GL_INT, &value);
 	}
 
@@ -275,7 +270,7 @@ namespace Athena
 			AttachDepthTexture(depthAttachment, samples);
 		}
 
-		ATN_CORE_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
+		ATN_CORE_VERIFY(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Framebuffer creation is failed!");
 	}
 
 	void GLFramebuffer::AttachColorTexture(uint32 id, uint32 samples, uint32 index)

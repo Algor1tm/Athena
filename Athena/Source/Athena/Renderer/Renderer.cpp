@@ -34,7 +34,7 @@ namespace Athena
 
 	void Renderer::Init(const RendererConfig& config)
 	{
-		ATN_CORE_ASSERT(s_Data.RendererAPI == nullptr, "Renderer already exists!");
+		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
 		switch (config.API)
 		{

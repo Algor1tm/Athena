@@ -75,7 +75,7 @@ namespace Athena
 
 	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
 	{
-		ATN_CORE_ASSERT(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount(), "Invalid AnimationDescription!");
+		ATN_CORE_VERIFY(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
 
 		Ref<Animation> result = CreateRef<Animation>();
 
@@ -133,15 +133,12 @@ namespace Athena
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const TranslationKey& left, const TranslationKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		const TranslationKey& start = *iter;
 		const TranslationKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
@@ -155,15 +152,12 @@ namespace Athena
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const RotationKey& left, const RotationKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		RotationKey start = *iter;
 		RotationKey end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::SLerp(start.Value, end.Value, scaleFactor);
 	}
@@ -177,15 +171,12 @@ namespace Athena
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const ScaleKey& left, const ScaleKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		const ScaleKey& start = *iter;
 		const ScaleKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
@@ -233,7 +224,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_WARN("Animator::PlayAnimation: Attempt to play Animation that does not belong to Animator!");
+			ATN_CORE_WARN_TAG("Animator", "Attempt to play Animation that does not belong to Animator!");
 		}
 	}
 }

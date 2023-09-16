@@ -31,7 +31,7 @@
 // maximum mumber of lines the output console should have
 static const WORD MAX_CONSOLE_LINES = 1000;
 
-static void RedirectIOToConsole()
+static void CreateConsole()
 {
 	int hConHandle;
 	__int64 lStdHandle;
@@ -58,9 +58,9 @@ static void RedirectIOToConsole()
 
 #else
 
-static void RedirectIOToConsole()
+static void CreateConsole()
 {
-
+	ATN_CORE_ASSERT(false, "Not implemented for this platform");
 }
 
 #endif
@@ -73,7 +73,7 @@ namespace Athena
 
 	void Log::Init()
 	{
-		RedirectIOToConsole();
+		CreateConsole();
 
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 

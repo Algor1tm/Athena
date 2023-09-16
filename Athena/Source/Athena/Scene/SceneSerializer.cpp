@@ -207,7 +207,7 @@ namespace Athena
 
 	void SceneSerializer::SerializeRuntime(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(false, "Not Implemented");
+		ATN_CORE_VERIFY(false, "Not Implemented");
 	}
 
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
@@ -223,7 +223,7 @@ namespace Athena
 		}
 		catch (const YAML::ParserException& ex)
 		{
-			ATN_CORE_ERROR("Failed to deserialize scene '{0}'\n {1}", path, ex.what());
+			ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
 			return false;
 		}
 
@@ -484,7 +484,7 @@ namespace Athena
 
 	bool SceneSerializer::DeserializeRuntime(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(false, "Not Implemented");
+		ATN_CORE_VERIFY(false, "Not Implemented");
 		return false;
 	}
 
@@ -506,7 +506,7 @@ namespace Athena
 	{
 		if (!entity.HasComponent<IDComponent>() && !entity.HasComponent<TagComponent>())
 		{
-			ATN_CORE_ERROR("Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
 			return;
 		}
 

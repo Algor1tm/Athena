@@ -9,7 +9,7 @@ namespace Athena
 	GLGraphicsContext::GLGraphicsContext(GLFWwindow* windowHandle)
 		: m_WindowHandle(windowHandle)
 	{
-		ATN_CORE_ASSERT(windowHandle, "Window handle is null!");
+		ATN_CORE_VERIFY(windowHandle, "Window handle is null!");
 
 #ifdef ATN_DEBUG
 		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
@@ -17,14 +17,12 @@ namespace Athena
 
 		glfwMakeContextCurrent(windowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		ATN_CORE_ASSERT(status, "Failed to initialize glad!");
+		ATN_CORE_VERIFY(status, "Failed to initialize glad!");
 
-		ATN_CORE_INFO("");
-		ATN_CORE_INFO("Create OpenGL Graphics Context:");
-		ATN_CORE_INFO("OpenGL version: {0}", glGetString(GL_VERSION));
-		ATN_CORE_INFO("Graphics Card: {0}", glGetString(GL_RENDERER));
-		ATN_CORE_INFO("Vendor: {0}", glGetString(GL_VENDOR));
-		ATN_CORE_INFO("");
+		ATN_CORE_INFO_TAG("GLGraphicsContext", "Create OpenGL Graphics Context:");
+		ATN_CORE_INFO_TAG_("GLGraphicsContext", "OpenGL version: {0}", glGetString(GL_VERSION));
+		ATN_CORE_INFO_TAG_("GLGraphicsContext", "Graphics Card: {0}", glGetString(GL_RENDERER));
+		ATN_CORE_INFO_TAG_("GLGraphicsContext", "Vendor: {0}", glGetString(GL_VENDOR));
 	}
 
 	void GLGraphicsContext::SwapBuffers()

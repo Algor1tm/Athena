@@ -26,7 +26,7 @@ namespace Athena
 
 			if (!data)
 			{
-				ATN_CORE_ERROR("Failed to load texture for Cubemap from {}!", path);
+				ATN_CORE_ERROR_TAG_("GLTextureCube", "Failed to load texture from {}!", path);
 				m_IsLoaded = false;
 				break;
 			}
@@ -34,7 +34,7 @@ namespace Athena
 			GLenum internalFormat = 0, dataFormat = 0;
 			if (!Utils::GetGLFormats(channels, false, sRGB, internalFormat, dataFormat))
 			{
-				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", path, channels);
+				ATN_CORE_ERROR("GLTextureCube", "Texture format not supported(texture = {0}, channels = {1})", path, channels);
 				m_IsLoaded = false;
 				stbi_image_free(data);
 				break;

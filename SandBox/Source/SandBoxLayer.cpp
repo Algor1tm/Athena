@@ -16,7 +16,7 @@ void SandBoxLayer::OnAttach()
 	SceneSerializer serializer(m_Scene);
 	if (serializer.DeserializeFromFile(m_ScenePath.string()))
 	{
-		ATN_CORE_ERROR("Failed to load scene at '{}'", m_ScenePath);
+		ATN_ERROR_TAG("SandBoxLayer", "Failed to load scene at '{}'", m_ScenePath);
 	}
 
 	m_Scene->OnRuntimeStart();

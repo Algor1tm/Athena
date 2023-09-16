@@ -34,7 +34,7 @@ namespace Athena
 
 			if (!Utils::GetGLFormats(channels, HDR, sRGB, m_InternalFormat, m_DataFormat))
 			{
-				ATN_CORE_ERROR("Texture format not supported(texture = {0}, channels = {1})", filepath, channels);
+				ATN_CORE_ERROR_TAG_("GLTexture2D", "Texture format not supported(texture = {0}, channels = {1})", filepath, channels);
 				stbi_image_free(data);
 				return;
 			}
@@ -59,7 +59,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load Texture2D from {}!)", m_FilePath);
+			ATN_CORE_ERROR_TAG_("GLTexture2D", "Failed to load Texture2D from {}!)", m_FilePath);
 		}
 	}
 
@@ -79,7 +79,7 @@ namespace Athena
 
 			if (!Utils::GetGLFormats(channels, false, sRGB, m_InternalFormat, m_DataFormat))
 			{
-				ATN_CORE_ERROR("Texture format not supported(channels = {})", channels);
+				ATN_CORE_ERROR_TAG_("GLTexture2D", "Texture format not supported(channels = {})", channels);
 				stbi_image_free(data);
 				return;
 			}
@@ -104,7 +104,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("Failed to load Texture2D from memory!");
+			ATN_CORE_ERROR_TAG("GLTexture2D", "Failed to load Texture2D from memory!");
 		}
 	}
 
@@ -156,7 +156,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("GLTexture2D::SetData: Data must be entire texture!");
+			ATN_CORE_ERROR_TAG("GLTexture2D", "Data must be entire texture!");
 		}
 	}
 

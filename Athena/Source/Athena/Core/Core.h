@@ -58,7 +58,7 @@
 	#error Athena only supports Windows!
 #endif // End of linking detection
 
-
+// Debug break macro
 #ifdef ATN_DEBUG
 	#if defined(ATN_PLATFORM_WINDOWS)
 		#define ATN_DEBUGBREAK() __debugbreak()
@@ -70,12 +70,13 @@
 	#endif
 
 	#define ATN_ASSERTS
+	#define ATN_LOG_LEVEL_DEBUG
 
 #else
 	#define ATN_DEBUGBREAK()
 #endif
 
-
+// Force inline macro
 #ifdef _MSC_VER
 	#define ATN_FORCEINLINE __forceinline
 #elif __GNUC__
@@ -84,30 +85,36 @@
 	#define ATN_FORCEINLINE inline
 #endif
 
+// Utilities
+#define BIT(x) (1 << x)
 #define ATN_EXPAND_MACRO(x) x
 #define ATN_STRINGIFY_MACRO(x) #x
 
 
+// Asserts Implementation
+#define ATN_INTERNAL_ASSERT_IMPL(type, check, msg, ...) { if(!(check)) { ATN##type##ERROR(msg, __VA_ARGS__); ATN_DEBUGBREAK(); } }
+#define ATN_INTERNAL_ASSERT_WITH_MSG(type, name, check, ...) ATN_INTERNAL_ASSERT_IMPL(type, check, name " failed: {0}", __VA_ARGS__)
+#define ATN_INTERNAL_ASSERT_NO_MSG(type, name, check) ATN_INTERNAL_ASSERT_IMPL(type, check, name " '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(check), std::filesystem::path(__FILE__).filename().string(), __LINE__)
+
+#define ATN_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro
+#define ATN_INTERNAL_ASSERT_GET_MACRO(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO_NAME(__VA_ARGS__, ATN_INTERNAL_ASSERT_WITH_MSG, ATN_INTERNAL_ASSERT_NO_MSG) )
+
+
+// Asserts
 #ifdef ATN_ASSERTS
-	// Alternatively we could use the same "default" message for both "WITH_MSG" and "NO_MSG" and
-	// provide support for custom formatting by concatenating the formatting string instead of having the format inside the default message
-	#define ATN_INTERNAL_ASSERT_IMPL(type, check, msg, ...) { if(!(check)) { ATN##type##ERROR(msg, __VA_ARGS__); ATN_DEBUGBREAK(); } }
-	#define ATN_INTERNAL_ASSERT_WITH_MSG(type, check, ...) ATN_INTERNAL_ASSERT_IMPL(type, check, "Assertion failed: {0}", __VA_ARGS__)
-	#define ATN_INTERNAL_ASSERT_NO_MSG(type, check) ATN_INTERNAL_ASSERT_IMPL(type, check, "Assertion '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(check), std::filesystem::path(__FILE__).filename().string(), __LINE__)
-
-	#define ATN_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro
-	#define ATN_INTERNAL_ASSERT_GET_MACRO(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO_NAME(__VA_ARGS__, ATN_INTERNAL_ASSERT_WITH_MSG, ATN_INTERNAL_ASSERT_NO_MSG) )
-
 	// Currently accepts at least the condition and one additional parameter (the message) being optional
-	#define ATN_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, __VA_ARGS__) )
-	#define ATN_CORE_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, __VA_ARGS__) )
+	#define ATN_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, "Assertion", __VA_ARGS__) )
+	#define ATN_CORE_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, "Assertion", __VA_ARGS__) )
 #else
-	#define ATN_ASSERT(x, ...) 
-	#define ATN_CORE_ASSERT(x, ...)
+	#define ATN_ASSERT(...) 
+	#define ATN_CORE_ASSERT(...)
 #endif
 
+// Verifies
+// Work like asserts but in release mode too
+#define ATN_VERIFY(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, "Verify", __VA_ARGS__) )
+#define ATN_CORE_VERIFY(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, "Verify", __VA_ARGS__) )
 
-#define BIT(x) (1 << x)
 
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 

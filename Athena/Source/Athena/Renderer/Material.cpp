@@ -31,6 +31,7 @@ namespace Athena
 		}
 
 		m_Materials[material->m_Name] = material;
+		ATN_CORE_WARN_TAG_("Material", "Create material '{}'", name);
 
 		return material;
 	}
@@ -56,11 +57,12 @@ namespace Athena
 	{
 		if (m_Materials.find(name) == m_Materials.end())
 		{
-			ATN_CORE_ERROR("MaterialManager::DeleteMaterial: invalid material name!");
+			ATN_CORE_ERROR_TAG_("MaterialManager", "Failed to delete material, invalid material name '{}'!", name);
 		}
 		else
 		{
 			m_Materials.erase(name);
+			ATN_CORE_WARN_TAG_("Material", "Delete material '{}'", name);
 		}
 	}
 

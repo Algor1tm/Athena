@@ -25,7 +25,7 @@ namespace Athena
 		case Antialising::MSAA_8X: return "MSAA 8X (2D Only)";
 		}
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return "";
 	}
 
@@ -43,7 +43,7 @@ namespace Athena
 		if (str == "MSAA 8X (2D Only)")
 			return Antialising::MSAA_8X;
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return (Antialising)0;
 	}
 
@@ -56,7 +56,7 @@ namespace Athena
 		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
 		}
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return "";
 	}
 
@@ -71,7 +71,7 @@ namespace Athena
 		if (str == "ShadowCascades")
 			return DebugView::SHADOW_CASCADES;
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return (DebugView)0;
 	}
 

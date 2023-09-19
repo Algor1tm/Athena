@@ -8,8 +8,6 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0.848312557, -0.331071168, -0.332202762, -0.245762154]
       Scale: [0.999999881, 0.99999994, 0.99999994]
-    ChildComponent:
-      Parent: 6292570374589452764
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
       Intensity: 1
@@ -66,11 +64,9 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.147900015, 0.147900015, 0.147900015]
-    ChildComponent:
-      Parent: 6292570374589452764
     StaticMeshComponent:
       FilePath: Assets\Meshes\BlenderScene.fbx
-      Hide: false
+      Visible: true
   - IDComponent:
       ID: 9434107904280492893
     TagComponent:
@@ -83,7 +79,7 @@ Entities:
       Parent: 2151942939999983161
     StaticMeshComponent:
       FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
-      Hide: false
+      Visible: true
   - IDComponent:
       ID: 3148190026798035267
     TagComponent:
@@ -107,8 +103,6 @@ Entities:
       Translation: [23.3378658, 7.31552744, -0.211175531]
       Rotation: [-0.688643873, 0.0871698409, -0.714152932, -0.0903140157]
       Scale: [1, 0.999999702, 0.999995351]
-    ChildComponent:
-      Parent: 6292570374589452764
     ScriptComponent:
       Name: FirstPersonCamera
     CameraComponent:
@@ -122,16 +116,6 @@ Entities:
         OrthographicFarClip: 10
       Primary: true
       FixedAspectRatio: false
-  - IDComponent:
-      ID: 6292570374589452764
-    TagComponent:
-      Tag: Scene Root
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    RootComponent:
-      {}
 Environment:
   EnvMap FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
   Ambient Light Intensity: 1

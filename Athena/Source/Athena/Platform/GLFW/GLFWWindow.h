@@ -183,7 +183,7 @@ namespace Athena
 
 		m_WindowCount++;
 
-		ATN_CORE_INFO_TAG("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
+		ATN_CORE_INFO_TAG_("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
 		glfwSetWindowAttrib(hWnd, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 

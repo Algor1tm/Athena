@@ -8,8 +8,6 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
-    ChildComponent:
-      Parent: 12026708388747019329
     ScriptComponent:
       Name: FirstPersonCamera
     CameraComponent:
@@ -31,11 +29,9 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [0.057190001, 0.0571899563, 0.0571899563]
-    ChildComponent:
-      Parent: 12026708388747019329
     StaticMeshComponent:
       FilePath: Assets\Meshes\Sponza.fbx
-      Hide: false
+      Visible: true
   - IDComponent:
       ID: 18100746580937150330
     TagComponent:
@@ -44,21 +40,9 @@ Entities:
       Translation: [0, 0, 0]
       Rotation: [0.76768744, -0.640824497, 0, 0]
       Scale: [1, 1, 1]
-    ChildComponent:
-      Parent: 12026708388747019329
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
       Intensity: 3.79999995
-  - IDComponent:
-      ID: 12026708388747019329
-    TagComponent:
-      Tag: Scene Root
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    RootComponent:
-      {}
 Environment:
   EnvMap FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
   Ambient Light Intensity: 1

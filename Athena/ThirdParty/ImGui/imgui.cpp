@@ -13777,18 +13777,7 @@ const ImGuiPayload* ImGui::AcceptDragDropPayload(const char* type, ImGuiDragDrop
     //IMGUI_DEBUG_LOG("AcceptDragDropPayload(): %08X: accept\n", g.DragDropTargetId);
     
     // NOTE: added by Athena
-    bool isTargetWindow = true;
-    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Min.x == window->ContentRegionRect.Min.x;
-    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Min.y == window->ContentRegionRect.Min.y;
-    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Max.x == window->ContentRegionRect.Max.x;
-    isTargetWindow = isTargetWindow && g.DragDropTargetRect.Max.y == window->ContentRegionRect.Max.y;
-
-    ImVec2 offset = { 3.5f, 3.5f };
-    if (isTargetWindow)
-    {
-        offset.x = window->WindowPadding.x == 0.f ? -1.5f : 3.5f;
-        offset.y = window->WindowPadding.y == 0.f ? -1.5f : 3.5f;
-    }
+    ImVec2 offset = { -0.5f, -0.5f };
 
     // Render default drop visuals
     payload.Preview = was_accepted_previously;

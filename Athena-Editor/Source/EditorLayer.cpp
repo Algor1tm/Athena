@@ -766,17 +766,12 @@ namespace Athena
         if(serializer.DeserializeFromFile(path.string()))
         {
             m_CurrentScenePath = path;
-
-            m_RuntimeScene = nullptr;
-            m_EditorScene = newScene;
-            m_EditorCtx->ActiveScene = newScene;
-            m_EditorCtx->SelectedEntity = {};
-
             ATN_INFO_TAG_("EditorLayer", "Successfully load Scene from '{}'", path.string().data());
         }
-        else
-        {
-            ATN_ERROR_TAG_("EditorLayer", "Failed to load Scene from '{}'", path.string().data());
-        }
+
+        m_RuntimeScene = nullptr;
+        m_EditorScene = newScene;
+        m_EditorCtx->ActiveScene = newScene;
+        m_EditorCtx->SelectedEntity = {};
     }
 }

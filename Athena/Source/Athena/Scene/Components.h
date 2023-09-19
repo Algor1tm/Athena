@@ -77,11 +77,6 @@ namespace Athena
 		}
 	};
 
-	struct RootComponent
-	{
-		Scene* SceneRef;  // not used
-	};
-
 	struct ParentComponent
 	{
 		std::vector<Entity> Children;
@@ -187,20 +182,20 @@ namespace Athena
 	struct StaticMeshComponent
 	{
 		Ref<StaticMesh> Mesh;
-		bool Hide = false;
+		bool Visible = true;
 
 		StaticMeshComponent() = default;
 
 		StaticMeshComponent(const StaticMeshComponent& other)
 		{
 			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
-			Hide = other.Hide;
+			Visible = other.Visible;
 		}
 
 		StaticMeshComponent& operator=(const StaticMeshComponent& other)
 		{
 			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
-			Hide = other.Hide;
+			Visible = other.Visible;
 			return *this;
 		}
 	};

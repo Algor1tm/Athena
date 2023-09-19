@@ -15,11 +15,6 @@ namespace Athena
 		return GetComponent<TagComponent>().Tag; 
 	}
 
-	bool Entity::HasChildren() const
-	{
-		return GetComponent<ParentComponent>().Children.size() > 0;
-	}
-
 	TransformComponent Entity::GetWorldTransform() const
 	{
 		if (HasComponent<ChildComponent>())

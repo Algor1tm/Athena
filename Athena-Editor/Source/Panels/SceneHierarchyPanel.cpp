@@ -133,16 +133,35 @@ namespace Athena
 		ImGui::PushStyleColor(ImGuiCol_Header, color);
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, color);
 
-		Entity root = m_EditorCtx.ActiveScene->GetRootEntity();
-		DrawEntityNode(root, true);
+		const auto& view = m_EditorCtx.ActiveScene->GetAllEntitiesWith<IDComponent>();
+		for (auto entt : view)
+		{
+			Entity entity = Entity(entt, m_EditorCtx.ActiveScene.get());
+			if (!entity.HasComponent<ChildComponent>())
+			{
+				DrawEntityNode(entity);
+			}
+		}
 
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar();
 
+		UI::InvisibleItem("DragDropRegion", ImGui::GetContentRegionAvail());
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SCENE_HIERARCHY_ENTITY", ImGuiDragDropFlags_AcceptNoDrawDefaultRect))
+			{
+				Entity payloadEntity = *(Entity*)payload->Data;
+				m_EditorCtx.ActiveScene->MakeOrphan(payloadEntity);
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
 		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 			m_EditorCtx.SelectedEntity = {};
 
-		if (ImGui::BeginPopupContextWindow("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
+		if (ImGui::BeginPopupContextItem("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Create Entity"))
 			{
@@ -159,7 +178,8 @@ namespace Athena
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
 		bool selected = m_EditorCtx.SelectedEntity == entity;
-		bool hasChildren = entity.HasChildren();
+		bool hasChildren = entity.HasComponent<ParentComponent>();
+		bool hasParent = entity.HasComponent<ChildComponent>();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -202,7 +222,7 @@ namespace Athena
 				Entity payloadEntity = *(Entity*)payload->Data;
 				if (payloadEntity != entity)
 				{
-					m_EditorCtx.ActiveScene->MakeParent(entity, payloadEntity);
+					m_EditorCtx.ActiveScene->MakeRelationship(entity, payloadEntity);
 				}
 			}
 
@@ -211,17 +231,27 @@ namespace Athena
 
 		Entity selectedEntity = m_EditorCtx.SelectedEntity;
 		bool entityDeleted = false;
-		if (ImGui::BeginPopupContextItem())
+		// If there are entities with the same tag in the scene, this won`t work correct
+		if (ImGui::BeginPopupContextItem(entity.GetComponent<TagComponent>().Tag.c_str(), ImGuiPopupFlags_MouseButtonRight))
 		{
-			if (selectedEntity && !selected && ImGui::MenuItem("Add to children"))
-			{
-				Entity parent = entity;
-				Entity child = selectedEntity;
-				m_EditorCtx.ActiveScene->MakeParent(parent, child);
-			}
-
 			if (ImGui::MenuItem("Delete Entity"))
 				entityDeleted = true;
+
+			if (hasParent && ImGui::MenuItem("Make Orphan"))
+				m_EditorCtx.ActiveScene->MakeOrphan(entity);
+
+			bool correctParent = selectedEntity;
+			if (selectedEntity && entity.HasComponent<ChildComponent>())
+			{
+				correctParent = entity.GetComponent<ChildComponent>().Parent != selectedEntity;
+			}
+
+			if (correctParent && ImGui::MenuItem("Add to children"))
+			{
+				Entity newParent = entity;
+				Entity newChild = selectedEntity;
+				m_EditorCtx.ActiveScene->MakeRelationship(newParent, newChild);
+			}
 
 			ImGui::EndPopup();
 		}
@@ -253,11 +283,12 @@ namespace Athena
 
 		if (UI::TreeNode("Environment") && UI::BeginPropertyTable())
 		{
+			bool hasEnvMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap != nullptr;
 			UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
 			{
 				String label;
 				Ref<EnvironmentMap> envMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap;
-				if (envMap)
+				if (hasEnvMap)
 				{
 					const FilePath& envPath = envMap->GetFilePath();
 					label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
@@ -275,20 +306,23 @@ namespace Athena
 						m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = EnvironmentMap::Create(filepath);
 					}
 				}
-				if (ImGui::Button("Delete"))
+				if (hasEnvMap && ImGui::Button("Delete"))
 				{
 					m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = nullptr;
 				}
 			}
 
-			const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
-			String selectedStr = std::to_string(environment->EnvironmentMap->GetResolution());
-			std::string_view selected = selectedStr.data();
-
-			if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
+			if (hasEnvMap)
 			{
-				uint32 resolution = std::atoi(selected.data());
-				environment->EnvironmentMap->SetResolution(resolution);
+				const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
+				String selectedStr = std::to_string(environment->EnvironmentMap->GetResolution());
+				std::string_view selected = selectedStr.data();
+
+				if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
+				{
+					uint32 resolution = std::atoi(selected.data());
+					environment->EnvironmentMap->SetResolution(resolution);
+				}
 			}
 
 			UI::PropertySlider("Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f);
@@ -636,7 +670,7 @@ namespace Athena
 								}
 								else
 								{
-									ATN_ERROR_TAG("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
+									ATN_ERROR_TAG_("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
 								}
 							}
 							ImGui::EndDragDropTarget();
@@ -760,7 +794,7 @@ namespace Athena
 					String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
 
 					UI::PropertyText("Mesh", meshFilename.c_str());
-					UI::PropertyCheckbox("Hide", &meshComponent.Hide);
+					UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 
 					UI::EndPropertyTable();
 

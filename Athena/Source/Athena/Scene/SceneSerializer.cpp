@@ -205,13 +205,14 @@ namespace Athena
 		fout << out.c_str();
 	}
 
-	void SceneSerializer::SerializeRuntime(const FilePath& path)
-	{
-		ATN_CORE_VERIFY(false, "Not Implemented");
-	}
-
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
+		if (!FileSystem::Exists(path))
+		{
+			ATN_CORE_ERROR_TAG_("SceneSerializer", "Invalid scene filepath {}", path);
+			return false;
+		}
+
 		std::ifstream stream(path);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
@@ -220,39 +221,37 @@ namespace Athena
 		try
 		{
 			data = YAML::Load(strStream.str());
-		}
-		catch (const YAML::ParserException& ex)
-		{
-			ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
-			return false;
-		}
 
-		if (!data["Scene"])
-			return false;
+			if (!data["Scene"])
+			{
+				ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene {0}", path);
+				return false;
+			}
 
-		String sceneName = data["Scene"].as<String>();
-		m_Scene->SetSceneName(sceneName);
+			String sceneName = data["Scene"].as<String>();
+			m_Scene->SetSceneName(sceneName);
 
-		Ref<Environment> environment = CreateRef<Environment>();
-		const auto& envNode = data["Environment"];
-		if (envNode)
-		{
-			FilePath envPath = envNode["EnvMap FilePath"].as<String>();
-			if(!envPath.empty())
-				environment->EnvironmentMap = EnvironmentMap::Create(envPath);
+			Ref<Environment> environment = CreateRef<Environment>();
+			const auto& envNode = data["Environment"];
+			if (envNode)
+			{
+				FilePath envPath = envNode["EnvMap FilePath"].as<String>();
+				if(!envPath.empty())
+					environment->EnvironmentMap = EnvironmentMap::Create(envPath);
 
-			environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
-			environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
-			environment->Exposure = envNode["Exposure"].as<float>();
-			environment->Gamma = envNode["Gamma"].as<float>();
-		}
+				environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
+				environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
+				environment->Exposure = envNode["Exposure"].as<float>();
+				environment->Gamma = envNode["Gamma"].as<float>();
+			}
 
-		m_Scene->SetEnvironment(environment);
+			m_Scene->SetEnvironment(environment);
 
 
-		const auto& entities = data["Entities"];
-		if (entities)
-		{
+			const auto& entities = data["Entities"];
+			if (!entities)
+				return false;
+
 			for (const auto& entityNode : entities)
 			{
 				uint64 uuid = 0;
@@ -269,19 +268,7 @@ namespace Athena
 						name = tagComponentNode["Tag"].as<String>();
 				}
 
-				bool isRoot = false;
-				{
-					const auto& rootComponentNode = entityNode["RootComponent"];
-					if (rootComponentNode)
-					{
-						Entity root = m_Scene->GetRootEntity();
-						root.GetComponent<TagComponent>().Tag = name;
-						m_Scene->SetEntityUUID(root, uuid);
-						isRoot = true;
-					}
-				}
-
-				Entity deserializedEntity = isRoot ? m_Scene->GetRootEntity() : m_Scene->CreateEntity(name, uuid);
+				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
 
 				{
 					const auto& transformComponentNode = entityNode["TransformComponent"];
@@ -424,7 +411,7 @@ namespace Athena
 						FilePath path = staticMeshComponentNode["FilePath"].as<String>();
 
 						meshComp.Mesh = StaticMesh::Create(path);
-						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
+						meshComp.Visible = staticMeshComponentNode["Visible"].as<bool>();
 					}
 				}
 
@@ -452,6 +439,7 @@ namespace Athena
 				}
 			}
 
+			// Build Entity Hierarchy
 			for (const auto& entityNode : entities)
 			{
 				uint64 uuid = 0;
@@ -471,21 +459,30 @@ namespace Athena
 						Entity parent = m_Scene->GetEntityByUUID(parentID);
 
 						if (parent)
-							m_Scene->MakeParent(parent, entity);
+							m_Scene->MakeRelationship(parent, entity);
 					}
 				}
 			}
-		}
 
-		m_Scene->LoadAllScripts();
+			m_Scene->LoadAllScripts();
+		}
+		catch (const YAML::Exception& ex)
+		{
+			ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
+			return false;
+		}
 
 		return true;
 	}
 
-	bool SceneSerializer::DeserializeRuntime(const FilePath& path)
+	void DeserializeEnvironment(const YAML::Node& rootNode)
 	{
-		ATN_CORE_VERIFY(false, "Not Implemented");
-		return false;
+
+	}
+
+	void DeserializeEntities(const YAML::Node& rootNode)
+	{
+
 	}
 
 	template <typename Component, typename Func>
@@ -529,12 +526,6 @@ namespace Athena
 				output << YAML::Key << "Translation" << YAML::Value << transform.Translation;
 				output << YAML::Key << "Rotation" << YAML::Value << transform.Rotation;
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
-			});
-
-		SerializeComponent<RootComponent>(out, "RootComponent", entity,
-			[](YAML::Emitter& output, const RootComponent& childCmp)
-			{
-
 			});
 
 		SerializeComponent<ChildComponent>(out, "ChildComponent", entity,
@@ -634,7 +625,7 @@ namespace Athena
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath().string();
-				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
+				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
 			});
 
 

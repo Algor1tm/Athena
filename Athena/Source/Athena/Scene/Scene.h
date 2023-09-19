@@ -44,16 +44,14 @@ namespace Athena
 
 		static Ref<Scene> Copy(Ref<Scene> scene);
 
-		Entity GetRootEntity();
-
-		Entity CreateEntity(const String& name, UUID id, Entity parent);
 		Entity CreateEntity(const String& name, UUID id);
+		Entity CreateEntity(const String& name, UUID id, Entity parent);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);
-		void MakeParent(Entity parent, Entity child);
+		void MakeRelationship(Entity parent, Entity child);
+		void MakeOrphan(Entity child);
 
-		void SetEntityUUID(Entity entity, UUID newID);
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 

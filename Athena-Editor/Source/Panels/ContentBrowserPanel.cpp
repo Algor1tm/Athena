@@ -93,6 +93,7 @@ namespace Athena
 						const auto& path = relativePath.string();
 
 						ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", path.data(), strlen(path.data()) + 1, ImGuiCond_Once);
+						ImGui::Text(path.c_str());
 						ImGui::EndDragDropSource();
 					}
 				}

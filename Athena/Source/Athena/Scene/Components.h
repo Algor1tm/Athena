@@ -77,12 +77,12 @@ namespace Athena
 		}
 	};
 
-	struct ParentComponent
+	struct ChildComponent
 	{
 		std::vector<Entity> Children;
 	};
 
-	struct ChildComponent
+	struct ParentComponent
 	{
 		Entity Parent;
 	};
@@ -183,21 +183,6 @@ namespace Athena
 	{
 		Ref<StaticMesh> Mesh;
 		bool Visible = true;
-
-		StaticMeshComponent() = default;
-
-		StaticMeshComponent(const StaticMeshComponent& other)
-		{
-			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
-			Visible = other.Visible;
-		}
-
-		StaticMeshComponent& operator=(const StaticMeshComponent& other)
-		{
-			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
-			Visible = other.Visible;
-			return *this;
-		}
 	};
 
 	struct DirectionalLightComponent

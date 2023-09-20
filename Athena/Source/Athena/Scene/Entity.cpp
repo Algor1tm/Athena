@@ -17,9 +17,9 @@ namespace Athena
 
 	TransformComponent Entity::GetWorldTransform() const
 	{
-		if (HasComponent<ChildComponent>())
+		if (HasComponent<ParentComponent>())
 		{
-			const TransformComponent& parentTransform = GetComponent<ChildComponent>().Parent.GetWorldTransform();
+			const TransformComponent& parentTransform = GetComponent<ParentComponent>().Parent.GetWorldTransform();
 			const TransformComponent& localTransform = GetComponent<TransformComponent>();
 
 			TransformComponent worldTransform;

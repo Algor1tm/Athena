@@ -88,7 +88,7 @@ namespace Athena
 		{
 			children.erase(iter);
 			if (children.size() == 0)
-				parent.RemoveComponent<ParentComponent>();
+				parent.RemoveComponent<ChildComponent>();
 
 		}
 		else
@@ -162,17 +162,20 @@ namespace Athena
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		if (entity.HasComponent<ParentComponent>())
-		{
-			auto& children = entity.GetComponent<ParentComponent>().Children;
-			for (Entity e : children)
-				DestroyEntity(e);
-		}
-
 		if (entity.HasComponent<ChildComponent>())
 		{
-			Entity parent = entity.GetComponent<ChildComponent>().Parent;
-			auto& parentChildren = parent.GetComponent<ParentComponent>().Children;
+			// Need to copy array here, because it will be modified in recursive calls
+			auto children = entity.GetComponent<ChildComponent>().Children;
+			for (Entity e : children)
+			{
+				DestroyEntity(e);
+			}
+		}
+
+		if (entity.HasComponent<ParentComponent>())
+		{
+			Entity parent = entity.GetComponent<ParentComponent>().Parent;
+			auto& parentChildren = parent.GetComponent<ChildComponent>().Children;
 
 			DeleteFromChildren(parentChildren, parent, entity);
 		}
@@ -186,9 +189,9 @@ namespace Athena
 		String name = entity.GetName();
 		Entity newEntity;
 
-		if (entity.HasComponent<ChildComponent>())
+		if (entity.HasComponent<ParentComponent>())
 		{
-			Entity entityParent = entity.GetComponent<ChildComponent>().Parent;
+			Entity entityParent = entity.GetComponent<ParentComponent>().Parent;
 			newEntity = CreateEntity(name, UUID(), entityParent);
 		}
 		else
@@ -198,13 +201,13 @@ namespace Athena
 
 		CopyComponentIfExists(AllComponents{}, newEntity, entity);
 
-		if (entity.HasComponent<ParentComponent>())
+		if (entity.HasComponent<ChildComponent>())
 		{
 			// Copy because next calls of DuplicateEntity in for-loop can reallocate this array
-			std::vector<Entity> children = entity.GetComponent<ParentComponent>().Children;
+			std::vector<Entity> children = entity.GetComponent<ChildComponent>().Children;
 
 			// Clear new children because, ParentComponent copied in CopyComponentIfExists
-			std::vector<Entity>& newChildren = newEntity.GetComponent<ParentComponent>().Children;
+			std::vector<Entity>& newChildren = newEntity.GetComponent<ChildComponent>().Children;
 			newChildren.clear();
 
 			for (Entity child : children)
@@ -219,35 +222,35 @@ namespace Athena
 
 	void Scene::MakeRelationship(Entity parent, Entity child)
 	{
-		if (child.HasComponent<ChildComponent>())
+		if (child.HasComponent<ParentComponent>())
 		{
-			Entity& oldParent = child.GetComponent<ChildComponent>().Parent;
-			auto& oldParentChildren = oldParent.GetComponent<ParentComponent>().Children;
+			Entity& oldParent = child.GetComponent<ParentComponent>().Parent;
+			auto& oldParentChildren = oldParent.GetComponent<ChildComponent>().Children;
 
 			DeleteFromChildren(oldParentChildren, oldParent, child);
 			oldParent = parent;
 		}
 		else
 		{
-			child.AddComponent<ChildComponent>().Parent = parent;
+			child.AddComponent<ParentComponent>().Parent = parent;
 		}
 
-		if (!parent.HasComponent<ParentComponent>())
-			parent.AddComponent<ParentComponent>();
+		if (!parent.HasComponent<ChildComponent>())
+			parent.AddComponent<ChildComponent>();
 
-		auto& children = parent.GetComponent<ParentComponent>().Children;
+		auto& children = parent.GetComponent<ChildComponent>().Children;
 		children.push_back(child);
 	}
 
 	void Scene::MakeOrphan(Entity child)
 	{
-		if (child.HasComponent<ChildComponent>())
+		if (child.HasComponent<ParentComponent>())
 		{
-			Entity parent = child.GetComponent<ChildComponent>().Parent;
-			auto& parentChildren = parent.GetComponent<ParentComponent>().Children;
+			Entity parent = child.GetComponent<ParentComponent>().Parent;
+			auto& parentChildren = parent.GetComponent<ChildComponent>().Children;
 
 			DeleteFromChildren(parentChildren, parent, child);
-			child.RemoveComponent<ChildComponent>();
+			child.RemoveComponent<ParentComponent>();
 		}
 	}
 

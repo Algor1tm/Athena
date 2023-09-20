@@ -452,10 +452,10 @@ namespace Athena
 				Entity entity = m_Scene->GetEntityByUUID(uuid);
 				
 				{
-					const auto& childComponentNode = entityNode["ChildComponent"];
-					if (childComponentNode)
+					const auto& parentComponentNode = entityNode["ParentComponent"];
+					if (parentComponentNode)
 					{
-						UUID parentID = childComponentNode["Parent"].as<uint64>();
+						UUID parentID = parentComponentNode["Parent"].as<uint64>();
 						Entity parent = m_Scene->GetEntityByUUID(parentID);
 
 						if (parent)
@@ -528,10 +528,10 @@ namespace Athena
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
 			});
 
-		SerializeComponent<ChildComponent>(out, "ChildComponent", entity,
-			[](YAML::Emitter& output, const ChildComponent& childCmp)
+		SerializeComponent<ParentComponent>(out, "ParentComponent", entity,
+			[](YAML::Emitter& output, const ParentComponent& parentCmp)
 			{
-				uint64 parentID = (uint64)childCmp.Parent.GetComponent<IDComponent>().ID;
+				uint64 parentID = (uint64)parentCmp.Parent.GetComponent<IDComponent>().ID;
 				output << YAML::Key << "Parent" << YAML::Value << parentID;
 			});
 

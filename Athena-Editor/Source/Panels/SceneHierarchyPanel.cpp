@@ -137,7 +137,7 @@ namespace Athena
 		for (auto entt : view)
 		{
 			Entity entity = Entity(entt, m_EditorCtx.ActiveScene.get());
-			if (!entity.HasComponent<ChildComponent>())
+			if (!entity.HasComponent<ParentComponent>())
 			{
 				DrawEntityNode(entity);
 			}
@@ -178,8 +178,8 @@ namespace Athena
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
 		bool selected = m_EditorCtx.SelectedEntity == entity;
-		bool hasChildren = entity.HasComponent<ParentComponent>();
-		bool hasParent = entity.HasComponent<ChildComponent>();
+		bool hasChildren = entity.HasComponent<ChildComponent>();
+		bool hasParent = entity.HasComponent<ParentComponent>();
 
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -241,9 +241,9 @@ namespace Athena
 				m_EditorCtx.ActiveScene->MakeOrphan(entity);
 
 			bool correctParent = selectedEntity;
-			if (selectedEntity && entity.HasComponent<ChildComponent>())
+			if (selectedEntity && entity.HasComponent<ParentComponent>())
 			{
-				correctParent = entity.GetComponent<ChildComponent>().Parent != selectedEntity;
+				correctParent = entity.GetComponent<ParentComponent>().Parent != selectedEntity;
 			}
 
 			if (correctParent && ImGui::MenuItem("Add to children"))
@@ -258,7 +258,7 @@ namespace Athena
 
 		if (opened && hasChildren)
 		{
-			const std::vector<Entity>& children = entity.GetComponent<ParentComponent>().Children;
+			const std::vector<Entity>& children = entity.GetComponent<ChildComponent>().Children;
 			for (auto entity : children)
 			{
 				DrawEntityNode(entity);

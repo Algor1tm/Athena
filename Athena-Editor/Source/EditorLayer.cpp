@@ -662,8 +662,8 @@ namespace Athena
         {
             if (m_EditorCtx->SelectedEntity && m_EditorCtx->SceneState == SceneState::Edit)
             {
-                m_EditorCtx->SelectedEntity = {};
                 m_EditorScene->DestroyEntity(m_EditorCtx->SelectedEntity);
+                m_EditorCtx->SelectedEntity = {};
             }
             break;
         }

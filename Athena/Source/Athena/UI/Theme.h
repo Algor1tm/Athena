@@ -18,7 +18,7 @@ namespace Athena::UI
 
 	struct ATHENA_API Theme
 	{
-		static Theme Dark();
+		static Theme DefaultDark();
 
 		Style Style;
 

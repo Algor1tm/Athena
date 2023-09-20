@@ -154,7 +154,7 @@ namespace Athena
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
 		
-		m_Theme = UI::Theme::Dark();
+		m_Theme = UI::Theme::DefaultDark();
 		UpdateImGuiTheme();
 
 		Application& app = Application::Get();

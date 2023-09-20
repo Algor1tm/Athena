@@ -156,7 +156,6 @@ namespace YAML
 	}
 }
 
-#define SERIALIZE_MATERIALS 0	// TODO: Serialize materials
 
 namespace Athena
 {
@@ -475,16 +474,6 @@ namespace Athena
 		return true;
 	}
 
-	void DeserializeEnvironment(const YAML::Node& rootNode)
-	{
-
-	}
-
-	void DeserializeEntities(const YAML::Node& rootNode)
-	{
-
-	}
-
 	template <typename Component, typename Func>
 	static void SerializeComponent(YAML::Emitter& out, const String& name, Entity entity, Func serialize)
 	{
@@ -627,7 +616,6 @@ namespace Athena
 				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath().string();
 				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
 			});
-
 
 		SerializeComponent<DirectionalLightComponent>(out, "DirectionalLightComponent", entity,
 			[](YAML::Emitter& output, const DirectionalLightComponent& lightComponent)

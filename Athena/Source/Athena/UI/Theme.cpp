@@ -8,7 +8,7 @@
 
 namespace Athena::UI
 {
-	Theme Theme::Dark()
+	Theme Theme::DefaultDark()
 	{
 		Theme theme;
 
@@ -18,19 +18,19 @@ namespace Athena::UI
 		theme.Style.WindowRounding = 5.f;
 
 		theme.Titlebar = IM_COL32(21, 21, 21, 255);
-		theme.Background = IM_COL32(30, 30, 30, 255);
+		theme.Background = IM_COL32(27, 27, 27, 255);
 		theme.BackgroundDark = IM_COL32(17, 17, 17, 255);
-		theme.BackgroundPopup = theme.Background;
+		theme.BackgroundPopup = IM_COL32(42, 42, 42, 255);
 		
 		theme.Accent = IM_COL32(0, 112, 224, 255);
 		theme.Text = IM_COL32(255, 255, 255, 255);
 		
-		theme.FrameBg = IM_COL32(14, 14, 14, 255);
-		theme.FrameBgActive = IM_COL32(51, 51, 51, 255);
+		theme.FrameBg = IM_COL32(8, 8, 8, 255);
+		theme.FrameBgActive = IM_COL32(8, 8, 8, 255);
 		theme.Header = IM_COL32(40, 40, 40, 255);
 		theme.HeaderActive = IM_COL32(53, 53, 53, 255);
-		theme.Button = IM_COL32(41, 41, 41, 255);
-		theme.ButtonActive = IM_COL32(53, 53, 53, 255);
+		theme.Button = IM_COL32(27, 27, 27, 255);
+		theme.ButtonActive = IM_COL32(27, 27, 27, 255);
 		theme.Tab = theme.Background;
 		theme.TabActive = IM_COL32(28, 69, 143, 120);
 
@@ -92,6 +92,14 @@ namespace Athena::UI
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.FrameBgActive);
 			UI::PropertyColor4("FrameBgActive", &color4.x);
 			theme.FrameBgActive = ImGui::ColorConvertFloat4ToU32(color4);
+
+			color4 = ImGui::ColorConvertU32ToFloat4(theme.Header);
+			UI::PropertyColor4("Header", &color4.x);
+			theme.Header = ImGui::ColorConvertFloat4ToU32(color4);
+
+			color4 = ImGui::ColorConvertU32ToFloat4(theme.HeaderActive);
+			UI::PropertyColor4("HeaderActive", &color4.x);
+			theme.HeaderActive = ImGui::ColorConvertFloat4ToU32(color4);
 
 			color4 = ImGui::ColorConvertU32ToFloat4(theme.Button);
 			UI::PropertyColor4("Button", &color4.x);

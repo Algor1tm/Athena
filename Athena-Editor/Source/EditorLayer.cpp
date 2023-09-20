@@ -540,7 +540,7 @@ namespace Athena
         UI::ThemeEditor(theme);
 
         if (ImGui::Button("Reset"))
-            theme = UI::Theme::Dark();
+            theme = UI::Theme::DefaultDark();
 
         Application::Get().GetImGuiLayer()->UpdateImGuiTheme();
 

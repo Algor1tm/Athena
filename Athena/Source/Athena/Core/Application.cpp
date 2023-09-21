@@ -29,15 +29,13 @@ namespace Athena
 		if (appinfo.AppConfig.WorkingDirectory != FilePath())
 			FileSystem::SetWorkingDirectory(appinfo.AppConfig.WorkingDirectory);
 
-		appinfo.AppConfig.EnableConsole ? Log::Init() : Log::InitWithoutConsole();
+		Log::Init(appinfo.AppConfig.EnableConsole);
 			
 		m_Window = Window::Create(appinfo.WindowInfo);
+		m_Window->SetEventCallback([this](const Ref<Event>& event) { Application::QueueEvent(event); });
+
 		Renderer::Init(appinfo.RendererConfig);
-
-		m_Window->SetEventCallback(ATN_BIND_EVENT_FN(Application::OnEvent));
-
-		if (m_Window->GetWindowMode() != WindowMode::Default)
-			Renderer::OnWindowResized(m_Window->GetWidth(), m_Window->GetHeight());
+		ScriptEngine::Init(appinfo.ScriptConfig);
 
 		if (appinfo.AppConfig.EnableImGui)
 		{
@@ -48,33 +46,12 @@ namespace Athena
 		{
 			m_ImGuiLayer = nullptr;
 		}
-
-		ScriptEngine::Init(appinfo.ScriptConfig);
 	}
 
 	Application::~Application()
 	{
 		Renderer::Shutdown();
 		ScriptEngine::Shutdown();
-	}
-
-	void Application::OnEvent(Event& event)
-	{
-		Timer timer;
-		Time start = timer.ElapsedTime();
-
-		EventDispatcher dispatcher(event);
-		dispatcher.Dispatch<WindowCloseEvent>(ATN_BIND_EVENT_FN(Application::OnWindowClose));
-		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
-
-		for (LayerStack::iterator it = m_LayerStack.end(); it != m_LayerStack.begin();)
-		{
-			(*--it)->OnEvent(event);
-			if (event.Handled)
-				break;
-		}
-
-		m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
 	}
 
 	void Application::Run()
@@ -89,6 +66,23 @@ namespace Athena
 
 			if (m_Minimized == false)
 			{
+				// Process Event Queue
+				{
+					Time start = timer.ElapsedTime();
+
+					std::scoped_lock<std::mutex> lock(m_EventQueueMutex);
+
+					while (m_EventQueue.size() > 0)
+					{
+						Event& event = *m_EventQueue.front();
+						OnEvent(event);
+						m_EventQueue.pop();
+					}
+
+					m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
+				}
+
+				// Update
 				{
 					Time start = timer.ElapsedTime();
 
@@ -100,6 +94,7 @@ namespace Athena
 					m_Statistics.Application_OnUpdate = timer.ElapsedTime() - start;
 				}
 
+				// Render UI
 				if (m_ImGuiLayer != nullptr)
 				{
 					Time start = timer.ElapsedTime();
@@ -115,6 +110,7 @@ namespace Athena
 				}
 			}
 
+			// Swap Buffers
 			{
 				Time start = timer.ElapsedTime();
 				m_Window->OnUpdate();
@@ -122,6 +118,25 @@ namespace Athena
 			}
 
 			frameTime = timer.ElapsedTime() - start;
+		}
+	}
+
+	void Application::QueueEvent(const Ref<Event>& event)
+	{
+		m_EventQueue.push(event);
+	}
+
+	void Application::OnEvent(Event& event)
+	{
+		EventDispatcher dispatcher(event);
+		dispatcher.Dispatch<WindowCloseEvent>(ATN_BIND_EVENT_FN(Application::OnWindowClose));
+		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(Application::OnWindowResized));
+
+		for (LayerStack::iterator it = m_LayerStack.end(); it != m_LayerStack.begin();)
+		{
+			(*--it)->OnEvent(event);
+			if (event.Handled)
+				break;
 		}
 	}
 

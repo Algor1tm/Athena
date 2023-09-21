@@ -2,143 +2,144 @@ from enum import IntEnum
 
 
 class Keyboard(IntEnum):
-    Space = 0x20
-    Apostrophe = 0xDE # ' 
-    Comma = 0xBC      # , 
-    Minus = 0xBD      # - 
-    Dot = 0xBE        # . 
-    Slash = 0x6C      # / 
+    Space = 32,
+    Apostrophe = 39, # ' #
+    Comma = 44, # , #
+    Minus = 45, # - #
+    Period = 46, # . #
+    Slash = 47, # / #
 
-    # 0 - 9 are the same as ASCII '0' - '9'
-    D0 = 0x30   # 0 
-    D1 = 0x31   # 1 
-    D2 = 0x32   # 2 
-    D3 = 0x33   # 3 
-    D4 = 0x34   # 4 
-    D5 = 0x35   # 5 
-    D6 = 0x36   # 6 
-    D7 = 0x37   # 7 
-    D8 = 0x38   # 8 
-    D9 = 0x39   # 9 
+    D0 = 48, # 0 #
+    D1 = 49, # 1 #
+    D2 = 50, # 2 #
+    D3 = 51, # 3 #
+    D4 = 52, # 4 #
+    D5 = 53, # 5 #
+    D6 = 54, # 6 #
+    D7 = 55, # 7 #
+    D8 = 56, # 8 #
+    D9 = 57, # 9 #
 
-    Semicolon = 0xBA    # ; 
-    Equal = 0xBB        # = 
+    Semicolon = 59, # ; #
+    Equal = 61, # = #
 
-    # A - Z are the same as ASCII 'A' - 'Z' (0x41 - 0x5A)
-    A = 0x41
-    B = 0x42
-    C = 0x43
-    D = 0x44
-    E = 0x45
-    F = 0x46
-    G = 0x47
-    H = 0x48
-    I = 0x49
-    J = 0x4A
-    K = 0x4B
-    L = 0x4C
-    M = 0x4D
-    N = 0x4E
-    O = 0x4F
-    P = 0x50
-    Q = 0x51
-    R = 0x52
-    S = 0x53
-    T = 0x54
-    U = 0x55
-    V = 0x56
-    W = 0x57
-    X = 0x58
-    Y = 0x59
-    Z = 0x5A
+    A = 65,
+    B = 66,
+    C = 67,
+    D = 68,
+    E = 69,
+    F = 70,
+    G = 71,
+    H = 72,
+    I = 73,
+    J = 74,
+    K = 75,
+    L = 76,
+    M = 77,
+    N = 78,
+    O = 79,
+    P = 80,
+    Q = 81,
+    R = 82,
+    S = 83,
+    T = 84,
+    U = 85,
+    V = 86,
+    W = 87,
+    X = 88,
+    Y = 89,
+    Z = 90,
 
-    LeftBracket = 0xDB      # [ 
-    Backslash = 0xDC        # \ 
-    RightBracket = 0xDD     # ] 
-    GraveAccent = 0xC0      # ` 
+    LeftBracket = 91,  # [ #
+    Backslash = 92,  # \ #
+    RightBracket = 93,  # ] #
+    GraveAccent = 96,  # ` #
 
-    # Function keys 
-    Escape = 0x1B
-    Enter = 0x0D
-    Tab = 0x09
-    Backspace = 0x08
-    Insert = 0x2D
-    Delete = 0x2E
+    World1 = 161, # non-US #1 #
+    World2 = 162, # non-US #2 #
 
-    Left = 0x25
-    Up = 0x26
-    Right = 0x27
-    Down = 0x28
+    # Function keys #
+    Escape = 256,
+    Enter = 257,
+    Tab = 258,
+    Backspace = 259,
+    Insert = 260,
+    Delete = 261,
+    Right = 262,
+    Left = 263,
+    Down = 264,
+    Up = 265,
+    PageUp = 266,
+    PageDown = 267,
+    Home = 268,
+    End = 269,
+    CapsLock = 280,
+    ScrollLock = 281,
+    NumLock = 282,
+    PrintScreen = 283,
+    Pause = 284,
+    F1 = 290,
+    F2 = 291,
+    F3 = 292,
+    F4 = 293,
+    F5 = 294,
+    F6 = 295,
+    F7 = 296,
+    F8 = 297,
+    F9 = 298,
+    F10 = 299,
+    F11 = 300,
+    F12 = 301,
+    F13 = 302,
+    F14 = 303,
+    F15 = 304,
+    F16 = 305,
+    F17 = 306,
+    F18 = 307,
+    F19 = 308,
+    F20 = 309,
+    F21 = 310,
+    F22 = 311,
+    F23 = 312,
+    F24 = 313,
+    F25 = 314,
 
-    PageUp = 0x21
-    PageDown = 0x22
-    Home = 0x24
-    End = 0x23
-    CapsLock = 0x14
-    NumLock = 0x90
-    ScrollLock = 0x91
-    PrintScreen = 0x2A
-    Pause = 0x13
-        
-    F1 = 0x70
-    F2 = 0x71
-    F3 = 0x72
-    F4 = 0x73
-    F5 = 0x74
-    F6 = 0x75
-    F7 = 0x76
-    F8 = 0x77
-    F9 = 0x78
-    F10 = 0x79
-    F11 = 0x7A
-    F12 = 0x7B
-    F13 = 0x7C
-    F14 = 0x7D
-    F15 = 0x7E
-    F16 = 0x7F
-    F17 = 0x80
-    F18 = 0x81
-    F19 = 0x82
-    F20 = 0x83
-    F21 = 0x84
-    F22 = 0x85
-    F23 = 0x86
-    F24 = 0x87
-        
-    # NumPad
-    KP0 = 0x60
-    KP1 = 0x61
-    KP2 = 0x62
-    KP3 = 0x63
-    KP4 = 0x64
-    KP5 = 0x65
-    KP6 = 0x66
-    KP7 = 0x67
-    KP8 = 0x68
-    KP9 = 0x69
-        
-    KPDecimal = 0x6E
-    KPDivide = 0x6F
-    KPMultiply = 0x6A
-    KPSubtract = 0x6D
-    KPAdd = 0x6B
-    KPEnter = 0x0D
+    # Keypad #
+    KP0 = 320,
+    KP1 = 321,
+    KP2 = 322,
+    KP3 = 323,
+    KP4 = 324,
+    KP5 = 325,
+    KP6 = 326,
+    KP7 = 327,
+    KP8 = 328,
+    KP9 = 329,
+    KPDecimal = 330,
+    KPDivide = 331,
+    KPMultiply = 332,
+    KPSubtract = 333,
+    KPAdd = 334,
+    KPEnter = 335,
+    KPEqual = 336,
 
-    LShift = 0xA0
-    RShift = 0xA1
-    LCtrl = 0xA2
-    RCtrl = 0xA3
-    LAlt = 0xA4
-    RAlt = 0xA5
-    LWindows = 0x5B
-    RWindows = 0x5C
-    Menu = 0x5D
+    LShift = 340,
+    LCtrl = 341,
+    LAlt = 342,
+    LSuper = 343,
+    RShift = 344,
+    RCtrl = 345,
+    RAlt = 346,
+    RSuper = 347,
+    Menu = 348
 
 
 class Mouse(IntEnum):
-    XButton1 = 0x05
-    XButton2 = 0x06
+	Left = 0,
+	Right = 1,
+	Middle = 2,
 
-    Left = 0x01
-    Right = 0x02
-    Middle = 0x04
+	XButton1 = 3,
+	XButton2 = 4,
+	XButton3 = 5,
+	XButton4 = 6

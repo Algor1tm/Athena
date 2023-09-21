@@ -9,6 +9,7 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+//#include <spdlog/fmt/bundled/format.h>
 
 #if defined(_MSC_VER)
 	#pragma warning(pop)
@@ -20,11 +21,7 @@ namespace Athena
 	class ATHENA_API Log
 	{
 	public:
-		static void Init();
-		static void InitWithoutConsole();
-
-		static void Disable();
-		static void Enable();
+		static void Init(bool createConsole);
 
 		inline static const Ref<spdlog::logger>& GetCoreLogger()   { return s_CoreLogger; }
 		inline static const Ref<spdlog::logger>& GetClientLogger() { return s_ClientLogger; }
@@ -40,17 +37,17 @@ namespace Athena
 	{
 		return "Unknown type!";
 	}
-
+	
 	constexpr const String& ToString(const String& x)
 	{
 		return x;
 	}
-
+	
 	inline std::string ToString(const std::wstring& x)
 	{
 		return FilePath(x).string();
 	}
-
+	
 	constexpr const char* ToString(const char* x)
 	{
 		return x;
@@ -69,12 +66,7 @@ namespace fmt
 
 //Core log macros
 
-#ifdef ATN_LOG_LEVEL_DEBUG
-	#define ATN_CORE_TRACE(...) ::Athena::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#else
-	#define ATN_CORE_TRACE(...)   
-#endif
-
+#define ATN_CORE_TRACE(...)		::Athena::Log::GetCoreLogger()->trace(__VA_ARGS__)
 #define ATN_CORE_INFO(...)	    ::Athena::Log::GetCoreLogger()->info(__VA_ARGS__)
 #define ATN_CORE_WARN(...)      ::Athena::Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define ATN_CORE_ERROR(...)     ::Athena::Log::GetCoreLogger()->error(__VA_ARGS__)
@@ -83,12 +75,7 @@ namespace fmt
 
 //Client log macros
 
-#ifdef ATN_LOG_LEVEL_DEBUG
-	#define ATN_TRACE(...)    ::Athena::Log::GetClientLogger()->trace(__VA_ARGS__)
-#else
-	#define ATN_TRACE(...)
-#endif
-
+#define ATN_TRACE(...)		  ::Athena::Log::GetClientLogger()->trace(__VA_ARGS__)
 #define ATN_INFO(...)	      ::Athena::Log::GetClientLogger()->info(__VA_ARGS__)
 #define ATN_WARN(...)         ::Athena::Log::GetClientLogger()->warn(__VA_ARGS__)
 #define ATN_ERROR(...)        ::Athena::Log::GetClientLogger()->error(__VA_ARGS__)

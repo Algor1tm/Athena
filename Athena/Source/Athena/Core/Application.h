@@ -5,11 +5,13 @@
 #include "Athena/Core/LayerStack.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/WindowEvent.h"
 
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Scripting/ScriptEngine.h"
+
+#include <queue>
 
 
 namespace Athena
@@ -44,7 +46,7 @@ namespace Athena
 		virtual ~Application();
 
 		void Run();
-		void OnEvent(Event& event);
+		void QueueEvent(const Ref<Event>& event);
 
 		void PushLayer(Ref<Layer> layer);
 		void PushOverlay(Ref<Layer> layer);
@@ -71,6 +73,7 @@ namespace Athena
 		};
 
 	private:
+		void OnEvent(Event& event);
 		bool OnWindowClose(WindowCloseEvent& event);
 		bool OnWindowResized(WindowResizeEvent& event);
 
@@ -82,6 +85,9 @@ namespace Athena
 		bool m_Running;
 		bool m_Minimized;
 		LayerStack m_LayerStack;
+
+		std::mutex m_EventQueueMutex;
+		std::queue<Ref<Event>> m_EventQueue;
 
 		Statistics m_Statistics;
 

@@ -11,7 +11,7 @@ namespace Athena
 {
 	class ATHENA_API GraphicsContext;
 
-	using WindowEventCallback = std::function<void(Event&)>;
+	using WindowEventCallback = std::function<void(const Ref<Event>&)>;
 	using TitlebarHitTestCallback = std::function<bool()>;
 
 	enum class WindowMode
@@ -32,8 +32,6 @@ namespace Athena
 		bool CustomTitlebar = false;
 		bool WindowResizeable = true;
 		FilePath Icon;
-
-		WindowEventCallback EventCallback = [](Event&) {};
 	};
 
 	class ATHENA_API Window
@@ -81,8 +79,8 @@ namespace Athena
 			WindowMode Mode = WindowMode::Default;
 			bool CustomTitlebar = false;
 
-			WindowEventCallback EventCallback = [](Event&) {};
-			TitlebarHitTestCallback TitlebarHitTest = []() {return false; };
+			WindowEventCallback EventCallback = [](const Ref<Event>&) {};
+			TitlebarHitTestCallback TitlebarHitTest = []() { return false; };
 		};
 
 	private:

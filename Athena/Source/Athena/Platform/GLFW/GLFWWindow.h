@@ -5,7 +5,8 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/Input.h"
+#include "Athena/Input/WindowEvent.h"
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/MouseEvent.h"
 
@@ -17,74 +18,123 @@
 
 namespace Athena
 {
-	static inline Keyboard::Key GLFWKeyCodeToAthenaKeyCode(int glfwKeyCode);
-	static inline Mouse::Button GLFWMouseCodeToAthenaMouseCode(int glfwMouseCode);
-
-
 	static void GLFWErrorCallback(int error, const char* description)
 	{
 		ATN_CORE_ERROR_TAG_("GLFWWindow", "Error({0}) : {1}", error, description);
+	}
+
+	static Window::WindowData& GetUserPointer(GLFWwindow* window)
+	{
+		return *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
 	}
 
 	static void SetEventCallbacks(GLFWwindow* windowHandle)
 	{
 		glfwSetWindowCloseCallback(windowHandle, [](GLFWwindow* window)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 
-				WindowCloseEvent event;
+				Ref<WindowCloseEvent> event = CreateRef<WindowCloseEvent>();
 				data.EventCallback(event);
 			});
 
 		glfwSetWindowSizeCallback(windowHandle, [](GLFWwindow* window, int width, int height)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 				data.Width = width;
 				data.Height = height;
 
-				WindowResizeEvent event(width, height);
+				Ref<WindowResizeEvent> event = CreateRef<WindowResizeEvent>(width, height);
 				data.EventCallback(event);
 			});
 
-		glfwSetWindowIconifyCallback(windowHandle, [](GLFWwindow* window, int iconified)
+		glfwSetWindowPosCallback(windowHandle, [](GLFWwindow* window, int xpos, int ypos)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
-				if (iconified)
-					data.Mode = WindowMode::Minimized;
+				Window::WindowData& data = GetUserPointer(window);
+				
+				Ref<WindowMoveEvent> event = CreateRef<WindowMoveEvent>(xpos, ypos);
+				data.EventCallback(event);
+			});
+
+		glfwSetWindowFocusCallback(windowHandle, [](GLFWwindow* window, int focused)
+			{
+				Window::WindowData& data = GetUserPointer(window);
+
+				if (focused)
+				{
+					Ref<WindowGainedFocusEvent> event = CreateRef<WindowGainedFocusEvent>();
+					data.EventCallback(event);
+				}
 				else
-					data.Mode = WindowMode::Default;
+				{
+					Ref<WindowLostFocusEvent> event = CreateRef<WindowLostFocusEvent>();
+					data.EventCallback(event);
+				}
 			});
 
 		glfwSetWindowMaximizeCallback(windowHandle, [](GLFWwindow* window, int maximized)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 				if (maximized)
+				{
 					data.Mode = WindowMode::Maximized;
+
+					Ref<WindowMaximizeEvent> event = CreateRef<WindowMaximizeEvent>();
+					data.EventCallback(event);
+				}
 				else
+				{
 					data.Mode = WindowMode::Default;
+
+					Ref<WindowRestoreEvent> event = CreateRef<WindowRestoreEvent>();
+					data.EventCallback(event);
+				}
+			});
+
+		glfwSetWindowIconifyCallback(windowHandle, [](GLFWwindow* window, int iconified)
+			{
+				Window::WindowData& data = GetUserPointer(window);
+				if (iconified)
+				{
+					data.Mode = WindowMode::Minimized;
+
+					Ref<WindowIconifyEvent> event = CreateRef<WindowIconifyEvent>();
+					data.EventCallback(event);
+				}
+				else
+				{
+					data.Mode = WindowMode::Default;
+
+					Ref<WindowRestoreEvent> event = CreateRef<WindowRestoreEvent>();
+					data.EventCallback(event);
+				}
 			});
 
 		glfwSetKeyCallback(windowHandle, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
+				
+				bool ctrl = mods & GLFW_MOD_CONTROL;
+				bool alt = mods & GLFW_MOD_ALT;
+				bool shift = mods & GLFW_MOD_SHIFT;
 
 				switch (action)
 				{
 				case GLFW_PRESS:
 				{
-					KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), false);
+					Ref<KeyPressedEvent> event = CreateRef<KeyPressedEvent>(Input::ConvertFromNativeKeyCode(key), false, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE:
 				{
-					KeyReleasedEvent event(GLFWKeyCodeToAthenaKeyCode(key));
+					Ref<KeyReleasedEvent> event = CreateRef<KeyReleasedEvent>(Input::ConvertFromNativeKeyCode(key), ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_REPEAT:
 				{
-					KeyPressedEvent event(GLFWKeyCodeToAthenaKeyCode(key), true);
+					Ref<KeyPressedEvent> event = CreateRef<KeyPressedEvent>(Input::ConvertFromNativeKeyCode(key), true, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
@@ -93,52 +143,56 @@ namespace Athena
 
 		glfwSetCharCallback(windowHandle, [](GLFWwindow* window, unsigned int character)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 
-				KeyTypedEvent event(static_cast<Keyboard::Key>(UnicodeToASCII(character)));
+				Ref<KeyTypedEvent> event = CreateRef<KeyTypedEvent>(Input::ConvertFromNativeKeyCode(character));
 				data.EventCallback(event);
 			});
 
-		glfwSetMouseButtonCallback(windowHandle, [](GLFWwindow* window, int button, int action, int modes)
+		glfwSetMouseButtonCallback(windowHandle, [](GLFWwindow* window, int button, int action, int mods)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
+
+				bool ctrl = mods & GLFW_MOD_CONTROL;
+				bool alt = mods & GLFW_MOD_ALT;
+				bool shift = mods & GLFW_MOD_SHIFT;
 
 				switch (action)
 				{
 				case GLFW_PRESS:
 				{
-					MouseButtonPressedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
+					Ref<MouseButtonPressedEvent> event = CreateRef<MouseButtonPressedEvent>(Input::ConvertFromNativeMouseCode(button), ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE:
 				{
-					MouseButtonReleasedEvent event(GLFWMouseCodeToAthenaMouseCode(button));
+					Ref<MouseButtonReleasedEvent> event = CreateRef<MouseButtonReleasedEvent>(Input::ConvertFromNativeMouseCode(button), ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				}
 			});
-
+		
 		glfwSetScrollCallback(windowHandle, [](GLFWwindow* window, double xOffset, double yOffset)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 
-				MouseScrolledEvent event((float)xOffset, (float)yOffset);
+				Ref<MouseScrolledEvent> event = CreateRef<MouseScrolledEvent>((float)xOffset, (float)yOffset);
 				data.EventCallback(event);
 			});
 
 		glfwSetCursorPosCallback(windowHandle, [](GLFWwindow* window, double x, double y)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 
-				MouseMovedEvent event((float)x, (float)y);
+				Ref<MouseMoveEvent> event = CreateRef<MouseMoveEvent>((float)x, (float)y);
 				data.EventCallback(event);
 			});
 
 		glfwSetTitlebarHitTestCallback(windowHandle, [](GLFWwindow* window, int x, int y, int* hit)
 			{
-				Window::WindowData& data = *reinterpret_cast<Window::WindowData*>(glfwGetWindowUserPointer(window));
+				Window::WindowData& data = GetUserPointer(window);
 		
 				if (data.CustomTitlebar)
 				{
@@ -157,7 +211,6 @@ namespace Athena
 		windowData.Height = info.Height;
 		windowData.VSync = info.VSync;
 		windowData.Title = info.Title;
-		windowData.EventCallback = info.EventCallback;
 		windowData.CustomTitlebar = info.CustomTitlebar;
 
 		window->m_Data = windowData;
@@ -173,8 +226,8 @@ namespace Athena
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
 
-		GLFWwindow* hWnd;
-		window->m_WindowHandle = hWnd = glfwCreateWindow(
+		GLFWwindow* glfwWindow;
+		window->m_WindowHandle = glfwWindow = glfwCreateWindow(
 			window->m_Data.Width,
 			window->m_Data.Height,
 			window->m_Data.Title.c_str(),
@@ -185,10 +238,10 @@ namespace Athena
 
 		ATN_CORE_INFO_TAG_("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
-		glfwSetWindowAttrib(hWnd, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
+		glfwSetWindowAttrib(glfwWindow, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
-		glfwSetWindowUserPointer(hWnd, &window->m_Data);
-		SetEventCallbacks(hWnd);
+		glfwSetWindowUserPointer(glfwWindow, &window->m_Data);
+		SetEventCallbacks(glfwWindow);
 
 		window->m_Context = CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(window->m_WindowHandle));;
 		window->SetVSync(window->m_Data.VSync);
@@ -201,7 +254,7 @@ namespace Athena
 			image.pixels = stbi_load(info.Icon.string().c_str(), &image.width, &image.height, 0, 4);
 			if (image.pixels)
 			{
-				glfwSetWindowIcon(hWnd, 1, &image);
+				glfwSetWindowIcon(glfwWindow, 1, &image);
 				stbi_image_free(image.pixels);
 			}
 			else
@@ -212,6 +265,12 @@ namespace Athena
 		else if(!info.Icon.empty())
 		{
 			ATN_CORE_ERROR_TAG_("GLFWWindow", "invalid filepath for icon '{}'!", info.Icon);
+		}
+
+		if (glfwRawMouseMotionSupported())
+		{
+			ATN_CORE_INFO_TAG("GLFWWindow", "Raw mouse motion enabled");
+			glfwSetInputMode(glfwWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		}
 
 		return window;
@@ -269,7 +328,7 @@ namespace Athena
 		{
 			m_Context->SetFullscreen(false);
 			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-			glfwSetWindowMonitor(hWnd, nullptr, 100, 100, m_Data.Width * 3 / 4, m_Data.Width * 3 / 4, mode->refreshRate);
+			glfwSetWindowMonitor(hWnd, nullptr, 0, 0, m_Data.Width, m_Data.Width, mode->refreshRate);
 		}
 
 		switch (mode)
@@ -301,154 +360,5 @@ namespace Athena
 		}
 
 		m_Data.Mode = mode;
-	}
-
-
-	static inline Keyboard::Key GLFWKeyCodeToAthenaKeyCode(int glfwKeyCode)
-	{
-		switch (glfwKeyCode)
-		{
-		case 32: return Keyboard::Space;
-		case 39: return Keyboard::Apostrophe;
-		case 44: return Keyboard::Comma;
-		case 45: return Keyboard::Minus;
-		case 46: return Keyboard::Dot;
-		case 47: return Keyboard::Slash;
-
-		case 48: return Keyboard::D0;
-		case 49: return Keyboard::D1;
-		case 50: return Keyboard::D2;
-		case 51: return Keyboard::D3;
-		case 52: return Keyboard::D4;
-		case 53: return Keyboard::D5;
-		case 54: return Keyboard::D6;
-		case 55: return Keyboard::D7;
-		case 56: return Keyboard::D8;
-		case 57: return Keyboard::D9;
-
-		case 59: return Keyboard::Semicolon;
-		case 61: return Keyboard::Equal;
-
-		case 65: return Keyboard::A;
-		case 66: return Keyboard::B;
-		case 67: return Keyboard::C;
-		case 68: return Keyboard::D;
-		case 69: return Keyboard::E;
-		case 70: return Keyboard::F;
-		case 71: return Keyboard::G;
-		case 72: return Keyboard::H;
-		case 73: return Keyboard::I;
-		case 74: return Keyboard::J;
-		case 75: return Keyboard::K;
-		case 76: return Keyboard::L;
-		case 77: return Keyboard::M;
-		case 78: return Keyboard::N;
-		case 79: return Keyboard::O;
-		case 80: return Keyboard::P;
-		case 81: return Keyboard::Q;
-		case 82: return Keyboard::R;
-		case 83: return Keyboard::S;
-		case 84: return Keyboard::T;
-		case 85: return Keyboard::U;
-		case 86: return Keyboard::V;
-		case 87: return Keyboard::W;
-		case 88: return Keyboard::X;
-		case 89: return Keyboard::Y;
-		case 90: return Keyboard::Z;
-
-		case 91: return Keyboard::LeftBracket;
-		case 92: return Keyboard::Backslash;
-		case 93: return Keyboard::RightBracket;
-		case 96: return Keyboard::GraveAccent;
-
-		case 256: return Keyboard::Escape;
-		case 257: return Keyboard::Enter;
-		case 258: return Keyboard::Tab;
-		case 259: return Keyboard::Backspace;
-		case 260: return Keyboard::Insert;
-		case 261: return Keyboard::Delete;
-		case 262: return Keyboard::Right;
-		case 263: return Keyboard::Left;
-		case 264: return Keyboard::Down;
-		case 265: return Keyboard::Up;
-		case 266: return Keyboard::PageUp;
-		case 267: return Keyboard::PageDown;
-		case 268: return Keyboard::Home;
-		case 269: return Keyboard::End;
-		case 280: return Keyboard::CapsLock;
-		case 281: return Keyboard::ScrollLock;
-		case 282: return Keyboard::NumLock;
-		case 283: return Keyboard::PrintScreen;
-		case 284: return Keyboard::Pause;
-		case 290: return Keyboard::F1;
-		case 291: return Keyboard::F2;
-		case 292: return Keyboard::F3;
-		case 293: return Keyboard::F4;
-		case 294: return Keyboard::F5;
-		case 295: return Keyboard::F6;
-		case 296: return Keyboard::F7;
-		case 297: return Keyboard::F8;
-		case 298: return Keyboard::F9;
-		case 299: return Keyboard::F10;
-		case 300: return Keyboard::F11;
-		case 301: return Keyboard::F12;
-		case 302: return Keyboard::F13;
-		case 303: return Keyboard::F14;
-		case 304: return Keyboard::F15;
-		case 305: return Keyboard::F16;
-		case 306: return Keyboard::F17;
-		case 307: return Keyboard::F18;
-		case 308: return Keyboard::F19;
-		case 309: return Keyboard::F20;
-		case 310: return Keyboard::F21;
-		case 311: return Keyboard::F22;
-		case 312: return Keyboard::F23;
-		case 313: return Keyboard::F24;
-
-		case 320: return Keyboard::KP0;
-		case 321: return Keyboard::KP1;
-		case 322: return Keyboard::KP2;
-		case 323: return Keyboard::KP3;
-		case 324: return Keyboard::KP4;
-		case 325: return Keyboard::KP5;
-		case 326: return Keyboard::KP6;
-		case 327: return Keyboard::KP7;
-		case 328: return Keyboard::KP8;
-		case 329: return Keyboard::KP9;
-		case 330: return Keyboard::KPDecimal;
-		case 331: return Keyboard::KPDivide;
-		case 332: return Keyboard::KPMultiply;
-		case 333: return Keyboard::KPSubtract;
-		case 334: return Keyboard::KPAdd;
-		case 335: return Keyboard::KPEnter;
-
-		case 340: return Keyboard::LShift;
-		case 341: return Keyboard::LCtrl;
-		case 342: return Keyboard::LAlt;
-		case 343: return Keyboard::LWindows;
-		case 344: return Keyboard::RShift;
-		case 345: return Keyboard::RCtrl;
-		case 346: return Keyboard::RAlt;
-		case 347: return Keyboard::RWindows;
-		case 348: return Keyboard::Menu;
-		}
-
-		ATN_CORE_ERROR_TAG_("GLFWWindow", "Failed to match GLFW KeyCode with Athena KeyCode '{0}'", glfwKeyCode);
-		return Keyboard::Space;
-	}
-
-	static inline Mouse::Button GLFWMouseCodeToAthenaMouseCode(int glfwMouseCode)
-	{
-		switch (glfwMouseCode)
-		{
-		case 0: return Mouse::Left;
-		case 1: return Mouse::Right;
-		case 2: return Mouse::Middle;
-		case 3: return Mouse::XButton1;
-		case 4: return Mouse::XButton2;
-		}
-
-		ATN_CORE_ERROR_TAG_("GLFWWindow", "Failed to match GLFW MouseCode with Athena MouseCode '{0}'", glfwMouseCode);
-		return Mouse::XButton1;
 	}
 }

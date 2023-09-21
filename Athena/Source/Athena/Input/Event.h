@@ -7,25 +7,20 @@
 
 namespace Athena
 {
-	// Events in Athena are currently blocking, meaning when an event occurs it
-	// immediately gets dispatched and must be dealt with right then an there.
-	// For the future, a better strategy might be to buffer events in an event
-	// bus and process them during the "event" part of the update stage.
-
 	enum class EventType
 	{
 		None = 0,
-		WindowClosed, WindowResized, WindowFocused, WindowLostFocus, WindowMoved,
-		AppTick, AppUpdate, AppRender,
+		WindowClosed, WindowResized, WindowMoved,
+		WindowGainedFocus, WindowLostFocus, WindowMaximized, WindowIconified, WindowRestored,
 		KeyPressed, KeyReleased, KeyTyped,
-		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
+		MouseMoved, MouseButtonPressed, MouseButtonReleased, MouseScrolled
 	};
 
 
 	enum EventCategory
 	{
 		None = 0,
-		EventCategoryApplication		= BIT(0),
+		EventCategoryWindow			    = BIT(0),
 		EventCategoryInput				= BIT(1),
 		EventCategoryKeyboard			= BIT(2),
 		EventCategoryMouse				= BIT(3),
@@ -35,7 +30,7 @@ namespace Athena
 	                                                                      
 #define EVENT_CLASS_TYPE(type) static EventType GetStaticType() { return EventType::type; }\
 						       virtual EventType GetEventType() const override { return GetStaticType(); }\
-							   virtual const char* GetName() const override { return #type; }
+							   virtual const char* GetName() const override { return #type"Event"; }
 
 #define EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; }
 
@@ -50,7 +45,7 @@ namespace Athena
 		virtual int GetCategoryFlags() const = 0;
 		virtual String ToString() const { return GetName(); }
 
-		inline bool IsInCategory(EventCategory category)
+		bool IsInCategory(EventCategory category)
 		{
 			return GetCategoryFlags() & category;
 		}
@@ -70,7 +65,7 @@ namespace Athena
 			: m_Event(event) {}
 
 		template <typename T>
-		bool Dispatch(EventFn<T> func)
+		bool Dispatch(const EventFn<T>& func)
 		{
 			if (m_Event.GetEventType() == T::GetStaticType())
 			{
@@ -83,6 +78,7 @@ namespace Athena
 	private:
 		Event& m_Event;
 	};
+
 
 	inline String ToString(const Event& event)
 	{

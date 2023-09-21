@@ -605,7 +605,7 @@ namespace Athena
             {
 				m_ImGuizmoLayer->OnEvent(event);
 				m_EditorCamera->OnEvent(event);
-
+                
                 if(rightMB && !m_HideCursor)
 				{
 					m_HideCursor = true;
@@ -632,7 +632,7 @@ namespace Athena
         if (event.IsRepeat())
             return false;
 
-        bool ctrl = Input::IsKeyPressed(Keyboard::LCtrl) || Input::IsKeyPressed(Keyboard::RCtrl);
+        bool ctrl = event.IsCtrlPressed();
 
         switch (event.GetKeyCode())
         {

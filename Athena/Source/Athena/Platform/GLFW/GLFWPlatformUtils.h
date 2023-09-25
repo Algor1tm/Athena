@@ -95,7 +95,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ERROR_TAG_("Platform", "GetSystemInfo: {}", GetLastError());
+				ATN_CORE_ERROR_TAG("Platform", "GetSystemInfo: {}", GetLastError());
 				return;
 			}
 		}

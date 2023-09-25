@@ -117,13 +117,13 @@ namespace Athena
 		try
 		{
 			s_Data->PythonModules[name] = py::module_::import(name.c_str());
-			ATN_CORE_WARN_TAG_("SriptEngine", "Successfully load python script '{}'!", name);
+			ATN_CORE_WARN_TAG("SriptEngine", "Successfully load python script '{}'!", name);
 			return true;
 		}
 		catch (std::exception& exception)
 		{
 			s_Data->PythonModules.erase(name);
-			ATN_CORE_ERROR_TAG_("SriptEngine", "Load module exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "Load module exception: \n{}!", exception.what());
 			return false;
 		}
 	}
@@ -137,7 +137,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("SriptEngine", "Reload module exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "Reload module exception: \n{}!", exception.what());
 			return false;
 		}
 	}
@@ -158,7 +158,7 @@ namespace Athena
 				{
 					return true;
 				}
-				ATN_CORE_WARN_TAG_("SriptEngine", "Unknown field type: {0} ({1}), class - {2}", name, type, className);
+				ATN_CORE_WARN_TAG("SriptEngine", "Unknown field type: {0} ({1}), class - {2}", name, type, className);
 			}
 		}
 
@@ -176,7 +176,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
 			return;
 		}
 
@@ -221,7 +221,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
 		}
 
 		return py::object();
@@ -275,7 +275,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(config.ScriptsFolder))
 		{
-			ATN_CORE_FATAL_TAG_("SriptEngine", "folder does not exists '{}'!", config.ScriptsFolder);
+			ATN_CORE_FATAL_TAG("SriptEngine", "folder does not exists '{}'!", config.ScriptsFolder);
 			return;
 		}
 
@@ -418,7 +418,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("ScriptEngine", "InstantiateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "InstantiateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 
@@ -433,7 +433,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("ScriptEngine", "OnCreateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "OnCreateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 
@@ -448,7 +448,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG_("ScriptEngine", "OnUpdateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "OnUpdateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 

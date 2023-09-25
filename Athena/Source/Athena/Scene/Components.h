@@ -4,7 +4,6 @@
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Math/Transforms.h"
-#include "Athena/Math/TypeCasts.h"
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Mesh.h"

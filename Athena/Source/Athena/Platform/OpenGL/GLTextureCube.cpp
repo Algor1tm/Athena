@@ -26,7 +26,7 @@ namespace Athena
 
 			if (!data)
 			{
-				ATN_CORE_ERROR_TAG_("GLTextureCube", "Failed to load texture from {}!", path);
+				ATN_CORE_ERROR_TAG("GLTextureCube", "Failed to load texture from {}!", path);
 				m_IsLoaded = false;
 				break;
 			}

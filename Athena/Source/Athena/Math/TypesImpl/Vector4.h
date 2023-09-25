@@ -376,3 +376,16 @@ namespace Athena::Math
 #include "Athena/Math/SIMD/TypesImpl/Vector4float_simd.h"
 #include "Athena/Math/SIMD/TypesImpl/VectorRelational_simd.h"
 #endif
+
+
+namespace Athena
+{
+	template <>
+	inline String ToString<Math::Vector<float, 4>>(const Math::Vector<float, 4>& vec)
+	{
+		std::stringstream stream;
+		stream << "Vector4" << "(" << vec[0] << ", " << vec[1] << ", " << vec[2] << ", " << vec[3] << ")";
+
+		return stream.str();
+	}
+}

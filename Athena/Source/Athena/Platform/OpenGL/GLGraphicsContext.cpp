@@ -20,9 +20,9 @@ namespace Athena
 		ATN_CORE_VERIFY(status, "Failed to initialize glad!");
 
 		ATN_CORE_INFO_TAG("GLGraphicsContext", "Create OpenGL Graphics Context:");
-		ATN_CORE_INFO_TAG_("GLGraphicsContext", "OpenGL version: {0}", glGetString(GL_VERSION));
-		ATN_CORE_INFO_TAG_("GLGraphicsContext", "Graphics Card: {0}", glGetString(GL_RENDERER));
-		ATN_CORE_INFO_TAG_("GLGraphicsContext", "Vendor: {0}", glGetString(GL_VENDOR));
+		ATN_CORE_INFO_TAG("GLGraphicsContext", "OpenGL version: {0}", glGetString(GL_VERSION));
+		ATN_CORE_INFO_TAG("GLGraphicsContext", "Graphics Card: {0}", glGetString(GL_RENDERER));
+		ATN_CORE_INFO_TAG("GLGraphicsContext", "Vendor: {0}", glGetString(GL_VENDOR));
 	}
 
 	void GLGraphicsContext::SwapBuffers()

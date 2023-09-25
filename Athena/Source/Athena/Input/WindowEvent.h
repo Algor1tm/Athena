@@ -29,7 +29,7 @@ namespace Athena
 		virtual String ToString() const override
 		{
 			std::stringstream stream;
-			stream << "WindowResizedEvent: width = " << m_Width << ", height = " << m_Height;
+			stream << "WindowResizeEvent: width = " << m_Width << ", height = " << m_Height;
 			return stream.str();
 		}
 
@@ -49,6 +49,13 @@ namespace Athena
 
 		int32 GetPosX() const { return m_PosX; }
 		int32 GetPosY() const { return m_PosY; }
+
+		virtual String ToString() const override
+		{
+			std::stringstream stream;
+			stream << "WindowMoveEvent: posX = " << m_PosX << ", posY = " << m_PosY;
+			return stream.str();
+		}
 
 		EVENT_CLASS_TYPE(WindowMoved)
 		EVENT_CLASS_CATEGORY(EventCategoryWindow)

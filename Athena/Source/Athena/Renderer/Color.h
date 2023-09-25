@@ -17,7 +17,6 @@ namespace Athena
 		float H = 0, S = 0, V = 100;
 	};
 
-	ATHENA_API String ToString(const HSVColor& color);
 
 	struct HEXColor
 	{
@@ -29,7 +28,6 @@ namespace Athena
 		bool Inverse = false;
 	};
 
-	ATHENA_API String ToString(const HEXColor& color);
 
 	class IntegerColor;
 
@@ -102,8 +100,6 @@ namespace Athena
 
 	ATHENA_API LinearColor Lerp(const LinearColor& a, const LinearColor& b, float t);
 	ATHENA_API LinearColor Clamp(const LinearColor& clr, float min, float max);
-	ATHENA_API String ToString(const LinearColor& color);
-
 
 
 	// Stores a color with 8 bits(uint8) of precision per channel.
@@ -164,5 +160,41 @@ namespace Athena
 
 	ATHENA_API IntegerColor Lerp(const IntegerColor& a, const IntegerColor& b, float t);
 	ATHENA_API IntegerColor Clamp(const IntegerColor& clr, uint8 min, uint8 max);
-	ATHENA_API String ToString(const IntegerColor& color);
+
+
+	template<>
+	inline String ToString<HSVColor>(const HSVColor& color)
+	{
+		std::stringstream stream;
+		stream << "HSVColor(H = " << color.H << ", S = " << color.S << ", V = " << color.V << ")";
+		return stream.str();
+	}
+
+	template<>
+	inline String ToString<HEXColor>(const HEXColor& color)
+	{
+		std::stringstream stream;
+		stream << "HEXColor: #" << std::hex << color.Value;
+		return stream.str();
+	}
+
+	template<>
+	inline String ToString<LinearColor>(const LinearColor& color)
+	{
+		std::stringstream stream;
+		stream << "LinearColor(" << color.r << ", " << color.g << ", " << color.b << ", " << color.a << ")";
+		return stream.str();
+	}
+
+	template<>
+	inline String ToString<IntegerColor>(const IntegerColor& color)
+	{
+		std::stringstream stream;
+		stream << "IntegerColor(" <<
+			(uint32)color.r << ", " <<
+			(uint32)color.g << ", " <<
+			(uint32)color.b << ", " <<
+			(uint32)color.a << ")";
+		return stream.str();
+	}
 }

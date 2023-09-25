@@ -39,7 +39,12 @@ namespace Athena
 		virtual String ToString() const override
 		{
 			std::stringstream stream;
-			stream << "KeyPressedEvent: " << m_KeyCode << " (Is repeat - " << m_IsRepeat << ")";
+			stream << "KeyPressedEvent: " << m_KeyCode;
+			stream << " (repeat - " << std::boolalpha << m_IsRepeat;
+			stream << ", ctrl - " << std::boolalpha << m_Ctrl;
+			stream << ", alt - " << std::boolalpha << m_Alt;
+			stream << ", shift - " << std::boolalpha << m_Shift << ")";
+
 			return stream.str();
 		}
 

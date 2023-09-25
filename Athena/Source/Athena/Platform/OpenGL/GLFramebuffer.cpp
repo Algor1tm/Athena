@@ -84,7 +84,7 @@ namespace Athena
 	{
 		if (width == 0 || height == 0 || width > s_MaxFramebufferSize || height > s_MaxFramebufferSize)
 		{
-			ATN_CORE_WARN_TAG_("GLFramebuffer", "Attempted to resize Framebuffer to invalid size ({0}, {1})", width, height);
+			ATN_CORE_WARN_TAG("GLFramebuffer", "Attempted to resize Framebuffer to invalid size ({0}, {1})", width, height);
 			return;
 		}
 
@@ -108,7 +108,7 @@ namespace Athena
 	{
 		if (index >= m_ColorAttachments.size())
 		{
-			ATN_CORE_ERROR_TAG_("GLFramebuffer", "Invalid index for color attachment image'{}'!", index);
+			ATN_CORE_ERROR_TAG("GLFramebuffer", "Invalid index for color attachment image'{}'!", index);
 		}
 		else
 		{
@@ -123,7 +123,7 @@ namespace Athena
 	{
 		if (index >= m_ColorAttachments.size())
 		{
-			ATN_CORE_ERROR_TAG_("GLFramebuffer", "Invalid index for color attachment '{}'!", index);
+			ATN_CORE_ERROR_TAG("GLFramebuffer", "Invalid index for color attachment '{}'!", index);
 		}
 		else
 		{

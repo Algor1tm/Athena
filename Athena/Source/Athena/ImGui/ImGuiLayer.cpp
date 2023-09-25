@@ -26,7 +26,7 @@ namespace Athena
 		}
 		
 		if(!loaded)
-			ATN_CORE_ERROR_TAG_("ImGuiLayer", "Failed to load UI font '{}'!", path);
+			ATN_CORE_ERROR_TAG("ImGuiLayer", "Failed to load UI font '{}'!", path);
 
 		return font;
 	}
@@ -161,7 +161,7 @@ namespace Athena
 
 		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
 
-		ATN_CORE_INFO_TAG_("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
+		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
 
 

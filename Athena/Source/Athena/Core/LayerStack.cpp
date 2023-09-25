@@ -39,7 +39,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG_("LayerStack", "Could not pop layer with name = {0}", layer->GetName());
+			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop layer with name = {0}", layer->GetName());
 		}
 	}
 
@@ -54,7 +54,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG_("LayerStack", "Could not pop overlay with name = {0}", overlay->GetName());
+			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop overlay with name = {0}", overlay->GetName());
 		}
 	}
 }

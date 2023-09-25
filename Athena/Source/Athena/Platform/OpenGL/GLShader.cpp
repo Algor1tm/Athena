@@ -45,7 +45,7 @@ namespace Athena
 
 				glDeleteProgram(*program);
 
-				ATN_CORE_ERROR_TAG_("GLShader", "{0} '{1}' compilation failed!", ShaderTypeToString(glType), name);
+				ATN_CORE_ERROR_TAG("GLShader", "{0} '{1}' compilation failed!", ShaderTypeToString(glType), name);
 				ATN_CORE_INFO("Errors/Warnings:\n{}", infoLog.data());
 
 				return false;
@@ -72,7 +72,7 @@ namespace Athena
 
 			glDeleteProgram(*program);
 
-			ATN_CORE_ERROR_TAG_("GLShader", "{0} linking failed!", name);
+			ATN_CORE_ERROR_TAG("GLShader", "{0} linking failed!", name);
 			ATN_CORE_INFO("Errors/Warnings: \n{0}", infoLog.data());
 
 			return false;
@@ -127,7 +127,7 @@ namespace Athena
 	{
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			ATN_CORE_ERROR_TAG_("GLShader", "Invalid filepath for shader {}", m_FilePath);
+			ATN_CORE_ERROR_TAG("GLShader", "Invalid filepath for shader {}", m_FilePath);
 			m_Compiled = false;
 			return;
 		}
@@ -140,7 +140,7 @@ namespace Athena
 
 		if (Compile(shaderSources))
 		{
-			ATN_CORE_WARN_TAG_("GLShader", "Successfully compile OpenGL Shader '{}'", m_Name);
+			ATN_CORE_WARN_TAG("GLShader", "Successfully compile OpenGL Shader '{}'", m_Name);
 		}
 	}
 
@@ -186,7 +186,7 @@ namespace Athena
 	{
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			ATN_CORE_ERROR_TAG_("GLIncludeShader", "Invalid filepath for shader '{}'", m_FilePath);
+			ATN_CORE_ERROR_TAG("GLIncludeShader", "Invalid filepath for shader '{}'", m_FilePath);
 			m_IsLoaded = false;
 			return;
 		}

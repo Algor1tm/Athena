@@ -72,7 +72,7 @@ namespace Athena
 
 					std::scoped_lock<std::mutex> lock(m_EventQueueMutex);
 
-					while (m_EventQueue.size() > 0)
+					while (!m_EventQueue.empty())
 					{
 						Event& event = *m_EventQueue.front();
 						OnEvent(event);
@@ -123,6 +123,8 @@ namespace Athena
 
 	void Application::QueueEvent(const Ref<Event>& event)
 	{
+		std::scoped_lock<std::mutex> lock(m_EventQueueMutex);
+
 		m_EventQueue.push(event);
 	}
 

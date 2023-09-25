@@ -670,7 +670,7 @@ namespace Athena
 								}
 								else
 								{
-									ATN_ERROR_TAG_("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
+									ATN_ERROR_TAG("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
 								}
 							}
 							ImGui::EndDragDropTarget();

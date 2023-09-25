@@ -19,7 +19,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG_("FileSystem", "Could not open file: '{0}'", path);
+			ATN_CORE_ERROR_TAG("FileSystem", "Could not open file: '{0}'", path);
 		}
 
 		return result;

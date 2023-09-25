@@ -733,14 +733,14 @@ namespace Athena
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_ERROR_TAG_("EditorLayer", "Invalid filepath to save Scene '{}'", filepath.string());
+            ATN_ERROR_TAG("EditorLayer", "Invalid filepath to save Scene '{}'", filepath.string());
     }
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
         SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_INFO_TAG_("EditorLayer", "Successfully saved Scene into '{}'", path.string());
+        ATN_INFO_TAG("EditorLayer", "Successfully saved Scene into '{}'", path.string());
     }
 
     void EditorLayer::OpenScene()
@@ -752,7 +752,7 @@ namespace Athena
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_ERROR_TAG_("EditorLayer", "Invalid filepath to loaded Scene '{}'", filepath.string());
+            ATN_ERROR_TAG("EditorLayer", "Invalid filepath to loaded Scene '{}'", filepath.string());
     }
 
     void EditorLayer::OpenScene(const FilePath& path)
@@ -766,7 +766,7 @@ namespace Athena
         if(serializer.DeserializeFromFile(path.string()))
         {
             m_CurrentScenePath = path;
-            ATN_INFO_TAG_("EditorLayer", "Successfully load Scene from '{}'", path.string().data());
+            ATN_INFO_TAG("EditorLayer", "Successfully load Scene from '{}'", path.string().data());
         }
 
         m_RuntimeScene = nullptr;

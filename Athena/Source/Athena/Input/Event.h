@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Log.h"
 
 #include <functional>
 
@@ -80,7 +81,8 @@ namespace Athena
 	};
 
 
-	inline String ToString(const Event& event)
+	template <>
+	inline String ToString<Event>(const Event& event)
 	{
 		return event.ToString();
 	}

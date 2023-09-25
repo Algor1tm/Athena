@@ -208,7 +208,7 @@ namespace Athena
 	{
 		if (!FileSystem::Exists(path))
 		{
-			ATN_CORE_ERROR_TAG_("SceneSerializer", "Invalid scene filepath {}", path);
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Invalid scene filepath {}", path);
 			return false;
 		}
 
@@ -223,7 +223,7 @@ namespace Athena
 
 			if (!data["Scene"])
 			{
-				ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene {0}", path);
+				ATN_CORE_ERROR_TAG("SceneSerializer", "Failed to deserialize scene {0}", path);
 				return false;
 			}
 
@@ -467,7 +467,7 @@ namespace Athena
 		}
 		catch (const YAML::Exception& ex)
 		{
-			ATN_CORE_ERROR_TAG_("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
 			return false;
 		}
 

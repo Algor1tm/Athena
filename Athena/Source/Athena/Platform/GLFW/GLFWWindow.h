@@ -20,7 +20,7 @@ namespace Athena
 {
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		ATN_CORE_ERROR_TAG_("GLFWWindow", "Error({0}) : {1}", error, description);
+		ATN_CORE_ERROR_TAG("GLFWWindow", "Error({0}) : {1}", error, description);
 	}
 
 	static Window::WindowData& GetUserPointer(GLFWwindow* window)
@@ -143,9 +143,11 @@ namespace Athena
 
 		glfwSetCharCallback(windowHandle, [](GLFWwindow* window, unsigned int character)
 			{
+				const auto convertFromUnicode = [](unsigned int code) { return (int)code >= 97 ? (int)code - 32 : (int)code; };
+
 				Window::WindowData& data = GetUserPointer(window);
 
-				Ref<KeyTypedEvent> event = CreateRef<KeyTypedEvent>(Input::ConvertFromNativeKeyCode(character));
+				Ref<KeyTypedEvent> event = CreateRef<KeyTypedEvent>(Input::ConvertFromNativeKeyCode(convertFromUnicode(character)));
 				data.EventCallback(event);
 			});
 
@@ -236,7 +238,7 @@ namespace Athena
 
 		m_WindowCount++;
 
-		ATN_CORE_INFO_TAG_("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
+		ATN_CORE_INFO_TAG("GLFWWindow", "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
 		glfwSetWindowAttrib(glfwWindow, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
 
@@ -259,12 +261,12 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ERROR_TAG_("GLFWWindow", "failed to load icon from {}!", info.Icon);
+				ATN_CORE_ERROR_TAG("GLFWWindow", "failed to load icon from {}!", info.Icon);
 			}
 		}
 		else if(!info.Icon.empty())
 		{
-			ATN_CORE_ERROR_TAG_("GLFWWindow", "invalid filepath for icon '{}'!", info.Icon);
+			ATN_CORE_ERROR_TAG("GLFWWindow", "invalid filepath for icon '{}'!", info.Icon);
 		}
 
 		if (glfwRawMouseMotionSupported())
@@ -281,7 +283,7 @@ namespace Athena
 		glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_WindowHandle));
 		--m_WindowCount;
 
-		ATN_CORE_INFO_TAG_("GLFWWindow", "Destroy Window '{0}'", m_Data.Title);
+		ATN_CORE_INFO_TAG("GLFWWindow", "Destroy Window '{0}'", m_Data.Title);
 
 		if (m_WindowCount <= 0)
 		{

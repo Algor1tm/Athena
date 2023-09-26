@@ -1,7 +1,7 @@
 #include "Scene.h"
 
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Light.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/SceneRenderer.h"
@@ -102,7 +102,7 @@ namespace Athena
 	Scene::Scene(const String& name)
 		: m_Name(name)
 	{
-		m_Environment = CreateRef<Environment>();
+		
 	}
 
 	Scene::~Scene()
@@ -116,8 +116,6 @@ namespace Athena
 
 		newScene->m_ViewportWidth = other->m_ViewportWidth;
 		newScene->m_ViewportHeight = other->m_ViewportHeight;
-
-		newScene->m_Environment = other->m_Environment;
 
 		auto& srcSceneRegistry = other->m_Registry;
 		auto& dstSceneRegistry = newScene->m_Registry;
@@ -571,7 +569,7 @@ namespace Athena
 
 	void Scene::RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
-		SceneRenderer::BeginScene({ view, proj, near, far }, m_Environment);
+		SceneRenderer::BeginScene({ view, proj, near, far });
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
 		for (auto entity : staticMeshes)
@@ -595,6 +593,8 @@ namespace Athena
 			}
 		}
 
+		LightEnvironment lightEnv;
+
 		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
 		for (auto entity : dirLights)
 		{
@@ -603,7 +603,7 @@ namespace Athena
 
 			Vector3 direction = transform.Rotation * Vector3::Forward();
 			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
-			SceneRenderer::SubmitLight(dirLight);
+			lightEnv.DirectionalLights.push_back(dirLight);
 		}
 
 		auto pointLights = GetAllEntitiesWith<PointLightComponent>();
@@ -613,8 +613,25 @@ namespace Athena
 			const auto& light = pointLights.get<PointLightComponent>(entity);
 
 			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
-			SceneRenderer::SubmitLight(pointLight);
+			lightEnv.PointLights.push_back(pointLight);
 		}
+
+		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
+		if (skyLights.size() > 1)
+			ATN_CORE_WARN_TAG("Scene", "Attempt to submit more than 1 SkyLight in the scene!");
+
+		if (skyLights.size() == 1)
+		{
+			auto entity = skyLights[0];
+			const auto& light = skyLights.get<SkyLightComponent>(entity);
+
+			lightEnv.EnvironmentMap = light.EnvironmentMap;
+			lightEnv.EnvironmentMapLOD = light.LOD;
+			lightEnv.EnvironmentMapIntensity = light.Intensity;
+		}
+
+
+		SceneRenderer::SubmitLightEnvironment(lightEnv);
 
 		SceneRenderer::EndScene();
 

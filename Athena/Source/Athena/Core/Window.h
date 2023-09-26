@@ -28,7 +28,7 @@ namespace Athena
 		uint32 Height = 720;
 		String Title = "Athena App";
 		bool VSync = true;
-		WindowMode Mode = WindowMode::Default;
+		WindowMode StartMode = WindowMode::Default;
 		bool CustomTitlebar = false;
 		bool WindowResizeable = true;
 		FilePath Icon;

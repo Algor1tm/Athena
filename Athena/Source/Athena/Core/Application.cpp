@@ -33,6 +33,7 @@ namespace Athena
 			
 		m_Window = Window::Create(appinfo.WindowInfo);
 		m_Window->SetEventCallback([this](const Ref<Event>& event) { Application::QueueEvent(event); });
+		QueueEvent(CreateRef<WindowResizeEvent>(m_Window->GetWidth(), m_Window->GetHeight()));
 
 		Renderer::Init(appinfo.RendererConfig);
 		ScriptEngine::Init(appinfo.ScriptConfig);

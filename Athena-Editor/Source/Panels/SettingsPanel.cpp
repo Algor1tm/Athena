@@ -101,7 +101,7 @@ namespace Athena
 		ImGui::Begin("SceneRenderer");
 		ImGui::PopStyleVar();
 
-		if (UI::TreeNode("Debug"))
+		if (UI::TreeNode("Debug", false))
 		{
 			auto stats = Renderer::GetStatistics();
 
@@ -133,71 +133,80 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Shadows", false))
+		if (UI::TreeNode("LightEnvironmentSettings") && UI::BeginPropertyTable())
 		{
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+			LightEnvironmentSettings& settings = SceneRenderer::GetSettings().LightEnvironmentSettings;
 
-			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.ShadowSettings.EnableShadows);
-			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.ShadowSettings.SoftShadows);
-			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.ShadowSettings.LightSize, 0.025f);
-			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.ShadowSettings.MaxDistance);
-			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.ShadowSettings.FadeOut);
-			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ShadowSettings.ExponentialSplitFactor, 0.f, 1.f);
-			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.ShadowSettings.NearPlaneOffset);
-			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.ShadowSettings.FarPlaneOffset);
+			UI::PropertyDrag("Exposure", &settings.Exposure);
+			UI::PropertyDrag("Gamma", &settings.Gamma);
 
+			UI::EndPropertyTable();
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Bloom"))
+		if (UI::TreeNode("Shadows") && UI::BeginPropertyTable())
 		{
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+			ShadowSettings& settings = SceneRenderer::GetSettings().ShadowSettings;
 
-			ImGui::Text("Enable Bloom"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.BloomSettings.EnableBloom);
-			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f, 0, 10);
-			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f, 0, 10);
-			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.05f, 0, 10);
-			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f, 0, 200);
+			UI::PropertyCheckbox("Enable Shadows", &settings.EnableShadows);
+			UI::PropertyCheckbox("Soft Shadows", &settings.SoftShadows);
+			UI::PropertyDrag("Light Size", &settings.LightSize, 0.025f);
+			UI::PropertyDrag("Max Distance", &settings.MaxDistance);
+			UI::PropertyDrag("Fade Out", &settings.FadeOut);
+			UI::PropertySlider("Split Factor", &settings.ExponentialSplitFactor, 0.f, 1.f);
+			UI::PropertyDrag("NearPlaneOffset", &settings.NearPlaneOffset);
+			UI::PropertyDrag("FarPlaneOffset", &settings.FarPlaneOffset);
 
-			ImGui::Text("Dirt Texture"); 
-			ImGui::SameLine();
-			auto dirtTexture = settings.BloomSettings.DirtTexture ? settings.BloomSettings.DirtTexture : Renderer::GetWhiteTexture();
-			if (ImGui::ImageButton(dirtTexture->GetRendererID(), { 50, 50 }))
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Bloom") && UI::BeginPropertyTable())
+		{
+			BloomSettings& settings = SceneRenderer::GetSettings().BloomSettings;
+
+			UI::PropertyCheckbox("Enable Bloom", &settings.EnableBloom);
+			UI::PropertyDrag("Intensity", &settings.Intensity, 0.1f, 0, 10);
+			UI::PropertyDrag("Threshold", &settings.Threshold, 0.1f, 0, 10);
+			UI::PropertyDrag("Knee", &settings.Knee, 0.05f, 0, 10);
+			UI::PropertyDrag("DirtIntensity", &settings.DirtIntensity, 0.1f, 0, 200);
+
+			if (UI::PropertyImage("Dirt Texture", settings.DirtTexture, { 45.f, 45.f }))
 			{
 				FilePath path = FileDialogs::OpenFile("DirtTexture (*png)\0*.png\0");
 				if (!path.empty())
-					settings.BloomSettings.DirtTexture = Texture2D::Create(path);
+					settings.DirtTexture = Texture2D::Create(path);
 			}
 
+			UI::EndPropertyTable();
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Other", false))
+		if (UI::TreeNode("Other") && UI::BeginPropertyTable())
 		{
 			SceneRendererSettings& settings = SceneRenderer::GetSettings();
 
-			ImGui::Text("Antialiasing");
-			ImGui::SameLine();
-
 			std::string_view views[] = { "None", "MSAA 2X (2D Only)", "MSAA 4X (2D Only)", "MSAA 8X (2D Only)"};
 			std::string_view selected = AntialisingToString(settings.AntialisingMethod);
-			if (UI::ComboBox("##Antialiasing", views, std::size(views), &selected))
+
+			if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
 			{
 				settings.AntialisingMethod = StringToAntialising(selected);
 			}
 
-			ImGui::Text("Reload Shaders");
-			ImGui::SameLine();
-
-			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-			if (ImGui::Button("Reload Shaders"))
+			UI::PropertyRow("Reload Shaders", ImGui::GetFrameHeight());
 			{
-				Renderer::GetShaderLibrary()->Reload();
+				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+				if (ImGui::Button("Reload Shaders"))
+				{
+					Renderer::GetShaderLibrary()->Reload();
+				}
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
 			}
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor();
 
+			UI::EndPropertyTable();
 			UI::TreePop();
 		}
 

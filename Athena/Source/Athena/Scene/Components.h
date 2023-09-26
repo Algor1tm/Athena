@@ -6,6 +6,7 @@
 #include "Athena/Math/Transforms.h"
 
 #include "Athena/Renderer/Color.h"
+#include "Athena/Renderer/EnvironmentMap.h"
 #include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Texture.h"
@@ -198,6 +199,13 @@ namespace Athena
 		float FallOff = 1.f;
 	};
 
+	struct SkyLightComponent
+	{
+		Ref<EnvironmentMap> EnvironmentMap;
+		float LOD = 0.f;
+		float Intensity = 1.f;
+	};
+
 
 	template<typename... Component>
 	struct ComponentGroup
@@ -209,7 +217,7 @@ namespace Athena
 		SpriteComponent, CircleComponent, CameraComponent, 
 		ScriptComponent, NativeScriptComponent, 
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
-		StaticMeshComponent, DirectionalLightComponent, PointLightComponent>;
+		StaticMeshComponent, DirectionalLightComponent, PointLightComponent, SkyLightComponent>;
 
 
 	template <typename T>

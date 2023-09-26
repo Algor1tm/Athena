@@ -13,7 +13,7 @@ namespace Athena
 		friend class ATHENA_API SceneRenderer;
 
 	public:
-		static Ref<EnvironmentMap> Create(const FilePath& hdrMap);
+		static Ref<EnvironmentMap> Create(const FilePath& hdrMap, uint32 resolution = 1024);
 
 		void Bind();
 		const FilePath& GetFilePath() { return m_FilePath; };

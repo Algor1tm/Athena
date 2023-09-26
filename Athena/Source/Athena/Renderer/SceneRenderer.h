@@ -5,7 +5,7 @@
 
 #include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Light.h"
 
 #include "Athena/Math/Matrix.h"
 
@@ -33,6 +33,12 @@ namespace Athena
 		SHADOW_CASCADES = 2
 	};
 
+	struct LightEnvironmentSettings
+	{
+		float Exposure = 1;
+		float Gamma = 2.2f;
+	};
+
 	struct ShadowSettings
 	{
 		bool EnableShadows = true;
@@ -57,6 +63,7 @@ namespace Athena
 
 	struct SceneRendererSettings
 	{
+		LightEnvironmentSettings LightEnvironmentSettings;
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
 		DebugView DebugView = DebugView::NONE;
@@ -71,7 +78,7 @@ namespace Athena
 
 		static void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment);
+		static void BeginScene(const CameraInfo& cameraInfo);
 		static void EndScene();
 
 		static void FlushEntityIDs();
@@ -82,10 +89,8 @@ namespace Athena
 		static Ref<Framebuffer> GetEntityIDFramebuffer();
 		static Ref<Framebuffer> GetFinalFramebuffer();
 
-		static void SubmitLight(const DirectionalLight& dirLight);
-		static void SubmitLight(const PointLight& pointLight);
-
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		static void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
 		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, EnvironmentMap* envMap);
 

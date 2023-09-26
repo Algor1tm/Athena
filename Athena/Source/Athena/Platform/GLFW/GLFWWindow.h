@@ -248,7 +248,7 @@ namespace Athena
 		window->m_Context = CreateRef<GLGraphicsContext>(reinterpret_cast<GLFWwindow*>(window->m_WindowHandle));;
 		window->SetVSync(window->m_Data.VSync);
 
-		window->SetWindowMode(info.Mode);
+		window->SetWindowMode(info.StartMode);
 
 		if (FileSystem::Exists(info.Icon))
 		{

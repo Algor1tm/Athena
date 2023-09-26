@@ -32,7 +32,7 @@ namespace Athena
 
 	struct EnvironmentMapData
 	{
-		float EnvironmentMapLOD = 0.f;
+		float LOD = 0.f;
 		float Intensity = 1.f;
 	};
 
@@ -45,10 +45,10 @@ namespace Athena
 
 	struct LightData
 	{
-		DirectionalLight DirectionalLightBuffer[ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT];
+		DirectionalLight DirectionalLightBuffer[ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT];
 		uint32 DirectionalLightCount = 0;
 
-		PointLight PointLightBuffer[ShaderConstants::MAX_POINT_LIGHT_COUNT];
+		PointLight PointLightBuffer[ShaderDef::MAX_POINT_LIGHT_COUNT];
 		uint32 PointLightCount = 0;
 	};
 
@@ -61,9 +61,9 @@ namespace Athena
 			float __Padding;
 		};
 
-		Matrix4 LightViewProjMatrices[ShaderConstants::SHADOW_CASCADES_COUNT];
-		Matrix4 LightViewMatrices[ShaderConstants::SHADOW_CASCADES_COUNT];
-		CascadeSplitInfo CascadeSplits[ShaderConstants::SHADOW_CASCADES_COUNT];
+		Matrix4 LightViewProjMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+		Matrix4 LightViewMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+		CascadeSplitInfo CascadeSplits[ShaderDef::SHADOW_CASCADES_COUNT];
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
 		float LightSize = 0.5f;
@@ -92,7 +92,7 @@ namespace Athena
 
 		RenderList MeshList;
 
-		Ref<Environment> ActiveEnvironment;
+		Ref<EnvironmentMap> EnvironmentMap;
 
 		CameraData CameraDataBuffer;
 		SceneData SceneDataBuffer;
@@ -143,7 +143,7 @@ namespace Athena
 		fbInfo.Attachments = { TextureFormat::DEPTH32F };
 		fbInfo.Width = s_Data.ShadowMapResolution;
 		fbInfo.Height = s_Data.ShadowMapResolution;
-		fbInfo.Layers = ShaderConstants::SHADOW_CASCADES_COUNT;
+		fbInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 		fbInfo.Samples = 1;
 
 		s_Data.ShadowMap = Framebuffer::Create(fbInfo);
@@ -175,7 +175,7 @@ namespace Athena
 		s_Data.BloomConstantBuffer = ConstantBuffer::Create(sizeof(BloomData), BufferBinder::BLOOM_DATA);
 
 		s_Data.LightShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(LightData), BufferBinder::LIGHT_DATA);
-		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderConstants::MAX_NUM_BONES, BufferBinder::BONES_DATA);
+		s_Data.BoneTransformsShaderStorageBuffer = ShaderStorageBuffer::Create(sizeof(Matrix4) * ShaderDef::MAX_NUM_BONES, BufferBinder::BONES_DATA);
 	}
 
 	void SceneRenderer::Shutdown()
@@ -190,11 +190,9 @@ namespace Athena
 		s_Data.EntityIDFramebuffer->Resize(width, height);
 	}
 
-	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo, const Ref<Environment>& environment)
+	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
 		s_Data.MeshList.Clear();
-
-		s_Data.ActiveEnvironment = environment;
 
 		s_Data.CameraDataBuffer.ViewMatrix = cameraInfo.ViewMatrix;
 		s_Data.CameraDataBuffer.ProjectionMatrix = cameraInfo.ProjectionMatrix;
@@ -203,11 +201,8 @@ namespace Athena
 		s_Data.CameraDataBuffer.NearClip = cameraInfo.NearClip;
 		s_Data.CameraDataBuffer.FarClip = cameraInfo.FarClip;
 
-		s_Data.SceneDataBuffer.Exposure = s_Data.ActiveEnvironment->Exposure;
-		s_Data.SceneDataBuffer.Gamma = s_Data.ActiveEnvironment->Gamma;
-
-		s_Data.EnvMapDataBuffer.EnvironmentMapLOD = s_Data.ActiveEnvironment->EnvironmentMapLOD;
-		s_Data.EnvMapDataBuffer.Intensity = s_Data.ActiveEnvironment->AmbientLightIntensity;
+		s_Data.SceneDataBuffer.Exposure = s_Data.Settings.LightEnvironmentSettings.Exposure;
+		s_Data.SceneDataBuffer.Gamma = s_Data.Settings.LightEnvironmentSettings.Gamma;
 
 		s_Data.ShadowsDataBuffer.SoftShadows = s_Data.Settings.ShadowSettings.SoftShadows;
 		s_Data.ShadowsDataBuffer.LightSize = s_Data.Settings.ShadowSettings.LightSize;
@@ -248,7 +243,7 @@ namespace Athena
 		SceneCompositePass();
 		DebugViewPass();
 
-		s_Data.ActiveEnvironment = nullptr;
+		s_Data.EnvironmentMap = nullptr;
 
 		s_Data.LightDataBuffer.DirectionalLightCount = 0;
 		s_Data.LightDataBuffer.PointLightCount = 0;
@@ -264,31 +259,6 @@ namespace Athena
 	{
 		s_Data.FinalFramebuffer->ResolveMutlisampling();
 		s_Data.FinalFramebuffer->UnBind();
-	}
-
-	void SceneRenderer::SubmitLight(const DirectionalLight& dirLight)
-	{
-		if (ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT == s_Data.LightDataBuffer.DirectionalLightCount)
-		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} DirectionalLights!", ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
-			return;
-		}
-
-		uint32 currentIndex = s_Data.LightDataBuffer.DirectionalLightCount;
-		s_Data.LightDataBuffer.DirectionalLightBuffer[currentIndex] = dirLight;
-		s_Data.LightDataBuffer.DirectionalLightCount++;
-	}
-
-	void SceneRenderer::SubmitLight(const PointLight& pointLight)
-	{
-		if (ShaderConstants::MAX_POINT_LIGHT_COUNT == s_Data.LightDataBuffer.PointLightCount)
-		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderConstants::MAX_POINT_LIGHT_COUNT);
-			return;
-		}
-
-		s_Data.LightDataBuffer.PointLightBuffer[s_Data.LightDataBuffer.PointLightCount] = pointLight;
-		s_Data.LightDataBuffer.PointLightCount++;
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
@@ -308,6 +278,32 @@ namespace Athena
 		{
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit nullptr vertexBuffer!");
 		}
+	}
+
+	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
+	{
+		if (lightEnv.DirectionalLights.size() > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
+			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+
+		if (lightEnv.PointLights.size() > ShaderDef::MAX_POINT_LIGHT_COUNT)
+			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+
+		s_Data.LightDataBuffer.DirectionalLightCount = Math::Min(lightEnv.DirectionalLights.size(), (uint64)ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+		for (uint32 i = 0; i < s_Data.LightDataBuffer.DirectionalLightCount; ++i)
+		{
+			s_Data.LightDataBuffer.DirectionalLightBuffer[i] = lightEnv.DirectionalLights[i];
+		}
+
+		s_Data.LightDataBuffer.PointLightCount = Math::Min(lightEnv.PointLights.size(), (uint64)ShaderDef::MAX_POINT_LIGHT_COUNT);
+		for (uint32 i = 0; i < s_Data.LightDataBuffer.PointLightCount; ++i)
+		{
+			s_Data.LightDataBuffer.PointLightBuffer[i] = lightEnv.PointLights[i];
+		}
+
+		s_Data.EnvironmentMap = lightEnv.EnvironmentMap;
+
+		s_Data.EnvMapDataBuffer.LOD = lightEnv.EnvironmentMapLOD;
+		s_Data.EnvMapDataBuffer.Intensity = lightEnv.EnvironmentMapIntensity;
 	}
 
 	void SceneRenderer::RenderGeometry(std::string_view shader, bool useMaterials)
@@ -411,9 +407,9 @@ namespace Athena
 		{
 			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
-			if (s_Data.ActiveEnvironment->EnvironmentMap)
+			if (s_Data.EnvironmentMap)
 			{
-				s_Data.ActiveEnvironment->EnvironmentMap->Bind();
+				s_Data.EnvironmentMap->Bind();
 				Renderer::GetBRDF_LUT()->Bind(TextureBinder::BRDF_LUT);
 			}
 
@@ -425,7 +421,7 @@ namespace Athena
 
 			s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 
-			if (s_Data.ActiveEnvironment->EnvironmentMap)
+			if (s_Data.EnvironmentMap)
 			{
 				s_Data.CameraDataBuffer.ProjectionMatrix;
 				s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
@@ -565,9 +561,9 @@ namespace Athena
 
 		const float splitWeight = s_Data.Settings.ShadowSettings.ExponentialSplitFactor;
 
-		for (uint32 i = 0; i < ShaderConstants::SHADOW_CASCADES_COUNT; ++i)
+		for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
 		{
-			float percent = (i + 1) / float(ShaderConstants::SHADOW_CASCADES_COUNT);
+			float percent = (i + 1) / float(ShaderDef::SHADOW_CASCADES_COUNT);
 			float log = cameraNear * Math::Pow(cameraFar / cameraNear, percent);
 			float uniform = Math::Lerp(cameraNear, cameraFar, percent); 
 			float split = Math::Lerp(uniform, log, splitWeight);
@@ -586,7 +582,7 @@ namespace Athena
 		float lastSplit = 0.f;
 		float averageFrustumSize = 0.f;
 
-		for (uint32 layer = 0; layer < ShaderConstants::SHADOW_CASCADES_COUNT; ++layer)
+		for (uint32 layer = 0; layer < ShaderDef::SHADOW_CASCADES_COUNT; ++layer)
 		{
 			float split = (s_Data.ShadowsDataBuffer.CascadeSplits[layer].SplitDepth - cameraNear) / (cameraFar - cameraNear); // range (0, 1)
 
@@ -694,7 +690,7 @@ namespace Athena
 			Renderer::Dispatch(width, height, 6);
 
 			skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
-			skybox->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
+			skybox->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
 		}
 
 		// Compute Irradiance Map
@@ -727,20 +723,20 @@ namespace Athena
 			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 		
 			envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
-			envMap->m_PrefilteredMap->GenerateMipMap(ShaderConstants::MAX_SKYBOX_MAP_LOD);
+			envMap->m_PrefilteredMap->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
 		
 			Renderer::BindShader("EnvironmentMipFilter");
 			skybox->Bind();
 		
-			for (uint32 mip = 0; mip < ShaderConstants::MAX_SKYBOX_MAP_LOD; ++mip)
+			for (uint32 mip = 0; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
 				envMap->m_PrefilteredMap->BindAsImage(1, mip);
 		
 				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
 				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
 		
-				float roughness = (float)mip / (float)(ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
-				s_Data.EnvMapDataBuffer.EnvironmentMapLOD = roughness;
+				float roughness = (float)mip / (float)(ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
+				s_Data.EnvMapDataBuffer.LOD = roughness;
 				s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 		
 				Renderer::Dispatch(mipWidth, mipHeight, 6);

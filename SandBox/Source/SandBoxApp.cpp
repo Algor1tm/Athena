@@ -9,7 +9,7 @@ using namespace Athena;
 class SandBox : public Application
 {
 public:
-	SandBox(const ApplicationDescription& appdesc)
+	SandBox(const ApplicationCreateInfo& appdesc)
 		: Application(appdesc)
 	{
 
@@ -26,26 +26,28 @@ namespace Athena
 {
 	Application* CreateApplication()
 	{
-		ApplicationDescription appdesc;
+		ApplicationCreateInfo appinfo;
 
-		appdesc.AppConfig.EnableImGui = false;
-		appdesc.AppConfig.EnableConsole = false;
-		appdesc.AppConfig.WorkingDirectory = "../Athena-Editor";
+		appinfo.AppConfig.Name = "SandBox";
+		appinfo.AppConfig.EnableImGui = false;
+		appinfo.AppConfig.EnableConsole = false;
+		appinfo.AppConfig.WorkingDirectory = "../Athena-Editor";
+		appinfo.AppConfig.EngineResources = "../Athena/EngineResources";
 
-		appdesc.RendererConfig.API = Renderer::API::OpenGL;
-		appdesc.RendererConfig.ShaderPack = "../Athena/EngineResources/Shaders";
+		appinfo.RendererConfig.API = Renderer::API::OpenGL;
 
-		appdesc.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
 
-		appdesc.WindowDesc.Width = 1600;
-		appdesc.WindowDesc.Height = 900;
-		appdesc.WindowDesc.Title = "SandBox";
-		appdesc.WindowDesc.VSync = true;
-		appdesc.WindowDesc.Mode = WindowMode::Maximized;
-		appdesc.WindowDesc.Icon = "EditorResources/Icons/Logo/no-background";
+		appinfo.WindowInfo.Width = 1600;
+		appinfo.WindowInfo.Height = 900;
+		appinfo.WindowInfo.Title = "SandBox";
+		appinfo.WindowInfo.VSync = true;
+		appinfo.WindowInfo.StartMode = WindowMode::Maximized;
+		appinfo.WindowInfo.CustomTitlebar = false;
+		appinfo.WindowInfo.WindowResizeable = true;
+		appinfo.WindowInfo.Icon = "EditorResources/Icons/Logo/LogoBlack.png";
 
-		Application* app = new SandBox(appdesc);
-
+		Application* app = new SandBox(appinfo);
 
 		FilePath scene = "Assets/Scenes/Sponza.atn";
 

@@ -16,7 +16,7 @@
 
 
 // --------Input--------------------
-#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/WindowEvent.h"
 #include "Athena/Input/Event.h"
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/MouseEvent.h"
@@ -33,7 +33,6 @@
 #include "Athena/Math/Random.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Math/Projections.h"
-#include "Athena/Math/TypeCasts.h"
 #include "Athena/Math/Constants.h"
 #include "Athena/Math/Limits.h"
 

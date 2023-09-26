@@ -182,22 +182,6 @@ namespace Athena
 
 		out << YAML::EndSeq;
 
-		auto env = m_Scene->GetEnvironment();
-		out << YAML::Key << "Environment";
-		out << YAML::BeginMap;
-
-		if (env)
-		{
-			String filepath = env->EnvironmentMap ? env->EnvironmentMap->GetFilePath().string() : "";
-			out << YAML::Key << "EnvMap FilePath" << filepath;
-			out << YAML::Key << "Ambient Light Intensity" << YAML::Value << env->AmbientLightIntensity;
-			out << YAML::Key << "EnvMap LOD" << YAML::Value << env->EnvironmentMapLOD;
-			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
-			out << YAML::Key << "Gamma" << YAML::Value << env->Gamma;
-		}
-
-		out << YAML::EndMap;
-
 		out << YAML::EndMap;
 
 		std::ofstream fout(path);
@@ -229,23 +213,6 @@ namespace Athena
 
 			String sceneName = data["Scene"].as<String>();
 			m_Scene->SetSceneName(sceneName);
-
-			Ref<Environment> environment = CreateRef<Environment>();
-			const auto& envNode = data["Environment"];
-			if (envNode)
-			{
-				FilePath envPath = envNode["EnvMap FilePath"].as<String>();
-				if(!envPath.empty())
-					environment->EnvironmentMap = EnvironmentMap::Create(envPath);
-
-				environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
-				environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
-				environment->Exposure = envNode["Exposure"].as<float>();
-				environment->Gamma = envNode["Gamma"].as<float>();
-			}
-
-			m_Scene->SetEnvironment(environment);
-
 
 			const auto& entities = data["Entities"];
 			if (!entities)
@@ -434,6 +401,21 @@ namespace Athena
 						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
 						lightComp.Radius = pointLightComponent["Radius"].as<float>();
 						lightComp.FallOff = pointLightComponent["FallOff"].as<float>();
+					}
+				}
+
+				{
+					const auto skyLightComponent = entityNode["SkyLightComponent"];
+					if (skyLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
+						FilePath envPath = skyLightComponent["FilePath"].as<String>();
+						uint32 resolution = skyLightComponent["Resolution"].as<uint32>();
+						if (!envPath.empty())
+							lightComp.EnvironmentMap = EnvironmentMap::Create(envPath, resolution);
+
+						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
+						lightComp.LOD = skyLightComponent["LOD"].as<float>();
 					}
 				}
 			}
@@ -631,6 +613,16 @@ namespace Athena
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 				output << YAML::Key << "Radius" << YAML::Value << lightComponent.Radius;
 				output << YAML::Key << "FallOff" << YAML::Value << lightComponent.FallOff;
+			});
+
+		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
+			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
+			{
+				String filepath = lightComponent.EnvironmentMap ? lightComponent.EnvironmentMap->GetFilePath().string() : "";
+				output << YAML::Key << "FilePath" << filepath;
+				output << YAML::Key << "Resolution" << lightComponent.EnvironmentMap->GetResolution();
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "LOD" << YAML::Value << lightComponent.LOD;
 			});
 
 		out << YAML::EndMap;

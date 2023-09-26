@@ -60,12 +60,12 @@ namespace Athena
 		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_MAP_BINDER", (int32_t)TextureBinder::SHADOW_MAP);
 		s_Data.GlobalShaderMacroses += DEFINE("PCF_SAMPLER_BINDER", (int32_t)TextureBinder::PCF_SAMPLER);
 		
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_POINT_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_POINT_LIGHT_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_CASCADES_COUNT", (int32_t)ShaderConstants::SHADOW_CASCADES_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES_PER_VERTEX", (int32_t)ShaderConstants::MAX_NUM_BONES_PER_VERTEX);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES", (int32_t)ShaderConstants::MAX_NUM_BONES);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_SKYBOX_MAP_LOD", (int32_t)ShaderConstants::MAX_SKYBOX_MAP_LOD);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_POINT_LIGHT_COUNT", (int32_t)ShaderDef::MAX_POINT_LIGHT_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_CASCADES_COUNT", (int32_t)ShaderDef::SHADOW_CASCADES_COUNT);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES_PER_VERTEX", (int32_t)ShaderDef::MAX_NUM_BONES_PER_VERTEX);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES", (int32_t)ShaderDef::MAX_NUM_BONES);
+		s_Data.GlobalShaderMacroses += DEFINE("MAX_SKYBOX_MAP_LOD", (int32_t)ShaderDef::MAX_SKYBOX_MAP_LOD);
 
 		s_Data.GlobalShaderMacroses += DEFINE("RENDERER2D_CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::RENDERER2D_CAMERA_DATA);
 		s_Data.GlobalShaderMacroses += DEFINE("CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::CAMERA_DATA);

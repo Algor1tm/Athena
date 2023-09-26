@@ -9,7 +9,7 @@
 
 namespace Athena
 {
-	enum ShaderConstants
+	enum ShaderDef
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
 		MAX_POINT_LIGHT_COUNT = 32,
@@ -68,8 +68,8 @@ namespace Athena
 		Vector3 Normal;
 		Vector3 Tangent;
 		Vector3 Bitangent;
-		int BoneIDs[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
-		float Weights[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
+		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
+		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 	};
 
 	class ATHENA_API ShaderLibrary;

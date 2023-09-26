@@ -5,7 +5,6 @@
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Renderer/EditorCamera.h"
-#include "Athena/Renderer/Environment.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -26,7 +25,6 @@ class b2World;
 
 namespace Athena
 {
-	class ATHENA_API Environment;
 	class ATHENA_API Entity;
 
 	class TransformComponent;
@@ -71,9 +69,6 @@ namespace Athena
 
 		Entity GetPrimaryCameraEntity();
 
-		Ref<Environment> GetEnvironment() { return m_Environment; }
-		void SetEnvironment(const Ref<Environment>& env) { m_Environment = env; }
-
 		template <typename... Components>
 		auto GetAllEntitiesWith()
 		{
@@ -103,7 +98,6 @@ namespace Athena
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 
 		std::unique_ptr<b2World> m_PhysicsWorld;
-		Ref<Environment> m_Environment;
 
 		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
 	};

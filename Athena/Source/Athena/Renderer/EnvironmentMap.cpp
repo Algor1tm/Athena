@@ -6,12 +6,12 @@
 
 namespace Athena
 {
-	Ref<EnvironmentMap> EnvironmentMap::Create(const FilePath& hdrMap)
+	Ref<EnvironmentMap> EnvironmentMap::Create(const FilePath& hdrMap, uint32 resolution)
 	{
 		Ref<EnvironmentMap> result = CreateRef<EnvironmentMap>();
 		result->m_FilePath = hdrMap;
 
-		result->Load();
+		result->SetResolution(resolution);
 
 		return result;
 	}

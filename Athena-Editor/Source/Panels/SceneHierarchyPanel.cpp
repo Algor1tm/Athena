@@ -97,8 +97,6 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
-		DrawEnvironmentEditor(m_EditorCtx.ActiveScene->GetEnvironment());
-
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
 		ImGui::Begin("Materials Editor");
 		if (m_EditorCtx.SelectedEntity)
@@ -276,68 +274,6 @@ namespace Athena
 		}
 	}
 
-	void SceneHierarchyPanel::DrawEnvironmentEditor(const Ref<Environment>& environment)
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		ImGui::Begin("Environment");
-
-		if (UI::TreeNode("Environment") && UI::BeginPropertyTable())
-		{
-			bool hasEnvMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap != nullptr;
-			UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
-			{
-				String label;
-				Ref<EnvironmentMap> envMap = m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap;
-				if (hasEnvMap)
-				{
-					const FilePath& envPath = envMap->GetFilePath();
-					label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
-				}
-				else
-				{
-					label = "Load Environment Map";
-				}
-
-				if (ImGui::Button(label.data()))
-				{
-					FilePath filepath = FileDialogs::OpenFile("EnvironmentMap (*hdr)\0*.hdr\0");
-					if (!filepath.empty())
-					{
-						m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = EnvironmentMap::Create(filepath);
-					}
-				}
-				if (hasEnvMap && ImGui::Button("Delete"))
-				{
-					m_EditorCtx.ActiveScene->GetEnvironment()->EnvironmentMap = nullptr;
-				}
-			}
-
-			if (hasEnvMap)
-			{
-				const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
-				String selectedStr = std::to_string(environment->EnvironmentMap->GetResolution());
-				std::string_view selected = selectedStr.data();
-
-				if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
-				{
-					uint32 resolution = std::atoi(selected.data());
-					environment->EnvironmentMap->SetResolution(resolution);
-				}
-			}
-
-			UI::PropertySlider("Ambient Intensity", &environment->AmbientLightIntensity, 0.f, 10.f);
-			UI::PropertySlider("Environment Map LOD", &environment->EnvironmentMapLOD, 0, ShaderConstants::MAX_SKYBOX_MAP_LOD - 1);
-			UI::PropertySlider("Exposure", &environment->Exposure, 0.001, 10);
-			UI::PropertySlider("Gamma", &environment->Gamma, 0.000, 10);
-
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
-
-		ImGui::PopStyleVar();
-		ImGui::End();
-	}
-
 	void SceneHierarchyPanel::DrawMaterialsEditor()
 	{
 		Entity selectedEntity = m_EditorCtx.SelectedEntity;
@@ -485,6 +421,7 @@ namespace Athena
 			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
 			DrawAddComponentEntry<DirectionalLightComponent>(entity, "DirectionalLight");
 			DrawAddComponentEntry<PointLightComponent>(entity, "PointLight");
+			DrawAddComponentEntry<SkyLightComponent>(entity, "SkyLight");
 
 			ImGui::EndPopup();
 		}
@@ -870,6 +807,59 @@ namespace Athena
 					UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
 					UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
 					UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
+
+					UI::EndPropertyTable();
+				}
+			});
+
+		DrawComponent<SkyLightComponent>(entity, "SkyLight", [](SkyLightComponent& lightComponent)
+			{
+				if (UI::BeginPropertyTable())
+				{
+					bool hasEnvMap = lightComponent.EnvironmentMap != nullptr;
+					UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
+					{
+						String label;
+						Ref<EnvironmentMap> envMap = lightComponent.EnvironmentMap;
+						if (hasEnvMap)
+						{
+							const FilePath& envPath = envMap->GetFilePath();
+							label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+						}
+						else
+						{
+							label = "Load Environment Map";
+						}
+
+						if (ImGui::Button(label.data()))
+						{
+							FilePath filepath = FileDialogs::OpenFile("EnvironmentMap (*hdr)\0*.hdr\0");
+							if (!filepath.empty())
+							{
+								lightComponent.EnvironmentMap = EnvironmentMap::Create(filepath);
+							}
+						}
+						if (hasEnvMap && ImGui::Button("Delete"))
+						{
+							lightComponent.EnvironmentMap = nullptr;
+						}
+					}
+
+					if (hasEnvMap)
+					{
+						const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
+						String selectedStr = std::to_string(lightComponent.EnvironmentMap->GetResolution());
+						std::string_view selected = selectedStr.data();
+
+						if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
+						{
+							uint32 resolution = std::atoi(selected.data());
+							lightComponent.EnvironmentMap->SetResolution(resolution);
+						}
+					}
+
+					UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
+					UI::PropertySlider("Environment Map LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
 
 					UI::EndPropertyTable();
 				}

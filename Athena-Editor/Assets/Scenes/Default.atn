@@ -116,9 +116,16 @@ Entities:
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
       Intensity: 1
-Environment:
-  EnvMap FilePath: Assets\EnvironmentMaps\birchwood_4k.hdr
-  Ambient Light Intensity: 1
-  EnvMap LOD: 0
-  Exposure: 1
-  Gamma: 2.20000005
+  - IDComponent:
+      ID: 9453339502114578766
+    TagComponent:
+      Tag: SkyLight
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    SkyLightComponent:
+      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
+      Resolution: 2048
+      Intensity: 1
+      LOD: 0

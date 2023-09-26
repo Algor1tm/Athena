@@ -217,7 +217,7 @@ namespace Athena
 				{
 					uint32 vertexID = aibone->mWeights[j].mVertexId;
 					float weight = aibone->mWeights[j].mWeight;
-					for (uint32 k = 0; k < ShaderConstants::MAX_NUM_BONES_PER_VERTEX; ++k)
+					for (uint32 k = 0; k < ShaderDef::MAX_NUM_BONES_PER_VERTEX; ++k)
 					{
 						if (vertices[vertexID].Weights[k] == 0.f)
 						{
@@ -225,7 +225,7 @@ namespace Athena
 							vertices[vertexID].Weights[k] = weight;
 							break;
 						}
-						else if (k == ShaderConstants::MAX_NUM_BONES_PER_VERTEX - 1)
+						else if (k == ShaderDef::MAX_NUM_BONES_PER_VERTEX - 1)
 						{
 							ATN_CORE_WARN_TAG("StaticMesh", "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
 								boneID, weight);
@@ -349,9 +349,9 @@ namespace Athena
 		info.TicksPerSecond = aianimation->mTicksPerSecond;
 		info.Skeleton = skeleton;
 
-		if (aianimation->mNumChannels > ShaderConstants::MAX_NUM_BONES)
+		if (aianimation->mNumChannels > ShaderDef::MAX_NUM_BONES)
 		{
-			ATN_CORE_ERROR_TAG("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
+			ATN_CORE_ERROR_TAG("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderDef::MAX_NUM_BONES);
 		}
 
 		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);

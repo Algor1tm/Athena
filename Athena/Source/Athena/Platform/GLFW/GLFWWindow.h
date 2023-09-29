@@ -12,7 +12,10 @@
 
 #include  "Athena/Platform/OpenGL/GLGraphicsContext.h"
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
+
 #include <stb_image/stb_image.h>
 
 

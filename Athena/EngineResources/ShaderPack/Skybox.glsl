@@ -27,9 +27,6 @@ void main()
     Output.TexCoords = a_Position;
 
     vec4 pos = u_Camera.ProjectionMatrix * u_Camera.RotationViewMatrix * vec4(a_Position, 1);
-
-    //pos.xy /= 2; // TODO: remove(idk why it needs to be)
-
     gl_Position = pos.xyww;
 }
 

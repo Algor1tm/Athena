@@ -103,6 +103,10 @@ AddLibrary(spdlog)
 AddLibrary(yaml-cpp)
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
 
+if (Vulkan_FOUND)
+	target_link_libraries(Athena PRIVATE Vulkan::Vulkan)
+endif(Vulkan_FOUND)
+
 add_subdirectory("${THIRD_PARTY_DIR}/pybind11")
 target_link_libraries(Athena PRIVATE pybind11::embed)
 

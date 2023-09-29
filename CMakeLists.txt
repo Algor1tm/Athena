@@ -25,9 +25,18 @@ endmacro()
 project ("Athena")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "Athena-Editor")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "SandBox")
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+
+# Find Vulkan
+find_package(Vulkan REQUIRED)
+if(Vulkan_FOUND)
+    set(VULKAN_SDK_PATH "$ENV{VULKAN_SDK}")
+    message("-- Find VulkanSDK - ${VULKAN_SDK_PATH}")
+else(Vulkan_FOUND)
+	message("-- Failed to find VulkanSDK(Install VulkanSDK from official website or check if it is added to path)")
+endif(Vulkan_FOUND)
 
 # Find Python 3.6+
 find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)

@@ -35,8 +35,8 @@ namespace Athena
 		m_Window->SetEventCallback([this](const Ref<Event>& event) { Application::QueueEvent(event); });
 		QueueEvent(CreateRef<WindowResizeEvent>(m_Window->GetWidth(), m_Window->GetHeight()));
 
-		Renderer::Init(appinfo.RendererConfig);
-		ScriptEngine::Init(appinfo.ScriptConfig);
+		//Renderer::Init(appinfo.RendererConfig);
+		//ScriptEngine::Init(appinfo.ScriptConfig);
 
 		if (appinfo.AppConfig.EnableImGui)
 		{
@@ -51,8 +51,8 @@ namespace Athena
 
 	Application::~Application()
 	{
-		Renderer::Shutdown();
-		ScriptEngine::Shutdown();
+		//Renderer::Shutdown();
+		//ScriptEngine::Shutdown();
 	}
 
 	void Application::Run()
@@ -175,7 +175,7 @@ namespace Athena
 		}
 
 		m_Minimized = false;
-		Renderer::OnWindowResized(event.GetWidth(), event.GetHeight());
+		//Renderer::OnWindowResized(event.GetWidth(), event.GetHeight());
 
 		return false;
 	}

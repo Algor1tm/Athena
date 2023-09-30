@@ -30,7 +30,7 @@ namespace Athena
 
 		appinfo.AppConfig.Name = "SandBox";
 		appinfo.AppConfig.EnableImGui = false;
-		appinfo.AppConfig.EnableConsole = false;
+		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.WorkingDirectory = "../Athena-Editor";
 		appinfo.AppConfig.EngineResources = "../Athena/EngineResources";
 

@@ -61,6 +61,8 @@ namespace Athena
 
 		inline void* GetNativeWindow() { return m_WindowHandle; }
 
+		void SetIcon(const FilePath& path);
+
 		void SetWindowMode(WindowMode mode);
 		inline WindowMode GetWindowMode() const { return m_Data.Mode; }
 

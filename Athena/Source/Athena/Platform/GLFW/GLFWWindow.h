@@ -30,13 +30,25 @@ namespace Athena
 	static VkQueue                  s_Queue = VK_NULL_HANDLE;
 	static VkSurfaceKHR				s_Surface = VK_NULL_HANDLE;
 	static VkSwapchainKHR			s_SwapChain = VK_NULL_HANDLE;
-	static std::vector<VkImage>		s_SwapChainImages;
 
-	static VkDescriptorPool         s_DescriptorPool = VK_NULL_HANDLE;
+	static VkCommandPool			s_CommandPool = VK_NULL_HANDLE;
 
 	static VkDebugReportCallbackEXT s_DebugReport = VK_NULL_HANDLE;
-	 
-	static uint32					s_FramesInFlight = 2;
+
+	// Resources per frame in flight
+	static std::vector<VkImage>		s_SwapChainImages;
+	static std::vector<VkImageView>	s_SwapChainImageViews;
+
+	static std::vector<VkCommandBuffer> s_CommandBuffers;
+
+	static std::vector<VkSemaphore> s_ImageAcquiredSemaphores;
+	static std::vector<VkSemaphore> s_RenderCompleteSemaphores;
+	static std::vector<VkFence>		s_RenderCompleteFences;
+
+
+	static uint32					s_CurrentFrameIndex = 0;
+	static const uint32				s_MaxFramesInFlight = 2;
+
 
 	static void check_vk_result(VkResult error)
 	{
@@ -52,7 +64,7 @@ namespace Athena
 		ATN_CORE_ASSERT(false);
 	}
 
-#define CHECK_VK_RESULT(expr) check_vk_result(expr)
+#define VK_CHECK(expr) check_vk_result(expr)
 
 #ifdef ATN_DEBUG
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, 
@@ -66,13 +78,11 @@ namespace Athena
 
 	static void InitVulkan(GLFWwindow* window)
 	{
-		VkResult result;
 		// Create Instance
 		{
 			// Select Vulkan Version
 			uint32 version = 0;
-			result = vkEnumerateInstanceVersion(&version);
-			CHECK_VK_RESULT(result);
+			VK_CHECK(vkEnumerateInstanceVersion(&version));
 
 			uint32 variant = VK_API_VERSION_VARIANT(version);
 			uint32 major = VK_API_VERSION_MAJOR(version);
@@ -81,7 +91,7 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", "Version: {}.{}.{}.{}", variant, major, minor, patch);
 
-			VkApplicationInfo appInfo;
+			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			appInfo.pNext = nullptr;
 			appInfo.pApplicationName = "Vulkan Example";
@@ -107,56 +117,52 @@ namespace Athena
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
 			// Create Vulkan Instance
-			VkInstanceCreateInfo instCreateInfo;
-			instCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-			instCreateInfo.pNext = nullptr;
-			instCreateInfo.flags = 0;
-			instCreateInfo.pApplicationInfo = &appInfo;
-			instCreateInfo.enabledLayerCount = layers.size();
-			instCreateInfo.ppEnabledLayerNames = layers.data();
-			instCreateInfo.enabledExtensionCount = extensions.size();
-			instCreateInfo.ppEnabledExtensionNames = extensions.data();
+			VkInstanceCreateInfo instanceCI = {};
+			instanceCI.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+			instanceCI.pNext = nullptr;
+			instanceCI.flags = 0;
+			instanceCI.pApplicationInfo = &appInfo;
+			instanceCI.enabledLayerCount = layers.size();
+			instanceCI.ppEnabledLayerNames = layers.data();
+			instanceCI.enabledExtensionCount = extensions.size();
+			instanceCI.ppEnabledExtensionNames = extensions.data();
 
-			result = vkCreateInstance(&instCreateInfo, s_Allocator, &s_Instance);
-			CHECK_VK_RESULT(result);
+			VK_CHECK(vkCreateInstance(&instanceCI, s_Allocator, &s_Instance));
 
 #ifdef ATN_DEBUG
 			// Setup the debug report callback
 			auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(s_Instance, "vkCreateDebugReportCallbackEXT");
 			ATN_CORE_ASSERT(vkCreateDebugReportCallbackEXT != NULL);
 
-			VkDebugReportCallbackCreateInfoEXT reportCreateInfo = {};
-			reportCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-			reportCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-			reportCreateInfo.pfnCallback = VulkanDebugCallback;
-			reportCreateInfo.pUserData = NULL;
-			result = vkCreateDebugReportCallbackEXT(s_Instance, &reportCreateInfo, s_Allocator, &s_DebugReport);
-			CHECK_VK_RESULT(result);
+			VkDebugReportCallbackCreateInfoEXT reportCI = {};
+			reportCI.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+			reportCI.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			reportCI.pfnCallback = VulkanDebugCallback;
+			reportCI.pUserData = NULL;
+			VK_CHECK(vkCreateDebugReportCallbackEXT(s_Instance, &reportCI, s_Allocator, &s_DebugReport));
 #endif
 		}
 
 		// Select GPU
 		{
-			uint32 gpu_count;
-			result = vkEnumeratePhysicalDevices(s_Instance, &gpu_count, NULL);
-			CHECK_VK_RESULT(result);
+			uint32 gpuCount;
+			VK_CHECK(vkEnumeratePhysicalDevices(s_Instance, &gpuCount, NULL));
 
-			std::vector<VkPhysicalDevice> gpus(gpu_count);
+			std::vector<VkPhysicalDevice> gpus(gpuCount);
 
-			result = vkEnumeratePhysicalDevices(s_Instance, &gpu_count, gpus.data());
-			CHECK_VK_RESULT(result);
+			VK_CHECK(vkEnumeratePhysicalDevices(s_Instance, &gpuCount, gpus.data()));
 
 			String message = "GPUs: \n\t";
 			String selectedGPUName;
 
-			uint32 use_gpu = 0;
-			for (uint32 i = 0; i < gpu_count; i++)
+			uint32 useGpu = 0;
+			for (uint32 i = 0; i < gpuCount; i++)
 			{
 				VkPhysicalDeviceProperties properties;
 				vkGetPhysicalDeviceProperties(gpus[i], &properties);
 				if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 				{
-					use_gpu = i;
+					useGpu = i;
 					selectedGPUName = properties.deviceName;
 				}
 
@@ -166,7 +172,7 @@ namespace Athena
 			ATN_CORE_INFO_TAG("Vulkan", message);
 			ATN_CORE_INFO_TAG("Vulkan", "Selected GPU: {}\n", selectedGPUName);
 
-			s_PhysicalDevice = gpus[use_gpu];
+			s_PhysicalDevice = gpus[useGpu];
 		}
 
 		// Select graphics queue family
@@ -206,11 +212,11 @@ namespace Athena
 
 			const float queuePriority[] = { 1.0f };
 
-			VkDeviceQueueCreateInfo queueInfos[1] = {};
-			queueInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueInfos[0].queueFamilyIndex = s_QueueFamily;
-			queueInfos[0].queueCount = 1;
-			queueInfos[0].pQueuePriorities = queuePriority;
+			VkDeviceQueueCreateInfo queueCIs[1] = {};
+			queueCIs[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCIs[0].queueFamilyIndex = s_QueueFamily;
+			queueCIs[0].queueCount = 1;
+			queueCIs[0].pQueuePriorities = queuePriority;
 
 			message += std::format("QueueFamily - {}, count - {}\n\t", s_QueueFamily, 1);
 			ATN_CORE_INFO_TAG("Vulkan", message);
@@ -223,22 +229,20 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
-			VkDeviceCreateInfo createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-			createInfo.queueCreateInfoCount = std::size(queueInfos);
-			createInfo.pQueueCreateInfos = queueInfos;
-			createInfo.enabledExtensionCount = deviceExtensions.size();
-			createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+			VkDeviceCreateInfo deviceCI = {};
+			deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			deviceCI.queueCreateInfoCount = std::size(queueCIs);
+			deviceCI.pQueueCreateInfos = queueCIs;
+			deviceCI.enabledExtensionCount = deviceExtensions.size();
+			deviceCI.ppEnabledExtensionNames = deviceExtensions.data();
 
-			result = vkCreateDevice(s_PhysicalDevice, &createInfo, s_Allocator, &s_Device);
-			CHECK_VK_RESULT(result);
+			VK_CHECK(vkCreateDevice(s_PhysicalDevice, &deviceCI, s_Allocator, &s_Device));
 			vkGetDeviceQueue(s_Device, s_QueueFamily, 0, &s_Queue);
 		}
 
 		// Create window surface and SwapChain
 		{
-			result = glfwCreateWindowSurface(s_Instance, window, s_Allocator, &s_Surface);
-			CHECK_VK_RESULT(result);
+			VK_CHECK(glfwCreateWindowSurface(s_Instance, window, s_Allocator, &s_Surface));
 
 			// Check for WSI support
 			VkBool32 res;
@@ -247,14 +251,14 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
 
-			VkSurfaceCapabilitiesKHR surfaceCapabilities;
+			VkSurfaceCapabilitiesKHR surfaceCaps;
 			std::vector<VkSurfaceFormatKHR> surfaceFormats;
 			std::vector<VkPresentModeKHR> surfacePresentModes;
 
 			// Surface Capabilites
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_PhysicalDevice, s_Surface, &surfaceCapabilities);
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(s_PhysicalDevice, s_Surface, &surfaceCaps);
 
-			ATN_CORE_VERIFY(surfaceCapabilities.minImageCount <= s_FramesInFlight && surfaceCapabilities.maxImageCount >= s_FramesInFlight);
+			ATN_CORE_VERIFY(surfaceCaps.minImageCount <= s_MaxFramesInFlight && surfaceCaps.maxImageCount >= s_MaxFramesInFlight);
 
 			// Supported formats
 			uint32 formatCount;
@@ -271,18 +275,27 @@ namespace Athena
 			vkGetPhysicalDeviceSurfacePresentModesKHR(s_PhysicalDevice, s_Surface, &presentModeCount, surfacePresentModes.data());
 			
 			// Select Format
-			int32 useFormat = -1;
-			for (uint64 i = 0; i < surfaceFormats.size(); ++i)
-			{
-				if (surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-				{
-					useFormat = i;
-					break;
-				}
-			}
+			const VkFormat requestedFormats[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
+			const VkColorSpaceKHR requestedColorsSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
 
-			ATN_CORE_VERIFY(useFormat != -1, "Failed to find supported window surface format!");
-			VkSurfaceFormatKHR selectedFormat = surfaceFormats[useFormat];
+			// first format in the array is prefered
+			const auto rateFormat = [requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR fmt) -> uint64
+			{
+				if (fmt.colorSpace != requestedColorsSpace)
+					return 0;
+
+				auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
+				uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element index is 1
+
+				return reversedIdx;
+			};
+
+			std::sort(surfaceFormats.begin(), surfaceFormats.end(), [rateFormat, requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR left, VkSurfaceFormatKHR right)
+				{
+					return rateFormat(left) > rateFormat(right);
+				});
+
+			VkSurfaceFormatKHR selectedFormat = surfaceFormats[0];
 
 			// Select Present mode
 			int32 usePresentMode = -1;
@@ -297,71 +310,133 @@ namespace Athena
 
 			VkPresentModeKHR selectedPresentMode = usePresentMode == -1 ? VK_PRESENT_MODE_FIFO_KHR : surfacePresentModes[usePresentMode];
 
+
+			// Extent
 			Window::WindowData& windowData = *(Window::WindowData*)(glfwGetWindowUserPointer(window));
-			uint32 width = windowData.Width;
-			uint32 height = windowData.Height;
 
-			VkSwapchainCreateInfoKHR info;
-			info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-			info.surface = s_Surface;
-			info.minImageCount = s_FramesInFlight;
-			info.imageFormat = selectedFormat.format;
-			info.imageColorSpace = selectedFormat.colorSpace;
-			info.imageExtent.width = width;
-			info.imageExtent.height = height;
-			info.imageArrayLayers = 1;
-			info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-			info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;           // Assume that graphics family == present family
-			info.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-			info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			info.presentMode = selectedPresentMode;
-			info.clipped = VK_TRUE;
-			info.oldSwapchain = s_SwapChain;
+			VkExtent2D extent;
+			if (surfaceCaps.currentExtent.width == (uint32)-1)
+			{
+				extent.width = windowData.Width;
+				extent.height = windowData.Height;
 
-			// Crashes with no debug message
-			
-			//result = vkCreateSwapchainKHR(s_Device, &info, s_Allocator, &s_SwapChain); 
-			//CHECK_VK_RESULT(result);
-			//
-			//s_SwapChainImages.resize(s_FramesInFlight);
-			//result = vkGetSwapchainImagesKHR(s_Device, s_SwapChain, &s_FramesInFlight, s_SwapChainImages.data());
-			//CHECK_VK_RESULT(result);
+				extent.width = Math::Clamp(extent.width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
+				extent.height = Math::Clamp(extent.width, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
+			}
+			else
+			{
+				extent.width = surfaceCaps.currentExtent.width;
+				extent.height = surfaceCaps.currentExtent.height;
+			}
+
+
+			VkSwapchainCreateInfoKHR swapchainCI = {};
+			swapchainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+			swapchainCI.surface = s_Surface;
+			swapchainCI.minImageCount = s_MaxFramesInFlight;
+			swapchainCI.imageFormat = selectedFormat.format;
+			swapchainCI.imageColorSpace = selectedFormat.colorSpace;
+			swapchainCI.imageExtent.width = extent.width;
+			swapchainCI.imageExtent.height = extent.height;
+			swapchainCI.imageArrayLayers = 1;
+			swapchainCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;           // Assume that graphics family == present family
+			swapchainCI.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			swapchainCI.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+			swapchainCI.presentMode = selectedPresentMode;
+			swapchainCI.clipped = VK_TRUE;
+			swapchainCI.oldSwapchain = s_SwapChain;
+
+			VK_CHECK(vkCreateSwapchainKHR(s_Device, &swapchainCI, s_Allocator, &s_SwapChain));
+
+			uint32 imagesCount;
+			vkGetSwapchainImagesKHR(s_Device, s_SwapChain, &imagesCount, nullptr);
+			ATN_CORE_VERIFY(imagesCount == s_MaxFramesInFlight);
+
+			s_SwapChainImages.resize(s_MaxFramesInFlight);
+			VK_CHECK(vkGetSwapchainImagesKHR(s_Device, s_SwapChain, &imagesCount, s_SwapChainImages.data()));
+
+			s_SwapChainImageViews.resize(s_MaxFramesInFlight);
+			for (uint32_t i = 0; i < s_MaxFramesInFlight; i++)
+			{
+				VkImageViewCreateInfo imageViewCI = {};
+				imageViewCI.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				imageViewCI.format = selectedFormat.format;
+				imageViewCI.components.r = VK_COMPONENT_SWIZZLE_R;
+				imageViewCI.components.g = VK_COMPONENT_SWIZZLE_G;
+				imageViewCI.components.b = VK_COMPONENT_SWIZZLE_B;
+				imageViewCI.components.a = VK_COMPONENT_SWIZZLE_A;
+				imageViewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				imageViewCI.subresourceRange.baseMipLevel = 0;
+				imageViewCI.subresourceRange.levelCount = 1;
+				imageViewCI.subresourceRange.baseArrayLayer = 0;
+				imageViewCI.subresourceRange.layerCount = 1;
+				imageViewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
+				imageViewCI.image = s_SwapChainImages[i];
+
+				VK_CHECK(vkCreateImageView(s_Device, &imageViewCI, s_Allocator, &s_SwapChainImageViews[i]));
+			}
 		}
 
-		// Create Descriptor Pool
+		// Create CommandPool and CommandBuffers
 		{
-			VkDescriptorPoolSize poolSizes[] =
+			VkCommandPoolCreateInfo commandPoolCI = {};
+			commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+			commandPoolCI.queueFamilyIndex = s_QueueFamily;
+			commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+			VK_CHECK(vkCreateCommandPool(s_Device, &commandPoolCI, nullptr, &s_CommandPool));
+
+			s_CommandBuffers.resize(s_MaxFramesInFlight);
+
+			VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
+			cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			cmdBufAllocInfo.commandPool = s_CommandPool;
+			cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			cmdBufAllocInfo.commandBufferCount = s_MaxFramesInFlight;
+			VK_CHECK(vkAllocateCommandBuffers(s_Device, &cmdBufAllocInfo, s_CommandBuffers.data()));
+		}
+		
+		// Create synchronization primitives
+		{
+			s_ImageAcquiredSemaphores.resize(s_MaxFramesInFlight);
+			s_RenderCompleteSemaphores.resize(s_MaxFramesInFlight);
+			s_RenderCompleteFences.resize(s_MaxFramesInFlight);
+
+			for (uint32_t i = 0; i < s_MaxFramesInFlight; i++) 
 			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-			};
+				VkSemaphoreCreateInfo semaphoreCI = {};
+				semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+				// Semaphore used to ensure that image acquired from swapchain before starting to submit again
+				VK_CHECK(vkCreateSemaphore(s_Device, &semaphoreCI, s_Allocator, &s_ImageAcquiredSemaphores[i]));
+				// Semaphore used to ensure that all commands submitted have been finished before submitting the image to the queue
+				VK_CHECK(vkCreateSemaphore(s_Device, &semaphoreCI, s_Allocator, &s_RenderCompleteSemaphores[i]));
 
-			VkDescriptorPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			pool_info.maxSets = 1000 * std::size(poolSizes);
-			pool_info.poolSizeCount = std::size(poolSizes);
-			pool_info.pPoolSizes = poolSizes;
+				VkFenceCreateInfo fenceCI = {};
+				fenceCI.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+				// Create in signaled state so we don't wait on first render of each command buffer
+				fenceCI.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+				VK_CHECK(vkCreateFence(s_Device, &fenceCI, s_Allocator, &s_RenderCompleteFences[i]));
 
-			result = vkCreateDescriptorPool(s_Device, &pool_info, s_Allocator, &s_DescriptorPool);
-			CHECK_VK_RESULT(result);
+			}
 		}
 	}
 
 	static void ShutdownVulkan()
 	{
-		vkQueueWaitIdle(s_Queue);
+		vkDeviceWaitIdle(s_Device);
+		
+		for (uint32_t i = 0; i < s_MaxFramesInFlight; i++)
+		{
+			vkDestroySemaphore(s_Device, s_ImageAcquiredSemaphores[i], s_Allocator);
+			vkDestroySemaphore(s_Device, s_RenderCompleteSemaphores[i], s_Allocator);
 
-		vkDestroyDescriptorPool(s_Device, s_DescriptorPool, s_Allocator);
+			vkDestroyFence(s_Device, s_RenderCompleteFences[i], s_Allocator);
+		}
+
+		vkDestroyCommandPool(s_Device, s_CommandPool, s_Allocator);
+
+		for(uint32 i = 0; i < s_MaxFramesInFlight; ++i)
+			vkDestroyImageView(s_Device, s_SwapChainImageViews[i], s_Allocator);
 
 		vkDestroySwapchainKHR(s_Device, s_SwapChain, s_Allocator);
 		vkDestroySurfaceKHR(s_Instance, s_Surface, s_Allocator);
@@ -376,6 +451,65 @@ namespace Athena
 		vkDestroyInstance(s_Instance, s_Allocator);
 	}
 
+	static void VulkanOnUpdate()
+	{
+		// Acquire image from swapchain
+
+		vkWaitForFences(s_Device, 1, &s_RenderCompleteFences[s_CurrentFrameIndex], VK_TRUE, UINT64_MAX);
+
+		uint32 imageIndex = 0;
+		VkResult result = vkAcquireNextImageKHR(s_Device, s_SwapChain, UINT64_MAX, s_ImageAcquiredSemaphores[s_CurrentFrameIndex], VK_NULL_HANDLE, &imageIndex);
+		
+		vkResetFences(s_Device, 1, &s_RenderCompleteFences[s_CurrentFrameIndex]);
+
+		// Rendering
+		vkResetCommandBuffer(s_CommandBuffers[s_CurrentFrameIndex], 0);
+
+		VkCommandBufferBeginInfo cmdBufBeginInfo = {};
+		cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		VK_CHECK(vkBeginCommandBuffer(s_CommandBuffers[s_CurrentFrameIndex], &cmdBufBeginInfo));
+		{
+			VkClearColorValue color = { 1, 1, 0, 1 };
+			VkImageSubresourceRange range;
+			range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			range.baseMipLevel = 0;
+			range.levelCount = 1;
+			range.baseArrayLayer = 0;
+			range.layerCount = 1;
+
+			vkCmdClearColorImage(s_CommandBuffers[s_CurrentFrameIndex], s_SwapChainImages[s_CurrentFrameIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range);
+		}
+		VK_CHECK(vkEndCommandBuffer(s_CommandBuffers[s_CurrentFrameIndex]));
+
+
+		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		// Submit commands to queue
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &s_ImageAcquiredSemaphores[s_CurrentFrameIndex];
+		submitInfo.pWaitDstStageMask = waitStage;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &s_CommandBuffers[s_CurrentFrameIndex];
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &s_RenderCompleteSemaphores[s_CurrentFrameIndex];
+		VK_CHECK(vkQueueSubmit(s_Queue, 1, &submitInfo, s_RenderCompleteFences[s_CurrentFrameIndex]));
+
+		// Present into swapchain
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &s_RenderCompleteSemaphores[s_CurrentFrameIndex];
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &s_SwapChain;
+		presentInfo.pImageIndices = &imageIndex;
+		VK_CHECK(vkQueuePresentKHR(s_Queue, &presentInfo));
+
+		s_CurrentFrameIndex = (s_CurrentFrameIndex + 1) % s_MaxFramesInFlight;
+	}
 
 	static void GLFWErrorCallback(int error, const char* description)
 	{
@@ -604,27 +738,9 @@ namespace Athena
 		SetEventCallbacks(glfwWindow);
 
 		glfwSetWindowAttrib(glfwWindow, GLFW_RESIZABLE, info.WindowResizeable ? GLFW_TRUE : GLFW_FALSE);
-		window->SetWindowMode(info.StartMode);
 
-		// Icon
-		if (FileSystem::Exists(info.Icon))
-		{
-			GLFWimage image;
-			image.pixels = stbi_load(info.Icon.string().c_str(), &image.width, &image.height, 0, 4);
-			if (image.pixels)
-			{
-				glfwSetWindowIcon(glfwWindow, 1, &image);
-				stbi_image_free(image.pixels);
-			}
-			else
-			{
-				ATN_CORE_ERROR_TAG("GLFW", "failed to load icon from {}!", info.Icon);
-			}
-		}
-		else if(!info.Icon.empty())
-		{
-			ATN_CORE_ERROR_TAG("GLFW", "invalid filepath for icon '{}'!", info.Icon);
-		}
+		window->SetWindowMode(info.StartMode);
+		window->SetIcon(info.Icon);
 
 		// Raw mouse motion
 		if (glfwRawMouseMotionSupported())
@@ -672,6 +788,7 @@ namespace Athena
 	void Window::OnUpdate()
 	{
 		glfwPollEvents();
+		VulkanOnUpdate();
 		//m_Context->SwapBuffers();
 	}
 
@@ -692,6 +809,28 @@ namespace Athena
 	void Window::SetCursorPosition(Vector2 position)
 	{
 		glfwSetCursorPos((GLFWwindow*)m_WindowHandle, position.x, position.y);
+	}
+
+	void Window::SetIcon(const FilePath& path)
+	{
+		if (FileSystem::Exists(path))
+		{
+			GLFWimage image;
+			image.pixels = stbi_load(path.string().c_str(), &image.width, &image.height, 0, 4);
+			if (image.pixels)
+			{
+				glfwSetWindowIcon((GLFWwindow*)m_WindowHandle, 1, &image);
+				stbi_image_free(image.pixels);
+			}
+			else
+			{
+				ATN_CORE_ERROR_TAG("GLFW", "failed to load icon from '{}'!", path);
+			}
+		}
+		else if (!path.empty())
+		{
+			ATN_CORE_ERROR_TAG("GLFW", "invalid filepath for icon '{}'!", path);
+		}
 	}
 
 	void Window::SetWindowMode(WindowMode mode)

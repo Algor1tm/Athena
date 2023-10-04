@@ -112,7 +112,7 @@ namespace Athena
 
 	Ref<Scene> Scene::Copy(Ref<Scene> other)
 	{
-		Ref<Scene> newScene = CreateRef<Scene>();
+		Ref<Scene> newScene = Ref<Scene>::Create();
 
 		newScene->m_ViewportWidth = other->m_ViewportWidth;
 		newScene->m_ViewportHeight = other->m_ViewportHeight;

@@ -12,7 +12,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLIndexBuffer>(vertices, count); break;
+			return Ref<GLIndexBuffer>::Create(vertices, count); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -29,7 +29,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLVertexBuffer>(info); break;
+			return Ref<GLVertexBuffer>::Create(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -44,7 +44,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLUniformBuffer>(size, binding); break;
+			return Ref<GLUniformBuffer>::Create(size, binding); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -59,7 +59,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLShaderStorageBuffer>(size, binding); break;
+			return Ref<GLShaderStorageBuffer>::Create(size, binding); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

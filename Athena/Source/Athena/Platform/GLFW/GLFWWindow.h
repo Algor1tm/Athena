@@ -74,7 +74,7 @@ namespace Athena
 		ATN_CORE_ERROR_TAG("Vulkan", "Debug report from ObjectType: {} \nMessage: {}\n", (int)objectType, pMessage);
 		return VK_FALSE;
 	}
-#endif // IMGUI_VULKAN_DEBUG_REPORT
+#endif
 
 	static void InitVulkan(GLFWwindow* window)
 	{
@@ -143,6 +143,12 @@ namespace Athena
 #endif
 		}
 
+		// Create window surface
+		{
+			VK_CHECK(glfwCreateWindowSurface(s_Instance, window, s_Allocator, &s_Surface));
+			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
+		}
+
 		// Select GPU
 		{
 			uint32 gpuCount;
@@ -185,12 +191,24 @@ namespace Athena
 
 			String message = "Queue Families: \n\t";
 
+			VkQueueFlagBits requestedFlags[] = { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT };
 			for (uint32 i = 0; i < count; i++)
 			{
-				if ((queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queues[i].queueFlags & VK_QUEUE_COMPUTE_BIT))
+				bool supportFlags = true;
+				for (auto flag : requestedFlags)
 				{
-					s_QueueFamily = i;
+					if (!(queues[i].queueFlags & flag))
+					{
+						supportFlags = false;
+						break;
+					}
 				}
+
+				VkBool32 supportWSI;
+				vkGetPhysicalDeviceSurfaceSupportKHR(s_PhysicalDevice, i, s_Surface, &supportWSI);
+
+				if(supportFlags && supportWSI)
+					s_QueueFamily = i;
 
 				String flags;
 
@@ -199,7 +217,7 @@ namespace Athena
 				flags += queues[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
 				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
-				message += std::format("{}: {} count = {}\n\t", i, flags, queues[i].queueCount);
+				message += std::format("{}: {} count = {}, WSI = {}\n\t", i, flags, queues[i].queueCount, supportWSI ? "true" : "false");
 			}
 			
 			ATN_CORE_INFO_TAG("Vulkan", message);
@@ -240,17 +258,8 @@ namespace Athena
 			vkGetDeviceQueue(s_Device, s_QueueFamily, 0, &s_Queue);
 		}
 
-		// Create window surface and SwapChain
+		// Create SwapChain
 		{
-			VK_CHECK(glfwCreateWindowSurface(s_Instance, window, s_Allocator, &s_Surface));
-
-			// Check for WSI support
-			VkBool32 res;
-			vkGetPhysicalDeviceSurfaceSupportKHR(s_PhysicalDevice, s_QueueFamily, s_Surface, &res);
-			ATN_CORE_VERIFY(res, "no WSI support on physical device");
-
-			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
-
 			VkSurfaceCapabilitiesKHR surfaceCaps;
 			std::vector<VkSurfaceFormatKHR> surfaceFormats;
 			std::vector<VkPresentModeKHR> surfacePresentModes;
@@ -285,7 +294,7 @@ namespace Athena
 					return 0;
 
 				auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
-				uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element index is 1
+				uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element - index is 1
 
 				return reversedIdx;
 			};
@@ -454,7 +463,6 @@ namespace Athena
 	static void VulkanOnUpdate()
 	{
 		// Acquire image from swapchain
-
 		vkWaitForFences(s_Device, 1, &s_RenderCompleteFences[s_CurrentFrameIndex], VK_TRUE, UINT64_MAX);
 
 		uint32 imageIndex = 0;
@@ -527,7 +535,7 @@ namespace Athena
 			{
 				Window::WindowData& data = GetUserPointer(window);
 
-				Ref<WindowCloseEvent> event = CreateRef<WindowCloseEvent>();
+				Ref<WindowCloseEvent> event = Ref<WindowCloseEvent>::Create();
 				data.EventCallback(event);
 			});
 
@@ -537,7 +545,7 @@ namespace Athena
 				data.Width = width;
 				data.Height = height;
 
-				Ref<WindowResizeEvent> event = CreateRef<WindowResizeEvent>(width, height);
+				Ref<WindowResizeEvent> event = Ref<WindowResizeEvent>::Create(width, height);
 				data.EventCallback(event);
 			});
 
@@ -545,7 +553,7 @@ namespace Athena
 			{
 				Window::WindowData& data = GetUserPointer(window);
 				
-				Ref<WindowMoveEvent> event = CreateRef<WindowMoveEvent>(xpos, ypos);
+				Ref<WindowMoveEvent> event = Ref<WindowMoveEvent>::Create(xpos, ypos);
 				data.EventCallback(event);
 			});
 
@@ -555,12 +563,12 @@ namespace Athena
 
 				if (focused)
 				{
-					Ref<WindowGainedFocusEvent> event = CreateRef<WindowGainedFocusEvent>();
+					Ref<WindowGainedFocusEvent> event = Ref<WindowGainedFocusEvent>::Create();
 					data.EventCallback(event);
 				}
 				else
 				{
-					Ref<WindowLostFocusEvent> event = CreateRef<WindowLostFocusEvent>();
+					Ref<WindowLostFocusEvent> event = Ref<WindowLostFocusEvent>::Create();
 					data.EventCallback(event);
 				}
 			});
@@ -572,14 +580,14 @@ namespace Athena
 				{
 					data.Mode = WindowMode::Maximized;
 
-					Ref<WindowMaximizeEvent> event = CreateRef<WindowMaximizeEvent>();
+					Ref<WindowMaximizeEvent> event = Ref<WindowMaximizeEvent>::Create();
 					data.EventCallback(event);
 				}
 				else
 				{
 					data.Mode = WindowMode::Default;
 
-					Ref<WindowRestoreEvent> event = CreateRef<WindowRestoreEvent>();
+					Ref<WindowRestoreEvent> event = Ref<WindowRestoreEvent>::Create();
 					data.EventCallback(event);
 				}
 			});
@@ -591,14 +599,14 @@ namespace Athena
 				{
 					data.Mode = WindowMode::Minimized;
 
-					Ref<WindowIconifyEvent> event = CreateRef<WindowIconifyEvent>();
+					Ref<WindowIconifyEvent> event = Ref<WindowIconifyEvent>::Create();
 					data.EventCallback(event);
 				}
 				else
 				{
 					data.Mode = WindowMode::Default;
 
-					Ref<WindowRestoreEvent> event = CreateRef<WindowRestoreEvent>();
+					Ref<WindowRestoreEvent> event = Ref<WindowRestoreEvent>::Create();
 					data.EventCallback(event);
 				}
 			});
@@ -611,23 +619,25 @@ namespace Athena
 				bool alt = mods & GLFW_MOD_ALT;
 				bool shift = mods & GLFW_MOD_SHIFT;
 
+				Keyboard::Key akey = Input::ConvertFromNativeKeyCode(key);
+
 				switch (action)
 				{
 				case GLFW_PRESS:
 				{
-					Ref<KeyPressedEvent> event = CreateRef<KeyPressedEvent>(Input::ConvertFromNativeKeyCode(key), false, ctrl, alt, shift);
+					Ref<KeyPressedEvent> event = Ref<KeyPressedEvent>::Create(akey, false, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE:
 				{
-					Ref<KeyReleasedEvent> event = CreateRef<KeyReleasedEvent>(Input::ConvertFromNativeKeyCode(key), ctrl, alt, shift);
+					Ref<KeyReleasedEvent> event = Ref<KeyReleasedEvent>::Create(akey, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_REPEAT:
 				{
-					Ref<KeyPressedEvent> event = CreateRef<KeyPressedEvent>(Input::ConvertFromNativeKeyCode(key), true, ctrl, alt, shift);
+					Ref<KeyPressedEvent> event = Ref<KeyPressedEvent>::Create(akey, true, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
@@ -640,7 +650,7 @@ namespace Athena
 
 				Window::WindowData& data = GetUserPointer(window);
 
-				Ref<KeyTypedEvent> event = CreateRef<KeyTypedEvent>(Input::ConvertFromNativeKeyCode(convertFromUnicode(character)));
+				Ref<KeyTypedEvent> event = Ref<KeyTypedEvent>::Create(Input::ConvertFromNativeKeyCode(convertFromUnicode(character)));
 				data.EventCallback(event);
 			});
 
@@ -652,17 +662,19 @@ namespace Athena
 				bool alt = mods & GLFW_MOD_ALT;
 				bool shift = mods & GLFW_MOD_SHIFT;
 
+				Mouse::Button abutton = Input::ConvertFromNativeMouseCode(button);
+
 				switch (action)
 				{
 				case GLFW_PRESS:
 				{
-					Ref<MouseButtonPressedEvent> event = CreateRef<MouseButtonPressedEvent>(Input::ConvertFromNativeMouseCode(button), ctrl, alt, shift);
+					Ref<MouseButtonPressedEvent> event = Ref<MouseButtonPressedEvent>::Create(abutton, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
 				case GLFW_RELEASE:
 				{
-					Ref<MouseButtonReleasedEvent> event = CreateRef<MouseButtonReleasedEvent>(Input::ConvertFromNativeMouseCode(button), ctrl, alt, shift);
+					Ref<MouseButtonReleasedEvent> event = Ref<MouseButtonReleasedEvent>::Create(abutton, ctrl, alt, shift);
 					data.EventCallback(event);
 					break;
 				}
@@ -673,7 +685,7 @@ namespace Athena
 			{
 				Window::WindowData& data = GetUserPointer(window);
 
-				Ref<MouseScrolledEvent> event = CreateRef<MouseScrolledEvent>((float)xOffset, (float)yOffset);
+				Ref<MouseScrolledEvent> event = Ref<MouseScrolledEvent>::Create((float)xOffset, (float)yOffset);
 				data.EventCallback(event);
 			});
 
@@ -681,7 +693,7 @@ namespace Athena
 			{
 				Window::WindowData& data = GetUserPointer(window);
 
-				Ref<MouseMoveEvent> event = CreateRef<MouseMoveEvent>((float)x, (float)y);
+				Ref<MouseMoveEvent> event = Ref<MouseMoveEvent>::Create((float)x, (float)y);
 				data.EventCallback(event);
 			});
 
@@ -699,7 +711,7 @@ namespace Athena
 
 	Scope<Window> Window::Create(const WindowCreateInfo& info)
 	{
-		Scope<Window> window = CreateScope<Window>();
+		Scope<Window> window = Scope<Window>::Create();
 
 		WindowData windowData;
 		windowData.Width = info.Width;

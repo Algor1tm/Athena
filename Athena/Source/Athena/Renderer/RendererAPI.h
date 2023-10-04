@@ -88,4 +88,14 @@ namespace Athena
 
 		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize) = 0;
 	};
+
+	class ATHENA_API RendererObject
+	{
+	public:
+		template <typename T>
+		Ref<T> As() const
+		{
+			return std::static_pointer_cast<T>(this);
+		}
+	};
 }

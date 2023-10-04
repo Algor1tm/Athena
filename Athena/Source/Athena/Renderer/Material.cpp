@@ -11,7 +11,7 @@ namespace Athena
 
 	Ref<Material> MaterialManager::CreateMaterial(const String& name)
 	{
-		Ref<Material> material = CreateRef<Material>();
+		Ref<Material> material = Ref<Material>::Create();
 
 		if (m_Materials.find(name) != m_Materials.end())
 		{

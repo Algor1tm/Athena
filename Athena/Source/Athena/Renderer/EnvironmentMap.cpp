@@ -8,7 +8,7 @@ namespace Athena
 {
 	Ref<EnvironmentMap> EnvironmentMap::Create(const FilePath& hdrMap, uint32 resolution)
 	{
-		Ref<EnvironmentMap> result = CreateRef<EnvironmentMap>();
+		Ref<EnvironmentMap> result = Ref<EnvironmentMap>::Create();
 		result->m_FilePath = hdrMap;
 
 		result->SetResolution(resolution);

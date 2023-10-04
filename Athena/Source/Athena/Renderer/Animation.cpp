@@ -24,7 +24,7 @@ namespace Athena
 
 	Ref<Skeleton> Skeleton::Create(const BonesHierarchyInfo& boneHierarchy)
 	{
-		Ref<Skeleton> result = CreateRef<Skeleton>();
+		Ref<Skeleton> result = Ref<Skeleton>::Create();
 
 		uint32 boneCount = 0;
 		BoneCreateHelper(boneHierarchy, result->m_RootBone, boneCount);
@@ -77,7 +77,7 @@ namespace Athena
 	{
 		ATN_CORE_VERIFY(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
 
-		Ref<Animation> result = CreateRef<Animation>();
+		Ref<Animation> result = Ref<Animation>::Create();
 
 		result->m_Name = info.Name;
 		result->m_Duration = info.Duration;
@@ -184,7 +184,7 @@ namespace Athena
 
 	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations)
 	{
-		Ref<Animator> result = CreateRef<Animator>();
+		Ref<Animator> result = Ref<Animator>::Create();
 
 		result->m_Animations = animations;
 		result->m_CurrentTime = 0.f;

@@ -51,7 +51,7 @@ namespace Athena
 
 		FilePath scene = "Assets/Scenes/Sponza.atn";
 
-		app->PushLayer(CreateRef<SandBoxLayer>(scene));
+		app->PushLayer(Ref<SandBoxLayer>::Create(scene));
 
 		return app;
 	}

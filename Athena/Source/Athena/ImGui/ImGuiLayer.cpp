@@ -44,12 +44,12 @@ namespace Athena
 	
 	Ref<ImGuiLayer> ImGuiLayer::Create()
 	{
-		auto imguiLayer = CreateRef<ImGuiLayer>();
+		auto imguiLayer = Ref<ImGuiLayer>::Create();
 
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			imguiLayer->m_ImGuiImpl = CreateScope<GLImGuiLayerImpl>(); break;
+			imguiLayer->m_ImGuiImpl = Scope<GLImGuiLayerImpl>::Create(); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); break;
 		default:

@@ -39,7 +39,7 @@ namespace Athena
 		switch (config.API)
 		{
 		case Renderer::API::OpenGL:
-			s_Data.RendererAPI = CreateScope<GLRendererAPI>(); break;
+			s_Data.RendererAPI = Scope<GLRendererAPI>::Create(); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -86,7 +86,7 @@ namespace Athena
 
 		FilePath shaderPackModule = Application::Get().GetEngineResourcesPath() / "ShaderPack";
 
-		s_Data.ShaderPack = CreateRef<ShaderLibrary>();
+		s_Data.ShaderPack = Ref<ShaderLibrary>::Create();
 
 		s_Data.ShaderPack->LoadIncludeShader("PoissonDisk", shaderPackModule / "PoissonDisk");
 

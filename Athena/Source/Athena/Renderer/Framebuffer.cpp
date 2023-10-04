@@ -12,7 +12,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLFramebuffer>(info); break;
+			return Ref<GLFramebuffer>::Create(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

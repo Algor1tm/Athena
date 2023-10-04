@@ -16,7 +16,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(path, sRGB, samplerInfo); break;
+			return Ref<GLTexture2D>::Create(path, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -30,7 +30,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(data, width, height, sRGB, samplerInfo); break;
+			return Ref<GLTexture2D>::Create(data, width, height, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -44,7 +44,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTexture2D>(format, width, height, samplerInfo); break;
+			return Ref<GLTexture2D>::Create(format, width, height, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -92,7 +92,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureCube>(faces, sRGB, samplerInfo); break;
+			return Ref<GLTextureCube>::Create(faces, sRGB, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -106,7 +106,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureCube>(format, width, height, samplerInfo); break;
+			return Ref<GLTextureCube>::Create(format, width, height, samplerInfo); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}
@@ -120,7 +120,7 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::OpenGL:
-			return CreateRef<GLTextureSampler>(info); break;
+			return Ref<GLTextureSampler>::Create(info); break;
 		case Renderer::API::None:
 			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
 		}

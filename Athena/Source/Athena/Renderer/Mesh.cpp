@@ -434,7 +434,7 @@ namespace Athena
 			return nullptr;
 		}
 
-		Ref<StaticMesh> result = CreateRef<StaticMesh>();
+		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
 

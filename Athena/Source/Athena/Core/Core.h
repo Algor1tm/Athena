@@ -119,6 +119,9 @@
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 
 
+#include "Memory.h"
+
+
 namespace Athena
 {
 	using byte = ::std::byte; // type of size 1 byte
@@ -135,20 +138,4 @@ namespace Athena
 
 	using String = ::std::string; // string type
 	using FilePath = ::std::filesystem::path; // filepath type
-
-	template <typename T>
-	using Scope = ::std::unique_ptr<T>;
-	template<typename T, typename... Args>
-	constexpr Scope<T> CreateScope(Args&&... args)
-	{
-		return ::std::make_unique<T>(std::forward<Args>(args)...);
-	}
-
-	template <typename T>
-	using Ref = ::std::shared_ptr<T>;
-	template<typename T, typename... Args>
-	constexpr Ref<T> CreateRef(Args&&... args)
-	{
-		return ::std::make_shared<T>(std::forward<Args>(args)...);
-	}
 }

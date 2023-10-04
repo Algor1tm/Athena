@@ -31,7 +31,7 @@ namespace Athena
 		std::sort(m_Queue.begin(), m_Queue.end(), [](const DrawCallInfo& left, const DrawCallInfo& right)
 			{
 				if (left.Animator != right.Animator)
-					return left.Animator < right.Animator;
+					return left.Animator.Raw() < right.Animator.Raw();
 
 				return left.Material->GetName() < right.Material->GetName();
 			});

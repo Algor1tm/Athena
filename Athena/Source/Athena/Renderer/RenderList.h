@@ -4,15 +4,15 @@
 
 #include "Athena/Math/Matrix.h"
 
+#include "Athena/Renderer/Animation.h"
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/Material.h"
+
 #include <deque>
 
 
 namespace Athena
 {
-	class ATHENA_API Animator;
-	class ATHENA_API VertexBuffer;
-	class ATHENA_API Material;
-
 	struct DrawCallInfo
 	{
 		Ref<VertexBuffer> VertexBuffer;

@@ -43,8 +43,8 @@ namespace Athena
 		static inline String FormatMessage(const String& msg, Args&&... args);
 
 	private:
-		ATHENA_API static Ref<spdlog::logger> s_CoreLogger;
-		ATHENA_API static Ref<spdlog::logger> s_ClientLogger;
+		ATHENA_API static std::shared_ptr<spdlog::logger> s_CoreLogger;
+		ATHENA_API static std::shared_ptr<spdlog::logger> s_ClientLogger;
 	};
 
 

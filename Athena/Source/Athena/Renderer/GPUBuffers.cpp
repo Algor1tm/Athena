@@ -1,7 +1,5 @@
 #include "GPUBuffers.h"
 
-#include "Athena/Platform/OpenGL/GLBuffers.h"
-
 #include "Athena/Renderer/Renderer.h"
 
 
@@ -11,13 +9,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLIndexBuffer>::Create(vertices, count); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::None: return nullptr;
+		case Renderer::API::Vulkan: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -28,13 +23,10 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLVertexBuffer>::Create(info); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -43,13 +35,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLUniformBuffer>::Create(size, binding); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -58,13 +47,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLShaderStorageBuffer>::Create(size, binding); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 }

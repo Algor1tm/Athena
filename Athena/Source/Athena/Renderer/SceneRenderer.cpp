@@ -83,11 +83,11 @@ namespace Athena
 
 	struct SceneRendererData
 	{
-		Ref<Framebuffer> HDRFramebuffer;
-		Ref<Framebuffer> FinalFramebuffer;
-		Ref<Framebuffer> ShadowMap;
-		Ref<Framebuffer> EntityIDFramebuffer;
-
+		//Ref<Framebuffer> HDRFramebuffer;
+		//Ref<Framebuffer> FinalFramebuffer;
+		//Ref<Framebuffer> ShadowMap;
+		//Ref<Framebuffer> EntityIDFramebuffer;
+		//
 		Ref<TextureSampler> PCF_Sampler;
 
 		RenderList MeshList;
@@ -123,38 +123,38 @@ namespace Athena
 
 	void SceneRenderer::Init()
 	{
-		FramebufferCreateInfo fbInfo;
-		fbInfo.Attachments = { { TextureFormat::RGBA16F, true }, TextureFormat::DEPTH24STENCIL8 };
-		fbInfo.Width = 1280;
-		fbInfo.Height = 720;
-		fbInfo.Layers = 1;
-		fbInfo.Samples = 1;
-		 
-		s_Data.HDRFramebuffer = Framebuffer::Create(fbInfo);
+		//FramebufferCreateInfo fbInfo;
+		//fbInfo.Attachments = { { TextureFormat::RGBA16F, true }, TextureFormat::DEPTH24STENCIL8 };
+		//fbInfo.Width = 1280;
+		//fbInfo.Height = 720;
+		//fbInfo.Layers = 1;
+		//fbInfo.Samples = 1;
+		// 
+		//s_Data.HDRFramebuffer = Framebuffer::Create(fbInfo);
 
-		fbInfo.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
-		fbInfo.Width = 1280;
-		fbInfo.Height = 720;
-		fbInfo.Layers = 1;
-		fbInfo.Samples = 1;
+		//fbInfo.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
+		//fbInfo.Width = 1280;
+		//fbInfo.Height = 720;
+		//fbInfo.Layers = 1;
+		//fbInfo.Samples = 1;
 
-		s_Data.FinalFramebuffer = Framebuffer::Create(fbInfo);
+		//s_Data.FinalFramebuffer = Framebuffer::Create(fbInfo);
 
-		fbInfo.Attachments = { TextureFormat::DEPTH32F };
-		fbInfo.Width = s_Data.ShadowMapResolution;
-		fbInfo.Height = s_Data.ShadowMapResolution;
-		fbInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
-		fbInfo.Samples = 1;
+		//fbInfo.Attachments = { TextureFormat::DEPTH32F };
+		//fbInfo.Width = s_Data.ShadowMapResolution;
+		//fbInfo.Height = s_Data.ShadowMapResolution;
+		//fbInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
+		//fbInfo.Samples = 1;
 
-		s_Data.ShadowMap = Framebuffer::Create(fbInfo);
+		//s_Data.ShadowMap = Framebuffer::Create(fbInfo);
 
-		fbInfo.Attachments = { TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
-		fbInfo.Width = 1280;
-		fbInfo.Height = 720;
-		fbInfo.Layers = 1;
-		fbInfo.Samples = 1;
+		//fbInfo.Attachments = { TextureFormat::RED_INTEGER, TextureFormat::DEPTH24STENCIL8 };
+		//fbInfo.Width = 1280;
+		//fbInfo.Height = 720;
+		//fbInfo.Layers = 1;
+		//fbInfo.Samples = 1;
 
-		s_Data.EntityIDFramebuffer = Framebuffer::Create(fbInfo);
+		//s_Data.EntityIDFramebuffer = Framebuffer::Create(fbInfo);
 
 		TextureSamplerCreateInfo samplerInfo;
 		samplerInfo.MinFilter = TextureFilter::LINEAR;
@@ -185,9 +185,9 @@ namespace Athena
 
 	void SceneRenderer::OnWindowResized(uint32 width, uint32 height)
 	{
-		s_Data.HDRFramebuffer->Resize(width, height);
-		s_Data.FinalFramebuffer->Resize(width, height);
-		s_Data.EntityIDFramebuffer->Resize(width, height);
+		//s_Data.HDRFramebuffer->Resize(width, height);
+		//s_Data.FinalFramebuffer->Resize(width, height);
+		//s_Data.EntityIDFramebuffer->Resize(width, height);
 	}
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
@@ -224,15 +224,15 @@ namespace Athena
 		s_Data.SceneConstantBuffer->SetData(&s_Data.SceneDataBuffer, sizeof(SceneData));
 		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
 
-		FramebufferCreateInfo finalFBInfo = s_Data.FinalFramebuffer->GetCreateInfo();
-
-		// TODO: remove hack
-		uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
-		if (samples != finalFBInfo.Samples)
-		{
-			finalFBInfo.Samples = samples;
-			s_Data.FinalFramebuffer = Framebuffer::Create(finalFBInfo);
-		}
+		//FramebufferCreateInfo finalFBInfo = s_Data.FinalFramebuffer->GetCreateInfo();
+		//
+		//// TODO: remove hack
+		//uint32 samples = Math::Pow(2u, (uint32)s_Data.Settings.AntialisingMethod);
+		//if (samples != finalFBInfo.Samples)
+		//{
+		//	finalFBInfo.Samples = samples;
+		//	s_Data.FinalFramebuffer = Framebuffer::Create(finalFBInfo);
+		//}
 	}
 
 	void SceneRenderer::EndScene()
@@ -257,8 +257,8 @@ namespace Athena
 	void SceneRenderer::BeginFrame() {}
 	void SceneRenderer::EndFrame()
 	{
-		s_Data.FinalFramebuffer->ResolveMutlisampling();
-		s_Data.FinalFramebuffer->UnBind();
+		//s_Data.FinalFramebuffer->ResolveMutlisampling();
+		//s_Data.FinalFramebuffer->UnBind();
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
@@ -327,7 +327,7 @@ namespace Athena
 			if (useMaterials && s_Data.MeshList.UpdateMaterial())
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 
-			Renderer::DrawTriangles(info.VertexBuffer);
+			//Renderer::DrawTriangles(info.VertexBuffer);
 		}
 
 		// Render Animated Meshes
@@ -352,7 +352,7 @@ namespace Athena
 				s_Data.MaterialConstantBuffer->SetData(&info.Material->Bind(), sizeof(Material::ShaderData));
 			}
 
-			Renderer::DrawTriangles(info.VertexBuffer);
+			//Renderer::DrawTriangles(info.VertexBuffer);
 		}
 
 		s_Data.MeshList.Reset();
@@ -360,198 +360,198 @@ namespace Athena
 
 	void SceneRenderer::ShadowMapPass()
 	{
-		Pipeline pipeline;
-		pipeline.CullFace = CullFace::FRONT;
-		pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
-		pipeline.BlendFunc = BlendFunc::NONE;
-		pipeline.DepthFunc = DepthFunc::LEQUAL;
+		//Pipeline pipeline;
+		//pipeline.CullFace = CullFace::FRONT;
+		//pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
+		//pipeline.BlendFunc = BlendFunc::NONE;
+		//pipeline.DepthFunc = DepthFunc::LEQUAL;
 
-		Renderer::BindPipeline(pipeline);
+		//Renderer::BindPipeline(pipeline);
 
-		RenderPass renderPass;
-		renderPass.TargetFramebuffer = s_Data.ShadowMap;
-		renderPass.ClearBit = CLEAR_DEPTH_BIT;
-		renderPass.Name = "ShadowMapPass";
+		//RenderPass renderPass;
+		////renderPass.TargetFramebuffer = s_Data.ShadowMap;
+		//renderPass.ClearBit = CLEAR_DEPTH_BIT;
+		//renderPass.Name = "ShadowMapPass";
 
-		Renderer::BeginRenderPass(renderPass);
-		{
-			if (s_Data.Settings.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
-			{
-				ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
-				s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
+		//Renderer::BeginRenderPass(renderPass);
+		//{
+		//	if (s_Data.Settings.ShadowSettings.EnableShadows && s_Data.LightDataBuffer.DirectionalLightCount > 0) // For now only 1 directional light 
+		//	{
+		//		ComputeCascadeSpaceMatrices(s_Data.LightDataBuffer.DirectionalLightBuffer[0]);
+		//		s_Data.ShadowsConstantBuffer->SetData(&s_Data.ShadowsDataBuffer, sizeof(ShadowsData));
 
-				s_Data.MeshList.Sort();
-				RenderGeometry("DirShadowMap", false);
-			}
-		}
-		Renderer::EndRenderPass();
+		//		s_Data.MeshList.Sort();
+		//		RenderGeometry("DirShadowMap", false);
+		//	}
+		//}
+		//Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::GeometryPass()
 	{
-		Pipeline pipeline;
-		pipeline.CullFace = CullFace::BACK;
-		pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
-		pipeline.BlendFunc = BlendFunc::ONE_MINUS_SRC_ALPHA;
-		pipeline.DepthFunc = DepthFunc::LEQUAL;
+		//Pipeline pipeline;
+		//pipeline.CullFace = CullFace::BACK;
+		//pipeline.CullDirection = CullDirection::COUNTER_CLOCKWISE;
+		//pipeline.BlendFunc = BlendFunc::ONE_MINUS_SRC_ALPHA;
+		//pipeline.DepthFunc = DepthFunc::LEQUAL;
 
-		Renderer::BindPipeline(pipeline);
+		//Renderer::BindPipeline(pipeline);
 
-		RenderPass renderPass;
-		renderPass.TargetFramebuffer = s_Data.HDRFramebuffer;
-		renderPass.ClearBit = CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
-		renderPass.ClearColor = LinearColor::Black;
-		renderPass.Name = "GeometryPass";
+		//RenderPass renderPass;
+		////renderPass.TargetFramebuffer = s_Data.HDRFramebuffer;
+		//renderPass.ClearBit = CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
+		//renderPass.ClearColor = LinearColor::Black;
+		//renderPass.Name = "GeometryPass";
 
-		Renderer::BeginRenderPass(renderPass);
-		{
-			s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
+		//Renderer::BeginRenderPass(renderPass);
+		//{
+		//	s_Data.LightShaderStorageBuffer->SetData(&s_Data.LightDataBuffer, sizeof(LightData));
 
-			if (s_Data.EnvironmentMap)
-			{
-				s_Data.EnvironmentMap->Bind();
-				Renderer::GetBRDF_LUT()->Bind(TextureBinder::BRDF_LUT);
-			}
+		//	if (s_Data.EnvironmentMap)
+		//	{
+		//		s_Data.EnvironmentMap->Bind();
+		//		Renderer::GetBRDF_LUT()->Bind(TextureBinder::BRDF_LUT);
+		//	}
 
-			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
-			s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
-			s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
+		//	//s_Data.ShadowMap->BindDepthAttachment(TextureBinder::SHADOW_MAP);
+		//	//s_Data.ShadowMap->BindDepthAttachment(TextureBinder::PCF_SAMPLER);
+		//	s_Data.PCF_Sampler->Bind(TextureBinder::PCF_SAMPLER);
 
-			RenderGeometry("PBR", true);
+		//	RenderGeometry("PBR", true);
 
-			s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
+		//	s_Data.PCF_Sampler->UnBind(TextureBinder::PCF_SAMPLER);
 
-			if (s_Data.EnvironmentMap)
-			{
-				s_Data.CameraDataBuffer.ProjectionMatrix;
-				s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
+		//	if (s_Data.EnvironmentMap)
+		//	{
+		//		s_Data.CameraDataBuffer.ProjectionMatrix;
+		//		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraDataBuffer, sizeof(CameraData));
 
-				Renderer::BindShader("Skybox");
-				Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
-			}
-		}
-		Renderer::EndRenderPass();
+		//		Renderer::BindShader("Skybox");
+		//		Renderer::DrawTriangles(Renderer::GetCubeVertexBuffer());
+		//	}
+		//}
+		//Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::BloomPass()
 	{
-		if (!s_Data.Settings.BloomSettings.EnableBloom)
-			return;
+		//if (!s_Data.Settings.BloomSettings.EnableBloom)
+		//	return;
 
-		const FramebufferCreateInfo& hdrfbInfo = s_Data.HDRFramebuffer->GetCreateInfo();
+		//const FramebufferCreateInfo& hdrfbInfo = s_Data.HDRFramebuffer->GetCreateInfo();
 
-		uint32 mipLevels = 1;
-		Vector2u mipSize = { hdrfbInfo.Width / 2, hdrfbInfo.Height / 2 };
+		//uint32 mipLevels = 1;
+		//Vector2u mipSize = { hdrfbInfo.Width / 2, hdrfbInfo.Height / 2 };
 
-		// Compute mip levels
-		{
-			const uint32 maxIterations = 16;
-			const uint32 downSampleLimit = 10;
+		//// Compute mip levels
+		//{
+		//	const uint32 maxIterations = 16;
+		//	const uint32 downSampleLimit = 10;
 
-			uint32 width = hdrfbInfo.Width;
-			uint32 height = hdrfbInfo.Height;
+		//	uint32 width = hdrfbInfo.Width;
+		//	uint32 height = hdrfbInfo.Height;
 
-			for (uint8 i = 0; i < maxIterations; ++i)
-			{
-				width = width / 2;
-				height = height / 2;
+		//	for (uint8 i = 0; i < maxIterations; ++i)
+		//	{
+		//		width = width / 2;
+		//		height = height / 2;
 
-				if (width < downSampleLimit || height < downSampleLimit) 
-					break;
+		//		if (width < downSampleLimit || height < downSampleLimit) 
+		//			break;
 
-				++mipLevels;
-			}
+		//		++mipLevels;
+		//	}
 
-			mipLevels += 1;
-		}
+		//	mipLevels += 1;
+		//}
 
-		ComputePass computePass;
-		computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | FRAMEBUFFER_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
-		computePass.Name = "Bloom";
+		//ComputePass computePass;
+		//computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | FRAMEBUFFER_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
+		//computePass.Name = "Bloom";
 
-		Renderer::BeginComputePass(computePass);
-		// Downsample
-		{
-			Renderer::BindShader("BloomDownsample");
-			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+		//Renderer::BeginComputePass(computePass);
+		//// Downsample
+		//{
+		//	Renderer::BindShader("BloomDownsample");
+		//	s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
 
-			for (uint8 i = 0; i < mipLevels - 1; ++i)
-			{
-				s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
-				s_Data.BloomDataBuffer.MipLevel = i;
-				s_Data.BloomDataBuffer.EnableThreshold = i == 0;
+		//	for (uint8 i = 0; i < mipLevels - 1; ++i)
+		//	{
+		//		s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+		//		s_Data.BloomDataBuffer.MipLevel = i;
+		//		s_Data.BloomDataBuffer.EnableThreshold = i == 0;
 
-				s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i + 1);
-				s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
+		//		//s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i + 1);
+		//		s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
 
-				Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
-				mipSize = mipSize / 2u;
-			}
-		}
+		//		Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+		//		mipSize = mipSize / 2u;
+		//	}
+		//}
 
-		// Upsample
-		{
-			Renderer::BindShader("BloomUpsample");
-			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+		//// Upsample
+		//{
+		//	Renderer::BindShader("BloomUpsample");
+		//	s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
 
-			if (s_Data.Settings.BloomSettings.DirtTexture)
-				s_Data.Settings.BloomSettings.DirtTexture->Bind(2);
+		//	if (s_Data.Settings.BloomSettings.DirtTexture)
+		//		s_Data.Settings.BloomSettings.DirtTexture->Bind(2);
 
-			for (uint8 i = mipLevels - 1; i >= 1; --i)
-			{
-				mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Width) / Math::Pow<float>(2.f, i - 1)));
-				mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Height) / Math::Pow<float>(2.f, i - 1)));
+		//	for (uint8 i = mipLevels - 1; i >= 1; --i)
+		//	{
+		//		mipSize.x = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Width) / Math::Pow<float>(2.f, i - 1)));
+		//		mipSize.y = Math::Max(1.f, Math::Floor(float(hdrfbInfo.Height) / Math::Pow<float>(2.f, i - 1)));
 
-				s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
-				s_Data.BloomDataBuffer.MipLevel = i;
+		//		s_Data.BloomDataBuffer.TexelSize = Vector2(1.f, 1.f) / Vector2(mipSize);
+		//		s_Data.BloomDataBuffer.MipLevel = i;
 
-				s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i - 1);
-				s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
+		//		s_Data.HDRFramebuffer->BindColorAttachmentAsImage(0, 1, i - 1);
+		//		s_Data.BloomConstantBuffer->SetData(&s_Data.BloomDataBuffer, sizeof(s_Data.BloomDataBuffer));
 
-				Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
-			}
-		}
-		Renderer::EndComputePass();
+		//		Renderer::Dispatch(mipSize.x, mipSize.y, 1, { 8, 8, 1 });
+		//	}
+		//}
+		//Renderer::EndComputePass();
 	}
 
 	void SceneRenderer::SceneCompositePass()
 	{
-		RenderPass renderPass;
-		renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
-		renderPass.ClearBit = CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
-		renderPass.Name = "SceneComposite";
+		//RenderPass renderPass;
+		//renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
+		//renderPass.ClearBit = CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
+		//renderPass.Name = "SceneComposite";
 
-		Renderer::BeginRenderPass(renderPass);
-		{
-			Renderer::BindShader("SceneComposite");
+		//Renderer::BeginRenderPass(renderPass);
+		//{
+		//	Renderer::BindShader("SceneComposite");
 
-			s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
-			s_Data.HDRFramebuffer->BindDepthAttachment(1);
+		//	s_Data.HDRFramebuffer->BindColorAttachment(0, 0);
+		//	s_Data.HDRFramebuffer->BindDepthAttachment(1);
 
-			Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
-		}
-		Renderer::EndRenderPass();
+		//	Renderer::DrawTriangles(Renderer::GetQuadVertexBuffer());
+		//}
+		//Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::DebugViewPass()
 	{
-		if (s_Data.Settings.DebugView == DebugView::NONE)
-			return;
+		//if (s_Data.Settings.DebugView == DebugView::NONE)
+		//	return;
 
-		RenderPass renderPass;
-		renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
-		renderPass.ClearBit = CLEAR_NONE_BIT;
-		renderPass.Name = "DebugView";
-		
-		Renderer::BeginRenderPass(renderPass);
-		{
-			if (s_Data.Settings.DebugView == DebugView::WIREFRAME)
-				RenderGeometry("Debug_Wireframe", false);
+		//RenderPass renderPass;
+		//renderPass.TargetFramebuffer = s_Data.FinalFramebuffer;
+		//renderPass.ClearBit = CLEAR_NONE_BIT;
+		//renderPass.Name = "DebugView";
+		//
+		//Renderer::BeginRenderPass(renderPass);
+		//{
+		//	if (s_Data.Settings.DebugView == DebugView::WIREFRAME)
+		//		RenderGeometry("Debug_Wireframe", false);
 
-			else if (s_Data.Settings.DebugView == DebugView::SHADOW_CASCADES)
-				RenderGeometry("Debug_ShadowCascades", false);
-		}
-		Renderer::EndRenderPass();
+		//	else if (s_Data.Settings.DebugView == DebugView::SHADOW_CASCADES)
+		//		RenderGeometry("Debug_ShadowCascades", false);
+		//}
+		//Renderer::EndRenderPass();
 	}
 
 	void SceneRenderer::ComputeCascadeSplits()
@@ -665,95 +665,85 @@ namespace Athena
 
 	void SceneRenderer::PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, EnvironmentMap* envMap)
 	{
-		ComputePass computePass;
-		computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
-		computePass.Name = "PreProcessEnvironmentMap";
+		//ComputePass computePass;
+		//computePass.BarrierBit = SHADER_IMAGE_BARRIER_BIT | BUFFER_UPDATE_BARRIER_BIT;
+		//computePass.Name = "PreProcessEnvironmentMap";
 
-		Renderer::BeginComputePass(computePass);
-		// Convert EquirectangularHDRMap to Cubemap
-		Ref<TextureCube> skybox;
-		{
-			uint32 width = envMap->m_Resolution;
-			uint32 height = envMap->m_Resolution;
+		//Renderer::BeginComputePass(computePass);
+		//// Convert EquirectangularHDRMap to Cubemap
+		//Ref<TextureCube> skybox;
+		//{
+		//	uint32 width = envMap->m_Resolution;
+		//	uint32 height = envMap->m_Resolution;
 
-			TextureSamplerCreateInfo samplerInfo;
-			samplerInfo.MinFilter = TextureFilter::LINEAR;
-			samplerInfo.MagFilter = TextureFilter::LINEAR;
-			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		//	TextureSamplerCreateInfo samplerInfo;
+		//	samplerInfo.MinFilter = TextureFilter::LINEAR;
+		//	samplerInfo.MagFilter = TextureFilter::LINEAR;
+		//	samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			skybox = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
+		//	skybox = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
 
-			equirectangularHDRMap->Bind();
-			skybox->BindAsImage(1);
+		//	equirectangularHDRMap->Bind();
+		//	skybox->BindAsImage(1);
 
-			Renderer::BindShader("EquirectangularToCubemap");
-			Renderer::Dispatch(width, height, 6);
+		//	Renderer::BindShader("EquirectangularToCubemap");
+		//	Renderer::Dispatch(width, height, 6);
 
-			skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
-			skybox->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
-		}
+		//	skybox->SetFilters(TextureFilter::LINEAR_MIPMAP_LINEAR, TextureFilter::LINEAR);
+		//	skybox->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
+		//}
 
-		// Compute Irradiance Map
-		{
-			uint32 width = envMap->m_IrradianceResolution;
-			uint32 height = envMap->m_IrradianceResolution;
+		//// Compute Irradiance Map
+		//{
+		//	uint32 width = envMap->m_IrradianceResolution;
+		//	uint32 height = envMap->m_IrradianceResolution;
 
-			TextureSamplerCreateInfo samplerInfo;
-			samplerInfo.MinFilter = TextureFilter::LINEAR;
-			samplerInfo.MagFilter = TextureFilter::LINEAR;
-			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		//	TextureSamplerCreateInfo samplerInfo;
+		//	samplerInfo.MinFilter = TextureFilter::LINEAR;
+		//	samplerInfo.MagFilter = TextureFilter::LINEAR;
+		//	samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			envMap->m_IrradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
+		//	envMap->m_IrradianceMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
 
-			skybox->Bind();
-			envMap->m_IrradianceMap->BindAsImage(1);
+		//	skybox->Bind();
+		//	envMap->m_IrradianceMap->BindAsImage(1);
 
-			Renderer::BindShader("IrradianceMapConvolution");
-			Renderer::Dispatch(width, height, 6);
-		}
+		//	Renderer::BindShader("IrradianceMapConvolution");
+		//	Renderer::Dispatch(width, height, 6);
+		//}
 
-		// Compute Prefiltered Skybox Map
-		{
-			uint32 width = envMap->m_Resolution;
-			uint32 height = envMap->m_Resolution;
-		
-			TextureSamplerCreateInfo samplerInfo;
-			samplerInfo.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
-			samplerInfo.MagFilter = TextureFilter::LINEAR;
-			samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
-		
-			envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
-			envMap->m_PrefilteredMap->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
-		
-			Renderer::BindShader("EnvironmentMipFilter");
-			skybox->Bind();
-		
-			for (uint32 mip = 0; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
-			{
-				envMap->m_PrefilteredMap->BindAsImage(1, mip);
-		
-				uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
-				uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
-		
-				float roughness = (float)mip / (float)(ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
-				s_Data.EnvMapDataBuffer.LOD = roughness;
-				s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
-		
-				Renderer::Dispatch(mipWidth, mipHeight, 6);
-			}
-		}
+		//// Compute Prefiltered Skybox Map
+		//{
+		//	uint32 width = envMap->m_Resolution;
+		//	uint32 height = envMap->m_Resolution;
+		//
+		//	TextureSamplerCreateInfo samplerInfo;
+		//	samplerInfo.MinFilter = TextureFilter::LINEAR_MIPMAP_LINEAR;
+		//	samplerInfo.MagFilter = TextureFilter::LINEAR;
+		//	samplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		//
+		//	envMap->m_PrefilteredMap = TextureCube::Create(TextureFormat::R11F_G11F_B10F, width, height, samplerInfo);
+		//	envMap->m_PrefilteredMap->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
+		//
+		//	Renderer::BindShader("EnvironmentMipFilter");
+		//	skybox->Bind();
+		//
+		//	for (uint32 mip = 0; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
+		//	{
+		//		envMap->m_PrefilteredMap->BindAsImage(1, mip);
+		//
+		//		uint32 mipWidth = width * Math::Pow(0.5f, (float)mip);
+		//		uint32 mipHeight = height * Math::Pow(0.5f, (float)mip);
+		//
+		//		float roughness = (float)mip / (float)(ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
+		//		s_Data.EnvMapDataBuffer.LOD = roughness;
+		//		s_Data.EnvMapConstantBuffer->SetData(&s_Data.EnvMapDataBuffer, sizeof(EnvironmentMapData));
+		//
+		//		Renderer::Dispatch(mipWidth, mipHeight, 6);
+		//	}
+		//}
 
-		Renderer::EndComputePass();
-	}
-
-	Ref<Framebuffer> SceneRenderer::GetEntityIDFramebuffer()
-	{
-		return s_Data.EntityIDFramebuffer;
-	}
-
-	Ref<Framebuffer> SceneRenderer::GetFinalFramebuffer()
-	{
-		return s_Data.FinalFramebuffer;
+		//Renderer::EndComputePass();
 	}
 
 	SceneRendererSettings& SceneRenderer::GetSettings()

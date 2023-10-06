@@ -2,36 +2,51 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/RendererAPI.h"
+#include "Athena/Platform/Vulkan/VulkanDevice.h"
 
 #include <vulkan/vulkan.h>
 
 
 namespace Athena
 {
-	class VulkanRenderer
+	struct FrameSyncData
+	{
+		VkSemaphore ImageAcquiredSemaphore;
+		VkSemaphore RenderCompleteSemaphore;
+		VkFence RenderCompleteFence;
+	};
+
+
+	class VulkanContext
 	{
 	public:
-		virtual void Init() = 0;
+		friend class VulkanRenderer;
 
+	public:
 		static VkInstance GetInstance() { return s_Instance; }
-
-
-		virtual void BindPipeline(const Pipeline& pipeline) {};
-
-		virtual void BeginRenderPass(const RenderPass& pass) {};
-		virtual void EndRenderPass() = 0;
-
-		virtual void BeginComputePass(const ComputePass& pass) {};
-		virtual void EndComputePass() {};
-
-		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0) {};
-		virtual void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0) {};
-
-		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize) {};
-
-
+		static VkAllocationCallbacks* GetAllocator() { return s_Allocator; }
+		static Ref<VulkanDevice> GetCurrentDevice() { return s_CurrentDevice; }
+		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_FrameSyncData[frameIndex]; }
+		static VkCommandPool GetCommandPool() { return s_CommandPool; }
 
 	private:
 		static VkInstance s_Instance;
+		static VkAllocationCallbacks* s_Allocator;
+		static Ref<VulkanDevice> s_CurrentDevice;
+		static std::vector<FrameSyncData> s_FrameSyncData;
+		static VkCommandPool s_CommandPool;
+	};
+
+
+	class VulkanRenderer: public RendererAPI
+	{
+	public:
+		virtual void Init() override;
+		virtual void Shutdown() override;
+
+		virtual void Submit(const Ref<CommandBuffer>& cmdBuff) override;
+
+	private:
+		VkDebugReportCallbackEXT m_DebugReport;
 	};
 }

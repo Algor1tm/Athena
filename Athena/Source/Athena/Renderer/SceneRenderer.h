@@ -86,9 +86,6 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
-		static Ref<Framebuffer> GetEntityIDFramebuffer();
-		static Ref<Framebuffer> GetFinalFramebuffer();
-
 		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		static void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 

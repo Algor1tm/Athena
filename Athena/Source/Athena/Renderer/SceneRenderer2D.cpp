@@ -191,12 +191,12 @@ namespace Athena
 
 		if (!s_Data.DrawEntityID)
 		{
-			RenderPass renderPass;
-			renderPass.TargetFramebuffer = SceneRenderer::GetFinalFramebuffer();
-			renderPass.ClearBit = CLEAR_NONE_BIT;
-			renderPass.Name = "2D Pass";
+			//RenderPass renderPass;
+			//renderPass.TargetFramebuffer = SceneRenderer::GetFinalFramebuffer();
+			//renderPass.ClearBit = CLEAR_NONE_BIT;
+			//renderPass.Name = "2D Pass";
 
-			Renderer::BeginRenderPass(renderPass);
+			//Renderer::BeginRenderPass(renderPass);
 		}
 
 		StartBatch();
@@ -211,7 +211,7 @@ namespace Athena
 		else
 		{
 			Flush();
-			Renderer::EndRenderPass();
+			//Renderer::EndRenderPass();
 		}
 	}
 
@@ -229,7 +229,7 @@ namespace Athena
 				s_Data.TextureSlots[i]->Bind(i);
 
 			Renderer::BindShader("Renderer2D_Quad");
-			Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
+			//Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
 		}
 
 		if (s_Data.CircleIndexCount)
@@ -238,7 +238,7 @@ namespace Athena
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
 
 			Renderer::BindShader("Renderer2D_Circle");
-			Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
+			//Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
 		}
 
 		if (s_Data.LineVertexCount)
@@ -247,7 +247,7 @@ namespace Athena
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
 			Renderer::BindShader("Renderer2D_Line");
-			Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
+			//Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
 		}
 	}
 
@@ -260,7 +260,7 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.QuadVertexBufferPointer - (byte*)s_Data.QuadVertexBufferBase;
 			s_Data.QuadVertexBuffer->SetData(s_Data.QuadVertexBufferBase, (uint32)dataSize);
 
-			Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
+			//Renderer::DrawTriangles(s_Data.QuadVertexBuffer, s_Data.QuadIndexCount);
 		}
 
 		if (s_Data.CircleIndexCount)
@@ -268,7 +268,7 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.CircleVertexBufferPointer - (byte*)s_Data.CircleVertexBufferBase;
 			s_Data.CircleVertexBuffer->SetData(s_Data.CircleVertexBufferBase, (uint32)dataSize);
 
-			Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
+			//Renderer::DrawTriangles(s_Data.CircleVertexBuffer, s_Data.CircleIndexCount);
 		}
 
 		if (s_Data.LineVertexCount)
@@ -276,7 +276,7 @@ namespace Athena
 			uint64 dataSize = (byte*)s_Data.LineVertexBufferPointer - (byte*)s_Data.LineVertexBufferBase;
 			s_Data.LineVertexBuffer->SetData(s_Data.LineVertexBufferBase, (uint32)dataSize);
 
-			Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
+			//Renderer::DrawLines(s_Data.LineVertexBuffer, s_Data.LineVertexCount);
 		}
 	}
 

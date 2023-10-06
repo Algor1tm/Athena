@@ -3,8 +3,6 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Platform/OpenGL/GLImGuiLayerImpl.h"
-
 #include "Athena/Renderer/Renderer.h"
 
 
@@ -48,12 +46,8 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			imguiLayer->m_ImGuiImpl = Scope<GLImGuiLayerImpl>::Create(); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported"); break;
-		default:
-			ATN_CORE_ASSERT(false, "Unknown RendererAPI!"); break;
+		case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = nullptr; break;
+		case Renderer::API::None: imguiLayer->m_ImGuiImpl = nullptr; break;
 		}
 
 		return imguiLayer;

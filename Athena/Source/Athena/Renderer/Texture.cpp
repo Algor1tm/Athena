@@ -2,10 +2,6 @@
 
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Platform/OpenGL/GLTexture2D.h"
-#include "Athena/Platform/OpenGL/GlTextureCube.h"
-#include "Athena/Platform/OpenGL/GLTextureSampler.h"
-
 #include "Athena/Renderer/Renderer.h"
 
 
@@ -15,13 +11,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTexture2D>::Create(path, sRGB, samplerInfo); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -29,13 +22,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTexture2D>::Create(data, width, height, sRGB, samplerInfo); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -43,13 +33,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTexture2D>::Create(format, width, height, samplerInfo); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -91,13 +78,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTextureCube>::Create(faces, sRGB, samplerInfo); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -105,13 +89,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTextureCube>::Create(format, width, height, samplerInfo); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -119,13 +100,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLTextureSampler>::Create(info); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 }

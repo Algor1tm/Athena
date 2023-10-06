@@ -44,6 +44,12 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 
 	//SceneRenderer::EndFrame();
 	//SceneRenderer::GetFinalFramebuffer()->BlitToScreen();
+
+	Renderer::BeginFrame();
+
+	Renderer::Render();
+
+	Renderer::EndFrame();
 }
 
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)

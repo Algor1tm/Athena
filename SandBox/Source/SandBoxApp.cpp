@@ -34,9 +34,9 @@ namespace Athena
 		appinfo.AppConfig.WorkingDirectory = "../Athena-Editor";
 		appinfo.AppConfig.EngineResources = "../Athena/EngineResources";
 
-		appinfo.RendererConfig.API = Renderer::API::OpenGL;
+		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 
-		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsFolder = ""; //"Assets/Scripts"
 
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;

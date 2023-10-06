@@ -2,9 +2,8 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/Framebuffer.h"
 #include "Athena/Renderer/GPUBuffers.h"
-#include "Athena/Renderer/RendererAPI.h"
+#include "Athena/Renderer/Texture.h"
 
 
 namespace Athena
@@ -81,7 +80,7 @@ namespace Athena
 		enum API
 		{
 			None = 0,
-			OpenGL = 1
+			Vulkan = 1
 		};
 
 	public:
@@ -89,25 +88,21 @@ namespace Athena
 		static void Shutdown();
 
 		static Renderer::API GetAPI();
-		
+
+		static uint32 FramesInFlight();
+		static uint32 CurrentFrameIndex();
+
+		static void BeginFrame();
+		static void EndFrame();
+
+		// Temporary
+		static void Render();
+
 		static void BindShader(std::string_view name);
 		static Ref<ShaderLibrary> GetShaderLibrary();
 		static const String& GetGlobalShaderMacroses();
 
 		static void OnWindowResized(uint32 width, uint32 height);
-
-		static void BindPipeline(const Pipeline& pipeline);
-
-		static void BeginRenderPass(const RenderPass& pass) ;
-		static void EndRenderPass();
-
-		static void BeginComputePass(const ComputePass& pass);
-		static void EndComputePass();
-
-		static void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0);
-		static void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0);
-
-		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3i workGroupSize = { 8, 4, 1 });
 
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();
@@ -135,6 +130,6 @@ namespace Athena
 
 	struct RendererConfig
 	{
-		Renderer::API API = Renderer::API::OpenGL;
+		Renderer::API API = Renderer::API::Vulkan;
 	};
 }

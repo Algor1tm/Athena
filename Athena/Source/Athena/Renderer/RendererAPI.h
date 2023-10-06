@@ -4,7 +4,8 @@
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/GPUBuffers.h"
-#include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/CommandBuffer.h"
 
 
 namespace Athena
@@ -29,73 +30,16 @@ namespace Athena
 		NONE, ONE_MINUS_SRC_ALPHA, 
 	};
 
-	struct Pipeline
-	{
-		CullFace CullFace;
-		CullDirection CullDirection;
-		DepthFunc DepthFunc;
-		BlendFunc BlendFunc;
-	};
-
-	enum ClearBit
-	{
-		CLEAR_NONE_BIT	  = BIT(0),
-		CLEAR_COLOR_BIT   = BIT(1),
-		CLEAR_DEPTH_BIT   = BIT(2),
-		CLEAR_STENCIL_BIT = BIT(3)
-	};
-
-	struct RenderPass
-	{
-		Ref<Framebuffer> TargetFramebuffer;
-		uint32 ClearBit = CLEAR_NONE_BIT;
-		LinearColor ClearColor = LinearColor::Black;
-		String Name;
-	};
-
-	enum BarrierBit
-	{
-		BARRIER_BIT_NONE = BIT(0),
-		BUFFER_UPDATE_BARRIER_BIT = BIT(1),
-		FRAMEBUFFER_BARRIER_BIT = BIT(2),
-		SHADER_IMAGE_BARRIER_BIT = BIT(3),
-		ALL_BARRIERS = BIT(4)
-	};
-
-	struct ComputePass
-	{
-		uint32 BarrierBit = ALL_BARRIERS;
-		String Name;
-	};
 
 	class ATHENA_API RendererAPI
 	{
 	public:
+		static Ref<RendererAPI> Create(Renderer::API api);
 		virtual ~RendererAPI() = default;
 
 		virtual void Init() = 0;
+		virtual void Shutdown() = 0;
 
-		virtual void BindPipeline(const Pipeline& pipeline) = 0;
-
-		virtual void BeginRenderPass(const RenderPass& pass) = 0;
-		virtual void EndRenderPass() = 0;
-
-		virtual void BeginComputePass(const ComputePass& pass) = 0;
-		virtual void EndComputePass() = 0;
-
-		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0) = 0;
-		virtual void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0) = 0;
-
-		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize) = 0;
-	};
-
-	class ATHENA_API RendererObject
-	{
-	public:
-		template <typename T>
-		Ref<T> As() const
-		{
-			return std::static_pointer_cast<T>(this);
-		}
+		virtual void Submit(const Ref<CommandBuffer>& cmdBuf) = 0;
 	};
 }

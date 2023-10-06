@@ -1,6 +1,5 @@
 #include "Shader.h"
 
-#include "Athena/Platform/OpenGl/GLShader.h"
 #include "Renderer.h"
 
 #include <format>
@@ -22,33 +21,23 @@ namespace Athena
 
 	Ref<Shader> Shader::Create(const FilePath& path)
 	{
-		FilePath stem = path;
-
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLShader>::Create(stem.concat(L".glsl")); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 	
 	Ref<Shader> Shader::Create(const FilePath& path, const String& name)
 	{
-		FilePath stem = path;
-
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLShader>::Create(stem.concat(L".glsl"), name); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
@@ -56,13 +45,10 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLShader>::Create(name, vertexSrc, fragmentSrc); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 	
@@ -95,17 +81,12 @@ namespace Athena
 
 	Ref<IncludeShader> IncludeShader::Create(const FilePath& path)
 	{
-		FilePath stem = path;
-
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return Ref<GLIncludeShader>::Create(stem.concat(L".glsl")); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 

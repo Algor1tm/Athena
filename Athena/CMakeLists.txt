@@ -95,7 +95,6 @@ target_include_directories(Athena PRIVATE
 
 
 AddLibrary("Box2D")
-AddLibrary(glad)
 AddLibrary(GLFW)
 AddLibrary(ImGui)
 AddLibrary(spdlog)

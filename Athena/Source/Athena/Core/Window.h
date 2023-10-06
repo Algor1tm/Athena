@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-
 #include "Athena/Input/Event.h"
-
 #include "Athena/Math/Vector.h"
+#include "Athena/Renderer/SwapChain.h"
 
 
 namespace Athena
@@ -43,8 +42,10 @@ namespace Athena
 		
 		void OnUpdate();
 
-		inline uint32 GetWidth() const { return m_Data.Width; }
-		inline uint32 GetHeight() const { return m_Data.Height; }
+		uint32 GetWidth() const { return m_Data.Width; }
+		uint32 GetHeight() const { return m_Data.Height; }
+
+		Ref<SwapChain> GetSwapChain() const { return m_SwapChain; }
 
 		inline void SetEventCallback(const WindowEventCallback& callback)
 		{
@@ -59,17 +60,15 @@ namespace Athena
 		void SetVSync(bool enabled);
 		bool IsVSync() const { return m_Data.VSync; }
 
-		inline void* GetNativeWindow() { return m_WindowHandle; }
+		void* GetNativeWindow() { return m_WindowHandle; }
 
 		void SetIcon(const FilePath& path);
 
 		void SetWindowMode(WindowMode mode);
-		inline WindowMode GetWindowMode() const { return m_Data.Mode; }
+		WindowMode GetWindowMode() const { return m_Data.Mode; }
 
 		void HideCursor(bool hide);
 		void SetCursorPosition(Vector2 position);
-
-		const Ref<GraphicsContext>& GetGraphicsContext() const { return m_Context; }
 
 	public:
 		struct WindowData
@@ -88,7 +87,7 @@ namespace Athena
 	private:
 		void* m_WindowHandle = nullptr;
 		WindowData m_Data;
-		Ref<GraphicsContext> m_Context;
+		Ref<SwapChain> m_SwapChain;
 
 		static inline uint8 m_WindowCount = 0;
 	};

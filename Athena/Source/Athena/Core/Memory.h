@@ -160,7 +160,7 @@ namespace Athena
 			return m_Impl != nullptr;
 		}
 
-	private:
+	public:
 		Ref(const std::shared_ptr<T>& impl)
 			: m_Impl(impl)
 		{
@@ -305,7 +305,7 @@ namespace Athena
 			return m_Impl != nullptr;
 		}
 
-	private:
+	public:
 		Scope(std::unique_ptr<T>&& impl)
 			: m_Impl(std::move(impl))
 		{

@@ -95,7 +95,7 @@ namespace Athena
 
 		// Create synchronization primitives
 		{
-			VkDevice logicalDevice = VulkanContext::GetCurrentDevice()->GetLogicalDevice();
+			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 
 			VulkanContext::s_FrameSyncData.resize(Renderer::FramesInFlight());
 
@@ -119,7 +119,7 @@ namespace Athena
 
 		// Create CommandPool
 		{
-			Ref<VulkanDevice> device = VulkanContext::GetCurrentDevice();
+			Ref<VulkanDevice> device = VulkanContext::GetDevice();
 
 			VkCommandPoolCreateInfo commandPoolCI = {};
 			commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -173,11 +173,11 @@ namespace Athena
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
 
-		VK_CHECK(vkQueueSubmit(VulkanContext::GetCurrentDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
 	}
 
 	void VulkanRenderer::WaitDeviceIdle()
 	{
-		vkDeviceWaitIdle(VulkanContext::GetCurrentDevice()->GetLogicalDevice());
+		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());
 	}
 }

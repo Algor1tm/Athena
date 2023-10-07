@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.24)
 
 function(AddLibrary TARGET_NAME)
     add_subdirectory("${THIRD_PARTY_DIR}/${TARGET_NAME}")
@@ -103,7 +103,13 @@ AddLibrary(yaml-cpp)
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
 
 if (Vulkan_FOUND)
-	target_link_libraries(Athena PRIVATE Vulkan::Vulkan)
+	target_link_libraries(Athena PRIVATE Vulkan::Vulkan Vulkan::shaderc_combined)
+
+	# Vulkan::SPIRV-Tools does not link required libs, so do this instead
+	target_link_libraries(Athena PRIVATE
+		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-cored.lib>
+		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>)
+
 endif(Vulkan_FOUND)
 
 add_subdirectory("${THIRD_PARTY_DIR}/pybind11")
@@ -113,14 +119,5 @@ target_link_libraries(Athena PRIVATE pybind11::embed)
 # Windows specific code
 if(WIN32)
 	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
-
-	target_link_libraries(Athena PRIVATE opengl32.lib)
 	target_compile_definitions(Athena PUBLIC ATN_WINDOWS)
 endif(WIN32)
-
-# Linux specific code
-if(UNIX AND NOT APPLE)
-	set_property(TARGET Athena PROPERTY POSITION_INDEPENDENT_CODE ON)
-	target_link_libraries(Athena PRIVATE opengl32.lib)
-    target_compile_definitions(Athena PUBLIC ATN_LINUX)
-endif(UNIX AND NOT APPLE)

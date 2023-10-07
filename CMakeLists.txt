@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.24)
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
 set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
@@ -30,7 +30,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT "
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 # Find Vulkan
-find_package(Vulkan REQUIRED)
+find_package(Vulkan COMPONENTS shaderc_combined SPIRV-Tools REQUIRED)
 if(Vulkan_FOUND)
     set(VULKAN_SDK_PATH "$ENV{VULKAN_SDK}")
     message("-- Find VulkanSDK - ${VULKAN_SDK_PATH}")

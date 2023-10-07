@@ -25,7 +25,7 @@ namespace Athena
 	public:
 		static VkInstance GetInstance() { return s_Instance; }
 		static VkAllocationCallbacks* GetAllocator() { return s_Allocator; }
-		static Ref<VulkanDevice> GetCurrentDevice() { return s_CurrentDevice; }
+		static Ref<VulkanDevice> GetDevice() { return s_CurrentDevice; }
 		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_FrameSyncData[frameIndex]; }
 		static VkCommandPool GetCommandPool() { return s_CommandPool; }
 

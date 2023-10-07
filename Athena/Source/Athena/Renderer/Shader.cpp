@@ -1,6 +1,8 @@
 #include "Shader.h"
 
-#include "Renderer.h"
+#include "Athena/Renderer/Renderer.h"
+
+#include "Athena/Platform/Vulkan/VulkanShader.h"
 
 #include <format>
 
@@ -23,7 +25,7 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::Vulkan: return Ref<VulkanShader>::Create(path);
 		case Renderer::API::None: return nullptr;
 		}
 
@@ -34,24 +36,13 @@ namespace Athena
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::Vulkan: return Ref<VulkanShader>::Create(path, name);
 		case Renderer::API::None: return nullptr;
 		}
 
 		return nullptr;
 	}
 
-	Ref<Shader> Shader::Create(const String& name, const String& vertexSrc, const String& fragmentSrc)
-	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: return nullptr;
-		case Renderer::API::None: return nullptr;
-		}
-
-		return nullptr;
-	}
-	
 	std::unordered_map<ShaderType, String> Shader::PreProcess(const String& source)
 	{
 		std::unordered_map<ShaderType, String> shaderSources;
@@ -79,35 +70,11 @@ namespace Athena
 		return shaderSources;
 	}
 
-	Ref<IncludeShader> IncludeShader::Create(const FilePath& path)
-	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: return nullptr;
-		case Renderer::API::None: return nullptr;
-		}
-
-		return nullptr;
-	}
-
 
 	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
 	{
 		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
 		m_Shaders[name] = shader;
-	}
-
-	void ShaderLibrary::AddIncludeShader(const String& name, const Ref<IncludeShader>& shader)
-	{
-		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
-		m_IncludeShaders[name] = shader;
-	}
-
-	Ref<IncludeShader> ShaderLibrary::LoadIncludeShader(const String& name, const FilePath& path)
-	{
-		auto shader = IncludeShader::Create(path);
-		Add(name, shader);
-		return shader;
 	}
 
 	Ref<Shader> ShaderLibrary::Load(const String& name, const FilePath& path)
@@ -125,15 +92,11 @@ namespace Athena
 
 	bool ShaderLibrary::Exists(const String& name)
 	{
-		return (m_Shaders.find(name) != m_Shaders.end()) || 
-			(m_IncludeShaders.find(name) != m_IncludeShaders.end());
+		return (m_Shaders.find(name) != m_Shaders.end());
 	}
 
 	void ShaderLibrary::Reload()
 	{
-		for (const auto& [key, shader] : m_IncludeShaders)
-			shader->Reload();
-
 		for (const auto& [key, shader] : m_Shaders)
 			shader->Reload();
 	}

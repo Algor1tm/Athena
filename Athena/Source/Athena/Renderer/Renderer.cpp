@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/FileSystem.h"
 
 #include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Renderer/RendererAPI.h"
@@ -13,8 +14,11 @@ namespace Athena
 	{
 		Renderer::API API = Renderer::API::None;
 		uint32 MaxFramesInFlight = 3;
-		uint32 CurrentFrameIndex = 0;
 
+		FilePath ShaderPackDirectory;
+		FilePath ShaderCacheDirectory;
+
+		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
 		Ref<CommandBuffer> CommandQueue;
 		
@@ -40,6 +44,13 @@ namespace Athena
 
 		s_Data.API = config.API;
 		s_Data.MaxFramesInFlight = config.MaxFramesInFlight;
+
+		const FilePath& resourcesPath = Application::Get().GetEngineResourcesPath();
+		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
+		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/Shaders";
+
+		if (!FileSystem::Exists(s_Data.ShaderCacheDirectory))
+			FileSystem::CreateDirectory(s_Data.ShaderCacheDirectory);
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
@@ -94,10 +105,14 @@ namespace Athena
 		s_Data.RendererAPI->WaitDeviceIdle();
 	}
 
-	void Renderer::BindShader(std::string_view name)
+	const FilePath& Renderer::GetShaderPackDirectory()
 	{
-		GetShaderLibrary()->Get(name.data())->Bind();
-		s_Data.Stats.ShadersBinded++;
+		return s_Data.ShaderPackDirectory;
+	}
+
+	const FilePath& Renderer::GetShaderCacheDirectory()
+	{
+		return s_Data.ShaderCacheDirectory;
 	}
 
 	Ref<ShaderLibrary> Renderer::GetShaderLibrary()

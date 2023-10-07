@@ -17,7 +17,7 @@ namespace Athena
 		cmdBufAllocInfo.commandBufferCount = Renderer::FramesInFlight();
 
 		m_CommandBuffers.resize(Renderer::FramesInFlight());
-		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetCurrentDevice()->GetLogicalDevice(), &cmdBufAllocInfo, m_CommandBuffers.data()));
+		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetDevice()->GetLogicalDevice(), &cmdBufAllocInfo, m_CommandBuffers.data()));
 	}
 
 	VulkanCommandBuffer::~VulkanCommandBuffer()

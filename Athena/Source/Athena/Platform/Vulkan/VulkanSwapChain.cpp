@@ -15,8 +15,8 @@ namespace Athena
 	{
 		m_VSync = vsync;
 
-		VkPhysicalDevice physicalDevice = VulkanContext::GetCurrentDevice()->GetPhysicalDevice();
-		uint32 queueFamilyIndex = VulkanContext::GetCurrentDevice()->GetQueueFamily();
+		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
+		uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
 
 		// Create window surface
 		{
@@ -117,15 +117,15 @@ namespace Athena
 	void VulkanSwapChain::CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews)
 	{
 		for (uint32 i = 0; i < Renderer::FramesInFlight(); ++i)
-			vkDestroyImageView(VulkanContext::GetCurrentDevice()->GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
+			vkDestroyImageView(VulkanContext::GetDevice()->GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
 
-		vkDestroySwapchainKHR(VulkanContext::GetCurrentDevice()->GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
+		vkDestroySwapchainKHR(VulkanContext::GetDevice()->GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
 	}
 
 	void VulkanSwapChain::Recreate()
 	{
-		VkPhysicalDevice physicalDevice = VulkanContext::GetCurrentDevice()->GetPhysicalDevice();
-		VkDevice logicalDevice = VulkanContext::GetCurrentDevice()->GetLogicalDevice();
+		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
+		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		uint32 framesInFlight = Renderer::FramesInFlight();
 		VkSwapchainKHR oldSwapChain = m_VkSwapChain;
 
@@ -226,7 +226,7 @@ namespace Athena
 		// We save frame index, because when we get to presenting it will change
 		m_CurrentFrameIndex = Renderer::CurrentFrameIndex();
 
-		VkDevice logicalDevice = VulkanContext::GetCurrentDevice()->GetLogicalDevice();
+		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(m_CurrentFrameIndex);
 
 		vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
@@ -261,7 +261,7 @@ namespace Athena
 		presentInfo.pSwapchains = &m_VkSwapChain;
 		presentInfo.pImageIndices = &m_ImageIndex;
 
-		VkResult result = vkQueuePresentKHR(VulkanContext::GetCurrentDevice()->GetQueue(), &presentInfo);
+		VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{

@@ -23,9 +23,6 @@ void SandBoxLayer::OnAttach()
 
 	//m_Scene->OnRuntimeStart();
 
-	//const auto& window = Application::Get().GetWindow();
-	//m_Scene->OnViewportResize(window.GetWidth(), window.GetHeight());
-
 	//auto& settings = SceneRenderer::GetSettings();
 
 	//settings.BloomSettings.EnableBloom = false;

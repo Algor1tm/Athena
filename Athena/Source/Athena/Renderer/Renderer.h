@@ -102,7 +102,9 @@ namespace Athena
 		
 		static void WaitDeviceIdle();
 
-		static void BindShader(std::string_view name);
+		static const FilePath& GetShaderPackDirectory();
+		static const FilePath& GetShaderCacheDirectory();
+
 		static Ref<ShaderLibrary> GetShaderLibrary();
 		static const String& GetGlobalShaderMacroses();
 

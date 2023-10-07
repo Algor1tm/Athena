@@ -5,6 +5,7 @@
 
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/RenderList.h"
+#include "Athena/Renderer/Shader.h"
 
 // TEMPORARY
 #include "Athena/Core/Application.h"
@@ -12,9 +13,10 @@
 #include <vulkan/vulkan.h>
 
 
-
 namespace Athena
 {
+	static Ref<Shader> s_Shader;
+
 	Ref<SceneRenderer> SceneRenderer::Create()
 	{
 		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create();
@@ -26,10 +28,13 @@ namespace Athena
 	void SceneRenderer::Init()
 	{
 		m_Data = new SceneRendererData();
+
+		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.glsl");
 	}
 
 	void SceneRenderer::Shutdown()
 	{
+		s_Shader.Reset();
 		delete m_Data;
 	}
 

@@ -5,6 +5,7 @@
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Renderer/EditorCamera.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -53,9 +54,9 @@ namespace Athena
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 
-		void OnUpdateEditor(Time frameTime, const EditorCamera& camera); 
-		void OnUpdateRuntime(Time frameTime);
-		void OnUpdateSimulation(Time frameTime, const EditorCamera& camera);
+		void OnUpdateEditor(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera); 
+		void OnUpdateRuntime(Time frameTime, Ref<SceneRenderer> renderer);
+		void OnUpdateSimulation(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera);
 
 		void OnRuntimeStart();
 		void OnSimulationStart();
@@ -79,9 +80,7 @@ namespace Athena
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
 
-		void RenderEditorScene(const EditorCamera& camera);
-		void RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform);
-		void RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far);
+		void RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far);
 
 		TransformComponent GetWorldTransform(entt::entity entity);
 

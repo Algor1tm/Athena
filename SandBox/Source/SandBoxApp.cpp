@@ -35,6 +35,7 @@ namespace Athena
 		appinfo.AppConfig.EngineResources = "../Athena/EngineResources";
 
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
+		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
 		appinfo.ScriptConfig.ScriptsFolder = ""; //"Assets/Scripts"
 

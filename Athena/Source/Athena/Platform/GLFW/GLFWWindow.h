@@ -277,9 +277,7 @@ namespace Athena
 			}
 		}
 
-		window->m_SwapChain = SwapChain::Create(glfwWindow);
-
-		window->SetVSync(window->m_Data.VSync);
+		window->m_SwapChain = SwapChain::Create(glfwWindow, window->m_Data.VSync);
 
 		return window;
 	}
@@ -307,6 +305,7 @@ namespace Athena
 	void Window::SetVSync(bool enabled)
 	{
 		m_Data.VSync = enabled;
+		m_SwapChain->SetVSync(enabled);
 	}
 
 	void Window::HideCursor(bool hide)

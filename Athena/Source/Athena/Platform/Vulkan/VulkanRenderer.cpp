@@ -131,6 +131,7 @@ namespace Athena
 
 	void VulkanRenderer::Shutdown()
 	{
+		
 		VkDevice logicalDevice = VulkanContext::s_CurrentDevice->GetLogicalDevice();
 
 		vkDestroyCommandPool(logicalDevice, VulkanContext::s_CommandPool, VulkanContext::s_Allocator);
@@ -171,6 +172,12 @@ namespace Athena
 		submitInfo.pCommandBuffers = &buffer;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
+
 		VK_CHECK(vkQueueSubmit(VulkanContext::GetCurrentDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+	}
+
+	void VulkanRenderer::WaitDeviceIdle()
+	{
+		vkDeviceWaitIdle(VulkanContext::GetCurrentDevice()->GetLogicalDevice());
 	}
 }

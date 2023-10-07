@@ -44,6 +44,7 @@ namespace Athena
 		virtual void Init() override;
 		virtual void Shutdown() override;
 
+		virtual void WaitDeviceIdle() override;
 		virtual void Submit(const Ref<CommandBuffer>& cmdBuff) override;
 
 	private:

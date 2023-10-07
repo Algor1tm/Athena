@@ -37,7 +37,7 @@ namespace Athena
 
 		if (equirectangularMap->IsLoaded())
 		{
-			SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, this);
+			//SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, this);
 		}
 	}
 }

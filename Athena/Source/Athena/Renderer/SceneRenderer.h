@@ -70,39 +70,103 @@ namespace Athena
 		Antialising AntialisingMethod = Antialising::MSAA_2X;
 	};
 
+
+	struct CameraData
+	{
+		Matrix4 ViewMatrix;
+		Matrix4 ProjectionMatrix;
+		Matrix4 RotationViewMatrix;
+		Vector4 Position;
+		float NearClip;
+		float FarClip;
+	};
+
+	struct SceneData
+	{
+		float Exposure = 1.f;
+		float Gamma = 2.2f;
+	};
+
+	struct EnvironmentMapData
+	{
+		float LOD = 0.f;
+		float Intensity = 1.f;
+	};
+
+	struct EntityData
+	{
+		Matrix4 TransformMatrix;
+		int32 EntityID = -1;
+		bool IsAnimated = false;
+	};
+
+	struct LightData
+	{
+		DirectionalLight DirectionalLightBuffer[ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT];
+		uint32 DirectionalLightCount = 0;
+
+		PointLight PointLightBuffer[ShaderDef::MAX_POINT_LIGHT_COUNT];
+		uint32 PointLightCount = 0;
+	};
+
+	struct ShadowsData
+	{
+		struct CascadeSplitInfo
+		{
+			Vector2 LightFrustumPlanes;
+			float SplitDepth;
+			float __Padding;
+		};
+
+		Matrix4 LightViewProjMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+		Matrix4 LightViewMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+		CascadeSplitInfo CascadeSplits[ShaderDef::SHADOW_CASCADES_COUNT];
+		float MaxDistance = 200.f;
+		float FadeOut = 10.f;
+		float LightSize = 0.5f;
+		bool SoftShadows = true;
+	};
+
+	struct BloomData
+	{
+		float Intensity;
+		float Threshold;
+		float Knee;
+		float DirtIntensity;
+		Vector2 TexelSize;
+		bool EnableThreshold;
+		int32 MipLevel;
+	};
+
+	struct SceneRendererData
+	{
+		SceneRendererSettings Settings;
+		const uint32 ShadowMapResolution = 2048;
+	};
+
 	class ATHENA_API SceneRenderer
 	{
 	public:
-		static void Init();
-		static void Shutdown();
+		static Ref<SceneRenderer> Create();
 
-		static void OnWindowResized(uint32 width, uint32 height);
+		void RenderTest();
 
-		static void BeginScene(const CameraInfo& cameraInfo);
-		static void EndScene();
+		void Init();
+		void Shutdown();
 
-		static void FlushEntityIDs();
+		void OnWindowResized(uint32 width, uint32 height);
 
-		static void BeginFrame();
-		static void EndFrame();
+		void BeginScene(const CameraInfo& cameraInfo);
+		void EndScene();
 
-		static void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
-		static void SubmitLightEnvironment(const LightEnvironment& lightEnv);
+		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
-		static void PreProcessEnvironmentMap(const Ref<Texture2D>& equirectangularHDRMap, EnvironmentMap* envMap);
-
-		static SceneRendererSettings& GetSettings();
+		SceneRendererSettings& GetSettings();
 
 	private:
-		static void RenderGeometry(std::string_view shader, bool useMaterials);
 
-		static void ShadowMapPass();
-		static void GeometryPass();
-		static void BloomPass();
-		static void SceneCompositePass();
-		static void DebugViewPass();
-
-		static void ComputeCascadeSplits();
-		static void ComputeCascadeSpaceMatrices(const DirectionalLight& light);
+	private:
+		SceneRendererData* m_Data = nullptr;
 	};
 }

@@ -11,13 +11,21 @@ namespace Athena
 	class VulkanSwapChain : public SwapChain
 	{
 	public:
-		VulkanSwapChain(void* windowHandle);
+		VulkanSwapChain(void* windowHandle, bool vsync = false);
 		~VulkanSwapChain();
+
+		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews);
+
+		virtual void Recreate() override;
+		virtual void SetVSync(bool enabled) override;
 
 		virtual void AcquireImage() override;
 		virtual void Present() override;
 
 		virtual void* GetCurrentImageHandle() override;
+
+	private:
+		VkPresentModeKHR GetPresentMode();
 
 	private:
 		VkSurfaceKHR m_Surface;
@@ -28,5 +36,10 @@ namespace Athena
 
 		uint32 m_ImageIndex = 0;
 		uint32 m_CurrentFrameIndex = 0;
+
+		bool m_VSync = false;
+		VkPresentModeKHR m_SelectedPresentMode;
+		VkSurfaceFormatKHR m_SelectedFormat;
+		bool m_Dirty = false;
 	};
 }

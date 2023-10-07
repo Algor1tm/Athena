@@ -4,11 +4,7 @@
 
 #include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Renderer/RendererAPI.h"
-#include "Athena/Renderer/SceneRenderer.h"
-#include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/Shader.h"
-
-#include <vulkan/vulkan.h>
 
 
 namespace Athena
@@ -16,7 +12,7 @@ namespace Athena
 	struct RendererData
 	{
 		Renderer::API API = Renderer::API::None;
-		uint32 MaxFramesInFlight = 2;
+		uint32 MaxFramesInFlight = 3;
 		uint32 CurrentFrameIndex = 0;
 
 		Ref<RendererAPI> RendererAPI;
@@ -43,6 +39,7 @@ namespace Athena
 		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
 		s_Data.API = config.API;
+		s_Data.MaxFramesInFlight = config.MaxFramesInFlight;
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
@@ -53,11 +50,12 @@ namespace Athena
 	void Renderer::Shutdown()
 	{
 		s_Data.CommandQueue.Reset();
-
-		// Destroy SwapChain
-		Application::Get().GetWindow().GetSwapChain().Reset();
-
 		s_Data.RendererAPI->Shutdown();
+	}
+
+	Ref<CommandBuffer> Renderer::GetCommandQueue()
+	{
+		return s_Data.CommandQueue;
 	}
 
 	void Renderer::BeginFrame()
@@ -66,23 +64,6 @@ namespace Athena
 
 		swapChain->AcquireImage();
 		s_Data.CommandQueue->Begin();
-	}
-
-	void Renderer::Render()
-	{
-		// TMP
-		VkCommandBuffer cmdBuf = (VkCommandBuffer)s_Data.CommandQueue->GetCommandBuffer();
-		VkImage swapChainImageView = (VkImage)Application::Get().GetWindow().GetSwapChain()->GetCurrentImageHandle();
-
-		VkClearColorValue color = { 1, 1, 0, 1 };
-		VkImageSubresourceRange range;
-		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel = 0;
-		range.levelCount = 1;
-		range.baseArrayLayer = 0;
-		range.layerCount = 1;
-		
-		vkCmdClearColorImage(cmdBuf, swapChainImageView, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &color, 1, &range);
 	}
 
 	void Renderer::EndFrame()
@@ -108,6 +89,11 @@ namespace Athena
 		return s_Data.CurrentFrameIndex;
 	}
 
+	void Renderer::WaitDeviceIdle()
+	{
+		s_Data.RendererAPI->WaitDeviceIdle();
+	}
+
 	void Renderer::BindShader(std::string_view name)
 	{
 		GetShaderLibrary()->Get(name.data())->Bind();
@@ -126,7 +112,7 @@ namespace Athena
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)
 	{
-		SceneRenderer::OnWindowResized(width, height);
+		
 	}
 
 	const Renderer::Statistics& Renderer::GetStatistics()

@@ -8,8 +8,11 @@ namespace Athena
 	class ATHENA_API SwapChain
 	{
 	public:
-		static Ref<SwapChain> Create(void* windowHandle);
+		static Ref<SwapChain> Create(void* windowHandle, bool vsync = false);
 		virtual ~SwapChain() = default;
+
+		virtual void Recreate() = 0;
+		virtual void SetVSync(bool enabled) = 0;
 
 		virtual void AcquireImage() = 0;
 		virtual void Present() = 0;

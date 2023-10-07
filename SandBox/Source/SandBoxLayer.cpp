@@ -11,6 +11,8 @@ SandBoxLayer::SandBoxLayer(const FilePath& scenePath)
 
 void SandBoxLayer::OnAttach()
 {
+	m_SceneRenderer = SceneRenderer::Create();
+
 	//m_Scene = CreateRef<Scene>();
 
 	//SceneSerializer serializer(m_Scene);
@@ -33,21 +35,15 @@ void SandBoxLayer::OnAttach()
 
 void SandBoxLayer::OnDetach()
 {
-
+	m_SceneRenderer->Shutdown();
 }
 
 void SandBoxLayer::OnUpdate(Time frameTime)
 {
-	//SceneRenderer::BeginFrame();
-
-	//m_Scene->OnUpdateRuntime(frameTime);
-
-	//SceneRenderer::EndFrame();
-	//SceneRenderer::GetFinalFramebuffer()->BlitToScreen();
-
 	Renderer::BeginFrame();
 
-	Renderer::Render();
+	//m_Scene->OnUpdateRuntime(frameTime, m_SceneRenderer);
+	m_SceneRenderer->RenderTest();
 
 	Renderer::EndFrame();
 }
@@ -55,6 +51,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 {
 	//m_Scene->OnViewportResize(event.GetWidth(), event.GetHeight());
+	m_SceneRenderer->OnWindowResized(event.GetWidth(), event.GetHeight());
 
 	return false;
 }

@@ -52,8 +52,13 @@ namespace Athena
 
 	Application::~Application()
 	{
-		Renderer::Shutdown();
+		m_LayerStack.Clear();
+
+		// Destroy SwapChain before Renderer::Shutdown
+		m_Window.Reset();
+
 		ScriptEngine::Shutdown();
+		Renderer::Shutdown();
 	}
 
 	void Application::Run()
@@ -104,7 +109,9 @@ namespace Athena
 					m_ImGuiLayer->Begin();
 					{
 						for (Ref<Layer> layer : m_LayerStack)
+						{
 							layer->OnImGuiRender();
+						}
 					}
 					m_ImGuiLayer->End();
 

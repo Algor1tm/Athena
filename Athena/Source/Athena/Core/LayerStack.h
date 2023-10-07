@@ -23,6 +23,8 @@ namespace Athena
 		void PopLayer(Ref<Layer> layer);
 		void PopOverlay(Ref<Layer> overlay);
 
+		void Clear();
+
 		inline iterator		  begin()		{ return m_Layers.begin(); }
 		inline const_iterator begin() const { return m_Layers.begin(); }
 		inline iterator		  end()			{ return m_Layers.end();   }

@@ -8,10 +8,7 @@ namespace Athena
 {
 	LayerStack::~LayerStack()
 	{
-		for (Ref<Layer> layer : m_Layers)
-		{
-			layer->OnDetach();
-		}
+		Clear();
 	}
 
 
@@ -56,5 +53,15 @@ namespace Athena
 		{
 			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop overlay with name = {0}", overlay->GetName());
 		}
+	}
+
+	void LayerStack::Clear()
+	{
+		for (Ref<Layer> layer : m_Layers)
+		{
+			layer->OnDetach();
+		}
+
+		m_Layers.clear();
 	}
 }

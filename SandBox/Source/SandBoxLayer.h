@@ -19,6 +19,7 @@ private:
 	bool OnWindowResize(WindowResizeEvent& event);
 
 private:
+	Ref<SceneRenderer> m_SceneRenderer;
 	Ref<Scene> m_Scene;
 	FilePath m_ScenePath;
 };

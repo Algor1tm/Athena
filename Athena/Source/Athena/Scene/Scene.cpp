@@ -271,7 +271,7 @@ namespace Athena
 		return {};
 	}
 
-	void Scene::OnUpdateEditor(Time frameTime, const EditorCamera& camera)
+	void Scene::OnUpdateEditor(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
 	{
 		// Update Animations
 		auto view = m_Registry.view<StaticMeshComponent>();
@@ -284,10 +284,10 @@ namespace Athena
 			}
 		}
 
-		RenderEditorScene(camera);
+		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
-	void Scene::OnUpdateRuntime(Time frameTime)
+	void Scene::OnUpdateRuntime(Time frameTime, Ref<SceneRenderer> renderer)
 	{
 		// Update scripts
 		{
@@ -348,15 +348,20 @@ namespace Athena
 		{
 			if (mainCamera)
 			{
-				RenderRuntimeScene(*mainCamera, cameraTransform.AsMatrix());
+				Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
+				Matrix4 projectionMatrix = mainCamera->GetProjectionMatrix();
+				float near = mainCamera->GetNearClip();
+				float far = mainCamera->GetFarClip();
+
+				RenderScene(renderer, viewMatrix, projectionMatrix, near, far);
 			}
 		}
 	}
 
-	void Scene::OnUpdateSimulation(Time frameTime, const EditorCamera& camera)
+	void Scene::OnUpdateSimulation(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
 	{
 		UpdatePhysics(frameTime);
-		RenderEditorScene(camera);
+		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
 	void Scene::OnRuntimeStart()
@@ -508,68 +513,10 @@ namespace Athena
 		}
 	}
 
-	void Scene::RenderEditorScene(const EditorCamera& camera)
+
+	void Scene::RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
-		//Matrix4 viewMatrix = camera.GetViewMatrix();
-		//Matrix4 projectionMatrix = camera.GetProjectionMatrix();
-		//float near = camera.GetNearClip();
-		//float far = camera.GetFarClip();
-
-		//RenderScene(viewMatrix, projectionMatrix, near, far);
-
-		//// Render Entity IDs
-		//RenderPass renderPass;
-		//renderPass.TargetFramebuffer = SceneRenderer::GetEntityIDFramebuffer();
-		//renderPass.ClearBit = CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
-		//renderPass.Name = "EntityIDs";
-
-		//Renderer::BeginRenderPass(renderPass);
-		//{
-		//	SceneRenderer::GetEntityIDFramebuffer()->ClearAttachment(0, -1);
-
-		//	SceneRenderer::FlushEntityIDs();
-
-		//	SceneRenderer2D::EntityIDEnable(true);
-		//	SceneRenderer2D::BeginScene(viewMatrix, projectionMatrix);
-
-		//	auto quads = GetAllEntitiesWith<SpriteComponent>();
-		//	for (auto entity : quads)
-		//	{
-		//		auto transform = GetWorldTransform(entity);
-		//		const auto& sprite = quads.get<SpriteComponent>(entity);
-
-		//		SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
-		//	}
-
-		//	auto circles = GetAllEntitiesWith<CircleComponent>();
-		//	for (auto entity : circles)
-		//	{
-		//		auto transform = GetWorldTransform(entity);
-		//		const auto& circle = circles.get<CircleComponent>(entity);
-
-		//		SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
-		//	}
-
-		//	SceneRenderer2D::EndScene();
-		//	SceneRenderer2D::EntityIDEnable(false);
-
-		//}
-		//Renderer::EndRenderPass();
-	}
-
-	void Scene::RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform)
-	{
-		//Matrix4 viewMatrix = Math::AffineInverse(transform);
-		//Matrix4 projectionMatrix = camera.GetProjectionMatrix();
-		//float near = camera.GetNearClip();
-		//float far = camera.GetFarClip();
-
-		//RenderScene(viewMatrix, projectionMatrix, near, far);
-	}
-
-	void Scene::RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far)
-	{
-		SceneRenderer::BeginScene({ view, proj, near, far });
+		renderer->BeginScene({ view, proj, near, far });
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
 		for (auto entity : staticMeshes)
@@ -586,9 +533,9 @@ namespace Athena
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
 					if(animator != nullptr && animator->IsPlaying())
-						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
+						renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
 					else
-						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
+						renderer->Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
 				}
 			}
 		}
@@ -631,32 +578,32 @@ namespace Athena
 		}
 
 
-		SceneRenderer::SubmitLightEnvironment(lightEnv);
+		renderer->SubmitLightEnvironment(lightEnv);
 
-		SceneRenderer::EndScene();
+		renderer->EndScene();
 
 
-		SceneRenderer2D::BeginScene(view, proj);
+		//SceneRenderer2D::BeginScene(view, proj);
 
-		auto quads = GetAllEntitiesWith<SpriteComponent>();
-		for (auto entity : quads)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& sprite = quads.get<SpriteComponent>(entity);
+		//auto quads = GetAllEntitiesWith<SpriteComponent>();
+		//for (auto entity : quads)
+		//{
+		//	auto transform = GetWorldTransform(entity);
+		//	const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-		}
+		//	SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+		//}
 
-		auto circles = GetAllEntitiesWith<CircleComponent>();
-		for (auto entity : circles)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& circle = circles.get<CircleComponent>(entity);
+		//auto circles = GetAllEntitiesWith<CircleComponent>();
+		//for (auto entity : circles)
+		//{
+		//	auto transform = GetWorldTransform(entity);
+		//	const auto& circle = circles.get<CircleComponent>(entity);
 
-			SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
-		}
+		//	SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
+		//}
 
-		SceneRenderer2D::EndScene();
+		//SceneRenderer2D::EndScene();
 	}
 
 	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)

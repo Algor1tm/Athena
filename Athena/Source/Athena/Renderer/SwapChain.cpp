@@ -7,11 +7,11 @@
 
 namespace Athena
 {
-	Ref<SwapChain> SwapChain::Create(void* windowHandle)
+	Ref<SwapChain> SwapChain::Create(void* windowHandle, bool vsync)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanSwapChain>::Create(windowHandle);
+		case Renderer::API::Vulkan: return Ref<VulkanSwapChain>::Create(windowHandle, vsync);
 		case Renderer::API::None: return nullptr;
 		}
 

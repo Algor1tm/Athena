@@ -8,6 +8,8 @@
 
 namespace Athena
 {
+	class CommandBuffer;
+
 	enum ShaderDef
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
@@ -86,6 +88,9 @@ namespace Athena
 	public:
 		static void Init(const RendererConfig& config);
 		static void Shutdown();
+		
+		// TMP
+		static Ref<CommandBuffer> GetCommandQueue();
 
 		static Renderer::API GetAPI();
 
@@ -94,9 +99,8 @@ namespace Athena
 
 		static void BeginFrame();
 		static void EndFrame();
-
-		// Temporary
-		static void Render();
+		
+		static void WaitDeviceIdle();
 
 		static void BindShader(std::string_view name);
 		static Ref<ShaderLibrary> GetShaderLibrary();
@@ -131,5 +135,6 @@ namespace Athena
 	struct RendererConfig
 	{
 		Renderer::API API = Renderer::API::Vulkan;
+		uint32 MaxFramesInFlight = 3;
 	};
 }

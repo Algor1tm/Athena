@@ -21,12 +21,30 @@
 
 namespace Athena
 {
+	struct CameraUBO
+	{
+		Matrix4 ViewMatrix;
+	};
+
+	struct VulkanUBO
+	{
+		VkBuffer Buffer;
+		VkDeviceMemory BufferMemory;
+		void* MappedMemory;
+	};
+
 	static Ref<Shader> s_Shader;
 
 	static VkBuffer s_VertexBuffer;
 	static VkDeviceMemory s_VertexBufferMemory;
 	static VkBuffer s_IndexBuffer;
 	static VkDeviceMemory s_IndexBufferMemory;
+	static std::vector<VulkanUBO> s_UniformBuffers;
+	static CameraUBO s_CameraUBO;
+
+	static VkDescriptorPool s_DescriptorPool;
+	static VkDescriptorSetLayout s_DescriptorSetLayout;
+	static std::vector<VkDescriptorSet> s_DescriptorSets;
 
 	static VkRenderPass s_RenderPass;
 	static VkPipelineLayout s_PipelineLayout;
@@ -260,6 +278,80 @@ namespace Athena
 			VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, VulkanContext::GetAllocator(), &s_RenderPass));
 		}
 
+		// Descriptor Sets
+		{
+			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
+
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = 0;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			uboLayoutBinding.pImmutableSamplers = nullptr;
+
+			VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = 1;
+			layoutInfo.pBindings = &uboLayoutBinding;
+
+			VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice, &layoutInfo, VulkanContext::GetAllocator(), &s_DescriptorSetLayout));
+
+			VkDeviceSize bufferSize = sizeof(CameraUBO);
+			s_UniformBuffers.resize(Renderer::GetFramesInFlight());
+
+			for (auto& ubo: s_UniformBuffers)
+			{
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &ubo.Buffer, &ubo.BufferMemory);
+
+			}
+
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			poolSize.descriptorCount = Renderer::GetFramesInFlight();
+
+			VkDescriptorPoolCreateInfo poolInfo = {};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.poolSizeCount = 1;
+			poolInfo.pPoolSizes = &poolSize;
+			poolInfo.maxSets = Renderer::GetFramesInFlight();
+
+			VK_CHECK(vkCreateDescriptorPool(logicalDevice, &poolInfo, VulkanContext::GetAllocator(), &s_DescriptorPool));
+
+			std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), s_DescriptorSetLayout);
+
+			VkDescriptorSetAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = s_DescriptorPool;
+			allocInfo.descriptorSetCount = Renderer::GetFramesInFlight();
+			allocInfo.pSetLayouts = layouts.data();
+
+			s_DescriptorSets.resize(Renderer::GetFramesInFlight());
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice, &allocInfo, s_DescriptorSets.data()));
+
+			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
+			{
+				VkDescriptorBufferInfo bufferInfo = {};
+				bufferInfo.buffer = s_UniformBuffers[i].Buffer;
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(CameraUBO);
+
+				VkWriteDescriptorSet descriptorWrite{};
+				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrite.dstSet = s_DescriptorSets[i];
+				descriptorWrite.dstBinding = 0;
+				descriptorWrite.dstArrayElement = 0;
+				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrite.descriptorCount = 1;
+				descriptorWrite.pBufferInfo = &bufferInfo;
+				descriptorWrite.pImageInfo = nullptr;
+				descriptorWrite.pTexelBufferView = nullptr;
+
+				vkUpdateDescriptorSets(VulkanContext::GetDevice()->GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+			}
+
+		}
+
 		// Create Pipeline
 		{
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
@@ -342,8 +434,8 @@ namespace Athena
 
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = 0;
-			pipelineLayoutInfo.pSetLayouts = nullptr; 
+			pipelineLayoutInfo.setLayoutCount = 1;
+			pipelineLayoutInfo.pSetLayouts = &s_DescriptorSetLayout;
 			pipelineLayoutInfo.pushConstantRangeCount = 0;
 			pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -401,14 +493,22 @@ namespace Athena
 
 		Renderer::SubmitResourceFree([]()
 			{
-				for (VkFramebuffer framebuffer : s_Framebuffers)
-					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
+				{
+					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_Framebuffers[i], VulkanContext::GetAllocator());
 
+					vkDestroyBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_UniformBuffers[i].Buffer, VulkanContext::GetAllocator());
+					vkFreeMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_UniformBuffers[i].BufferMemory, VulkanContext::GetAllocator());
+				}
+				
 				vkDestroyBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBuffer, VulkanContext::GetAllocator());
 				vkFreeMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBufferMemory, VulkanContext::GetAllocator());
 
 				vkDestroyBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_IndexBuffer, VulkanContext::GetAllocator());
 				vkFreeMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_IndexBufferMemory, VulkanContext::GetAllocator());
+
+				vkDestroyDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), s_DescriptorPool, VulkanContext::GetAllocator());
+				vkDestroyDescriptorSetLayout(VulkanContext::GetDevice()->GetLogicalDevice(), s_DescriptorSetLayout, VulkanContext::GetAllocator());
 
 				vkDestroyPipeline(VulkanContext::GetDevice()->GetLogicalDevice(), s_Pipeline, VulkanContext::GetAllocator());
 				vkDestroyPipelineLayout(VulkanContext::GetDevice()->GetLogicalDevice(), s_PipelineLayout, VulkanContext::GetAllocator());
@@ -419,7 +519,7 @@ namespace Athena
 	}
 
 	// TEMPORARY
-	void SceneRenderer::RenderTest()
+	void SceneRenderer::Render(const CameraInfo& cameraInfo)
 	{
 		Window& window = Application::Get().GetWindow();
 		Ref<SwapChain> swapChain = window.GetSwapChain();
@@ -460,7 +560,21 @@ namespace Athena
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &s_VertexBuffer, offsets);
 			vkCmdBindIndexBuffer(commandBuffer, s_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
-			
+
+			// Update Uniform buffer
+			{
+				s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
+
+				auto& ubo = s_UniformBuffers[Renderer::GetCurrentFrameIndex()];
+
+				vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory, 0, sizeof(s_CameraUBO), 0, &ubo.MappedMemory);
+				memcpy(ubo.MappedMemory, &s_CameraUBO, sizeof(s_CameraUBO));
+				vkUnmapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory);
+
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, 0, 1, 
+					&s_DescriptorSets[Renderer::GetCurrentFrameIndex()], 0, 0);
+			}
+
 			vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 		}
 		vkCmdEndRenderPass(commandBuffer);

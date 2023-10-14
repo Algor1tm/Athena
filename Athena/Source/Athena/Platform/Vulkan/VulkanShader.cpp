@@ -70,16 +70,20 @@ namespace Athena
 			return "";
 		}
 
-		static shaderc_source_language GetSourceLanguageType(const FilePath& extension)
+		static bool ShaderTypeFromString(const String& strType, ShaderType& type)
 		{
-			if (extension == ".glsl")
-				return shaderc_source_language_glsl;
+			if (strType == "VERTEX_STAGE")
+				type = ShaderType::VERTEX_SHADER;
+			else if (strType == "FRAGMENT_STAGE" || strType == "PIXEL_STAGE")
+				type = ShaderType::FRAGMENT_SHADER;
+			else if (strType == "GEOMETRY_STAGE")
+				type = ShaderType::GEOMETRY_SHADER;
+			else if (strType == "COMPUTE_STAGE")
+				type = ShaderType::COMPUTE_SHADER;
+			else
+				return false;
 
-			if (extension == ".hlsl" || extension == ".hlsli")
-				return shaderc_source_language_hlsl;
-
-			ATN_CORE_ASSERT(false);
-			return (shaderc_source_language)0;
+			return true;
 		}
 
 		static std::string_view GetEntryPointName(ShaderType type)
@@ -102,6 +106,9 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
+
+		FilePath ext = m_FilePath.extension();
+		m_IsHlsl = ext == L".hlsl" || ext == L".hlsli";
 
 		CompileOrGetBinaries(false);
 		if (m_Compiled)
@@ -137,19 +144,73 @@ namespace Athena
 		m_SPIRVBinaries.clear();
 	}
 
+	bool VulkanShader::PreProcess(const String& source, std::unordered_map<ShaderType, String>& result)
+	{
+		const char* hlslSettings = "#pragma pack_matrix( row_major )\n\n";
+
+		const char* stageToken = "#pragma";
+		uint64 stageTokenLength = strlen(stageToken);
+		uint64 pos = source.find(stageToken, 0);
+		while (pos != String::npos)
+		{
+			uint64 eol = source.find_first_of("\r\n", pos);
+
+			if (eol == String::npos)
+			{
+				ATN_CORE_ERROR_TAG("Vulkan", "Failed to parse shader '{}'!", m_FilePath);
+				return false;
+			}
+
+			uint64 begin = pos + stageTokenLength + 1;
+			String typeString = source.substr(begin, eol - begin);
+
+			ShaderType type;
+			bool convertResult = Utils::ShaderTypeFromString(typeString, type);
+			if (!convertResult)
+			{
+				ATN_CORE_ERROR_TAG("Vulkan", "Failed to parse shader '{}'!\n Error: invalid shader stage name.", m_Name);
+				return false;
+			}
+
+			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
+			pos = source.find(stageToken, nextLinePos);
+			String shaderSource = source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
+
+			if (m_IsHlsl)
+				shaderSource.insert(0, hlslSettings);
+
+			result[type] = shaderSource;
+		}
+
+		return true;
+	}
+
 	bool VulkanShader::CompileOrGetBinaries(bool forceCompile)
 	{
 		Timer compilationTimer;
+
+		m_Compiled = false;
 		if (!FileSystem::Exists(m_FilePath))
 		{
 			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
 			return false;
 		}
 
-		String result = FileSystem::ReadFile(m_FilePath);
-		std::unordered_map<ShaderType, String> shaderSources = PreProcess(result);
+		FilePath ext = m_FilePath.extension();
+		if (ext != L".hlsl" && ext != L".hlsli" && ext != L".glsl" && ext != L".glsli")
+		{
+			ATN_CORE_ERROR_TAG("Vulkan", "Invalid shader extension '{}'!", m_FilePath);
+			return false;
+		}
 
-		m_Compiled = false;
+		String shaderString = FileSystem::ReadFile(m_FilePath);
+
+		std::unordered_map<ShaderType, String> shaderSources;
+		bool result = PreProcess(shaderString, shaderSources);
+
+		if (!result)
+			return false;
+
 		if (!CheckShaderStages(shaderSources))
 			return false;
 
@@ -183,7 +244,7 @@ namespace Athena
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 			options.SetOptimizationLevel(shaderc_optimization_level_performance);
-			options.SetSourceLanguage(Utils::GetSourceLanguageType(m_FilePath.extension()));
+			options.SetSourceLanguage(m_IsHlsl ? shaderc_source_language_hlsl : shaderc_source_language_glsl);
 			options.SetGenerateDebugInfo();
 
 			const std::unordered_map<String, String>& globalMacroses = Renderer::GetGlobalShaderMacroses();
@@ -339,7 +400,7 @@ namespace Athena
 			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			shaderStageCI.stage = VulkanUtils::GetShaderStage(type);
 			shaderStageCI.module = m_VulkanShaderModules[type];
-			shaderStageCI.pName = m_FilePath.extension() == ".glsl" ? "main" : Utils::GetEntryPointName(type).data();
+			shaderStageCI.pName = m_IsHlsl ? Utils::GetEntryPointName(type).data() : "main";
 
 			m_PipelineShaderStages.push_back(shaderStageCI);
 		}

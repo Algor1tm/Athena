@@ -12,11 +12,16 @@ struct FragmentShaderInput
     float4 Color;
 };
 
+cbuffer Camera : register(b0, space0)
+{
+    float4x4 u_CameraView;
+};
+
 FragmentShaderInput VSMain(VertexShaderInput Input)
 {
     FragmentShaderInput Output;
     
-    Output.Position = float4(Input.Position, 0.0, 1.0);
+    Output.Position = mul(float4(Input.Position, 0.0, 1.0), u_CameraView);
     Output.Color = Input.Color;
     return Output;
 }

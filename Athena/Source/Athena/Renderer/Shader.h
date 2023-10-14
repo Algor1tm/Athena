@@ -19,9 +19,6 @@ namespace Athena
 	class ATHENA_API Shader
 	{
 	public:
-		// Pass file without extension
-		//     if RendererAPI = Direct3D extension will be .hlsl
-		//     if RendererAPI = OpenGL extension will be .glsl
 		static Ref<Shader> Create(const FilePath& path);
 		static Ref<Shader> Create(const FilePath& path, const String& name);
 
@@ -31,9 +28,6 @@ namespace Athena
 		virtual void Reload() = 0;
 
 		const String& GetName() const { return m_Name; }
-
-	protected:
-		std::unordered_map<ShaderType, String> PreProcess(const String& source);
 
 	protected:
 		String m_Name;

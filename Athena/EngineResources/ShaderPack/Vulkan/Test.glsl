@@ -6,10 +6,15 @@ layout (location = 1) in vec4 a_Color;
 
 layout (location = 0) out vec4 Color;
 
+layout(std140, binding = 0, set = 0) uniform Camera
+{
+    mat4 u_CameraView;
+};
+
 
 void main() 
 {
-    gl_Position = vec4(a_Position, 0.0, 1.0);
+    gl_Position = u_CameraView * vec4(a_Position, 0.0, 1.0);
     Color = a_Color;
 }
 

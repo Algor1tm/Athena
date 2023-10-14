@@ -12,6 +12,7 @@ SandBoxLayer::SandBoxLayer(const FilePath& scenePath)
 void SandBoxLayer::OnAttach()
 {
 	m_SceneRenderer = SceneRenderer::Create();
+	m_Camera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
 	//m_Scene = CreateRef<Scene>();
 
@@ -46,14 +47,22 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 		m_ViewportResized = false;
 	}
 
-	m_SceneRenderer->RenderTest();
+	m_Camera->OnUpdate(frameTime);
+
+	CameraInfo cameraInfo;
+	cameraInfo.ViewMatrix = m_Camera->GetViewMatrix();
+	cameraInfo.ProjectionMatrix = m_Camera->GetProjectionMatrix();
+	cameraInfo.NearClip = m_Camera->GetNearClip();
+	cameraInfo.FarClip = m_Camera->GetFarClip();
+
+	m_SceneRenderer->Render(cameraInfo);
 
 	Renderer::EndFrame();
 }
 
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 {
-	//m_Scene->OnViewportResize(event.GetWidth(), event.GetHeight());
+	m_Camera->SetViewportSize(event.GetWidth(), event.GetHeight());
 	m_ViewportResized = true;
 
 	return false;
@@ -61,6 +70,8 @@ bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 
 void SandBoxLayer::OnEvent(Event& event)
 {
+	m_Camera->OnEvent(event);
+
 	EventDispatcher dispatcher(event);
 	dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OnWindowResize));
 }

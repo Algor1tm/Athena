@@ -149,7 +149,7 @@ namespace Athena
 	public:
 		static Ref<SceneRenderer> Create();
 
-		void RenderTest();
+		void Render(const CameraInfo& cameraInfo);
 
 		void Init();
 		void Shutdown();

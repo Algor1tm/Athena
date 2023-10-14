@@ -21,6 +21,8 @@ private:
 private:
 	Ref<SceneRenderer> m_SceneRenderer;
 	bool m_ViewportResized = false;
+	Ref<OrthographicCamera> m_Camera;
+
 	Ref<Scene> m_Scene;
 	FilePath m_ScenePath;
 };

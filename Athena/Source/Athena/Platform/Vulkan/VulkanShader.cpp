@@ -65,6 +65,20 @@ namespace Athena
 		return "";
 	}
 
+	static VkShaderStageFlagBits ShaderTypeToVkShaderStage(ShaderType type)
+	{
+		switch (type)
+		{
+		case ShaderType::VERTEX_SHADER: return VK_SHADER_STAGE_VERTEX_BIT;
+		case ShaderType::FRAGMENT_SHADER: return VK_SHADER_STAGE_FRAGMENT_BIT;
+		case ShaderType::GEOMETRY_SHADER: return VK_SHADER_STAGE_GEOMETRY_BIT;
+		case ShaderType::COMPUTE_SHADER: return VK_SHADER_STAGE_COMPUTE_BIT;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return (VkShaderStageFlagBits)0;
+	}
+
 
 	VulkanShader::VulkanShader(const FilePath& path, const String& name)
 	{
@@ -73,7 +87,7 @@ namespace Athena
 
 		CompileOrGetBinaries(false);
 		if (m_Compiled)
-			CreateVulkanShaderModules();
+			CreateVulkanShaderModulesAndStages();
 
 		m_SPIRVBinaries.clear();
 	}
@@ -100,7 +114,7 @@ namespace Athena
 
 		CompileOrGetBinaries(true);
 		if (m_Compiled)
-			CreateVulkanShaderModules();
+			CreateVulkanShaderModulesAndStages();
 
 		m_SPIRVBinaries.clear();
 	}
@@ -120,6 +134,7 @@ namespace Athena
 		if (!CheckShaderStages(shaderSources))
 			return false;
 
+		// Get cached file paths
 		std::unordered_map<ShaderType, FilePath> cachedFilePaths;
 
 		for (const auto& [type, _] : shaderSources)
@@ -127,6 +142,7 @@ namespace Athena
 			cachedFilePaths[type] = Renderer::GetShaderCacheDirectory() / GetCachedFileName(m_FilePath.filename(), type);
 		}
 
+		// Check if need to recompile
 		bool recompile = false;
 		for (const auto& [_, path] : cachedFilePaths)
 		{
@@ -145,6 +161,8 @@ namespace Athena
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 			options.SetOptimizationLevel(shaderc_optimization_level_performance);
+			//options.SetSourceLanguage(shaderc_source_language_hlsl);
+			options.SetGenerateDebugInfo();
 
 			String filePathStr = m_FilePath.string();
 			for (const auto& [type, source] : shaderSources)
@@ -213,9 +231,14 @@ namespace Athena
 			errorMsg = "Has FRAGMENT_SHADER stage but no VERTEX_SHADER stage.";
 		}
 
+		if (shaderTypeExistMap.at(ShaderType::GEOMETRY_SHADER) && (!shaderTypeExistMap.at(ShaderType::VERTEX_SHADER) || shaderTypeExistMap.at(ShaderType::FRAGMENT_SHADER)))
+		{
+			errorMsg = "Has GEOMETRY_SHADER stage but no VERTEX_SHADER or FRAGMENT_SHADER stage.";
+		}
+
 		if (shaderTypeExistMap.at(ShaderType::COMPUTE_SHADER) && sources.size() != 1)
 		{
-			errorMsg = "Compute shader must have only 1 stage COMPUTE_SHADER.";
+			errorMsg = "Compute shader must have only 1 stage - COMPUTE_SHADER.";
 		}
 
 		if (errorMsg.size() != 0)
@@ -240,18 +263,29 @@ namespace Athena
 		for (const auto& resource : resources.uniform_buffers)
 		{
 			const auto& bufferType = compiler.get_type(resource.base_type_id);
-			uint32_t bufferSize = compiler.get_declared_struct_size(bufferType);
-			uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
+			uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+
 			int memberCount = bufferType.member_types.size();
 
 			ATN_CORE_TRACE("  {}", resource.name);
-			ATN_CORE_TRACE("    Size = {}", bufferSize);
-			ATN_CORE_TRACE("    Binding = {}", binding);
-			ATN_CORE_TRACE("    Members = {}", memberCount);
+			ATN_CORE_TRACE("\tBuffer size = {}", bufferSize);
+			ATN_CORE_TRACE("\tBinding = {}", binding);
+			ATN_CORE_TRACE("\tSet = {}", set);
+			ATN_CORE_TRACE("\tMembers = {}", memberCount);
+
+			for (int i = 0; i < memberCount; ++i)
+			{
+				String name = compiler.get_member_name(resource.base_type_id, i);
+				size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
+				ATN_CORE_TRACE("\t  Name = {}", name);
+				ATN_CORE_TRACE("\t  Size = {}", size);
+			}
 		}
 	}
 
-	void VulkanShader::CreateVulkanShaderModules()
+	void VulkanShader::CreateVulkanShaderModulesAndStages()
 	{
 		for (const auto& [type, src] : m_SPIRVBinaries)
 		{
@@ -261,14 +295,25 @@ namespace Athena
 			createInfo.pCode = src.data();
 
 			VK_CHECK(vkCreateShaderModule(VulkanContext::GetDevice()->GetLogicalDevice(), &createInfo, VulkanContext::GetAllocator(), &m_VulkanShaderModules[type]));
+
+			VkPipelineShaderStageCreateInfo shaderStageCI = {};
+			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shaderStageCI.stage = ShaderTypeToVkShaderStage(type);
+			shaderStageCI.module = m_VulkanShaderModules[type];
+			shaderStageCI.pName = "main";
+
+			m_PipelineShaderStages.push_back(shaderStageCI);
 		}
 	}
 
 	void VulkanShader::CleanUp()
 	{
-		for (const auto& [type, src] : m_VulkanShaderModules)
-		{
-			vkDestroyShaderModule(VulkanContext::GetDevice()->GetLogicalDevice(), m_VulkanShaderModules[type], VulkanContext::GetAllocator());
-		}
+		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules]()
+			{
+				for (const auto& [type, src] : shaderModules)
+				{
+					vkDestroyShaderModule(VulkanContext::GetDevice()->GetLogicalDevice(), shaderModules.at(type), VulkanContext::GetAllocator());
+				}
+			});
 	}
 }

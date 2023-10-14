@@ -52,8 +52,6 @@ namespace Athena
 
 	Application::~Application()
 	{
-		Renderer::WaitDeviceIdle();
-
 		m_LayerStack.Clear();
 
 		// Destroy SwapChain before Renderer::Shutdown

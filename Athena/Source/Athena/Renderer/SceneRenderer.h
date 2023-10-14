@@ -154,7 +154,7 @@ namespace Athena
 		void Init();
 		void Shutdown();
 
-		void OnWindowResized(uint32 width, uint32 height);
+		void OnViewportResize(uint32 width, uint32 height);
 
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();

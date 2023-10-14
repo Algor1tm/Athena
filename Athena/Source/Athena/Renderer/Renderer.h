@@ -94,13 +94,14 @@ namespace Athena
 
 		static Renderer::API GetAPI();
 
-		static uint32 FramesInFlight();
-		static uint32 CurrentFrameIndex();
+		static uint32 GetFramesInFlight();
+		static uint32 GetCurrentFrameIndex();
 
 		static void BeginFrame();
 		static void EndFrame();
-		
-		static void WaitDeviceIdle();
+
+		static void Flush();
+		static void SubmitResourceFree(std::function<void()>&& func);
 
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();

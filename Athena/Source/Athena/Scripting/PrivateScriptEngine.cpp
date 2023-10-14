@@ -275,7 +275,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(config.ScriptsFolder))
 		{
-			ATN_CORE_FATAL_TAG("SriptEngine", "Scripts folder does not exists '{}'!", config.ScriptsFolder);
+			ATN_CORE_ERROR_TAG("SriptEngine", "Scripts folder does not exists {}!", config.ScriptsFolder);
 			return;
 		}
 

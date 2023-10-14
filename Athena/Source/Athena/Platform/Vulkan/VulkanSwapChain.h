@@ -14,7 +14,7 @@ namespace Athena
 		VulkanSwapChain(void* windowHandle, bool vsync = false);
 		~VulkanSwapChain();
 
-		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews);
+		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews, bool cleanupSurface = false);
 
 		virtual void Recreate() override;
 		virtual void SetVSync(bool enabled) override;
@@ -23,9 +23,9 @@ namespace Athena
 		virtual void Present() override;
 
 		virtual void* GetCurrentImageHandle() override;
+		virtual uint32 GetCurrentImageIndex() override { return m_ImageIndex; }
 
-	private:
-		VkPresentModeKHR GetPresentMode();
+		const std::vector<VkImageView> GetVulkanImageViews() const { return m_SwapChainImageViews; };
 
 	private:
 		VkSurfaceKHR m_Surface;
@@ -35,7 +35,6 @@ namespace Athena
 		std::vector<VkImageView> m_SwapChainImageViews;
 
 		uint32 m_ImageIndex = 0;
-		uint32 m_CurrentFrameIndex = 0;
 
 		bool m_VSync = false;
 		VkPresentModeKHR m_SelectedPresentMode;

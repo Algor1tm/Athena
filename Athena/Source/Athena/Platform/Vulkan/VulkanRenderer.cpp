@@ -97,9 +97,9 @@ namespace Athena
 		{
 			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 
-			VulkanContext::s_FrameSyncData.resize(Renderer::FramesInFlight());
+			VulkanContext::s_FrameSyncData.resize(Renderer::GetFramesInFlight());
 
-			for (uint32_t i = 0; i < Renderer::FramesInFlight(); i++)
+			for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)
 			{
 				VkSemaphoreCreateInfo semaphoreCI = {};
 				semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -136,7 +136,7 @@ namespace Athena
 
 		vkDestroyCommandPool(logicalDevice, VulkanContext::s_CommandPool, VulkanContext::s_Allocator);
 
-		for (uint32_t i = 0; i < Renderer::FramesInFlight(); i++)
+		for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)
 		{
 			vkDestroySemaphore(logicalDevice, VulkanContext::s_FrameSyncData[i].ImageAcquiredSemaphore, VulkanContext::s_Allocator);
 			vkDestroySemaphore(logicalDevice, VulkanContext::s_FrameSyncData[i].RenderCompleteSemaphore, VulkanContext::s_Allocator);
@@ -155,12 +155,12 @@ namespace Athena
 		vkDestroyInstance(VulkanContext::s_Instance, VulkanContext::s_Allocator);
 	}
 
-	void VulkanRenderer::Submit(const Ref<CommandBuffer>& cmdBuff)
+	void VulkanRenderer::Flush(const Ref<CommandBuffer>& cmdBuff)
 	{
-		const FrameSyncData& frameData = VulkanContext::s_FrameSyncData[Renderer::CurrentFrameIndex()];
+		const FrameSyncData& frameData = VulkanContext::s_FrameSyncData[Renderer::GetCurrentFrameIndex()];
 
 		VkCommandBuffer buffer = cmdBuff.As<VulkanCommandBuffer>()->GetNativeCmdBuffer();
-		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		// Submit commands to queue
 		VkSubmitInfo submitInfo = {};

@@ -14,16 +14,16 @@ namespace Athena
 	{
 		Renderer::API API = Renderer::API::None;
 		uint32 MaxFramesInFlight = 3;
-
-		FilePath ShaderPackDirectory;
-		FilePath ShaderCacheDirectory;
-
 		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
 		Ref<CommandBuffer> CommandQueue;
 		
-		Ref<ShaderLibrary> ShaderPack;
+		std::vector<std::vector<std::function<void()>>> ResourceFreeQueue;
+
+		FilePath ShaderPackDirectory;
+		FilePath ShaderCacheDirectory;
 		String GlobalShaderMacroses;
+		Ref<ShaderLibrary> ShaderPack;
 
 		Renderer::Statistics Stats;
 
@@ -44,6 +44,9 @@ namespace Athena
 
 		s_Data.API = config.API;
 		s_Data.MaxFramesInFlight = config.MaxFramesInFlight;
+		s_Data.CurrentFrameIndex = 0;
+
+		s_Data.ResourceFreeQueue.resize(config.MaxFramesInFlight);
 
 		const FilePath& resourcesPath = Application::Get().GetEngineResourcesPath();
 		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
@@ -60,6 +63,14 @@ namespace Athena
 
 	void Renderer::Shutdown()
 	{
+		s_Data.RendererAPI->WaitDeviceIdle();
+
+		{
+			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
+				func();
+			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
+		}
+
 		s_Data.CommandQueue.Reset();
 		s_Data.RendererAPI->Shutdown();
 	}
@@ -71,18 +82,28 @@ namespace Athena
 
 	void Renderer::BeginFrame()
 	{
-		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
+		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
 
-		swapChain->AcquireImage();
+		// Free resources in queue
+		{
+			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
+				func();
+			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
+		}
+
+		// Acquire image from swapchain
+		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
 		s_Data.CommandQueue->Begin();
 	}
 
 	void Renderer::EndFrame()
 	{
 		s_Data.CommandQueue->End();
-		s_Data.RendererAPI->Submit(s_Data.CommandQueue);
+	}
 
-		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
+	void Renderer::Flush()
+	{
+		s_Data.RendererAPI->Flush(s_Data.CommandQueue);
 	}
 
 	Renderer::API Renderer::GetAPI()
@@ -90,19 +111,19 @@ namespace Athena
 		return s_Data.API;
 	}
 
-	uint32 Renderer::FramesInFlight()
+	uint32 Renderer::GetFramesInFlight()
 	{
 		return s_Data.MaxFramesInFlight;
 	}
 
-	uint32 Renderer::CurrentFrameIndex()
+	uint32 Renderer::GetCurrentFrameIndex()
 	{
 		return s_Data.CurrentFrameIndex;
 	}
 
-	void Renderer::WaitDeviceIdle()
+	void Renderer::SubmitResourceFree(std::function<void()>&& func)
 	{
-		s_Data.RendererAPI->WaitDeviceIdle();
+		s_Data.ResourceFreeQueue[Renderer::GetCurrentFrameIndex()].push_back(func);
 	}
 
 	const FilePath& Renderer::GetShaderPackDirectory()

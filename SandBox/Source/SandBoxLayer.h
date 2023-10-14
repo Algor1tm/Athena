@@ -20,6 +20,7 @@ private:
 
 private:
 	Ref<SceneRenderer> m_SceneRenderer;
+	bool m_ViewportResized = false;
 	Ref<Scene> m_Scene;
 	FilePath m_ScenePath;
 };

@@ -1,18 +1,11 @@
 ##### ATHENA #########################
 
-*.sln
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
-bin/
-bin-int/
 Build/
+
+Athena/EngineResources/Cache/
 
 Athena-Editor/Assets/Scripts/Internal/*.dll
 Athena-Editor/Assets/Scripts/Internal/*.pyd
-
-Athena-Editor/Resources/Tmp/EditorScene.atn
-Makefile
 
 .vscode/
 .idea/

@@ -45,7 +45,7 @@ namespace Athena
 		virtual void Shutdown() override;
 
 		virtual void WaitDeviceIdle() override;
-		virtual void Submit(const Ref<CommandBuffer>& cmdBuff) override;
+		virtual void Flush(const Ref<CommandBuffer>& cmdBuff) override;
 
 	private:
 		VkDebugReportCallbackEXT m_DebugReport;

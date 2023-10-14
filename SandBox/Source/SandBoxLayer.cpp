@@ -39,7 +39,13 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 {
 	Renderer::BeginFrame();
 
-	//m_Scene->OnUpdateRuntime(frameTime, m_SceneRenderer);
+	// Temporary hack (scene renderer must be resized after Renderer::BeginFrame for now)
+	if (m_ViewportResized)
+	{
+		m_SceneRenderer->OnViewportResize(Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight());
+		m_ViewportResized = false;
+	}
+
 	m_SceneRenderer->RenderTest();
 
 	Renderer::EndFrame();
@@ -48,7 +54,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 {
 	//m_Scene->OnViewportResize(event.GetWidth(), event.GetHeight());
-	m_SceneRenderer->OnWindowResized(event.GetWidth(), event.GetHeight());
+	m_ViewportResized = true;
 
 	return false;
 }

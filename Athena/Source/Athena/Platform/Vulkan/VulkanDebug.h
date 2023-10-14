@@ -69,10 +69,10 @@ namespace Athena
         }
     }
 
-	inline void CheckVulkanResult(VkResult error)
+	inline bool CheckVulkanResult(VkResult error)
 	{
 		if (error == 0)
-			return;
+			return true;
 
         const char* errorString = GetVulkanResultString(error);
 
@@ -82,11 +82,11 @@ namespace Athena
 		if (error < 0)
 			ATN_CORE_FATAL_TAG("Vulkan", "VkResult = {}, Fatal Error: {}", (int)error, errorString);
 
-		ATN_CORE_ASSERT(false);
+        return false;
 	}
 
 
-    #define VK_CHECK(expr) CheckVulkanResult(expr)
+    #define VK_CHECK(expr) ATN_CORE_ASSERT(CheckVulkanResult(expr))
 
 
 	inline VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,

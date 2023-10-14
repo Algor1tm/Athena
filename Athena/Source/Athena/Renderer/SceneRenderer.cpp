@@ -16,6 +16,8 @@
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include <vulkan/vulkan.h>
 
+#define DEFAULT_FENCE_TIMEOUT 100000000000
+
 
 namespace Athena
 {
@@ -23,12 +25,106 @@ namespace Athena
 
 	static VkBuffer s_VertexBuffer;
 	static VkDeviceMemory s_VertexBufferMemory;
+	static VkBuffer s_IndexBuffer;
+	static VkDeviceMemory s_IndexBufferMemory;
 
 	static VkRenderPass s_RenderPass;
 	static VkPipelineLayout s_PipelineLayout;
 	static VkPipeline s_Pipeline;
 
 	static std::vector<VkFramebuffer> s_Framebuffers;
+
+	namespace Utils
+	{
+		static uint32 GetVulkanMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
+		{
+			VkPhysicalDeviceMemoryProperties memProperties;
+			vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetDevice()->GetPhysicalDevice(), &memProperties);
+
+			for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+			{
+				if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+				{
+					return i;
+				}
+			}
+
+			ATN_CORE_ASSERT(false);
+			return 0xffffffff;
+		};
+
+		void CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
+		{
+			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
+
+			VkBufferCreateInfo bufferInfo{};
+			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufferInfo.size = size;
+			bufferInfo.usage = usage;
+			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			VK_CHECK(vkCreateBuffer(logicalDevice, &bufferInfo, VulkanContext::GetAllocator(), buffer));
+
+			VkMemoryRequirements memRequirements;
+			vkGetBufferMemoryRequirements(logicalDevice, *buffer, &memRequirements);
+
+			VkMemoryAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			allocInfo.allocationSize = memRequirements.size;
+			allocInfo.memoryTypeIndex = GetVulkanMemoryType(memRequirements.memoryTypeBits, properties);
+
+			VK_CHECK(vkAllocateMemory(logicalDevice, &allocInfo, VulkanContext::GetAllocator(), bufferMemory));
+
+			vkBindBufferMemory(logicalDevice, *buffer, *bufferMemory, 0);
+		}
+
+		void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+		{
+			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
+
+			VkCommandBufferAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			allocInfo.commandPool = VulkanContext::GetCommandPool();
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer commandBuffer;
+			VK_CHECK(vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer));
+
+			VkCommandBufferBeginInfo beginInfo = {};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+			VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+			{
+				VkBufferCopy copyRegion{};
+				copyRegion.srcOffset = 0;
+				copyRegion.dstOffset = 0;
+				copyRegion.size = size;
+				vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+			}
+			VK_CHECK(vkEndCommandBuffer(commandBuffer));
+
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &commandBuffer;
+
+			VkFenceCreateInfo fenceInfo = {};
+			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			fenceInfo.flags = 0;
+
+			VkFence fence;
+			VK_CHECK(vkCreateFence(logicalDevice, &fenceInfo, VulkanContext::GetAllocator(), &fence));
+
+			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
+
+			VK_CHECK(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+
+			vkDestroyFence(logicalDevice, fence, VulkanContext::GetAllocator());
+			vkFreeCommandBuffers(logicalDevice, VulkanContext::GetCommandPool(), 1, &commandBuffer);
+		}
+	}
 
 
 	Ref<SceneRenderer> SceneRenderer::Create()
@@ -45,7 +141,7 @@ namespace Athena
 
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
 
-		// Create Vertex Buffer
+		// Create Vertex Buffer and Index Buffer
 		VkVertexInputBindingDescription bindingDescription = {};
 		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
 		{
@@ -55,10 +151,15 @@ namespace Athena
 				LinearColor Color;
 			};
 
-			const std::vector<TVertex> vertices = {
-				{ { 0.0f, -0.5f }, { 1.f, 0.f, 0.f, 1.f }},
-				{ { 0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f }},
-				{ { -0.5f, 0.5f }, { 0.f, 0.f, 1.f, 1.f }}
+			const TVertex vertices[] = {
+				{ { -0.5f, -0.5f }, { 1.f, 0.f, 0.f, 1.f } },
+				{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 1.f } },
+				{ {  0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f } },
+				{ { -0.5f,  0.5f }, { 1.f, 1.f, 1.f, 1.f } }
+			};
+
+			const uint32 indices[] = {
+				0, 1, 2, 2, 3, 0
 			};
 
 			
@@ -70,53 +171,59 @@ namespace Athena
 			attributeDescriptions[0].binding = 0;
 			attributeDescriptions[0].location = 0;
 			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[0].offset = offsetof(TVertex, Position);
+			attributeDescriptions[0].offset = offsetof(TVertex, Position); // 0
 
 			attributeDescriptions[1].binding = 0;
 			attributeDescriptions[1].location = 1;
 			attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(TVertex, Color);
+			attributeDescriptions[1].offset = offsetof(TVertex, Color);  // 8
 
-			VkBufferCreateInfo bufferInfo{};
-			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufferInfo.size = sizeof(TVertex) * vertices.size();
-			bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 
-			VK_CHECK(vkCreateBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &bufferInfo, VulkanContext::GetAllocator(), &s_VertexBuffer));
+			VkBuffer stagingBuffer;
+			VkDeviceMemory stagingBufferMemory;
 
-			VkMemoryRequirements memRequirements;
-			vkGetBufferMemoryRequirements(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBuffer, &memRequirements);
+			// Vertex buffer
+			{
+				VkDeviceSize bufferSize = sizeof(vertices);
 
-			auto findMemoryType = [](uint32 typeFilter, VkMemoryPropertyFlags properties) -> uint32
-				{
-					VkPhysicalDeviceMemoryProperties memProperties;
-					vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetDevice()->GetPhysicalDevice(), &memProperties);
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
-					for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
-					{
-						if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
-						{
-							return i;
-						}
-					}
+				void* data;
+				vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+				memcpy(data, vertices, bufferSize);
+				vkUnmapMemory(logicalDevice, stagingBufferMemory);
 
-					ATN_CORE_ASSERT(false);
-					return 0;
-				};
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_VertexBuffer, &s_VertexBufferMemory);
 
-			VkMemoryAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				Utils::CopyVulkanBuffer(stagingBuffer, s_VertexBuffer, bufferSize);
 
-			VK_CHECK(vkAllocateMemory(VulkanContext::GetDevice()->GetLogicalDevice(), &allocInfo, VulkanContext::GetAllocator(), &s_VertexBufferMemory));
-			vkBindBufferMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBuffer, s_VertexBufferMemory, 0);
+				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
+				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
+			}
 
-			void* data;
-			vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBufferMemory, 0, bufferInfo.size, 0, &data);
-			memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-			vkUnmapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBufferMemory);
+			// Index buffer
+			{
+				VkDeviceSize bufferSize = sizeof(indices);
+
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+
+				void* data;
+				vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+				memcpy(data, indices, bufferSize);
+				vkUnmapMemory(logicalDevice, stagingBufferMemory);
+
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_IndexBuffer, &s_IndexBufferMemory);
+
+				Utils::CopyVulkanBuffer(stagingBuffer, s_IndexBuffer, bufferSize);
+
+				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
+				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
+			}
 		}
 
 		// Create RenderPass
@@ -201,7 +308,7 @@ namespace Athena
 			VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 			colorBlendAttachment.blendEnable = VK_TRUE;
-			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; 
+			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 			colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; 
@@ -300,6 +407,9 @@ namespace Athena
 				vkDestroyBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBuffer, VulkanContext::GetAllocator());
 				vkFreeMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_VertexBufferMemory, VulkanContext::GetAllocator());
 
+				vkDestroyBuffer(VulkanContext::GetDevice()->GetLogicalDevice(), s_IndexBuffer, VulkanContext::GetAllocator());
+				vkFreeMemory(VulkanContext::GetDevice()->GetLogicalDevice(), s_IndexBufferMemory, VulkanContext::GetAllocator());
+
 				vkDestroyPipeline(VulkanContext::GetDevice()->GetLogicalDevice(), s_Pipeline, VulkanContext::GetAllocator());
 				vkDestroyPipelineLayout(VulkanContext::GetDevice()->GetLogicalDevice(), s_PipelineLayout, VulkanContext::GetAllocator());
 				vkDestroyRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), s_RenderPass, VulkanContext::GetAllocator());
@@ -349,8 +459,9 @@ namespace Athena
 			
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &s_VertexBuffer, offsets);
+			vkCmdBindIndexBuffer(commandBuffer, s_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			
-			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+			vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 		}
 		vkCmdEndRenderPass(commandBuffer);
 	}

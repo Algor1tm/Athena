@@ -1,4 +1,4 @@
-#type VERTEX_SHADER
+#pragma VERTEX_STAGE
 #version 450
 
 layout (location = 0) in vec2 a_Position;
@@ -14,7 +14,7 @@ void main()
 }
 
 
-#type FRAGMENT_SHADER
+#pragma FRAGMENT_STAGE
 #version 450
 
 layout(location = 0) in vec4 Color;

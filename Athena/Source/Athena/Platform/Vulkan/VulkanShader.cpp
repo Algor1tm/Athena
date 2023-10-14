@@ -1,10 +1,12 @@
 #include "VulkanShader.h"
 
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/Time.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/Vulkan/VulkanRenderer.h"
 #include "Athena/Platform/Vulkan/VulkanDebug.h"
+#include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #if defined(_MSC_VER)
 	#pragma warning(push, 0)
@@ -12,7 +14,6 @@
 
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
-#include <spirv_cross/spirv_glsl.hpp>
 
 #if defined(_MSC_VER)
 	#pragma warning(pop)
@@ -21,62 +22,79 @@
 
 namespace Athena
 {
-	static FilePath GetCachedFileName(const FilePath& path, ShaderType type)
+	namespace Utils
 	{
-		FilePath result = path;
-		switch (type)
+		static FilePath GetCachedFilePath(const FilePath& path, ShaderType type)
 		{
-		case ShaderType::VERTEX_SHADER:    return result.replace_extension("glsl.cached.vert");
-		case ShaderType::FRAGMENT_SHADER:  return result.replace_extension("glsl.cached.frag");
-		case ShaderType::GEOMETRY_SHADER:  return result.replace_extension("glsl.cached.geom");
-		case ShaderType::COMPUTE_SHADER:   return result.replace_extension("glsl.cached.compute");
+			FilePath relativeToShaderPack = std::filesystem::relative(path, Renderer::GetShaderPackDirectory());
+			FilePath cachedPath = Renderer::GetShaderCacheDirectory() / relativeToShaderPack;
+
+			switch (type)
+			{
+			case ShaderType::VERTEX_SHADER:    cachedPath += L".cached.vert"; break;
+			case ShaderType::FRAGMENT_SHADER:  cachedPath += L".cached.frag"; break;
+			case ShaderType::GEOMETRY_SHADER:  cachedPath += L".cached.geom"; break;
+			case ShaderType::COMPUTE_SHADER:   cachedPath += L".cached.compute"; break;
+			default: ATN_CORE_ASSERT(false); return "";
+			}
+
+			return cachedPath;
 		}
 
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
-
-	static shaderc_shader_kind ShaderTypeToShaderCKind(ShaderType type)
-	{
-		switch (type)
+		static shaderc_shader_kind ShaderTypeToShaderCKind(ShaderType type)
 		{
-		case ShaderType::VERTEX_SHADER:    return shaderc_glsl_vertex_shader;
-		case ShaderType::FRAGMENT_SHADER:  return shaderc_glsl_fragment_shader;
-		case ShaderType::GEOMETRY_SHADER:  return shaderc_glsl_geometry_shader;
-		case ShaderType::COMPUTE_SHADER:   return shaderc_glsl_compute_shader;
+			switch (type)
+			{
+			case ShaderType::VERTEX_SHADER:    return shaderc_glsl_vertex_shader;
+			case ShaderType::FRAGMENT_SHADER:  return shaderc_glsl_fragment_shader;
+			case ShaderType::GEOMETRY_SHADER:  return shaderc_glsl_geometry_shader;
+			case ShaderType::COMPUTE_SHADER:   return shaderc_glsl_compute_shader;
+			}
+
+			ATN_CORE_ASSERT(false);
+			return (shaderc_shader_kind)0;
 		}
 
-		ATN_CORE_ASSERT(false);
-		return (shaderc_shader_kind)0;
-	}
 
-
-	static std::string_view ShaderTypeToString(ShaderType type)
-	{
-		switch (type)
+		static std::string_view ShaderTypeToString(ShaderType type)
 		{
-		case ShaderType::VERTEX_SHADER: return "Vertex Shader";
-		case ShaderType::FRAGMENT_SHADER: return "Fragment Shader";
-		case ShaderType::GEOMETRY_SHADER: return "Geometry Shader";
-		case ShaderType::COMPUTE_SHADER: return "Compute Shader";
+			switch (type)
+			{
+			case ShaderType::VERTEX_SHADER: return "Vertex Shader";
+			case ShaderType::FRAGMENT_SHADER: return "Fragment Shader";
+			case ShaderType::GEOMETRY_SHADER: return "Geometry Shader";
+			case ShaderType::COMPUTE_SHADER: return "Compute Shader";
+			}
+
+			ATN_CORE_ASSERT(false);
+			return "";
 		}
 
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
-
-	static VkShaderStageFlagBits ShaderTypeToVkShaderStage(ShaderType type)
-	{
-		switch (type)
+		static shaderc_source_language GetSourceLanguageType(const FilePath& extension)
 		{
-		case ShaderType::VERTEX_SHADER: return VK_SHADER_STAGE_VERTEX_BIT;
-		case ShaderType::FRAGMENT_SHADER: return VK_SHADER_STAGE_FRAGMENT_BIT;
-		case ShaderType::GEOMETRY_SHADER: return VK_SHADER_STAGE_GEOMETRY_BIT;
-		case ShaderType::COMPUTE_SHADER: return VK_SHADER_STAGE_COMPUTE_BIT;
+			if (extension == ".glsl")
+				return shaderc_source_language_glsl;
+
+			if (extension == ".hlsl" || extension == ".hlsli")
+				return shaderc_source_language_hlsl;
+
+			ATN_CORE_ASSERT(false);
+			return (shaderc_source_language)0;
 		}
 
-		ATN_CORE_ASSERT(false);
-		return (VkShaderStageFlagBits)0;
+		static std::string_view GetEntryPointName(ShaderType type)
+		{
+			switch (type)
+			{
+			case ShaderType::VERTEX_SHADER: return "VSMain";
+			case ShaderType::FRAGMENT_SHADER: return "FSMain";
+			case ShaderType::GEOMETRY_SHADER: return "GSMain";
+			case ShaderType::COMPUTE_SHADER: return "CSMain";
+			}
+
+			ATN_CORE_ASSERT(false);
+			return "";
+		}
 	}
 
 
@@ -121,6 +139,7 @@ namespace Athena
 
 	bool VulkanShader::CompileOrGetBinaries(bool forceCompile)
 	{
+		Timer compilationTimer;
 		if (!FileSystem::Exists(m_FilePath))
 		{
 			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
@@ -139,7 +158,7 @@ namespace Athena
 
 		for (const auto& [type, _] : shaderSources)
 		{
-			cachedFilePaths[type] = Renderer::GetShaderCacheDirectory() / GetCachedFileName(m_FilePath.filename(), type);
+			cachedFilePaths[type] = Utils::GetCachedFilePath(m_FilePath, type);
 		}
 
 		// Check if need to recompile
@@ -155,19 +174,36 @@ namespace Athena
 
 		m_Compiled = true;
 
-		if (forceCompile || recompile)
+		forceCompile |= recompile;
+		if (forceCompile)
 		{
+			FileSystem::CreateDirectory(Renderer::GetShaderCacheDirectory() / "Vulkan");
+
 			shaderc::Compiler compiler;
 			shaderc::CompileOptions options;
 			options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 			options.SetOptimizationLevel(shaderc_optimization_level_performance);
-			//options.SetSourceLanguage(shaderc_source_language_hlsl);
+			options.SetSourceLanguage(Utils::GetSourceLanguageType(m_FilePath.extension()));
 			options.SetGenerateDebugInfo();
 
-			String filePathStr = m_FilePath.string();
+			const std::unordered_map<String, String>& globalMacroses = Renderer::GetGlobalShaderMacroses();
+			for (const auto& [name, value] : globalMacroses)
+			{
+				if (value.empty())
+				{
+					options.AddMacroDefinition(value);
+				}
+				else
+				{
+					options.AddMacroDefinition(name, value);
+				}
+			}
+
 			for (const auto& [type, source] : shaderSources)
 			{
-				shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(source, ShaderTypeToShaderCKind(type), filePathStr.c_str(), options);
+				String filePathStr = m_FilePath.string();
+				shaderc::SpvCompilationResult module = 
+					compiler.CompileGlslToSpv(source, Utils::ShaderTypeToShaderCKind(type), filePathStr.c_str(), Utils::GetEntryPointName(type).data(), options);
 
 				if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 				{
@@ -188,7 +224,7 @@ namespace Athena
 			for (const auto& [type, _] : shaderSources)
 			{
 				std::vector<byte> bytes = FileSystem::ReadFileBinary(cachedFilePaths.at(type));
-				ATN_CORE_ASSERT(bytes.size() % 4 == 0);
+				ATN_CORE_VERIFY(bytes.size() % 4 == 0);
 
 				m_SPIRVBinaries[type] = std::vector<uint32>(bytes.size() / sizeof(uint32));
 				memcpy(m_SPIRVBinaries[type].data(), bytes.data(), bytes.size());
@@ -197,6 +233,9 @@ namespace Athena
 
 		for (const auto& [type, src] : m_SPIRVBinaries)
 			Reflect(type, src);
+
+		if(forceCompile)
+			ATN_CORE_INFO_TAG("Vulkan", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
 
 		return true;
 	}
@@ -255,7 +294,7 @@ namespace Athena
 		spirv_cross::Compiler compiler(src);
 		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-		ATN_CORE_TRACE("Shader Reflect - {} {}", ShaderTypeToString(type), m_Name);
+		ATN_CORE_TRACE("Shader Reflect - {} {}", Utils::ShaderTypeToString(type), m_Name);
 		ATN_CORE_TRACE("    {} uniform buffers", resources.uniform_buffers.size());
 		ATN_CORE_TRACE("    {} resources", resources.sampled_images.size());
 
@@ -298,9 +337,9 @@ namespace Athena
 
 			VkPipelineShaderStageCreateInfo shaderStageCI = {};
 			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageCI.stage = ShaderTypeToVkShaderStage(type);
+			shaderStageCI.stage = VulkanUtils::GetShaderStage(type);
 			shaderStageCI.module = m_VulkanShaderModules[type];
-			shaderStageCI.pName = "main";
+			shaderStageCI.pName = m_FilePath.extension() == ".glsl" ? "main" : Utils::GetEntryPointName(type).data();
 
 			m_PipelineShaderStages.push_back(shaderStageCI);
 		}

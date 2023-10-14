@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Log.h"
 #include "Athena/Core/PlatformUtils.h"
 
 #include <chrono>
@@ -21,7 +22,21 @@ namespace Athena
 		Time(std::chrono::duration<Rep, Period> duration)
 			: m_Time(std::chrono::duration_cast<duration_type>(duration)) {}
 
-		inline operator double() const
+		String ToString() const
+		{
+			double value = AsSeconds();
+			if (value > 1.0)
+				return std::format("{:10f} s", value);
+
+			value = AsMilliseconds();
+			if (value > 1.0)
+				return std::format("{:10f} ms", value);
+
+			value = AsMicroseconds();
+			return std::format("{:10f} µs", value);
+		}
+
+		explicit inline operator double() const
 		{
 			return m_Time.count();
 		}
@@ -112,6 +127,12 @@ namespace Athena
 	private:
 		duration_type m_Time;
 	};
+
+	template<>
+	inline String ToString<Time>(const Time& time)
+	{
+		return time.ToString();
+	}
 
 
 	class Timer

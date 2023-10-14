@@ -11,10 +11,10 @@ namespace Athena
 {
 	static ShaderType ShaderTypeFromString(const String& type)
 	{
-		if (type == "VERTEX_SHADER") return ShaderType::VERTEX_SHADER;
-		if (type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER") return ShaderType::FRAGMENT_SHADER;
-		if (type == "GEOMETRY_SHADER") return ShaderType::GEOMETRY_SHADER;
-		if (type == "COMPUTE_SHADER") return ShaderType::COMPUTE_SHADER;
+		if (type == "VERTEX_STAGE") return ShaderType::VERTEX_SHADER;
+		if (type == "FRAGMENT_STAGE" || type == "PIXEL_STAGE") return ShaderType::FRAGMENT_SHADER;
+		if (type == "GEOMETRY_STAGE") return ShaderType::GEOMETRY_SHADER;
+		if (type == "COMPUTE_STAGE") return ShaderType::COMPUTE_SHADER;
 
 		ATN_CORE_ASSERT(false, "Unknown shader type!");
 		return ShaderType();
@@ -47,23 +47,20 @@ namespace Athena
 	{
 		std::unordered_map<ShaderType, String> shaderSources;
 
-		const char* typeToken = "#type";
-		uint64 typeTokenLength = strlen(typeToken);
-		uint64 pos = source.find(typeToken, 0);
+		const char* stageToken = "#pragma";
+		uint64 stageTokenLength = strlen(stageToken);
+		uint64 pos = source.find(stageToken, 0);
 		while (pos != String::npos)
 		{
 			uint64 eol = source.find_first_of("\r\n", pos);
 			ATN_CORE_ASSERT(eol != String::npos, "Syntax Error");
-			uint64 begin = pos + typeTokenLength + 1;
+			uint64 begin = pos + stageTokenLength + 1;
 			String typeString = source.substr(begin, eol - begin);
-			ATN_CORE_ASSERT(typeString == "VERTEX_SHADER" || typeString == "FRAGMENT_SHADER" || 
-				typeString == "PIXEL_SHADER" || typeString == "GEOMETRY_SHADER" || typeString == "COMPUTE_SHADER",
-				"Invalid Shader Type specifier");
-			
+
 			ShaderType type = ShaderTypeFromString(typeString);
 
 			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
-			pos = source.find(typeToken, nextLinePos);
+			pos = source.find(stageToken, nextLinePos);
 			shaderSources[type] = source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
 		}
 

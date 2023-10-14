@@ -64,7 +64,7 @@ source_group(TREE "${SCRIPTS_FOLDER}" FILES ${PYTHON_FILES} )
 set_property(TARGET PythonScripts PROPERTY LINKER_LANGUAGE CXX)
 set_property(TARGET PythonScripts PROPERTY FOLDER Core)
 
-# Show python scripts in solution explorer
+# Show shaders in solution explorer
 file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
 	"${SHADERS_FOLDER}/*.glsl"
     "${SHADERS_FOLDER}/*.hlsl")
@@ -74,6 +74,7 @@ add_library(Shaders ${SHADER_FILES})
 source_group(TREE "${SHADERS_FOLDER}" FILES ${SHADER_FILES} )
 set_property(TARGET Shaders PROPERTY LINKER_LANGUAGE CXX)
 set_property(TARGET Shaders PROPERTY FOLDER Core)
+
 
 # copy assimp dlls
 if(WIN32)  

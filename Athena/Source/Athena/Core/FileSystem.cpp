@@ -17,6 +17,10 @@ namespace Athena
 			in.read(result.data(), result.size());
 			in.close();
 		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read file {}", path);
+		}
 
 		return result;
 	}
@@ -35,12 +39,20 @@ namespace Athena
 			result.resize(size);
 			in.read((char*)result.data(), size);
 		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read binary file {}", path);
+		}
 		
 		return result;
 	}
 
 	bool FileSystem::WriteFile(const FilePath& path, const char* bytes, uint64 size)
 	{
+		FilePath parentDir = path.parent_path();
+		if (!FileSystem::Exists(parentDir))
+			FileSystem::CreateDirectory(parentDir);
+
 		std::ofstream out(path, std::ios::out | std::ios::binary);
 		if (out.is_open())
 		{
@@ -48,6 +60,10 @@ namespace Athena
 			out.flush();
 			out.close();
 			return true;
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to write to file {}", path);
 		}
 
 		return false;

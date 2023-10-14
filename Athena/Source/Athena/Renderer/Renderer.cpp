@@ -22,7 +22,7 @@ namespace Athena
 
 		FilePath ShaderPackDirectory;
 		FilePath ShaderCacheDirectory;
-		String GlobalShaderMacroses;
+		std::unordered_map<String, String> GlobalShaderMacroses;
 		Ref<ShaderLibrary> ShaderPack;
 
 		Renderer::Statistics Stats;
@@ -141,9 +141,14 @@ namespace Athena
 		return s_Data.ShaderPack;
 	}
 
-	const String& Renderer::GetGlobalShaderMacroses()
+	const std::unordered_map<String, String>& Renderer::GetGlobalShaderMacroses()
 	{
 		return s_Data.GlobalShaderMacroses;
+	}
+
+	void Renderer::SetGlobalShaderMacros(const String& name, const String& value)
+	{
+		s_Data.GlobalShaderMacroses[name] = value;
 	}
 
 	void Renderer::OnWindowResized(uint32 width, uint32 height)

@@ -43,7 +43,7 @@ namespace Athena
 	{
 		m_Data = new SceneRendererData();
 
-		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.glsl");
+		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
 
 		// Create Vertex Buffer
 		VkVertexInputBindingDescription bindingDescription = {};
@@ -56,8 +56,8 @@ namespace Athena
 			};
 
 			const std::vector<TVertex> vertices = {
-				{ { 0.0f, -0.5f }, { 1.f, 0.f, 0.f, 0.f }},
-				{ { 0.5f,  0.5f }, { 0.f, 1.f, 0.f, 0.f }},
+				{ { 0.0f, -0.5f }, { 1.f, 0.f, 0.f, 1.f }},
+				{ { 0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f }},
 				{ { -0.5f, 0.5f }, { 0.f, 0.f, 1.f, 1.f }}
 			};
 
@@ -325,7 +325,7 @@ namespace Athena
 		renderPassInfo.framebuffer = s_Framebuffers[swapChain->GetCurrentImageIndex()];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = { width, height };
-		VkClearValue clearColor = { {0.0f, 0.0f, 0.0f, 1.0f} };
+		VkClearValue clearColor = { {0.9f, 0.3f, 0.4f, 1.0f} };
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 

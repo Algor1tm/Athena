@@ -70,6 +70,11 @@ add_custom_command(TARGET Athena POST_BUILD
      "$<TARGET_FILE:Athena>"
      "${BUILD_FOLDER}/SandBox/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
 
+# Delete shader cache on project compile
+add_custom_command(TARGET Athena POST_BUILD COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/Shaders/")
+
+#file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/Shaders/")
+
 # Precompile Header
 target_precompile_headers(Athena PRIVATE
 	<memory> <algorithm> <functional> <utility> <chrono>

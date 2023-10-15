@@ -1,48 +1,45 @@
 #pragma VERTEX_STAGE
 
-struct VertexShaderInput
+#include "Buffers.hlsli"
+
+struct Vertex
 {
     float2 Position;
     float4 Color;
 };
 
-struct FragmentShaderInput
+struct Interpolators
 {
     float4 Position : SV_POSITION;
     float4 Color;
 };
 
-cbuffer Camera : register(b0, space0)
+Interpolators VSMain(Vertex vertex)
 {
-    float4x4 u_CameraView;
-};
-
-FragmentShaderInput VSMain(VertexShaderInput Input)
-{
-    FragmentShaderInput Output;
+    Interpolators output;
     
-    Output.Position = mul(float4(Input.Position, 0.0, 1.0), u_CameraView);
-    Output.Color = Input.Color;
-    return Output;
+    output.Position = mul(mul(float4(vertex.Position, 0.0, 1.0), u_Camera.View), u_Camera.Proj);
+    output.Color = vertex.Color;
+    return output;
 }
 
 #pragma FRAGMENT_STAGE
 
-struct FragmentShaderInput
+struct Interpolators
 {
     float4 Position : SV_POSITION;
     float4 Color;
 };
 
-struct FragmentShaderOuput
+struct Fragment
 {
     float4 Color : SV_TARGET0;
 };
 
-FragmentShaderOuput FSMain(FragmentShaderInput Input)
+Fragment FSMain(Interpolators input)
 {
-    FragmentShaderOuput Output;
+    Fragment output;
     
-    Output.Color = Input.Color;
-    return Output;
+    output.Color = input.Color;
+    return output;
 }

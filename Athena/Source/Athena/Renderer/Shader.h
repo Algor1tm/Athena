@@ -8,12 +8,12 @@
 
 namespace Athena
 {
-	enum class ShaderType
+	enum class ShaderStage
 	{
-		VERTEX_SHADER = 0,
-		FRAGMENT_SHADER = 1,
-		GEOMETRY_SHADER = 2,
-		COMPUTE_SHADER = 3
+		VERTEX_STAGE = 0,
+		FRAGMENT_STAGE = 1,
+		GEOMETRY_STAGE = 2,
+		COMPUTE_STAGE = 3
 	};
 
 	class ATHENA_API Shader

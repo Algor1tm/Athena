@@ -22,15 +22,15 @@ namespace Athena::Math
 	}
 
 	template <typename T>
-	inline Matrix<T, 4, 4> Perspective(T verticalFOV, T aspectRatio, T zNear, T zFar)
+	constexpr Matrix<T, 4, 4> Perspective(T verticalFOV, T aspectRatio, T zNear, T zFar)
 	{
 		Matrix<T, 4, 4> out(0.f);
-		T invTan = T(1) / Math::Tan(verticalFOV / static_cast<T>(2));
+		T invTan = static_cast<T>(1) / Math::Tan(verticalFOV / static_cast<T>(2));
 		out[0][0] = invTan / aspectRatio;
 		out[1][1] = invTan;
-		out[2][2] = -(zFar + zNear) / (zFar - zNear);
-		out[3][2] = static_cast<T>(-2) * (zFar * zNear) / (zFar - zNear);
-		out[2][3] = static_cast<T>(-1);
+		out[2][2] = zFar / (zFar - zNear);
+		out[3][2] = -(zFar * zNear) / (zFar - zNear);
+		out[2][3] = static_cast<T>(1);
 
 		return out;
 	}

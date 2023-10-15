@@ -131,7 +131,6 @@ namespace Athena
 
 	void VulkanRenderer::Shutdown()
 	{
-		
 		VkDevice logicalDevice = VulkanContext::s_CurrentDevice->GetLogicalDevice();
 
 		vkDestroyCommandPool(logicalDevice, VulkanContext::s_CommandPool, VulkanContext::s_Allocator);

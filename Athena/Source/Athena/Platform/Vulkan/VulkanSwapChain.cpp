@@ -175,7 +175,6 @@ namespace Athena
 
 		if (oldSwapChain != VK_NULL_HANDLE)
 		{
-			vkDeviceWaitIdle(logicalDevice);
 			CleanUp(oldSwapChain, m_SwapChainImageViews);
 		}
 

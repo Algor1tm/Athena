@@ -22,11 +22,11 @@ namespace Athena
 		const std::vector<VkPipelineShaderStageCreateInfo>& GetPipelineStages() const { return m_PipelineShaderStages; }
 
 	private:
-		bool PreProcess(const String& source, std::unordered_map<ShaderType, String>& result);
+		bool PreProcess(const String& source, std::unordered_map<ShaderStage, String>& result);
 
 		bool CompileOrGetBinaries(bool forceCompile = false);
-		bool CheckShaderStages(const std::unordered_map<ShaderType, String>& sources);
-		void Reflect(ShaderType type, const std::vector<uint32>& src);
+		bool CheckShaderStages(const std::unordered_map<ShaderStage, String>& sources);
+		void Reflect(ShaderStage stage, const std::vector<uint32>& src);
 
 		void CreateVulkanShaderModulesAndStages();
 		void CleanUp();
@@ -34,9 +34,9 @@ namespace Athena
 	private:
 		bool m_IsHlsl = true;
 		bool m_Compiled = false;
-		std::unordered_map<ShaderType, std::vector<uint32>> m_SPIRVBinaries;
+		std::unordered_map<ShaderStage, std::vector<uint32>> m_SPIRVBinaries;
 
-		std::unordered_map<ShaderType, VkShaderModule> m_VulkanShaderModules;
+		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> m_PipelineShaderStages;
 	};
 }

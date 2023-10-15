@@ -24,13 +24,13 @@ namespace Athena
 	struct CameraUBO
 	{
 		Matrix4 ViewMatrix;
+		Matrix4 ProjectionMatrix;
 	};
 
 	struct VulkanUBO
 	{
 		VkBuffer Buffer;
 		VkDeviceMemory BufferMemory;
-		void* MappedMemory;
 	};
 
 	static Ref<Shader> s_Shader;
@@ -171,7 +171,7 @@ namespace Athena
 
 			const TVertex vertices[] = {
 				{ { -0.5f, -0.5f }, { 1.f, 0.f, 0.f, 1.f } },
-				{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 1.f } },
+				{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 0.f } },
 				{ {  0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f } },
 				{ { -0.5f,  0.5f }, { 1.f, 1.f, 1.f, 1.f } }
 			};
@@ -381,7 +381,7 @@ namespace Athena
 			rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 			rasterizer.lineWidth = 1.0f;
 			rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 			rasterizer.depthBiasEnable = VK_FALSE;
 			rasterizer.depthBiasConstantFactor = 0.0f;
 			rasterizer.depthBiasClamp = 0.0f; 
@@ -564,11 +564,13 @@ namespace Athena
 			// Update Uniform buffer
 			{
 				s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
+				s_CameraUBO.ProjectionMatrix = cameraInfo.ProjectionMatrix;
 
 				auto& ubo = s_UniformBuffers[Renderer::GetCurrentFrameIndex()];
 
-				vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory, 0, sizeof(s_CameraUBO), 0, &ubo.MappedMemory);
-				memcpy(ubo.MappedMemory, &s_CameraUBO, sizeof(s_CameraUBO));
+				void* mappedMemory;
+				vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory, 0, sizeof(s_CameraUBO), 0, &mappedMemory);
+				memcpy(mappedMemory, &s_CameraUBO, sizeof(s_CameraUBO));
 				vkUnmapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory);
 
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, 0, 1, 

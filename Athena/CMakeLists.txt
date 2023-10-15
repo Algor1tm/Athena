@@ -115,6 +115,10 @@ if (Vulkan_FOUND)
 		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-cored.lib>
 		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>)
 
+	target_link_libraries(Athena PRIVATE
+		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/shaderc_utild.lib>
+		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
+
 endif(Vulkan_FOUND)
 
 add_subdirectory("${THIRD_PARTY_DIR}/pybind11")

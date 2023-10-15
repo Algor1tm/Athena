@@ -6,14 +6,14 @@
 
 namespace Athena::VulkanUtils
 {
-	static VkShaderStageFlagBits GetShaderStage(ShaderType type)
+	static VkShaderStageFlagBits GetShaderStage(ShaderStage stage)
 	{
-		switch (type)
+		switch (stage)
 		{
-		case ShaderType::VERTEX_SHADER: return VK_SHADER_STAGE_VERTEX_BIT;
-		case ShaderType::FRAGMENT_SHADER: return VK_SHADER_STAGE_FRAGMENT_BIT;
-		case ShaderType::GEOMETRY_SHADER: return VK_SHADER_STAGE_GEOMETRY_BIT;
-		case ShaderType::COMPUTE_SHADER: return VK_SHADER_STAGE_COMPUTE_BIT;
+		case ShaderStage::VERTEX_STAGE: return VK_SHADER_STAGE_VERTEX_BIT;
+		case ShaderStage::FRAGMENT_STAGE: return VK_SHADER_STAGE_FRAGMENT_BIT;
+		case ShaderStage::GEOMETRY_STAGE: return VK_SHADER_STAGE_GEOMETRY_BIT;
+		case ShaderStage::COMPUTE_STAGE: return VK_SHADER_STAGE_COMPUTE_BIT;
 		}
 
 		ATN_CORE_ASSERT(false);

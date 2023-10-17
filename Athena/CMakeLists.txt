@@ -61,6 +61,7 @@ set_target_properties(Athena
 )
 
 # Disable some warnings
+# 4099 - require debug info
 target_link_options(Athena PRIVATE /ignore:4099)
 
 add_custom_command(TARGET Athena POST_BUILD 

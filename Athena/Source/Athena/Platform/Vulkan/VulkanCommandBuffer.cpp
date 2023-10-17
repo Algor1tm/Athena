@@ -1,10 +1,6 @@
 #include "VulkanCommandBuffer.h"
 
-#include "Athena/Renderer/Renderer.h"
-
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanRenderer.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 
 namespace Athena
@@ -12,8 +8,6 @@ namespace Athena
 	VulkanCommandBuffer::VulkanCommandBuffer(CommandBufferUsage usage)
 		: m_Usage(usage)
 	{
-		ATN_CORE_ASSERT(m_Usage != CommandBufferUsage::UNDEFINED);
-
 		uint32 count = 0;
 		switch (m_Usage)
 		{
@@ -28,31 +22,37 @@ namespace Athena
 		cmdBufAllocInfo.commandBufferCount = count;
 
 		m_VkCommandBuffer.resize(count);
-		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetDevice()->GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffer.data()));
+		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffer.data()));
 	}
 
 	VulkanCommandBuffer::~VulkanCommandBuffer()
 	{
 		Renderer::SubmitResourceFree([commandBuffers = m_VkCommandBuffer]()
 			{
-				vkFreeCommandBuffers(VulkanContext::GetDevice()->GetLogicalDevice(), VulkanContext::GetCommandPool(), commandBuffers.size(), commandBuffers.data());
+				vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), commandBuffers.size(), commandBuffers.data());
 			});
 	}
 
 	void VulkanCommandBuffer::Begin()
 	{
-		VK_CHECK(vkResetCommandBuffer(GetVulkanCommandBuffer(), 0));
+		VkCommandBuffer vkCommandBuffer = GetVulkanCommandBuffer();
+
+		VK_CHECK(vkResetCommandBuffer(vkCommandBuffer, 0));
 
 		VkCommandBufferBeginInfo cmdBufBeginInfo = {};
 		cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		VK_CHECK(vkBeginCommandBuffer(GetVulkanCommandBuffer(), &cmdBufBeginInfo));
+		VK_CHECK(vkBeginCommandBuffer(vkCommandBuffer, &cmdBufBeginInfo));
+
+		VulkanContext::SetActiveCommandBuffer(vkCommandBuffer);
 	}
 
 	void VulkanCommandBuffer::End()
 	{
 		VK_CHECK(vkEndCommandBuffer(GetVulkanCommandBuffer()));
+
+		VulkanContext::SetActiveCommandBuffer(VK_NULL_HANDLE);
 	}
 
 	void VulkanCommandBuffer::Flush()
@@ -87,7 +87,6 @@ namespace Athena
 
 	void VulkanCommandBuffer::FlushImmediate()
 	{
-		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
 
 		VkSubmitInfo submitInfo = {};
@@ -100,13 +99,13 @@ namespace Athena
 		fenceInfo.flags = 0;
 
 		VkFence fence;
-		VK_CHECK(vkCreateFence(logicalDevice, &fenceInfo, VulkanContext::GetAllocator(), &fence));
+		VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, VulkanContext::GetAllocator(), &fence));
 
 		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
 
-		VK_CHECK(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+		VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
-		vkDestroyFence(logicalDevice, fence, VulkanContext::GetAllocator());
+		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, VulkanContext::GetAllocator());
 	}
 
 	VkCommandBuffer VulkanCommandBuffer::GetVulkanCommandBuffer()

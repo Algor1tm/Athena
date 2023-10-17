@@ -1,13 +1,10 @@
 #include "VulkanImGuiLayerImpl.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
-#include "Athena/Platform/Vulkan/VulkanRenderer.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -99,7 +96,7 @@ namespace Athena
 		init_info.ImageCount = Renderer::GetFramesInFlight();
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = VulkanContext::GetAllocator();
-		init_info.CheckVkResultFn = [](VkResult result) { CheckVulkanResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+		init_info.CheckVkResultFn = [](VkResult result) { Utils::CheckVulkanResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
 
 		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 
@@ -121,11 +118,11 @@ namespace Athena
 		
 		//Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
 		//	{
-				vkDestroyDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), m_ImGuiDescriptorPool, VulkanContext::GetAllocator());
-				vkDestroyRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), m_ImGuiRenderPass, VulkanContext::GetAllocator());
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), m_ImGuiDescriptorPool, VulkanContext::GetAllocator());
+				vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), m_ImGuiRenderPass, VulkanContext::GetAllocator());
 
 				for (auto framebuffer : m_SwapChainFramebuffers)
-					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+					vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 
 				ImGui_ImplVulkan_Shutdown();
 				ImGui_ImplGlfw_Shutdown();
@@ -140,10 +137,8 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::RenderDrawData(uint32 width, uint32 height)
 	{
-		Window& window = Application::Get().GetWindow();
-		Ref<SwapChain> swapChain = window.GetSwapChain();
-
-		VkCommandBuffer commandBuffer = Renderer::GetCommandQueue().As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
+		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
+		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

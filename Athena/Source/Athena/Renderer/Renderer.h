@@ -90,9 +90,6 @@ namespace Athena
 		static void Init(const RendererConfig& config);
 		static void Shutdown();
 		
-		// TMP
-		static Ref<CommandBuffer> GetCommandQueue();
-
 		static Renderer::API GetAPI();
 
 		static uint32 GetFramesInFlight();

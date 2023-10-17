@@ -1,10 +1,9 @@
 #include "VulkanRenderer.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
 #include "Athena/Platform/Vulkan/VulkanDevice.h"
 #include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -16,7 +15,30 @@ namespace Athena
 	Ref<VulkanDevice> VulkanContext::s_CurrentDevice = VK_NULL_HANDLE;
 	std::vector<FrameSyncData> VulkanContext::s_FrameSyncData;
 	VkCommandPool VulkanContext::s_CommandPool = VK_NULL_HANDLE;
+	VkCommandBuffer VulkanContext::s_ActiveCommandBuffer = VK_NULL_HANDLE;
 
+#ifdef ATN_DEBUG
+	inline VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
+		uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
+	{
+		switch (flags)
+		{
+		case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
+			ATN_CORE_INFO_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
+
+		case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+			ATN_CORE_WARN_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
+
+		case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+			ATN_CORE_WARN_TAG("Vulkan", "'PERFORMANCE WARNING' Debug report: \n{}\n", pMessage); break;
+
+		case VK_DEBUG_REPORT_ERROR_BIT_EXT:
+			ATN_CORE_ERROR_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
+		}
+
+		return VK_FALSE;
+	}
+#endif
 
 	void VulkanRenderer::Init()
 	{
@@ -48,7 +70,10 @@ namespace Athena
 			// Select Extensions
 			// Note: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
 			// maybe try other ways to initalize application
-			std::vector<const char*> extensions = { "VK_KHR_surface", "VK_KHR_win32_surface" }; //glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+			std::vector<const char*> extensions = { 
+				"VK_KHR_surface", 
+				"VK_KHR_win32_surface" };
+
 			std::vector<const char*> layers;
 
 #ifdef ATN_DEBUG
@@ -77,7 +102,7 @@ namespace Athena
 
 #ifdef ATN_DEBUG
 			// Setup the debug report callback
-			auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::s_Instance, "vkCreateDebugReportCallbackEXT");
+			auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkCreateDebugReportCallbackEXT");
 			ATN_CORE_ASSERT(vkCreateDebugReportCallbackEXT != NULL);
 
 			VkDebugReportCallbackCreateInfoEXT reportCI = {};
@@ -85,7 +110,7 @@ namespace Athena
 			reportCI.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 			reportCI.pfnCallback = VulkanDebugCallback;
 			reportCI.pUserData = NULL;
-			VK_CHECK(vkCreateDebugReportCallbackEXT(VulkanContext::s_Instance, &reportCI, VulkanContext::s_Allocator, &m_DebugReport));
+			VK_CHECK(vkCreateDebugReportCallbackEXT(VulkanContext::GetInstance(), &reportCI, VulkanContext::GetAllocator(), &m_DebugReport));
 #endif
 		}
 
@@ -96,8 +121,6 @@ namespace Athena
 
 		// Create synchronization primitives
 		{
-			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
-
 			VulkanContext::s_FrameSyncData.resize(Renderer::GetFramesInFlight());
 
 			for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)
@@ -105,54 +128,52 @@ namespace Athena
 				VkSemaphoreCreateInfo semaphoreCI = {};
 				semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 				// Semaphore used to ensure that image acquired from swapchain before starting to submit again
-				VK_CHECK(vkCreateSemaphore(logicalDevice, &semaphoreCI, VulkanContext::s_Allocator, &VulkanContext::s_FrameSyncData[i].ImageAcquiredSemaphore));
+				VK_CHECK(vkCreateSemaphore(VulkanContext::GetLogicalDevice(), &semaphoreCI, VulkanContext::GetAllocator(), &VulkanContext::s_FrameSyncData[i].ImageAcquiredSemaphore));
 				// Semaphore used to ensure that all commands submitted have been finished before submitting the image to the queue
-				VK_CHECK(vkCreateSemaphore(logicalDevice, &semaphoreCI, VulkanContext::s_Allocator, &VulkanContext::s_FrameSyncData[i].RenderCompleteSemaphore));
+				VK_CHECK(vkCreateSemaphore(VulkanContext::GetLogicalDevice(), &semaphoreCI, VulkanContext::GetAllocator(), &VulkanContext::s_FrameSyncData[i].RenderCompleteSemaphore));
 
 				VkFenceCreateInfo fenceCI = {};
 				fenceCI.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 				// Create in signaled state so we don't wait on first render of each command buffer
 				fenceCI.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-				VK_CHECK(vkCreateFence(logicalDevice, &fenceCI, VulkanContext::s_Allocator, &VulkanContext::s_FrameSyncData[i].RenderCompleteFence));
+				VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceCI, VulkanContext::GetAllocator(), &VulkanContext::s_FrameSyncData[i].RenderCompleteFence));
 
 			}
 		}
 
 		// Create CommandPool
 		{
-			Ref<VulkanDevice> device = VulkanContext::GetDevice();
-
 			VkCommandPoolCreateInfo commandPoolCI = {};
 			commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			commandPoolCI.queueFamilyIndex = device->GetQueueFamily();
+			commandPoolCI.queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
 			commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-			VK_CHECK(vkCreateCommandPool(device->GetLogicalDevice(), &commandPoolCI, VulkanContext::s_Allocator, &VulkanContext::s_CommandPool));
+			VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, VulkanContext::GetAllocator(), &VulkanContext::s_CommandPool));
 		}
 	}
 
 	void VulkanRenderer::Shutdown()
 	{
-		VkDevice logicalDevice = VulkanContext::s_CurrentDevice->GetLogicalDevice();
+		VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
 
-		vkDestroyCommandPool(logicalDevice, VulkanContext::s_CommandPool, VulkanContext::s_Allocator);
+		vkDestroyCommandPool(logicalDevice, VulkanContext::GetCommandPool(), VulkanContext::GetAllocator());
 
 		for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)
 		{
-			vkDestroySemaphore(logicalDevice, VulkanContext::s_FrameSyncData[i].ImageAcquiredSemaphore, VulkanContext::s_Allocator);
-			vkDestroySemaphore(logicalDevice, VulkanContext::s_FrameSyncData[i].RenderCompleteSemaphore, VulkanContext::s_Allocator);
+			vkDestroySemaphore(logicalDevice, VulkanContext::GetFrameSyncData(i).ImageAcquiredSemaphore, VulkanContext::GetAllocator());
+			vkDestroySemaphore(logicalDevice, VulkanContext::GetFrameSyncData(i).RenderCompleteSemaphore, VulkanContext::GetAllocator());
 
-			vkDestroyFence(logicalDevice, VulkanContext::s_FrameSyncData[i].RenderCompleteFence, VulkanContext::s_Allocator);
+			vkDestroyFence(logicalDevice, VulkanContext::GetFrameSyncData(i).RenderCompleteFence, VulkanContext::GetAllocator());
 		}
 
 		// Destroy Device
 		VulkanContext::s_CurrentDevice.Reset();
 
 #ifdef ATN_DEBUG
-		auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::s_Instance, "vkDestroyDebugReportCallbackEXT");
-		vkDestroyDebugReportCallbackEXT(VulkanContext::s_Instance, m_DebugReport, VulkanContext::s_Allocator);
+		auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkDestroyDebugReportCallbackEXT");
+		vkDestroyDebugReportCallbackEXT(VulkanContext::GetInstance(), m_DebugReport, VulkanContext::GetAllocator());
 #endif
 
-		vkDestroyInstance(VulkanContext::s_Instance, VulkanContext::s_Allocator);
+		vkDestroyInstance(VulkanContext::GetInstance(), VulkanContext::GetAllocator());
 	}
 
 	void VulkanRenderer::WaitDeviceIdle()

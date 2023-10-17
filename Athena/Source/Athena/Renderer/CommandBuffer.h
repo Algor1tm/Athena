@@ -7,7 +7,6 @@ namespace Athena
 {
 	enum class CommandBufferUsage
 	{
-		UNDEFINED,
 		PRESENT,
 		IMMEDIATE
 	};

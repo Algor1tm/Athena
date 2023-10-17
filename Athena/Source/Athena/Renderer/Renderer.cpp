@@ -75,11 +75,6 @@ namespace Athena
 		s_Data.RendererAPI->Shutdown();
 	}
 
-	Ref<CommandBuffer> Renderer::GetCommandQueue()
-	{
-		return s_Data.RenderCommandBuffer;
-	}
-
 	void Renderer::BeginFrame()
 	{
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;

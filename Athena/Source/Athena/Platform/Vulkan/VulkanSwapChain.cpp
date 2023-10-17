@@ -2,10 +2,8 @@
 
 #include "Athena/Core/Application.h"
 #include "Athena/ImGui/ImGuiLayer.h"
-#include "Athena/Renderer/Renderer.h"
 
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
-#include "Athena/Platform/Vulkan/VulkanRenderer.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -121,9 +119,9 @@ namespace Athena
 		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
 			{
 				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-					vkDestroyImageView(VulkanContext::GetDevice()->GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
+					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
 
-				vkDestroySwapchainKHR(VulkanContext::GetDevice()->GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
+				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
 
 				if(cleanupSurface)
 					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
@@ -137,13 +135,11 @@ namespace Athena
 
 		auto& app = Application::Get();
 
-		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
-		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		uint32 framesInFlight = Renderer::GetFramesInFlight();
 		VkSwapchainKHR oldSwapChain = m_VkSwapChain;
 
 		VkSurfaceCapabilitiesKHR surfaceCaps;
-		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanContext::GetPhysicalDevice(), m_Surface, &surfaceCaps);
 
 		VkExtent2D extent;
 		if (surfaceCaps.currentExtent.width == (uint32)-1)
@@ -181,7 +177,7 @@ namespace Athena
 		swapchainCI.oldSwapchain = oldSwapChain;
 
 
-		VK_CHECK(vkCreateSwapchainKHR(logicalDevice, &swapchainCI, VulkanContext::GetAllocator(), &m_VkSwapChain));
+		VK_CHECK(vkCreateSwapchainKHR(VulkanContext::GetLogicalDevice(), &swapchainCI, VulkanContext::GetAllocator(), &m_VkSwapChain));
 
 		if (oldSwapChain != VK_NULL_HANDLE)
 		{
@@ -189,11 +185,11 @@ namespace Athena
 		}
 
 		uint32 imagesCount;
-		vkGetSwapchainImagesKHR(logicalDevice, m_VkSwapChain, &imagesCount, nullptr);
+		vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, nullptr);
 		ATN_CORE_VERIFY(imagesCount == framesInFlight);
 
 		m_SwapChainImages.resize(framesInFlight);
-		VK_CHECK(vkGetSwapchainImagesKHR(logicalDevice, m_VkSwapChain, &imagesCount, m_SwapChainImages.data()));
+		VK_CHECK(vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, m_SwapChainImages.data()));
 
 		m_SwapChainImageViews.resize(framesInFlight);
 		for (uint32_t i = 0; i < framesInFlight; i++)
@@ -213,7 +209,7 @@ namespace Athena
 			imageViewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			imageViewCI.image = m_SwapChainImages[i];
 
-			VK_CHECK(vkCreateImageView(logicalDevice, &imageViewCI, VulkanContext::GetAllocator(), &m_SwapChainImageViews[i]));
+			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &imageViewCI, VulkanContext::GetAllocator(), &m_SwapChainImageViews[i]));
 		}
 
 		m_Dirty = false;
@@ -231,7 +227,7 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
+		VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 		vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);

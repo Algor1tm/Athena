@@ -1,7 +1,6 @@
 #include "VulkanDevice.h"
 
-#include "Athena/Platform/Vulkan/VulkanRenderer.h"
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 
 namespace Athena

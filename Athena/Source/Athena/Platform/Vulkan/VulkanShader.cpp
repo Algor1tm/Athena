@@ -2,11 +2,8 @@
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Time.h"
-#include "Athena/Renderer/Renderer.h"
 
-#include "Athena/Platform/Vulkan/VulkanRenderer.h"
-#include "Athena/Platform/Vulkan/VulkanDebug.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #if defined(_MSC_VER)
 	#pragma warning(push, 0)
@@ -437,11 +434,11 @@ namespace Athena
 			createInfo.codeSize = src.size() * sizeof(uint32);
 			createInfo.pCode = src.data();
 
-			VK_CHECK(vkCreateShaderModule(VulkanContext::GetDevice()->GetLogicalDevice(), &createInfo, VulkanContext::GetAllocator(), &m_VulkanShaderModules[stage]));
+			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &createInfo, VulkanContext::GetAllocator(), &m_VulkanShaderModules[stage]));
 
 			VkPipelineShaderStageCreateInfo shaderStageCI = {};
 			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageCI.stage = VulkanUtils::GetShaderStage(stage);
+			shaderStageCI.stage = Utils::GetVulkanShaderStage(stage);
 			shaderStageCI.module = m_VulkanShaderModules.at(stage);
 			shaderStageCI.pName = Utils::GetEntryPointName(stage, m_IsHlsl).data();
 
@@ -455,7 +452,7 @@ namespace Athena
 			{
 				for (const auto& [stage, src] : shaderModules)
 				{
-					vkDestroyShaderModule(VulkanContext::GetDevice()->GetLogicalDevice(), shaderModules.at(stage), VulkanContext::GetAllocator());
+					vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), VulkanContext::GetAllocator());
 				}
 			});
 	}

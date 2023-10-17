@@ -11,7 +11,7 @@ SandBoxLayer::SandBoxLayer(const FilePath& scenePath)
 
 void SandBoxLayer::OnAttach()
 {
-	m_SceneRenderer = SceneRenderer::Create();
+	//m_SceneRenderer = SceneRenderer::Create();
 	m_Camera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
 	//m_Scene = CreateRef<Scene>();
@@ -33,7 +33,7 @@ void SandBoxLayer::OnAttach()
 
 void SandBoxLayer::OnDetach()
 {
-	m_SceneRenderer->Shutdown();
+	//m_SceneRenderer->Shutdown();
 }
 
 void SandBoxLayer::OnUpdate(Time frameTime)
@@ -43,7 +43,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	// Temporary hack (scene renderer must be resized after Renderer::BeginFrame for now)
 	if (m_ViewportResized)
 	{
-		m_SceneRenderer->OnViewportResize(Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight());
+		//m_SceneRenderer->OnViewportResize(Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight());
 		m_ViewportResized = false;
 	}
 
@@ -55,9 +55,23 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	cameraInfo.NearClip = m_Camera->GetNearClip();
 	cameraInfo.FarClip = m_Camera->GetFarClip();
 
-	m_SceneRenderer->Render(cameraInfo);
+	//m_SceneRenderer->Render(cameraInfo);
 
 	Renderer::EndFrame();
+}
+
+void SandBoxLayer::OnImGuiRender()
+{
+	ImGui::Begin("Hello");
+	ImGui::End();
+}
+
+void SandBoxLayer::OnEvent(Event& event)
+{
+	m_Camera->OnEvent(event);
+
+	EventDispatcher dispatcher(event);
+	dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OnWindowResize));
 }
 
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
@@ -68,10 +82,3 @@ bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 	return false;
 }
 
-void SandBoxLayer::OnEvent(Event& event)
-{
-	m_Camera->OnEvent(event);
-
-	EventDispatcher dispatcher(event);
-	dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OnWindowResize));
-}

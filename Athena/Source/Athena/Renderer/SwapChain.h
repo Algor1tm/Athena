@@ -11,7 +11,7 @@ namespace Athena
 		static Ref<SwapChain> Create(void* windowHandle, bool vsync = false);
 		virtual ~SwapChain() = default;
 
-		virtual void Recreate() = 0;
+		virtual bool Recreate() = 0;
 		virtual void SetVSync(bool enabled) = 0;
 
 		virtual void AcquireImage() = 0;

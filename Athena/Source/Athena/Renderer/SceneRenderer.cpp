@@ -14,9 +14,10 @@
 #include "Athena/Platform/Vulkan/VulkanDebug.h"
 #include "Athena/Platform/Vulkan/VulkanRenderer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 #include <vulkan/vulkan.h>
 
-#define DEFAULT_FENCE_TIMEOUT 100000000000
 
 
 namespace Athena
@@ -98,49 +99,16 @@ namespace Athena
 
 		void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 		{
-			VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
+			Renderer::SubmitImmediate([srcBuffer, dstBuffer, size](Ref<CommandBuffer> commandBuffer)
+				{
+					VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetNativeCmdBuffer();
 
-			VkCommandBufferAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			allocInfo.commandPool = VulkanContext::GetCommandPool();
-			allocInfo.commandBufferCount = 1;
-
-			VkCommandBuffer commandBuffer;
-			VK_CHECK(vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer));
-
-			VkCommandBufferBeginInfo beginInfo = {};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-			VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
-			{
-				VkBufferCopy copyRegion{};
-				copyRegion.srcOffset = 0;
-				copyRegion.dstOffset = 0;
-				copyRegion.size = size;
-				vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-			}
-			VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-			VkSubmitInfo submitInfo{};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
-
-			VkFenceCreateInfo fenceInfo = {};
-			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-			fenceInfo.flags = 0;
-
-			VkFence fence;
-			VK_CHECK(vkCreateFence(logicalDevice, &fenceInfo, VulkanContext::GetAllocator(), &fence));
-
-			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
-
-			VK_CHECK(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-
-			vkDestroyFence(logicalDevice, fence, VulkanContext::GetAllocator());
-			vkFreeCommandBuffers(logicalDevice, VulkanContext::GetCommandPool(), 1, &commandBuffer);
+					VkBufferCopy copyRegion{};
+					copyRegion.srcOffset = 0;
+					copyRegion.dstOffset = 0;
+					copyRegion.size = size;
+					vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
+				});
 		}
 	}
 
@@ -473,7 +441,7 @@ namespace Athena
 			{
 				VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
 
-				VkFramebufferCreateInfo framebufferInfo{};
+				VkFramebufferCreateInfo framebufferInfo = {};
 				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 				framebufferInfo.renderPass = s_RenderPass;
 				framebufferInfo.attachmentCount = 1;
@@ -525,7 +493,6 @@ namespace Athena
 		Ref<SwapChain> swapChain = window.GetSwapChain();
 
 		VkCommandBuffer commandBuffer = (VkCommandBuffer)Renderer::GetCommandQueue()->GetCommandBuffer();
-		VkImage swapChainImage = (VkImage)swapChain->GetCurrentImageHandle();
 		uint32 width = window.GetWidth();
 		uint32 height = window.GetHeight();
 

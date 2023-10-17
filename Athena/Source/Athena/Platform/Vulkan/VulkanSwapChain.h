@@ -16,7 +16,7 @@ namespace Athena
 
 		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews, bool cleanupSurface = false);
 
-		virtual void Recreate() override;
+		virtual bool Recreate() override;
 		virtual void SetVSync(bool enabled) override;
 
 		virtual void AcquireImage() override;
@@ -34,11 +34,11 @@ namespace Athena
 		std::vector<VkImage> m_SwapChainImages;
 		std::vector<VkImageView> m_SwapChainImageViews;
 
-		uint32 m_ImageIndex = 0;
-
-		bool m_VSync = false;
 		VkPresentModeKHR m_SelectedPresentMode;
 		VkSurfaceFormatKHR m_SelectedFormat;
-		bool m_Dirty = false;
+
+		uint32 m_ImageIndex;
+		bool m_VSync;
+		bool m_Dirty;
 	};
 }

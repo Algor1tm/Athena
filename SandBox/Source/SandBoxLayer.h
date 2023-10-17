@@ -14,6 +14,7 @@ public:
 
 	void OnUpdate(Time frameTime) override;
 	void OnEvent(Event& event) override;
+	void OnImGuiRender() override;
 
 private:
 	bool OnWindowResize(WindowResizeEvent& event);

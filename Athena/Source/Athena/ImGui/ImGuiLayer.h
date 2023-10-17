@@ -17,9 +17,9 @@ namespace Athena
 		virtual void Shutdown() = 0;
 
 		virtual void NewFrame() = 0;
-		virtual void RenderDrawData() = 0;
+		virtual void RenderDrawData(uint32 width, uint32 height) = 0;
 
-		virtual void UpdateViewports() = 0;
+		virtual void OnSwapChainRecreate() = 0;
 	};
 
 
@@ -41,6 +41,8 @@ namespace Athena
 		void Begin();
 		void End();
 		
+		void OnSwapChainRecreate();
+
 		void BlockEvents(bool block) { m_BlockEvents = block; }
 
 	private:

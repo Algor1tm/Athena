@@ -5,6 +5,7 @@
 
 #include "Athena/Renderer/Renderer.h"
 
+#include "Athena/Platform/Vulkan/VulkanImGuiLayerImpl.h"
 
 #include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
@@ -46,7 +47,7 @@ namespace Athena
 
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = nullptr; break;
+		case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = Scope<VulkanImGuiLayerImpl>::Create(); break;
 		case Renderer::API::None: imguiLayer->m_ImGuiImpl = nullptr; break;
 		}
 
@@ -133,14 +134,9 @@ namespace Athena
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
-		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
-		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
-		//ImGui::StyleColorsClassic();
 
-		// When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
 		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
@@ -153,12 +149,6 @@ namespace Athena
 
 		Application& app = Application::Get();
 
-		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
-
-		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})", 
-			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
-
-
 		const FilePath& resources = app.GetEngineResourcesPath();
 		FilePath defaultFontPath = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
 		FilePath boldFontPath = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
@@ -166,6 +156,11 @@ namespace Athena
 		io.FontDefault = TryLoadImGuiFont(defaultFontPath, 16.f);
 		TryLoadImGuiFont(boldFontPath, 16.f);
 		TryLoadImGuiFont(defaultFontPath, 22.f);
+
+		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
+
+		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
+			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
 	}
 
 	void ImGuiLayer::OnDetach()
@@ -196,16 +191,24 @@ namespace Athena
 	void ImGuiLayer::End()
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		Application& app = Application::Get();
-		io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
+		uint32 windowWidth = Application::Get().GetWindow().GetWidth();
+		uint32 windowHeight = Application::Get().GetWindow().GetHeight();
+
+		io.DisplaySize = ImVec2((float)windowWidth, (float)windowHeight);
 
 		// Rendering
 		ImGui::Render();
-		m_ImGuiImpl->RenderDrawData();
+		m_ImGuiImpl->RenderDrawData(windowWidth, windowHeight);
 
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			m_ImGuiImpl->UpdateViewports();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
 		}
+	}
+
+	void ImGuiLayer::OnSwapChainRecreate()
+	{
+		m_ImGuiImpl->OnSwapChainRecreate();
 	}
 }

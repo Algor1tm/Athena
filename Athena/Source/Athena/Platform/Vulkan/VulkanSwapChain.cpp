@@ -15,6 +15,7 @@ namespace Athena
 	{
 		m_VSync = vsync;
 		m_ImageIndex = 0;
+		m_Dirty = true;
 
 		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
 		uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
@@ -128,8 +129,13 @@ namespace Athena
 			});
 	}
 
-	void VulkanSwapChain::Recreate()
+	bool VulkanSwapChain::Recreate()
 	{
+		if (!m_Dirty)
+			return false;
+
+		auto& app = Application::Get();
+
 		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
 		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		uint32 framesInFlight = Renderer::GetFramesInFlight();
@@ -141,8 +147,8 @@ namespace Athena
 		VkExtent2D extent;
 		if (surfaceCaps.currentExtent.width == (uint32)-1)
 		{
-			extent.width = Application::Get().GetWindow().GetWidth();
-			extent.height = Application::Get().GetWindow().GetHeight();
+			extent.width = app.GetWindow().GetWidth();
+			extent.height = app.GetWindow().GetHeight();
 
 			extent.width = Math::Clamp(extent.width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
 			extent.height = Math::Clamp(extent.width, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
@@ -207,6 +213,7 @@ namespace Athena
 		}
 
 		m_Dirty = false;
+		return true;
 	}
 
 	void VulkanSwapChain::SetVSync(bool enabled)
@@ -220,11 +227,6 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		if (m_Dirty)
-		{
-			Recreate();
-		}
-
 		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 

@@ -3,6 +3,8 @@
 
 #include <vulkan/vulkan.h>
 
+#define DEFAULT_FENCE_TIMEOUT 100000000000
+
 
 namespace Athena::VulkanUtils
 {

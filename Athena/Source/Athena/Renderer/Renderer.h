@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 
+#include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
 
@@ -102,7 +103,9 @@ namespace Athena
 
 		static void Flush();
 		static void SubmitResourceFree(std::function<void()>&& func);
-
+		static void SubmitImmediate(std::function<void(Ref<CommandBuffer>)>&& func);
+		static void WaitDeviceIdle();
+		
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();
 		static Ref<ShaderLibrary> GetShaderLibrary();

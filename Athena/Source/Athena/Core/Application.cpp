@@ -52,9 +52,10 @@ namespace Athena
 
 	Application::~Application()
 	{
+		Renderer::WaitDeviceIdle();
+
 		m_LayerStack.Clear();
 
-		// Destroy SwapChain before Renderer::Shutdown
 		m_Window.Reset();
 
 		ScriptEngine::Shutdown();
@@ -76,8 +77,6 @@ namespace Athena
 				// Process Event Queue
 				{
 					Time start = timer.ElapsedTime();
-
-					std::scoped_lock<std::mutex> lock(m_EventQueueMutex);
 
 					while (!m_EventQueue.empty())
 					{
@@ -123,6 +122,13 @@ namespace Athena
 			{
 				Time start = timer.ElapsedTime();
 				m_Window->OnUpdate();
+
+				// Recreate SwapChain?
+				if (m_Window->GetSwapChain()->Recreate())
+				{
+					m_ImGuiLayer->OnSwapChainRecreate();
+				}
+
 				m_Statistics.Window_OnUpdate = timer.ElapsedTime() - start;
 			}
 
@@ -132,8 +138,6 @@ namespace Athena
 
 	void Application::QueueEvent(const Ref<Event>& event)
 	{
-		std::scoped_lock<std::mutex> lock(m_EventQueueMutex);
-
 		m_EventQueue.push(event);
 	}
 
@@ -171,7 +175,7 @@ namespace Athena
 	bool Application::OnWindowClose(WindowCloseEvent& event)
 	{
 		m_Running = false;
-		return true;
+		return false;
 	}
 
 	bool Application::OnWindowResized(WindowResizeEvent& event)
@@ -183,6 +187,7 @@ namespace Athena
 		}
 
 		m_Minimized = false;
+
 		Renderer::OnWindowResized(event.GetWidth(), event.GetHeight());
 
 		return false;

@@ -46,7 +46,6 @@ namespace Athena
 		virtual ~Application();
 
 		void Run();
-		void QueueEvent(const Ref<Event>& event);
 
 		void PushLayer(Ref<Layer> layer);
 		void PushOverlay(Ref<Layer> layer);
@@ -73,6 +72,7 @@ namespace Athena
 		};
 
 	private:
+		void QueueEvent(const Ref<Event>& event);
 		void OnEvent(Event& event);
 		bool OnWindowClose(WindowCloseEvent& event);
 		bool OnWindowResized(WindowResizeEvent& event);
@@ -86,7 +86,6 @@ namespace Athena
 		bool m_Minimized;
 		LayerStack m_LayerStack;
 
-		std::mutex m_EventQueueMutex;
 		std::queue<Ref<Event>> m_EventQueue;
 
 		Statistics m_Statistics;

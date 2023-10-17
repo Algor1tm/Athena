@@ -8,8 +8,6 @@
 
 namespace Athena
 {
-	class ATHENA_API GraphicsContext;
-
 	using WindowEventCallback = std::function<void(const Ref<Event>&)>;
 	using TitlebarHitTestCallback = std::function<bool()>;
 
@@ -31,6 +29,7 @@ namespace Athena
 		bool CustomTitlebar = false;
 		bool WindowResizeable = true;
 		FilePath Icon;
+		WindowEventCallback EventCallback = nullptr;
 	};
 
 	class ATHENA_API Window
@@ -40,7 +39,8 @@ namespace Athena
 
 		~Window();
 		
-		void OnUpdate();
+		void PollEvents();
+		void SwapBuffers();
 
 		uint32 GetWidth() const { return m_Data.Width; }
 		uint32 GetHeight() const { return m_Data.Height; }

@@ -11,18 +11,22 @@ namespace Athena
 	class VulkanCommandBuffer: public CommandBuffer
 	{
 	public:
-		VulkanCommandBuffer();
+		VulkanCommandBuffer(CommandBufferUsage usage);
 		~VulkanCommandBuffer();
 
 		virtual void Begin() override;
 		virtual void End() override;
 
-		// Temporary function
-		virtual void* GetCommandBuffer() override { return (void*)GetNativeCmdBuffer(); }
+		virtual void Flush() override;
 
-		VkCommandBuffer GetNativeCmdBuffer();
+		VkCommandBuffer GetVulkanCommandBuffer();
 
 	private:
-		std::vector<VkCommandBuffer> m_CommandBuffers;
+		void FlushForPresent();
+		void FlushImmediate();
+
+	private:
+		CommandBufferUsage m_Usage;
+		std::vector<VkCommandBuffer> m_VkCommandBuffer;
 	};
 }

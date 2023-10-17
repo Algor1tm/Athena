@@ -7,11 +7,11 @@
 
 namespace Athena
 {
-	Ref<CommandBuffer> CommandBuffer::Create()
+	Ref<CommandBuffer> CommandBuffer::Create(CommandBufferUsage usage)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanCommandBuffer>::Create();
+		case Renderer::API::Vulkan: return Ref<VulkanCommandBuffer>::Create(usage);
 		case Renderer::API::None: return nullptr;
 		}
 

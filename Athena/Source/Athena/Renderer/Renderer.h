@@ -103,7 +103,6 @@ namespace Athena
 
 		static void Flush();
 		static void SubmitResourceFree(std::function<void()>&& func);
-		static void SubmitImmediate(std::function<void(Ref<CommandBuffer>)>&& func);
 		static void WaitDeviceIdle();
 		
 		static const FilePath& GetShaderPackDirectory();
@@ -111,8 +110,6 @@ namespace Athena
 		static Ref<ShaderLibrary> GetShaderLibrary();
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
-
-		static void OnWindowResized(uint32 width, uint32 height);
 
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();

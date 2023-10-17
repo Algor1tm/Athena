@@ -25,7 +25,8 @@ namespace Athena
 		virtual void* GetCurrentImageHandle() override;
 		virtual uint32 GetCurrentImageIndex() override { return m_ImageIndex; }
 
-		const std::vector<VkImageView> GetVulkanImageViews() const { return m_SwapChainImageViews; };
+		const std::vector<VkImageView>& GetVulkanImageViews() const { return m_SwapChainImageViews; }
+		VkFormat GetFormat() const { return m_Format.format; }
 
 	private:
 		VkSurfaceKHR m_Surface;
@@ -34,8 +35,8 @@ namespace Athena
 		std::vector<VkImage> m_SwapChainImages;
 		std::vector<VkImageView> m_SwapChainImageViews;
 
-		VkPresentModeKHR m_SelectedPresentMode;
-		VkSurfaceFormatKHR m_SelectedFormat;
+		VkPresentModeKHR m_PresentMode;
+		VkSurfaceFormatKHR m_Format;
 
 		uint32 m_ImageIndex;
 		bool m_VSync;

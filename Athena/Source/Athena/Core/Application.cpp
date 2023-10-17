@@ -23,31 +23,16 @@ namespace Athena
 		ATN_CORE_VERIFY(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
-		m_Name = appinfo.AppConfig.Name;
-		m_EngineResourcesPath = appinfo.AppConfig.EngineResources;
+		m_Config = appinfo.AppConfig;
 
-		if (appinfo.AppConfig.WorkingDirectory != FilePath())
-			FileSystem::SetWorkingDirectory(appinfo.AppConfig.WorkingDirectory);
+		if (m_Config.WorkingDirectory != FilePath())
+			FileSystem::SetWorkingDirectory(m_Config.WorkingDirectory);
 
-		Log::Init(appinfo.AppConfig.EnableConsole);
-			
+		Log::Init(m_Config.EnableConsole);
 		Renderer::Init(appinfo.RendererConfig);
-
-		m_Window = Window::Create(appinfo.WindowInfo);
-		m_Window->SetEventCallback([this](const Ref<Event>& event) { Application::QueueEvent(event); });
-		QueueEvent(Ref<WindowResizeEvent>::Create(m_Window->GetWidth(), m_Window->GetHeight()));
-
+		CreateMainWindow(appinfo.WindowInfo);
+		InitImGui();
 		ScriptEngine::Init(appinfo.ScriptConfig);
-
-		if (appinfo.AppConfig.EnableImGui)
-		{
-			m_ImGuiLayer = ImGuiLayer::Create();
-			PushOverlay(m_ImGuiLayer);
-		}
-		else
-		{
-			m_ImGuiLayer = nullptr;
-		}
 	}
 
 	Application::~Application()
@@ -55,9 +40,7 @@ namespace Athena
 		Renderer::WaitDeviceIdle();
 
 		m_LayerStack.Clear();
-
 		m_Window.Reset();
-
 		ScriptEngine::Shutdown();
 		Renderer::Shutdown();
 	}
@@ -72,67 +55,87 @@ namespace Athena
 			Time start = timer.ElapsedTime();
 			m_Statistics.FrameTime = frameTime;
 
+			// Process Events
+			ProcessEvents();
+
 			if (m_Minimized == false)
 			{
-				// Process Event Queue
-				{
-					Time start = timer.ElapsedTime();
-
-					while (!m_EventQueue.empty())
-					{
-						Event& event = *m_EventQueue.front();
-						OnEvent(event);
-						m_EventQueue.pop();
-					}
-
-					m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
-				}
-
+				Renderer::BeginFrame();
 				// Update
 				{
 					Time start = timer.ElapsedTime();
 
 					for (Ref<Layer> layer : m_LayerStack)
-					{
 						layer->OnUpdate(frameTime);
-					}
 
 					m_Statistics.Application_OnUpdate = timer.ElapsedTime() - start;
 				}
 
 				// Render UI
-				if (m_ImGuiLayer != nullptr)
+				UpdateImGui();
+
+				Renderer::EndFrame();
+				 
+				// Swap Buffers
 				{
 					Time start = timer.ElapsedTime();
+					m_Window->SwapBuffers();
 
-					m_ImGuiLayer->Begin();
+					// Recreate SwapChain?
+					if (m_Window->GetSwapChain()->Recreate())
 					{
-						for (Ref<Layer> layer : m_LayerStack)
-						{
-							layer->OnImGuiRender();
-						}
+						if (m_ImGuiLayer)
+							m_ImGuiLayer->OnSwapChainRecreate();
 					}
-					m_ImGuiLayer->End();
 
-					m_Statistics.Application_OnImGuiRender = timer.ElapsedTime() - start;
+					m_Statistics.Window_SwapBuffers = timer.ElapsedTime() - start;
 				}
 			}
-
-			// Swap Buffers
+			else
 			{
-				Time start = timer.ElapsedTime();
-				m_Window->OnUpdate();
+				// Update ImGui viewports, that outside of window rect, when window minimized
+				UpdateImGui();
 
-				// Recreate SwapChain?
-				if (m_Window->GetSwapChain()->Recreate())
-				{
-					m_ImGuiLayer->OnSwapChainRecreate();
-				}
-
-				m_Statistics.Window_OnUpdate = timer.ElapsedTime() - start;
+				// Immitate VSync when minimized
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
+
+
 
 			frameTime = timer.ElapsedTime() - start;
+		}
+	}
+
+	void Application::ProcessEvents()
+	{
+		//Time start = timer.ElapsedTime();
+
+		m_Window->PollEvents();
+
+		while (!m_EventQueue.empty())
+		{
+			Event& event = *m_EventQueue.front();
+			OnEvent(event);
+			m_EventQueue.pop();
+		}
+
+		//m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
+	}
+
+	void Application::UpdateImGui()
+	{
+		if (m_Config.EnableImGui)
+		{
+			//Time start = timer.ElapsedTime();
+
+			m_ImGuiLayer->Begin();
+			{
+				for (Ref<Layer> layer : m_LayerStack)
+					layer->OnImGuiRender();
+			}
+			m_ImGuiLayer->End(m_Minimized);
+
+			//m_Statistics.Application_OnImGuiRender = timer.ElapsedTime() - start;
 		}
 	}
 
@@ -188,8 +191,27 @@ namespace Athena
 
 		m_Minimized = false;
 
-		Renderer::OnWindowResized(event.GetWidth(), event.GetHeight());
-
 		return false;
+	}
+
+	void Application::CreateMainWindow(WindowCreateInfo info)
+	{
+		if (info.EventCallback == nullptr)
+			info.EventCallback = [this](const Ref<Event>& event) { Application::QueueEvent(event); };
+
+		m_Window = Window::Create(info);
+	}
+
+	void Application::InitImGui()
+	{
+		if (m_Config.EnableImGui)
+		{
+			m_ImGuiLayer = ImGuiLayer::Create();
+			PushOverlay(m_ImGuiLayer);
+		}
+		else
+		{
+			m_ImGuiLayer = nullptr;
+		}
 	}
 }

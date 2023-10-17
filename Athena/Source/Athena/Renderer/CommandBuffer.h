@@ -5,16 +5,22 @@
 
 namespace Athena
 {
+	enum class CommandBufferUsage
+	{
+		UNDEFINED,
+		PRESENT,
+		IMMEDIATE
+	};
+
 	class ATHENA_API CommandBuffer
 	{
 	public:
-		static Ref<CommandBuffer> Create();
+		static Ref<CommandBuffer> Create(CommandBufferUsage usage);
 		virtual ~CommandBuffer() = default;
 
 		virtual void Begin() = 0;
 		virtual void End() = 0;
 
-		// Temporary function
-		virtual void* GetCommandBuffer() = 0;
+		virtual void Flush() = 0;
 	};
 }

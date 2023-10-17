@@ -222,6 +222,7 @@ namespace Athena
 		windowData.VSync = info.VSync;
 		windowData.Title = info.Title;
 		windowData.CustomTitlebar = info.CustomTitlebar;
+		windowData.EventCallback = info.EventCallback;
 
 		window->m_Data = windowData;
 
@@ -296,9 +297,13 @@ namespace Athena
 		}
 	}
 
-	void Window::OnUpdate()
+	void Window::PollEvents()
 	{
 		glfwPollEvents();
+	}
+
+	void Window::SwapBuffers()
+	{
 		m_SwapChain->Present();
 	}
 

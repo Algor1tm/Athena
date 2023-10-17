@@ -188,7 +188,7 @@ namespace Athena
 		ImGuizmo::BeginFrame();
 	}
 
-	void ImGuiLayer::End()
+	void ImGuiLayer::End(bool minimized)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		uint32 windowWidth = Application::Get().GetWindow().GetWidth();
@@ -198,8 +198,10 @@ namespace Athena
 
 		// Rendering
 		ImGui::Render();
-		m_ImGuiImpl->RenderDrawData(windowWidth, windowHeight);
 
+		if(!minimized)
+			m_ImGuiImpl->RenderDrawData(windowWidth, windowHeight);
+		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();

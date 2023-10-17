@@ -1,6 +1,7 @@
 #include "VulkanSwapChain.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/Vulkan/VulkanDebug.h"
@@ -73,7 +74,7 @@ namespace Athena
 						return rateFormat(left) > rateFormat(right);
 					});
 
-				m_SelectedFormat = surfaceFormats[0];
+				m_Format = surfaceFormats[0];
 			}
 
 			// Present mode
@@ -102,7 +103,7 @@ namespace Athena
 						return ratePresentMode(left) > ratePresentMode(right);
 					});
 
-				m_SelectedPresentMode = surfacePresentModes[0];
+				m_PresentMode = surfacePresentModes[0];
 			}
 
 
@@ -159,12 +160,15 @@ namespace Athena
 			extent.height = surfaceCaps.currentExtent.height;
 		}
 
+		if (extent.width == 0 || extent.height == 0)
+			return false;
+
 		VkSwapchainCreateInfoKHR swapchainCI = {};
 		swapchainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCI.surface = m_Surface;
 		swapchainCI.minImageCount = framesInFlight;
-		swapchainCI.imageFormat = m_SelectedFormat.format;
-		swapchainCI.imageColorSpace = m_SelectedFormat.colorSpace;
+		swapchainCI.imageFormat = m_Format.format;
+		swapchainCI.imageColorSpace = m_Format.colorSpace;
 		swapchainCI.imageExtent.width = extent.width;
 		swapchainCI.imageExtent.height = extent.height;
 		swapchainCI.imageArrayLayers = 1;
@@ -172,7 +176,7 @@ namespace Athena
 		swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;           // Assume that graphics family == present family
 		swapchainCI.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 		swapchainCI.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		swapchainCI.presentMode = m_VSync ? VK_PRESENT_MODE_FIFO_KHR : m_SelectedPresentMode;
+		swapchainCI.presentMode = m_VSync ? VK_PRESENT_MODE_FIFO_KHR : m_PresentMode;
 		swapchainCI.clipped = VK_TRUE;
 		swapchainCI.oldSwapchain = oldSwapChain;
 
@@ -196,7 +200,7 @@ namespace Athena
 		{
 			VkImageViewCreateInfo imageViewCI = {};
 			imageViewCI.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			imageViewCI.format = m_SelectedFormat.format;
+			imageViewCI.format = m_Format.format;
 			imageViewCI.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 			imageViewCI.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 			imageViewCI.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -237,8 +241,14 @@ namespace Athena
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
 		{
 			m_Dirty = true;
-			ATN_CORE_ASSERT(false); // TODO: test it
-			return;
+			Recreate();
+
+			// TODO: remove ui layer logic from here
+			auto uiLayer = Application::Get().GetImGuiLayer();
+			if (uiLayer)
+				uiLayer->OnSwapChainRecreate();
+
+			VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
 		}
 		else
 		{

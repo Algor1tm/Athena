@@ -60,6 +60,9 @@ set_target_properties(Athena
 	RUNTIME_OUTPUT_DIRECTORY "${BUILD_FOLDER}/Athena"
 )
 
+# Disable some warnings
+target_link_options(Athena PRIVATE /ignore:4099)
+
 add_custom_command(TARGET Athena POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 
      "$<TARGET_FILE:Athena>"
@@ -72,8 +75,6 @@ add_custom_command(TARGET Athena POST_BUILD
 
 # Delete shader cache on project compile
 add_custom_command(TARGET Athena POST_BUILD COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/Shaders/")
-
-#file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/Shaders/")
 
 # Precompile Header
 target_precompile_headers(Athena PRIVATE

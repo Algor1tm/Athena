@@ -16,9 +16,9 @@ namespace Athena
 		uint32 MaxFramesInFlight = 3;
 		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
-		Ref<CommandBuffer> MainCommandQueue;
-		Ref<CommandBuffer> ImmediateCommandQueue;
-		
+		Ref<CommandBuffer> RenderCommandBuffer;
+
+		// Per frame in flight
 		std::vector<std::vector<std::function<void()>>> ResourceFreeQueue;
 
 		FilePath ShaderPackDirectory;
@@ -58,27 +58,26 @@ namespace Athena
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
-		                                                
-		s_Data.MainCommandQueue = CommandBuffer::Create();
-		s_Data.ImmediateCommandQueue = CommandBuffer::Create();
+		
+		s_Data.RenderCommandBuffer = CommandBuffer::Create(CommandBufferUsage::PRESENT);
 	}
 
 	void Renderer::Shutdown()
 	{
+		s_Data.RenderCommandBuffer.Reset();
+
 		{
 			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
 				func();
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
 
-		s_Data.MainCommandQueue.Reset();
-		s_Data.ImmediateCommandQueue.Reset();
 		s_Data.RendererAPI->Shutdown();
 	}
 
 	Ref<CommandBuffer> Renderer::GetCommandQueue()
 	{
-		return s_Data.MainCommandQueue;
+		return s_Data.RenderCommandBuffer;
 	}
 
 	void Renderer::BeginFrame()
@@ -95,18 +94,17 @@ namespace Athena
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
 
-		s_Data.MainCommandQueue->Begin();
+		s_Data.RenderCommandBuffer->Begin();
 	}
 
 	void Renderer::EndFrame()
 	{
-		
+		s_Data.RenderCommandBuffer->End();
 	}
 
 	void Renderer::Flush()
 	{
-		s_Data.MainCommandQueue->End();
-		s_Data.RendererAPI->Flush(s_Data.MainCommandQueue);
+		s_Data.RenderCommandBuffer->Flush();
 	}
 
 	Renderer::API Renderer::GetAPI()
@@ -127,15 +125,6 @@ namespace Athena
 	void Renderer::SubmitResourceFree(std::function<void()>&& func)
 	{
 		s_Data.ResourceFreeQueue[Renderer::GetCurrentFrameIndex()].push_back(func);
-	}
-
-	void Renderer::SubmitImmediate(std::function<void(Ref<CommandBuffer>)>&& func)
-	{
-		s_Data.ImmediateCommandQueue->Begin();
-		func(s_Data.ImmediateCommandQueue);
-		s_Data.ImmediateCommandQueue->End();
-
-		s_Data.RendererAPI->FlushImmediate(s_Data.ImmediateCommandQueue);
 	}
 
 	void Renderer::WaitDeviceIdle()
@@ -166,11 +155,6 @@ namespace Athena
 	void Renderer::SetGlobalShaderMacros(const String& name, const String& value)
 	{
 		s_Data.GlobalShaderMacroses[name] = value;
-	}
-
-	void Renderer::OnWindowResized(uint32 width, uint32 height)
-	{
-		
 	}
 
 	const Renderer::Statistics& Renderer::GetStatistics()

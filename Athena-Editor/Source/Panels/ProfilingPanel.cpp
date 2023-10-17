@@ -52,7 +52,7 @@ namespace Athena
                 ImGui::Text("Application::OnUpdate: %.3f", appstats.Application_OnUpdate.AsMilliseconds());
                 ImGui::Text("Application::OnEvent: %.3f", appstats.Application_OnEvent.AsMilliseconds());
                 ImGui::Text("Application::OnImGuiRender: %.3f", appstats.Application_OnImGuiRender.AsMilliseconds());
-                ImGui::Text("Window::OnUpdate: %.3f", appstats.Window_OnUpdate.AsMilliseconds());
+                ImGui::Text("Window::OnUpdate: %.3f", appstats.Window_SwapBuffers.AsMilliseconds());
 
                 bool vsync = Application::Get().GetWindow().IsVSync();
                 bool newVsync = vsync;

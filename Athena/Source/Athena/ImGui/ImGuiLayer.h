@@ -39,7 +39,7 @@ namespace Athena
 		virtual void OnEvent(Event& event) override;
 
 		void Begin();
-		void End();
+		void End(bool minimized);
 		
 		void OnSwapChainRecreate();
 

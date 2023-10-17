@@ -41,7 +41,5 @@ namespace Athena
 		virtual void Shutdown() = 0;
 
 		virtual void WaitDeviceIdle() = 0;
-		virtual void Flush(const Ref<CommandBuffer>& cmdBuf) = 0;
-		virtual void FlushImmediate(const Ref<CommandBuffer>& cmdBuf) = 0;
 	};
 }

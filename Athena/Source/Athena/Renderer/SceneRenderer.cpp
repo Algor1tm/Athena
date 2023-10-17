@@ -99,16 +99,19 @@ namespace Athena
 
 		void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 		{
-			Renderer::SubmitImmediate([srcBuffer, dstBuffer, size](Ref<CommandBuffer> commandBuffer)
-				{
-					VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetNativeCmdBuffer();
+			Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
+			commandBuffer->Begin();
+			{
+				VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
 
-					VkBufferCopy copyRegion{};
-					copyRegion.srcOffset = 0;
-					copyRegion.dstOffset = 0;
-					copyRegion.size = size;
-					vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
-				});
+				VkBufferCopy copyRegion{};
+				copyRegion.srcOffset = 0;
+				copyRegion.dstOffset = 0;
+				copyRegion.size = size;
+				vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
+			}
+			commandBuffer->End();
+			commandBuffer->Flush();
 		}
 	}
 
@@ -492,7 +495,7 @@ namespace Athena
 		Window& window = Application::Get().GetWindow();
 		Ref<SwapChain> swapChain = window.GetSwapChain();
 
-		VkCommandBuffer commandBuffer = (VkCommandBuffer)Renderer::GetCommandQueue()->GetCommandBuffer();
+		VkCommandBuffer commandBuffer = Renderer::GetCommandQueue().As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
 		uint32 width = window.GetWidth();
 		uint32 height = window.GetHeight();
 

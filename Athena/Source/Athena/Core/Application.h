@@ -50,8 +50,8 @@ namespace Athena
 		void PushLayer(Ref<Layer> layer);
 		void PushOverlay(Ref<Layer> layer);
 
-		const String& GetName() const { return m_Name; }
-		const FilePath& GetEngineResourcesPath() const { return m_EngineResourcesPath; }
+		const String& GetName() const { return m_Config.Name; }
+		const FilePath& GetEngineResourcesPath() const { return m_Config.EngineResources; }
 
 		Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
 		Window& GetWindow() { return *m_Window; }
@@ -68,18 +68,23 @@ namespace Athena
 			Time Application_OnUpdate;
 			Time Application_OnEvent;
 			Time Application_OnImGuiRender;
-			Time Window_OnUpdate;
+			Time Window_SwapBuffers;
 		};
 
 	private:
+		void ProcessEvents();
+		void UpdateImGui();
+
 		void QueueEvent(const Ref<Event>& event);
 		void OnEvent(Event& event);
 		bool OnWindowClose(WindowCloseEvent& event);
 		bool OnWindowResized(WindowResizeEvent& event);
 
+		void CreateMainWindow(WindowCreateInfo info);
+		void InitImGui();
+
 	private:
-		String m_Name;
-		FilePath m_EngineResourcesPath;
+		AppConfig m_Config;
 		Scope<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;

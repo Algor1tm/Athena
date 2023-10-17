@@ -38,8 +38,6 @@ void SandBoxLayer::OnDetach()
 
 void SandBoxLayer::OnUpdate(Time frameTime)
 {
-	Renderer::BeginFrame();
-
 	// Temporary hack (scene renderer must be resized after Renderer::BeginFrame for now)
 	if (m_ViewportResized)
 	{
@@ -56,8 +54,6 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	cameraInfo.FarClip = m_Camera->GetFarClip();
 
 	//m_SceneRenderer->Render(cameraInfo);
-
-	Renderer::EndFrame();
 }
 
 void SandBoxLayer::OnImGuiRender()

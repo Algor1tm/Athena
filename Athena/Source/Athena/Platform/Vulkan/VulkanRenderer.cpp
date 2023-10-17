@@ -155,51 +155,6 @@ namespace Athena
 		vkDestroyInstance(VulkanContext::s_Instance, VulkanContext::s_Allocator);
 	}
 
-	void VulkanRenderer::Flush(const Ref<CommandBuffer>& cmdBuff)
-	{
-		const FrameSyncData& frameData = VulkanContext::s_FrameSyncData[Renderer::GetCurrentFrameIndex()];
-
-		VkCommandBuffer buffer = cmdBuff.As<VulkanCommandBuffer>()->GetNativeCmdBuffer();
-		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-		// Submit commands to queue
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &frameData.ImageAcquiredSemaphore;
-		submitInfo.pWaitDstStageMask = waitStage;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &buffer;
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
-
-		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
-	}
-
-	void VulkanRenderer::FlushImmediate(const Ref<CommandBuffer>& cmdBuff)
-	{
-		VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
-		VkCommandBuffer buffer = cmdBuff.As<VulkanCommandBuffer>()->GetNativeCmdBuffer();
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &buffer;
-
-		VkFenceCreateInfo fenceInfo = {};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = 0;
-
-		VkFence fence;
-		VK_CHECK(vkCreateFence(logicalDevice, &fenceInfo, VulkanContext::GetAllocator(), &fence));
-
-		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
-
-		VK_CHECK(vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-
-		vkDestroyFence(logicalDevice, fence, VulkanContext::GetAllocator());
-	}
-
 	void VulkanRenderer::WaitDeviceIdle()
 	{
 		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());

@@ -106,17 +106,17 @@ namespace Athena
 
 	void Material::BindTexture(MaterialTexture textureType, TextureBinder binder, int* isEnabled)
 	{
-		if (m_TextureMap.find(textureType) != m_TextureMap.end())
-		{
-			*isEnabled = m_TextureMap.at(textureType).IsEnabled;
-			if (*isEnabled)
-			{
-				m_TextureMap.at(textureType).Texture->Bind(binder);
-			}
-		}
-		else
-		{
-			*isEnabled = false;
-		}
+		//if (m_TextureMap.find(textureType) != m_TextureMap.end())
+		//{
+		//	*isEnabled = m_TextureMap.at(textureType).IsEnabled;
+		//	if (*isEnabled)
+		//	{
+		//		m_TextureMap.at(textureType).Texture->Bind(binder);
+		//	}
+		//}
+		//else
+		//{
+		//	*isEnabled = false;
+		//}
 	}
 }

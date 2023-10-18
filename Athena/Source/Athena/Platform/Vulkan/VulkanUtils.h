@@ -1,7 +1,7 @@
 #include "Athena/Core/Core.h"
 
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Image.h"
+#include "Athena/Renderer/Texture.h"
 
 #include "Athena/Platform/Vulkan/VulkanContext.h"
 
@@ -108,37 +108,76 @@ namespace Athena::Utils
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetVulkanFormat(ImageFormat format)
+    inline VkFormat GetVulkanFormat(TextureFormat format, bool sRGB)
     {
         switch (format)
         {
-        case ImageFormat::RGB8: return VK_FORMAT_R8G8B8_UNORM;
-        case ImageFormat::RGBA8: return VK_FORMAT_R8G8B8A8_UNORM;
+        case TextureFormat::RGB8: return sRGB ? VK_FORMAT_R8G8B8_SRGB : VK_FORMAT_R8G8B8_UNORM;
+        case TextureFormat::RGBA8: return sRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
 
-        case ImageFormat::RG16F: return VK_FORMAT_R16G16_SFLOAT;
-        case ImageFormat::RGB16F: return VK_FORMAT_R16G16B16_SFLOAT;
-        case ImageFormat::RGB32F: return VK_FORMAT_R32G32B32_SFLOAT;
-        case ImageFormat::RGBA16F: return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case ImageFormat::RGBA32F: return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case TextureFormat::RG16F: return VK_FORMAT_R16G16_SFLOAT;
+        case TextureFormat::RGB16F: return VK_FORMAT_R16G16B16_SFLOAT;
+        case TextureFormat::RGB32F: return VK_FORMAT_R32G32B32_SFLOAT;
+        case TextureFormat::RGBA16F: return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case TextureFormat::RGBA32F: return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        case ImageFormat::DEPTH16: return VK_FORMAT_D16_UNORM;
-        case ImageFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case ImageFormat::DEPTH32F: return VK_FORMAT_D32_SFLOAT;
+        case TextureFormat::DEPTH16: return VK_FORMAT_D16_UNORM;
+        case TextureFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case TextureFormat::DEPTH32F: return VK_FORMAT_D32_SFLOAT;
         }
 
         ATN_CORE_ASSERT(false);
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetVulkanImageAspect(ImageFormat format)
+    inline VkImageAspectFlagBits GetVulkanImageAspectFlags(TextureFormat format)
     {
-        uint32 depthBit = Image::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
-        uint32 stencilBit = Image::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
 
-        if (!(stencilBit || depthBit))
+        if (!depthBit && !stencilBit)
             return VK_IMAGE_ASPECT_COLOR_BIT;
 
         return VkImageAspectFlagBits(depthBit | stencilBit);
+    }
+
+    inline VkFilter GetVulkanFilter(TextureFilter filter)
+    {
+        switch (filter)
+        {
+        case TextureFilter::NEAREST:return VK_FILTER_NEAREST;
+        case TextureFilter::LINEAR: return VK_FILTER_LINEAR;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkFilter)0;
+    }
+
+    inline VkSamplerMipmapMode GetVulkanMipMapMode(TextureFilter filter)
+    {
+        switch (filter)
+        {
+        case TextureFilter::NEAREST:return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkSamplerMipmapMode)0;
+    }
+
+    inline VkSamplerAddressMode GetVulkanWrap(TextureWrap wrap)
+    {
+        switch (wrap)
+        {
+        case TextureWrap::REPEAT: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case TextureWrap::CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case TextureWrap::CLAMP_TO_BORDER: return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case TextureWrap::MIRRORED_REPEAT: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkSamplerAddressMode)0;
     }
 
     inline uint32 GetVulkanMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)

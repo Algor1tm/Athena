@@ -20,8 +20,8 @@ namespace Athena
 	{
 		if (m_PrefilteredMap && m_IrradianceMap)
 		{
-			m_PrefilteredMap->Bind(TextureBinder::ENVIRONMENT_MAP);
-			m_IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
+			//m_PrefilteredMap->Bind(TextureBinder::ENVIRONMENT_MAP);
+			//m_IrradianceMap->Bind(TextureBinder::IRRADIANCE_MAP);
 		}
 	}
 
@@ -33,11 +33,11 @@ namespace Athena
 
 	void EnvironmentMap::Load()
 	{
-		Ref<Texture2D> equirectangularMap = Texture2D::Create(m_FilePath);
-
-		if (equirectangularMap->IsLoaded())
-		{
-			//SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, this);
-		}
+		//Ref<Texture2D> equirectangularMap = Texture2D::Create(m_FilePath);
+		//
+		//if (equirectangularMap->IsLoaded())
+		//{
+		//	//SceneRenderer::PreProcessEnvironmentMap(equirectangularMap, this);
+		//}
 	}
 }

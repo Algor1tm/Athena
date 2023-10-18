@@ -60,8 +60,8 @@ void SandBoxLayer::OnImGuiRender()
 {
 	ImGui::Begin("Hello");
 
-	Ref<Image> image = m_SceneRenderer->GetFinalImage();
-	ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() });
+	Ref<Texture2D> image = m_SceneRenderer->GetFinalImage();
+	ImGui::Image(image->GetDescriptorSet(), { (float)image->GetInfo().Width, (float)image->GetInfo().Height });
 
 	ImGui::End();
 }

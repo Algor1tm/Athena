@@ -6,7 +6,7 @@
 #include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Light.h"
-#include "Athena/Renderer/Image.h"
+#include "Athena/Renderer/Texture.h"
 
 #include "Athena/Math/Matrix.h"
 
@@ -155,7 +155,7 @@ namespace Athena
 		void Init();
 		void Shutdown();
 
-		Ref<Image> GetFinalImage();
+		Ref<Texture2D> GetFinalImage();
 
 		void OnViewportResize(uint32 width, uint32 height);
 

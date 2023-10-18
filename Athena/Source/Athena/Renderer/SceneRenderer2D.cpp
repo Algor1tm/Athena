@@ -379,44 +379,44 @@ namespace Athena
 
 	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor, int32 entityID)
 	{
-		if (s_Data.QuadIndexCount >= SceneRenderer2DData::MaxIndices)
-			NextBatch();
+		//if (s_Data.QuadIndexCount >= SceneRenderer2DData::MaxIndices)
+		//	NextBatch();
 
-		constexpr uint32 QuadVertexCount = 4;
-		const auto& texCoords = texture.GetTexCoords();
-		float textureIndex = 0.0f;
+		//constexpr uint32 QuadVertexCount = 4;
+		//const auto& texCoords = texture.GetTexCoords();
+		//float textureIndex = 0.0f;
 
-		for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
-		{
-			if (*s_Data.TextureSlots[i] == *(texture.GetNativeTexture()))
-			{
-				textureIndex = (float)i;
-				break;
-			}
-		}
+		//for (uint32 i = 1; i < s_Data.TextureSlotIndex; ++i)
+		//{
+		//	if (*s_Data.TextureSlots[i] == *(texture.GetNativeTexture()))
+		//	{
+		//		textureIndex = (float)i;
+		//		break;
+		//	}
+		//}
 
-		if (textureIndex == 0.0f)
-		{
-			if (s_Data.TextureSlotIndex >= SceneRenderer2DData::MaxTextureSlots)
-				NextBatch();
+		//if (textureIndex == 0.0f)
+		//{
+		//	if (s_Data.TextureSlotIndex >= SceneRenderer2DData::MaxTextureSlots)
+		//		NextBatch();
 
-			textureIndex = (float)s_Data.TextureSlotIndex;
-			s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture.GetNativeTexture();
-			s_Data.TextureSlotIndex++;
-		}
+		//	textureIndex = (float)s_Data.TextureSlotIndex;
+		//	s_Data.TextureSlots[s_Data.TextureSlotIndex] = texture.GetNativeTexture();
+		//	s_Data.TextureSlotIndex++;
+		//}
 
-		for (uint32 i = 0; i < QuadVertexCount; ++i)
-		{
-			s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
-			s_Data.QuadVertexBufferPointer->Color = tint;
-			s_Data.QuadVertexBufferPointer->TexCoord = texCoords[i];
-			s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
-			s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
-			s_Data.QuadVertexBufferPointer->EntityID = entityID;
-			s_Data.QuadVertexBufferPointer++;
-		}
+		//for (uint32 i = 0; i < QuadVertexCount; ++i)
+		//{
+		//	s_Data.QuadVertexBufferPointer->Position = s_Data.QuadVertexPositions[i] * transform;
+		//	s_Data.QuadVertexBufferPointer->Color = tint;
+		//	s_Data.QuadVertexBufferPointer->TexCoord = texCoords[i];
+		//	s_Data.QuadVertexBufferPointer->TexIndex = textureIndex;
+		//	s_Data.QuadVertexBufferPointer->TilingFactor = tilingFactor;
+		//	s_Data.QuadVertexBufferPointer->EntityID = entityID;
+		//	s_Data.QuadVertexBufferPointer++;
+		//}
 
-		s_Data.QuadIndexCount += 6;
+		//s_Data.QuadIndexCount += 6;
 	}
 
 

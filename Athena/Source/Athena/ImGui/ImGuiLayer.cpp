@@ -166,7 +166,11 @@ namespace Athena
 	void ImGuiLayer::OnDetach()
 	{
 		m_ImGuiImpl->Shutdown();
-		ImGui::DestroyContext();
+
+		Renderer::SubmitResourceFree([]()
+			{
+				ImGui::DestroyContext();
+			});
 
 		ATN_CORE_INFO_TAG("ImGuiLayer", "Shutdown ImGui");
 	}

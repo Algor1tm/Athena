@@ -114,19 +114,17 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::Shutdown()
 	{
-		// Cannot submit to resource free queue, because ImGui_ImplGlfw_Shutdown must executed before window(GLFW) shutdown
-		
-		//Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
-		//	{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), m_ImGuiDescriptorPool, VulkanContext::GetAllocator());
-				vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), m_ImGuiRenderPass, VulkanContext::GetAllocator());
+		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
+			{
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, VulkanContext::GetAllocator());
+				vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, VulkanContext::GetAllocator());
 
-				for (auto framebuffer : m_SwapChainFramebuffers)
+				for (auto framebuffer : framebuffers)
 					vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 
 				ImGui_ImplVulkan_Shutdown();
 				ImGui_ImplGlfw_Shutdown();
-		//	});
+			});
 	}
 
 	void VulkanImGuiLayerImpl::NewFrame()

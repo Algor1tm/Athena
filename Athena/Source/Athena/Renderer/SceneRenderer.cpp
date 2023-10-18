@@ -6,7 +6,7 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/RenderList.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Image.h"
+#include "Athena/Renderer/Texture.h"
 
 // TEMPORARY
 #include "Athena/Core/Application.h"
@@ -15,7 +15,7 @@
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanImage.h"
+#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include <vulkan/vulkan.h>
 
 
@@ -51,7 +51,7 @@ namespace Athena
 	static VkPipelineLayout s_PipelineLayout;
 	static VkPipeline s_Pipeline;
 
-	static std::vector<Ref<Image>> s_ImageAttachments;
+	static std::vector<Ref<Texture2D>> s_Attachments;
 	static std::vector<VkFramebuffer> s_Framebuffers;
 
 	namespace Utils
@@ -312,15 +312,21 @@ namespace Athena
 			uint32 width = 1600;
 			uint32 height = 900;
 
-			ImageCreateInfo info = {};
-			info.Format = ImageFormat::RGBA8;
+			TextureCreateInfo info = {};
 			info.Width = width;
 			info.Height = height;
-			info.Usage = ImageUsage::ATTACHMENT;
+			info.sRGB = false;
+			info.Format = TextureFormat::RGBA8;
+			info.Usage = TextureUsage::ATTACHMENT;
+			info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			info.SamplerInfo.Wrap = TextureWrap::REPEAT;
+			info.GenerateMipMap = false;
+			info.Layers = 1;
 
-			s_ImageAttachments.resize(Renderer::GetFramesInFlight());
-			for (uint32 i = 0; i < s_ImageAttachments.size(); ++i)
-				s_ImageAttachments[i] = Image::Create(info);
+			s_Attachments.resize(Renderer::GetFramesInFlight());
+			for (uint32 i = 0; i < s_Attachments.size(); ++i)
+				s_Attachments[i] = Texture2D::Create(info);
 
 
 			VkFramebufferCreateInfo framebufferInfo = {};
@@ -331,10 +337,10 @@ namespace Athena
 			framebufferInfo.height = height;
 			framebufferInfo.layers = 1;
 
-			s_Framebuffers.resize(s_ImageAttachments.size());
-			for (size_t i = 0; i < s_ImageAttachments.size(); i++)
+			s_Framebuffers.resize(s_Attachments.size());
+			for (size_t i = 0; i < s_Attachments.size(); i++)
 			{
-				VkImageView attachment = s_ImageAttachments[i].As<VulkanImage>()->GetVulkanImageView();
+				VkImageView attachment = s_Attachments[i].As<VulkanTexture2D>()->GetVulkanImageView();
 				framebufferInfo.pAttachments = &attachment;
 
 				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
@@ -457,7 +463,7 @@ namespace Athena
 	void SceneRenderer::Shutdown()
 	{
 		s_Shader.Reset();
-		s_ImageAttachments.clear();
+		s_Attachments.clear();
 
 		Renderer::SubmitResourceFree([]()
 			{
@@ -490,8 +496,8 @@ namespace Athena
 	void SceneRenderer::Render(const CameraInfo& cameraInfo)
 	{
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
-		uint32 width = s_ImageAttachments[Renderer::GetCurrentFrameIndex()]->GetWidth();
-		uint32 height = s_ImageAttachments[Renderer::GetCurrentFrameIndex()]->GetHeight();
+		uint32 width = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Width;
+		uint32 height = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Height;
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -546,9 +552,9 @@ namespace Athena
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	Ref<Image> SceneRenderer::GetFinalImage()
+	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return s_ImageAttachments[Renderer::GetCurrentFrameIndex()];
+		return s_Attachments[Renderer::GetCurrentFrameIndex()];
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
@@ -559,15 +565,21 @@ namespace Athena
 					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 			});
 
-		ImageCreateInfo info = {};
-		info.Format = ImageFormat::RGBA8;
+		TextureCreateInfo info = {};
 		info.Width = width;
 		info.Height = height;
-		info.Usage = ImageUsage::ATTACHMENT;
+		info.sRGB = false;
+		info.Format = TextureFormat::RGBA8;
+		info.Usage = TextureUsage::ATTACHMENT;
+		info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.Wrap = TextureWrap::REPEAT;
+		info.GenerateMipMap = false;
+		info.Layers = 1;
 
-		s_ImageAttachments.resize(Renderer::GetFramesInFlight());
-		for (uint32 i = 0; i < s_ImageAttachments.size(); ++i)
-			s_ImageAttachments[i] = Image::Create(info);
+		s_Attachments.resize(Renderer::GetFramesInFlight());
+		for (uint32 i = 0; i < s_Attachments.size(); ++i)
+			s_Attachments[i] = Texture2D::Create(info);
 
 
 		VkFramebufferCreateInfo framebufferInfo = {};
@@ -578,10 +590,10 @@ namespace Athena
 		framebufferInfo.height = height;
 		framebufferInfo.layers = 1;
 
-		s_Framebuffers.resize(s_ImageAttachments.size());
-		for (size_t i = 0; i < s_ImageAttachments.size(); i++)
+		s_Framebuffers.resize(s_Attachments.size());
+		for (size_t i = 0; i < s_Attachments.size(); i++)
 		{
-			VkImageView attachment = s_ImageAttachments[i].As<VulkanImage>()->GetVulkanImageView();
+			VkImageView attachment = s_Attachments[i].As<VulkanTexture2D>()->GetVulkanImageView();
 			framebufferInfo.pAttachments = &attachment;
 
 			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));

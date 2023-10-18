@@ -40,9 +40,11 @@ namespace Athena
 		Renderer::WaitDeviceIdle();
 
 		m_LayerStack.Clear();
-		m_Window.Reset();
-		ScriptEngine::Shutdown();
+		m_Window->DestroySwapChain();
 		Renderer::Shutdown();
+
+		ScriptEngine::Shutdown();
+		m_Window.Reset();
 	}
 
 	void Application::Run()

@@ -1,5 +1,9 @@
 #include "Athena/Core/Core.h"
+
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Image.h"
+
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #include <vulkan/vulkan.h>
 
@@ -90,7 +94,7 @@ namespace Athena::Utils
 
 #endif // ATN_DEBUG
 
-	static VkShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage)
+    inline VkShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage)
 	{
 		switch (stage)
 		{
@@ -103,4 +107,54 @@ namespace Athena::Utils
 		ATN_CORE_ASSERT(false);
 		return (VkShaderStageFlagBits)0;
 	}
+
+    inline VkFormat GetVulkanFormat(ImageFormat format)
+    {
+        switch (format)
+        {
+        case ImageFormat::RGB8: return VK_FORMAT_R8G8B8_UNORM;
+        case ImageFormat::RGBA8: return VK_FORMAT_R8G8B8A8_UNORM;
+
+        case ImageFormat::RG16F: return VK_FORMAT_R16G16_SFLOAT;
+        case ImageFormat::RGB16F: return VK_FORMAT_R16G16B16_SFLOAT;
+        case ImageFormat::RGB32F: return VK_FORMAT_R32G32B32_SFLOAT;
+        case ImageFormat::RGBA16F: return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case ImageFormat::RGBA32F: return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+        case ImageFormat::DEPTH16: return VK_FORMAT_D16_UNORM;
+        case ImageFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case ImageFormat::DEPTH32F: return VK_FORMAT_D32_SFLOAT;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkFormat)0;
+    }
+
+    inline VkImageAspectFlagBits GetVulkanImageAspect(ImageFormat format)
+    {
+        uint32 depthBit = Image::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = Image::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+
+        if (!(stencilBit || depthBit))
+            return VK_IMAGE_ASPECT_COLOR_BIT;
+
+        return VkImageAspectFlagBits(depthBit | stencilBit);
+    }
+
+    inline uint32 GetVulkanMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
+    {
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetPhysicalDevice(), &memProperties);
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+        {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+            {
+                return i;
+            }
+        }
+
+        ATN_CORE_ASSERT(false);
+        return 0xffffffff;
+    };
 }

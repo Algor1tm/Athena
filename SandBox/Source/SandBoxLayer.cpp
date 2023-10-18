@@ -11,9 +11,16 @@ SandBoxLayer::SandBoxLayer(const FilePath& scenePath)
 
 void SandBoxLayer::OnAttach()
 {
-	//m_SceneRenderer = SceneRenderer::Create();
+	m_SceneRenderer = SceneRenderer::Create();
 	m_Camera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
+	uint32 width = 1280;
+	uint32 height = 720;
+
+	m_Camera->SetViewportSize(width, height);
+	m_SceneRenderer->OnViewportResize(width, height);
+
+	Application::Get().GetImGuiLayer()->BlockEvents(false);
 	//m_Scene = CreateRef<Scene>();
 
 	//SceneSerializer serializer(m_Scene);
@@ -33,18 +40,11 @@ void SandBoxLayer::OnAttach()
 
 void SandBoxLayer::OnDetach()
 {
-	//m_SceneRenderer->Shutdown();
+	m_SceneRenderer->Shutdown();
 }
 
 void SandBoxLayer::OnUpdate(Time frameTime)
 {
-	// Temporary hack (scene renderer must be resized after Renderer::BeginFrame for now)
-	if (m_ViewportResized)
-	{
-		//m_SceneRenderer->OnViewportResize(Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight());
-		m_ViewportResized = false;
-	}
-
 	m_Camera->OnUpdate(frameTime);
 
 	CameraInfo cameraInfo;
@@ -53,12 +53,16 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	cameraInfo.NearClip = m_Camera->GetNearClip();
 	cameraInfo.FarClip = m_Camera->GetFarClip();
 
-	//m_SceneRenderer->Render(cameraInfo);
+	m_SceneRenderer->Render(cameraInfo);
 }
 
 void SandBoxLayer::OnImGuiRender()
 {
 	ImGui::Begin("Hello");
+
+	Ref<Image> image = m_SceneRenderer->GetFinalImage();
+	ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() });
+
 	ImGui::End();
 }
 
@@ -72,9 +76,6 @@ void SandBoxLayer::OnEvent(Event& event)
 
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 {
-	m_Camera->SetViewportSize(event.GetWidth(), event.GetHeight());
-	m_ViewportResized = true;
-
 	return false;
 }
 

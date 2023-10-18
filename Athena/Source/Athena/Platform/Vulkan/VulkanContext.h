@@ -3,7 +3,6 @@
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/Vulkan/VulkanDevice.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #include <vulkan/vulkan.h>
 

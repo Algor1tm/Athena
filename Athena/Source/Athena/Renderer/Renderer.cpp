@@ -67,8 +67,12 @@ namespace Athena
 		s_Data.RenderCommandBuffer.Reset();
 
 		{
-			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
-				func();
+			for (const auto& queue : s_Data.ResourceFreeQueue)
+			{
+				for (const auto& func : queue)
+					func();
+			}
+
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
 

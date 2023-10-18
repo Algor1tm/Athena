@@ -3,7 +3,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 
-#include "Athena/Platform/Vulkan/VulkanContext.h"
+#include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #include <GLFW/glfw3.h>
 

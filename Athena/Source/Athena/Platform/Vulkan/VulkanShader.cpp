@@ -3,7 +3,7 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Time.h"
 
-#include "Athena/Platform/Vulkan/VulkanContext.h"
+#include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #if defined(_MSC_VER)
 	#pragma warning(push, 0)

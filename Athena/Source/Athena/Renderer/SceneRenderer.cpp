@@ -6,14 +6,16 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/RenderList.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Image.h"
 
 // TEMPORARY
 #include "Athena/Core/Application.h"
 #include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
-#include "Athena/Platform/Vulkan/VulkanContext.h"
+#include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanImage.h"
 #include <vulkan/vulkan.h>
 
 
@@ -49,27 +51,11 @@ namespace Athena
 	static VkPipelineLayout s_PipelineLayout;
 	static VkPipeline s_Pipeline;
 
+	static std::vector<Ref<Image>> s_ImageAttachments;
 	static std::vector<VkFramebuffer> s_Framebuffers;
 
 	namespace Utils
 	{
-		static uint32 GetVulkanMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
-		{
-			VkPhysicalDeviceMemoryProperties memProperties;
-			vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetPhysicalDevice(), &memProperties);
-
-			for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-			{
-				if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
-			}
-
-			ATN_CORE_ASSERT(false);
-			return 0xffffffff;
-		};
-
 		void CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
 		{
 			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
@@ -128,6 +114,7 @@ namespace Athena
 
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
 
+	
 		// Create Vertex Buffer and Index Buffer
 		VkVertexInputBindingDescription bindingDescription = {};
 		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
@@ -213,39 +200,6 @@ namespace Athena
 			}
 		}
 
-		// Create RenderPass
-		{
-			VkAttachmentDescription colorAttachment = {};
-			colorAttachment.format = VK_FORMAT_B8G8R8A8_UNORM;
-			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-
-			VkAttachmentReference colorAttachmentRef = {};
-			colorAttachmentRef.attachment = 0;
-			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &colorAttachmentRef;
-
-
-			VkRenderPassCreateInfo renderPassInfo = {};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = 1;
-			renderPassInfo.pAttachments = &colorAttachment;
-			renderPassInfo.subpassCount = 1;
-			renderPassInfo.pSubpasses = &subpass;
-
-			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, VulkanContext::GetAllocator(), &s_RenderPass));
-		}
 
 		// Descriptor Sets
 		{
@@ -266,9 +220,9 @@ namespace Athena
 			VkDeviceSize bufferSize = sizeof(CameraUBO);
 			s_UniformBuffers.resize(Renderer::GetFramesInFlight());
 
-			for (auto& ubo: s_UniformBuffers)
+			for (auto& ubo : s_UniformBuffers)
 			{
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &ubo.Buffer, &ubo.BufferMemory);
 
 			}
@@ -317,6 +271,74 @@ namespace Athena
 				vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
 			}
 
+		}
+
+		// Create RenderPass
+		{
+			VkAttachmentDescription colorAttachment = {};
+			colorAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+
+			VkAttachmentReference colorAttachmentRef = {};
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+
+			VkSubpassDescription subpass = {};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorAttachmentRef;
+
+
+			VkRenderPassCreateInfo renderPassInfo = {};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			renderPassInfo.attachmentCount = 1;
+			renderPassInfo.pAttachments = &colorAttachment;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+
+			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, VulkanContext::GetAllocator(), &s_RenderPass));
+		}
+
+		// Create Attachemnts and Framebuffers
+		{
+			uint32 width = 1600;
+			uint32 height = 900;
+
+			ImageCreateInfo info = {};
+			info.Format = ImageFormat::RGBA8;
+			info.Width = width;
+			info.Height = height;
+			info.Usage = ImageUsage::ATTACHMENT;
+
+			s_ImageAttachments.resize(Renderer::GetFramesInFlight());
+			for (uint32 i = 0; i < s_ImageAttachments.size(); ++i)
+				s_ImageAttachments[i] = Image::Create(info);
+
+
+			VkFramebufferCreateInfo framebufferInfo = {};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = s_RenderPass;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.width = width;
+			framebufferInfo.height = height;
+			framebufferInfo.layers = 1;
+
+			s_Framebuffers.resize(s_ImageAttachments.size());
+			for (size_t i = 0; i < s_ImageAttachments.size(); i++)
+			{
+				VkImageView attachment = s_ImageAttachments[i].As<VulkanImage>()->GetVulkanImageView();
+				framebufferInfo.pAttachments = &attachment;
+
+				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
+			}
 		}
 
 		// Create Pipeline
@@ -370,8 +392,8 @@ namespace Athena
 			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 			colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 			colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; 
-			colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; 
+			colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 			colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; 
 
 
@@ -430,33 +452,12 @@ namespace Athena
 
 			VK_CHECK(vkCreateGraphicsPipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, VulkanContext::GetAllocator(), &s_Pipeline));
 		}
-
-		// Create Framebuffers
-		{
-			s_Framebuffers.resize(Renderer::GetFramesInFlight());
-			Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();;
-
-			for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++) 
-			{
-				VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
-
-				VkFramebufferCreateInfo framebufferInfo = {};
-				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass = s_RenderPass;
-				framebufferInfo.attachmentCount = 1;
-				framebufferInfo.pAttachments = &attachment;
-				framebufferInfo.width = Application::Get().GetWindow().GetWidth();
-				framebufferInfo.height = Application::Get().GetWindow().GetHeight();
-				framebufferInfo.layers = 1;
-
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
-			}
-		}
 	}
 
 	void SceneRenderer::Shutdown()
 	{
 		s_Shader.Reset();
+		s_ImageAttachments.clear();
 
 		Renderer::SubmitResourceFree([]()
 			{
@@ -488,17 +489,14 @@ namespace Athena
 	// TEMPORARY
 	void SceneRenderer::Render(const CameraInfo& cameraInfo)
 	{
-		Window& window = Application::Get().GetWindow();
-		Ref<SwapChain> swapChain = window.GetSwapChain();
-
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
-		uint32 width = window.GetWidth();
-		uint32 height = window.GetHeight();
+		uint32 width = s_ImageAttachments[Renderer::GetCurrentFrameIndex()]->GetWidth();
+		uint32 height = s_ImageAttachments[Renderer::GetCurrentFrameIndex()]->GetHeight();
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = s_RenderPass;
-		renderPassInfo.framebuffer = s_Framebuffers[swapChain->GetCurrentImageIndex()];
+		renderPassInfo.framebuffer = s_Framebuffers[Renderer::GetCurrentFrameIndex()];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = { width, height };
 		VkClearValue clearColor = { {0.9f, 0.3f, 0.4f, 1.0f} };
@@ -548,6 +546,11 @@ namespace Athena
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
+	Ref<Image> SceneRenderer::GetFinalImage()
+	{
+		return s_ImageAttachments[Renderer::GetCurrentFrameIndex()];
+	}
+
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
 	{
 		Renderer::SubmitResourceFree([framebuffers = s_Framebuffers]()
@@ -556,26 +559,32 @@ namespace Athena
 					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 			});
 
-		// Create Framebuffers
+		ImageCreateInfo info = {};
+		info.Format = ImageFormat::RGBA8;
+		info.Width = width;
+		info.Height = height;
+		info.Usage = ImageUsage::ATTACHMENT;
+
+		s_ImageAttachments.resize(Renderer::GetFramesInFlight());
+		for (uint32 i = 0; i < s_ImageAttachments.size(); ++i)
+			s_ImageAttachments[i] = Image::Create(info);
+
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = s_RenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.width = width;
+		framebufferInfo.height = height;
+		framebufferInfo.layers = 1;
+
+		s_Framebuffers.resize(s_ImageAttachments.size());
+		for (size_t i = 0; i < s_ImageAttachments.size(); i++)
 		{
-			s_Framebuffers.resize(Renderer::GetFramesInFlight());
-			Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
+			VkImageView attachment = s_ImageAttachments[i].As<VulkanImage>()->GetVulkanImageView();
+			framebufferInfo.pAttachments = &attachment;
 
-			for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++)
-			{
-				VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
-
-				VkFramebufferCreateInfo framebufferInfo{};
-				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass = s_RenderPass;
-				framebufferInfo.attachmentCount = 1;
-				framebufferInfo.pAttachments = &attachment;
-				framebufferInfo.width = Application::Get().GetWindow().GetWidth();
-				framebufferInfo.height = Application::Get().GetWindow().GetHeight();
-				framebufferInfo.layers = 1;
-
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
-			}
+			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
 		}
 	}
 

@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Panels/Panel.h"
 #include "ImGuizmoLayer.h"
@@ -21,9 +22,6 @@ namespace Athena
 		Vector2u Size = { 0, 0 };
 		Vector2 Bounds[2] = {};
 		Vector2 Position = { 0, 0 };
-
-		Ref<Framebuffer> AttachedFramebuffer;
-		uint32 AttachmentIndex;
 	};
 
 	class ViewportPanel: public Panel
@@ -33,9 +31,9 @@ namespace Athena
 
 		virtual void OnImGuiRender() override;
 
-		void SetFramebuffer(const Ref<Framebuffer>& framebuffer, uint32 attachmentIndex) 
+		void SetViewportRenderer(const Ref<SceneRenderer>& renderer) 
 		{
-			m_Description.AttachedFramebuffer = framebuffer; m_Description.AttachmentIndex = attachmentIndex;
+			m_ViewportRenderer = renderer;
 		}
 
 		const ViewportDescription& GetDescription() const { return m_Description; }
@@ -51,6 +49,7 @@ namespace Athena
 	private:
 		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
 		ViewportDescription m_Description;
+		Ref<SceneRenderer> m_ViewportRenderer;
 
 		std::function<void()> m_DragDropCallback;
 		std::function<void()> m_UIOverlayCallback;

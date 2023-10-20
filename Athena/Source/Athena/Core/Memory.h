@@ -98,7 +98,7 @@ namespace Athena
 			m_Impl.reset(otherPtr);
 		}
 
-		void Reset()
+		void Release()
 		{
 			m_Impl.reset();
 		}
@@ -243,7 +243,7 @@ namespace Athena
 			m_Impl.reset(otherPtr);
 		}
 
-		void Reset()
+		void Release()
 		{
 			m_Impl.reset();
 		}

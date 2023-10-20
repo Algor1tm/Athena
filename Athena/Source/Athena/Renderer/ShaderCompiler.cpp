@@ -143,15 +143,14 @@ namespace Athena
 	{
 		Timer compilationTimer;
 
-		bool compiled = true;
-
 		std::unordered_map<ShaderStage, String> shaderSources;
-		compiled = PreProcess(shaderSources);
+		bool compiled = PreProcess(shaderSources);
 
 		if (!compiled)
 			return false;
 
-		if (forceCompile || m_Recompile)
+		m_Recompile |= forceCompile;
+		if (m_Recompile)
 		{
 			compiled = CompileAndWriteToCache(shaderSources);
 		}
@@ -163,7 +162,7 @@ namespace Athena
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 			Reflect(stage, src);
 
-		if (forceCompile)
+		if (m_Recompile)
 			ATN_CORE_INFO_TAG("Vulkan", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
 
 		return compiled;
@@ -365,33 +364,33 @@ namespace Athena
 			errorMsg = "Found 0 shader stages.";
 		}
 
-		std::unordered_map<ShaderStage, bool> ShaderStageExistMap;
-		ShaderStageExistMap[ShaderStage::VERTEX_STAGE] = false;
-		ShaderStageExistMap[ShaderStage::FRAGMENT_STAGE] = false;
-		ShaderStageExistMap[ShaderStage::GEOMETRY_STAGE] = false;
-		ShaderStageExistMap[ShaderStage::COMPUTE_STAGE] = false;
+		std::unordered_map<ShaderStage, bool> shaderStageExistMap;
+		shaderStageExistMap[ShaderStage::VERTEX_STAGE] = false;
+		shaderStageExistMap[ShaderStage::FRAGMENT_STAGE] = false;
+		shaderStageExistMap[ShaderStage::GEOMETRY_STAGE] = false;
+		shaderStageExistMap[ShaderStage::COMPUTE_STAGE] = false;
 
 		for (const auto& [stage, _] : sources)
 		{
-			ShaderStageExistMap.at(stage) = true;
+			shaderStageExistMap.at(stage) = true;
 		}
 
-		if (ShaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !ShaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
 		{
 			errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
 		}
 
-		if (!ShaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && ShaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
 		{
 			errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
 		}
 
-		if (ShaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!ShaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || ShaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
+		if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
 		{
 			errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
 		}
 
-		if (ShaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && sources.size() != 1)
+		if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && sources.size() != 1)
 		{
 			errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
 		}

@@ -73,7 +73,7 @@ namespace Athena
 
 	private:
 		void ProcessEvents();
-		void UpdateImGui();
+		void RenderImGui();
 
 		void QueueEvent(const Ref<Event>& event);
 		void OnEvent(Event& event);

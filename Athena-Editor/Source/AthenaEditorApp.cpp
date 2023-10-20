@@ -27,14 +27,15 @@ namespace Athena
 		ApplicationCreateInfo appinfo;
 
 		appinfo.AppConfig.Name = "Athena Editor";
-		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.EnableImGui = true;
+		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.WorkingDirectory = "";
 		appinfo.AppConfig.EngineResources = "../Athena/EngineResources";
 
-		appinfo.RendererConfig.API = Renderer::API::OpenGL;
+		appinfo.RendererConfig.API = Renderer::API::Vulkan;
+		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
-		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsFolder = "";// "Assets/Scripts";
 
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;
@@ -50,7 +51,7 @@ namespace Athena
 		EditorConfig editorConfig;
 		editorConfig.EditorResources = "EditorResources/";
 
-		application->PushLayer(CreateRef<EditorLayer>(editorConfig));
+		application->PushLayer(Ref<EditorLayer>::Create(editorConfig));
 
 		return application;
 	}

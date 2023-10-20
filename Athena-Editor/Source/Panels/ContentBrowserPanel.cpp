@@ -28,7 +28,7 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
 			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetRendererID(), m_UndoButtonSize, {0, 1}, {1, 0}))
+			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetDescriptorSet(), m_UndoButtonSize))
 			{
 				if (m_CurrentDirectory != m_AssetDirectory)
 				{
@@ -39,7 +39,7 @@ namespace Athena
 
 			ImGui::SameLine();
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Redo")->GetRendererID(), m_UndoButtonSize, { 0, 1 }, { 1, 0 }))
+			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Redo")->GetDescriptorSet(), m_UndoButtonSize))
 			{
 				if (m_CurrentDirectory != m_LastDirectory)
 				{
@@ -80,7 +80,7 @@ namespace Athena
 				ImGui::PushID(filename.data());
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
 				Ref<Texture2D> icon = dirEntry.is_directory() ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
-				ImGui::ImageButton(icon->GetRendererID(), m_ItemSize, {0, 1}, {1, 0});
+				ImGui::ImageButton(icon->GetDescriptorSet(), m_ItemSize);
 
 				if (dirEntry.is_directory() && ImGui::IsItemClicked())
 				{

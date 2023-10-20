@@ -39,79 +39,91 @@ namespace Athena
 
     void EditorLayer::OnAttach()
     {
-        m_EditorCtx = CreateRef<EditorContext>();
+        m_EditorCtx = Ref<EditorContext>::Create();
         m_EditorCtx->ActiveScene = nullptr;
         m_EditorCtx->SceneState = SceneState::Edit;
         m_EditorCtx->SelectedEntity = {};
 
-        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
-        m_ImGuizmoLayer = CreateRef<ImGuizmoLayer>(m_EditorCtx, m_EditorCamera);
-
-        m_EditorScene = CreateRef<Scene>();
+        m_EditorScene = Ref<Scene>::Create();
         m_EditorCtx->ActiveScene = m_EditorScene;
+
+        m_ViewportRenderer = SceneRenderer::Create();
+
+        //m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
+        m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
         EditorResources::Init(m_Config.EditorResources);
 
         Application::Get().GetImGuiLayer()->BlockEvents(false);
         Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
 
+        m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
         InitUI();
-#if 1
+#if 0
         OpenScene("Assets/Scenes/Default.atn");
 #endif
     }
 
     void EditorLayer::OnDetach()
     {
-
+        m_ViewportRenderer->Shutdown();
+        EditorResources::Shutdown();
+        Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
         const auto& vpDesc = m_MainViewport->GetDescription();
-        const auto& framebuffer = SceneRenderer::GetFinalFramebuffer();
-        const auto& framebufferInfo = framebuffer->GetCreateInfo();
+        const auto& image = m_ViewportRenderer->GetFinalImage();
+        const auto& imageInfo = image->GetInfo();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
-            (framebufferInfo.Width != vpDesc.Size.x || framebufferInfo.Height != vpDesc.Size.y))
+            (imageInfo.Width != vpDesc.Size.x || imageInfo.Height != vpDesc.Size.y))
         {
-            SceneRenderer::OnWindowResized(vpDesc.Size.x, vpDesc.Size.y);
+            m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
-                
             m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
-        Renderer::ResetStats();
+        if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+            m_EditorCamera->OnUpdate(frameTime);
 
-        SceneRenderer::BeginFrame();
+        CameraInfo cameraInfo;
+        cameraInfo.ViewMatrix = m_EditorCamera->GetViewMatrix();
+        cameraInfo.ProjectionMatrix = m_EditorCamera->GetProjectionMatrix();
+        cameraInfo.NearClip = m_EditorCamera->GetNearClip();
+        cameraInfo.FarClip = m_EditorCamera->GetFarClip();
 
-        switch (m_EditorCtx->SceneState)
-        {
-        case SceneState::Edit:
-        {
-            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-                m_EditorCamera->OnUpdate(frameTime);
+        m_ViewportRenderer->Render(cameraInfo);
 
-            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera);
-            break;
-        }
-        case SceneState::Play:
-        {
-            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
-            break;
-        }
-        case SceneState::Simulation:
-        {
-            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-                m_EditorCamera->OnUpdate(frameTime);
+        //Renderer::ResetStats();
 
-            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
-            break;
-        }
-        }
+        //switch (m_EditorCtx->SceneState)
+        //{
+        //case SceneState::Edit:
+        //{
+        //    if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+        //        m_EditorCamera->OnUpdate(frameTime);
 
-        RenderOverlay();
-        SceneRenderer::EndFrame();
+        //    m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera);
+        //    break;
+        //}
+        //case SceneState::Play:
+        //{
+        //    m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
+        //    break;
+        //}
+        //case SceneState::Simulation:
+        //{
+        //    if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+        //        m_EditorCamera->OnUpdate(frameTime);
+
+        //    m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
+        //    break;
+        //}
+        //}
+
+        //RenderOverlay();
     }
 
     void EditorLayer::OnImGuiRender()
@@ -162,7 +174,6 @@ namespace Athena
         ImGui::End();
 
         m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
-        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
@@ -179,7 +190,7 @@ namespace Athena
 
     void EditorLayer::InitUI()
     {
-        m_Titlebar = CreateRef<Titlebar>(Application::Get().GetName(), m_EditorCtx);
+        m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetName(), m_EditorCtx);
 
         m_Titlebar->SetMenubarCallback([this]()
             {
@@ -230,10 +241,10 @@ namespace Athena
                 }
             });
 
-        m_MainViewport = CreateRef<ViewportPanel>("MainViewport", m_EditorCtx);
+        m_MainViewport = Ref<ViewportPanel>::Create("MainViewport", m_EditorCtx);
 
         m_MainViewport->SetImGuizmoLayer(m_ImGuizmoLayer);
-        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
+        m_MainViewport->SetViewportRenderer(m_ViewportRenderer);
         m_MainViewport->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
@@ -341,38 +352,38 @@ namespace Athena
 
         m_PanelManager.AddPanel(m_MainViewport, false);
 
-        m_SettingsPanel = CreateRef<SettingsPanel>("Settings", m_EditorCtx);
+        m_SettingsPanel = Ref<SettingsPanel>::Create("Settings", m_EditorCtx);
 		m_PanelManager.AddPanel(m_SettingsPanel, Keyboard::I);
 
-        m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorCtx);
+        m_SceneHierarchy = Ref<SceneHierarchyPanel>::Create("SceneHierarchy", m_EditorCtx);
         m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
 
-        auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser", m_EditorCtx);
+        auto contentBrowser = Ref<ContentBrowserPanel>::Create("ContentBrowser", m_EditorCtx);
         m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
 
-        auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel", m_EditorCtx);
+        auto profiling = Ref<ProfilingPanel>::Create("ProfilingPanel", m_EditorCtx);
         m_PanelManager.AddPanel(profiling, Keyboard::K);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        //const auto& vpDesc = m_MainViewport->GetDescription();
 
-        auto [mx, my] = ImGui::GetMousePos();
-        mx -= vpDesc.Bounds[0].x;
-        my -= vpDesc.Bounds[0].y;
-        Vector2 viewportSize = vpDesc.Bounds[1] - vpDesc.Bounds[0];
-        my = viewportSize.y - my;
+        //auto [mx, my] = ImGui::GetMousePos();
+        //mx -= vpDesc.Bounds[0].x;
+        //my -= vpDesc.Bounds[0].y;
+        //Vector2 viewportSize = vpDesc.Bounds[1] - vpDesc.Bounds[0];
+        //my = viewportSize.y - my;
 
-        int mouseX = (int)mx;
-        int mouseY = (int)my;
+        //int mouseX = (int)mx;
+        //int mouseY = (int)my;
 
-        if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
-        {
-            int pixelData = SceneRenderer::GetEntityIDFramebuffer()->ReadPixel(0, mouseX, mouseY);
-            if (pixelData != -1)
-                return { (entt::entity)pixelData, m_EditorScene.get() };
-        }
+        //if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
+        //{
+        //    int pixelData = SceneRenderer::GetEntityIDFramebuffer()->ReadPixel(0, mouseX, mouseY);
+        //    if (pixelData != -1)
+        //        return { (entt::entity)pixelData, m_EditorScene.get() };
+        //}
 
         return Entity{};
     }
@@ -717,7 +728,7 @@ namespace Athena
         m_CurrentScenePath = FilePath();
 
         m_RuntimeScene = nullptr;
-        m_EditorScene = CreateRef<Scene>();
+        m_EditorScene = Ref<Scene>::Create();
         m_EditorCtx->ActiveScene = m_EditorScene;
         m_EditorCtx->SelectedEntity = {};
 
@@ -760,7 +771,7 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        Ref<Scene> newScene = CreateRef<Scene>();
+        Ref<Scene> newScene = Ref<Scene>::Create();
 
         SceneSerializer serializer(newScene);
         if(serializer.DeserializeFromFile(path.string()))

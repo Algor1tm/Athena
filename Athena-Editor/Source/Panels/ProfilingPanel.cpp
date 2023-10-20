@@ -13,7 +13,6 @@ namespace Athena
         : Panel(name, context)
     {
         Platform::GetSystemInfo(&m_SystemInfo);
-        Application::Get().GetWindow().GetGraphicsContext()->GetGPUInfo(&m_GPUInfo);
     }
 
 	void ProfilingPanel::OnImGuiRender()
@@ -34,11 +33,11 @@ namespace Athena
                 ImGui::Spacing();
                 ImGui::Spacing();
 
-                ImGui::Text("GPU: ");
-				ImGui::Text(m_GPUInfo.GPUBrandString.c_str());
-				ImGui::Text("Driver: %s", m_GPUInfo.APIVersion.c_str());
-				ImGui::Text("Vendor: %s", m_GPUInfo.Vendor.c_str());
-				ImGui::Text("VRAM: %d MB", m_GPUInfo.TotalPhysicalMemoryKB / 1024);
+                //ImGui::Text("GPU: ");
+				//ImGui::Text(m_GPUInfo.GPUBrandString.c_str());
+				//ImGui::Text("Driver: %s", m_GPUInfo.APIVersion.c_str());
+				//ImGui::Text("Vendor: %s", m_GPUInfo.Vendor.c_str());
+				//ImGui::Text("VRAM: %d MB", m_GPUInfo.TotalPhysicalMemoryKB / 1024);
 
                 UI::TreePop();
             }

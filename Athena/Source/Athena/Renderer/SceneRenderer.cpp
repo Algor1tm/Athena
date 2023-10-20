@@ -416,7 +416,7 @@ namespace Athena
 
 	void SceneRenderer::Shutdown()
 	{
-		s_Shader.Reset();
+		s_Shader.Release();
 		s_Attachments.clear();
 
 		Renderer::SubmitResourceFree([]()

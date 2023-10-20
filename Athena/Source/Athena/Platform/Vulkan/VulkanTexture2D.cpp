@@ -36,7 +36,7 @@ namespace Athena
 			imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		if (m_Info.GenerateMipMap && m_Info.MipLevels == 0)
-			m_Info.MipLevels = Math::Log2(Math::Min(m_Info.Width, m_Info.Height));
+			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max(m_Info.Width, m_Info.Height))) + 1;
 
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

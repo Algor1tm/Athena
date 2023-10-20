@@ -30,6 +30,25 @@ namespace Athena
 		m_Icons["ContentBrowser_Redo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Redo.png");
 	}
 
+	void EditorResources::Shutdown()
+	{
+		m_Icons["Logo"].Release();
+
+		m_Icons["Titlebar_CloseWindow"].Release();
+		m_Icons["Titlebar_MinimizeWindow"].Release();
+		m_Icons["Titlebar_RestoreWindow"].Release();
+		m_Icons["Titlebar_MaximizeWindow"].Release();
+
+		m_Icons["Viewport_Play"].Release();
+		m_Icons["Viewport_Simulate"].Release();
+		m_Icons["Viewport_Stop"].Release();
+
+		m_Icons["ContentBrowser_Folder"].Release();
+		m_Icons["ContentBrowser_File"].Release();
+		m_Icons["ContentBrowser_Undo"].Release();
+		m_Icons["ContentBrowser_Redo"].Release();
+	}
+
 	const FilePath& EditorResources::GetPath()
 	{
 		return m_Path;

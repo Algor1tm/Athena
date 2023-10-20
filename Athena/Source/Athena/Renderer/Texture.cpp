@@ -24,8 +24,8 @@ namespace Athena
 			HDR = true;
 			switch (channels)
 			{
-			case 3: format = TextureFormat::RGB16F;
-			case 4: format = TextureFormat::RGBA16F;
+			case 3: format = TextureFormat::RGB16F; break;
+			case 4: format = TextureFormat::RGBA16F; break;
 			default: ATN_CORE_ASSERT(false);
 			}
 		}
@@ -34,8 +34,8 @@ namespace Athena
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
-			case 3: format = TextureFormat::RGB8;
-			case 4: format = TextureFormat::RGBA8;
+			case 3: format = TextureFormat::RGB8; break;
+			case 4: format = TextureFormat::RGBA8; break;
 			default: ATN_CORE_ASSERT(false);
 			}
 		}
@@ -78,8 +78,8 @@ namespace Athena
 
 		switch (channels)
 		{
-		case 3: format = TextureFormat::RGB8;
-		case 4: format = TextureFormat::RGBA8;
+		case 3: format = TextureFormat::RGB8; break;
+		case 4: format = TextureFormat::RGBA8; break;
 		default: ATN_CORE_ASSERT(false);
 		}
 

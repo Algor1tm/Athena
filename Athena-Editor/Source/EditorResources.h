@@ -12,6 +12,7 @@ namespace Athena
 	{
 	public:
 		static void Init(const FilePath& path);
+		static void Shutdown();
 
 		static const FilePath& GetPath();
 		static Ref<Texture2D> GetIcon(std::string_view name);

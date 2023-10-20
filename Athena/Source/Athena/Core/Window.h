@@ -44,7 +44,7 @@ namespace Athena
 		uint32 GetWidth() const { return m_Data.Width; }
 		uint32 GetHeight() const { return m_Data.Height; }
 
-		void DestroySwapChain() { m_SwapChain.Reset(); }
+		void DestroySwapChain() { m_SwapChain.Release(); }
 		Ref<SwapChain> GetSwapChain() const { return m_SwapChain; }
 
 		inline void SetEventCallback(const WindowEventCallback& callback)

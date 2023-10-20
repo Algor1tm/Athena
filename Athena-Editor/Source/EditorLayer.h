@@ -69,6 +69,7 @@ namespace Athena
 	private:
 		EditorConfig m_Config;
 
+		Ref<SceneRenderer> m_ViewportRenderer;
 		Ref<EditorContext> m_EditorCtx;
 		Ref<EditorCamera> m_EditorCamera;
 		Ref<ImGuizmoLayer> m_ImGuizmoLayer;

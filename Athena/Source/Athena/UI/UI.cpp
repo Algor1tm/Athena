@@ -264,7 +264,7 @@ namespace Athena::UI
 	{
 		PropertyRow(label, size.y + 5.f);
 
-		bool pressed = ImGui::ImageButton(tex->GetDescriptorSet(), size, { 0, 1 }, { 1, 0 }, frame_padding, bg_col, tint_col);
+		bool pressed = ImGui::ImageButton(tex->GetDescriptorSet(), size, { 0, 0 }, { 1, 1 }, frame_padding, bg_col, tint_col);
 		return pressed;
 	}
 
@@ -337,13 +337,13 @@ namespace Athena::UI
 	{
 		auto* drawList = ImGui::GetWindowDrawList();
 		if (ImGui::IsItemActive())
-			drawList->AddImage(imagePressed->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintPressed);
+			drawList->AddImage(imagePressed->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintPressed);
 		else if (ImGui::IsItemHovered())
-			drawList->AddImage(imageHovered->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintHovered);
+			drawList->AddImage(imageHovered->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintHovered);
 		else
-			drawList->AddImage(imageNormal->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 1), ImVec2(1, 0), tintNormal);
+			drawList->AddImage(imageNormal->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
 	}
-
+	
 	void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
 	{
 		ButtonImage(image, image, image, tintNormal, tintHovered, tintPressed, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
@@ -351,7 +351,7 @@ namespace Athena::UI
 
 	void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 	{
-		ImGui::Image(image->GetDescriptorSet(), size, { 0, 1 }, { 1, 0 }, tint_col, border_col);
+		ImGui::Image(image->GetDescriptorSet(), size, { 0, 0 }, { 1, 1 }, tint_col, border_col);
 	}
 
 	bool ButtonCentered(std::string_view label, const ImVec2& size)

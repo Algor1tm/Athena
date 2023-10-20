@@ -166,7 +166,7 @@ namespace Athena
 		}
 
 		// Destroy Device
-		VulkanContext::s_CurrentDevice.Reset();
+		VulkanContext::s_CurrentDevice.Release();
 
 #ifdef ATN_DEBUG
 		auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkDestroyDebugReportCallbackEXT");

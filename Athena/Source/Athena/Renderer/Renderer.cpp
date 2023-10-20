@@ -89,7 +89,9 @@ namespace Athena
 
 	void Renderer::Shutdown()
 	{
-		s_Data.RenderCommandBuffer.Reset();
+		s_Data.RenderCommandBuffer.Release();
+
+		s_Data.RendererAPI->WaitDeviceIdle();
 
 		{
 			for (const auto& queue : s_Data.ResourceFreeQueue)

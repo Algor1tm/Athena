@@ -175,7 +175,6 @@ namespace Athena
 			m_SwapChainFramebuffers.resize(Renderer::GetFramesInFlight());
 		}
 
-		// Create Frame buffers
 		{
 			Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();;
 

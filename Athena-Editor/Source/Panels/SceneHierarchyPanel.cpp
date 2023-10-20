@@ -134,7 +134,7 @@ namespace Athena
 		const auto& view = m_EditorCtx.ActiveScene->GetAllEntitiesWith<IDComponent>();
 		for (auto entt : view)
 		{
-			Entity entity = Entity(entt, m_EditorCtx.ActiveScene.get());
+			Entity entity = Entity(entt, m_EditorCtx.ActiveScene.Raw());
 			if (!entity.HasComponent<ParentComponent>())
 			{
 				DrawEntityNode(entity);

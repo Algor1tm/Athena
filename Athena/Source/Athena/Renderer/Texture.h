@@ -145,9 +145,9 @@ namespace Athena
 	{
 		switch (format)
 		{
-		case TextureFormat::DEPTH16: return true;
+		case TextureFormat::DEPTH16:		 return true;
 		case TextureFormat::DEPTH24STENCIL8: return true;
-		case TextureFormat::DEPTH32F: return true;
+		case TextureFormat::DEPTH32F:		 return true;
 		}
 
 		return false;
@@ -172,11 +172,12 @@ namespace Athena
 	{
 		switch (format)
 		{
-		case TextureFormat::RG16F: return true;
-		case TextureFormat::RGB16F: return true;
-		case TextureFormat::RGB32F: return true;
-		case TextureFormat::RGBA16F: return true;
-		case TextureFormat::RGBA32F: return true;
+		case TextureFormat::RG16F:    return true;
+		case TextureFormat::RGB16F:   return true;
+		case TextureFormat::RGB32F:   return true;
+		case TextureFormat::RGBA16F:  return true;
+		case TextureFormat::RGBA32F:  return true;
+		case TextureFormat::DEPTH32F: return true;
 		}
 
 		return false;

@@ -4,8 +4,6 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Core/PlatformUtils.h"
 
-#include "Athena/Renderer/GraphicsContext.h"
-
 #include "Panels/Panel.h"
 
 #include <array>
@@ -24,6 +22,5 @@ namespace Athena
 		bool m_IsPlottingFrameRate = false;
 
 		SystemInfo m_SystemInfo;
-		GPUInfo m_GPUInfo;
 	};
 }

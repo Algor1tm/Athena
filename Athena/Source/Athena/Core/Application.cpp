@@ -37,14 +37,12 @@ namespace Athena
 
 	Application::~Application()
 	{
-		Renderer::WaitDeviceIdle();
-
 		m_LayerStack.Clear();
 		m_Window->DestroySwapChain();
 		Renderer::Shutdown();
 
 		ScriptEngine::Shutdown();
-		m_Window.Reset();
+		m_Window.Release();
 	}
 
 	void Application::Run()
@@ -72,7 +70,7 @@ namespace Athena
 				}
 
 				// Render UI
-				UpdateImGui();
+				RenderImGui();
 
 				// Submit commands to GPU and queue present
 				Renderer::EndFrame();
@@ -81,7 +79,7 @@ namespace Athena
 			else
 			{
 				// Render ImGui viewports, that outside of window rect, when window minimized
-				UpdateImGui();
+				RenderImGui();
 
 				// Immitate VSync when minimized
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -103,7 +101,7 @@ namespace Athena
 		}
 	}
 
-	void Application::UpdateImGui()
+	void Application::RenderImGui()
 	{
 		if (m_Config.EnableImGui)
 		{

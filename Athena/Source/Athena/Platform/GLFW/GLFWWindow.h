@@ -204,7 +204,7 @@ namespace Athena
 			{
 				Window::WindowData& data = GetUserPointer(window);
 		
-				if (data.CustomTitlebar)
+				if (data.CustomTitlebar && data.TitlebarHitTest)
 				{
 					*hit = data.TitlebarHitTest();
 				}

@@ -2,8 +2,6 @@
 
 #include "Athena/Core/Application.h"
 
-#include "Athena/Renderer/Framebuffer.h"
-
 #include "ImGuizmoLayer.h"
 
 #include <ImGui/imgui.h>
@@ -37,8 +35,8 @@ namespace Athena
         const auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_Description.Size = { viewportX, viewportY };
 
-        void* texID = m_Description.AttachedFramebuffer->GetColorAttachmentRendererID(m_Description.AttachmentIndex);
-        ImGui::Image(texID, ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y), { 0, 1 }, { 1, 0 });
+        Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
+        ImGui::Image(image->GetDescriptorSet(), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
 
         if (ImGui::BeginDragDropTarget())
         {

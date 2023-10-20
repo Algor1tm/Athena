@@ -16,6 +16,7 @@ namespace Athena
 
 		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews, bool cleanupSurface = false);
 
+		virtual void OnWindowResize() override;
 		virtual bool Recreate() override;
 		virtual void SetVSync(bool enabled) override;
 

@@ -13,8 +13,6 @@ namespace Athena
 {
 	enum class TextureFormat
 	{
-		NONE = 0,
-
 		// Color
 		RGB8,
 		RGBA8,
@@ -33,7 +31,7 @@ namespace Athena
 
 	enum class TextureUsage
 	{
-		NONE = 0,
+		SHADER_READ_ONLY,
 		ATTACHMENT,
 	};
 
@@ -57,21 +55,23 @@ namespace Athena
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;
 		TextureFilter MipMapFilter = TextureFilter::LINEAR;
-
 		TextureWrap Wrap = TextureWrap::REPEAT;
+		// TODO: Anisotropy
 	};
 
 	struct TextureCreateInfo
 	{
 		const void* Data = nullptr;
-		uint32 Width = 0;
-		uint32 Height = 0;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		bool Layers = 1;
+		bool MipLevels = 1;
+		bool GenerateMipMap = false;
 		bool sRGB = false;
 		TextureFormat Format = TextureFormat::RGBA8;
-		TextureUsage Usage = TextureUsage::NONE;
+		TextureUsage Usage = TextureUsage::SHADER_READ_ONLY;
+		bool GenerateSampler = true;
 		TextureSamplerCreateInfo SamplerInfo;
-		bool GenerateMipMap = false;
-		bool Layers = 1;
 	};
 
 
@@ -80,7 +80,7 @@ namespace Athena
 	public:
 		virtual ~Texture() = default;
 
-		virtual void GenerateMipMap(uint32 maxLevel) = 0;
+		virtual void GenerateMipMap(uint32 levels) = 0;
 		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
 		virtual void* GetDescriptorSet() = 0;
@@ -92,6 +92,7 @@ namespace Athena
 		static bool IsStencilFormat(TextureFormat format);
 		static bool IsColorFormat(TextureFormat format);
 		static bool IsHDRFormat(TextureFormat format);
+		static uint32 BytesPerPixel(TextureFormat format);
 
 	protected:
 		TextureCreateInfo m_Info;
@@ -178,6 +179,27 @@ namespace Athena
 		case TextureFormat::RGBA32F: return true;
 		}
 
+		return false;
+	}
+
+	inline uint32 Texture::BytesPerPixel(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TextureFormat::RGB8:			 return 3 * 1;
+		case TextureFormat::RGBA8:			 return 4 * 1;
+		case TextureFormat::RG16F:			 return 2 * 2;
+		case TextureFormat::RGB16F:			 return 3 * 2;
+		case TextureFormat::RGB32F:			 return 3 * 4;
+		case TextureFormat::RGBA16F:		 return 4 * 2;
+		case TextureFormat::RGBA32F:		 return 4 * 4;
+			// TODO: Verify
+		case TextureFormat::DEPTH16:		 return 2;	
+		case TextureFormat::DEPTH24STENCIL8: return 4;
+		case TextureFormat::DEPTH32F:		 return 4;
+		}
+
+		ATN_CORE_ASSERT(false);
 		return false;
 	}
 }

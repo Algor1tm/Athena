@@ -98,7 +98,6 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
-		static void Flush();
 		static void SubmitResourceFree(std::function<void()>&& func);
 		static void WaitDeviceIdle();
 		

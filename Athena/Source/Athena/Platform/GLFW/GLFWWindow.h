@@ -302,11 +302,6 @@ namespace Athena
 		glfwPollEvents();
 	}
 
-	void Window::SwapBuffers()
-	{
-		m_SwapChain->Present();
-	}
-
 	void Window::SetVSync(bool enabled)
 	{
 		m_Data.VSync = enabled;

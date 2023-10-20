@@ -60,6 +60,31 @@ namespace Athena
 		s_Data.RendererAPI->Init();
 		
 		s_Data.RenderCommandBuffer = CommandBuffer::Create(CommandBufferUsage::PRESENT);
+
+		uint32 whiteTextureData = 0xffffffff;
+
+		//TextureCreateInfo texInfo;
+		//texInfo.Data = &whiteTextureData;
+		//texInfo.Width = 1;
+		//texInfo.Height = 1;
+		//texInfo.Layers = 1;
+		//texInfo.MipLevels = 1;
+		//texInfo.GenerateMipMap = false;
+		//texInfo.sRGB = false;
+		//texInfo.Format = TextureFormat::RGBA8;
+		//texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
+		//texInfo.GenerateSampler = false;
+		//texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
+		//texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
+		//texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
+		//texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+		//s_Data.WhiteTexture = Texture2D::Create(texInfo);
+
+		//uint32 blackTextureData = 0xff000000;
+		//texInfo.Data = &blackTextureData;
+
+		//s_Data.BlackTexture = Texture2D::Create(texInfo);
 	}
 
 	void Renderer::Shutdown()
@@ -83,9 +108,6 @@ namespace Athena
 	{
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
 
-		// Acquire image from swapchain
-		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
-
 		// Free resources in queue
 		{
 			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
@@ -93,16 +115,15 @@ namespace Athena
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
 
+		// Acquire image from swapchain
+		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
+
 		s_Data.RenderCommandBuffer->Begin();
 	}
 
 	void Renderer::EndFrame()
 	{
 		s_Data.RenderCommandBuffer->End();
-	}
-
-	void Renderer::Flush()
-	{
 		s_Data.RenderCommandBuffer->Flush();
 	}
 

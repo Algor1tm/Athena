@@ -4,6 +4,7 @@
 #include "Athena/Renderer/Texture.h"
 
 #include "Athena/Platform/Vulkan/VulkanContext.h"
+#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 
 #include <vulkan/vulkan.h>
 
@@ -196,4 +197,46 @@ namespace Athena::Utils
         ATN_CORE_ASSERT(false);
         return 0xffffffff;
     };
+
+    inline void CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
+    {
+        VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = size;
+        bufferInfo.usage = usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VK_CHECK(vkCreateBuffer(logicalDevice, &bufferInfo, VulkanContext::GetAllocator(), buffer));
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(logicalDevice, *buffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = GetVulkanMemoryType(memRequirements.memoryTypeBits, properties);
+
+        VK_CHECK(vkAllocateMemory(logicalDevice, &allocInfo, VulkanContext::GetAllocator(), bufferMemory));
+
+        vkBindBufferMemory(logicalDevice, *buffer, *bufferMemory, 0);
+    }
+
+    inline void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    {
+        Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
+        commandBuffer->Begin();
+        {
+            VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
+
+            VkBufferCopy copyRegion{};
+            copyRegion.srcOffset = 0;
+            copyRegion.dstOffset = 0;
+            copyRegion.size = size;
+            vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
+        }
+        commandBuffer->End();
+        commandBuffer->Flush();
+    }
 }

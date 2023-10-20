@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/ShaderCompiler.h"
 
 #include <vulkan/vulkan.h>
 
@@ -22,20 +23,11 @@ namespace Athena
 		const std::vector<VkPipelineShaderStageCreateInfo>& GetPipelineStages() const { return m_PipelineShaderStages; }
 
 	private:
-		bool PreProcess(const String& source, std::unordered_map<ShaderStage, String>& result);
-
-		bool CompileOrGetBinaries(bool forceCompile = false);
-		bool CheckShaderStages(const std::unordered_map<ShaderStage, String>& sources);
-		void Reflect(ShaderStage stage, const std::vector<uint32>& src);
-
-		void CreateVulkanShaderModulesAndStages();
+		void CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler);
 		void CleanUp();
 
 	private:
-		bool m_IsHlsl = true;
 		bool m_Compiled = false;
-		std::unordered_map<ShaderStage, std::vector<uint32>> m_SPIRVBinaries;
-
 		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> m_PipelineShaderStages;
 	};

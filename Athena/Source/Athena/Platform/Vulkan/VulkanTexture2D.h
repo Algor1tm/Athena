@@ -15,10 +15,13 @@ namespace Athena
 
 		virtual void* GetDescriptorSet() override { return m_DescriptorSet; }
 
-		virtual void GenerateMipMap(uint32 maxLevel) override;
+		virtual void GenerateMipMap(uint32 levels) override;
 		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 
 		VkImageView GetVulkanImageView() const { return m_VkImageView; }
+
+	private:
+		void UploadData(const void* data, uint32 width, uint32 height);
 
 	private:
 		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;

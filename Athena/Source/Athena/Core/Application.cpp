@@ -62,40 +62,25 @@ namespace Athena
 
 			if (m_Minimized == false)
 			{
+				// Wait for GPU commands to finish and begin new commands
 				Renderer::BeginFrame();
+
 				// Update
 				{
-					Time start = timer.ElapsedTime();
-
 					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
-
-					m_Statistics.Application_OnUpdate = timer.ElapsedTime() - start;
 				}
 
 				// Render UI
 				UpdateImGui();
 
+				// Submit commands to GPU and queue present
 				Renderer::EndFrame();
-				 
-				// Swap Buffers
-				{
-					Time start = timer.ElapsedTime();
-					m_Window->SwapBuffers();
-
-					// Recreate SwapChain?
-					if (m_Window->GetSwapChain()->Recreate())
-					{
-						if (m_ImGuiLayer)
-							m_ImGuiLayer->OnSwapChainRecreate();
-					}
-
-					m_Statistics.Window_SwapBuffers = timer.ElapsedTime() - start;
-				}
+				m_Window->GetSwapChain()->Present();
 			}
 			else
 			{
-				// Update ImGui viewports, that outside of window rect, when window minimized
+				// Render ImGui viewports, that outside of window rect, when window minimized
 				UpdateImGui();
 
 				// Immitate VSync when minimized
@@ -108,8 +93,6 @@ namespace Athena
 
 	void Application::ProcessEvents()
 	{
-		//Time start = timer.ElapsedTime();
-
 		m_Window->PollEvents();
 
 		while (!m_EventQueue.empty())
@@ -118,24 +101,18 @@ namespace Athena
 			OnEvent(event);
 			m_EventQueue.pop();
 		}
-
-		//m_Statistics.Application_OnEvent = timer.ElapsedTime() - start;
 	}
 
 	void Application::UpdateImGui()
 	{
 		if (m_Config.EnableImGui)
 		{
-			//Time start = timer.ElapsedTime();
-
 			m_ImGuiLayer->Begin();
 			{
 				for (Ref<Layer> layer : m_LayerStack)
 					layer->OnImGuiRender();
 			}
 			m_ImGuiLayer->End(m_Minimized);
-
-			//m_Statistics.Application_OnImGuiRender = timer.ElapsedTime() - start;
 		}
 	}
 
@@ -158,6 +135,26 @@ namespace Athena
 		}
 	}
 
+	bool Application::OnWindowClose(WindowCloseEvent& event)
+	{
+		m_Running = false;
+		return false;
+	}
+
+	bool Application::OnWindowResized(WindowResizeEvent& event)
+	{
+		if (event.GetWidth() == 0 || event.GetHeight() == 0)
+		{
+			m_Minimized = true;
+			return false;
+		}
+
+		m_Window->GetSwapChain()->OnWindowResize();
+
+		m_Minimized = false;
+		return false;
+	}
+
 	void Application::Close()
 	{
 		m_Running = false;
@@ -173,25 +170,6 @@ namespace Athena
 	{
 		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();
-	}
-
-	bool Application::OnWindowClose(WindowCloseEvent& event)
-	{
-		m_Running = false;
-		return false;
-	}
-
-	bool Application::OnWindowResized(WindowResizeEvent& event)
-	{
-		if (event.GetWidth() == 0 || event.GetHeight() == 0)
-		{
-			m_Minimized = true;
-			return false;
-		}
-
-		m_Minimized = false;
-
-		return false;
 	}
 
 	void Application::CreateMainWindow(WindowCreateInfo info)

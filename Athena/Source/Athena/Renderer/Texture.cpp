@@ -5,18 +5,103 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 
+#include <stb_image/stb_image.h>
+
 
 namespace Athena
 {
-	Ref<Texture2D> Texture2D::Create(const FilePath& path)
+	Ref<Texture2D> Texture2D::Create(const FilePath& filepath)
 	{
-		return nullptr;
+		int width, height, channels;
+		bool HDR = false;
+		TextureFormat format = TextureFormat::RGBA8;
+		void* data = nullptr;
+
+		String path = filepath.string();
+		if (stbi_is_hdr(path.data()))
+		{
+			data = stbi_loadf(path.data(), &width, &height, &channels, 0);
+			HDR = true;
+			switch (channels)
+			{
+			case 3: format = TextureFormat::RGB16F;
+			case 4: format = TextureFormat::RGBA16F;
+			default: ATN_CORE_ASSERT(false);
+			}
+		}
+		else
+		{
+			data = stbi_load(path.data(), &width, &height, &channels, 0);
+			switch (channels)
+			{
+			case 3: format = TextureFormat::RGB8;
+			case 4: format = TextureFormat::RGBA8;
+			default: ATN_CORE_ASSERT(false);
+			}
+		}
+		ATN_CORE_ASSERT(data);
+
+		TextureCreateInfo info;
+		info.Data = data;
+		info.Width = width;
+		info.Height = height;
+		info.Layers = 1;
+		info.MipLevels = 1;
+		info.GenerateMipMap = false;
+		info.sRGB = HDR ? false : true;
+		info.Format = format;
+		info.Usage = TextureUsage::SHADER_READ_ONLY;
+		info.GenerateSampler = true;
+		info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+		Ref<Texture2D> result = Texture2D::Create(info);
+		result->m_FilePath = filepath;
+
+		stbi_image_free(data);
+		return result;
 	}
 
 	// From memory
-	Ref<Texture2D> Texture2D::Create(const void* data, uint32 width, uint32 height)
+	Ref<Texture2D> Texture2D::Create(const void* inputData, uint32 inputWidth, uint32 inputHeight)
 	{
-		return nullptr;
+		int width, height, channels;
+		void* data = nullptr;
+
+		const uint32 size = inputHeight == 0 ? inputWidth : inputWidth * inputHeight;
+		data = stbi_load_from_memory((const stbi_uc*)inputData, size, &width, &height, &channels, 0);
+		ATN_CORE_ASSERT(data);
+
+		TextureFormat format = TextureFormat::RGBA8;
+
+		switch (channels)
+		{
+		case 3: format = TextureFormat::RGB8;
+		case 4: format = TextureFormat::RGBA8;
+		default: ATN_CORE_ASSERT(false);
+		}
+
+		TextureCreateInfo info;
+		info.Data = data;
+		info.Width = width;
+		info.Height = height;
+		info.Layers = 1;
+		info.MipLevels = 1;
+		info.GenerateMipMap = false;
+		info.sRGB = true;
+		info.Format = format;
+		info.Usage = TextureUsage::SHADER_READ_ONLY;
+		info.GenerateSampler = true;
+		info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
+		info.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+		Ref<Texture2D> result = Texture2D::Create(info);
+		stbi_image_free(data);
+		return result;
 	}
 
 	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info)

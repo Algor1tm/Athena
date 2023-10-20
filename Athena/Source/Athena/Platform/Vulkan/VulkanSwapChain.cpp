@@ -119,20 +119,17 @@ namespace Athena
 		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
 			{
 				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
+				vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
 
-				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
+		vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
 
-				if(cleanupSurface)
-					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
+		if (cleanupSurface)
+			vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
 			});
 	}
 
 	bool VulkanSwapChain::Recreate()
 	{
-		if (!m_Dirty)
-			return false;
-
 		auto& app = Application::Get();
 
 		uint32 framesInFlight = Renderer::GetFramesInFlight();
@@ -176,7 +173,6 @@ namespace Athena
 		swapchainCI.clipped = VK_TRUE;
 		swapchainCI.oldSwapchain = oldSwapChain;
 
-
 		VK_CHECK(vkCreateSwapchainKHR(VulkanContext::GetLogicalDevice(), &swapchainCI, VulkanContext::GetAllocator(), &m_VkSwapChain));
 
 		if (oldSwapChain != VK_NULL_HANDLE)
@@ -196,6 +192,8 @@ namespace Athena
 		{
 			VkImageViewCreateInfo imageViewCI = {};
 			imageViewCI.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			imageViewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			imageViewCI.image = m_SwapChainImages[i];
 			imageViewCI.format = m_Format.format;
 			imageViewCI.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 			imageViewCI.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -206,11 +204,15 @@ namespace Athena
 			imageViewCI.subresourceRange.levelCount = 1;
 			imageViewCI.subresourceRange.baseArrayLayer = 0;
 			imageViewCI.subresourceRange.layerCount = 1;
-			imageViewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			imageViewCI.image = m_SwapChainImages[i];
+
 
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &imageViewCI, VulkanContext::GetAllocator(), &m_SwapChainImageViews[i]));
 		}
+
+		// TODO: remove ui layer logic from here
+		auto uiLayer = Application::Get().GetImGuiLayer();
+		if (uiLayer)
+			uiLayer->OnSwapChainRecreate();
 
 		m_Dirty = false;
 		return true;
@@ -225,8 +227,16 @@ namespace Athena
 		m_VSync = enabled;
 	}
 
+	void VulkanSwapChain::OnWindowResize()
+	{
+		m_Dirty = true;
+	}
+
 	void VulkanSwapChain::AcquireImage()
 	{
+		if (m_Dirty)
+			Recreate();
+
 		VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
@@ -236,13 +246,7 @@ namespace Athena
 		
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
 		{
-			m_Dirty = true;
 			Recreate();
-
-			// TODO: remove ui layer logic from here
-			auto uiLayer = Application::Get().GetImGuiLayer();
-			if (uiLayer)
-				uiLayer->OnSwapChainRecreate();
 
 			VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
 		}
@@ -256,11 +260,6 @@ namespace Athena
 
 	void VulkanSwapChain::Present()
 	{
-		if (m_Dirty)
-			return;
-
-		Renderer::Flush();
-
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 		VkPresentInfoKHR presentInfo = {};

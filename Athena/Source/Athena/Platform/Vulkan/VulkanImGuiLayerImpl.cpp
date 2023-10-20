@@ -138,7 +138,7 @@ namespace Athena
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
-		VkRenderPassBeginInfo renderPassInfo{};
+		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_ImGuiRenderPass;
 		renderPassInfo.framebuffer = m_SwapChainFramebuffers[swapChain->GetCurrentImageIndex()];

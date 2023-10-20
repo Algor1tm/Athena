@@ -54,52 +54,6 @@ namespace Athena
 	static std::vector<Ref<Texture2D>> s_Attachments;
 	static std::vector<VkFramebuffer> s_Framebuffers;
 
-	namespace Utils
-	{
-		void CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
-		{
-			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
-
-			VkBufferCreateInfo bufferInfo{};
-			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufferInfo.size = size;
-			bufferInfo.usage = usage;
-			bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-			VK_CHECK(vkCreateBuffer(logicalDevice, &bufferInfo, VulkanContext::GetAllocator(), buffer));
-
-			VkMemoryRequirements memRequirements;
-			vkGetBufferMemoryRequirements(logicalDevice, *buffer, &memRequirements);
-
-			VkMemoryAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = GetVulkanMemoryType(memRequirements.memoryTypeBits, properties);
-
-			VK_CHECK(vkAllocateMemory(logicalDevice, &allocInfo, VulkanContext::GetAllocator(), bufferMemory));
-
-			vkBindBufferMemory(logicalDevice, *buffer, *bufferMemory, 0);
-		}
-
-		void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-		{
-			Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
-			commandBuffer->Begin();
-			{
-				VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
-
-				VkBufferCopy copyRegion{};
-				copyRegion.srcOffset = 0;
-				copyRegion.dstOffset = 0;
-				copyRegion.size = size;
-				vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
-			}
-			commandBuffer->End();
-			commandBuffer->Flush();
-		}
-	}
-
-
 	Ref<SceneRenderer> SceneRenderer::Create()
 	{
 		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create();
@@ -315,14 +269,14 @@ namespace Athena
 			TextureCreateInfo info = {};
 			info.Width = width;
 			info.Height = height;
+			info.GenerateMipMap = false;
 			info.sRGB = false;
 			info.Format = TextureFormat::RGBA8;
 			info.Usage = TextureUsage::ATTACHMENT;
+			info.GenerateSampler = true;
 			info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 			info.SamplerInfo.Wrap = TextureWrap::REPEAT;
-			info.GenerateMipMap = false;
-			info.Layers = 1;
 
 			s_Attachments.resize(Renderer::GetFramesInFlight());
 			for (uint32 i = 0; i < s_Attachments.size(); ++i)
@@ -568,14 +522,14 @@ namespace Athena
 		TextureCreateInfo info = {};
 		info.Width = width;
 		info.Height = height;
+		info.GenerateMipMap = false;
 		info.sRGB = false;
 		info.Format = TextureFormat::RGBA8;
 		info.Usage = TextureUsage::ATTACHMENT;
+		info.GenerateSampler = true;
 		info.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 		info.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 		info.SamplerInfo.Wrap = TextureWrap::REPEAT;
-		info.GenerateMipMap = false;
-		info.Layers = 1;
 
 		s_Attachments.resize(Renderer::GetFramesInFlight());
 		for (uint32 i = 0; i < s_Attachments.size(); ++i)

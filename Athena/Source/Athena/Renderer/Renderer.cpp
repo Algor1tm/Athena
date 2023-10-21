@@ -51,7 +51,7 @@ namespace Athena
 
 		const FilePath& resourcesPath = Application::Get().GetEngineResourcesPath();
 		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
-		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/Shaders";
+		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/ShaderPack";
 
 		if (!FileSystem::Exists(s_Data.ShaderCacheDirectory))
 			FileSystem::CreateDirectory(s_Data.ShaderCacheDirectory);
@@ -93,14 +93,10 @@ namespace Athena
 
 		s_Data.RendererAPI->WaitDeviceIdle();
 
+		for (const auto& queue : s_Data.ResourceFreeQueue)
 		{
-			for (const auto& queue : s_Data.ResourceFreeQueue)
-			{
-				for (const auto& func : queue)
-					func();
-			}
-
-			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
+			for (const auto& func : queue)
+				func();
 		}
 
 		s_Data.RendererAPI->Shutdown();
@@ -110,15 +106,15 @@ namespace Athena
 	{
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
 
+		// Acquire image from swapchain
+		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
+
 		// Free resources in queue
 		{
 			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
 				func();
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
-
-		// Acquire image from swapchain
-		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
 
 		s_Data.RenderCommandBuffer->Begin();
 	}

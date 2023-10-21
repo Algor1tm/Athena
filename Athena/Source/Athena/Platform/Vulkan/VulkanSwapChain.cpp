@@ -130,6 +130,8 @@ namespace Athena
 
 	bool VulkanSwapChain::Recreate()
 	{
+		vkDeviceWaitIdle(VulkanContext::GetLogicalDevice());
+
 		auto& app = Application::Get();
 
 		uint32 framesInFlight = Renderer::GetFramesInFlight();

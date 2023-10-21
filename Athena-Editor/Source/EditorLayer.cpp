@@ -17,6 +17,7 @@
 
 #include "Athena/UI/Theme.h"
 
+#include "Panels/PanelManager.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
@@ -67,13 +68,16 @@ namespace Athena
     void EditorLayer::OnDetach()
     {
         m_ViewportRenderer->Shutdown();
+        PanelManager::Shutdown();
         EditorResources::Shutdown();
         Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+
+        const auto& vpDesc = viewportPanel->GetDescription();
         const auto& image = m_ViewportRenderer->GetFinalImage();
         const auto& imageInfo = image->GetInfo();
 
@@ -163,7 +167,7 @@ namespace Athena
         ImGui::DockSpace(ImGui::GetID("MyDockspace"));
         style.WindowMinSize.x = minWinSizeX;
 
-        m_PanelManager.OnImGuiRender();
+        PanelManager::OnImGuiRender();
 
         if (m_AboutModalOpen)
             DrawAboutModal();
@@ -173,7 +177,8 @@ namespace Athena
 
         ImGui::End();
 
-        m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        m_EditorCamera->SetMoveSpeedLevel(settingsPanel->GetEditorSettings().CameraSpeedLevel);
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
@@ -216,7 +221,7 @@ namespace Athena
 
                 if (ImGui::BeginMenu("View"))
                 {
-                    m_PanelManager.ImGuiRenderAsMenuItems();
+                    PanelManager::ImGuiRenderAsMenuItems();
                     ImGui::EndMenu();
                 }
 
@@ -241,11 +246,11 @@ namespace Athena
                 }
             });
 
-        m_MainViewport = Ref<ViewportPanel>::Create("MainViewport", m_EditorCtx);
+        auto viewportPanel = Ref<ViewportPanel>::Create(VIEWPORT_PANEL_ID, m_EditorCtx);
 
-        m_MainViewport->SetImGuizmoLayer(m_ImGuizmoLayer);
-        m_MainViewport->SetViewportRenderer(m_ViewportRenderer);
-        m_MainViewport->SetDragDropCallback([this]()
+        viewportPanel->SetImGuizmoLayer(m_ImGuizmoLayer);
+        viewportPanel->SetViewportRenderer(m_ViewportRenderer);
+        viewportPanel->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
@@ -286,7 +291,7 @@ namespace Athena
                 }
             });
 
-        m_MainViewport->SetUIOverlayCallback([this]()
+        viewportPanel->SetUIOverlayCallback([this]()
             {
                 float windowPaddingY = 3.f;
 
@@ -350,19 +355,19 @@ namespace Athena
                 ImGui::PopStyleVar();
             });
 
-        m_PanelManager.AddPanel(m_MainViewport, false);
+        PanelManager::AddPanel(viewportPanel, false);
 
-        m_SettingsPanel = Ref<SettingsPanel>::Create("Settings", m_EditorCtx);
-		m_PanelManager.AddPanel(m_SettingsPanel, Keyboard::I);
+        auto settingsPanel = Ref<SettingsPanel>::Create(SETTINGS_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(settingsPanel, Keyboard::I);
 
-        m_SceneHierarchy = Ref<SceneHierarchyPanel>::Create("SceneHierarchy", m_EditorCtx);
-        m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
+        auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(SCENE_HIERARCHY_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(sceneHierarchyPanel, Keyboard::J);
 
-        auto contentBrowser = Ref<ContentBrowserPanel>::Create("ContentBrowser", m_EditorCtx);
-        m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
+        auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(CONTENT_BORWSER_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
 
-        auto profiling = Ref<ProfilingPanel>::Create("ProfilingPanel", m_EditorCtx);
-        m_PanelManager.AddPanel(profiling, Keyboard::K);
+        auto profilingPanel = Ref<ProfilingPanel>::Create(PROFILING_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(profilingPanel, Keyboard::K);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
@@ -410,7 +415,8 @@ namespace Athena
             SceneRenderer2D::BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
         }
 
-        if (m_SettingsPanel->GetEditorSettings().ShowPhysicsColliders)
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        if (settingsPanel->GetEditorSettings().ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
@@ -564,12 +570,15 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
-        if (m_SettingsPanel->GetEditorSettings().ReloadScriptsOnStart)
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+
+        if (settingsPanel->GetEditorSettings().ReloadScriptsOnStart)
         {
             m_EditorCtx->ActiveScene->LoadAllScripts();
         }
 
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        const auto& vpDesc = viewportPanel->GetDescription();
 
         if (m_EditorCtx->SceneState == SceneState::Simulation)
             OnSceneStop();
@@ -594,7 +603,8 @@ namespace Athena
 
     void EditorLayer::OnSceneSimulate()
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        const auto& vpDesc = viewportPanel->GetDescription();
 
         m_EditorCtx->SceneState = SceneState::Simulation;
 
@@ -607,7 +617,9 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        const auto& vpDesc = viewportPanel->GetDescription();
+
         if ((m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
         {
             bool rightMB = Input::IsMouseButtonPressed(Mouse::Right);
@@ -631,7 +643,7 @@ namespace Athena
             }
         }
 
-        m_PanelManager.OnEvent(event);
+        PanelManager::OnEvent(event);
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));

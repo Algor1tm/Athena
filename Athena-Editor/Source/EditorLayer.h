@@ -10,7 +10,6 @@
 
 #include "Athena/Scene/Entity.h"
 
-#include "PanelManager.h"
 #include "EditorContext.h"
 #include "ImGuizmoLayer.h"
 #include "Titlebar.h"
@@ -19,12 +18,7 @@
 namespace Athena
 {
 	class Scene;
-	class Texture2D;
 
-	class ViewportPanel;
-	class MenuBarPanel;
-	class SceneHierarchyPanel;
-	class SettingsPanel;
 
 	struct EditorConfig
 	{
@@ -76,11 +70,6 @@ namespace Athena
 
 		Ref<Titlebar> m_Titlebar;
 		bool m_HideCursor = false;
-
-		PanelManager m_PanelManager;
-		Ref<ViewportPanel> m_MainViewport;
-		Ref<SceneHierarchyPanel> m_SceneHierarchy;
-		Ref<SettingsPanel> m_SettingsPanel;
 
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;

@@ -1,5 +1,6 @@
 #include "ContentBrowserPanel.h"
 
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Texture.h"
 
 #include "Athena/UI/UI.h"
@@ -11,14 +12,15 @@
 #include <ImGui/imgui_internal.h>
 
 #include <string_view>
+#include <queue>
 
 
 namespace Athena
 {
 	ContentBrowserPanel::ContentBrowserPanel(std::string_view name, const Ref<EditorContext>& context)
-		: Panel(name, context)
+		: Panel(name, context), m_CurrentNode(nullptr)
 	{
-		m_LastDirectory = m_CurrentDirectory = m_AssetDirectory;
+		Refresh();
 	}
 
 	void ContentBrowserPanel::OnImGuiRender()
@@ -28,23 +30,26 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
 			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetDescriptorSet(), m_UndoButtonSize))
+			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetDescriptorSet(), m_ButtonSize))
 			{
-				if (m_CurrentDirectory != m_AssetDirectory)
+				if (m_CurrentNode->ParentNode != nullptr)
 				{
-					m_LastDirectory = m_CurrentDirectory;
-					m_CurrentDirectory = m_CurrentDirectory.parent_path();
+					m_CurrentNode = m_CurrentNode->ParentNode;
 				}
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Redo")->GetDescriptorSet(), m_UndoButtonSize))
+			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Redo")->GetDescriptorSet(), m_ButtonSize))
 			{
-				if (m_CurrentDirectory != m_LastDirectory)
-				{
-					m_CurrentDirectory = m_LastDirectory;
-				}
+				// TODO
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Refresh")->GetDescriptorSet(), m_ButtonSize))
+			{
+				Refresh();
 			}
 
 			ImGui::SameLine();
@@ -52,8 +57,14 @@ namespace Athena
 			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
 
 			ImGui::PushItemWidth(regionAvail.x * 0.15f);
-			String searchString;
-			UI::TextInputWithHint("Search...", searchString); // TODO: implement this
+
+			String oldString = m_SearchString;
+			UI::TextInputWithHint("Search...", m_SearchString);
+
+			if (oldString != m_SearchString && !m_SearchString.empty())
+			{
+				Search();
+			}
 
 			ImGui::PopStyleVar();
 			ImGui::PopStyleColor();
@@ -61,10 +72,13 @@ namespace Athena
 			ImGui::SameLine();
 
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + regionAvail.x * 0.01f);
-			ImGui::Text(m_CurrentDirectory.string().c_str());
+			ImGui::Text(m_CurrentNode->FilePath.c_str());
 
 
 			ImGui::Separator();
+
+			bool showSearchResult = !m_SearchString.empty();
+			uint32 nodeCount = showSearchResult ? m_SearchResult.size() : m_CurrentNode->Children.size();
 
 			float cellSize = m_Padding + m_ItemSize.x;
 			float panelWidth = regionAvail.x;
@@ -72,25 +86,27 @@ namespace Athena
 			ImGui::Columns(int(panelWidth / cellSize), 0, false);
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-			for (const auto& dirEntry : std::filesystem::directory_iterator(m_CurrentDirectory))
+			for (uint32 i = 0; i < nodeCount; ++i)
 			{
-				const auto& relativePath = dirEntry.path();
-				const auto& filename = dirEntry.path().filename().string();
+				auto& node = showSearchResult ? *m_SearchResult[i] : m_CurrentNode->Children[i];
+				const auto& filename = node.FileName;
 
 				ImGui::PushID(filename.data());
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-				Ref<Texture2D> icon = dirEntry.is_directory() ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
+
+				Ref<Texture2D> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
 				ImGui::ImageButton(icon->GetDescriptorSet(), m_ItemSize);
 
-				if (dirEntry.is_directory() && ImGui::IsItemClicked())
+				bool enteredIntoFolder = false;
+				if (node.IsFolder && ImGui::IsItemClicked())
 				{
-					m_CurrentDirectory /= filename;
+					enteredIntoFolder = true;
 				}
 				else
 				{
 					if (ImGui::BeginDragDropSource())
 					{
-						const auto& path = relativePath.string();
+						const auto& path = node.FilePath;
 
 						ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", path.data(), strlen(path.data()) + 1, ImGuiCond_Once);
 						ImGui::Text(path.c_str());
@@ -102,13 +118,122 @@ namespace Athena
 
 				ImGui::TextWrapped(filename.data());
 				ImGui::NextColumn();
+
+				if (enteredIntoFolder)
+				{
+					if (showSearchResult)
+					{
+						m_SearchResult.clear();
+						m_SearchString.clear();
+					}
+
+					m_CurrentNode = &node;
+				}
 			}
 			ImGui::PopStyleVar();
 
 			ImGui::EndColumns();
-
 		}
 
 		ImGui::End();
+	}
+
+	void ContentBrowserPanel::Refresh()
+	{
+		String currentFilePath = m_CurrentNode != nullptr ? m_CurrentNode->FilePath : String();
+
+		m_TreeRoot = TreeNode();
+
+		m_TreeRoot.IsFolder = true;
+		m_TreeRoot.FilePath = m_AssetDirectory;
+		m_TreeRoot.FileName = FilePath(m_TreeRoot.FilePath).filename().string();
+		m_TreeRoot.ParentNode = nullptr;
+
+		ReloadTreeHierarchy(m_AssetDirectory, m_TreeRoot);
+
+		// Update current node
+
+		if (m_CurrentNode == nullptr)
+		{
+			m_CurrentNode = &m_TreeRoot;
+		}
+		else
+		{
+			TreeNode* node = FindTreeNode(m_TreeRoot, currentFilePath);
+			m_CurrentNode = node == nullptr ? &m_TreeRoot : node;
+		}
+
+		if (!m_SearchString.empty())
+			Search();
+	}
+
+	void ContentBrowserPanel::ReloadTreeHierarchy(const FilePath& srcDirectory, TreeNode& dstNode)
+	{
+		for (const auto& dirEntry : std::filesystem::directory_iterator(srcDirectory))
+		{
+			TreeNode child;
+			child.IsFolder = dirEntry.is_directory();
+			child.FilePath = dirEntry.path().string();
+			child.FileName = dirEntry.path().filename().string();
+			child.ParentNode = &dstNode;
+
+			dstNode.Children.push_back(child);
+		}
+
+		for (auto& child : dstNode.Children)
+		{
+			if (child.IsFolder)
+			{
+				ReloadTreeHierarchy(child.FilePath, child);
+			}
+		}
+	}
+
+	ContentBrowserPanel::TreeNode* ContentBrowserPanel::FindTreeNode(TreeNode& root, const String& path)
+	{
+		for (auto& child : root.Children)
+		{
+			if (child.FilePath == path)
+			{
+				return &child;
+			}
+
+			if (path.find(child.FilePath) != String::npos)
+			{
+				return FindTreeNode(child, path);
+			}
+		}
+
+		return nullptr;
+	}
+
+	void ContentBrowserPanel::Search()
+	{
+		m_SearchResult.clear();
+		std::queue<TreeNode*> searchQueue;
+
+		for (auto& child : m_TreeRoot.Children)
+			searchQueue.push(&child);
+
+		while (!searchQueue.empty())
+		{
+			TreeNode* node = searchQueue.front();
+
+			if (node->FileName.starts_with(m_SearchString))
+				m_SearchResult.push_back(node);
+
+			for (auto& child : (*node).Children)
+				searchQueue.push(&child);
+
+			searchQueue.pop();
+		}
+
+		std::sort(m_SearchResult.begin(), m_SearchResult.end(), [this](TreeNode* left, TreeNode* right)
+			{
+				uint64 leftDist = Math::Abs((int64)left->FileName.size() - (int64)m_SearchString.size());
+				uint64 rightDist = Math::Abs((int64)right->FileName.size() - (int64)m_SearchString.size());
+
+				return leftDist < rightDist;
+			});
 	}
 }

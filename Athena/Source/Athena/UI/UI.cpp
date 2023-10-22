@@ -65,6 +65,7 @@ namespace Athena::UI
 	{
 		static char buffer[128];
 		memset(buffer, 0, sizeof(buffer));
+		strcpy_s(buffer, destination.c_str());
 		if (ImGui::InputTextWithHint("##TextInputWithHint", hint.data(), buffer, sizeof(buffer), flags))
 		{
 			destination = String(buffer);

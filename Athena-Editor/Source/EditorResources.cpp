@@ -28,6 +28,7 @@ namespace Athena
 		m_Icons["ContentBrowser_File"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/File.png");
 		m_Icons["ContentBrowser_Undo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Undo.png");
 		m_Icons["ContentBrowser_Redo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Redo.png");
+		m_Icons["ContentBrowser_Refresh"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Refresh.png");
 	}
 
 	void EditorResources::Shutdown()
@@ -47,6 +48,7 @@ namespace Athena
 		m_Icons["ContentBrowser_File"].Release();
 		m_Icons["ContentBrowser_Undo"].Release();
 		m_Icons["ContentBrowser_Redo"].Release();
+		m_Icons["ContentBrowser_Refresh"].Release();
 	}
 
 	const FilePath& EditorResources::GetPath()

@@ -34,7 +34,7 @@ namespace Athena
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
-			case 3: format = TextureFormat::RGB8; break;
+			case 3: format = TextureFormat::RGB8; ATN_CORE_ASSERT(false); break;
 			case 4: format = TextureFormat::RGBA8; break;
 			default: ATN_CORE_ASSERT(false);
 			}
@@ -78,7 +78,7 @@ namespace Athena
 
 		switch (channels)
 		{
-		case 3: format = TextureFormat::RGB8; break;
+		case 3: format = TextureFormat::RGB8; ATN_CORE_ASSERT(false); break;
 		case 4: format = TextureFormat::RGBA8; break;
 		default: ATN_CORE_ASSERT(false);
 		}

@@ -23,8 +23,9 @@ namespace Athena
 		virtual void AcquireImage() override;
 		virtual void Present() override;
 
-		virtual void* GetCurrentImageHandle() override;
 		virtual uint32 GetCurrentImageIndex() override { return m_ImageIndex; }
+
+		VkImage GetCurrentVulkanImage();
 
 		const std::vector<VkImageView>& GetVulkanImageViews() const { return m_SwapChainImageViews; }
 		VkFormat GetFormat() const { return m_Format.format; }

@@ -98,6 +98,8 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
+		static void CopyTextureToSwapChain(const Ref<Texture2D>& texture);
+
 		static void SubmitResourceFree(std::function<void()>&& func);
 		static void WaitDeviceIdle();
 		

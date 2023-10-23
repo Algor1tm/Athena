@@ -16,7 +16,6 @@ namespace Athena
 		uint32 MaxFramesInFlight = 3;
 		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
-		Ref<CommandBuffer> RenderCommandBuffer;
 
 		// Per frame in flight
 		std::vector<std::vector<std::function<void()>>> ResourceFreeQueue;
@@ -49,7 +48,7 @@ namespace Athena
 
 		s_Data.ResourceFreeQueue.resize(config.MaxFramesInFlight);
 
-		const FilePath& resourcesPath = Application::Get().GetEngineResourcesPath();
+		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
 		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/ShaderPack";
 
@@ -59,8 +58,6 @@ namespace Athena
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
 		
-		s_Data.RenderCommandBuffer = CommandBuffer::Create(CommandBufferUsage::PRESENT);
-
 		uint32 whiteTextureData = 0xffffffff;
 
 		//TextureCreateInfo texInfo;
@@ -89,8 +86,7 @@ namespace Athena
 
 	void Renderer::Shutdown()
 	{
-		s_Data.RenderCommandBuffer.Release();
-
+		s_Data.RendererAPI->Shutdown();
 		s_Data.RendererAPI->WaitDeviceIdle();
 
 		for (const auto& queue : s_Data.ResourceFreeQueue)
@@ -98,8 +94,6 @@ namespace Athena
 			for (const auto& func : queue)
 				func();
 		}
-
-		s_Data.RendererAPI->Shutdown();
 	}
 
 	void Renderer::BeginFrame()
@@ -116,13 +110,17 @@ namespace Athena
 			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
 		}
 
-		s_Data.RenderCommandBuffer->Begin();
+		s_Data.RendererAPI->BeginFrame();
 	}
 
 	void Renderer::EndFrame()
 	{
-		s_Data.RenderCommandBuffer->End();
-		s_Data.RenderCommandBuffer->Flush();
+		s_Data.RendererAPI->EndFrame();
+	}
+
+	void Renderer::CopyTextureToSwapChain(const Ref<Texture2D>& texture)
+	{
+		s_Data.RendererAPI->CopyTextureToSwapChain(texture);
 	}
 
 	Renderer::API Renderer::GetAPI()

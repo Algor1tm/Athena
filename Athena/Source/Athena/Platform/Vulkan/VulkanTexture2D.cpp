@@ -1,7 +1,7 @@
 #include "VulkanTexture2D.h"
 
+#include "Athena/Core/Application.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 
 #include <ImGui/backends/imgui_impl_vulkan.h>
 
@@ -27,13 +27,19 @@ namespace Athena
 	{
 		m_Info = info;
 
+		m_AddImGuiTexture = info.GenerateSampler && Application::Get().GetConfig().EnableImGui;
+
 		uint32 imageUsage = GetVulkanImageUsage(m_Info.Usage, m_Info.Format);
 
 		if (m_Info.Usage == TextureUsage::ATTACHMENT)
+		{
 			imageUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+			imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;	// TODO
+		}
 
 		if (m_Info.Data != nullptr)
 			imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
 
 		if (m_Info.GenerateMipMap && m_Info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max(m_Info.Width, m_Info.Height))) + 1;
@@ -46,7 +52,7 @@ namespace Athena
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = m_Info.MipLevels;
 		imageInfo.arrayLayers = m_Info.Layers;
-		imageInfo.format = Utils::GetVulkanFormat(m_Info.Format, m_Info.sRGB);
+		imageInfo.format = VulkanUtils::GetFormat(m_Info.Format, m_Info.sRGB);
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = imageUsage;
@@ -62,7 +68,7 @@ namespace Athena
 		VkMemoryAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = Utils::GetVulkanMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		allocInfo.memoryTypeIndex = VulkanUtils::GetMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		VK_CHECK(vkAllocateMemory(VulkanContext::GetLogicalDevice(), &allocInfo, VulkanContext::GetAllocator(), &m_ImageMemory));
 
@@ -78,8 +84,8 @@ namespace Athena
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_VkImage;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = Utils::GetVulkanFormat(m_Info.Format, m_Info.sRGB);
-		viewInfo.subresourceRange.aspectMask = Utils::GetVulkanImageAspectFlags(m_Info.Format);
+		viewInfo.format = VulkanUtils::GetFormat(m_Info.Format, m_Info.sRGB);
+		viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectFlags(m_Info.Format);
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = m_Info.MipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -117,7 +123,9 @@ namespace Athena
 			Renderer::SubmitResourceFree([vkSampler = m_Sampler, set = m_DescriptorSet]()
 				{
 					vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, VulkanContext::GetAllocator());
-					ImGui_ImplVulkan_RemoveTexture(set);
+
+					if(set != VK_NULL_HANDLE)
+						ImGui_ImplVulkan_RemoveTexture(set);
 				});
 		}
 
@@ -127,12 +135,12 @@ namespace Athena
 		{
 			VkSamplerCreateInfo vksamplerInfo = {};
 			vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			vksamplerInfo.magFilter = Utils::GetVulkanFilter(m_Info.SamplerInfo.MagFilter);
-			vksamplerInfo.minFilter = Utils::GetVulkanFilter(m_Info.SamplerInfo.MinFilter);
-			vksamplerInfo.mipmapMode = Utils::GetVulkanMipMapMode(m_Info.SamplerInfo.MipMapFilter);
-			vksamplerInfo.addressModeU = Utils::GetVulkanWrap(m_Info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeV = Utils::GetVulkanWrap(m_Info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeW = Utils::GetVulkanWrap(m_Info.SamplerInfo.Wrap);
+			vksamplerInfo.magFilter = VulkanUtils::GetFilter(m_Info.SamplerInfo.MagFilter);
+			vksamplerInfo.minFilter = VulkanUtils::GetFilter(m_Info.SamplerInfo.MinFilter);
+			vksamplerInfo.mipmapMode = VulkanUtils::GetMipMapMode(m_Info.SamplerInfo.MipMapFilter);
+			vksamplerInfo.addressModeU = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
+			vksamplerInfo.addressModeV = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
+			vksamplerInfo.addressModeW = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
 			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.anisotropyEnable = false;
 			vksamplerInfo.maxAnisotropy = 1.0f;
@@ -146,7 +154,8 @@ namespace Athena
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, VulkanContext::GetAllocator(), &m_Sampler));
 		}
 
-		m_DescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_VkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		if(m_AddImGuiTexture)
+			m_DescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_VkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void VulkanTexture2D::UploadData(const void* data, uint32 width, uint32 height)
@@ -156,7 +165,7 @@ namespace Athena
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
 
-		Utils::CreateVulkanBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VulkanUtils::CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
 		void* mappedMemory;
@@ -178,11 +187,8 @@ namespace Athena
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
 
-		Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
-		commandBuffer->Begin();
+		VkCommandBuffer vkCommandBuffer = VulkanUtils::BeginSingleTimeCommands();
 		{
-			VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
-
 			// Barrier
 			{
 				barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -194,7 +200,7 @@ namespace Athena
 				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 				vkCmdPipelineBarrier(
-					vkCmdBuf,
+					vkCommandBuffer,
 					sourceStage, destinationStage,
 					0,
 					0, nullptr,
@@ -208,7 +214,7 @@ namespace Athena
 			region.bufferRowLength = 0;
 			region.bufferImageHeight = 0;
 
-			region.imageSubresource.aspectMask = Utils::GetVulkanImageAspectFlags(m_Info.Format);
+			region.imageSubresource.aspectMask = VulkanUtils::GetImageAspectFlags(m_Info.Format);
 			region.imageSubresource.mipLevel = 0;
 			region.imageSubresource.baseArrayLayer = 0;
 			region.imageSubresource.layerCount = 1;
@@ -216,7 +222,7 @@ namespace Athena
 			region.imageOffset = { 0, 0, 0 };
 			region.imageExtent = { width, height, 1 };
 
-			vkCmdCopyBufferToImage(vkCmdBuf, stagingBuffer, m_VkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			vkCmdCopyBufferToImage(vkCommandBuffer, stagingBuffer, m_VkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 			
 			// Barrier
 			{
@@ -229,7 +235,7 @@ namespace Athena
 				destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
 				vkCmdPipelineBarrier(
-					vkCmdBuf,
+					vkCommandBuffer,
 					sourceStage, destinationStage,
 					0,
 					0, nullptr,
@@ -238,8 +244,7 @@ namespace Athena
 				);
 			}
 		}
-		commandBuffer->End();
-		commandBuffer->Flush();
+		VulkanUtils::EndSingleTimeCommands(vkCommandBuffer);
 
 		vkDestroyBuffer(VulkanContext::GetLogicalDevice(), stagingBuffer, VulkanContext::GetAllocator());
 		vkFreeMemory(VulkanContext::GetLogicalDevice(), stagingBufferMemory, VulkanContext::GetAllocator());
@@ -247,7 +252,6 @@ namespace Athena
 
 	void VulkanTexture2D::GenerateMipMap(uint32 levels)
 	{
-		m_Info.MipLevels = levels;
 		// TODO
 	}
 }

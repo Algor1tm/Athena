@@ -14,9 +14,15 @@ namespace Athena
 		virtual void Init() override;
 		virtual void Shutdown() override;
 
+		virtual void BeginFrame() override;
+		virtual void EndFrame() override;
+
 		virtual void WaitDeviceIdle() override;
 
+		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) override;
+
 	private:
+		std::vector<VkCommandBuffer> m_VkCommandBuffers;
 		VkDebugReportCallbackEXT m_DebugReport;
 	};
 }

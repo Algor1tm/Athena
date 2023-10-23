@@ -18,7 +18,6 @@ namespace Athena
 		virtual void AcquireImage() = 0;
 		virtual void Present() = 0;
 
-		virtual void* GetCurrentImageHandle() = 0;
 		virtual uint32 GetCurrentImageIndex() = 0;
 	};
 }

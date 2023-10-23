@@ -2,7 +2,6 @@
 
 #include "Athena/Core/Application.h"
 
-#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 
@@ -96,18 +95,15 @@ namespace Athena
 		init_info.ImageCount = Renderer::GetFramesInFlight();
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = VulkanContext::GetAllocator();
-		init_info.CheckVkResultFn = [](VkResult result) { Utils::CheckVulkanResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+		init_info.CheckVkResultFn = [](VkResult result) { VulkanUtils::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
 
 		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 
-		Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
-		commandBuffer->Begin();
+		VkCommandBuffer vkCommandBuffer = VulkanUtils::BeginSingleTimeCommands();
 		{
-			VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
-			ImGui_ImplVulkan_CreateFontsTexture(vkCmdBuf);
+			ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
 		}
-		commandBuffer->End();
-		commandBuffer->Flush();
+		VulkanUtils::EndSingleTimeCommands(vkCommandBuffer);
 
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}

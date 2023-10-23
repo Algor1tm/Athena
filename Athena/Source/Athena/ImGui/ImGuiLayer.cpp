@@ -149,7 +149,7 @@ namespace Athena
 
 		Application& app = Application::Get();
 
-		const FilePath& resources = app.GetEngineResourcesPath();
+		const FilePath& resources = app.GetConfig().EngineResourcesPath;
 		FilePath defaultFontPath = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
 		FilePath boldFontPath = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
 
@@ -177,12 +177,23 @@ namespace Athena
 
 	void ImGuiLayer::OnEvent(Event& event)
 	{
+		EventDispatcher dispatcher(event);
+		dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(ImGuiLayer::OnWindowResize));
+
 		if (m_BlockEvents)
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			event.Handled |= event.IsInCategory(EventCategoryMouse) & io.WantCaptureMouse;
 			event.Handled |= event.IsInCategory(EventCategoryKeyboard) & io.WantCaptureKeyboard;
 		}
+	}
+
+	bool ImGuiLayer::OnWindowResize(WindowResizeEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2((float)event.GetWidth(), (float)event.GetHeight());
+
+		return false;
 	}
 
 	void ImGuiLayer::Begin()
@@ -195,16 +206,13 @@ namespace Athena
 	void ImGuiLayer::End(bool minimized)
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		uint32 windowWidth = Application::Get().GetWindow().GetWidth();
-		uint32 windowHeight = Application::Get().GetWindow().GetHeight();
 
-		io.DisplaySize = ImVec2((float)windowWidth, (float)windowHeight);
-
-		// Rendering
 		ImGui::Render();
 
-		if(!minimized)
-			m_ImGuiImpl->RenderDrawData(windowWidth, windowHeight);
+		if (!minimized)
+		{
+			m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
+		}
 		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{

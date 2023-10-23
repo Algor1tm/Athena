@@ -119,12 +119,12 @@ namespace Athena
 		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
 			{
 				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-				vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
+					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
 
-		vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
+				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
 
-		if (cleanupSurface)
-			vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
+				if (cleanupSurface)
+					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
 			});
 	}
 
@@ -284,8 +284,8 @@ namespace Athena
 		}
 	}
 
-	void* VulkanSwapChain::GetCurrentImageHandle()
+	VkImage VulkanSwapChain::GetCurrentVulkanImage()
 	{
-		return (void*)m_SwapChainImages[m_ImageIndex];
+		return m_SwapChainImages[m_ImageIndex];
 	}
 }

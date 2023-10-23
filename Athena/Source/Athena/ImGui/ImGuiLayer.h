@@ -4,6 +4,7 @@
 #include "Athena/Core/Layer.h"
 
 #include "Athena/Input/Event.h"
+#include "Athena/Input/WindowEvent.h"
 
 #include "Athena/UI/Theme.h"
 
@@ -44,6 +45,9 @@ namespace Athena
 		void OnSwapChainRecreate();
 
 		void BlockEvents(bool block) { m_BlockEvents = block; }
+
+	private:
+		bool OnWindowResize(WindowResizeEvent& event);
 
 	private:
 		UI::Theme m_Theme;

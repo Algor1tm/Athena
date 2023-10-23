@@ -4,17 +4,16 @@
 #include "Athena/Renderer/Texture.h"
 
 #include "Athena/Platform/Vulkan/VulkanContext.h"
-#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 
 #include <vulkan/vulkan.h>
 
 #define DEFAULT_FENCE_TIMEOUT 100000000000
 
 
-namespace Athena::Utils
+namespace Athena::VulkanUtils
 {
     // Copied from glfw internal
-    inline const char* GetVulkanResultString(VkResult result)
+    inline const char* GetResultString(VkResult result)
     {
         switch (result)
         {
@@ -74,12 +73,12 @@ namespace Athena::Utils
     #define VK_CHECK(expr) expr
 
 #else
-    inline bool CheckVulkanResult(VkResult error)
+    inline bool CheckResult(VkResult error)
     {
         if (error == 0)
             return true;
 
-        const char* errorString = GetVulkanResultString(error);
+        const char* errorString = GetResultString(error);
 
         if (error > 0)
             ATN_CORE_ERROR_TAG("Vulkan", "VkResult = {}, Error: {}", (int)error, errorString);
@@ -91,11 +90,11 @@ namespace Athena::Utils
     }
 
 
-    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::Utils::CheckVulkanResult(expr))
+    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::VulkanUtils::CheckResult(expr))
 
 #endif // ATN_DEBUG
 
-    inline VkShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage)
+    inline VkShaderStageFlagBits GetShaderStage(ShaderStage stage)
 	{
 		switch (stage)
 		{
@@ -109,7 +108,7 @@ namespace Athena::Utils
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetVulkanFormat(TextureFormat format, bool sRGB)
+    inline VkFormat GetFormat(TextureFormat format, bool sRGB)
     {
         switch (format)
         {
@@ -131,7 +130,7 @@ namespace Athena::Utils
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetVulkanImageAspectFlags(TextureFormat format)
+    inline VkImageAspectFlagBits GetImageAspectFlags(TextureFormat format)
     {
         uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
         uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
@@ -142,7 +141,7 @@ namespace Athena::Utils
         return VkImageAspectFlagBits(depthBit | stencilBit);
     }
 
-    inline VkFilter GetVulkanFilter(TextureFilter filter)
+    inline VkFilter GetFilter(TextureFilter filter)
     {
         switch (filter)
         {
@@ -154,7 +153,7 @@ namespace Athena::Utils
         return (VkFilter)0;
     }
 
-    inline VkSamplerMipmapMode GetVulkanMipMapMode(TextureFilter filter)
+    inline VkSamplerMipmapMode GetMipMapMode(TextureFilter filter)
     {
         switch (filter)
         {
@@ -166,7 +165,7 @@ namespace Athena::Utils
         return (VkSamplerMipmapMode)0;
     }
 
-    inline VkSamplerAddressMode GetVulkanWrap(TextureWrap wrap)
+    inline VkSamplerAddressMode GetWrap(TextureWrap wrap)
     {
         switch (wrap)
         {
@@ -181,7 +180,51 @@ namespace Athena::Utils
         return (VkSamplerAddressMode)0;
     }
 
-    inline uint32 GetVulkanMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
+    inline VkCommandBuffer BeginSingleTimeCommands()
+    {
+        VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
+        cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
+        cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        cmdBufAllocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer vkCommandBuffer;
+        VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, &vkCommandBuffer));
+
+        VkCommandBufferBeginInfo cmdBufBeginInfo = {};
+        cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        VK_CHECK(vkBeginCommandBuffer(vkCommandBuffer, &cmdBufBeginInfo));
+
+        return vkCommandBuffer;
+    }
+
+    inline void EndSingleTimeCommands(VkCommandBuffer vkCommandBuffer)
+    {
+        vkEndCommandBuffer(vkCommandBuffer);
+
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &vkCommandBuffer;
+
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = 0;
+
+        VkFence fence;
+        VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, VulkanContext::GetAllocator(), &fence));
+
+        VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
+
+        VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+
+        vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, VulkanContext::GetAllocator());
+        vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), 1, &vkCommandBuffer);
+    }
+
+    inline uint32 GetMemoryType(uint32 typeFilter, VkMemoryPropertyFlags properties)
     {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetPhysicalDevice(), &memProperties);
@@ -198,7 +241,7 @@ namespace Athena::Utils
         return 0xffffffff;
     };
 
-    inline void CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
+    inline void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
     {
         VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
 
@@ -216,27 +259,24 @@ namespace Athena::Utils
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = GetVulkanMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = GetMemoryType(memRequirements.memoryTypeBits, properties);
 
         VK_CHECK(vkAllocateMemory(logicalDevice, &allocInfo, VulkanContext::GetAllocator(), bufferMemory));
 
         vkBindBufferMemory(logicalDevice, *buffer, *bufferMemory, 0);
     }
 
-    inline void CopyVulkanBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    inline void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        Ref<CommandBuffer> commandBuffer = CommandBuffer::Create(CommandBufferUsage::IMMEDIATE);
-        commandBuffer->Begin();
+        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
         {
-            VkCommandBuffer vkCmdBuf = commandBuffer.As<VulkanCommandBuffer>()->GetVulkanCommandBuffer();
-
             VkBufferCopy copyRegion{};
             copyRegion.srcOffset = 0;
             copyRegion.dstOffset = 0;
             copyRegion.size = size;
-            vkCmdCopyBuffer(vkCmdBuf, srcBuffer, dstBuffer, 1, &copyRegion);
+
+            vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
         }
-        commandBuffer->End();
-        commandBuffer->Flush();
+        EndSingleTimeCommands(vkCommandBuffer);
     }
 }

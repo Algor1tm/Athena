@@ -49,20 +49,12 @@ namespace Athena
 
 			String message = "Queue Families: \n\t";
 
-			VkQueueFlagBits requestedFlags[] = { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT };
+			m_QueueFamily = UINT32_MAX;
+			VkQueueFlagBits requestedQueueFlags = VkQueueFlagBits(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
 			for (uint32 i = 0; i < count; i++)
 			{
-				bool supportFlags = true;
-				for (auto flag : requestedFlags)
-				{
-					if (!(queues[i].queueFlags & flag))
-					{
-						supportFlags = false;
-						break;
-					}
-				}
-
-				if (supportFlags)
+				// Select fisrt queue that support requested flags
+				if ((queues[i].queueFlags & requestedQueueFlags) && (m_QueueFamily == UINT32_MAX))
 					m_QueueFamily = i;
 
 				String flags;
@@ -73,10 +65,12 @@ namespace Athena
 				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
 				message += std::format("{}: {} count = {}\n\t", i, flags, queues[i].queueCount);
+
+
 			}
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(m_QueueFamily != (uint32)-1);
+			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT");
 		}
 
 		// Create Logical Device

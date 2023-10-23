@@ -63,7 +63,7 @@ namespace Athena
 
 			VkPipelineShaderStageCreateInfo shaderStageCI = {};
 			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageCI.stage = Utils::GetVulkanShaderStage(stage);
+			shaderStageCI.stage = VulkanUtils::GetShaderStage(stage);
 			shaderStageCI.module = m_VulkanShaderModules.at(stage);
 			shaderStageCI.pName = compiler.GetEntryPoint(stage).data();
 

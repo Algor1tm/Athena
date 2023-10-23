@@ -24,7 +24,7 @@ namespace Athena
 		bool EnableImGui = true;
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
-		FilePath EngineResources = FilePath();
+		FilePath EngineResourcesPath = FilePath();
 	};
 
 	struct ApplicationCreateInfo
@@ -50,8 +50,7 @@ namespace Athena
 		void PushLayer(Ref<Layer> layer);
 		void PushOverlay(Ref<Layer> layer);
 
-		const String& GetName() const { return m_Config.Name; }
-		const FilePath& GetEngineResourcesPath() const { return m_Config.EngineResources; }
+		const AppConfig GetConfig() const { return m_Config; }
 
 		Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
 		Window& GetWindow() { return *m_Window; }

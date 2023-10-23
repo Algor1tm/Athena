@@ -18,6 +18,7 @@ namespace Athena
 		virtual void GenerateMipMap(uint32 levels) override;
 		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 
+		VkImage GetVulkanImage() const { return m_VkImage; }
 		VkImageView GetVulkanImageView() const { return m_VkImageView; }
 
 	private:
@@ -30,5 +31,6 @@ namespace Athena
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 
 		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
+		bool m_AddImGuiTexture = false;
 	};
 }

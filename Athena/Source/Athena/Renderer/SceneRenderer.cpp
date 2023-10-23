@@ -14,7 +14,6 @@
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanCommandBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include <vulkan/vulkan.h>
 
@@ -115,7 +114,7 @@ namespace Athena
 			{
 				VkDeviceSize bufferSize = sizeof(vertices);
 
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
 				void* data;
@@ -123,10 +122,10 @@ namespace Athena
 				memcpy(data, vertices, bufferSize);
 				vkUnmapMemory(logicalDevice, stagingBufferMemory);
 
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_VertexBuffer, &s_VertexBufferMemory);
 
-				Utils::CopyVulkanBuffer(stagingBuffer, s_VertexBuffer, bufferSize);
+				VulkanUtils::CopyBuffer(stagingBuffer, s_VertexBuffer, bufferSize);
 
 				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
 				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
@@ -136,7 +135,7 @@ namespace Athena
 			{
 				VkDeviceSize bufferSize = sizeof(indices);
 
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
 				void* data;
@@ -144,10 +143,10 @@ namespace Athena
 				memcpy(data, indices, bufferSize);
 				vkUnmapMemory(logicalDevice, stagingBufferMemory);
 
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_IndexBuffer, &s_IndexBufferMemory);
 
-				Utils::CopyVulkanBuffer(stagingBuffer, s_IndexBuffer, bufferSize);
+				VulkanUtils::CopyBuffer(stagingBuffer, s_IndexBuffer, bufferSize);
 
 				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
 				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
@@ -176,7 +175,7 @@ namespace Athena
 
 			for (auto& ubo : s_UniformBuffers)
 			{
-				Utils::CreateVulkanBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &ubo.Buffer, &ubo.BufferMemory);
 
 			}
@@ -237,7 +236,9 @@ namespace Athena
 			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			// TODO: if attachment is SwapChain target set layout to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;		
 
 
 			VkAttachmentReference colorAttachmentRef = {};

@@ -6,6 +6,7 @@
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/CommandBuffer.h"
+#include "Athena/Renderer/Texture.h"
 
 
 namespace Athena
@@ -40,6 +41,11 @@ namespace Athena
 		virtual void Init() = 0;
 		virtual void Shutdown() = 0;
 
+		virtual void BeginFrame() = 0;
+		virtual void EndFrame() = 0;
+
 		virtual void WaitDeviceIdle() = 0;
+
+		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) = 0;
 	};
 }

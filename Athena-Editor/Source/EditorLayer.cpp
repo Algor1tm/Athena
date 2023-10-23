@@ -195,7 +195,7 @@ namespace Athena
 
     void EditorLayer::InitUI()
     {
-        m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetName(), m_EditorCtx);
+        m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetConfig().Name, m_EditorCtx);
 
         m_Titlebar->SetMenubarCallback([this]()
             {

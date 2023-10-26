@@ -33,11 +33,15 @@ namespace Athena
 		CreateMainWindow(appinfo.WindowInfo);
 		InitImGui();
 		ScriptEngine::Init(appinfo.ScriptConfig);
+
+		Renderer::WaitAndRender();
 	}
 
 	Application::~Application()
 	{
 		m_LayerStack.Clear();
+
+		// Window cant be destroyed before Renderer::Shutdown, because of ImGui and GLFW
 		m_Window->DestroySwapChain();
 		Renderer::Shutdown();
 
@@ -75,6 +79,9 @@ namespace Athena
 				// Submit commands to GPU and queue present
 				Renderer::EndFrame();
 				m_Window->GetSwapChain()->Present();
+
+				// Execute renderer commands after update loop
+				Renderer::WaitAndRender();
 			}
 			else
 			{

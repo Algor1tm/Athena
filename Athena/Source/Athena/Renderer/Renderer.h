@@ -2,15 +2,13 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/CommandBuffer.h"
+#include "Athena/Renderer/CommandQueue.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
 
 
 namespace Athena
 {
-	class CommandBuffer;
-
 	enum ShaderDef
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
@@ -89,20 +87,31 @@ namespace Athena
 	public:
 		static void Init(const RendererConfig& config);
 		static void Shutdown();
-		
+
 		static Renderer::API GetAPI();
 
 		static uint32 GetFramesInFlight();
 		static uint32 GetCurrentFrameIndex();
 
+		template <typename FuncT>
+		static void Submit(FuncT&& func)
+		{
+			//GetRenderCommandQueue().Submit(std::forward<FuncT>(func));
+			func();
+		}
+
+		template <typename FuncT>
+		static void SubmitResourceFree(FuncT&& func)
+		{
+			GetResourceFreeQueue().Submit(std::forward<FuncT>(func));
+		}
+
 		static void BeginFrame();
 		static void EndFrame();
+		static void WaitAndRender();
 
 		static void CopyTextureToSwapChain(const Ref<Texture2D>& texture);
 
-		static void SubmitResourceFree(std::function<void()>&& func);
-		static void WaitDeviceIdle();
-		
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();
 		static Ref<ShaderLibrary> GetShaderLibrary();
@@ -131,6 +140,10 @@ namespace Athena
 
 		static const Statistics& GetStatistics();
 		static void ResetStats();
+
+	private:
+		static CommandQueue& GetRenderCommandQueue();
+		static CommandQueue& GetResourceFreeQueue();
 	};
 
 	struct RendererConfig

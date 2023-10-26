@@ -3,7 +3,6 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 
@@ -17,8 +16,8 @@ namespace Athena
 		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
 
-		// Per frame in flight
-		std::vector<std::vector<std::function<void()>>> ResourceFreeQueue;
+		CommandQueue RenderCommandQueue = CommandQueue(1024 * 1024 * 10);	// 10 Mb
+		std::vector<CommandQueue> ResourceFreeQueues;						// 2 Mb per queue in flight
 
 		FilePath ShaderPackDirectory;
 		FilePath ShaderCacheDirectory;
@@ -46,7 +45,12 @@ namespace Athena
 		s_Data.MaxFramesInFlight = config.MaxFramesInFlight;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
 
-		s_Data.ResourceFreeQueue.resize(config.MaxFramesInFlight);
+		s_Data.ResourceFreeQueues.reserve(s_Data.MaxFramesInFlight);
+		for (uint32 i = 0; i < s_Data.MaxFramesInFlight; ++i)
+		{
+			s_Data.ResourceFreeQueues.push_back(CommandQueue(1024 * 1024 * 2));	// 2 Mb
+		}
+
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
@@ -81,7 +85,7 @@ namespace Athena
 		//uint32 blackTextureData = 0xff000000;
 		//texInfo.Data = &blackTextureData;
 
-		//s_Data.BlackTexture = Texture2D::Create(texInfo);
+		//s_Data.BlackTexture = Texture2D::Create(texInfo); 
 	}
 
 	void Renderer::Shutdown()
@@ -89,10 +93,9 @@ namespace Athena
 		s_Data.RendererAPI->Shutdown();
 		s_Data.RendererAPI->WaitDeviceIdle();
 
-		for (const auto& queue : s_Data.ResourceFreeQueue)
+		for (auto& queue : s_Data.ResourceFreeQueues)
 		{
-			for (const auto& func : queue)
-				func();
+			queue.Flush();
 		}
 	}
 
@@ -104,11 +107,10 @@ namespace Athena
 		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
 
 		// Free resources in queue
-		{
-			for (auto& func : s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex])
-				func();
-			s_Data.ResourceFreeQueue[s_Data.CurrentFrameIndex].clear();
-		}
+		// If resource is submitted to be freed on 'i' frame index, 
+		// then it will be freed on 'i + FramesInFlight' frame, so it guarantees
+		// that currently used resource will not be freed
+		s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()].Flush();
 
 		s_Data.RendererAPI->BeginFrame();
 	}
@@ -116,6 +118,11 @@ namespace Athena
 	void Renderer::EndFrame()
 	{
 		s_Data.RendererAPI->EndFrame();
+	}
+
+	void Renderer::WaitAndRender()
+	{
+		s_Data.RenderCommandQueue.Flush();
 	}
 
 	void Renderer::CopyTextureToSwapChain(const Ref<Texture2D>& texture)
@@ -136,16 +143,6 @@ namespace Athena
 	uint32 Renderer::GetCurrentFrameIndex()
 	{
 		return s_Data.CurrentFrameIndex;
-	}
-
-	void Renderer::SubmitResourceFree(std::function<void()>&& func)
-	{
-		s_Data.ResourceFreeQueue[Renderer::GetCurrentFrameIndex()].push_back(func);
-	}
-
-	void Renderer::WaitDeviceIdle()
-	{
-		s_Data.RendererAPI->WaitDeviceIdle();
 	}
 
 	const FilePath& Renderer::GetShaderPackDirectory()
@@ -232,5 +229,15 @@ namespace Athena
 			{ ShaderDataType::Int4,	  "a_BoneIDs"   },
 			{ ShaderDataType::Float4, "a_Weights"   },
 		};
+	}
+
+	CommandQueue& Renderer::GetRenderCommandQueue()
+	{
+		return s_Data.RenderCommandQueue;
+	}
+
+	CommandQueue& Renderer::GetResourceFreeQueue()
+	{
+		return s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()];
 	}
 }

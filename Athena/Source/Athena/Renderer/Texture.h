@@ -14,7 +14,7 @@ namespace Athena
 	enum class TextureFormat
 	{
 		// Color
-		RGB8,	// TODO: add support to this format
+		RGB8,	// TODO: add support to RGB8 format
 		RGBA8,
 
 		RG16F,

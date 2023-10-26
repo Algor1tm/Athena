@@ -14,11 +14,14 @@ namespace Athena
 		m_FilePath = path;
 		m_Name = name;
 
-		ShaderCompiler compiler(m_FilePath, m_Name);
-		m_Compiled = compiler.CompileOrGetFromCache(false);
+		Renderer::Submit([this]()
+		{
+			ShaderCompiler compiler(m_FilePath, m_Name);
+			m_Compiled = compiler.CompileOrGetFromCache(false);
 
-		if (m_Compiled)
-			CreateVulkanShaderModulesAndStages(compiler);
+			if (m_Compiled)
+				CreateVulkanShaderModulesAndStages(compiler);
+		});
 	}
 
 	VulkanShader::VulkanShader(const FilePath& path)
@@ -41,11 +44,14 @@ namespace Athena
 	{
 		CleanUp();
 
-		ShaderCompiler compiler(m_FilePath, m_Name);
-		m_Compiled = compiler.CompileOrGetFromCache(true);
+		Renderer::Submit([this]()
+		{
+			ShaderCompiler compiler(m_FilePath, m_Name);
+			m_Compiled = compiler.CompileOrGetFromCache(true);
 
-		if (m_Compiled)
-			CreateVulkanShaderModulesAndStages(compiler);
+			if (m_Compiled)
+				CreateVulkanShaderModulesAndStages(compiler);
+		});
 	}
 
 	void VulkanShader::CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler)
@@ -74,11 +80,11 @@ namespace Athena
 	void VulkanShader::CleanUp()
 	{
 		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules]()
+		{
+			for (const auto& [stage, src] : shaderModules)
 			{
-				for (const auto& [stage, src] : shaderModules)
-				{
-					vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), VulkanContext::GetAllocator());
-				}
-			});
+				vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), VulkanContext::GetAllocator());
+			}
+		});
 	}
 }

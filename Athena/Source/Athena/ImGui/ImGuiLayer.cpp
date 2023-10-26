@@ -168,9 +168,9 @@ namespace Athena
 		m_ImGuiImpl->Shutdown();
 
 		Renderer::SubmitResourceFree([]()
-			{
-				ImGui::DestroyContext();
-			});
+		{
+			ImGui::DestroyContext();
+		});
 
 		ATN_CORE_INFO_TAG("ImGuiLayer", "Shutdown ImGui");
 	}
@@ -205,20 +205,23 @@ namespace Athena
 
 	void ImGuiLayer::End(bool minimized)
 	{
-		ImGuiIO& io = ImGui::GetIO();
-
-		ImGui::Render();
-
-		if (!minimized)
+		Renderer::Submit([this, minimized]()
 		{
-			m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
-		}
-		
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-		}
+			ImGuiIO& io = ImGui::GetIO();
+
+			ImGui::Render();
+
+			if (!minimized)
+			{
+				m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
+			}
+
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+			}
+		});
 	}
 
 	void ImGuiLayer::OnSwapChainRecreate()

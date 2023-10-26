@@ -16,97 +16,101 @@ namespace Athena
 		m_ImageIndex = 0;
 		m_Dirty = true;
 
-		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
-		uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
-
-		// Create window surface
+		Renderer::Submit([this, windowHandle = windowHandle]()
 		{
-			m_Surface = VK_NULL_HANDLE;
-			VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, VulkanContext::GetAllocator(), &m_Surface));
-			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
+			VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
+			uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
 
-			VkBool32 supportWSI;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
-			ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
-		}
-
-		// Query device properties and create SwapChain
-		{
-			m_VkSwapChain = VK_NULL_HANDLE;
-
-			VkSurfaceCapabilitiesKHR surfaceCaps;
-			std::vector<VkSurfaceFormatKHR> surfaceFormats;
-			std::vector<VkPresentModeKHR> surfacePresentModes;
-
-			// Surface Capabilites
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
-			ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
-
-			// Format
+			// Create window surface
 			{
-				// Supported formats
-				uint32 formatCount;
-				vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, nullptr);
+				m_Surface = VK_NULL_HANDLE;
+				VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, VulkanContext::GetAllocator(), &m_Surface));
+				ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
 
-				surfaceFormats.resize(formatCount);
-				vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, surfaceFormats.data());
-
-				// Select Format
-				const VkFormat requestedFormats[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-				const VkColorSpaceKHR requestedColorsSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-
-				// first format in the array is the most prefered
-				const auto rateFormat = [requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR fmt) -> uint64
-				{
-					if (fmt.colorSpace != requestedColorsSpace)
-						return 0;
-
-					auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
-					uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element - index is 1
-
-					return reversedIdx;
-				};
-
-				std::sort(surfaceFormats.begin(), surfaceFormats.end(), [rateFormat, requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR left, VkSurfaceFormatKHR right)
-					{
-						return rateFormat(left) > rateFormat(right);
-					});
-
-				m_Format = surfaceFormats[0];
+				VkBool32 supportWSI;
+				vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
+				ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
 			}
 
-			// Present mode
+			// Query device properties and create SwapChain
 			{
-				// Supported present modes
-				uint32 presentModeCount;
-				vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, nullptr);
+				m_VkSwapChain = VK_NULL_HANDLE;
 
-				surfacePresentModes.resize(presentModeCount);
-				vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, surfacePresentModes.data());
+				VkSurfaceCapabilitiesKHR surfaceCaps;
+				std::vector<VkSurfaceFormatKHR> surfaceFormats;
+				std::vector<VkPresentModeKHR> surfacePresentModes;
 
-				const VkPresentModeKHR requestedPresentModes[] =
-				{ VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR };
+				// Surface Capabilites
+				vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
+				ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
 
-				// first mode in the array is the most prefered
-				const auto ratePresentMode = [requestedPresentModes](VkPresentModeKHR mode) -> uint64
+				// Format
 				{
-					auto findPtr = std::find(std::begin(requestedPresentModes), std::end(requestedPresentModes), mode);
-					uint64 reversedIdx = std::distance(findPtr, std::end(requestedPresentModes));
+					// Supported formats
+					uint32 formatCount;
+					vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, nullptr);
 
-					return reversedIdx;
-				};
+					surfaceFormats.resize(formatCount);
+					vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, surfaceFormats.data());
 
-				std::sort(surfacePresentModes.begin(), surfacePresentModes.end(), [ratePresentMode, requestedPresentModes](VkPresentModeKHR left, VkPresentModeKHR right)
+					// Select Format
+					const VkFormat requestedFormats[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
+					const VkColorSpaceKHR requestedColorsSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+
+					// first format in the array is the most prefered
+					const auto rateFormat = [requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR fmt) -> uint64
 					{
-						return ratePresentMode(left) > ratePresentMode(right);
-					});
+						if (fmt.colorSpace != requestedColorsSpace)
+							return 0;
 
-				m_PresentMode = surfacePresentModes[0];
+						auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
+						uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element - index is 1
+
+						return reversedIdx;
+					};
+
+					std::sort(surfaceFormats.begin(), surfaceFormats.end(), [rateFormat, requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR left, VkSurfaceFormatKHR right)
+						{
+							return rateFormat(left) > rateFormat(right);
+						});
+
+					m_Format = surfaceFormats[0];
+				}
+
+				// Present mode
+				{
+					// Supported present modes
+					uint32 presentModeCount;
+					vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, nullptr);
+
+					surfacePresentModes.resize(presentModeCount);
+					vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, surfacePresentModes.data());
+
+					const VkPresentModeKHR requestedPresentModes[] =
+					{ VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR };
+
+					// first mode in the array is the most prefered
+					const auto ratePresentMode = [requestedPresentModes](VkPresentModeKHR mode) -> uint64
+					{
+						auto findPtr = std::find(std::begin(requestedPresentModes), std::end(requestedPresentModes), mode);
+						uint64 reversedIdx = std::distance(findPtr, std::end(requestedPresentModes));
+
+						return reversedIdx;
+					};
+
+					std::sort(surfacePresentModes.begin(), surfacePresentModes.end(), [ratePresentMode, requestedPresentModes](VkPresentModeKHR left, VkPresentModeKHR right)
+						{
+							return ratePresentMode(left) > ratePresentMode(right);
+						});
+
+					m_PresentMode = surfacePresentModes[0];
+				}
+
+
+				Recreate();
 			}
+		});
 
-
-			Recreate();
-		}
 	}
 
 	VulkanSwapChain::~VulkanSwapChain()
@@ -236,52 +240,58 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		if (m_Dirty)
-			Recreate();
-
-		VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
-		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-
-		vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
-
-		VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
-		
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+		Renderer::Submit([this]()
 		{
-			Recreate();
+			if (m_Dirty)
+				Recreate();
 
-			VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
-		}
-		else
-		{
-			VK_CHECK(result);
-		}
+			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
+			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
-		vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
+			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
+
+			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			{
+				Recreate();
+
+				VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
+			}
+			else
+			{
+				VK_CHECK(result);
+			}
+
+			vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
+		});
 	}
 
 	void VulkanSwapChain::Present()
 	{
-		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-
-		VkPresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = &frameData.RenderCompleteSemaphore;
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = &m_VkSwapChain;
-		presentInfo.pImageIndices = &m_ImageIndex;
-
-		VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		Renderer::Submit([this]()
 		{
-			m_Dirty = true;
-		}
-		else
-		{
-			VK_CHECK(result);
-		}
+			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+
+			VkPresentInfoKHR presentInfo = {};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = &frameData.RenderCompleteSemaphore;
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = &m_VkSwapChain;
+			presentInfo.pImageIndices = &m_ImageIndex;
+
+			VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			{
+				m_Dirty = true;
+			}
+			else
+			{
+				VK_CHECK(result);
+			}
+		});
 	}
 
 	VkImage VulkanSwapChain::GetCurrentVulkanImage()

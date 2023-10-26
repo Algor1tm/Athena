@@ -2,10 +2,7 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/CommandBuffer.h"
 #include "Athena/Renderer/Texture.h"
 
 

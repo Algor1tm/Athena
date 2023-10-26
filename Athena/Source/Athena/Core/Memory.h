@@ -9,7 +9,6 @@ namespace Athena
 	// For now these classes just wrappers of std
 	// In the future implement own std-like library
 
-
 	template <typename T>
 	class Ref
 	{

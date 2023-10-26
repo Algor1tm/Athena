@@ -8,6 +8,7 @@ namespace Athena
 	VulkanDevice::VulkanDevice()
 	{
 		// Select GPU
+		Renderer::Submit([this]()
 		{
 			uint32 gpuCount;
 			VK_CHECK(vkEnumeratePhysicalDevices(VulkanContext::GetInstance(), &gpuCount, NULL));
@@ -37,9 +38,11 @@ namespace Athena
 			ATN_CORE_INFO_TAG("Vulkan", "Selected GPU: {}\n", selectedGPUName);
 
 			m_PhysicalDevice = gpus[useGpu];
-		}
+		});
 
+		
 		// Select graphics queue family
+		Renderer::Submit([this]()
 		{
 			uint32 count;
 			vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &count, NULL);
@@ -71,9 +74,10 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
 			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT");
-		}
+		});
 
 		// Create Logical Device
+		Renderer::Submit([this]()
 		{
 			String message = "Queues created: \n\t";
 
@@ -105,7 +109,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCI, VulkanContext::GetAllocator(), &m_LogicalDevice));
 			vkGetDeviceQueue(m_LogicalDevice, m_QueueFamily, 0, &m_Queue);
-		}
+		});
 	}
 
 	VulkanDevice::~VulkanDevice()

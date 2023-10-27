@@ -56,6 +56,8 @@ namespace Athena
 
 		while (m_Running)
 		{
+			ATN_PROFILE_FRAME("MainThread")
+
 			Time start = timer.ElapsedTime();
 			m_Statistics.FrameTime = frameTime;
 
@@ -78,7 +80,7 @@ namespace Athena
 
 				// Submit commands to GPU and queue present
 				Renderer::EndFrame();
-				m_Window->GetSwapChain()->Present();
+				m_Window->SwapBuffers();
 
 				// Execute renderer commands after update loop
 				Renderer::WaitAndRender();
@@ -94,10 +96,14 @@ namespace Athena
 
 			frameTime = timer.ElapsedTime() - start;
 		}
+
+		ATN_PROFILER_SHUTDOWN()
 	}
 
 	void Application::ProcessEvents()
 	{
+		ATN_PROFILE_FUNC()
+
 		m_Window->PollEvents();
 
 		while (!m_EventQueue.empty())
@@ -112,6 +118,8 @@ namespace Athena
 	{
 		if (m_Config.EnableImGui)
 		{
+			ATN_PROFILE_FUNC()
+
 			m_ImGuiLayer->Begin();
 			{
 				for (Ref<Layer> layer : m_LayerStack)

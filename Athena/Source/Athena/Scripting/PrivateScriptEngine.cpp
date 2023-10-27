@@ -286,6 +286,8 @@ namespace Athena
 	
 	void PrivateScriptEngine::LoadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC()
+
 		if (s_Data->PythonModules.find(name) != s_Data->PythonModules.end())
 		{
 			ReloadScript(name, entity);
@@ -309,6 +311,8 @@ namespace Athena
 
 	void PrivateScriptEngine::ReloadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC()
+
 		bool exists = s_Data->EntityClasses.find(name) == s_Data->EntityClasses.end() ||
 			s_Data->EntityScriptFields.find(entity.GetID()) == s_Data->EntityScriptFields.end();
 
@@ -342,6 +346,8 @@ namespace Athena
 
 	void PrivateScriptEngine::UnloadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC()
+
 		UUID entityID = entity.GetID();
 
 		s_Data->PythonModules.erase(name);
@@ -405,6 +411,8 @@ namespace Athena
 
 	void PrivateScriptEngine::InstantiateEntity(Entity entity)
 	{
+		ATN_PROFILE_FUNC()
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try
@@ -424,6 +432,8 @@ namespace Athena
 
 	void PrivateScriptEngine::OnCreateEntity(Entity entity)
 	{
+		ATN_PROFILE_FUNC()
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try
@@ -439,6 +449,8 @@ namespace Athena
 
 	void PrivateScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
+		ATN_PROFILE_FUNC()
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try

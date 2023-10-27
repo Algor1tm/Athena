@@ -200,6 +200,7 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
+			ATN_PROFILE_SCOPE("VulkanRenderer::BeginFrame")
 			VkCommandBuffer commandBuffer = m_VkCommandBuffers[Renderer::GetCurrentFrameIndex()];
 
 			VK_CHECK(vkResetCommandBuffer(commandBuffer, 0));
@@ -218,6 +219,8 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
+			ATN_PROFILE_SCOPE("VulkanRenderer::EndFrame")
+
 			VulkanContext::SetActiveCommandBuffer(VK_NULL_HANDLE);
 
 			VkCommandBuffer commandBuffer = m_VkCommandBuffers[Renderer::GetCurrentFrameIndex()];
@@ -238,7 +241,10 @@ namespace Athena
 			submitInfo.signalSemaphoreCount = 1;
 			submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
 
-			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+			{
+				ATN_PROFILE_SCOPE("vkQueueSubmit")
+				VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+			}
 		});
 	}
 
@@ -249,6 +255,7 @@ namespace Athena
 
 	void VulkanRenderer::CopyTextureToSwapChain(const Ref<Texture2D>& texture)
 	{
+		ATN_PROFILE_FUNC()
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
 		VkImage sourceImage = texture.As<VulkanTexture2D>()->GetVulkanImage();

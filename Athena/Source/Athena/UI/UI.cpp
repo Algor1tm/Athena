@@ -228,6 +228,14 @@ namespace Athena::UI
 		return active;
 	}
 
+	bool PropertyColorU32(std::string_view label, ImU32* color, ImGuiColorEditFlags flags)
+	{
+		ImVec4 tmp = ImGui::ColorConvertU32ToFloat4(*color);
+		bool active = UI::PropertyColor4(label, &tmp.x, flags);
+		*color = ImGui::ColorConvertFloat4ToU32(tmp);
+		return active;
+	}
+
 	bool PropertyCheckbox(std::string_view label, bool* v)
 	{
 		float height = ImGui::GetFrameHeight();

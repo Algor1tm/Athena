@@ -134,6 +134,8 @@ namespace Athena
 
 	bool VulkanSwapChain::Recreate()
 	{
+		ATN_PROFILE_FUNC()
+
 		vkDeviceWaitIdle(VulkanContext::GetLogicalDevice());
 
 		auto& app = Application::Get();
@@ -242,28 +244,36 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
+			ATN_PROFILE_SCOPE("VulkanSwapChain::AcquireImage")
 			if (m_Dirty)
 				Recreate();
 
 			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
 			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
-			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
-
-			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
-
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 			{
-				Recreate();
-
-				VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
-			}
-			else
-			{
-				VK_CHECK(result);
+				ATN_PROFILE_SCOPE("vkWaitForFences")
+				vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
+				vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
 			}
 
-			vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
+
+			{
+				ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
+
+				VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
+
+				if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+				{
+					Recreate();
+
+					VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
+				}
+				else
+				{
+					VK_CHECK(result);
+				}
+			}
 		});
 	}
 
@@ -271,6 +281,7 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
+			ATN_PROFILE_SCOPE("VulkanSwapChain::Present")
 			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 			VkPresentInfoKHR presentInfo = {};

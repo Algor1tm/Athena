@@ -101,6 +101,7 @@ namespace Athena
 
 	void Renderer::BeginFrame()
 	{
+		ATN_PROFILE_FUNC()
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
 
 		// Acquire image from swapchain
@@ -110,18 +111,23 @@ namespace Athena
 		// If resource is submitted to be freed on 'i' frame index, 
 		// then it will be freed on 'i + FramesInFlight' frame, so it guarantees
 		// that currently used resource will not be freed
-		s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()].Flush();
+		{
+			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush")
+			s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()].Flush();
+		}
 
 		s_Data.RendererAPI->BeginFrame();
 	}
 
 	void Renderer::EndFrame()
 	{
+		ATN_PROFILE_FUNC()
 		s_Data.RendererAPI->EndFrame();
 	}
 
 	void Renderer::WaitAndRender()
 	{
+		ATN_PROFILE_FUNC()
 		s_Data.RenderCommandQueue.Flush();
 	}
 

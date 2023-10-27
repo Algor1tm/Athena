@@ -167,6 +167,8 @@ namespace Athena
 
 	void SceneSerializer::SerializeToFile(const FilePath& path)
 	{
+		ATN_PROFILE_FUNC()
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->GetSceneName();
@@ -190,6 +192,8 @@ namespace Athena
 
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
+		ATN_PROFILE_FUNC()
+
 		if (!FileSystem::Exists(path))
 		{
 			ATN_CORE_ERROR_TAG("SceneSerializer", "Invalid scene filepath {}", path);

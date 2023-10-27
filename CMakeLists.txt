@@ -67,7 +67,7 @@ set_property(TARGET PythonScripts PROPERTY FOLDER Core)
 # Show shaders in solution explorer
 file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
 	"${SHADERS_FOLDER}/*.glsl"
-    "${SHADERS_FOLDER}/*.glsli"
+    "${SHADERS_FOLDER}/*.glslh"
     "${SHADERS_FOLDER}/*.hlsl"
     "${SHADERS_FOLDER}/*.hlsli")
 

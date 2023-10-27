@@ -40,6 +40,7 @@ namespace Athena
 		~Window();
 		
 		void PollEvents();
+		void SwapBuffers();
 
 		uint32 GetWidth() const { return m_Data.Width; }
 		uint32 GetHeight() const { return m_Data.Height; }

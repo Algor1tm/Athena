@@ -128,12 +128,15 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::NewFrame()
 	{
+		ATN_PROFILE_FUNC()
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 	}
 
 	void VulkanImGuiLayerImpl::RenderDrawData(uint32 width, uint32 height)
 	{
+		ATN_PROFILE_FUNC()
+
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
@@ -156,6 +159,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()
 	{
+		ATN_PROFILE_FUNC()
 		RecreateFramebuffers();
 	}
 

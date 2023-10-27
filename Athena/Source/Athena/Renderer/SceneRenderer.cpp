@@ -460,6 +460,7 @@ namespace Athena
 	{
 		Renderer::Submit([cameraInfo = cameraInfo]()
 		{
+			ATN_PROFILE_SCOPE("SceneRenderer::Render")
 			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 			uint32 width = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Width;
 			uint32 height = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Height;

@@ -56,6 +56,7 @@ namespace Athena::UI
 	ATHENA_API bool PropertySlider(std::string_view label, Vector2* value, float min, float max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertyColor3(std::string_view label, float color[3], ImGuiColorEditFlags flags = 0);
 	ATHENA_API bool PropertyColor4(std::string_view label, float color[4], ImGuiColorEditFlags flags = 0);
+	ATHENA_API bool PropertyColorU32(std::string_view label, ImU32* color, ImGuiColorEditFlags flags = 0);
 	ATHENA_API bool PropertyCheckbox(std::string_view label, bool* value);
 	ATHENA_API bool PropertyCombo(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool PropertyCombo(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);

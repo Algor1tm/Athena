@@ -273,14 +273,18 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
 	{
+		ATN_PROFILE_FUNC()
 		// Update Animations
-		auto view = m_Registry.view<StaticMeshComponent>();
-		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<StaticMeshComponent>(entity);
-			if (meshComponent.Mesh->HasAnimations())
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+			auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
 			{
-				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
+				{
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				}
 			}
 		}
 
@@ -289,8 +293,10 @@ namespace Athena
 
 	void Scene::OnUpdateRuntime(Time frameTime, Ref<SceneRenderer> renderer)
 	{
+		ATN_PROFILE_FUNC()
 		// Update scripts
 		{
+			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate")
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
@@ -313,15 +319,19 @@ namespace Athena
 		}
 
 		// Update Animations
-		auto view = m_Registry.view<StaticMeshComponent>();
-		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<StaticMeshComponent>(entity);
-			if (meshComponent.Mesh->HasAnimations())
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+			auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
 			{
-				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
+				{
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				}
 			}
 		}
+
 
 		// Physics
 		UpdatePhysics(frameTime);
@@ -360,16 +370,21 @@ namespace Athena
 
 	void Scene::OnUpdateSimulation(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
 	{
+		ATN_PROFILE_FUNC()
 		UpdatePhysics(frameTime);
 		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
 	void Scene::OnRuntimeStart()
 	{
+		ATN_PROFILE_FUNC()
+
 		OnPhysics2DStart();
 
 		// Scripting
 		{
+			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart")
+
 			PrivateScriptEngine::OnRuntimeStart(this);
 
 			// Instantiate all script entities
@@ -435,6 +450,8 @@ namespace Athena
 
 	void Scene::OnPhysics2DStart()
 	{
+		ATN_PROFILE_FUNC()
+
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
 			{
@@ -487,6 +504,8 @@ namespace Athena
 
 	void Scene::UpdatePhysics(Time frameTime)
 	{
+		ATN_PROFILE_FUNC()
+
 		constexpr uint32 velocityIterations = 6;
 		constexpr uint32 positionIterations = 2;
 		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
@@ -516,6 +535,8 @@ namespace Athena
 
 	void Scene::RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
+		ATN_PROFILE_FUNC()
+
 		renderer->BeginScene({ view, proj, near, far });
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();

@@ -198,6 +198,7 @@ namespace Athena
 
 	void ImGuiLayer::Begin()
 	{
+		ATN_PROFILE_FUNC()
 		m_ImGuiImpl->NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
@@ -207,6 +208,7 @@ namespace Athena
 	{
 		Renderer::Submit([this, minimized]()
 		{
+			ATN_PROFILE_SCOPE("ImGuiLayer::End")
 			ImGuiIO& io = ImGui::GetIO();
 
 			ImGui::Render();
@@ -226,6 +228,7 @@ namespace Athena
 
 	void ImGuiLayer::OnSwapChainRecreate()
 	{
+		ATN_PROFILE_FUNC()
 		m_ImGuiImpl->OnSwapChainRecreate();
 	}
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.24)
 
-function(AddLibrary TARGET_NAME)
-    add_subdirectory("${THIRD_PARTY_DIR}/${TARGET_NAME}")
+function(AddLibrary TARGET_NAME TARGET_PATH)
+    add_subdirectory("${TARGET_PATH}")
     EnableMultiProcessorCompilation(${TARGET_NAME})
     set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER Dependencies)
 
@@ -39,10 +39,13 @@ set_property(TARGET Athena PROPERTY CXX_STANDARD 20)
 set_property(TARGET Athena PROPERTY FOLDER Core)
 set_property(TARGET Athena PROPERTY DEBUG_POSTFIX "")
 
-target_compile_definitions(Athena PRIVATE
+target_compile_definitions(Athena PUBLIC
 	$<$<CONFIG:Debug>:ATN_DEBUG>
 	$<$<CONFIG:Release>:ATN_RELEASE>
 	ATN_SIMD
+)
+
+target_compile_definitions(Athena PRIVATE
 	ATN_BUILD_DLL
 )
 
@@ -86,6 +89,8 @@ target_precompile_headers(Athena PRIVATE
 
 	Source/Athena/Core/Core.h
 	Source/Athena/Core/Log.h
+	Source/Athena/Core/Memory.h
+	Source/Athena/Core/Profile.h
 )
 
 target_include_directories(Athena PRIVATE 
@@ -96,18 +101,23 @@ target_include_directories(Athena PRIVATE
 	${GLAD_INCLUDE_DIR}
 	${GLFW_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
+	${OPTICK_INCLUDE_DIR}
 	${PYBIND11_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
 	${YAML_CPP_INCLUDE_DIR})
 
 
-AddLibrary("Box2D")
-AddLibrary(GLFW)
-AddLibrary(ImGui)
-AddLibrary(spdlog)
+AddLibrary("Box2D" "${THIRD_PARTY_DIR}/Box2D")
+AddLibrary(GLFW "${THIRD_PARTY_DIR}/GLFW")
+AddLibrary(ImGui "${THIRD_PARTY_DIR}/ImGui")
+AddLibrary(spdlog "${THIRD_PARTY_DIR}/spdlog")
 
-AddLibrary(yaml-cpp)
+AddLibrary(yaml-cpp "${THIRD_PARTY_DIR}/yaml-cpp")
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
+
+AddLibrary(OptickCore "${THIRD_PARTY_DIR}/Optick/OptickCore")
+
+
 
 if (Vulkan_FOUND)
 	target_link_libraries(Athena PRIVATE Vulkan::Vulkan Vulkan::shaderc_combined)
@@ -130,5 +140,5 @@ target_link_libraries(Athena PRIVATE pybind11::embed)
 # Windows specific code
 if(WIN32)
 	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
-	target_compile_definitions(Athena PUBLIC ATN_WINDOWS)
+	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS)
 endif(WIN32)

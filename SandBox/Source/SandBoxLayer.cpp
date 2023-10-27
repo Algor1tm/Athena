@@ -22,6 +22,8 @@ void SandBoxLayer::OnDetach()
 
 void SandBoxLayer::OnUpdate(Time frameTime)
 {
+	ATN_PROFILE_FUNC()
+
 	m_Camera->OnUpdate(frameTime);
 
 	CameraInfo cameraInfo;
@@ -45,6 +47,8 @@ void SandBoxLayer::OnImGuiRender()
 
 void SandBoxLayer::OnEvent(Event& event)
 {
+	ATN_PROFILE_FUNC()
+
 	m_Camera->OnEvent(event);
 
 	EventDispatcher dispatcher(event);
@@ -53,6 +57,8 @@ void SandBoxLayer::OnEvent(Event& event)
 
 bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 {
+	ATN_PROFILE_FUNC()
+
 	uint32 width = event.GetWidth();
 	uint32 height = event.GetHeight();
 

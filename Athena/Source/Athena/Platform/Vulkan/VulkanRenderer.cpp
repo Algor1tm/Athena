@@ -77,16 +77,13 @@ namespace Athena
 
 				std::vector<const char*> layers;
 
-	#ifdef ATN_DEBUG
-				layers.push_back("VK_LAYER_KHRONOS_validation");
+#ifdef ATN_DEBUG
 				extensions.push_back("VK_EXT_debug_report");
-	#endif
+				layers.push_back("VK_LAYER_KHRONOS_validation");
+#endif
 
-				String message = "Vulkan Extensions: \n\t";
-				for (auto ext : extensions)
-					message.append(std::format("'{}'\n\t", ext));
-
-				ATN_CORE_INFO_TAG("Vulkan", message);
+				CheckEnabledExtensions(extensions);
+				CheckEnabledLayers(layers);
 
 				// Create Vulkan Instance
 				VkInstanceCreateInfo instanceCI = {};
@@ -372,5 +369,94 @@ namespace Athena
 				1, &barrier
 			);
 		}
+	}
+
+	RenderCapabilities VulkanRenderer::GetRenderCaps()
+	{
+		return VulkanContext::GetDevice()->GetDeviceCapabilities();
+	}
+
+	bool VulkanRenderer::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
+	{
+		uint32 supportedExtensionCount = 0;
+		vkEnumerateInstanceExtensionProperties(NULL, &supportedExtensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
+		vkEnumerateInstanceExtensionProperties(NULL, &supportedExtensionCount, supportedExtensions.data());
+
+		uint32 findCount = 0;
+		for (uint32 i = 0; i < supportedExtensions.size(); ++i)
+		{
+			String extName = supportedExtensions[i].extensionName;
+			bool find = (std::find_if(requiredExtensions.begin(), requiredExtensions.end(), [&extName](const char* name)
+				{ return name == extName; }) != requiredExtensions.end());
+
+			if (find)
+				findCount++;
+		}
+
+		bool exists = findCount == requiredExtensions.size();
+
+		String message = "Vulkan supported extensions: \n\t";
+		for (auto ext: supportedExtensions)
+			message += std::format("'{}'\n\t", ext.extensionName);
+
+		ATN_CORE_TRACE_TAG("Vulkan", message);
+
+		message = "Vulkan required extensions: \n\t";
+		for (auto ext : requiredExtensions)
+			message += std::format("'{}'\n\t", ext);
+
+		ATN_CORE_INFO_TAG("Vulkan", message);
+
+		if (!exists)
+		{
+			ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan API version does not support required extensions!");
+			ATN_CORE_ASSERT(false);
+		}
+
+		return exists;
+	}
+
+	bool VulkanRenderer::CheckEnabledLayers(const std::vector<const char*>& requiredLayers)
+	{
+		uint32 supportedLayerCount = 0;
+		vkEnumerateInstanceLayerProperties(&supportedLayerCount, nullptr);
+
+		std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);
+		vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
+
+		uint32 findCount = 0;
+		for (uint32 i = 0; i < supportedLayers.size(); ++i)
+		{
+			String layerName = supportedLayers[i].layerName;
+			bool find =(std::find_if(requiredLayers.begin(), requiredLayers.end(), [&layerName](const char* name)
+				{ return name == layerName; }) != requiredLayers.end());
+
+			if (find)
+				findCount++;
+		}
+
+		bool exists = findCount == requiredLayers.size();
+
+		String message = "Vulkan supported layers: \n\t";
+		for (auto layer : supportedLayers)
+			message += std::format("'{}'\n\t", layer.layerName);
+
+		ATN_CORE_TRACE_TAG("Vulkan", message);
+
+		message = "Vulkan required layers: \n\t";
+		for (auto layer : requiredLayers)
+			message += std::format("'{}'\n\t", layer);
+
+		ATN_CORE_INFO_TAG("Vulkan", message);
+
+		if (!exists)
+		{
+			ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan API version does not support required layers!");
+			ATN_CORE_ASSERT(false);
+		}
+
+		return true;
 	}
 }

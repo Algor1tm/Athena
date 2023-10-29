@@ -9,6 +9,42 @@
 
 namespace Athena
 {
+	struct RenderCapabilities
+	{
+		String Name;
+		uint64 VRAM;
+
+		uint32 MaxImageDimension2D;
+		uint32 MaxImageDimensionCube;
+		uint32 MaxImageArrayLayers;
+
+		float  MaxSamplerLodBias;
+		float  MaxSamplerAnisotropy;
+
+		uint32 MaxFramebufferWidth;
+		uint32 MaxFramebufferHeight;
+		uint32 MaxFramebufferLayers;
+		uint32 MaxFramebufferColorAttachments;
+
+		uint32 MaxUniformBufferRange;
+		uint32 MaxStorageBufferRange;
+		uint32 MaxPushConstantRange;
+
+		uint32 MaxViewportDimensions[2];
+		uint32 MaxClipDistances;
+		uint32 MaxCullDistances;
+		float  LineWidthRange[2];
+
+		uint32 MaxVertexInputAttributes;
+		uint32 MaxVertexInputBindingStride;
+		uint32 MaxFragmentInputComponents;
+		uint32 MaxFragmentOutputAttachments;
+
+		uint32 MaxComputeWorkGroupSize[3];
+		uint32 MaxComputeSharedMemorySize;
+		uint32 MaxComputeWorkGroupInvocations;
+	};
+
 	enum ShaderDef
 	{
 		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
@@ -118,6 +154,8 @@ namespace Athena
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
 
+		static const RenderCapabilities& GetRenderCaps();
+
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();
 		static Ref<Texture2D> GetBlackTexture();
@@ -127,19 +165,6 @@ namespace Athena
 
 		static BufferLayout GetStaticVertexLayout();
 		static BufferLayout GetAnimVertexLayout();
-
-		struct Statistics
-		{
-			uint32 DrawCalls = 0;
-			uint32 DispatchCalls = 0;
-			uint32 ShadersBinded = 0;
-			uint32 PipelinesBinded = 0;
-			uint32 RenderPasses = 0;
-			uint32 ComputePasses = 0;
-		};
-
-		static const Statistics& GetStatistics();
-		static void ResetStats();
 
 	private:
 		static CommandQueue& GetRenderCommandQueue();

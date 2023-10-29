@@ -10,9 +10,9 @@ namespace Athena
 	struct CPUCapabilities
 	{
 		String Name;
-		uint32 NumberOfProcessorCores = 0;
-		uint32 NumberOfLogicalProcessors = 0;
-		uint64 TotalPhysicalMemoryKB = 0;
+		uint32 Cores = 0;
+		uint32 LogicalProcessors = 0;
+		uint64 RAM = 0;	// Kb
 	};
 
 	class ATHENA_API Platform
@@ -21,8 +21,10 @@ namespace Athena
 		static void Init();
 		static const CPUCapabilities& GetCPUCapabilities();
 
-		// returns time in milliseconds
+		// In milliseconds
 		static double GetHighPrecisionTime();
+
+		// In bytes
 		static uint64 GetMemoryUsage();
 	};
 

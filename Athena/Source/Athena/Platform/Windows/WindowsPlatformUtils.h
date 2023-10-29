@@ -102,7 +102,7 @@ namespace Athena
 			statex.dwLength = sizeof(statex);
 			WINAPI_CHECK(GlobalMemoryStatusEx(&statex));
 
-			s_Data.CPUCaps.TotalPhysicalMemoryKB = statex.ullTotalPhys / 1024;
+			s_Data.CPUCaps.RAM = statex.ullTotalPhys / 1024;
 		}
 
 		// Logical processor info
@@ -159,8 +159,8 @@ namespace Athena
 
 			free(buffer);
 
-			s_Data.CPUCaps.NumberOfProcessorCores = processorCoreCount;
-			s_Data.CPUCaps.NumberOfLogicalProcessors = logicalProcessorCount;
+			s_Data.CPUCaps.Cores = processorCoreCount;
+			s_Data.CPUCaps.LogicalProcessors = logicalProcessorCount;
 
 		}
 
@@ -210,16 +210,16 @@ namespace Athena
 		if (NULL == hProcess)
 			return 0;
 
-		uint64 memUsageMB = 0;
+		uint64 memUsage = 0;
 		if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
 		{
-			memUsageMB = pmc.WorkingSetSize;
+			memUsage = pmc.WorkingSetSize;
 		}
 
 		WINAPI_CHECK_LASTERROR();
 
 		WINAPI_CHECK(CloseHandle(hProcess));
-		return memUsageMB;
+		return memUsage;
 	}
 
 

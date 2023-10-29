@@ -94,9 +94,7 @@ namespace Athena
 
 			std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-			message = "Device extensions: \n\t";
-			for (auto ext : deviceExtensions)
-				message += std::format("{}\n\t", ext);
+			CheckEnabledExtensions(deviceExtensions);
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
@@ -120,5 +118,94 @@ namespace Athena
 	void VulkanDevice::WaitIdle()
 	{
 		vkDeviceWaitIdle(m_LogicalDevice);
+	}
+
+	RenderCapabilities VulkanDevice::GetDeviceCapabilities() const
+	{
+		RenderCapabilities deviceCaps;
+
+		VkPhysicalDeviceProperties properties;
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
+
+		deviceCaps.Name = properties.deviceName;
+
+		deviceCaps.VRAM = 0; // TODO
+
+		deviceCaps.MaxImageDimension2D = properties.limits.maxImageDimension2D;
+		deviceCaps.MaxImageDimensionCube = properties.limits.maxImageDimensionCube;
+		deviceCaps.MaxImageArrayLayers = properties.limits.maxImageArrayLayers;
+		deviceCaps.MaxSamplerLodBias = properties.limits.maxSamplerLodBias;
+		deviceCaps.MaxSamplerAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+		deviceCaps.MaxFramebufferWidth = properties.limits.maxFramebufferWidth;
+		deviceCaps.MaxFramebufferHeight = properties.limits.maxFramebufferHeight;
+		deviceCaps.MaxFramebufferLayers = properties.limits.maxFramebufferLayers;
+		deviceCaps.MaxFramebufferColorAttachments = properties.limits.maxColorAttachments;
+
+		deviceCaps.MaxUniformBufferRange = properties.limits.maxUniformBufferRange;
+		deviceCaps.MaxStorageBufferRange = properties.limits.maxStorageBufferRange;
+		deviceCaps.MaxPushConstantRange = properties.limits.maxPushConstantsSize;
+
+		deviceCaps.MaxViewportDimensions[0] = properties.limits.maxViewportDimensions[0];
+		deviceCaps.MaxViewportDimensions[1] = properties.limits.maxViewportDimensions[1];
+		deviceCaps.MaxClipDistances = properties.limits.maxClipDistances;
+		deviceCaps.MaxCullDistances = properties.limits.maxCullDistances;
+		deviceCaps.LineWidthRange[0] = properties.limits.lineWidthRange[0];
+		deviceCaps.LineWidthRange[1] = properties.limits.lineWidthRange[1];
+
+		deviceCaps.MaxVertexInputAttributes = properties.limits.maxVertexInputAttributes;
+		deviceCaps.MaxVertexInputBindingStride = properties.limits.maxVertexInputBindingStride;
+		deviceCaps.MaxFragmentInputComponents = properties.limits.maxFragmentInputComponents;
+		deviceCaps.MaxFragmentOutputAttachments = properties.limits.maxFragmentOutputAttachments;
+
+		deviceCaps.MaxComputeWorkGroupSize[0] = properties.limits.maxComputeWorkGroupSize[0];
+		deviceCaps.MaxComputeWorkGroupSize[1] = properties.limits.maxComputeWorkGroupSize[1];
+		deviceCaps.MaxComputeWorkGroupSize[2] = properties.limits.maxComputeWorkGroupSize[2];
+		deviceCaps.MaxComputeSharedMemorySize = properties.limits.maxComputeSharedMemorySize;
+		deviceCaps.MaxComputeWorkGroupInvocations = properties.limits.maxComputeWorkGroupInvocations;
+
+		return deviceCaps;
+	}
+
+	bool VulkanDevice::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
+	{
+		uint32 supportedExtensionCount = 0;
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, NULL, &supportedExtensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, NULL, &supportedExtensionCount, supportedExtensions.data());
+
+		uint32 findCount = 0;
+		for (uint32 i = 0; i < supportedExtensions.size(); ++i)
+		{
+			String extName = supportedExtensions[i].extensionName;
+			bool find = (std::find_if(requiredExtensions.begin(), requiredExtensions.end(), [&extName](const char* name)
+				{ return name == extName; }) != requiredExtensions.end());
+
+			if (find)
+				findCount++;
+		}
+
+		bool exists = findCount == requiredExtensions.size();
+
+		String message = "Device supported extensions: \n\t";
+		for (auto ext : supportedExtensions)
+			message += std::format("'{}'\n\t", ext.extensionName);
+
+		ATN_CORE_TRACE_TAG("Vulkan", message);
+
+		message = "Device required extensions: \n\t";
+		for (auto ext : requiredExtensions)
+			message += std::format("'{}'\n\t", ext);
+
+		ATN_CORE_INFO_TAG("Vulkan", message);
+
+		if (!exists)
+		{
+			ATN_CORE_FATAL_TAG("Vulkan", "Current Physical Device does not support required extensions!");
+			ATN_CORE_ASSERT(false);
+		}
+
+		return exists;
 	}
 }

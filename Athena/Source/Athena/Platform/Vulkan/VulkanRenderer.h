@@ -18,8 +18,13 @@ namespace Athena
 		virtual void EndFrame() override;
 
 		virtual void WaitDeviceIdle() override;
-
 		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) override;
+
+		virtual RenderCapabilities GetRenderCaps() override;
+
+	private:
+		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);
+		bool CheckEnabledLayers(const std::vector<const char*>& requiredLayers);
 
 	private:
 		std::vector<VkCommandBuffer> m_VkCommandBuffers;

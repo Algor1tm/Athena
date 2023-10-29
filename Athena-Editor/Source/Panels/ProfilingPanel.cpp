@@ -68,15 +68,50 @@ namespace Athena
                         auto& cpuCaps = Platform::GetCPUCapabilities();
 
                         ImGui::Text(cpuCaps.Name.c_str());
-                        ImGui::Text("Processor Cores: %d", cpuCaps.NumberOfProcessorCores);
-                        ImGui::Text("Logical Processors: %d", cpuCaps.NumberOfLogicalProcessors);
-                        ImGui::Text("RAM: %d MB", cpuCaps.TotalPhysicalMemoryKB / 1024);
+                        ImGui::Text("RAM: %d MB", cpuCaps.RAM / 1024);
+                        ImGui::Text("Cores: %d", cpuCaps.Cores);
+                        ImGui::Text("Logical Processors: %d", cpuCaps.LogicalProcessors);
 
                         UI::TreePop();
                     }
 
                     if (UI::TreeNode("GPU Capabilites"))
                     {
+                        auto& gpuCaps = Renderer::GetRenderCaps();
+
+                        ImGui::Text(gpuCaps.Name.c_str());
+                        ImGui::Text("VRAM: %d", gpuCaps.VRAM);
+
+                        ImGui::Text("MaxImageDimension2D: %u", gpuCaps.MaxImageDimension2D);
+                        ImGui::Text("MaxImageDimensionCube: %u", gpuCaps.MaxImageDimensionCube);
+                        ImGui::Text("MaxImageArrayLayers: %u", gpuCaps.MaxImageArrayLayers);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxSamplerLodBias: %.1f", gpuCaps.MaxSamplerLodBias);
+                        ImGui::Text("MaxSamplerAnisotropy: %.1f", gpuCaps.MaxSamplerAnisotropy);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxFramebufferWidth: %u", gpuCaps.MaxFramebufferWidth);
+                        ImGui::Text("MaxFramebufferHeight: %u", gpuCaps.MaxFramebufferHeight);
+                        ImGui::Text("MaxFramebufferLayers: %u", gpuCaps.MaxFramebufferLayers);
+                        ImGui::Text("MaxFramebufferColorAttachments: %u", gpuCaps.MaxFramebufferColorAttachments);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxUniformBufferRange: %u", gpuCaps.MaxUniformBufferRange);
+                        ImGui::Text("MaxStorageBufferRange: %u", gpuCaps.MaxStorageBufferRange);
+                        ImGui::Text("MaxPushConstantRange: %u", gpuCaps.MaxPushConstantRange);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxViewportDimensions: { %u, %u }", gpuCaps.MaxViewportDimensions[0], gpuCaps.MaxViewportDimensions[1]);
+                        ImGui::Text("MaxClipDistances: %u", gpuCaps.MaxClipDistances);
+                        ImGui::Text("MaxCullDistances: %u", gpuCaps.MaxCullDistances);
+                        ImGui::Text("LineWidthRange: { %.1f, %.1f }", gpuCaps.LineWidthRange[0], gpuCaps.LineWidthRange[1]);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxVertexInputAttributes: %u", gpuCaps.MaxVertexInputAttributes);
+                        ImGui::Text("MaxVertexInputBindingStride: %u", gpuCaps.MaxVertexInputBindingStride);
+                        ImGui::Text("MaxFragmentInputComponents: %u", gpuCaps.MaxFragmentInputComponents);
+                        ImGui::Text("MaxFragmentOutputAttachments: %u", gpuCaps.MaxFragmentOutputAttachments);
+                        ImGui::Spacing();
+                        ImGui::Text("MaxComputeWorkGroupSize: { %u, %u, %u }", gpuCaps.MaxComputeWorkGroupSize[0], gpuCaps.MaxComputeWorkGroupSize[1], gpuCaps.MaxComputeWorkGroupSize[2]);
+                        ImGui::Text("MaxComputeSharedMemorySize: %u", gpuCaps.MaxComputeSharedMemorySize);
+                        ImGui::Text("MaxComputeWorkGroupInvocations: %u", gpuCaps.MaxComputeWorkGroupInvocations);
+
                         UI::TreePop();
                     }
 

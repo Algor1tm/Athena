@@ -24,7 +24,7 @@ namespace Athena
 		std::unordered_map<String, String> GlobalShaderMacroses;
 		Ref<ShaderLibrary> ShaderPack;
 
-		Renderer::Statistics Stats;
+		RenderCapabilities RenderCaps;
 
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BlackTexture;
@@ -61,7 +61,8 @@ namespace Athena
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
-		
+		s_Data.RenderCaps = s_Data.RendererAPI->GetRenderCaps();
+
 		uint32 whiteTextureData = 0xffffffff;
 
 		//TextureCreateInfo texInfo;
@@ -181,14 +182,9 @@ namespace Athena
 		s_Data.GlobalShaderMacroses[name] = value;
 	}
 
-	const Renderer::Statistics& Renderer::GetStatistics()
+	const RenderCapabilities& Renderer::GetRenderCaps()
 	{
-		return s_Data.Stats;
-	}
-
-	void Renderer::ResetStats()
-	{
-		s_Data.Stats = Renderer::Statistics();
+		return s_Data.RenderCaps;
 	}
 
 	Ref<Texture2D> Renderer::GetBRDF_LUT()

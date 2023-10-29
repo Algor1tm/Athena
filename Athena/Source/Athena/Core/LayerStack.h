@@ -18,8 +18,8 @@ namespace Athena
 		LayerStack() = default;
 		~LayerStack();
 
-		void PushLayer(Ref<Layer> layer);
-		void PushOverlay(Ref<Layer> overlay);
+		void PushLayer(const Ref<Layer>& layer);
+		void PushOverlay(const Ref<Layer>& overlay);
 		void PopLayer(Ref<Layer> layer);
 		void PopOverlay(Ref<Layer> overlay);
 

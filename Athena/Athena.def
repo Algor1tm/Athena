@@ -12,7 +12,9 @@ EXPORTS
 	?BeginPopup@ImGui@@YA_NPEBDH@Z	
 	?BeginPopupContextItem@ImGui@@YA_NPEBDH@Z
 	?BeginPopupModal@ImGui@@YA_NPEBDPEA_NH@Z
+	?BeginTabBar@ImGui@@YA_NPEBDH@Z
 	?BeginTable@ImGui@@YA_NPEBDHHAEBUImVec2@@M@Z
+	?BeginTabItem@ImGui@@YA_NPEBDPEA_NH@Z
 	?BeginHorizontal@ImGui@@YAXPEBDAEBUImVec2@@M@Z
 	?BeginMenu@ImGui@@YA_NPEBD_N@Z
 	?Button@ImGui@@YA_NPEBDAEBUImVec2@@@Z
@@ -30,6 +32,8 @@ EXPORTS
 	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
 	?End@ImGui@@YAXXZ
 	?EndGroup@ImGui@@YAXXZ
+	?EndTabBar@ImGui@@YAXXZ
+	?EndTabItem@ImGui@@YAXXZ
 	?EndHorizontal@ImGui@@YAXXZ
 	?EndMenu@ImGui@@YAXXZ
 	?ItemAdd@ImGui@@YA_NAEBUImRect@@IPEBU2@H@Z
@@ -100,11 +104,13 @@ EXPORTS
 	?NextColumn@ImGui@@YAXXZ
 	?OpenPopup@ImGui@@YAXPEBDH@Z
 	?PlotLines@ImGui@@YAXPEBDPEBMHH0MMUImVec2@@H@Z
+	?PopClipRect@ImGui@@YAXXZ
 	?PopFont@ImGui@@YAXXZ
 	?PopID@ImGui@@YAXXZ
 	?PopItemWidth@ImGui@@YAXXZ
 	?PopStyleColor@ImGui@@YAXH@Z	
 	?PopStyleVar@ImGui@@YAXH@Z
+	?PushClipRect@ImGui@@YAXAEBUImVec2@@0_N@Z
 	?PushFont@ImGui@@YAXPEAUImFont@@@Z
 	?PushID@ImGui@@YAXPEBD@Z
 	?PushItemWidth@ImGui@@YAXM@Z

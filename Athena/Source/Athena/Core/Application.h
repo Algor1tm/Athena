@@ -35,6 +35,18 @@ namespace Athena
 		WindowCreateInfo WindowInfo;
 	};
 
+	struct ApplicationStatistics
+	{
+		Timer Timer;
+		Time FrameTime;
+		Time Application_ProcessEvents;
+		Time Application_OnUpdate;
+		Time Application_RenderImGui;
+		Time Renderer_WaitAndRender;
+		Time SwapChain_Present;
+		Time SwapChain_AcquireImage;
+		Time Renderer_QueueSubmit;
+	};
 
 	class ATHENA_API Application
 	{
@@ -47,28 +59,18 @@ namespace Athena
 
 		void Run();
 
-		void PushLayer(Ref<Layer> layer);
-		void PushOverlay(Ref<Layer> layer);
+		void PushLayer(const Ref<Layer>& layer);
+		void PushOverlay(const Ref<Layer>& layer);
 
 		const AppConfig GetConfig() const { return m_Config; }
 
-		Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
+		const Ref<ImGuiLayer>& GetImGuiLayer() { return m_ImGuiLayer; }
 		Window& GetWindow() { return *m_Window; }
-		const Statistics& GetStatistics() const { return m_Statistics; }
+		ApplicationStatistics& GetStats() { return m_Statistics; }
 
 		void Close();
 
 		inline static Application& Get() { return *s_Instance; }
-
-	public:
-		struct Statistics
-		{
-			Time FrameTime;
-			Time Application_OnUpdate;
-			Time Application_OnEvent;
-			Time Application_OnImGuiRender;
-			Time Window_SwapBuffers;
-		};
 
 	private:
 		void ProcessEvents();
@@ -92,7 +94,7 @@ namespace Athena
 
 		std::queue<Ref<Event>> m_EventQueue;
 
-		Statistics m_Statistics;
+		ApplicationStatistics m_Statistics;
 
 	private:
 		static Application* s_Instance;

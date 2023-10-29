@@ -17,10 +17,5 @@ namespace Athena
 		ProfilingPanel(std::string_view name, const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
-
-	private:
-		bool m_IsPlottingFrameRate = false;
-
-		SystemInfo m_SystemInfo;
 	};
 }

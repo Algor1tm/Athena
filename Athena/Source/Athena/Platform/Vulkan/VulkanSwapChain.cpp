@@ -245,6 +245,9 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			ATN_PROFILE_SCOPE("VulkanSwapChain::AcquireImage")
+			auto& appstats = Application::Get().GetStats();
+			appstats.Timer.Reset();
+
 			if (m_Dirty)
 				Recreate();
 
@@ -274,6 +277,8 @@ namespace Athena
 					VK_CHECK(result);
 				}
 			}
+
+			appstats.SwapChain_AcquireImage = appstats.Timer.ElapsedTime();
 		});
 	}
 
@@ -282,6 +287,9 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			ATN_PROFILE_SCOPE("VulkanSwapChain::Present")
+			auto& appstats = Application::Get().GetStats();
+			appstats.Timer.Reset();
+
 			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 			VkPresentInfoKHR presentInfo = {};
@@ -302,6 +310,8 @@ namespace Athena
 			{
 				VK_CHECK(result);
 			}
+
+			appstats.SwapChain_Present = appstats.Timer.ElapsedTime();
 		});
 	}
 

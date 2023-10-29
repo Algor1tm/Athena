@@ -31,6 +31,7 @@ namespace Athena
 		Log::Init(m_Config.EnableConsole);
 		Renderer::Init(appinfo.RendererConfig);
 		CreateMainWindow(appinfo.WindowInfo);
+		Platform::Init();
 		InitImGui();
 		ScriptEngine::Init(appinfo.ScriptConfig);
 
@@ -71,8 +72,12 @@ namespace Athena
 
 				// Update
 				{
+					m_Statistics.Timer.Reset();
+
 					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
+
+					m_Statistics.Application_OnUpdate = m_Statistics.Timer.ElapsedTime();
 				}
 
 				// Render UI
@@ -81,9 +86,6 @@ namespace Athena
 				// Submit commands to GPU and queue present
 				Renderer::EndFrame();
 				m_Window->SwapBuffers();
-
-				// Execute renderer commands after update loop
-				Renderer::WaitAndRender();
 			}
 			else
 			{
@@ -94,6 +96,9 @@ namespace Athena
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 
+			// Execute renderer commands after update loop
+			Renderer::WaitAndRender();
+
 			frameTime = timer.ElapsedTime() - start;
 		}
 
@@ -103,6 +108,7 @@ namespace Athena
 	void Application::ProcessEvents()
 	{
 		ATN_PROFILE_FUNC()
+		m_Statistics.Timer.Reset();
 
 		m_Window->PollEvents();
 
@@ -112,10 +118,14 @@ namespace Athena
 			OnEvent(event);
 			m_EventQueue.pop();
 		}
+
+		m_Statistics.Application_ProcessEvents = m_Statistics.Timer.ElapsedTime();
 	}
 
 	void Application::RenderImGui()
 	{
+		m_Statistics.Timer.Reset();
+
 		if (m_Config.EnableImGui)
 		{
 			ATN_PROFILE_FUNC()
@@ -127,6 +137,8 @@ namespace Athena
 			}
 			m_ImGuiLayer->End(m_Minimized);
 		}
+
+		m_Statistics.Application_RenderImGui = m_Statistics.Timer.ElapsedTime();
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)
@@ -173,13 +185,13 @@ namespace Athena
 		m_Running = false;
 	}
 
-	void Application::PushLayer(Ref<Layer> layer)
+	void Application::PushLayer(const Ref<Layer>& layer)
 	{
 		m_LayerStack.PushLayer(layer);
 		layer->OnAttach();
 	}
 
-	void Application::PushOverlay(Ref<Layer> layer)
+	void Application::PushOverlay(const Ref<Layer>& layer)
 	{
 		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();

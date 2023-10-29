@@ -12,14 +12,14 @@ namespace Athena
 	}
 
 
-	void LayerStack::PushLayer(Ref<Layer> layer)
+	void LayerStack::PushLayer(const Ref<Layer>& layer)
 	{
 		m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
 		++m_LayerInsertIndex;
 	}
 
 
-	void LayerStack::PushOverlay(Ref<Layer> overlay)
+	void LayerStack::PushOverlay(const Ref<Layer>& overlay)
 	{
 		m_Layers.emplace_back(overlay);
 	}

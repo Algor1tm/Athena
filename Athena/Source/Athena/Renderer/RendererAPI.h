@@ -41,9 +41,9 @@ namespace Athena
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 
-		virtual void WaitDeviceIdle() = 0;
-
 		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) = 0;
-		virtual RenderCapabilities GetRenderCaps() = 0;
+
+		virtual void WaitDeviceIdle() = 0;
+		virtual RenderCapabilities GetRenderCapabilities() = 0;
 	};
 }

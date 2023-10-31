@@ -57,7 +57,10 @@ namespace Athena
 			for (uint32 i = 0; i < count; i++)
 			{
 				// Select fisrt queue that support requested flags
-				if ((queues[i].queueFlags & requestedQueueFlags) && (m_QueueFamily == UINT32_MAX))
+				bool supported = true;
+				supported = supported && queues[i].queueFlags & requestedQueueFlags;
+				supported = supported && queues[i].timestampValidBits > 0;
+				if (supported && (m_QueueFamily == UINT32_MAX))
 					m_QueueFamily = i;
 
 				String flags;
@@ -67,13 +70,11 @@ namespace Athena
 				flags += queues[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
 				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
-				message += std::format("{}: {} count = {}\n\t", i, flags, queues[i].queueCount);
-
-
+				message += std::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
 			}
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT");
+			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
 		});
 
 		// Create Logical Device
@@ -96,14 +97,25 @@ namespace Athena
 
 			CheckEnabledExtensions(deviceExtensions);
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			// GPU profiling
+			VkPhysicalDeviceHostQueryResetFeatures resetFeatures = {};
+			resetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+			resetFeatures.pNext = nullptr;
+			resetFeatures.hostQueryReset = VK_TRUE;
+
+			VkPhysicalDeviceFeatures deviceFeatures = {};
+			deviceFeatures.geometryShader = VK_TRUE;
+			deviceFeatures.wideLines = VK_TRUE;
+			deviceFeatures.pipelineStatisticsQuery = VK_TRUE;
 
 			VkDeviceCreateInfo deviceCI = {};
+			deviceCI.pNext = &resetFeatures;
 			deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			deviceCI.queueCreateInfoCount = std::size(queueCIs);
 			deviceCI.pQueueCreateInfos = queueCIs;
 			deviceCI.enabledExtensionCount = deviceExtensions.size();
 			deviceCI.ppEnabledExtensionNames = deviceExtensions.data();
+			deviceCI.pEnabledFeatures = &deviceFeatures;
 
 			VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCI, VulkanContext::GetAllocator(), &m_LogicalDevice));
 			vkGetDeviceQueue(m_LogicalDevice, m_QueueFamily, 0, &m_Queue);
@@ -126,43 +138,54 @@ namespace Athena
 
 		VkPhysicalDeviceProperties properties;
 		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
+		VkPhysicalDeviceLimits limits = properties.limits;
 
 		deviceCaps.Name = properties.deviceName;
 
 		deviceCaps.VRAM = 0; // TODO
 
-		deviceCaps.MaxImageDimension2D = properties.limits.maxImageDimension2D;
-		deviceCaps.MaxImageDimensionCube = properties.limits.maxImageDimensionCube;
-		deviceCaps.MaxImageArrayLayers = properties.limits.maxImageArrayLayers;
-		deviceCaps.MaxSamplerLodBias = properties.limits.maxSamplerLodBias;
-		deviceCaps.MaxSamplerAnisotropy = properties.limits.maxSamplerAnisotropy;
+		deviceCaps.MaxImageDimension2D = limits.maxImageDimension2D;
+		deviceCaps.MaxImageDimensionCube = limits.maxImageDimensionCube;
+		deviceCaps.MaxImageArrayLayers = limits.maxImageArrayLayers;
+		deviceCaps.MaxSamplerLodBias = limits.maxSamplerLodBias;
+		deviceCaps.MaxSamplerAnisotropy = limits.maxSamplerAnisotropy;
 
-		deviceCaps.MaxFramebufferWidth = properties.limits.maxFramebufferWidth;
-		deviceCaps.MaxFramebufferHeight = properties.limits.maxFramebufferHeight;
-		deviceCaps.MaxFramebufferLayers = properties.limits.maxFramebufferLayers;
-		deviceCaps.MaxFramebufferColorAttachments = properties.limits.maxColorAttachments;
+		deviceCaps.MaxFramebufferWidth = limits.maxFramebufferWidth;
+		deviceCaps.MaxFramebufferHeight = limits.maxFramebufferHeight;
+		deviceCaps.MaxFramebufferLayers = limits.maxFramebufferLayers;
+		deviceCaps.MaxFramebufferColorAttachments = limits.maxColorAttachments;
 
-		deviceCaps.MaxUniformBufferRange = properties.limits.maxUniformBufferRange;
-		deviceCaps.MaxStorageBufferRange = properties.limits.maxStorageBufferRange;
-		deviceCaps.MaxPushConstantRange = properties.limits.maxPushConstantsSize;
+		deviceCaps.MaxUniformBufferRange = limits.maxUniformBufferRange;
+		deviceCaps.MaxStorageBufferRange = limits.maxStorageBufferRange;
+		deviceCaps.MaxPushConstantRange = limits.maxPushConstantsSize;
 
-		deviceCaps.MaxViewportDimensions[0] = properties.limits.maxViewportDimensions[0];
-		deviceCaps.MaxViewportDimensions[1] = properties.limits.maxViewportDimensions[1];
-		deviceCaps.MaxClipDistances = properties.limits.maxClipDistances;
-		deviceCaps.MaxCullDistances = properties.limits.maxCullDistances;
-		deviceCaps.LineWidthRange[0] = properties.limits.lineWidthRange[0];
-		deviceCaps.LineWidthRange[1] = properties.limits.lineWidthRange[1];
+		deviceCaps.MaxDescriptorSetSamplers = limits.maxDescriptorSetSamplers;
+		deviceCaps.MaxDescriptorSetUnifromBuffers = limits.maxDescriptorSetUniformBuffers;
+		deviceCaps.MaxDescriptorSetStorageBuffers = limits.maxDescriptorSetStorageBuffers;
+		deviceCaps.MaxDescriptorSetSampledImages = limits.maxDescriptorSetSampledImages;
+		deviceCaps.MaxDescriptorSetStorageImages = limits.maxDescriptorSetStorageImages;
+		deviceCaps.MaxDescriptorSetInputAttachments = limits.maxDescriptorSetInputAttachments;
 
-		deviceCaps.MaxVertexInputAttributes = properties.limits.maxVertexInputAttributes;
-		deviceCaps.MaxVertexInputBindingStride = properties.limits.maxVertexInputBindingStride;
-		deviceCaps.MaxFragmentInputComponents = properties.limits.maxFragmentInputComponents;
-		deviceCaps.MaxFragmentOutputAttachments = properties.limits.maxFragmentOutputAttachments;
+		deviceCaps.MaxViewportDimensions[0] = limits.maxViewportDimensions[0];
+		deviceCaps.MaxViewportDimensions[1] = limits.maxViewportDimensions[1];
+		deviceCaps.MaxClipDistances = limits.maxClipDistances;
+		deviceCaps.MaxCullDistances = limits.maxCullDistances;
+		deviceCaps.LineWidthRange[0] = limits.lineWidthRange[0];
+		deviceCaps.LineWidthRange[1] = limits.lineWidthRange[1];
 
-		deviceCaps.MaxComputeWorkGroupSize[0] = properties.limits.maxComputeWorkGroupSize[0];
-		deviceCaps.MaxComputeWorkGroupSize[1] = properties.limits.maxComputeWorkGroupSize[1];
-		deviceCaps.MaxComputeWorkGroupSize[2] = properties.limits.maxComputeWorkGroupSize[2];
-		deviceCaps.MaxComputeSharedMemorySize = properties.limits.maxComputeSharedMemorySize;
-		deviceCaps.MaxComputeWorkGroupInvocations = properties.limits.maxComputeWorkGroupInvocations;
+		deviceCaps.MaxVertexInputAttributes = limits.maxVertexInputAttributes;
+		deviceCaps.MaxVertexInputBindingStride = limits.maxVertexInputBindingStride;
+		deviceCaps.MaxFragmentInputComponents = limits.maxFragmentInputComponents;
+		deviceCaps.MaxFragmentOutputAttachments = limits.maxFragmentOutputAttachments;
+
+		deviceCaps.MaxComputeWorkGroupSize[0] = limits.maxComputeWorkGroupSize[0];
+		deviceCaps.MaxComputeWorkGroupSize[1] = limits.maxComputeWorkGroupSize[1];
+		deviceCaps.MaxComputeWorkGroupSize[2] = limits.maxComputeWorkGroupSize[2];
+		deviceCaps.MaxComputeSharedMemorySize = limits.maxComputeSharedMemorySize;
+		deviceCaps.MaxComputeWorkGroupInvocations = limits.maxComputeWorkGroupInvocations;
+
+		deviceCaps.TimestampComputeAndGraphics = limits.timestampComputeAndGraphics;
+		deviceCaps.TimestampPeriod = limits.timestampPeriod;
 
 		return deviceCaps;
 	}

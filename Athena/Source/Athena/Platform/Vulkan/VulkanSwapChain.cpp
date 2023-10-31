@@ -260,7 +260,6 @@ namespace Athena
 				vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
 			}
 
-
 			{
 				ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
 

@@ -37,7 +37,7 @@ endif()
 
 
 # Options
-option(OPTICK_USE_VULKAN "Built-in support for Vulkan" ON)
+option(OPTICK_USE_VULKAN "Built-in support for Vulkan" OFF)
 option(OPTICK_USE_D3D12 "Built-in support for DirectX 12" OFF)
 option(OPTICK_BUILD_GUI_APP "Build Optick gui viewer app" OFF)
 option(OPTICK_BUILD_CONSOLE_SAMPLE "Build Optick console sample app" ${standalone})
@@ -86,7 +86,7 @@ endif()
 
 # Gui App
 if(MSVC AND OPTICK_BUILD_GUI_APP)
-	#add_subdirectory(gui)
+	#add_subdirectory(gui)	// Do not compile gui project
 endif()
 
 

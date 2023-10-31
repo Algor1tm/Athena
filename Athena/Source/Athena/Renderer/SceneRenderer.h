@@ -4,6 +4,7 @@
 #include "Athena/Core/Time.h"
 
 #include "Athena/Renderer/Camera.h"
+#include "Athena/Renderer/GPUProfiler.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Light.h"
 #include "Athena/Renderer/Texture.h"
@@ -139,10 +140,16 @@ namespace Athena
 		int32 MipLevel;
 	};
 
+	struct SceneRendererStatistics
+	{
+		double GeometryPass = 0;
+		PipelineStatistics PipelineStats;
+	};
+
 	struct SceneRendererData
 	{
-		SceneRendererSettings Settings;
-		const uint32 ShadowMapResolution = 2048;
+		Ref<GPUProfiler> Profiler;
+		SceneRendererStatistics Statistics;
 	};
 
 	class ATHENA_API SceneRenderer
@@ -155,6 +162,9 @@ namespace Athena
 		void Init();
 		void Shutdown();
 
+		const SceneRendererStatistics& GetStatistics() { return m_Data->Statistics; }
+		Vector2u GetViewportSize();
+
 		Ref<Texture2D> GetFinalImage();
 
 		void OnViewportResize(uint32 width, uint32 height);
@@ -164,10 +174,6 @@ namespace Athena
 
 		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
-
-		SceneRendererSettings& GetSettings();
-
-	private:
 
 	private:
 		SceneRendererData* m_Data = nullptr;

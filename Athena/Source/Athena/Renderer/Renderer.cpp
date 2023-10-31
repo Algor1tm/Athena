@@ -61,7 +61,7 @@ namespace Athena
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
-		s_Data.RenderCaps = s_Data.RendererAPI->GetRenderCaps();
+		s_Data.RenderCaps = s_Data.RendererAPI->GetRenderCapabilities();
 
 		uint32 whiteTextureData = 0xffffffff;
 

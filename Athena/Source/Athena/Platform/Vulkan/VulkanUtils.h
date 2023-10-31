@@ -65,14 +65,9 @@ namespace Athena::VulkanUtils
             return "A validation layer found an error";
         default:
             return "UNKNOWN VULKAN ERROR";
-}
+        }
     }
 
-#ifndef ATN_DEBUG
-
-    #define VK_CHECK(expr) expr
-
-#else
     inline bool CheckResult(VkResult error)
     {
         if (error == 0)
@@ -90,9 +85,11 @@ namespace Athena::VulkanUtils
     }
 
 
+#ifdef ATN_DEBUG
     #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::VulkanUtils::CheckResult(expr))
-
-#endif // ATN_DEBUG
+#else
+    #define VK_CHECK(expr) expr
+#endif
 
     inline VkShaderStageFlagBits GetShaderStage(ShaderStage stage)
 	{

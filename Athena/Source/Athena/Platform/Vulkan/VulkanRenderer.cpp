@@ -161,7 +161,6 @@ namespace Athena
 				VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffers.data()));
 			}
 		});
-
 	}
 
 	void VulkanRenderer::Shutdown()
@@ -181,10 +180,10 @@ namespace Athena
 				vkDestroyFence(logicalDevice, VulkanContext::GetFrameSyncData(i).RenderCompleteFence, VulkanContext::GetAllocator());
 			}
 
-	#ifdef ATN_DEBUG
+#ifdef ATN_DEBUG
 			auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkDestroyDebugReportCallbackEXT");
 			vkDestroyDebugReportCallbackEXT(VulkanContext::GetInstance(), debugReport, VulkanContext::GetAllocator());
-	#endif
+#endif
 
 			// Destroy Device
 			VulkanContext::s_CurrentDevice.Release();
@@ -257,7 +256,6 @@ namespace Athena
 
 	void VulkanRenderer::CopyTextureToSwapChain(const Ref<Texture2D>& texture)
 	{
-		ATN_PROFILE_FUNC()
 		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
 		VkImage sourceImage = texture.As<VulkanTexture2D>()->GetVulkanImage();
@@ -371,7 +369,7 @@ namespace Athena
 		}
 	}
 
-	RenderCapabilities VulkanRenderer::GetRenderCaps()
+	RenderCapabilities VulkanRenderer::GetRenderCapabilities()
 	{
 		return VulkanContext::GetDevice()->GetDeviceCapabilities();
 	}

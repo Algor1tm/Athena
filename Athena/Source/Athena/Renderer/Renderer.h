@@ -30,6 +30,13 @@ namespace Athena
 		uint32 MaxStorageBufferRange;
 		uint32 MaxPushConstantRange;
 
+		uint32 MaxDescriptorSetSamplers;
+		uint32 MaxDescriptorSetUnifromBuffers;
+		uint32 MaxDescriptorSetStorageBuffers;
+		uint32 MaxDescriptorSetSampledImages;
+		uint32 MaxDescriptorSetStorageImages;
+		uint32 MaxDescriptorSetInputAttachments;
+
 		uint32 MaxViewportDimensions[2];
 		uint32 MaxClipDistances;
 		uint32 MaxCullDistances;
@@ -43,6 +50,9 @@ namespace Athena
 		uint32 MaxComputeWorkGroupSize[3];
 		uint32 MaxComputeSharedMemorySize;
 		uint32 MaxComputeWorkGroupInvocations;
+
+		bool TimestampComputeAndGraphics;
+		float TimestampPeriod;
 	};
 
 	enum ShaderDef

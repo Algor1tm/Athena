@@ -20,7 +20,7 @@ namespace Athena
 		virtual void WaitDeviceIdle() override;
 		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) override;
 
-		virtual RenderCapabilities GetRenderCaps() override;
+		virtual RenderCapabilities GetRenderCapabilities() override;
 
 	private:
 		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);

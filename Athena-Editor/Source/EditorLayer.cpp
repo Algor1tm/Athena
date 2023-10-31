@@ -373,6 +373,7 @@ namespace Athena
         PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
 
         auto profilingPanel = Ref<ProfilingPanel>::Create(PROFILING_PANEL_ID, m_EditorCtx);
+        profilingPanel->SetContext(m_ViewportRenderer);
         PanelManager::AddPanel(profilingPanel, Keyboard::K);
     }
 

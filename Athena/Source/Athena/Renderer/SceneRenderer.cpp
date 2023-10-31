@@ -64,6 +64,8 @@ namespace Athena
 	{
 		m_Data = new SceneRendererData();
 
+		m_Data->Profiler = GPUProfiler::Create();
+
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
 
 
@@ -458,9 +460,12 @@ namespace Athena
 	// TEMPORARY
 	void SceneRenderer::Render(const CameraInfo& cameraInfo)
 	{
-		Renderer::Submit([cameraInfo = cameraInfo]()
+		m_Data->Profiler->Reset();
+		m_Data->Profiler->BeginPipelineStatsQuery();
+		m_Data->Profiler->BeginTimeQuery();
+
+		Renderer::Submit([this, cameraInfo = cameraInfo]()
 		{
-			ATN_PROFILE_SCOPE("SceneRenderer::Render")
 			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 			uint32 width = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Width;
 			uint32 height = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Height;
@@ -517,6 +522,14 @@ namespace Athena
 			}
 			vkCmdEndRenderPass(commandBuffer);
 		});
+
+		m_Data->Statistics.GeometryPass = m_Data->Profiler->EndTimeQuery();
+		m_Data->Statistics.PipelineStats = m_Data->Profiler->EndPipelineStatsQuery();
+	}
+
+	Vector2u SceneRenderer::GetViewportSize()
+	{
+		return { s_Attachments[0]->GetInfo().Width, s_Attachments[0]->GetInfo().Height };
 	}
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
@@ -623,10 +636,5 @@ namespace Athena
 		//
 		//s_Data.EnvMapDataBuffer.LOD = lightEnv.EnvironmentMapLOD;
 		//s_Data.EnvMapDataBuffer.Intensity = lightEnv.EnvironmentMapIntensity;
-	}
-
-	SceneRendererSettings& SceneRenderer::GetSettings()
-	{
-		return m_Data->Settings;
 	}
 }

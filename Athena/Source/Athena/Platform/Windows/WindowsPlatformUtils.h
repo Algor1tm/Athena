@@ -80,7 +80,7 @@ namespace Athena
 		// CPU name
 		{
 			int cpuInfo[4] = { -1 };
-			char cpuString[0x40];
+			char cpuString[0x41] = { 0 };
 
 			memset(cpuString, 0, sizeof(cpuString));
 

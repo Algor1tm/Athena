@@ -25,12 +25,8 @@ namespace Athena
 		template <typename FuncT>
 		void Submit(FuncT&& func)
 		{
-			ATN_CORE_TRACE_TAG("CommandQueue", "Submit");
-	
 			CommandFn commandFn = [](void* func) -> uint16
 			{
-				ATN_CORE_TRACE_TAG("CommandQueue", "Execute");
-
 				FuncT* funcT = (FuncT*)func;
 				(*funcT)();
 				funcT->~FuncT();

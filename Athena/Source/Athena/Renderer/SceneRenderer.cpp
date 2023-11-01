@@ -10,8 +10,9 @@
 
 // TEMPORARY
 #include "Athena/Core/Application.h"
-#include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include <vulkan/vulkan.h>
@@ -33,13 +34,11 @@ namespace Athena
 	};
 
 	static Ref<Shader> s_Shader;
+	static Ref<VertexBuffer> s_VertexBuffer;
 
-	static VkBuffer s_VertexBuffer;
-	static VkDeviceMemory s_VertexBufferMemory;
-	static VkBuffer s_IndexBuffer;
-	static VkDeviceMemory s_IndexBufferMemory;
-	static std::vector<VulkanUBO> s_UniformBuffers;
 	static CameraUBO s_CameraUBO;
+	static Ref<UniformBuffer> s_UniformBuffer;
+
 
 	static VkDescriptorPool s_DescriptorPool;
 	static VkDescriptorSetLayout s_DescriptorSetLayout;
@@ -68,95 +67,42 @@ namespace Athena
 
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
 
-
-		Renderer::Submit([]()
+		struct TVertex
 		{
-			// Create Vertex Buffer and Index Buffer
-			VkVertexInputBindingDescription bindingDescription = {};
-			std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
-			{
-				struct TVertex
-				{
-					Vector2 Position;
-					LinearColor Color;
-				};
+			Vector2 Position;
+			LinearColor Color;
+		};
 
-				const TVertex vertices[] = {
-					{ { -0.5f, -0.5f }, { 1.f, 0.f, 0.f, 1.f } },
-					{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 0.f } },
-					{ {  0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f } },
-					{ { -0.5f,  0.5f }, { 1.f, 1.f, 1.f, 1.f } }
-				};
+		const TVertex vertices[] = {
+			{ { -0.5f, -0.5f }, { 1.f, 0.f, 0.f, 1.f } },
+			{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 0.f } },
+			{ {  0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f } },
+			{ { -0.5f,  0.5f }, { 1.f, 1.f, 1.f, 1.f } }
+		};
 
-				const uint32 indices[] = {
-					0, 1, 2, 2, 3, 0
-				};
+		const uint32 indices[] = {
+			0, 1, 2, 2, 3, 0
+		};
 
+		VertexBufferLayout layout =
+		{
+			{ ShaderDataType::Float2, "a_Position"  },
+			{ ShaderDataType::Float4, "a_Color"     },
+		};
 
-				bindingDescription.binding = 0;
-				bindingDescription.stride = sizeof(TVertex);
-				bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		VertexBufferCreateInfo info;
+		info.VerticesData = (void*)vertices;
+		info.VerticesSize = sizeof(vertices);
+		info.IndicesData = (void*)indices;
+		info.IndicesCount = std::size(indices);
+		info.Usage = VertexBufferUsage::STATIC;
 
+		s_VertexBuffer = VertexBuffer::Create(info);
+		
+		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
 
-				attributeDescriptions[0].binding = 0;
-				attributeDescriptions[0].location = 0;
-				attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-				attributeDescriptions[0].offset = offsetof(TVertex, Position); // 0
-
-				attributeDescriptions[1].binding = 0;
-				attributeDescriptions[1].location = 1;
-				attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-				attributeDescriptions[1].offset = offsetof(TVertex, Color);  // 8
-
-				VkDevice logicalDevice = VulkanContext::GetDevice()->GetLogicalDevice();
-
-				VkBuffer stagingBuffer;
-				VkDeviceMemory stagingBufferMemory;
-
-				// Vertex buffer
-				{
-					VkDeviceSize bufferSize = sizeof(vertices);
-
-					VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-
-					void* data;
-					vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-					memcpy(data, vertices, bufferSize);
-					vkUnmapMemory(logicalDevice, stagingBufferMemory);
-
-					VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_VertexBuffer, &s_VertexBufferMemory);
-
-					VulkanUtils::CopyBuffer(stagingBuffer, s_VertexBuffer, bufferSize);
-
-					vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
-					vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
-				}
-
-				// Index buffer
-				{
-					VkDeviceSize bufferSize = sizeof(indices);
-
-					VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-
-					void* data;
-					vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-					memcpy(data, indices, bufferSize);
-					vkUnmapMemory(logicalDevice, stagingBufferMemory);
-
-					VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &s_IndexBuffer, &s_IndexBufferMemory);
-
-					VulkanUtils::CopyBuffer(stagingBuffer, s_IndexBuffer, bufferSize);
-
-					vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
-					vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
-				}
-			}
-
-
+		Renderer::Submit([vertexBufferLayout = layout]()
+		{
 			// Descriptor Sets
 			{
 				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
@@ -173,15 +119,6 @@ namespace Athena
 
 				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, VulkanContext::GetAllocator(), &s_DescriptorSetLayout));
 
-				VkDeviceSize bufferSize = sizeof(CameraUBO);
-				s_UniformBuffers.resize(Renderer::GetFramesInFlight());
-
-				for (auto& ubo : s_UniformBuffers)
-				{
-					VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-						VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &ubo.Buffer, &ubo.BufferMemory);
-
-				}
 
 				VkDescriptorPoolSize poolSize = {};
 				poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -209,7 +146,7 @@ namespace Athena
 				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
 				{
 					VkDescriptorBufferInfo bufferInfo = {};
-					bufferInfo.buffer = s_UniformBuffers[i].Buffer;
+					bufferInfo.buffer = s_UniformBuffer.As<VulkanUniformBuffer>()->GetVulkanBuffer(i);
 					bufferInfo.offset = 0;
 					bufferInfo.range = sizeof(CameraUBO);
 
@@ -267,6 +204,21 @@ namespace Athena
 
 			// Create Pipeline
 			{
+				VkVertexInputBindingDescription bindingDescription = {};
+				bindingDescription.binding = 0;
+				bindingDescription.stride = vertexBufferLayout.GetStride();
+				bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+				std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexBufferLayout.GetElementsNum());
+				for (uint32 i = 0; i < vertexBufferLayout.GetElementsNum(); ++i)
+				{
+					attributeDescriptions[i].binding = 0;
+					attributeDescriptions[i].location = i;
+					attributeDescriptions[i].format = 
+						VulkanUtils::GetFormat(vertexBufferLayout.GetElements()[i].Type, vertexBufferLayout.GetElements()[i].Normalized);
+					attributeDescriptions[i].offset = vertexBufferLayout.GetElements()[i].Offset;
+				}
+
 				VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 				vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 				vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -341,7 +293,7 @@ namespace Athena
 
 				VkPipelineDynamicStateCreateInfo dynamicState = {};
 				dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-				dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+				dynamicState.dynamicStateCount = dynamicStates.size();
 				dynamicState.pDynamicStates = dynamicStates.data();
 
 
@@ -428,6 +380,7 @@ namespace Athena
 	void SceneRenderer::Shutdown()
 	{
 		s_Shader.Release();
+		s_VertexBuffer.Release();
 		s_Attachments.clear();
 
 		Renderer::SubmitResourceFree([]()
@@ -435,17 +388,8 @@ namespace Athena
 			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
 			{
 				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), s_Framebuffers[i], VulkanContext::GetAllocator());
-
-				vkDestroyBuffer(VulkanContext::GetLogicalDevice(), s_UniformBuffers[i].Buffer, VulkanContext::GetAllocator());
-				vkFreeMemory(VulkanContext::GetLogicalDevice(), s_UniformBuffers[i].BufferMemory, VulkanContext::GetAllocator());
 			}
 				
-			vkDestroyBuffer(VulkanContext::GetLogicalDevice(), s_VertexBuffer, VulkanContext::GetAllocator());
-			vkFreeMemory(VulkanContext::GetLogicalDevice(), s_VertexBufferMemory, VulkanContext::GetAllocator());
-
-			vkDestroyBuffer(VulkanContext::GetLogicalDevice(), s_IndexBuffer, VulkanContext::GetAllocator());
-			vkFreeMemory(VulkanContext::GetLogicalDevice(), s_IndexBufferMemory, VulkanContext::GetAllocator());
-
 			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_DescriptorPool, VulkanContext::GetAllocator());
 			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), s_DescriptorSetLayout, VulkanContext::GetAllocator());
 
@@ -461,12 +405,23 @@ namespace Athena
 	void SceneRenderer::Render(const CameraInfo& cameraInfo)
 	{
 		m_Data->Profiler->Reset();
+
 		m_Data->Profiler->BeginPipelineStatsQuery();
 		m_Data->Profiler->BeginTimeQuery();
 
 		Renderer::Submit([this, cameraInfo = cameraInfo]()
 		{
 			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
+
+			// Update Uniform buffer
+			{
+				s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
+				s_CameraUBO.ProjectionMatrix = cameraInfo.ProjectionMatrix;
+
+				s_UniformBuffer->SetData(&s_CameraUBO, sizeof(s_CameraUBO));
+			}
+
+			// Geometry Pass
 			uint32 width = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Width;
 			uint32 height = s_Attachments[Renderer::GetCurrentFrameIndex()]->GetInfo().Height;
 
@@ -498,27 +453,17 @@ namespace Athena
 				scissor.extent = { width, height };
 				vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, 0, 1,
+					&s_DescriptorSets[Renderer::GetCurrentFrameIndex()], 0, 0);
+
+				Ref<VulkanVertexBuffer> vkVertexBuffer = s_VertexBuffer.As<VulkanVertexBuffer>();
+				VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
+
 				VkDeviceSize offsets[] = { 0 };
-				vkCmdBindVertexBuffers(commandBuffer, 0, 1, &s_VertexBuffer, offsets);
-				vkCmdBindIndexBuffer(commandBuffer, s_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+				vkCmdBindIndexBuffer(commandBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-				// Update Uniform buffer
-				{
-					s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
-					s_CameraUBO.ProjectionMatrix = cameraInfo.ProjectionMatrix;
-
-					auto& ubo = s_UniformBuffers[Renderer::GetCurrentFrameIndex()];
-
-					void* mappedMemory;
-					vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory, 0, sizeof(s_CameraUBO), 0, &mappedMemory);
-					memcpy(mappedMemory, &s_CameraUBO, sizeof(s_CameraUBO));
-					vkUnmapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.BufferMemory);
-
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, 0, 1,
-						&s_DescriptorSets[Renderer::GetCurrentFrameIndex()], 0, 0);
-				}
-
-				vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+				vkCmdDrawIndexed(commandBuffer, s_VertexBuffer->GetIndexCount(), 1, 0, 0, 0);
 			}
 			vkCmdEndRenderPass(commandBuffer);
 		});

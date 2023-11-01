@@ -101,8 +101,8 @@ namespace Athena
 				count = m_TimestampsCount[m_QueryFrameIndex];
 
 				vkCmdResetQueryPool(VulkanContext::GetActiveCommandBuffer(), m_TimeQueryPool, start, count);
-				m_TimestampsCount[m_QueryFrameIndex] = 0;
 
+				m_TimestampsCount[m_QueryFrameIndex] = 0;
 				m_CurrentTimeQueryIndex = 0;
 			}
 
@@ -127,8 +127,8 @@ namespace Athena
 				count = m_PipelineQueriesCount[m_QueryFrameIndex];
 
 				vkCmdResetQueryPool(VulkanContext::GetActiveCommandBuffer(), m_PipelineStatsQueryPool, start, count);
-				m_PipelineQueriesCount[m_QueryFrameIndex] = 0;
 
+				m_PipelineQueriesCount[m_QueryFrameIndex] = 0;
 				m_CurrentQueryPipelineIndex = 0;
 			}
 		});

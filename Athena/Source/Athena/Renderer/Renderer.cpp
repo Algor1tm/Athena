@@ -212,7 +212,7 @@ namespace Athena
 		return s_Data.QuadVertexBuffer;
 	}
 
-	BufferLayout Renderer::GetStaticVertexLayout()
+	VertexBufferLayout Renderer::GetStaticVertexLayout()
 	{
 		return 	
 		{
@@ -224,7 +224,7 @@ namespace Athena
 		};
 	}
 
-	BufferLayout Renderer::GetAnimVertexLayout()
+	VertexBufferLayout Renderer::GetAnimVertexLayout()
 	{
 		return 
 		{

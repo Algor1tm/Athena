@@ -71,13 +71,6 @@ namespace Athena
 
 		Vector4 QuadVertexPositions[4];
 
-		struct CameraData
-		{
-			Matrix4 ViewProjection;
-		};
-		CameraData CameraBuffer;
-		Ref<ConstantBuffer> CameraConstantBuffer;
-
 		bool DrawEntityID = false;
 	};
 
@@ -85,91 +78,91 @@ namespace Athena
 
 	void SceneRenderer2D::Init()
 	{
-		BufferLayout layout =
-		{
-			{ ShaderDataType::Float3, "a_Position"     },
-			{ ShaderDataType::Int,    "a_EntityID"     },
-			{ ShaderDataType::Float4, "a_Color"        },
-			{ ShaderDataType::Float2, "a_TexCoord"     },
-			{ ShaderDataType::Float,  "a_TexIndex"     },
-			{ ShaderDataType::Float,  "a_TilingFactor" },
-		};
+		//BufferLayout layout =
+		//{
+		//	{ ShaderDataType::Float3, "a_Position"     },
+		//	{ ShaderDataType::Int,    "a_EntityID"     },
+		//	{ ShaderDataType::Float4, "a_Color"        },
+		//	{ ShaderDataType::Float2, "a_TexCoord"     },
+		//	{ ShaderDataType::Float,  "a_TexIndex"     },
+		//	{ ShaderDataType::Float,  "a_TilingFactor" },
+		//};
 
-		s_Data.QuadVertexBufferBase = new QuadVertex[SceneRenderer2DData::MaxQuadVertices];
+		//s_Data.QuadVertexBufferBase = new QuadVertex[SceneRenderer2DData::MaxQuadVertices];
 
-		uint32* indices = new uint32[SceneRenderer2DData::MaxIndices];
-		uint32 offset = 0;
-		for (uint32 i = 0; i < SceneRenderer2DData::MaxIndices; i += 6)
-		{
-			indices[i + 0] = offset + 0;
-			indices[i + 1] = offset + 1;
-			indices[i + 2] = offset + 2;
+		//uint32* indices = new uint32[SceneRenderer2DData::MaxIndices];
+		//uint32 offset = 0;
+		//for (uint32 i = 0; i < SceneRenderer2DData::MaxIndices; i += 6)
+		//{
+		//	indices[i + 0] = offset + 0;
+		//	indices[i + 1] = offset + 1;
+		//	indices[i + 2] = offset + 2;
 
-			indices[i + 3] = offset + 2;
-			indices[i + 4] = offset + 3;
-			indices[i + 5] = offset + 0;
+		//	indices[i + 3] = offset + 2;
+		//	indices[i + 4] = offset + 3;
+		//	indices[i + 5] = offset + 0;
 
-			offset += 4;
-		}
+		//	offset += 4;
+		//}
 
-		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, SceneRenderer2DData::MaxIndices);
-		delete[] indices;
+		//Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indices, SceneRenderer2DData::MaxIndices);
+		//delete[] indices;
 
-		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = SceneRenderer2DData::MaxQuadVertices * sizeof(QuadVertex);
-		vertexBufferInfo.Layout = layout;
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+		//VertexBufferCreateInfo vertexBufferInfo;
+		//vertexBufferInfo.Data = nullptr;
+		//vertexBufferInfo.Size = SceneRenderer2DData::MaxQuadVertices * sizeof(QuadVertex);
+		//vertexBufferInfo.Layout = layout;
+		//vertexBufferInfo.IndexBuffer = indexBuffer;
+		//vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		//s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		layout =
-		{
-			{ ShaderDataType::Float3, "a_WorldPosition"  },
-			{ ShaderDataType::Int,    "a_EntityID"       },
-			{ ShaderDataType::Float3, "a_LocalPosition"  },
-			{ ShaderDataType::Float4, "a_Color"			 },
-			{ ShaderDataType::Float,  "a_Thickness"		 },
-			{ ShaderDataType::Float,  "a_Fade"			 },
-		};
+		//layout =
+		//{
+		//	{ ShaderDataType::Float3, "a_WorldPosition"  },
+		//	{ ShaderDataType::Int,    "a_EntityID"       },
+		//	{ ShaderDataType::Float3, "a_LocalPosition"  },
+		//	{ ShaderDataType::Float4, "a_Color"			 },
+		//	{ ShaderDataType::Float,  "a_Thickness"		 },
+		//	{ ShaderDataType::Float,  "a_Fade"			 },
+		//};
 
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = SceneRenderer2DData::MaxCircles * sizeof(CircleVertex);
-		vertexBufferInfo.Layout = layout;
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+		//vertexBufferInfo.Data = nullptr;
+		//vertexBufferInfo.Size = SceneRenderer2DData::MaxCircles * sizeof(CircleVertex);
+		//vertexBufferInfo.Layout = layout;
+		//vertexBufferInfo.IndexBuffer = indexBuffer;
+		//vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		//s_Data.CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		s_Data.CircleVertexBufferBase = new CircleVertex[SceneRenderer2DData::MaxCircleVertices];
+		//s_Data.CircleVertexBufferBase = new CircleVertex[SceneRenderer2DData::MaxCircleVertices];
 
-		layout =
-		{
-			{ ShaderDataType::Float3, "a_Position" },
-			{ ShaderDataType::Int,    "a_EntityID" },
-			{ ShaderDataType::Float4, "a_Color"    },
-		};
+		//layout =
+		//{
+		//	{ ShaderDataType::Float3, "a_Position" },
+		//	{ ShaderDataType::Int,    "a_EntityID" },
+		//	{ ShaderDataType::Float4, "a_Color"    },
+		//};
 
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = SceneRenderer2DData::MaxLines * sizeof(LineVertex);
-		vertexBufferInfo.Layout = layout;
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+		//vertexBufferInfo.Data = nullptr;
+		//vertexBufferInfo.Size = SceneRenderer2DData::MaxLines * sizeof(LineVertex);
+		//vertexBufferInfo.Layout = layout;
+		//vertexBufferInfo.IndexBuffer = indexBuffer;
+		//vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
 
-		s_Data.LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		//s_Data.LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		s_Data.LineVertexBufferBase = new LineVertex[SceneRenderer2DData::MaxLineVertices];
+		//s_Data.LineVertexBufferBase = new LineVertex[SceneRenderer2DData::MaxLineVertices];
 
 
-		s_Data.TextureSlots[0] = Renderer::GetWhiteTexture();
+		//s_Data.TextureSlots[0] = Renderer::GetWhiteTexture();
 
-		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
-		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };
-		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
-		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
+		//s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.f, 1.f };
+		//s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };
+		//s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
+		//s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
 
-		s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(SceneRenderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
+		//s_Data.CameraConstantBuffer = ConstantBuffer::Create(sizeof(SceneRenderer2DData::CameraData), BufferBinder::RENDERER2D_CAMERA_DATA);
 	}
 
 	void SceneRenderer2D::Shutdown()
@@ -186,8 +179,8 @@ namespace Athena
 
 	void SceneRenderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
 	{
-		s_Data.CameraBuffer.ViewProjection = viewMatrix * projectionMatrix;
-		s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(SceneRenderer2DData::CameraData));
+		//s_Data.CameraBuffer.ViewProjection = viewMatrix * projectionMatrix;
+		//s_Data.CameraConstantBuffer->SetData(&s_Data.CameraBuffer, sizeof(SceneRenderer2DData::CameraData));
 
 		if (!s_Data.DrawEntityID)
 		{

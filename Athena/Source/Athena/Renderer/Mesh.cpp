@@ -129,26 +129,26 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<IndexBuffer> LoadIndexBuffer(const aiMesh* aimesh)
-	{
-		uint32 numFaces = aimesh->mNumFaces;
-		aiFace* faces = aimesh->mFaces;
+	//static Ref<IndexBuffer> LoadIndexBuffer(const aiMesh* aimesh)
+	//{
+	//	uint32 numFaces = aimesh->mNumFaces;
+	//	aiFace* faces = aimesh->mFaces;
 
-		std::vector<uint32> indicies(numFaces * 3);
+	//	std::vector<uint32> indicies(numFaces * 3);
 
-		uint32 index = 0;
-		for (uint32 i = 0; i < numFaces; i++)
-		{
-			if (faces[i].mNumIndices != 3)
-				break;
+	//	uint32 index = 0;
+	//	for (uint32 i = 0; i < numFaces; i++)
+	//	{
+	//		if (faces[i].mNumIndices != 3)
+	//			break;
 
-			indicies[index++] = faces[i].mIndices[0];
-			indicies[index++] = faces[i].mIndices[1];
-			indicies[index++] = faces[i].mIndices[2];
-		}
+	//		indicies[index++] = faces[i].mIndices[0];
+	//		indicies[index++] = faces[i].mIndices[1];
+	//		indicies[index++] = faces[i].mIndices[2];
+	//	}
 
-		return IndexBuffer::Create(indicies.data(), indicies.size());
-	}
+	//	return IndexBuffer::Create(indicies.data(), indicies.size());
+	//}
 
 	static Ref<VertexBuffer> LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform)
 	{
@@ -190,11 +190,11 @@ namespace Athena
 		}
 
 		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Data = vertices.data();
-		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
-		vertexBufferInfo.Layout = Renderer::GetStaticVertexLayout();
-		vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
-		vertexBufferInfo.Usage = BufferUsage::STATIC;
+		//vertexBufferInfo.Data = vertices.data();
+		//vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
+		//vertexBufferInfo.Layout = Renderer::GetStaticVertexLayout();
+		//vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
+		//vertexBufferInfo.Usage = BufferUsage::STATIC;
 
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
@@ -270,11 +270,11 @@ namespace Athena
 		}
 
 		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Data = vertices.data();
-		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
-		vertexBufferInfo.Layout = Renderer::GetAnimVertexLayout();
-		vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
-		vertexBufferInfo.Usage = BufferUsage::STATIC;
+		//vertexBufferInfo.Data = vertices.data();
+		//vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
+		//vertexBufferInfo.Layout = Renderer::GetAnimVertexLayout();
+		//vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
+		//vertexBufferInfo.Usage = BufferUsage::STATIC;
 
 		return VertexBuffer::Create(vertexBufferInfo);
 	}

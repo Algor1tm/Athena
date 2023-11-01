@@ -36,12 +36,6 @@ namespace Athena
             size.y = Application::Get().GetWindow().GetHeight();
             ImGui::Text("WindowSize: { %u, %u }", size.x, size.y);
 
-            if (m_SceneRenderer)
-            {
-                size = m_SceneRenderer->GetViewportSize();
-                ImGui::Text("ViewportSize: { %u, %u }", size.x, size.y);
-            }
-
             ImGui::Spacing();
 
             ImGuiTabBarFlags tabBarFlags = 0;
@@ -71,6 +65,9 @@ namespace Athena
                 {
                     if (m_SceneRenderer)
                     {
+                        size = m_SceneRenderer->GetViewportSize();
+                        ImGui::Text("ViewportSize: { %u, %u }", size.x, size.y);
+
                         auto& stats = m_SceneRenderer->GetStatistics();
                         ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass);
                         

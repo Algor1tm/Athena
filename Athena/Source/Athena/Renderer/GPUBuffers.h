@@ -7,7 +7,7 @@ namespace Athena
 {
 	enum class ShaderDataType : uint8
 	{
-		None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
+		None = 0, Float, Float2, Float3, Float4, Int, Int2, Int3, Int4, Bool, Mat3, Mat4
 	};
 
 	constexpr uint32 ShaderDataTypeSize(ShaderDataType type)
@@ -18,13 +18,13 @@ namespace Athena
 			case ShaderDataType::Float2: return 4 * 2;
 			case ShaderDataType::Float3: return 4 * 3;
 			case ShaderDataType::Float4: return 4 * 4;
-			case ShaderDataType::Mat3:   return 4 * 9;
-			case ShaderDataType::Mat4:   return 4 * 16;
 			case ShaderDataType::Int:    return 4;
 			case ShaderDataType::Int2:   return 4 * 2;
 			case ShaderDataType::Int3:   return 4 * 3;
 			case ShaderDataType::Int4:   return 4 * 4;
 			case ShaderDataType::Bool:   return 1;
+			case ShaderDataType::Mat3:   return 4 * 9;
+			case ShaderDataType::Mat4:   return 4 * 16;
 		}
 
 		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
@@ -32,7 +32,7 @@ namespace Athena
 	}
 
 
-	struct BufferElement
+	struct VertexBufferElement
 	{
 		String Name;
 		ShaderDataType Type;
@@ -40,8 +40,8 @@ namespace Athena
 		uint32 Offset;
 		bool Normalized;
 
-		BufferElement() = default;
-		BufferElement(ShaderDataType type, const String& name, bool normalized = false)
+		VertexBufferElement() = default;
+		VertexBufferElement(ShaderDataType type, const String& name, bool normalized = false)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
 		uint32 GetComponentCount() const
@@ -67,30 +67,16 @@ namespace Athena
 	};
 
 
-	class ATHENA_API BufferLayout
+	class ATHENA_API VertexBufferLayout
 	{
 	public:
-		using iterator = std::vector<BufferElement>::iterator;
-		using const_iterator = std::vector<BufferElement>::const_iterator;
+		using iterator = std::vector<VertexBufferElement>::iterator;
+		using const_iterator = std::vector<VertexBufferElement>::const_iterator;
 
 	public:
-		BufferLayout() = default;
-		BufferLayout(const std::initializer_list<BufferElement>& elements)
+		VertexBufferLayout() = default;
+		VertexBufferLayout(const std::initializer_list<VertexBufferElement>& elements)
 			: m_Elements(elements) 
-		{
-			CalculateOffsetAndStride();
-		}
-
-		inline uint32 GetStride() const { return m_Stride; }
-		inline const std::vector<BufferElement>& GetElements() const { return m_Elements; }
-
-		inline iterator		  begin()	    { return m_Elements.begin(); }
-		inline const_iterator begin() const { return m_Elements.begin(); }
-		inline iterator		  end()		    { return m_Elements.end(); }
-		inline const_iterator end()   const { return m_Elements.end(); }
-
-	private:
-		void CalculateOffsetAndStride()
 		{
 			uint32 stride = 0;
 			uint32 offset = 0;
@@ -103,25 +89,23 @@ namespace Athena
 			}
 		}
 
+		uint32 GetStride() const { return m_Stride; }
+
+		const std::vector<VertexBufferElement>& GetElements() const { return m_Elements; }
+		uint32 GetElementsNum() const { return m_Elements.size(); }
+
+		iterator	   begin()	     { return m_Elements.begin(); }
+		const_iterator begin() const { return m_Elements.begin(); }
+		iterator	   end()		 { return m_Elements.end(); }
+		const_iterator end()   const { return m_Elements.end(); }
+
 	private:
-		std::vector<BufferElement> m_Elements;
+		std::vector<VertexBufferElement> m_Elements;
 		uint32 m_Stride = 0;
 	};
 
 	
-	class ATHENA_API IndexBuffer
-	{
-	public:
-		static Ref<IndexBuffer> Create(uint32* indices, uint32 count);
-		virtual ~IndexBuffer() = default;
-
-		virtual void Bind() const = 0;
-		virtual void UnBind() const = 0;
-
-		virtual uint32 GetCount() const = 0;
-	};
-
-	enum class BufferUsage
+	enum class VertexBufferUsage
 	{
 		STATIC,
 		DYNAMIC
@@ -129,11 +113,11 @@ namespace Athena
 
 	struct VertexBufferCreateInfo
 	{
-		const void* Data;
-		uint32 Size;
-		BufferLayout Layout;
-		Ref<IndexBuffer> IndexBuffer;
-		BufferUsage Usage;
+		const void* VerticesData;
+		uint32 VerticesSize;
+		const void* IndicesData;
+		uint32 IndicesCount;
+		VertexBufferUsage Usage;
 	};
 
 	class ATHENA_API VertexBuffer
@@ -142,21 +126,22 @@ namespace Athena
 		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
 		virtual ~VertexBuffer() = default;
 
-		virtual void Bind() const = 0;
-		virtual void UnBind() const = 0;
+		virtual void SetVertexData(const void* data, uint32 size) = 0;
 
-		virtual void SetData(const void* data, uint32 size) = 0;
+		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
+		uint32 GetIndexCount() const { return m_Info.IndicesCount; }
 
-		virtual const Ref<IndexBuffer>& GetIndexBuffer() const = 0;
+	protected:
+		VertexBufferCreateInfo m_Info;
 	};
 
 
-	class ATHENA_API ConstantBuffer
+	class ATHENA_API UniformBuffer
 	{
 	public:
-		virtual ~ConstantBuffer() = default;
+		virtual ~UniformBuffer() = default;
 
-		static Ref<ConstantBuffer> Create(uint32 size, uint32 binding);
+		static Ref<UniformBuffer> Create(uint32 size);
 
 		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
 	};
@@ -167,7 +152,7 @@ namespace Athena
 	public:
 		virtual ~ShaderStorageBuffer() = default;
 
-		static Ref<ShaderStorageBuffer> Create(uint32 size, uint32 binding);
+		static Ref<ShaderStorageBuffer> Create(uint32 size);
 
 		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
 	};

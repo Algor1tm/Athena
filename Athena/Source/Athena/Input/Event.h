@@ -36,7 +36,7 @@ namespace Athena
 #define EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override { return category; }
 
 
-	class ATHENA_API Event
+	class ATHENA_API Event : public RefCounted
 	{
 	public:
 		virtual ~Event() = default;

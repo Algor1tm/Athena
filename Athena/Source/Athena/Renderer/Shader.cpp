@@ -31,31 +31,31 @@ namespace Athena
 		return nullptr;
 	}
 
-	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
+	void ShaderPack::Add(const String& name, const Ref<Shader>& shader)
 	{
 		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
 		m_Shaders[name] = shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const String& name, const FilePath& path)
+	Ref<Shader> ShaderPack::Load(const String& name, const FilePath& path)
 	{
 		auto shader = Shader::Create(path, name);
 		Add(name, shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Get(const String& name)
+	Ref<Shader> ShaderPack::Get(const String& name)
 	{
 		ATN_CORE_ASSERT(Exists(name), "Shader not found!");
 		return m_Shaders.at(name);
 	}
 
-	bool ShaderLibrary::Exists(const String& name)
+	bool ShaderPack::Exists(const String& name)
 	{
 		return (m_Shaders.find(name) != m_Shaders.end());
 	}
 
-	void ShaderLibrary::Reload()
+	void ShaderPack::Reload()
 	{
 		for (const auto& [key, shader] : m_Shaders)
 			shader->Reload();

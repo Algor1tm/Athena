@@ -1,6 +1,5 @@
 #include "EnvironmentMap.h"
 
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/SceneRenderer.h"
 
 

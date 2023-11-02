@@ -16,7 +16,7 @@ namespace Athena
 		COMPUTE_STAGE = 3
 	};
 
-	class ATHENA_API Shader
+	class ATHENA_API Shader : public RefCounted
 	{
 	public:
 		static Ref<Shader> Create(const FilePath& path);
@@ -24,7 +24,7 @@ namespace Athena
 
 		virtual ~Shader() = default;
 
-		virtual bool IsCompiled() = 0;
+		bool IsCompiled() const { return m_IsCompiled; }
 		virtual void Reload() = 0;
 
 		const String& GetName() const { return m_Name; }
@@ -32,9 +32,10 @@ namespace Athena
 	protected:
 		String m_Name;
 		FilePath m_FilePath;
+		bool m_IsCompiled;
 	};
 
-	class ATHENA_API ShaderLibrary
+	class ATHENA_API ShaderPack : public RefCounted
 	{
 	public:
 		void Add(const String& name, const Ref<Shader>& shader);

@@ -31,7 +31,7 @@ namespace Athena
 	class TransformComponent;
 
 
-	class ATHENA_API Scene
+	class ATHENA_API Scene : public RefCounted
 	{
 	public:
 		friend class ATHENA_API Entity;

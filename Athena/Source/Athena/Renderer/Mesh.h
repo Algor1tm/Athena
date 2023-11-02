@@ -4,6 +4,7 @@
 
 #include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/Animation.h"
 
 #include <vector>
 
@@ -14,10 +15,6 @@ class aiNode;
 
 namespace Athena
 {
-	class ATHENA_API Skeleton;
-	class ATHENA_API Animator;
-
-
 	struct SubMesh
 	{
 		String Name;
@@ -25,7 +22,7 @@ namespace Athena
 		String MaterialName;
 	};
 
-	class ATHENA_API StaticMesh
+	class ATHENA_API StaticMesh : public RefCounted
 	{
 	public:
 		static Ref<StaticMesh> Create(const FilePath& path);

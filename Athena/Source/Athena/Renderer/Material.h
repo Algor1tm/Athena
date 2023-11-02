@@ -45,7 +45,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Material
+	class ATHENA_API Material : public RefCounted
 	{
 	public:
 		friend class ATHENA_API MaterialManager;

@@ -29,7 +29,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API RendererAPI
+	class ATHENA_API RendererAPI : public RefCounted
 	{
 	public:
 		static Ref<RendererAPI> Create(Renderer::API api);

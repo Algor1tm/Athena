@@ -24,7 +24,7 @@ namespace Athena
 		std::vector<Bone> Children;
 	};
 
-	class ATHENA_API Skeleton
+	class ATHENA_API Skeleton : public RefCounted
 	{
 	public:
 		static Ref<Skeleton> Create(const BonesHierarchyInfo& boneHierarchy);
@@ -79,7 +79,7 @@ namespace Athena
 		Ref<Skeleton> Skeleton;
 	};
 
-	class ATHENA_API Animation
+	class ATHENA_API Animation : public RefCounted
 	{
 	public:
 		static Ref<Animation> Create(const AnimationCreateInfo& info);
@@ -109,7 +109,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Animator
+	class ATHENA_API Animator : public RefCounted
 	{
 	public:
 		static Ref<Animator> Create(const std::vector<Ref<Animation>>& animations);

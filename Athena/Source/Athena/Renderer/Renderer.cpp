@@ -22,7 +22,7 @@ namespace Athena
 		FilePath ShaderPackDirectory;
 		FilePath ShaderCacheDirectory;
 		std::unordered_map<String, String> GlobalShaderMacroses;
-		Ref<ShaderLibrary> ShaderPack;
+		Ref<ShaderPack> ShaderPack;
 
 		RenderCapabilities RenderCaps;
 
@@ -50,7 +50,6 @@ namespace Athena
 		{
 			s_Data.ResourceFreeQueues.push_back(CommandQueue(1024 * 1024 * 2));	// 2 Mb
 		}
-
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
@@ -167,7 +166,7 @@ namespace Athena
 		return s_Data.ShaderCacheDirectory;
 	}
 
-	Ref<ShaderLibrary> Renderer::GetShaderLibrary()
+	Ref<ShaderPack> Renderer::GetShaderLibrary()
 	{
 		return s_Data.ShaderPack;
 	}

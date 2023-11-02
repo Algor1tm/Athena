@@ -13,7 +13,7 @@ namespace Athena
 		float FarClip;
 	};
 
-	class ATHENA_API Camera
+	class ATHENA_API Camera : public RefCounted
 	{
 	public:
 		Camera() = default;

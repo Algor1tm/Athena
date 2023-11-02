@@ -4,14 +4,6 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/ImGui/ImGuiLayer.h"
-
-#include "Athena/Renderer/Renderer.h"
-
-#include "Athena/Input/Input.h"
-
-#include "Athena/Scripting/ScriptEngine.h"
-
 
 namespace Athena
 {

@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/Texture.h"
 
 
 namespace Athena
 {
-	class ATHENA_API TextureCube;
-
-	class ATHENA_API EnvironmentMap
+	class ATHENA_API EnvironmentMap : public RefCounted
 	{
 	public:
 		friend class ATHENA_API SceneRenderer;

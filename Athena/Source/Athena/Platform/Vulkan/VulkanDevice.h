@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	class VulkanDevice
+	class VulkanDevice : public RefCounted
 	{
 	public:
 		VulkanDevice();

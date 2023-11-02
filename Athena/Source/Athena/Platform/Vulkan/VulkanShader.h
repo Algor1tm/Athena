@@ -17,7 +17,6 @@ namespace Athena
 
 		~VulkanShader();
 
-		virtual bool IsCompiled() override;
 		virtual void Reload() override;
 
 		const std::vector<VkPipelineShaderStageCreateInfo>& GetPipelineStages() const { return m_PipelineShaderStages; }
@@ -27,7 +26,6 @@ namespace Athena
 		void CleanUp();
 
 	private:
-		bool m_Compiled = false;
 		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> m_PipelineShaderStages;
 	};

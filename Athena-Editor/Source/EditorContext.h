@@ -12,7 +12,7 @@ namespace Athena
 		Edit = 0, Play = 1, Simulation = 2
 	};
 
-	struct EditorContext
+	struct EditorContext : public RefCounted
 	{
 		Entity SelectedEntity;
 		Ref<Scene> ActiveScene;

@@ -2,8 +2,6 @@
 
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer.h"
 

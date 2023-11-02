@@ -118,7 +118,7 @@ namespace Athena
 		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 	};
 
-	class ATHENA_API ShaderLibrary;
+	class ATHENA_API ShaderPack;
 	struct RendererConfig;
 
 	class ATHENA_API Renderer
@@ -160,7 +160,7 @@ namespace Athena
 
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();
-		static Ref<ShaderLibrary> GetShaderLibrary();
+		static Ref<ShaderPack> GetShaderLibrary();
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
 

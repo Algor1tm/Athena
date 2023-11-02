@@ -120,7 +120,7 @@ namespace Athena
 		VertexBufferUsage Usage;
 	};
 
-	class ATHENA_API VertexBuffer
+	class ATHENA_API VertexBuffer : public RefCounted
 	{
 	public:
 		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
@@ -136,7 +136,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API UniformBuffer
+	class ATHENA_API UniformBuffer : public RefCounted
 	{
 	public:
 		virtual ~UniformBuffer() = default;
@@ -147,7 +147,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API ShaderStorageBuffer
+	class ATHENA_API ShaderStorageBuffer : public RefCounted
 	{
 	public:
 		virtual ~ShaderStorageBuffer() = default;

@@ -152,7 +152,7 @@ namespace Athena
 		SceneRendererStatistics Statistics;
 	};
 
-	class ATHENA_API SceneRenderer
+	class ATHENA_API SceneRenderer : public RefCounted
 	{
 	public:
 		static Ref<SceneRenderer> Create();

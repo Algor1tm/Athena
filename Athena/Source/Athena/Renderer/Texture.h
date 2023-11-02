@@ -76,7 +76,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture
+	class ATHENA_API Texture : public RefCounted
 	{
 	public:
 		virtual ~Texture() = default;

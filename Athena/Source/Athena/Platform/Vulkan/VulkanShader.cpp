@@ -17,9 +17,9 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			ShaderCompiler compiler(m_FilePath, m_Name);
-			m_Compiled = compiler.CompileOrGetFromCache(false);
+			m_IsCompiled = compiler.CompileOrGetFromCache(false);
 
-			if (m_Compiled)
+			if (m_IsCompiled)
 				CreateVulkanShaderModulesAndStages(compiler);
 		});
 	}
@@ -35,10 +35,6 @@ namespace Athena
 		CleanUp();
 	}
 
-	bool VulkanShader::IsCompiled()
-	{
-		return m_Compiled;
-	}
 
 	void VulkanShader::Reload()
 	{
@@ -47,9 +43,9 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			ShaderCompiler compiler(m_FilePath, m_Name);
-			m_Compiled = compiler.CompileOrGetFromCache(true);
+			m_IsCompiled = compiler.CompileOrGetFromCache(true);
 
-			if (m_Compiled)
+			if (m_IsCompiled)
 				CreateVulkanShaderModulesAndStages(compiler);
 		});
 	}

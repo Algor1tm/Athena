@@ -5,133 +5,190 @@
 
 namespace Athena
 {
-	// TODO:
-	// For now these classes just wrappers of std
-	// In the future implement own std-like library
+	// Base class for reference counting objects
+	class RefCounted
+	{
+	public:
+		RefCounted()
+			: m_Count(0)
+		{
+
+		}
+
+		int32_t GetCount() const
+		{
+			return m_Count;
+		}
+
+	private:
+		void Increment() const
+		{
+			m_Count++;
+		}
+
+		void Decrement() const
+		{
+			m_Count--;
+		}
+
+	private:
+		template <typename T>
+		friend class Ref;
+
+	private:
+		mutable int32_t m_Count;
+	};
+
 
 	template <typename T>
 	class Ref
 	{
 	public:
+		static_assert(std::is_base_of_v<RefCounted, T>, "T required to be inherited from RefCounted");
+
+	public:
 		template <typename... Args>
-		static Ref<T> Create(Args&&... args)
+		static Ref Create(Args&&... args)
 		{
-			return Ref<T>(std::make_shared<T>(std::forward<Args>(args)...));
+			return Ref(new T(std::forward<Args>(args)...));
 		}
 
 		Ref()
+			: m_Object(nullptr)
 		{
 
 		}
 
-		Ref(T* ptr)
-			: m_Impl(ptr)
+		Ref(std::nullptr_t)
+			: m_Object(nullptr)
 		{
-			
+
 		}
 
-		Ref(const Ref<T>& other)
-			: m_Impl(other.m_Impl)
+		explicit Ref(T* ptr)
 		{
+			Acquire(ptr);
+		}
 
+		Ref(const Ref& other)
+		{
+			Acquire(other.Raw());
 		}
 
 		template <typename U>
 		Ref(const Ref<U>& other)
-			: m_Impl(other.GetImpl())
 		{
-
+			Acquire(static_cast<T*>(other.Raw()));
 		}
 
-		Ref(Ref<T>&& other) noexcept
-			: m_Impl(std::move(other.m_Impl))
+		Ref(Ref&& other) noexcept
 		{
-
+			m_Object = other.Raw();
+			other.m_Object = nullptr;
 		}
 
 		template <typename U>
 		Ref(Ref<U>&& other) noexcept
-			: m_Impl(std::move(other.GetImpl()))
 		{
-
+			m_Object = static_cast<T*>(other.Raw());
+			other.m_Object = nullptr;
 		}
 
-		Ref<T>& operator=(const Ref<T>& other)
+		Ref& operator=(const Ref& other)
 		{
-			m_Impl = other.m_Impl;
+			if (m_Object == other.Raw())
+				return *this;
+
+			Reset(other.Raw());
 			return *this;
 		}
 
 		template <typename U>
 		Ref<T>& operator=(const Ref<U>& other)
 		{
-			m_Impl = other.GetImpl();
+			if (m_Object == other.Raw())
+				return *this;
+
+			Reset(static_cast<T*>(other.Raw()));
 			return *this;
 		}
 
-		Ref<T>& operator=(Ref<T>&& other) noexcept
+		Ref& operator=(Ref&& other) noexcept
 		{
-			m_Impl = std::move(other.m_Impl);
+			if (m_Object == other.Raw())
+				return *this;
+
+			Release();
+			m_Object = other.Raw();
+			other.m_Object = nullptr;
+
 			return *this;
 		}
 
 		template <typename U>
 		Ref<T>& operator=(Ref<U>&& other) noexcept
 		{
-			m_Impl = std::move(other.GetImpl());
+			if (m_Object == other.Raw())
+				return *this;
+
+			Release();
+			m_Object = static_cast<T*>(other.Raw());
+			other.m_Object = nullptr;
+
+			return *this;
+		}
+
+		Ref& operator=(std::nullptr_t)
+		{
+			Release();
 			return *this;
 		}
 
 		~Ref()
 		{
-			
+			Release();
 		}
 
 		T* Raw() const
 		{
-			return m_Impl.get();
+			return m_Object;
 		}
 
-		void Reset(T* otherPtr)
+		void Reset(T* ptr)
 		{
-			m_Impl.reset(otherPtr);
+			Release();
+			Acquire(ptr);
 		}
 
 		void Release()
 		{
-			m_Impl.reset();
+			if (m_Object)
+			{
+				m_Object->Decrement();
+
+				if (m_Object->GetCount() == 0)
+				{
+					delete m_Object;
+				}
+
+				m_Object = nullptr;
+			}
 		}
 
 		template <typename U>
 		Ref<U> As() const
 		{
-			return std::static_pointer_cast<U>(m_Impl);
-		}
-
-		template <typename U>
-		Ref<U> AsDynamic() const
-		{
-			return std::dynamic_pointer_cast<U>(m_Impl);
-		}
-
-		const std::shared_ptr<T>& GetImpl() const
-		{
-			return m_Impl;
-		}
-
-		std::shared_ptr<T>& GetImpl()
-		{
-			return m_Impl;
+			return Ref<U>(static_cast<U*>(m_Object));
 		}
 
 		explicit operator bool() const
 		{
-			return (bool)m_Impl;
+			return (bool)m_Object;
 		}
 
 		T& operator*() const
 		{
-			return *m_Impl;
+			return *m_Object;
 		}
 
 		T* operator->() const
@@ -139,41 +196,40 @@ namespace Athena
 			return Raw();
 		}
 
-		bool operator==(const Ref<T>& other) const
+		bool operator==(const Ref& other) const
 		{
-			return other.m_Impl == m_Impl;
+			return m_Object == other.Raw();
 		}
 
-		bool operator!=(const Ref<T>& other) const
+		bool operator!=(const Ref& other) const
 		{
-			return other.m_Impl != m_Impl;
+			return m_Object != other.Raw();
 		}
 
 		bool operator==(std::nullptr_t) const
 		{
-			return m_Impl == nullptr;
+			return m_Object == nullptr;
 		}
 
 		bool operator!=(std::nullptr_t) const
 		{
-			return m_Impl != nullptr;
-		}
-
-	public:
-		Ref(const std::shared_ptr<T>& impl)
-			: m_Impl(impl)
-		{
-
-		}
-
-		Ref(std::shared_ptr<T>&& impl)
-			: m_Impl(std::move(impl))
-		{
-
+			return m_Object != nullptr;
 		}
 
 	private:
-		std::shared_ptr<T> m_Impl;
+		void Acquire(T* ptr)
+		{
+			m_Object = ptr;
+			if (m_Object)
+				m_Object->Increment();
+		}
+
+	private:
+		template <typename U>
+		friend class Ref;
+
+	private:
+		T* m_Object;
 	};
 
 
@@ -182,101 +238,81 @@ namespace Athena
 	{
 	public:
 		template <typename... Args>
-		static Scope<T> Create(Args&&... args)
+		static Scope Create(Args&&... args)
 		{
-			return Scope<T>(std::make_unique<T>(std::forward<Args>(args)...));
+			return Scope(new T(std::forward<Args>(args)...));
 		}
 
 		Scope()
+			: m_Object(nullptr)
 		{
 
 		}
 
 		Scope(T* ptr)
-			: m_Impl(ptr)
+			: m_Object(ptr)
 		{
 
 		}
 
-		Scope(const Ref<T>& other) = delete;
-		Scope<T> operator=(const Ref<T>& other) = delete;
-
-		Scope(Scope<T>&& other) noexcept
-			: m_Impl(std::move(other.m_Impl))
-		{
-
-		}
+		Scope(const Scope& other) = delete;
+		Scope& operator=(const Scope& other) = delete;
 
 		template <typename U>
 		Scope(Scope<U>&& other) noexcept
-			: m_Impl(std::move(other.GetImpl()))
 		{
-
-		}
-
-		Scope<T>& operator=(Scope<T>&& other) noexcept
-		{
-			m_Impl = std::move(other.m_Impl);
-			return *this;
+			m_Object = static_cast<T*>(other.m_Object);
+			other.m_Object = nullptr;
 		}
 
 		template <typename U>
 		Scope<T>& operator=(Scope<U>&& other) noexcept
 		{
-			m_Impl = std::move(other.GetImpl());
+			if (m_Object == other.m_Object)
+				return *this;
+
+			m_Object = static_cast<T*>(other.m_Object);
+			other.m_Object = nullptr;
+
+			return *this;
+		}
+
+		Scope& operator=(std::nullptr_t)
+		{
+			Release();
 			return *this;
 		}
 
 		~Scope()
 		{
-
+			Release();
 		}
 
 		T* Raw() const
 		{
-			return m_Impl.get();
-		}
-
-		void Reset(T* otherPtr)
-		{
-			m_Impl.reset(otherPtr);
+			return m_Object;
 		}
 
 		void Release()
 		{
-			m_Impl.reset();
+			delete m_Object;
+			m_Object = nullptr;
 		}
 
-		template <typename U>
-		Scope<U> As() const
+		void Reset(T* ptr)
 		{
-			return std::static_pointer_cast<U>(m_Impl);
-		}
-
-		template <typename U>
-		Scope<U> AsDynamic() const
-		{
-			return std::dynamic_pointer_cast<U>(m_Impl);
-		}
-
-		const std::unique_ptr<T>& GetImpl() const
-		{
-			return m_Impl;
-		}
-
-		std::unique_ptr<T>& GetImpl()
-		{
-			return m_Impl;
+			Release();
+			m_Object = ptr;
 		}
 
 		explicit operator bool() const
 		{
-			return (bool)m_Impl;
+			return (bool)m_Object;
 		}
 
 		T& operator*() const
 		{
-			return *m_Impl;
+			return *m_Object;
 		}
 
 		T* operator->() const
@@ -284,35 +320,31 @@ namespace Athena
 			return Raw();
 		}
 
-		bool operator==(const Ref<T>& other) const
+		bool operator==(const Scope& other) const
 		{
-			return other.m_Impl == m_Impl;
+			return m_Object == other.Raw();
 		}
 
-		bool operator!=(const Ref<T>& other) const
+		bool operator!=(const Scope& other) const
 		{
-			return other.m_Impl != m_Impl;
+			return m_Object != other.Raw();
 		}
 
 		bool operator==(std::nullptr_t) const
 		{
-			return m_Impl == nullptr;
+			return m_Object == nullptr;
 		}
 
 		bool operator!=(std::nullptr_t) const
 		{
-			return m_Impl != nullptr;
-		}
-
-	public:
-		Scope(std::unique_ptr<T>&& impl)
-			: m_Impl(std::move(impl))
-		{
-
+			return m_Object != nullptr;
 		}
 
 	private:
-		std::unique_ptr<T> m_Impl;
+		template <typename U>
+		friend class Scope;
+
+	private:
+		T* m_Object;
 	};
 }
-

@@ -6,6 +6,8 @@
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/Keyboard.h"
 
+#include "Panels/Panel.h"
+
 #include <unordered_map>
 
 
@@ -18,9 +20,6 @@
 
 namespace Athena
 {
-	class Panel;
-
-
 	struct PanelDescription
 	{
 		Ref<Panel> PanelRef;

@@ -5,10 +5,9 @@
 #include "Athena/Core/LayerStack.h"
 #include "Athena/Core/Window.h"
 
+#include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Input/WindowEvent.h"
-
 #include "Athena/Renderer/Renderer.h"
-
 #include "Athena/Scripting/ScriptEngine.h"
 
 #include <queue>
@@ -16,8 +15,6 @@
 
 namespace Athena
 {
-	class ATHENA_API ImGuiLayer;
-
 	struct AppConfig
 	{
 		String Name = "";

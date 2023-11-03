@@ -47,7 +47,7 @@ namespace Athena
 		Timer timer;
 		Time frameTime = 0;
 
-		// Post initialization
+		// Initialize rendering stuff
 		Renderer::WaitAndRender();
 
 		while (m_Running)
@@ -67,12 +67,12 @@ namespace Athena
 
 				// Update
 				{
-					m_Statistics.Timer.Reset();
+					Timer timer = Timer();
 
 					for (Ref<Layer> layer : m_LayerStack)
 						layer->OnUpdate(frameTime);
 
-					m_Statistics.Application_OnUpdate = m_Statistics.Timer.ElapsedTime();
+					m_Statistics.Application_OnUpdate = timer.ElapsedTime();
 				}
 
 				// Render UI
@@ -101,7 +101,7 @@ namespace Athena
 	void Application::ProcessEvents()
 	{
 		ATN_PROFILE_FUNC()
-		m_Statistics.Timer.Reset();
+		Timer timer = Timer();
 
 		m_Window->PollEvents();
 
@@ -112,14 +112,14 @@ namespace Athena
 			m_EventQueue.pop();
 		}
 
-		m_Statistics.Application_ProcessEvents = m_Statistics.Timer.ElapsedTime();
+		m_Statistics.Application_ProcessEvents = timer.ElapsedTime();
 	}
 
 	void Application::RenderImGui()
 	{
 		Renderer::Submit([this]()
 		{
-			m_Statistics.Timer.Reset();
+			Timer timer = Timer();
 
 			if (m_Config.EnableImGui)
 			{
@@ -133,7 +133,7 @@ namespace Athena
 				m_ImGuiLayer->End(m_Minimized);
 			}
 
-			m_Statistics.Application_RenderImGui = m_Statistics.Timer.ElapsedTime();
+			m_Statistics.Application_RenderImGui = timer.ElapsedTime();
 		});
 	}
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Time.h"
+
 
 namespace Athena
 {
@@ -22,12 +24,12 @@ namespace Athena
 	class ATHENA_API GPUProfiler : public RefCounted
 	{
 	public:
-		static Ref<GPUProfiler> Create();
+		static Ref<GPUProfiler> Create(uint32 maxTimestamps, uint32 maxPipelineQueries);
 
 		virtual void Reset() = 0;
 
 		virtual void BeginTimeQuery() = 0;
-		virtual double EndTimeQuery() = 0;
+		virtual Time EndTimeQuery() = 0;
 
 		virtual void BeginPipelineStatsQuery() = 0;
 		virtual const PipelineStatistics& EndPipelineStatsQuery() = 0;

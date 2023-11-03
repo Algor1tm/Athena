@@ -54,11 +54,9 @@ namespace Athena
 	}
 
 #ifdef ATN_ENABLE_ASSERTS
-	#define WINAPI_CHECK(expr) expr; ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
 	#define WINAPI_CHECK_LASTERROR() ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
 	#define SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
 #else
-	#define WINAPI_CHECK(expr) expr
 	#define WINAPI_CHECK_LASTERROR()
 	#define SUPPRESS_LAST_ERROR()
 #endif
@@ -98,13 +96,14 @@ namespace Athena
 			s_Data.CPUCaps.Name = cpuString;
 		}
 
+		SUPPRESS_LAST_ERROR();
+
 		// Memory info
 		{
-			SUPPRESS_LAST_ERROR();
-
 			MEMORYSTATUSEX statex;
 			statex.dwLength = sizeof(statex);
-			WINAPI_CHECK(GlobalMemoryStatusEx(&statex));
+			GlobalMemoryStatusEx(&statex);
+			WINAPI_CHECK_LASTERROR();
 
 			s_Data.CPUCaps.RAM = statex.ullTotalPhys / 1024;
 		}
@@ -171,14 +170,16 @@ namespace Athena
 		// Process ID
 		{
 			DWORD processID;
-			WINAPI_CHECK(GetWindowThreadProcessId(s_Data.WindowHandle, &processID));
+			GetWindowThreadProcessId(s_Data.WindowHandle, &processID);
+			WINAPI_CHECK_LASTERROR();
 			s_Data.ProcessID = processID;
 		}
 		
 		// Performance Frequency
 		{
 			LARGE_INTEGER li;
-			WINAPI_CHECK(QueryPerformanceFrequency(&li));
+			QueryPerformanceFrequency(&li);
+			WINAPI_CHECK_LASTERROR();
 			s_Data.PerformanceFrequency = (double)li.QuadPart / 1000.0;
 		}
 
@@ -222,7 +223,8 @@ namespace Athena
 
 		WINAPI_CHECK_LASTERROR();
 
-		WINAPI_CHECK(CloseHandle(hProcess));
+		CloseHandle(hProcess);
+		WINAPI_CHECK_LASTERROR();
 		return memUsage;
 	}
 

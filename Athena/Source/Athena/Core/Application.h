@@ -34,7 +34,6 @@ namespace Athena
 
 	struct ApplicationStatistics
 	{
-		Timer Timer;
 		Time FrameTime;
 		Time Application_ProcessEvents;
 		Time Application_OnUpdate;
@@ -47,9 +46,6 @@ namespace Athena
 
 	class ATHENA_API Application
 	{
-	public:
-		struct Statistics;
-
 	public:
 		Application(const ApplicationCreateInfo& appinfo);
 		virtual ~Application();

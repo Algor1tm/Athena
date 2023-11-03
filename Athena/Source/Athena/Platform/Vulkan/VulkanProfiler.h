@@ -13,34 +13,33 @@ namespace Athena
 	class VulkanProfiler : public GPUProfiler
 	{
 	public:
-		VulkanProfiler();
+		VulkanProfiler(uint32 maxTimestamps, uint32 maxPipelineQueries);
 		~VulkanProfiler();
 
 		virtual void Reset() override;
 
 		virtual void BeginTimeQuery() override;
-		virtual double EndTimeQuery() override;
+		virtual Time EndTimeQuery() override;
 
 		virtual void BeginPipelineStatsQuery() override;
 		virtual const PipelineStatistics& EndPipelineStatsQuery() override;
 
 	private:
-		static constexpr uint32 m_MaxTimestampsCount = 128;
-		static constexpr uint32 m_MaxPipelineQueriesCount = 2;
+		uint32 m_MaxTimestampsCount;
+		uint32 m_MaxPipelineQueriesCount;
 
-	private:
 		uint32 m_QueryFrameIndex;
 
 		VkQueryPool m_TimeQueryPool;
 		double m_Frequency;
 		std::vector<uint32> m_TimestampsCount;
-		std::vector<std::array<uint64, m_MaxTimestampsCount>> m_Timestamps;
-		std::vector<std::array<double, m_MaxTimestampsCount / 2>> m_ResolvedTimeStats;
+		std::vector<std::vector<uint64>> m_Timestamps;
+		std::vector<std::vector<Time>> m_ResolvedTimeStats;
 		uint32 m_CurrentTimeQueryIndex = 0;
 
 		VkQueryPool m_PipelineStatsQueryPool;
 		std::vector<uint32> m_PipelineQueriesCount;
-		std::vector<std::array<PipelineStatistics, m_MaxPipelineQueriesCount>> m_ResolvedPipelineStats;
+		std::vector<std::vector<PipelineStatistics>> m_ResolvedPipelineStats;
 		uint32 m_CurrentPipelineQueryIndex = 0;
 	};
 }

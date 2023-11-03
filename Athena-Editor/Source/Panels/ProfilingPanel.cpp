@@ -69,7 +69,7 @@ namespace Athena
                         ImGui::Text("ViewportSize: { %u, %u }", size.x, size.y);
 
                         auto& stats = m_SceneRenderer->GetStatistics();
-                        ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass);
+                        ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass.AsMilliseconds());
                         
                         if (UI::TreeNode("Pipeline Statistics"))
                         {

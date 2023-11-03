@@ -156,7 +156,7 @@ namespace Athena
 		static void EndFrame();
 		static void WaitAndRender();
 
-		static void CopyTextureToSwapChain(const Ref<Texture2D>& texture);
+		static void BlitToScreen(const Ref<Texture2D>& texture);
 
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();

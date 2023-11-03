@@ -5,8 +5,11 @@
 
 namespace Athena
 {
-	VulkanProfiler::VulkanProfiler()
+	VulkanProfiler::VulkanProfiler(uint32 maxTimestamps, uint32 maxPipelineQueries)
 	{
+		m_MaxTimestampsCount = maxTimestamps;
+		m_MaxPipelineQueriesCount = maxPipelineQueries;
+
 		Renderer::Submit([this]()
 		{
 			// Create time queury pool
@@ -21,8 +24,14 @@ namespace Athena
 				vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
 				
 				m_TimestampsCount.resize(Renderer::GetFramesInFlight());
+
 				m_Timestamps.resize(Renderer::GetFramesInFlight());
+				for (auto& timestamps : m_Timestamps)
+					timestamps.resize(m_MaxTimestampsCount);
+
 				m_ResolvedTimeStats.resize(Renderer::GetFramesInFlight());
+				for (auto& stats : m_ResolvedTimeStats)
+					stats.resize(m_MaxTimestampsCount / 2);
 
 				// Time stored in ms
 				m_Frequency = (uint64)(1000000ll / Renderer::GetRenderCaps().TimestampPeriod);
@@ -51,6 +60,8 @@ namespace Athena
 
 				m_PipelineQueriesCount.resize(Renderer::GetFramesInFlight());
 				m_ResolvedPipelineStats.resize(Renderer::GetFramesInFlight());
+				for (auto& stats : m_ResolvedPipelineStats)
+					stats.resize(m_MaxPipelineQueriesCount);
 			}
 		});
 	}
@@ -92,7 +103,7 @@ namespace Athena
 
 					for (uint32 i = 0; i < count; i += 2)
 					{
-						double resolvedTime = (double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency;
+						Time resolvedTime = Time::Milliseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
 						resolvedTimeStats[i / 2] = resolvedTime;
 					}
 				}
@@ -147,7 +158,7 @@ namespace Athena
 		});
 	}
 
-	double VulkanProfiler::EndTimeQuery()
+	Time VulkanProfiler::EndTimeQuery()
 	{
 		Renderer::Submit([this]()
 		{

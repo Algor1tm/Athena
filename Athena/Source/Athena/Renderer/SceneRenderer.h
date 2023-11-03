@@ -142,7 +142,7 @@ namespace Athena
 
 	struct SceneRendererStatistics
 	{
-		double GeometryPass = 0;
+		Time GeometryPass;
 		PipelineStatistics PipelineStats;
 	};
 

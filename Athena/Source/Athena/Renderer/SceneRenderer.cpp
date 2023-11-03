@@ -63,9 +63,12 @@ namespace Athena
 	{
 		m_Data = new SceneRendererData();
 
-		m_Data->Profiler = GPUProfiler::Create();
+		const uint32 maxTimestamps = 32;
+		const uint32 maxPipelineQueries = 1;
+		m_Data->Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
+		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
 
 		struct TVertex
 		{
@@ -98,8 +101,6 @@ namespace Athena
 		info.Usage = VertexBufferUsage::STATIC;
 
 		s_VertexBuffer = VertexBuffer::Create(info);
-		
-		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
 
 		Renderer::Submit([vertexBufferLayout = layout]()
 		{

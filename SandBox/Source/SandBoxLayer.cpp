@@ -34,10 +34,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 
 	m_SceneRenderer->Render(cameraInfo);
 
-	Renderer::Submit([this]()
-	{
-		Renderer::CopyTextureToSwapChain(m_SceneRenderer->GetFinalImage());
-	});
+	Renderer::BlitToScreen(m_SceneRenderer->GetFinalImage());
 }
 
 void SandBoxLayer::OnImGuiRender()

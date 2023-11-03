@@ -18,7 +18,7 @@ namespace Athena
 		virtual void EndFrame() override;
 
 		virtual void WaitDeviceIdle() override;
-		virtual void CopyTextureToSwapChain(const Ref<Texture2D>& texture) override;
+		virtual void BlitToScreen(const Ref<Texture2D>& texture) override;
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;
 

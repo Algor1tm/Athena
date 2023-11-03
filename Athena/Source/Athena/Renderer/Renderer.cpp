@@ -128,17 +128,16 @@ namespace Athena
 	void Renderer::WaitAndRender()
 	{
 		ATN_PROFILE_FUNC()
-		auto& appstats = Application::Get().GetStats();
-		appstats.Timer.Reset();
+		Timer timer = Timer();
 
 		s_Data.RenderCommandQueue.Flush();
 
-		appstats.Renderer_WaitAndRender = appstats.Timer.ElapsedTime();
+		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
-	void Renderer::CopyTextureToSwapChain(const Ref<Texture2D>& texture)
+	void Renderer::BlitToScreen(const Ref<Texture2D>& texture)
 	{
-		s_Data.RendererAPI->CopyTextureToSwapChain(texture);
+		s_Data.RendererAPI->BlitToScreen(texture);
 	}
 
 	Renderer::API Renderer::GetAPI()

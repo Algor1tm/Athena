@@ -36,11 +36,11 @@ namespace Athena
 		std::vector<uint32> m_TimestampsCount;
 		std::vector<std::array<uint64, m_MaxTimestampsCount>> m_Timestamps;
 		std::vector<std::array<double, m_MaxTimestampsCount / 2>> m_ResolvedTimeStats;
-		uint32 m_CurrentTimeQueryIndex;
+		uint32 m_CurrentTimeQueryIndex = 0;
 
 		VkQueryPool m_PipelineStatsQueryPool;
 		std::vector<uint32> m_PipelineQueriesCount;
 		std::vector<std::array<PipelineStatistics, m_MaxPipelineQueriesCount>> m_ResolvedPipelineStats;
-		uint32 m_CurrentQueryPipelineIndex;
+		uint32 m_CurrentPipelineQueryIndex = 0;
 	};
 }

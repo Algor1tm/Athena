@@ -142,8 +142,8 @@ namespace Athena
 		template <typename FuncT>
 		static void Submit(FuncT&& func)
 		{
-			//GetRenderCommandQueue().Submit(std::forward<FuncT>(func));
-			func();
+			GetRenderCommandQueue().Submit(std::forward<FuncT>(func));
+			//func();
 		}
 
 		template <typename FuncT>

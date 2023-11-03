@@ -1,6 +1,7 @@
 #include "VulkanTexture2D.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/Buffer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -27,9 +28,13 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Renderer::Submit([this]()
+		Buffer localBuffer;
+		if(info.Data != nullptr)
+			localBuffer = Buffer::Copy(info.Data, info.Width * info.Height * Texture::BytesPerPixel(info.Format));
+
+		Ref<VulkanTexture2D> instance(this);
+		Renderer::Submit([instance, localBuffer]() mutable
 		{
-			auto instance = this;
 			auto& info = instance->m_Info;
 
 			instance->m_AddImGuiTexture = info.GenerateSampler && Application::Get().GetConfig().EnableImGui;
@@ -39,7 +44,7 @@ namespace Athena
 			if (info.Usage == TextureUsage::ATTACHMENT)
 			{
 				imageUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;	// TODO
+				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;	// TODO (this usage added for copying into swapchain)
 			}
 
 			if (info.Data != nullptr)
@@ -81,7 +86,9 @@ namespace Athena
 
 			if (info.Data != nullptr)
 			{
-				instance->UploadData(info.Data, info.Width, info.Height);
+				instance->UploadData(localBuffer.Data(), info.Width, info.Height);
+
+				localBuffer.Release();
 				info.Data = nullptr;
 			}
 
@@ -137,9 +144,9 @@ namespace Athena
 
 		m_Info.SamplerInfo = samplerInfo;
 
-		Renderer::Submit([this]()
+		Ref<VulkanTexture2D> instance(this);
+		Renderer::Submit([instance]()
 		{
-			auto instance = this;
 			auto& info = instance->m_Info;
 
 			VkSamplerCreateInfo vksamplerInfo = {};
@@ -161,10 +168,10 @@ namespace Athena
 			vksamplerInfo.unnormalizedCoordinates = false;
 
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, VulkanContext::GetAllocator(), &instance->m_Sampler));
-		});
 
-		if(m_AddImGuiTexture)
-			m_DescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_VkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			if (instance->m_AddImGuiTexture)
+				instance->m_DescriptorSet = ImGui_ImplVulkan_AddTexture(instance->m_Sampler, instance->m_VkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		});
 	}
 
 	void VulkanTexture2D::UploadData(const void* data, uint32 width, uint32 height)

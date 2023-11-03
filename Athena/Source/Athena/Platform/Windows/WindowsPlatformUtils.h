@@ -53,12 +53,14 @@ namespace Athena
 		}
 	}
 
-#ifdef ATN_DEBUG
+#ifdef ATN_ENABLE_ASSERTS
 	#define WINAPI_CHECK(expr) expr; ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
 	#define WINAPI_CHECK_LASTERROR() ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
+	#define SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
 #else
 	#define WINAPI_CHECK(expr) expr
 	#define WINAPI_CHECK_LASTERROR()
+	#define SUPPRESS_LAST_ERROR()
 #endif
 
 
@@ -98,6 +100,8 @@ namespace Athena
 
 		// Memory info
 		{
+			SUPPRESS_LAST_ERROR();
+
 			MEMORYSTATUSEX statex;
 			statex.dwLength = sizeof(statex);
 			WINAPI_CHECK(GlobalMemoryStatusEx(&statex));
@@ -134,7 +138,7 @@ namespace Athena
 						free(buffer);
 
 					buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(bufferSize);
-					SetLastError(ERROR_SUCCESS);
+					SUPPRESS_LAST_ERROR();
 				}
 				else
 				{
@@ -196,7 +200,7 @@ namespace Athena
 
 	uint64 Platform::GetMemoryUsage()
 	{
-		SetLastError(ERROR_SUCCESS);	// Error from somewhere else
+		SUPPRESS_LAST_ERROR();	// Error from somewhere else
 
 		HANDLE hProcess;
 		PROCESS_MEMORY_COUNTERS pmc;

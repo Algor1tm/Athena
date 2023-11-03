@@ -206,24 +206,21 @@ namespace Athena
 
 	void ImGuiLayer::End(bool minimized)
 	{
-		Renderer::Submit([this, minimized]()
+		ATN_PROFILE_SCOPE("ImGuiLayer::End")
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImGui::Render();
+
+		if (!minimized)
 		{
-			ATN_PROFILE_SCOPE("ImGuiLayer::End")
-			ImGuiIO& io = ImGui::GetIO();
+			m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
+		}
 
-			ImGui::Render();
-
-			if (!minimized)
-			{
-				m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
-			}
-
-			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-			{
-				ImGui::UpdatePlatformWindows();
-				ImGui::RenderPlatformWindowsDefault();
-			}
-		});
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+		}
 	}
 
 	void ImGuiLayer::OnSwapChainRecreate()

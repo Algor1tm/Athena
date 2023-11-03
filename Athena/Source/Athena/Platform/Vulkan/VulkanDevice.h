@@ -21,7 +21,7 @@ namespace Athena
 		uint32 GetQueueFamily() { return m_QueueFamily; }
 		VkQueue GetQueue() { return m_Queue; }
 
-		RenderCapabilities GetDeviceCapabilities() const;
+		void GetDeviceCapabilities(RenderCapabilities& deviceCaps) const;
 
 	private:
 		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);

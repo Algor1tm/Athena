@@ -60,32 +60,32 @@ namespace Athena
 
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
 		s_Data.RendererAPI->Init();
-		s_Data.RenderCaps = s_Data.RendererAPI->GetRenderCapabilities();
+		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
 
 		uint32 whiteTextureData = 0xffffffff;
 
-		//TextureCreateInfo texInfo;
-		//texInfo.Data = &whiteTextureData;
-		//texInfo.Width = 1;
-		//texInfo.Height = 1;
-		//texInfo.Layers = 1;
-		//texInfo.MipLevels = 1;
-		//texInfo.GenerateMipMap = false;
-		//texInfo.sRGB = false;
-		//texInfo.Format = TextureFormat::RGBA8;
-		//texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
-		//texInfo.GenerateSampler = false;
-		//texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
-		//texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
-		//texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
-		//texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+		TextureCreateInfo texInfo;
+		texInfo.Data = &whiteTextureData;
+		texInfo.Width = 1;
+		texInfo.Height = 1;
+		texInfo.Layers = 1;
+		texInfo.MipLevels = 1;
+		texInfo.GenerateMipMap = false;
+		texInfo.sRGB = false;
+		texInfo.Format = TextureFormat::RGBA8;
+		texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
+		texInfo.GenerateSampler = false;
+		texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
+		texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
+		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
+		texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
 
-		//s_Data.WhiteTexture = Texture2D::Create(texInfo);
+		s_Data.WhiteTexture = Texture2D::Create(texInfo);
 
-		//uint32 blackTextureData = 0xff000000;
-		//texInfo.Data = &blackTextureData;
+		uint32 blackTextureData = 0xff000000;
+		texInfo.Data = &blackTextureData;
 
-		//s_Data.BlackTexture = Texture2D::Create(texInfo); 
+		s_Data.BlackTexture = Texture2D::Create(texInfo); 
 	}
 
 	void Renderer::Shutdown()

@@ -26,12 +26,12 @@ namespace Athena
 		Platform::Init();
 		InitImGui();
 		ScriptEngine::Init(appinfo.ScriptConfig);
-
-		Renderer::WaitAndRender();
 	}
 
 	Application::~Application()
 	{
+		ATN_PROFILER_SHUTDOWN()
+
 		m_LayerStack.Clear();
 
 		// Window cant be destroyed before Renderer::Shutdown, because of ImGui and GLFW
@@ -46,6 +46,9 @@ namespace Athena
 	{
 		Timer timer;
 		Time frameTime = 0;
+
+		// Post initialization
+		Renderer::WaitAndRender();
 
 		while (m_Running)
 		{
@@ -88,13 +91,11 @@ namespace Athena
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 
-			// Execute renderer commands after update loop
+			// Execute renderer commands
 			Renderer::WaitAndRender();
 
 			frameTime = timer.ElapsedTime() - start;
 		}
-
-		ATN_PROFILER_SHUTDOWN()
 	}
 
 	void Application::ProcessEvents()
@@ -116,21 +117,24 @@ namespace Athena
 
 	void Application::RenderImGui()
 	{
-		m_Statistics.Timer.Reset();
-
-		if (m_Config.EnableImGui)
+		Renderer::Submit([this]()
 		{
-			ATN_PROFILE_FUNC()
+			m_Statistics.Timer.Reset();
 
-			m_ImGuiLayer->Begin();
+			if (m_Config.EnableImGui)
 			{
-				for (Ref<Layer> layer : m_LayerStack)
-					layer->OnImGuiRender();
-			}
-			m_ImGuiLayer->End(m_Minimized);
-		}
+				ATN_PROFILE_SCOPE("Application::RenderImGui")
 
-		m_Statistics.Application_RenderImGui = m_Statistics.Timer.ElapsedTime();
+				m_ImGuiLayer->Begin();
+				{
+					for (Ref<Layer> layer : m_LayerStack)
+						layer->OnImGuiRender();
+				}
+				m_ImGuiLayer->End(m_Minimized);
+			}
+
+			m_Statistics.Application_RenderImGui = m_Statistics.Timer.ElapsedTime();
+		});
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)

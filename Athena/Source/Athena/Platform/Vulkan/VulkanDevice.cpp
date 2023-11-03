@@ -132,62 +132,61 @@ namespace Athena
 		vkDeviceWaitIdle(m_LogicalDevice);
 	}
 
-	RenderCapabilities VulkanDevice::GetDeviceCapabilities() const
+	void VulkanDevice::GetDeviceCapabilities(RenderCapabilities& deviceCaps) const
 	{
-		RenderCapabilities deviceCaps;
+		Renderer::Submit([&deviceCaps, this]()
+		{
+			VkPhysicalDeviceProperties properties;
+			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
+			VkPhysicalDeviceLimits limits = properties.limits;
 
-		VkPhysicalDeviceProperties properties;
-		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
-		VkPhysicalDeviceLimits limits = properties.limits;
+			deviceCaps.Name = properties.deviceName;
 
-		deviceCaps.Name = properties.deviceName;
+			deviceCaps.VRAM = 0; // TODO
 
-		deviceCaps.VRAM = 0; // TODO
+			deviceCaps.MaxImageDimension2D = limits.maxImageDimension2D;
+			deviceCaps.MaxImageDimensionCube = limits.maxImageDimensionCube;
+			deviceCaps.MaxImageArrayLayers = limits.maxImageArrayLayers;
+			deviceCaps.MaxSamplerLodBias = limits.maxSamplerLodBias;
+			deviceCaps.MaxSamplerAnisotropy = limits.maxSamplerAnisotropy;
 
-		deviceCaps.MaxImageDimension2D = limits.maxImageDimension2D;
-		deviceCaps.MaxImageDimensionCube = limits.maxImageDimensionCube;
-		deviceCaps.MaxImageArrayLayers = limits.maxImageArrayLayers;
-		deviceCaps.MaxSamplerLodBias = limits.maxSamplerLodBias;
-		deviceCaps.MaxSamplerAnisotropy = limits.maxSamplerAnisotropy;
+			deviceCaps.MaxFramebufferWidth = limits.maxFramebufferWidth;
+			deviceCaps.MaxFramebufferHeight = limits.maxFramebufferHeight;
+			deviceCaps.MaxFramebufferLayers = limits.maxFramebufferLayers;
+			deviceCaps.MaxFramebufferColorAttachments = limits.maxColorAttachments;
 
-		deviceCaps.MaxFramebufferWidth = limits.maxFramebufferWidth;
-		deviceCaps.MaxFramebufferHeight = limits.maxFramebufferHeight;
-		deviceCaps.MaxFramebufferLayers = limits.maxFramebufferLayers;
-		deviceCaps.MaxFramebufferColorAttachments = limits.maxColorAttachments;
+			deviceCaps.MaxUniformBufferRange = limits.maxUniformBufferRange;
+			deviceCaps.MaxStorageBufferRange = limits.maxStorageBufferRange;
+			deviceCaps.MaxPushConstantRange = limits.maxPushConstantsSize;
 
-		deviceCaps.MaxUniformBufferRange = limits.maxUniformBufferRange;
-		deviceCaps.MaxStorageBufferRange = limits.maxStorageBufferRange;
-		deviceCaps.MaxPushConstantRange = limits.maxPushConstantsSize;
+			deviceCaps.MaxDescriptorSetSamplers = limits.maxDescriptorSetSamplers;
+			deviceCaps.MaxDescriptorSetUnifromBuffers = limits.maxDescriptorSetUniformBuffers;
+			deviceCaps.MaxDescriptorSetStorageBuffers = limits.maxDescriptorSetStorageBuffers;
+			deviceCaps.MaxDescriptorSetSampledImages = limits.maxDescriptorSetSampledImages;
+			deviceCaps.MaxDescriptorSetStorageImages = limits.maxDescriptorSetStorageImages;
+			deviceCaps.MaxDescriptorSetInputAttachments = limits.maxDescriptorSetInputAttachments;
 
-		deviceCaps.MaxDescriptorSetSamplers = limits.maxDescriptorSetSamplers;
-		deviceCaps.MaxDescriptorSetUnifromBuffers = limits.maxDescriptorSetUniformBuffers;
-		deviceCaps.MaxDescriptorSetStorageBuffers = limits.maxDescriptorSetStorageBuffers;
-		deviceCaps.MaxDescriptorSetSampledImages = limits.maxDescriptorSetSampledImages;
-		deviceCaps.MaxDescriptorSetStorageImages = limits.maxDescriptorSetStorageImages;
-		deviceCaps.MaxDescriptorSetInputAttachments = limits.maxDescriptorSetInputAttachments;
+			deviceCaps.MaxViewportDimensions[0] = limits.maxViewportDimensions[0];
+			deviceCaps.MaxViewportDimensions[1] = limits.maxViewportDimensions[1];
+			deviceCaps.MaxClipDistances = limits.maxClipDistances;
+			deviceCaps.MaxCullDistances = limits.maxCullDistances;
+			deviceCaps.LineWidthRange[0] = limits.lineWidthRange[0];
+			deviceCaps.LineWidthRange[1] = limits.lineWidthRange[1];
 
-		deviceCaps.MaxViewportDimensions[0] = limits.maxViewportDimensions[0];
-		deviceCaps.MaxViewportDimensions[1] = limits.maxViewportDimensions[1];
-		deviceCaps.MaxClipDistances = limits.maxClipDistances;
-		deviceCaps.MaxCullDistances = limits.maxCullDistances;
-		deviceCaps.LineWidthRange[0] = limits.lineWidthRange[0];
-		deviceCaps.LineWidthRange[1] = limits.lineWidthRange[1];
+			deviceCaps.MaxVertexInputAttributes = limits.maxVertexInputAttributes;
+			deviceCaps.MaxVertexInputBindingStride = limits.maxVertexInputBindingStride;
+			deviceCaps.MaxFragmentInputComponents = limits.maxFragmentInputComponents;
+			deviceCaps.MaxFragmentOutputAttachments = limits.maxFragmentOutputAttachments;
 
-		deviceCaps.MaxVertexInputAttributes = limits.maxVertexInputAttributes;
-		deviceCaps.MaxVertexInputBindingStride = limits.maxVertexInputBindingStride;
-		deviceCaps.MaxFragmentInputComponents = limits.maxFragmentInputComponents;
-		deviceCaps.MaxFragmentOutputAttachments = limits.maxFragmentOutputAttachments;
+			deviceCaps.MaxComputeWorkGroupSize[0] = limits.maxComputeWorkGroupSize[0];
+			deviceCaps.MaxComputeWorkGroupSize[1] = limits.maxComputeWorkGroupSize[1];
+			deviceCaps.MaxComputeWorkGroupSize[2] = limits.maxComputeWorkGroupSize[2];
+			deviceCaps.MaxComputeSharedMemorySize = limits.maxComputeSharedMemorySize;
+			deviceCaps.MaxComputeWorkGroupInvocations = limits.maxComputeWorkGroupInvocations;
 
-		deviceCaps.MaxComputeWorkGroupSize[0] = limits.maxComputeWorkGroupSize[0];
-		deviceCaps.MaxComputeWorkGroupSize[1] = limits.maxComputeWorkGroupSize[1];
-		deviceCaps.MaxComputeWorkGroupSize[2] = limits.maxComputeWorkGroupSize[2];
-		deviceCaps.MaxComputeSharedMemorySize = limits.maxComputeSharedMemorySize;
-		deviceCaps.MaxComputeWorkGroupInvocations = limits.maxComputeWorkGroupInvocations;
-
-		deviceCaps.TimestampComputeAndGraphics = limits.timestampComputeAndGraphics;
-		deviceCaps.TimestampPeriod = limits.timestampPeriod;
-
-		return deviceCaps;
+			deviceCaps.TimestampComputeAndGraphics = limits.timestampComputeAndGraphics;
+			deviceCaps.TimestampPeriod = limits.timestampPeriod;
+		});
 	}
 
 	bool VulkanDevice::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)

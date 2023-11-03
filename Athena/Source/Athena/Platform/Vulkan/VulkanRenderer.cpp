@@ -369,9 +369,9 @@ namespace Athena
 		}
 	}
 
-	RenderCapabilities VulkanRenderer::GetRenderCapabilities()
+	void VulkanRenderer::GetRenderCapabilities(RenderCapabilities& caps)
 	{
-		return VulkanContext::GetDevice()->GetDeviceCapabilities();
+		return VulkanContext::GetDevice()->GetDeviceCapabilities(caps);
 	}
 
 	bool VulkanRenderer::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)

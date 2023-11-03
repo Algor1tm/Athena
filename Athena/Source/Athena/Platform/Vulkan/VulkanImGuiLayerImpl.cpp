@@ -15,7 +15,7 @@ namespace Athena
 	{
 		Renderer::Submit([this, windowHandle]()
 		{
-				VkDescriptorPoolSize pool_sizes[] =
+			VkDescriptorPoolSize pool_sizes[] =
 			{
 				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
 				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
@@ -114,16 +114,16 @@ namespace Athena
 	void VulkanImGuiLayerImpl::Shutdown()
 	{
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, VulkanContext::GetAllocator());
-				vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, VulkanContext::GetAllocator());
+		{
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, VulkanContext::GetAllocator());
+			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, VulkanContext::GetAllocator());
 
-				for (auto framebuffer : framebuffers)
-					vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+			for (auto framebuffer : framebuffers)
+				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 
-				ImGui_ImplVulkan_Shutdown();
-				ImGui_ImplGlfw_Shutdown();
-			});
+			ImGui_ImplVulkan_Shutdown();
+			ImGui_ImplGlfw_Shutdown();
+		});
 	}
 
 	void VulkanImGuiLayerImpl::NewFrame()
@@ -165,38 +165,33 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::RecreateFramebuffers()
 	{
-		if (!m_SwapChainFramebuffers.empty())
+		Renderer::SubmitResourceFree([framebuffers = m_SwapChainFramebuffers]()
 		{
-			Renderer::SubmitResourceFree([framebuffers = m_SwapChainFramebuffers]()
-			{
-				for (auto framebuffer : framebuffers)
-					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
-			});
-		}
-		else
-		{
-			m_SwapChainFramebuffers.resize(Renderer::GetFramesInFlight());
-		}
-
-		Renderer::Submit([this]()
-		{
-			Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();;
-
-			for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++)
-			{
-				VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
-
-				VkFramebufferCreateInfo framebufferInfo = {};
-				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass = m_ImGuiRenderPass;
-				framebufferInfo.attachmentCount = 1;
-				framebufferInfo.pAttachments = &attachment;
-				framebufferInfo.width = Application::Get().GetWindow().GetWidth();
-				framebufferInfo.height = Application::Get().GetWindow().GetHeight();
-				framebufferInfo.layers = 1;
-
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &m_SwapChainFramebuffers[i]));
-			}
+			for (auto framebuffer : framebuffers)
+				vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
 		});
+
+		m_SwapChainFramebuffers.resize(Renderer::GetFramesInFlight());
+
+		if (!m_ImGuiRenderPass)
+			return;
+
+		Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();;
+
+		for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++)
+		{
+			VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
+
+			VkFramebufferCreateInfo framebufferInfo = {};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = m_ImGuiRenderPass;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = &attachment;
+			framebufferInfo.width = Application::Get().GetWindow().GetWidth();
+			framebufferInfo.height = Application::Get().GetWindow().GetHeight();
+			framebufferInfo.layers = 1;
+
+			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &m_SwapChainFramebuffers[i]));
+		}
 	}
 }

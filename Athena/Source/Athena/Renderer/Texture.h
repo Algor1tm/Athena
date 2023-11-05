@@ -65,11 +65,11 @@ namespace Athena
 		const void* Data = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
-		bool Layers = 1;
-		bool MipLevels = 1;
+		uint32 Layers = 1;
+		uint32 MipLevels = 1;
 		bool GenerateMipMap = false;
-		bool sRGB = false;
 		TextureFormat Format = TextureFormat::RGBA8;
+		bool sRGB = false;
 		TextureUsage Usage = TextureUsage::SHADER_READ_ONLY;
 		bool GenerateSampler = true;
 		TextureSamplerCreateInfo SamplerInfo;
@@ -82,7 +82,7 @@ namespace Athena
 		virtual ~Texture() = default;
 
 		virtual void GenerateMipMap(uint32 levels) = 0;
-		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
+		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
 		virtual void* GetDescriptorSet() = 0;
 

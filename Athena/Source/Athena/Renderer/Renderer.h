@@ -158,13 +158,14 @@ namespace Athena
 
 		static void BlitToScreen(const Ref<Texture2D>& texture);
 
+		static const RenderCapabilities& GetRenderCaps();
+		static uint64 GetMemoryUsage();
+
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();
 		static Ref<ShaderPack> GetShaderLibrary();
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
-
-		static const RenderCapabilities& GetRenderCaps();
 
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();

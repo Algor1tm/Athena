@@ -43,9 +43,10 @@ namespace Athena
             {
                 if (ImGui::BeginTabItem("Application"))
                 {
-                    uint32 memoryUsage = Platform::GetMemoryUsage() / (1024 * 1024);
-                    ImGui::Text("RAM: %d Mb", memoryUsage);
-                    ImGui::Text("VRAM: %d Mb", 0);
+                    float memoryUsage = (float)Platform::GetMemoryUsage() / (1024.f * 1024.f);
+                    float videoMemoryUsage = (float)Renderer::GetMemoryUsage() / (1024.f * 1024.f);
+                    ImGui::Text("RAM: %.1f Mb", memoryUsage);
+                    ImGui::Text("VRAM: %.1f Mb", videoMemoryUsage);
                     ImGui::Spacing();
 
                     ImGui::Text("Application::ProcessEvents: %.3f ms", appstats.Application_ProcessEvents.AsMilliseconds());
@@ -97,7 +98,7 @@ namespace Athena
                         auto& cpuCaps = Platform::GetCPUCapabilities();
 
                         ImGui::Text(cpuCaps.Name.c_str());
-                        ImGui::Text("RAM: %d MB", cpuCaps.RAM / 1024);
+                        ImGui::Text("RAM: %d Mb", cpuCaps.RAM / 1024);
                         ImGui::Text("Cores: %d", cpuCaps.Cores);
                         ImGui::Text("Logical Processors: %d", cpuCaps.LogicalProcessors);
 
@@ -109,7 +110,7 @@ namespace Athena
                         auto& gpuCaps = Renderer::GetRenderCaps();
 
                         ImGui::Text(gpuCaps.Name.c_str());
-                        ImGui::Text("VRAM: %d", gpuCaps.VRAM);
+                        ImGui::Text("VRAM: %d Mb", gpuCaps.VRAM / 1024);
 
                         ImGui::Text("MaxImageDimension2D: %u", gpuCaps.MaxImageDimension2D);
                         ImGui::Text("MaxImageDimensionCube: %u", gpuCaps.MaxImageDimensionCube);

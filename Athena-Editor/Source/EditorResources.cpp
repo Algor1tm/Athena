@@ -33,22 +33,7 @@ namespace Athena
 
 	void EditorResources::Shutdown()
 	{
-		m_Icons["Logo"].Release();
-
-		m_Icons["Titlebar_CloseWindow"].Release();
-		m_Icons["Titlebar_MinimizeWindow"].Release();
-		m_Icons["Titlebar_RestoreWindow"].Release();
-		m_Icons["Titlebar_MaximizeWindow"].Release();
-
-		m_Icons["Viewport_Play"].Release();
-		m_Icons["Viewport_Simulate"].Release();
-		m_Icons["Viewport_Stop"].Release();
-
-		m_Icons["ContentBrowser_Folder"].Release();
-		m_Icons["ContentBrowser_File"].Release();
-		m_Icons["ContentBrowser_Undo"].Release();
-		m_Icons["ContentBrowser_Redo"].Release();
-		m_Icons["ContentBrowser_Refresh"].Release();
+		m_Icons.clear();
 	}
 
 	const FilePath& EditorResources::GetPath()
@@ -58,11 +43,8 @@ namespace Athena
 
 	Ref<Texture2D> EditorResources::GetIcon(std::string_view name)
 	{
-		if (m_Icons.find(name) == m_Icons.end())
-		{
-			ATN_WARN_TAG("EditorResources", "Failed to get icon with name '{}'", name);
+		if (!m_Icons.contains(name) || m_Icons.at(name) == nullptr)
 			return Renderer::GetWhiteTexture();
-		}
 
 		return m_Icons.at(name);
 	}

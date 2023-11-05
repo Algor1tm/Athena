@@ -74,7 +74,7 @@ namespace Athena
 		texInfo.sRGB = false;
 		texInfo.Format = TextureFormat::RGBA8;
 		texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
-		texInfo.GenerateSampler = false;
+		texInfo.GenerateSampler = true;
 		texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
@@ -186,6 +186,11 @@ namespace Athena
 	const RenderCapabilities& Renderer::GetRenderCaps()
 	{
 		return s_Data.RenderCaps;
+	}
+
+	uint64 Renderer::GetMemoryUsage()
+	{
+		return s_Data.RendererAPI->GetMemoryUsage();
 	}
 
 	Ref<Texture2D> Renderer::GetBRDF_LUT()

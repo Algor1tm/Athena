@@ -42,8 +42,9 @@ namespace Athena
 		virtual void EndFrame() = 0;
 
 		virtual void BlitToScreen(const Ref<Texture2D>& texture) = 0;
-
 		virtual void WaitDeviceIdle() = 0;
+
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) = 0;
+		virtual uint64 GetMemoryUsage() = 0;
 	};
 }

@@ -14,8 +14,6 @@ namespace Athena
 		VulkanDevice();
 		~VulkanDevice();
 
-		void WaitIdle();
-
 		VkPhysicalDevice GetPhysicalDevice() { return m_PhysicalDevice; }
 		VkDevice GetLogicalDevice() { return m_LogicalDevice; }
 		uint32 GetQueueFamily() { return m_QueueFamily; }

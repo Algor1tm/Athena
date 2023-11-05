@@ -145,15 +145,17 @@ namespace Athena
 			// Note: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
 			std::vector<const char*> extensions = {
 				"VK_KHR_surface",
-				"VK_KHR_win32_surface" };
-
+				"VK_KHR_win32_surface",
+				"VK_KHR_get_physical_device_properties2"
+				};
+		
 			std::vector<const char*> layers;
 
 #ifdef ATN_DEBUG
 			extensions.push_back("VK_EXT_debug_report");
 			layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
-
+			
 			Utils::CheckEnabledExtensions(extensions);
 			Utils::CheckEnabledLayers(layers);
 

@@ -14,10 +14,10 @@ namespace Athena
 		VulkanTexture2D(const TextureCreateInfo& info);
 		~VulkanTexture2D();
 
-		virtual void* GetDescriptorSet() override { return m_DescriptorSet; }
-
+		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 		virtual void GenerateMipMap(uint32 levels) override;
-		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
+
+		virtual void* GetDescriptorSet() override;
 
 		VkImage GetVulkanImage() { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() { return m_ImageView; }
@@ -30,7 +30,6 @@ namespace Athena
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 
-		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
-		bool m_AddImGuiTexture = false;
+		VkDescriptorSet m_UIDescriptorSet = VK_NULL_HANDLE;
 	};
 }

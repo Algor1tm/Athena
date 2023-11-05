@@ -24,8 +24,8 @@ namespace Athena
 		void UnmapMemory();
 
 	private:
-		VkBuffer m_Buffer;
-		VmaAllocation m_Allocation;
+		VkBuffer m_Buffer = VK_NULL_HANDLE;
+		VmaAllocation m_Allocation = VK_NULL_HANDLE;
 	};
 	
 	class VulkanImage
@@ -41,8 +41,8 @@ namespace Athena
 		VmaAllocation GetAllocation() { return m_Allocation; }
 
 	private:
-		VkImage m_Image;
-		VmaAllocation m_Allocation;
+		VkImage m_Image = VK_NULL_HANDLE;
+		VmaAllocation m_Allocation = VK_NULL_HANDLE;
 	};
 
 
@@ -60,7 +60,13 @@ namespace Athena
 
 		VmaAllocator GetInternalAllocator() { return m_Allocator; }
 
+		void OnUpdate();
+
+		// return in Kb
+		uint64 GetMemoryUsage();
+
 	private:
 		VmaAllocator m_Allocator;
+		VkPhysicalDeviceMemoryProperties m_MemoryProps;
 	};
 }

@@ -32,12 +32,13 @@ namespace Athena
 		if(info.Data != nullptr)
 			localBuffer = Buffer::Copy(info.Data, info.Width * info.Height * (uint64)Texture::BytesPerPixel(info.Format));
 
+		if (info.GenerateMipMap && info.MipLevels == 0)
+			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
+
 		Ref<VulkanTexture2D> instance(this);
 		Renderer::Submit([instance, localBuffer]() mutable
 		{
 			auto& info = instance->m_Info;
-
-			instance->m_AddImGuiTexture = info.GenerateSampler && Application::Get().GetConfig().EnableImGui;
 
 			uint32 imageUsage = GetVulkanImageUsage(info.Usage, info.Format);
 
@@ -48,11 +49,15 @@ namespace Athena
 			}
 
 			if (info.Data != nullptr)
+			{
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			}
 
-
-			if (info.GenerateMipMap && info.MipLevels == 0)
-				info.MipLevels = Math::Floor(Math::Log2(Math::Max(info.Width, info.Height))) + 1;
+			if (info.GenerateMipMap)
+			{
+				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			}
 
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -84,7 +89,7 @@ namespace Athena
 			viewInfo.image = instance->m_Image.GetImage();
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			viewInfo.format = VulkanUtils::GetFormat(info.Format, info.sRGB);
-			viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectFlags(info.Format);
+			viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(info.Format);
 			viewInfo.subresourceRange.baseMipLevel = 0;
 			viewInfo.subresourceRange.levelCount = info.MipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -94,7 +99,7 @@ namespace Athena
 		});
 
 		if(m_Info.GenerateSampler)
-			ResetSampler(m_Info.SamplerInfo);
+			SetSampler(m_Info.SamplerInfo);
 
 		if (m_Info.GenerateMipMap)
 			GenerateMipMap(m_Info.MipLevels);
@@ -102,10 +107,13 @@ namespace Athena
 
 	VulkanTexture2D::~VulkanTexture2D()
 	{
-		Renderer::SubmitResourceFree([set = m_DescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView, 
+		Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView,
 				image = m_Image]()
 		{
-			if(set != VK_NULL_HANDLE)
+			// TODO: some imgui descriptor sets does not removed on application close,
+			// because they deleted after imgui layer shutdowned
+
+			if(set != VK_NULL_HANDLE && Application::Get().GetImGuiLayer() != nullptr) 
 				ImGui_ImplVulkan_RemoveTexture(set);
 
 			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
@@ -115,11 +123,11 @@ namespace Athena
 		});
 	}
 
-	void VulkanTexture2D::ResetSampler(const TextureSamplerCreateInfo& samplerInfo)
+	void VulkanTexture2D::SetSampler(const TextureSamplerCreateInfo& samplerInfo)
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			Renderer::SubmitResourceFree([vkSampler = m_Sampler, set = m_DescriptorSet]()
+			Renderer::SubmitResourceFree([vkSampler = m_Sampler, set = m_UIDescriptorSet]()
 			{
 				vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
 
@@ -143,20 +151,17 @@ namespace Athena
 			vksamplerInfo.addressModeU = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
 			vksamplerInfo.addressModeV = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
 			vksamplerInfo.addressModeW = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
-			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.anisotropyEnable = false;
-			vksamplerInfo.maxAnisotropy = 1.0f;
+			vksamplerInfo.maxAnisotropy = 1.f;
 			vksamplerInfo.compareEnable = false;
 			vksamplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-			vksamplerInfo.minLod = -1000;
-			vksamplerInfo.maxLod = 1000;
+			vksamplerInfo.minLod = 0.f;
+			vksamplerInfo.maxLod = info.MipLevels;
+			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 			vksamplerInfo.unnormalizedCoordinates = false;
 
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &instance->m_Sampler));
-
-			if (instance->m_AddImGuiTexture)
-				instance->m_DescriptorSet = ImGui_ImplVulkan_AddTexture(instance->m_Sampler, instance->m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		});
 	}
 
@@ -189,7 +194,7 @@ namespace Athena
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
 
-		VkCommandBuffer vkCommandBuffer = VulkanUtils::BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = VulkanUtils::BeginSingleTimeCommands();
 		{
 			// Barrier
 			{
@@ -202,7 +207,7 @@ namespace Athena
 				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
 				vkCmdPipelineBarrier(
-					vkCommandBuffer,
+					commandBuffer,
 					sourceStage, destinationStage,
 					0,
 					0, nullptr,
@@ -216,7 +221,7 @@ namespace Athena
 			region.bufferRowLength = 0;
 			region.bufferImageHeight = 0;
 
-			region.imageSubresource.aspectMask = VulkanUtils::GetImageAspectFlags(m_Info.Format);
+			region.imageSubresource.aspectMask = VulkanUtils::GetImageAspectMask(m_Info.Format);
 			region.imageSubresource.mipLevel = 0;
 			region.imageSubresource.baseArrayLayer = 0;
 			region.imageSubresource.layerCount = 1;
@@ -224,11 +229,122 @@ namespace Athena
 			region.imageOffset = { 0, 0, 0 };
 			region.imageExtent = { width, height, 1 };
 
-			vkCmdCopyBufferToImage(vkCommandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 			// Barrier
+			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+			vkCmdPipelineBarrier(
+				commandBuffer,
+				sourceStage, destinationStage,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier
+			);
+		}
+		VulkanUtils::EndSingleTimeCommands(commandBuffer);
+
+		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
+	}
+
+	void VulkanTexture2D::GenerateMipMap(uint32 levels)
+	{
+		Ref<VulkanTexture2D> instance(this);
+		Renderer::Submit([instance, levels]()
+		{
+			instance->m_Info.MipLevels = levels;
+
+			if (instance->m_Info.MipLevels < 2)
 			{
-				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				ATN_CORE_ASSERT(false);
+				return;
+			}
+
+			VkCommandBuffer commandBuffer = VulkanUtils::BeginSingleTimeCommands();
+
+			int32 mipWidth = instance->m_Info.Width;
+			int32 mipHeight = instance->m_Info.Height;
+
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = instance->m_Image.GetImage();
+			barrier.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(instance->m_Info.Format);;
+			barrier.subresourceRange.levelCount = 1;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+
+			VkPipelineStageFlags sourceStage;
+			VkPipelineStageFlags destinationStage;
+
+			for (uint32 level = 1; level < instance->m_Info.MipLevels; ++level)
+			{
+				bool firstMip = level == 1;
+
+				barrier.subresourceRange.baseMipLevel = level - 1;
+				barrier.oldLayout = firstMip ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				barrier.srcAccessMask = firstMip ? VK_ACCESS_NONE : VK_ACCESS_TRANSFER_WRITE_BIT;
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+				vkCmdPipelineBarrier(
+					commandBuffer,
+					sourceStage, destinationStage,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &barrier);
+
+				barrier.subresourceRange.baseMipLevel = level;
+				barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				barrier.srcAccessMask = VK_ACCESS_NONE;
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+				vkCmdPipelineBarrier(
+					commandBuffer,
+					sourceStage, destinationStage,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &barrier);
+
+				VkImageBlit blit = {};
+				blit.srcOffsets[0] = { 0, 0, 0 };
+				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.srcSubresource.aspectMask = barrier.subresourceRange.aspectMask;
+				blit.srcSubresource.mipLevel = level - 1;
+				blit.srcSubresource.baseArrayLayer = 0;
+				blit.srcSubresource.layerCount = 1;
+				blit.dstOffsets[0] = { 0, 0, 0 };
+				blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+				blit.dstSubresource.aspectMask = barrier.subresourceRange.aspectMask;
+				blit.dstSubresource.mipLevel = level;
+				blit.dstSubresource.baseArrayLayer = 0;
+				blit.dstSubresource.layerCount = 1;
+
+				vkCmdBlitImage(commandBuffer,
+					instance->m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					instance->m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					1, &blit,
+					VK_FILTER_LINEAR);
+
+				barrier.subresourceRange.baseMipLevel = level - 1;
+				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -237,22 +353,47 @@ namespace Athena
 				destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
 				vkCmdPipelineBarrier(
-					vkCommandBuffer,
+					commandBuffer,
 					sourceStage, destinationStage,
 					0,
 					0, nullptr,
 					0, nullptr,
-					1, &barrier
-				);
-			}
-		}
-		VulkanUtils::EndSingleTimeCommands(vkCommandBuffer);
+					1, &barrier);
 
-		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
+				if (mipWidth > 1) mipWidth /= 2;
+				if (mipHeight > 1) mipHeight /= 2;
+			}
+
+			barrier.subresourceRange.baseMipLevel = instance->m_Info.MipLevels - 1;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+			vkCmdPipelineBarrier(
+				commandBuffer,
+				sourceStage, destinationStage,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &barrier);
+
+			VulkanUtils::EndSingleTimeCommands(commandBuffer);
+		});
+
 	}
 
-	void VulkanTexture2D::GenerateMipMap(uint32 levels)
+	void* VulkanTexture2D::GetDescriptorSet()
 	{
-		// TODO
+		if (m_UIDescriptorSet == VK_NULL_HANDLE)
+		{
+			ATN_CORE_ASSERT(m_Sampler);
+			m_UIDescriptorSet = ImGui_ImplVulkan_AddTexture(m_Sampler, m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		}
+
+		return m_UIDescriptorSet;
 	}
 }

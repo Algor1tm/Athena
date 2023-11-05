@@ -150,7 +150,7 @@ namespace Athena::VulkanUtils
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetImageAspectFlags(TextureFormat format)
+    inline VkImageAspectFlagBits GetImageAspectMask(TextureFormat format)
     {
         uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
         uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;

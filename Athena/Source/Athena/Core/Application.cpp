@@ -33,6 +33,7 @@ namespace Athena
 		ATN_PROFILER_SHUTDOWN()
 
 		m_LayerStack.Clear();
+		m_ImGuiLayer.Release();
 
 		// Window cant be destroyed before Renderer::Shutdown, because of ImGui and GLFW
 		m_Window->DestroySwapChain();

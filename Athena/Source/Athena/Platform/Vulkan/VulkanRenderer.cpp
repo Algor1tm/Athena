@@ -55,6 +55,8 @@ namespace Athena
 			VK_CHECK(vkBeginCommandBuffer(commandBuffer, &cmdBufBeginInfo));
 
 			VulkanContext::SetActiveCommandBuffer(commandBuffer);
+
+			VulkanContext::GetAllocator()->OnUpdate();
 		});
 	}
 
@@ -224,5 +226,10 @@ namespace Athena
 		{
 			VulkanContext::GetDevice()->GetDeviceCapabilities(caps);
 		});
+	}
+
+	uint64 VulkanRenderer::GetMemoryUsage()
+	{
+		return VulkanContext::GetAllocator()->GetMemoryUsage();
 	}
 }

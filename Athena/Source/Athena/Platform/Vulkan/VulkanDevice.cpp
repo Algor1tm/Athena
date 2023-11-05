@@ -90,7 +90,9 @@ namespace Athena
 			message += std::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
-			std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+			std::vector<const char*> deviceExtensions = { 
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				"VK_EXT_memory_budget" };
 
 			CheckEnabledExtensions(deviceExtensions);
 
@@ -124,20 +126,23 @@ namespace Athena
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 	}
 
-	void VulkanDevice::WaitIdle()
-	{
-		vkDeviceWaitIdle(m_LogicalDevice);
-	}
-
 	void VulkanDevice::GetDeviceCapabilities(RenderCapabilities& deviceCaps) const
 	{
+		VkPhysicalDeviceMemoryProperties memoryProps;
+		vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memoryProps);
+
+		deviceCaps.VRAM = 0;
+		for (uint32 i = 0; i < memoryProps.memoryHeapCount; ++i)
+		{
+			if(memoryProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+				deviceCaps.VRAM += memoryProps.memoryHeaps[i].size / 1024;
+		}
+
 		VkPhysicalDeviceProperties properties;
 		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
 		VkPhysicalDeviceLimits limits = properties.limits;
 
 		deviceCaps.Name = properties.deviceName;
-
-		deviceCaps.VRAM = 0; // TODO
 
 		deviceCaps.MaxImageDimension2D = limits.maxImageDimension2D;
 		deviceCaps.MaxImageDimensionCube = limits.maxImageDimensionCube;

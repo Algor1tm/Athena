@@ -21,6 +21,7 @@ namespace Athena
 		virtual void BlitToScreen(const Ref<Texture2D>& texture) override;
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;
+		virtual uint64 GetMemoryUsage() override;
 
 	private:
 		std::vector<VkCommandBuffer> m_VkCommandBuffers;

@@ -10,6 +10,23 @@
 
 namespace Athena
 {
+	static void* ConvertRGBToRGBA(Vector<byte, 3>* data, uint32 width, uint32 height)
+	{
+		uint64 newSize = width * height * Texture::BytesPerPixel(TextureFormat::RGBA8);
+		Vector<byte, 4>* newData = (Vector<byte, 4>*)malloc(newSize);
+
+		for (uint64 i = 0; i < width * height; ++i)
+		{
+			newData[i][0] = data[i][0];
+			newData[i][1] = data[i][1];
+			newData[i][2] = data[i][2];
+			newData[i][3] = 255;
+		}
+
+		stbi_image_free(data);
+		return newData;
+	}
+
 	Ref<Texture2D> Texture2D::Create(const FilePath& filepath)
 	{
 		int width, height, channels;
@@ -26,7 +43,9 @@ namespace Athena
 			{
 			case 3: format = TextureFormat::RGB16F; break;
 			case 4: format = TextureFormat::RGBA16F; break;
-			default: ATN_CORE_ASSERT(false);
+			default:
+				ATN_CORE_ERROR("Failed to load texture from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
+				return nullptr;
 			}
 		}
 		else
@@ -34,12 +53,20 @@ namespace Athena
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
-			case 3: format = TextureFormat::RGB8; ATN_CORE_ASSERT(false); break;
+			case 3: format = TextureFormat::RGB8; break;
 			case 4: format = TextureFormat::RGBA8; break;
-			default: ATN_CORE_ASSERT(false);
+			default: 
+				ATN_CORE_ERROR("Failed to load texture from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
+				return nullptr;
 			}
 		}
 		ATN_CORE_ASSERT(data);
+
+		if (format == TextureFormat::RGB8)
+		{
+			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
+			format = TextureFormat::RGBA8;
+		}
 
 		TextureCreateInfo info;
 		info.Data = data;
@@ -78,9 +105,17 @@ namespace Athena
 
 		switch (channels)
 		{
-		case 3: format = TextureFormat::RGB8; ATN_CORE_ASSERT(false); break;
+		case 3: format = TextureFormat::RGB8; break;
 		case 4: format = TextureFormat::RGBA8; break;
-		default: ATN_CORE_ASSERT(false);
+		default:
+			ATN_CORE_ERROR("Failed to load texture from memory, width = {}, height = {}, channels = {}", width, height, channels);
+			return nullptr;
+		}
+
+		if (format == TextureFormat::RGB8)
+		{
+			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
+			format = TextureFormat::RGBA8;
 		}
 
 		TextureCreateInfo info;

@@ -1,7 +1,13 @@
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
 #define VMA_IMPLEMENTATION
-#include "vma/vk_mem_alloc.h"
+
+// Disable vma asserts. Vma checks if all allocations freed on shutdown, 
+// when application is closed by closing console, some resources are not freed(unknown which resources)
+// so vma crushes whole application. So this problem causing console.
+#define VMA_ASSERT
+
+#include <vma/vk_mem_alloc.h>
 
 #include "VulkanAllocator.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
@@ -28,6 +34,7 @@ namespace Athena
 		vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
 
 		VmaAllocatorCreateInfo allocatorCreateInfo = {};
+		allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
 		allocatorCreateInfo.vulkanApiVersion = vulkanVersion;
 		allocatorCreateInfo.physicalDevice = VulkanContext::GetPhysicalDevice();
 		allocatorCreateInfo.device = VulkanContext::GetLogicalDevice();
@@ -35,6 +42,8 @@ namespace Athena
 		allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
 
 		VK_CHECK(vmaCreateAllocator(&allocatorCreateInfo, &m_Allocator));
+
+		vkGetPhysicalDeviceMemoryProperties(VulkanContext::GetPhysicalDevice(), &m_MemoryProps);
 	}
 
 	VulkanAllocator::~VulkanAllocator()
@@ -76,5 +85,25 @@ namespace Athena
 	void VulkanAllocator::DestroyImage(VulkanImage image)
 	{
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
+	}
+
+	void VulkanAllocator::OnUpdate()
+	{
+		vmaSetCurrentFrameIndex(m_Allocator, Renderer::GetCurrentFrameIndex());
+	}
+
+	uint64 VulkanAllocator::GetMemoryUsage()
+	{
+		VmaBudget heaps[VK_MAX_MEMORY_HEAPS] = { 0 };
+		vmaGetHeapBudgets(m_Allocator, heaps);
+
+		uint64 result = 0;
+		for (uint32 i = 0; i < m_MemoryProps.memoryHeapCount; i++)
+		{
+			if(m_MemoryProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+				result += heaps[i].usage;
+		}
+
+		return result;
 	}
 }

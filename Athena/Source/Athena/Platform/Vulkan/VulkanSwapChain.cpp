@@ -24,7 +24,7 @@ namespace Athena
 			// Create window surface
 			{
 				m_Surface = VK_NULL_HANDLE;
-				VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, VulkanContext::GetAllocator(), &m_Surface));
+				VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, nullptr, &m_Surface));
 				ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
 
 				VkBool32 supportWSI;
@@ -123,12 +123,12 @@ namespace Athena
 		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
 			{
 				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], VulkanContext::GetAllocator());
+					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], nullptr);
 
-				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, VulkanContext::GetAllocator());
+				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, nullptr);
 
 				if (cleanupSurface)
-					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, VulkanContext::GetAllocator());
+					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, nullptr);
 			});
 	}
 
@@ -181,7 +181,7 @@ namespace Athena
 		swapchainCI.clipped = VK_TRUE;
 		swapchainCI.oldSwapchain = oldSwapChain;
 
-		VK_CHECK(vkCreateSwapchainKHR(VulkanContext::GetLogicalDevice(), &swapchainCI, VulkanContext::GetAllocator(), &m_VkSwapChain));
+		VK_CHECK(vkCreateSwapchainKHR(VulkanContext::GetLogicalDevice(), &swapchainCI, nullptr, &m_VkSwapChain));
 
 		if (oldSwapChain != VK_NULL_HANDLE)
 		{
@@ -214,7 +214,7 @@ namespace Athena
 			imageViewCI.subresourceRange.layerCount = 1;
 
 
-			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &imageViewCI, VulkanContext::GetAllocator(), &m_SwapChainImageViews[i]));
+			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &imageViewCI, nullptr, &m_SwapChainImageViews[i]));
 		}
 
 		// TODO: remove ui layer logic from here

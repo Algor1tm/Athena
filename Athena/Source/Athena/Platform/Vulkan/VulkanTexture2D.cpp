@@ -30,7 +30,7 @@ namespace Athena
 
 		Buffer localBuffer;
 		if(info.Data != nullptr)
-			localBuffer = Buffer::Copy(info.Data, info.Width * info.Height * Texture::BytesPerPixel(info.Format));
+			localBuffer = Buffer::Copy(info.Data, info.Width * info.Height * (uint64)Texture::BytesPerPixel(info.Format));
 
 		Ref<VulkanTexture2D> instance(this);
 		Renderer::Submit([instance, localBuffer]() mutable
@@ -69,20 +69,7 @@ namespace Athena
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			VK_CHECK(vkCreateImage(VulkanContext::GetLogicalDevice(), &imageInfo, VulkanContext::GetAllocator(), &instance->m_VkImage));
-
-
-			VkMemoryRequirements memRequirements;
-			vkGetImageMemoryRequirements(VulkanContext::GetLogicalDevice(), instance->m_VkImage, &memRequirements);
-
-			VkMemoryAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			allocInfo.allocationSize = memRequirements.size;
-			allocInfo.memoryTypeIndex = VulkanUtils::GetMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-			VK_CHECK(vkAllocateMemory(VulkanContext::GetLogicalDevice(), &allocInfo, VulkanContext::GetAllocator(), &instance->m_ImageMemory));
-
-			vkBindImageMemory(VulkanContext::GetLogicalDevice(), instance->m_VkImage, instance->m_ImageMemory, 0);
+			instance->m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo);
 
 			if (info.Data != nullptr)
 			{
@@ -94,7 +81,7 @@ namespace Athena
 
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = instance->m_VkImage;
+			viewInfo.image = instance->m_Image.GetImage();
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			viewInfo.format = VulkanUtils::GetFormat(info.Format, info.sRGB);
 			viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectFlags(info.Format);
@@ -103,7 +90,7 @@ namespace Athena
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = info.Layers;
 
-			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, VulkanContext::GetAllocator(), &instance->m_VkImageView));
+			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &instance->m_ImageView));
 		});
 
 		if(m_Info.GenerateSampler)
@@ -115,17 +102,16 @@ namespace Athena
 
 	VulkanTexture2D::~VulkanTexture2D()
 	{
-		Renderer::SubmitResourceFree([set = m_DescriptorSet, vkSampler = m_Sampler, vkImageView = m_VkImageView, 
-				vkImage = m_VkImage, imageMemory = m_ImageMemory]()
+		Renderer::SubmitResourceFree([set = m_DescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView, 
+				image = m_Image]()
 		{
 			if(set != VK_NULL_HANDLE)
 				ImGui_ImplVulkan_RemoveTexture(set);
 
-			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, VulkanContext::GetAllocator());
-			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, VulkanContext::GetAllocator());
+			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
+			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 
-			vkDestroyImage(VulkanContext::GetLogicalDevice(), vkImage, VulkanContext::GetAllocator());
-			vkFreeMemory(VulkanContext::GetLogicalDevice(), imageMemory, VulkanContext::GetAllocator());
+			VulkanContext::GetAllocator()->DestroyImage(image);
 		});
 	}
 
@@ -135,7 +121,7 @@ namespace Athena
 		{
 			Renderer::SubmitResourceFree([vkSampler = m_Sampler, set = m_DescriptorSet]()
 			{
-				vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, VulkanContext::GetAllocator());
+				vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
 
 				if(set != VK_NULL_HANDLE)
 					ImGui_ImplVulkan_RemoveTexture(set);
@@ -167,33 +153,33 @@ namespace Athena
 			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 			vksamplerInfo.unnormalizedCoordinates = false;
 
-			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, VulkanContext::GetAllocator(), &instance->m_Sampler));
+			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &instance->m_Sampler));
 
 			if (instance->m_AddImGuiTexture)
-				instance->m_DescriptorSet = ImGui_ImplVulkan_AddTexture(instance->m_Sampler, instance->m_VkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				instance->m_DescriptorSet = ImGui_ImplVulkan_AddTexture(instance->m_Sampler, instance->m_ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		});
 	}
 
 	void VulkanTexture2D::UploadData(const void* data, uint32 width, uint32 height)
 	{
-		VkDeviceSize imageSize = width * height * Texture::BytesPerPixel(m_Info.Format);
+		VkDeviceSize imageSize = width * height * (uint64)Texture::BytesPerPixel(m_Info.Format);
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
+		VkBufferCreateInfo bufferInfo = {};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = imageSize;
+		bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-		VulkanUtils::CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+		VulkanBuffer stagingBuffer = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
-		void* mappedMemory;
-		vkMapMemory(VulkanContext::GetLogicalDevice(), stagingBufferMemory, 0, imageSize, 0, &mappedMemory);
+		void* mappedMemory = stagingBuffer.MapMemory();
 		memcpy(mappedMemory, data, imageSize);
-		vkUnmapMemory(VulkanContext::GetLogicalDevice(), stagingBufferMemory);
+		stagingBuffer.UnmapMemory();
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = m_VkImage;
+		barrier.image = m_Image.GetImage();
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
@@ -238,7 +224,7 @@ namespace Athena
 			region.imageOffset = { 0, 0, 0 };
 			region.imageExtent = { width, height, 1 };
 
-			vkCmdCopyBufferToImage(vkCommandBuffer, stagingBuffer, m_VkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			vkCmdCopyBufferToImage(vkCommandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 			// Barrier
 			{
@@ -262,8 +248,7 @@ namespace Athena
 		}
 		VulkanUtils::EndSingleTimeCommands(vkCommandBuffer);
 
-		vkDestroyBuffer(VulkanContext::GetLogicalDevice(), stagingBuffer, VulkanContext::GetAllocator());
-		vkFreeMemory(VulkanContext::GetLogicalDevice(), stagingBufferMemory, VulkanContext::GetAllocator());
+		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
 	}
 
 	void VulkanTexture2D::GenerateMipMap(uint32 levels)

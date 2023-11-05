@@ -118,7 +118,7 @@ namespace Athena
 				layoutInfo.bindingCount = 1;
 				layoutInfo.pBindings = &uboLayoutBinding;
 
-				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, VulkanContext::GetAllocator(), &s_DescriptorSetLayout));
+				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &s_DescriptorSetLayout));
 
 
 				VkDescriptorPoolSize poolSize = {};
@@ -131,7 +131,7 @@ namespace Athena
 				poolInfo.pPoolSizes = &poolSize;
 				poolInfo.maxSets = Renderer::GetFramesInFlight();
 
-				VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, VulkanContext::GetAllocator(), &s_DescriptorPool));
+				VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &s_DescriptorPool));
 
 				std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), s_DescriptorSetLayout);
 
@@ -200,7 +200,7 @@ namespace Athena
 				renderPassInfo.subpassCount = 1;
 				renderPassInfo.pSubpasses = &subpass;
 
-				VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, VulkanContext::GetAllocator(), &s_RenderPass));
+				VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &s_RenderPass));
 			}
 
 			// Create Pipeline
@@ -305,7 +305,7 @@ namespace Athena
 				pipelineLayoutInfo.pushConstantRangeCount = 0;
 				pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-				VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, VulkanContext::GetAllocator(), &s_PipelineLayout));
+				VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &s_PipelineLayout));
 
 				auto vkShader = s_Shader.As<VulkanShader>();
 
@@ -327,7 +327,7 @@ namespace Athena
 				pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 				pipelineInfo.basePipelineIndex = -1;
 
-				VK_CHECK(vkCreateGraphicsPipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, VulkanContext::GetAllocator(), &s_Pipeline));
+				VK_CHECK(vkCreateGraphicsPipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &s_Pipeline));
 			}
 		});
 
@@ -373,7 +373,7 @@ namespace Athena
 				VkImageView attachment = s_Attachments[i].As<VulkanTexture2D>()->GetVulkanImageView();
 				framebufferInfo.pAttachments = &attachment;
 
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
+				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &s_Framebuffers[i]));
 			}
 		});
 	}
@@ -382,21 +382,22 @@ namespace Athena
 	{
 		s_Shader.Release();
 		s_VertexBuffer.Release();
+		s_UniformBuffer.Release();
 		s_Attachments.clear();
 
 		Renderer::SubmitResourceFree([]()
 		{
 			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
 			{
-				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), s_Framebuffers[i], VulkanContext::GetAllocator());
+				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), s_Framebuffers[i], nullptr);
 			}
 				
-			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_DescriptorPool, VulkanContext::GetAllocator());
-			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), s_DescriptorSetLayout, VulkanContext::GetAllocator());
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_DescriptorPool, nullptr);
+			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), s_DescriptorSetLayout, nullptr);
 
-			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), s_Pipeline, VulkanContext::GetAllocator());
-			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), s_PipelineLayout, VulkanContext::GetAllocator());
-			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), s_RenderPass, VulkanContext::GetAllocator());
+			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), s_Pipeline, nullptr);
+			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), s_PipelineLayout, nullptr);
+			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), s_RenderPass, nullptr);
 		});
 
 		delete m_Data;
@@ -488,7 +489,7 @@ namespace Athena
 		Renderer::SubmitResourceFree([framebuffers = s_Framebuffers]()
 			{
 				for (VkFramebuffer framebuffer : framebuffers)
-					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+					vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, nullptr);
 			});
 
 
@@ -524,7 +525,7 @@ namespace Athena
 				VkImageView attachment = s_Attachments[i].As<VulkanTexture2D>()->GetVulkanImageView();
 				framebufferInfo.pAttachments = &attachment;
 
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &s_Framebuffers[i]));
+				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &s_Framebuffers[i]));
 			}
 		});
 	}

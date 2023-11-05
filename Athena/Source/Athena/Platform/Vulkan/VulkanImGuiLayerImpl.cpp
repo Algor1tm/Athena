@@ -37,7 +37,7 @@ namespace Athena
 			pool_info.poolSizeCount = std::size(pool_sizes);
 			pool_info.pPoolSizes = pool_sizes;
 
-			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &pool_info, VulkanContext::GetAllocator(), &m_ImGuiDescriptorPool));
+			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &pool_info, nullptr, &m_ImGuiDescriptorPool));
 
 			// Create Render Pass
 			{
@@ -77,7 +77,7 @@ namespace Athena
 				renderPassInfo.dependencyCount = 1;
 				renderPassInfo.pDependencies = &dependency;
 
-				VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, VulkanContext::GetAllocator(), &m_ImGuiRenderPass));
+				VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, nullptr, &m_ImGuiRenderPass));
 			}
 
 			RecreateFramebuffers();
@@ -96,7 +96,7 @@ namespace Athena
 			init_info.MinImageCount = Renderer::GetFramesInFlight();
 			init_info.ImageCount = Renderer::GetFramesInFlight();
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			init_info.Allocator = VulkanContext::GetAllocator();
+			init_info.Allocator = nullptr;
 			init_info.CheckVkResultFn = [](VkResult result) { VulkanUtils::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
 
 			ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
@@ -115,11 +115,11 @@ namespace Athena
 	{
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
 		{
-			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, VulkanContext::GetAllocator());
-			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, VulkanContext::GetAllocator());
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, nullptr);
+			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
 
 			for (auto framebuffer : framebuffers)
-				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
 
 			ImGui_ImplVulkan_Shutdown();
 			ImGui_ImplGlfw_Shutdown();
@@ -168,7 +168,7 @@ namespace Athena
 		Renderer::SubmitResourceFree([framebuffers = m_SwapChainFramebuffers]()
 		{
 			for (auto framebuffer : framebuffers)
-				vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, VulkanContext::GetAllocator());
+				vkDestroyFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), framebuffer, nullptr);
 		});
 
 		m_SwapChainFramebuffers.resize(Renderer::GetFramesInFlight());
@@ -191,7 +191,7 @@ namespace Athena
 			framebufferInfo.height = Application::Get().GetWindow().GetHeight();
 			framebufferInfo.layers = 1;
 
-			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, VulkanContext::GetAllocator(), &m_SwapChainFramebuffers[i]));
+			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
 		}
 	}
 }

@@ -3,6 +3,7 @@
 #include "Athena/Renderer/Renderer.h"
 
 #include "Athena/Platform/Vulkan/VulkanDevice.h"
+#include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>
 
@@ -16,32 +17,38 @@ namespace Athena
 		VkFence RenderCompleteFence;
 	};
 
+	struct VulkanContextData
+	{
+		VkInstance Instance;
+		VkDebugReportCallbackEXT DebugReport;
+		Ref<VulkanAllocator> Allocator;
+		Ref<VulkanDevice> CurrentDevice;
+		std::vector<FrameSyncData> FrameSyncData;
+		VkCommandPool CommandPool;
+		VkCommandBuffer ActiveCommandBuffer;
+	};
+
 
 	class VulkanContext
 	{
 	public:
-		friend class VulkanRenderer;
+		static void Init();
+		static void Shutdown();
 
-	public:
-		static VkInstance GetInstance() { return s_Instance; }
-		static VkAllocationCallbacks* GetAllocator() { return s_Allocator; }
+		static VkInstance GetInstance() { return s_Data.Instance; }
+		static Ref<VulkanAllocator> GetAllocator() { return s_Data.Allocator; }
 
-		static Ref<VulkanDevice> GetDevice() { return s_CurrentDevice; }
-		static VkDevice GetLogicalDevice() { return s_CurrentDevice->GetLogicalDevice(); }
-		static VkPhysicalDevice GetPhysicalDevice() { return s_CurrentDevice->GetPhysicalDevice(); }
+		static Ref<VulkanDevice> GetDevice() { return s_Data.CurrentDevice; }
+		static VkDevice GetLogicalDevice() { return s_Data.CurrentDevice->GetLogicalDevice(); }
+		static VkPhysicalDevice GetPhysicalDevice() { return s_Data.CurrentDevice->GetPhysicalDevice(); }
 
-		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_FrameSyncData[frameIndex]; }
+		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_Data.FrameSyncData[frameIndex]; }
 
-		static VkCommandPool GetCommandPool() { return s_CommandPool; }
-		static void SetActiveCommandBuffer(VkCommandBuffer commandBuffer) { s_ActiveCommandBuffer = commandBuffer; }
-		static VkCommandBuffer GetActiveCommandBuffer() { return s_ActiveCommandBuffer; }
+		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
+		static void SetActiveCommandBuffer(VkCommandBuffer commandBuffer) { s_Data.ActiveCommandBuffer = commandBuffer; }
+		static VkCommandBuffer GetActiveCommandBuffer() { return s_Data.ActiveCommandBuffer; }
 
 	private:
-		static VkInstance s_Instance;
-		static VkAllocationCallbacks* s_Allocator;
-		static Ref<VulkanDevice> s_CurrentDevice;
-		static std::vector<FrameSyncData> s_FrameSyncData;
-		static VkCommandPool s_CommandPool;
-		static VkCommandBuffer s_ActiveCommandBuffer;
+		static VulkanContextData s_Data;
 	};
 }

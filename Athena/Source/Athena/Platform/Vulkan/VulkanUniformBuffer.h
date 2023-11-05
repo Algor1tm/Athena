@@ -3,6 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/GPUBuffers.h"
 
+#include "Athena/Platform/Vulkan/VulkanAllocator.h"
+
 #include <vulkan/vulkan.h>
 
 
@@ -16,16 +18,9 @@ namespace Athena
 
 		virtual void SetData(const void* data, uint32 size, uint32 offset) override;
 
-		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBOSet[frameIndex].Buffer; }
+		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBOSet[frameIndex].GetBuffer(); }
 
 	private:
-		struct VulkanBufferData
-		{
-			VkBuffer Buffer = VK_NULL_HANDLE;
-			VkDeviceMemory Memory = VK_NULL_HANDLE;
-		};
-
-	private:
-		std::vector<VulkanBufferData> m_VulkanUBOSet;
+		std::vector<VulkanBuffer> m_VulkanUBOSet;
 	};
 }

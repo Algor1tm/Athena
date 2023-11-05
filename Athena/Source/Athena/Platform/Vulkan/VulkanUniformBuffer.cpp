@@ -13,8 +13,12 @@ namespace Athena
 		{
 			for (auto& ubo : m_VulkanUBOSet)
 			{
-				VulkanUtils::CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &ubo.Buffer, &ubo.Memory);
+				VkBufferCreateInfo bufferInfo = {};
+				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bufferInfo.size = size;
+				bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+				ubo = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			}
 		});
 
@@ -22,12 +26,11 @@ namespace Athena
 
 	VulkanUniformBuffer::~VulkanUniformBuffer()
 	{
-		Renderer::SubmitResourceFree([vulkanUBOset = m_VulkanUBOSet]()
+		Renderer::SubmitResourceFree([vulkanUBOSet = m_VulkanUBOSet]()
 		{
-			for (uint32 i = 0; i < vulkanUBOset.size(); ++i)
+			for (auto ubo: vulkanUBOSet)
 			{
-				vkDestroyBuffer(VulkanContext::GetLogicalDevice(), vulkanUBOset[i].Buffer, VulkanContext::GetAllocator());
-				vkFreeMemory(VulkanContext::GetLogicalDevice(), vulkanUBOset[i].Memory, VulkanContext::GetAllocator());
+				VulkanContext::GetAllocator()->DestroyBuffer(ubo);
 			}
 		});
 	}
@@ -36,9 +39,8 @@ namespace Athena
 	{
 		auto& ubo = m_VulkanUBOSet[Renderer::GetCurrentFrameIndex()];
 
-		void* mappedMemory;
-		vkMapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.Memory, offset, size, 0, &mappedMemory);
+		void* mappedMemory = ubo.MapMemory();
 		memcpy(mappedMemory, data, size);
-		vkUnmapMemory(VulkanContext::GetDevice()->GetLogicalDevice(), ubo.Memory);
+		ubo.UnmapMemory();
 	}
 }

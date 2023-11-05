@@ -6,6 +6,24 @@
 
 namespace Athena
 {
+	namespace VulkanUtils
+	{
+		static void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+		{
+			VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
+			{
+				VkBufferCopy copyRegion{};
+				copyRegion.srcOffset = 0;
+				copyRegion.dstOffset = 0;
+				copyRegion.size = size;
+
+				vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+			}
+			EndSingleTimeCommands(vkCommandBuffer);
+		}
+	}
+
+
 	VulkanVertexBuffer::VulkanVertexBuffer(const VertexBufferCreateInfo& info)
 	{
 		m_Info = info;
@@ -15,71 +33,66 @@ namespace Athena
 
 		Renderer::Submit([this, vertexLocalData, indexLocalData]() mutable
 		{
-			VkBuffer stagingBuffer;
-			VkDeviceMemory stagingBufferMemory;
-
-			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
+			Ref<VulkanAllocator> allocator = VulkanContext::GetAllocator();
 
 			// Vertex buffer
 			{
 				VkDeviceSize bufferSize = m_Info.VerticesSize;
 
-				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+				VkBufferCreateInfo bufferInfo = {};
+				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bufferInfo.size = bufferSize;
+				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-				void* data;
-				vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-				memcpy(data, vertexLocalData.Data(), bufferSize);
-				vkUnmapMemory(logicalDevice, stagingBufferMemory);
+				VulkanBuffer stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
-				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_VertexBuffer, &m_VertexBufferMemory);
+				void* mappedData = stagingBuffer.MapMemory();
+				memcpy(mappedData, vertexLocalData.Data(), bufferSize);
+				stagingBuffer.UnmapMemory();
 
-				VulkanUtils::CopyBuffer(stagingBuffer, m_VertexBuffer, bufferSize);
+				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+				m_VertexBuffer = allocator->AllocateBuffer(bufferInfo);
 
-				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
-				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
+				VulkanUtils::CopyBuffer(stagingBuffer.GetBuffer(), m_VertexBuffer.GetBuffer(), bufferSize);
+
+				allocator->DestroyBuffer(stagingBuffer);
+				vertexLocalData.Release();
+				m_Info.VerticesData = nullptr;
 			}
 
 			// Index buffer
 			{
 				VkDeviceSize bufferSize = m_Info.IndicesCount * sizeof(uint32);
 
-				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+				VkBufferCreateInfo bufferInfo = {};
+				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+				bufferInfo.size = bufferSize;
+				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-				void* data;
-				vkMapMemory(logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-				memcpy(data, indexLocalData.Data(), bufferSize);
-				vkUnmapMemory(logicalDevice, stagingBufferMemory);
+				VulkanBuffer stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
-				VulkanUtils::CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_IndexBuffer, &m_IndexBufferMemory);
+				void* mappedData = stagingBuffer.MapMemory();
+				memcpy(mappedData, indexLocalData.Data(), bufferSize);
+				stagingBuffer.UnmapMemory();
 
-				VulkanUtils::CopyBuffer(stagingBuffer, m_IndexBuffer, bufferSize);
+				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+				m_IndexBuffer = allocator->AllocateBuffer(bufferInfo);
 
-				vkDestroyBuffer(logicalDevice, stagingBuffer, VulkanContext::GetAllocator());
-				vkFreeMemory(logicalDevice, stagingBufferMemory, VulkanContext::GetAllocator());
+				VulkanUtils::CopyBuffer(stagingBuffer.GetBuffer(), m_IndexBuffer.GetBuffer(), bufferSize);
 
-				vertexLocalData.Release();
+				allocator->DestroyBuffer(stagingBuffer);
 				indexLocalData.Release();
-
 				m_Info.IndicesData = nullptr;
-				m_Info.VerticesData = nullptr;
 			}
 		});
 	}
 
 	VulkanVertexBuffer::~VulkanVertexBuffer()
 	{
-		Renderer::SubmitResourceFree([vertexBuffer = m_VertexBuffer, vertexMemory = m_VertexBufferMemory, 
-			indexBuffer = m_IndexBuffer, indexMemory = m_IndexBufferMemory]() 
+		Renderer::SubmitResourceFree([vertexBuffer = m_VertexBuffer, indexBuffer = m_IndexBuffer]() 
 		{
-			vkDestroyBuffer(VulkanContext::GetLogicalDevice(), vertexBuffer, VulkanContext::GetAllocator());
-			vkFreeMemory(VulkanContext::GetLogicalDevice(), vertexMemory, VulkanContext::GetAllocator());
-
-			vkDestroyBuffer(VulkanContext::GetLogicalDevice(), indexBuffer, VulkanContext::GetAllocator());
-			vkFreeMemory(VulkanContext::GetLogicalDevice(), indexMemory, VulkanContext::GetAllocator());
+			VulkanContext::GetAllocator()->DestroyBuffer(vertexBuffer);
+			VulkanContext::GetAllocator()->DestroyBuffer(indexBuffer);
 		});
 	}
 }

@@ -90,6 +90,9 @@ namespace Athena
 
 	void Renderer::Shutdown()
 	{
+		s_Data.WhiteTexture.Release();
+		s_Data.BlackTexture.Release();
+
 		s_Data.RendererAPI->Shutdown();
 		s_Data.RendererAPI->WaitDeviceIdle();
 

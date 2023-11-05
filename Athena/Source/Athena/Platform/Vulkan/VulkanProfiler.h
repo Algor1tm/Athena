@@ -28,8 +28,6 @@ namespace Athena
 		uint32 m_MaxTimestampsCount;
 		uint32 m_MaxPipelineQueriesCount;
 
-		uint32 m_QueryFrameIndex;
-
 		VkQueryPool m_TimeQueryPool;
 		double m_Frequency;
 		std::vector<uint32> m_TimestampsCount;

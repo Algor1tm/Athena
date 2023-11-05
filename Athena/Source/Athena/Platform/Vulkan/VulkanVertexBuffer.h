@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>
 
@@ -16,13 +17,11 @@ namespace Athena
 
 		virtual void SetVertexData(const void* data, uint32 size) override {}
 
-		VkBuffer GetVulkanVertexBuffer() { return m_VertexBuffer; }
-		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer; }
+		VkBuffer GetVulkanVertexBuffer() { return m_VertexBuffer.GetBuffer(); }
+		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer.GetBuffer(); }
 
 	private:
-		VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
-		VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
+		VulkanBuffer m_VertexBuffer;
+		VulkanBuffer m_IndexBuffer;
 	};
 }

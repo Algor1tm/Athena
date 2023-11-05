@@ -1,5 +1,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>
 
@@ -18,16 +19,15 @@ namespace Athena
 		virtual void GenerateMipMap(uint32 levels) override;
 		virtual void ResetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 
-		VkImage GetVulkanImage() const { return m_VkImage; }
-		VkImageView GetVulkanImageView() const { return m_VkImageView; }
+		VkImage GetVulkanImage() { return m_Image.GetImage(); }
+		VkImageView GetVulkanImageView() { return m_ImageView; }
 
 	private:
 		void UploadData(const void* data, uint32 width, uint32 height);
 
 	private:
-		VkDeviceMemory m_ImageMemory = VK_NULL_HANDLE;
-		VkImage m_VkImage = VK_NULL_HANDLE;
-		VkImageView m_VkImageView = VK_NULL_HANDLE;
+		VulkanImage m_Image;
+		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 
 		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;

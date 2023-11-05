@@ -23,11 +23,6 @@ namespace Athena
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;
 
 	private:
-		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);
-		bool CheckEnabledLayers(const std::vector<const char*>& requiredLayers);
-
-	private:
 		std::vector<VkCommandBuffer> m_VkCommandBuffers;
-		VkDebugReportCallbackEXT m_DebugReport;
 	};
 }

@@ -128,6 +128,7 @@ namespace Athena
 					}
 
 					m_CurrentNode = &node;
+					break;
 				}
 			}
 			ImGui::PopStyleVar();
@@ -149,7 +150,7 @@ namespace Athena
 		m_TreeRoot.FileName = FilePath(m_TreeRoot.FilePath).filename().string();
 		m_TreeRoot.ParentNode = nullptr;
 
-		ReloadTreeHierarchy(m_AssetDirectory, m_TreeRoot);
+		ReloadTreeHierarchy(m_AssetDirectory);
 
 		// Update current node
 
@@ -167,24 +168,31 @@ namespace Athena
 			Search();
 	}
 
-	void ContentBrowserPanel::ReloadTreeHierarchy(const FilePath& srcDirectory, TreeNode& dstNode)
+	void ContentBrowserPanel::ReloadTreeHierarchy(const FilePath& srcDirectory)
 	{
-		for (const auto& dirEntry : std::filesystem::directory_iterator(srcDirectory))
-		{
-			TreeNode child;
-			child.IsFolder = dirEntry.is_directory();
-			child.FilePath = dirEntry.path().string();
-			child.FileName = dirEntry.path().filename().string();
-			child.ParentNode = &dstNode;
+		std::queue<TreeNode*> queue;
+		queue.push(&m_TreeRoot);
 
-			dstNode.Children.push_back(child);
-		}
-
-		for (auto& child : dstNode.Children)
+		while (!queue.empty())
 		{
-			if (child.IsFolder)
+			TreeNode* node = queue.front();
+			queue.pop();
+
+			for (const auto& dirEntry : std::filesystem::directory_iterator(node->FilePath))
 			{
-				ReloadTreeHierarchy(child.FilePath, child);
+				TreeNode child;
+				child.IsFolder = dirEntry.is_directory();
+				child.FilePath = dirEntry.path().string();
+				child.FileName = dirEntry.path().filename().string();
+				child.ParentNode = node;
+
+				node->Children.push_back(child);
+			}
+
+			for (auto& child : node->Children)
+			{
+				if (child.IsFolder)
+					queue.push(&child);
 			}
 		}
 	}

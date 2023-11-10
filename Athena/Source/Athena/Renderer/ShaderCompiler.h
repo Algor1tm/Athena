@@ -8,8 +8,8 @@
 
 namespace Athena
 {
-	using ShaderSources = std::unordered_map<ShaderStage, String>;
 	using ShaderBinaries = std::unordered_map<ShaderStage, std::vector<uint32>>;
+
 
 	class ATHENA_API ShaderCompiler
 	{
@@ -18,26 +18,38 @@ namespace Athena
 
 		bool CompileOrGetFromCache(bool forceCompile = false);
 
-		bool IsHlsl() const { return m_IsHlsl; }
 		std::string_view GetEntryPoint(ShaderStage stage) const;
 		const ShaderBinaries& GetBinaries() const { return m_SPIRVBinaries; }
 
 	private:
-		bool CompileAndWriteToCache(const ShaderSources& sources);
-		void ReadFromCache();
+		struct StageDescription
+		{
+			ShaderStage Stage;
+			FilePath FilePathToCache;
+		};
+
+		struct PreProcessResult
+		{
+			String Source;
+			std::vector<StageDescription> StageDescriptions;
+			bool ParseResult;
+			bool NeedRecompile;
+		};
+
+	private:
+		bool CompileAndWriteToCache(const PreProcessResult& result);
+		void ReadFromCache(const PreProcessResult& result);
+
+		PreProcessResult PreProcess();
+		bool CheckShaderStages(const std::vector<StageDescription>& stages);
 
 		void Reflect(ShaderStage type, const std::vector<uint32>& src);
-		bool PreProcess(ShaderSources& shaderSources);
-		bool CheckShaderStages(const ShaderSources& sources);
-		bool Parse(const String& source, ShaderSources& result);
 
 	private:
 		FilePath m_FilePath;
 		String m_Name;
-		bool m_IsHlsl;
-		std::unordered_map<ShaderStage, FilePath> m_CachedFilePaths;
-		bool m_Recompile;
 		ShaderBinaries m_SPIRVBinaries;
-	};
 
+		std::unordered_map<ShaderStage, std::string_view> m_StageToEntryPointMap;
+	};
 }

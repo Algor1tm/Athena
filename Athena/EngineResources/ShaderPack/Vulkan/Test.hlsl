@@ -1,5 +1,3 @@
-#pragma VERTEX_STAGE
-
 #include "Buffers.hlsli"
 
 struct Vertex
@@ -23,13 +21,6 @@ Interpolators VSMain(Vertex vertex)
     return output;
 }
 
-#pragma FRAGMENT_STAGE
-
-struct Interpolators
-{
-    float4 Position : SV_POSITION;
-    float4 Color;
-};
 
 struct Fragment
 {

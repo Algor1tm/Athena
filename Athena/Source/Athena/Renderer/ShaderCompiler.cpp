@@ -57,39 +57,6 @@ namespace Athena
 			ATN_CORE_ASSERT(false);
 			return "";
 		}
-
-		static bool ShaderStageFromString(const String& strType, ShaderStage& stage)
-		{
-			if (strType == "VERTEX_STAGE")
-				stage = ShaderStage::VERTEX_STAGE;
-			else if (strType == "FRAGMENT_STAGE" || strType == "PIXEL_STAGE")
-				stage = ShaderStage::FRAGMENT_STAGE;
-			else if (strType == "GEOMETRY_STAGE")
-				stage = ShaderStage::GEOMETRY_STAGE;
-			else if (strType == "COMPUTE_STAGE")
-				stage = ShaderStage::COMPUTE_STAGE;
-			else
-				return false;
-
-			return true;
-		}
-
-		static std::string_view GetEntryPointName(ShaderStage stage, bool isHlsl)
-		{
-			if (!isHlsl)
-				return "main";
-
-			switch (stage)
-			{
-			case ShaderStage::VERTEX_STAGE: return "VSMain";
-			case ShaderStage::FRAGMENT_STAGE: return "FSMain";
-			case ShaderStage::GEOMETRY_STAGE: return "GSMain";
-			case ShaderStage::COMPUTE_STAGE: return "CSMain";
-			}
-
-			ATN_CORE_ASSERT(false);
-			return "";
-		}
 	}
 
 	class FileSystemIncluder : public shaderc::CompileOptions::IncluderInterface
@@ -132,43 +99,50 @@ namespace Athena
 	{
 		m_FilePath = filepath;
 		m_Name = name;
+
+		m_StageToEntryPointMap[ShaderStage::VERTEX_STAGE] = "VSMain";
+		m_StageToEntryPointMap[ShaderStage::FRAGMENT_STAGE] = "FSMain";
+		m_StageToEntryPointMap[ShaderStage::GEOMETRY_STAGE] = "GSMain";
+		m_StageToEntryPointMap[ShaderStage::COMPUTE_STAGE] = "CSMain";
 	}
 
 	std::string_view ShaderCompiler::GetEntryPoint(ShaderStage stage) const
 	{
-		return Utils::GetEntryPointName(stage, m_IsHlsl);
+		ATN_CORE_ASSERT(m_StageToEntryPointMap.contains(stage));
+		return m_StageToEntryPointMap.at(stage);
 	}
 
 	bool ShaderCompiler::CompileOrGetFromCache(bool forceCompile)
 	{
 		Timer compilationTimer;
 
-		std::unordered_map<ShaderStage, String> shaderSources;
-		bool compiled = PreProcess(shaderSources);
+		PreProcessResult result = PreProcess();
 
-		if (!compiled)
+		if (!result.ParseResult)
 			return false;
 
-		m_Recompile |= forceCompile;
-		if (m_Recompile)
+		bool compiled = true;
+		result.NeedRecompile |= forceCompile;
+
+		if (result.NeedRecompile)
 		{
-			compiled = CompileAndWriteToCache(shaderSources);
+			compiled = CompileAndWriteToCache(result);
 		}
 		else
 		{
-			ReadFromCache();
+			ReadFromCache(result);
 		}
 
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 			Reflect(stage, src);
 
-		if (m_Recompile)
+		if (result.NeedRecompile)
 			ATN_CORE_INFO_TAG("Vulkan", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
 
 		return compiled;
 	}
 
-	bool ShaderCompiler::CompileAndWriteToCache(const ShaderSources& sources)
+	bool ShaderCompiler::CompileAndWriteToCache(const PreProcessResult& result)
 	{
 		bool compiled = true;
 
@@ -176,7 +150,7 @@ namespace Athena
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-		options.SetSourceLanguage(m_IsHlsl ? shaderc_source_language_hlsl : shaderc_source_language_glsl);
+		options.SetSourceLanguage(shaderc_source_language_hlsl);
 		options.SetInvertY(true);
 		options.SetGenerateDebugInfo();
 		options.SetIncluder(std::make_unique<FileSystemIncluder>());
@@ -187,12 +161,12 @@ namespace Athena
 			options.AddMacroDefinition(name, value);
 		}
 
-		for (const auto& [stage, source] : sources)
+		for (const auto& [stage, cachePath] : result.StageDescriptions)
 		{
 			String filePathStr = m_FilePath.string();
 
 			shaderc::PreprocessedSourceCompilationResult preResult =
-				compiler.PreprocessGlsl(source, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), options);
+				compiler.PreprocessGlsl(result.Source, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), options);
 
 			if (preResult.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
@@ -204,7 +178,7 @@ namespace Athena
 			String preProcessedSource = String(preResult.begin(), preResult.end());
 
 			shaderc::SpvCompilationResult module =
-				compiler.CompileGlslToSpv(preProcessedSource, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), Utils::GetEntryPointName(stage, m_IsHlsl).data(), options);
+				compiler.CompileGlslToSpv(preProcessedSource, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), GetEntryPoint(stage).data(), options);
 
 			if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
@@ -217,21 +191,123 @@ namespace Athena
 
 			// Save to cache
 			auto& data = m_SPIRVBinaries.at(stage);
-			FileSystem::WriteFile(m_CachedFilePaths.at(stage), (const char*)data.data(), data.size() * sizeof(uint32));
+			FileSystem::WriteFile(cachePath, (const char*)data.data(), data.size() * sizeof(uint32));
 		}
 
 		return compiled;
 	}
 
-	void ShaderCompiler::ReadFromCache()
+	void ShaderCompiler::ReadFromCache(const PreProcessResult& result)
 	{
-		for (const auto& [stage, _] : m_CachedFilePaths)
+		for (const auto& [stage, cachePath] : result.StageDescriptions)
 		{
-			std::vector<byte> bytes = FileSystem::ReadFileBinary(m_CachedFilePaths.at(stage));
+			std::vector<byte> bytes = FileSystem::ReadFileBinary(cachePath);
 
 			m_SPIRVBinaries[stage] = std::vector<uint32>(bytes.size() / sizeof(uint32));
 			memcpy(m_SPIRVBinaries[stage].data(), bytes.data(), bytes.size());
 		}
+	}
+
+	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess()
+	{
+		PreProcessResult result;
+		result.ParseResult = true;
+
+		if (!FileSystem::Exists(m_FilePath))
+		{
+			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
+			result.ParseResult = false;
+		}
+
+		FilePath ext = m_FilePath.extension();
+		if (ext != L".hlsl")
+		{
+			ATN_CORE_ERROR_TAG("Vulkan", "Invalid shader extension {}!", m_FilePath);
+			result.ParseResult = false;
+		}
+
+		if (result.ParseResult == false)
+			return result;
+
+		const char* macroSettings = "#pragma pack_matrix( row_major )\n\n";
+
+		result.Source = FileSystem::ReadFile(m_FilePath);
+		result.Source.insert(0, macroSettings);
+
+		for (const auto& [stage, entryPoint] : m_StageToEntryPointMap)
+		{
+			if (result.Source.find(entryPoint) != std::string::npos)
+			{
+				StageDescription stageDesc;
+				stageDesc.Stage = stage;
+				stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
+
+				result.StageDescriptions.push_back(stageDesc);
+			}
+		}
+
+		result.ParseResult = CheckShaderStages(result.StageDescriptions);
+
+		result.NeedRecompile = false;
+		for (const auto& [_, path] : result.StageDescriptions)
+		{
+			if (!FileSystem::Exists(path))
+			{
+				result.NeedRecompile = true;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	bool ShaderCompiler::CheckShaderStages(const std::vector<StageDescription>& stages)
+	{
+		std::string_view errorMsg = "";
+
+		if (stages.size() == 0)
+		{
+			errorMsg = "Found 0 shader stages.";
+		}
+
+		std::unordered_map<ShaderStage, bool> shaderStageExistMap;
+		shaderStageExistMap[ShaderStage::VERTEX_STAGE] = false;
+		shaderStageExistMap[ShaderStage::FRAGMENT_STAGE] = false;
+		shaderStageExistMap[ShaderStage::GEOMETRY_STAGE] = false;
+		shaderStageExistMap[ShaderStage::COMPUTE_STAGE] = false;
+
+		for (const auto& stage : stages)
+		{
+			shaderStageExistMap.at(stage.Stage) = true;
+		}
+
+		if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		{
+			errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
+		}
+
+		if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		{
+			errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
+		}
+
+		if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
+		{
+			errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
+		}
+
+		if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && stages.size() != 1)
+		{
+			errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
+		}
+
+		if (errorMsg.size() != 0)
+		{
+			ATN_CORE_ERROR_TAG("Vulkan", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, errorMsg);
+			return false;
+		}
+
+		return true;
 	}
 
 	void ShaderCompiler::Reflect(ShaderStage type, const std::vector<uint32>& src)
@@ -267,140 +343,5 @@ namespace Athena
 				ATN_CORE_TRACE("\t  Size = {}", size);
 			}
 		}
-	}
-
-	bool ShaderCompiler::PreProcess(ShaderSources& shaderSources)
-	{
-		if (!FileSystem::Exists(m_FilePath))
-		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
-			return false;
-		}
-
-		FilePath ext = m_FilePath.extension();
-		if (ext != L".hlsl" && ext != L".glsl")
-		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Invalid shader extension {}!", m_FilePath);
-			return false;
-		}
-
-		m_IsHlsl = ext == L".hlsl";
-
-		String shaderString = FileSystem::ReadFile(m_FilePath);
-
-		bool result = Parse(shaderString, shaderSources);
-
-		if (!result)
-			return false;
-
-		if (!CheckShaderStages(shaderSources))
-			return false;
-
-		for (const auto& [stage, _] : shaderSources)
-		{
-			m_CachedFilePaths[stage] = Utils::GetCachedFilePath(m_FilePath, stage);
-		}
-
-		// Check if need to recompile
-		for (const auto& [_, path] : m_CachedFilePaths)
-		{
-			if (!FileSystem::Exists(path))
-			{
-				m_Recompile = true;
-				break;
-			}
-		}
-
-		return true;
-	}
-
-	bool ShaderCompiler::Parse(const String& source, ShaderSources& result)
-	{
-		const char* hlslSettings = "#pragma pack_matrix( row_major )\n\n";
-
-		const char* stageToken = "#pragma";
-		uint64 stageTokenLength = strlen(stageToken);
-		uint64 pos = source.find(stageToken, 0);
-		while (pos != String::npos)
-		{
-			uint64 eol = source.find_first_of("\r\n", pos);
-
-			if (eol == String::npos)
-			{
-				ATN_CORE_ERROR_TAG("Vulkan", "Failed to parse shader '{}'!", m_Name);
-				return false;
-			}
-
-			uint64 begin = pos + stageTokenLength + 1;
-			String typeString = source.substr(begin, eol - begin);
-
-			ShaderStage type;
-			bool convertResult = Utils::ShaderStageFromString(typeString, type);
-			if (!convertResult)
-			{
-				ATN_CORE_ERROR_TAG("Vulkan", "Failed to parse shader '{}'!\n Error: invalid shader stage name.", m_Name);
-				return false;
-			}
-
-			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
-			pos = source.find(stageToken, nextLinePos);
-			String shaderSource = source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
-
-			if (m_IsHlsl)
-				shaderSource.insert(0, hlslSettings);
-
-			result[type] = shaderSource;
-		}
-
-		return true;
-	}
-
-	bool ShaderCompiler::CheckShaderStages(const ShaderSources& sources)
-	{
-		std::string_view errorMsg = "";
-
-		if (sources.size() == 0)
-		{
-			errorMsg = "Found 0 shader stages.";
-		}
-
-		std::unordered_map<ShaderStage, bool> shaderStageExistMap;
-		shaderStageExistMap[ShaderStage::VERTEX_STAGE] = false;
-		shaderStageExistMap[ShaderStage::FRAGMENT_STAGE] = false;
-		shaderStageExistMap[ShaderStage::GEOMETRY_STAGE] = false;
-		shaderStageExistMap[ShaderStage::COMPUTE_STAGE] = false;
-
-		for (const auto& [stage, _] : sources)
-		{
-			shaderStageExistMap.at(stage) = true;
-		}
-
-		if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		{
-			errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
-		}
-
-		if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		{
-			errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
-		}
-
-		if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
-		{
-			errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
-		}
-
-		if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && sources.size() != 1)
-		{
-			errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
-		}
-
-		if (errorMsg.size() != 0)
-		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, errorMsg);
-			return false;
-		}
-
-		return true;
 	}
 }

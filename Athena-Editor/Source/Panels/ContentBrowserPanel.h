@@ -31,7 +31,7 @@ namespace Athena
 
 	private:
 		void Refresh();
-		void ReloadTreeHierarchy(const FilePath& srcDirectory, TreeNode& dstNode);
+		void ReloadTreeHierarchy(const FilePath& srcDirectory);
 		TreeNode* FindTreeNode(TreeNode& root, const String& path);
 
 		void Search();

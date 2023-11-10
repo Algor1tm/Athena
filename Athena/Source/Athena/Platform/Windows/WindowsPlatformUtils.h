@@ -133,8 +133,7 @@ namespace Athena
 
 				if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
 				{
-					if (buffer)
-						free(buffer);
+					free(buffer);
 
 					buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(bufferSize);
 					SUPPRESS_LAST_ERROR();
@@ -164,7 +163,6 @@ namespace Athena
 
 			s_Data.CPUCaps.Cores = processorCoreCount;
 			s_Data.CPUCaps.LogicalProcessors = logicalProcessorCount;
-
 		}
 
 		// Process ID

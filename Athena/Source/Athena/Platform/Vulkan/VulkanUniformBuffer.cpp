@@ -35,7 +35,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanUniformBuffer::SetData(const void* data, uint32 size, uint32 offset)
+	void VulkanUniformBuffer::RT_SetData(const void* data, uint32 size, uint32 offset)
 	{
 		auto& ubo = m_VulkanUBOSet[Renderer::GetCurrentFrameIndex()];
 

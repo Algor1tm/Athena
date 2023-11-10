@@ -226,10 +226,26 @@ namespace Athena
 			commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, &s_Data.CommandPool));
 		}
+
+		// Create Descriptors pool
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			poolSize.descriptorCount = Renderer::GetFramesInFlight();
+
+			VkDescriptorPoolCreateInfo poolInfo = {};
+			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+			poolInfo.poolSizeCount = 1;
+			poolInfo.pPoolSizes = &poolSize;
+			poolInfo.maxSets = Renderer::GetFramesInFlight();
+
+			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &s_Data.DescriptorPool));
+		}
 	}
 
 	void VulkanContext::Shutdown()
 	{
+		vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_Data.DescriptorPool, nullptr);
 		vkDestroyCommandPool(VulkanContext::GetLogicalDevice(), s_Data.CommandPool, nullptr);
 
 		for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)

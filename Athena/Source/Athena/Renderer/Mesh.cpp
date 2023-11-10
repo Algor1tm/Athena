@@ -77,52 +77,52 @@ namespace Athena
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		if (MaterialManager::Exists(materialName))
-			return MaterialManager::Get(materialName);
+		//if (MaterialManager::Exists(materialName))
+		//	return MaterialManager::Get(materialName);
 
-		result = MaterialManager::CreateMaterial(materialName);
+		//result = MaterialManager::CreateMaterial(materialName);
 
-		aiColor4D color;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
-		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
+		//aiColor4D color;
+		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
+		//	result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
+		//else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
+		//	result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
 
-		float roughness;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
-			result->Set(MaterialUniform::ROUGHNESS, roughness);
+		//float roughness;
+		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
+		//	result->Set(MaterialUniform::ROUGHNESS, roughness);
 
-		float metalness;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-			result->Set(MaterialUniform::METALNESS, metalness);
+		//float metalness;
+		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
+		//	result->Set(MaterialUniform::METALNESS, metalness);
 
-		float emission;
-		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
-			result->Set(MaterialUniform::EMISSION, emission);
-		
+		//float emission;
+		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
+		//	result->Set(MaterialUniform::EMISSION, emission);
+		//
 
-		Ref<Texture2D> texture;
+		//Ref<Texture2D> texture;
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
-			result->Set(MaterialTexture::ALBEDO_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
-			result->Set(MaterialTexture::ALBEDO_MAP, texture);
+		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
+		//	result->Set(MaterialTexture::ALBEDO_MAP, texture);
+		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
+		//	result->Set(MaterialTexture::ALBEDO_MAP, texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
-			result->Set(MaterialTexture::NORMAL_MAP, texture);
+		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
+		//	result->Set(MaterialTexture::NORMAL_MAP, texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
-			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
-			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
+		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
+		//	result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
+		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
+		//	result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
-			result->Set(MaterialTexture::METALNESS_MAP, texture);
+		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
+		//	result->Set(MaterialTexture::METALNESS_MAP, texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
-			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
-			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
+		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
+		//	result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
+		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
+		//	result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
 
 		return result;
 	}
@@ -290,7 +290,7 @@ namespace Athena
 		else
 			subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
-		subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path)->GetName();
+		//subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path)->GetName();
 
 		return subMesh;
 	}

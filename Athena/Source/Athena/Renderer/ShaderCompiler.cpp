@@ -3,6 +3,7 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Time.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/GPUBuffers.h"
 
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
@@ -56,6 +57,63 @@ namespace Athena
 
 			ATN_CORE_ASSERT(false);
 			return "";
+		}
+
+		static ShaderDataType SprivTypeToShaderDataType(spirv_cross::SPIRType type)
+		{
+			// Scalar
+			if (type.vecsize == 1 && type.columns == 1)
+			{
+				switch (type.basetype)
+				{
+				case spirv_cross::SPIRType::BaseType::Int: return ShaderDataType::Int;
+				case spirv_cross::SPIRType::BaseType::Float: return ShaderDataType::Float;
+				case spirv_cross::SPIRType::BaseType::Boolean: return ShaderDataType::Bool;
+				default: return ShaderDataType::None;
+				}
+			}
+
+			// Vector
+			if (type.vecsize != 1 && type.columns == 1)
+			{
+				switch (type.basetype)
+				{
+				case spirv_cross::SPIRType::BaseType::Int:
+				{
+					switch (type.vecsize)
+					{
+					case 2: return ShaderDataType::Int2;
+					case 3: return ShaderDataType::Int3;
+					case 4: return ShaderDataType::Int4;
+					default: return ShaderDataType::None;
+					}
+				}
+				case spirv_cross::SPIRType::BaseType::Float:
+				{
+					switch (type.vecsize)
+					{
+					case 2: return ShaderDataType::Float2;
+					case 3: return ShaderDataType::Float3;
+					case 4: return ShaderDataType::Float4;
+					default: return ShaderDataType::None;
+					}
+				}
+				default: return ShaderDataType::None;
+				}
+			}
+
+			// Matrix
+			if (type.vecsize != 1 && type.columns != 1 && type.vecsize == type.columns)
+			{
+				switch (type.vecsize)
+				{
+				case 3: return ShaderDataType::Mat3;
+				case 4: return ShaderDataType::Mat4;
+				default: return ShaderDataType::None;
+				}
+			}
+
+			return ShaderDataType::None;
 		}
 	}
 
@@ -132,9 +190,6 @@ namespace Athena
 		{
 			ReadFromCache(result);
 		}
-
-		for (const auto& [stage, src] : m_SPIRVBinaries)
-			Reflect(stage, src);
 
 		if (result.NeedRecompile)
 			ATN_CORE_INFO_TAG("Vulkan", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
@@ -310,38 +365,80 @@ namespace Athena
 		return true;
 	}
 
-	void ShaderCompiler::Reflect(ShaderStage type, const std::vector<uint32>& src)
+	ShaderReflectionData ShaderCompiler::Reflect()
 	{
-		spirv_cross::Compiler compiler(src);
-		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+		ShaderReflectionData result;
 
-		ATN_CORE_TRACE("Shader Reflect - {} {}", Utils::ShaderStageToString(type), m_Name);
-		ATN_CORE_TRACE("    {} uniform buffers", resources.uniform_buffers.size());
-		ATN_CORE_TRACE("    {} resources", resources.sampled_images.size());
-
-		ATN_CORE_TRACE("Uniform buffers:");
-		for (const auto& resource : resources.uniform_buffers)
+		for (const auto& [stage, src] : m_SPIRVBinaries)
 		{
-			const auto& bufferType = compiler.get_type(resource.base_type_id);
-			uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
-			uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-			uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			spirv_cross::Compiler compiler(src);
+			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-			int memberCount = bufferType.member_types.size();
+			ATN_CORE_TRACE("Shader Reflect - {} {}", Utils::ShaderStageToString(stage), m_Name);
+			ATN_CORE_TRACE("    {} uniform buffers", resources.uniform_buffers.size());
+			ATN_CORE_TRACE("    {} resources", resources.sampled_images.size());
 
-			ATN_CORE_TRACE("  {}", resource.name);
-			ATN_CORE_TRACE("\tBuffer size = {}", bufferSize);
-			ATN_CORE_TRACE("\tBinding = {}", binding);
-			ATN_CORE_TRACE("\tSet = {}", set);
-			ATN_CORE_TRACE("\tMembers = {}", memberCount);
-
-			for (int i = 0; i < memberCount; ++i)
+			if (stage == ShaderStage::VERTEX_STAGE)
 			{
-				String name = compiler.get_member_name(resource.base_type_id, i);
-				size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
-				ATN_CORE_TRACE("\t  Name = {}", name);
-				ATN_CORE_TRACE("\t  Size = {}", size);
+				ATN_CORE_TRACE("Vertex buffer layout:");
+
+				std::vector<VertexBufferElement> elements;
+
+				for (const auto& resource : resources.stage_inputs)
+				{
+					ATN_CORE_TRACE("  {}", resource.name);
+
+					auto elemType = Utils::SprivTypeToShaderDataType(compiler.get_type(resource.type_id));
+					ATN_CORE_ASSERT(elemType != ShaderDataType::None);
+
+					elements.push_back({ elemType, resource.name });
+				}
+
+				result.VertexBufferLayout = elements;
+			}
+
+			ATN_CORE_TRACE("Uniform buffers:");
+			for (const auto& resource : resources.uniform_buffers)
+			{
+				const auto& bufferType = compiler.get_type(resource.base_type_id);
+				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
+				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+
+				int memberCount = bufferType.member_types.size();
+
+				ATN_CORE_TRACE("  {}", resource.name);
+				ATN_CORE_TRACE("\tBuffer size = {}", bufferSize);
+				ATN_CORE_TRACE("\tBinding = {}", binding);
+				ATN_CORE_TRACE("\tSet = {}", set);
+				ATN_CORE_TRACE("\tMembers = {}", memberCount);
+
+				for (int i = 0; i < memberCount; ++i)
+				{
+					String name = compiler.get_member_name(resource.base_type_id, i);
+					size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
+					ATN_CORE_TRACE("\t  Name = {}", name);
+					ATN_CORE_TRACE("\t  Size = {}", size);
+				}
+
+				if (result.UniformBuffers.contains(resource.name))
+				{
+					auto& stageFlags = result.UniformBuffers.at(resource.name).StageFlags;
+					stageFlags = ShaderStage(stageFlags | stage);
+				}
+				else
+				{
+					BufferReflectionData bufferData;
+					bufferData.Size = bufferSize;
+					bufferData.Binding = binding;
+					bufferData.Set = set;
+					bufferData.StageFlags = stage;
+
+					result.UniformBuffers[resource.name] = bufferData;
+				}
 			}
 		}
+
+		return result;
 	}
 }

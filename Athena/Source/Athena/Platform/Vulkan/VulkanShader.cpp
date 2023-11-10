@@ -1,10 +1,7 @@
 #include "VulkanShader.h"
 
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Core/Time.h"
-
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-
 
 
 namespace Athena
@@ -13,15 +10,7 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
-
-		Renderer::Submit([this]()
-		{
-			ShaderCompiler compiler(m_FilePath, m_Name);
-			m_IsCompiled = compiler.CompileOrGetFromCache(false);
-
-			if (m_IsCompiled)
-				CreateVulkanShaderModulesAndStages(compiler);
-		});
+		CompileOrGetFromCache(false);
 	}
 
 	VulkanShader::VulkanShader(const FilePath& path)
@@ -35,15 +24,19 @@ namespace Athena
 		CleanUp();
 	}
 
-
 	void VulkanShader::Reload()
 	{
 		CleanUp();
+		CompileOrGetFromCache(true);
+	}
 
-		Renderer::Submit([this]()
+	void VulkanShader::CompileOrGetFromCache(bool forceCompile)
+	{
+		Renderer::Submit([this, forceCompile]()
 		{
 			ShaderCompiler compiler(m_FilePath, m_Name);
-			m_IsCompiled = compiler.CompileOrGetFromCache(true);
+			m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
+			m_ReflectionData = compiler.Reflect();
 
 			if (m_IsCompiled)
 				CreateVulkanShaderModulesAndStages(compiler);
@@ -56,20 +49,20 @@ namespace Athena
 
 		for (const auto& [stage, src] : binaries)
 		{
-			VkShaderModuleCreateInfo createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			createInfo.codeSize = src.size() * sizeof(uint32);
-			createInfo.pCode = src.data();
+			VkShaderModuleCreateInfo moduleCreateInfo = {};
+			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			moduleCreateInfo.codeSize = src.size() * sizeof(uint32);
+			moduleCreateInfo.pCode = src.data();
 
-			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &createInfo, nullptr, &m_VulkanShaderModules[stage]));
+			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &moduleCreateInfo, nullptr, &m_VulkanShaderModules[stage]));
 
-			VkPipelineShaderStageCreateInfo shaderStageCI = {};
-			shaderStageCI.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageCI.stage = VulkanUtils::GetShaderStage(stage);
-			shaderStageCI.module = m_VulkanShaderModules.at(stage);
-			shaderStageCI.pName = compiler.GetEntryPoint(stage).data();
+			VkPipelineShaderStageCreateInfo shaderStageInfo = {};
+			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shaderStageInfo.stage = VulkanUtils::GetShaderStage(stage);
+			shaderStageInfo.module = m_VulkanShaderModules.at(stage);
+			shaderStageInfo.pName = compiler.GetEntryPoint(stage).data();
 
-			m_PipelineShaderStages.push_back(shaderStageCI);
+			m_PipelineShaderStages.push_back(shaderStageInfo);
 		}
 	}
 

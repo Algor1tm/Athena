@@ -26,6 +26,7 @@ namespace Athena
 		std::vector<FrameSyncData> FrameSyncData;
 		VkCommandPool CommandPool;
 		VkCommandBuffer ActiveCommandBuffer;
+		VkDescriptorPool DescriptorPool;
 	};
 
 
@@ -47,6 +48,8 @@ namespace Athena
 		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
 		static void SetActiveCommandBuffer(VkCommandBuffer commandBuffer) { s_Data.ActiveCommandBuffer = commandBuffer; }
 		static VkCommandBuffer GetActiveCommandBuffer() { return s_Data.ActiveCommandBuffer; }
+
+		static VkDescriptorPool GetDescriptorPool() { return s_Data.DescriptorPool; }
 
 	private:
 		static VulkanContextData s_Data;

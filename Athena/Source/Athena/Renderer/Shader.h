@@ -8,12 +8,27 @@
 
 namespace Athena
 {
-	enum class ShaderStage
+	enum ShaderStage
 	{
-		VERTEX_STAGE = 0,
-		FRAGMENT_STAGE = 1,
-		GEOMETRY_STAGE = 2,
-		COMPUTE_STAGE = 3
+		VERTEX_STAGE   = BIT(1),
+		FRAGMENT_STAGE = BIT(2),
+		GEOMETRY_STAGE = BIT(3),
+		COMPUTE_STAGE  = BIT(4)
+	};
+
+	struct BufferReflectionData
+	{
+		uint64 Size;
+		uint32 Binding;
+		uint32 Set;
+		ShaderStage StageFlags;
+	};
+
+	struct ShaderReflectionData
+	{
+		VertexBufferLayout VertexBufferLayout;
+
+		std::unordered_map<String, BufferReflectionData> UniformBuffers;
 	};
 
 	class ATHENA_API Shader : public RefCounted
@@ -23,6 +38,8 @@ namespace Athena
 		static Ref<Shader> Create(const FilePath& path, const String& name);
 
 		virtual ~Shader() = default;
+
+		virtual const ShaderReflectionData& GetReflectionData() = 0;
 
 		bool IsCompiled() const { return m_IsCompiled; }
 		virtual void Reload() = 0;

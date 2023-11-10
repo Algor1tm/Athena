@@ -11,6 +11,7 @@
 // TEMPORARY
 #include "Athena/Core/Application.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanMaterial.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
@@ -27,21 +28,13 @@ namespace Athena
 		Matrix4 ProjectionMatrix;
 	};
 
-	struct VulkanUBO
-	{
-		VkBuffer Buffer;
-		VkDeviceMemory BufferMemory;
-	};
-
 	static Ref<Shader> s_Shader;
+	static Ref<Material> s_Material;
 	static Ref<VertexBuffer> s_VertexBuffer;
 
 	static CameraUBO s_CameraUBO;
 	static Ref<UniformBuffer> s_UniformBuffer;
 
-
-	static VkDescriptorPool s_DescriptorPool;
-	static VkDescriptorSetLayout s_DescriptorSetLayout;
 	static std::vector<VkDescriptorSet> s_DescriptorSets;
 
 	static VkRenderPass s_RenderPass;
@@ -68,6 +61,8 @@ namespace Athena
 		m_Data->Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
 		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
+		s_Material = Material::Create(s_Shader);
+
 		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
 
 		struct TVertex
@@ -87,11 +82,6 @@ namespace Athena
 			0, 1, 2, 2, 3, 0
 		};
 
-		VertexBufferLayout layout =
-		{
-			{ ShaderDataType::Float2, "a_Position"  },
-			{ ShaderDataType::Float4, "a_Color"     },
-		};
 
 		VertexBufferCreateInfo info;
 		info.VerticesData = (void*)vertices;
@@ -102,42 +92,15 @@ namespace Athena
 
 		s_VertexBuffer = VertexBuffer::Create(info);
 
-		Renderer::Submit([vertexBufferLayout = layout]()
+		Renderer::Submit([]()
 		{
 			// Descriptor Sets
 			{
-				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-				uboLayoutBinding.binding = 0;
-				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-				uboLayoutBinding.pImmutableSamplers = nullptr;
-
-				VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				layoutInfo.bindingCount = 1;
-				layoutInfo.pBindings = &uboLayoutBinding;
-
-				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &s_DescriptorSetLayout));
-
-
-				VkDescriptorPoolSize poolSize = {};
-				poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				poolSize.descriptorCount = Renderer::GetFramesInFlight();
-
-				VkDescriptorPoolCreateInfo poolInfo = {};
-				poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				poolInfo.poolSizeCount = 1;
-				poolInfo.pPoolSizes = &poolSize;
-				poolInfo.maxSets = Renderer::GetFramesInFlight();
-
-				VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &s_DescriptorPool));
-
-				std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), s_DescriptorSetLayout);
+				std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), s_Material.As<VulkanMaterial>()->GetDescriptorSetLayout());
 
 				VkDescriptorSetAllocateInfo allocInfo = {};
 				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				allocInfo.descriptorPool = s_DescriptorPool;
+				allocInfo.descriptorPool = VulkanContext::GetDescriptorPool();
 				allocInfo.descriptorSetCount = Renderer::GetFramesInFlight();
 				allocInfo.pSetLayouts = layouts.data();
 
@@ -151,7 +114,7 @@ namespace Athena
 					bufferInfo.offset = 0;
 					bufferInfo.range = sizeof(CameraUBO);
 
-					VkWriteDescriptorSet descriptorWrite{};
+					VkWriteDescriptorSet descriptorWrite = {};
 					descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					descriptorWrite.dstSet = s_DescriptorSets[i];
 					descriptorWrite.dstBinding = 0;
@@ -164,7 +127,6 @@ namespace Athena
 
 					vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
 				}
-
 			}
 
 			// Create RenderPass
@@ -205,6 +167,8 @@ namespace Athena
 
 			// Create Pipeline
 			{
+				const VertexBufferLayout& vertexBufferLayout = s_Shader->GetReflectionData().VertexBufferLayout;
+
 				VkVertexInputBindingDescription bindingDescription = {};
 				bindingDescription.binding = 0;
 				bindingDescription.stride = vertexBufferLayout.GetStride();
@@ -297,12 +261,13 @@ namespace Athena
 				dynamicState.dynamicStateCount = dynamicStates.size();
 				dynamicState.pDynamicStates = dynamicStates.data();
 
+				auto setLayout = s_Material.As<VulkanMaterial>()->GetDescriptorSetLayout();
 
 				VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 				pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 				pipelineLayoutInfo.setLayoutCount = 1;
-				pipelineLayoutInfo.pSetLayouts = &s_DescriptorSetLayout;
-				pipelineLayoutInfo.pushConstantRangeCount = 0;
+				pipelineLayoutInfo.pSetLayouts = &setLayout;
+				pipelineLayoutInfo.pushConstantRangeCount = 0;	// Shader reflection data
 				pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
 				VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &s_PipelineLayout));
@@ -392,9 +357,6 @@ namespace Athena
 				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), s_Framebuffers[i], nullptr);
 			}
 				
-			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_DescriptorPool, nullptr);
-			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), s_DescriptorSetLayout, nullptr);
-
 			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), s_Pipeline, nullptr);
 			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), s_PipelineLayout, nullptr);
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), s_RenderPass, nullptr);
@@ -420,7 +382,7 @@ namespace Athena
 				s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
 				s_CameraUBO.ProjectionMatrix = cameraInfo.ProjectionMatrix;
 
-				s_UniformBuffer->SetData(&s_CameraUBO, sizeof(s_CameraUBO));
+				s_UniformBuffer->RT_SetData(&s_CameraUBO, sizeof(s_CameraUBO));
 			}
 
 			// Geometry Pass

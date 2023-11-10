@@ -21,6 +21,8 @@ namespace Athena
 		std::string_view GetEntryPoint(ShaderStage stage) const;
 		const ShaderBinaries& GetBinaries() const { return m_SPIRVBinaries; }
 
+		ShaderReflectionData Reflect();
+
 	private:
 		struct StageDescription
 		{
@@ -42,8 +44,6 @@ namespace Athena
 
 		PreProcessResult PreProcess();
 		bool CheckShaderStages(const std::vector<StageDescription>& stages);
-
-		void Reflect(ShaderStage type, const std::vector<uint32>& src);
 
 	private:
 		FilePath m_FilePath;

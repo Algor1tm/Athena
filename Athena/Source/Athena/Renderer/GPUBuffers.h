@@ -40,7 +40,6 @@ namespace Athena
 		uint32 Offset;
 		bool Normalized;
 
-		VertexBufferElement() = default;
 		VertexBufferElement(ShaderDataType type, const String& name, bool normalized = false)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
@@ -75,18 +74,23 @@ namespace Athena
 
 	public:
 		VertexBufferLayout() = default;
+
 		VertexBufferLayout(const std::initializer_list<VertexBufferElement>& elements)
+			: m_Elements(elements)
+		{
+			CalculateOffsetsAndStride();
+		}
+
+		VertexBufferLayout(const std::vector<VertexBufferElement>& elements)
 			: m_Elements(elements) 
 		{
-			uint32 stride = 0;
-			uint32 offset = 0;
+			CalculateOffsetsAndStride();
+		}
 
-			for (auto& elem : m_Elements)
-			{
-				elem.Offset = offset;
-				offset += elem.Size;
-				m_Stride += elem.Size;
-			}
+		VertexBufferLayout(std::vector<VertexBufferElement>&& elements)
+			: m_Elements(std::move(elements))
+		{
+			CalculateOffsetsAndStride();
 		}
 
 		uint32 GetStride() const { return m_Stride; }
@@ -98,6 +102,20 @@ namespace Athena
 		const_iterator begin() const { return m_Elements.begin(); }
 		iterator	   end()		 { return m_Elements.end(); }
 		const_iterator end()   const { return m_Elements.end(); }
+
+	private:
+		void CalculateOffsetsAndStride()
+		{
+			uint32 stride = 0;
+			uint32 offset = 0;
+
+			for (auto& elem : m_Elements)
+			{
+				elem.Offset = offset;
+				offset += elem.Size;
+				m_Stride += elem.Size;
+			}
+		}
 
 	private:
 		std::vector<VertexBufferElement> m_Elements;
@@ -143,7 +161,7 @@ namespace Athena
 
 		static Ref<UniformBuffer> Create(uint32 size);
 
-		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+		virtual void RT_SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
 	};
 
 
@@ -154,6 +172,6 @@ namespace Athena
 
 		static Ref<ShaderStorageBuffer> Create(uint32 size);
 
-		virtual void SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+		virtual void RT_SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
 	};
 }

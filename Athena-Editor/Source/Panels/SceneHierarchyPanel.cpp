@@ -101,7 +101,7 @@ namespace Athena
 		ImGui::Begin("Materials Editor");
 		if (m_EditorCtx.SelectedEntity)
 		{
-			DrawMaterialsEditor();
+			//DrawMaterialsEditor();
 		}
 		ImGui::PopStyleVar();
 		ImGui::End();
@@ -274,103 +274,103 @@ namespace Athena
 		}
 	}
 
-	void SceneHierarchyPanel::DrawMaterialsEditor()
-	{
-		Entity selectedEntity = m_EditorCtx.SelectedEntity;
-		std::vector<String> materials;
-		if(selectedEntity.HasComponent<StaticMeshComponent>())
-		{
-			auto mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
-			const auto& subMeshes = mesh->GetAllSubMeshes();
-			materials.reserve(subMeshes.size());
-			for (uint32 i = 0; i < subMeshes.size(); ++i)
-			{
-				const String& material = subMeshes[i].MaterialName;
-				if (std::find(materials.begin(), materials.end(), material) == materials.end())
-				{
-					materials.push_back(material);
-				}
-			}
+	//void SceneHierarchyPanel::DrawMaterialsEditor()
+	//{
+	//	Entity selectedEntity = m_EditorCtx.SelectedEntity;
+	//	std::vector<String> materials;
+	//	if(selectedEntity.HasComponent<StaticMeshComponent>())
+	//	{
+	//		auto mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
+	//		const auto& subMeshes = mesh->GetAllSubMeshes();
+	//		materials.reserve(subMeshes.size());
+	//		for (uint32 i = 0; i < subMeshes.size(); ++i)
+	//		{
+	//			const String& material = subMeshes[i].MaterialName;
+	//			if (std::find(materials.begin(), materials.end(), material) == materials.end())
+	//			{
+	//				materials.push_back(material);
+	//			}
+	//		}
 
-			if (std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
-				m_ActiveMaterial = materials[0];
-		}
+	//		if (std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
+	//			m_ActiveMaterial = materials[0];
+	//	}
 
-		if (!materials.empty())
-		{
-			if (m_ActiveMaterial.empty())
-				m_ActiveMaterial = materials[0];
+	//	if (!materials.empty())
+	//	{
+	//		if (m_ActiveMaterial.empty())
+	//			m_ActiveMaterial = materials[0];
 
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyCombo("Material List", materials.data(), materials.size(), &m_ActiveMaterial);
+	//		if (UI::BeginPropertyTable())
+	//		{
+	//			UI::PropertyCombo("Material List", materials.data(), materials.size(), &m_ActiveMaterial);
 
-				UI::EndPropertyTable();
-			}
-			
-			Ref<Material> material = MaterialManager::Get(m_ActiveMaterial);
+	//			UI::EndPropertyTable();
+	//		}
+	//		
+	//		Ref<Material> material = MaterialManager::Get(m_ActiveMaterial);
 
-			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
-			{
-				DrawMaterialProperty(material, "Albedo", "Color", MaterialTexture::ALBEDO_MAP, MaterialUniform::ALBEDO);
-				DrawMaterialProperty(material, "Normal Map", "", MaterialTexture::NORMAL_MAP, (MaterialUniform)0);
-				DrawMaterialProperty(material, "Roughness", "Roughness", MaterialTexture::ROUGHNESS_MAP, MaterialUniform::ROUGHNESS);
-				DrawMaterialProperty(material, "Metalness", "Metalness", MaterialTexture::METALNESS_MAP, MaterialUniform::METALNESS);
-				DrawMaterialProperty(material, "Ambient Occlusion", "", MaterialTexture::AMBIENT_OCCLUSION_MAP, (MaterialUniform)0);
+	//		if (UI::TreeNode("Material") && UI::BeginPropertyTable())
+	//		{
+	//			//DrawMaterialProperty(material, "Albedo", "Color", MaterialTexture::ALBEDO_MAP, MaterialUniform::ALBEDO);
+	//			//DrawMaterialProperty(material, "Normal Map", "", MaterialTexture::NORMAL_MAP, (MaterialUniform)0);
+	//			//DrawMaterialProperty(material, "Roughness", "Roughness", MaterialTexture::ROUGHNESS_MAP, MaterialUniform::ROUGHNESS);
+	//			//DrawMaterialProperty(material, "Metalness", "Metalness", MaterialTexture::METALNESS_MAP, MaterialUniform::METALNESS);
+	//			//DrawMaterialProperty(material, "Ambient Occlusion", "", MaterialTexture::AMBIENT_OCCLUSION_MAP, (MaterialUniform)0);
 
-				UI::EndPropertyTable();
-				UI::TreePop();
-				ImGui::Spacing();
-			}
-		}
-	}
+	//			UI::EndPropertyTable();
+	//			UI::TreePop();
+	//			ImGui::Spacing();
+	//		}
+	//	}
+	//}
 
-	void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType)
-	{
-		ImGui::PushID(name.data());
-		{
-			float imageSize = 45.f;
-			Ref<Texture2D> albedoMap = mat->Get(texType);
+	//void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, std::string_view name, std::string_view uniformName, MaterialTexture texType, MaterialUniform uniformType)
+	//{
+	//	ImGui::PushID(name.data());
+	//	{
+	//		float imageSize = 45.f;
+	//		Ref<Texture2D> albedoMap = mat->Get(texType);
 
-			if (UI::PropertyImage(name.data(), albedoMap ? albedoMap : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
-			{
-				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
-				if (!path.empty())
-				{
-					albedoMap = Texture2D::Create(path);
-					mat->Set(texType, albedoMap);
-				}
-			}
-			ImGui::SameLine();
-			                                                                          
-			bool enableAlbedoMap = mat->IsEnabled(texType);
-			ImGui::Checkbox("Enable", &enableAlbedoMap);
-			mat->Enable(texType, enableAlbedoMap);
+	//		if (UI::PropertyImage(name.data(), albedoMap ? albedoMap : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
+	//		{
+	//			FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+	//			if (!path.empty())
+	//			{
+	//				albedoMap = Texture2D::Create(path);
+	//				mat->Set(texType, albedoMap);
+	//			}
+	//		}
+	//		ImGui::SameLine();
+	//		                                                                          
+	//		bool enableAlbedoMap = mat->IsEnabled(texType);
+	//		ImGui::Checkbox("Enable", &enableAlbedoMap);
+	//		mat->Enable(texType, enableAlbedoMap);
 
-			if (!uniformName.empty())
-			{
-				ImGui::SameLine();
-				if (uniformType == MaterialUniform::ALBEDO)
-				{
-					Vector3 albedo = mat->Get<Vector3>(uniformType);
-					ImGui::ColorEdit3(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs);
-					mat->Set(uniformType, albedo);
+	//		if (!uniformName.empty())
+	//		{
+	//			ImGui::SameLine();
+	//			if (uniformType == MaterialUniform::ALBEDO)
+	//			{
+	//				Vector3 albedo = mat->Get<Vector3>(uniformType);
+	//				ImGui::ColorEdit3(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs);
+	//				mat->Set(uniformType, albedo);
 
-					float emission = mat->Get<float>(MaterialUniform::EMISSION);
-					ImGui::DragFloat("Emission", &emission);
-					mat->Set(MaterialUniform::EMISSION, emission);
-				}
-				else
-				{
-					float uniform = mat->Get<float>(uniformType);
-					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f);
-					mat->Set(uniformType, uniform);
-				}
-			}
-		}
-		ImGui::PopID();
-	}
+	//				float emission = mat->Get<float>(MaterialUniform::EMISSION);
+	//				ImGui::DragFloat("Emission", &emission);
+	//				mat->Set(MaterialUniform::EMISSION, emission);
+	//			}
+	//			else
+	//			{
+	//				float uniform = mat->Get<float>(uniformType);
+	//				ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+	//				ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f);
+	//				mat->Set(uniformType, uniform);
+	//			}
+	//		}
+	//	}
+	//	ImGui::PopID();
+	//}
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
 	{

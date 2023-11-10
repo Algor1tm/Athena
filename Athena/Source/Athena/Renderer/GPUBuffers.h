@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/ShaderResource.h"
 
 
 namespace Athena
@@ -154,24 +155,26 @@ namespace Athena
 	};
 
 
-	class ATHENA_API UniformBuffer : public RefCounted
+	class ATHENA_API UniformBuffer : public ShaderResource
 	{
 	public:
+		static Ref<UniformBuffer> Create(uint64 size);
 		virtual ~UniformBuffer() = default;
 
-		static Ref<UniformBuffer> Create(uint32 size);
+		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::UniformBuffer; }
 
-		virtual void RT_SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+		virtual uint64 GetSize() = 0;
+		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 	};
 
 
-	class ATHENA_API ShaderStorageBuffer : public RefCounted
+	class ATHENA_API ShaderStorageBuffer : public ShaderResource
 	{
 	public:
 		virtual ~ShaderStorageBuffer() = default;
 
-		static Ref<ShaderStorageBuffer> Create(uint32 size);
+		static Ref<ShaderStorageBuffer> Create(uint64 size);
 
-		virtual void RT_SetData(const void* data, uint32 size, uint32 offset = 0) = 0;
+		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 	};
 }

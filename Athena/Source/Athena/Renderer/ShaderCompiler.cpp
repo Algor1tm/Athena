@@ -376,7 +376,6 @@ namespace Athena
 
 			ATN_CORE_TRACE("Shader Reflect - {} {}", Utils::ShaderStageToString(stage), m_Name);
 			ATN_CORE_TRACE("    {} uniform buffers", resources.uniform_buffers.size());
-			ATN_CORE_TRACE("    {} resources", resources.sampled_images.size());
 
 			if (stage == ShaderStage::VERTEX_STAGE)
 			{

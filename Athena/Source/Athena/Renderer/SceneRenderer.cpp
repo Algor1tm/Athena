@@ -35,10 +35,7 @@ namespace Athena
 	static CameraUBO s_CameraUBO;
 	static Ref<UniformBuffer> s_UniformBuffer;
 
-	static std::vector<VkDescriptorSet> s_DescriptorSets;
-
 	static VkRenderPass s_RenderPass;
-	static VkPipelineLayout s_PipelineLayout;
 	static VkPipeline s_Pipeline;
 
 	static std::vector<Ref<Texture2D>> s_Attachments;
@@ -64,6 +61,9 @@ namespace Athena
 		s_Material = Material::Create(s_Shader);
 
 		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
+
+		s_Material->Set("CameraUBO", s_UniformBuffer);
+
 
 		struct TVertex
 		{
@@ -94,41 +94,6 @@ namespace Athena
 
 		Renderer::Submit([]()
 		{
-			// Descriptor Sets
-			{
-				std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), s_Material.As<VulkanMaterial>()->GetDescriptorSetLayout());
-
-				VkDescriptorSetAllocateInfo allocInfo = {};
-				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				allocInfo.descriptorPool = VulkanContext::GetDescriptorPool();
-				allocInfo.descriptorSetCount = Renderer::GetFramesInFlight();
-				allocInfo.pSetLayouts = layouts.data();
-
-				s_DescriptorSets.resize(Renderer::GetFramesInFlight());
-				VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, s_DescriptorSets.data()));
-
-				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-				{
-					VkDescriptorBufferInfo bufferInfo = {};
-					bufferInfo.buffer = s_UniformBuffer.As<VulkanUniformBuffer>()->GetVulkanBuffer(i);
-					bufferInfo.offset = 0;
-					bufferInfo.range = sizeof(CameraUBO);
-
-					VkWriteDescriptorSet descriptorWrite = {};
-					descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					descriptorWrite.dstSet = s_DescriptorSets[i];
-					descriptorWrite.dstBinding = 0;
-					descriptorWrite.dstArrayElement = 0;
-					descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					descriptorWrite.descriptorCount = 1;
-					descriptorWrite.pBufferInfo = &bufferInfo;
-					descriptorWrite.pImageInfo = nullptr;
-					descriptorWrite.pTexelBufferView = nullptr;
-
-					vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
-				}
-			}
-
 			// Create RenderPass
 			{
 				VkAttachmentDescription colorAttachment = {};
@@ -261,18 +226,8 @@ namespace Athena
 				dynamicState.dynamicStateCount = dynamicStates.size();
 				dynamicState.pDynamicStates = dynamicStates.data();
 
-				auto setLayout = s_Material.As<VulkanMaterial>()->GetDescriptorSetLayout();
-
-				VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-				pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-				pipelineLayoutInfo.setLayoutCount = 1;
-				pipelineLayoutInfo.pSetLayouts = &setLayout;
-				pipelineLayoutInfo.pushConstantRangeCount = 0;	// Shader reflection data
-				pipelineLayoutInfo.pPushConstantRanges = nullptr;
-
-				VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &s_PipelineLayout));
-
 				auto vkShader = s_Shader.As<VulkanShader>();
+				auto vkMaterial = s_Material.As<VulkanMaterial>();
 
 				VkGraphicsPipelineCreateInfo pipelineInfo = {};
 				pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -286,7 +241,7 @@ namespace Athena
 				pipelineInfo.pDepthStencilState = nullptr;
 				pipelineInfo.pColorBlendState = &colorBlending;
 				pipelineInfo.pDynamicState = &dynamicState;
-				pipelineInfo.layout = s_PipelineLayout;
+				pipelineInfo.layout = vkMaterial->GetPipelineLayout();
 				pipelineInfo.renderPass = s_RenderPass;
 				pipelineInfo.subpass = 0;
 				pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -358,7 +313,6 @@ namespace Athena
 			}
 				
 			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), s_Pipeline, nullptr);
-			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), s_PipelineLayout, nullptr);
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), s_RenderPass, nullptr);
 		});
 
@@ -417,8 +371,7 @@ namespace Athena
 				scissor.extent = { width, height };
 				vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, 0, 1,
-					&s_DescriptorSets[Renderer::GetCurrentFrameIndex()], 0, 0);
+				s_Material->RT_UpdateForRendering();
 
 				Ref<VulkanVertexBuffer> vkVertexBuffer = s_VertexBuffer.As<VulkanVertexBuffer>();
 				VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();

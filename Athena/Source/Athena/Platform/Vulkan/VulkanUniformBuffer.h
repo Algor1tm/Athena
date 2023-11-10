@@ -13,14 +13,16 @@ namespace Athena
 	class VulkanUniformBuffer: public UniformBuffer
 	{
 	public:
-		VulkanUniformBuffer(uint32 size);
+		VulkanUniformBuffer(uint64 size);
 		~VulkanUniformBuffer();
 
-		virtual void RT_SetData(const void* data, uint32 size, uint32 offset) override;
+		virtual void RT_SetData(const void* data, uint64 size, uint64 offset) override;
+		virtual uint64 GetSize() override { return m_Size; }
 
 		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBOSet[frameIndex].GetBuffer(); }
 
 	private:
 		std::vector<VulkanBuffer> m_VulkanUBOSet;
+		uint64 m_Size;
 	};
 }

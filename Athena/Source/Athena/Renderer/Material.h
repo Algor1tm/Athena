@@ -14,6 +14,7 @@ namespace Athena
 	public:
 		static Ref<Material> Create(const Ref<Shader>& shader);
 
+		virtual void Set(std::string_view name, const Ref<ShaderResource>& resource) = 0;
 		virtual void RT_UpdateForRendering() = 0;
 
 		Ref<Shader> GetShader() { return m_Shader; };

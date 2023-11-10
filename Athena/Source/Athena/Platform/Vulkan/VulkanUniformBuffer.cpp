@@ -5,8 +5,9 @@
 
 namespace Athena
 {
-	VulkanUniformBuffer::VulkanUniformBuffer(uint32 size)
+	VulkanUniformBuffer::VulkanUniformBuffer(uint64 size)
 	{
+		m_Size = size;
 		m_VulkanUBOSet.resize(Renderer::GetFramesInFlight());
 
 		Renderer::Submit([this, size]()
@@ -35,7 +36,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanUniformBuffer::RT_SetData(const void* data, uint32 size, uint32 offset)
+	void VulkanUniformBuffer::RT_SetData(const void* data, uint64 size, uint64 offset)
 	{
 		auto& ubo = m_VulkanUBOSet[Renderer::GetCurrentFrameIndex()];
 

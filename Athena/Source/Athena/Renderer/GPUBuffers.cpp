@@ -19,7 +19,7 @@ namespace Athena
 	}
 
 
-	Ref<UniformBuffer> UniformBuffer::Create(uint32 size)
+	Ref<UniformBuffer> UniformBuffer::Create(uint64 size)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -31,7 +31,7 @@ namespace Athena
 	}
 
 
-	Ref<ShaderStorageBuffer> ShaderStorageBuffer::Create(uint32 size)
+	Ref<ShaderStorageBuffer> ShaderStorageBuffer::Create(uint64 size)
 	{
 		switch (Renderer::GetAPI())
 		{

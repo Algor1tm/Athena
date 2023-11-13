@@ -22,7 +22,6 @@ namespace Athena
 				ubo = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			}
 		});
-
 	}
 
 	VulkanUniformBuffer::~VulkanUniformBuffer()

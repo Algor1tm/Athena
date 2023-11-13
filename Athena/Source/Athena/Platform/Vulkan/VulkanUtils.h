@@ -106,7 +106,7 @@ namespace Athena::VulkanUtils
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(TextureFormat format, bool sRGB)
+    inline VkFormat GetFormat(TextureFormat format, bool sRGB = false)
     {
         switch (format)
         {

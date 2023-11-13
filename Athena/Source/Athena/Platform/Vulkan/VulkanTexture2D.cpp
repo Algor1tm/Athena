@@ -28,15 +28,52 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Buffer localBuffer;
-		if(info.Data != nullptr)
-			localBuffer = Buffer::Copy(info.Data, info.Width * info.Height * (uint64)Texture::BytesPerPixel(info.Format));
-
-		if (info.GenerateMipMap && info.MipLevels == 0)
+		if (info.GenerateMipMap && info.MipLevels <= 1)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
 
+		if(m_Info.GenerateSampler)
+			SetSampler(m_Info.SamplerInfo);
+
+		Resize(m_Info.Width, m_Info.Height);
+	}
+
+	VulkanTexture2D::~VulkanTexture2D()
+	{
+		Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView,
+				image = m_Image]()
+		{
+			// TODO: some imgui descriptor sets does not removed on application close,
+			// because they deleted after imgui layer shutdowned
+
+			if(set != VK_NULL_HANDLE && Application::Get().GetImGuiLayer() != nullptr) 
+				ImGui_ImplVulkan_RemoveTexture(set);
+
+			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
+			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
+
+			VulkanContext::GetAllocator()->DestroyImage(image);
+		});
+	}
+
+	void VulkanTexture2D::Resize(uint32 width, uint32 height)
+	{
+		if (m_ImageView != VK_NULL_HANDLE)
+		{
+			Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkImageView = m_ImageView, image = m_Image]()
+			{
+				if (set != VK_NULL_HANDLE && Application::Get().GetImGuiLayer() != nullptr)
+					ImGui_ImplVulkan_RemoveTexture(set);
+
+				vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
+				VulkanContext::GetAllocator()->DestroyImage(image);
+			});
+		}
+
+		m_Info.Width = width;
+		m_Info.Height = height;
+
 		Ref<VulkanTexture2D> instance(this);
-		Renderer::Submit([instance, localBuffer]() mutable
+		Renderer::Submit([instance]() mutable
 		{
 			auto& info = instance->m_Info;
 
@@ -76,14 +113,6 @@ namespace Athena
 
 			instance->m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo);
 
-			if (info.Data != nullptr)
-			{
-				instance->UploadData(localBuffer.Data(), info.Width, info.Height);
-
-				localBuffer.Release();
-				info.Data = nullptr;
-			}
-
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			viewInfo.image = instance->m_Image.GetImage();
@@ -96,31 +125,27 @@ namespace Athena
 			viewInfo.subresourceRange.layerCount = info.Layers;
 
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &instance->m_ImageView));
+
+			instance->m_UIDescriptorSet = VK_NULL_HANDLE;
 		});
 
-		if(m_Info.GenerateSampler)
-			SetSampler(m_Info.SamplerInfo);
+
+		if (m_Info.Data != nullptr)
+		{
+			Buffer localBuffer = Buffer::Copy(m_Info.Data, m_Info.Width * m_Info.Height * (uint64)Texture::BytesPerPixel(m_Info.Format));
+
+			Ref<VulkanTexture2D> instance(this);
+			Renderer::Submit([instance, localBuffer]() mutable
+			{
+				instance->UploadData(localBuffer.Data(), instance->m_Info.Width, instance->m_Info.Height);
+
+				localBuffer.Release();
+				instance->m_Info.Data = nullptr;
+			});
+		}
 
 		if (m_Info.GenerateMipMap)
 			GenerateMipMap(m_Info.MipLevels);
-	}
-
-	VulkanTexture2D::~VulkanTexture2D()
-	{
-		Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView,
-				image = m_Image]()
-		{
-			// TODO: some imgui descriptor sets does not removed on application close,
-			// because they deleted after imgui layer shutdowned
-
-			if(set != VK_NULL_HANDLE && Application::Get().GetImGuiLayer() != nullptr) 
-				ImGui_ImplVulkan_RemoveTexture(set);
-
-			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
-			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
-
-			VulkanContext::GetAllocator()->DestroyImage(image);
-		});
 	}
 
 	void VulkanTexture2D::SetSampler(const TextureSamplerCreateInfo& samplerInfo)

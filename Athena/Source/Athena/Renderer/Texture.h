@@ -13,8 +13,9 @@ namespace Athena
 {
 	enum class TextureFormat
 	{
+		NONE,
 		// Color
-		RGB8,	// TODO: add support to RGB8 format
+		RGB8,
 		RGBA8,
 
 		RG16F,
@@ -107,6 +108,8 @@ namespace Athena
 		static Ref<Texture2D> Create(const FilePath& path);							  // From file
 		static Ref<Texture2D> Create(const void* data, uint32 width, uint32 height);  // From memory
 
+		virtual void Resize(uint32 width, uint32 height) = 0;
+
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
 	public:
@@ -153,7 +156,7 @@ namespace Athena
 
 		return false;
 	}
-
+	 
 	inline bool Texture::IsStencilFormat(TextureFormat format)
 	{
 		switch (format)

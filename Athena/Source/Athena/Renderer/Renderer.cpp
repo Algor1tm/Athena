@@ -218,32 +218,6 @@ namespace Athena
 		return s_Data.QuadVertexBuffer;
 	}
 
-	VertexBufferLayout Renderer::GetStaticVertexLayout()
-	{
-		return 	
-		{
-			{ ShaderDataType::Float3, "a_Position"  },
-			{ ShaderDataType::Float2, "a_TexCoord"  },
-			{ ShaderDataType::Float3, "a_Normal"    },
-			{ ShaderDataType::Float3, "a_Tangent"   },
-			{ ShaderDataType::Float3, "a_Bitangent" }
-		};
-	}
-
-	VertexBufferLayout Renderer::GetAnimVertexLayout()
-	{
-		return 
-		{
-			{ ShaderDataType::Float3, "a_Position"  },
-			{ ShaderDataType::Float2, "a_TexCoord"  },
-			{ ShaderDataType::Float3, "a_Normal"    },
-			{ ShaderDataType::Float3, "a_Tangent"   },
-			{ ShaderDataType::Float3, "a_Bitangent" },
-			{ ShaderDataType::Int4,	  "a_BoneIDs"   },
-			{ ShaderDataType::Float4, "a_Weights"   },
-		};
-	}
-
 	CommandQueue& Renderer::GetRenderCommandQueue()
 	{
 		return s_Data.RenderCommandQueue;

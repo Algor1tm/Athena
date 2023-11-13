@@ -80,11 +80,10 @@ namespace Athena
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
 
         const auto& vpDesc = viewportPanel->GetDescription();
-        const auto& image = m_ViewportRenderer->GetFinalImage();
-        const auto& imageInfo = image->GetInfo();
+        const auto& rendererSize = m_ViewportRenderer->GetViewportSize();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
-            (imageInfo.Width != vpDesc.Size.x || imageInfo.Height != vpDesc.Size.y))
+            (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
         {
             ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize")
 

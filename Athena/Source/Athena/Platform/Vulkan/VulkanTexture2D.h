@@ -14,6 +14,8 @@ namespace Athena
 		VulkanTexture2D(const TextureCreateInfo& info);
 		~VulkanTexture2D();
 
+		virtual void Resize(uint32 width, uint32 height) override;
+
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 		virtual void GenerateMipMap(uint32 levels) override;
 

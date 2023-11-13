@@ -174,9 +174,6 @@ namespace Athena
 		static Ref<VertexBuffer> GetCubeVertexBuffer();
 		static Ref<VertexBuffer> GetQuadVertexBuffer();
 
-		static VertexBufferLayout GetStaticVertexLayout();
-		static VertexBufferLayout GetAnimVertexLayout();
-
 	private:
 		static CommandQueue& GetRenderCommandQueue();
 		static CommandQueue& GetResourceFreeQueue();

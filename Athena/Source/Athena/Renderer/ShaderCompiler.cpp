@@ -284,10 +284,10 @@ namespace Athena
 		if (result.ParseResult == false)
 			return result;
 
-		const char* macroSettings = "#pragma pack_matrix( row_major )\n\n";
+		const char* matrixMemoryLayoutSettings = "#pragma pack_matrix( row_major )\n\n";
 
 		result.Source = FileSystem::ReadFile(m_FilePath);
-		result.Source.insert(0, macroSettings);
+		result.Source.insert(0, matrixMemoryLayoutSettings);
 
 		for (const auto& [stage, entryPoint] : m_StageToEntryPointMap)
 		{

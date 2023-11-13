@@ -23,7 +23,6 @@ namespace Athena
 		return (VkImageUsageFlags)0;
 	}
 
-
 	VulkanTexture2D::VulkanTexture2D(const TextureCreateInfo& info)
 	{
 		m_Info = info;
@@ -72,25 +71,22 @@ namespace Athena
 		m_Info.Width = width;
 		m_Info.Height = height;
 
-		Ref<VulkanTexture2D> instance(this);
-		Renderer::Submit([instance]() mutable
+		Renderer::Submit([this]() mutable
 		{
-			auto& info = instance->m_Info;
+			uint32 imageUsage = GetVulkanImageUsage(m_Info.Usage, m_Info.Format);
 
-			uint32 imageUsage = GetVulkanImageUsage(info.Usage, info.Format);
-
-			if (info.Usage == TextureUsage::ATTACHMENT)
+			if (m_Info.Usage == TextureUsage::ATTACHMENT)
 			{
 				imageUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;	// TODO (this usage added for copying into swapchain)
 			}
 
-			if (info.Data != nullptr)
+			if (m_Info.Data != nullptr)
 			{
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			}
 
-			if (info.GenerateMipMap)
+			if (m_Info.GenerateMipMap)
 			{
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -99,34 +95,34 @@ namespace Athena
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.imageType = VK_IMAGE_TYPE_2D;
-			imageInfo.extent.width = info.Width;
-			imageInfo.extent.height = info.Height;
+			imageInfo.extent.width = m_Info.Width;
+			imageInfo.extent.height = m_Info.Height;
 			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = info.MipLevels;
-			imageInfo.arrayLayers = info.Layers;
-			imageInfo.format = VulkanUtils::GetFormat(info.Format, info.sRGB);
+			imageInfo.mipLevels = m_Info.MipLevels;
+			imageInfo.arrayLayers = m_Info.Layers;
+			imageInfo.format = VulkanUtils::GetFormat(m_Info.Format);
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			imageInfo.usage = imageUsage;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			instance->m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo);
+			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo);
 
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = instance->m_Image.GetImage();
+			viewInfo.image = m_Image.GetImage();
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			viewInfo.format = VulkanUtils::GetFormat(info.Format, info.sRGB);
-			viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(info.Format);
+			viewInfo.format = VulkanUtils::GetFormat(m_Info.Format);
+			viewInfo.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(m_Info.Format);
 			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = info.MipLevels;
+			viewInfo.subresourceRange.levelCount = m_Info.MipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = info.Layers;
+			viewInfo.subresourceRange.layerCount = m_Info.Layers;
 
-			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &instance->m_ImageView));
+			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 
-			instance->m_UIDescriptorSet = VK_NULL_HANDLE;
+			m_UIDescriptorSet = VK_NULL_HANDLE;
 		});
 
 
@@ -134,13 +130,12 @@ namespace Athena
 		{
 			Buffer localBuffer = Buffer::Copy(m_Info.Data, m_Info.Width * m_Info.Height * (uint64)Texture::BytesPerPixel(m_Info.Format));
 
-			Ref<VulkanTexture2D> instance(this);
-			Renderer::Submit([instance, localBuffer]() mutable
+			Renderer::Submit([this, localBuffer]() mutable
 			{
-				instance->UploadData(localBuffer.Data(), instance->m_Info.Width, instance->m_Info.Height);
+				UploadData(localBuffer.Data(), m_Info.Width, m_Info.Height);
 
 				localBuffer.Release();
-				instance->m_Info.Data = nullptr;
+				m_Info.Data = nullptr;
 			});
 		}
 
@@ -163,30 +158,27 @@ namespace Athena
 
 		m_Info.SamplerInfo = samplerInfo;
 
-		Ref<VulkanTexture2D> instance(this);
-		Renderer::Submit([instance]()
+		Renderer::Submit([this]()
 		{
-			auto& info = instance->m_Info;
-
 			VkSamplerCreateInfo vksamplerInfo = {};
 			vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			vksamplerInfo.magFilter = VulkanUtils::GetFilter(info.SamplerInfo.MagFilter);
-			vksamplerInfo.minFilter = VulkanUtils::GetFilter(info.SamplerInfo.MinFilter);
-			vksamplerInfo.mipmapMode = VulkanUtils::GetMipMapMode(info.SamplerInfo.MipMapFilter);
-			vksamplerInfo.addressModeU = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeV = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeW = VulkanUtils::GetWrap(info.SamplerInfo.Wrap);
+			vksamplerInfo.magFilter = VulkanUtils::GetFilter(m_Info.SamplerInfo.MagFilter);
+			vksamplerInfo.minFilter = VulkanUtils::GetFilter(m_Info.SamplerInfo.MinFilter);
+			vksamplerInfo.mipmapMode = VulkanUtils::GetMipMapMode(m_Info.SamplerInfo.MipMapFilter);
+			vksamplerInfo.addressModeU = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
+			vksamplerInfo.addressModeV = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
+			vksamplerInfo.addressModeW = VulkanUtils::GetWrap(m_Info.SamplerInfo.Wrap);
 			vksamplerInfo.anisotropyEnable = false;
 			vksamplerInfo.maxAnisotropy = 1.f;
 			vksamplerInfo.compareEnable = false;
 			vksamplerInfo.compareOp = VK_COMPARE_OP_NEVER;
 			vksamplerInfo.minLod = 0.f;
-			vksamplerInfo.maxLod = info.MipLevels;
+			vksamplerInfo.maxLod = m_Info.MipLevels;
 			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 			vksamplerInfo.unnormalizedCoordinates = false;
 
-			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &instance->m_Sampler));
+			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_Sampler));
 		});
 	}
 
@@ -281,12 +273,11 @@ namespace Athena
 
 	void VulkanTexture2D::GenerateMipMap(uint32 levels)
 	{
-		Ref<VulkanTexture2D> instance(this);
-		Renderer::Submit([instance, levels]()
+		Renderer::Submit([this, levels]()
 		{
-			instance->m_Info.MipLevels = levels;
+			m_Info.MipLevels = levels;
 
-			if (instance->m_Info.MipLevels < 2)
+			if (m_Info.MipLevels < 2)
 			{
 				ATN_CORE_ASSERT(false);
 				return;
@@ -294,15 +285,15 @@ namespace Athena
 
 			VkCommandBuffer commandBuffer = VulkanUtils::BeginSingleTimeCommands();
 
-			int32 mipWidth = instance->m_Info.Width;
-			int32 mipHeight = instance->m_Info.Height;
+			int32 mipWidth = m_Info.Width;
+			int32 mipHeight = m_Info.Height;
 
 			VkImageMemoryBarrier barrier = {};
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.image = instance->m_Image.GetImage();
-			barrier.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(instance->m_Info.Format);;
+			barrier.image = m_Image.GetImage();
+			barrier.subresourceRange.aspectMask = VulkanUtils::GetImageAspectMask(m_Info.Format);;
 			barrier.subresourceRange.levelCount = 1;
 			barrier.subresourceRange.baseArrayLayer = 0;
 			barrier.subresourceRange.layerCount = 1;
@@ -310,7 +301,7 @@ namespace Athena
 			VkPipelineStageFlags sourceStage;
 			VkPipelineStageFlags destinationStage;
 
-			for (uint32 level = 1; level < instance->m_Info.MipLevels; ++level)
+			for (uint32 level = 1; level < m_Info.MipLevels; ++level)
 			{
 				bool firstMip = level == 1;
 
@@ -363,8 +354,8 @@ namespace Athena
 				blit.dstSubresource.layerCount = 1;
 
 				vkCmdBlitImage(commandBuffer,
-					instance->m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					instance->m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					1, &blit,
 					VK_FILTER_LINEAR);
 
@@ -389,7 +380,7 @@ namespace Athena
 				if (mipHeight > 1) mipHeight /= 2;
 			}
 
-			barrier.subresourceRange.baseMipLevel = instance->m_Info.MipLevels - 1;
+			barrier.subresourceRange.baseMipLevel = m_Info.MipLevels - 1;
 			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;

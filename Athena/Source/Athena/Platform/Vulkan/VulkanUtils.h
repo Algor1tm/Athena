@@ -106,12 +106,14 @@ namespace Athena::VulkanUtils
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(TextureFormat format, bool sRGB = false)
+    inline VkFormat GetFormat(TextureFormat format)
     {
         switch (format)
         {
-        case TextureFormat::RGB8: return sRGB ? VK_FORMAT_R8G8B8_SRGB : VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::RGBA8: return sRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+        case TextureFormat::RGB8: return VK_FORMAT_R8G8B8_UNORM;
+        case TextureFormat::RGB8_SRGB: return VK_FORMAT_R8G8B8_SRGB;
+        case TextureFormat::RGBA8: return VK_FORMAT_R8G8B8A8_UNORM;
+        case TextureFormat::RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
 
         case TextureFormat::RG16F: return VK_FORMAT_R16G16_SFLOAT;
         case TextureFormat::R11G11B10F: return VK_FORMAT_B10G11R11_UFLOAT_PACK32;

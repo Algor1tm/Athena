@@ -12,9 +12,9 @@ namespace Athena
 
 		bool hasColorFormat = false;
 		bool hasDepthFormat = false;
-		for (auto format : m_Info.Attachments)
+		for (auto attachment : m_Info.Attachments)
 		{
-			if (Texture::IsColorFormat(format))
+			if (Texture::IsColorFormat(attachment.Format))
 				hasColorFormat = true;
 			else
 				hasDepthFormat = true;
@@ -28,21 +28,20 @@ namespace Athena
 
 		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
 		{
-			for (const auto& format : m_Info.Attachments)
+			for (const auto& attachment : m_Info.Attachments)
 			{
 				TextureCreateInfo attachmentInfo = {};
 				attachmentInfo.Width = m_Info.Width;
 				attachmentInfo.Height = m_Info.Height;
 				attachmentInfo.GenerateMipMap = false;
-				attachmentInfo.sRGB = false;
-				attachmentInfo.Format = format;
+				attachmentInfo.Format = attachment.Format;
 				attachmentInfo.Usage = TextureUsage::ATTACHMENT;
 				attachmentInfo.GenerateSampler = true;
 				attachmentInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 				attachmentInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 				attachmentInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
 
-				if (Texture::IsColorFormat(format))
+				if (Texture::IsColorFormat(attachment.Format))
 				{
 					m_ColorAttachmentsSet[frameIndex].push_back(Texture2D::Create(attachmentInfo));
 				}

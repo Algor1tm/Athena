@@ -8,7 +8,7 @@ namespace Athena
 {
 	namespace VulkanUtils
 	{
-		VkImageLayout GetAttachmentImageLayout(TextureFormat format)
+		static VkImageLayout GetAttachmentImageLayout(TextureFormat format)
 		{
 			if (Texture::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -21,6 +21,22 @@ namespace Athena
 
 			ATN_CORE_ASSERT(false);
 			return (VkImageLayout)0;
+		}
+
+		static VkClearValue GetClearValue(const FramebufferAttachmentInfo& info)
+		{
+			VkClearValue result = {};
+
+			if (Texture::IsColorFormat(info.Format))
+			{
+				result.color = { info.ClearColor[0], info.ClearColor[1], info.ClearColor[2], info.ClearColor[3] };
+			}
+			else
+			{
+				result.depthStencil = { info.DepthClearColor, info.StencilClearColor };
+			}
+			
+			return result;
 		}
 	}
 
@@ -36,10 +52,10 @@ namespace Athena
 			bool hasDepthStencil = false;
 			VkAttachmentReference depthStencilAttachmentRef = {};
 
-			for (auto format : m_Info.OutputTarget->GetInfo().Attachments)
+			for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
 			{
 				VkAttachmentDescription attachmentDesc = {};
-				attachmentDesc.format = VulkanUtils::GetFormat(format);
+				attachmentDesc.format = VulkanUtils::GetFormat(attachment.Format);
 				attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
 				VkAttachmentLoadOp loadOp = m_Info.LoadOpClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -55,18 +71,18 @@ namespace Athena
 
 				attachments.push_back(attachmentDesc);
 
-				if (Texture::IsColorFormat(format))
+				if (Texture::IsColorFormat(attachment.Format))
 				{
 					VkAttachmentReference colorAttachmentRef;
 					colorAttachmentRef.attachment = attachments.size() - 1;
-					colorAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(format);
+					colorAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(attachment.Format);
 
 					colorAttachmentRefs.push_back(colorAttachmentRef);
 				}
 				else
 				{
 					depthStencilAttachmentRef.attachment = attachments.size() - 1;
-					depthStencilAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(format);
+					depthStencilAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(attachment.Format);
 					hasDepthStencil = true;
 				}
 			}
@@ -86,7 +102,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
 
-			m_Info.OutputTarget.As<VulkanFramebuffer>()->RT_BakeFramebuffer(m_VulkanRenderPass);
+			m_Info.Output.As<VulkanFramebuffer>()->RT_BakeFramebuffer(m_VulkanRenderPass);
 		});
 	}
 
@@ -95,6 +111,47 @@ namespace Athena
 		Renderer::SubmitResourceFree([renderPass = m_VulkanRenderPass]()
 		{
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
+		});
+	}
+
+	void VulkanRenderPass::Begin()
+	{
+		Renderer::Submit([this]()
+		{
+			uint32 width = m_Info.Output->GetInfo().Width;
+			uint32 height = m_Info.Output->GetInfo().Height;
+
+			VkRenderPassBeginInfo renderPassBeginInfo = {};
+			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassBeginInfo.renderPass = m_VulkanRenderPass;
+			renderPassBeginInfo.framebuffer = m_Info.Output.As<VulkanFramebuffer>()->GetVulkanFramebuffer();
+			renderPassBeginInfo.renderArea.offset = { 0, 0 };
+			renderPassBeginInfo.renderArea.extent = { width , height };
+
+			std::vector<VkClearValue> clearValues;
+			if (m_Info.LoadOpClear)
+			{
+				renderPassBeginInfo.clearValueCount = m_Info.Output->GetInfo().Attachments.size();
+				clearValues.reserve(renderPassBeginInfo.clearValueCount);
+
+				for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
+				{
+					VkClearValue clearValue = VulkanUtils::GetClearValue(attachment);
+					clearValues.push_back(clearValue);
+				}
+
+				renderPassBeginInfo.pClearValues = clearValues.data();
+			}
+
+			vkCmdBeginRenderPass(VulkanContext::GetActiveCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		});
+	}
+
+	void VulkanRenderPass::End()
+	{
+		Renderer::Submit([this]()
+		{
+			vkCmdEndRenderPass(VulkanContext::GetActiveCommandBuffer());
 		});
 	}
 }

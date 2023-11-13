@@ -163,7 +163,7 @@ namespace Athena
 
 		static const FilePath& GetShaderPackDirectory();
 		static const FilePath& GetShaderCacheDirectory();
-		static Ref<ShaderPack> GetShaderLibrary();
+		static Ref<ShaderPack> GetShaderPack();
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
 

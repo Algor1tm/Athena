@@ -8,7 +8,7 @@ namespace Athena
 {
 	struct RenderPassCreateInfo
 	{
-		Ref<Framebuffer> OutputTarget;
+		Ref<Framebuffer> Output;
 		bool LoadOpClear;
 	};
 
@@ -17,6 +17,9 @@ namespace Athena
 	public:
 		static Ref<RenderPass> Create(const RenderPassCreateInfo& info);
 		virtual ~RenderPass() = default;
+
+		virtual void Begin() = 0;
+		virtual void End() = 0;
 
 		const RenderPassCreateInfo& GetInfo() const { return m_Info; }
 

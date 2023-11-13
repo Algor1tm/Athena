@@ -13,6 +13,9 @@ namespace Athena
 		VulkanRenderPass(const RenderPassCreateInfo& info);
 		~VulkanRenderPass();
 
+		virtual void Begin() override;
+		virtual void End() override;
+
 		VkRenderPass GetVulkanRenderPass() const { return m_VulkanRenderPass; };
 
 	private:

@@ -62,6 +62,9 @@ namespace Athena
 		s_Data.RendererAPI->Init();
 		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
 
+		s_Data.ShaderPack = Ref<ShaderPack>::Create();
+		s_Data.ShaderPack->Load("Test", s_Data.ShaderPackDirectory / "Vulkan/Test.hlsl");
+
 		uint32 whiteTextureData = 0xffffffff;
 
 		TextureCreateInfo texInfo;
@@ -71,7 +74,6 @@ namespace Athena
 		texInfo.Layers = 1;
 		texInfo.MipLevels = 1;
 		texInfo.GenerateMipMap = false;
-		texInfo.sRGB = false;
 		texInfo.Format = TextureFormat::RGBA8;
 		texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
 		texInfo.GenerateSampler = true;
@@ -86,12 +88,43 @@ namespace Athena
 		texInfo.Data = &blackTextureData;
 
 		s_Data.BlackTexture = Texture2D::Create(texInfo); 
+
+		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
+		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
+
+		VertexBufferCreateInfo vertexBufInfo;
+		vertexBufInfo.VerticesData = (void*)cubeVertices;
+		vertexBufInfo.VerticesSize = sizeof(cubeVertices);
+		vertexBufInfo.IndicesData = (void*)cubeIndices;
+		vertexBufInfo.IndicesCount = std::size(cubeIndices);
+		vertexBufInfo.Usage = VertexBufferUsage::STATIC;
+
+		s_Data.CubeVertexBuffer = VertexBuffer::Create(vertexBufInfo);
+
+		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
+		float quadVertices[] = { -1.f, -1.f,  0.f, 0.f,
+								  1.f, -1.f,  1.f, 0.f,
+								  1.f,  1.f,  1.f, 1.f,
+								 -1.f,  1.f,  0.f, 1.f, };
+
+		vertexBufInfo.VerticesData = (void*)quadVertices;
+		vertexBufInfo.VerticesSize = sizeof(quadVertices);
+		vertexBufInfo.IndicesData = (void*)quadIndices;
+		vertexBufInfo.IndicesCount = std::size(quadIndices);
+		vertexBufInfo.Usage = VertexBufferUsage::STATIC;
+
+		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 	}
 
 	void Renderer::Shutdown()
 	{
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
+
+		s_Data.CubeVertexBuffer.Release();
+		s_Data.QuadVertexBuffer.Release();
+
+		s_Data.ShaderPack.Release();
 
 		s_Data.RendererAPI->Shutdown();
 		s_Data.RendererAPI->WaitDeviceIdle();
@@ -168,7 +201,7 @@ namespace Athena
 		return s_Data.ShaderCacheDirectory;
 	}
 
-	Ref<ShaderPack> Renderer::GetShaderLibrary()
+	Ref<ShaderPack> Renderer::GetShaderPack()
 	{
 		return s_Data.ShaderPack;
 	}

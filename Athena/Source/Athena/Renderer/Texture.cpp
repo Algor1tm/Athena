@@ -53,8 +53,8 @@ namespace Athena
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
-			case 3: format = TextureFormat::RGB8; break;
-			case 4: format = TextureFormat::RGBA8; break;
+			case 3: format = TextureFormat::RGB8_SRGB; break;
+			case 4: format = TextureFormat::RGBA8_SRGB; break;
 			default: 
 				ATN_CORE_ERROR("Failed to load texture from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
 				return nullptr;
@@ -62,10 +62,10 @@ namespace Athena
 		}
 		ATN_CORE_ASSERT(data);
 
-		if (format == TextureFormat::RGB8)
+		if (format == TextureFormat::RGB8_SRGB)
 		{
 			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = TextureFormat::RGBA8;
+			format = TextureFormat::RGBA8_SRGB;
 		}
 
 		TextureCreateInfo info;
@@ -75,7 +75,6 @@ namespace Athena
 		info.Layers = 1;
 		info.MipLevels = 1;
 		info.GenerateMipMap = false;
-		info.sRGB = HDR ? false : true;
 		info.Format = format;
 		info.Usage = TextureUsage::SHADER_READ_ONLY;
 		info.GenerateSampler = true;
@@ -91,7 +90,6 @@ namespace Athena
 		return result;
 	}
 
-	// From memory
 	Ref<Texture2D> Texture2D::Create(const void* inputData, uint32 inputWidth, uint32 inputHeight)
 	{
 		int width, height, channels;
@@ -101,21 +99,21 @@ namespace Athena
 		data = stbi_load_from_memory((const stbi_uc*)inputData, size, &width, &height, &channels, 0);
 		ATN_CORE_ASSERT(data);
 
-		TextureFormat format = TextureFormat::RGBA8;
+		TextureFormat format = TextureFormat::RGBA8_SRGB;
 
 		switch (channels)
 		{
-		case 3: format = TextureFormat::RGB8; break;
-		case 4: format = TextureFormat::RGBA8; break;
+		case 3: format = TextureFormat::RGB8_SRGB; break;
+		case 4: format = TextureFormat::RGBA8_SRGB; break;
 		default:
 			ATN_CORE_ERROR("Failed to load texture from memory, width = {}, height = {}, channels = {}", width, height, channels);
 			return nullptr;
 		}
 
-		if (format == TextureFormat::RGB8)
+		if (format == TextureFormat::RGB8_SRGB)
 		{
 			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = TextureFormat::RGBA8;
+			format = TextureFormat::RGBA8_SRGB;
 		}
 
 		TextureCreateInfo info;
@@ -125,7 +123,6 @@ namespace Athena
 		info.Layers = 1;
 		info.MipLevels = 1;
 		info.GenerateMipMap = false;
-		info.sRGB = true;
 		info.Format = format;
 		info.Usage = TextureUsage::SHADER_READ_ONLY;
 		info.GenerateSampler = true;

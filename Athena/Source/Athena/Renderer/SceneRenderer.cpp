@@ -4,10 +4,6 @@
 #include "Athena/Math/Transforms.h"
 
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/RenderList.h"
-#include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/Texture.h" 
-#include "Athena/Renderer/RenderPass.h"
 
 
 // TEMPORARY
@@ -26,22 +22,7 @@
 
 namespace Athena
 {
-	struct CameraUBO
-	{
-		Matrix4 ViewMatrix;
-		Matrix4 ProjectionMatrix;
-	};
-
-	static Ref<Shader> s_Shader;
-	static Ref<Material> s_Material;
 	static Ref<VertexBuffer> s_VertexBuffer;
-
-	static CameraUBO s_CameraUBO;
-	static Ref<UniformBuffer> s_UniformBuffer;
-
-	static Ref<Framebuffer> s_Framebuffer;
-	static Ref<RenderPass> s_RenderPass;
-
 	static VkPipeline s_Pipeline;
 
 	Ref<SceneRenderer> SceneRenderer::Create()
@@ -60,26 +41,24 @@ namespace Athena
 		const uint32 maxPipelineQueries = 1;
 		m_Data->Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
-		s_Shader = Shader::Create(Renderer::GetShaderPackDirectory() / "Vulkan/Test.hlsl");
-
-		s_UniformBuffer = UniformBuffer::Create(sizeof(CameraUBO));
+		m_Data->CameraUBO = UniformBuffer::Create(sizeof(CameraUBO));
 
 		FramebufferCreateInfo fbInfo;
 		fbInfo.Attachments = { TextureFormat::RGBA8 };
-		fbInfo.Width = 1;
-		fbInfo.Height = 1;
+		fbInfo.Width = m_Data->ViewportSize.x;
+		fbInfo.Height = m_Data->ViewportSize.y;
+		fbInfo.Attachments[0].ClearColor = { 0.9f, 0.3f, 0.4f, 1.0f };
 
-		s_Framebuffer = Framebuffer::Create(fbInfo);
+		Ref<Framebuffer> mainFramebuffer = Framebuffer::Create(fbInfo);
 		
 		RenderPassCreateInfo passInfo;
-		passInfo.OutputTarget = s_Framebuffer;
+		passInfo.Output = mainFramebuffer;
 		passInfo.LoadOpClear = true;
 
-		s_RenderPass = RenderPass::Create(passInfo);
+		m_Data->GeometryPass = RenderPass::Create(passInfo);
 
-		s_Material = Material::Create(s_Shader);
-		s_Material->Set("u_CameraData", s_UniformBuffer);
-
+		m_Data->GeometryStaticMaterial = Material::Create(Renderer::GetShaderPack()->Get("Test"));
+		m_Data->GeometryStaticMaterial->Set("u_CameraData", m_Data->CameraUBO);
 
 		{
 			struct TVertex
@@ -99,7 +78,6 @@ namespace Athena
 				0, 1, 2, 2, 3, 0
 			};
 
-
 			VertexBufferCreateInfo info;
 			info.VerticesData = (void*)vertices;
 			info.VerticesSize = sizeof(vertices);
@@ -108,13 +86,12 @@ namespace Athena
 			info.Usage = VertexBufferUsage::STATIC;
 
 			s_VertexBuffer = VertexBuffer::Create(info);
-
 		}
 
-		Renderer::Submit([]()
+		Renderer::Submit([this]()
 		{
 			// Create Pipeline
-			const VertexBufferLayout& vertexBufferLayout = s_Shader->GetReflectionData().VertexBufferLayout;
+			const VertexBufferLayout& vertexBufferLayout = m_Data->GeometryStaticMaterial->GetShader()->GetReflectionData().VertexBufferLayout;
 
 			VkVertexInputBindingDescription bindingDescription = {};
 			bindingDescription.binding = 0;
@@ -208,8 +185,8 @@ namespace Athena
 			dynamicState.dynamicStateCount = dynamicStates.size();
 			dynamicState.pDynamicStates = dynamicStates.data();
 
-			auto vkShader = s_Shader.As<VulkanShader>();
-			auto vkMaterial = s_Material.As<VulkanMaterial>();
+			auto vkShader = m_Data->GeometryStaticMaterial->GetShader().As<VulkanShader>();
+			auto vkMaterial = m_Data->GeometryStaticMaterial.As<VulkanMaterial>();
 
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -224,7 +201,7 @@ namespace Athena
 			pipelineInfo.pColorBlendState = &colorBlending;
 			pipelineInfo.pDynamicState = &dynamicState;
 			pipelineInfo.layout = vkMaterial->GetPipelineLayout();
-			pipelineInfo.renderPass = s_RenderPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
+			pipelineInfo.renderPass = m_Data->GeometryPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 			pipelineInfo.basePipelineIndex = -1;
@@ -235,12 +212,7 @@ namespace Athena
 
 	void SceneRenderer::Shutdown()
 	{
-		s_Shader.Release();
 		s_VertexBuffer.Release();
-		s_UniformBuffer.Release();
-
-		s_Framebuffer.Release();
-		s_RenderPass.Release();
 
 		Renderer::SubmitResourceFree([]()
 		{
@@ -258,51 +230,38 @@ namespace Athena
 		m_Data->Profiler->BeginPipelineStatsQuery();
 		m_Data->Profiler->BeginTimeQuery();
 
-		Renderer::Submit([this, cameraInfo = cameraInfo]()
+		m_Data->CameraData.ViewMatrix = cameraInfo.ViewMatrix;
+		m_Data->CameraData.ProjectionMatrix = cameraInfo.ProjectionMatrix;
+
+		// Update Uniform buffer
+		Renderer::Submit([this]()
 		{
-			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
+			m_Data->CameraUBO->RT_SetData(&m_Data->CameraData, sizeof(CameraUBO));
+		});
 
-			// Update Uniform buffer
+		m_Data->GeometryPass->Begin();
+		{
+			Renderer::Submit([this]()
 			{
-				s_CameraUBO.ViewMatrix = cameraInfo.ViewMatrix;
-				s_CameraUBO.ProjectionMatrix = cameraInfo.ProjectionMatrix;
+				VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 
-				s_UniformBuffer->RT_SetData(&s_CameraUBO, sizeof(s_CameraUBO));
-			}
-
-			// Geometry Pass
-			uint32 width = s_Framebuffer->GetInfo().Width;
-			uint32 height = s_Framebuffer->GetInfo().Height;
-
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = s_RenderPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
-			renderPassInfo.framebuffer = s_Framebuffer.As<VulkanFramebuffer>()->GetVulkanFramebuffer();
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { width , height};
-			VkClearValue clearColor = { {0.9f, 0.3f, 0.4f, 1.0f} };
-			renderPassInfo.clearValueCount = 1;
-			renderPassInfo.pClearValues = &clearColor;
-
-			vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			{
 				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, s_Pipeline);
 
 				VkViewport viewport = {};
 				viewport.x = 0.0f;
 				viewport.y = 0.0f;
-				viewport.width = width;
-				viewport.height = height;
+				viewport.width = m_Data->ViewportSize.x;
+				viewport.height = m_Data->ViewportSize.y;
 				viewport.minDepth = 0.0f;
 				viewport.maxDepth = 1.0f;
 				vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 				VkRect2D scissor = {};
 				scissor.offset = { 0, 0 };
-				scissor.extent = { width, height };
+				scissor.extent = { (uint32)viewport.width, (uint32)viewport.height };
 				vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-				s_Material->RT_UpdateForRendering();
+				m_Data->GeometryStaticMaterial->RT_UpdateForRendering();
 
 				Ref<VulkanVertexBuffer> vkVertexBuffer = s_VertexBuffer.As<VulkanVertexBuffer>();
 				VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
@@ -312,27 +271,23 @@ namespace Athena
 				vkCmdBindIndexBuffer(commandBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
 				vkCmdDrawIndexed(commandBuffer, s_VertexBuffer->GetIndexCount(), 1, 0, 0, 0);
-			}
-			vkCmdEndRenderPass(commandBuffer);
-		});
+			});
+		}
+		m_Data->GeometryPass->End();
 
 		m_Data->Statistics.GeometryPass = m_Data->Profiler->EndTimeQuery();
 		m_Data->Statistics.PipelineStats = m_Data->Profiler->EndPipelineStatsQuery();
 	}
 
-	Vector2u SceneRenderer::GetViewportSize()
-	{
-		return { s_Framebuffer->GetInfo().Width, s_Framebuffer->GetInfo().Height };
-	}
-
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return s_Framebuffer->GetColorAttachment(0);
+		return m_Data->GeometryPass->GetInfo().Output->GetColorAttachment(0);
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
 	{
-		s_Framebuffer->Resize(width, height);
+		m_Data->ViewportSize = { width, height };
+		m_Data->GeometryPass->GetInfo().Output->Resize(width, height);
 	}
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
@@ -349,13 +304,13 @@ namespace Athena
 	{
 		if (vertexBuffer)
 		{
-			DrawCallInfo info;
-			info.VertexBuffer = vertexBuffer;
-			info.Material = material;
-			info.Animator = animator;
-			info.Transform = transform;
-			info.EntityID = entityID;
-
+			//DrawCallInfo info;
+			//info.VertexBuffer = vertexBuffer;
+			//info.Material = material;
+			//info.Animator = animator;
+			//info.Transform = transform;
+			//info.EntityID = entityID;
+			//
 			//s_Data.MeshList.Push(info);
 		}
 		else

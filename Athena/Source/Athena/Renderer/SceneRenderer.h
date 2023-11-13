@@ -3,23 +3,20 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 
+#include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/GPUProfiler.h"
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Light.h"
-#include "Athena/Renderer/Texture.h"
 
 #include "Athena/Math/Matrix.h"
 
 
 namespace Athena
 {
-	class ATHENA_API Animator;
-	class ATHENA_API VertexBuffer;
-	class ATHENA_API Material;
-	class ATHENA_API Texture2D;
-	class ATHENA_API TextureCube;
-
 	enum class Antialising
 	{
 		NONE = 0,
@@ -146,8 +143,22 @@ namespace Athena
 		PipelineStatistics PipelineStats;
 	};
 
+	struct CameraUBO
+	{
+		Matrix4 ViewMatrix;
+		Matrix4 ProjectionMatrix;
+	};
+
 	struct SceneRendererData
 	{
+		Ref<RenderPass> GeometryPass;
+		Ref<Material> GeometryStaticMaterial;
+
+		CameraUBO CameraData;
+		Ref<UniformBuffer> CameraUBO;
+
+		Vector2u ViewportSize = { 1, 1 };
+
 		Ref<GPUProfiler> Profiler;
 		SceneRendererStatistics Statistics;
 	};
@@ -163,7 +174,7 @@ namespace Athena
 		void Shutdown();
 
 		const SceneRendererStatistics& GetStatistics() { return m_Data->Statistics; }
-		Vector2u GetViewportSize();
+		Vector2u GetViewportSize() { return m_Data->ViewportSize; }
 
 		Ref<Texture2D> GetFinalImage();
 

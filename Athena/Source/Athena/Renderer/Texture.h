@@ -16,7 +16,9 @@ namespace Athena
 		NONE,
 		// Color
 		RGB8,
+		RGB8_SRGB,
 		RGBA8,
+		RGBA8_SRGB,
 
 		RG16F,
 		RGB16F,
@@ -70,7 +72,6 @@ namespace Athena
 		uint32 MipLevels = 1;
 		bool GenerateMipMap = false;
 		TextureFormat Format = TextureFormat::RGBA8;
-		bool sRGB = false;
 		TextureUsage Usage = TextureUsage::SHADER_READ_ONLY;
 		bool GenerateSampler = true;
 		TextureSamplerCreateInfo SamplerInfo;
@@ -192,18 +193,20 @@ namespace Athena
 	{
 		switch (format)
 		{
-		case TextureFormat::RGB8:			 return 3 * 1;
-		case TextureFormat::RGBA8:			 return 4 * 1;
-		case TextureFormat::RG16F:			 return 2 * 2;
-		case TextureFormat::R11G11B10F:		 return 4;
-		case TextureFormat::RGB16F:			 return 3 * 2;
-		case TextureFormat::RGB32F:			 return 3 * 4;
-		case TextureFormat::RGBA16F:		 return 4 * 2;
-		case TextureFormat::RGBA32F:		 return 4 * 4;
+		case TextureFormat::RGB8:			   return 3 * 1;
+		case TextureFormat::RGB8_SRGB:		   return 3 * 1;
+		case TextureFormat::RGBA8:			   return 4 * 1;
+		case TextureFormat::RGBA8_SRGB:		   return 4 * 1;
+		case TextureFormat::RG16F:			   return 2 * 2;
+		case TextureFormat::R11G11B10F:		   return 4;
+		case TextureFormat::RGB16F:			   return 3 * 2;
+		case TextureFormat::RGB32F:			   return 3 * 4;
+		case TextureFormat::RGBA16F:		   return 4 * 2;
+		case TextureFormat::RGBA32F:		   return 4 * 4;
 			// TODO: Verify
-		case TextureFormat::DEPTH16:		 return 2;	
-		case TextureFormat::DEPTH24STENCIL8: return 4;
-		case TextureFormat::DEPTH32F:		 return 4;
+		case TextureFormat::DEPTH16:		   return 2;	
+		case TextureFormat::DEPTH24STENCIL8:   return 4;
+		case TextureFormat::DEPTH32F:		   return 4;
 		}
 
 		ATN_CORE_ASSERT(false);

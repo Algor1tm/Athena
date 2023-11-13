@@ -21,6 +21,10 @@ namespace Athena
 		virtual void Begin() = 0;
 		virtual void End() = 0;
 
+		Ref<Framebuffer> GetOutput() const { return m_Info.Output; }
+		Ref<Texture2D> GetOutput(uint32 attachmentIndex) const { return m_Info.Output->GetColorAttachment(); }
+		Ref<Texture2D> GetDepthOutput() const { return m_Info.Output->GetDepthAttachment(); }
+
 		const RenderPassCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:

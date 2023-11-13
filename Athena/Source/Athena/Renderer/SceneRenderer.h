@@ -11,6 +11,7 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Light.h"
+#include "Pipeline.h"
 
 #include "Athena/Math/Matrix.h"
 
@@ -152,7 +153,7 @@ namespace Athena
 	struct SceneRendererData
 	{
 		Ref<RenderPass> GeometryPass;
-		Ref<Material> GeometryStaticMaterial;
+		Ref<Pipeline> StaticGeometryPipeline;
 
 		CameraUBO CameraData;
 		Ref<UniformBuffer> CameraUBO;

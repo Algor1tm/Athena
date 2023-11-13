@@ -6,6 +6,7 @@
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 
 
 namespace Athena
@@ -94,6 +95,26 @@ namespace Athena
 
 				Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
 			}
+		});
+	}
+
+	void VulkanRenderer::RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	{
+		Renderer::Submit([mesh, material]()
+		{
+			// Push constants
+			//material->RT_UpdateForRendering();
+
+			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
+
+			Ref<VulkanVertexBuffer> vkVertexBuffer = mesh.As<VulkanVertexBuffer>();
+			VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
+
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+			vkCmdBindIndexBuffer(commandBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+			vkCmdDrawIndexed(commandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
 		});
 	}
 

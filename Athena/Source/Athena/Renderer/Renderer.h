@@ -5,6 +5,7 @@
 #include "Athena/Renderer/CommandQueue.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Material.h"
 
 
 namespace Athena
@@ -68,36 +69,6 @@ namespace Athena
 		MAX_SKYBOX_MAP_LOD = 8,
 	};
 
-	enum TextureBinder
-	{
-		ALBEDO_MAP = 0,
-		NORMAL_MAP = 1,
-		ROUGHNESS_MAP = 2,
-		METALNESS_MAP = 3,
-		AMBIENT_OCCLUSION_MAP = 4,
-
-		ENVIRONMENT_MAP = 5,
-		IRRADIANCE_MAP = 6,
-		BRDF_LUT = 7,
-
-		SHADOW_MAP = 8,
-		PCF_SAMPLER = 9
-	};
-
-	enum BufferBinder
-	{
-		RENDERER2D_CAMERA_DATA = 0,
-		CAMERA_DATA = 1,
-		SCENE_DATA = 2,
-		ENVIRONMENT_MAP_DATA = 3,
-		ENTITY_DATA = 4,
-		MATERIAL_DATA = 5,
-		SHADOWS_DATA = 6,
-		LIGHT_DATA = 7,
-		BONES_DATA = 8,
-		BLOOM_DATA = 9
-	};
-
 	struct StaticVertex
 	{
 		Vector3 Position;
@@ -143,7 +114,6 @@ namespace Athena
 		static void Submit(FuncT&& func)
 		{
 			GetRenderCommandQueue().Submit(std::forward<FuncT>(func));
-			//func();
 		}
 
 		template <typename FuncT>
@@ -155,6 +125,8 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 		static void WaitAndRender();
+
+		static void RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
 
 		static void BlitToScreen(const Ref<Texture2D>& texture);
 

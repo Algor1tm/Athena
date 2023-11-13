@@ -8,27 +8,6 @@
 
 namespace Athena
 {
-	enum class CullFace
-	{
-		NONE, BACK, FRONT
-	};
-
-	enum class CullDirection
-	{
-		CLOCKWISE, COUNTER_CLOCKWISE
-	};
-
-	enum class DepthFunc
-	{
-		NONE, LESS, LEQUAL
-	};
-
-	enum class BlendFunc
-	{
-		NONE, ONE_MINUS_SRC_ALPHA, 
-	};
-
-
 	class ATHENA_API RendererAPI : public RefCounted
 	{
 	public:
@@ -40,6 +19,8 @@ namespace Athena
 
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
+
+		virtual void RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) = 0;
 
 		virtual void BlitToScreen(const Ref<Texture2D>& texture) = 0;
 		virtual void WaitDeviceIdle() = 0;

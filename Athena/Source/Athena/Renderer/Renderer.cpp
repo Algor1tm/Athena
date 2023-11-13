@@ -171,6 +171,11 @@ namespace Athena
 		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
+	void Renderer::RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	{
+		s_Data.RendererAPI->RenderMeshWithMaterial(mesh, material);
+	}
+
 	void Renderer::BlitToScreen(const Ref<Texture2D>& texture)
 	{
 		s_Data.RendererAPI->BlitToScreen(texture);

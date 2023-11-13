@@ -37,6 +37,9 @@ namespace Athena
 		virtual const Ref<Texture2D>& GetColorAttachment(uint32 index = 0) const = 0;
 		virtual const Ref<Texture2D>& GetDepthAttachment() const = 0;
 
+		virtual uint32 GetColorAttachmentCount() = 0;
+		virtual bool HasDepthAttachment() = 0;
+
 		const FramebufferCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:

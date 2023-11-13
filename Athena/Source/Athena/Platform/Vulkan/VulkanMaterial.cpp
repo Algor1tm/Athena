@@ -112,7 +112,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanMaterial::RT_UpdateForRendering()
+	void VulkanMaterial::RT_Bind()
 	{
 		vkCmdBindDescriptorSets(
 			VulkanContext::GetActiveCommandBuffer(), 

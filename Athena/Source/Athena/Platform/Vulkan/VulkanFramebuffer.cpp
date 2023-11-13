@@ -95,6 +95,19 @@ namespace Athena
 		return m_DepthAttachmentSet[Renderer::GetCurrentFrameIndex()];
 	}
 
+	uint32 VulkanFramebuffer::GetColorAttachmentCount()
+	{
+		if (m_ColorAttachmentsSet.size() == 0)
+			return 0;
+
+		return m_ColorAttachmentsSet[0].size();
+	}
+
+	bool VulkanFramebuffer::HasDepthAttachment()
+	{
+		return m_DepthAttachmentSet.size() != 0;
+	}
+
 	VkFramebuffer VulkanFramebuffer::GetVulkanFramebuffer() const 
 	{
 		return m_VulkanFramebufferSet[Renderer::GetCurrentFrameIndex()]; 

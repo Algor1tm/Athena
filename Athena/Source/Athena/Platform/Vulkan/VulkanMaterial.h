@@ -15,7 +15,7 @@ namespace Athena
 		~VulkanMaterial();
 
 		virtual void Set(std::string_view name, const Ref<ShaderResource>& resource) override;
-		virtual void RT_UpdateForRendering() override;
+		virtual void RT_Bind() override;
 
 		VkDescriptorSetLayout GetDescriptorSetLayout() { return m_DescriptorSetLayout; }
 		VkPipelineLayout GetPipelineLayout() { return m_PipelineLayout; }

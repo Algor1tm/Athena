@@ -13,11 +13,8 @@ namespace Athena
 			if (Texture::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-			if (Texture::IsDepthFormat(format))
-				return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-
-			if (Texture::IsStencilFormat(format))
-				return VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+			if (Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format))
+				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			ATN_CORE_ASSERT(false);
 			return (VkImageLayout)0;

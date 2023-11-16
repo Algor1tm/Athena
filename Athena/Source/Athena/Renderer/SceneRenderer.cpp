@@ -139,7 +139,7 @@ namespace Athena
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return m_Data->GeometryPass->GetOutput()->GetColorAttachment(0);
+		return m_Data->GeometryPass->GetOutput(0);
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)

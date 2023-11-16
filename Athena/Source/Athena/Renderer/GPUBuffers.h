@@ -8,7 +8,7 @@ namespace Athena
 {
 	enum class ShaderDataType : uint8
 	{
-		None = 0, Float, Float2, Float3, Float4, Int, Int2, Int3, Int4, Bool, Mat3, Mat4
+		Unknown = 0, Float, Float2, Float3, Float4, Int, Int2, Int3, Int4, Bool, Mat3, Mat4
 	};
 
 	constexpr uint32 ShaderDataTypeSize(ShaderDataType type)

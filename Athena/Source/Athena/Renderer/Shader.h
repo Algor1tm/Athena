@@ -16,6 +16,20 @@ namespace Athena
 		COMPUTE_STAGE  = BIT(4)
 	};
 
+	struct StructMemberReflectionData
+	{
+		ShaderDataType Type;	// may be Unknown
+		uint32 Size;
+		uint32 Offset;
+	};
+
+	struct PushConstantReflectionData
+	{
+		uint32 Size;
+		std::unordered_map<String, StructMemberReflectionData> Members;
+		ShaderStage StageFlags;
+	};
+
 	struct BufferReflectionData
 	{
 		uint64 Size;
@@ -29,6 +43,7 @@ namespace Athena
 		VertexBufferLayout VertexBufferLayout;
 
 		std::unordered_map<String, BufferReflectionData> UniformBuffers;
+		PushConstantReflectionData PushConstant;
 	};
 
 	class ATHENA_API Shader : public RefCounted

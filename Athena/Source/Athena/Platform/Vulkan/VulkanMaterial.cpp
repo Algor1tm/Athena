@@ -72,13 +72,28 @@ namespace Athena
 			m_DescriptorSets.resize(Renderer::GetFramesInFlight());
 			VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets.data()));
 
-
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfo.setLayoutCount = 1;
 			pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-			pipelineLayoutInfo.pushConstantRangeCount = 0;
-			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+			VkPushConstantRange range = {};
+			if (m_Shader->GetReflectionData().PushConstant.Size != 0)
+			{
+				const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
+
+				range.offset = 0;
+				range.size = pushConstant.Size;
+				range.stageFlags = VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags);
+
+				pipelineLayoutInfo.pushConstantRangeCount = 1;
+				pipelineLayoutInfo.pPushConstantRanges = &range;
+			}
+			else
+			{
+				pipelineLayoutInfo.pushConstantRangeCount = 0;
+				pipelineLayoutInfo.pPushConstantRanges = nullptr;
+			}
 
 			VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 		});

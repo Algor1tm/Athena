@@ -69,7 +69,7 @@ namespace Athena
 				case spirv_cross::SPIRType::BaseType::Int: return ShaderDataType::Int;
 				case spirv_cross::SPIRType::BaseType::Float: return ShaderDataType::Float;
 				case spirv_cross::SPIRType::BaseType::Boolean: return ShaderDataType::Bool;
-				default: return ShaderDataType::None;
+				default: return ShaderDataType::Unknown;
 				}
 			}
 
@@ -85,7 +85,7 @@ namespace Athena
 					case 2: return ShaderDataType::Int2;
 					case 3: return ShaderDataType::Int3;
 					case 4: return ShaderDataType::Int4;
-					default: return ShaderDataType::None;
+					default: return ShaderDataType::Unknown;
 					}
 				}
 				case spirv_cross::SPIRType::BaseType::Float:
@@ -95,10 +95,10 @@ namespace Athena
 					case 2: return ShaderDataType::Float2;
 					case 3: return ShaderDataType::Float3;
 					case 4: return ShaderDataType::Float4;
-					default: return ShaderDataType::None;
+					default: return ShaderDataType::Unknown;
 					}
 				}
-				default: return ShaderDataType::None;
+				default: return ShaderDataType::Unknown;
 				}
 			}
 
@@ -109,11 +109,11 @@ namespace Athena
 				{
 				case 3: return ShaderDataType::Mat3;
 				case 4: return ShaderDataType::Mat4;
-				default: return ShaderDataType::None;
+				default: return ShaderDataType::Unknown;
 				}
 			}
 
-			return ShaderDataType::None;
+			return ShaderDataType::Unknown;
 		}
 	}
 
@@ -206,6 +206,7 @@ namespace Athena
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
 		options.SetSourceLanguage(shaderc_source_language_hlsl);
+		options.SetHlslOffsets(true);
 		options.SetInvertY(true);
 		options.SetGenerateDebugInfo();
 		options.SetIncluder(std::make_unique<FileSystemIncluder>());
@@ -368,27 +369,21 @@ namespace Athena
 	ShaderReflectionData ShaderCompiler::Reflect()
 	{
 		ShaderReflectionData result;
+		result.PushConstant.Size = 0;
 
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 		{
 			spirv_cross::Compiler compiler(src);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-			ATN_CORE_TRACE("Shader Reflect - {} {}", Utils::ShaderStageToString(stage), m_Name);
-			ATN_CORE_TRACE("    {} uniform buffers", resources.uniform_buffers.size());
-
 			if (stage == ShaderStage::VERTEX_STAGE)
 			{
-				ATN_CORE_TRACE("Vertex buffer layout:");
-
 				std::vector<VertexBufferElement> elements;
-
+				elements.reserve(resources.stage_inputs.size());
 				for (const auto& resource : resources.stage_inputs)
 				{
-					ATN_CORE_TRACE("  {}", resource.name);
-
-					auto elemType = Utils::SprivTypeToShaderDataType(compiler.get_type(resource.type_id));
-					ATN_CORE_ASSERT(elemType != ShaderDataType::None);
+					ShaderDataType elemType = Utils::SprivTypeToShaderDataType(compiler.get_type(resource.type_id));
+					ATN_CORE_ASSERT(elemType != ShaderDataType::Unknown);
 
 					elements.push_back({ elemType, resource.name });
 				}
@@ -396,7 +391,45 @@ namespace Athena
 				result.VertexBufferLayout = elements;
 			}
 
-			ATN_CORE_TRACE("Uniform buffers:");
+			if (result.PushConstant.Size != 0)
+			{
+				result.PushConstant.StageFlags = ShaderStage(result.PushConstant.StageFlags | stage);
+			}
+			else if(resources.push_constant_buffers.size() > 0)
+			{
+				spirv_cross::Resource resource = resources.push_constant_buffers[0];
+
+				const auto& bufferType = compiler.get_type(resource.base_type_id);
+				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
+				int memberCount = bufferType.member_types.size();
+
+				ATN_CORE_ASSERT(bufferSize <= 128, "Push constant block is bigger than 128 bytes!");
+
+				result.PushConstant.Size = bufferSize;
+				result.PushConstant.Members.reserve(memberCount);
+				result.PushConstant.StageFlags = stage;
+
+				uint32 memberOffset = 0;
+
+				for (int i = 0; i < memberCount; ++i)
+				{
+					String name = compiler.get_member_name(resource.base_type_id, i);
+					size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
+
+					const auto& spirvType = compiler.get_type(compiler.get_type(resource.base_type_id).member_types[i]);
+					ShaderDataType elemType = Utils::SprivTypeToShaderDataType(spirvType);
+
+					StructMemberReflectionData memberData;
+					memberData.Size = size;
+					memberData.Offset = memberOffset;
+					memberData.Type = elemType;
+
+					result.PushConstant.Members[name] = memberData;
+
+					memberOffset += size;
+				}
+			}
+
 			for (const auto& resource : resources.uniform_buffers)
 			{
 				const auto& bufferType = compiler.get_type(resource.base_type_id);
@@ -405,20 +438,6 @@ namespace Athena
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
 				int memberCount = bufferType.member_types.size();
-
-				ATN_CORE_TRACE("  {}", resource.name);
-				ATN_CORE_TRACE("\tBuffer size = {}", bufferSize);
-				ATN_CORE_TRACE("\tBinding = {}", binding);
-				ATN_CORE_TRACE("\tSet = {}", set);
-				ATN_CORE_TRACE("\tMembers = {}", memberCount);
-
-				for (int i = 0; i < memberCount; ++i)
-				{
-					String name = compiler.get_member_name(resource.base_type_id, i);
-					size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
-					ATN_CORE_TRACE("\t  Name = {}", name);
-					ATN_CORE_TRACE("\t  Size = {}", size);
-				}
 
 				if (result.UniformBuffers.contains(resource.name))
 				{
@@ -436,6 +455,22 @@ namespace Athena
 					result.UniformBuffers[resource.name] = bufferData;
 				}
 			}
+
+			ATN_CORE_TRACE("");
+			ATN_CORE_INFO("Shader Reflect - {} '{}'", Utils::ShaderStageToString(stage), m_Name);
+
+			if (stage == ShaderStage::VERTEX_STAGE)
+			{
+				ATN_CORE_TRACE("  vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
+				for (const auto& elem : result.VertexBufferLayout)
+					ATN_CORE_TRACE("\t input {}: {} bytes", elem.Name, elem.Size);
+			}
+
+			ATN_CORE_TRACE("  push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
+
+			ATN_CORE_TRACE("  uniform buffers: {}", result.UniformBuffers.size());
+			for (const auto& [name, buffer] : result.UniformBuffers)
+				ATN_CORE_TRACE("\t buffer {}: {} bytes", name, buffer.Size);
 		}
 
 		return result;

@@ -18,13 +18,14 @@ namespace Athena
 
 	struct StructMemberReflectionData
 	{
-		ShaderDataType Type;	// may be Unknown
+		ShaderDataType Type;	// can be Unknown
 		uint32 Size;
 		uint32 Offset;
 	};
 
 	struct PushConstantReflectionData
 	{
+		bool Enabled;
 		uint32 Size;
 		std::unordered_map<String, StructMemberReflectionData> Members;
 		ShaderStage StageFlags;
@@ -54,7 +55,7 @@ namespace Athena
 
 		virtual ~Shader() = default;
 
-		virtual const ShaderReflectionData& GetReflectionData() = 0;
+		const ShaderReflectionData& GetReflectionData() { return m_ReflectionData; };
 
 		bool IsCompiled() const { return m_IsCompiled; }
 		virtual void Reload() = 0;
@@ -65,6 +66,7 @@ namespace Athena
 		String m_Name;
 		FilePath m_FilePath;
 		bool m_IsCompiled;
+		ShaderReflectionData m_ReflectionData;
 	};
 
 	class ATHENA_API ShaderPack : public RefCounted

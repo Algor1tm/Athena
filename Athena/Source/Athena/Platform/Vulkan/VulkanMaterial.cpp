@@ -31,6 +31,7 @@ namespace Athena
 	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader)
 	{
 		m_Shader = shader;
+		memset(m_PushConstantBuffer, 0, sizeof(m_PushConstantBuffer));
 
 		Renderer::Submit([this]()
 		{
@@ -78,10 +79,10 @@ namespace Athena
 			pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
 
 			VkPushConstantRange range = {};
-			if (m_Shader->GetReflectionData().PushConstant.Size != 0)
-			{
-				const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
+			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
 
+			if (pushConstant.Enabled)
+			{
 				range.offset = 0;
 				range.size = pushConstant.Size;
 				range.stageFlags = VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags);
@@ -122,9 +123,26 @@ namespace Athena
 
 			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
 			{
-				UpdateDescriptorSet(m_ResourcesTable.at(name), i);
+				RT_UpdateDescriptorSet(m_ResourcesTable.at(name), i);
 			}
 		});
+	}
+
+	void VulkanMaterial::Set(std::string_view name, const Matrix4& mat4)
+	{
+		const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+
+		String nameStr = String(name);
+		if (!pushConstantData.Members.contains(nameStr))
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}'", name);
+			return;
+		}
+
+		const auto& memberData = pushConstantData.Members.at(nameStr);
+		ATN_CORE_ASSERT(memberData.Size == sizeof(mat4));
+
+		memcpy(&m_PushConstantBuffer[memberData.Offset], mat4.Data(), memberData.Size);
 	}
 
 	void VulkanMaterial::RT_Bind()
@@ -138,7 +156,7 @@ namespace Athena
 			0, 0);
 	}
 
-	void VulkanMaterial::UpdateDescriptorSet(const ResourceDescription& resourceDesc, uint32 frameIndex)
+	void VulkanMaterial::RT_UpdateDescriptorSet(const ResourceDescription& resourceDesc, uint32 frameIndex)
 	{
 		switch (resourceDesc.Resource->GetResourceType())
 		{
@@ -164,6 +182,20 @@ namespace Athena
 
 			vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
 		}
+		}
+	}
+
+	void VulkanMaterial::RT_UpdateForRendering()
+	{
+		if (m_Shader->GetReflectionData().PushConstant.Enabled)
+		{
+			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
+			vkCmdPushConstants(VulkanContext::GetActiveCommandBuffer(), 
+				m_PipelineLayout, 
+				VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags),
+				0,
+				pushConstant.Size,
+				m_PushConstantBuffer);
 		}
 	}
 }

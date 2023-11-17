@@ -129,7 +129,10 @@ namespace Athena
 		{
 			m_Data->StaticGeometryPipeline->Bind();
 
-			Renderer::RenderMeshWithMaterial(s_VertexBuffer, m_Data->StaticGeometryPipeline->GetInfo().Material);
+			Ref<Material> material = m_Data->StaticGeometryPipeline->GetInfo().Material;
+			material->Set("u_Transform", Math::TranslateMatrix(Vector3{1, 0, 0}));
+
+			Renderer::RenderMeshWithMaterial(s_VertexBuffer, material);
 		}
 		m_Data->GeometryPass->End();
 

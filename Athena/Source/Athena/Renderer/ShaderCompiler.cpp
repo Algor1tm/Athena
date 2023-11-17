@@ -473,6 +473,8 @@ namespace Athena
 				ATN_CORE_TRACE("\t buffer {}: {} bytes", name, buffer.Size);
 		}
 
+		result.PushConstant.Enabled = result.PushConstant.Size != 0;
+
 		return result;
 	}
 }

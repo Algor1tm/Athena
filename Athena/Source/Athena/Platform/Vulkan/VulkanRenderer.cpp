@@ -102,8 +102,7 @@ namespace Athena
 	{
 		Renderer::Submit([mesh, material]()
 		{
-			// Push constants
-			//material->RT_UpdateForRendering();
+			material->RT_UpdateForRendering();
 
 			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 

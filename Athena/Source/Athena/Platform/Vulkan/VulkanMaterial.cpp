@@ -130,23 +130,26 @@ namespace Athena
 
 	void VulkanMaterial::Set(std::string_view name, const Matrix4& mat4)
 	{
-		const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
-
-		String nameStr = String(name);
-		if (!pushConstantData.Members.contains(nameStr))
+		Renderer::Submit([this, name, mat4]()
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (could not find member with that name)", name);
-			return;
-		}
+			const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
 
-		const auto& memberData = pushConstantData.Members.at(nameStr);
-		if (memberData.Size == sizeof(mat4))
-		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (size is not matching)");
-			return;
-		}
+			String nameStr = String(name);
+			if (!pushConstantData.Members.contains(nameStr))
+			{
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (could not find member with that name)", name);
+				return;
+			}
 
-		memcpy(&m_PushConstantBuffer[memberData.Offset], mat4.Data(), memberData.Size);
+			const auto& memberData = pushConstantData.Members.at(nameStr);
+			if (memberData.Size != sizeof(mat4))
+			{
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (size is not matching: given - {}, expected - {})", name, memberData.Size, sizeof(mat4));
+				return;
+			}
+
+			memcpy(&m_PushConstantBuffer[memberData.Offset], mat4.Data(), memberData.Size);
+		});
 	}
 
 	void VulkanMaterial::RT_Bind()
@@ -193,6 +196,9 @@ namespace Athena
 	{
 		if (m_Shader->GetReflectionData().PushConstant.Enabled)
 		{
+			Matrix4* test = reinterpret_cast<Matrix4*>(&m_PushConstantBuffer);
+			Matrix4 testMatrix = *test;
+
 			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
 			vkCmdPushConstants(VulkanContext::GetActiveCommandBuffer(), 
 				m_PipelineLayout, 

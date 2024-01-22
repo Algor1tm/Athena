@@ -136,7 +136,6 @@ namespace Athena
 			{
 				material->Set("u_Transform", drawCall.Transform);
 				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, material);
-
 			}
 		}
 		m_Data->GeometryPass->End();

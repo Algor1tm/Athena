@@ -52,6 +52,7 @@ Fragment FSMain(Interpolators input)
 {
     Fragment output;
     
-    output.Color = float4(input.TexCoord, 0.5, 1.0);
+    input.Normal = input.Normal * 0.5 + 0.5;
+    output.Color = float4(input.Normal, 1.0);
     return output;
 }

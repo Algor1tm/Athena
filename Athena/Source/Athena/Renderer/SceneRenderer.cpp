@@ -6,23 +6,8 @@
 #include "Athena/Renderer/Renderer.h"
 
 
-// TEMPORARY
-#include "Athena/Core/Application.h"
-#include "Athena/Platform/Vulkan/VulkanShader.h"
-#include "Athena/Platform/Vulkan/VulkanMaterial.h"
-#include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
-#include "Athena/Platform/Vulkan/VulkanRenderPass.h"
-#include "Athena/Platform/Vulkan/VulkanFramebuffer.h"
-#include <vulkan/vulkan.h>
-
-
 namespace Athena
 {
-	static Ref<VertexBuffer> s_VertexBuffer;
-
 	Ref<SceneRenderer> SceneRenderer::Create()
 	{
 		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create();
@@ -39,7 +24,7 @@ namespace Athena
 		const uint32 maxPipelineQueries = 1;
 		m_Data->Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
-		m_Data->CameraUBO = UniformBuffer::Create(sizeof(CameraUBO));
+		m_Data->CameraUBO = UniformBuffer::Create(sizeof(CameraData));
 
 		// Geometry Pass
 		{
@@ -71,73 +56,11 @@ namespace Athena
 
 			pipelineInfo.Material->Set("u_CameraData", m_Data->CameraUBO);
 		}
-
-
-		{
-			struct TVertex
-			{
-				Vector2 Position;
-				LinearColor Color;
-			};
-
-			const TVertex vertices[] = {
-				{ { -0.5f, -0.5f }, { 1.f, 0.f, 0.f, 1.f } },
-				{ {  0.5f, -0.5f }, { 0.f, 1.f, 0.f, 0.f } },
-				{ {  0.5f,  0.5f }, { 0.f, 1.f, 0.f, 1.f } },
-				{ { -0.5f,  0.5f }, { 1.f, 1.f, 1.f, 1.f } }
-			};
-
-			const uint32 indices[] = {
-				0, 1, 2, 2, 3, 0
-			};
-
-			VertexBufferCreateInfo info;
-			info.VerticesData = (void*)vertices;
-			info.VerticesSize = sizeof(vertices);
-			info.IndicesData = (void*)indices;
-			info.IndicesCount = std::size(indices);
-			info.Usage = VertexBufferUsage::STATIC;
-
-			s_VertexBuffer = VertexBuffer::Create(info);
-		}
 	}
 
 	void SceneRenderer::Shutdown()
 	{
-		s_VertexBuffer.Release();
 		delete m_Data;
-	}
-
-	// TEMPORARY
-	void SceneRenderer::Render(const CameraInfo& cameraInfo)
-	{
-		m_Data->Profiler->Reset();
-
-		m_Data->Profiler->BeginPipelineStatsQuery();
-		m_Data->Profiler->BeginTimeQuery();
-
-		m_Data->CameraData.ViewMatrix = cameraInfo.ViewMatrix;
-		m_Data->CameraData.ProjectionMatrix = cameraInfo.ProjectionMatrix;
-
-		// Update Uniform buffer
-		Renderer::Submit([this]()
-		{
-			m_Data->CameraUBO->RT_SetData(&m_Data->CameraData, sizeof(CameraUBO));
-		});
-
-		m_Data->GeometryPass->Begin();
-		{
-			m_Data->StaticGeometryPipeline->Bind();
-
-			Ref<Material> material = m_Data->StaticGeometryPipeline->GetInfo().Material;
-			material->Set("u_Transform", Math::TranslateMatrix(Vector3{1, 0, 0}));
-
-			Renderer::RenderMeshWithMaterial(s_VertexBuffer, material);
-		}
-		m_Data->GeometryPass->End();
-
-		m_Data->Statistics.GeometryPass = m_Data->Profiler->EndTimeQuery();
-		m_Data->Statistics.PipelineStats = m_Data->Profiler->EndPipelineStatsQuery();
 	}
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
@@ -155,31 +78,40 @@ namespace Athena
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
+		m_Data->CameraData.View = cameraInfo.ViewMatrix;
+		m_Data->CameraData.Projection = cameraInfo.ProjectionMatrix;
 
+		Renderer::Submit([this]()
+		{
+			m_Data->CameraUBO->RT_SetData(&m_Data->CameraData, sizeof(CameraData));
+		});
 	}
 
 	void SceneRenderer::EndScene()
 	{
+		m_Data->Profiler->Reset();
+		m_Data->Profiler->BeginPipelineStatsQuery();
 
+		GeometryPass();
+
+		m_Data->Statistics.PipelineStats = m_Data->Profiler->EndPipelineStatsQuery();
+
+		m_Data->StaticGeometryList.clear();
 	}
 
-	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform, int32 entityID)
+	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform)
 	{
-		if (vertexBuffer)
-		{
-			//DrawCallInfo info;
-			//info.VertexBuffer = vertexBuffer;
-			//info.Material = material;
-			//info.Animator = animator;
-			//info.Transform = transform;
-			//info.EntityID = entityID;
-			//
-			//s_Data.MeshList.Push(info);
-		}
-		else
+		if (!vertexBuffer)
 		{
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit nullptr vertexBuffer!");
+			return;
 		}
+
+		DrawCall drawCall;
+		drawCall.VertexBuffer = vertexBuffer;
+		drawCall.Transform = transform;
+
+		m_Data->StaticGeometryList.push_back(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
@@ -189,22 +121,26 @@ namespace Athena
 
 		if (lightEnv.PointLights.size() > ShaderDef::MAX_POINT_LIGHT_COUNT)
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+	}
 
-		//s_Data.LightDataBuffer.DirectionalLightCount = Math::Min(lightEnv.DirectionalLights.size(), (uint64)ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
-		//for (uint32 i = 0; i < s_Data.LightDataBuffer.DirectionalLightCount; ++i)
-		//{
-		//	s_Data.LightDataBuffer.DirectionalLightBuffer[i] = lightEnv.DirectionalLights[i];
-		//}
-		//
-		//s_Data.LightDataBuffer.PointLightCount = Math::Min(lightEnv.PointLights.size(), (uint64)ShaderDef::MAX_POINT_LIGHT_COUNT);
-		//for (uint32 i = 0; i < s_Data.LightDataBuffer.PointLightCount; ++i)
-		//{
-		//	s_Data.LightDataBuffer.PointLightBuffer[i] = lightEnv.PointLights[i];
-		//}
-		//
-		//s_Data.EnvironmentMap = lightEnv.EnvironmentMap;
-		//
-		//s_Data.EnvMapDataBuffer.LOD = lightEnv.EnvironmentMapLOD;
-		//s_Data.EnvMapDataBuffer.Intensity = lightEnv.EnvironmentMapIntensity;
+	void SceneRenderer::GeometryPass()
+	{
+		m_Data->Profiler->BeginTimeQuery();
+
+		m_Data->GeometryPass->Begin();
+		{
+			m_Data->StaticGeometryPipeline->Bind();
+			Ref<Material> material = m_Data->StaticGeometryPipeline->GetInfo().Material;
+
+			for (const auto& drawCall : m_Data->StaticGeometryList)
+			{
+				material->Set("u_Transform", drawCall.Transform);
+				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, material);
+
+			}
+		}
+		m_Data->GeometryPass->End();
+
+		m_Data->Statistics.GeometryPass = m_Data->Profiler->EndTimeQuery();
 	}
 }

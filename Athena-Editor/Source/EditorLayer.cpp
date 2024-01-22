@@ -50,8 +50,8 @@ namespace Athena
 
         m_ViewportRenderer = SceneRenderer::Create();
 
-        //m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
-        m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
+        //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
         EditorResources::Init(m_Config.EditorResources);
 
@@ -60,7 +60,7 @@ namespace Athena
 
         m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
         InitUI();
-#if 0
+#if 1
         OpenScene("Assets/Scenes/Default.atn");
 #endif
     }
@@ -95,40 +95,30 @@ namespace Athena
         if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
             m_EditorCamera->OnUpdate(frameTime);
 
-        CameraInfo cameraInfo;
-        cameraInfo.ViewMatrix = m_EditorCamera->GetViewMatrix();
-        cameraInfo.ProjectionMatrix = m_EditorCamera->GetProjectionMatrix();
-        cameraInfo.NearClip = m_EditorCamera->GetNearClip();
-        cameraInfo.FarClip = m_EditorCamera->GetFarClip();
+        switch (m_EditorCtx->SceneState)
+        {
+        case SceneState::Edit:
+        {
+            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+                m_EditorCamera->OnUpdate(frameTime);
 
-        m_ViewportRenderer->Render(cameraInfo);
+            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, m_ViewportRenderer, *m_EditorCamera);
+            break;
+        }
+        case SceneState::Play:
+        {
+            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime, m_ViewportRenderer);
+            break;
+        }
+        case SceneState::Simulation:
+        {
+            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+                m_EditorCamera->OnUpdate(frameTime);
 
-        //Renderer::ResetStats();
-
-        //switch (m_EditorCtx->SceneState)
-        //{
-        //case SceneState::Edit:
-        //{
-        //    if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-        //        m_EditorCamera->OnUpdate(frameTime);
-
-        //    m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera);
-        //    break;
-        //}
-        //case SceneState::Play:
-        //{
-        //    m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
-        //    break;
-        //}
-        //case SceneState::Simulation:
-        //{
-        //    if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-        //        m_EditorCamera->OnUpdate(frameTime);
-
-        //    m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
-        //    break;
-        //}
-        //}
+            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, m_ViewportRenderer , *m_EditorCamera);
+            break;
+        }
+        }
 
         //RenderOverlay();
     }

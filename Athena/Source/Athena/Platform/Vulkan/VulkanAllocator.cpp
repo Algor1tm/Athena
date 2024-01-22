@@ -69,7 +69,7 @@ namespace Athena
 		allocInfo.flags = flags;
 
 		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
-		ATN_CORE_TRACE_TAG("Vulkan", "Allocating buffer of {} Kb", Utils::BytesToKb(allocation->GetSize()));
+		//ATN_CORE_TRACE_TAG("Vulkan", "Allocating buffer of {} Kb", Utils::BytesToKb(allocation->GetSize()));
 
 		return VulkanBuffer(buffer, allocation);
 	}
@@ -84,20 +84,20 @@ namespace Athena
 		allocInfo.flags = flags;
 
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
-		ATN_CORE_TRACE_TAG("Vulkan", "Allocating image of {} Kb", Utils::BytesToKb(allocation->GetSize()));
+		//ATN_CORE_TRACE_TAG("Vulkan", "Allocating image of {} Kb", Utils::BytesToKb(allocation->GetSize()));
 
 		return VulkanImage(image, allocation);
 	}
 
 	void VulkanAllocator::DestroyBuffer(VulkanBuffer buffer)
 	{
-		ATN_CORE_TRACE_TAG("Vulkan", "Destroying buffer of {} Kb", Utils::BytesToKb(buffer.GetAllocation()->GetSize()));
+		//ATN_CORE_TRACE_TAG("Vulkan", "Destroying buffer of {} Kb", Utils::BytesToKb(buffer.GetAllocation()->GetSize()));
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
 
 	void VulkanAllocator::DestroyImage(VulkanImage image)
 	{
-		ATN_CORE_TRACE_TAG("Vulkan", "Destroying image of {} Kb", Utils::BytesToKb(image.GetAllocation()->GetSize()));
+		//ATN_CORE_TRACE_TAG("Vulkan", "Destroying image of {} Kb", Utils::BytesToKb(image.GetAllocation()->GetSize()));
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
 

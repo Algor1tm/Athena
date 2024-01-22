@@ -59,7 +59,7 @@ namespace Athena
 			return result;
 		}
 
-		TransformComponent& UpdateFromWorldTransforms(const TransformComponent& newWorldTransform, const TransformComponent& oldWorldTransform)
+		TransformComponent& ConvertToLocalTransform(const TransformComponent& newWorldTransform, const TransformComponent& oldWorldTransform)
 		{
 			TransformComponent inverseOldWorldTransform = oldWorldTransform.Inverse();
 

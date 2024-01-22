@@ -135,12 +135,16 @@ namespace Athena
 		String nameStr = String(name);
 		if (!pushConstantData.Members.contains(nameStr))
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}'", name);
+			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (could not find member with that name)", name);
 			return;
 		}
 
 		const auto& memberData = pushConstantData.Members.at(nameStr);
-		ATN_CORE_ASSERT(memberData.Size == sizeof(mat4));
+		if (memberData.Size == sizeof(mat4))
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (size is not matching)");
+			return;
+		}
 
 		memcpy(&m_PushConstantBuffer[memberData.Offset], mat4.Data(), memberData.Size);
 	}

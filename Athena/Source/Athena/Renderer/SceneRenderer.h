@@ -73,12 +73,8 @@ namespace Athena
 
 	struct CameraData
 	{
-		Matrix4 ViewMatrix;
-		Matrix4 ProjectionMatrix;
-		Matrix4 RotationViewMatrix;
-		Vector4 Position;
-		float NearClip;
-		float FarClip;
+		Matrix4 View;
+		Matrix4 Projection;
 	};
 
 	struct SceneData
@@ -144,18 +140,20 @@ namespace Athena
 		PipelineStatistics PipelineStats;
 	};
 
-	struct CameraUBO
+	struct DrawCall
 	{
-		Matrix4 ViewMatrix;
-		Matrix4 ProjectionMatrix;
+		Ref<VertexBuffer> VertexBuffer;
+		Matrix4 Transform;
 	};
 
 	struct SceneRendererData
 	{
+		std::vector<DrawCall> StaticGeometryList;
+
 		Ref<RenderPass> GeometryPass;
 		Ref<Pipeline> StaticGeometryPipeline;
 
-		CameraUBO CameraData;
+		CameraData CameraData;
 		Ref<UniformBuffer> CameraUBO;
 
 		Vector2u ViewportSize = { 1, 1 };
@@ -184,8 +182,11 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
-		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity(), int32 entityID = -1);
+		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
+
+	private:
+		void GeometryPass();
 
 	private:
 		SceneRendererData* m_Data = nullptr;

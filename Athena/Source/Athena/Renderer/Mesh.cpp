@@ -187,12 +187,28 @@ namespace Athena
 			}
 		}
 
+		uint32 numFaces = aimesh->mNumFaces;
+		aiFace* faces = aimesh->mFaces;
+
+		std::vector<uint32> indices(numFaces * 3);
+
+		uint32 index = 0;
+		for (uint32 i = 0; i < numFaces; i++)
+		{
+			if (faces[i].mNumIndices != 3)
+				break;
+
+			indices[index++] = faces[i].mIndices[0];
+			indices[index++] = faces[i].mIndices[1];
+			indices[index++] = faces[i].mIndices[2];
+		}
+
 		VertexBufferCreateInfo vertexBufferInfo;
-		//vertexBufferInfo.Data = vertices.data();
-		//vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
-		//vertexBufferInfo.Layout = Renderer::GetStaticVertexLayout();
-		//vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
-		//vertexBufferInfo.Usage = BufferUsage::STATIC;
+		vertexBufferInfo.VerticesData = vertices.data();
+		vertexBufferInfo.VerticesSize = vertices.size() * sizeof(StaticVertex);
+		vertexBufferInfo.IndicesData = indices.data();
+		vertexBufferInfo.IndicesCount = indices.size();
+		vertexBufferInfo.Usage = VertexBufferUsage::STATIC;
 
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
@@ -285,11 +301,12 @@ namespace Athena
 		aabb.Extend(AABB(ConvertaiVector3D(aimesh->mAABB.mMin) * localTransform, ConvertaiVector3D(aimesh->mAABB.mMax) * localTransform));
 
 		subMesh.Name = aimesh->mName.C_Str();
-		if(skeleton)
-			subMesh.VertexBuffer = LoadAnimVertexBuffer(aimesh, localTransform, skeleton);
-		else
-			subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
+		//if(skeleton)
+		//	subMesh.VertexBuffer = LoadAnimVertexBuffer(aimesh, localTransform, skeleton);
+		//else
+		//	subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
+		subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 		//subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path)->GetName();
 
 		return subMesh;

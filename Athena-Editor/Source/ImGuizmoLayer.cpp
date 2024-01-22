@@ -1,11 +1,8 @@
 #include "ImGuizmoLayer.h"
 
 #include "Athena/Renderer/EditorCamera.h"
-
 #include "Athena/Input/Input.h"
-
 #include "Athena/Scene/Components.h"
-
 #include "Panels/ViewportPanel.h"
 
 
@@ -27,7 +24,8 @@ namespace Athena
             ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
-            const Matrix4& cameraProjection = m_Camera->GetProjectionMatrix();
+            Matrix4 cameraProjection = m_Camera->GetProjectionMatrix();
+            cameraProjection[1][1] = -cameraProjection[1][1];   // ImGuizmo uses OpenGl coordinate system
             const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
             TransformComponent worldTransform = m_EditorCtx->SelectedEntity.GetWorldTransform();
@@ -54,7 +52,7 @@ namespace Athena
                 newWorldTransform.Rotation = rotation;
                 newWorldTransform.Scale = scale;
 
-                m_EditorCtx->SelectedEntity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, worldTransform);
+               m_EditorCtx->SelectedEntity.GetComponent<TransformComponent>().ConvertToLocalTransform(newWorldTransform, worldTransform);
             }
         }
 	}

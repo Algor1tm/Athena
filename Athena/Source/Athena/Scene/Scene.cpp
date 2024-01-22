@@ -528,7 +528,7 @@ namespace Athena
 			eulerAngles.z = body->GetAngle();
 			newWorldTransform.Rotation = Quaternion(eulerAngles);
 
-			entity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, oldWorldTransform);
+			entity.GetComponent<TransformComponent>().ConvertToLocalTransform(newWorldTransform, oldWorldTransform);
 		}
 	}
 
@@ -553,10 +553,7 @@ namespace Athena
 					Ref<Material> material = nullptr;//MaterialManager::Get(subMeshes[i].MaterialName);
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
-					if(animator != nullptr && animator->IsPlaying())
-						renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
-					else
-						renderer->Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
+					renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix());
 				}
 			}
 		}

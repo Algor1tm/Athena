@@ -2,32 +2,11 @@
 
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanShader.h"
 
 
 namespace Athena
 {
-	namespace VulkanUtils 
-	{
-		static VkShaderStageFlags GetShaderStageFlags(ShaderStage stageFlags)
-		{
-			uint64 flags = 0;
-
-			if (stageFlags & ShaderStage::VERTEX_STAGE)
-				flags |= VK_SHADER_STAGE_VERTEX_BIT;
-
-			if (stageFlags & ShaderStage::FRAGMENT_STAGE)
-				flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-
-			if (stageFlags & ShaderStage::GEOMETRY_STAGE)
-				flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-
-			if (stageFlags & ShaderStage::COMPUTE_STAGE)
-				flags |= VK_SHADER_STAGE_COMPUTE_BIT;
-
-			return flags;
-		}
-	}
-
 	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader)
 	{
 		m_Shader = shader;
@@ -35,19 +14,8 @@ namespace Athena
 
 		Renderer::Submit([this]()
 		{
-			std::vector<VkDescriptorSetLayoutBinding> bindings;
-
 			for (const auto& [name, ubo] : m_Shader->GetReflectionData().UniformBuffers)
 			{
-				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-				uboLayoutBinding.binding = ubo.Binding;
-				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = VulkanUtils::GetShaderStageFlags(ubo.StageFlags);
-				uboLayoutBinding.pImmutableSamplers = nullptr;
-
-				bindings.push_back(uboLayoutBinding);
-
 				ResourceDescription resourceDesc;
 				resourceDesc.Resource = nullptr;
 				resourceDesc.Binding = ubo.Binding;
@@ -55,14 +23,8 @@ namespace Athena
 				m_ResourcesTable[name] = resourceDesc;
 			}
 
-			VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = bindings.size();
-			layoutInfo.pBindings = bindings.data();
-
-			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout));
-
-			std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), m_DescriptorSetLayout);
+			Ref<VulkanShader> vkShader = m_Shader.As<VulkanShader>();
+			std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), vkShader->GetDescriptorSetLayout());
 
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -72,41 +34,12 @@ namespace Athena
 
 			m_DescriptorSets.resize(Renderer::GetFramesInFlight());
 			VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets.data()));
-
-			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = 1;
-			pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-
-			VkPushConstantRange range = {};
-			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
-
-			if (pushConstant.Enabled)
-			{
-				range.offset = 0;
-				range.size = pushConstant.Size;
-				range.stageFlags = VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags);
-
-				pipelineLayoutInfo.pushConstantRangeCount = 1;
-				pipelineLayoutInfo.pPushConstantRanges = &range;
-			}
-			else
-			{
-				pipelineLayoutInfo.pushConstantRangeCount = 0;
-				pipelineLayoutInfo.pPushConstantRanges = nullptr;
-			}
-
-			VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 		});
 	}
 
 	VulkanMaterial::~VulkanMaterial()
 	{
-		Renderer::SubmitResourceFree([setLayout = m_DescriptorSetLayout, pipelineLayout = m_PipelineLayout]()
-		{
-			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
-			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
-		});
+
 	}
 
 	void VulkanMaterial::Set(std::string_view name, const Ref<ShaderResource>& resource)
@@ -115,7 +48,7 @@ namespace Athena
 		{
 			if (!m_ResourcesTable.contains(name))
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader resource with name '{}'", name);
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader resource with name '{}' (could not find resource with that name)", name);
 				return;
 			}
 
@@ -142,9 +75,10 @@ namespace Athena
 			}
 
 			const auto& memberData = pushConstantData.Members.at(nameStr);
-			if (memberData.Size != sizeof(mat4))
+			if (memberData.Type != ShaderDataType::Mat4)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (size is not matching: given - {}, expected - {})", name, memberData.Size, sizeof(mat4));
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' \
+					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData.Type), ShaderDataTypeToString(ShaderDataType::Mat4));
 				return;
 			}
 
@@ -157,7 +91,7 @@ namespace Athena
 		vkCmdBindDescriptorSets(
 			VulkanContext::GetActiveCommandBuffer(), 
 			VK_PIPELINE_BIND_POINT_GRAPHICS, 
-			m_PipelineLayout, 
+			m_Shader.As<VulkanShader>()->GetPipelineLayout(),
 			0, 1,
 			&m_DescriptorSets[Renderer::GetCurrentFrameIndex()], 
 			0, 0);
@@ -196,12 +130,9 @@ namespace Athena
 	{
 		if (m_Shader->GetReflectionData().PushConstant.Enabled)
 		{
-			Matrix4* test = reinterpret_cast<Matrix4*>(&m_PushConstantBuffer);
-			Matrix4 testMatrix = *test;
-
 			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
 			vkCmdPushConstants(VulkanContext::GetActiveCommandBuffer(), 
-				m_PipelineLayout, 
+				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
 				VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags),
 				0,
 				pushConstant.Size,

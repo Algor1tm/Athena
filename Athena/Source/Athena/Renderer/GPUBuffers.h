@@ -32,6 +32,27 @@ namespace Athena
 		return 0;
 	}
 
+	constexpr std::string_view ShaderDataTypeToString(ShaderDataType type)
+	{
+		switch (type)
+		{
+		case ShaderDataType::Float:  return "float";
+		case ShaderDataType::Float2: return "float2";
+		case ShaderDataType::Float3: return "float3";
+		case ShaderDataType::Float4: return "float4";
+		case ShaderDataType::Int:    return "int";
+		case ShaderDataType::Int2:   return "int2";
+		case ShaderDataType::Int3:   return "int3";
+		case ShaderDataType::Int4:   return "int4";
+		case ShaderDataType::Bool:   return "bool";
+		case ShaderDataType::Mat3:   return "mat3";
+		case ShaderDataType::Mat4:   return "mat4";
+		}
+
+		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		return "";
+	}
+
 
 	struct VertexBufferElement
 	{

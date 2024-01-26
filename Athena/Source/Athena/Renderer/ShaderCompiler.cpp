@@ -59,7 +59,7 @@ namespace Athena
 			return "";
 		}
 
-		static ShaderDataType SprivTypeToShaderDataType(spirv_cross::SPIRType type)
+		static ShaderDataType SprivTypeToShaderDataType(const spirv_cross::SPIRType& type)
 		{
 			// Scalar
 			if (type.vecsize == 1 && type.columns == 1)

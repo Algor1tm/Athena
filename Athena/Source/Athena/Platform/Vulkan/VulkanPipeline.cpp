@@ -3,7 +3,6 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanRenderPass.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
-#include "Athena/Platform/Vulkan/VulkanMaterial.h"
 
 
 namespace Athena
@@ -202,7 +201,6 @@ namespace Athena
 			colorBlending.blendConstants[3] = 0.0f;
 
 			auto vkShader = m_Info.Material->GetShader().As<VulkanShader>();
-			auto vkMaterial = m_Info.Material.As<VulkanMaterial>();
 
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -216,7 +214,7 @@ namespace Athena
 			pipelineInfo.pDepthStencilState = &depthStencil;
 			pipelineInfo.pColorBlendState = &colorBlending;
 			pipelineInfo.pDynamicState = nullptr;
-			pipelineInfo.layout = vkMaterial->GetPipelineLayout();
+			pipelineInfo.layout = vkShader->GetPipelineLayout();
 			pipelineInfo.renderPass = m_Info.RenderPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;

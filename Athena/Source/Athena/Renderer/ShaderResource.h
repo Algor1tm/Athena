@@ -13,6 +13,7 @@ namespace Athena
 	class ATHENA_API ShaderResource: public RefCounted
 	{
 	public:
+		virtual ~ShaderResource() = default;
 		virtual ShaderResourceType GetResourceType() = 0;
 	};
 }

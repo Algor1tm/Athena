@@ -202,6 +202,25 @@ namespace Athena::VulkanUtils
         return (VkSamplerAddressMode)0;
     }
 
+    static VkShaderStageFlags GetShaderStageFlags(ShaderStage stageFlags)
+    {
+        uint64 flags = 0;
+
+        if (stageFlags & ShaderStage::VERTEX_STAGE)
+            flags |= VK_SHADER_STAGE_VERTEX_BIT;
+
+        if (stageFlags & ShaderStage::FRAGMENT_STAGE)
+            flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+
+        if (stageFlags & ShaderStage::GEOMETRY_STAGE)
+            flags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+
+        if (stageFlags & ShaderStage::COMPUTE_STAGE)
+            flags |= VK_SHADER_STAGE_COMPUTE_BIT;
+
+        return flags;
+    }
+
     inline VkCommandBuffer BeginSingleTimeCommands()
     {
         VkCommandBufferAllocateInfo cmdBufAllocInfo = {};

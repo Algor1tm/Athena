@@ -41,7 +41,9 @@ namespace Athena
 			if (m_IsCompiled)
 				CreateVulkanShaderModulesAndStages(compiler);
 
-			std::vector<VkDescriptorSetLayoutBinding> bindings;
+			// Up to 3 sets
+			std::vector<std::vector<VkDescriptorSetLayoutBinding>> bindings;
+			bindings.resize(3);
 
 			for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
 			{
@@ -52,21 +54,44 @@ namespace Athena
 				uboLayoutBinding.stageFlags = VulkanUtils::GetShaderStageFlags(ubo.StageFlags);
 				uboLayoutBinding.pImmutableSamplers = nullptr;
 
-				bindings.push_back(uboLayoutBinding);
+				bindings[ubo.Set].push_back(uboLayoutBinding);
+			}
+			for (const auto& [name, texture] : m_ReflectionData.SampledTextures)
+			{
+				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+				uboLayoutBinding.binding = texture.Binding;
+				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				uboLayoutBinding.descriptorCount = 1;
+				uboLayoutBinding.stageFlags = VulkanUtils::GetShaderStageFlags(texture.StageFlags);
+				uboLayoutBinding.pImmutableSamplers = nullptr;
+
+				bindings[texture.Set].push_back(uboLayoutBinding);
 			}
 
-			VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			layoutInfo.bindingCount = bindings.size();
-			layoutInfo.pBindings = bindings.data();
+			uint32 validSetsCount = bindings.size();
+			for (auto layoutBindings = bindings.crbegin(); layoutBindings < bindings.crend(); ++layoutBindings)
+			{
+				if ((*layoutBindings).size() == 0)
+					validSetsCount--;
+				else
+					break;
+			}
 
-			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayout));
+			m_DescriptorSetLayouts.resize(validSetsCount);
+			for (uint32 set = 0; set < validSetsCount; ++set)
+			{
+				VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+				layoutInfo.bindingCount = bindings[set].size();
+				layoutInfo.pBindings = bindings[set].data();
 
-			VkDescriptorSetLayout setLayout = m_DescriptorSetLayout;
+				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
+			}
+
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = 1;
-			pipelineLayoutInfo.pSetLayouts = &setLayout;
+			pipelineLayoutInfo.setLayoutCount = m_DescriptorSetLayouts.size();
+			pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
 
 			VkPushConstantRange range = {};
 			const auto& pushConstant = m_ReflectionData.PushConstant;
@@ -115,14 +140,14 @@ namespace Athena
 
 	void VulkanShader::CleanUp()
 	{
-		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules, setLayout = m_DescriptorSetLayout, pipelineLayout = m_PipelineLayout]()
+		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules, setLayouts = m_DescriptorSetLayouts, pipelineLayout = m_PipelineLayout]()
 		{
 			for (const auto& [stage, src] : shaderModules)
-			{
 				vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), nullptr);
-			}
 
-			vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
+			for(const auto& setLayout : setLayouts)
+				vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
+
 			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
 		});
 	}

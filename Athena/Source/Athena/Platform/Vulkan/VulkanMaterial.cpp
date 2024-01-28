@@ -2,6 +2,7 @@
 
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 
 
@@ -20,20 +21,30 @@ namespace Athena
 				resourceDesc.Resource = nullptr;
 				resourceDesc.Binding = ubo.Binding;
 
-				m_ResourcesTable[name] = resourceDesc;
+				m_ResourcesTable[ubo.Set][name] = resourceDesc;
+			}
+			for (const auto& [name, texture] : m_Shader->GetReflectionData().SampledTextures)
+			{
+				ResourceDescription resourceDesc;
+				resourceDesc.Resource = nullptr;
+				resourceDesc.Binding = texture.Binding;
+
+				m_ResourcesTable[texture.Set][name] = resourceDesc;
 			}
 
-			Ref<VulkanShader> vkShader = m_Shader.As<VulkanShader>();
-			std::vector<VkDescriptorSetLayout> layouts(Renderer::GetFramesInFlight(), vkShader->GetDescriptorSetLayout());
-
-			VkDescriptorSetAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = VulkanContext::GetDescriptorPool();
-			allocInfo.descriptorSetCount = Renderer::GetFramesInFlight();
-			allocInfo.pSetLayouts = layouts.data();
-
+			const auto& setLayouts = m_Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
 			m_DescriptorSets.resize(Renderer::GetFramesInFlight());
-			VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets.data()));
+			for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
+			{
+				VkDescriptorSetAllocateInfo allocInfo = {};
+				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				allocInfo.descriptorPool = VulkanContext::GetDescriptorPool();
+				allocInfo.descriptorSetCount = setLayouts.size();
+				allocInfo.pSetLayouts = setLayouts.data();
+
+				m_DescriptorSets[frameIndex].resize(setLayouts.size());
+				VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets[frameIndex].data()));
+			}
 		});
 	}
 
@@ -46,17 +57,66 @@ namespace Athena
 	{
 		Renderer::Submit([this, resource, name]()
 		{
-			if (!m_ResourcesTable.contains(name))
+			bool findResource = false;
+			for (auto& [set, setData] : m_ResourcesTable)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader resource with name '{}' (could not find resource with that name)", name);
-				return;
+				if (!setData.contains(name))
+					continue;
+
+				setData.at(name).Resource = resource;
+				ResourceDescription resourceDesc = setData.at(name);
+
+				for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
+				{
+					VkWriteDescriptorSet descriptorWrite = {};
+					descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					descriptorWrite.dstSet = m_DescriptorSets[frameIndex][set];
+					descriptorWrite.dstBinding = resourceDesc.Binding;
+					descriptorWrite.dstArrayElement = 0;
+					descriptorWrite.descriptorCount = 1;
+
+					switch (resourceDesc.Resource->GetResourceType())
+					{
+					case ShaderResourceType::UniformBuffer:
+					{
+						Ref<VulkanUniformBuffer> ubo = resourceDesc.Resource.As<VulkanUniformBuffer>();
+
+						VkDescriptorBufferInfo bufferInfo = {};
+						bufferInfo.buffer = ubo->GetVulkanBuffer(frameIndex);
+						bufferInfo.offset = 0;
+						bufferInfo.range = ubo->GetSize();
+
+						descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						descriptorWrite.pBufferInfo = &bufferInfo;
+
+						vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+						break;
+					}
+					case ShaderResourceType::SampledTexture:
+					{
+						Ref<VulkanTexture2D> texture = resourceDesc.Resource.As<VulkanTexture2D>();
+
+						VkDescriptorImageInfo imageInfo = {};
+						imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+						imageInfo.imageView = texture->GetVulkanImageView();
+						imageInfo.sampler = texture->GetVulkanSampler();
+
+						descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						descriptorWrite.pImageInfo = &imageInfo;
+
+						vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
+						break;
+					}
+					}
+				}
+
+				findResource = true;
+				break;
 			}
 
-			m_ResourcesTable.at(name).Resource = resource;
-
-			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
+			if (!findResource)
 			{
-				RT_UpdateDescriptorSet(m_ResourcesTable.at(name), i);
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader resource with name '{}' (could not find resource with that name)", name);
 			}
 		});
 	}
@@ -88,41 +148,17 @@ namespace Athena
 
 	void VulkanMaterial::RT_Bind()
 	{
-		vkCmdBindDescriptorSets(
-			VulkanContext::GetActiveCommandBuffer(), 
-			VK_PIPELINE_BIND_POINT_GRAPHICS, 
-			m_Shader.As<VulkanShader>()->GetPipelineLayout(),
-			0, 1,
-			&m_DescriptorSets[Renderer::GetCurrentFrameIndex()], 
-			0, 0);
-	}
+		uint32 setCount = m_DescriptorSets[0].size();
 
-	void VulkanMaterial::RT_UpdateDescriptorSet(const ResourceDescription& resourceDesc, uint32 frameIndex)
-	{
-		switch (resourceDesc.Resource->GetResourceType())
+		if (setCount > 1)
 		{
-		case ShaderResourceType::UniformBuffer:
-		{
-			Ref<VulkanUniformBuffer> ubo = resourceDesc.Resource.As<VulkanUniformBuffer>();
-
-			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = ubo->GetVulkanBuffer(frameIndex);
-			bufferInfo.offset = 0;
-			bufferInfo.range = ubo->GetSize();
-
-			VkWriteDescriptorSet descriptorWrite = {};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = m_DescriptorSets[frameIndex];
-			descriptorWrite.dstBinding = resourceDesc.Binding;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
-			descriptorWrite.pImageInfo = nullptr;
-			descriptorWrite.pTexelBufferView = nullptr;
-
-			vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), 1, &descriptorWrite, 0, nullptr);
-		}
+			vkCmdBindDescriptorSets(
+				VulkanContext::GetActiveCommandBuffer(),
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
+				1, setCount - 1,
+				&m_DescriptorSets[Renderer::GetCurrentFrameIndex()][1],
+				0, 0);
 		}
 	}
 
@@ -137,6 +173,19 @@ namespace Athena
 				0,
 				pushConstant.Size,
 				m_PushConstantBuffer);
+		}
+
+		uint32 setCount = m_DescriptorSets[0].size();
+
+		if (setCount > 0)
+		{
+			vkCmdBindDescriptorSets(
+				VulkanContext::GetActiveCommandBuffer(),
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
+				0, 1,
+				&m_DescriptorSets[Renderer::GetCurrentFrameIndex()][0],
+				0, 0);
 		}
 	}
 }

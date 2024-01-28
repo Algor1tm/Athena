@@ -23,6 +23,7 @@ namespace Athena
 
 		VkImage GetVulkanImage() { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() { return m_ImageView; }
+		VkSampler GetVulkanSampler() { return m_Sampler; }
 
 	private:
 		void UploadData(const void* data, uint32 width, uint32 height);

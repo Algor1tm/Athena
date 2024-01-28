@@ -39,11 +39,19 @@ namespace Athena
 		ShaderStage StageFlags;
 	};
 
+	struct SampledTextureReflectionData
+	{
+		uint32 Binding;
+		uint32 Set;
+		ShaderStage StageFlags;
+	};
+
 	struct ShaderReflectionData
 	{
 		VertexBufferLayout VertexBufferLayout;
 
 		std::unordered_map<String, BufferReflectionData> UniformBuffers;
+		std::unordered_map<String, SampledTextureReflectionData> SampledTextures;
 		PushConstantReflectionData PushConstant;
 	};
 

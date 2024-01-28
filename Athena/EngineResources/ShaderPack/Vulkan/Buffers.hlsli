@@ -5,7 +5,7 @@ struct CameraData
     float4x4 Proj;
 };
 
-cbuffer u_CameraData : register(b1, space0)
+cbuffer u_CameraData : register(b0, space1)
 {
     CameraData u_Camera;
 }

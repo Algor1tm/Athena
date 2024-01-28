@@ -20,7 +20,7 @@ namespace Athena
 		virtual void Reload() override;
 
 		const std::vector<VkPipelineShaderStageCreateInfo>& GetPipelineStages() const { return m_PipelineShaderStages; }
-		VkDescriptorSetLayout GetDescriptorSetLayout() const { return m_DescriptorSetLayout; }
+		std::vector<VkDescriptorSetLayout> GetAllDescriptorSetLayouts() const { return m_DescriptorSetLayouts; }
 		VkPipelineLayout GetPipelineLayout() const { return m_PipelineLayout; }
 
 	private:
@@ -31,7 +31,7 @@ namespace Athena
 	private:
 		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;
 		std::vector<VkPipelineShaderStageCreateInfo> m_PipelineShaderStages;
-		VkDescriptorSetLayout m_DescriptorSetLayout;
+		std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
 		VkPipelineLayout m_PipelineLayout;
 	};
 }

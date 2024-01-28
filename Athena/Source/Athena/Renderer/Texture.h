@@ -1,10 +1,9 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-
 #include "Athena/Math/Vector.h"
-
 #include "Athena/Renderer/Color.h"
+#include "Athena/Renderer/ShaderResource.h"
 
 #include <array>
 
@@ -78,7 +77,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture : public RefCounted
+	class ATHENA_API Texture : public ShaderResource
 	{
 	public:
 		virtual ~Texture() = default;
@@ -88,6 +87,7 @@ namespace Athena
 
 		virtual void* GetDescriptorSet() = 0;
 
+		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::SampledTexture; }
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 		
 	public:

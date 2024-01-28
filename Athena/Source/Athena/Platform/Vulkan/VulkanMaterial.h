@@ -28,12 +28,8 @@ namespace Athena
 		};
 
 	private:
-		void RT_UpdateDescriptorSet(const ResourceDescription& resourceDesc, uint32 frameIndex);
-
-	private:
-		std::vector<VkDescriptorSet> m_DescriptorSets;
-
-		std::unordered_map<std::string_view, ResourceDescription> m_ResourcesTable;
+		std::vector<std::vector<VkDescriptorSet>> m_DescriptorSets;
+		std::unordered_map<uint32, std::unordered_map<std::string_view, ResourceDescription>> m_ResourcesTable;
 		byte m_PushConstantBuffer[128];
 	};
 }

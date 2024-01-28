@@ -229,15 +229,15 @@ namespace Athena
 
 		// Create Descriptors pool
 		{
-			VkDescriptorPoolSize poolSize = {};
-			poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			poolSize.descriptorCount = Renderer::GetFramesInFlight();
+			VkDescriptorPoolSize poolSizes[] = 
+			{ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Renderer::GetFramesInFlight() },
+			  { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Renderer::GetFramesInFlight() } };
 
 			VkDescriptorPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.poolSizeCount = 1;
-			poolInfo.pPoolSizes = &poolSize;
-			poolInfo.maxSets = Renderer::GetFramesInFlight();
+			poolInfo.poolSizeCount = std::size(poolSizes);
+			poolInfo.pPoolSizes = poolSizes;
+			poolInfo.maxSets = 2 * Renderer::GetFramesInFlight();
 
 			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &s_Data.DescriptorPool));
 		}

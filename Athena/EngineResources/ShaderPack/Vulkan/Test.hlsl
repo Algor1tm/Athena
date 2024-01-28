@@ -48,11 +48,16 @@ struct Fragment
     float4 Color : SV_TARGET0;
 };
 
+[[vk::combinedImageSampler]]
+Texture2D u_Albedo : register(t0, space0);
+[[vk::combinedImageSampler]]
+SamplerState u_AlbedoSampler : register(s0, space0);
+
+
 Fragment FSMain(Interpolators input)
 {
     Fragment output;
     
-    input.Normal = input.Normal * 0.5 + 0.5;
-    output.Color = float4(input.Normal, 1.0);
+    output.Color = u_Albedo.Sample(u_AlbedoSampler, input.TexCoord);
     return output;
 }

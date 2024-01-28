@@ -208,6 +208,7 @@ namespace Athena
 		options.SetSourceLanguage(shaderc_source_language_hlsl);
 		options.SetHlslOffsets(true);
 		options.SetInvertY(true);
+		options.SetAutoSampledTextures(true);
 		options.SetGenerateDebugInfo();
 		options.SetIncluder(std::make_unique<FileSystemIncluder>());
 
@@ -437,8 +438,6 @@ namespace Athena
 				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
-				int memberCount = bufferType.member_types.size();
-
 				if (result.UniformBuffers.contains(resource.name))
 				{
 					auto& stageFlags = result.UniformBuffers.at(resource.name).StageFlags;
@@ -456,24 +455,48 @@ namespace Athena
 				}
 			}
 
-			ATN_CORE_TRACE("");
-			ATN_CORE_INFO("Shader Reflect - {} '{}'", Utils::ShaderStageToString(stage), m_Name);
-
-			if (stage == ShaderStage::VERTEX_STAGE)
+			for (const auto& resource : resources.sampled_images)
 			{
-				ATN_CORE_TRACE("  vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
-				for (const auto& elem : result.VertexBufferLayout)
-					ATN_CORE_TRACE("\t input {}: {} bytes", elem.Name, elem.Size);
+				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+
+				if (result.SampledTextures.contains(resource.name))
+				{
+					auto& stageFlags = result.SampledTextures.at(resource.name).StageFlags;
+					stageFlags = ShaderStage(stageFlags | stage);
+				}
+				else
+				{
+					SampledTextureReflectionData textureData;
+					textureData.Binding = binding;
+					textureData.Set = set;
+					textureData.StageFlags = stage;
+
+					result.SampledTextures[resource.name] = textureData;
+				}
 			}
-
-			ATN_CORE_TRACE("  push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
-
-			ATN_CORE_TRACE("  uniform buffers: {}", result.UniformBuffers.size());
-			for (const auto& [name, buffer] : result.UniformBuffers)
-				ATN_CORE_TRACE("\t buffer {}: {} bytes", name, buffer.Size);
 		}
 
 		result.PushConstant.Enabled = result.PushConstant.Size != 0;
+
+		ATN_CORE_TRACE("");
+		ATN_CORE_INFO("Shader Reflect '{}'", m_Name);
+
+		ATN_CORE_TRACE("  vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
+		for (const auto& elem : result.VertexBufferLayout)
+			ATN_CORE_TRACE("\t input {}: {} bytes", elem.Name, elem.Size);
+
+		ATN_CORE_TRACE("  push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
+		for (const auto& [name, member] : result.PushConstant.Members)
+			ATN_CORE_TRACE("\t member {}: {} bytes, {} offset", name, member.Size, member.Offset);
+
+		ATN_CORE_TRACE("  uniform buffers: {}", result.UniformBuffers.size());
+		for (const auto& [name, buffer] : result.UniformBuffers)
+			ATN_CORE_TRACE("\t buffer {}: {} bytes, binding {}, set {}", name, buffer.Size, buffer.Binding, buffer.Set);
+
+		ATN_CORE_TRACE("  sampled textures: {}", result.SampledTextures.size());
+		for (const auto& [name, texture] : result.SampledTextures)
+			ATN_CORE_TRACE("\t texture {}: binding {}, set {}", name, texture.Binding, texture.Set);
 
 		return result;
 	}

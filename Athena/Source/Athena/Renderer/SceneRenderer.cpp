@@ -55,6 +55,7 @@ namespace Athena
 			m_Data->StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
 
 			pipelineInfo.Material->Set("u_CameraData", m_Data->CameraUBO);
+			pipelineInfo.Material->Set("u_Albedo", Renderer::GetWhiteTexture());
 		}
 	}
 

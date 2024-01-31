@@ -84,7 +84,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_WARN_TAG("Renderer", "Failed to set shader resource with name '{}' (invalid name)", name);
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager {} - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
 			}
 		});
 	}

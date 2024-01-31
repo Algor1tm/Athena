@@ -28,6 +28,7 @@ namespace Athena
 
 	struct DescriptorSetManagerCreateInfo
 	{
+		String Name;
 		Ref<Shader> Shader;
 		uint32 FirstSet;
 		uint32 LastSet;

@@ -99,7 +99,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
 
-			m_Info.Output.As<VulkanFramebuffer>()->RT_BakeFramebuffer(m_VulkanRenderPass);
+			m_Info.Output.As<VulkanFramebuffer>()->RT_PrepareFramebuffer(m_VulkanRenderPass);
 		});
 	}
 

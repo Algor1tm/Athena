@@ -8,12 +8,14 @@
 
 namespace Athena
 {
-	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader)
+	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader, const String& name)
 	{
 		m_Shader = shader;
+		m_Name = name;
 		memset(m_PushConstantBuffer, 0, sizeof(m_PushConstantBuffer));
 
 		DescriptorSetManagerCreateInfo info;
+		info.Name = name;
 		info.Shader = m_Shader;
 		info.FirstSet = 0;
 		info.LastSet = 0;

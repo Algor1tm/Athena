@@ -12,7 +12,7 @@ namespace Athena
 
 		bool hasColorFormat = false;
 		bool hasDepthFormat = false;
-		for (auto attachment : m_Info.Attachments)
+		for (const auto& attachment : m_Info.Attachments)
 		{
 			if (Texture::IsColorFormat(attachment.Format))
 				hasColorFormat = true;
@@ -31,6 +31,7 @@ namespace Athena
 			for (const auto& attachment : m_Info.Attachments)
 			{
 				TextureCreateInfo attachmentInfo = {};
+				attachmentInfo.Name = std::format("{}_{}", attachment.Name, frameIndex);
 				attachmentInfo.Width = m_Info.Width;
 				attachmentInfo.Height = m_Info.Height;
 				attachmentInfo.GenerateMipMap = false;
@@ -113,7 +114,7 @@ namespace Athena
 		return m_VulkanFramebufferSet[Renderer::GetCurrentFrameIndex()]; 
 	}
 
-	void VulkanFramebuffer::RT_BakeFramebuffer(VkRenderPass renderPass)
+	void VulkanFramebuffer::RT_PrepareFramebuffer(VkRenderPass renderPass)
 	{
 		m_VulkanRenderPass = renderPass;
 

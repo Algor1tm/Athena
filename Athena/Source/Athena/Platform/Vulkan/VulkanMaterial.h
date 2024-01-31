@@ -12,7 +12,7 @@ namespace Athena
 	class VulkanMaterial : public Material
 	{
 	public:
-		VulkanMaterial(const Ref<Shader>& shader);
+		VulkanMaterial(const Ref<Shader>& shader, const String& name);
 		~VulkanMaterial();
 
 		virtual void Set(std::string_view name, const Ref<ShaderResource>& resource) override;

@@ -17,9 +17,26 @@ namespace Athena
 {
 	namespace Utils
 	{
-		static float BytesToKb(VkDeviceSize size)
+		static std::string_view DeviceSizeAbbreviation(VkDeviceSize size)
 		{
-			return (float)size / 1024.f;
+			if (size > 1024 * 1024)
+				return "MBs";
+			
+			if (size > 1024)
+				return "KBs";
+
+			return "bytes";
+		}
+
+		static float DeviceSizeUnits(VkDeviceSize size)
+		{
+			if (size > 1024 * 1024)
+				return (float)size / (1024.f * 1024.f);
+
+			if (size > 1024)
+				return (float)size / 1024.f;
+
+			return size;
 		}
 	}
 
@@ -59,7 +76,7 @@ namespace Athena
 		vmaDestroyAllocator(m_Allocator);
 	}
 
-	VulkanBuffer VulkanAllocator::AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage, VmaAllocationCreateFlagBits flags)
+	VulkanBuffer VulkanAllocator::AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage, VmaAllocationCreateFlagBits flags, const String& name)
 	{
 		VkBuffer buffer;
 		VmaAllocation allocation;
@@ -69,12 +86,15 @@ namespace Athena
 		allocInfo.flags = flags;
 
 		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
-		//ATN_CORE_TRACE_TAG("Vulkan", "Allocating buffer of {} Kb", Utils::BytesToKb(allocation->GetSize()));
+
+		VkDeviceSize size = allocation->GetSize();
+		if(!name.empty())
+			ATN_CORE_INFO_TAG("Vulkan", "Allocating buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		return VulkanBuffer(buffer, allocation);
 	}
 
-	VulkanImage VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage, VmaAllocationCreateFlagBits flags)
+	VulkanImage VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage, VmaAllocationCreateFlagBits flags, const String& name)
 	{
 		VkImage image;
 		VmaAllocation allocation;
@@ -84,20 +104,27 @@ namespace Athena
 		allocInfo.flags = flags;
 
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
-		//ATN_CORE_TRACE_TAG("Vulkan", "Allocating image of {} Kb", Utils::BytesToKb(allocation->GetSize()));
+
+		VkDeviceSize size = allocation->GetSize();
+		ATN_CORE_INFO_TAG("Vulkan", "Allocating image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		return VulkanImage(image, allocation);
 	}
 
-	void VulkanAllocator::DestroyBuffer(VulkanBuffer buffer)
+	void VulkanAllocator::DestroyBuffer(VulkanBuffer buffer, const String& name)
 	{
-		//ATN_CORE_TRACE_TAG("Vulkan", "Destroying buffer of {} Kb", Utils::BytesToKb(buffer.GetAllocation()->GetSize()));
+		VkDeviceSize size = buffer.GetAllocation()->GetSize();
+		if(!name.empty())
+			ATN_CORE_INFO_TAG("Vulkan", "Destroying buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
 
-	void VulkanAllocator::DestroyImage(VulkanImage image)
+	void VulkanAllocator::DestroyImage(VulkanImage image, const String& name)
 	{
-		//ATN_CORE_TRACE_TAG("Vulkan", "Destroying image of {} Kb", Utils::BytesToKb(image.GetAllocation()->GetSize()));
+		VkDeviceSize size = image.GetAllocation()->GetSize();
+		ATN_CORE_INFO_TAG("Vulkan", "Destroying image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
 

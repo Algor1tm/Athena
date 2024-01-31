@@ -11,8 +11,8 @@ namespace Athena
 		FramebufferAttachmentInfo(TextureFormat format)
 			: Format(format){}
 
+		String Name;
 		TextureFormat Format;
-
 		LinearColor ClearColor = Vector4(0.f);
 		float DepthClearColor = 0.f;
 		uint32 StencilClearColor = 0.f;
@@ -20,8 +20,8 @@ namespace Athena
 
 	struct FramebufferCreateInfo
 	{
+		String Name;
 		std::vector<FramebufferAttachmentInfo> Attachments;
-
 		uint32 Width = 1;
 		uint32 Height = 1;
 	};

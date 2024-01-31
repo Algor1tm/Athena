@@ -51,7 +51,7 @@ namespace Athena
 				void* data = embeddedTex->pcData;
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
-				result = Texture2D::Create(data, width, height);
+				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height);
 			}
 			else
 			{

@@ -28,27 +28,32 @@ namespace Athena
 		const uint32 maxPipelineQueries = 1;
 		m_Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
-		m_CameraUBO = UniformBuffer::Create(sizeof(CameraData));
+		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
 
 		// Geometry Pass
 		{
 			FramebufferCreateInfo fbInfo;
+			fbInfo.Name = "GeometryFramebuffer";
 			fbInfo.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
 			fbInfo.Width = m_ViewportSize.x;
 			fbInfo.Height = m_ViewportSize.y;
+			fbInfo.Attachments[0].Name = "GeometryColor";
 			fbInfo.Attachments[0].ClearColor = { 0.9f, 0.3f, 0.4f, 1.0f };
+			fbInfo.Attachments[1].Name = "GeometryDepth";
 			fbInfo.Attachments[1].DepthClearColor = 1.f;
 			fbInfo.Attachments[1].StencilClearColor = 1.f;
 
 			Ref<Framebuffer> mainFramebuffer = Framebuffer::Create(fbInfo);
 
 			RenderPassCreateInfo renderPassInfo;
+			renderPassInfo.Name = "GeometryPass";
 			renderPassInfo.Output = mainFramebuffer;
 			renderPassInfo.LoadOpClear = true;
 
 			m_GeometryPass = RenderPass::Create(renderPassInfo);
 
 			PipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Test");
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
@@ -60,7 +65,7 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->Bake();
 
-			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader);
+			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
 			m_StaticGeometryMaterial->Set("u_Albedo", Renderer::GetWhiteTexture());
 		}
 	}

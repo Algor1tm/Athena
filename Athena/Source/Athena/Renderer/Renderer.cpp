@@ -66,6 +66,7 @@ namespace Athena
 		uint32 whiteTextureData = 0xffffffff;
 
 		TextureCreateInfo texInfo;
+		texInfo.Name = "WhiteTexture";
 		texInfo.Data = &whiteTextureData;
 		texInfo.Width = 1;
 		texInfo.Height = 1;
@@ -84,6 +85,7 @@ namespace Athena
 
 		uint32 blackTextureData = 0xff000000;
 		texInfo.Data = &blackTextureData;
+		texInfo.Name = "BlackTexture";
 
 		s_Data.BlackTexture = Texture2D::Create(texInfo); 
 

@@ -5,9 +5,10 @@
 
 namespace Athena
 {
-	VulkanUniformBuffer::VulkanUniformBuffer(uint64 size)
+	VulkanUniformBuffer::VulkanUniformBuffer(const String& name, uint64 size)
 	{
 		m_Size = size;
+		m_Name = name;
 		m_VulkanUBOSet.resize(Renderer::GetFramesInFlight());
 		m_DescriptorInfo.resize(Renderer::GetFramesInFlight());
 
@@ -19,7 +20,7 @@ namespace Athena
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 				bufferInfo.size = m_Size;
 				bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-				m_VulkanUBOSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				m_VulkanUBOSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, m_Name);
 
 				VkDescriptorBufferInfo descriptorInfo;
 				descriptorInfo.buffer = m_VulkanUBOSet[i].GetBuffer();
@@ -32,11 +33,11 @@ namespace Athena
 
 	VulkanUniformBuffer::~VulkanUniformBuffer()
 	{
-		Renderer::SubmitResourceFree([vulkanUBOSet = m_VulkanUBOSet]()
+		Renderer::SubmitResourceFree([vulkanUBOSet = m_VulkanUBOSet, name = m_Name]()
 		{
 			for (auto ubo: vulkanUBOSet)
 			{
-				VulkanContext::GetAllocator()->DestroyBuffer(ubo);
+				VulkanContext::GetAllocator()->DestroyBuffer(ubo, name);
 			}
 		});
 	}

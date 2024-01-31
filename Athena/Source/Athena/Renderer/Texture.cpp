@@ -1,7 +1,7 @@
 #include "Texture.h"
 
 #include "Athena/Core/FileSystem.h"
-
+#include "Athena/Core/Log.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 
@@ -69,6 +69,7 @@ namespace Athena
 		}
 
 		TextureCreateInfo info;
+		info.Name = filepath.filename().string();
 		info.Data = data;
 		info.Width = width;
 		info.Height = height;
@@ -90,7 +91,7 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const void* inputData, uint32 inputWidth, uint32 inputHeight)
+	Ref<Texture2D> Texture2D::Create(const String& name, const void* inputData, uint32 inputWidth, uint32 inputHeight)
 	{
 		int width, height, channels;
 		void* data = nullptr;
@@ -117,6 +118,7 @@ namespace Athena
 		}
 
 		TextureCreateInfo info;
+		info.Name = name;
 		info.Data = data;
 		info.Width = width;
 		info.Height = height;

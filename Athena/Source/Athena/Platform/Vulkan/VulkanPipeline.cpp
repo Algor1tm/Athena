@@ -52,6 +52,7 @@ namespace Athena
 		m_Info = info;
 
 		DescriptorSetManagerCreateInfo setManagerInfo;
+		setManagerInfo.Name = info.Name;
 		setManagerInfo.Shader = m_Info.Shader;
 		setManagerInfo.FirstSet = 1;
 		setManagerInfo.LastSet = 4;

@@ -179,7 +179,7 @@ namespace Athena
 	class ATHENA_API UniformBuffer : public ShaderResource
 	{
 	public:
-		static Ref<UniformBuffer> Create(uint64 size);
+		static Ref<UniformBuffer> Create(const String& name, uint64 size);
 		virtual ~UniformBuffer() = default;
 
 		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::UniformBuffer; }

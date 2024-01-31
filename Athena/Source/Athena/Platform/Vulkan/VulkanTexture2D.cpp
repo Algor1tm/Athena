@@ -43,7 +43,7 @@ namespace Athena
 	VulkanTexture2D::~VulkanTexture2D()
 	{
 		Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkSampler = m_Sampler, vkImageView = m_ImageView,
-				image = m_Image]()
+				image = m_Image, name = m_Info.Name]()
 		{
 			// TODO: some imgui descriptor sets does not removed on application close,
 			// because they deleted after imgui layer shutdowned
@@ -54,7 +54,7 @@ namespace Athena
 			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
 			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 
-			VulkanContext::GetAllocator()->DestroyImage(image);
+			VulkanContext::GetAllocator()->DestroyImage(image, name);
 		});
 	}
 
@@ -62,13 +62,13 @@ namespace Athena
 	{
 		if (m_ImageView != VK_NULL_HANDLE)
 		{
-			Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkImageView = m_ImageView, image = m_Image]()
+			Renderer::SubmitResourceFree([set = m_UIDescriptorSet, vkImageView = m_ImageView, image = m_Image, name = m_Info.Name]()
 			{
 				if (set != VK_NULL_HANDLE && Application::Get().GetImGuiLayer() != nullptr)
 					ImGui_ImplVulkan_RemoveTexture(set);
 
 				vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
-				VulkanContext::GetAllocator()->DestroyImage(image);
+				VulkanContext::GetAllocator()->DestroyImage(image, name);
 			});
 		}
 
@@ -111,7 +111,7 @@ namespace Athena
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo);
+			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
 
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

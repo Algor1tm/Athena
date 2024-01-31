@@ -64,6 +64,7 @@ namespace Athena
 
 	struct TextureCreateInfo
 	{
+		String Name;
 		const void* Data = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
@@ -107,7 +108,7 @@ namespace Athena
 	public:
 		static Ref<Texture2D> Create(const TextureCreateInfo& info);				  // Default
 		static Ref<Texture2D> Create(const FilePath& path);							  // From file
-		static Ref<Texture2D> Create(const void* data, uint32 width, uint32 height);  // From memory
+		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height);  // From memory
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 

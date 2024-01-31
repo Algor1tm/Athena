@@ -29,6 +29,7 @@ namespace Athena
 
 	struct PipelineCreateInfo
 	{
+		String Name;
 		Ref<RenderPass> RenderPass;
 		Ref<Shader> Shader;
 		Topology Topology = Topology::TRIANGLE_LIST;

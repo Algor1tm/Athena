@@ -8,6 +8,7 @@ namespace Athena
 {
 	struct RenderPassCreateInfo
 	{
+		String Name;
 		Ref<Framebuffer> Output;
 		bool LoadOpClear;
 	};

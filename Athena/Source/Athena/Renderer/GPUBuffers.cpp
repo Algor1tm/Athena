@@ -19,11 +19,11 @@ namespace Athena
 	}
 
 
-	Ref<UniformBuffer> UniformBuffer::Create(uint64 size)
+	Ref<UniformBuffer> UniformBuffer::Create(const String& name, uint64 size)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanUniformBuffer>::Create(size);
+		case Renderer::API::Vulkan: return Ref<VulkanUniformBuffer>::Create(name, size);
 		case Renderer::API::None: return nullptr;
 		}
 

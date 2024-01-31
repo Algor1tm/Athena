@@ -25,6 +25,7 @@ namespace Athena
 	{
 	public:
 		static Ref<GPUProfiler> Create(uint32 maxTimestamps, uint32 maxPipelineQueries);
+		virtual ~GPUProfiler() = default;
 
 		virtual void Reset() = 0;
 

@@ -2,11 +2,6 @@
 #define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
 #define VMA_IMPLEMENTATION
 
-// Disable vma asserts. Vma checks if all allocations freed on shutdown, 
-// when application is closed by closing console, some resources are not freed(unknown which resources)
-// so vma crushes whole application. So this problem causing console.
-#define VMA_ASSERT
-
 #include <vma/vk_mem_alloc.h>
 
 #include "VulkanAllocator.h"
@@ -89,7 +84,7 @@ namespace Athena
 
 		VkDeviceSize size = allocation->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Vulkan", "Allocating buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+			ATN_CORE_INFO_TAG("Renderer", "Allocating buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		return VulkanBuffer(buffer, allocation);
 	}
@@ -106,7 +101,7 @@ namespace Athena
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
 		VkDeviceSize size = allocation->GetSize();
-		ATN_CORE_INFO_TAG("Vulkan", "Allocating image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+		ATN_CORE_INFO_TAG("Renderer", "Allocating image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		return VulkanImage(image, allocation);
 	}
@@ -115,7 +110,7 @@ namespace Athena
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Vulkan", "Destroying buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+			ATN_CORE_INFO_TAG("Renderer", "Destroying buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
@@ -123,7 +118,7 @@ namespace Athena
 	void VulkanAllocator::DestroyImage(VulkanImage image, const String& name)
 	{
 		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_CORE_INFO_TAG("Vulkan", "Destroying image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+		ATN_CORE_INFO_TAG("Renderer", "Destroying image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}

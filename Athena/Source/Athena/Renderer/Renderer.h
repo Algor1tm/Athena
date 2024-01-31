@@ -156,7 +156,7 @@ namespace Athena
 	struct RendererConfig
 	{
 		Renderer::API API = Renderer::API::Vulkan;
-		bool ForceCompileShaders = false;
+		bool ForceCompileShaderPack = false;
 		uint32 MaxFramesInFlight = 3;
 	};
 }

@@ -25,7 +25,7 @@ namespace Athena
 
 	VulkanMaterial::~VulkanMaterial()
 	{
-
+		
 	}
 
 	void VulkanMaterial::Set(std::string_view name, const Ref<ShaderResource>& resource)

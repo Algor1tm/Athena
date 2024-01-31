@@ -13,6 +13,7 @@ namespace Athena
 	{
 	public:
 		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
+		virtual ~Material() = default;
 
 		virtual void Set(std::string_view name, const Ref<ShaderResource>& resource) = 0;
 		virtual void Set(std::string_view name, const Matrix4& mat4) = 0;

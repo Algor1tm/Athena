@@ -44,6 +44,7 @@ namespace Athena
 	{
 	public:
 		static Ref<Pipeline> Create(const PipelineCreateInfo& info);
+		virtual ~Pipeline() = default;
 		
 		virtual void Bind() = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;

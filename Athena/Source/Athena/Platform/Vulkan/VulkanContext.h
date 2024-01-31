@@ -26,7 +26,8 @@ namespace Athena
 		std::vector<FrameSyncData> FrameSyncData;
 		VkCommandPool CommandPool;
 		VkCommandBuffer ActiveCommandBuffer;
-		VkDescriptorPool DescriptorPool;
+
+		PFN_vkDebugMarkerSetObjectNameEXT SetObjectNamePFN;
 	};
 
 
@@ -49,7 +50,7 @@ namespace Athena
 		static void SetActiveCommandBuffer(VkCommandBuffer commandBuffer) { s_Data.ActiveCommandBuffer = commandBuffer; }
 		static VkCommandBuffer GetActiveCommandBuffer() { return s_Data.ActiveCommandBuffer; }
 
-		static VkDescriptorPool GetDescriptorPool() { return s_Data.DescriptorPool; }
+		static void SetObjectName(void* object, VkDebugReportObjectTypeEXT type, const String& name);
 
 	private:
 		static VulkanContextData s_Data;

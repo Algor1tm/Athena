@@ -60,7 +60,6 @@ namespace Athena
 				}
 			}
 		});
-
 	}
 
 	DescriptorSetManager::~DescriptorSetManager()
@@ -84,7 +83,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager {} - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
 			}
 		});
 	}
@@ -95,7 +94,7 @@ namespace Athena
 		{
 			if (!m_Resources.contains(resDesc.Set))
 			{
-				ATN_CORE_WARN_TAG("Renderer", "No input resources for set {}", resDesc.Set);
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
 				return false;
 			}
 
@@ -103,7 +102,7 @@ namespace Athena
 
 			if (!setResources.contains(resDesc.Binding))
 			{
-				ATN_CORE_WARN_TAG("Renderer", "No input resource '{}' for set {}, binding {}", name, resDesc.Set, resDesc.Binding);
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
@@ -111,13 +110,13 @@ namespace Athena
 
 			if (resource == nullptr)
 			{
-				ATN_CORE_WARN_TAG("Renderer", "Resource '{}' is NULL (set {}, binding {})!", name, resDesc.Set, resDesc.Binding);
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {})!", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
 			if (resDesc.Type != resource->GetResourceType())
 			{
-				ATN_CORE_WARN_TAG("Renderer", "Required resource '{}' is wrong type (expected - '{}', given - '{}')", name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource->GetResourceType()));
+				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}')", m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource->GetResourceType()));
 				return false;
 			}
 		}
@@ -131,7 +130,7 @@ namespace Athena
 		{
 			if (!Validate())
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Descriptor set manager validation has failed!");
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
 				ATN_CORE_ASSERT(false);
 				return;
 			}
@@ -254,7 +253,7 @@ namespace Athena
 
 					if (!descriptorsToUpdate.empty())
 					{
-						ATN_CORE_INFO_TAG("Renderer", "Updating descriptors in set {} (frameIndex {})", set, frameIndex);
+						ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
 						vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 					}
 				}
@@ -277,14 +276,16 @@ namespace Athena
 				{
 				case ShaderResourceType::UniformBuffer:
 				{
-					if (storedWriteDescriptor.ResourceHandle != writeDescriptor.pBufferInfo->buffer)
+					const auto& bufferInfo = resource.As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
+					if (&bufferInfo != writeDescriptor.pBufferInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pBufferInfo->buffer)
 						m_InvalidatedResources[set][binding] = resource;
 
 					break;
 				}
 				case ShaderResourceType::Texture2D:
 				{
-					if (storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
+					const auto& imageInfo = resource.As<VulkanTexture2D>()->GetVulkanDescriptorInfo();
+					if (&imageInfo != writeDescriptor.pImageInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
 						m_InvalidatedResources[set][binding] = resource;
 
 					break;
@@ -308,7 +309,6 @@ namespace Athena
 			{
 				WriteDescriptorSet& storedWriteDescriptor = m_WriteDescriptorSetTable[frameIndex][set][binding];
 				VkWriteDescriptorSet& writeDescriptor = storedWriteDescriptor.VulkanWriteDescriptorSet;
-				descriptorsToUpdate.push_back(writeDescriptor);
 
 				switch (resource->GetResourceType())
 				{
@@ -327,11 +327,13 @@ namespace Athena
 					break;
 				}
 				}
+
+				descriptorsToUpdate.push_back(writeDescriptor);
 			}
 
 			if (!descriptorsToUpdate.empty())
 			{
-				ATN_CORE_INFO_TAG("Renderer", "Updating descriptors in set {} (frameIndex {})", set, frameIndex);
+				ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
 				vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 			}
 		}

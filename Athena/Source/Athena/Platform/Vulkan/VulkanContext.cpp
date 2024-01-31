@@ -41,18 +41,25 @@ namespace Athena
 			std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
 			vkEnumerateInstanceExtensionProperties(NULL, &supportedExtensionCount, supportedExtensions.data());
 
-			uint32 findCount = 0;
-			for (uint32 i = 0; i < supportedExtensions.size(); ++i)
+			std::vector<const char*> missingExtensions;
+			for (uint32 i = 0; i < requiredExtensions.size(); ++i)
 			{
-				String extName = supportedExtensions[i].extensionName;
-				bool find = (std::find_if(requiredExtensions.begin(), requiredExtensions.end(), [&extName](const char* name)
-					{ return name == extName; }) != requiredExtensions.end());
+				bool find = false;
+				for (uint32 j = 0; j < supportedExtensions.size(); ++j)
+				{
+					if (!strcmp(requiredExtensions[i], supportedExtensions[j].extensionName))
+					{
+						find = true;
+						break;
+					}
+				}
 
-				if (find)
-					findCount++;
+				if (!find)
+				{
+					missingExtensions.push_back(requiredExtensions[i]);
+					break;
+				}
 			}
-
-			bool exists = findCount == requiredExtensions.size();
 
 			String message = "Vulkan supported extensions: \n\t";
 			for (auto ext : supportedExtensions)
@@ -66,13 +73,19 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
-			if (!exists)
+			if (!missingExtensions.empty())
 			{
-				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan API version does not support required extensions!");
-				ATN_CORE_ASSERT(false);
+				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version does not support required instance extensions!");
+
+				message = "Missing extensions: \n\t";
+				for (auto ext : missingExtensions)
+					message += std::format("'{}'\n\t", ext);
+
+				ATN_CORE_ERROR_TAG("Vulkan", message);
+				ATN_CORE_VERIFY(false);
 			}
 
-			return exists;
+			return missingExtensions.empty();
 		}
 
 		static bool CheckEnabledLayers(const std::vector<const char*>& requiredLayers)
@@ -83,19 +96,25 @@ namespace Athena
 			std::vector<VkLayerProperties> supportedLayers(supportedLayerCount);
 			vkEnumerateInstanceLayerProperties(&supportedLayerCount, supportedLayers.data());
 
-			uint32 findCount = 0;
-			for (uint32 i = 0; i < supportedLayers.size(); ++i)
+			std::vector<const char*> missingLayers;
+			for (uint32 i = 0; i < requiredLayers.size(); ++i)
 			{
-				String layerName = supportedLayers[i].layerName;
-				bool find = (std::find_if(requiredLayers.begin(), requiredLayers.end(), [&layerName](const char* name)
-					{ return name == layerName; }) != requiredLayers.end());
+				bool find = false;
+				for (uint32 j = 0; j < supportedLayers.size(); ++j)
+				{
+					if (!strcmp(requiredLayers[i], supportedLayers[j].layerName))
+					{
+						find = true;
+						break;
+					}
+				}
 
-				if (find)
-					findCount++;
+				if (!find)
+				{
+					missingLayers.push_back(requiredLayers[i]);
+					break;
+				}
 			}
-
-			bool exists = findCount == requiredLayers.size();
-
 			String message = "Vulkan supported layers: \n\t";
 			for (auto layer : supportedLayers)
 				message += std::format("'{}'\n\t", layer.layerName);
@@ -108,13 +127,19 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
 
-			if (!exists)
+			if (!missingLayers.empty())
 			{
-				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan API version does not support required layers!");
-				ATN_CORE_ASSERT(false);
+				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version does not support required instance layers!");
+
+				message = "Missing layers: \n\t";
+				for (auto layer : missingLayers)
+					message += std::format("'{}'\n\t", layer);
+
+				ATN_CORE_ERROR_TAG("Vulkan", message);
+				ATN_CORE_VERIFY(false);
 			}
 
-			return true;
+			return missingLayers.empty();
 		}
 	}
 
@@ -227,25 +252,11 @@ namespace Athena
 			VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, &s_Data.CommandPool));
 		}
 
-		// Create Descriptors pool
-		{
-			VkDescriptorPoolSize poolSizes[] = 
-			{ { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Renderer::GetFramesInFlight() },
-			  { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Renderer::GetFramesInFlight() } };
-
-			VkDescriptorPoolCreateInfo poolInfo = {};
-			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.poolSizeCount = std::size(poolSizes);
-			poolInfo.pPoolSizes = poolSizes;
-			poolInfo.maxSets = 2 * Renderer::GetFramesInFlight();
-
-			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &s_Data.DescriptorPool));
-		}
+		s_Data.SetObjectNamePFN = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkDebugMarkerSetObjectNameEXT");
 	}
 
 	void VulkanContext::Shutdown()
 	{
-		vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), s_Data.DescriptorPool, nullptr);
 		vkDestroyCommandPool(VulkanContext::GetLogicalDevice(), s_Data.CommandPool, nullptr);
 
 		for (uint32_t i = 0; i < Renderer::GetFramesInFlight(); i++)
@@ -265,5 +276,16 @@ namespace Athena
 		s_Data.CurrentDevice.Release();
 		
 		vkDestroyInstance(VulkanContext::GetInstance(), nullptr);
+	}
+
+	void VulkanContext::SetObjectName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
+	{
+		VkDebugMarkerObjectNameInfoEXT nameInfo = {};
+		nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+		nameInfo.objectType = type;
+		nameInfo.object = (uint64)object;
+		nameInfo.pObjectName = name.c_str();
+
+		s_Data.SetObjectNamePFN(VulkanContext::GetLogicalDevice(), &nameInfo);
 	}
 }

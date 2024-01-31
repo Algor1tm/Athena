@@ -10,7 +10,7 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
-		CompileOrGetFromCache(Renderer::GetConfig().ForceCompileShaders);
+		CompileOrGetFromCache(Renderer::GetConfig().ForceCompileShaderPack);
 	}
 
 	VulkanShader::VulkanShader(const FilePath& path)
@@ -128,6 +128,11 @@ namespace Athena
 	{
 		const ShaderBinaries& binaries = compiler.GetBinaries();
 
+		std::unordered_map<ShaderStage, std::string_view> debugNames;
+		debugNames[ShaderStage::VERTEX_STAGE] = "Vertex";
+		debugNames[ShaderStage::FRAGMENT_STAGE] = "Fragment";
+		debugNames[ShaderStage::GEOMETRY_STAGE] = "Geometry";
+		debugNames[ShaderStage::COMPUTE_STAGE] = "Compute";
 		for (const auto& [stage, src] : binaries)
 		{
 			VkShaderModuleCreateInfo moduleCreateInfo = {};
@@ -136,6 +141,7 @@ namespace Athena
 			moduleCreateInfo.pCode = src.data();
 
 			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &moduleCreateInfo, nullptr, &m_VulkanShaderModules[stage]));
+			VulkanContext::SetObjectName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
 
 			VkPipelineShaderStageCreateInfo shaderStageInfo = {};
 			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

@@ -92,6 +92,7 @@ namespace Athena
 
 			std::vector<const char*> deviceExtensions = { 
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
 				"VK_EXT_memory_budget" };
 
 			CheckEnabledExtensions(deviceExtensions);
@@ -197,18 +198,26 @@ namespace Athena
 		std::vector<VkExtensionProperties> supportedExtensions(supportedExtensionCount);
 		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, NULL, &supportedExtensionCount, supportedExtensions.data());
 
-		uint32 findCount = 0;
-		for (uint32 i = 0; i < supportedExtensions.size(); ++i)
+		std::vector<const char*> missingExtensions;
+		for (uint32 i = 0; i < requiredExtensions.size(); ++i)
 		{
-			String extName = supportedExtensions[i].extensionName;
-			bool find = (std::find_if(requiredExtensions.begin(), requiredExtensions.end(), [&extName](const char* name)
-				{ return name == extName; }) != requiredExtensions.end());
+			bool find = false;
+			for (uint32 j = 0; j < supportedExtensions.size(); ++j)
+			{
+				if (!strcmp(requiredExtensions[i], supportedExtensions[j].extensionName))
+				{
+					find = true;
+					break;
+				}
+			}
 
-			if (find)
-				findCount++;
+			// (?) Make exception for debug marker extension 
+			if (!find && strcmp(requiredExtensions[i], VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
+			{
+				missingExtensions.push_back(requiredExtensions[i]);
+				break;
+			}
 		}
-
-		bool exists = findCount == requiredExtensions.size();
 
 		String message = "Device supported extensions: \n\t";
 		for (auto ext : supportedExtensions)
@@ -222,12 +231,18 @@ namespace Athena
 
 		ATN_CORE_INFO_TAG("Vulkan", message);
 
-		if (!exists)
+		if (!missingExtensions.empty())
 		{
-			ATN_CORE_FATAL_TAG("Vulkan", "Current Physical Device does not support required extensions!");
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_FATAL_TAG("Vulkan", "Current Physical Device does not support required device extensions!");
+
+			message = "Missing extensions: \n\t";
+			for (auto ext : missingExtensions)
+				message += std::format("'{}'\n\t", ext);
+
+			ATN_CORE_ERROR_TAG("Vulkan", message);
+			//ATN_CORE_VERIFY(false);
 		}
 
-		return exists;
+		return missingExtensions.empty();
 	}
 }

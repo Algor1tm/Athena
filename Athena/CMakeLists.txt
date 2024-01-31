@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.24)
+cmake_minimum_required (VERSION 3.5)
 
 function(AddLibrary TARGET_NAME TARGET_PATH)
     add_subdirectory("${TARGET_PATH}")
@@ -43,6 +43,7 @@ target_compile_definitions(Athena PUBLIC
 	$<$<CONFIG:Debug>:ATN_DEBUG>
 	$<$<CONFIG:Release>:ATN_RELEASE>
 	ATN_SIMD
+	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 )
 
 target_compile_definitions(Athena PRIVATE

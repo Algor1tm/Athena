@@ -8,7 +8,7 @@ namespace Athena
 	enum class ShaderResourceType
 	{
 		UniformBuffer = 1,
-		SampledTexture = 2
+		Texture2D = 2
 	};
 
 	class ATHENA_API ShaderResource: public RefCounted

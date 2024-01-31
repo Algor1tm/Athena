@@ -41,9 +41,15 @@ namespace Athena
 			if (m_IsCompiled)
 				CreateVulkanShaderModulesAndStages(compiler);
 
-			// Up to 3 sets
-			std::vector<std::vector<VkDescriptorSetLayoutBinding>> bindings;
-			bindings.resize(3);
+			struct DescriptorSetLayoutStatistics
+			{
+				uint32 UBOs;
+				uint32 Samplers;
+				uint32 Textures2D;
+			};
+
+			std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
+			std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
 
 			for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
 			{
@@ -55,8 +61,9 @@ namespace Athena
 				uboLayoutBinding.pImmutableSamplers = nullptr;
 
 				bindings[ubo.Set].push_back(uboLayoutBinding);
+				stats[ubo.Set].UBOs++;
 			}
-			for (const auto& [name, texture] : m_ReflectionData.SampledTextures)
+			for (const auto& [name, texture] : m_ReflectionData.Textures2D)
 			{
 				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 				uboLayoutBinding.binding = texture.Binding;
@@ -66,19 +73,19 @@ namespace Athena
 				uboLayoutBinding.pImmutableSamplers = nullptr;
 
 				bindings[texture.Set].push_back(uboLayoutBinding);
+				stats[texture.Set].Textures2D++;
+				stats[texture.Set].Samplers++;
 			}
 
-			uint32 validSetsCount = bindings.size();
-			for (auto layoutBindings = bindings.crbegin(); layoutBindings < bindings.crend(); ++layoutBindings)
+			uint32 setsCount = 0;
+			for (const auto& [set, _] : bindings)
 			{
-				if ((*layoutBindings).size() == 0)
-					validSetsCount--;
-				else
-					break;
+				if (setsCount < set + 1)
+					setsCount = set + 1;
 			}
 
-			m_DescriptorSetLayouts.resize(validSetsCount);
-			for (uint32 set = 0; set < validSetsCount; ++set)
+			m_DescriptorSetLayouts.resize(setsCount);
+			for (uint32 set = 0; set < setsCount; ++set)
 			{
 				VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -86,6 +93,8 @@ namespace Athena
 				layoutInfo.pBindings = bindings[set].data();
 
 				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
+				const auto& setStats = stats[set];
+				ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} ubos, {} samplers, {} textures", set, setStats.UBOs, setStats.Samplers, setStats.Textures2D);
 			}
 
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};

@@ -17,8 +17,8 @@ namespace Athena
 			: m_Buffer(buffer), m_Allocation(alloc)
 		{}
 
-		VkBuffer GetBuffer() { return m_Buffer; }
-		VmaAllocation GetAllocation() { return m_Allocation; }
+		VkBuffer GetBuffer() const { return m_Buffer; }
+		VmaAllocation GetAllocation() const { return m_Allocation; }
 
 		void* MapMemory();
 		void UnmapMemory();
@@ -37,8 +37,8 @@ namespace Athena
 			: m_Image(image), m_Allocation(alloc)
 		{}
 
-		VkImage GetImage() { return m_Image; }
-		VmaAllocation GetAllocation() { return m_Allocation; }
+		VkImage GetImage() const { return m_Image; }
+		VmaAllocation GetAllocation() const { return m_Allocation; }
 
 	private:
 		VkImage m_Image = VK_NULL_HANDLE;

@@ -2,8 +2,9 @@
 
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
-
 #include "Athena/Renderer/Renderer.h"
+
+#include "Athena/Platform/Vulkan/DescriptorSetManager.h"
 
 
 namespace Athena
@@ -46,16 +47,18 @@ namespace Athena
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.RenderPass = m_Data->GeometryPass;
-			pipelineInfo.Material = Material::Create(Renderer::GetShaderPack()->Get("Test"));
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Test");
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = true;
 
 			m_Data->StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
+			m_Data->StaticGeometryPipeline->SetInput("u_CameraData", m_Data->CameraUBO);
+			m_Data->StaticGeometryPipeline->Bake();
 
-			pipelineInfo.Material->Set("u_CameraData", m_Data->CameraUBO);
-			pipelineInfo.Material->Set("u_Albedo", Renderer::GetWhiteTexture());
+			m_Data->StaticGeometryMaterial = Material::Create(pipelineInfo.Shader);
+			m_Data->StaticGeometryMaterial->Set("u_Albedo", Renderer::GetWhiteTexture());
 		}
 	}
 
@@ -131,7 +134,9 @@ namespace Athena
 		m_Data->GeometryPass->Begin();
 		{
 			m_Data->StaticGeometryPipeline->Bind();
-			Ref<Material> material = m_Data->StaticGeometryPipeline->GetInfo().Material;
+
+			Ref<Material> material = m_Data->StaticGeometryMaterial;
+			material->Bind();
 
 			for (const auto& drawCall : m_Data->StaticGeometryList)
 			{

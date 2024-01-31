@@ -51,6 +51,12 @@ namespace Athena
 	{
 		m_Info = info;
 
+		DescriptorSetManagerCreateInfo setManagerInfo;
+		setManagerInfo.Shader = m_Info.Shader;
+		setManagerInfo.FirstSet = 1;
+		setManagerInfo.LastSet = 1;
+		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(setManagerInfo);
+
 		CreatePipeline(info.RenderPass->GetOutput()->GetInfo().Width, info.RenderPass->GetOutput()->GetInfo().Height);
 	}
 
@@ -64,7 +70,9 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			vkCmdBindPipeline(VulkanContext::GetActiveCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
-			m_Info.Material->RT_Bind();
+
+			m_DescriptorSetManager->RT_InvalidateAndUpdate();
+			m_DescriptorSetManager->RT_BindDescriptorSets();
 		});
 	}
 
@@ -82,11 +90,21 @@ namespace Athena
 		});
 	}
 
+	void VulkanPipeline::SetInput(std::string_view name, Ref<ShaderResource> resource)
+	{
+		m_DescriptorSetManager->Set(name, resource);
+	}
+
+	void VulkanPipeline::Bake()
+	{
+		m_DescriptorSetManager->Bake();
+	}
+
 	void VulkanPipeline::CreatePipeline(uint32 width, uint32 height)
 	{
 		Renderer::Submit([this, width, height]()
 		{
-			const VertexBufferLayout& vertexBufferLayout = m_Info.Material->GetShader()->GetReflectionData().VertexBufferLayout;
+			const VertexBufferLayout& vertexBufferLayout = m_Info.Shader->GetReflectionData().VertexBufferLayout;
 
 			VkVertexInputBindingDescription bindingDescription = {};
 			bindingDescription.binding = 0;
@@ -200,7 +218,7 @@ namespace Athena
 			colorBlending.blendConstants[2] = 0.0f;
 			colorBlending.blendConstants[3] = 0.0f;
 
-			auto vkShader = m_Info.Material->GetShader().As<VulkanShader>();
+			auto vkShader = m_Info.Shader.As<VulkanShader>();
 
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

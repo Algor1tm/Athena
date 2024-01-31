@@ -135,7 +135,7 @@ namespace Athena
 		for (uint32 i = 0; i < memoryProps.memoryHeapCount; ++i)
 		{
 			if(memoryProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-				deviceCaps.VRAM += memoryProps.memoryHeaps[i].size / 1024;
+				deviceCaps.VRAM += memoryProps.memoryHeaps[i].size / 1024; // bytes
 		}
 
 		VkPhysicalDeviceProperties properties;

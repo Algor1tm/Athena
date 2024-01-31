@@ -372,6 +372,8 @@ namespace Athena
 		ShaderReflectionData result;
 		result.PushConstant.Size = 0;
 
+		ATN_CORE_INFO_TAG("Renderer", "Compiling Shader '{}'", m_Name);
+
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 		{
 			spirv_cross::Compiler compiler(src);
@@ -460,27 +462,24 @@ namespace Athena
 				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
-				if (result.SampledTextures.contains(resource.name))
+				if (result.Textures2D.contains(resource.name))
 				{
-					auto& stageFlags = result.SampledTextures.at(resource.name).StageFlags;
+					auto& stageFlags = result.Textures2D.at(resource.name).StageFlags;
 					stageFlags = ShaderStage(stageFlags | stage);
 				}
 				else
 				{
-					SampledTextureReflectionData textureData;
+					Texture2DReflectionData textureData;
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
 
-					result.SampledTextures[resource.name] = textureData;
+					result.Textures2D[resource.name] = textureData;
 				}
 			}
 		}
 
 		result.PushConstant.Enabled = result.PushConstant.Size != 0;
-
-		ATN_CORE_TRACE("");
-		ATN_CORE_INFO("Shader Reflect '{}'", m_Name);
 
 		ATN_CORE_TRACE("  vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
 		for (const auto& elem : result.VertexBufferLayout)
@@ -488,14 +487,14 @@ namespace Athena
 
 		ATN_CORE_TRACE("  push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
 		for (const auto& [name, member] : result.PushConstant.Members)
-			ATN_CORE_TRACE("\t member {}: {} bytes, {} offset", name, member.Size, member.Offset);
+			ATN_CORE_TRACE("\t {}: {} bytes, {} offset", name, member.Size, member.Offset);
 
 		ATN_CORE_TRACE("  uniform buffers: {}", result.UniformBuffers.size());
 		for (const auto& [name, buffer] : result.UniformBuffers)
 			ATN_CORE_TRACE("\t buffer {}: {} bytes, binding {}, set {}", name, buffer.Size, buffer.Binding, buffer.Set);
 
-		ATN_CORE_TRACE("  sampled textures: {}", result.SampledTextures.size());
-		for (const auto& [name, texture] : result.SampledTextures)
+		ATN_CORE_TRACE("  sampled textures: {}", result.Textures2D.size());
+		for (const auto& [name, texture] : result.Textures2D)
 			ATN_CORE_TRACE("\t texture {}: binding {}, set {}", name, texture.Binding, texture.Set);
 
 		return result;

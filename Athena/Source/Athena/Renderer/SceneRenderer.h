@@ -152,6 +152,7 @@ namespace Athena
 
 		Ref<RenderPass> GeometryPass;
 		Ref<Pipeline> StaticGeometryPipeline;
+		Ref<Material> StaticGeometryMaterial;
 
 		CameraData CameraData;
 		Ref<UniformBuffer> CameraUBO;

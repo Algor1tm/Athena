@@ -87,7 +87,7 @@ namespace Athena
 
 		virtual void* GetDescriptorSet() = 0;
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::SampledTexture; }
+		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 		
 	public:

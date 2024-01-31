@@ -2,7 +2,8 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/RenderPass.h"
-#include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/ShaderResource.h"
 
 
 namespace Athena
@@ -29,7 +30,7 @@ namespace Athena
 	struct PipelineCreateInfo
 	{
 		Ref<RenderPass> RenderPass;
-		Ref<Material> Material;
+		Ref<Shader> Shader;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		float LineWidth = 1.f;
 		CullMode CullMode = CullMode::BACK;
@@ -45,6 +46,9 @@ namespace Athena
 		
 		virtual void Bind() = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
+
+		virtual void SetInput(std::string_view name, Ref<ShaderResource> resource) = 0;
+		virtual void Bake() = 0;
 
 		const PipelineCreateInfo& GetInfo() const { return m_Info; }
 

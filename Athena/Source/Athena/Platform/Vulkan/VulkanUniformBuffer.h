@@ -20,9 +20,11 @@ namespace Athena
 		virtual uint64 GetSize() override { return m_Size; }
 
 		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBOSet[frameIndex].GetBuffer(); }
+		const VkDescriptorBufferInfo& GetVulkanDescriptorInfo(uint32 frameIndex) const { return m_DescriptorInfo[frameIndex]; }
 
 	private:
 		std::vector<VulkanBuffer> m_VulkanUBOSet;
+		std::vector<VkDescriptorBufferInfo> m_DescriptorInfo;
 		uint64 m_Size;
 	};
 }

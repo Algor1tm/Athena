@@ -21,9 +21,10 @@ namespace Athena
 
 		virtual void* GetDescriptorSet() override;
 
-		VkImage GetVulkanImage() { return m_Image.GetImage(); }
-		VkImageView GetVulkanImageView() { return m_ImageView; }
-		VkSampler GetVulkanSampler() { return m_Sampler; }
+		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
+		VkImageView GetVulkanImageView() const { return m_ImageView; }
+		VkSampler GetVulkanSampler() const { return m_Sampler; }
+		const VkDescriptorImageInfo& GetVulkanDescriptorInfo() const { return m_DescriptorInfo; }
 
 	private:
 		void UploadData(const void* data, uint32 width, uint32 height);
@@ -32,7 +33,7 @@ namespace Athena
 		VulkanImage m_Image;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
-
+		VkDescriptorImageInfo m_DescriptorInfo;
 		VkDescriptorSet m_UIDescriptorSet = VK_NULL_HANDLE;
 	};
 }

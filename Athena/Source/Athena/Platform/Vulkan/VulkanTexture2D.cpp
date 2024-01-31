@@ -27,6 +27,10 @@ namespace Athena
 	{
 		m_Info = info;
 
+		m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
+		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
+
 		if (info.GenerateMipMap && info.MipLevels <= 1)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
 
@@ -123,6 +127,11 @@ namespace Athena
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 
 			m_UIDescriptorSet = VK_NULL_HANDLE;
+
+			// TODO: set layout based on usage and format
+			m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			m_DescriptorInfo.imageView = m_ImageView;
+			m_DescriptorInfo.sampler = m_Sampler;
 		});
 
 

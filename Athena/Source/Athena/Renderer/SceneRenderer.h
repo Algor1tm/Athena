@@ -146,33 +146,18 @@ namespace Athena
 		Matrix4 Transform;
 	};
 
-	struct SceneRendererData
-	{
-		std::vector<DrawCall> StaticGeometryList;
-
-		Ref<RenderPass> GeometryPass;
-		Ref<Pipeline> StaticGeometryPipeline;
-		Ref<Material> StaticGeometryMaterial;
-
-		CameraData CameraData;
-		Ref<UniformBuffer> CameraUBO;
-
-		Vector2u ViewportSize = { 1, 1 };
-
-		Ref<GPUProfiler> Profiler;
-		SceneRendererStatistics Statistics;
-	};
 
 	class ATHENA_API SceneRenderer : public RefCounted
 	{
 	public:
 		static Ref<SceneRenderer> Create();
+		~SceneRenderer();
 
 		void Init();
 		void Shutdown();
 
-		const SceneRendererStatistics& GetStatistics() { return m_Data->Statistics; }
-		Vector2u GetViewportSize() { return m_Data->ViewportSize; }
+		const SceneRendererStatistics& GetStatistics() { return m_Statistics; }
+		Vector2u GetViewportSize() { return m_ViewportSize; }
 
 		Ref<Texture2D> GetFinalImage();
 
@@ -188,6 +173,18 @@ namespace Athena
 		void GeometryPass();
 
 	private:
-		SceneRendererData* m_Data = nullptr;
+		std::vector<DrawCall> m_StaticGeometryList;
+
+		Ref<RenderPass> m_GeometryPass;
+		Ref<Pipeline> m_StaticGeometryPipeline;
+		Ref<Material> m_StaticGeometryMaterial;
+
+		CameraData m_CameraData;
+		Ref<UniformBuffer> m_CameraUBO;
+
+		Vector2u m_ViewportSize = { 1, 1 };
+
+		Ref<GPUProfiler> m_Profiler;
+		SceneRendererStatistics m_Statistics;
 	};
 }

@@ -54,7 +54,7 @@ namespace Athena
 		DescriptorSetManagerCreateInfo setManagerInfo;
 		setManagerInfo.Shader = m_Info.Shader;
 		setManagerInfo.FirstSet = 1;
-		setManagerInfo.LastSet = 1;
+		setManagerInfo.LastSet = 4;
 		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(setManagerInfo);
 
 		CreatePipeline(info.RenderPass->GetOutput()->GetInfo().Width, info.RenderPass->GetOutput()->GetInfo().Height);

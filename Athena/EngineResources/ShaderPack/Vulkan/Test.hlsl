@@ -50,7 +50,6 @@ struct Fragment
 
 [[vk::combinedImageSampler]]
 Texture2D u_Albedo : register(t0, space0);
-[[vk::combinedImageSampler]]
 SamplerState u_AlbedoSampler : register(s0, space0);
 
 

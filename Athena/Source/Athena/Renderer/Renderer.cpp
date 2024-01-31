@@ -11,8 +11,7 @@ namespace Athena
 {
 	struct RendererData
 	{
-		Renderer::API API = Renderer::API::None;
-		uint32 MaxFramesInFlight = 3;
+		RendererConfig Config;
 		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
 
@@ -41,12 +40,11 @@ namespace Athena
 	{
 		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
-		s_Data.API = config.API;
-		s_Data.MaxFramesInFlight = config.MaxFramesInFlight;
+		s_Data.Config = config;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
 
-		s_Data.ResourceFreeQueues.reserve(s_Data.MaxFramesInFlight);
-		for (uint32 i = 0; i < s_Data.MaxFramesInFlight; ++i)
+		s_Data.ResourceFreeQueues.reserve(s_Data.Config.MaxFramesInFlight);
+		for (uint32 i = 0; i < s_Data.Config.MaxFramesInFlight; ++i)
 		{
 			s_Data.ResourceFreeQueues.push_back(CommandQueue(1024 * 1024 * 2));	// 2 Mb
 		}
@@ -58,7 +56,7 @@ namespace Athena
 		if (!FileSystem::Exists(s_Data.ShaderCacheDirectory))
 			FileSystem::CreateDirectory(s_Data.ShaderCacheDirectory);
 
-		s_Data.RendererAPI = RendererAPI::Create(s_Data.API);
+		s_Data.RendererAPI = RendererAPI::Create(s_Data.Config.API);
 		s_Data.RendererAPI->Init();
 		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
 
@@ -138,7 +136,7 @@ namespace Athena
 	void Renderer::BeginFrame()
 	{
 		ATN_PROFILE_FUNC()
-		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.MaxFramesInFlight;
+		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.Config.MaxFramesInFlight;
 
 		// Acquire image from swapchain
 		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
@@ -181,14 +179,19 @@ namespace Athena
 		s_Data.RendererAPI->BlitToScreen(texture);
 	}
 
+	const RendererConfig& Renderer::GetConfig()
+	{
+		return s_Data.Config;
+	}
+
 	Renderer::API Renderer::GetAPI()
 	{
-		return s_Data.API;
+		return s_Data.Config.API;
 	}
 
 	uint32 Renderer::GetFramesInFlight()
 	{
-		return s_Data.MaxFramesInFlight;
+		return s_Data.Config.MaxFramesInFlight;
 	}
 
 	uint32 Renderer::GetCurrentFrameIndex()

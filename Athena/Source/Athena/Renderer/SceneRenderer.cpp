@@ -17,22 +17,25 @@ namespace Athena
 		return renderer;
 	}
 
+	SceneRenderer::~SceneRenderer()
+	{
+		Shutdown();
+	}
+
 	void SceneRenderer::Init()
 	{
-		m_Data = new SceneRendererData();
-
 		const uint32 maxTimestamps = 16;
 		const uint32 maxPipelineQueries = 1;
-		m_Data->Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
+		m_Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
-		m_Data->CameraUBO = UniformBuffer::Create(sizeof(CameraData));
+		m_CameraUBO = UniformBuffer::Create(sizeof(CameraData));
 
 		// Geometry Pass
 		{
 			FramebufferCreateInfo fbInfo;
 			fbInfo.Attachments = { TextureFormat::RGBA8, TextureFormat::DEPTH24STENCIL8 };
-			fbInfo.Width = m_Data->ViewportSize.x;
-			fbInfo.Height = m_Data->ViewportSize.y;
+			fbInfo.Width = m_ViewportSize.x;
+			fbInfo.Height = m_ViewportSize.y;
 			fbInfo.Attachments[0].ClearColor = { 0.9f, 0.3f, 0.4f, 1.0f };
 			fbInfo.Attachments[1].DepthClearColor = 1.f;
 			fbInfo.Attachments[1].StencilClearColor = 1.f;
@@ -43,64 +46,64 @@ namespace Athena
 			renderPassInfo.Output = mainFramebuffer;
 			renderPassInfo.LoadOpClear = true;
 
-			m_Data->GeometryPass = RenderPass::Create(renderPassInfo);
+			m_GeometryPass = RenderPass::Create(renderPassInfo);
 
 			PipelineCreateInfo pipelineInfo;
-			pipelineInfo.RenderPass = m_Data->GeometryPass;
+			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Test");
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = true;
 
-			m_Data->StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
-			m_Data->StaticGeometryPipeline->SetInput("u_CameraData", m_Data->CameraUBO);
-			m_Data->StaticGeometryPipeline->Bake();
+			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
+			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
+			m_StaticGeometryPipeline->Bake();
 
-			m_Data->StaticGeometryMaterial = Material::Create(pipelineInfo.Shader);
-			m_Data->StaticGeometryMaterial->Set("u_Albedo", Renderer::GetWhiteTexture());
+			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader);
+			m_StaticGeometryMaterial->Set("u_Albedo", Renderer::GetWhiteTexture());
 		}
 	}
 
 	void SceneRenderer::Shutdown()
 	{
-		delete m_Data;
+		
 	}
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return m_Data->GeometryPass->GetOutput(0);
+		return m_GeometryPass->GetOutput(0);
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
 	{
-		m_Data->ViewportSize = { width, height };
+		m_ViewportSize = { width, height };
 
-		m_Data->GeometryPass->GetOutput()->Resize(width, height);
-		m_Data->StaticGeometryPipeline->SetViewport(width, height);
+		m_GeometryPass->GetOutput()->Resize(width, height);
+		m_StaticGeometryPipeline->SetViewport(width, height);
 	}
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
-		m_Data->CameraData.View = cameraInfo.ViewMatrix;
-		m_Data->CameraData.Projection = cameraInfo.ProjectionMatrix;
+		m_CameraData.View = cameraInfo.ViewMatrix;
+		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
 
 		Renderer::Submit([this]()
 		{
-			m_Data->CameraUBO->RT_SetData(&m_Data->CameraData, sizeof(CameraData));
+			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
 		});
 	}
 
 	void SceneRenderer::EndScene()
 	{
-		m_Data->Profiler->Reset();
-		m_Data->Profiler->BeginPipelineStatsQuery();
+		m_Profiler->Reset();
+		m_Profiler->BeginPipelineStatsQuery();
 
 		GeometryPass();
 
-		m_Data->Statistics.PipelineStats = m_Data->Profiler->EndPipelineStatsQuery();
+		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
 
-		m_Data->StaticGeometryList.clear();
+		m_StaticGeometryList.clear();
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform)
@@ -115,7 +118,7 @@ namespace Athena
 		drawCall.VertexBuffer = vertexBuffer;
 		drawCall.Transform = transform;
 
-		m_Data->StaticGeometryList.push_back(drawCall);
+		m_StaticGeometryList.push_back(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
@@ -129,23 +132,23 @@ namespace Athena
 
 	void SceneRenderer::GeometryPass()
 	{
-		m_Data->Profiler->BeginTimeQuery();
+		m_Profiler->BeginTimeQuery();
 
-		m_Data->GeometryPass->Begin();
+		m_GeometryPass->Begin();
 		{
-			m_Data->StaticGeometryPipeline->Bind();
+			m_StaticGeometryPipeline->Bind();
 
-			Ref<Material> material = m_Data->StaticGeometryMaterial;
+			Ref<Material> material = m_StaticGeometryMaterial;
 			material->Bind();
 
-			for (const auto& drawCall : m_Data->StaticGeometryList)
+			for (const auto& drawCall : m_StaticGeometryList)
 			{
 				material->Set("u_Transform", drawCall.Transform);
 				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, material);
 			}
 		}
-		m_Data->GeometryPass->End();
+		m_GeometryPass->End();
 
-		m_Data->Statistics.GeometryPass = m_Data->Profiler->EndTimeQuery();
+		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
 	}
 }

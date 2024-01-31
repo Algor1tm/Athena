@@ -67,7 +67,8 @@ namespace Athena
 	{
 		Renderer::SubmitResourceFree([pool = m_DescriptorPool]()
 		{
-			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+			if(pool != VK_NULL_HANDLE)
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
 		});
 	}
 
@@ -135,13 +136,36 @@ namespace Athena
 				return;
 			}
 
-			const ShaderReflectionData& reflectionData = m_Info.Shader->GetReflectionData();
-			const auto& setLayouts = m_Info.Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
+			// Calculate descriptor pool size and allocate it
+			std::unordered_map<VkDescriptorType, uint32> poolSizesMap;
+
+			uint32 maxSet = 0;
+			for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+			{
+				switch (resDesc.Type)
+				{
+				case ShaderResourceType::UniformBuffer:
+				{
+					poolSizesMap[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] += 1;
+					break;
+				}
+				case ShaderResourceType::Texture2D:
+				{
+					poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
+					break;
+				}
+				}
+
+				if (resDesc.Set > maxSet)
+					maxSet = resDesc.Set;
+			}
+
+			uint32 setsCount = maxSet - m_Info.FirstSet + 1;
 
 			std::vector<VkDescriptorPoolSize> poolSizes;
-			poolSizes.emplace_back(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, reflectionData.UniformBuffers.size());
-			poolSizes.emplace_back(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, reflectionData.Textures2D.size());
-			uint32 setsCount = m_Info.LastSet - m_Info.FirstSet + 1;	// TODO: not every set can be used, maybe count how many sets are used
+			poolSizes.reserve(poolSizesMap.size());
+			for (const auto& [type, count] : poolSizesMap)
+				poolSizes.emplace_back(type, count);
 
 			VkDescriptorPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -149,31 +173,42 @@ namespace Athena
 			poolInfo.poolSizeCount = poolSizes.size();
 			poolInfo.pPoolSizes = poolSizes.data();
 
-			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool));
+			// Do not create pool if there are no resources
+			if (poolInfo.maxSets > 0 && poolInfo.poolSizeCount > 0)
+			{
+				VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool));
+			}
+			else
+			{
+				m_DescriptorPool = VK_NULL_HANDLE;
+			}
 
+			const auto& setLayouts = m_Info.Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
 			m_DescriptorSets.resize(Renderer::GetFramesInFlight());
 			m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
 
 			for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
 			{
-				for (const auto& [set, setData] : m_Resources)
+				if (setLayouts.size() > 0)
 				{
 					VkDescriptorSetAllocateInfo allocInfo = {};
 					allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 					allocInfo.descriptorPool = m_DescriptorPool;
-					allocInfo.descriptorSetCount = 1;
-					allocInfo.pSetLayouts = &setLayouts[set];
+					allocInfo.descriptorSetCount = setsCount;
+					allocInfo.pSetLayouts = &setLayouts[m_Info.FirstSet];
 
-					VkDescriptorSet descriptorSet;
-					VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, &descriptorSet));
-					m_DescriptorSets[frameIndex].emplace_back(descriptorSet);
+					m_DescriptorSets[frameIndex].resize(setsCount);
+					VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets[frameIndex].data()));
+				}
 
+				for (const auto& [set, setData] : m_Resources)
+				{
 					for (const auto& [binding, resource] : setData)
 					{
 						WriteDescriptorSet& storedWriteDescriptor = m_WriteDescriptorSetTable[frameIndex][set][binding];
 						VkWriteDescriptorSet& writeDescriptor = storedWriteDescriptor.VulkanWriteDescriptorSet;
 						writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-						writeDescriptor.dstSet = descriptorSet;
+						writeDescriptor.dstSet = m_DescriptorSets[frameIndex].at(set - m_Info.FirstSet);
 						writeDescriptor.dstBinding = binding;
 						writeDescriptor.dstArrayElement = 0;
 						writeDescriptor.descriptorCount = 1;
@@ -308,7 +343,6 @@ namespace Athena
 	{
 		const auto& descriptorSets = m_DescriptorSets[Renderer::GetCurrentFrameIndex()];
 
-		// Bind descriptor set 0 if exists
 		if (descriptorSets.size() > 0)
 		{
 			vkCmdBindDescriptorSets(

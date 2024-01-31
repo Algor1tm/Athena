@@ -10,7 +10,7 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
-		CompileOrGetFromCache(false);
+		CompileOrGetFromCache(Renderer::GetConfig().ForceCompileShaders);
 	}
 
 	VulkanShader::VulkanShader(const FilePath& path)

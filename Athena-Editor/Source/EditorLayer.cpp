@@ -67,7 +67,7 @@ namespace Athena
 
     void EditorLayer::OnDetach()
     {
-        m_ViewportRenderer->Shutdown();
+        m_ViewportRenderer.Release();
         PanelManager::Shutdown();
         EditorResources::Shutdown();
         Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);

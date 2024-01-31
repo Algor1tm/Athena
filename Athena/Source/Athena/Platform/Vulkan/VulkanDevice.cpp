@@ -135,7 +135,7 @@ namespace Athena
 		for (uint32 i = 0; i < memoryProps.memoryHeapCount; ++i)
 		{
 			if(memoryProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-				deviceCaps.VRAM += memoryProps.memoryHeaps[i].size / 1024; // bytes
+				deviceCaps.VRAM += memoryProps.memoryHeaps[i].size / 1024; // KBs
 		}
 
 		VkPhysicalDeviceProperties properties;
@@ -159,6 +159,7 @@ namespace Athena
 		deviceCaps.MaxStorageBufferRange = limits.maxStorageBufferRange;
 		deviceCaps.MaxPushConstantRange = limits.maxPushConstantsSize;
 
+		deviceCaps.MaxBoundDescriptorSets = limits.maxBoundDescriptorSets;
 		deviceCaps.MaxDescriptorSetSamplers = limits.maxDescriptorSetSamplers;
 		deviceCaps.MaxDescriptorSetUnifromBuffers = limits.maxDescriptorSetUniformBuffers;
 		deviceCaps.MaxDescriptorSetStorageBuffers = limits.maxDescriptorSetStorageBuffers;

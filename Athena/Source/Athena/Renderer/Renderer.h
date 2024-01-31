@@ -31,6 +31,7 @@ namespace Athena
 		uint32 MaxStorageBufferRange;
 		uint32 MaxPushConstantRange;
 
+		uint32 MaxBoundDescriptorSets;
 		uint32 MaxDescriptorSetSamplers;
 		uint32 MaxDescriptorSetUnifromBuffers;
 		uint32 MaxDescriptorSetStorageBuffers;
@@ -105,8 +106,9 @@ namespace Athena
 		static void Init(const RendererConfig& config);
 		static void Shutdown();
 
+		static const RendererConfig& GetConfig();
 		static Renderer::API GetAPI();
-
+		
 		static uint32 GetFramesInFlight();
 		static uint32 GetCurrentFrameIndex();
 
@@ -154,6 +156,7 @@ namespace Athena
 	struct RendererConfig
 	{
 		Renderer::API API = Renderer::API::Vulkan;
+		bool ForceCompileShaders = false;
 		uint32 MaxFramesInFlight = 3;
 	};
 }

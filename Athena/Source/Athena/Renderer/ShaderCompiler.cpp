@@ -360,7 +360,7 @@ namespace Athena
 
 		if (errorMsg.size() != 0)
 		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, errorMsg);
+			ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, errorMsg);
 			return false;
 		}
 
@@ -372,7 +372,7 @@ namespace Athena
 		ShaderReflectionData result;
 		result.PushConstant.Size = 0;
 
-		ATN_CORE_INFO_TAG("Renderer", "Compiling Shader '{}'", m_Name);
+		ATN_CORE_INFO_TAG("Renderer", "Reflecting Shader '{}'", m_Name);
 
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 		{

@@ -128,8 +128,9 @@ namespace Athena
                         ImGui::Text("MaxStorageBufferRange: %u", gpuCaps.MaxStorageBufferRange);
                         ImGui::Text("MaxPushConstantRange: %u", gpuCaps.MaxPushConstantRange);
                         ImGui::Spacing();
+                        ImGui::Text("MaxBoundDescriptorSets: %u", gpuCaps.MaxBoundDescriptorSets);
                         ImGui::Text("MaxDescriptorSetSamplers: %u", gpuCaps.MaxDescriptorSetSamplers);
-                        ImGui::Text("MaxDescriptorSetUnifromBuffers: %u", gpuCaps.MaxDescriptorSetUnifromBuffers);
+                        ImGui::Text("MaxDescriptorSetUniformBuffers: %u", gpuCaps.MaxDescriptorSetUnifromBuffers);
                         ImGui::Text("MaxDescriptorSetStorageBuffers: %u", gpuCaps.MaxDescriptorSetStorageBuffers);
                         ImGui::Text("MaxDescriptorSetSampledImages: %u", gpuCaps.MaxDescriptorSetSampledImages);
                         ImGui::Text("MaxDescriptorSetStorageImages: %u", gpuCaps.MaxDescriptorSetStorageImages);

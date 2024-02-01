@@ -144,6 +144,7 @@ namespace Athena
 	{
 		Ref<VertexBuffer> VertexBuffer;
 		Matrix4 Transform;
+		Ref<Material> Material;
 	};
 
 

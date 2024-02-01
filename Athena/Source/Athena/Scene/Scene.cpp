@@ -550,7 +550,7 @@ namespace Athena
 				const auto& subMeshes = meshComponent.Mesh->GetAllSubMeshes();
 				for (uint32 i = 0; i < subMeshes.size(); ++i)
 				{
-					Ref<Material> material = nullptr;//MaterialManager::Get(subMeshes[i].MaterialName);
+					Ref<Material> material = subMeshes[i].Material;
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
 					renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix());

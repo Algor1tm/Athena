@@ -22,6 +22,7 @@ namespace Athena
 		FilePath ShaderCacheDirectory;
 		std::unordered_map<String, String> GlobalShaderMacroses;
 		Ref<ShaderPack> ShaderPack;
+		Ref<MaterialTable> MaterialTable;
 
 		RenderCapabilities RenderCaps;
 
@@ -62,6 +63,8 @@ namespace Athena
 
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
 		s_Data.ShaderPack->Load("Test", s_Data.ShaderPackDirectory / "Vulkan/Test.hlsl");
+
+		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
 		uint32 whiteTextureData = 0xffffffff;
 
@@ -118,6 +121,8 @@ namespace Athena
 
 	void Renderer::Shutdown()
 	{
+		s_Data.MaterialTable.Release();
+
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
 
@@ -224,6 +229,11 @@ namespace Athena
 	void Renderer::SetGlobalShaderMacros(const String& name, const String& value)
 	{
 		s_Data.GlobalShaderMacroses[name] = value;
+	}
+
+	Ref<MaterialTable> Renderer::GetMaterialTable()
+	{
+		return s_Data.MaterialTable;
 	}
 
 	const RenderCapabilities& Renderer::GetRenderCaps()

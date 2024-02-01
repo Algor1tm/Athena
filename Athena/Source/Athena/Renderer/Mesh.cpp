@@ -1,8 +1,6 @@
 #include "Mesh.h"
 
 #include "Athena/Core/FileSystem.h"
-
-#include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
@@ -77,36 +75,43 @@ namespace Athena
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		//if (MaterialManager::Exists(materialName))
-		//	return MaterialManager::Get(materialName);
+		Ref<MaterialTable> table = Renderer::GetMaterialTable();
+		if (table->Exists(materialName))
+			return table->GetMaterial(materialName);
 
-		//result = MaterialManager::CreateMaterial(materialName);
+		result = Material::CreatePBRStatic(materialName);
 
-		//aiColor4D color;
-		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-		//	result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
-		//else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-		//	result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
+		aiColor4D color;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
+			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
+		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
+			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
 
-		//float roughness;
-		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
-		//	result->Set(MaterialUniform::ROUGHNESS, roughness);
+		float roughness;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
+			result->Set("u_Roughness", roughness);
 
-		//float metalness;
-		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-		//	result->Set(MaterialUniform::METALNESS, metalness);
+		float metalness;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
+			result->Set("u_Metalness", metalness);
 
-		//float emission;
-		//if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
-		//	result->Set(MaterialUniform::EMISSION, emission);
-		//
+		float emission;
+		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
+			result->Set("u_Emission", emission);
+		
+		result->Set("u_UseAlbedoMap", (uint32)true);
+		result->Set("u_UseNormalMap", (uint32)false);
+		result->Set("u_UseRoughnessMap", (uint32)false);
+		result->Set("u_UseMetalnessMap", (uint32)false);
 
-		//Ref<Texture2D> texture;
+		Ref<Texture2D> texture;
 
-		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
-		//	result->Set(MaterialTexture::ALBEDO_MAP, texture);
-		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
-		//	result->Set(MaterialTexture::ALBEDO_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
+			result->Set("u_AlbedoMap", texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
+			result->Set("u_AlbedoMap", texture);
+
+		result->Set("u_UseAlbedoMap", uint32(texture != nullptr));
 
 		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
 		//	result->Set(MaterialTexture::NORMAL_MAP, texture);
@@ -119,34 +124,8 @@ namespace Athena
 		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
 		//	result->Set(MaterialTexture::METALNESS_MAP, texture);
 
-		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
-		//	result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
-		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
-		//	result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
-
 		return result;
 	}
-
-	//static Ref<IndexBuffer> LoadIndexBuffer(const aiMesh* aimesh)
-	//{
-	//	uint32 numFaces = aimesh->mNumFaces;
-	//	aiFace* faces = aimesh->mFaces;
-
-	//	std::vector<uint32> indicies(numFaces * 3);
-
-	//	uint32 index = 0;
-	//	for (uint32 i = 0; i < numFaces; i++)
-	//	{
-	//		if (faces[i].mNumIndices != 3)
-	//			break;
-
-	//		indicies[index++] = faces[i].mIndices[0];
-	//		indicies[index++] = faces[i].mIndices[1];
-	//		indicies[index++] = faces[i].mIndices[2];
-	//	}
-
-	//	return IndexBuffer::Create(indicies.data(), indicies.size());
-	//}
 
 	static Ref<VertexBuffer> LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform)
 	{
@@ -307,7 +286,7 @@ namespace Athena
 		//	subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
 		subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
-		//subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path)->GetName();
+		subMesh.Material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path);
 
 		return subMesh;
 	}
@@ -437,7 +416,8 @@ namespace Athena
 			aiProcess_OptimizeMeshes |
 
 			aiProcess_Triangulate |
-			aiProcess_EmbedTextures;
+			aiProcess_EmbedTextures |
+			aiProcess_FlipUVs;
 
 		const aiScene* aiscene = aiImportFile(path.string().c_str(), flags);
 

@@ -45,8 +45,8 @@ namespace Athena
                 {
                     float memoryUsage = (float)Platform::GetMemoryUsage() / (1024.f * 1024.f);
                     float videoMemoryUsage = (float)Renderer::GetMemoryUsage() / (1024.f * 1024.f);
-                    ImGui::Text("RAM: %.1f Mb", memoryUsage);
-                    ImGui::Text("VRAM: %.1f Mb", videoMemoryUsage);
+                    ImGui::Text("RAM: %.3f Mb", memoryUsage);
+                    ImGui::Text("VRAM: %.3f Mb", videoMemoryUsage);
                     ImGui::Spacing();
 
                     ImGui::Text("Application::ProcessEvents: %.3f ms", appstats.Application_ProcessEvents.AsMilliseconds());

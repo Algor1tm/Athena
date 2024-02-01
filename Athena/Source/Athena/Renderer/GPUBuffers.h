@@ -8,7 +8,7 @@ namespace Athena
 {
 	enum class ShaderDataType : uint8
 	{
-		Unknown = 0, Float, Float2, Float3, Float4, Int, Int2, Int3, Int4, Bool, Mat3, Mat4
+		Unknown = 0, Float, Float2, Float3, Float4, Int, Int2, Int3, Int4, UInt, Mat3, Mat4
 	};
 
 	constexpr uint32 ShaderDataTypeSize(ShaderDataType type)
@@ -23,7 +23,7 @@ namespace Athena
 			case ShaderDataType::Int2:   return 4 * 2;
 			case ShaderDataType::Int3:   return 4 * 3;
 			case ShaderDataType::Int4:   return 4 * 4;
-			case ShaderDataType::Bool:   return 1;
+			case ShaderDataType::UInt:   return 4;
 			case ShaderDataType::Mat3:   return 4 * 9;
 			case ShaderDataType::Mat4:   return 4 * 16;
 		}
@@ -44,7 +44,7 @@ namespace Athena
 		case ShaderDataType::Int2:   return "int2";
 		case ShaderDataType::Int3:   return "int3";
 		case ShaderDataType::Int4:   return "int4";
-		case ShaderDataType::Bool:   return "bool";
+		case ShaderDataType::UInt:   return "uint";
 		case ShaderDataType::Mat3:   return "mat3";
 		case ShaderDataType::Mat4:   return "mat4";
 		}
@@ -79,7 +79,7 @@ namespace Athena
 				case ShaderDataType::Int2: return 2;
 				case ShaderDataType::Int3: return 3;
 				case ShaderDataType::Int4: return 4;
-				case ShaderDataType::Bool: return 1;
+				case ShaderDataType::UInt: return 4;
 			}
 
 			ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");

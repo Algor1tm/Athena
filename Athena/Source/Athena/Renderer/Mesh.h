@@ -5,6 +5,7 @@
 #include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Animation.h"
+#include "Athena/Renderer/Material.h"
 
 #include <vector>
 
@@ -19,7 +20,7 @@ namespace Athena
 	{
 		String Name;
 		Ref<VertexBuffer> VertexBuffer;
-		String MaterialName;
+		Ref<Material> Material;
 	};
 
 	class ATHENA_API StaticMesh : public RefCounted

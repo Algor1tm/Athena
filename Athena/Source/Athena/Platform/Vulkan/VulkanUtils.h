@@ -174,8 +174,8 @@ namespace Athena::Vulkan
         case VK_DEBUG_REPORT_WARNING_BIT_EXT:
             ATN_CORE_WARN_TAG("Vulkan", message); break;
 
-        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", message); break;
+        //case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+        //    ATN_CORE_WARN_TAG("Vulkan", message); break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
             ATN_CORE_ERROR_TAG("Vulkan", message);
@@ -239,7 +239,7 @@ namespace Athena::Vulkan
         case ShaderDataType::Int3: return VK_FORMAT_R32G32B32_SINT;
         case ShaderDataType::Int4: return VK_FORMAT_R32G32B32A32_SINT;
 
-        case ShaderDataType::Bool:  return VK_FORMAT_R8_UINT;
+        case ShaderDataType::UInt:  return VK_FORMAT_R32_UINT;
         }
 
         ATN_CORE_ASSERT(false);

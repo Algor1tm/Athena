@@ -68,7 +68,7 @@ namespace Athena
 				{
 				case spirv_cross::SPIRType::BaseType::Int: return ShaderDataType::Int;
 				case spirv_cross::SPIRType::BaseType::Float: return ShaderDataType::Float;
-				case spirv_cross::SPIRType::BaseType::Boolean: return ShaderDataType::Bool;
+				case spirv_cross::SPIRType::BaseType::UInt: return ShaderDataType::UInt;
 				default: return ShaderDataType::Unknown;
 				}
 			}

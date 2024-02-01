@@ -83,7 +83,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
 			}
 		});
 	}
@@ -94,7 +94,7 @@ namespace Athena
 		{
 			if (!m_Resources.contains(resDesc.Set))
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
 				return false;
 			}
 
@@ -102,7 +102,7 @@ namespace Athena
 
 			if (!setResources.contains(resDesc.Binding))
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
@@ -110,13 +110,13 @@ namespace Athena
 
 			if (resource == nullptr)
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {})!", m_Info.Name, name, resDesc.Set, resDesc.Binding);
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {})!", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
 			if (resDesc.Type != resource->GetResourceType())
 			{
-				ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}')", m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource->GetResourceType()));
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}')", m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource->GetResourceType()));
 				return false;
 			}
 		}

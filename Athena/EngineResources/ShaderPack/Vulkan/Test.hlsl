@@ -21,6 +21,15 @@ struct Interpolators
 cbuffer MaterialData
 {
     float4x4 u_Transform;
+    float4 u_Albedo;
+    float u_Roughness;
+    float u_Metalness;
+    float u_Emission;
+
+    uint u_UseAlbedoMap;
+    uint u_UseNormalMap;
+    uint u_UseRoughnessMap;
+    uint u_UseMetalnessMap;
 };
 
 
@@ -49,14 +58,44 @@ struct Fragment
 };
 
 [[vk::combinedImageSampler]]
-Texture2D u_Albedo : register(t0, space0);
-SamplerState u_AlbedoSampler : register(s0, space0);
+Texture2D u_AlbedoMap : register(t0, space0);
+SamplerState u_AlbedoMapSampler : register(s0, space0);
+
+[[vk::combinedImageSampler]]
+Texture2D u_NormalMap : register(t1, space0);
+SamplerState u_NormalMapSampler : register(s1, space0);
+
+[[vk::combinedImageSampler]]
+Texture2D u_RoughnessMap : register(t2, space0);
+SamplerState u_RoughnessMapSampler : register(s2, space0);
+
+[[vk::combinedImageSampler]]
+Texture2D u_MetalnessMap : register(t3, space0);
+SamplerState u_MetalnessMapSampler : register(s3, space0);
 
 
 Fragment FSMain(Interpolators input)
 {
     Fragment output;
     
-    output.Color = u_Albedo.Sample(u_AlbedoSampler, input.TexCoord);
+    // Get PBR parameters
+    float4 albedo = u_Albedo;
+    if (u_UseAlbedoMap)
+        albedo *= u_AlbedoMap.Sample(u_AlbedoMapSampler, input.TexCoord);
+    
+    float3 normal = input.Normal;
+    if(u_UseNormalMap)
+    {
+        normal = u_NormalMap.Sample(u_NormalMapSampler, input.TexCoord).rgb;
+        normal = normal * 2 - 1;
+        normal = mul(normal, input.TBN);
+    }
+    
+    float roughness = u_UseRoughnessMap ? u_RoughnessMap.Sample(u_RoughnessMapSampler, input.TexCoord).r : u_Roughness;
+    float metalness = u_UseMetalnessMap ? u_MetalnessMap.Sample(u_MetalnessMapSampler, input.TexCoord).r : u_Metalness;
+    float emission = u_Emission;
+    
+    output.Color = albedo;
+    
     return output;
 }

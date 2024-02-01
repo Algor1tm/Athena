@@ -65,8 +65,8 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->Bake();
 
-			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
-			m_StaticGeometryMaterial->Set("u_Albedo", Renderer::GetWhiteTexture());
+			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader, "StaticGeometryMaterial");
+			m_StaticGeometryMaterial->Set("u_AlbedoMap", Renderer::GetWhiteTexture());
 		}
 	}
 
@@ -122,6 +122,7 @@ namespace Athena
 		DrawCall drawCall;
 		drawCall.VertexBuffer = vertexBuffer;
 		drawCall.Transform = transform;
+		drawCall.Material = material;
 
 		m_StaticGeometryList.push_back(drawCall);
 	}
@@ -143,13 +144,11 @@ namespace Athena
 		{
 			m_StaticGeometryPipeline->Bind();
 
-			Ref<Material> material = m_StaticGeometryMaterial;
-			material->Bind();
-
 			for (const auto& drawCall : m_StaticGeometryList)
 			{
-				material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, material);
+				drawCall.Material->Bind();
+				drawCall.Material->Set("u_Transform", drawCall.Transform);
+				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, drawCall.Material);
 			}
 		}
 		m_GeometryPass->End();

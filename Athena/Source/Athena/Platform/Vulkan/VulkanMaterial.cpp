@@ -74,7 +74,7 @@ namespace Athena
 			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
 			vkCmdPushConstants(VulkanContext::GetActiveCommandBuffer(), 
 				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
-				VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags),
+				Vulkan::GetShaderStageFlags(pushConstant.StageFlags),
 				0,
 				pushConstant.Size,
 				m_PushConstantBuffer);

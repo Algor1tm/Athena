@@ -86,8 +86,6 @@ namespace Athena
 		virtual void GenerateMipMap(uint32 levels) = 0;
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
-		virtual void* GetDescriptorSet() = 0;
-
 		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 		

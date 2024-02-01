@@ -30,7 +30,7 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
 			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Undo")->GetDescriptorSet(), m_ButtonSize))
+			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Undo")), m_ButtonSize))
 			{
 				if (m_CurrentNode->ParentNode != nullptr)
 				{
@@ -40,14 +40,14 @@ namespace Athena
 
 			ImGui::SameLine();
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Redo")->GetDescriptorSet(), m_ButtonSize))
+			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Redo")), m_ButtonSize))
 			{
 				// TODO
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::ImageButton(EditorResources::GetIcon("ContentBrowser_Refresh")->GetDescriptorSet(), m_ButtonSize))
+			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Refresh")), m_ButtonSize))
 			{
 				Refresh();
 			}
@@ -95,7 +95,7 @@ namespace Athena
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
 
 				Ref<Texture2D> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
-				ImGui::ImageButton(icon->GetDescriptorSet(), m_ItemSize);
+				ImGui::ImageButton(UI::GetTextureID(icon), m_ItemSize);
 
 				bool enteredIntoFolder = false;
 				if (node.IsFolder && ImGui::IsItemClicked())

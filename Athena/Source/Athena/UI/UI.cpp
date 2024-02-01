@@ -1,8 +1,14 @@
 #include "UI.h"
+#include "Athena/Core/Application.h"
 
 
 namespace Athena::UI
 {
+	void* GetTextureID(Ref<Texture2D> texture)
+	{
+		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
+	}
+
 	void PushFont(Fonts font)
 	{
 		ImGuiIO& io = ImGui::GetIO();
@@ -273,7 +279,7 @@ namespace Athena::UI
 	{
 		PropertyRow(label, size.y + 5.f);
 
-		bool pressed = ImGui::ImageButton(tex->GetDescriptorSet(), size, { 0, 0 }, { 1, 1 }, frame_padding, bg_col, tint_col);
+		bool pressed = ImGui::ImageButton(UI::GetTextureID(tex), size, { 0, 0 }, { 1, 1 }, frame_padding, bg_col, tint_col);
 		return pressed;
 	}
 
@@ -340,27 +346,27 @@ namespace Athena::UI
 		return result;
 	}
 
-	void ButtonImage(const Ref<Texture>& imageNormal, const Ref<Texture>& imageHovered, const Ref<Texture>& imagePressed,
+	void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax)
 	{
 		auto* drawList = ImGui::GetWindowDrawList();
 		if (ImGui::IsItemActive())
-			drawList->AddImage(imagePressed->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintPressed);
+			drawList->AddImage(UI::GetTextureID(imagePressed), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintPressed);
 		else if (ImGui::IsItemHovered())
-			drawList->AddImage(imageHovered->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintHovered);
+			drawList->AddImage(UI::GetTextureID(imageHovered), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintHovered);
 		else
-			drawList->AddImage(imageNormal->GetDescriptorSet(), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
+			drawList->AddImage(UI::GetTextureID(imageNormal), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
 	}
 	
-	void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
+	void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
 	{
 		ButtonImage(image, image, image, tintNormal, tintHovered, tintPressed, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 	}
 
 	void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 	{
-		ImGui::Image(image->GetDescriptorSet(), size, { 0, 0 }, { 1, 1 }, tint_col, border_col);
+		ImGui::Image(UI::GetTextureID(image), size, { 0, 0 }, { 1, 1 }, tint_col, border_col);
 	}
 
 	bool ButtonCentered(std::string_view label, const ImVec2& size)

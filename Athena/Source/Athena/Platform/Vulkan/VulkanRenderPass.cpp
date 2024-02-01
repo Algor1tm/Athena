@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	namespace VulkanUtils
+	namespace Vulkan
 	{
 		static VkImageLayout GetAttachmentImageLayout(TextureFormat format)
 		{
@@ -52,7 +52,7 @@ namespace Athena
 			for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
 			{
 				VkAttachmentDescription attachmentDesc = {};
-				attachmentDesc.format = VulkanUtils::GetFormat(attachment.Format);
+				attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
 				attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
 				VkAttachmentLoadOp loadOp = m_Info.LoadOpClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -72,14 +72,14 @@ namespace Athena
 				{
 					VkAttachmentReference colorAttachmentRef;
 					colorAttachmentRef.attachment = attachments.size() - 1;
-					colorAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(attachment.Format);
+					colorAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
 
 					colorAttachmentRefs.push_back(colorAttachmentRef);
 				}
 				else
 				{
 					depthStencilAttachmentRef.attachment = attachments.size() - 1;
-					depthStencilAttachmentRef.layout = VulkanUtils::GetAttachmentImageLayout(attachment.Format);
+					depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
 					hasDepthStencil = true;
 				}
 			}
@@ -98,6 +98,7 @@ namespace Athena
 			renderPassInfo.pSubpasses = &subpass;
 
 			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
+			Vulkan::SetObjectName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
 
 			m_Info.Output.As<VulkanFramebuffer>()->RT_PrepareFramebuffer(m_VulkanRenderPass);
 		});
@@ -133,7 +134,7 @@ namespace Athena
 
 				for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
 				{
-					VkClearValue clearValue = VulkanUtils::GetClearValue(attachment);
+					VkClearValue clearValue = Vulkan::GetClearValue(attachment);
 					clearValues.push_back(clearValue);
 				}
 

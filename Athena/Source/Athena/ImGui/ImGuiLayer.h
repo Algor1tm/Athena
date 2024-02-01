@@ -5,6 +5,7 @@
 
 #include "Athena/Input/Event.h"
 #include "Athena/Input/WindowEvent.h"
+#include "Athena/Renderer/Texture.h"
 
 #include "Athena/UI/Theme.h"
 
@@ -14,12 +15,15 @@ namespace Athena
 	class ATHENA_API ImGuiLayerImpl
 	{
 	public:
+		virtual ~ImGuiLayerImpl() = default;
+
 		virtual void Init(void* windowHandle) = 0;
 		virtual void Shutdown() = 0;
 
 		virtual void NewFrame() = 0;
 		virtual void RenderDrawData(uint32 width, uint32 height) = 0;
 
+		virtual void* GetTextureID(Ref<Texture2D> texture) = 0;
 		virtual void OnSwapChainRecreate() = 0;
 	};
 
@@ -34,6 +38,8 @@ namespace Athena
 
 		UI::Theme& GetTheme() { return m_Theme; }
 		void UpdateImGuiTheme();
+
+		void* GetTextureID(Ref<Texture2D> texture);
 
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;

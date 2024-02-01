@@ -57,7 +57,7 @@ namespace Athena
 				uboLayoutBinding.binding = ubo.Binding;
 				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = VulkanUtils::GetShaderStageFlags(ubo.StageFlags);
+				uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
 				uboLayoutBinding.pImmutableSamplers = nullptr;
 
 				bindings[ubo.Set].push_back(uboLayoutBinding);
@@ -69,7 +69,7 @@ namespace Athena
 				uboLayoutBinding.binding = texture.Binding;
 				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = VulkanUtils::GetShaderStageFlags(texture.StageFlags);
+				uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
 				uboLayoutBinding.pImmutableSamplers = nullptr;
 
 				bindings[texture.Set].push_back(uboLayoutBinding);
@@ -109,7 +109,7 @@ namespace Athena
 			{
 				range.offset = 0;
 				range.size = pushConstant.Size;
-				range.stageFlags = VulkanUtils::GetShaderStageFlags(pushConstant.StageFlags);
+				range.stageFlags = Vulkan::GetShaderStageFlags(pushConstant.StageFlags);
 
 				pipelineLayoutInfo.pushConstantRangeCount = 1;
 				pipelineLayoutInfo.pPushConstantRanges = &range;
@@ -121,6 +121,7 @@ namespace Athena
 			}
 
 			VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
+			Vulkan::SetObjectName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, m_Name);
 		});
 	}
 
@@ -141,11 +142,11 @@ namespace Athena
 			moduleCreateInfo.pCode = src.data();
 
 			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &moduleCreateInfo, nullptr, &m_VulkanShaderModules[stage]));
-			VulkanContext::SetObjectName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
+			Vulkan::SetObjectName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
 
 			VkPipelineShaderStageCreateInfo shaderStageInfo = {};
 			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			shaderStageInfo.stage = VulkanUtils::GetShaderStage(stage);
+			shaderStageInfo.stage = Vulkan::GetShaderStage(stage);
 			shaderStageInfo.module = m_VulkanShaderModules.at(stage);
 			shaderStageInfo.pName = compiler.GetEntryPoint(stage).data();
 

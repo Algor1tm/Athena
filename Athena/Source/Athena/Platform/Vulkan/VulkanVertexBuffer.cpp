@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	namespace VulkanUtils
+	namespace Vulkan
 	{
 		static void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 		{
@@ -53,7 +53,7 @@ namespace Athena
 				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 				m_VertexBuffer = allocator->AllocateBuffer(bufferInfo);
 
-				VulkanUtils::CopyBuffer(stagingBuffer.GetBuffer(), m_VertexBuffer.GetBuffer(), bufferSize);
+				Vulkan::CopyBuffer(stagingBuffer.GetBuffer(), m_VertexBuffer.GetBuffer(), bufferSize);
 
 				allocator->DestroyBuffer(stagingBuffer);
 				vertexLocalData.Release();
@@ -78,7 +78,7 @@ namespace Athena
 				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 				m_IndexBuffer = allocator->AllocateBuffer(bufferInfo);
 
-				VulkanUtils::CopyBuffer(stagingBuffer.GetBuffer(), m_IndexBuffer.GetBuffer(), bufferSize);
+				Vulkan::CopyBuffer(stagingBuffer.GetBuffer(), m_IndexBuffer.GetBuffer(), bufferSize);
 
 				allocator->DestroyBuffer(stagingBuffer);
 				indexLocalData.Release();

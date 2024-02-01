@@ -11,7 +11,7 @@
 #define DEFAULT_FENCE_TIMEOUT 100000000000
 
 
-namespace Athena::VulkanUtils
+namespace Athena::Vulkan
 {
     // Copied from glfw internal
     inline const char* GetResultString(VkResult result)
@@ -85,12 +85,106 @@ namespace Athena::VulkanUtils
         return false;
     }
 
-
 #ifdef ATN_DEBUG
-    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::VulkanUtils::CheckResult(expr))
+    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::Vulkan::CheckResult(expr))
 #else
     #define VK_CHECK(expr) expr
 #endif
+
+
+    inline void SetObjectName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
+    {
+#ifdef ATN_DEBUG
+        static PFN_vkDebugMarkerSetObjectNameEXT PFN_DebugMarkerSetObjectName = nullptr;
+
+        if (PFN_DebugMarkerSetObjectName == nullptr)
+        {
+            PFN_DebugMarkerSetObjectName = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkDebugMarkerSetObjectNameEXT");
+        }
+
+        VkDebugMarkerObjectNameInfoEXT nameInfo = {};
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+        nameInfo.objectType = type;
+        nameInfo.object = (uint64)object;
+        nameInfo.pObjectName = name.c_str();
+
+        PFN_DebugMarkerSetObjectName(VulkanContext::GetLogicalDevice(), &nameInfo);
+#endif
+    }
+
+    inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
+        uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
+    {
+        String message = String(pMessage);
+
+        std::vector<String> objects;
+        const std::string_view objectLabel = " Object ";
+        const std::string_view handleLabel = " handle = ";
+        const std::string_view nameLabel = " name = ";
+
+        // Collect objects in array
+        uint64 pos = message.find(objectLabel);
+        while (pos != String::npos)
+        {
+            uint64 begin = pos + objectLabel.size() + 1;
+            uint64 end = message.find(';', begin);
+
+            if (begin == String::npos || end == String::npos)
+                break;
+
+            String objectInfo = message.substr(begin, end - begin + 1);
+            // move handle to the end and add name if not indicated
+            {
+                uint64 handleStart = objectInfo.find(handleLabel);
+                uint64 handleEnd = objectInfo.find(',', handleStart);
+                String handleStr = objectInfo.substr(handleStart, handleEnd - handleStart);
+                handleStr.insert(handleStr.begin(), ',');
+                objectInfo.erase(handleStart, handleEnd - handleStart + 1);
+                uint64 insertPos = objectInfo.find(';');
+                objectInfo.insert(insertPos, handleStr);
+
+                if (objectInfo.find(nameLabel) == String::npos)
+                {
+                    std::string label = " name = XXX,";
+                    objectInfo.insert(1, label);
+                }
+            }
+
+            objects.push_back(objectInfo);
+            pos = message.find(objectLabel, end);
+        }
+
+        // Remove message part from object descriptions to message id inclusive
+        uint64 deleteStart = message.find_first_of(']') + 1; 
+        uint64 deleteEnd = message.find_last_of('|') + 1;
+        message.erase(deleteStart, deleteEnd - deleteStart);
+
+        // Add objects to end of the message in formmatted way
+        message += "\n      Objects:";
+        uint32 i = 0;
+        for (const auto& objectInfo : objects)
+            message += std::format("\n            {}{}", i++, objectInfo);
+        message += "\n\n";
+
+        switch (flags)
+        {
+        case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
+            ATN_CORE_INFO_TAG("Vulkan", message); break;
+
+        case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+            ATN_CORE_WARN_TAG("Vulkan", message); break;
+
+        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+            ATN_CORE_WARN_TAG("Vulkan", message); break;
+
+        case VK_DEBUG_REPORT_ERROR_BIT_EXT:
+            ATN_CORE_ERROR_TAG("Vulkan", message);
+            ATN_CORE_ASSERT(false);
+            break;
+        }
+
+        return VK_FALSE;
+    }
 
     inline VkShaderStageFlagBits GetShaderStage(ShaderStage stage)
 	{

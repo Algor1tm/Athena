@@ -49,7 +49,7 @@ namespace Athena
                 logoOffset.y += 3.f;
             const ImVec2 logoRectStart = { ImGui::GetItemRectMin().x + logoOffset.x, ImGui::GetItemRectMin().y + logoOffset.y };
             const ImVec2 logoRectMax = { logoRectStart.x + logoWidth, logoRectStart.y + logoHeight };
-            fgDrawList->AddImage(EditorResources::GetIcon("Logo")->GetDescriptorSet(), logoRectStart, logoRectMax);
+            fgDrawList->AddImage(UI::GetTextureID(EditorResources::GetIcon("Logo")), logoRectStart, logoRectMax);
         }
 
         ImGui::BeginHorizontal("Titlebar", { ImGui::GetWindowWidth() - windowPadding.y * 2.0f, ImGui::GetFrameHeightWithSpacing() });

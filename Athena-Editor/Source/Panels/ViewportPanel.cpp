@@ -1,7 +1,7 @@
 #include "ViewportPanel.h"
 
 #include "Athena/Core/Application.h"
-
+#include "Athena/UI/UI.h"
 #include "ImGuizmoLayer.h"
 
 #include <ImGui/imgui.h>
@@ -36,7 +36,7 @@ namespace Athena
         m_Description.Size = { viewportX, viewportY };
 
         Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
-        ImGui::Image(image->GetDescriptorSet(), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
+        ImGui::Image(UI::GetTextureID(image), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
 
         if (ImGui::BeginDragDropTarget())
         {

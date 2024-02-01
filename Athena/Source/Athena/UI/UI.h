@@ -24,6 +24,8 @@ namespace Athena::UI
 		Default16 = Default
 	};
 
+	ATHENA_API void* GetTextureID(Ref<Texture2D> texture);
+
 	ATHENA_API void PushFont(Fonts font);
 	ATHENA_API void PopFont();
 
@@ -67,10 +69,10 @@ namespace Athena::UI
 	ATHENA_API bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool ComboBox(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
 
-	ATHENA_API void ButtonImage(const Ref<Texture>& imageNormal, const Ref<Texture>& imageHovered, const Ref<Texture>& imagePressed,
+	ATHENA_API void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax);
-	ATHENA_API void ButtonImage(const Ref<Texture>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
+	ATHENA_API void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
 
 	ATHENA_API void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 

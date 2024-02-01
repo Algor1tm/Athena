@@ -10,29 +10,6 @@ namespace Athena
 
 	namespace Utils
 	{
-#ifdef ATN_DEBUG
-		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
-			uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
-		{
-			switch (flags)
-			{
-			case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
-				ATN_CORE_INFO_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
-
-			case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-				ATN_CORE_WARN_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
-
-			case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-				ATN_CORE_WARN_TAG("Vulkan", "'PERFORMANCE WARNING' Debug report: \n{}\n", pMessage); break;
-
-			case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-				ATN_CORE_ERROR_TAG("Vulkan", "Debug report: \n{}\n", pMessage); break;
-			}
-
-			return VK_FALSE;
-		}
-#endif
-
 		static bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
 		{
 			uint32 supportedExtensionCount = 0;
@@ -205,7 +182,7 @@ namespace Athena
 			VkDebugReportCallbackCreateInfoEXT reportCI = {};
 			reportCI.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 			reportCI.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-			reportCI.pfnCallback = Utils::VulkanDebugCallback;
+			reportCI.pfnCallback = Vulkan::DebugCallback;
 			reportCI.pUserData = NULL;
 			VK_CHECK(vkCreateDebugReportCallbackEXT(VulkanContext::GetInstance(), &reportCI, nullptr, &s_Data.DebugReport));
 #endif
@@ -251,8 +228,6 @@ namespace Athena
 			commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, &s_Data.CommandPool));
 		}
-
-		s_Data.SetObjectNamePFN = (PFN_vkDebugMarkerSetObjectNameEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkDebugMarkerSetObjectNameEXT");
 	}
 
 	void VulkanContext::Shutdown()
@@ -276,16 +251,5 @@ namespace Athena
 		s_Data.CurrentDevice.Release();
 		
 		vkDestroyInstance(VulkanContext::GetInstance(), nullptr);
-	}
-
-	void VulkanContext::SetObjectName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
-	{
-		VkDebugMarkerObjectNameInfoEXT nameInfo = {};
-		nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-		nameInfo.objectType = type;
-		nameInfo.object = (uint64)object;
-		nameInfo.pObjectName = name.c_str();
-
-		s_Data.SetObjectNamePFN(VulkanContext::GetLogicalDevice(), &nameInfo);
 	}
 }

@@ -20,8 +20,6 @@
 #include <iostream>
 #include <fstream>
 
-// maximum mumber of lines the output console should have
-static const WORD MAX_CONSOLE_LINES = 1000;
 
 static void CreateConsole()
 {
@@ -30,12 +28,15 @@ static void CreateConsole()
 	CONSOLE_SCREEN_BUFFER_INFO coninfo;
 	FILE* fp;
 
+	const WORD CONSOLE_LINES = 1000;
+
 	// allocate a console for this app
 	AllocConsole();
 
 	// set the screen buffer to be big enough to let us scroll text
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
-	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+
+	coninfo.dwSize.Y = CONSOLE_LINES;
 	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
 
 	// redirect unbuffered STDOUT to the console

@@ -16,11 +16,14 @@ namespace Athena
 		{
 			for (uint32 i = 0; i < m_VulkanUBOSet.size(); ++i)
 			{
+				String bufferName = std::format("{}_{}", m_Name, i);
+
 				VkBufferCreateInfo bufferInfo = {};
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 				bufferInfo.size = m_Size;
 				bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-				m_VulkanUBOSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, std::format("{}_{}", m_Name, i));
+				m_VulkanUBOSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, bufferName);
+				Vulkan::SetObjectName(m_VulkanUBOSet[i].GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, bufferName);
 
 				VkDescriptorBufferInfo descriptorInfo;
 				descriptorInfo.buffer = m_VulkanUBOSet[i].GetBuffer();

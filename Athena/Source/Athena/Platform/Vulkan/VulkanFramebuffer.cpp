@@ -168,6 +168,7 @@ namespace Athena
 			framebufferInfo.pAttachments = attachments.data();
 
 			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebufferSet[frameIndex]));
+			Vulkan::SetObjectName(m_VulkanFramebufferSet[frameIndex], VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_{}", m_Info.Name, frameIndex));
 		}
 	}
 }

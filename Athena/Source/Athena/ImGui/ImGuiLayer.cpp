@@ -124,6 +124,11 @@ namespace Athena
 		colors[ImGuiCol_Border] = ImColor(m_Theme.BackgroundDark);
 	}
 
+	void* ImGuiLayer::GetTextureID(Ref<Texture2D> texture)
+	{
+		return m_ImGuiImpl->GetTextureID(texture);
+	}
+
 	void ImGuiLayer::OnAttach()
 	{
 		// Setup Dear ImGui context

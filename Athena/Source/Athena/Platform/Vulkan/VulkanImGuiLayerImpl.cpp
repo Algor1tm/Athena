@@ -4,6 +4,7 @@
 
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
+#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -97,15 +98,15 @@ namespace Athena
 			init_info.ImageCount = Renderer::GetFramesInFlight();
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 			init_info.Allocator = nullptr;
-			init_info.CheckVkResultFn = [](VkResult result) { VulkanUtils::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+			init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
 
 			ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 
-			VkCommandBuffer vkCommandBuffer = VulkanUtils::BeginSingleTimeCommands();
+			VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands();
 			{
 				ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
 			}
-			VulkanUtils::EndSingleTimeCommands(vkCommandBuffer);
+			Vulkan::EndSingleTimeCommands(vkCommandBuffer);
 
 			ImGui_ImplVulkan_DestroyFontUploadObjects();
 		});
@@ -113,6 +114,8 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::Shutdown()
 	{
+		m_TextureMap.clear();
+
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, framebuffers = m_SwapChainFramebuffers]()
 		{
 			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, nullptr);
@@ -129,6 +132,9 @@ namespace Athena
 	void VulkanImGuiLayerImpl::NewFrame()
 	{
 		ATN_PROFILE_FUNC()
+
+		InvalidateDescriptorSets();
+
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 	}
@@ -193,5 +199,61 @@ namespace Athena
 
 			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetDevice()->GetLogicalDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
 		}
+	}
+
+	void* VulkanImGuiLayerImpl::GetTextureID(Ref<Texture2D> texture)
+	{
+		if (m_TextureMap.contains(texture))
+		{
+			return m_TextureMap.at(texture).Set;
+		}
+
+		TextureInfo info;
+		info.ImageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();
+		info.Sampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
+		info.Set = ImGui_ImplVulkan_AddTexture(info.Sampler, info.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		m_TextureMap[texture] = info;
+
+		return info.Set;
+	}
+
+	void VulkanImGuiLayerImpl::InvalidateDescriptorSets()
+	{
+		std::vector<Ref<Texture2D>> texturesToDelete;
+		for (auto& [texture, texInfo] : m_TextureMap)
+		{
+			// All instances of texture has been deleted except one in texture map
+			if (texture->GetCount() == 1)
+			{
+				RemoveDescriptorSet(texInfo.Set);
+				texturesToDelete.push_back(texture);
+			}
+
+			VkImageView imageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();
+			VkSampler sampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
+
+			// Check if texture has been modified and update descriptor set
+			if (texInfo.ImageView != imageView || texInfo.Sampler != sampler)
+			{
+				RemoveDescriptorSet(texInfo.Set);
+				texInfo.ImageView = imageView;
+				texInfo.Sampler = sampler;
+				texInfo.Set = ImGui_ImplVulkan_AddTexture(texInfo.Sampler, texInfo.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			}
+		}
+
+		for (const auto& texture : texturesToDelete)
+		{
+			m_TextureMap.erase(texture);
+		}
+	}
+
+	void VulkanImGuiLayerImpl::RemoveDescriptorSet(VkDescriptorSet set)
+	{
+		Renderer::SubmitResourceFree([set = set]()
+		{
+			ImGui_ImplVulkan_RemoveTexture(set);
+		});
 	}
 }

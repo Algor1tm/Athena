@@ -1,9 +1,9 @@
+#pragma once
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>
-
 
 
 namespace Athena
@@ -19,8 +19,6 @@ namespace Athena
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 		virtual void GenerateMipMap(uint32 levels) override;
 
-		virtual void* GetDescriptorSet() override;
-
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() const { return m_ImageView; }
 		VkSampler GetVulkanSampler() const { return m_Sampler; }
@@ -34,6 +32,5 @@ namespace Athena
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkDescriptorImageInfo m_DescriptorInfo;
-		VkDescriptorSet m_UIDescriptorSet = VK_NULL_HANDLE;
 	};
 }

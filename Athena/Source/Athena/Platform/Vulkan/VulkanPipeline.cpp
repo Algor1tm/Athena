@@ -7,7 +7,7 @@
 
 namespace Athena
 {
-	namespace VulkanUtils
+	namespace Vulkan
 	{
 		static VkPrimitiveTopology GetTopology(Topology topology)
 		{
@@ -118,7 +118,7 @@ namespace Athena
 				attributeDescriptions[i].binding = 0;
 				attributeDescriptions[i].location = i;
 				attributeDescriptions[i].format =
-					VulkanUtils::GetFormat(vertexBufferLayout.GetElements()[i].Type, vertexBufferLayout.GetElements()[i].Normalized);
+					Vulkan::GetFormat(vertexBufferLayout.GetElements()[i].Type, vertexBufferLayout.GetElements()[i].Normalized);
 				attributeDescriptions[i].offset = vertexBufferLayout.GetElements()[i].Offset;
 			}
 
@@ -132,7 +132,7 @@ namespace Athena
 
 			VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-			inputAssembly.topology = VulkanUtils::GetTopology(m_Info.Topology);
+			inputAssembly.topology = Vulkan::GetTopology(m_Info.Topology);
 			inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 			VkPipelineViewportStateCreateInfo viewportState = {};
@@ -160,7 +160,7 @@ namespace Athena
 			rasterizer.rasterizerDiscardEnable = VK_FALSE;
 			rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 			rasterizer.lineWidth = m_Info.LineWidth;
-			rasterizer.cullMode = VulkanUtils::GetCullMode(m_Info.CullMode);
+			rasterizer.cullMode = Vulkan::GetCullMode(m_Info.CullMode);
 			rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 			rasterizer.depthBiasEnable = VK_FALSE;
 			rasterizer.depthBiasConstantFactor = 0.0f;
@@ -182,7 +182,7 @@ namespace Athena
 			depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			depthStencil.depthTestEnable = enableDepthTest;
 			depthStencil.depthWriteEnable = enableDepthTest;
-			depthStencil.depthCompareOp = VulkanUtils::GetDepthCompare(m_Info.DepthCompare);
+			depthStencil.depthCompareOp = Vulkan::GetDepthCompare(m_Info.DepthCompare);
 			depthStencil.depthBoundsTestEnable = VK_FALSE;
 			depthStencil.stencilTestEnable = enableDepthTest;
 			depthStencil.back.compareOp = depthStencil.depthCompareOp;
@@ -240,6 +240,7 @@ namespace Athena
 			pipelineInfo.basePipelineIndex = -1;
 
 			VK_CHECK(vkCreateGraphicsPipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
+			Vulkan::SetObjectName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
 		});
 	}
 }

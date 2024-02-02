@@ -178,7 +178,6 @@ namespace Athena
 
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
-		Ref<Material> m_StaticGeometryMaterial;
 
 		CameraData m_CameraData;
 		Ref<UniformBuffer> m_CameraUBO;

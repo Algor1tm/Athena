@@ -28,63 +28,58 @@ namespace Athena
 		
 	}
 
-	void VulkanMaterial::Set(std::string_view name, const Ref<ShaderResource>& resource)
+	void VulkanMaterial::Set(const String& name, const Ref<ShaderResource>& resource)
 	{
 		m_DescriptorSetManager->Set(name, resource);
 	}
 
-	void VulkanMaterial::Set(std::string_view name, const Matrix4& value)
+	Ref<Texture2D> VulkanMaterial::GetTexture(const String& name)
 	{
-		Renderer::Submit([this, name, value]()
-		{
-			RT_SetPushConstantData(name, ShaderDataType::Mat4, &value);
-		});
+		return m_DescriptorSetManager->Get<Ref<Texture2D>>(name);
 	}
 
-	void VulkanMaterial::Set(std::string_view name, const Vector4& value)
+	void VulkanMaterial::SetInternal(const String& name, ShaderDataType dataType, const void* data)
 	{
-		Renderer::Submit([this, name, value]()
+		if (Exists(name, dataType))
 		{
-			RT_SetPushConstantData(name, ShaderDataType::Float4, &value);
-		});
+			const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+			const auto& memberData = pushConstantData.Members.at(name);
+			memcpy(&m_PushConstantBuffer[memberData.Offset], data, memberData.Size);
+		}
 	}
 
-	void VulkanMaterial::Set(std::string_view name, float value)
+	bool VulkanMaterial::GetInternal(const String& name, ShaderDataType dataType, void** data)
 	{
-		Renderer::Submit([this, name, value]()
+		if (Exists(name, dataType))
 		{
-			RT_SetPushConstantData(name, ShaderDataType::Float, &value);
-		});
+			const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+			const auto& memberData = pushConstantData.Members.at(name);
+			*data = &m_PushConstantBuffer[memberData.Offset];
+			return true;
+		}
+
+		return false;
 	}
 
-	void VulkanMaterial::Set(std::string_view name, uint32 value)
-	{
-		Renderer::Submit([this, name, value]()
-		{
-			RT_SetPushConstantData(name, ShaderDataType::UInt, &value);
-		});
-	}
-
-	void VulkanMaterial::RT_SetPushConstantData(std::string_view name, ShaderDataType dataType, const void* data)
+	bool VulkanMaterial::Exists(const String& name, ShaderDataType dataType)
 	{
 		const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
 
-		String nameStr = String(name);
-		if (!pushConstantData.Members.contains(nameStr))
+		if (!pushConstantData.Members.contains(name))
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' (invalid name)", name);
-			return;
+			ATN_CORE_ERROR_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
+			return false;
 		}
 
-		const auto& memberData = pushConstantData.Members.at(nameStr);
+		const auto& memberData = pushConstantData.Members.at(name);
 		if (memberData.Type != dataType)
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to set shader push constant member with name '{}' \
+			ATN_CORE_ERROR_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
 					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData.Type), ShaderDataTypeToString(dataType));
-			return;
+			return false;
 		}
 
-		memcpy(&m_PushConstantBuffer[memberData.Offset], data, memberData.Size);
+		return true;
 	}
 
 	void VulkanMaterial::Bind()

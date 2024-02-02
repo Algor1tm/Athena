@@ -41,67 +41,64 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Renderer::Submit([this]()
+		std::vector<VkAttachmentDescription> attachments;
+		std::vector<VkAttachmentReference> colorAttachmentRefs;
+
+		bool hasDepthStencil = false;
+		VkAttachmentReference depthStencilAttachmentRef = {};
+
+		for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
 		{
-			std::vector<VkAttachmentDescription> attachments;
-			std::vector<VkAttachmentReference> colorAttachmentRefs;
+			VkAttachmentDescription attachmentDesc = {};
+			attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
+			attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			bool hasDepthStencil = false;
-			VkAttachmentReference depthStencilAttachmentRef = {};
+			VkAttachmentLoadOp loadOp = m_Info.LoadOpClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+			VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-			for (const auto& attachment : m_Info.Output->GetInfo().Attachments)
+			attachmentDesc.loadOp = loadOp;
+			attachmentDesc.storeOp = storeOp;
+			attachmentDesc.stencilLoadOp = loadOp;
+			attachmentDesc.stencilStoreOp = storeOp;
+
+			attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			attachments.push_back(attachmentDesc);
+
+			if (Texture::IsColorFormat(attachment.Format))
 			{
-				VkAttachmentDescription attachmentDesc = {};
-				attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
-				attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+				VkAttachmentReference colorAttachmentRef;
+				colorAttachmentRef.attachment = attachments.size() - 1;
+				colorAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
 
-				VkAttachmentLoadOp loadOp = m_Info.LoadOpClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-				VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-				attachmentDesc.loadOp = loadOp;
-				attachmentDesc.storeOp = storeOp;
-				attachmentDesc.stencilLoadOp = loadOp;
-				attachmentDesc.stencilStoreOp = storeOp;
-
-				attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-				attachments.push_back(attachmentDesc);
-
-				if (Texture::IsColorFormat(attachment.Format))
-				{
-					VkAttachmentReference colorAttachmentRef;
-					colorAttachmentRef.attachment = attachments.size() - 1;
-					colorAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
-
-					colorAttachmentRefs.push_back(colorAttachmentRef);
-				}
-				else
-				{
-					depthStencilAttachmentRef.attachment = attachments.size() - 1;
-					depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
-					hasDepthStencil = true;
-				}
+				colorAttachmentRefs.push_back(colorAttachmentRef);
 			}
+			else
+			{
+				depthStencilAttachmentRef.attachment = attachments.size() - 1;
+				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
+				hasDepthStencil = true;
+			}
+		}
 
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// TODO: compute pipelines
-			subpass.colorAttachmentCount = colorAttachmentRefs.size();
-			subpass.pColorAttachments = colorAttachmentRefs.data();
-			subpass.pDepthStencilAttachment = hasDepthStencil ? &depthStencilAttachmentRef : nullptr;
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// TODO: compute pipelines
+		subpass.colorAttachmentCount = colorAttachmentRefs.size();
+		subpass.pColorAttachments = colorAttachmentRefs.data();
+		subpass.pDepthStencilAttachment = hasDepthStencil ? &depthStencilAttachmentRef : nullptr;
 
-			VkRenderPassCreateInfo renderPassInfo = {};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassInfo.attachmentCount = attachments.size();
-			renderPassInfo.pAttachments = attachments.data();
-			renderPassInfo.subpassCount = 1;
-			renderPassInfo.pSubpasses = &subpass;
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = attachments.size();
+		renderPassInfo.pAttachments = attachments.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
 
-			VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
-			Vulkan::SetObjectName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
+		VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
+		Vulkan::SetObjectName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
 
-			m_Info.Output.As<VulkanFramebuffer>()->RT_PrepareFramebuffer(m_VulkanRenderPass);
-		});
+		m_Info.Output.As<VulkanFramebuffer>()->Bake(m_VulkanRenderPass);
 	}
 
 	VulkanRenderPass::~VulkanRenderPass()

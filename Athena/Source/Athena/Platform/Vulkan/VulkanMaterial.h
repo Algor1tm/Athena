@@ -15,18 +15,18 @@ namespace Athena
 		VulkanMaterial(const Ref<Shader>& shader, const String& name);
 		~VulkanMaterial();
 
-		virtual void Set(std::string_view name, const Ref<ShaderResource>& resource) override;
+		virtual void Set(const String& name, const Ref<ShaderResource>& resource) override;
 
-		virtual void Set(std::string_view name, const Matrix4& value) override;
-		virtual void Set(std::string_view name, const Vector4& value) override;
-		virtual void Set(std::string_view name, float value) override;
-		virtual void Set(std::string_view name, uint32 value) override;
+		virtual Ref<Texture2D> GetTexture(const String& name) override;
 
 		virtual void Bind() override;
 		virtual void RT_UpdateForRendering() override;
 
+		virtual void SetInternal(const String& name, ShaderDataType dataType, const void* data) override;
+		virtual bool GetInternal(const String& name, ShaderDataType dataType, void** data) override;
+
 	private:
-		void RT_SetPushConstantData(std::string_view name, ShaderDataType dataType, const void* data);
+		bool Exists(const String& name, ShaderDataType dataType);
 
 	private:
 		Ref<DescriptorSetManager> m_DescriptorSetManager;

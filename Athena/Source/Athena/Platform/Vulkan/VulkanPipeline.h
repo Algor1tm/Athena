@@ -18,7 +18,7 @@ namespace Athena
 		virtual void Bind() override;
 		virtual void SetViewport(uint32 width, uint32 height) override;
 
-		virtual void SetInput(std::string_view name, Ref<ShaderResource> resource) override;
+		virtual void SetInput(const String& name, Ref<ShaderResource> resource) override;
 		virtual void Bake() override;
 
 	private:

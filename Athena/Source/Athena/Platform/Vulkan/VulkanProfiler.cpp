@@ -10,60 +10,57 @@ namespace Athena
 		m_MaxTimestampsCount = maxTimestamps;
 		m_MaxPipelineQueriesCount = maxPipelineQueries;
 
-		Renderer::Submit([this]()
+		// Create time queury pool
 		{
-			// Create time queury pool
-			{
-				VkQueryPoolCreateInfo queryPoolInfo = {};
-				queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-				queryPoolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
-				queryPoolInfo.queryCount = m_MaxTimestampsCount * Renderer::GetFramesInFlight();
+			VkQueryPoolCreateInfo queryPoolInfo = {};
+			queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+			queryPoolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
+			queryPoolInfo.queryCount = m_MaxTimestampsCount * Renderer::GetFramesInFlight();
 				
-				VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_TimeQueryPool));
+			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_TimeQueryPool));
 				
-				vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
+			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
 				
-				m_TimestampsCount.resize(Renderer::GetFramesInFlight());
+			m_TimestampsCount.resize(Renderer::GetFramesInFlight());
 
-				m_Timestamps.resize(Renderer::GetFramesInFlight());
-				for (auto& timestamps : m_Timestamps)
-					timestamps.resize(m_MaxTimestampsCount);
+			m_Timestamps.resize(Renderer::GetFramesInFlight());
+			for (auto& timestamps : m_Timestamps)
+				timestamps.resize(m_MaxTimestampsCount);
 
-				m_ResolvedTimeStats.resize(Renderer::GetFramesInFlight());
-				for (auto& stats : m_ResolvedTimeStats)
-					stats.resize(m_MaxTimestampsCount / 2);
+			m_ResolvedTimeStats.resize(Renderer::GetFramesInFlight());
+			for (auto& stats : m_ResolvedTimeStats)
+				stats.resize(m_MaxTimestampsCount / 2);
 
-				// Time stored in ms
-				m_Frequency = (uint64)(1000000ll / Renderer::GetRenderCaps().TimestampPeriod);
-			}
+			// Time stored in ms
+			m_Frequency = (uint64)(1000000ll / Renderer::GetRenderCaps().TimestampPeriod);
+		}
 
-			// Pipeline statistics query pool
-			{
-				VkQueryPoolCreateInfo queryPoolInfo = {};
-				queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-				queryPoolInfo.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
-				queryPoolInfo.queryCount = m_MaxPipelineQueriesCount * Renderer::GetFramesInFlight();
-				queryPoolInfo.pipelineStatistics =
-					VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
-					VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
+		// Pipeline statistics query pool
+		{
+			VkQueryPoolCreateInfo queryPoolInfo = {};
+			queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+			queryPoolInfo.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
+			queryPoolInfo.queryCount = m_MaxPipelineQueriesCount * Renderer::GetFramesInFlight();
+			queryPoolInfo.pipelineStatistics =
+				VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
+				VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
 
-				VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_PipelineStatsQueryPool));
+			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_PipelineStatsQueryPool));
 
-				vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
+			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
 
-				m_PipelineQueriesCount.resize(Renderer::GetFramesInFlight());
-				m_ResolvedPipelineStats.resize(Renderer::GetFramesInFlight());
-				for (auto& stats : m_ResolvedPipelineStats)
-					stats.resize(m_MaxPipelineQueriesCount);
-			}
-		});
+			m_PipelineQueriesCount.resize(Renderer::GetFramesInFlight());
+			m_ResolvedPipelineStats.resize(Renderer::GetFramesInFlight());
+			for (auto& stats : m_ResolvedPipelineStats)
+				stats.resize(m_MaxPipelineQueriesCount);
+		}
 	}
 
 	VulkanProfiler::~VulkanProfiler()

@@ -41,7 +41,10 @@ namespace Athena
 		DescriptorSetManager(const DescriptorSetManagerCreateInfo& info);
 		~DescriptorSetManager();
 
-		void Set(std::string_view name, Ref<ShaderResource> resource);
+		void Set(const String& name, Ref<ShaderResource> resource);
+
+		template <typename T>
+		T Get(const String& name);
 
 		bool Validate() const;
 		void Bake();
@@ -59,4 +62,28 @@ namespace Athena
 		std::vector<std::unordered_map<uint32, std::unordered_map<uint32, WriteDescriptorSet>>> m_WriteDescriptorSetTable;
 		VkDescriptorPool m_DescriptorPool;
 	};
+
+
+	// TODO: need to check types before upcasting
+	template <typename T>
+	T DescriptorSetManager::Get(const String& name)
+	{
+		if (m_ResourcesDescriptionTable.contains(name))
+		{
+			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(name);
+
+			if (m_Resources.contains(desc.Set) && m_Resources.at(desc.Set).contains(desc.Binding))
+			{
+				return m_Resources.at(desc.Set).at(desc.Binding);
+			}
+
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (resource is not present)", m_Info.Name, name);
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (invalid name)", m_Info.Name, name);
+		}
+
+		return nullptr;
+	}
 }

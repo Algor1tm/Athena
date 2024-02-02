@@ -9,7 +9,7 @@ namespace Athena
 	Ref<Material> Material::Create(const Ref<Shader>& shader, const String& name)
 	{
 		Ref<Material> material = Ref<VulkanMaterial>::Create(shader, name);
-		Renderer::GetMaterialTable()->AddMaterial(material);
+		Renderer::GetMaterialTable()->Add(material);
 
 		switch (Renderer::GetAPI())
 		{
@@ -30,21 +30,42 @@ namespace Athena
 		// 1 more in material table
 		if (GetCount() == 2)
 		{
-			Renderer::GetMaterialTable()->RemoveMaterial(Ref(this));
+			Renderer::GetMaterialTable()->Remove(Ref(this));
 		}
 	}
 
-	Ref<Material> MaterialTable::GetMaterial(const String& name) const
+	void Material::Set(const String& name, const Matrix4& value)
+	{
+		SetInternal(name, ShaderDataType::Mat4, &value);
+	}
+
+	void Material::Set(const String& name, const Vector4& value)
+	{
+		SetInternal(name, ShaderDataType::Float4, &value);
+	}
+
+	void Material::Set(const String& name, float value)
+	{
+		SetInternal(name, ShaderDataType::Float, &value);
+	}
+
+	void Material::Set(const String& name, uint32 value)
+	{
+		SetInternal(name, ShaderDataType::UInt, &value);
+	}
+
+
+	Ref<Material> MaterialTable::Get(const String& name) const
 	{
 		return m_Materials.at(name);
 	}
 
-	void MaterialTable::AddMaterial(const Ref<Material>& material)
+	void MaterialTable::Add(const Ref<Material>& material)
 	{
 		m_Materials[material->GetName()] = material;
 	}
 
-	void MaterialTable::RemoveMaterial(const Ref<Material>& material)
+	void MaterialTable::Remove(const Ref<Material>& material)
 	{
 		m_Materials.erase(material->GetName());
 	}

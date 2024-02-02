@@ -117,7 +117,7 @@ namespace Athena
 		try
 		{
 			s_Data->PythonModules[name] = py::module_::import(name.c_str());
-			ATN_CORE_WARN_TAG("SriptEngine", "Successfully load python script '{}'!", name);
+			ATN_CORE_INFO_TAG("SriptEngine", "Successfully load python script '{}'!", name);
 			return true;
 		}
 		catch (std::exception& exception)

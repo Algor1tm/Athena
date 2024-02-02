@@ -14,102 +14,99 @@ namespace Athena
 {
 	void VulkanImGuiLayerImpl::Init(void* windowHandle)
 	{
-		Renderer::Submit([this, windowHandle]()
+		VkDescriptorPoolSize pool_sizes[] =
 		{
-			VkDescriptorPoolSize pool_sizes[] =
-			{
-				{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-				{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-			};
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
 
-			VkDescriptorPoolCreateInfo pool_info = {};
-			pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-			pool_info.maxSets = 1000;
-			pool_info.poolSizeCount = std::size(pool_sizes);
-			pool_info.pPoolSizes = pool_sizes;
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		pool_info.maxSets = 1000;
+		pool_info.poolSizeCount = std::size(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
 
-			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &pool_info, nullptr, &m_ImGuiDescriptorPool));
+		VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &pool_info, nullptr, &m_ImGuiDescriptorPool));
 
-			// Create Render Pass
-			{
-				VkAttachmentDescription colorAttachment = {};
-				colorAttachment.format = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetFormat();
-				colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-				colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-				colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-				colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-				colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-				colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		// Create Render Pass
+		{
+			VkAttachmentDescription colorAttachment = {};
+			colorAttachment.format = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetFormat();
+			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-				VkAttachmentReference colorAttachmentRef = {};
-				colorAttachmentRef.attachment = 0;
-				colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			VkAttachmentReference colorAttachmentRef = {};
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-				VkSubpassDescription subpass = {};
-				subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-				subpass.colorAttachmentCount = 1;
-				subpass.pColorAttachments = &colorAttachmentRef;
+			VkSubpassDescription subpass = {};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorAttachmentRef;
 
-				VkSubpassDependency dependency = {};
-				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-				dependency.dstSubpass = 0;
-				dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-				dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-				dependency.srcAccessMask = 0;
-				dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			VkSubpassDependency dependency = {};
+			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+			dependency.dstSubpass = 0;
+			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.srcAccessMask = 0;
+			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-				VkRenderPassCreateInfo renderPassInfo = {};
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-				renderPassInfo.attachmentCount = 1;
-				renderPassInfo.pAttachments = &colorAttachment;
-				renderPassInfo.subpassCount = 1;
-				renderPassInfo.pSubpasses = &subpass;
-				renderPassInfo.dependencyCount = 1;
-				renderPassInfo.pDependencies = &dependency;
+			VkRenderPassCreateInfo renderPassInfo = {};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			renderPassInfo.attachmentCount = 1;
+			renderPassInfo.pAttachments = &colorAttachment;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+			renderPassInfo.dependencyCount = 1;
+			renderPassInfo.pDependencies = &dependency;
 
-				VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, nullptr, &m_ImGuiRenderPass));
-			}
+			VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, nullptr, &m_ImGuiRenderPass));
+		}
 
-			RecreateFramebuffers();
+		RecreateFramebuffers();
 
-			ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(windowHandle), true);
+		ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(windowHandle), true);
 
-			ImGui_ImplVulkan_InitInfo init_info = {};
-			init_info.Instance = VulkanContext::GetInstance();
-			init_info.PhysicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
-			init_info.Device = VulkanContext::GetDevice()->GetLogicalDevice();
-			init_info.QueueFamily = VulkanContext::GetDevice()->GetQueueFamily();
-			init_info.Queue = VulkanContext::GetDevice()->GetQueue();
-			init_info.PipelineCache = VK_NULL_HANDLE;
-			init_info.DescriptorPool = m_ImGuiDescriptorPool;
-			init_info.Subpass = 0;
-			init_info.MinImageCount = Renderer::GetFramesInFlight();
-			init_info.ImageCount = Renderer::GetFramesInFlight();
-			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			init_info.Allocator = nullptr;
-			init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+		ImGui_ImplVulkan_InitInfo init_info = {};
+		init_info.Instance = VulkanContext::GetInstance();
+		init_info.PhysicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
+		init_info.Device = VulkanContext::GetDevice()->GetLogicalDevice();
+		init_info.QueueFamily = VulkanContext::GetDevice()->GetQueueFamily();
+		init_info.Queue = VulkanContext::GetDevice()->GetQueue();
+		init_info.PipelineCache = VK_NULL_HANDLE;
+		init_info.DescriptorPool = m_ImGuiDescriptorPool;
+		init_info.Subpass = 0;
+		init_info.MinImageCount = Renderer::GetFramesInFlight();
+		init_info.ImageCount = Renderer::GetFramesInFlight();
+		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info.Allocator = nullptr;
+		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
 
-			ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
+		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 
-			VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands();
-			{
-				ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
-			}
-			Vulkan::EndSingleTimeCommands(vkCommandBuffer);
+		VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands();
+		{
+			ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
+		}
+		Vulkan::EndSingleTimeCommands(vkCommandBuffer);
 
-			ImGui_ImplVulkan_DestroyFontUploadObjects();
-		});
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()

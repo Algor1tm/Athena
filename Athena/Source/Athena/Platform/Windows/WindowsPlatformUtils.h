@@ -172,14 +172,6 @@ namespace Athena
 			WINAPI_CHECK_LASTERROR();
 			s_Data.ProcessID = processID;
 		}
-		
-		// Performance Frequency
-		{
-			LARGE_INTEGER li;
-			QueryPerformanceFrequency(&li);
-			WINAPI_CHECK_LASTERROR();
-			s_Data.PerformanceFrequency = (double)li.QuadPart / 1000.0;
-		}
 
 		ATN_CORE_INFO_TAG("Platform", "Initalize Windows platform");
 	}
@@ -191,6 +183,15 @@ namespace Athena
 
 	double Platform::GetHighPrecisionTime()
 	{
+		// We need timer before platform initialization
+		if (s_Data.PerformanceFrequency == 0)
+		{
+			LARGE_INTEGER li;
+			QueryPerformanceFrequency(&li);
+			WINAPI_CHECK_LASTERROR();
+			s_Data.PerformanceFrequency = (double)li.QuadPart / 1000.0;
+		}
+
 		LARGE_INTEGER result;
 		QueryPerformanceCounter(&result);
 

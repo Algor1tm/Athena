@@ -24,7 +24,7 @@ namespace Athena
 
 		VkFramebuffer GetVulkanFramebuffer() const;
 
-		void RT_PrepareFramebuffer(VkRenderPass renderPass);
+		void Bake(VkRenderPass renderPass);
 
 	private:
 		void CleanUpFramebufferSet();

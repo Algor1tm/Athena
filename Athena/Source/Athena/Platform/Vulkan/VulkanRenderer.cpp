@@ -13,22 +13,19 @@ namespace Athena
 {
 	void VulkanRenderer::Init()
 	{
-		Renderer::Submit([this]()
+		VulkanContext::Init();
+
+		// Create Command buffers
 		{
-			VulkanContext::Init();
+			VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
+			cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
+			cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			cmdBufAllocInfo.commandBufferCount = Renderer::GetFramesInFlight();
 
-			// Create Command buffers
-			{
-				VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
-				cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-				cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
-				cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-				cmdBufAllocInfo.commandBufferCount = Renderer::GetFramesInFlight();
-
-				m_VkCommandBuffers.resize(Renderer::GetFramesInFlight());
-				VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffers.data()));
-			}
-		});
+			m_VkCommandBuffers.resize(Renderer::GetFramesInFlight());
+			VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffers.data()));
+		}
 	}
 
 	void VulkanRenderer::Shutdown()
@@ -242,10 +239,7 @@ namespace Athena
 
 	void VulkanRenderer::GetRenderCapabilities(RenderCapabilities& caps)
 	{
-		Renderer::Submit([&caps]() mutable
-		{
-			VulkanContext::GetDevice()->GetDeviceCapabilities(caps);
-		});
+		VulkanContext::GetDevice()->GetDeviceCapabilities(caps);
 	}
 
 	uint64 VulkanRenderer::GetMemoryUsage()

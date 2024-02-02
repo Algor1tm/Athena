@@ -64,9 +64,6 @@ namespace Athena
 			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->Bake();
-
-			m_StaticGeometryMaterial = Material::Create(pipelineInfo.Shader, "StaticGeometryMaterial");
-			m_StaticGeometryMaterial->Set("u_AlbedoMap", Renderer::GetWhiteTexture());
 		}
 	}
 

@@ -16,101 +16,98 @@ namespace Athena
 		m_ImageIndex = 0;
 		m_Dirty = true;
 
-		Renderer::Submit([this, windowHandle = windowHandle]()
+
+		VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
+		uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
+
+		// Create window surface
 		{
-			VkPhysicalDevice physicalDevice = VulkanContext::GetDevice()->GetPhysicalDevice();
-			uint32 queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
+			m_Surface = VK_NULL_HANDLE;
+			VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, nullptr, &m_Surface));
+			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
 
-			// Create window surface
+			VkBool32 supportWSI;
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
+			ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
+		}
+
+		// Query device properties and create SwapChain
+		{
+			m_VkSwapChain = VK_NULL_HANDLE;
+
+			VkSurfaceCapabilitiesKHR surfaceCaps;
+			std::vector<VkSurfaceFormatKHR> surfaceFormats;
+			std::vector<VkPresentModeKHR> surfacePresentModes;
+
+			// Surface Capabilites
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
+			ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
+
+			// Format
 			{
-				m_Surface = VK_NULL_HANDLE;
-				VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, nullptr, &m_Surface));
-				ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
+				// Supported formats
+				uint32 formatCount;
+				vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, nullptr);
 
-				VkBool32 supportWSI;
-				vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
-				ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
+				surfaceFormats.resize(formatCount);
+				vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, surfaceFormats.data());
+
+				// Select Format
+				const VkFormat requestedFormats[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
+				const VkColorSpaceKHR requestedColorsSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+
+				// first format in the array is the most prefered
+				const auto rateFormat = [requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR fmt) -> uint64
+				{
+					if (fmt.colorSpace != requestedColorsSpace)
+						return 0;
+
+					auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
+					uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element - index is 1
+
+					return reversedIdx;
+				};
+
+				std::sort(surfaceFormats.begin(), surfaceFormats.end(), [rateFormat, requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR left, VkSurfaceFormatKHR right)
+					{
+						return rateFormat(left) > rateFormat(right);
+					});
+
+				m_Format = surfaceFormats[0];
 			}
 
-			// Query device properties and create SwapChain
+			// Present mode
 			{
-				m_VkSwapChain = VK_NULL_HANDLE;
+				// Supported present modes
+				uint32 presentModeCount;
+				vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, nullptr);
 
-				VkSurfaceCapabilitiesKHR surfaceCaps;
-				std::vector<VkSurfaceFormatKHR> surfaceFormats;
-				std::vector<VkPresentModeKHR> surfacePresentModes;
+				surfacePresentModes.resize(presentModeCount);
+				vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, surfacePresentModes.data());
 
-				// Surface Capabilites
-				vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
-				ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
+				const VkPresentModeKHR requestedPresentModes[] =
+				{ VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR };
 
-				// Format
+				// first mode in the array is the most prefered
+				const auto ratePresentMode = [requestedPresentModes](VkPresentModeKHR mode) -> uint64
 				{
-					// Supported formats
-					uint32 formatCount;
-					vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, nullptr);
+					auto findPtr = std::find(std::begin(requestedPresentModes), std::end(requestedPresentModes), mode);
+					uint64 reversedIdx = std::distance(findPtr, std::end(requestedPresentModes));
 
-					surfaceFormats.resize(formatCount);
-					vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, m_Surface, &formatCount, surfaceFormats.data());
+					return reversedIdx;
+				};
 
-					// Select Format
-					const VkFormat requestedFormats[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-					const VkColorSpaceKHR requestedColorsSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-
-					// first format in the array is the most prefered
-					const auto rateFormat = [requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR fmt) -> uint64
+				std::sort(surfacePresentModes.begin(), surfacePresentModes.end(), [ratePresentMode, requestedPresentModes](VkPresentModeKHR left, VkPresentModeKHR right)
 					{
-						if (fmt.colorSpace != requestedColorsSpace)
-							return 0;
+						return ratePresentMode(left) > ratePresentMode(right);
+					});
 
-						auto findPtr = std::find(std::begin(requestedFormats), std::end(requestedFormats), fmt.format);
-						uint64 reversedIdx = std::distance(findPtr, std::end(requestedFormats)); // if last element - index is 1
-
-						return reversedIdx;
-					};
-
-					std::sort(surfaceFormats.begin(), surfaceFormats.end(), [rateFormat, requestedFormats, requestedColorsSpace](VkSurfaceFormatKHR left, VkSurfaceFormatKHR right)
-						{
-							return rateFormat(left) > rateFormat(right);
-						});
-
-					m_Format = surfaceFormats[0];
-				}
-
-				// Present mode
-				{
-					// Supported present modes
-					uint32 presentModeCount;
-					vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, nullptr);
-
-					surfacePresentModes.resize(presentModeCount);
-					vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, m_Surface, &presentModeCount, surfacePresentModes.data());
-
-					const VkPresentModeKHR requestedPresentModes[] =
-					{ VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_FIFO_KHR };
-
-					// first mode in the array is the most prefered
-					const auto ratePresentMode = [requestedPresentModes](VkPresentModeKHR mode) -> uint64
-					{
-						auto findPtr = std::find(std::begin(requestedPresentModes), std::end(requestedPresentModes), mode);
-						uint64 reversedIdx = std::distance(findPtr, std::end(requestedPresentModes));
-
-						return reversedIdx;
-					};
-
-					std::sort(surfacePresentModes.begin(), surfacePresentModes.end(), [ratePresentMode, requestedPresentModes](VkPresentModeKHR left, VkPresentModeKHR right)
-						{
-							return ratePresentMode(left) > ratePresentMode(right);
-						});
-
-					m_PresentMode = surfacePresentModes[0];
-				}
-
-
-				Recreate();
+				m_PresentMode = surfacePresentModes[0];
 			}
-		});
 
+
+			Recreate();
+		}
 	}
 
 	VulkanSwapChain::~VulkanSwapChain()

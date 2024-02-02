@@ -77,7 +77,7 @@ namespace Athena
 
 		Ref<MaterialTable> table = Renderer::GetMaterialTable();
 		if (table->Exists(materialName))
-			return table->GetMaterial(materialName);
+			return table->Get(materialName);
 
 		result = Material::CreatePBRStatic(materialName);
 
@@ -433,7 +433,7 @@ namespace Athena
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
 
-		ATN_CORE_WARN_TAG("StaticMesh", "Create static mesh from '{}'", path);
+		ATN_CORE_INFO_TAG("StaticMesh", "Create static mesh from '{}'", path);
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
 		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());

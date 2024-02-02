@@ -26,40 +26,38 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Renderer::Submit([this]()
+
+		const ShaderReflectionData& reflectionData = m_Info.Shader->GetReflectionData();
+
+		for (const auto& [name, ubo] : reflectionData.UniformBuffers)
 		{
-			const ShaderReflectionData& reflectionData = m_Info.Shader->GetReflectionData();
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::UniformBuffer;
+			resourceDesc.Binding = ubo.Binding;
+			resourceDesc.Set = ubo.Set;
 
-			for (const auto& [name, ubo] : reflectionData.UniformBuffers)
+			if (resourceDesc.Set >= m_Info.FirstSet && resourceDesc.Set <= m_Info.LastSet)
+				m_ResourcesDescriptionTable[name] = resourceDesc;
+		}
+		for (const auto& [name, texture] : reflectionData.Textures2D)
+		{
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::Texture2D;
+			resourceDesc.Binding = texture.Binding;
+			resourceDesc.Set = texture.Set;
+
+			if (resourceDesc.Set >= m_Info.FirstSet && resourceDesc.Set <= m_Info.LastSet)
+				m_ResourcesDescriptionTable[name] = resourceDesc;
+		}
+
+		// Insert default textures for set 0
+		for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+		{
+			if (resDesc.Type == ShaderResourceType::Texture2D && resDesc.Set == 0)
 			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = ShaderResourceType::UniformBuffer;
-				resourceDesc.Binding = ubo.Binding;
-				resourceDesc.Set = ubo.Set;
-
-				if (resourceDesc.Set >= m_Info.FirstSet && resourceDesc.Set <= m_Info.LastSet)
-					m_ResourcesDescriptionTable[name] = resourceDesc;
+				m_Resources[resDesc.Set][resDesc.Binding] = Renderer::GetWhiteTexture();
 			}
-			for (const auto& [name, texture] : reflectionData.Textures2D)
-			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = ShaderResourceType::Texture2D;
-				resourceDesc.Binding = texture.Binding;
-				resourceDesc.Set = texture.Set;
-
-				if (resourceDesc.Set >= m_Info.FirstSet && resourceDesc.Set <= m_Info.LastSet)
-					m_ResourcesDescriptionTable[name] = resourceDesc;
-			}
-
-			// Insert default textures for set 0
-			for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
-			{
-				if (resDesc.Type == ShaderResourceType::Texture2D && resDesc.Set == 0)
-				{
-					m_Resources[resDesc.Set][resDesc.Binding] = Renderer::GetWhiteTexture();
-				}
-			}
-		});
+		}
 	}
 
 	DescriptorSetManager::~DescriptorSetManager()
@@ -71,21 +69,17 @@ namespace Athena
 		});
 	}
 
-	void DescriptorSetManager::Set(std::string_view name, Ref<ShaderResource> resource)
+	void DescriptorSetManager::Set(const String& name, Ref<ShaderResource> resource)
 	{
-		Renderer::Submit([this, name, resource]()
+		if (m_ResourcesDescriptionTable.contains(name))
 		{
-			String nameStr(name);
-			if (m_ResourcesDescriptionTable.contains(nameStr))
-			{
-				const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(nameStr);
-				m_Resources[desc.Set][desc.Binding] = resource;
-			}
-			else
-			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
-			}
-		});
+			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(name);
+			m_Resources[desc.Set][desc.Binding] = resource;
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
+		}
 	}
 
 	bool DescriptorSetManager::Validate() const
@@ -126,139 +120,136 @@ namespace Athena
 
 	void DescriptorSetManager::Bake()
 	{
-		Renderer::Submit([this]()
+		if (!Validate())
 		{
-			if (!Validate())
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
+			ATN_CORE_ASSERT(false);
+			return;
+		}
+
+		// Calculate descriptor pool size and allocate it
+		std::unordered_map<VkDescriptorType, uint32> poolSizesMap;
+
+		uint32 maxSet = 0;
+		for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+		{
+			switch (resDesc.Type)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
-				ATN_CORE_ASSERT(false);
-				return;
+			case ShaderResourceType::UniformBuffer:
+			{
+				poolSizesMap[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] += 1;
+				break;
+			}
+			case ShaderResourceType::Texture2D:
+			{
+				poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
+				break;
+			}
 			}
 
-			// Calculate descriptor pool size and allocate it
-			std::unordered_map<VkDescriptorType, uint32> poolSizesMap;
+			if (resDesc.Set > maxSet)
+				maxSet = resDesc.Set;
+		}
 
-			uint32 maxSet = 0;
-			for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+		uint32 setsCount = maxSet - m_Info.FirstSet + 1;
+
+		std::vector<VkDescriptorPoolSize> poolSizes;
+		poolSizes.reserve(poolSizesMap.size());
+		for (const auto& [type, count] : poolSizesMap)
+			poolSizes.emplace_back(type, count);
+
+		VkDescriptorPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.maxSets = setsCount * Renderer::GetFramesInFlight();
+		poolInfo.poolSizeCount = poolSizes.size();
+		poolInfo.pPoolSizes = poolSizes.data();
+
+		// Do not create pool if there are no resources
+		if (poolInfo.maxSets > 0 && poolInfo.poolSizeCount > 0)
+		{
+			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool));
+		}
+		else
+		{
+			m_DescriptorPool = VK_NULL_HANDLE;
+		}
+
+		const auto& setLayouts = m_Info.Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
+		m_DescriptorSets.resize(Renderer::GetFramesInFlight());
+		m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
+
+		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
+		{
+			if (setLayouts.size() > 0)
 			{
-				switch (resDesc.Type)
-				{
-				case ShaderResourceType::UniformBuffer:
-				{
-					poolSizesMap[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] += 1;
-					break;
-				}
-				case ShaderResourceType::Texture2D:
-				{
-					poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
-					break;
-				}
-				}
+				VkDescriptorSetAllocateInfo allocInfo = {};
+				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				allocInfo.descriptorPool = m_DescriptorPool;
+				allocInfo.descriptorSetCount = setsCount;
+				allocInfo.pSetLayouts = &setLayouts[m_Info.FirstSet];
 
-				if (resDesc.Set > maxSet)
-					maxSet = resDesc.Set;
+				m_DescriptorSets[frameIndex].resize(setsCount);
+				VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets[frameIndex].data()));
 			}
 
-			uint32 setsCount = maxSet - m_Info.FirstSet + 1;
-
-			std::vector<VkDescriptorPoolSize> poolSizes;
-			poolSizes.reserve(poolSizesMap.size());
-			for (const auto& [type, count] : poolSizesMap)
-				poolSizes.emplace_back(type, count);
-
-			VkDescriptorPoolCreateInfo poolInfo = {};
-			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.maxSets = setsCount * Renderer::GetFramesInFlight();
-			poolInfo.poolSizeCount = poolSizes.size();
-			poolInfo.pPoolSizes = poolSizes.data();
-
-			// Do not create pool if there are no resources
-			if (poolInfo.maxSets > 0 && poolInfo.poolSizeCount > 0)
+			for (const auto& [set, setData] : m_Resources)
 			{
-				VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool));
-			}
-			else
-			{
-				m_DescriptorPool = VK_NULL_HANDLE;
-			}
-
-			const auto& setLayouts = m_Info.Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
-			m_DescriptorSets.resize(Renderer::GetFramesInFlight());
-			m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
-
-			for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
-			{
-				if (setLayouts.size() > 0)
+				for (const auto& [binding, resource] : setData)
 				{
-					VkDescriptorSetAllocateInfo allocInfo = {};
-					allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-					allocInfo.descriptorPool = m_DescriptorPool;
-					allocInfo.descriptorSetCount = setsCount;
-					allocInfo.pSetLayouts = &setLayouts[m_Info.FirstSet];
+					WriteDescriptorSet& storedWriteDescriptor = m_WriteDescriptorSetTable[frameIndex][set][binding];
+					VkWriteDescriptorSet& writeDescriptor = storedWriteDescriptor.VulkanWriteDescriptorSet;
+					writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					writeDescriptor.dstSet = m_DescriptorSets[frameIndex].at(set - m_Info.FirstSet);
+					writeDescriptor.dstBinding = binding;
+					writeDescriptor.dstArrayElement = 0;
+					writeDescriptor.descriptorCount = 1;
 
-					m_DescriptorSets[frameIndex].resize(setsCount);
-					VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets[frameIndex].data()));
-				}
-
-				for (const auto& [set, setData] : m_Resources)
-				{
-					for (const auto& [binding, resource] : setData)
+					switch (resource->GetResourceType())
 					{
-						WriteDescriptorSet& storedWriteDescriptor = m_WriteDescriptorSetTable[frameIndex][set][binding];
-						VkWriteDescriptorSet& writeDescriptor = storedWriteDescriptor.VulkanWriteDescriptorSet;
-						writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-						writeDescriptor.dstSet = m_DescriptorSets[frameIndex].at(set - m_Info.FirstSet);
-						writeDescriptor.dstBinding = binding;
-						writeDescriptor.dstArrayElement = 0;
-						writeDescriptor.descriptorCount = 1;
+					case ShaderResourceType::UniformBuffer:
+					{
+						Ref<VulkanUniformBuffer> ubo = resource.As<VulkanUniformBuffer>();
 
-						switch (resource->GetResourceType())
-						{
-						case ShaderResourceType::UniformBuffer:
-						{
-							Ref<VulkanUniformBuffer> ubo = resource.As<VulkanUniformBuffer>();
+						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						writeDescriptor.pBufferInfo = &ubo->GetVulkanDescriptorInfo(frameIndex);
+						storedWriteDescriptor.ResourceHandle = writeDescriptor.pBufferInfo->buffer;
 
-							writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-							writeDescriptor.pBufferInfo = &ubo->GetVulkanDescriptorInfo(frameIndex);
-							storedWriteDescriptor.ResourceHandle = writeDescriptor.pBufferInfo->buffer;
+						if (storedWriteDescriptor.ResourceHandle == nullptr)
+							m_InvalidatedResources[set][binding] = resource;
 
-							if (storedWriteDescriptor.ResourceHandle == nullptr)
-								m_InvalidatedResources[set][binding] = resource;
-
-							break;
-						}
-						case ShaderResourceType::Texture2D:
-						{
-							Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
-
-							writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-							writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
-							storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
-
-							if (storedWriteDescriptor.ResourceHandle == nullptr)
-								m_InvalidatedResources[set][binding] = resource;
-
-							break;
-						}
-						}
+						break;
 					}
-
-					std::vector<VkWriteDescriptorSet> descriptorsToUpdate;
-					for (const auto& [binding, writeDescriptor] : m_WriteDescriptorSetTable[frameIndex][set])
+					case ShaderResourceType::Texture2D:
 					{
-						// update if valid, otherwise defer (will be updated at rendering stage)
-						if (!IsInvalidated(set, binding))
-							descriptorsToUpdate.emplace_back(writeDescriptor.VulkanWriteDescriptorSet);
+						Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
+
+						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+						storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+
+						if (storedWriteDescriptor.ResourceHandle == nullptr)
+							m_InvalidatedResources[set][binding] = resource;
+
+						break;
 					}
-
-					if (!descriptorsToUpdate.empty())
-					{
-						ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
-						vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 					}
 				}
+
+				std::vector<VkWriteDescriptorSet> descriptorsToUpdate;
+				for (const auto& [binding, writeDescriptor] : m_WriteDescriptorSetTable[frameIndex][set])
+				{
+					// update if valid, otherwise defer (will be updated at rendering stage)
+					if (!IsInvalidated(set, binding))
+						descriptorsToUpdate.emplace_back(writeDescriptor.VulkanWriteDescriptorSet);
+				}
+
+				if (!descriptorsToUpdate.empty())
+				{
+					ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
+					vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
+				}
 			}
-		});
+		}
 	}
 
 	void DescriptorSetManager::RT_InvalidateAndUpdate()

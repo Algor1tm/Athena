@@ -32,97 +32,94 @@ namespace Athena
 
 	void VulkanShader::CompileOrGetFromCache(bool forceCompile)
 	{
-		Renderer::Submit([this, forceCompile]()
+		ShaderCompiler compiler(m_FilePath, m_Name);
+		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
+		m_ReflectionData = compiler.Reflect();
+
+		if (m_IsCompiled)
+			CreateVulkanShaderModulesAndStages(compiler);
+
+		struct DescriptorSetLayoutStatistics
 		{
-			ShaderCompiler compiler(m_FilePath, m_Name);
-			m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
-			m_ReflectionData = compiler.Reflect();
+			uint32 UBOs;
+			uint32 Samplers;
+			uint32 Textures2D;
+		};
 
-			if (m_IsCompiled)
-				CreateVulkanShaderModulesAndStages(compiler);
+		std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
+		std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
 
-			struct DescriptorSetLayoutStatistics
-			{
-				uint32 UBOs;
-				uint32 Samplers;
-				uint32 Textures2D;
-			};
+		for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
+		{
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = ubo.Binding;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
+			uboLayoutBinding.pImmutableSamplers = nullptr;
 
-			std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
-			std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
+			bindings[ubo.Set].push_back(uboLayoutBinding);
+			stats[ubo.Set].UBOs++;
+		}
+		for (const auto& [name, texture] : m_ReflectionData.Textures2D)
+		{
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = texture.Binding;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
+			uboLayoutBinding.pImmutableSamplers = nullptr;
 
-			for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
-			{
-				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-				uboLayoutBinding.binding = ubo.Binding;
-				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
-				uboLayoutBinding.pImmutableSamplers = nullptr;
+			bindings[texture.Set].push_back(uboLayoutBinding);
+			stats[texture.Set].Textures2D++;
+			stats[texture.Set].Samplers++;
+		}
 
-				bindings[ubo.Set].push_back(uboLayoutBinding);
-				stats[ubo.Set].UBOs++;
-			}
-			for (const auto& [name, texture] : m_ReflectionData.Textures2D)
-			{
-				VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-				uboLayoutBinding.binding = texture.Binding;
-				uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				uboLayoutBinding.descriptorCount = 1;
-				uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
-				uboLayoutBinding.pImmutableSamplers = nullptr;
+		uint32 setsCount = 0;
+		for (const auto& [set, _] : bindings)
+		{
+			if (setsCount < set + 1)
+				setsCount = set + 1;
+		}
 
-				bindings[texture.Set].push_back(uboLayoutBinding);
-				stats[texture.Set].Textures2D++;
-				stats[texture.Set].Samplers++;
-			}
+		m_DescriptorSetLayouts.resize(setsCount);
+		for (uint32 set = 0; set < setsCount; ++set)
+		{
+			VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = bindings[set].size();
+			layoutInfo.pBindings = bindings[set].data();
 
-			uint32 setsCount = 0;
-			for (const auto& [set, _] : bindings)
-			{
-				if (setsCount < set + 1)
-					setsCount = set + 1;
-			}
+			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
+			const auto& setStats = stats[set];
+			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} ubos, {} samplers, {} textures", set, setStats.UBOs, setStats.Samplers, setStats.Textures2D);
+		}
 
-			m_DescriptorSetLayouts.resize(setsCount);
-			for (uint32 set = 0; set < setsCount; ++set)
-			{
-				VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-				layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-				layoutInfo.bindingCount = bindings[set].size();
-				layoutInfo.pBindings = bindings[set].data();
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = m_DescriptorSetLayouts.size();
+		pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
 
-				VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
-				const auto& setStats = stats[set];
-				ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} ubos, {} samplers, {} textures", set, setStats.UBOs, setStats.Samplers, setStats.Textures2D);
-			}
+		VkPushConstantRange range = {};
+		const auto& pushConstant = m_ReflectionData.PushConstant;
 
-			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-			pipelineLayoutInfo.setLayoutCount = m_DescriptorSetLayouts.size();
-			pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
+		if (pushConstant.Enabled)
+		{
+			range.offset = 0;
+			range.size = pushConstant.Size;
+			range.stageFlags = Vulkan::GetShaderStageFlags(pushConstant.StageFlags);
 
-			VkPushConstantRange range = {};
-			const auto& pushConstant = m_ReflectionData.PushConstant;
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &range;
+		}
+		else
+		{
+			pipelineLayoutInfo.pushConstantRangeCount = 0;
+			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+		}
 
-			if (pushConstant.Enabled)
-			{
-				range.offset = 0;
-				range.size = pushConstant.Size;
-				range.stageFlags = Vulkan::GetShaderStageFlags(pushConstant.StageFlags);
-
-				pipelineLayoutInfo.pushConstantRangeCount = 1;
-				pipelineLayoutInfo.pPushConstantRanges = &range;
-			}
-			else
-			{
-				pipelineLayoutInfo.pushConstantRangeCount = 0;
-				pipelineLayoutInfo.pPushConstantRanges = nullptr;
-			}
-
-			VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
-			Vulkan::SetObjectName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, m_Name);
-		});
+		VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
+		Vulkan::SetObjectName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, std::format("{}Layout", m_Name));
 	}
 
 	void VulkanShader::CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler)

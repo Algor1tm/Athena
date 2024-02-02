@@ -31,9 +31,9 @@ namespace Athena
 		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.WorkingDirectory = "";
 		appinfo.AppConfig.EngineResourcesPath = "../Athena/EngineResources";
+		appinfo.AppConfig.CleanCache = true;
 
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
-		appinfo.RendererConfig.ForceCompileShaderPack = true;
 		appinfo.RendererConfig.MaxFramesInFlight = 2;
 
 		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";

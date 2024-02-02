@@ -113,16 +113,22 @@ namespace Athena
 
 		result->Set("u_UseAlbedoMap", uint32(texture != nullptr));
 
-		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
-		//	result->Set(MaterialTexture::NORMAL_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
+			result->Set("u_NormalMap", texture);
 
-		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
-		//	result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
-		//else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
-		//	result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
+		result->Set("u_UseNormalMap", uint32(texture != nullptr));
 
-		//if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
-		//	result->Set(MaterialTexture::METALNESS_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
+			result->Set("u_RoughnessMap", texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
+			result->Set("u_RoughnessMap", texture);
+
+		result->Set("u_UseRoughnessMap", uint32(texture != nullptr));
+
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
+			result->Set("u_MetalnessMap", texture);
+
+		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
 
 		return result;
 	}

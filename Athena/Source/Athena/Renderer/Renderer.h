@@ -59,7 +59,7 @@ namespace Athena
 
 	enum ShaderDef
 	{
-		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
+		MAX_DIRECTIONAL_LIGHT_COUNT = 8,
 		MAX_POINT_LIGHT_COUNT = 32,
 
 		SHADOW_CASCADES_COUNT = 4,
@@ -158,7 +158,6 @@ namespace Athena
 	struct RendererConfig
 	{
 		Renderer::API API = Renderer::API::Vulkan;
-		bool ForceCompileShaderPack = false;
 		uint32 MaxFramesInFlight = 3;
 	};
 }

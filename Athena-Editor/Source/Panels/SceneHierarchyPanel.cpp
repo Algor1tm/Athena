@@ -313,9 +313,9 @@ namespace Athena
 			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
 			{
 				DrawMaterialProperty(material, "u_AlbedoMap", "u_UseAlbedoMap", "u_Albedo");
-				//DrawMaterialProperty(material, "u_NormalMap", "u_UseNormalMap", "");
-				//DrawMaterialProperty(material, "u_RoughnessMap", "u_UseRoughnessMap", "u_Roughness");
-				//DrawMaterialProperty(material, "u_MetalnessMap", "u_UseMetalnessMap", "u_Metalness");
+				DrawMaterialProperty(material, "u_NormalMap", "u_UseNormalMap", "");
+				DrawMaterialProperty(material, "u_RoughnessMap", "u_UseRoughnessMap", "u_Roughness");
+				DrawMaterialProperty(material, "u_MetalnessMap", "u_UseMetalnessMap", "u_Metalness");
 
 				UI::EndPropertyTable();
 				UI::TreePop();
@@ -329,23 +329,24 @@ namespace Athena
 		ImGui::PushID(texName.data());
 		{
 			float imageSize = 45.f;
-			Ref<Texture2D> albedoMap = mat->Get<Ref<Texture2D>>(texName);
+			Ref<Texture2D> texture = mat->Get<Ref<Texture2D>>(texName);
 
-			if (UI::PropertyImage(texName.data(), albedoMap ? albedoMap : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
+			if (UI::PropertyImage(texName.data(), texture ? texture : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
 			{
 				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 				if (!path.empty())
 				{
-					albedoMap = Texture2D::Create(path);
-					mat->Set(texName, albedoMap);
+					texture = Texture2D::Create(path);
+					mat->Set(texName, texture);
+					mat->Set(useTexName, (uint32)true);
 				}
 			}
 			ImGui::SameLine();
 			                                                                          
-			bool enableAlbedoMap = mat->Get<uint32>(useTexName);
-			ImGui::Checkbox("Use", &enableAlbedoMap);
-			mat->Set(useTexName, (uint32)enableAlbedoMap);
-
+			bool useTexture = mat->Get<uint32>(useTexName);
+			ImGui::Checkbox("Use", &useTexture);
+			mat->Set(useTexName, (uint32)useTexture);
+			
 			if (!uniformName.empty())
 			{
 				ImGui::SameLine();

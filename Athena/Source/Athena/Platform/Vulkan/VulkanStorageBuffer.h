@@ -10,21 +10,21 @@
 
 namespace Athena
 {
-	class VulkanUniformBuffer: public UniformBuffer
+	class VulkanStorageBuffer: public StorageBuffer
 	{
 	public:
-		VulkanUniformBuffer(const String& name, uint64 size);
-		~VulkanUniformBuffer();
+		VulkanStorageBuffer(const String& name, uint64 size);
+		~VulkanStorageBuffer();
 
 		virtual void RT_SetData(const void* data, uint64 size, uint64 offset) override;
 		virtual uint64 GetSize() override { return m_Size; }
 
-		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBSet[frameIndex].GetBuffer(); }
+		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanSBSet[frameIndex].GetBuffer(); }
 		const VkDescriptorBufferInfo& GetVulkanDescriptorInfo(uint32 frameIndex) const { return m_DescriptorInfo[frameIndex]; }
 
 	private:
 		String m_Name;
-		std::vector<VulkanBuffer> m_VulkanUBSet;
+		std::vector<VulkanBuffer> m_VulkanSBSet;
 		std::vector<VkDescriptorBufferInfo> m_DescriptorInfo;
 		uint64 m_Size;
 	};

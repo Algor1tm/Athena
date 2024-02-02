@@ -29,6 +29,7 @@ namespace Athena
 		m_Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
+		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData));
 
 		// Geometry Pass
 		{
@@ -55,13 +56,14 @@ namespace Athena
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Test");
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Static");
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = true;
 
 			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
+			m_StaticGeometryPipeline->SetInput("_272", m_LightSBO);
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->Bake();
 		}
@@ -89,11 +91,7 @@ namespace Athena
 	{
 		m_CameraData.View = cameraInfo.ViewMatrix;
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
-
-		Renderer::Submit([this]()
-		{
-			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
-		});
+		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
 	}
 
 	void SceneRenderer::EndScene()
@@ -101,10 +99,15 @@ namespace Athena
 		m_Profiler->Reset();
 		m_Profiler->BeginPipelineStatsQuery();
 
+		Renderer::Submit([this]()
+		{
+			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
+			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
+		});
+
 		GeometryPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
-
 		m_StaticGeometryList.clear();
 	}
 
@@ -127,10 +130,23 @@ namespace Athena
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
 	{
 		if (lightEnv.DirectionalLights.size() > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
+		{
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
-
-		if (lightEnv.PointLights.size() > ShaderDef::MAX_POINT_LIGHT_COUNT)
+			return;
+		}
+		else if (lightEnv.PointLights.size() > ShaderDef::MAX_POINT_LIGHT_COUNT)
+		{
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			return;
+		}
+
+		m_LightData.DirectionalLightCount = lightEnv.DirectionalLights.size();
+		for(uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
+			m_LightData.DirectionalLights[i] = lightEnv.DirectionalLights[i];
+
+		m_LightData.PointLightCount = lightEnv.PointLights.size();
+		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
+			m_LightData.PointLights[i] = lightEnv.PointLights[i];
 	}
 
 	void SceneRenderer::GeometryPass()

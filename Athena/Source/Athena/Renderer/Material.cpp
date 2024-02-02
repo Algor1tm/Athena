@@ -22,7 +22,7 @@ namespace Athena
 
 	Ref<Material> Material::CreatePBRStatic(const String& name)
 	{
-		return Material::Create(Renderer::GetShaderPack()->Get("Test"), name);
+		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Static"), name);
 	}
 
 	Material::~Material()

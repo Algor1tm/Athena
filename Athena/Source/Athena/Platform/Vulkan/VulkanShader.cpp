@@ -10,7 +10,7 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
-		CompileOrGetFromCache(Renderer::GetConfig().ForceCompileShaderPack);
+		CompileOrGetFromCache(false);
 	}
 
 	VulkanShader::VulkanShader(const FilePath& path)
@@ -36,31 +36,21 @@ namespace Athena
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
 		m_ReflectionData = compiler.Reflect();
 
+		ATN_CORE_ASSERT(m_IsCompiled, "Failed to compile shader!");
 		if (m_IsCompiled)
 			CreateVulkanShaderModulesAndStages(compiler);
 
 		struct DescriptorSetLayoutStatistics
 		{
-			uint32 UBOs;
-			uint32 Samplers;
 			uint32 Textures2D;
+			uint32 Samplers;
+			uint32 UBOs;
+			uint32 SBOs;
 		};
 
 		std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
 		std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
 
-		for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
-		{
-			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = ubo.Binding;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
-			uboLayoutBinding.pImmutableSamplers = nullptr;
-
-			bindings[ubo.Set].push_back(uboLayoutBinding);
-			stats[ubo.Set].UBOs++;
-		}
 		for (const auto& [name, texture] : m_ReflectionData.Textures2D)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
@@ -73,6 +63,30 @@ namespace Athena
 			bindings[texture.Set].push_back(uboLayoutBinding);
 			stats[texture.Set].Textures2D++;
 			stats[texture.Set].Samplers++;
+		}
+		for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
+		{
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = ubo.Binding;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
+			uboLayoutBinding.pImmutableSamplers = nullptr;
+
+			bindings[ubo.Set].push_back(uboLayoutBinding);
+			stats[ubo.Set].UBOs++;
+		}
+		for (const auto& [name, ubo] : m_ReflectionData.StorageBuffers)
+		{
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = ubo.Binding;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
+			uboLayoutBinding.pImmutableSamplers = nullptr;
+
+			bindings[ubo.Set].push_back(uboLayoutBinding);
+			stats[ubo.Set].SBOs++;
 		}
 
 		uint32 setsCount = 0;
@@ -92,7 +106,8 @@ namespace Athena
 
 			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
 			const auto& setStats = stats[set];
-			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} ubos, {} samplers, {} textures", set, setStats.UBOs, setStats.Samplers, setStats.Textures2D);
+			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} samplers, {} ubos, {} sbos", 
+				set, setStats.Textures2D, setStats.Samplers, setStats.UBOs, setStats.SBOs);
 		}
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};

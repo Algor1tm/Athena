@@ -189,13 +189,15 @@ namespace Athena
 	};
 
 
-	class ATHENA_API ShaderStorageBuffer : public ShaderResource
+	class ATHENA_API StorageBuffer : public ShaderResource
 	{
 	public:
-		virtual ~ShaderStorageBuffer() = default;
+		static Ref<StorageBuffer> Create(const String& name, uint64 size);
+		virtual ~StorageBuffer() = default;
 
-		static Ref<ShaderStorageBuffer> Create(uint64 size);
+		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::StorageBuffer; }
 
+		virtual uint64 GetSize() = 0;
 		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 	};
 }

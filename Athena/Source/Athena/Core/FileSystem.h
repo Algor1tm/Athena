@@ -12,6 +12,7 @@ namespace Athena
 		static std::vector<byte> ReadFileBinary(const FilePath& path);
 
 		static bool WriteFile(const FilePath& path, const char* bytes, uint64 size);
+		static bool Remove(const FilePath& path);
 
 		static FilePath GetWorkingDirectory();
 		static void SetWorkingDirectory(const FilePath& path);

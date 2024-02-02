@@ -22,6 +22,7 @@ namespace Athena
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
 		FilePath EngineResourcesPath = FilePath();
+		bool CleanCache = false;
 	};
 
 	struct ApplicationCreateInfo

@@ -92,8 +92,11 @@ namespace Athena
 
 			std::vector<const char*> deviceExtensions = { 
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-				VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
 				"VK_EXT_memory_budget" };
+
+#ifdef ATN_DEBUG
+			deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+#endif
 
 			CheckEnabledExtensions(deviceExtensions);
 

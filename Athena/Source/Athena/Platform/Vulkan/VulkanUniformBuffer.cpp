@@ -9,12 +9,12 @@ namespace Athena
 	{
 		m_Size = size;
 		m_Name = name;
-		m_VulkanUBOSet.resize(Renderer::GetFramesInFlight());
+		m_VulkanUBSet.resize(Renderer::GetFramesInFlight());
 		m_DescriptorInfo.resize(Renderer::GetFramesInFlight());
 
 		Renderer::Submit([this]()
 		{
-			for (uint32 i = 0; i < m_VulkanUBOSet.size(); ++i)
+			for (uint32 i = 0; i < m_VulkanUBSet.size(); ++i)
 			{
 				String bufferName = std::format("{}_{}", m_Name, i);
 
@@ -22,11 +22,11 @@ namespace Athena
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 				bufferInfo.size = m_Size;
 				bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-				m_VulkanUBOSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, bufferName);
-				Vulkan::SetObjectName(m_VulkanUBOSet[i].GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, bufferName);
+				m_VulkanUBSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, bufferName);
+				Vulkan::SetObjectName(m_VulkanUBSet[i].GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, bufferName);
 
 				VkDescriptorBufferInfo descriptorInfo;
-				descriptorInfo.buffer = m_VulkanUBOSet[i].GetBuffer();
+				descriptorInfo.buffer = m_VulkanUBSet[i].GetBuffer();
 				descriptorInfo.offset = 0;
 				descriptorInfo.range = m_Size;
 				m_DescriptorInfo[i] = descriptorInfo;
@@ -36,18 +36,18 @@ namespace Athena
 
 	VulkanUniformBuffer::~VulkanUniformBuffer()
 	{
-		Renderer::SubmitResourceFree([vulkanUBOSet = m_VulkanUBOSet, name = m_Name]()
+		Renderer::SubmitResourceFree([vulkanUBSet = m_VulkanUBSet, name = m_Name]()
 		{
-			for (uint32 i = 0; i < vulkanUBOSet.size(); ++i)
+			for (uint32 i = 0; i < vulkanUBSet.size(); ++i)
 			{
-				VulkanContext::GetAllocator()->DestroyBuffer(vulkanUBOSet[i], std::format("{}_{}", name, i));
+				VulkanContext::GetAllocator()->DestroyBuffer(vulkanUBSet[i], std::format("{}_{}", name, i));
 			}
 		});
 	}
 
 	void VulkanUniformBuffer::RT_SetData(const void* data, uint64 size, uint64 offset)
 	{
-		auto& ubo = m_VulkanUBOSet[Renderer::GetCurrentFrameIndex()];
+		auto& ubo = m_VulkanUBSet[Renderer::GetCurrentFrameIndex()];
 
 		void* mappedMemory = ubo.MapMemory();
 		memcpy(mappedMemory, data, size);

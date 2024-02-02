@@ -3,6 +3,7 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 
 
 namespace Athena
@@ -31,11 +32,11 @@ namespace Athena
 	}
 
 
-	Ref<ShaderStorageBuffer> ShaderStorageBuffer::Create(uint64 size)
+	Ref<StorageBuffer> StorageBuffer::Create(const String& name, uint64 size)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::Vulkan: return Ref<VulkanStorageBuffer>::Create(name, size);;
 		case Renderer::API::None: return nullptr;
 		}
 

@@ -205,9 +205,16 @@ namespace Athena
 			return m_TextureMap.at(texture).Set;
 		}
 
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
 		TextureInfo info;
 		info.ImageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();
 		info.Sampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
+
+		if (info.ImageView == nullptr || info.Sampler == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
 		info.Set = ImGui_ImplVulkan_AddTexture(info.Sampler, info.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		m_TextureMap[texture] = info;

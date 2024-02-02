@@ -61,8 +61,12 @@ namespace Athena
 		s_Data.RendererAPI->Init();
 		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
 
+		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("PI", std::to_string(Math::PI<float>()));
+
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
-		s_Data.ShaderPack->Load("Test", s_Data.ShaderPackDirectory / "Vulkan/Test.hlsl");
+		s_Data.ShaderPack->Load("PBR_Static", s_Data.ShaderPackDirectory / "PBR_Static.hlsl");
 
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 

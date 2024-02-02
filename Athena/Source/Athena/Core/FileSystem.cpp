@@ -69,6 +69,11 @@ namespace Athena
 		return false;
 	}
 
+	bool FileSystem::Remove(const FilePath& path)
+	{
+		return std::filesystem::remove_all(path);
+	}
+
 	FilePath FileSystem::GetWorkingDirectory()
 	{
 		return std::filesystem::current_path();

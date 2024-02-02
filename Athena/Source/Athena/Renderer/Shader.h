@@ -50,8 +50,9 @@ namespace Athena
 	{
 		VertexBufferLayout VertexBufferLayout;
 
-		std::unordered_map<String, BufferReflectionData> UniformBuffers;
 		std::unordered_map<String, Texture2DReflectionData> Textures2D;
+		std::unordered_map<String, BufferReflectionData> UniformBuffers;
+		std::unordered_map<String, BufferReflectionData> StorageBuffers;
 		PushConstantReflectionData PushConstant;
 	};
 

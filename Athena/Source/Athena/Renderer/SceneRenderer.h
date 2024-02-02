@@ -75,6 +75,7 @@ namespace Athena
 	{
 		Matrix4 View;
 		Matrix4 Projection;
+		Vector3 Position;
 	};
 
 	struct SceneData
@@ -98,10 +99,10 @@ namespace Athena
 
 	struct LightData
 	{
-		DirectionalLight DirectionalLightBuffer[ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT];
+		DirectionalLight DirectionalLights[ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT];
 		uint32 DirectionalLightCount = 0;
 
-		PointLight PointLightBuffer[ShaderDef::MAX_POINT_LIGHT_COUNT];
+		PointLight PointLights[ShaderDef::MAX_POINT_LIGHT_COUNT];
 		uint32 PointLightCount = 0;
 	};
 
@@ -180,7 +181,10 @@ namespace Athena
 		Ref<Pipeline> m_StaticGeometryPipeline;
 
 		CameraData m_CameraData;
+		LightData m_LightData;
+
 		Ref<UniformBuffer> m_CameraUBO;
+		Ref<StorageBuffer> m_LightSBO;
 
 		Vector2u m_ViewportSize = { 1, 1 };
 

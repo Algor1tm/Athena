@@ -353,6 +353,7 @@ namespace Athena
         PanelManager::AddPanel(viewportPanel, false);
 
         auto settingsPanel = Ref<SettingsPanel>::Create(SETTINGS_PANEL_ID, m_EditorCtx);
+        settingsPanel->SetContext(m_ViewportRenderer);
         PanelManager::AddPanel(settingsPanel, Keyboard::I);
 
         auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(SCENE_HIERARCHY_PANEL_ID, m_EditorCtx);

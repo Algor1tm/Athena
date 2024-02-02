@@ -200,13 +200,13 @@ namespace Athena
 
 	void* VulkanImGuiLayerImpl::GetTextureID(Ref<Texture2D> texture)
 	{
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
 		if (m_TextureMap.contains(texture))
 		{
 			return m_TextureMap.at(texture).Set;
 		}
-
-		if (texture == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture());
 
 		TextureInfo info;
 		info.ImageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();

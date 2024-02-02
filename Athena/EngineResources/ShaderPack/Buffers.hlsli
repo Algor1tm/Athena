@@ -12,6 +12,14 @@ cbuffer u_CameraData : register(b0, space1)
     CameraData u_Camera;
 }
 
+cbuffer u_SceneData : register(b1, space1)
+{
+    float u_Exposure;
+    float u_Gamma;
+    float u_EnvironmentIntensity;
+    float u_EnivornmentLOD;
+}
+
 struct DirectionalLight
 {
     float4 Color;
@@ -28,7 +36,7 @@ struct PointLight
     float FallOff;
 };
 
-tbuffer u_LightData : register(b1, space1)
+tbuffer u_LightData : register(b2, space1)
 {
     DirectionalLight g_DirectionalLights[MAX_DIRECTIONAL_LIGHT_COUNT];
     int g_DirectionalLightCount;

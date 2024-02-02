@@ -28,7 +28,7 @@ namespace Athena
 
 	private:
 		void DrawEntitiesHierarchy();
-		void DrawEntityNode(Entity entity, bool open = false);
+		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
 
 		void DrawMaterialsEditor();

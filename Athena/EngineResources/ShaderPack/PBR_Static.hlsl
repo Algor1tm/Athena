@@ -7,7 +7,7 @@
 struct Vertex
 {
     float3 Position;
-    float2 TexCoord;
+    float2 TexCoords;
     float3 Normal;
     float3 Tangent;
     float3 Bitangent;
@@ -17,7 +17,7 @@ struct Interpolators
 {
     float4 OutPosition : SV_POSITION;
     float3 WorldPos;
-    float2 TexCoord;
+    float2 TexCoords;
     float3 Normal;
     float3x3 TBN;
 };
@@ -45,7 +45,7 @@ Interpolators VSMain(Vertex vertex)
     float4 worldPos = mul(float4(vertex.Position, 1.0), u_Transform);
     output.OutPosition = mul(mul(worldPos, u_Camera.View), u_Camera.Projection);
     output.WorldPos = worldPos.xyz;
-    output.TexCoord = vertex.TexCoord;
+    output.TexCoords = vertex.TexCoords;
     output.Normal = normalize(mul(float4(vertex.Normal, 0), u_Transform).xyz);
 
     float3 T = normalize(mul(float4(vertex.Tangent, 0), u_Transform).xyz);
@@ -80,7 +80,6 @@ SamplerState u_RoughnessMapSampler : register(s2, space0);
 [[vk::combinedImageSampler]]
 Texture2D u_MetalnessMap : register(t3, space0);
 SamplerState u_MetalnessMapSampler : register(s3, space0);
-
 
 
 float3 LightContribution(float3 lightDirection, float3 lightRadiance, float3 normal, float3 viewDir, float3 albedo, float metalness, float roughness)
@@ -143,22 +142,21 @@ Fragment FSMain(Interpolators input)
     // Get PBR parameters
     float4 albedo = u_Albedo;
     if (u_UseAlbedoMap)
-        albedo *= u_AlbedoMap.Sample(u_AlbedoMapSampler, input.TexCoord);
+        albedo *= u_AlbedoMap.Sample(u_AlbedoMapSampler, input.TexCoords);
     
     float3 normal = input.Normal;
     if(u_UseNormalMap)
     {
-        normal = u_NormalMap.Sample(u_NormalMapSampler, input.TexCoord).rgb;
+        normal = u_NormalMap.Sample(u_NormalMapSampler, input.TexCoords).rgb;
         normal = normal * 2 - 1;
         normal = mul(normal, input.TBN);
     }
     
-    float roughness = u_UseRoughnessMap ? u_RoughnessMap.Sample(u_RoughnessMapSampler, input.TexCoord).r : u_Roughness;
-    float metalness = u_UseMetalnessMap ? u_MetalnessMap.Sample(u_MetalnessMapSampler, input.TexCoord).r : u_Metalness;
-    
-    float3 viewDir = normalize(u_Camera.Position.xyz - input.WorldPos.xyz);
+    float roughness = u_UseRoughnessMap ? u_RoughnessMap.Sample(u_RoughnessMapSampler, input.TexCoords).r : u_Roughness;
+    float metalness = u_UseMetalnessMap ? u_MetalnessMap.Sample(u_MetalnessMapSampler, input.TexCoords).r : u_Metalness;
     
     // Compute lighting from all light sources
+    float3 viewDir = normalize(u_Camera.Position.xyz - input.WorldPos.xyz);
     float3 totalIrradiance = float3(0.0);
     
     for (int i = 0; i < g_DirectionalLightCount; ++i)
@@ -177,19 +175,14 @@ Fragment FSMain(Interpolators input)
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
+    const float3 ambientDiffuse = float3(0.5, 0.5, 0.5);
+    const float3 ambientSpecular = float3(0.0, 0.0, 0.0);
+    
+    float3 ambient = albedo.rgb * ambientDiffuse + ambientSpecular;
     float3 emission = albedo.rgb * u_Emission;
-    float3 ambient = float3(0.5, 0.5, 0.5) * albedo.rgb;
     
-    float3 hdrColor = ambient + totalIrradiance + emission;
+    float3 hdrColor = totalIrradiance + ambient + emission;
     
-    // Tone mapping
-    const float gamma = 2.2;
-    const float exposure = 1.0;
-    
-    float3 color = float3(1.0) - exp(-hdrColor * exposure);
-    color = pow(color, float3(1.0 / gamma));
-    
-    output.Color = float4(color, albedo.a);
-    
+    output.Color = float4(hdrColor, albedo.a);
     return output;
 }

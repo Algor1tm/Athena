@@ -172,7 +172,7 @@ namespace Athena
 		ImGui::End();
 	}
 
-	void SceneHierarchyPanel::DrawEntityNode(Entity entity, bool open)
+	void SceneHierarchyPanel::DrawEntityNode(Entity entity)
 	{
 		const auto& tag = entity.GetComponent<TagComponent>().Tag;
 		bool selected = m_EditorCtx.SelectedEntity == entity;
@@ -182,10 +182,8 @@ namespace Athena
 		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
 			ImGuiTreeNodeFlags_OpenOnDoubleClick |
 			ImGuiTreeNodeFlags_SpanAvailWidth |
-			ImGuiTreeNodeFlags_FramePadding;
-
-		if (open)
-			flags |= ImGuiTreeNodeFlags_DefaultOpen;
+			ImGuiTreeNodeFlags_FramePadding |
+			ImGuiTreeNodeFlags_DefaultOpen;
 
 		if (selected)
 			flags |= ImGuiTreeNodeFlags_Selected;

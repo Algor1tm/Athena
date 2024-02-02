@@ -174,8 +174,8 @@ namespace Athena::Vulkan
         case VK_DEBUG_REPORT_WARNING_BIT_EXT:
             ATN_CORE_WARN_TAG("Vulkan", message); break;
 
-        //case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-        //    ATN_CORE_WARN_TAG("Vulkan", message); break;
+        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+            ATN_CORE_WARN_TAG("Vulkan", message); break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
             ATN_CORE_ERROR_TAG("Vulkan", message);

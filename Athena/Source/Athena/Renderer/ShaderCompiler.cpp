@@ -286,7 +286,7 @@ namespace Athena
 		if (result.ParseResult == false)
 			return result;
 
-		const char* matrixMemoryLayoutSettings = "#pragma pack_matrix( row_major )\n\n";
+		const char* matrixMemoryLayoutSettings = "#pragma pack_matrix( row_major )\n";
 
 		result.Source = FileSystem::ReadFile(m_FilePath);
 		result.Source.insert(0, matrixMemoryLayoutSettings);
@@ -480,14 +480,18 @@ namespace Athena
 
 			for (const auto& resource : resources.storage_buffers)
 			{
+				// Spirv-cross seems to be treating storage buffers differently (resource.name is incorrect)
+				// So we make work around and get resource name using base_type_id
+				String resourceName = compiler.get_name(resource.base_type_id);
+
 				const auto& bufferType = compiler.get_type(resource.base_type_id);
 				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
 				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
-				if (result.StorageBuffers.contains(resource.name))
+				if (result.StorageBuffers.contains(resourceName))
 				{
-					auto& stageFlags = result.StorageBuffers.at(resource.name).StageFlags;
+					auto& stageFlags = result.StorageBuffers.at(resourceName).StageFlags;
 					stageFlags = ShaderStage(stageFlags | stage);
 				}
 				else
@@ -498,7 +502,7 @@ namespace Athena
 					bufferData.Set = set;
 					bufferData.StageFlags = stage;
 
-					result.StorageBuffers[resource.name] = bufferData;
+					result.StorageBuffers[resourceName] = bufferData;
 				}
 			}
 		}

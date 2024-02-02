@@ -82,19 +82,8 @@ namespace Athena
 	{
 		float Exposure = 1.f;
 		float Gamma = 2.2f;
-	};
-
-	struct EnvironmentMapData
-	{
-		float LOD = 0.f;
-		float Intensity = 1.f;
-	};
-
-	struct EntityData
-	{
-		Matrix4 TransformMatrix;
-		int32 EntityID = -1;
-		bool IsAnimated = false;
+		float EnvironmentLOD = 0.f;
+		float EnvironmentIntensity = 1.f;
 	};
 
 	struct LightData
@@ -138,6 +127,7 @@ namespace Athena
 	struct SceneRendererStatistics
 	{
 		Time GeometryPass;
+		Time SceneCompositePass;
 		PipelineStatistics PipelineStats;
 	};
 
@@ -158,6 +148,7 @@ namespace Athena
 		void Init();
 		void Shutdown();
 
+		SceneRendererSettings& GetSettings() { return m_Settings; }
 		const SceneRendererStatistics& GetStatistics() { return m_Statistics; }
 		Vector2u GetViewportSize() { return m_ViewportSize; }
 
@@ -173,6 +164,7 @@ namespace Athena
 
 	private:
 		void GeometryPass();
+		void SceneCompositePass();
 
 	private:
 		std::vector<DrawCall> m_StaticGeometryList;
@@ -180,15 +172,21 @@ namespace Athena
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
 
+		Ref<RenderPass> m_CompositePass;
+		Ref<Pipeline> m_CompositePipeline;
+
 		CameraData m_CameraData;
+		SceneData m_SceneData;
 		LightData m_LightData;
 
 		Ref<UniformBuffer> m_CameraUBO;
+		Ref<UniformBuffer> m_SceneUBO;
 		Ref<StorageBuffer> m_LightSBO;
 
 		Vector2u m_ViewportSize = { 1, 1 };
 
 		Ref<GPUProfiler> m_Profiler;
 		SceneRendererStatistics m_Statistics;
+		SceneRendererSettings m_Settings;
 	};
 }

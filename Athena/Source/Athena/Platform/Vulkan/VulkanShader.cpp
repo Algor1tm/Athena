@@ -34,9 +34,10 @@ namespace Athena
 	{
 		ShaderCompiler compiler(m_FilePath, m_Name);
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
+		ATN_CORE_ASSERT(m_IsCompiled, "Failed to compile shader!");
+
 		m_ReflectionData = compiler.Reflect();
 
-		ATN_CORE_ASSERT(m_IsCompiled, "Failed to compile shader!");
 		if (m_IsCompiled)
 			CreateVulkanShaderModulesAndStages(compiler);
 

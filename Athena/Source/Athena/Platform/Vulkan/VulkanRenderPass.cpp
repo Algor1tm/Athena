@@ -8,6 +8,19 @@ namespace Athena
 {
 	namespace Vulkan
 	{
+		static VkAttachmentLoadOp GetLoadOp(RenderPassLoadOp loadOp)
+		{
+			switch (loadOp)
+			{
+			case RenderPassLoadOp::DONT_CARE: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			case RenderPassLoadOp::CLEAR: return VK_ATTACHMENT_LOAD_OP_CLEAR;
+			case RenderPassLoadOp::LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
+			}
+
+			ATN_CORE_ASSERT(false);
+			return (VkAttachmentLoadOp)0;
+		}
+
 		static VkImageLayout GetAttachmentImageLayout(TextureFormat format)
 		{
 			if (Texture::IsColorFormat(format))
@@ -43,6 +56,7 @@ namespace Athena
 
 		std::vector<VkAttachmentDescription> attachments;
 		std::vector<VkAttachmentReference> colorAttachmentRefs;
+		std::vector<VkSubpassDependency> dependencies;
 
 		bool hasDepthStencil = false;
 		VkAttachmentReference depthStencilAttachmentRef = {};
@@ -53,7 +67,7 @@ namespace Athena
 			attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
 			attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			VkAttachmentLoadOp loadOp = m_Info.LoadOpClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+			VkAttachmentLoadOp loadOp = Vulkan::GetLoadOp(m_Info.LoadOpClear);
 			VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 			attachmentDesc.loadOp = loadOp;
@@ -88,12 +102,15 @@ namespace Athena
 		subpass.pColorAttachments = colorAttachmentRefs.data();
 		subpass.pDepthStencilAttachment = hasDepthStencil ? &depthStencilAttachmentRef : nullptr;
 
+
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = attachments.size();
 		renderPassInfo.pAttachments = attachments.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = dependencies.size();
+		renderPassInfo.pDependencies = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
 		Vulkan::SetObjectName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
@@ -124,7 +141,7 @@ namespace Athena
 			renderPassBeginInfo.renderArea.extent = { width , height };
 
 			std::vector<VkClearValue> clearValues;
-			if (m_Info.LoadOpClear)
+			if (m_Info.LoadOpClear == RenderPassLoadOp::CLEAR)
 			{
 				renderPassBeginInfo.clearValueCount = m_Info.Output->GetInfo().Attachments.size();
 				clearValues.reserve(renderPassBeginInfo.clearValueCount);

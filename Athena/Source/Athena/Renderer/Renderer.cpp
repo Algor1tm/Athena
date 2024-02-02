@@ -67,6 +67,7 @@ namespace Athena
 
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
 		s_Data.ShaderPack->Load("PBR_Static", s_Data.ShaderPackDirectory / "PBR_Static.hlsl");
+		s_Data.ShaderPack->Load("SceneComposite", s_Data.ShaderPackDirectory / "SceneComposite.hlsl");
 
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
@@ -111,8 +112,8 @@ namespace Athena
 		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
 		float quadVertices[] = { -1.f, -1.f,  0.f, 0.f,
 								  1.f, -1.f,  1.f, 0.f,
-								  1.f,  1.f,  1.f, 1.f,
-								 -1.f,  1.f,  0.f, 1.f, };
+								  1.f,  1.f,  1.f, -1.f,
+								 -1.f,  1.f,  0.f, -1.f, };
 
 		vertexBufInfo.VerticesData = (void*)quadVertices;
 		vertexBufInfo.VerticesSize = sizeof(quadVertices);
@@ -183,6 +184,11 @@ namespace Athena
 	void Renderer::RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
 	{
 		s_Data.RendererAPI->RenderMeshWithMaterial(mesh, material);
+	}
+
+	void Renderer::RenderFullscreenQuad(const Ref<Material>& material)
+	{
+		s_Data.RendererAPI->RenderMeshWithMaterial(s_Data.QuadVertexBuffer, material);
 	}
 
 	void Renderer::BlitToScreen(const Ref<Texture2D>& texture)

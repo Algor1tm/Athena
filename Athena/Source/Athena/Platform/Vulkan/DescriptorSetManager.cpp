@@ -27,7 +27,6 @@ namespace Athena
 	{
 		m_Info = info;
 
-
 		const ShaderReflectionData& reflectionData = m_Info.Shader->GetReflectionData();
 
 		for (const auto& [name, texture] : reflectionData.Textures2D)
@@ -136,7 +135,7 @@ namespace Athena
 		{
 			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
 			ATN_CORE_ASSERT(false);
-			//return;
+			return;
 		}
 
 		// Calculate descriptor pool size and allocate it

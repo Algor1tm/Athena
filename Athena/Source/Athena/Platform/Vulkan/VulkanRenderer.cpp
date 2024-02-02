@@ -99,7 +99,8 @@ namespace Athena
 	{
 		Renderer::Submit([mesh, material]()
 		{
-			material->RT_UpdateForRendering();
+			if(material)
+				material->RT_UpdateForRendering();
 
 			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
 

@@ -31,8 +31,7 @@ namespace Athena
 			for (auto& stats : m_ResolvedTimeStats)
 				stats.resize(m_MaxTimestampsCount / 2);
 
-			// Time stored in ms
-			m_Frequency = (uint64)(1000000ll / Renderer::GetRenderCaps().TimestampPeriod);
+			m_Frequency = 1000000.0 / (double)Renderer::GetRenderCaps().TimestampPeriod;
 		}
 
 		// Pipeline statistics query pool
@@ -97,7 +96,7 @@ namespace Athena
 
 					for (uint32 i = 0; i < count; i += 2)
 					{
-						Time resolvedTime = Time::Milliseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
+						Time resolvedTime = Time::Microseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
 						resolvedTimeStats[i / 2] = resolvedTime;
 					}
 				}

@@ -7,6 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
 namespace Athena
@@ -37,81 +38,28 @@ namespace Athena
 		});
 	}
 
-	void VulkanRenderer::BeginFrame()
+	void VulkanRenderer::OnUpdate()
 	{
-		Renderer::Submit([this]()
-		{
-			ATN_PROFILE_SCOPE("VulkanRenderer::BeginFrame")
-			VkCommandBuffer commandBuffer = m_VkCommandBuffers[Renderer::GetCurrentFrameIndex()];
-
-			VK_CHECK(vkResetCommandBuffer(commandBuffer, 0));
-
-			VkCommandBufferBeginInfo cmdBufBeginInfo = {};
-			cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-			VK_CHECK(vkBeginCommandBuffer(commandBuffer, &cmdBufBeginInfo));
-
-			VulkanContext::SetActiveCommandBuffer(commandBuffer);
-
-			VulkanContext::GetAllocator()->OnUpdate();
-		});
+		VulkanContext::GetAllocator()->OnUpdate();
 	}
 
-	void VulkanRenderer::EndFrame()
+	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([commandBuffer, mesh, material]()
 		{
-			ATN_PROFILE_SCOPE("VulkanRenderer::EndFrame")
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			VulkanContext::SetActiveCommandBuffer(VK_NULL_HANDLE);
-
-			VkCommandBuffer commandBuffer = m_VkCommandBuffers[Renderer::GetCurrentFrameIndex()];
-			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-
-			VK_CHECK(vkEndCommandBuffer(commandBuffer));
-
-			bool enableUI = Application::Get().GetConfig().EnableImGui;
-			VkPipelineStageFlags waitStage = enableUI ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-			VkSubmitInfo submitInfo = {};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = &frameData.ImageAcquiredSemaphore;
-			submitInfo.pWaitDstStageMask = &waitStage;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
-			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
-
-			{
-				ATN_PROFILE_SCOPE("vkQueueSubmit")
-				Timer timer = Timer();
-
-				VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
-
-				Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
-			}
-		});
-	}
-
-	void VulkanRenderer::RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
-	{
-		Renderer::Submit([mesh, material]()
-		{
 			if(material)
-				material->RT_UpdateForRendering();
-
-			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
-
+				material->RT_UpdateForRendering(commandBuffer);
+			
 			Ref<VulkanVertexBuffer> vkVertexBuffer = mesh.As<VulkanVertexBuffer>();
 			VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
 
 			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
-			vkCmdBindIndexBuffer(commandBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vertexBuffer, offsets);
+			vkCmdBindIndexBuffer(vkcmdBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdDrawIndexed(commandBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
+			vkCmdDrawIndexed(vkcmdBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
 		});
 	}
 
@@ -120,11 +68,11 @@ namespace Athena
 		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());
 	}
 
-	void VulkanRenderer::BlitToScreen(const Ref<Texture2D>& texture)
+	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
 	{
-		Renderer::Submit([texture]()
+		Renderer::Submit([cmdBuffer, texture]()
 		{
-			VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
+			VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 			VkImage sourceImage = texture.As<VulkanTexture2D>()->GetVulkanImage();
 			VkImage swapChainImage = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetCurrentVulkanImage();

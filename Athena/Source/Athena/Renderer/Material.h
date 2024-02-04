@@ -6,6 +6,7 @@
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -27,8 +28,8 @@ namespace Athena
 		template <typename T>
 		T Get(const String& name);
 
-		virtual void Bind() = 0;
-		virtual void RT_UpdateForRendering() = 0;
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		virtual void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
 		Ref<Shader> GetShader() { return m_Shader; }
 		const String& GetName() { return m_Name; }

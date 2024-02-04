@@ -190,7 +190,7 @@ namespace Athena
 
 		// Create Device
 		{
-			s_Data.CurrentDevice = Ref<VulkanDevice>::Create();
+			s_Data.Device = Ref<VulkanDevice>::Create();
 		}
 
 		// Create Allocator
@@ -248,7 +248,7 @@ namespace Athena
 #endif
 
 		s_Data.Allocator.Release();
-		s_Data.CurrentDevice.Release();
+		s_Data.Device.Release();
 		
 		vkDestroyInstance(VulkanContext::GetInstance(), nullptr);
 	}

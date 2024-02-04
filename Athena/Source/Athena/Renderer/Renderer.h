@@ -6,6 +6,7 @@
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -115,7 +116,7 @@ namespace Athena
 		template <typename FuncT>
 		static void Submit(FuncT&& func)
 		{
-			GetRenderCommandQueue().Submit(std::forward<FuncT>(func));
+			GetRenderThreadCommandQueue().Submit(std::forward<FuncT>(func));
 		}
 
 		template <typename FuncT>
@@ -128,11 +129,12 @@ namespace Athena
 		static void EndFrame();
 		static void WaitAndRender();
 
-		static void RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
-		static void RenderFullscreenQuad(const Ref<Material>& material = nullptr);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
+		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
 
-		static void BlitToScreen(const Ref<Texture2D>& texture);
+		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture);
 
+		static Ref<RenderCommandBuffer> GetRenderCommandBuffer();
 		static const RenderCapabilities& GetRenderCaps();
 		static uint64 GetMemoryUsage();
 
@@ -152,7 +154,7 @@ namespace Athena
 		static Ref<VertexBuffer> GetQuadVertexBuffer();
 
 	private:
-		static CommandQueue& GetRenderCommandQueue();
+		static CommandQueue& GetRenderThreadCommandQueue();
 		static CommandQueue& GetResourceFreeQueue();
 	};
 

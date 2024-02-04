@@ -13,7 +13,7 @@ namespace Athena
 	class VulkanProfiler : public GPUProfiler
 	{
 	public:
-		VulkanProfiler(uint32 maxTimestamps, uint32 maxPipelineQueries);
+		VulkanProfiler(const GPUProfilerCreateInfo& info);
 		~VulkanProfiler();
 
 		virtual void Reset() override;
@@ -25,9 +25,6 @@ namespace Athena
 		virtual const PipelineStatistics& EndPipelineStatsQuery() override;
 
 	private:
-		uint32 m_MaxTimestampsCount;
-		uint32 m_MaxPipelineQueriesCount;
-
 		VkQueryPool m_TimeQueryPool;
 		double m_Frequency;
 		std::vector<uint32> m_TimestampsCount;

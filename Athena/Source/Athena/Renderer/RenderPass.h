@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -26,8 +27,8 @@ namespace Athena
 		static Ref<RenderPass> Create(const RenderPassCreateInfo& info);
 		virtual ~RenderPass() = default;
 
-		virtual void Begin() = 0;
-		virtual void End() = 0;
+		virtual void Begin(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
 		Ref<Framebuffer> GetOutput() const { return m_Info.Output; }
 		Ref<Texture2D> GetOutput(uint32 attachmentIndex) const { return m_Info.Output->GetColorAttachment(attachmentIndex); }

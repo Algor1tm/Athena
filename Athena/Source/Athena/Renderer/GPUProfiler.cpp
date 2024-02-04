@@ -5,11 +5,11 @@
 
 namespace Athena
 {
-	Ref<GPUProfiler> GPUProfiler::Create(uint32 maxTimestamps, uint32 maxPipelineQueries)
+	Ref<GPUProfiler> GPUProfiler::Create(const GPUProfilerCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanProfiler>::Create(maxTimestamps, maxPipelineQueries);
+		case Renderer::API::Vulkan: return Ref<VulkanProfiler>::Create(info);
 		case Renderer::API::None: return nullptr;
 		}
 

@@ -16,8 +16,9 @@ namespace Athena
 		uint32 CurrentFrameIndex = 0;
 		uint32 CurrentResourceFreeQueueIndex = 0;
 
-		CommandQueue RenderCommandQueue;
+		CommandQueue RenderThreadCommandQueue;
 		std::vector<CommandQueue> ResourceFreeQueues; 
+		Ref<RenderCommandBuffer> RenderCommandBuffer;
 
 		FilePath ShaderPackDirectory;
 		FilePath ShaderCacheDirectory;
@@ -46,7 +47,7 @@ namespace Athena
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
 		s_Data.CurrentResourceFreeQueueIndex = s_Data.CurrentFrameIndex;
 
-		s_Data.RenderCommandQueue = CommandQueue(1024 * 1024 * 10);		// 10 Mb
+		s_Data.RenderThreadCommandQueue = CommandQueue(1024 * 1024 * 10);		// 10 Mb
 
 		s_Data.ResourceFreeQueues.resize(s_Data.Config.MaxFramesInFlight + 1);
 		for (uint32 i = 0; i < s_Data.ResourceFreeQueues.size(); ++i)
@@ -64,6 +65,12 @@ namespace Athena
 		s_Data.RendererAPI = RendererAPI::Create(s_Data.Config.API);
 		s_Data.RendererAPI->Init();
 		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
+
+		RenderCommandBufferCreateInfo cmdBufferInfo;
+		cmdBufferInfo.Name = "Renderer_MainCommandBuffer";
+		cmdBufferInfo.Usage = RenderCommandBufferUsage::PRESENT;
+
+		s_Data.RenderCommandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
 
 		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
@@ -166,13 +173,15 @@ namespace Athena
 			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
 
-		s_Data.RendererAPI->BeginFrame();
+		s_Data.RendererAPI->OnUpdate();
+		s_Data.RenderCommandBuffer->Begin();
 	}
 
 	void Renderer::EndFrame()
 	{
 		ATN_PROFILE_FUNC()
-		s_Data.RendererAPI->EndFrame();
+		s_Data.RenderCommandBuffer->End();
+		s_Data.RenderCommandBuffer->Submit();
 	}
 
 	void Renderer::WaitAndRender()
@@ -180,24 +189,29 @@ namespace Athena
 		ATN_PROFILE_FUNC()
 		Timer timer = Timer();
 
-		s_Data.RenderCommandQueue.Flush();
+		s_Data.RenderThreadCommandQueue.Flush();
 
 		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
-	void Renderer::RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(mesh, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, mesh, material);
 	}
 
-	void Renderer::RenderFullscreenQuad(const Ref<Material>& material)
+	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(s_Data.QuadVertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, s_Data.QuadVertexBuffer, material);
 	}
 
-	void Renderer::BlitToScreen(const Ref<Texture2D>& texture)
+	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
 	{
-		s_Data.RendererAPI->BlitToScreen(texture);
+		s_Data.RendererAPI->BlitToScreen(cmdBuffer, texture);
+	}
+
+	Ref<RenderCommandBuffer> Renderer::GetRenderCommandBuffer()
+	{
+		return s_Data.RenderCommandBuffer;
 	}
 
 	const RendererConfig& Renderer::GetConfig()
@@ -285,9 +299,9 @@ namespace Athena
 		return s_Data.QuadVertexBuffer;
 	}
 
-	CommandQueue& Renderer::GetRenderCommandQueue()
+	CommandQueue& Renderer::GetRenderThreadCommandQueue()
 	{
-		return s_Data.RenderCommandQueue;
+		return s_Data.RenderThreadCommandQueue;
 	}
 
 	CommandQueue& Renderer::GetResourceFreeQueue()

@@ -4,6 +4,7 @@
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
 namespace Athena
@@ -82,21 +83,25 @@ namespace Athena
 		return true;
 	}
 
-	void VulkanMaterial::Bind()
+	void VulkanMaterial::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([this, commandBuffer]()
 		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
 			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets();
+			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer);
 		});
 	}
 
-	void VulkanMaterial::RT_UpdateForRendering()
+	void VulkanMaterial::RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		if (m_Shader->GetReflectionData().PushConstant.Enabled)
 		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
-			vkCmdPushConstants(VulkanContext::GetActiveCommandBuffer(), 
+
+			vkCmdPushConstants(vkcmdBuffer,
 				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
 				Vulkan::GetShaderStageFlags(pushConstant.StageFlags),
 				0,

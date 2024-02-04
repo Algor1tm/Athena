@@ -19,21 +19,21 @@ namespace Athena
 		virtual const Ref<Texture2D>& GetColorAttachment(uint32 index = 0) const override;
 		virtual const Ref<Texture2D>& GetDepthAttachment() const override;
 
-		virtual uint32 GetColorAttachmentCount() override;
-		virtual bool HasDepthAttachment() override;
+		virtual uint32 GetColorAttachmentCount() const override;
+		virtual bool HasDepthAttachment() const override;
 
 		VkFramebuffer GetVulkanFramebuffer() const;
 
 		void Bake(VkRenderPass renderPass);
 
 	private:
-		void CleanUpFramebufferSet();
-		void ResizeFramebufferSet();
+		void CleanUpFramebuffer();
+		void ResizeFramebuffer();
 
 	private:
-		std::vector<std::vector<Ref<Texture2D>>> m_ColorAttachmentsSet;
-		std::vector<Ref<Texture2D>> m_DepthAttachmentSet;
-		std::vector<VkFramebuffer> m_VulkanFramebufferSet;
+		std::vector<Ref<Texture2D>> m_ColorAttachments;
+		Ref<Texture2D> m_DepthAttachment;
+		VkFramebuffer m_VulkanFramebuffer;
 		VkRenderPass m_VulkanRenderPass;
 	};
 }

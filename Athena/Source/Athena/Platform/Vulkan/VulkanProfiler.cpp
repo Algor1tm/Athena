@@ -1,23 +1,24 @@
 #include "VulkanProfiler.h"
 
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
 namespace Athena
 {
-	VulkanProfiler::VulkanProfiler(uint32 maxTimestamps, uint32 maxPipelineQueries)
+	VulkanProfiler::VulkanProfiler(const GPUProfilerCreateInfo& info)
 	{
-		m_MaxTimestampsCount = maxTimestamps;
-		m_MaxPipelineQueriesCount = maxPipelineQueries;
+		m_Info = info;
 
 		// Create time queury pool
 		{
 			VkQueryPoolCreateInfo queryPoolInfo = {};
 			queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 			queryPoolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
-			queryPoolInfo.queryCount = m_MaxTimestampsCount * Renderer::GetFramesInFlight();
+			queryPoolInfo.queryCount = m_Info.MaxTimestampsCount * Renderer::GetFramesInFlight();
 				
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_TimeQueryPool));
+			Vulkan::SetObjectName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_TimestampsPool", m_Info.Name));
 				
 			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
 				
@@ -25,11 +26,11 @@ namespace Athena
 
 			m_Timestamps.resize(Renderer::GetFramesInFlight());
 			for (auto& timestamps : m_Timestamps)
-				timestamps.resize(m_MaxTimestampsCount);
+				timestamps.resize(m_Info.MaxTimestampsCount);
 
 			m_ResolvedTimeStats.resize(Renderer::GetFramesInFlight());
 			for (auto& stats : m_ResolvedTimeStats)
-				stats.resize(m_MaxTimestampsCount / 2);
+				stats.resize(m_Info.MaxTimestampsCount / 2);
 
 			m_Frequency = 1000000.0 / (double)Renderer::GetRenderCaps().TimestampPeriod;
 		}
@@ -39,7 +40,7 @@ namespace Athena
 			VkQueryPoolCreateInfo queryPoolInfo = {};
 			queryPoolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
 			queryPoolInfo.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
-			queryPoolInfo.queryCount = m_MaxPipelineQueriesCount * Renderer::GetFramesInFlight();
+			queryPoolInfo.queryCount = m_Info.MaxPipelineQueriesCount * Renderer::GetFramesInFlight();
 			queryPoolInfo.pipelineStatistics =
 				VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT |
 				VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT |
@@ -52,13 +53,14 @@ namespace Athena
 				VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
 
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_PipelineStatsQueryPool));
+			Vulkan::SetObjectName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_PipelineStatsPool", m_Info.Name));
 
 			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
 
 			m_PipelineQueriesCount.resize(Renderer::GetFramesInFlight());
 			m_ResolvedPipelineStats.resize(Renderer::GetFramesInFlight());
 			for (auto& stats : m_ResolvedPipelineStats)
-				stats.resize(m_MaxPipelineQueriesCount);
+				stats.resize(m_Info.MaxPipelineQueriesCount);
 		}
 	}
 
@@ -75,9 +77,11 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
+			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
 			// Reset time query
 			{
-				uint32 start = m_MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+				uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 				uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
 				if (count > 0)
@@ -101,7 +105,7 @@ namespace Athena
 					}
 				}
 
-				vkCmdResetQueryPool(VulkanContext::GetActiveCommandBuffer(), m_TimeQueryPool, start, count);
+				vkCmdResetQueryPool(commandBuffer, m_TimeQueryPool, start, count);
 
 				m_TimestampsCount[Renderer::GetCurrentFrameIndex()] = 0;
 				m_CurrentTimeQueryIndex = 0;
@@ -109,7 +113,7 @@ namespace Athena
 
 			// Reset pipeline query
 			{
-				uint32 start = m_MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+				uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
 				uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
 				if (count > 0)
@@ -124,7 +128,7 @@ namespace Athena
 						VK_QUERY_RESULT_64_BIT);
 				}
 
-				vkCmdResetQueryPool(VulkanContext::GetActiveCommandBuffer(), m_PipelineStatsQueryPool, start, count);
+				vkCmdResetQueryPool(commandBuffer, m_PipelineStatsQueryPool, start, count);
 
 				m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] = 0;
 				m_CurrentPipelineQueryIndex = 0;
@@ -136,10 +140,11 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
-			uint32 start = m_MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 			uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdWriteTimestamp(VulkanContext::GetActiveCommandBuffer(), VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
 
 			m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 		});
@@ -149,12 +154,13 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
-			ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_MaxTimestampsCount, "Too much time queries per frame");
+			ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
 
-			uint32 start = m_MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 			uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdWriteTimestamp(VulkanContext::GetActiveCommandBuffer(), VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
 
 			m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 		});
@@ -169,10 +175,11 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
-			uint32 start = m_MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
 			uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdBeginQuery(VulkanContext::GetActiveCommandBuffer(), m_PipelineStatsQueryPool, start + count, 0);
+			vkCmdBeginQuery(commandBuffer, m_PipelineStatsQueryPool, start + count, 0);
 		});
 	}
 
@@ -180,12 +187,13 @@ namespace Athena
 	{
 		Renderer::Submit([this]()
 		{
-			ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_MaxPipelineQueriesCount, "Too much pipeline queries per frame");
+			ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
 
-			uint32 start = m_MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
 			uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdEndQuery(VulkanContext::GetActiveCommandBuffer(), m_PipelineStatsQueryPool, start + count);
+			vkCmdEndQuery(commandBuffer, m_PipelineStatsQueryPool, start + count);
 
 			m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()]++;
 		});

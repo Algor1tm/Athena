@@ -376,14 +376,14 @@ namespace Athena
 		m_InvalidatedResources.clear();
 	}
 
-	void DescriptorSetManager::RT_BindDescriptorSets()
+	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer)
 	{
 		const auto& descriptorSets = m_DescriptorSets[Renderer::GetCurrentFrameIndex()];
 
 		if (descriptorSets.size() > 0)
 		{
 			vkCmdBindDescriptorSets(
-				VulkanContext::GetActiveCommandBuffer(),
+				vkcommandBuffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_Info.Shader.As<VulkanShader>()->GetPipelineLayout(),
 				m_Info.FirstSet, descriptorSets.size(),

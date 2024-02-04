@@ -19,8 +19,8 @@ namespace Athena
 
 		virtual Ref<Texture2D> GetTexture(const String& name) override;
 
-		virtual void Bind() override;
-		virtual void RT_UpdateForRendering() override;
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		virtual void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
 		virtual void SetInternal(const String& name, ShaderDataType dataType, const void* data) override;
 		virtual bool GetInternal(const String& name, ShaderDataType dataType, void** data) override;

@@ -4,6 +4,7 @@
 #include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ShaderResource.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -46,7 +47,7 @@ namespace Athena
 		static Ref<Pipeline> Create(const PipelineCreateInfo& info);
 		virtual ~Pipeline() = default;
 		
-		virtual void Bind() = 0;
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
 
 		virtual void SetInput(const String& name, Ref<ShaderResource> resource) = 0;

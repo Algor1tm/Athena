@@ -22,10 +22,9 @@ namespace Athena
 		VkInstance Instance;
 		VkDebugReportCallbackEXT DebugReport;
 		Ref<VulkanAllocator> Allocator;
-		Ref<VulkanDevice> CurrentDevice;
+		Ref<VulkanDevice> Device;
 		std::vector<FrameSyncData> FrameSyncData;
 		VkCommandPool CommandPool;
-		VkCommandBuffer ActiveCommandBuffer;
 	};
 
 
@@ -37,16 +36,13 @@ namespace Athena
 
 		static VkInstance GetInstance() { return s_Data.Instance; }
 		static Ref<VulkanAllocator> GetAllocator() { return s_Data.Allocator; }
+		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
 
-		static Ref<VulkanDevice> GetDevice() { return s_Data.CurrentDevice; }
-		static VkDevice GetLogicalDevice() { return s_Data.CurrentDevice->GetLogicalDevice(); }
-		static VkPhysicalDevice GetPhysicalDevice() { return s_Data.CurrentDevice->GetPhysicalDevice(); }
+		static Ref<VulkanDevice> GetDevice() { return s_Data.Device; }
+		static VkDevice GetLogicalDevice() { return s_Data.Device->GetLogicalDevice(); }
+		static VkPhysicalDevice GetPhysicalDevice() { return s_Data.Device->GetPhysicalDevice(); }
 
 		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_Data.FrameSyncData[frameIndex]; }
-
-		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
-		static void SetActiveCommandBuffer(VkCommandBuffer commandBuffer) { s_Data.ActiveCommandBuffer = commandBuffer; }
-		static VkCommandBuffer GetActiveCommandBuffer() { return s_Data.ActiveCommandBuffer; }
 
 	private:
 		static VulkanContextData s_Data;

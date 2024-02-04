@@ -9,6 +9,7 @@
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Light.h"
 #include "Pipeline.h"
@@ -185,6 +186,7 @@ namespace Athena
 
 		Vector2u m_ViewportSize = { 1, 1 };
 
+		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Ref<GPUProfiler> m_Profiler;
 		SceneRendererStatistics m_Statistics;
 		SceneRendererSettings m_Settings;

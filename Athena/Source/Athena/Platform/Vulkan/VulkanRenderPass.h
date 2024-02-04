@@ -13,8 +13,8 @@ namespace Athena
 		VulkanRenderPass(const RenderPassCreateInfo& info);
 		~VulkanRenderPass();
 
-		virtual void Begin() override;
-		virtual void End() override;
+		virtual void Begin(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
 		VkRenderPass GetVulkanRenderPass() const { return m_VulkanRenderPass; };
 

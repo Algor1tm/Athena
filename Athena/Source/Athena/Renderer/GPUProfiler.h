@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -19,12 +20,20 @@ namespace Athena
 		uint64 ComputeShaderInvocations;
 	};
 
+	struct GPUProfilerCreateInfo
+	{
+		String Name;
+		Ref<RenderCommandBuffer> RenderCommandBuffer;
+		uint32 MaxTimestampsCount = 0;
+		uint32 MaxPipelineQueriesCount = 0;
+	};
+
 
 	// Returns query results with FramesInFlight delay
 	class ATHENA_API GPUProfiler : public RefCounted
 	{
 	public:
-		static Ref<GPUProfiler> Create(uint32 maxTimestamps, uint32 maxPipelineQueries);
+		static Ref<GPUProfiler> Create(const GPUProfilerCreateInfo& info);
 		virtual ~GPUProfiler() = default;
 
 		virtual void Reset() = 0;
@@ -34,5 +43,8 @@ namespace Athena
 
 		virtual void BeginPipelineStatsQuery() = 0;
 		virtual const PipelineStatistics& EndPipelineStatsQuery() = 0;
+
+	protected:
+		GPUProfilerCreateInfo m_Info;
 	};
 }

@@ -24,9 +24,14 @@ namespace Athena
 
 	void SceneRenderer::Init()
 	{
-		const uint32 maxTimestamps = 16;
-		const uint32 maxPipelineQueries = 1;
-		m_Profiler = GPUProfiler::Create(maxTimestamps, maxPipelineQueries);
+		m_RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
+
+		GPUProfilerCreateInfo profilerInfo;
+		profilerInfo.Name = "SceneRendererProfiler";
+		profilerInfo.RenderCommandBuffer = m_RenderCommandBuffer;
+		profilerInfo.MaxTimestampsCount = 16;
+		profilerInfo.MaxPipelineQueriesCount = 1;
+		m_Profiler = GPUProfiler::Create(profilerInfo);
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
 		m_SceneUBO = UniformBuffer::Create("SceneUBO", sizeof(SceneData));
@@ -124,8 +129,6 @@ namespace Athena
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
-		m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput(0));
-
 		m_CameraData.View = cameraInfo.ViewMatrix;
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
 		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
@@ -197,19 +200,20 @@ namespace Athena
 	void SceneRenderer::GeometryPass()
 	{
 		m_Profiler->BeginTimeQuery();
+		auto commandBuffer = m_RenderCommandBuffer;
 
-		m_GeometryPass->Begin();
+		m_GeometryPass->Begin(commandBuffer);
 		{
-			m_StaticGeometryPipeline->Bind();
+			m_StaticGeometryPipeline->Bind(commandBuffer);
 
 			for (const auto& drawCall : m_StaticGeometryList)
 			{
-				drawCall.Material->Bind();
+				drawCall.Material->Bind(commandBuffer);
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderGeometry(drawCall.VertexBuffer, drawCall.Material);
+				Renderer::RenderGeometry(commandBuffer, drawCall.VertexBuffer, drawCall.Material);
 			}
 		}
-		m_GeometryPass->End();
+		m_GeometryPass->End(commandBuffer);
 
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
 	}
@@ -217,13 +221,14 @@ namespace Athena
 	void SceneRenderer::SceneCompositePass()
 	{
 		m_Profiler->BeginTimeQuery();
+		auto commandBuffer = m_RenderCommandBuffer;
 
-		m_CompositePass->Begin();
+		m_CompositePass->Begin(commandBuffer);
 		{
-			m_CompositePipeline->Bind();
-			Renderer::RenderFullscreenQuad();
+			m_CompositePipeline->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer);
 		}
-		m_CompositePass->End();
+		m_CompositePass->End(commandBuffer);
 
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}

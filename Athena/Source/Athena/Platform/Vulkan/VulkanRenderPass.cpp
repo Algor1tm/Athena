@@ -2,6 +2,7 @@
 
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanFramebuffer.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
 namespace Athena
@@ -126,10 +127,11 @@ namespace Athena
 		});
 	}
 
-	void VulkanRenderPass::Begin()
+	void VulkanRenderPass::Begin(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([this, commandBuffer = commandBuffer]()
 		{
+			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 			uint32 width = m_Info.Output->GetInfo().Width;
 			uint32 height = m_Info.Output->GetInfo().Height;
 
@@ -155,15 +157,16 @@ namespace Athena
 				renderPassBeginInfo.pClearValues = clearValues.data();
 			}
 
-			vkCmdBeginRenderPass(VulkanContext::GetActiveCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(vkcmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 		});
 	}
 
-	void VulkanRenderPass::End()
+	void VulkanRenderPass::End(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([this, commandBuffer = commandBuffer]()
 		{
-			vkCmdEndRenderPass(VulkanContext::GetActiveCommandBuffer());
+			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			vkCmdEndRenderPass(vkcmdBuf);
 		});
 	}
 }

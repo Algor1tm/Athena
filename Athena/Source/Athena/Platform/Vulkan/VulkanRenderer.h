@@ -14,12 +14,11 @@ namespace Athena
 		virtual void Init() override;
 		virtual void Shutdown() override;
 
-		virtual void BeginFrame() override;
-		virtual void EndFrame() override;
+		virtual void OnUpdate() override;
 
-		virtual void RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
+		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
 
-		virtual void BlitToScreen(const Ref<Texture2D>& texture) override;
+		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture) override;
 		virtual void WaitDeviceIdle() override;
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;

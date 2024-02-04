@@ -5,6 +5,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -141,7 +142,7 @@ namespace Athena
 		ATN_PROFILE_FUNC()
 
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
-		VkCommandBuffer commandBuffer = VulkanContext::GetActiveCommandBuffer();
+		VkCommandBuffer commandBuffer = Renderer::GetRenderCommandBuffer().As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -204,9 +205,7 @@ namespace Athena
 			return GetTextureID(Renderer::GetWhiteTexture());
 
 		if (m_TextureMap.contains(texture))
-		{
 			return m_TextureMap.at(texture).Set;
-		}
 
 		TextureInfo info;
 		info.ImageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();

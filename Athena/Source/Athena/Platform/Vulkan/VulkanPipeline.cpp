@@ -3,6 +3,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanRenderPass.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
 namespace Athena
@@ -66,14 +67,15 @@ namespace Athena
 		CleanUp();
 	}
 
-	void VulkanPipeline::Bind()
+	void VulkanPipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([this, commandBuffer]()
 		{
-			vkCmdBindPipeline(VulkanContext::GetActiveCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
 
 			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets();
+			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer);
 		});
 	}
 

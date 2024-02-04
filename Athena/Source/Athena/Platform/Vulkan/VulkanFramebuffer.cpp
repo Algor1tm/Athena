@@ -10,54 +10,39 @@ namespace Athena
 	{
 		m_Info = info;
 
-		bool hasColorFormat = false;
-		bool hasDepthFormat = false;
+		m_DepthAttachment = nullptr;
+		m_VulkanFramebuffer = VK_NULL_HANDLE;
+		m_VulkanRenderPass = VK_NULL_HANDLE;
+
 		for (const auto& attachment : m_Info.Attachments)
 		{
+			TextureCreateInfo attachmentInfo = {};
+			attachmentInfo.Name = attachment.Name;
+			attachmentInfo.Width = m_Info.Width;
+			attachmentInfo.Height = m_Info.Height;
+			attachmentInfo.GenerateMipMap = false;
+			attachmentInfo.Format = attachment.Format;
+			attachmentInfo.Usage = TextureUsage::ATTACHMENT;
+			attachmentInfo.GenerateSampler = true;
+			attachmentInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			attachmentInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			attachmentInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
 			if (Texture::IsColorFormat(attachment.Format))
-				hasColorFormat = true;
-			else
-				hasDepthFormat = true;
-		}
-
-		if (hasDepthFormat)
-			m_DepthAttachmentSet.resize(Renderer::GetFramesInFlight());
-
-		if (hasColorFormat)
-			m_ColorAttachmentsSet.resize(Renderer::GetFramesInFlight());
-
-		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
-		{
-			for (const auto& attachment : m_Info.Attachments)
 			{
-				TextureCreateInfo attachmentInfo = {};
-				attachmentInfo.Name = std::format("{}_{}", attachment.Name, frameIndex);
-				attachmentInfo.Width = m_Info.Width;
-				attachmentInfo.Height = m_Info.Height;
-				attachmentInfo.GenerateMipMap = false;
-				attachmentInfo.Format = attachment.Format;
-				attachmentInfo.Usage = TextureUsage::ATTACHMENT;
-				attachmentInfo.GenerateSampler = true;
-				attachmentInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-				attachmentInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-				attachmentInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
-
-				if (Texture::IsColorFormat(attachment.Format))
-				{
-					m_ColorAttachmentsSet[frameIndex].push_back(Texture2D::Create(attachmentInfo));
-				}
-				else
-				{
-					ATN_CORE_ASSERT(m_DepthAttachmentSet[frameIndex] == nullptr);
-					m_DepthAttachmentSet[frameIndex] = Texture2D::Create(attachmentInfo);
-				}
+				m_ColorAttachments.push_back(Texture2D::Create(attachmentInfo));
+			}
+			else
+			{
+				ATN_CORE_VERIFY(m_DepthAttachment == nullptr, "Max 1 depth attachment in framebuffer!");
+				m_DepthAttachment = Texture2D::Create(attachmentInfo);
 			}
 		}
 	}
 
 	VulkanFramebuffer::~VulkanFramebuffer()
 	{
-		CleanUpFramebufferSet();
+		CleanUpFramebuffer();
 	}
 
 	void VulkanFramebuffer::Resize(uint32 width, uint32 height)
@@ -65,75 +50,65 @@ namespace Athena
 		m_Info.Width = width;
 		m_Info.Height = height;
 
-		CleanUpFramebufferSet();
+		CleanUpFramebuffer();
 
-		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
-		{
-			for (auto& attachment : m_ColorAttachmentsSet[frameIndex])
-				attachment->Resize(width, height);
+		for (auto& attachment : m_ColorAttachments)
+			attachment->Resize(width, height);
 
-			if (m_DepthAttachmentSet.size() != 0)
-				m_DepthAttachmentSet[frameIndex]->Resize(width, height);
-		}
+		if (HasDepthAttachment())
+			m_DepthAttachment->Resize(width, height);
 
-		ResizeFramebufferSet();
+		ResizeFramebuffer();
 	}
 
 	const Ref<Texture2D>& VulkanFramebuffer::GetColorAttachment(uint32 index) const
 	{
-		ATN_CORE_ASSERT(m_ColorAttachmentsSet[Renderer::GetCurrentFrameIndex()].size() > index);
+		ATN_CORE_ASSERT(m_ColorAttachments.size() > index);
 
-		return m_ColorAttachmentsSet[Renderer::GetCurrentFrameIndex()][index];
+		return m_ColorAttachments[index];
 	}
 
 	const Ref<Texture2D>& VulkanFramebuffer::GetDepthAttachment() const
 	{
-		ATN_CORE_ASSERT(m_DepthAttachmentSet.size() != 0);
+		ATN_CORE_ASSERT(HasDepthAttachment());
 
-		return m_DepthAttachmentSet[Renderer::GetCurrentFrameIndex()];
+		return m_DepthAttachment;
 	}
 
-	uint32 VulkanFramebuffer::GetColorAttachmentCount()
+	uint32 VulkanFramebuffer::GetColorAttachmentCount() const
 	{
-		if (m_ColorAttachmentsSet.empty())
-			return 0;
-
-		return m_ColorAttachmentsSet[0].size();
+		return m_ColorAttachments.size();
 	}
 
-	bool VulkanFramebuffer::HasDepthAttachment()
+	bool VulkanFramebuffer::HasDepthAttachment() const
 	{
-		return !m_DepthAttachmentSet.empty();
+		return m_DepthAttachment != nullptr;
 	}
 
 	VkFramebuffer VulkanFramebuffer::GetVulkanFramebuffer() const 
 	{
-		return m_VulkanFramebufferSet[Renderer::GetCurrentFrameIndex()]; 
+		return m_VulkanFramebuffer; 
 	}
 
 	void VulkanFramebuffer::Bake(VkRenderPass renderPass)
 	{
 		m_VulkanRenderPass = renderPass;
 
-		m_VulkanFramebufferSet.resize(Renderer::GetFramesInFlight());
-		ResizeFramebufferSet();
+		ResizeFramebuffer();
 	}
 
-	void VulkanFramebuffer::CleanUpFramebufferSet()
+	void VulkanFramebuffer::CleanUpFramebuffer()
 	{
-		if (m_VulkanFramebufferSet.size() > 0)
+		if (m_VulkanFramebuffer)
 		{
-			Renderer::SubmitResourceFree([framebufferSet = m_VulkanFramebufferSet]()
+			Renderer::SubmitResourceFree([framebuffer = m_VulkanFramebuffer]()
 			{
-				for (auto framebuffer : framebufferSet)
-				{
-					vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
-				}
+				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
 			});
 		}
 	}
 
-	void VulkanFramebuffer::ResizeFramebufferSet()
+	void VulkanFramebuffer::ResizeFramebuffer()
 	{
 		Renderer::Submit([this]()
 		{
@@ -145,30 +120,24 @@ namespace Athena
 			framebufferInfo.height = m_Info.Height;
 			framebufferInfo.layers = 1;
 
-			for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
+			std::vector<VkImageView> attachments;
+
+			for (auto& colorAttachment : m_ColorAttachments)
 			{
-				std::vector<VkImageView> attachments;
-
-				if (m_ColorAttachmentsSet.size() > 0)
-				{
-					for (auto& colorAttachment : m_ColorAttachmentsSet[frameIndex])
-					{
-						VkImageView attachment = colorAttachment.As<VulkanTexture2D>()->GetVulkanImageView();
-						attachments.push_back(attachment);
-					}
-				}
-
-				if (m_DepthAttachmentSet.size() > 0)
-				{
-					VkImageView attachment = m_DepthAttachmentSet[frameIndex].As<VulkanTexture2D>()->GetVulkanImageView();
-					attachments.push_back(attachment);
-				}
-
-				framebufferInfo.pAttachments = attachments.data();
-
-				VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebufferSet[frameIndex]));
-				Vulkan::SetObjectName(m_VulkanFramebufferSet[frameIndex], VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_{}", m_Info.Name, frameIndex));
+				VkImageView attachment = colorAttachment.As<VulkanTexture2D>()->GetVulkanImageView();
+				attachments.push_back(attachment);
 			}
+
+			if (m_DepthAttachment != nullptr)
+			{
+				VkImageView attachment = m_DepthAttachment.As<VulkanTexture2D>()->GetVulkanImageView();
+				attachments.push_back(attachment);
+			}
+
+			framebufferInfo.pAttachments = attachments.data();
+
+			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
+			Vulkan::SetObjectName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_Info.Name);
 		});
 	}
 }

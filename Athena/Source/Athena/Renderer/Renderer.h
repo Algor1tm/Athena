@@ -128,7 +128,7 @@ namespace Athena
 		static void EndFrame();
 		static void WaitAndRender();
 
-		static void RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
+		static void RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
 		static void RenderFullscreenQuad(const Ref<Material>& material = nullptr);
 
 		static void BlitToScreen(const Ref<Texture2D>& texture);

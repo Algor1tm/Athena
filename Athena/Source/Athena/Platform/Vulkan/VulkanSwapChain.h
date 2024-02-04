@@ -14,7 +14,7 @@ namespace Athena
 		VulkanSwapChain(void* windowHandle, bool vsync = false);
 		~VulkanSwapChain();
 
-		void CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews, bool cleanupSurface = false);
+		void CleanUp(VkSwapchainKHR swapChain, bool cleanupSurface = false);
 
 		virtual void OnWindowResize() override;
 		virtual bool Recreate() override;

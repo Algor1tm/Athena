@@ -17,7 +17,7 @@ namespace Athena
 		virtual void BeginFrame() override;
 		virtual void EndFrame() override;
 
-		virtual void RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
+		virtual void RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
 
 		virtual void BlitToScreen(const Ref<Texture2D>& texture) override;
 		virtual void WaitDeviceIdle() override;

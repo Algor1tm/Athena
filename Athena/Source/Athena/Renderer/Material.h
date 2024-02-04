@@ -15,7 +15,7 @@ namespace Athena
 	public:
 		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
 		static Ref<Material> CreatePBRStatic(const String& name);
-		virtual ~Material();
+		virtual ~Material() = default;
 
 		virtual void Set(const String& name, const Ref<ShaderResource>& resource) = 0;
 

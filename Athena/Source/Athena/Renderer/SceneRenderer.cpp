@@ -206,7 +206,7 @@ namespace Athena
 			{
 				drawCall.Material->Bind();
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderMeshWithMaterial(drawCall.VertexBuffer, drawCall.Material);
+				Renderer::RenderGeometry(drawCall.VertexBuffer, drawCall.Material);
 			}
 		}
 		m_GeometryPass->End();

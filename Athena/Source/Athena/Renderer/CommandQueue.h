@@ -11,6 +11,7 @@ namespace Athena
 		using CommandFn = uint16 (*)(void*);
 
 	public:
+		CommandQueue() = default;
 		CommandQueue(uint64 sizeInBytes);
 		~CommandQueue();
 

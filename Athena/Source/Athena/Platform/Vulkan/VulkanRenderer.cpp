@@ -95,7 +95,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanRenderer::RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	void VulkanRenderer::RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
 	{
 		Renderer::Submit([mesh, material]()
 		{

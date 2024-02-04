@@ -192,7 +192,7 @@ namespace Athena
 		}
 
 		if (result.NeedRecompile)
-			ATN_CORE_INFO_TAG("Vulkan", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
+			ATN_CORE_INFO_TAG("Renderer", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
 
 		return compiled;
 	}
@@ -227,7 +227,7 @@ namespace Athena
 
 			if (preResult.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Vulkan", "Shader '{}' preprocess failed, error message:\n{}\n", m_Name, preResult.GetErrorMessage());
+				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' preprocess failed, error message:\n{}\n", m_Name, preResult.GetErrorMessage());
 				compiled = false;
 				break;
 			}
@@ -239,7 +239,7 @@ namespace Athena
 
 			if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Vulkan", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, module.GetErrorMessage());
+				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, module.GetErrorMessage());
 				compiled = false;
 				break;
 			}

@@ -25,15 +25,6 @@ namespace Athena
 		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Static"), name);
 	}
 
-	Material::~Material()
-	{
-		// 1 more in material table
-		if (GetCount() == 2)
-		{
-			Renderer::GetMaterialTable()->Remove(Ref(this));
-		}
-	}
-
 	void Material::Set(const String& name, const Matrix4& value)
 	{
 		SetInternal(name, ShaderDataType::Mat4, &value);

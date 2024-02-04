@@ -460,4 +460,14 @@ namespace Athena
 
 		return result;
 	}
+
+	SubMesh::~SubMesh()
+	{
+		// HACK!
+		// 1 in material table and 1 in this object
+		if (Material->GetCount() == 2)
+		{
+			Renderer::GetMaterialTable()->Remove(Material);
+		}
+	}
 }

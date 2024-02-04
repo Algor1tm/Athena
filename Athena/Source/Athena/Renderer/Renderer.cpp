@@ -12,11 +12,12 @@ namespace Athena
 	struct RendererData
 	{
 		RendererConfig Config;
-		uint32 CurrentFrameIndex = 0;
 		Ref<RendererAPI> RendererAPI;
+		uint32 CurrentFrameIndex = 0;
+		uint32 CurrentResourceFreeQueueIndex = 0;
 
-		CommandQueue RenderCommandQueue = CommandQueue(1024 * 1024 * 10);	// 10 Mb
-		std::vector<CommandQueue> ResourceFreeQueues;						// 2 Mb per queue in flight
+		CommandQueue RenderCommandQueue;
+		std::vector<CommandQueue> ResourceFreeQueues; 
 
 		FilePath ShaderPackDirectory;
 		FilePath ShaderCacheDirectory;
@@ -43,11 +44,14 @@ namespace Athena
 
 		s_Data.Config = config;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
+		s_Data.CurrentResourceFreeQueueIndex = s_Data.CurrentFrameIndex;
 
-		s_Data.ResourceFreeQueues.reserve(s_Data.Config.MaxFramesInFlight);
-		for (uint32 i = 0; i < s_Data.Config.MaxFramesInFlight; ++i)
+		s_Data.RenderCommandQueue = CommandQueue(1024 * 1024 * 10);		// 10 Mb
+
+		s_Data.ResourceFreeQueues.resize(s_Data.Config.MaxFramesInFlight + 1);
+		for (uint32 i = 0; i < s_Data.ResourceFreeQueues.size(); ++i)
 		{
-			s_Data.ResourceFreeQueues.push_back(CommandQueue(1024 * 1024 * 2));	// 2 Mb
+			s_Data.ResourceFreeQueues[i] = CommandQueue(1024 * 1024 * 2);	// 2 Mb
 		}
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
@@ -97,7 +101,7 @@ namespace Athena
 
 		s_Data.BlackTexture = Texture2D::Create(texInfo); 
 
-		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
+		Vector3 cubeVertices[] = { {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f}, {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f} };
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 
 		VertexBufferCreateInfo vertexBufInfo;
@@ -149,17 +153,17 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC()
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.Config.MaxFramesInFlight;
+		s_Data.CurrentResourceFreeQueueIndex = (s_Data.CurrentResourceFreeQueueIndex + 1) % (s_Data.Config.MaxFramesInFlight + 1);
 
-		// Acquire image from swapchain
 		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
 
 		// Free resources in queue
 		// If resource is submitted to be freed on 'i' frame index, 
-		// then it will be freed on 'i + FramesInFlight' frame, so it guarantees
+		// then it will be freed on 'i + FramesInFlight + 1' frame, so it guarantees
 		// that currently used resource will not be freed
 		{
 			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush")
-			s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()].Flush();
+			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
 
 		s_Data.RendererAPI->BeginFrame();
@@ -181,14 +185,14 @@ namespace Athena
 		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
-	void Renderer::RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	void Renderer::RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderMeshWithMaterial(mesh, material);
+		s_Data.RendererAPI->RenderGeometry(mesh, material);
 	}
 
 	void Renderer::RenderFullscreenQuad(const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderMeshWithMaterial(s_Data.QuadVertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(s_Data.QuadVertexBuffer, material);
 	}
 
 	void Renderer::BlitToScreen(const Ref<Texture2D>& texture)
@@ -288,6 +292,6 @@ namespace Athena
 
 	CommandQueue& Renderer::GetResourceFreeQueue()
 	{
-		return s_Data.ResourceFreeQueues[Renderer::GetCurrentFrameIndex()];
+		return s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex];
 	}
 }

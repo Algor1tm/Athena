@@ -20,7 +20,7 @@ namespace Athena
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 
-		virtual void RenderMeshWithMaterial(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) = 0;
+		virtual void RenderGeometry(const Ref<VertexBuffer>& mesh, const Ref<Material>& material) = 0;
 
 		virtual void BlitToScreen(const Ref<Texture2D>& texture) = 0;
 		virtual void WaitDeviceIdle() = 0;

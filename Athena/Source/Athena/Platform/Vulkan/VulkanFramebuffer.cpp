@@ -95,7 +95,7 @@ namespace Athena
 
 	uint32 VulkanFramebuffer::GetColorAttachmentCount()
 	{
-		if (m_ColorAttachmentsSet.size() == 0)
+		if (m_ColorAttachmentsSet.empty())
 			return 0;
 
 		return m_ColorAttachmentsSet[0].size();
@@ -103,7 +103,7 @@ namespace Athena
 
 	bool VulkanFramebuffer::HasDepthAttachment()
 	{
-		return m_DepthAttachmentSet.size() != 0;
+		return !m_DepthAttachmentSet.empty();
 	}
 
 	VkFramebuffer VulkanFramebuffer::GetVulkanFramebuffer() const 

@@ -112,21 +112,21 @@ namespace Athena
 
 	VulkanSwapChain::~VulkanSwapChain()
 	{
-		CleanUp(m_VkSwapChain, m_SwapChainImageViews, true);
+		CleanUp(m_VkSwapChain, true);
 	}
 
-	void VulkanSwapChain::CleanUp(VkSwapchainKHR swapChain, const std::vector<VkImageView>& imageViews, bool cleanupSurface)
+	void VulkanSwapChain::CleanUp(VkSwapchainKHR swapChain, bool cleanupSurface)
 	{
-		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
-			{
-				for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
-					vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], nullptr);
+		Renderer::SubmitResourceFree([swapChain = swapChain, imageViews = m_SwapChainImageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
+		{
+			for (uint32 i = 0; i < Renderer::GetFramesInFlight(); ++i)
+				vkDestroyImageView(VulkanContext::GetLogicalDevice(), imageViews[i], nullptr);
 
-				vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, nullptr);
+			vkDestroySwapchainKHR(VulkanContext::GetLogicalDevice(), swapChain, nullptr);
 
-				if (cleanupSurface)
-					vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, nullptr);
-			});
+			if (cleanupSurface)
+				vkDestroySurfaceKHR(VulkanContext::GetInstance(), surface, nullptr);
+		});
 	}
 
 	bool VulkanSwapChain::Recreate()
@@ -182,7 +182,7 @@ namespace Athena
 
 		if (oldSwapChain != VK_NULL_HANDLE)
 		{
-			CleanUp(oldSwapChain, m_SwapChainImageViews);
+			CleanUp(oldSwapChain, false);
 		}
 
 		uint32 imagesCount;
@@ -209,7 +209,6 @@ namespace Athena
 			imageViewCI.subresourceRange.levelCount = 1;
 			imageViewCI.subresourceRange.baseArrayLayer = 0;
 			imageViewCI.subresourceRange.layerCount = 1;
-
 
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &imageViewCI, nullptr, &m_SwapChainImageViews[i]));
 		}

@@ -263,7 +263,6 @@ namespace Athena
 			);
 		}
 		Vulkan::EndSingleTimeCommands(commandBuffer);
-
 		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
 	}
 

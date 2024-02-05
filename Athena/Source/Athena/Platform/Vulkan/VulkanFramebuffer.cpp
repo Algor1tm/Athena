@@ -16,9 +16,11 @@ namespace Athena
 
 		for (const auto& attachment : m_Info.Attachments)
 		{
-			TextureCreateInfo attachmentInfo = {};
+			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC;
+
+			Texture2DCreateInfo attachmentInfo = {};
 			attachmentInfo.Format = attachment.Format;
-			attachmentInfo.Usage = ImageUsage::ATTACHMENT;
+			attachmentInfo.Usage = (ImageUsage)usage;
 			attachmentInfo.Name = attachment.Name;
 			attachmentInfo.Width = m_Info.Width;
 			attachmentInfo.Height = m_Info.Height;

@@ -5,7 +5,7 @@
 #include "Athena/Platform/Vulkan/VulkanDevice.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
@@ -68,13 +68,13 @@ namespace Athena
 		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());
 	}
 
-	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
+	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
 	{
-		Renderer::Submit([cmdBuffer, texture]()
+		Renderer::Submit([cmdBuffer, image]()
 		{
 			VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			VkImage sourceImage = texture.As<VulkanTexture2D>()->GetVulkanImage();
+			VkImage sourceImage = image.As<VulkanImage>()->GetVulkanImage();
 			VkImage swapChainImage = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetCurrentVulkanImage();
 
 			VkPipelineStageFlags sourceStage;
@@ -131,10 +131,10 @@ namespace Athena
 			VkImageBlit imageBlitRegion = {};
 			imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			imageBlitRegion.srcSubresource.layerCount = 1;
-			imageBlitRegion.srcOffsets[1] = { (int)texture->GetInfo().Width, (int)texture->GetInfo().Height, 1 };
+			imageBlitRegion.srcOffsets[1] = { (int)image->GetInfo().Width, (int)image->GetInfo().Height, 1 };
 			imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			imageBlitRegion.dstSubresource.layerCount = 1;
-			imageBlitRegion.dstOffsets[1] = { (int)texture->GetInfo().Width, (int)texture->GetInfo().Height, 1 };
+			imageBlitRegion.dstOffsets[1] = { (int)image->GetInfo().Width, (int)image->GetInfo().Height, 1 };
 
 			vkCmdBlitImage(
 				commandBuffer,

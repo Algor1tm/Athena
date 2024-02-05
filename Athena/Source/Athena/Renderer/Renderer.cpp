@@ -30,6 +30,7 @@ namespace Athena
 
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BlackTexture;
+		Ref<TextureCube> BlackTextureCube;
 		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<VertexBuffer> QuadVertexBuffer;
@@ -84,10 +85,10 @@ namespace Athena
 
 		uint32 whiteTextureData = 0xffffffff;
 
-		TextureCreateInfo texInfo;
+		Texture2DCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
 		texInfo.Format = ImageFormat::RGBA8;
-		texInfo.Usage = ImageUsage::SHADER_READ_ONLY;
+		texInfo.Usage = ImageUsage::DEFAULT;
 		texInfo.InitialData = &whiteTextureData;
 		texInfo.Width = 1;
 		texInfo.Height = 1;
@@ -105,6 +106,21 @@ namespace Athena
 		texInfo.Name = "Renderer_BlackTexture";
 
 		s_Data.BlackTexture = Texture2D::Create(texInfo); 
+
+		TextureCubeCreateInfo texCubeInfo;
+		texCubeInfo.Name = "Renderer_BlackTextureCube";
+		texCubeInfo.Format = ImageFormat::RGBA8;
+		texCubeInfo.Usage = ImageUsage::DEFAULT;
+		texCubeInfo.InitialData = &blackTextureData;
+		texCubeInfo.Width = 1;
+		texCubeInfo.Height = 1;
+		texCubeInfo.MipLevels = 1;
+		texCubeInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo);
 
 		Vector3 cubeVertices[] = { {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f}, {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f} };
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
@@ -139,7 +155,7 @@ namespace Athena
 
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
-
+		s_Data.BlackTextureCube.Release();
 		s_Data.CubeVertexBuffer.Release();
 		s_Data.QuadVertexBuffer.Release();
 
@@ -202,9 +218,9 @@ namespace Athena
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, s_Data.QuadVertexBuffer, material);
 	}
 
-	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
+	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
 	{
-		s_Data.RendererAPI->BlitToScreen(cmdBuffer, texture);
+		s_Data.RendererAPI->BlitToScreen(cmdBuffer, image);
 	}
 
 	Ref<RenderCommandBuffer> Renderer::GetRenderCommandBuffer()
@@ -285,6 +301,11 @@ namespace Athena
 	Ref<Texture2D> Renderer::GetBlackTexture()
 	{
 		return s_Data.BlackTexture;
+	}
+
+	Ref<TextureCube> Renderer::GetBlackTextureCube()
+	{
+		return s_Data.BlackTextureCube;
 	}
 
 	Ref<VertexBuffer> Renderer::GetCubeVertexBuffer()

@@ -153,7 +153,7 @@ namespace Athena
 		const SceneRendererStatistics& GetStatistics() { return m_Statistics; }
 		Vector2u GetViewportSize() { return m_ViewportSize; }
 
-		Ref<Texture2D> GetFinalImage();
+		Ref<Image> GetFinalImage();
 
 		void OnViewportResize(uint32 width, uint32 height);
 

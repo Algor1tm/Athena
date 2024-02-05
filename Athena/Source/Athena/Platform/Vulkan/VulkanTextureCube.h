@@ -12,12 +12,18 @@ namespace Athena
 	class ATHENA_API VulkanTextureCube : public TextureCube
 	{
 	public:
-		VulkanTextureCube(const TextureCreateInfo& info);
+		VulkanTextureCube(const TextureCubeCreateInfo& info);
 		~VulkanTextureCube();
 
+		virtual void Resize(uint32 width, uint32 height) override;
+		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
+
+		VkSampler GetVulkanSampler() const { return m_Sampler; }
+		VkImage GetVulkanImage() const;
+		VkImageView GetVulkanImageView() const;
+		const VkDescriptorImageInfo& GetVulkanDescriptorInfo();
+
 	private:
-		VulkanImageAllocation m_Image;
-		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkDescriptorImageInfo m_DescriptorInfo;
 	};

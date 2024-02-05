@@ -21,8 +21,6 @@ private:
 
 private:
 	Ref<SceneRenderer> m_SceneRenderer;
-	Ref<OrthographicCamera> m_Camera;
-
 	Ref<Scene> m_Scene;
 	FilePath m_ScenePath;
 };

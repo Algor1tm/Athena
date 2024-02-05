@@ -12,7 +12,19 @@ SandBoxLayer::SandBoxLayer(const FilePath& scenePath)
 void SandBoxLayer::OnAttach()
 {
 	m_SceneRenderer = SceneRenderer::Create();
-	m_Camera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
+	m_Scene = Ref<Scene>::Create();
+
+	SceneSerializer serializer(m_Scene);
+	if (serializer.DeserializeFromFile(m_ScenePath.string()))
+	{
+		ATN_INFO_TAG("SandBoxLayer", "Successfully load scene from {}", m_ScenePath);
+	}
+	else
+	{
+		ATN_ERROR_TAG("SandBoxLayer", "Failed to load scene from {}", m_ScenePath);
+	}
+
+	m_Scene->OnRuntimeStart();
 }
 
 void SandBoxLayer::OnDetach()
@@ -24,17 +36,8 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 {
 	ATN_PROFILE_FUNC()
 
-	m_Camera->OnUpdate(frameTime);
-
-	CameraInfo cameraInfo;
-	cameraInfo.ViewMatrix = m_Camera->GetViewMatrix();
-	cameraInfo.ProjectionMatrix = m_Camera->GetProjectionMatrix();
-	cameraInfo.NearClip = m_Camera->GetNearClip();
-	cameraInfo.FarClip = m_Camera->GetFarClip();
-
-	m_SceneRenderer->Render(cameraInfo);
-
-	Renderer::BlitToScreen(m_SceneRenderer->GetFinalImage());
+	m_Scene->OnUpdateRuntime(frameTime, m_SceneRenderer);
+	Renderer::BlitToScreen(Renderer::GetRenderCommandBuffer(), m_SceneRenderer->GetFinalImage());
 }
 
 void SandBoxLayer::OnImGuiRender()
@@ -45,8 +48,6 @@ void SandBoxLayer::OnImGuiRender()
 void SandBoxLayer::OnEvent(Event& event)
 {
 	ATN_PROFILE_FUNC()
-
-	m_Camera->OnEvent(event);
 
 	EventDispatcher dispatcher(event);
 	dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OnWindowResize));
@@ -59,7 +60,7 @@ bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 	uint32 width = event.GetWidth();
 	uint32 height = event.GetHeight();
 
-	m_Camera->SetViewportSize(width, height);
+	m_Scene->OnViewportResize(width, height);
 	m_SceneRenderer->OnViewportResize(width, height);
 
 	return false;

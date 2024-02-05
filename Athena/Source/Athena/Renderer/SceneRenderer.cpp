@@ -109,9 +109,9 @@ namespace Athena
 		
 	}
 
-	Ref<Texture2D> SceneRenderer::GetFinalImage()
+	Ref<Image> SceneRenderer::GetFinalImage()
 	{
-		return m_CompositePass->GetOutput(0);
+		return m_CompositePass->GetOutput(0)->GetImage();
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)

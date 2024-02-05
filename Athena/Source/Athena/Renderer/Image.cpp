@@ -73,7 +73,7 @@ namespace Athena
 		ImageCreateInfo info;
 		info.Name = filepath.filename().string();
 		info.Format = format;
-		info.Usage = ImageUsage::SHADER_READ_ONLY;
+		info.Usage = ImageUsage::DEFAULT;
 		info.Type = ImageType::IMAGE_2D;
 		info.InitialData = data;
 		info.Width = width;
@@ -116,7 +116,7 @@ namespace Athena
 		ImageCreateInfo info;
 		info.Name = name;
 		info.Format = format;
-		info.Usage = ImageUsage::SHADER_READ_ONLY;
+		info.Usage = ImageUsage::DEFAULT;
 		info.Type = ImageType::IMAGE_2D;
 		info.InitialData = data;
 		info.Width = width;

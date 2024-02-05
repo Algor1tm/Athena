@@ -18,7 +18,7 @@ namespace Athena
 
 		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
 
-		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture) override;
+		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image) override;
 		virtual void WaitDeviceIdle() override;
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;

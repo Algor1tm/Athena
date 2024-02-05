@@ -15,6 +15,8 @@ namespace Athena
 		VulkanImage(const ImageCreateInfo& info);
 		~VulkanImage();
 
+		virtual void GenerateMipMap(uint32 levels) override;
+
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() const { return m_ImageView; }
 

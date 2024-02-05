@@ -38,7 +38,7 @@ namespace Athena
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 		appinfo.RendererConfig.MaxFramesInFlight = 2;
 
-		appinfo.ScriptConfig.ScriptsFolder = ""; //"Assets/Scripts"
+		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
 
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;
@@ -51,7 +51,7 @@ namespace Athena
 
 		Application* app = new SandBox(appinfo);
 
-		FilePath scene = "Assets/Scenes/Sponza.atn";
+		FilePath scene = "Assets/Scenes/Default.atn";
 
 		app->PushLayer(Ref<SandBoxLayer>::Create(scene));
 

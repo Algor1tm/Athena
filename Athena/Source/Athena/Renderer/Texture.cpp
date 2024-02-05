@@ -4,12 +4,13 @@
 #include "Athena/Core/Log.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 
 
 namespace Athena
 {
 
-	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info)
+	Ref<Texture2D> Texture2D::Create(const Texture2DCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -59,11 +60,11 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<TextureCube> TextureCube::Create(const TextureCreateInfo& info)
+	Ref<TextureCube> TextureCube::Create(const TextureCubeCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return nullptr;
+		case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info);
 		case Renderer::API::None: return nullptr;
 		}
 

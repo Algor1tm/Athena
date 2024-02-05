@@ -35,19 +35,6 @@ namespace Athena
 		// TODO: Anisotropy
 	};
 
-	struct TextureCreateInfo
-	{
-		String Name;
-		ImageFormat Format = ImageFormat::RGBA8;
-		ImageUsage Usage = ImageUsage::SHADER_READ_ONLY;
-		const void* InitialData = nullptr;
-		uint32 Width = 1;
-		uint32 Height = 1;
-		uint32 Layers = 1;
-		uint32 MipLevels = 1;	// if 0 - mip levels will be max
-		TextureSamplerCreateInfo SamplerInfo;
-	};
-
 
 	class ATHENA_API Texture : public ShaderResource
 	{
@@ -57,37 +44,68 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) = 0;
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
-		const TextureCreateInfo& GetInfo() const { return m_Info; };
+		void GenerateMipMap(uint32 levels) { m_Image->GenerateMipMap(levels); }
 		const Ref<Image>& GetImage() const { return m_Image; }
 
 	protected:
-		TextureCreateInfo m_Info;
 		Ref<Image> m_Image;
 	};
 
 
+	struct Texture2DCreateInfo
+	{
+		String Name;
+		ImageFormat Format = ImageFormat::RGBA8;
+		ImageUsage Usage = ImageUsage::DEFAULT;
+		const void* InitialData = nullptr;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		uint32 Layers = 1;
+		uint32 MipLevels = 1;	// if 0 - mip levels will be max
+		TextureSamplerCreateInfo SamplerInfo;
+	};
+
 	class ATHENA_API Texture2D: public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(const TextureCreateInfo& info);				  // Default
-		static Ref<Texture2D> Create(const FilePath& path);							  // From file
-		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height);  // From memory
+		static Ref<Texture2D> Create(const Texture2DCreateInfo& info);
+		static Ref<Texture2D> Create(const FilePath& path);
+		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 
 		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
-		virtual void GenerateMipMap(uint32 levels) = 0;
 
+		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
-	public:
+	protected:
+		Texture2DCreateInfo m_Info;
 		FilePath m_FilePath;
 	};
 
 
+	struct TextureCubeCreateInfo
+	{
+		String Name;
+		ImageFormat Format = ImageFormat::RGBA8;
+		ImageUsage Usage = ImageUsage::DEFAULT;
+		const void* InitialData = nullptr;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		uint32 MipLevels = 1;	// if 0 - mip levels will be max
+		TextureSamplerCreateInfo SamplerInfo;
+	};
+
 	class ATHENA_API TextureCube: public Texture
 	{
 	public:
-		static Ref<TextureCube> Create(const TextureCreateInfo& info);
+		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info);
+
+		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
+		const TextureCubeCreateInfo& GetInfo() const { return m_Info; };
+
+	protected:
+		TextureCubeCreateInfo m_Info;
 	};
 
 

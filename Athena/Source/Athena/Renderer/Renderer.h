@@ -132,7 +132,7 @@ namespace Athena
 		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
 
-		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture);
+		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image);
 
 		static Ref<RenderCommandBuffer> GetRenderCommandBuffer();
 		static const RenderCapabilities& GetRenderCaps();
@@ -149,6 +149,7 @@ namespace Athena
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetWhiteTexture();
 		static Ref<Texture2D> GetBlackTexture();
+		static Ref<TextureCube> GetBlackTextureCube();
 
 		static Ref<VertexBuffer> GetCubeVertexBuffer();
 		static Ref<VertexBuffer> GetQuadVertexBuffer();

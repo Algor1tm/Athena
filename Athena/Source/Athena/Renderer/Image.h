@@ -28,10 +28,15 @@ namespace Athena
 		DEPTH32F
 	};
 
-	enum class ImageUsage
+	enum ImageUsage
 	{
-		SHADER_READ_ONLY,
-		ATTACHMENT,
+		NONE		 = BIT(0),
+		SAMPLED		 = BIT(1),
+		ATTACHMENT	 = BIT(2),
+		TRANSFER_SRC = BIT(3),
+		TRANSFER_DST = BIT(4),
+
+		DEFAULT = SAMPLED
 	};
 
 	enum class ImageType
@@ -44,7 +49,7 @@ namespace Athena
 	{
 		String Name;
 		ImageFormat Format = ImageFormat::RGBA8;
-		ImageUsage Usage = ImageUsage::SHADER_READ_ONLY;
+		ImageUsage Usage = ImageUsage::DEFAULT;
 		ImageType Type = ImageType::IMAGE_2D;
 		const void* InitialData = nullptr;
 		uint32 Width = 1;
@@ -60,6 +65,8 @@ namespace Athena
 		static Ref<Image> Create(const FilePath& path);
 		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height);
 		virtual ~Image() = default;
+
+		virtual void GenerateMipMap(uint32 levels) = 0;
 
 		const ImageCreateInfo& GetInfo() const { return m_Info; }
 

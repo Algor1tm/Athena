@@ -35,7 +35,7 @@ namespace Athena
         const auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_Description.Size = { viewportX, viewportY };
 
-        Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
+        Ref<Image> image = m_ViewportRenderer->GetFinalImage();
         ImGui::Image(UI::GetTextureID(image), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
 
         if (ImGui::BeginDragDropTarget())

@@ -179,7 +179,7 @@ namespace Athena
 			multisampling.alphaToCoverageEnable = VK_FALSE;
 			multisampling.alphaToOneEnable = VK_FALSE;
 
-			bool enableDepthTest = m_Info.DepthCompare != DepthCompare::NONE;;
+			bool enableDepthTest = m_Info.DepthCompare != DepthCompare::NONE;
 			VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 			depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			depthStencil.depthTestEnable = enableDepthTest;

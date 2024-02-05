@@ -22,12 +22,12 @@ namespace Athena
 			return (VkAttachmentLoadOp)0;
 		}
 
-		static VkImageLayout GetAttachmentImageLayout(TextureFormat format)
+		static VkImageLayout GetAttachmentImageLayout(ImageFormat format)
 		{
-			if (Texture::IsColorFormat(format))
+			if (Image::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-			if (Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format))
+			if (Image::IsDepthFormat(format) || Image::IsStencilFormat(format))
 				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			ATN_CORE_ASSERT(false);
@@ -38,7 +38,7 @@ namespace Athena
 		{
 			VkClearValue result = {};
 
-			if (Texture::IsColorFormat(info.Format))
+			if (Image::IsColorFormat(info.Format))
 			{
 				result.color = { info.ClearColor[0], info.ClearColor[1], info.ClearColor[2], info.ClearColor[3] };
 			}
@@ -81,7 +81,7 @@ namespace Athena
 
 			attachments.push_back(attachmentDesc);
 
-			if (Texture::IsColorFormat(attachment.Format))
+			if (Image::IsColorFormat(attachment.Format))
 			{
 				VkAttachmentReference colorAttachmentRef;
 				colorAttachmentRef.attachment = attachments.size() - 1;

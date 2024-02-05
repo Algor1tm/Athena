@@ -17,18 +17,18 @@ namespace Athena
 		for (const auto& attachment : m_Info.Attachments)
 		{
 			TextureCreateInfo attachmentInfo = {};
+			attachmentInfo.Format = attachment.Format;
+			attachmentInfo.Usage = ImageUsage::ATTACHMENT;
 			attachmentInfo.Name = attachment.Name;
 			attachmentInfo.Width = m_Info.Width;
 			attachmentInfo.Height = m_Info.Height;
-			attachmentInfo.GenerateMipMap = false;
-			attachmentInfo.Format = attachment.Format;
-			attachmentInfo.Usage = TextureUsage::ATTACHMENT;
-			attachmentInfo.GenerateSampler = true;
+			attachmentInfo.Layers = 1;
+			attachmentInfo.MipLevels = 1;
 			attachmentInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			attachmentInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 			attachmentInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
 
-			if (Texture::IsColorFormat(attachment.Format))
+			if (Image::IsColorFormat(attachment.Format))
 			{
 				m_ColorAttachments.push_back(Texture2D::Create(attachmentInfo));
 			}

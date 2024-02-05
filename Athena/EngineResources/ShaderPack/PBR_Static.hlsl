@@ -155,7 +155,7 @@ Fragment FSMain(Interpolators input)
     float roughness = u_UseRoughnessMap ? u_RoughnessMap.Sample(u_RoughnessMapSampler, input.TexCoords).r : u_Roughness;
     float metalness = u_UseMetalnessMap ? u_MetalnessMap.Sample(u_MetalnessMapSampler, input.TexCoords).r : u_Metalness;
     
-    // Compute lighting from all light sources
+    // Compute lightning from all light sources
     float3 viewDir = normalize(u_Camera.Position.xyz - input.WorldPos.xyz);
     float3 totalIrradiance = float3(0.0);
     

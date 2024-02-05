@@ -8,12 +8,12 @@
 
 namespace Athena
 {
-	class VulkanBuffer
+	class VulkanBufferAllocation
 	{
 	public:
-		VulkanBuffer() = default;
+		VulkanBufferAllocation() = default;
 
-		VulkanBuffer(VkBuffer buffer, VmaAllocation alloc)
+		VulkanBufferAllocation(VkBuffer buffer, VmaAllocation alloc)
 			: m_Buffer(buffer), m_Allocation(alloc)
 		{}
 
@@ -28,12 +28,12 @@ namespace Athena
 		VmaAllocation m_Allocation = VK_NULL_HANDLE;
 	};
 	
-	class VulkanImage
+	class VulkanImageAllocation
 	{
 	public:
-		VulkanImage() = default;
+		VulkanImageAllocation() = default;
 
-		VulkanImage(VkImage image, VmaAllocation alloc)
+		VulkanImageAllocation(VkImage image, VmaAllocation alloc)
 			: m_Image(image), m_Allocation(alloc)
 		{}
 
@@ -52,11 +52,11 @@ namespace Athena
 		VulkanAllocator(uint32 vulkanVersion);
 		~VulkanAllocator();
 
-		VulkanBuffer AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits flags = (VmaAllocationCreateFlagBits)0, const String& name = "");
-		VulkanImage AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits flags = (VmaAllocationCreateFlagBits)0, const String& name = "");
+		VulkanBufferAllocation AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits flags = (VmaAllocationCreateFlagBits)0, const String& name = "");
+		VulkanImageAllocation AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits flags = (VmaAllocationCreateFlagBits)0, const String& name = "");
 
-		void DestroyBuffer(VulkanBuffer buffer, const String& name = "");
-		void DestroyImage(VulkanImage image, const String& name = "");
+		void DestroyBuffer(VulkanBufferAllocation buffer, const String& name = "");
+		void DestroyImage(VulkanImageAllocation image, const String& name = "");
 
 		VmaAllocator GetInternalAllocator() { return m_Allocator; }
 

@@ -24,7 +24,7 @@ namespace Athena
 
 	private:
 		String m_Name;
-		std::vector<VulkanBuffer> m_VulkanUBSet;
+		std::vector<VulkanBufferAllocation> m_VulkanUBSet;
 		std::vector<VkDescriptorBufferInfo> m_DescriptorInfo;
 		uint64 m_Size;
 	};

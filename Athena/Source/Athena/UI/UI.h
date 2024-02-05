@@ -6,6 +6,7 @@
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Image.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -24,7 +25,8 @@ namespace Athena::UI
 		Default16 = Default
 	};
 
-	ATHENA_API void* GetTextureID(Ref<Texture2D> texture);
+	ATHENA_API void* GetTextureID(const Ref<Texture2D>& texture);
+	ATHENA_API void* GetTextureID(const Ref<Image>& image);
 
 	ATHENA_API void PushFont(Fonts font);
 	ATHENA_API void PopFont();
@@ -62,19 +64,19 @@ namespace Athena::UI
 	ATHENA_API bool PropertyCheckbox(std::string_view label, bool* value);
 	ATHENA_API bool PropertyCombo(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool PropertyCombo(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
-	ATHENA_API bool PropertyImage(std::string_view label, Ref<Texture2D> tex, ImVec2 size, float frame_padding = -1, const ImVec4& bg_col = { 0, 0, 0, 0 }, const ImVec4& tint_col = { 1, 1, 1, 1 });
+	ATHENA_API bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, float frame_padding = -1, const ImVec4& bg_col = { 0, 0, 0, 0 }, const ImVec4& tint_col = { 1, 1, 1, 1 });
 	ATHENA_API void PropertyText(std::string_view label, std::string_view value);
 
 	// Widgets
 	ATHENA_API bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool ComboBox(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
 
-	ATHENA_API void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
+	ATHENA_API void ButtonImage(const Ref<Image>& imageNormal, const Ref<Image>& imageHovered, const Ref<Image>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax);
-	ATHENA_API void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
+	ATHENA_API void ButtonImage(const Ref<Image>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
 
-	ATHENA_API void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+	ATHENA_API void DrawImage(const Ref<Image>& image, const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 
 	ATHENA_API bool ButtonCentered(std::string_view label, const ImVec2& size = ImVec2(0, 0));
 	ATHENA_API void TextCentered(std::string_view label);

@@ -1,7 +1,6 @@
 #pragma once
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>
 
@@ -12,6 +11,7 @@ namespace Athena
 	{
 	public:
 		VulkanTexture2D(const TextureCreateInfo& info);
+		VulkanTexture2D(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 		~VulkanTexture2D();
 
 		virtual void Resize(uint32 width, uint32 height) override;
@@ -19,17 +19,12 @@ namespace Athena
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 		virtual void GenerateMipMap(uint32 levels) override;
 
-		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
-		VkImageView GetVulkanImageView() const { return m_ImageView; }
 		VkSampler GetVulkanSampler() const { return m_Sampler; }
-		const VkDescriptorImageInfo& GetVulkanDescriptorInfo() const { return m_DescriptorInfo; }
+		VkImage GetVulkanImage() const;
+		VkImageView GetVulkanImageView() const;
+		const VkDescriptorImageInfo& GetVulkanDescriptorInfo();
 
 	private:
-		void UploadData(const void* data, uint32 width, uint32 height);
-
-	private:
-		VulkanImage m_Image;
-		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
 		VkDescriptorImageInfo m_DescriptorInfo;
 	};

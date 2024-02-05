@@ -313,12 +313,12 @@ namespace Athena
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { buttonPaddingX, 0.f });
                 ImGui::SetCursorScreenPos({ rectMin.x + rectPadding.x, rectMin.y + rectPadding.y });
 
-                Ref<Texture2D> playIcon = EditorResources::GetIcon("Viewport_Play");
-                Ref<Texture2D> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
-                Ref<Texture2D> stopIcon = EditorResources::GetIcon("Viewport_Stop");
+                Ref<Image> playIcon = EditorResources::GetIcon("Viewport_Play");
+                Ref<Image> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
+                Ref<Image> stopIcon = EditorResources::GetIcon("Viewport_Stop");
 
                 {
-                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
+                    Ref<Image> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Play", buttonSize))
                     {
@@ -334,7 +334,7 @@ namespace Athena
                 ImGui::SameLine();
 
                 {
-                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
+                    Ref<Image> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Simulate", buttonSize))
                     {
@@ -528,7 +528,7 @@ namespace Athena
         if (m_AboutModalOpen)
         {
             auto logo = EditorResources::GetIcon("Logo");
-            UI::Image(logo, { 48, 48 });
+            UI::DrawImage(logo, { 48, 48 });
 
             ImGui::SameLine();
             UI::ShiftCursorX(20.0f);

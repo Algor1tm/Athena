@@ -21,7 +21,7 @@ namespace Athena
 		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer.GetBuffer(); }
 
 	private:
-		VulkanBuffer m_VertexBuffer;
-		VulkanBuffer m_IndexBuffer;
+		VulkanBufferAllocation m_VertexBuffer;
+		VulkanBufferAllocation m_IndexBuffer;
 	};
 }

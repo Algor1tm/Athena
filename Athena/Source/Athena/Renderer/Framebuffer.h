@@ -8,11 +8,11 @@ namespace Athena
 {
 	struct FramebufferAttachmentInfo
 	{
-		FramebufferAttachmentInfo(TextureFormat format)
+		FramebufferAttachmentInfo(ImageFormat format)
 			: Format(format){}
 
 		String Name;
-		TextureFormat Format;
+		ImageFormat Format;
 		LinearColor ClearColor = Vector4(0.f);
 		float DepthClearColor = 0.f;
 		uint32 StencilClearColor = 0.f;

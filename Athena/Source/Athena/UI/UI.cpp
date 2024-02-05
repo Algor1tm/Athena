@@ -4,9 +4,14 @@
 
 namespace Athena::UI
 {
-	void* GetTextureID(Ref<Texture2D> texture)
+	void* GetTextureID(const Ref<Texture2D>& texture)
 	{
 		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
+	}
+
+	void* GetTextureID(const Ref<Image>& image)
+	{
+		return Application::Get().GetImGuiLayer()->GetTextureID(image);
 	}
 
 	void PushFont(Fonts font)
@@ -275,7 +280,7 @@ namespace Athena::UI
 		return active;
 	}
 
-	bool PropertyImage(std::string_view label, Ref<Texture2D> tex, ImVec2 size, float frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
+	bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, float frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
 	{
 		PropertyRow(label, size.y + 5.f);
 
@@ -346,7 +351,7 @@ namespace Athena::UI
 		return result;
 	}
 
-	void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
+	void ButtonImage(const Ref<Image>& imageNormal, const Ref<Image>& imageHovered, const Ref<Image>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax)
 	{
@@ -359,12 +364,12 @@ namespace Athena::UI
 			drawList->AddImage(UI::GetTextureID(imageNormal), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
 	}
 	
-	void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
+	void ButtonImage(const Ref<Image>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
 	{
 		ButtonImage(image, image, image, tintNormal, tintHovered, tintPressed, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 	}
 
-	void Image(Ref<Texture2D> image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
+	void DrawImage(const Ref<Image>& image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 	{
 		ImGui::Image(UI::GetTextureID(image), size, { 0, 0 }, { 1, 1 }, tint_col, border_col);
 	}

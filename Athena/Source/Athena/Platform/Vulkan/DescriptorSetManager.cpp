@@ -89,7 +89,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
+			ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}' (invalid name)", m_Info.Name, name);
 		}
 	}
 
@@ -283,6 +283,9 @@ namespace Athena
 
 	void DescriptorSetManager::RT_InvalidateAndUpdate()
 	{
+		if (m_DescriptorSets.size() == 0)
+			return;
+
 		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
 
 		for (const auto& [set, setData] : m_Resources)
@@ -378,6 +381,9 @@ namespace Athena
 
 	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer)
 	{
+		if (m_DescriptorSets.size() == 0)
+			return;
+
 		const auto& descriptorSets = m_DescriptorSets[Renderer::GetCurrentFrameIndex()];
 
 		if (descriptorSets.size() > 0)

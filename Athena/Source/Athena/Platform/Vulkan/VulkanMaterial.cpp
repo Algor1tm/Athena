@@ -68,14 +68,14 @@ namespace Athena
 
 		if (!pushConstantData.Members.contains(name))
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
 			return false;
 		}
 
 		const auto& memberData = pushConstantData.Members.at(name);
 		if (memberData.Type != dataType)
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
 					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData.Type), ShaderDataTypeToString(dataType));
 			return false;
 		}

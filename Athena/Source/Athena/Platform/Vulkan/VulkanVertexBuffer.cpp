@@ -44,7 +44,7 @@ namespace Athena
 				bufferInfo.size = bufferSize;
 				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-				VulkanBuffer stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				VulkanBufferAllocation stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
 				void* mappedData = stagingBuffer.MapMemory();
 				memcpy(mappedData, vertexLocalData.Data(), bufferSize);
@@ -69,7 +69,7 @@ namespace Athena
 				bufferInfo.size = bufferSize;
 				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-				VulkanBuffer stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				VulkanBufferAllocation stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
 				void* mappedData = stagingBuffer.MapMemory();
 				memcpy(mappedData, indexLocalData.Data(), bufferSize);

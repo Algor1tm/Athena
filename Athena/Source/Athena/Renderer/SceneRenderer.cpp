@@ -4,8 +4,6 @@
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
 
-#include "Athena/Platform/Vulkan/DescriptorSetManager.h"
-
 
 namespace Athena
 {
@@ -41,7 +39,7 @@ namespace Athena
 		{
 			FramebufferCreateInfo fbInfo;
 			fbInfo.Name = "GeometryFramebuffer";
-			fbInfo.Attachments = { TextureFormat::RGBA16F, TextureFormat::DEPTH24STENCIL8 };
+			fbInfo.Attachments = { ImageFormat::RGBA16F, ImageFormat::DEPTH24STENCIL8 };
 			fbInfo.Width = m_ViewportSize.x;
 			fbInfo.Height = m_ViewportSize.y;
 			fbInfo.Attachments[0].Name = "GeometryHDRColor";
@@ -77,7 +75,7 @@ namespace Athena
 		{
 			FramebufferCreateInfo fbInfo;
 			fbInfo.Name = "SceneCompositeFramebuffer";
-			fbInfo.Attachments = { TextureFormat::RGBA8 };
+			fbInfo.Attachments = { ImageFormat::RGBA8 };
 			fbInfo.Width = m_ViewportSize.x;
 			fbInfo.Height = m_ViewportSize.y;
 			fbInfo.Attachments[0].Name = "SceneCompositeColor";
@@ -174,22 +172,24 @@ namespace Athena
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
 	{
-		if (lightEnv.DirectionalLights.size() > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
+		m_LightData.DirectionalLightCount = lightEnv.DirectionalLights.size();
+
+		if (m_LightData.DirectionalLightCount > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
 		{
 			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
-			return;
-		}
-		else if (lightEnv.PointLights.size() > ShaderDef::MAX_POINT_LIGHT_COUNT)
-		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
-			return;
+			m_LightData.DirectionalLightCount = ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT;
 		}
 
-		m_LightData.DirectionalLightCount = lightEnv.DirectionalLights.size();
+		m_LightData.PointLightCount = lightEnv.PointLights.size();
+		if (m_LightData.PointLightCount > ShaderDef::MAX_POINT_LIGHT_COUNT)
+		{
+			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
+		}
+
 		for(uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
 			m_LightData.DirectionalLights[i] = lightEnv.DirectionalLights[i];
 
-		m_LightData.PointLightCount = lightEnv.PointLights.size();
 		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
 			m_LightData.PointLights[i] = lightEnv.PointLights[i];
 

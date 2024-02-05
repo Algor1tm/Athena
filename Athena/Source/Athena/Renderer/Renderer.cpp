@@ -86,15 +86,13 @@ namespace Athena
 
 		TextureCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
-		texInfo.Data = &whiteTextureData;
+		texInfo.Format = ImageFormat::RGBA8;
+		texInfo.Usage = ImageUsage::SHADER_READ_ONLY;
+		texInfo.InitialData = &whiteTextureData;
 		texInfo.Width = 1;
 		texInfo.Height = 1;
 		texInfo.Layers = 1;
 		texInfo.MipLevels = 1;
-		texInfo.GenerateMipMap = false;
-		texInfo.Format = TextureFormat::RGBA8;
-		texInfo.Usage = TextureUsage::SHADER_READ_ONLY;
-		texInfo.GenerateSampler = true;
 		texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
@@ -103,7 +101,7 @@ namespace Athena
 		s_Data.WhiteTexture = Texture2D::Create(texInfo);
 
 		uint32 blackTextureData = 0xff000000;
-		texInfo.Data = &blackTextureData;
+		texInfo.InitialData = &blackTextureData;
 		texInfo.Name = "Renderer_BlackTexture";
 
 		s_Data.BlackTexture = Texture2D::Create(texInfo); 

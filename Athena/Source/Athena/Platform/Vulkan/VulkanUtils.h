@@ -190,35 +190,35 @@ namespace Athena::Vulkan
 	{
 		switch (stage)
 		{
-		case ShaderStage::VERTEX_STAGE: return VK_SHADER_STAGE_VERTEX_BIT;
+		case ShaderStage::VERTEX_STAGE:   return VK_SHADER_STAGE_VERTEX_BIT;
 		case ShaderStage::FRAGMENT_STAGE: return VK_SHADER_STAGE_FRAGMENT_BIT;
 		case ShaderStage::GEOMETRY_STAGE: return VK_SHADER_STAGE_GEOMETRY_BIT;
-		case ShaderStage::COMPUTE_STAGE: return VK_SHADER_STAGE_COMPUTE_BIT;
+		case ShaderStage::COMPUTE_STAGE:  return VK_SHADER_STAGE_COMPUTE_BIT;
 		}
 
 		ATN_CORE_ASSERT(false);
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(TextureFormat format)
+    inline VkFormat GetFormat(ImageFormat format)
     {
         switch (format)
         {
-        case TextureFormat::RGB8: return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::RGB8_SRGB: return VK_FORMAT_R8G8B8_SRGB;
-        case TextureFormat::RGBA8: return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::RGBA8_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
+        case ImageFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
+        case ImageFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
+        case ImageFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
+        case ImageFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
 
-        case TextureFormat::RG16F: return VK_FORMAT_R16G16_SFLOAT;
-        case TextureFormat::R11G11B10F: return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
-        case TextureFormat::RGB16F: return VK_FORMAT_R16G16B16_SFLOAT;
-        case TextureFormat::RGB32F: return VK_FORMAT_R32G32B32_SFLOAT;
-        case TextureFormat::RGBA16F: return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case TextureFormat::RGBA32F: return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ImageFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
+        case ImageFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case ImageFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
+        case ImageFormat::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
+        case ImageFormat::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case ImageFormat::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        case TextureFormat::DEPTH16: return VK_FORMAT_D16_UNORM;
-        case TextureFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case TextureFormat::DEPTH32F: return VK_FORMAT_D32_SFLOAT;
+        case ImageFormat::DEPTH16:         return VK_FORMAT_D16_UNORM;
+        case ImageFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case ImageFormat::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
         }
 
         ATN_CORE_ASSERT(false);
@@ -246,10 +246,10 @@ namespace Athena::Vulkan
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetImageAspectMask(TextureFormat format)
+    inline VkImageAspectFlagBits GetImageAspectMask(ImageFormat format)
     {
-        uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
-        uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 depthBit = Image::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = Image::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
 
         if (!depthBit && !stencilBit)
             return VK_IMAGE_ASPECT_COLOR_BIT;

@@ -75,12 +75,12 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitForPresent()
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([instance = Ref(this)]()
 		{
 			ATN_PROFILE_SCOPE("VulkanRenderCommandBuffer::Submit")
 
 			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-			VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
+			VkCommandBuffer commandBuffer = instance->GetVulkanCommandBuffer();
 
 			VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -107,9 +107,9 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitImmediate()
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([instance = Ref(this)]()
 		{
-			VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
+			VkCommandBuffer commandBuffer = instance->GetVulkanCommandBuffer();
 
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

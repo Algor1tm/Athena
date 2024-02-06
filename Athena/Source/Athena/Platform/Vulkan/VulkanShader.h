@@ -18,6 +18,7 @@ namespace Athena
 		~VulkanShader();
 
 		virtual void Reload() override;
+		virtual bool IsCompute() override;
 
 		const std::vector<VkPipelineShaderStageCreateInfo>& GetPipelineStages() const { return m_PipelineShaderStages; }
 		std::vector<VkDescriptorSetLayout> GetAllDescriptorSetLayouts() const { return m_DescriptorSetLayouts; }

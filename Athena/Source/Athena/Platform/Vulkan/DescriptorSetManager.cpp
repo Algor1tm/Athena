@@ -14,8 +14,10 @@ namespace Athena
 		{
 			switch(type)
 			{
-			case ShaderResourceType::UniformBuffer: return "UniformBuffer";
 			case ShaderResourceType::Texture2D: return "Texture2D";
+			case ShaderResourceType::StorageTexture2D: return "StorageTexture2D";
+			case ShaderResourceType::UniformBuffer: return "UniformBuffer";
+			case ShaderResourceType::StorageBuffer: return "StorageBuffer";
 			}
 
 			ATN_CORE_ASSERT(false);
@@ -29,10 +31,20 @@ namespace Athena
 
 		const ShaderReflectionData& reflectionData = m_Info.Shader->GetReflectionData();
 
-		for (const auto& [name, texture] : reflectionData.Textures2D)
+		for (const auto& [name, texture] : reflectionData.SampledTextures)
 		{
 			ShaderResourceDescription resourceDesc;
 			resourceDesc.Type = ShaderResourceType::Texture2D;
+			resourceDesc.Binding = texture.Binding;
+			resourceDesc.Set = texture.Set;
+
+			if (resourceDesc.Set >= m_Info.FirstSet && resourceDesc.Set <= m_Info.LastSet)
+				m_ResourcesDescriptionTable[name] = resourceDesc;
+		}
+		for (const auto& [name, texture] : reflectionData.StorageTextures)
+		{
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::StorageTexture2D;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 
@@ -151,6 +163,11 @@ namespace Athena
 				poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
 				break;
 			}
+			case ShaderResourceType::StorageTexture2D:
+			{
+				poolSizesMap[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] += 1;
+				break;
+			}
 			case ShaderResourceType::UniformBuffer:
 			{
 				poolSizesMap[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] += 1;
@@ -235,6 +252,19 @@ namespace Athena
 
 						break;
 					}
+					case ShaderResourceType::StorageTexture2D:
+					{
+						Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
+
+						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+						writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+						storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+
+						if (storedWriteDescriptor.ResourceHandle == nullptr)
+							m_InvalidatedResources[set][binding] = resource;
+
+						break;
+					}
 					case ShaderResourceType::UniformBuffer:
 					{
 						Ref<VulkanUniformBuffer> ubo = resource.As<VulkanUniformBuffer>();
@@ -305,6 +335,14 @@ namespace Athena
 
 					break;
 				}
+				case ShaderResourceType::StorageTexture2D:
+				{
+					const auto& imageInfo = resource.As<VulkanTexture2D>()->GetVulkanDescriptorInfo();
+					if (&imageInfo != writeDescriptor.pImageInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
+						m_InvalidatedResources[set][binding] = resource;
+
+					break;
+				}
 				case ShaderResourceType::UniformBuffer:
 				{
 					const auto& bufferInfo = resource.As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
@@ -350,6 +388,13 @@ namespace Athena
 					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
 					break;
 				}
+				case ShaderResourceType::StorageTexture2D:
+				{
+					Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
+					writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+					break;
+				}
 				case ShaderResourceType::UniformBuffer:
 				{
 					Ref<VulkanUniformBuffer> ubo = resource.As<VulkanUniformBuffer>();
@@ -379,7 +424,7 @@ namespace Athena
 		m_InvalidatedResources.clear();
 	}
 
-	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer)
+	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint)
 	{
 		if (m_DescriptorSets.size() == 0)
 			return;
@@ -390,7 +435,7 @@ namespace Athena
 		{
 			vkCmdBindDescriptorSets(
 				vkcommandBuffer,
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				bindPoint,
 				m_Info.Shader.As<VulkanShader>()->GetPipelineLayout(),
 				m_Info.FirstSet, descriptorSets.size(),
 				&descriptorSets[0],

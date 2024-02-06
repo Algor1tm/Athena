@@ -37,10 +37,17 @@ namespace Athena
 		m_Shaders[name] = shader;
 	}
 
-	Ref<Shader> ShaderPack::Load(const String& name, const FilePath& path)
+	Ref<Shader> ShaderPack::Load(const FilePath& path)
 	{
-		auto shader = Shader::Create(path, name);
-		Add(name, shader);
+		auto shader = Shader::Create(Renderer::GetShaderPackDirectory() / path);
+		Add(shader->GetName(), shader);
+		return shader;
+	}
+
+	Ref<Shader> ShaderPack::Load(const FilePath& path, const String& name)
+	{
+		auto shader = Shader::Create(Renderer::GetShaderPackDirectory() / path, name);
+		Add(shader->GetName(), shader);
 		return shader;
 	}
 

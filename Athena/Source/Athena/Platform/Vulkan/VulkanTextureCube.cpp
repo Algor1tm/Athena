@@ -17,23 +17,6 @@ namespace Athena
 		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
 
-		SetSampler(m_Info.SamplerInfo);
-		Resize(m_Info.Width, m_Info.Height);
-	}
-
-	VulkanTextureCube::~VulkanTextureCube()
-	{
-		Renderer::SubmitResourceFree([vkSampler = m_Sampler]()
-		{
-			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
-		});
-	}
-
-	void VulkanTextureCube::Resize(uint32 width, uint32 height)
-	{
-		m_Info.Width = width;
-		m_Info.Height = height;
-
 		ImageCreateInfo imageInfo;
 		imageInfo.Name = m_Info.Name;
 		imageInfo.Format = m_Info.Format;
@@ -46,6 +29,27 @@ namespace Athena
 		imageInfo.MipLevels = m_Info.MipLevels;
 
 		m_Image = Image::Create(imageInfo);
+
+		SetSampler(m_Info.SamplerInfo);
+	}
+
+	VulkanTextureCube::~VulkanTextureCube()
+	{
+		Renderer::SubmitResourceFree([vkSampler = m_Sampler]()
+		{
+			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
+		});
+	}
+
+	void VulkanTextureCube::Resize(uint32 width, uint32 height)
+	{
+		if (m_Info.Width == width && m_Info.Height == height)
+			return;
+
+		m_Info.Width = width;
+		m_Info.Height = height;
+
+		m_Image->Resize(width, height);
 	}
 
 	void VulkanTextureCube::SetSampler(const TextureSamplerCreateInfo& samplerInfo)
@@ -85,6 +89,15 @@ namespace Athena
 
 			m_DescriptorInfo.sampler = m_Sampler;
 		});
+	}
+
+	ShaderResourceType VulkanTextureCube::GetResourceType()
+	{
+		// TODO
+		if (m_Info.Usage & ImageUsage::STORAGE)
+			return ShaderResourceType::StorageTexture2D;
+
+		return ShaderResourceType::Texture2D;
 	}
 
 	VkImage VulkanTextureCube::GetVulkanImage() const

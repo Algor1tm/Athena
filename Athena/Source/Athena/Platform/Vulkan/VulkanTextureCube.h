@@ -18,6 +18,8 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) override;
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
 
+		virtual ShaderResourceType GetResourceType() override;
+
 		VkSampler GetVulkanSampler() const { return m_Sampler; }
 		VkImage GetVulkanImage() const;
 		VkImageView GetVulkanImageView() const;

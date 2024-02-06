@@ -30,6 +30,11 @@ namespace Athena
 		CompileOrGetFromCache(true);
 	}
 
+	bool VulkanShader::IsCompute()
+	{
+		return m_VulkanShaderModules.contains(ShaderStage::COMPUTE_STAGE);
+	}
+
 	void VulkanShader::CompileOrGetFromCache(bool forceCompile)
 	{
 		ShaderCompiler compiler(m_FilePath, m_Name);
@@ -43,7 +48,8 @@ namespace Athena
 
 		struct DescriptorSetLayoutStatistics
 		{
-			uint32 Textures2D;
+			uint32 SampledTextures;
+			uint32 StorageTextures;
 			uint32 Samplers;
 			uint32 UBOs;
 			uint32 SBOs;
@@ -52,7 +58,7 @@ namespace Athena
 		std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
 		std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
 
-		for (const auto& [name, texture] : m_ReflectionData.Textures2D)
+		for (const auto& [name, texture] : m_ReflectionData.SampledTextures)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = texture.Binding;
@@ -62,8 +68,20 @@ namespace Athena
 			uboLayoutBinding.pImmutableSamplers = nullptr;
 
 			bindings[texture.Set].push_back(uboLayoutBinding);
-			stats[texture.Set].Textures2D++;
+			stats[texture.Set].SampledTextures++;
 			stats[texture.Set].Samplers++;
+		}
+		for (const auto& [name, texture] : m_ReflectionData.StorageTextures)
+		{
+			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+			uboLayoutBinding.binding = texture.Binding;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
+			uboLayoutBinding.pImmutableSamplers = nullptr;
+
+			bindings[texture.Set].push_back(uboLayoutBinding);
+			stats[texture.Set].StorageTextures++;
 		}
 		for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
 		{
@@ -107,8 +125,8 @@ namespace Athena
 
 			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
 			const auto& setStats = stats[set];
-			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} samplers, {} ubos, {} sbos", 
-				set, setStats.Textures2D, setStats.Samplers, setStats.UBOs, setStats.SBOs);
+			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} samplers, {} storage textures, {} ubos, {} sbos", 
+				set, setStats.SampledTextures, setStats.Samplers, setStats.StorageTextures, setStats.UBOs, setStats.SBOs);
 		}
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};

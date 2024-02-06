@@ -29,6 +29,7 @@ namespace Athena
 		bool Exists(const String& name, ShaderDataType dataType);
 
 	private:
+		VkPipelineBindPoint m_PipelineBindPoint;
 		Ref<DescriptorSetManager> m_DescriptorSetManager;
 		byte m_PushConstantBuffer[128];
 	};

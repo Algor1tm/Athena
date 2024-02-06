@@ -32,9 +32,10 @@ namespace Athena
 	{
 		NONE		 = BIT(0),
 		SAMPLED		 = BIT(1),
-		ATTACHMENT	 = BIT(2),
-		TRANSFER_SRC = BIT(3),
-		TRANSFER_DST = BIT(4),
+		STORAGE		 = BIT(2),
+		ATTACHMENT	 = BIT(3),
+		TRANSFER_SRC = BIT(4),
+		TRANSFER_DST = BIT(5),
 
 		DEFAULT = SAMPLED
 	};
@@ -67,6 +68,7 @@ namespace Athena
 		virtual ~Image() = default;
 
 		virtual void GenerateMipMap(uint32 levels) = 0;
+		virtual void Resize(uint32 width, uint32 height) = 0;
 
 		const ImageCreateInfo& GetInfo() const { return m_Info; }
 

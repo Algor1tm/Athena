@@ -73,8 +73,6 @@ namespace Athena
 		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
-
 		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
@@ -101,7 +99,6 @@ namespace Athena
 	public:
 		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info);
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
 		const TextureCubeCreateInfo& GetInfo() const { return m_Info; };
 
 	protected:

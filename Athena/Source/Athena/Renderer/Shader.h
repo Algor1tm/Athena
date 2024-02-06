@@ -39,7 +39,7 @@ namespace Athena
 		ShaderStage StageFlags;
 	};
 
-	struct Texture2DReflectionData
+	struct TextureReflectionData
 	{
 		uint32 Binding;
 		uint32 Set;
@@ -50,7 +50,8 @@ namespace Athena
 	{
 		VertexBufferLayout VertexBufferLayout;
 
-		std::unordered_map<String, Texture2DReflectionData> Textures2D;
+		std::unordered_map<String, TextureReflectionData> SampledTextures;
+		std::unordered_map<String, TextureReflectionData> StorageTextures;
 		std::unordered_map<String, BufferReflectionData> UniformBuffers;
 		std::unordered_map<String, BufferReflectionData> StorageBuffers;
 		PushConstantReflectionData PushConstant;
@@ -64,11 +65,11 @@ namespace Athena
 
 		virtual ~Shader() = default;
 
-		const ShaderReflectionData& GetReflectionData() { return m_ReflectionData; };
-
-		bool IsCompiled() const { return m_IsCompiled; }
 		virtual void Reload() = 0;
+		virtual bool IsCompute() = 0;
 
+		const ShaderReflectionData& GetReflectionData() { return m_ReflectionData; };
+		bool IsCompiled() const { return m_IsCompiled; }
 		const String& GetName() const { return m_Name; }
 
 	protected:
@@ -83,7 +84,8 @@ namespace Athena
 	public:
 		void Add(const String& name, const Ref<Shader>& shader);
 
-		Ref<Shader> Load(const String& name, const FilePath& path);
+		Ref<Shader> Load(const FilePath& path);
+		Ref<Shader> Load(const FilePath& path, const String& name);
 		Ref<Shader> Get(const String& name);
 
 		bool Exists(const String& name);

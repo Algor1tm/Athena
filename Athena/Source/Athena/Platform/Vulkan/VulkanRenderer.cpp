@@ -63,6 +63,24 @@ namespace Athena
 		});
 	}
 
+	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
+	{
+		Renderer::Submit([commandBuffer, pipeline, imageSize, material]() 
+		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			if (material)
+				material->RT_UpdateForRendering(commandBuffer);
+
+			Vector3i workGroupSize = pipeline->GetInfo().WorkGroupSize;
+			uint32 groupCountX = Math::Ceil((float)imageSize.x / workGroupSize.x);
+			uint32 groupCountY = Math::Ceil((float)imageSize.y / workGroupSize.y);
+			uint32 groupCountZ = Math::Ceil((float)imageSize.z / workGroupSize.z);
+
+			vkCmdDispatch(vkcmdBuffer, groupCountX, groupCountY, groupCountZ);
+		});
+	}
+
 	void VulkanRenderer::WaitDeviceIdle()
 	{
 		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());

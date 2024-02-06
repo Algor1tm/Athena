@@ -12,12 +12,24 @@ namespace Athena
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
 
-		m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_DescriptorInfo.imageLayout = m_Info.Usage & ImageUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
 
+		ImageCreateInfo imageInfo;
+		imageInfo.Name = m_Info.Name;
+		imageInfo.Format = m_Info.Format;
+		imageInfo.Usage = m_Info.Usage;
+		imageInfo.Type = ImageType::IMAGE_2D;
+		imageInfo.InitialData = m_Info.InitialData;
+		imageInfo.Width = m_Info.Width;
+		imageInfo.Height = m_Info.Height;
+		imageInfo.Layers = m_Info.Layers;
+		imageInfo.MipLevels = m_Info.MipLevels;
+
+		m_Image = Image::Create(imageInfo);
+
 		SetSampler(m_Info.SamplerInfo);
-		Resize(m_Info.Width, m_Info.Height);
 	}
 
 	VulkanTexture2D::VulkanTexture2D(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo)
@@ -36,7 +48,7 @@ namespace Athena
 
 		m_Image = image;
 
-		m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_DescriptorInfo.imageLayout = m_Info.Usage & ImageUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
 
@@ -53,21 +65,13 @@ namespace Athena
 
 	void VulkanTexture2D::Resize(uint32 width, uint32 height)
 	{
+		if (m_Info.Width == width && m_Info.Height == height)
+			return;
+
 		m_Info.Width = width;
 		m_Info.Height = height;
 
-		ImageCreateInfo imageInfo;
-		imageInfo.Name = m_Info.Name;
-		imageInfo.Format = m_Info.Format;
-		imageInfo.Usage = m_Info.Usage;
-		imageInfo.Type = ImageType::IMAGE_2D;
-		imageInfo.InitialData = m_Info.InitialData;
-		imageInfo.Width = m_Info.Width;
-		imageInfo.Height = m_Info.Height;
-		imageInfo.Layers = m_Info.Layers;
-		imageInfo.MipLevels = m_Info.MipLevels;
-
-		m_Image = Image::Create(imageInfo);
+		m_Image->Resize(width, height);
 	}
 
 	void VulkanTexture2D::SetSampler(const TextureSamplerCreateInfo& samplerInfo)
@@ -107,6 +111,14 @@ namespace Athena
 
 			m_DescriptorInfo.sampler = m_Sampler;
 		});
+	}
+
+	ShaderResourceType VulkanTexture2D::GetResourceType()
+	{
+		if (m_Info.Usage & ImageUsage::STORAGE)
+			return ShaderResourceType::StorageTexture2D;
+
+		return ShaderResourceType::Texture2D;
 	}
 
 	VkImage VulkanTexture2D::GetVulkanImage() const 

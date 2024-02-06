@@ -1,5 +1,8 @@
 //////////////////////// PBR Functions ////////////////////////
 
+#define PI 3.14159265358979323846
+
+
 float DistributionGGX(float3 normal, float3 halfWay, float roughness)
 {
     float a = roughness * roughness;
@@ -37,4 +40,25 @@ float GeometrySmith(float3 normal, float3 view, float3 lightDir, float roughness
 float3 FresnelShlick(float cosHalfWayAndView, float3 reflectivityAtZeroIncidence)
 {
     return reflectivityAtZeroIncidence + (1.0 - reflectivityAtZeroIncidence) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
+}
+
+float GeometrySchlickGGX_IBL(float normalDotView, float roughness)
+{
+    float r = roughness;
+    float k = (r * r) / 2.0;
+
+    float numerator = normalDotView;
+    float denominator = normalDotView * (1.0 - k) + k;
+	
+    return numerator / denominator;
+}
+
+float GeometrySmith_IBL(float3 normal, float3 view, float3 lightDir, float roughness)
+{
+    float normalDotView = max(dot(normal, view), 0.0);
+    float normalDotLightDir = max(dot(normal, lightDir), 0.0);
+    float ggx2 = GeometrySchlickGGX_IBL(normalDotView, roughness);
+    float ggx1 = GeometrySchlickGGX_IBL(normalDotLightDir, roughness);
+	
+    return ggx1 * ggx2;
 }

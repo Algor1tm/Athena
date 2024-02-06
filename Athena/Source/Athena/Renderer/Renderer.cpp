@@ -5,6 +5,8 @@
 
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/ComputePipeline.h"
+#include "Athena/Renderer/ComputePass.h"
 
 
 namespace Athena
@@ -15,6 +17,7 @@ namespace Athena
 		Ref<RendererAPI> RendererAPI;
 		uint32 CurrentFrameIndex = 0;
 		uint32 CurrentResourceFreeQueueIndex = 0;
+		RenderCapabilities RenderCaps;
 
 		CommandQueue RenderThreadCommandQueue;
 		std::vector<CommandQueue> ResourceFreeQueues; 
@@ -26,16 +29,12 @@ namespace Athena
 		Ref<ShaderPack> ShaderPack;
 		Ref<MaterialTable> MaterialTable;
 
-		RenderCapabilities RenderCaps;
-
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BlackTexture;
 		Ref<TextureCube> BlackTextureCube;
 		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<VertexBuffer> QuadVertexBuffer;
-
-		const uint32 BRDF_LUTResolution = 512;
 	};
 
 	RendererData s_Data;
@@ -75,11 +74,11 @@ namespace Athena
 
 		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
-		Renderer::SetGlobalShaderMacros("PI", std::to_string(Math::PI<float>()));
 
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
-		s_Data.ShaderPack->Load("PBR_Static", s_Data.ShaderPackDirectory / "PBR_Static.hlsl");
-		s_Data.ShaderPack->Load("SceneComposite", s_Data.ShaderPackDirectory / "SceneComposite.hlsl");
+		s_Data.ShaderPack->Load("PBR_Static.hlsl");
+		s_Data.ShaderPack->Load("SceneComposite.hlsl");
+		s_Data.ShaderPack->Load("BRDF_LUT.hlsl");
 
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
@@ -147,6 +146,58 @@ namespace Athena
 		vertexBufInfo.Usage = VertexBufferUsage::STATIC;
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
+
+
+		//// BRDF_LUT GENERATION
+		//{
+		//	Texture2DCreateInfo brdfLutInfo;
+		//	brdfLutInfo.Name = "Renderer_BRDF_LUT";
+		//	brdfLutInfo.Format = ImageFormat::RGBA8;
+		//	brdfLutInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
+		//	brdfLutInfo.InitialData = nullptr;
+		//	brdfLutInfo.Width = 512;
+		//	brdfLutInfo.Height = 512;
+		//	brdfLutInfo.Layers = 1;
+		//	brdfLutInfo.MipLevels = 1;
+		//	brdfLutInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+		//	brdfLutInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+		//	brdfLutInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
+		//	brdfLutInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+		//	s_Data.BRDF_LUT = Texture2D::Create(brdfLutInfo);
+
+		//	ComputePassCreateInfo passInfo;
+		//	passInfo.Name = "BRDF_LUT_Pass";
+		//	passInfo.Outputs.push_back(s_Data.BRDF_LUT->GetImage());
+
+		//	Ref<ComputePass> pass = ComputePass::Create(passInfo);
+
+		//	ComputePipelineCreateInfo pipelineInfo;
+		//	pipelineInfo.Name = "BRDF_LUT_Pipeline";
+		//	pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
+		//	pipelineInfo.WorkGroupSize = { 8, 4, 1 };
+		//	
+		//	Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
+		//	pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
+		//	pipeline->Bake();
+		//	
+		//	cmdBufferInfo.Name = "BRDF_LUT_Generation";
+		//	cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
+		//	
+		//	Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
+		//	
+		//	commandBuffer->Begin();
+		//	{
+		//		pass->Begin(commandBuffer);
+
+		//		pipeline->Bind(commandBuffer);
+		//		Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
+
+		//		pass->End(commandBuffer);
+		//	}
+		//	commandBuffer->End();
+		//	commandBuffer->Submit();
+		//}
 	}
 
 	void Renderer::Shutdown()
@@ -156,6 +207,7 @@ namespace Athena
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
 		s_Data.BlackTextureCube.Release();
+		s_Data.BRDF_LUT.Release();
 		s_Data.CubeVertexBuffer.Release();
 		s_Data.QuadVertexBuffer.Release();
 
@@ -216,6 +268,11 @@ namespace Athena
 	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material)
 	{
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, s_Data.QuadVertexBuffer, material);
+	}
+
+	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
+	{
+		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
 	}
 
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)

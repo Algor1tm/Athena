@@ -15,6 +15,7 @@ namespace Athena
 		VulkanImage(const ImageCreateInfo& info);
 		~VulkanImage();
 
+		virtual void Resize(uint32 width, uint32 height) override;
 		virtual void GenerateMipMap(uint32 levels) override;
 
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
@@ -22,6 +23,7 @@ namespace Athena
 
 	private:
 		void RT_UploadData(const void* data, uint32 width, uint32 height);
+		void CleanUp();
 
 	private:
 		VulkanImageAllocation m_Image;

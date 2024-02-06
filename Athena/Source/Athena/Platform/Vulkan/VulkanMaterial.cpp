@@ -22,6 +22,8 @@ namespace Athena
 		info.LastSet = 0;
 		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(info);
 		m_DescriptorSetManager->Bake();
+
+		m_PipelineBindPoint = m_Shader->IsCompute() ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
 	}
 
 	VulkanMaterial::~VulkanMaterial()
@@ -90,7 +92,7 @@ namespace Athena
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer);
+			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer, m_PipelineBindPoint);
 		});
 	}
 

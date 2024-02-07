@@ -2,6 +2,8 @@
 
 #include "Common.hlsli"
 
+#define SAMPLE_COUNT 2048
+
 RWTexture2D<float2> u_BRDF_LUT : register(b0, space1);
 
 
@@ -55,7 +57,6 @@ float2 IntegrateBRDF(float NdotV, float roughness)
 
     float3 N = float3(0.0, 0.0, 1.0);
 
-    const uint SAMPLE_COUNT = 2048u;
     for (uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
         float2 Xi = Hammersley(i, SAMPLE_COUNT);
@@ -87,8 +88,13 @@ float2 IntegrateBRDF(float NdotV, float roughness)
 [numthreads(8, 4, 1)]
 void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
-    float2 texCoords = dispatchThreadId.xy;
+    float2 texSize;
+    u_BRDF_LUT.GetDimensions(texSize.x, texSize.y);
+    
+    float2 unnormalizedTexCoords = dispatchThreadId.xy;
+
+    float2 texCoords = float2(unnormalizedTexCoords.x + 1, unnormalizedTexCoords.y) / texSize;
     float2 integratedBRDF = IntegrateBRDF(texCoords.x, texCoords.y);
 	
-    u_BRDF_LUT[texCoords] = integratedBRDF;
+    u_BRDF_LUT[unnormalizedTexCoords] = integratedBRDF;
 }

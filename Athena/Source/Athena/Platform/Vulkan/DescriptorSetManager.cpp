@@ -1,5 +1,6 @@
 #include "DescriptorSetManager.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
@@ -15,7 +16,9 @@ namespace Athena
 			switch(type)
 			{
 			case ShaderResourceType::Texture2D: return "Texture2D";
+			case ShaderResourceType::TextureCube: return "TextureCube";
 			case ShaderResourceType::StorageTexture2D: return "StorageTexture2D";
+			case ShaderResourceType::StorageTextureCube: return "StorageTextureCube";
 			case ShaderResourceType::UniformBuffer: return "UniformBuffer";
 			case ShaderResourceType::StorageBuffer: return "StorageBuffer";
 			}
@@ -34,7 +37,7 @@ namespace Athena
 		for (const auto& [name, texture] : reflectionData.SampledTextures)
 		{
 			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = ShaderResourceType::Texture2D;
+			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 
@@ -44,7 +47,7 @@ namespace Athena
 		for (const auto& [name, texture] : reflectionData.StorageTextures)
 		{
 			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = ShaderResourceType::StorageTexture2D;
+			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::StorageTexture2D : ShaderResourceType::StorageTextureCube;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 
@@ -163,7 +166,17 @@ namespace Athena
 				poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
 				break;
 			}
+			case ShaderResourceType::TextureCube:
+			{
+				poolSizesMap[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += 1;
+				break;
+			}
 			case ShaderResourceType::StorageTexture2D:
+			{
+				poolSizesMap[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] += 1;
+				break;
+			}
+			case ShaderResourceType::StorageTextureCube:
 			{
 				poolSizesMap[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] += 1;
 				break;
@@ -252,9 +265,35 @@ namespace Athena
 
 						break;
 					}
+					case ShaderResourceType::TextureCube:
+					{
+						Ref<VulkanTextureCube> texture = resource.As<VulkanTextureCube>();
+
+						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+						storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+
+						if (storedWriteDescriptor.ResourceHandle == nullptr)
+							m_InvalidatedResources[set][binding] = resource;
+
+						break;
+					}
 					case ShaderResourceType::StorageTexture2D:
 					{
 						Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
+
+						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+						writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+						storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+
+						if (storedWriteDescriptor.ResourceHandle == nullptr)
+							m_InvalidatedResources[set][binding] = resource;
+
+						break;
+					}
+					case ShaderResourceType::StorageTextureCube:
+					{
+						Ref<VulkanTextureCube> texture = resource.As<VulkanTextureCube>();
 
 						writeDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 						writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
@@ -335,9 +374,25 @@ namespace Athena
 
 					break;
 				}
+				case ShaderResourceType::TextureCube:
+				{
+					const auto& imageInfo = resource.As<VulkanTextureCube>()->GetVulkanDescriptorInfo();
+					if (&imageInfo != writeDescriptor.pImageInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
+						m_InvalidatedResources[set][binding] = resource;
+
+					break;
+				}
 				case ShaderResourceType::StorageTexture2D:
 				{
 					const auto& imageInfo = resource.As<VulkanTexture2D>()->GetVulkanDescriptorInfo();
+					if (&imageInfo != writeDescriptor.pImageInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
+						m_InvalidatedResources[set][binding] = resource;
+
+					break;
+				}
+				case ShaderResourceType::StorageTextureCube:
+				{
+					const auto& imageInfo = resource.As<VulkanTextureCube>()->GetVulkanDescriptorInfo();
 					if (&imageInfo != writeDescriptor.pImageInfo || storedWriteDescriptor.ResourceHandle != writeDescriptor.pImageInfo->imageView)
 						m_InvalidatedResources[set][binding] = resource;
 
@@ -388,9 +443,23 @@ namespace Athena
 					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
 					break;
 				}
+				case ShaderResourceType::TextureCube:
+				{
+					Ref<VulkanTextureCube> texture = resource.As<VulkanTextureCube>();
+					writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+					break;
+				}
 				case ShaderResourceType::StorageTexture2D:
 				{
 					Ref<VulkanTexture2D> texture = resource.As<VulkanTexture2D>();
+					writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
+					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
+					break;
+				}
+				case ShaderResourceType::StorageTextureCube:
+				{
+					Ref<VulkanTextureCube> texture = resource.As<VulkanTextureCube>();
 					writeDescriptor.pImageInfo = &texture->GetVulkanDescriptorInfo();
 					storedWriteDescriptor.ResourceHandle = writeDescriptor.pImageInfo->imageView;
 					break;

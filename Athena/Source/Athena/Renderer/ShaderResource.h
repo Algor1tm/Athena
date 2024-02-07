@@ -8,7 +8,9 @@ namespace Athena
 	enum class ShaderResourceType
 	{
 		Texture2D = 1,
+		TextureCube,
 		StorageTexture2D,
+		StorageTextureCube,
 		UniformBuffer,
 		StorageBuffer,
 	};

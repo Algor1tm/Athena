@@ -51,7 +51,7 @@ namespace Athena
 			RenderPassCreateInfo renderPassInfo;
 			renderPassInfo.Name = "GeometryPass";
 			renderPassInfo.Output = Framebuffer::Create(fbInfo);
-			renderPassInfo.LoadOpClear = RenderPassLoadOp::CLEAR;
+			renderPassInfo.LoadOp = RenderPassLoadOp::CLEAR;
 
 			m_GeometryPass = RenderPass::Create(renderPassInfo);
 
@@ -69,6 +69,18 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->SetInput("u_LightData", m_LightSBO);
 			m_StaticGeometryPipeline->Bake();
+
+			//pipelineInfo.Name = "SkyboxPipeline";
+			//pipelineInfo.RenderPass = m_GeometryPass;
+			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
+			//pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			//pipelineInfo.CullMode = CullMode::BACK;
+			//pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			//pipelineInfo.BlendEnable = false;
+
+			//m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
+			//m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			//m_SkyboxPipeline->Bake();
 		}
 
 		// Composite Pass
@@ -83,7 +95,7 @@ namespace Athena
 			RenderPassCreateInfo renderPassInfo;
 			renderPassInfo.Name = "SceneCompositePass";
 			renderPassInfo.Output = Framebuffer::Create(fbInfo);
-			renderPassInfo.LoadOpClear = RenderPassLoadOp::DONT_CARE;
+			renderPassInfo.LoadOp = RenderPassLoadOp::DONT_CARE;
 
 			m_CompositePass = RenderPass::Create(renderPassInfo);
 
@@ -128,6 +140,7 @@ namespace Athena
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
 		m_CameraData.View = cameraInfo.ViewMatrix;
+		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
 		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
 

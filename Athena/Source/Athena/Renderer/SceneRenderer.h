@@ -75,6 +75,7 @@ namespace Athena
 	struct CameraData
 	{
 		Matrix4 View;
+		Matrix4 RotationView;
 		Matrix4 Projection;
 		Vector3 Position;
 	};
@@ -172,6 +173,7 @@ namespace Athena
 
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
+		Ref<Pipeline> m_SkyboxPipeline;
 
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;

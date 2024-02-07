@@ -13,7 +13,7 @@ namespace Athena
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
 
-		m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		m_DescriptorInfo.imageLayout = m_Info.Usage & ImageUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
 
@@ -95,9 +95,9 @@ namespace Athena
 	{
 		// TODO
 		if (m_Info.Usage & ImageUsage::STORAGE)
-			return ShaderResourceType::StorageTexture2D;
+			return ShaderResourceType::StorageTextureCube;
 
-		return ShaderResourceType::Texture2D;
+		return ShaderResourceType::TextureCube;
 	}
 
 	VkImage VulkanTextureCube::GetVulkanImage() const

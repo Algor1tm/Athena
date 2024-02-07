@@ -68,7 +68,7 @@ namespace Athena
 			attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
 			attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
-			VkAttachmentLoadOp loadOp = Vulkan::GetLoadOp(m_Info.LoadOpClear);
+			VkAttachmentLoadOp loadOp = Vulkan::GetLoadOp(m_Info.LoadOp);
 			VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
 			attachmentDesc.loadOp = loadOp;
@@ -143,7 +143,7 @@ namespace Athena
 			renderPassBeginInfo.renderArea.extent = { width , height };
 
 			std::vector<VkClearValue> clearValues;
-			if (m_Info.LoadOpClear == RenderPassLoadOp::CLEAR)
+			if (m_Info.LoadOp == RenderPassLoadOp::CLEAR)
 			{
 				renderPassBeginInfo.clearValueCount = m_Info.Output->GetInfo().Attachments.size();
 				clearValues.reserve(renderPassBeginInfo.clearValueCount);

@@ -114,7 +114,8 @@ namespace Athena
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			}
-			
+
+
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.flags = m_Info.Type == ImageType::IMAGE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
@@ -130,6 +131,16 @@ namespace Athena
 			imageInfo.usage = imageUsage;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+			if (Image::IsHDRFormat(m_Info.Format))
+			{
+				VkImageFormatProperties formatProperties = {};
+
+				vkGetPhysicalDeviceImageFormatProperties(VulkanContext::GetPhysicalDevice(), imageInfo.format, imageInfo.imageType, imageInfo.tiling,
+					imageInfo.usage, imageInfo.flags, &formatProperties);
+
+				VkExtent3D maxExtent = formatProperties.maxExtent;
+			}
 
 			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
 			Vulkan::SetObjectName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
@@ -148,8 +159,6 @@ namespace Athena
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 			Vulkan::SetObjectName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
 		});
-
-
 	}
 
 	void VulkanImage::CleanUp()
@@ -198,8 +207,6 @@ namespace Athena
 
 		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
 		{
-			// Barrier
-			{
 			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			barrier.srcAccessMask = 0;
@@ -216,7 +223,6 @@ namespace Athena
 				0, nullptr,
 				1, &barrier
 			);
-			}
 
 			VkBufferImageCopy region = {};
 			region.bufferOffset = 0;
@@ -233,7 +239,6 @@ namespace Athena
 
 			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-			// Barrier
 			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;

@@ -4,6 +4,7 @@
 #include "Athena/Math/Matrix.h"
 
 #include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/Image.h"
 
 
 namespace Athena
@@ -41,6 +42,7 @@ namespace Athena
 
 	struct TextureReflectionData
 	{
+		ImageType ImageType;
 		uint32 Binding;
 		uint32 Set;
 		ShaderStage StageFlags;

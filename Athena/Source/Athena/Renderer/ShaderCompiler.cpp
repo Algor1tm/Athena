@@ -59,7 +59,20 @@ namespace Athena
 			return "";
 		}
 
-		static ShaderDataType SprivTypeToShaderDataType(const spirv_cross::SPIRType& type)
+		static ImageType SpirvDimToImageType(const spv::Dim& dim)
+		{
+			switch (dim)
+			{
+			case spv::Dim2D: return ImageType::IMAGE_2D;
+			case spv::DimCube: return ImageType::IMAGE_CUBE;
+			}
+
+			ATN_CORE_ASSERT(false);
+			return ImageType::IMAGE_2D;
+		}
+
+
+		static ShaderDataType SpirvTypeToShaderDataType(const spirv_cross::SPIRType& type)
 		{
 			// Scalar
 			if (type.vecsize == 1 && type.columns == 1)
@@ -385,7 +398,7 @@ namespace Athena
 				elements.reserve(resources.stage_inputs.size());
 				for (const auto& resource : resources.stage_inputs)
 				{
-					ShaderDataType elemType = Utils::SprivTypeToShaderDataType(compiler.get_type(resource.type_id));
+					ShaderDataType elemType = Utils::SpirvTypeToShaderDataType(compiler.get_type(resource.type_id));
 					ATN_CORE_ASSERT(elemType != ShaderDataType::Unknown);
 
 					elements.push_back({ elemType, resource.name });
@@ -420,7 +433,7 @@ namespace Athena
 					size_t size = compiler.get_declared_struct_member_size(compiler.get_type(resource.base_type_id), i);
 
 					const auto& spirvType = compiler.get_type(compiler.get_type(resource.base_type_id).member_types[i]);
-					ShaderDataType elemType = Utils::SprivTypeToShaderDataType(spirvType);
+					ShaderDataType elemType = Utils::SpirvTypeToShaderDataType(spirvType);
 
 					StructMemberReflectionData memberData;
 					memberData.Size = size;
@@ -435,6 +448,7 @@ namespace Athena
 
 			for (const auto& resource : resources.sampled_images)
 			{
+				const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
 				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
@@ -446,6 +460,7 @@ namespace Athena
 				else
 				{
 					TextureReflectionData textureData;
+					textureData.ImageType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
@@ -456,6 +471,8 @@ namespace Athena
 
 			for (const auto& resource : resources.storage_images)
 			{
+				const auto& type = compiler.get_type(resource.base_type_id).image;
+				const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
 				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
@@ -466,7 +483,18 @@ namespace Athena
 				}
 				else
 				{
+					ImageType type;
+
+					// HACK: treat RWTexture2DArray as cube texture
+					bool writeTexture = !bool(compiler.get_decoration(resource.id, spv::DecorationNonWritable));
+					bool arrayed = compiler.get_type(resource.base_type_id).image.arrayed;
+					if (writeTexture && arrayed && dim == spv::Dim::Dim2D)
+						type = ImageType::IMAGE_CUBE;
+					else
+						type = Utils::SpirvDimToImageType(dim);
+
 					TextureReflectionData textureData;
+					textureData.ImageType = type;
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;

@@ -26,6 +26,23 @@ namespace Athena
 			stbi_image_free(data);
 			return newData;
 		}
+
+		static void* ConvertRGB32FToRGBA32F(Vector3* data, uint32 width, uint32 height)
+		{
+			uint64 newSize = width * height * Image::BytesPerPixel(ImageFormat::RGBA32F);
+			Vector4* newData = (Vector4*)malloc(newSize);
+
+			for (uint64 i = 0; i < width * height; ++i)
+			{
+				newData[i][0] = data[i][0];
+				newData[i][1] = data[i][1];
+				newData[i][2] = data[i][2];
+				newData[i][3] = 1.f;
+			}
+
+			stbi_image_free(data);
+			return newData;
+		}
 	}
 
 
@@ -43,8 +60,8 @@ namespace Athena
 			HDR = true;
 			switch (channels)
 			{
-			case 3: format = ImageFormat::RGB16F; break;
-			case 4: format = ImageFormat::RGBA16F; break;
+			case 3: format = ImageFormat::RGB32F; break;
+			case 4: format = ImageFormat::RGBA32F; break;
 			default:
 				ATN_CORE_ERROR("Failed to load image from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
 				return nullptr;
@@ -68,6 +85,11 @@ namespace Athena
 		{
 			data = Utils::ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
 			format = ImageFormat::RGBA8_SRGB;
+		}
+		else if (format == ImageFormat::RGB32F)
+		{
+			data = Utils::ConvertRGB32FToRGBA32F((Vector3*)data, width, height);
+			format = ImageFormat::RGBA32F;
 		}
 
 		ImageCreateInfo info;

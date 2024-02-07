@@ -77,7 +77,9 @@ namespace Athena
 
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
 		s_Data.ShaderPack->Load("PBR_Static.hlsl");
+		s_Data.ShaderPack->Load("Skybox.hlsl");
 		s_Data.ShaderPack->Load("SceneComposite.hlsl");
+		s_Data.ShaderPack->Load("PanoramaToCubemap.hlsl");
 		s_Data.ShaderPack->Load("BRDF_LUT.hlsl");
 
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
@@ -148,56 +150,56 @@ namespace Athena
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
 
-		//// BRDF_LUT GENERATION
-		//{
-		//	Texture2DCreateInfo brdfLutInfo;
-		//	brdfLutInfo.Name = "Renderer_BRDF_LUT";
-		//	brdfLutInfo.Format = ImageFormat::RGBA8;
-		//	brdfLutInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
-		//	brdfLutInfo.InitialData = nullptr;
-		//	brdfLutInfo.Width = 512;
-		//	brdfLutInfo.Height = 512;
-		//	brdfLutInfo.Layers = 1;
-		//	brdfLutInfo.MipLevels = 1;
-		//	brdfLutInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-		//	brdfLutInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-		//	brdfLutInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
-		//	brdfLutInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		// BRDF_LUT GENERATION
+		{
+			Texture2DCreateInfo brdfLutInfo;
+			brdfLutInfo.Name = "Renderer_BRDF_LUT";
+			brdfLutInfo.Format = ImageFormat::RG16F;
+			brdfLutInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
+			brdfLutInfo.InitialData = nullptr;
+			brdfLutInfo.Width = 512;
+			brdfLutInfo.Height = 512;
+			brdfLutInfo.Layers = 1;
+			brdfLutInfo.MipLevels = 1;
+			brdfLutInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			brdfLutInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			brdfLutInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
+			brdfLutInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-		//	s_Data.BRDF_LUT = Texture2D::Create(brdfLutInfo);
+			s_Data.BRDF_LUT = Texture2D::Create(brdfLutInfo);
 
-		//	ComputePassCreateInfo passInfo;
-		//	passInfo.Name = "BRDF_LUT_Pass";
-		//	passInfo.Outputs.push_back(s_Data.BRDF_LUT->GetImage());
+			//ComputePassCreateInfo passInfo;
+			//passInfo.Name = "BRDF_LUT_Pass";
+			//passInfo.Outputs.push_back(s_Data.BRDF_LUT->GetImage());
 
-		//	Ref<ComputePass> pass = ComputePass::Create(passInfo);
+			//Ref<ComputePass> pass = ComputePass::Create(passInfo);
 
-		//	ComputePipelineCreateInfo pipelineInfo;
-		//	pipelineInfo.Name = "BRDF_LUT_Pipeline";
-		//	pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
-		//	pipelineInfo.WorkGroupSize = { 8, 4, 1 };
-		//	
-		//	Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
-		//	pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
-		//	pipeline->Bake();
-		//	
-		//	cmdBufferInfo.Name = "BRDF_LUT_Generation";
-		//	cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
-		//	
-		//	Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
-		//	
-		//	commandBuffer->Begin();
-		//	{
-		//		pass->Begin(commandBuffer);
+			//ComputePipelineCreateInfo pipelineInfo;
+			//pipelineInfo.Name = "BRDF_LUT_Pipeline";
+			//pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
+			//pipelineInfo.WorkGroupSize = { 8, 4, 1 };
+			//
+			//Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
+			//pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
+			//pipeline->Bake();
+			//
+			//cmdBufferInfo.Name = "BRDF_LUT_Generation";
+			//cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
+			//
+			//Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
+			//
+			//commandBuffer->Begin();
+			//{
+			//	pass->Begin(commandBuffer);
 
-		//		pipeline->Bind(commandBuffer);
-		//		Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
+			//	pipeline->Bind(commandBuffer);
+			//	Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
 
-		//		pass->End(commandBuffer);
-		//	}
-		//	commandBuffer->End();
-		//	commandBuffer->Submit();
-		//}
+			//	pass->End(commandBuffer);
+			//}
+			//commandBuffer->End();
+			//commandBuffer->Submit();
+		}
 	}
 
 	void Renderer::Shutdown()

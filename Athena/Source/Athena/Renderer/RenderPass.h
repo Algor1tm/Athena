@@ -18,7 +18,7 @@ namespace Athena
 	{
 		String Name;
 		Ref<Framebuffer> Output;
-		RenderPassLoadOp LoadOpClear;
+		RenderPassLoadOp LoadOp;
 	};
 
 	class ATHENA_API RenderPass: public RefCounted

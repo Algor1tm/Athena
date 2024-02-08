@@ -153,7 +153,7 @@ namespace Athena
 		}
 
 		VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
-		Vulkan::SetObjectName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, std::format("{}Layout", m_Name));
+		Vulkan::SetObjectDebugName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, std::format("{}Layout", m_Name));
 	}
 
 	void VulkanShader::CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler)
@@ -173,7 +173,7 @@ namespace Athena
 			moduleCreateInfo.pCode = src.data();
 
 			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &moduleCreateInfo, nullptr, &m_VulkanShaderModules[stage]));
-			Vulkan::SetObjectName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
+			Vulkan::SetObjectDebugName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
 
 			VkPipelineShaderStageCreateInfo shaderStageInfo = {};
 			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

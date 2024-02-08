@@ -27,7 +27,7 @@ namespace Athena
 		Ref<TextureCube> m_IrradianceMap;
 
 		uint32 m_Resolution = 1024;
-		uint32 m_IrradianceResolution = 64;
+		uint32 m_IrradianceMapResolution = 64;
 
 		FilePath m_FilePath;
 	};

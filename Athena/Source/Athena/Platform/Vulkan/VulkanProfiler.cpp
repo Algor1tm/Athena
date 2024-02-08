@@ -18,7 +18,7 @@ namespace Athena
 			queryPoolInfo.queryCount = m_Info.MaxTimestampsCount * Renderer::GetFramesInFlight();
 				
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_TimeQueryPool));
-			Vulkan::SetObjectName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_TimestampsPool", m_Info.Name));
+			Vulkan::SetObjectDebugName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_TimestampsPool", m_Info.Name));
 				
 			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
 				
@@ -53,7 +53,7 @@ namespace Athena
 				VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
 
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_PipelineStatsQueryPool));
-			Vulkan::SetObjectName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_PipelineStatsPool", m_Info.Name));
+			Vulkan::SetObjectDebugName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, std::format("{}_PipelineStatsPool", m_Info.Name));
 
 			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
 

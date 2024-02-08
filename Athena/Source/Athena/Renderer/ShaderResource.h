@@ -9,8 +9,6 @@ namespace Athena
 	{
 		Texture2D = 1,
 		TextureCube,
-		StorageTexture2D,
-		StorageTextureCube,
 		UniformBuffer,
 		StorageBuffer,
 	};

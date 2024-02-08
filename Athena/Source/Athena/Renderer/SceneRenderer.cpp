@@ -69,6 +69,10 @@ namespace Athena
 
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->SetInput("u_LightData", m_LightSBO);
+			m_StaticGeometryPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_StaticGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
+			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->Bake();
 
 
@@ -214,10 +218,21 @@ namespace Athena
 		m_SceneData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_SceneData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
 
-		if(lightEnv.EnvironmentMap)
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMap->GetPrefilteredMap());
+		if (lightEnv.EnvironmentMap)
+		{
+			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceMap();
+			auto environmentMap = lightEnv.EnvironmentMap->GetPrefilteredMap();
+
+			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
+			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", environmentMap);
+		}
 		else
+		{
+			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+		}
 	}
 
 	void SceneRenderer::GeometryPass()

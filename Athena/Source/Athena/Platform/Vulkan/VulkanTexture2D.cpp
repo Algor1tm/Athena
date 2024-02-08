@@ -103,18 +103,10 @@ namespace Athena
 			vksamplerInfo.unnormalizedCoordinates = false;
 
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_Sampler));
-			Vulkan::SetObjectName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
+			Vulkan::SetObjectDebugName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
 
 			m_DescriptorInfo.sampler = m_Sampler;
 		});
-	}
-
-	ShaderResourceType VulkanTexture2D::GetResourceType()
-	{
-		if (m_Info.Usage & ImageUsage::STORAGE)
-			return ShaderResourceType::StorageTexture2D;
-
-		return ShaderResourceType::Texture2D;
 	}
 
 	VkImage VulkanTexture2D::GetVulkanImage() const 

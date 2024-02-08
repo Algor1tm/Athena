@@ -19,25 +19,6 @@ vec2 SampleSphericalMap(vec3 dir)
     return uv;
 }
 
-vec3 ImageCubeCoordsToWorldDirection(vec2 texCoords, int cubeFace)
-{
-    texCoords = texCoords  * 2.0 - 1.0;
-
-    vec3 direction;
-    switch(cubeFace)
-    {
-        case 0: direction = vec3(1.0, texCoords.y, -texCoords.x); break;
-        case 1: direction = vec3(-1.0, texCoords.y, texCoords.x); break;
-        case 2: direction = vec3(texCoords.x, -1.0, texCoords.y); break;
-        case 3: direction = vec3(texCoords.x,  1.0, -texCoords.y); break;
-        case 4: direction = vec3(texCoords.x, texCoords.y, 1.0); break;
-        case 5: direction = vec3(-texCoords.x, texCoords.y, -1.0); break;
-        default: direction = vec3(0.0);
-    }
-
-    return normalize(direction);
-}
-
 void main()
 {
     ivec3 unnormalizedTexCoords = ivec3(gl_GlobalInvocationID.xyz);

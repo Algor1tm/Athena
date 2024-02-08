@@ -28,7 +28,7 @@ namespace Athena
 		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_CommandBuffers.data()));
 
 		for (uint32 i = 0; i < count; ++i)
-			Vulkan::SetObjectName(m_CommandBuffers[i], VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, std::format("{}_{}", m_Info.Name, i));
+			Vulkan::SetObjectDebugName(m_CommandBuffers[i], VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, std::format("{}_{}", m_Info.Name, i));
 	}
 
 	VulkanRenderCommandBuffer::~VulkanRenderCommandBuffer()

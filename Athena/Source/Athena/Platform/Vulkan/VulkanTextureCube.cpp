@@ -81,18 +81,10 @@ namespace Athena
 			vksamplerInfo.unnormalizedCoordinates = false;
 
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_Sampler));
-			Vulkan::SetObjectName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
+			Vulkan::SetObjectDebugName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
 
 			m_DescriptorInfo.sampler = m_Sampler;
 		});
-	}
-
-	ShaderResourceType VulkanTextureCube::GetResourceType()
-	{
-		if (m_Info.Usage & ImageUsage::STORAGE)
-			return ShaderResourceType::StorageTextureCube;
-
-		return ShaderResourceType::TextureCube;
 	}
 
 	VkImage VulkanTextureCube::GetVulkanImage() const

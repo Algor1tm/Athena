@@ -11,7 +11,6 @@ layout(location = 0) out vec3 v_TexCoords;
 void main()
 {
     v_TexCoords = a_Position;
-    //v_TexCoords.xy *= -1.0;
 
     vec4 pos = u_Camera.Projection * u_Camera.RotationView * vec4(a_Position, 1.0);
     gl_Position = pos.xyww;

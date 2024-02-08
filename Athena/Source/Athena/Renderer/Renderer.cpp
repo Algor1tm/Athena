@@ -74,6 +74,7 @@ namespace Athena
 
 		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
 
 		s_Data.ShaderPack = Ref<ShaderPack>::Create();
 		s_Data.ShaderPack->Load("PBR_Static.glsl");
@@ -81,6 +82,7 @@ namespace Athena
 		s_Data.ShaderPack->Load("SceneComposite.glsl");
 		s_Data.ShaderPack->Load("BRDF_LUT.glsl");
 		s_Data.ShaderPack->Load("PanoramaToCubemap.glsl");
+		s_Data.ShaderPack->Load("IrradianceMapConvolution.glsl");
 
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
@@ -149,7 +151,7 @@ namespace Athena
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-#if 0
+#if 1
 		// BRDF_LUT GENERATION
 		{
 			Texture2DCreateInfo brdfLutInfo;

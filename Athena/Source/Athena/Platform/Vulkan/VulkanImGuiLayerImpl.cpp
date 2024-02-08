@@ -79,7 +79,7 @@ namespace Athena
 			renderPassInfo.pDependencies = &dependency;
 
 			VK_CHECK(vkCreateRenderPass(VulkanContext::GetDevice()->GetLogicalDevice(), &renderPassInfo, nullptr, &m_ImGuiRenderPass));
-			Vulkan::SetObjectName(m_ImGuiRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "ImGuiRenderPass");
+			Vulkan::SetObjectDebugName(m_ImGuiRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, "ImGuiRenderPass");
 		}
 
 		RecreateFramebuffers();
@@ -130,7 +130,7 @@ namespace Athena
 		vksamplerInfo.unnormalizedCoordinates = false;
 
 		VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_DefaultUISampler));
-		Vulkan::SetObjectName(m_DefaultUISampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "Sampler_DefaultUI");
+		Vulkan::SetObjectDebugName(m_DefaultUISampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "Sampler_DefaultUI");
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()

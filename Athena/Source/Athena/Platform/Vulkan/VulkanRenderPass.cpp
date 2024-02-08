@@ -114,7 +114,7 @@ namespace Athena
 		renderPassInfo.pDependencies = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
-		Vulkan::SetObjectName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
+		Vulkan::SetObjectDebugName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
 
 		m_Info.Output.As<VulkanFramebuffer>()->Bake(m_VulkanRenderPass);
 	}

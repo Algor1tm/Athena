@@ -92,7 +92,7 @@ namespace Athena::Vulkan
 #endif
 
 
-    inline void SetObjectName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
+    inline void SetObjectDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
     {
 #ifdef ATN_DEBUG
         static PFN_vkDebugMarkerSetObjectNameEXT PFN_DebugMarkerSetObjectName = nullptr;

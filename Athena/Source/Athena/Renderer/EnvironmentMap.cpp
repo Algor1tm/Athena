@@ -41,25 +41,43 @@ namespace Athena
 
 		m_PrefilteredMap = TextureCube::Create(cubemapInfo);
 
+		cubemapInfo.Name = std::format("{}_Irradiance", m_FilePath.stem().string());
+		cubemapInfo.Width = m_IrradianceMapResolution;
+		cubemapInfo.Height = m_IrradianceMapResolution;
+		cubemapInfo.MipLevels = 1;
+
+		m_IrradianceMap = TextureCube::Create(cubemapInfo);
 
 		ComputePassCreateInfo passInfo;
-		passInfo.Name = "PanoramaToCubemapPass";
+		passInfo.Name = "EnvMapGenerationPass";
 		passInfo.Outputs.push_back(m_PrefilteredMap->GetImage());
+		passInfo.Outputs.push_back(m_IrradianceMap->GetImage());
 
 		Ref<ComputePass> pass = ComputePass::Create(passInfo);
 
+		// Panorama To Cubemap Pipeline
 		ComputePipelineCreateInfo pipelineInfo;
 		pipelineInfo.Name = "PanoramaToCubemapPipeline";
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PanoramaToCubemap");
 		pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 
-		Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
-		pipeline->SetInput("u_PanoramaTex", panorama);
-		pipeline->SetInput("u_Cubemap", m_PrefilteredMap);
-		pipeline->Bake();
+		Ref<ComputePipeline> panoramaToCubePipeline = ComputePipeline::Create(pipelineInfo);
+		panoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
+		panoramaToCubePipeline->SetInput("u_Cubemap", m_PrefilteredMap);
+		panoramaToCubePipeline->Bake();
+
+		// Irradiance Pipeline
+		pipelineInfo.Name = "IrradianceMapPipeline";
+		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
+		pipelineInfo.WorkGroupSize = { 8, 4, 1 };
+		
+		Ref<ComputePipeline> irradiancePipeline = ComputePipeline::Create(pipelineInfo);
+		irradiancePipeline->SetInput("u_Cubemap", m_PrefilteredMap);
+		irradiancePipeline->SetInput("u_IrradianceMap", m_IrradianceMap);
+		irradiancePipeline->Bake();
 
 		RenderCommandBufferCreateInfo cmdBufferInfo;
-		cmdBufferInfo.Name = "EnvironmentMapGeneration";
+		cmdBufferInfo.Name = "EnvMapGeneration";
 		cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
 
 		Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
@@ -68,8 +86,11 @@ namespace Athena
 		{
 			pass->Begin(commandBuffer);
 
-			pipeline->Bind(commandBuffer);
-			Renderer::Dispatch(commandBuffer, pipeline, { m_Resolution, m_Resolution, 6});
+			panoramaToCubePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, panoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
+
+			irradiancePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, irradiancePipeline, { m_IrradianceMapResolution, m_IrradianceMapResolution, 6 });
 
 			pass->End(commandBuffer);
 		}

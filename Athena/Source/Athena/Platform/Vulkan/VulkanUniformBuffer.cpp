@@ -23,7 +23,7 @@ namespace Athena
 				bufferInfo.size = m_Size;
 				bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 				m_VulkanUBSet[i] = VulkanContext::GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, bufferName);
-				Vulkan::SetObjectName(m_VulkanUBSet[i].GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, bufferName);
+				Vulkan::SetObjectDebugName(m_VulkanUBSet[i].GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, bufferName);
 
 				VkDescriptorBufferInfo descriptorInfo;
 				descriptorInfo.buffer = m_VulkanUBSet[i].GetBuffer();

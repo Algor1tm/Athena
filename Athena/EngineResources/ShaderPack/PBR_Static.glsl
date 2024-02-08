@@ -92,6 +92,10 @@ layout(set = 0, binding = 1) uniform sampler2D u_NormalMap;
 layout(set = 0, binding = 2) uniform sampler2D u_RoughnessMap;
 layout(set = 0, binding = 3) uniform sampler2D u_MetalnessMap;
 
+layout(set = 1, binding = 3) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 4) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 5) uniform samplerCube u_IrradianceMap;
+
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
 {
@@ -130,8 +134,8 @@ vec3 ComputePointLightRadiance(int index, vec3 worldPos)
 {
     PointLight light = g_PointLights[index];
     
-    float distance = length(worldPos - light.Position);
-    float attenuationFactor = distance / light.Radius;
+    float dist = length(worldPos - light.Position);
+    float attenuationFactor = dist / light.Radius;
 
     float attenuation = 0.0;
     if (attenuationFactor < 1.0)
@@ -143,6 +147,30 @@ vec3 ComputePointLightRadiance(int index, vec3 worldPos)
 
     vec3 radiance = light.Color.rgb * light.Intensity * attenuation;
     return radiance;
+}
+
+vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
+{    
+    vec3 reflectivityAtZeroIncidence = vec3(0.04);
+    reflectivityAtZeroIncidence = mix(reflectivityAtZeroIncidence, albedo, metalness);
+
+    float NdotV = max(dot(normal, viewDir), 0.0);
+
+    vec3 reflectedLight = FresnelSchlickRoughness(NdotV, reflectivityAtZeroIncidence, roughness); 
+    vec3 absorbedLight = 1.0 - reflectedLight;
+    absorbedLight *= 1.0 - metalness;
+
+    vec3 irradiance = texture(u_IrradianceMap, normal).rgb;
+    vec3 diffuseIBL = absorbedLight * irradiance;
+
+    vec3 reflectedVec = reflect(-viewDir, normal); 
+
+    vec3 envMapReflectedColor = textureLod(u_EnvironmentMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
+    vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
+    vec3 specularIBL = envMapReflectedColor * (reflectedLight * envBRDF.x + envBRDF.y);
+
+    vec3 ambient = (diffuseIBL * albedo + specularIBL) * u_Scene.EnvironmentIntensity;
+    return ambient;
 }
 
 
@@ -184,10 +212,7 @@ void main()
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
-    const vec3 ambientDiffuse = vec3(0.5, 0.5, 0.5);
-    const vec3 ambientSpecular = vec3(0.0, 0.0, 0.0);
-    
-    vec3 ambient = albedo.rgb * ambientDiffuse + ambientSpecular;
+    vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
     vec3 emission = albedo.rgb * u_Emission;
     
     vec3 hdrColor = totalIrradiance + ambient + emission;

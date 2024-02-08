@@ -25,6 +25,9 @@ void main()
     vec3 irradiance = vec3(0.0);
 
     vec3 up = vec3(0.0, 1.0, 0.0);
+    if(normal.y == 1 || normal.y == -1)
+        up = vec3(1.0, 0.0, 0.0);
+
     vec3 right = normalize(cross(up, normal));
     up = normalize(cross(normal, right));
 

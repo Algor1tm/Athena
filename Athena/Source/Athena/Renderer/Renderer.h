@@ -130,13 +130,16 @@ namespace Athena
 		static void EndFrame();
 		static void WaitAndRender();
 
-		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material = nullptr);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
 		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
 
 		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
-
 		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image);
+
+		static void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);
+		static void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer);
+		static void InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);
 
 		static Ref<RenderCommandBuffer> GetRenderCommandBuffer();
 		static const RenderCapabilities& GetRenderCaps();

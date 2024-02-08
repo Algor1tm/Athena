@@ -121,6 +121,7 @@ namespace Athena
 
 	void Application::RenderImGui()
 	{
+		Renderer::BeginDebugRegion(Renderer::GetRenderCommandBuffer(), "UIOverlayPass", { 0.8f, 0.7f, 0.1f, 1.f });
 		Renderer::Submit([this]()
 		{
 			Timer timer = Timer();
@@ -139,6 +140,7 @@ namespace Athena
 
 			m_Statistics.Application_RenderImGui = timer.ElapsedTime();
 		});
+		Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)

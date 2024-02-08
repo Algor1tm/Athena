@@ -43,7 +43,7 @@ namespace Athena
 			fbInfo.Width = m_ViewportSize.x;
 			fbInfo.Height = m_ViewportSize.y;
 			fbInfo.Attachments[0].Name = "GeometryHDRColor";
-			fbInfo.Attachments[0].ClearColor = { 0.9f, 0.3f, 0.4f, 1.0f };
+			fbInfo.Attachments[0].ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 			fbInfo.Attachments[1].Name = "GeometryDepth";
 			fbInfo.Attachments[1].DepthClearColor = 1.f;
 			fbInfo.Attachments[1].StencilClearColor = 1.f;
@@ -146,36 +146,6 @@ namespace Athena
 		m_CompositePipeline->SetViewport(width, height);
 	}
 
-	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
-	{
-		m_CameraData.View = cameraInfo.ViewMatrix;
-		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
-		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
-		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
-
-		m_SceneData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
-		m_SceneData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
-	}
-
-	void SceneRenderer::EndScene()
-	{
-		m_Profiler->Reset();
-		m_Profiler->BeginPipelineStatsQuery();
-
-		Renderer::Submit([this]()
-		{
-			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
-			m_SceneUBO->RT_SetData(&m_SceneData, sizeof(SceneData));
-			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
-		});
-
-		GeometryPass();
-		SceneCompositePass();
-
-		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
-		m_StaticGeometryList.clear();
-	}
-
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform)
 	{
 		if (!vertexBuffer)
@@ -189,7 +159,7 @@ namespace Athena
 		drawCall.Transform = transform;
 		drawCall.Material = material;
 
-		m_StaticGeometryList.push_back(drawCall);
+		m_StaticGeometryList.Push(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
@@ -209,7 +179,7 @@ namespace Athena
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
-		for(uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
+		for (uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
 			m_LightData.DirectionalLights[i] = lightEnv.DirectionalLights[i];
 
 		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
@@ -235,26 +205,69 @@ namespace Athena
 		}
 	}
 
+	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
+	{
+		m_CameraData.View = cameraInfo.ViewMatrix;
+		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
+		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
+		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
+
+		m_SceneData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
+		m_SceneData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
+	}
+
+	void SceneRenderer::EndScene()
+	{
+		m_Profiler->Reset();
+		m_Profiler->BeginPipelineStatsQuery();
+
+		m_StaticGeometryList.Sort();
+
+		Renderer::Submit([this]()
+		{
+			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
+			m_SceneUBO->RT_SetData(&m_SceneData, sizeof(SceneData));
+			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
+		});
+
+		GeometryPass();
+		SceneCompositePass();
+
+		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
+		m_StaticGeometryList.Clear();
+	}
+
 	void SceneRenderer::GeometryPass()
 	{
 		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
+		Renderer::BeginDebugRegion(commandBuffer, "GeometryPass", { 0.4f, 0.8f, 0.2f, 1.f } );
 		m_GeometryPass->Begin(commandBuffer);
 		{
+			Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 			m_StaticGeometryPipeline->Bind(commandBuffer);
-			
+
 			for (const auto& drawCall : m_StaticGeometryList)
 			{
-				drawCall.Material->Bind(commandBuffer);
+				if(m_StaticGeometryList.UpdateMaterial(drawCall))
+					drawCall.Material->Bind(commandBuffer);
+
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
 				Renderer::RenderGeometry(commandBuffer, drawCall.VertexBuffer, drawCall.Material);
 			}
+			Renderer::EndDebugRegion(commandBuffer);
+			
 
-			m_SkyboxPipeline->Bind(commandBuffer);
-			Renderer::RenderNDCCube(commandBuffer);
+			Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
+			{
+				m_SkyboxPipeline->Bind(commandBuffer);
+				Renderer::RenderNDCCube(commandBuffer);
+			}
+			Renderer::EndDebugRegion(commandBuffer);
 		}
 		m_GeometryPass->End(commandBuffer);
+		Renderer::EndDebugRegion(commandBuffer);
 
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
 	}
@@ -264,12 +277,14 @@ namespace Athena
 		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
+		Renderer::BeginDebugRegion(commandBuffer, "SceneComposite", { 0.2f, 0.5f, 1.0f, 1.f });
 		m_CompositePass->Begin(commandBuffer);
 		{
 			m_CompositePipeline->Bind(commandBuffer);
 			Renderer::RenderFullscreenQuad(commandBuffer);
 		}
 		m_CompositePass->End(commandBuffer);
+		Renderer::EndDebugRegion(commandBuffer);
 
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}

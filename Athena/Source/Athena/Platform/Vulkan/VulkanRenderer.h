@@ -19,6 +19,10 @@ namespace Athena
 		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material) override;
 		virtual void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material) override;
 
+		virtual void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) override;
+		virtual void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer) override;
+		virtual void InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) override;
+
 		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image) override;
 		virtual void WaitDeviceIdle() override;
 
@@ -27,5 +31,8 @@ namespace Athena
 
 	private:
 		std::vector<VkCommandBuffer> m_VkCommandBuffers;
+		PFN_vkCmdDebugMarkerBeginEXT m_DebugMarkBeginPFN;
+		PFN_vkCmdDebugMarkerEndEXT m_DebugMarkEndPFN;
+		PFN_vkCmdDebugMarkerInsertEXT m_DebugMarkInsertPFN;
 	};
 }

@@ -27,6 +27,13 @@ namespace Athena
 			m_VkCommandBuffers.resize(Renderer::GetFramesInFlight());
 			VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffers.data()));
 		}
+
+		// Acquire function pointers
+#ifdef ATN_DEBUG
+		m_DebugMarkBeginPFN = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerBeginEXT");
+		m_DebugMarkEndPFN = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerEndEXT");
+		m_DebugMarkInsertPFN = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerInsertEXT");
+#endif
 	}
 
 	void VulkanRenderer::Shutdown()
@@ -79,6 +86,57 @@ namespace Athena
 
 			vkCmdDispatch(vkcmdBuffer, groupCountX, groupCountY, groupCountZ);
 		});
+	}
+
+	void VulkanRenderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
+	{
+#ifdef ATN_DEBUG
+		Renderer::Submit([this, commandBuffer, name, color]()
+		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			VkDebugMarkerMarkerInfoEXT markerInfo = {};
+			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+			markerInfo.color[0] = color[0];
+			markerInfo.color[1] = color[1];
+			markerInfo.color[2] = color[2];
+			markerInfo.color[3] = color[3];
+			markerInfo.pMarkerName = name.data();
+
+			m_DebugMarkBeginPFN(vkcmdBuffer, &markerInfo);
+		});
+#endif
+	}
+
+	void VulkanRenderer::EndDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+#ifdef ATN_DEBUG
+		Renderer::Submit([this, commandBuffer]()
+		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			m_DebugMarkEndPFN(vkcmdBuffer);
+		});
+#endif
+	}
+
+	void VulkanRenderer::InsertDebugMarker(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
+	{
+#ifdef ATN_DEBUG
+		Renderer::Submit([this, commandBuffer, name, color]()
+		{
+			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			VkDebugMarkerMarkerInfoEXT markerInfo = {};
+			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+			markerInfo.color[0] = color[0];
+			markerInfo.color[1] = color[1];
+			markerInfo.color[2] = color[2];
+			markerInfo.color[3] = color[3];
+			markerInfo.pMarkerName = name.data();
+
+			m_DebugMarkInsertPFN(vkcmdBuffer, &markerInfo);
+		});
+#endif
 	}
 
 	void VulkanRenderer::WaitDeviceIdle()

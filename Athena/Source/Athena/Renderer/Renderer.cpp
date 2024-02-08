@@ -290,6 +290,21 @@ namespace Athena
 		s_Data.RendererAPI->BlitToScreen(cmdBuffer, image);
 	}
 
+	void Renderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color)
+	{
+		s_Data.RendererAPI->BeginDebugRegion(cmdBuffer, name, color);
+	}
+
+	void Renderer::EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->EndDebugRegion(cmdBuffer);
+	}
+
+	void Renderer::InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color)
+	{
+		s_Data.RendererAPI->InsertDebugMarker(cmdBuffer, name, color);
+	}
+
 	Ref<RenderCommandBuffer> Renderer::GetRenderCommandBuffer()
 	{
 		return s_Data.RenderCommandBuffer;

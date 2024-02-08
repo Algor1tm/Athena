@@ -12,7 +12,8 @@
 #include "Athena/Renderer/RenderCommandBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Light.h"
-#include "Pipeline.h"
+#include "Athena/Renderer/DrawList.h"
+#include "Athena/Renderer/Pipeline.h"
 
 #include "Athena/Math/Matrix.h"
 
@@ -133,13 +134,6 @@ namespace Athena
 		PipelineStatistics PipelineStats;
 	};
 
-	struct DrawCall
-	{
-		Ref<VertexBuffer> VertexBuffer;
-		Matrix4 Transform;
-		Ref<Material> Material;
-	};
-
 
 	class ATHENA_API SceneRenderer : public RefCounted
 	{
@@ -169,7 +163,7 @@ namespace Athena
 		void SceneCompositePass();
 
 	private:
-		std::vector<DrawCall> m_StaticGeometryList;
+		DrawList m_StaticGeometryList;
 
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;

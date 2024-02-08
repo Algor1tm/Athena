@@ -28,7 +28,7 @@ namespace Athena
 		pipelineInfo.layout = vkShader->GetPipelineLayout();
 
 		VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
-		Vulkan::SetObjectDebugName(&m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
+		Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
 	}
 
 	VulkanComputePipeline::~VulkanComputePipeline()

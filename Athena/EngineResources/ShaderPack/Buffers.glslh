@@ -1,0 +1,42 @@
+//////////////////////// Athena common buffers ////////////////////////
+
+layout(std140, set = 1, binding = 0) uniform u_CameraData
+{
+	mat4 View;
+    mat4 Projection;
+    mat4 RotationView;
+    vec3 Position;
+} u_Camera;
+
+layout(std140, set = 1, binding = 1) uniform u_SceneData
+{
+    float Exposure;
+    float Gamma;
+    float EnvironmentIntensity;
+    float EnvironmentLOD;
+} u_Scene;
+
+struct DirectionalLight
+{
+    vec4 Color;
+    vec3 Direction;
+    float Intensity;
+};
+
+struct PointLight
+{
+    vec4 Color;
+    vec3 Position;
+    float Intensity;
+    float Radius;
+    float FallOff;
+};
+
+layout(std430, set = 1, binding = 2) readonly buffer u_LightData
+{
+    DirectionalLight g_DirectionalLights[MAX_DIRECTIONAL_LIGHT_COUNT];
+    int g_DirectionalLightCount;
+
+    PointLight g_PointLights[MAX_POINT_LIGHT_COUNT];
+    int g_PointLightCount;
+};

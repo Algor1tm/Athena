@@ -20,12 +20,16 @@ namespace Athena
 
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() const { return m_ImageView; }
+		VkImageLayout GetLayout() const { return m_Layout; }
+
+		void RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
 
 	private:
 		void RT_UploadData(const void* data, uint32 width, uint32 height);
 		void CleanUp();
 
 	private:
+		VkImageLayout m_Layout;
 		VulkanImageAllocation m_Image;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 	};

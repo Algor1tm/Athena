@@ -45,7 +45,7 @@ namespace Athena
 	{
 		if (Exists(name, dataType))
 		{
-			const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+			const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
 			const auto& memberData = pushConstantData.Members.at(name);
 			memcpy(&m_PushConstantBuffer[memberData.Offset], data, memberData.Size);
 		}
@@ -55,7 +55,7 @@ namespace Athena
 	{
 		if (Exists(name, dataType))
 		{
-			const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+			const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
 			const auto& memberData = pushConstantData.Members.at(name);
 			*data = &m_PushConstantBuffer[memberData.Offset];
 			return true;
@@ -66,7 +66,7 @@ namespace Athena
 
 	bool VulkanMaterial::Exists(const String& name, ShaderDataType dataType)
 	{
-		const auto& pushConstantData = m_Shader->GetReflectionData().PushConstant;
+		const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
 
 		if (!pushConstantData.Members.contains(name))
 		{
@@ -98,10 +98,10 @@ namespace Athena
 
 	void VulkanMaterial::RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		if (m_Shader->GetReflectionData().PushConstant.Enabled)
+		if (m_Shader->GetMetaData().PushConstant.Enabled)
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			const auto& pushConstant = m_Shader->GetReflectionData().PushConstant;
+			const auto& pushConstant = m_Shader->GetMetaData().PushConstant;
 
 			vkCmdPushConstants(vkcmdBuffer,
 				m_Shader.As<VulkanShader>()->GetPipelineLayout(),

@@ -55,6 +55,7 @@ namespace Athena
 
 			m_GeometryPass = RenderPass::Create(renderPassInfo);
 
+
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
@@ -70,17 +71,20 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_LightData", m_LightSBO);
 			m_StaticGeometryPipeline->Bake();
 
-			//pipelineInfo.Name = "SkyboxPipeline";
-			//pipelineInfo.RenderPass = m_GeometryPass;
-			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
-			//pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			//pipelineInfo.CullMode = CullMode::BACK;
-			//pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
-			//pipelineInfo.BlendEnable = false;
 
-			//m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
-			//m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			//m_SkyboxPipeline->Bake();
+			pipelineInfo.Name = "SkyboxPipeline";
+			pipelineInfo.RenderPass = m_GeometryPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.BlendEnable = false;
+
+			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
+			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
+			m_SkyboxPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_SkyboxPipeline->Bake();
 		}
 
 		// Composite Pass
@@ -132,6 +136,7 @@ namespace Athena
 
 		m_GeometryPass->GetOutput()->Resize(width, height);
 		m_StaticGeometryPipeline->SetViewport(width, height);
+		m_SkyboxPipeline->SetViewport(width, height);
 
 		m_CompositePass->GetOutput()->Resize(width, height);
 		m_CompositePipeline->SetViewport(width, height);
@@ -140,8 +145,8 @@ namespace Athena
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
 	{
 		m_CameraData.View = cameraInfo.ViewMatrix;
-		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
+		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
 		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
 
 		m_SceneData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
@@ -208,6 +213,11 @@ namespace Athena
 
 		m_SceneData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_SceneData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
+
+		if(lightEnv.EnvironmentMap)
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMap->GetPrefilteredMap());
+		else
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 	}
 
 	void SceneRenderer::GeometryPass()
@@ -218,13 +228,16 @@ namespace Athena
 		m_GeometryPass->Begin(commandBuffer);
 		{
 			m_StaticGeometryPipeline->Bind(commandBuffer);
-
+			
 			for (const auto& drawCall : m_StaticGeometryList)
 			{
 				drawCall.Material->Bind(commandBuffer);
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
 				Renderer::RenderGeometry(commandBuffer, drawCall.VertexBuffer, drawCall.Material);
 			}
+
+			m_SkyboxPipeline->Bind(commandBuffer);
+			Renderer::RenderNDCCube(commandBuffer);
 		}
 		m_GeometryPass->End(commandBuffer);
 

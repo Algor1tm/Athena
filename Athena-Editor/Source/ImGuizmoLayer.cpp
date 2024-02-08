@@ -25,6 +25,7 @@ namespace Athena
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
             Matrix4 cameraProjection = m_Camera->GetProjectionMatrix();
+            cameraProjection[1][1] = -cameraProjection[1][1]; // invert y
             const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
             TransformComponent worldTransform = m_EditorCtx->SelectedEntity.GetWorldTransform();

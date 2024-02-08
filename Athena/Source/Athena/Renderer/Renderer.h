@@ -132,6 +132,7 @@ namespace Athena
 
 		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
+		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
 
 		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
 

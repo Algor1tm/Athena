@@ -10,6 +10,13 @@ namespace Athena
 {
 	using ShaderBinaries = std::unordered_map<ShaderStage, std::vector<uint32>>;
 
+	enum class ShaderLanguage
+	{
+		UNDEFINED,
+		GLSL,
+		HLSL
+	};
+
 
 	class ATHENA_API ShaderCompiler
 	{
@@ -21,18 +28,18 @@ namespace Athena
 		std::string_view GetEntryPoint(ShaderStage stage) const;
 		const ShaderBinaries& GetBinaries() const { return m_SPIRVBinaries; }
 
-		ShaderReflectionData Reflect();
+		ShaderMetaData Reflect();
 
 	private:
 		struct StageDescription
 		{
 			ShaderStage Stage;
 			FilePath FilePathToCache;
+			String Source;
 		};
 
 		struct PreProcessResult
 		{
-			String Source;
 			std::vector<StageDescription> StageDescriptions;
 			bool ParseResult;
 			bool NeedRecompile;
@@ -43,11 +50,17 @@ namespace Athena
 		void ReadFromCache(const PreProcessResult& result);
 
 		PreProcessResult PreProcess();
+		std::vector<StageDescription> PreProcessShaderStages();
+		std::vector<StageDescription> GetHLSLStageDescriptions();
+		std::vector<StageDescription> GetGLSLStageDescriptions();
+
 		bool CheckShaderStages(const std::vector<StageDescription>& stages);
+		void GetLanguageAndEntryPoints();
 
 	private:
 		FilePath m_FilePath;
 		String m_Name;
+		ShaderLanguage m_Language;
 		ShaderBinaries m_SPIRVBinaries;
 
 		std::unordered_map<ShaderStage, std::string_view> m_StageToEntryPointMap;

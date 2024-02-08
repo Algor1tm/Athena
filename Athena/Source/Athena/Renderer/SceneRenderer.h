@@ -75,8 +75,8 @@ namespace Athena
 	struct CameraData
 	{
 		Matrix4 View;
-		Matrix4 RotationView;
 		Matrix4 Projection;
+		Matrix4 RotationView;
 		Vector3 Position;
 	};
 
@@ -84,8 +84,8 @@ namespace Athena
 	{
 		float Exposure = 1.f;
 		float Gamma = 2.2f;
-		float EnvironmentLOD = 0.f;
 		float EnvironmentIntensity = 1.f;
+		float EnvironmentLOD = 0.f;
 	};
 
 	struct LightData

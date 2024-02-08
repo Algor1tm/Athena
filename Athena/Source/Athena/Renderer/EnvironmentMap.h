@@ -23,7 +23,6 @@ namespace Athena
 		void Load();
 
 	private:
-		Ref<Texture2D> m_Panorama;
 		Ref<TextureCube> m_PrefilteredMap;
 		Ref<TextureCube> m_IrradianceMap;
 

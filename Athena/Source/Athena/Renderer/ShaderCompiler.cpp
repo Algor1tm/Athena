@@ -59,6 +59,23 @@ namespace Athena
 			return "";
 		}
 
+		static ShaderStage GetShaderStageFromGLSLString(const String& stageString)
+		{
+			if (stageString == "vertex")
+				return ShaderStage::VERTEX_STAGE;
+
+			if (stageString == "fragment")
+				return ShaderStage::FRAGMENT_STAGE;
+
+			if (stageString == "geometry")
+				return ShaderStage::GEOMETRY_STAGE;
+
+			if (stageString == "compute")
+				return ShaderStage::COMPUTE_STAGE;
+
+			return ShaderStage::UNDEFINED;
+		}
+
 		static ImageType SpirvDimToImageType(const spv::Dim& dim)
 		{
 			switch (dim)
@@ -171,20 +188,19 @@ namespace Athena
 		m_FilePath = filepath;
 		m_Name = name;
 
-		m_StageToEntryPointMap[ShaderStage::VERTEX_STAGE] = "VSMain";
-		m_StageToEntryPointMap[ShaderStage::FRAGMENT_STAGE] = "FSMain";
-		m_StageToEntryPointMap[ShaderStage::GEOMETRY_STAGE] = "GSMain";
-		m_StageToEntryPointMap[ShaderStage::COMPUTE_STAGE] = "CSMain";
+		GetLanguageAndEntryPoints();
 	}
 
 	std::string_view ShaderCompiler::GetEntryPoint(ShaderStage stage) const
 	{
-		ATN_CORE_ASSERT(m_StageToEntryPointMap.contains(stage));
 		return m_StageToEntryPointMap.at(stage);
 	}
 
 	bool ShaderCompiler::CompileOrGetFromCache(bool forceCompile)
 	{
+		if (m_Language == ShaderLanguage::UNDEFINED)
+			return false;
+
 		Timer compilationTimer;
 
 		PreProcessResult result = PreProcess();
@@ -218,12 +234,18 @@ namespace Athena
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-		options.SetSourceLanguage(shaderc_source_language_hlsl);
-		options.SetHlslOffsets(true);
-		options.SetInvertY(true);
-		options.SetAutoSampledTextures(true);
 		options.SetGenerateDebugInfo();
 		options.SetIncluder(std::make_unique<FileSystemIncluder>());
+
+		if (m_Language == ShaderLanguage::GLSL)
+		{
+			options.SetSourceLanguage(shaderc_source_language_glsl);
+		}
+		else if (m_Language == ShaderLanguage::HLSL)
+		{
+			options.SetSourceLanguage(shaderc_source_language_hlsl);
+			options.SetAutoSampledTextures(true);
+		}
 
 		const std::unordered_map<String, String>& globalMacroses = Renderer::GetGlobalShaderMacroses();
 		for (const auto& [name, value] : globalMacroses)
@@ -231,16 +253,16 @@ namespace Athena
 			options.AddMacroDefinition(name, value);
 		}
 
-		for (const auto& [stage, cachePath] : result.StageDescriptions)
+		for (const auto& [stage, cachePath, source] : result.StageDescriptions)
 		{
 			String filePathStr = m_FilePath.string();
 
 			shaderc::PreprocessedSourceCompilationResult preResult =
-				compiler.PreprocessGlsl(result.Source, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), options);
+				compiler.PreprocessGlsl(source, Utils::ShaderStageToShaderCKind(stage), filePathStr.c_str(), options);
 
 			if (preResult.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' preprocess failed, error message:\n{}\n", m_Name, preResult.GetErrorMessage());
+				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) preprocess failed, error message:\n{}\n", m_Name, Utils::ShaderStageToString(stage), preResult.GetErrorMessage());
 				compiled = false;
 				break;
 			}
@@ -252,7 +274,7 @@ namespace Athena
 
 			if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, module.GetErrorMessage());
+				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) compilation failed, error message:\n{}\n", m_Name, Utils::ShaderStageToString(stage), module.GetErrorMessage());
 				compiled = false;
 				break;
 			}
@@ -269,7 +291,7 @@ namespace Athena
 
 	void ShaderCompiler::ReadFromCache(const PreProcessResult& result)
 	{
-		for (const auto& [stage, cachePath] : result.StageDescriptions)
+		for (const auto& [stage, cachePath, source] : result.StageDescriptions)
 		{
 			std::vector<byte> bytes = FileSystem::ReadFileBinary(cachePath);
 
@@ -287,45 +309,104 @@ namespace Athena
 		{
 			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
 			result.ParseResult = false;
-		}
-
-		FilePath ext = m_FilePath.extension();
-		if (ext != L".hlsl")
-		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Invalid shader extension {}!", m_FilePath);
-			result.ParseResult = false;
-		}
-
-		if (result.ParseResult == false)
 			return result;
-
-		const char* matrixMemoryLayoutSettings = "#pragma pack_matrix( row_major )\n";
-
-		result.Source = FileSystem::ReadFile(m_FilePath);
-		result.Source.insert(0, matrixMemoryLayoutSettings);
-
-		for (const auto& [stage, entryPoint] : m_StageToEntryPointMap)
-		{
-			if (result.Source.find(entryPoint) != std::string::npos)
-			{
-				StageDescription stageDesc;
-				stageDesc.Stage = stage;
-				stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
-
-				result.StageDescriptions.push_back(stageDesc);
-			}
 		}
 
+		result.StageDescriptions = PreProcessShaderStages();
 		result.ParseResult = CheckShaderStages(result.StageDescriptions);
 
 		result.NeedRecompile = false;
-		for (const auto& [_, path] : result.StageDescriptions)
+		for (const auto& [_, path, __] : result.StageDescriptions)
 		{
 			if (!FileSystem::Exists(path))
 			{
 				result.NeedRecompile = true;
 				break;
 			}
+		}
+
+		return result;
+	}
+
+	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::PreProcessShaderStages()
+	{
+		if (m_Language == ShaderLanguage::GLSL)
+			return GetGLSLStageDescriptions();
+
+		if (m_Language == ShaderLanguage::HLSL)
+			return GetHLSLStageDescriptions();
+
+		return {};
+	}
+
+	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::GetHLSLStageDescriptions()
+	{
+		std::vector<StageDescription> result;
+
+		const char* matrixMemoryLayoutSettings = "#pragma pack_matrix( row_major )\n";
+
+		String source = FileSystem::ReadFile(m_FilePath);
+		source.insert(0, matrixMemoryLayoutSettings);
+
+		for (const auto& [stage, entryPoint] : m_StageToEntryPointMap)
+		{
+			if (source.find(entryPoint) != std::string::npos)
+			{
+				StageDescription stageDesc;
+				stageDesc.Stage = stage;
+				stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
+				stageDesc.Source = source;
+
+				result.push_back(stageDesc);
+			}
+		}
+
+		return result;
+	}
+
+	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::GetGLSLStageDescriptions()
+	{
+		std::vector<StageDescription> result;
+
+		String source = FileSystem::ReadFile(m_FilePath);
+
+		const std::string_view pragmaToken = "#pragma stage : ";
+		const std::string_view versionToken = "#version";
+
+		uint64 pos = source.find(versionToken, 0);
+		while (pos != std::string::npos)
+		{
+			uint64 stagePos = source.find(pragmaToken, pos + versionToken.size());
+			uint64 eol = source.find_first_of("\r\n", stagePos);
+			String stageString = source.substr(stagePos + pragmaToken.size(), eol - stagePos - pragmaToken.size());
+			ShaderStage stage = Utils::GetShaderStageFromGLSLString(stageString);
+
+			if (stage == ShaderStage::UNDEFINED)
+			{
+				ATN_CORE_ERROR_TAG("Renderer", "Failed to parse glsl shader stage!");
+				return {};
+			}
+
+			uint64 nextPos = source.find(versionToken, pos + versionToken.size());
+			String stageSource = source.substr(pos, nextPos - pos);
+
+			// Add empty lines, for debugger
+			uint64 linesCount = std::count(source.begin(), source.begin() + pos, '\n');
+			String linesStr(linesCount, '\n');
+
+			if(linesCount)
+				stageSource.insert(0, linesStr);
+
+			pos = nextPos;
+			if (nextPos == std::string::npos)
+				nextPos = source.size() - 1;
+
+			StageDescription stageDesc;
+			stageDesc.Stage = stage;
+			stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
+			stageDesc.Source = stageSource;
+
+			result.push_back(stageDesc);
 		}
 
 		return result;
@@ -380,9 +461,37 @@ namespace Athena
 		return true;
 	}
 
-	ShaderReflectionData ShaderCompiler::Reflect()
+	void ShaderCompiler::GetLanguageAndEntryPoints()
 	{
-		ShaderReflectionData result;
+		String extension = m_FilePath.extension().string();
+
+		if (extension == ".hlsl")
+		{
+			m_Language = ShaderLanguage::HLSL;
+
+			m_StageToEntryPointMap[ShaderStage::VERTEX_STAGE] = "VSMain";
+			m_StageToEntryPointMap[ShaderStage::FRAGMENT_STAGE] = "FSMain";
+			m_StageToEntryPointMap[ShaderStage::GEOMETRY_STAGE] = "GSMain";
+			m_StageToEntryPointMap[ShaderStage::COMPUTE_STAGE] = "CSMain";
+		}
+		else if (extension == ".glsl")
+		{
+			m_Language = ShaderLanguage::GLSL;
+
+			m_StageToEntryPointMap[ShaderStage::VERTEX_STAGE] = "main";
+			m_StageToEntryPointMap[ShaderStage::FRAGMENT_STAGE] = "main";
+			m_StageToEntryPointMap[ShaderStage::GEOMETRY_STAGE] = "main";
+			m_StageToEntryPointMap[ShaderStage::COMPUTE_STAGE] = "main";
+		}
+		else
+		{
+			m_Language = ShaderLanguage::UNDEFINED;
+		}
+	}
+
+	ShaderMetaData ShaderCompiler::Reflect()
+	{
+		ShaderMetaData result;
 		result.PushConstant.Size = 0;
 
 		ATN_CORE_INFO_TAG("Renderer", "Reflecting Shader '{}'", m_Name);
@@ -435,7 +544,7 @@ namespace Athena
 					const auto& spirvType = compiler.get_type(compiler.get_type(resource.base_type_id).member_types[i]);
 					ShaderDataType elemType = Utils::SpirvTypeToShaderDataType(spirvType);
 
-					StructMemberReflectionData memberData;
+					StructMemberShaderMetaData memberData;
 					memberData.Size = size;
 					memberData.Offset = memberOffset;
 					memberData.Type = elemType;
@@ -459,7 +568,7 @@ namespace Athena
 				}
 				else
 				{
-					TextureReflectionData textureData;
+					TextureShaderMetaData textureData;
 					textureData.ImageType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
@@ -483,18 +592,8 @@ namespace Athena
 				}
 				else
 				{
-					ImageType type;
-
-					// HACK: treat RWTexture2DArray as cube texture
-					bool writeTexture = !bool(compiler.get_decoration(resource.id, spv::DecorationNonWritable));
-					bool arrayed = compiler.get_type(resource.base_type_id).image.arrayed;
-					if (writeTexture && arrayed && dim == spv::Dim::Dim2D)
-						type = ImageType::IMAGE_CUBE;
-					else
-						type = Utils::SpirvDimToImageType(dim);
-
-					TextureReflectionData textureData;
-					textureData.ImageType = type;
+					TextureShaderMetaData textureData;
+					textureData.ImageType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
@@ -517,7 +616,7 @@ namespace Athena
 				}
 				else
 				{
-					BufferReflectionData bufferData;
+					BufferShaderMetaData bufferData;
 					bufferData.Size = bufferSize;
 					bufferData.Binding = binding;
 					bufferData.Set = set;
@@ -545,7 +644,7 @@ namespace Athena
 				}
 				else
 				{
-					BufferReflectionData bufferData;
+					BufferShaderMetaData bufferData;
 					bufferData.Size = bufferSize;
 					bufferData.Binding = binding;
 					bufferData.Set = set;
@@ -560,7 +659,7 @@ namespace Athena
 
 		ATN_CORE_TRACE("vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
 		for (const auto& elem : result.VertexBufferLayout)
-			ATN_CORE_TRACE("\t {}: {} bytes", elem.Name, elem.Size);
+			ATN_CORE_TRACE("\t{}: {} bytes", elem.Name, elem.Size);
 
 		ATN_CORE_TRACE("push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
 		for (const auto& [name, member] : result.PushConstant.Members)

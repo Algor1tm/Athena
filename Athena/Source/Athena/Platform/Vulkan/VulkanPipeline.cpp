@@ -40,6 +40,7 @@ namespace Athena
 			switch (depthCompare)
 			{
 			case DepthCompare::NONE: return VK_COMPARE_OP_NEVER;
+			case DepthCompare::LESS: return VK_COMPARE_OP_LESS;
 			case DepthCompare::LESS_OR_EQUAL: return VK_COMPARE_OP_LESS_OR_EQUAL;
 			}
 
@@ -107,7 +108,7 @@ namespace Athena
 	{
 		Renderer::Submit([this, width, height]()
 		{
-			const VertexBufferLayout& vertexBufferLayout = m_Info.Shader->GetReflectionData().VertexBufferLayout;
+			const VertexBufferLayout& vertexBufferLayout = m_Info.Shader->GetMetaData().VertexBufferLayout;
 
 			VkVertexInputBindingDescription bindingDescription = {};
 			bindingDescription.binding = 0;

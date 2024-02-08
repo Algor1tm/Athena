@@ -20,9 +20,19 @@ namespace Athena
 		uint32 Set;
 	}; 
 
+	struct ResourceState
+	{
+		// VkImageView or VkBuffer
+		void* ResourceHandle;
+
+		// texture specific
+		VkImageLayout ImageLayout;
+		VkSampler Sampler;
+	};
+
 	struct WriteDescriptorSet
 	{
-		void* ResourceHandle;
+		ResourceState ResourceState;
 		VkWriteDescriptorSet VulkanWriteDescriptorSet;
 	};
 
@@ -52,6 +62,10 @@ namespace Athena
 		void RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint);
 
 		bool IsInvalidated(uint32 set, uint32 binding);
+
+	private:
+		bool IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorImageInfo& imageInfo);
+		bool IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorBufferInfo& bufferInfo);
 
 	private:
 		DescriptorSetManagerCreateInfo m_Info;

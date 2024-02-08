@@ -25,6 +25,7 @@ namespace Athena
 	enum class DepthCompare
 	{
 		NONE = 0,
+		LESS,
 		LESS_OR_EQUAL
 	};
 

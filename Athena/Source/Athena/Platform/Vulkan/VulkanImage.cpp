@@ -62,6 +62,7 @@ namespace Athena
 		m_Info = info;
 		m_Info.Width = 0;
 		m_Info.Height = 0;
+		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		Resize(info.Width, info.Height);
 
@@ -115,7 +116,6 @@ namespace Athena
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			}
 
-
 			VkImageCreateInfo imageInfo = {};
 			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			imageInfo.flags = m_Info.Type == ImageType::IMAGE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
@@ -131,16 +131,6 @@ namespace Athena
 			imageInfo.usage = imageUsage;
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-
-			if (Image::IsHDRFormat(m_Info.Format))
-			{
-				VkImageFormatProperties formatProperties = {};
-
-				vkGetPhysicalDeviceImageFormatProperties(VulkanContext::GetPhysicalDevice(), imageInfo.format, imageInfo.imageType, imageInfo.tiling,
-					imageInfo.usage, imageInfo.flags, &formatProperties);
-
-				VkExtent3D maxExtent = formatProperties.maxExtent;
-			}
 
 			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
 			Vulkan::SetObjectName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
@@ -171,6 +161,33 @@ namespace Athena
 			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 			VulkanContext::GetAllocator()->DestroyImage(image, name);
 		});
+	}
+
+	void VulkanImage::RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
+	{
+		VkImageMemoryBarrier barrier = {};
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.oldLayout = m_Layout;
+		barrier.newLayout = newLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = m_Image.GetImage();
+		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = m_Info.MipLevels;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = m_Info.Layers;
+
+		vkCmdPipelineBarrier(
+			cmdBuffer,
+			srcStage, dstStage,
+			VK_DEPENDENCY_BY_REGION_BIT,
+			0, nullptr,
+			0, nullptr,
+			1, &barrier
+		);
+
+		m_Layout = newLayout;
 	}
 
 	void VulkanImage::RT_UploadData(const void* data, uint32 width, uint32 height)
@@ -258,6 +275,8 @@ namespace Athena
 		}
 		Vulkan::EndSingleTimeCommands(commandBuffer);
 		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
+
+		m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
 	void VulkanImage::GenerateMipMap(uint32 levels)
@@ -388,6 +407,8 @@ namespace Athena
 				1, &barrier);
 
 			Vulkan::EndSingleTimeCommands(commandBuffer);
+
+			m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		});
 	}
 }

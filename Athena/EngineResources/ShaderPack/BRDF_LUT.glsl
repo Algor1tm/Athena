@@ -1,10 +1,14 @@
 //////////////////////// Athena BRDF_LUT Shader ////////////////////////
 
-#include "Common.hlsli"
+#version 460 core
+#pragma stage : compute
 
+#include "Common.glslh"
 #define SAMPLE_COUNT 2048
 
-RWTexture2D<float2> u_BRDF_LUT : register(b0, space1);
+layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+
+layout(rg16f, set = 1, binding = 0) uniform image2D u_BRDF_LUT;
 
 
 float RadicalInverse_VdC(uint bits)
@@ -17,12 +21,12 @@ float RadicalInverse_VdC(uint bits)
     return float(bits) * 2.3283064365386963e-10; // / 0x100000000
 }
 
-float2 Hammersley(uint i, uint N)
+vec2 Hammersley(uint i, uint N)
 {
-    return float2(float(i) / float(N), RadicalInverse_VdC(i));
+    return vec2(float(i) / float(N), RadicalInverse_VdC(i));
 }
 
-float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
     float a = roughness * roughness;
 	
@@ -31,23 +35,23 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 	
     // from spherical coordinates to cartesian coordinates
-    float3 H;
+    vec3 H;
     H.x = cos(phi) * sinTheta;
     H.y = sin(phi) * sinTheta;
     H.z = cosTheta;
 	
     // from tangent-space vector to world-space sample vector
-    float3 up = abs(N.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
-    float3 tangent = normalize(cross(up, N));
-    float3 bitangent = cross(N, tangent);
+    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
 	
-    float3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
     return normalize(sampleVec);
 }
 
-float2 IntegrateBRDF(float NdotV, float roughness)
+vec2 IntegrateBRDF(float NdotV, float roughness)
 {
-    float3 V;
+    vec3 V;
     V.x = sqrt(1.0 - NdotV * NdotV);
     V.y = 0.0;
     V.z = NdotV;
@@ -55,13 +59,13 @@ float2 IntegrateBRDF(float NdotV, float roughness)
     float A = 0.0;
     float B = 0.0;
 
-    float3 N = float3(0.0, 0.0, 1.0);
+    vec3 N = vec3(0.0, 0.0, 1.0);
 
     for (uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
-        float2 Xi = Hammersley(i, SAMPLE_COUNT);
-        float3 H = ImportanceSampleGGX(Xi, N, roughness);
-        float3 L = normalize(2.0 * dot(V, H) * H - V);
+        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
+        vec3 H = ImportanceSampleGGX(Xi, N, roughness);
+        vec3 L = normalize(2.0 * dot(V, H) * H - V);
 
         float NdotL = max(L.z, 0.0);
         float NdotH = max(H.z, 0.0);
@@ -81,20 +85,14 @@ float2 IntegrateBRDF(float NdotV, float roughness)
     A /= float(SAMPLE_COUNT);
     B /= float(SAMPLE_COUNT);
     
-    return float2(A, B);
+    return vec2(A, B);
 }
 
-
-[numthreads(8, 4, 1)]
-void CSMain(uint3 dispatchThreadId : SV_DispatchThreadID)
+void main()
 {
-    float2 texSize;
-    u_BRDF_LUT.GetDimensions(texSize.x, texSize.y);
-    
-    float2 unnormalizedTexCoords = dispatchThreadId.xy;
+    ivec2 unnormalizedTexCoords = ivec2(gl_GlobalInvocationID.xy);
+    vec2 texCoords = vec2(unnormalizedTexCoords.x + 1, unnormalizedTexCoords.y) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
 
-    float2 texCoords = float2(unnormalizedTexCoords.x + 1, unnormalizedTexCoords.y) / texSize;
-    float2 integratedBRDF = IntegrateBRDF(texCoords.x, texCoords.y);
-	
-    u_BRDF_LUT[unnormalizedTexCoords] = integratedBRDF;
+    vec2 integratedBRDF = IntegrateBRDF(texCoords.x, texCoords.y);
+    imageStore(u_BRDF_LUT, unnormalizedTexCoords, vec4(integratedBRDF, 0, 1));
 }

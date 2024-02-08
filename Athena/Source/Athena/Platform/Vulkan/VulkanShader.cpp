@@ -41,7 +41,7 @@ namespace Athena
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
 		ATN_CORE_ASSERT(m_IsCompiled, "Failed to compile shader!");
 
-		m_ReflectionData = compiler.Reflect();
+		m_MetaData = compiler.Reflect();
 
 		if (m_IsCompiled)
 			CreateVulkanShaderModulesAndStages(compiler);
@@ -58,7 +58,7 @@ namespace Athena
 		std::unordered_map<uint32, DescriptorSetLayoutStatistics> stats;
 		std::unordered_map<uint32, std::vector<VkDescriptorSetLayoutBinding>> bindings;
 
-		for (const auto& [name, texture] : m_ReflectionData.SampledTextures)
+		for (const auto& [name, texture] : m_MetaData.SampledTextures)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = texture.Binding;
@@ -71,7 +71,7 @@ namespace Athena
 			stats[texture.Set].SampledTextures++;
 			stats[texture.Set].Samplers++;
 		}
-		for (const auto& [name, texture] : m_ReflectionData.StorageTextures)
+		for (const auto& [name, texture] : m_MetaData.StorageTextures)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = texture.Binding;
@@ -83,7 +83,7 @@ namespace Athena
 			bindings[texture.Set].push_back(uboLayoutBinding);
 			stats[texture.Set].StorageTextures++;
 		}
-		for (const auto& [name, ubo] : m_ReflectionData.UniformBuffers)
+		for (const auto& [name, ubo] : m_MetaData.UniformBuffers)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = ubo.Binding;
@@ -95,7 +95,7 @@ namespace Athena
 			bindings[ubo.Set].push_back(uboLayoutBinding);
 			stats[ubo.Set].UBOs++;
 		}
-		for (const auto& [name, ubo] : m_ReflectionData.StorageBuffers)
+		for (const auto& [name, ubo] : m_MetaData.StorageBuffers)
 		{
 			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 			uboLayoutBinding.binding = ubo.Binding;
@@ -135,7 +135,7 @@ namespace Athena
 		pipelineLayoutInfo.pSetLayouts = m_DescriptorSetLayouts.data();
 
 		VkPushConstantRange range = {};
-		const auto& pushConstant = m_ReflectionData.PushConstant;
+		const auto& pushConstant = m_MetaData.PushConstant;
 
 		if (pushConstant.Enabled)
 		{

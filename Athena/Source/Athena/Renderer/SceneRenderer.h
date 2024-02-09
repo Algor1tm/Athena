@@ -172,6 +172,8 @@ namespace Athena
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;
 
+		Ref<RenderPass> m_Renderer2DPass;
+
 		CameraData m_CameraData;
 		SceneData m_SceneData;
 		LightData m_LightData;

@@ -60,7 +60,7 @@ namespace Athena
 		setManagerInfo.LastSet = 4;
 		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(setManagerInfo);
 
-		CreatePipeline(info.RenderPass->GetOutput()->GetInfo().Width, info.RenderPass->GetOutput()->GetInfo().Height);
+		CreatePipeline(info.RenderPass->GetInfo().Width, info.RenderPass->GetInfo().Height);
 	}
 
 	VulkanPipeline::~VulkanPipeline()
@@ -198,7 +198,7 @@ namespace Athena
 			depthStencil.front = depthStencil.back;
 
 
-			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(m_Info.RenderPass->GetOutput()->GetColorAttachmentCount());
+			std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(m_Info.RenderPass->GetColorAttachmentCount());
 			for (auto& blendAttachment : colorBlendAttachments)
 			{
 				blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

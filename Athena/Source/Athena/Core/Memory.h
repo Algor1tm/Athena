@@ -44,9 +44,6 @@ namespace Athena
 	class Ref
 	{
 	public:
-		static_assert(std::is_base_of_v<RefCounted, T>, "T required to be inherited from RefCounted");
-
-	public:
 		template <typename... Args>
 		static Ref Create(Args&&... args)
 		{

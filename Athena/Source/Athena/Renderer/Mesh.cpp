@@ -188,12 +188,24 @@ namespace Athena
 			indices[index++] = faces[i].mIndices[2];
 		}
 
+		Ref<IndexBuffer> indexBuffer = nullptr;
+		if (!indices.empty())
+		{
+			IndexBufferCreateInfo indexBufferInfo;
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", aimesh->mName.C_Str());
+			indexBufferInfo.Data = indices.data();
+			indexBufferInfo.Count = indices.size();
+			indexBufferInfo.Usage = BufferUsage::STATIC;
+
+			indexBuffer = IndexBuffer::Create(indexBufferInfo);
+		}
+
 		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.VerticesData = vertices.data();
-		vertexBufferInfo.VerticesSize = vertices.size() * sizeof(StaticVertex);
-		vertexBufferInfo.IndicesData = indices.data();
-		vertexBufferInfo.IndicesCount = indices.size();
-		vertexBufferInfo.Usage = VertexBufferUsage::STATIC;
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", aimesh->mName.C_Str());
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Usage = BufferUsage::STATIC;
 
 		return VertexBuffer::Create(vertexBufferInfo);
 	}

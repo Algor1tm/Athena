@@ -146,19 +146,42 @@ namespace Athena
 	};
 
 	
-	enum class VertexBufferUsage
+	enum class BufferUsage
 	{
 		STATIC,
 		DYNAMIC
 	};
 
+	struct IndexBufferCreateInfo
+	{
+		String Name;
+		const void* Data;
+		uint32 Count;
+		BufferUsage Usage;
+	};
+
+	class ATHENA_API IndexBuffer : public RefCounted
+	{
+	public:
+		static Ref<IndexBuffer> Create(const IndexBufferCreateInfo& info);
+		virtual ~IndexBuffer() = default;
+
+		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
+
+		uint32 GetCount() const { return m_Info.Count; }
+		const IndexBufferCreateInfo& GetInfo() const { return m_Info; }
+
+	protected:
+		IndexBufferCreateInfo m_Info;
+	};
+
 	struct VertexBufferCreateInfo
 	{
-		const void* VerticesData;
-		uint32 VerticesSize;
-		const void* IndicesData;
-		uint32 IndicesCount;
-		VertexBufferUsage Usage;
+		String Name;
+		const void* Data;
+		uint64 Size;
+		Ref<IndexBuffer> IndexBuffer;
+		BufferUsage Usage;
 	};
 
 	class ATHENA_API VertexBuffer : public RefCounted
@@ -167,10 +190,11 @@ namespace Athena
 		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
 		virtual ~VertexBuffer() = default;
 
-		virtual void SetVertexData(const void* data, uint32 size) = 0;
+		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 
+		uint64 GetSize() const { return m_Info.Size; }
+		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
-		uint32 GetIndexCount() const { return m_Info.IndicesCount; }
 
 	protected:
 		VertexBufferCreateInfo m_Info;

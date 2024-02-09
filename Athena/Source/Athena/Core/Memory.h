@@ -161,9 +161,10 @@ namespace Athena
 		{
 			if (m_Object)
 			{
-				m_Object->Decrement();
+				RefCounted* objectBase = m_Object;
+				objectBase->Decrement();
 
-				if (m_Object->GetCount() == 0)
+				if (objectBase->GetCount() == 0)
 				{
 					delete m_Object;
 				}
@@ -218,7 +219,10 @@ namespace Athena
 		{
 			m_Object = ptr;
 			if (m_Object)
-				m_Object->Increment();
+			{
+				RefCounted* objectBase = m_Object;
+				objectBase->Increment();
+			}
 		}
 
 	private:

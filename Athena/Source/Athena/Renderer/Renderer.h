@@ -8,6 +8,7 @@
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 #include "Athena/Renderer/ComputePipeline.h"
+#include "Athena/Renderer/Pipeline.h"
 
 
 namespace Athena
@@ -130,9 +131,9 @@ namespace Athena
 		static void EndFrame();
 		static void WaitAndRender();
 
-		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material = nullptr);
-		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
-		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material = nullptr);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr);
+		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
+		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 
 		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
 		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image);

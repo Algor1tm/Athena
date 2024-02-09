@@ -7,6 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanIndexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
@@ -50,23 +51,35 @@ namespace Athena
 		VulkanContext::GetAllocator()->OnUpdate();
 	}
 
-	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material)
 	{
-		Renderer::Submit([commandBuffer, mesh, material]()
+		Renderer::Submit([commandBuffer, pipeline, vertexBuffer, material]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 			if(material)
 				material->RT_UpdateForRendering(commandBuffer);
 			
-			Ref<VulkanVertexBuffer> vkVertexBuffer = mesh.As<VulkanVertexBuffer>();
-			VkBuffer vertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
+			Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
+			VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
 
 			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vertexBuffer, offsets);
-			vkCmdBindIndexBuffer(vkcmdBuffer, vkVertexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vulkanVertexBuffer, offsets);
 
-			vkCmdDrawIndexed(vkcmdBuffer, mesh->GetIndexCount(), 1, 0, 0, 0);
+			if (vkVertexBuffer->GetIndexBuffer())
+			{
+				Ref<VulkanIndexBuffer> indexBuffer = vkVertexBuffer->GetIndexBuffer().As<VulkanIndexBuffer>();
+
+				vkCmdBindIndexBuffer(vkcmdBuffer, indexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				vkCmdDrawIndexed(vkcmdBuffer, indexBuffer->GetCount(), 1, 0, 0, 0);
+			}
+			else
+			{
+				uint32 stride = pipeline->GetInfo().Shader->GetMetaData().VertexBufferLayout.GetStride();
+				uint32 vbSize = vertexBuffer->GetSize();
+
+				vkCmdDraw(vkcmdBuffer, vbSize / stride, 1, 0, 0);
+			}
 		});
 	}
 

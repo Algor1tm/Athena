@@ -5,6 +5,7 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
+#include "Athena/Renderer/Pipeline.h"
 
 
 namespace Athena
@@ -20,7 +21,7 @@ namespace Athena
 
 		virtual void OnUpdate() = 0;
 
-		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material) = 0;
+		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material) = 0;
 		virtual void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i workGroupSize, const Ref<Material>& material) = 0;
 
 		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image) = 0;

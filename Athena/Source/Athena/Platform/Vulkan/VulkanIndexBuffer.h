@@ -9,16 +9,16 @@
 
 namespace Athena
 {
-	class VulkanVertexBuffer : public VertexBuffer
+	class VulkanIndexBuffer : public IndexBuffer
 	{
 	public:
-		VulkanVertexBuffer(const VertexBufferCreateInfo& info);
-		~VulkanVertexBuffer();
+		VulkanIndexBuffer(const IndexBufferCreateInfo& info);
+		~VulkanIndexBuffer();
 
 		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) override;
-		VkBuffer GetVulkanVertexBuffer() { return m_VertexBuffer.GetBuffer(); }
+		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer.GetBuffer(); }
 
 	private:
-		VulkanBufferAllocation m_VertexBuffer;
+		VulkanBufferAllocation m_IndexBuffer;
 	};
 }

@@ -358,4 +358,18 @@ namespace Athena::Vulkan
         vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
         vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), 1, &vkCommandBuffer);
     }
+
+    inline void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+    {
+        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
+        {
+            VkBufferCopy copyRegion{};
+            copyRegion.srcOffset = 0;
+            copyRegion.dstOffset = 0;
+            copyRegion.size = size;
+
+            vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+        }
+        EndSingleTimeCommands(vkCommandBuffer);
+    }
 }

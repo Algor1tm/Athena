@@ -50,7 +50,7 @@ namespace Athena
 		auto& ubo = m_VulkanUBSet[Renderer::GetCurrentFrameIndex()];
 
 		void* mappedMemory = ubo.MapMemory();
-		memcpy(mappedMemory, data, size);
+		memcpy((byte*)mappedMemory + offset, data, size);
 		ubo.UnmapMemory();
 	}
 }

@@ -128,12 +128,18 @@ namespace Athena
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 
+		IndexBufferCreateInfo indexBufInfo;
+		indexBufInfo.Name = "Renderer_CubeIB";
+		indexBufInfo.Data = cubeIndices;
+		indexBufInfo.Count = std::size(cubeIndices);
+		indexBufInfo.Usage = BufferUsage::STATIC;
+
 		VertexBufferCreateInfo vertexBufInfo;
-		vertexBufInfo.VerticesData = (void*)cubeVertices;
-		vertexBufInfo.VerticesSize = sizeof(cubeVertices);
-		vertexBufInfo.IndicesData = (void*)cubeIndices;
-		vertexBufInfo.IndicesCount = std::size(cubeIndices);
-		vertexBufInfo.Usage = VertexBufferUsage::STATIC;
+		vertexBufInfo.Name = "Renderer_CubeVB";
+		vertexBufInfo.Data = cubeVertices;
+		vertexBufInfo.Size = sizeof(cubeVertices);
+		vertexBufInfo.IndexBuffer = IndexBuffer::Create(indexBufInfo);
+		vertexBufInfo.Usage = BufferUsage::STATIC;
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
@@ -143,11 +149,14 @@ namespace Athena
 								  1.f, -1.f,  1.f, -1.f,
 								 -1.f, -1.f,  0.f, -1.f, };
 
-		vertexBufInfo.VerticesData = (void*)quadVertices;
-		vertexBufInfo.VerticesSize = sizeof(quadVertices);
-		vertexBufInfo.IndicesData = (void*)quadIndices;
-		vertexBufInfo.IndicesCount = std::size(quadIndices);
-		vertexBufInfo.Usage = VertexBufferUsage::STATIC;
+		indexBufInfo.Name = "Renderer_QuadIB";
+		indexBufInfo.Data = quadIndices;
+		indexBufInfo.Count = std::size(quadIndices);
+
+		vertexBufInfo.Name = "Renderer_QuadVB";
+		vertexBufInfo.Data = quadVertices;
+		vertexBufInfo.Size = sizeof(quadVertices);
+		vertexBufInfo.IndexBuffer = IndexBuffer::Create(indexBufInfo);
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
@@ -265,19 +274,19 @@ namespace Athena
 		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
-	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& mesh, const Ref<Material>& material)
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, mesh, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material);
 	}
 
-	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material)
+	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, s_Data.QuadVertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.QuadVertexBuffer, material);
 	}
 
-	void Renderer::RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Material>& material)
+	void Renderer::RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, s_Data.CubeVertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.CubeVertexBuffer, material);
 	}
 
 	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

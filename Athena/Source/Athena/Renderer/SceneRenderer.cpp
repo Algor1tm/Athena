@@ -262,7 +262,7 @@ namespace Athena
 					drawCall.Material->Bind(commandBuffer);
 
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderGeometry(commandBuffer, drawCall.VertexBuffer, drawCall.Material);
+				Renderer::RenderGeometry(commandBuffer, m_StaticGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
 			}
 			Renderer::EndDebugRegion(commandBuffer);
 			
@@ -270,7 +270,7 @@ namespace Athena
 			Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
 			{
 				m_SkyboxPipeline->Bind(commandBuffer);
-				Renderer::RenderNDCCube(commandBuffer);
+				Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
 			}
 			Renderer::EndDebugRegion(commandBuffer);
 		}
@@ -289,7 +289,7 @@ namespace Athena
 		m_CompositePass->Begin(commandBuffer);
 		{
 			m_CompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
 		}
 		m_CompositePass->End(commandBuffer);
 		Renderer::EndDebugRegion(commandBuffer);

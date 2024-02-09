@@ -6,38 +6,19 @@
 
 namespace Athena
 {
-	namespace Vulkan
-	{
-		static void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-		{
-			VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
-			{
-				VkBufferCopy copyRegion{};
-				copyRegion.srcOffset = 0;
-				copyRegion.dstOffset = 0;
-				copyRegion.size = size;
-
-				vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-			}
-			EndSingleTimeCommands(vkCommandBuffer);
-		}
-	}
-
-
 	VulkanVertexBuffer::VulkanVertexBuffer(const VertexBufferCreateInfo& info)
 	{
 		m_Info = info;
 
-		Buffer vertexLocalData = Buffer::Copy(info.VerticesData, info.VerticesSize);
-		Buffer indexLocalData = Buffer::Copy(info.IndicesData, info.IndicesCount * sizeof(uint32));
+		Buffer vertexLocalData = Buffer::Copy(m_Info.Data, m_Info.Size);
 
-		Renderer::Submit([this, vertexLocalData, indexLocalData]() mutable
+		Renderer::Submit([this, vertexLocalData]() mutable
 		{
 			Ref<VulkanAllocator> allocator = VulkanContext::GetAllocator();
 
-			// Vertex buffer
+			if(m_Info.Usage == BufferUsage::STATIC)
 			{
-				VkDeviceSize bufferSize = m_Info.VerticesSize;
+				VkDeviceSize bufferSize = m_Info.Size;
 
 				VkBufferCreateInfo bufferInfo = {};
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -51,48 +32,54 @@ namespace Athena
 				stagingBuffer.UnmapMemory();
 
 				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-				m_VertexBuffer = allocator->AllocateBuffer(bufferInfo);
+				m_VertexBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, (VmaAllocationCreateFlagBits)0, m_Info.Name);
+				Vulkan::SetObjectDebugName(m_VertexBuffer.GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_Info.Name);
 
 				Vulkan::CopyBuffer(stagingBuffer.GetBuffer(), m_VertexBuffer.GetBuffer(), bufferSize);
 
 				allocator->DestroyBuffer(stagingBuffer);
-				vertexLocalData.Release();
-				m_Info.VerticesData = nullptr;
 			}
-
-			// Index buffer
+			else if (m_Info.Usage == BufferUsage::DYNAMIC)
 			{
-				VkDeviceSize bufferSize = m_Info.IndicesCount * sizeof(uint32);
+				VkDeviceSize bufferSize = m_Info.Size;
 
 				VkBufferCreateInfo bufferInfo = {};
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 				bufferInfo.size = bufferSize;
-				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+				bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
-				VulkanBufferAllocation stagingBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				m_VertexBuffer = allocator->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, m_Info.Name);
+				Vulkan::SetObjectDebugName(m_VertexBuffer.GetBuffer(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_Info.Name);
 
-				void* mappedData = stagingBuffer.MapMemory();
-				memcpy(mappedData, indexLocalData.Data(), bufferSize);
-				stagingBuffer.UnmapMemory();
-
-				bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-				m_IndexBuffer = allocator->AllocateBuffer(bufferInfo);
-
-				Vulkan::CopyBuffer(stagingBuffer.GetBuffer(), m_IndexBuffer.GetBuffer(), bufferSize);
-
-				allocator->DestroyBuffer(stagingBuffer);
-				indexLocalData.Release();
-				m_Info.IndicesData = nullptr;
+				if (m_Info.Data != nullptr)
+				{
+					void* mappedData = m_VertexBuffer.MapMemory();
+					memcpy(mappedData, vertexLocalData.Data(), bufferSize);
+					m_VertexBuffer.UnmapMemory();
+				}
 			}
+
+			vertexLocalData.Release();
+			m_Info.Data = nullptr;
 		});
 	}
 
 	VulkanVertexBuffer::~VulkanVertexBuffer()
 	{
-		Renderer::SubmitResourceFree([vertexBuffer = m_VertexBuffer, indexBuffer = m_IndexBuffer]() 
+		Renderer::SubmitResourceFree([vertexBuffer = m_VertexBuffer, name = m_Info.Name]() 
 		{
-			VulkanContext::GetAllocator()->DestroyBuffer(vertexBuffer);
-			VulkanContext::GetAllocator()->DestroyBuffer(indexBuffer);
+			VulkanContext::GetAllocator()->DestroyBuffer(vertexBuffer, name);
 		});
+
+		m_Info.IndexBuffer.Release();
+	}
+
+	void VulkanVertexBuffer::RT_SetData(const void* data, uint64 size, uint64 offset)
+	{
+		ATN_CORE_VERIFY(m_Info.Usage == BufferUsage::DYNAMIC);
+
+		void* mappedData = m_VertexBuffer.MapMemory();
+		memcpy((byte*)mappedData + offset, data, size);
+		m_VertexBuffer.UnmapMemory();
 	}
 }

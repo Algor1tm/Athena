@@ -56,8 +56,8 @@ namespace Athena
 		}
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
-		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
 		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/ShaderPack";
+		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
 
 		if (!FileSystem::Exists(s_Data.ShaderCacheDirectory))
 			FileSystem::CreateDirectory(s_Data.ShaderCacheDirectory);
@@ -76,14 +76,7 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
 
-		s_Data.ShaderPack = Ref<ShaderPack>::Create();
-		s_Data.ShaderPack->Load("PBR_Static.glsl");
-		s_Data.ShaderPack->Load("Skybox.glsl");
-		s_Data.ShaderPack->Load("SceneComposite.glsl");
-		s_Data.ShaderPack->Load("BRDF_LUT.glsl");
-		s_Data.ShaderPack->Load("PanoramaToCubemap.glsl");
-		s_Data.ShaderPack->Load("IrradianceMapConvolution.glsl");
-
+		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
 		uint32 whiteTextureData = 0xffffffff;
@@ -160,7 +153,6 @@ namespace Athena
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-#if 1
 		// BRDF_LUT GENERATION
 		{
 			Texture2DCreateInfo brdfLutInfo;
@@ -211,7 +203,6 @@ namespace Athena
 			commandBuffer->End();
 			commandBuffer->Submit();
 		}
-#endif
 	}
 
 	void Renderer::Shutdown()
@@ -274,9 +265,9 @@ namespace Athena
 		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
 	}
 
-	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material)
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, vertexCount);
 	}
 
 	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)

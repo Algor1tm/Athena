@@ -31,6 +31,32 @@ namespace Athena
 		return nullptr;
 	}
 
+	Ref<ShaderPack> ShaderPack::Create(const FilePath& path)
+	{
+		Ref<ShaderPack> result = Ref<ShaderPack>::Create();
+		result->m_Directory = path;
+		result->LoadDirectory(path);
+		return result;
+	}
+
+	void ShaderPack::LoadDirectory(const FilePath& path)
+	{
+		for (const auto& dirEntry : std::filesystem::directory_iterator(path))
+		{
+			const FilePath& path = dirEntry.path();
+
+			if (dirEntry.is_directory())
+				LoadDirectory(path);
+
+			if (path.extension() == ".glsl" || path.extension() == ".hlsl")
+			{
+				String name = path.stem().string();
+				Ref<Shader> shader = Shader::Create(path, name);
+				Add(name, shader);
+			}
+		}
+	}
+
 	void ShaderPack::Add(const String& name, const Ref<Shader>& shader)
 	{
 		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
@@ -39,14 +65,14 @@ namespace Athena
 
 	Ref<Shader> ShaderPack::Load(const FilePath& path)
 	{
-		auto shader = Shader::Create(Renderer::GetShaderPackDirectory() / path);
+		auto shader = Shader::Create(m_Directory / path);
 		Add(shader->GetName(), shader);
 		return shader;
 	}
 
 	Ref<Shader> ShaderPack::Load(const FilePath& path, const String& name)
 	{
-		auto shader = Shader::Create(Renderer::GetShaderPackDirectory() / path, name);
+		auto shader = Shader::Create(m_Directory / path, name);
 		Add(shader->GetName(), shader);
 		return shader;
 	}

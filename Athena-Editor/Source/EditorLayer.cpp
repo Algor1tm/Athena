@@ -49,6 +49,7 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
 
         m_ViewportRenderer = SceneRenderer::Create();
+        m_ViewportRenderer->GetSceneRenderer2D()->SetLineWidth(1.f);
 
         m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
@@ -102,12 +103,14 @@ namespace Athena
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime, m_ViewportRenderer, *m_EditorCamera);
+            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
         }
         case SceneState::Play:
         {
-            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime, m_ViewportRenderer);
+            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer);
             break;
         }
         case SceneState::Simulation:
@@ -115,12 +118,13 @@ namespace Athena
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime, m_ViewportRenderer , *m_EditorCamera);
+            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
         }
         }
 
-        //RenderOverlay();
+        OnRender2D();
     }
 
     void EditorLayer::OnImGuiRender()
@@ -369,29 +373,19 @@ namespace Athena
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-        //const auto& vpDesc = m_MainViewport->GetDescription();
-
-        //auto [mx, my] = ImGui::GetMousePos();
-        //mx -= vpDesc.Bounds[0].x;
-        //my -= vpDesc.Bounds[0].y;
-        //Vector2 viewportSize = vpDesc.Bounds[1] - vpDesc.Bounds[0];
-        //my = viewportSize.y - my;
-
-        //int mouseX = (int)mx;
-        //int mouseY = (int)my;
-
-        //if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
-        //{
-        //    int pixelData = SceneRenderer::GetEntityIDFramebuffer()->ReadPixel(0, mouseX, mouseY);
-        //    if (pixelData != -1)
-        //        return { (entt::entity)pixelData, m_EditorScene.get() };
-        //}
 
         return Entity{};
     }
 
-    void EditorLayer::RenderOverlay()
+    void EditorLayer::OnRender2D()
     {
+        auto commandBuffer = Renderer::GetRenderCommandBuffer();
+
+        Renderer::BeginDebugRegion(commandBuffer, "Renderer2DPass", { 0.9f, 0.1f, 0.2f, 1.f });
+        m_ViewportRenderer->GetRenderer2DPass()->Begin(commandBuffer);
+        
+        Ref<SceneRenderer2D> renderer2D = m_ViewportRenderer->GetSceneRenderer2D();
+
         if (m_EditorCtx->SceneState == SceneState::Play)
         {
             Entity camera = m_EditorCtx->ActiveScene->GetPrimaryCameraEntity();
@@ -400,17 +394,19 @@ namespace Athena
 				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
 				Matrix4 view = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix());
-                SceneRenderer2D::BeginScene(view, runtimeCamera.GetProjectionMatrix());
+                renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
             {
-                SceneRenderer2D::BeginScene(Matrix4::Identity(), m_EditorCamera->GetProjectionMatrix());
+                renderer2D->BeginScene(Matrix4::Identity(), m_EditorCamera->GetProjectionMatrix());
             }
         }
         else
         {
-            SceneRenderer2D::BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
+            renderer2D->BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
         }
+
+        m_EditorCtx->ActiveScene->OnRender2D(renderer2D);
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         if (settingsPanel->GetEditorSettings().ShowPhysicsColliders)
@@ -425,7 +421,7 @@ namespace Athena
                     Vector2 scale = tc.Scale * Vector3(bc2d.Size * 2.f, 1.f);
                     Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(bc2d.Offset.y, bc2d.Offset.x, 0.f)).Rotate(tc.Rotation.z, Vector3::Back()).Translate(Vector3(translation, 0.001f));
 
-                    SceneRenderer2D::DrawRect(transform, LinearColor::Green, 3.f);
+                    renderer2D->DrawRect(transform, LinearColor::Green);
                 }
             }
 
@@ -439,7 +435,7 @@ namespace Athena
                     Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
                     Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, 0.001f));
 
-                    SceneRenderer2D::DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
+                    renderer2D->DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
                 }
             }
         }
@@ -455,7 +451,7 @@ namespace Athena
                 float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
                 float scale = 0.1f * distance;
                 Matrix4 rectTransform = Math::ConstructTransform(worldTransform.Translation, {scale, scale, scale}, worldTransform.Rotation);
-                SceneRenderer2D::DrawRect(rectTransform, color, 1);
+                renderer2D->DrawRect(rectTransform, color);
             }
             else if (selectedEntity.HasComponent<StaticMeshComponent>())
             {
@@ -467,27 +463,27 @@ namespace Athena
                 Vector3 max = transformedBox.GetMaxPoint();
 
                 // front
-                SceneRenderer2D::DrawLine(max, { max.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, max.z }, { min.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, min.y, max.z }, { min.x, max.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, max.z }, max, color);
+                renderer2D->DrawLine(max, { max.x, min.y, max.z }, color);
+                renderer2D->DrawLine({ max.x, min.y, max.z }, { min.x, min.y, max.z }, color);
+                renderer2D->DrawLine({ min.x, min.y, max.z }, { min.x, max.y, max.z }, color);
+                renderer2D->DrawLine({ min.x, max.y, max.z }, max, color);
                 // back
-                SceneRenderer2D::DrawLine(min, { min.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, min.z }, { max.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, max.y, min.z }, { max.x, min.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, min.z }, min, color);
+                renderer2D->DrawLine(min, { min.x, max.y, min.z }, color);
+                renderer2D->DrawLine({ min.x, max.y, min.z }, { max.x, max.y, min.z }, color);
+                renderer2D->DrawLine({ max.x, max.y, min.z }, { max.x, min.y, min.z }, color);
+                renderer2D->DrawLine({ max.x, min.y, min.z }, min, color);
 
                 // left
-                SceneRenderer2D::DrawLine(min, { min.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, min.z }, { min.x, max.y, max.z }, color);
+                renderer2D->DrawLine(min, { min.x, min.y, max.z }, color);
+                renderer2D->DrawLine({ min.x, max.y, min.z }, { min.x, max.y, max.z }, color);
 
                 // right
-                SceneRenderer2D::DrawLine(max, { max.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color);
+                renderer2D->DrawLine(max, { max.x, max.y, min.z }, color);
+                renderer2D->DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color);
             }
             else if(selectedEntity.HasComponent<SpriteComponent>() || selectedEntity.HasComponent<CircleComponent>())
             {
-                SceneRenderer2D::DrawRect(worldTransform.AsMatrix(), color, 8.f);
+                renderer2D->DrawRect(worldTransform.AsMatrix(), color);
             }
             else if (selectedEntity.HasComponent<PointLightComponent>())
             {
@@ -503,22 +499,25 @@ namespace Athena
                     Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f );
                     Vector3 p1 = position + Vector3(offset1.x, offset1.y, 0.f);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, color);
 
 					p0 = position + Vector3(offset0.x, 0.f, offset0.y);
 					p1 = position + Vector3(offset1.x, 0.f, offset1.y);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, color);
 
 					p0 = position + Vector3(0.f, offset0.x, offset0.y);
 					p1 = position + Vector3(0.f, offset1.x, offset1.y);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, color);
                 }
             }
         }
 
-        SceneRenderer2D::EndScene();
+        renderer2D->EndScene();
+
+        m_ViewportRenderer->GetRenderer2DPass()->End(commandBuffer);
+        Renderer::EndDebugRegion(commandBuffer);
     }
 
     void EditorLayer::DrawAboutModal()

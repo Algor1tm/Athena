@@ -14,6 +14,7 @@
 #include "Athena/Renderer/Light.h"
 #include "Athena/Renderer/DrawList.h"
 #include "Athena/Renderer/Pipeline.h"
+#include "Athena/Renderer/SceneRenderer2D.h"
 
 #include "Athena/Math/Matrix.h"
 
@@ -158,6 +159,9 @@ namespace Athena
 		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
+		Ref<RenderPass> GetRenderer2DPass() { return m_Renderer2DPass; }
+		Ref<SceneRenderer2D> GetSceneRenderer2D() { return m_SceneRenderer2D; }
+
 	private:
 		void GeometryPass();
 		void SceneCompositePass();
@@ -184,6 +188,7 @@ namespace Athena
 
 		Vector2u m_ViewportSize = { 1, 1 };
 
+		Ref<SceneRenderer2D> m_SceneRenderer2D;
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Ref<GPUProfiler> m_Profiler;
 		SceneRendererStatistics m_Statistics;

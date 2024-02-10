@@ -41,7 +41,7 @@ namespace Athena
 		Entity DuplicateEntity(Entity entity);
 
 		void InitUI();
-		void RenderOverlay();
+		void OnRender2D();
 		void DrawAboutModal();
 		void DrawThemeEditor();
 

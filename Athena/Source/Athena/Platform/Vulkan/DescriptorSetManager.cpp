@@ -229,7 +229,7 @@ namespace Athena
 
 		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
 		{
-			if (setLayouts.size() > 0)
+			if (poolSizes.size() > 0)
 			{
 				VkDescriptorSetAllocateInfo allocInfo = {};
 				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

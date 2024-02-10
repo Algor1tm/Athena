@@ -10,7 +10,7 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Buffer vertexLocalData = Buffer::Copy(m_Info.Data, m_Info.Size);
+		Buffer vertexLocalData = Buffer::Copy(m_Info.Data, info.Data == nullptr ? 0 : m_Info.Size);
 
 		Renderer::Submit([this, vertexLocalData]() mutable
 		{

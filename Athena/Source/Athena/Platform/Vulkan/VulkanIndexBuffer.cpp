@@ -10,7 +10,7 @@ namespace Athena
 	{
 		m_Info = info;
 
-		Buffer indexLocalData = Buffer::Copy(m_Info.Data, m_Info.Count * sizeof(uint32));
+		Buffer indexLocalData = Buffer::Copy(m_Info.Data, info.Data == nullptr ? 0 : m_Info.Count * sizeof(uint32));
 
 		Renderer::Submit([this, indexLocalData]() mutable
 		{

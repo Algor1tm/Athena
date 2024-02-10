@@ -125,12 +125,14 @@ namespace Athena
 			passInfo.ExistingImages.push_back(m_GeometryPass->GetDepthOutput()->GetImage());
 
 			m_Renderer2DPass = RenderPass::Create(passInfo);
+
+			m_SceneRenderer2D = SceneRenderer2D::Create(m_Renderer2DPass);
 		}
 	}
 
 	void SceneRenderer::Shutdown()
 	{
-		
+		m_SceneRenderer2D.Release();
 	}
 
 	Ref<Image> SceneRenderer::GetFinalImage()
@@ -150,6 +152,8 @@ namespace Athena
 		m_CompositePipeline->SetViewport(width, height);
 
 		m_Renderer2DPass->Resize(width, height);
+
+		m_SceneRenderer2D->OnViewportResize(width, height);
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform)

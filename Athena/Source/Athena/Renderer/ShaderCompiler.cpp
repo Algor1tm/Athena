@@ -507,10 +507,11 @@ namespace Athena
 				elements.reserve(resources.stage_inputs.size());
 				for (const auto& resource : resources.stage_inputs)
 				{
+					uint32 location = compiler.get_decoration(resource.id, spv::DecorationLocation);
 					ShaderDataType elemType = Utils::SpirvTypeToShaderDataType(compiler.get_type(resource.type_id));
 					ATN_CORE_ASSERT(elemType != ShaderDataType::Unknown);
 
-					elements.push_back({ elemType, resource.name });
+					elements.push_back({ elemType, resource.name, location });
 				}
 
 				result.VertexBufferLayout = elements;

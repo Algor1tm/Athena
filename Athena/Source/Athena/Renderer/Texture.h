@@ -75,8 +75,9 @@ namespace Athena
 
 		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
 
-		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
+		const String& GetName() const { return m_Info.Name; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
+		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
 
 	protected:
 		Texture2DCreateInfo m_Info;

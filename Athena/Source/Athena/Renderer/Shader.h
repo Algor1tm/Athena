@@ -85,6 +85,7 @@ namespace Athena
 	class ATHENA_API ShaderPack : public RefCounted
 	{
 	public:
+		static Ref<ShaderPack> Create(const FilePath& path);
 		void Add(const String& name, const Ref<Shader>& shader);
 
 		Ref<Shader> Load(const FilePath& path);
@@ -94,7 +95,13 @@ namespace Athena
 		bool Exists(const String& name);
 		void Reload();
 
+		const FilePath GetDirectory() const { return m_Directory; };
+
+	private:
+		void LoadDirectory(const FilePath& path);
+
 	private:
 		std::unordered_map<String, Ref<Shader>> m_Shaders;
+		FilePath m_Directory;
 	};
 }

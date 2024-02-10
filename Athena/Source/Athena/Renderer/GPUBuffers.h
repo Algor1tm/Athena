@@ -62,9 +62,11 @@ namespace Athena
 		uint32 Size;
 		uint32 Offset;
 		bool Normalized;
+		uint32 Location;
 
-		VertexBufferElement(ShaderDataType type, const String& name, bool normalized = false)
-			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
+		VertexBufferElement() = default;
+		VertexBufferElement(ShaderDataType type, const String& name, uint32 location ,bool normalized = false)
+			: Name(name), Type(type), Location(location), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
 		uint32 GetComponentCount() const
 		{
@@ -129,10 +131,14 @@ namespace Athena
 	private:
 		void CalculateOffsetsAndStride()
 		{
-			uint32 stride = 0;
-			uint32 offset = 0;
-
+			std::vector<VertexBufferElement> sortedElems(m_Elements.size());
 			for (auto& elem : m_Elements)
+				sortedElems[elem.Location] = elem;
+
+			m_Elements = sortedElems;
+
+			uint32 offset = 0;
+			for (auto& elem: m_Elements)
 			{
 				elem.Offset = offset;
 				offset += elem.Size;

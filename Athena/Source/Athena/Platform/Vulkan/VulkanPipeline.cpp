@@ -118,11 +118,12 @@ namespace Athena
 			std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexBufferLayout.GetElementsNum());
 			for (uint32 i = 0; i < vertexBufferLayout.GetElementsNum(); ++i)
 			{
+				const auto& elem = vertexBufferLayout.GetElements()[i];
+
 				attributeDescriptions[i].binding = 0;
-				attributeDescriptions[i].location = i;
-				attributeDescriptions[i].format =
-					Vulkan::GetFormat(vertexBufferLayout.GetElements()[i].Type, vertexBufferLayout.GetElements()[i].Normalized);
-				attributeDescriptions[i].offset = vertexBufferLayout.GetElements()[i].Offset;
+				attributeDescriptions[i].location = elem.Location;
+				attributeDescriptions[i].format = Vulkan::GetFormat(elem.Type, elem.Normalized);
+				attributeDescriptions[i].offset = elem.Offset;
 			}
 
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};

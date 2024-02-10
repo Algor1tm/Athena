@@ -54,12 +54,17 @@ namespace Athena
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 
-		void OnUpdateEditor(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera); 
-		void OnUpdateRuntime(Time frameTime, Ref<SceneRenderer> renderer);
-		void OnUpdateSimulation(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera);
+		void OnUpdateEditor(Time frameTime); 
+		void OnUpdateRuntime(Time frameTime);
+		void OnUpdateSimulation(Time frameTime);
 
 		void OnRuntimeStart();
 		void OnSimulationStart();
+
+		void OnRender(Ref<SceneRenderer> renderer, const EditorCamera& camera);
+		void OnRender(Ref<SceneRenderer> renderer);
+
+		void OnRender2D(Ref<SceneRenderer2D> renderer2D);
 
 		void LoadAllScripts();
 

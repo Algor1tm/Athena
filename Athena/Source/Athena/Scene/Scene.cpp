@@ -271,7 +271,7 @@ namespace Athena
 		return {};
 	}
 
-	void Scene::OnUpdateEditor(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
+	void Scene::OnUpdateEditor(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
 		// Update Animations
@@ -287,11 +287,9 @@ namespace Athena
 				}
 			}
 		}
-
-		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
-	void Scene::OnUpdateRuntime(Time frameTime, Ref<SceneRenderer> renderer)
+	void Scene::OnUpdateRuntime(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
 		// Update scripts
@@ -335,44 +333,12 @@ namespace Athena
 
 		// Physics
 		UpdatePhysics(frameTime);
-
-		// Choose camera
-		SceneCamera* mainCamera = nullptr;
-		TransformComponent cameraTransform;
-		{
-			auto cameras = m_Registry.view<CameraComponent>();
-			for (auto entity : cameras)
-			{
-				auto& camera = cameras.get<CameraComponent>(entity);
-
-				if (camera.Primary)
-				{
-					mainCamera = &camera.Camera;
-					cameraTransform = GetWorldTransform(entity);
-					break;
-				}
-			}
-		}
-
-		// Render 
-		{
-			if (mainCamera)
-			{
-				Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
-				Matrix4 projectionMatrix = mainCamera->GetProjectionMatrix();
-				float near = mainCamera->GetNearClip();
-				float far = mainCamera->GetFarClip();
-
-				RenderScene(renderer, viewMatrix, projectionMatrix, near, far);
-			}
-		}
 	}
 
-	void Scene::OnUpdateSimulation(Time frameTime, Ref<SceneRenderer> renderer, const EditorCamera& camera)
+	void Scene::OnUpdateSimulation(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
 		UpdatePhysics(frameTime);
-		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
 	void Scene::OnRuntimeStart()
@@ -454,52 +420,52 @@ namespace Athena
 
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
+		{
+			Entity entity = Entity(entityID, this);
+			TransformComponent transform = entity.GetWorldTransform();
+
+			b2BodyDef bodyDef;
+			bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
+			bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
+			bodyDef.angle = transform.Rotation.AsEulerAngles().z;
+
+			b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
+			body->SetFixedRotation(rb2d.FixedRotation);
+			rb2d.RuntimeBody = reinterpret_cast<void*>(body);
+
+			if (entity.HasComponent<BoxCollider2DComponent>())
 			{
-				Entity entity = Entity(entityID, this);
-				TransformComponent transform = entity.GetWorldTransform();
+				auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
 
-				b2BodyDef bodyDef;
-				bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
-				bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
-				bodyDef.angle = transform.Rotation.AsEulerAngles().z;
+				b2PolygonShape boxShape;
+				boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y, b2Vec2(bc2d.Offset.y, bc2d.Offset.x), 0.f);
 
-				b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
-				body->SetFixedRotation(rb2d.FixedRotation);
-				rb2d.RuntimeBody = reinterpret_cast<void*>(body);
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &boxShape;
+				fixtureDef.density = bc2d.Density;
+				fixtureDef.friction = bc2d.Friction;
+				fixtureDef.restitution = bc2d.Restitution;
+				fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
+				body->CreateFixture(&fixtureDef);
+			}
 
-				if (entity.HasComponent<BoxCollider2DComponent>())
-				{
-					auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
+			if (entity.HasComponent<CircleCollider2DComponent>())
+			{
+				auto& cc2d = entity.GetComponent<CircleCollider2DComponent>();
 
-					b2PolygonShape boxShape;
-					boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y, b2Vec2(bc2d.Offset.y, bc2d.Offset.x), 0.f);
+				b2CircleShape circleShape;
+				circleShape.m_p.Set(cc2d.Offset.x, cc2d.Offset.y);
+				circleShape.m_radius = cc2d.Radius * transform.Scale.x;
 
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &boxShape;
-					fixtureDef.density = bc2d.Density;
-					fixtureDef.friction = bc2d.Friction;
-					fixtureDef.restitution = bc2d.Restitution;
-					fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
-					body->CreateFixture(&fixtureDef);
-				}
-
-				if (entity.HasComponent<CircleCollider2DComponent>())
-				{
-					auto& cc2d = entity.GetComponent<CircleCollider2DComponent>();
-
-					b2CircleShape circleShape;
-					circleShape.m_p.Set(cc2d.Offset.x, cc2d.Offset.y);
-					circleShape.m_radius = cc2d.Radius * transform.Scale.x;
-
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &circleShape;
-					fixtureDef.density = cc2d.Density;
-					fixtureDef.friction = cc2d.Friction;
-					fixtureDef.restitution = cc2d.Restitution;
-					fixtureDef.restitutionThreshold = cc2d.RestitutionThreshold;
-					body->CreateFixture(&fixtureDef);
-				}
-			});
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &circleShape;
+				fixtureDef.density = cc2d.Density;
+				fixtureDef.friction = cc2d.Friction;
+				fixtureDef.restitution = cc2d.Restitution;
+				fixtureDef.restitutionThreshold = cc2d.RestitutionThreshold;
+				body->CreateFixture(&fixtureDef);
+			}
+		});
 	}
 
 	void Scene::UpdatePhysics(Time frameTime)
@@ -532,6 +498,63 @@ namespace Athena
 		}
 	}
 
+	void Scene::OnRender(Ref<SceneRenderer> renderer, const EditorCamera& camera)
+	{
+		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
+	}
+
+	void Scene::OnRender(Ref<SceneRenderer> renderer)
+	{
+		// Choose camera
+		SceneCamera* mainCamera = nullptr;
+		TransformComponent cameraTransform;
+		{
+			auto cameras = m_Registry.view<CameraComponent>();
+			for (auto entity : cameras)
+			{
+				auto& camera = cameras.get<CameraComponent>(entity);
+
+				if (camera.Primary)
+				{
+					mainCamera = &camera.Camera;
+					cameraTransform = GetWorldTransform(entity);
+					break;
+				}
+			}
+		}
+
+		// Render 
+		if (mainCamera)
+		{
+			Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
+			Matrix4 projectionMatrix = mainCamera->GetProjectionMatrix();
+			float near = mainCamera->GetNearClip();
+			float far = mainCamera->GetFarClip();
+
+			RenderScene(renderer, viewMatrix, projectionMatrix, near, far);
+		}
+	}
+
+	void Scene::OnRender2D(Ref<SceneRenderer2D> renderer2D)
+	{
+		auto quads = GetAllEntitiesWith<SpriteComponent>();
+		for (auto entity : quads)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& sprite = quads.get<SpriteComponent>(entity);
+
+			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+		}
+
+		auto circles = GetAllEntitiesWith<CircleComponent>();
+		for (auto entity : circles)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& circle = circles.get<CircleComponent>(entity);
+
+			renderer2D->DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
+		}
+	}
 
 	void Scene::RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
@@ -599,29 +622,6 @@ namespace Athena
 		renderer->SubmitLightEnvironment(lightEnv);
 
 		renderer->EndScene();
-
-
-		//SceneRenderer2D::BeginScene(view, proj);
-
-		//auto quads = GetAllEntitiesWith<SpriteComponent>();
-		//for (auto entity : quads)
-		//{
-		//	auto transform = GetWorldTransform(entity);
-		//	const auto& sprite = quads.get<SpriteComponent>(entity);
-
-		//	SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-		//}
-
-		//auto circles = GetAllEntitiesWith<CircleComponent>();
-		//for (auto entity : circles)
-		//{
-		//	auto transform = GetWorldTransform(entity);
-		//	const auto& circle = circles.get<CircleComponent>(entity);
-
-		//	SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
-		//}
-
-		//SceneRenderer2D::EndScene();
 	}
 
 	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)

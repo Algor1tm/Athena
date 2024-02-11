@@ -25,6 +25,11 @@ namespace Athena
 		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Static"), name);
 	}
 
+	Ref<Material> Material::CreatePBRAnim(const String& name)
+	{
+		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Anim"), name);
+	}
+
 	void Material::Set(const String& name, const Matrix4& value)
 	{
 		SetInternal(name, ShaderDataType::Mat4, &value);

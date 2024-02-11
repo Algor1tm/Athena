@@ -163,8 +163,8 @@ namespace Athena
 
 	void SceneRenderer2D::Flush()
 	{
-		//Renderer::Submit([this]()
-		//{
+		Renderer::Submit([this]()
+		{
 			if (m_QuadIndexCount)
 			{
 				uint64 dataSize = (byte*)m_QuadVertexBufferPointer - (byte*)m_QuadVertexBufferBase;
@@ -182,7 +182,7 @@ namespace Athena
 				uint64 dataSize = (byte*)m_LineVertexBufferPointer - (byte*)m_LineVertexBufferBase;
 				m_LineVertexBuffer->RT_SetData(m_LineVertexBufferBase, dataSize);
 			}
-		//});
+		});
 
 		auto commandBuffer = m_RenderCommandBuffer;
 

@@ -211,6 +211,9 @@ namespace Athena
 
 	void VulkanRenderPass::Begin(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
+		if(m_Info.DebugColor != LinearColor(0.f))
+			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
+
 		Renderer::Submit([this, commandBuffer = commandBuffer]()
 		{
 			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -237,6 +240,9 @@ namespace Athena
 			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 			vkCmdEndRenderPass(vkcmdBuf);
 		});
+		
+		if (m_Info.DebugColor != LinearColor(0.f))
+			Renderer::EndDebugRegion(commandBuffer);
 	}
 
 	void VulkanRenderPass::Resize(uint32 width, uint32 height)

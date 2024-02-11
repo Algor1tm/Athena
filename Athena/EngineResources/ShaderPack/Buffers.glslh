@@ -40,3 +40,8 @@ layout(std430, set = 1, binding = 2) readonly buffer u_LightData
     PointLight g_PointLights[MAX_POINT_LIGHT_COUNT];
     int g_PointLightCount;
 };
+
+layout(std430, set = 1, binding = 3) readonly buffer u_BonesData
+{
+    mat4 g_Bones[MAX_NUM_BONES_PER_MESH * MAX_NUM_ANIMATED_MESHES];
+};

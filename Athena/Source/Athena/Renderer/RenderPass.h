@@ -37,6 +37,7 @@ namespace Athena
 		std::vector<Ref<Image>> ExistingImages;
 		uint32 Width;
 		uint32 Height;
+		LinearColor DebugColor = LinearColor(0.f, 0.f, 0.f, 0.f);
 	};
 
 	class ATHENA_API RenderPass: public RefCounted

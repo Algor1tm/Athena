@@ -182,12 +182,16 @@ namespace Athena
 	}
 
 
-	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations)
+	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton)
 	{
 		Ref<Animator> result = Ref<Animator>::Create();
 
+		result->m_Skeleton = skeleton;
 		result->m_Animations = animations;
 		result->m_CurrentTime = 0.f;
+
+		result->m_BoneTransforms.resize(skeleton->GetBoneCount());
+		result->StopAnimation();
 
 		return result;
 	}
@@ -207,20 +211,20 @@ namespace Athena
 	{
 		m_CurrentTime = 0.f;
 		m_CurrentAnimation = nullptr;
+
+		Matrix4 identity = Matrix4::Identity();
+		for (uint32 i = 0; i < m_BoneTransforms.size(); ++i)
+			m_BoneTransforms[i] = identity;
 	}
 
 	void Animator::PlayAnimation(const Ref<Animation>& animation)
 	{
-		StopAnimation();
+		m_CurrentTime = 0.f;
+		m_CurrentAnimation = nullptr;
 
 		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
 		{
 			m_CurrentAnimation = animation;
-
-			m_BoneTransforms.resize(m_CurrentAnimation->GetSkeleton()->GetBoneCount());
-			Matrix4 identity = Matrix4::Identity();
-			for (uint32 i = 0; i < m_BoneTransforms.size(); ++i)
-				m_BoneTransforms[i] = identity;
 		}
 		else
 		{

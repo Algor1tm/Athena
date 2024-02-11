@@ -156,6 +156,7 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
+		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity());
 		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
@@ -168,9 +169,11 @@ namespace Athena
 
 	private:
 		DrawList m_StaticGeometryList;
+		DrawList m_AnimGeometryList;
 
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
+		Ref<Pipeline> m_AnimGeometryPipeline;
 		Ref<Pipeline> m_SkyboxPipeline;
 
 		Ref<RenderPass> m_CompositePass;
@@ -181,10 +184,13 @@ namespace Athena
 		CameraData m_CameraData;
 		SceneData m_SceneData;
 		LightData m_LightData;
+		std::vector<Matrix4> m_BonesData;
+		uint32 m_BonesDataOffset;
 
 		Ref<UniformBuffer> m_CameraUBO;
 		Ref<UniformBuffer> m_SceneUBO;
 		Ref<StorageBuffer> m_LightSBO;
+		Ref<StorageBuffer> m_BonesSBO;
 
 		Vector2u m_ViewportSize = { 1, 1 };
 

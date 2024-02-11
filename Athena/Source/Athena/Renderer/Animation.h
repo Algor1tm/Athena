@@ -112,7 +112,7 @@ namespace Athena
 	class ATHENA_API Animator : public RefCounted
 	{
 	public:
-		static Ref<Animator> Create(const std::vector<Ref<Animation>>& animations);
+		static Ref<Animator> Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton);
 
 		const std::vector<Matrix4>& GetBoneTransforms() const { return m_BoneTransforms; }
 
@@ -131,6 +131,7 @@ namespace Athena
 	private:
 		std::vector<Matrix4> m_BoneTransforms;
 		std::vector<Ref<Animation>> m_Animations;
+		Ref<Skeleton> m_Skeleton;
 		Ref<Animation> m_CurrentAnimation;
 		float m_CurrentTime;
 	};

@@ -381,9 +381,7 @@ namespace Athena
     {
         auto commandBuffer = Renderer::GetRenderCommandBuffer();
 
-        Renderer::BeginDebugRegion(commandBuffer, "Renderer2DPass", { 0.9f, 0.1f, 0.2f, 1.f });
         m_ViewportRenderer->GetRenderer2DPass()->Begin(commandBuffer);
-        
         Ref<SceneRenderer2D> renderer2D = m_ViewportRenderer->GetSceneRenderer2D();
 
         if (m_EditorCtx->SceneState == SceneState::Play)
@@ -517,7 +515,6 @@ namespace Athena
         renderer2D->EndScene();
 
         m_ViewportRenderer->GetRenderer2DPass()->End(commandBuffer);
-        Renderer::EndDebugRegion(commandBuffer);
     }
 
     void EditorLayer::DrawAboutModal()

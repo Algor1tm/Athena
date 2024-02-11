@@ -5,12 +5,13 @@
 
 #include "Buffers.glslh"
 
-
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec2 a_TexCoords;
 layout(location = 2) in vec3 a_Normal;
 layout(location = 3) in vec3 a_Tangent;
 layout(location = 4) in vec3 a_Bitangent;
+layout(location = 5) in ivec4 a_BoneIDs;
+layout(location = 6) in vec4 a_Weights;
 
 struct VertexInterpolators
 {
@@ -34,20 +35,30 @@ layout(push_constant) uniform MaterialData
     uint u_UseNormalMap;
     uint u_UseRoughnessMap;
     uint u_UseMetalnessMap;
+
+    uint u_BonesOffset;
 };
 
 
 void main()
 {
-    vec4 worldPos = u_Transform * vec4(a_Position, 1.0);
+    mat4 bonesTransform = g_Bones[u_BonesOffset + a_BoneIDs[0]] * a_Weights[0];
+    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+    {
+        bonesTransform += g_Bones[u_BonesOffset + a_BoneIDs[i]] * a_Weights[i];
+    }
+
+    mat4 transform = u_Transform * bonesTransform;
+
+    vec4 worldPos = transform * vec4(a_Position, 1.0);
     gl_Position = u_Camera.Projection * u_Camera.View * worldPos;
 
     Interpolators.WorldPos = worldPos.xyz;
     Interpolators.TexCoords = a_TexCoords;
-    Interpolators.Normal = normalize(u_Transform * vec4(a_Normal, 0)).xyz;
+    Interpolators.Normal = normalize(transform * vec4(a_Normal, 0)).xyz;
 
-    vec3 T = normalize(u_Transform * vec4(a_Tangent, 0)).xyz;
-    vec3 B = normalize(u_Transform * vec4(a_Bitangent, 0)).xyz;
+    vec3 T = normalize(transform * vec4(a_Tangent, 0)).xyz;
+    vec3 B = normalize(transform * vec4(a_Bitangent, 0)).xyz;
     vec3 N =  Interpolators.Normal;
     T = normalize(T - dot(T, N) * N);
     

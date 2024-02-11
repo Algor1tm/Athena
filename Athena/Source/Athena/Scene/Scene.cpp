@@ -576,7 +576,10 @@ namespace Athena
 					Ref<Material> material = subMeshes[i].Material;
 					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 
-					renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix());
+					if (animator != nullptr)
+						renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix());
+					else
+						renderer->Submit(subMeshes[i].VertexBuffer, material, transform.AsMatrix());
 				}
 			}
 		}

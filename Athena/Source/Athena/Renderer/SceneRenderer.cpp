@@ -33,6 +33,12 @@ namespace Athena
 		m_SceneUBO = UniformBuffer::Create("SceneUBO", sizeof(SceneData));
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData));
 
+		uint64 maxNumBones = ShaderDef::MAX_NUM_BONES_PER_MESH * ShaderDef::MAX_NUM_ANIMATED_MESHES;
+		m_BonesSBO = StorageBuffer::Create("BonesSBO", maxNumBones * sizeof(Matrix4));
+
+		m_BonesData = std::vector<Matrix4>(maxNumBones);
+		m_BonesDataOffset = 0;
+
 		// Geometry Pass
 		{
 			RenderPassCreateInfo passInfo;
@@ -47,6 +53,7 @@ namespace Athena
 			passInfo.Attachments[1].LoadOp = AttachmentLoadOp::CLEAR;
 			passInfo.Attachments[1].DepthClearColor = 1.f;
 			passInfo.Attachments[1].StencilClearColor = 1.f;
+			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
 			m_GeometryPass = RenderPass::Create(passInfo);
 
@@ -68,6 +75,26 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->Bake();
+
+
+			pipelineInfo.Name = "AnimGeometryPipeline";
+			pipelineInfo.RenderPass = m_GeometryPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Anim");
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.BlendEnable = true;
+
+			m_AnimGeometryPipeline = Pipeline::Create(pipelineInfo);
+
+			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
+			m_AnimGeometryPipeline->SetInput("u_LightData", m_LightSBO);
+			m_AnimGeometryPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_AnimGeometryPipeline->SetInput("u_BonesData", m_BonesSBO);
+			m_AnimGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
+			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+			m_AnimGeometryPipeline->Bake();
 
 
 			pipelineInfo.Name = "SkyboxPipeline";
@@ -95,6 +122,7 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.Attachments[0].Name = "SceneCompositeColor";
 			passInfo.Attachments[0].LoadOp = AttachmentLoadOp::DONT_CARE;
+			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
 
 			m_CompositePass = RenderPass::Create(passInfo);
 
@@ -123,6 +151,7 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.ExistingImages.push_back(m_CompositePass->GetOutput(0)->GetImage());
 			passInfo.ExistingImages.push_back(m_GeometryPass->GetDepthOutput()->GetImage());
+			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
 			m_Renderer2DPass = RenderPass::Create(passInfo);
 
@@ -146,6 +175,7 @@ namespace Athena
 
 		m_GeometryPass->Resize(width, height);
 		m_StaticGeometryPipeline->SetViewport(width, height);
+		m_AnimGeometryPipeline->SetViewport(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
 
 		m_CompositePass->Resize(width, height);
@@ -156,12 +186,21 @@ namespace Athena
 		m_SceneRenderer2D->OnViewportResize(width, height);
 	}
 
+	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform)
+	{
+		DrawCall drawCall;
+		drawCall.VertexBuffer = vertexBuffer;
+		drawCall.Transform = transform;
+		drawCall.Material = material;
+
+		m_StaticGeometryList.Push(drawCall);
+	}
+
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform)
 	{
-		if (!vertexBuffer)
+		if (m_BonesDataOffset >= m_BonesData.size())
 		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit null vertexBuffer!");
-			return;
+			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} animated meshes", ShaderDef::MAX_NUM_ANIMATED_MESHES);
 		}
 
 		DrawCall drawCall;
@@ -169,7 +208,13 @@ namespace Athena
 		drawCall.Transform = transform;
 		drawCall.Material = material;
 
-		m_StaticGeometryList.Push(drawCall);
+		const auto& bones = animator->GetBoneTransforms();
+		memcpy(&m_BonesData[m_BonesDataOffset], bones.data(), bones.size() * sizeof(Matrix4));
+
+		material->Set("u_BonesOffset", m_BonesDataOffset);
+		m_BonesDataOffset += bones.size();
+
+		m_AnimGeometryList.Push(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
@@ -205,12 +250,16 @@ namespace Athena
 
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);
+			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
+			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", environmentMap);
 		}
 		else
 		{
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 		}
 	}
@@ -226,6 +275,8 @@ namespace Athena
 
 		m_SceneData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
 		m_SceneData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
+
+		m_BonesDataOffset = 0;
 	}
 
 	void SceneRenderer::EndScene()
@@ -234,19 +285,23 @@ namespace Athena
 		m_Profiler->BeginPipelineStatsQuery();
 
 		m_StaticGeometryList.Sort();
+		m_AnimGeometryList.Sort();
 
 		Renderer::Submit([this]()
 		{
 			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
 			m_SceneUBO->RT_SetData(&m_SceneData, sizeof(SceneData));
 			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
+			m_BonesSBO->RT_SetData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
 		});
 
 		GeometryPass();
 		SceneCompositePass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
+
 		m_StaticGeometryList.Clear();
+		m_AnimGeometryList.Clear();
 	}
 
 	void SceneRenderer::GeometryPass()
@@ -254,7 +309,6 @@ namespace Athena
 		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		Renderer::BeginDebugRegion(commandBuffer, "GeometryPass", { 0.4f, 0.8f, 0.2f, 1.f } );
 		m_GeometryPass->Begin(commandBuffer);
 		{
 			Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
@@ -271,6 +325,20 @@ namespace Athena
 			Renderer::EndDebugRegion(commandBuffer);
 			
 
+			Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
+			m_AnimGeometryPipeline->Bind(commandBuffer);
+
+			for (const auto& drawCall : m_AnimGeometryList)
+			{
+				if (m_AnimGeometryList.UpdateMaterial(drawCall))
+					drawCall.Material->Bind(commandBuffer);
+
+				drawCall.Material->Set("u_Transform", drawCall.Transform);
+				Renderer::RenderGeometry(commandBuffer, m_AnimGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
+			}
+			Renderer::EndDebugRegion(commandBuffer);
+
+
 			Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
 			{
 				m_SkyboxPipeline->Bind(commandBuffer);
@@ -279,7 +347,6 @@ namespace Athena
 			Renderer::EndDebugRegion(commandBuffer);
 		}
 		m_GeometryPass->End(commandBuffer);
-		Renderer::EndDebugRegion(commandBuffer);
 
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
 	}
@@ -289,14 +356,12 @@ namespace Athena
 		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		Renderer::BeginDebugRegion(commandBuffer, "SceneComposite", { 0.2f, 0.5f, 1.0f, 1.f });
 		m_CompositePass->Begin(commandBuffer);
 		{
 			m_CompositePipeline->Bind(commandBuffer);
 			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
 		}
 		m_CompositePass->End(commandBuffer);
-		Renderer::EndDebugRegion(commandBuffer);
 
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}

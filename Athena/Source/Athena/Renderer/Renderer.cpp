@@ -75,6 +75,9 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
+		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
+		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_MESH", std::to_string(MAX_NUM_BONES_PER_MESH));
+		Renderer::SetGlobalShaderMacros("MAX_NUM_ANIMATED_MESHES", std::to_string(MAX_NUM_ANIMATED_MESHES));
 
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();

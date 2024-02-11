@@ -69,7 +69,7 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
+	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path, bool animated)
 	{
 		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
@@ -79,7 +79,10 @@ namespace Athena
 		if (table->Exists(materialName))
 			return table->Get(materialName);
 
-		result = Material::CreatePBRStatic(materialName);
+		if (animated)
+			result = Material::CreatePBRAnim(materialName);
+		else
+			result = Material::CreatePBRStatic(materialName);
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
@@ -280,13 +283,41 @@ namespace Athena
 			}
 		}
 
-		VertexBufferCreateInfo vertexBufferInfo;
-		//vertexBufferInfo.Data = vertices.data();
-		//vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
-		//vertexBufferInfo.Layout = Renderer::GetAnimVertexLayout();
-		//vertexBufferInfo.IndexBuffer = LoadIndexBuffer(aimesh);
-		//vertexBufferInfo.Usage = BufferUsage::STATIC;
+		uint32 numFaces = aimesh->mNumFaces;
+		aiFace* faces = aimesh->mFaces;
 
+		std::vector<uint32> indices(numFaces * 3);
+
+		uint32 index = 0;
+		for (uint32 i = 0; i < numFaces; i++)
+		{
+			if (faces[i].mNumIndices != 3)
+				break;
+
+			indices[index++] = faces[i].mIndices[0];
+			indices[index++] = faces[i].mIndices[1];
+			indices[index++] = faces[i].mIndices[2];
+		}
+
+		Ref<IndexBuffer> indexBuffer = nullptr;
+		if (!indices.empty())
+		{
+			IndexBufferCreateInfo indexBufferInfo;
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", aimesh->mName.C_Str());
+			indexBufferInfo.Data = indices.data();
+			indexBufferInfo.Count = indices.size();
+			indexBufferInfo.Usage = BufferUsage::STATIC;
+
+			indexBuffer = IndexBuffer::Create(indexBufferInfo);
+		}
+
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", aimesh->mName.C_Str());
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Usage = BufferUsage::STATIC;
+	
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
@@ -298,13 +329,12 @@ namespace Athena
 		aabb.Extend(AABB(ConvertaiVector3D(aimesh->mAABB.mMin) * localTransform, ConvertaiVector3D(aimesh->mAABB.mMax) * localTransform));
 
 		subMesh.Name = aimesh->mName.C_Str();
-		//if(skeleton)
-		//	subMesh.VertexBuffer = LoadAnimVertexBuffer(aimesh, localTransform, skeleton);
-		//else
-		//	subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
+		if(skeleton)
+			subMesh.VertexBuffer = LoadAnimVertexBuffer(aimesh, localTransform, skeleton);
+		else
+			subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
-		subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
-		subMesh.Material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path);
+		subMesh.Material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path, skeleton != nullptr);
 
 		return subMesh;
 	}
@@ -361,9 +391,9 @@ namespace Athena
 		info.TicksPerSecond = aianimation->mTicksPerSecond;
 		info.Skeleton = skeleton;
 
-		if (aianimation->mNumChannels > ShaderDef::MAX_NUM_BONES)
+		if (aianimation->mNumChannels > ShaderDef::MAX_NUM_BONES_PER_MESH)
 		{
-			ATN_CORE_ERROR_TAG("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderDef::MAX_NUM_BONES);
+			ATN_CORE_ERROR_TAG("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderDef::MAX_NUM_BONES_PER_MESH);
 		}
 
 		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
@@ -456,7 +486,7 @@ namespace Athena
 		result->m_Skeleton = LoadSkeleton(aiscene);
 		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());
 
-		if (aiscene->mNumAnimations > 0)
+		if (result->m_Skeleton)
 		{
 			std::vector<Ref<Animation>> animations(aiscene->mNumAnimations);
 
@@ -465,7 +495,7 @@ namespace Athena
 				animations[i] = LoadAnimation(aiscene->mAnimations[i], result->m_Skeleton);
 			}
 
-			result->m_Animator = Animator::Create(animations);
+			result->m_Animator = Animator::Create(animations, result->m_Skeleton);
 		}
 
 		aiReleaseImport(aiscene);

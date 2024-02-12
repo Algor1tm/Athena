@@ -192,6 +192,7 @@ namespace Athena
 		drawCall.VertexBuffer = vertexBuffer;
 		drawCall.Transform = transform;
 		drawCall.Material = material;
+		drawCall.BonesOffset = 0;
 
 		m_StaticGeometryList.Push(drawCall);
 	}
@@ -207,11 +208,11 @@ namespace Athena
 		drawCall.VertexBuffer = vertexBuffer;
 		drawCall.Transform = transform;
 		drawCall.Material = material;
+		drawCall.BonesOffset = m_BonesDataOffset;
 
 		const auto& bones = animator->GetBoneTransforms();
 		memcpy(&m_BonesData[m_BonesDataOffset], bones.data(), bones.size() * sizeof(Matrix4));
 
-		material->Set("u_BonesOffset", m_BonesDataOffset);
 		m_BonesDataOffset += bones.size();
 
 		m_AnimGeometryList.Push(drawCall);
@@ -334,6 +335,7 @@ namespace Athena
 					drawCall.Material->Bind(commandBuffer);
 
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
+				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
 				Renderer::RenderGeometry(commandBuffer, m_AnimGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
 			}
 			Renderer::EndDebugRegion(commandBuffer);

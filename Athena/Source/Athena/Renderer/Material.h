@@ -11,15 +11,10 @@
 
 namespace Athena
 {
-	class ATHENA_API Material : public RefCounted
+	class ATHENA_API PushConstantRange
 	{
 	public:
-		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
-		static Ref<Material> CreatePBRStatic(const String& name);
-		static Ref<Material> CreatePBRAnim(const String& name);
-		virtual ~Material() = default;
-
-		virtual void Set(const String& name, const Ref<ShaderResource>& resource) = 0;
+		PushConstantRange(const Ref<Shader>& shader);
 
 		void Set(const String& name, const Matrix4& value);
 		void Set(const String& name, const Vector4& value);
@@ -29,26 +24,21 @@ namespace Athena
 		template <typename T>
 		T Get(const String& name);
 
-		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
-		virtual void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
-
-		Ref<Shader> GetShader() { return m_Shader; }
-		const String& GetName() { return m_Name; }
+		const void* GetData() const { return m_Buffer; }
 
 	private:
-		virtual void SetInternal(const String& name, ShaderDataType dataType, const void* data) = 0;
-		virtual bool GetInternal(const String& name, ShaderDataType dataType, void** data) = 0;
+		bool TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData);
 
-		virtual Ref<Texture2D> GetTexture(const String& name) = 0;
+		void SetInternal(const String& name, ShaderDataType dataType, const void* data);
+		bool GetInternal(const String& name, ShaderDataType dataType, void** data);
 
-	protected:
-		Ref<Shader> m_Shader;
-		String m_Name;
+	private:
+		const std::unordered_map<String, StructMemberShaderMetaData>* m_Members;
+		byte m_Buffer[128];
 	};
 
-
 	template <>
-	inline Matrix4 Material::Get<Matrix4>(const String& name)
+	inline Matrix4 PushConstantRange::Get<Matrix4>(const String& name)
 	{
 		void* data;
 		if (GetInternal(name, ShaderDataType::Mat4, &data))
@@ -58,7 +48,7 @@ namespace Athena
 	}
 
 	template <>
-	inline Vector4 Material::Get<Vector4>(const String& name)
+	inline Vector4 PushConstantRange::Get<Vector4>(const String& name)
 	{
 		void* data;
 		if (GetInternal(name, ShaderDataType::Float4, &data))
@@ -68,7 +58,7 @@ namespace Athena
 	}
 
 	template <>
-	inline float Material::Get<float>(const String& name)
+	inline float PushConstantRange::Get<float>(const String& name)
 	{
 		void* data;
 		if (GetInternal(name, ShaderDataType::Float, &data))
@@ -78,7 +68,7 @@ namespace Athena
 	}
 
 	template <>
-	inline uint32 Material::Get<uint32>(const String& name)
+	inline uint32 PushConstantRange::Get<uint32>(const String& name)
 	{
 		void* data;
 		if (GetInternal(name, ShaderDataType::UInt, &data))
@@ -87,10 +77,58 @@ namespace Athena
 		return uint32(0);
 	}
 
+
+	class ATHENA_API Material : public RefCounted
+	{
+	public:
+		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
+		static Ref<Material> CreatePBRStatic(const String& name);
+		static Ref<Material> CreatePBRAnim(const String& name);
+		virtual ~Material() = default;
+
+		template <typename T>
+		void Set(const String& name, const T& value)
+		{
+			m_PushConstantRange.Set(name, value);
+		}
+
+		template <typename T>
+		T Get(const String& name)
+		{
+			return m_PushConstantRange.Get<T>(name);
+		}
+
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer);
+
+		Ref<Shader> GetShader() { return m_Shader; }
+		const String& GetName() { return m_Name; }
+
+	protected:
+		Material(const Ref<Shader> shader, const String& name);
+
+	private:
+		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource) = 0;
+		virtual Ref<ShaderResource> GetResource(const String& name) = 0;
+
+		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range) = 0;
+
+	private:
+		Ref<Shader> m_Shader;
+		String m_Name;
+		PushConstantRange m_PushConstantRange;
+	};
+
+	template <>
+	inline void Material::Set<Ref<Texture2D>>(const String& name, const Ref<Texture2D>& resource)
+	{
+		SetResource(name, resource);
+	}
+
 	template <>
 	inline Ref<Texture2D> Material::Get<Ref<Texture2D>>(const String& name)
 	{
-		return GetTexture(name);
+		return GetResource(name);
 	}
 
 

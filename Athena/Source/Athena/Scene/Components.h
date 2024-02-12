@@ -183,6 +183,32 @@ namespace Athena
 	{
 		Ref<StaticMesh> Mesh;
 		bool Visible = true;
+
+		StaticMeshComponent() = default;
+		StaticMeshComponent(const StaticMeshComponent& other)
+		{
+			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
+			Visible = other.Visible;
+		}
+
+		StaticMeshComponent(StaticMeshComponent&& other) noexcept
+		{
+			Mesh = other.Mesh;
+			Visible = other.Visible;
+			other.Mesh = nullptr;
+		}
+
+		StaticMeshComponent& operator=(StaticMeshComponent&& other) noexcept
+		{
+			if (&other != this)
+			{
+				Mesh = other.Mesh;
+				Visible = other.Visible;
+				other.Mesh = nullptr;
+			}
+
+			return *this;
+		}
 	};
 
 	struct DirectionalLightComponent

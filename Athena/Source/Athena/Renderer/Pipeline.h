@@ -51,7 +51,7 @@ namespace Athena
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
 
-		virtual void SetInput(const String& name, Ref<ShaderResource> resource) = 0;
+		virtual void SetInput(const String& name, const Ref<ShaderResource>& resource) = 0;
 		virtual void Bake() = 0;
 
 		const PipelineCreateInfo& GetInfo() const { return m_Info; }

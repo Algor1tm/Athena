@@ -6,6 +6,85 @@
 
 namespace Athena
 {
+	PushConstantRange::PushConstantRange(const Ref<Shader>& shader)
+		: m_Members(&shader->GetMetaData().PushConstant.Members)
+	{
+		memset(m_Buffer, 0, sizeof(m_Buffer));
+	}
+
+	void PushConstantRange::Set(const String& name, const Matrix4& value)
+	{
+		Renderer::Submit([this, name, value]()
+		{
+			SetInternal(name, ShaderDataType::Mat4, &value);
+		});
+	}
+
+	void PushConstantRange::Set(const String& name, const Vector4& value)
+	{
+		Renderer::Submit([this, name, value]()
+		{
+			SetInternal(name, ShaderDataType::Float4, &value);
+		});
+	}
+
+	void PushConstantRange::Set(const String& name, float value)
+	{
+		Renderer::Submit([this, name, value]()
+		{
+			SetInternal(name, ShaderDataType::Float, &value);
+		});
+	}
+
+	void PushConstantRange::Set(const String& name, uint32 value)
+	{
+		Renderer::Submit([this, name, value]()
+		{
+			SetInternal(name, ShaderDataType::UInt, &value);
+		});
+	}
+
+	bool PushConstantRange::TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData)
+	{
+		if (!m_Members->contains(name))
+		{
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
+			return false;
+		}
+
+		*memberData = m_Members->at(name);
+		if (memberData->Type != dataType)
+		{
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
+					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData->Type), ShaderDataTypeToString(dataType));
+			return false;
+		}
+
+		return true;
+	}
+
+	void PushConstantRange::SetInternal(const String& name, ShaderDataType dataType, const void* data)
+	{
+		StructMemberShaderMetaData memberData;
+		if (TryGetMemberData(name, dataType, &memberData))
+		{
+			memcpy(&m_Buffer[memberData.Offset], data, memberData.Size);
+		}
+	}
+
+	bool PushConstantRange::GetInternal(const String& name, ShaderDataType dataType, void** data)
+	{
+		StructMemberShaderMetaData memberData;
+		if (TryGetMemberData(name, dataType, &memberData))
+		{
+			*data = &m_Buffer[memberData.Offset];
+			return true;
+		}
+
+		return false;
+	}
+
+
 	Ref<Material> Material::Create(const Ref<Shader>& shader, const String& name)
 	{
 		Ref<Material> material = Ref<VulkanMaterial>::Create(shader, name);
@@ -30,24 +109,15 @@ namespace Athena
 		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Anim"), name);
 	}
 
-	void Material::Set(const String& name, const Matrix4& value)
+	Material::Material(const Ref<Shader> shader, const String& name)
+		: m_Shader(shader), m_Name(name), m_PushConstantRange(shader)
 	{
-		SetInternal(name, ShaderDataType::Mat4, &value);
+		
 	}
 
-	void Material::Set(const String& name, const Vector4& value)
+	void Material::RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		SetInternal(name, ShaderDataType::Float4, &value);
-	}
-
-	void Material::Set(const String& name, float value)
-	{
-		SetInternal(name, ShaderDataType::Float, &value);
-	}
-
-	void Material::Set(const String& name, uint32 value)
-	{
-		SetInternal(name, ShaderDataType::UInt, &value);
+		RT_SetPushConstant(commandBuffer, m_PushConstantRange);
 	}
 
 

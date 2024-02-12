@@ -130,7 +130,7 @@ namespace Athena
 		});
 	}
 
-	void DescriptorSetManager::Set(const String& name, Ref<ShaderResource> resource)
+	void DescriptorSetManager::Set(const String& name, const Ref<ShaderResource>& resource)
 	{
 		if (m_ResourcesDescriptionTable.contains(name) && resource != nullptr)
 		{
@@ -141,6 +141,27 @@ namespace Athena
 		{
 			ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}'", m_Info.Name, name);
 		}
+	}
+
+	Ref<ShaderResource> DescriptorSetManager::Get(const String& name)
+	{
+		if (m_ResourcesDescriptionTable.contains(name))
+		{
+			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(name);
+
+			if (m_Resources.contains(desc.Set) && m_Resources.at(desc.Set).contains(desc.Binding))
+			{
+				return m_Resources.at(desc.Set).at(desc.Binding);
+			}
+
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (resource is not present)", m_Info.Name, name);
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (invalid name)", m_Info.Name, name);
+		}
+
+		return nullptr;
 	}
 
 	bool DescriptorSetManager::Validate() const

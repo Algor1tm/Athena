@@ -18,6 +18,7 @@ namespace Athena
 		Ref<VertexBuffer> VertexBuffer;
 		Ref<Material> Material;
 		Matrix4 Transform;
+		uint32 BonesOffset = 0;
 	};
 
 

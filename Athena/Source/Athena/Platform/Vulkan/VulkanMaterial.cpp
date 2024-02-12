@@ -10,20 +10,17 @@
 namespace Athena
 {
 	VulkanMaterial::VulkanMaterial(const Ref<Shader>& shader, const String& name)
+		: Material(shader, name)
 	{
-		m_Shader = shader;
-		m_Name = name;
-		memset(m_PushConstantBuffer, 0, sizeof(m_PushConstantBuffer));
-
 		DescriptorSetManagerCreateInfo info;
 		info.Name = name;
-		info.Shader = m_Shader;
+		info.Shader = shader;
 		info.FirstSet = 0;
 		info.LastSet = 0;
 		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(info);
 		m_DescriptorSetManager->Bake();
 
-		m_PipelineBindPoint = m_Shader->IsCompute() ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
+		m_PipelineBindPoint = shader->IsCompute() ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
 	}
 
 	VulkanMaterial::~VulkanMaterial()
@@ -31,58 +28,14 @@ namespace Athena
 		
 	}
 
-	void VulkanMaterial::Set(const String& name, const Ref<ShaderResource>& resource)
+	void VulkanMaterial::SetResource(const String& name, const Ref<ShaderResource>& resource)
 	{
 		m_DescriptorSetManager->Set(name, resource);
 	}
 
-	Ref<Texture2D> VulkanMaterial::GetTexture(const String& name)
+	Ref<ShaderResource> VulkanMaterial::GetResource(const String& name)
 	{
-		return m_DescriptorSetManager->Get<Ref<Texture2D>>(name);
-	}
-
-	void VulkanMaterial::SetInternal(const String& name, ShaderDataType dataType, const void* data)
-	{
-		if (Exists(name, dataType))
-		{
-			const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
-			const auto& memberData = pushConstantData.Members.at(name);
-			memcpy(&m_PushConstantBuffer[memberData.Offset], data, memberData.Size);
-		}
-	}
-
-	bool VulkanMaterial::GetInternal(const String& name, ShaderDataType dataType, void** data)
-	{
-		if (Exists(name, dataType))
-		{
-			const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
-			const auto& memberData = pushConstantData.Members.at(name);
-			*data = &m_PushConstantBuffer[memberData.Offset];
-			return true;
-		}
-
-		return false;
-	}
-
-	bool VulkanMaterial::Exists(const String& name, ShaderDataType dataType)
-	{
-		const auto& pushConstantData = m_Shader->GetMetaData().PushConstant;
-
-		if (!pushConstantData.Members.contains(name))
-		{
-			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
-			return false;
-		}
-
-		const auto& memberData = pushConstantData.Members.at(name);
-		if (memberData.Type != dataType)
-		{
-			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
-					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData.Type), ShaderDataTypeToString(dataType));
-			return false;
-		}
-
-		return true;
+		return m_DescriptorSetManager->Get(name);
 	}
 
 	void VulkanMaterial::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
@@ -96,19 +49,21 @@ namespace Athena
 		});
 	}
 
-	void VulkanMaterial::RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer)
+	void VulkanMaterial::RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range)
 	{
-		if (m_Shader->GetMetaData().PushConstant.Enabled)
+		Ref<Shader> shader = GetShader();
+
+		if (shader->GetMetaData().PushConstant.Enabled)
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			const auto& pushConstant = m_Shader->GetMetaData().PushConstant;
+			const auto& pushConstant = shader->GetMetaData().PushConstant;
 
 			vkCmdPushConstants(vkcmdBuffer,
-				m_Shader.As<VulkanShader>()->GetPipelineLayout(),
+				shader.As<VulkanShader>()->GetPipelineLayout(),
 				Vulkan::GetShaderStageFlags(pushConstant.StageFlags),
 				0,
 				pushConstant.Size,
-				m_PushConstantBuffer);
+				range.GetData());
 		}
 	}
 }

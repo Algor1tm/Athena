@@ -94,7 +94,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanPipeline::SetInput(const String& name, Ref<ShaderResource> resource)
+	void VulkanPipeline::SetInput(const String& name, const Ref<ShaderResource>& resource)
 	{
 		m_DescriptorSetManager->Set(name, resource);
 	}

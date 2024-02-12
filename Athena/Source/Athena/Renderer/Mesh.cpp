@@ -223,8 +223,7 @@ namespace Athena
 			for (uint32 i = 0; i < aimesh->mNumBones; ++i)
 			{
 				aiBone* aibone = aimesh->mBones[i];
-				uint32 boneID = skeleton->GetBoneID(aibone->mName.C_Str());
-
+				uint32 boneID = skeleton->GetBoneIndex(aibone->mName.C_Str());
 				skeleton->SetBoneOffsetMatrix(boneID, ConvertaiMatrix4x4(aibone->mOffsetMatrix));
 
 				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
@@ -339,21 +338,27 @@ namespace Athena
 		return subMesh;
 	}
 
-	static void LoadBonesHierarchy(const aiNode* bonesRoot, BonesHierarchyInfo& info)
+	static void LoadBones(const aiNode* aiBone, std::vector<Bone>& bones)
 	{
-		String nodeName = bonesRoot->mName.C_Str();
+		String nodeName = aiBone->mName.C_Str();
 		bool isValid = nodeName.find("AssimpFbx") == String::npos && nodeName.find("RootNode") == String::npos;
-		if (bonesRoot->mNumChildren > 0 && !isValid)
+		if (aiBone->mNumChildren > 0 && !isValid)
 		{
-			LoadBonesHierarchy(bonesRoot->mChildren[0], info);
+			LoadBones(aiBone->mChildren[0], bones);
 			return;
 		}
 
-		info.Name = nodeName;
-		info.Children.resize(bonesRoot->mNumChildren);
-		for (uint32 i = 0; i < bonesRoot->mNumChildren; ++i)
+		Bone bone;
+		bone.Name = nodeName;
+		bone.Index = bones.size();
+		bone.Children.resize(aiBone->mNumChildren);
+		bone.OffsetMatrix = Matrix4::Identity();
+		bones.push_back(bone);
+
+		for (uint32 i = 0; i < aiBone->mNumChildren; ++i)
 		{
-			LoadBonesHierarchy(bonesRoot->mChildren[i], info.Children[i]);
+			bones[bone.Index].Children[i] = bones.size();
+			LoadBones(aiBone->mChildren[i], bones);
 		}
 	}
 
@@ -377,10 +382,10 @@ namespace Athena
 		if (bonesRoot == nullptr)
 			return nullptr;
 
-		BonesHierarchyInfo info;
-		LoadBonesHierarchy(bonesRoot, info);
+		std::vector<Bone> bones;
+		LoadBones(bonesRoot, bones);
 
-		return Skeleton::Create(info);
+		return Skeleton::Create(bones);
 	}
 
 	static Ref<Animation> LoadAnimation(const aiAnimation* aianimation, const Ref<Skeleton>& skeleton)

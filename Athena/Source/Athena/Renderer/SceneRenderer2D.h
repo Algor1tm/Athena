@@ -120,7 +120,7 @@ namespace Athena
 		std::array<Ref<Texture2D>, s_MaxTextureSlots> m_TextureSlots;
 		uint32 m_TextureSlotIndex = 1; // 0 - white texture
 
-		float m_LineWidth = 1.f;
+		float m_LineWidth = 2.f;
 		Vector4 m_QuadVertexPositions[4];
 	};
 }

@@ -10,38 +10,31 @@
 
 namespace Athena
 {
-	struct BonesHierarchyInfo
-	{
-		String Name;
-		std::vector<BonesHierarchyInfo> Children;
-	};
-
 	struct Bone
 	{
 		String Name;
-		uint32 ID;
+		Matrix4 OffsetMatrix;
+		uint32 Index;
 
-		std::vector<Bone> Children;
+		// Children bones indices
+		std::vector<uint32> Children;
 	};
 
 	class ATHENA_API Skeleton : public RefCounted
 	{
 	public:
-		static Ref<Skeleton> Create(const BonesHierarchyInfo& boneHierarchy);
+		static Ref<Skeleton> Create(const std::vector<Bone>& bones);
 
-		void SetBoneOffsetMatrix(const String& name, const Matrix4& transform);
-		void SetBoneOffsetMatrix(uint32 id, const Matrix4& transform);
+		void SetBoneOffsetMatrix(uint32 index, const Matrix4& transform);
 
-		const Matrix4& GetBoneOffset(uint32 id) const { return m_BoneOffsetMatrices.at(id); }
+		uint32 GetBoneIndex(const String& name) const;
+		uint32 GetBoneCount() const { return m_Bones.size(); }
 
-		uint32 GetBoneID(const String& name) const;
-		uint32 GetBoneCount() const { return m_BoneOffsetMatrices.size(); }
-
-		const Bone& GetRootBone() const { return m_RootBone; }
+		const Bone& GetRootBone() const { return m_Bones[0]; }
+		const Bone& GetBone(uint32 index) const { return m_Bones[index]; }
 
 	private:
-		Bone m_RootBone;
-		std::unordered_map<uint32, Matrix4> m_BoneOffsetMatrices;
+		std::vector<Bone> m_Bones;
 	};
 
 
@@ -94,7 +87,7 @@ namespace Athena
 
 	private:
 		void ProcessBonesHierarchy(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms);
-		Matrix4 GetInterpolatedLocalTransform(uint32 boneID, float time);
+		Matrix4 GetInterpolatedLocalTransform(uint32 boneIndex, float time);
 
 		Vector3 GetInterpolatedTranslation(const std::vector<TranslationKey>& keys, float time);
 		Quaternion GetInterpolatedRotation(const std::vector<RotationKey>& keys, float time);
@@ -104,7 +97,7 @@ namespace Athena
 		String m_Name;
 		float m_Duration;
 		uint32 m_TicksPerSecond;
-		std::unordered_map<uint32, KeyFramesList> m_BoneIDToKeyFramesMap;
+		std::unordered_map<uint32, KeyFramesList> m_BoneIndexToKeyFramesMap;
 		Ref<Skeleton> m_Skeleton;
 	};
 

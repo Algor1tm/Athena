@@ -9,68 +9,28 @@
 
 namespace Athena
 {
-	static void BoneCreateHelper(const BonesHierarchyInfo& info, Bone& bone, uint32& size)
-	{
-		bone.Name = info.Name;
-		bone.ID = size;
-
-		bone.Children.resize(info.Children.size());
-		for (uint32 i = 0; i < info.Children.size(); ++i)
-		{
-			size += 1;
-			BoneCreateHelper(info.Children[i], bone.Children[i], size);
-		}
-	}
-
-	Ref<Skeleton> Skeleton::Create(const BonesHierarchyInfo& boneHierarchy)
+	Ref<Skeleton> Skeleton::Create(const std::vector<Bone>& bones)
 	{
 		Ref<Skeleton> result = Ref<Skeleton>::Create();
-
-		uint32 boneCount = 0;
-		BoneCreateHelper(boneHierarchy, result->m_RootBone, boneCount);
-		boneCount++;
-
-		result->m_BoneOffsetMatrices.reserve(boneCount);
-		Matrix4 identity = Matrix4::Identity();
-
-		for (uint32 i = 0; i < boneCount; ++i)
-		{
-			result->m_BoneOffsetMatrices[i] = identity;
-		}
-
+		result->m_Bones = bones;
 		return result;
 	}
 
-	void Skeleton::SetBoneOffsetMatrix(const String& name, const Matrix4& transform)
+	void Skeleton::SetBoneOffsetMatrix(uint32 index, const Matrix4& transform)
 	{
-		uint32 id = GetBoneID(name);
-		m_BoneOffsetMatrices.at(id) = transform;
+		m_Bones[index].OffsetMatrix = transform;
 	}
 
-	void Skeleton::SetBoneOffsetMatrix(uint32 id, const Matrix4& transform)
+	uint32 Skeleton::GetBoneIndex(const String& name) const
 	{
-		m_BoneOffsetMatrices.at(id) = transform;
-	}
-
-	uint32 Skeleton::GetBoneID(const String& name) const
-	{
-		std::stack<const Bone*> boneStack;
-		boneStack.push(&m_RootBone);
-
-		while (!boneStack.empty())
+		for (const auto& bone : m_Bones)
 		{
-			const Bone* bone = boneStack.top();
-			boneStack.pop();
-
-			if (bone->Name == name)
-				return bone->ID;
-
-			for (uint32 i = 0; i < bone->Children.size(); ++i)
-				boneStack.push(&bone->Children[i]);
+			if (bone.Name == name)
+				return bone.Index;
 		}
 
-		ATN_CORE_ASSERT(false, "Invalid name for bone");
-		return -1;
+		ATN_CORE_ASSERT(false);
+		return 0;
 	}
 
 	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
@@ -86,7 +46,7 @@ namespace Athena
 
 		for (const auto& [name, keyframes] : info.BoneNameToKeyFramesMap)
 		{
-			result->m_BoneIDToKeyFramesMap[info.Skeleton->GetBoneID(name)] = keyframes;
+			result->m_BoneIndexToKeyFramesMap[info.Skeleton->GetBoneIndex(name)] = keyframes;
 		}
 
 		return result;
@@ -100,22 +60,22 @@ namespace Athena
 
 	void Animation::ProcessBonesHierarchy(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms)
 	{
-		Matrix4 boneTransform = GetInterpolatedLocalTransform(bone.ID, time);
+		Matrix4 boneTransform = GetInterpolatedLocalTransform(bone.Index, time);
 		Matrix4 globalTransform = boneTransform * parentTransform;
 
-		const Matrix4& boneOffset = m_Skeleton->GetBoneOffset(bone.ID);
+		const Matrix4& boneOffset = bone.OffsetMatrix;
 
-		transforms[bone.ID] = boneOffset * globalTransform;
+		transforms[bone.Index] = boneOffset * globalTransform;
 
 		for (uint32 i = 0; i < bone.Children.size(); ++i)
 		{
-			ProcessBonesHierarchy(bone.Children[i], globalTransform, time, transforms);
+			ProcessBonesHierarchy(m_Skeleton->GetBone(bone.Children[i]), globalTransform, time, transforms);
 		}
 	}
 
-	Matrix4 Animation::GetInterpolatedLocalTransform(uint32 boneID, float time)
+	Matrix4 Animation::GetInterpolatedLocalTransform(uint32 boneIndex, float time)
 	{
-		const KeyFramesList& keyFrames = m_BoneIDToKeyFramesMap[boneID];
+		const KeyFramesList& keyFrames = m_BoneIndexToKeyFramesMap[boneIndex];
 
 		Vector3 translation = GetInterpolatedTranslation(keyFrames.TranslationKeys, time);
 		Quaternion rotation = GetInterpolatedRotation(keyFrames.RotationKeys, time);

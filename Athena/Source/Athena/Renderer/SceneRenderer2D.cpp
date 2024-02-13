@@ -46,40 +46,16 @@ namespace Athena
 		indexBufferInfo.Count = s_MaxIndices;
 		indexBufferInfo.Usage = BufferUsage::STATIC;
 
-		Ref<IndexBuffer> indexBuffer = IndexBuffer::Create(indexBufferInfo);
+		m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
 		delete[] indices;
 
-		// Quad vertex buffer
 		m_QuadVertexBufferBase = new QuadVertex[s_MaxQuadVertices];
-
-		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Name = "Renderer2D_QuadVB";
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = s_MaxQuadVertices * sizeof(QuadVertex);
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
-
-		m_QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
-
-		// Circle vertex buffer
 		m_CircleVertexBufferBase = new CircleVertex[s_MaxCircleVertices];
-
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = s_MaxCircles * sizeof(CircleVertex);
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
-
-		m_CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
-
-		// Line vertex buffer
 		m_LineVertexBufferBase = new LineVertex[s_MaxLineVertices];
 
-		vertexBufferInfo.Data = nullptr;
-		vertexBufferInfo.Size = s_MaxLines * sizeof(LineVertex);
-		vertexBufferInfo.IndexBuffer = nullptr;
-		vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
-
-		m_LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		m_QuadVertexBuffers.resize(Renderer::GetFramesInFlight());
+		m_CircleVertexBuffers.resize(Renderer::GetFramesInFlight());
+		m_LineVertexBuffers.resize(Renderer::GetFramesInFlight());
 
 		m_TextureSlots[0] = Renderer::GetWhiteTexture();
 
@@ -102,7 +78,7 @@ namespace Athena
 		m_QuadPipeline->SetInput("u_Texture", Renderer::GetWhiteTexture());
 		m_QuadPipeline->Bake();
 
-		m_QuadMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+		m_QuadMaterials.push_back(Material::Create(pipelineInfo.Shader, pipelineInfo.Name));
 
 		pipelineInfo.Name = "CirclePipeline";
 		pipelineInfo.RenderPass = renderPass;
@@ -150,81 +126,196 @@ namespace Athena
 	{
 		m_RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
 
-		m_QuadMaterial->Set("u_ViewProjection", viewMatrix * projectionMatrix);
-		m_CircleMaterial->Set("u_ViewProjection", viewMatrix * projectionMatrix);
-		m_LineMaterial->Set("u_ViewProjection", viewMatrix * projectionMatrix);
-		StartBatch();
+		Matrix4 viewProj = viewMatrix * projectionMatrix;
+
+		for(const auto& quadMaterial : m_QuadMaterials)
+			quadMaterial->Set("u_ViewProjection", viewProj);
+
+		m_CircleMaterial->Set("u_ViewProjection", viewProj);
+		m_LineMaterial->Set("u_ViewProjection", viewProj);
+		
+		m_QuadIndexCount = 0;
+		m_QuadVertexBufferPointer = m_QuadVertexBufferBase;
+		m_TextureSlotIndex = 1;
+		m_QuadVertexBufferIndex = 0;
+
+		m_CircleIndexCount = 0;
+		m_CircleVertexBufferPointer = m_CircleVertexBufferBase;
+		m_CircleVertexBufferIndex = 0;
+
+		m_LineVertexCount = 0;
+		m_LineVertexBufferPointer = m_LineVertexBufferBase;
+		m_LineVertexBufferIndex = 0;
 	}
 
 	void SceneRenderer2D::EndScene()
 	{
-		Flush();
-	}
-
-	void SceneRenderer2D::Flush()
-	{
-		Renderer::Submit([this]()
-		{
-			if (m_QuadIndexCount)
-			{
-				uint64 dataSize = (byte*)m_QuadVertexBufferPointer - (byte*)m_QuadVertexBufferBase;
-				m_QuadVertexBuffer->RT_SetData(m_QuadVertexBufferBase, dataSize);
-			}
-
-			if (m_CircleIndexCount)
-			{
-				uint64 dataSize = (byte*)m_CircleVertexBufferPointer - (byte*)m_CircleVertexBufferBase;
-				m_CircleVertexBuffer->RT_SetData(m_CircleVertexBufferBase, dataSize);
-			}
-
-			if (m_LineVertexCount)
-			{
-				uint64 dataSize = (byte*)m_LineVertexBufferPointer - (byte*)m_LineVertexBufferBase;
-				m_LineVertexBuffer->RT_SetData(m_LineVertexBufferBase, dataSize);
-			}
-		});
+		FlushQuads();
+		FlushCircles();
+		FlushLines();
 
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		if (m_QuadIndexCount)
+		if (!m_QuadDrawList.empty())
 		{
-			//for (uint32 i = 0; i < s_Data.TextureSlotIndex; ++i)
-			//	s_Data.TextureSlots[i]->Bind(i);
-
 			m_QuadPipeline->Bind(commandBuffer);
-			Renderer::RenderGeometry(commandBuffer, m_QuadPipeline, m_QuadVertexBuffer, m_QuadMaterial, m_QuadIndexCount);
+
+			Ref<Material> prevMaterial = m_QuadMaterials[m_QuadDrawList[0].VertexBufferIndex];
+			prevMaterial->Bind(commandBuffer);
+
+			for (const auto& drawCall : m_QuadDrawList)
+			{
+				Ref<Material> material = m_QuadMaterials[drawCall.VertexBufferIndex];
+				Ref<VertexBuffer> buffer = m_QuadVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+
+				if (prevMaterial != material)
+				{
+					prevMaterial = material;
+					prevMaterial->Bind(commandBuffer);
+				}
+
+				Renderer::RenderGeometry(commandBuffer, m_QuadPipeline, buffer, material, drawCall.VertexCount);
+			}
 		}
 
-		if (m_CircleIndexCount)
+		if (!m_CircleDrawList.empty())
 		{
 			m_CirclePipeline->Bind(commandBuffer);
-			Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, m_CircleVertexBuffer, m_CircleMaterial, m_CircleIndexCount);
+			for (const auto& drawCall : m_CircleDrawList)
+			{
+				Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+				Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, buffer, m_CircleMaterial, drawCall.VertexCount);
+			}
 		}
 
-		if (m_LineVertexCount)
+		if (!m_LineDrawList.empty())
 		{
 			m_LinePipeline->Bind(commandBuffer);
-			Renderer::RenderGeometry(commandBuffer, m_LinePipeline, m_LineVertexBuffer, m_LineMaterial, m_LineVertexCount);
+			for (const auto& drawCall : m_LineDrawList)
+			{
+				Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+				Renderer::RenderGeometry(commandBuffer, m_LinePipeline, buffer, m_LineMaterial, drawCall.VertexCount);
+			}
 		}
+
+		m_QuadDrawList.clear();
+		m_CircleDrawList.clear();
+		m_LineDrawList.clear();
 	}
 
-	void SceneRenderer2D::StartBatch()
+	void SceneRenderer2D::FlushQuads()
 	{
+		if (m_QuadIndexCount == 0)
+			return;
+
+		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
+		if (m_QuadVertexBufferIndex == m_QuadVertexBuffers[frameIndex].size())
+		{
+			VertexBufferCreateInfo vertexBufferInfo;
+			vertexBufferInfo.Name = std::format("Renderer2D_QuadVB_{}", m_QuadVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Data = nullptr;
+			vertexBufferInfo.Size = s_MaxQuads * sizeof(QuadVertex);
+			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
+			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+
+			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
+			m_QuadVertexBuffers[frameIndex].push_back(newBuffer);
+		}
+
+		Ref<VertexBuffer> buffer = m_QuadVertexBuffers[Renderer::GetCurrentFrameIndex()][m_QuadVertexBufferIndex];
+		uint64 dataSize = (byte*)m_QuadVertexBufferPointer - (byte*)m_QuadVertexBufferBase;
+
+		buffer->SetData(m_QuadVertexBufferBase, dataSize);
+
+		// TODO: Set textures
+
+		DrawCall2D drawCall;
+		drawCall.VertexBufferIndex = m_QuadVertexBufferIndex;
+		drawCall.VertexCount = m_QuadIndexCount;
+
+		m_QuadDrawList.push_back(drawCall);
+
 		m_QuadIndexCount = 0;
 		m_QuadVertexBufferPointer = m_QuadVertexBufferBase;
 		m_TextureSlotIndex = 1;
+		m_QuadVertexBufferIndex++;
+
+		if (m_QuadVertexBufferIndex > m_QuadMaterials.size())
+		{
+			Ref<Material> newMaterial = Material::Create(m_QuadMaterials[0]->GetShader(), std::format("Renderer2D_Quad_{}", m_QuadMaterials.size()));
+			newMaterial->Set("u_ViewProjection", m_QuadMaterials[0]->Get<Matrix4>("u_ViewProjection"));
+			m_QuadMaterials.push_back(newMaterial);
+		}
+	}
+
+	void SceneRenderer2D::FlushCircles()
+	{
+		if (m_CircleIndexCount == 0)
+			return;
+
+		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
+		if (m_CircleVertexBufferIndex == m_CircleVertexBuffers[frameIndex].size())
+		{
+			VertexBufferCreateInfo vertexBufferInfo;
+			vertexBufferInfo.Name = std::format("Renderer2D_CircleVB_{}", m_CircleVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Data = nullptr;
+			vertexBufferInfo.Size = s_MaxCircles * sizeof(CircleVertex);
+			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
+			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+
+			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
+			m_CircleVertexBuffers[frameIndex].push_back(newBuffer);
+		}
+
+		Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][m_CircleVertexBufferIndex];
+		uint64 dataSize = (byte*)m_CircleVertexBufferPointer - (byte*)m_CircleVertexBufferBase;
+
+		buffer->SetData(m_CircleVertexBufferBase, dataSize);
+
+		DrawCall2D drawCall;
+		drawCall.VertexBufferIndex = m_CircleVertexBufferIndex;
+		drawCall.VertexCount = m_CircleIndexCount;
+
+		m_CircleDrawList.push_back(drawCall);
 
 		m_CircleIndexCount = 0;
 		m_CircleVertexBufferPointer = m_CircleVertexBufferBase;
+		m_CircleVertexBufferIndex++;
+	}
+
+	void SceneRenderer2D::FlushLines()
+	{
+		if (m_LineVertexCount == 0)
+			return;
+
+		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
+		if (m_LineVertexBufferIndex == m_LineVertexBuffers[frameIndex].size())
+		{
+			VertexBufferCreateInfo vertexBufferInfo;
+			vertexBufferInfo.Name = std::format("Renderer2D_LineVB_{}", m_LineVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Data = nullptr;
+			vertexBufferInfo.Size = s_MaxLines * sizeof(LineVertex);
+			vertexBufferInfo.IndexBuffer = nullptr;
+			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+
+			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
+			m_LineVertexBuffers[frameIndex].push_back(newBuffer);
+		}
+
+		Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][m_LineVertexBufferIndex];
+		uint64 dataSize = (byte*)m_LineVertexBufferPointer - (byte*)m_LineVertexBufferBase;
+
+		buffer->SetData(m_LineVertexBufferBase, dataSize);
+
+		DrawCall2D drawCall;
+		drawCall.VertexBufferIndex = m_LineVertexBufferIndex;
+		drawCall.VertexCount = m_LineVertexCount;
+
+		m_LineDrawList.push_back(drawCall);
 
 		m_LineVertexCount = 0;
 		m_LineVertexBufferPointer = m_LineVertexBufferBase;
-	}
-
-	void SceneRenderer2D::NextBatch()
-	{
-		Flush();
-		StartBatch();
+		m_LineVertexBufferIndex++;
 	}
 
 	void SceneRenderer2D::DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color)
@@ -280,7 +371,7 @@ namespace Athena
 	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
 	{
 		if (m_QuadIndexCount >= s_MaxIndices)
-			NextBatch();
+			FlushQuads();
 
 		constexpr uint32 QuadVertexCount = 4;
 		constexpr float textureIndex = 0.f; // White Texture
@@ -303,7 +394,7 @@ namespace Athena
 	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		if (m_QuadIndexCount >= s_MaxIndices)
-			NextBatch();
+			FlushQuads();
 
 		constexpr uint32 QuadVertexCount = 4;
 		const auto& texCoords = texture.GetTexCoords();
@@ -321,7 +412,7 @@ namespace Athena
 		if (textureIndex == 0)
 		{
 			if (m_TextureSlotIndex >= s_MaxTextureSlots)
-				NextBatch();
+				FlushQuads();
 
 			textureIndex = m_TextureSlotIndex;
 			m_TextureSlots[m_TextureSlotIndex] = texture.GetNativeTexture();
@@ -345,7 +436,7 @@ namespace Athena
 	void SceneRenderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade)
 	{
 		if (m_CircleIndexCount >= s_MaxIndices)
-			NextBatch();
+			FlushCircles();
 
 		for (uint32 i = 0; i < 4; ++i)
 		{
@@ -363,7 +454,7 @@ namespace Athena
 	void SceneRenderer2D::DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color)
 	{
 		if (m_LineVertexCount >= s_MaxIndices)
-			NextBatch();
+			FlushLines();
 
 		m_LineVertexBufferPointer->Position = p0;
 		m_LineVertexBufferPointer->Color = color;

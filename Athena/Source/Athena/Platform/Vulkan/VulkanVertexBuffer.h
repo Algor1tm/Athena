@@ -15,7 +15,7 @@ namespace Athena
 		VulkanVertexBuffer(const VertexBufferCreateInfo& info);
 		~VulkanVertexBuffer();
 
-		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) override;
+		virtual void SetData(const void* data, uint64 size, uint64 offset = 0) override;
 		VkBuffer GetVulkanVertexBuffer() { return m_VertexBuffer.GetBuffer(); }
 
 	private:

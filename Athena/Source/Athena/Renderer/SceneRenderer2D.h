@@ -36,6 +36,12 @@ namespace Athena
 		LinearColor Color;
 	};
 
+	struct DrawCall2D
+	{
+		uint32 VertexBufferIndex;
+		uint32 VertexCount;
+	};
+
 	class ATHENA_API SceneRenderer2D : public RefCounted
 	{
 	public:
@@ -49,7 +55,6 @@ namespace Athena
 
 		void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 		void EndScene();
-		void Flush();
 
 		void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
@@ -75,8 +80,9 @@ namespace Athena
 		float GetLineWidth();
 
 	private:
-		void StartBatch();
-		void NextBatch();
+		void FlushQuads();
+		void FlushCircles();
+		void FlushLines();
 
 	private:
 		// Max Geometry per batch
@@ -92,35 +98,42 @@ namespace Athena
 
 	private:
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 
 		Ref<Pipeline> m_QuadPipeline;
-		Ref<Pipeline> m_CirclePipeline;
-		Ref<Pipeline> m_LinePipeline;
-
-		Ref<Material> m_QuadMaterial;
-		Ref<Material> m_CircleMaterial;
-		Ref<Material> m_LineMaterial;
-
-		Ref<VertexBuffer> m_QuadVertexBuffer;
-		Ref<VertexBuffer> m_CircleVertexBuffer;
-		Ref<VertexBuffer> m_LineVertexBuffer;
-
+		std::vector<Ref<Material>> m_QuadMaterials;
+		std::vector<std::vector<Ref<VertexBuffer>>> m_QuadVertexBuffers;
+		std::vector<DrawCall2D> m_QuadDrawList;
 		uint32 m_QuadIndexCount = 0;
+		uint32 m_QuadVertexBufferIndex = 0;
 		QuadVertex* m_QuadVertexBufferBase = nullptr;
 		QuadVertex* m_QuadVertexBufferPointer = nullptr;
-
-		uint32 m_CircleIndexCount = 0;
-		CircleVertex* m_CircleVertexBufferBase = nullptr;
-		CircleVertex* m_CircleVertexBufferPointer = nullptr;
-
-		uint32 m_LineVertexCount = 0;
-		LineVertex* m_LineVertexBufferBase = nullptr;
-		LineVertex* m_LineVertexBufferPointer = nullptr;
 
 		std::array<Ref<Texture2D>, s_MaxTextureSlots> m_TextureSlots;
 		uint32 m_TextureSlotIndex = 1; // 0 - white texture
 
+
+		Ref<Pipeline> m_CirclePipeline;
+		Ref<Material> m_CircleMaterial;
+		std::vector<std::vector<Ref<VertexBuffer>>> m_CircleVertexBuffers;
+		std::vector<DrawCall2D> m_CircleDrawList;
+		uint32 m_CircleIndexCount = 0;
+		uint32 m_CircleVertexBufferIndex = 0;
+		CircleVertex* m_CircleVertexBufferBase = nullptr;
+		CircleVertex* m_CircleVertexBufferPointer = nullptr;
+
+
+		Ref<Pipeline> m_LinePipeline;
+		Ref<Material> m_LineMaterial;
+		std::vector<std::vector<Ref<VertexBuffer>>> m_LineVertexBuffers;
+		std::vector<DrawCall2D> m_LineDrawList;
+		uint32 m_LineVertexCount = 0;
+		uint32 m_LineVertexBufferIndex = 0;
+		LineVertex* m_LineVertexBufferBase = nullptr;
+		LineVertex* m_LineVertexBufferPointer = nullptr;
+
 		float m_LineWidth = 2.f;
+
 		Vector4 m_QuadVertexPositions[4];
 	};
 }

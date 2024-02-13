@@ -172,7 +172,7 @@ namespace Athena
 		static Ref<IndexBuffer> Create(const IndexBufferCreateInfo& info);
 		virtual ~IndexBuffer() = default;
 
-		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		virtual void SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 
 		uint32 GetCount() const { return m_Info.Count; }
 		const IndexBufferCreateInfo& GetInfo() const { return m_Info; }
@@ -196,7 +196,7 @@ namespace Athena
 		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
 		virtual ~VertexBuffer() = default;
 
-		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		virtual void SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 
 		uint64 GetSize() const { return m_Info.Size; }
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }

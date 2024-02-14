@@ -17,18 +17,11 @@ namespace Athena
 		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
 		virtual void Resize(uint32 width, uint32 height) override;
-
-		virtual Ref<Texture2D> GetOutput(uint32 attachmentIndex) const override;
-		virtual Ref<Texture2D> GetDepthOutput() const override;
-
-		virtual uint32 GetColorAttachmentCount() const override;
-		virtual bool HasDepthAttachment() const override;
+		virtual void Bake() override;
 
 		VkRenderPass GetVulkanRenderPass() const { return m_VulkanRenderPass; };
 
 	private:
-		std::vector<Ref<Texture2D>> m_ColorAttachments;
-		Ref<Texture2D> m_DepthAttachment;
 		VkFramebuffer m_VulkanFramebuffer = VK_NULL_HANDLE;
 		VkRenderPass m_VulkanRenderPass = VK_NULL_HANDLE;
 		std::vector<VkClearValue> m_ClearColors;

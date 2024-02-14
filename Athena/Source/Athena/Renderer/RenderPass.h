@@ -14,17 +14,40 @@ namespace Athena
 		LOAD = 1
 	};
 
-	struct AttachmentInfo
+	struct RenderPassAttachment
 	{
-		AttachmentInfo(ImageFormat format)
-			: Format(format) {}
+		RenderPassAttachment() = default;
+		RenderPassAttachment(const String& name, ImageFormat format)
+		{
+			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC;
 
-		String Name;
-		ImageFormat Format = ImageFormat::NONE;
+			Texture2DCreateInfo texInfo;
+			texInfo.Name = name;
+			texInfo.Format = format;
+			texInfo.Usage = (ImageUsage)usage;
+			texInfo.Width = 1;
+			texInfo.Height = 1;
+			texInfo.Layers = 1;
+			texInfo.MipLevels = 1;
+			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+			Texture = Texture2D::Create(texInfo);
+			LoadOp = AttachmentLoadOp::CLEAR;
+		}
+
+		RenderPassAttachment(const Ref<Texture2D>& texture)
+		{
+			Texture = texture;
+			LoadOp = AttachmentLoadOp::LOAD;
+		}
+
+		Ref<Texture2D> Texture;
 		AttachmentLoadOp LoadOp = AttachmentLoadOp::CLEAR;
-		LinearColor ClearColor = Vector4(0.f);
-		float DepthClearColor = 0.f;
-		uint32 StencilClearColor = 0.f;
+		LinearColor ClearColor = { 0.f, 0.f, 0.f, 1.0f };
+		float DepthClearColor = 1.f;
+		uint32 StencilClearColor = 1.f;
 	};
 
 	class RenderPass;
@@ -33,8 +56,6 @@ namespace Athena
 	{
 		String Name;
 		Ref<RenderPass> InputPass;
-		std::vector<AttachmentInfo> Attachments;
-		std::vector<Ref<Image>> ExistingImages;
 		uint32 Width;
 		uint32 Height;
 		LinearColor DebugColor = LinearColor(0.f, 0.f, 0.f, 0.f);
@@ -50,16 +71,20 @@ namespace Athena
 		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
+		virtual void Bake() = 0;
 
-		virtual Ref<Texture2D> GetOutput(uint32 attachmentIndex) const = 0;
-		virtual Ref<Texture2D> GetDepthOutput() const = 0;
+		void SetOutput(const RenderPassAttachment& attachment);
+		Ref<Texture2D> GetOutput(const String& name) const;
+		Ref<Texture2D> GetDepthOutput() const;
+		const auto& GetAllOutputs() const { return m_Outputs; }
 
-		virtual uint32 GetColorAttachmentCount() const = 0;
-		virtual bool HasDepthAttachment() const = 0;
+		uint32 GetColorAttachmentCount() const;
+		bool HasDepthAttachment() const;
 
 		const RenderPassCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
 		RenderPassCreateInfo m_Info;
+		std::vector<RenderPassAttachment> m_Outputs;
 	};
 }

@@ -17,7 +17,7 @@ void main()
 #version 460 core
 #pragma stage : fragment
 
-#include "Buffers.glslh"
+#include "Include/Buffers.glslh"
 
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;

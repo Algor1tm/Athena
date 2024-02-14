@@ -3,7 +3,7 @@
 #version 460 core
 #pragma stage : compute
 
-#include "Common.glslh"
+#include "Include/Common.glslh"
 
 #define SAMPLE_COUNT 2048
 

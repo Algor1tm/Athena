@@ -43,19 +43,15 @@ namespace Athena
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "GeometryPass";
-			passInfo.Attachments = { ImageFormat::RGBA16F, ImageFormat::DEPTH24STENCIL8 };
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.Attachments[0].Name = "GeometryHDRColor";
-			passInfo.Attachments[0].LoadOp = AttachmentLoadOp::CLEAR;
-			passInfo.Attachments[0].ClearColor = { 0.f, 0.f, 0.f, 1.0f };
-			passInfo.Attachments[1].Name = "GeometryDepth";
-			passInfo.Attachments[1].LoadOp = AttachmentLoadOp::CLEAR;
-			passInfo.Attachments[1].DepthClearColor = 1.f;
-			passInfo.Attachments[1].StencilClearColor = 1.f;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
 			m_GeometryPass = RenderPass::Create(passInfo);
+			m_GeometryPass->SetOutput({ "GeometryHDRColor", ImageFormat::RGBA16F });
+			m_GeometryPass->SetOutput({ "GeometryDepth", ImageFormat::DEPTH24STENCIL8 });
+			m_GeometryPass->Bake();
+
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "StaticGeometryPipeline";
@@ -117,14 +113,17 @@ namespace Athena
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";
 			passInfo.InputPass = m_GeometryPass;
-			passInfo.Attachments = { ImageFormat::RGBA8 };
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.Attachments[0].Name = "SceneCompositeColor";
-			passInfo.Attachments[0].LoadOp = AttachmentLoadOp::DONT_CARE;
 			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
 
+			RenderPassAttachment colorOutput = { "SceneCompositeColor", ImageFormat::RGBA8 };
+			colorOutput.LoadOp = AttachmentLoadOp::DONT_CARE;
+
 			m_CompositePass = RenderPass::Create(passInfo);
+			m_CompositePass->SetOutput(colorOutput);
+			m_CompositePass->Bake();
+
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "SceneCompositePipeline";
@@ -137,7 +136,7 @@ namespace Athena
 
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
 
-			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput(0));
+			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("GeometryHDRColor"));
 			m_CompositePipeline->SetInput("u_SceneData", m_SceneUBO);
 			m_CompositePipeline->Bake();
 		}
@@ -149,11 +148,15 @@ namespace Athena
 			passInfo.InputPass = m_CompositePass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.ExistingImages.push_back(m_CompositePass->GetOutput(0)->GetImage());
-			passInfo.ExistingImages.push_back(m_GeometryPass->GetDepthOutput()->GetImage());
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
+			RenderPassAttachment colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
+			RenderPassAttachment depthOutput = m_GeometryPass->GetOutput("GeometryDepth");
+
 			m_Renderer2DPass = RenderPass::Create(passInfo);
+			m_Renderer2DPass->SetOutput(colorOutput);
+			m_Renderer2DPass->SetOutput(depthOutput);
+			m_Renderer2DPass->Bake();
 
 			m_SceneRenderer2D = SceneRenderer2D::Create(m_Renderer2DPass);
 		}
@@ -166,7 +169,7 @@ namespace Athena
 
 	Ref<Image> SceneRenderer::GetFinalImage()
 	{
-		return m_CompositePass->GetOutput(0)->GetImage();
+		return m_CompositePass->GetOutput("SceneCompositeColor")->GetImage();
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)

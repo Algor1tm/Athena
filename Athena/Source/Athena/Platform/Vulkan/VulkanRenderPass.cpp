@@ -35,11 +35,11 @@ namespace Athena
 			return (VkImageLayout)0;
 		}
 
-		static VkClearValue GetClearValue(const AttachmentInfo& info)
+		static VkClearValue GetClearValue(const RenderPassAttachment& info)
 		{
 			VkClearValue result = {};
 
-			if (Image::IsColorFormat(info.Format))
+			if (Image::IsColorFormat(info.Texture->GetFormat()))
 			{
 				result.color = { info.ClearColor[0], info.ClearColor[1], info.ClearColor[2], info.ClearColor[3] };
 			}
@@ -55,19 +55,67 @@ namespace Athena
 	VulkanRenderPass::VulkanRenderPass(const RenderPassCreateInfo& info)
 	{
 		m_Info = info;
+	}
 
-		m_DepthAttachment = nullptr;
+	VulkanRenderPass::~VulkanRenderPass()
+	{
+		Renderer::SubmitResourceFree([renderPass = m_VulkanRenderPass, framebuffer = m_VulkanFramebuffer]()
+		{
+			vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
+			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
+		});
+	}
 
+	void VulkanRenderPass::Begin(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		if(m_Info.DebugColor != LinearColor(0.f))
+			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
+
+		Renderer::Submit([this, commandBuffer = commandBuffer]()
+		{
+			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 width = m_Info.Width;
+			uint32 height = m_Info.Height;
+
+			VkRenderPassBeginInfo renderPassBeginInfo = {};
+			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassBeginInfo.renderPass = m_VulkanRenderPass;
+			renderPassBeginInfo.framebuffer = m_VulkanFramebuffer;
+			renderPassBeginInfo.renderArea.offset = { 0, 0 };
+			renderPassBeginInfo.renderArea.extent = { width , height };
+			renderPassBeginInfo.clearValueCount = m_ClearColors.size();
+			renderPassBeginInfo.pClearValues = m_ClearColors.data();
+
+			vkCmdBeginRenderPass(vkcmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		});
+	}
+
+	void VulkanRenderPass::End(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		Renderer::Submit([this, commandBuffer = commandBuffer]()
+		{
+			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			vkCmdEndRenderPass(vkcmdBuf);
+		});
+		
+		if (m_Info.DebugColor != LinearColor(0.f))
+			Renderer::EndDebugRegion(commandBuffer);
+	}
+
+	void VulkanRenderPass::Bake()
+	{
 		std::vector<VkAttachmentDescription> attachments;
 		std::vector<VkAttachmentReference> colorAttachmentRefs;
 
 		bool hasDepthStencil = false;
 		VkAttachmentReference depthStencilAttachmentRef = {};
 
-		for (const auto& attachment : m_Info.Attachments)
+		for (const auto& attachment : m_Outputs)
 		{
+			ImageFormat format = attachment.Texture->GetFormat();
+
 			VkAttachmentDescription attachmentDesc = {};
-			attachmentDesc.format = Vulkan::GetFormat(attachment.Format);
+			attachmentDesc.format = Vulkan::GetFormat(format);
 			attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
 			VkAttachmentLoadOp loadOp = Vulkan::GetLoadOp(attachment.LoadOp);
@@ -78,64 +126,11 @@ namespace Athena
 			attachmentDesc.stencilLoadOp = loadOp;
 			attachmentDesc.stencilStoreOp = storeOp;
 
-			attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachmentDesc.initialLayout = attachment.LoadOp == AttachmentLoadOp::LOAD ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			attachments.push_back(attachmentDesc);
 
-			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC;
-
-			Texture2DCreateInfo attachmentInfo = {};
-			attachmentInfo.Format = attachment.Format;
-			attachmentInfo.Usage = (ImageUsage)usage;
-			attachmentInfo.Name = attachment.Name;
-			attachmentInfo.Width = m_Info.Width;
-			attachmentInfo.Height = m_Info.Height;
-			attachmentInfo.Layers = 1;
-			attachmentInfo.MipLevels = 1;
-			attachmentInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-			attachmentInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			attachmentInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
-
-			if (Image::IsColorFormat(attachment.Format))
-			{
-				VkAttachmentReference colorAttachmentRef;
-				colorAttachmentRef.attachment = attachments.size() - 1;
-				colorAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
-
-				colorAttachmentRefs.push_back(colorAttachmentRef);
-
-				m_ColorAttachments.push_back(Texture2D::Create(attachmentInfo));
-			}
-			else
-			{
-				depthStencilAttachmentRef.attachment = attachments.size() - 1;
-				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(attachment.Format);
-				hasDepthStencil = true;
-
-				ATN_CORE_VERIFY(m_DepthAttachment == nullptr, "Max 1 depth attachment in framebuffer!");
-				m_DepthAttachment = Texture2D::Create(attachmentInfo);
-			}
-		}
-		for (const auto& attachment : m_Info.ExistingImages)
-		{
-			ImageFormat format = attachment->GetInfo().Format;
-			VkAttachmentDescription attachmentDesc = {};
-			attachmentDesc.format = Vulkan::GetFormat(format);
-			attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-
-			VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-
-			attachmentDesc.loadOp = loadOp;
-			attachmentDesc.storeOp = storeOp;
-			attachmentDesc.stencilLoadOp = loadOp;
-			attachmentDesc.stencilStoreOp = storeOp;
-
-			attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			attachments.push_back(attachmentDesc);
 
 			if (Image::IsColorFormat(format))
 			{
@@ -147,6 +142,8 @@ namespace Athena
 			}
 			else
 			{
+				ATN_CORE_VERIFY(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
+
 				depthStencilAttachmentRef.attachment = attachments.size() - 1;
 				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(format);
 				hasDepthStencil = true;
@@ -157,7 +154,7 @@ namespace Athena
 
 		if (!colorAttachmentRefs.empty())
 		{
-			if(m_Info.InputPass)
+			if (m_Info.InputPass)
 			{
 				VkSubpassDependency dependency = {};
 				dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -216,7 +213,7 @@ namespace Athena
 		VK_CHECK(vkCreateRenderPass(VulkanContext::GetLogicalDevice(), &renderPassInfo, nullptr, &m_VulkanRenderPass));
 		Vulkan::SetObjectDebugName(m_VulkanRenderPass, VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_Info.Name);
 
-		for (const auto& attachment : m_Info.Attachments)
+		for (const auto& attachment : m_Outputs)
 		{
 			if (attachment.LoadOp == AttachmentLoadOp::CLEAR)
 			{
@@ -225,54 +222,12 @@ namespace Athena
 			}
 		}
 
+		uint32 width = m_Info.Width;
+		uint32 height = m_Info.Height;
+
 		m_Info.Width = 0;
 		m_Info.Height = 0;
-		Resize(info.Width, info.Height);
-	}
-
-	VulkanRenderPass::~VulkanRenderPass()
-	{
-		Renderer::SubmitResourceFree([renderPass = m_VulkanRenderPass, framebuffer = m_VulkanFramebuffer]()
-		{
-			vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
-			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
-		});
-	}
-
-	void VulkanRenderPass::Begin(const Ref<RenderCommandBuffer>& commandBuffer)
-	{
-		if(m_Info.DebugColor != LinearColor(0.f))
-			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
-
-		Renderer::Submit([this, commandBuffer = commandBuffer]()
-		{
-			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 width = m_Info.Width;
-			uint32 height = m_Info.Height;
-
-			VkRenderPassBeginInfo renderPassBeginInfo = {};
-			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassBeginInfo.renderPass = m_VulkanRenderPass;
-			renderPassBeginInfo.framebuffer = m_VulkanFramebuffer;
-			renderPassBeginInfo.renderArea.offset = { 0, 0 };
-			renderPassBeginInfo.renderArea.extent = { width , height };
-			renderPassBeginInfo.clearValueCount = m_ClearColors.size();
-			renderPassBeginInfo.pClearValues = m_ClearColors.data();
-
-			vkCmdBeginRenderPass(vkcmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		});
-	}
-
-	void VulkanRenderPass::End(const Ref<RenderCommandBuffer>& commandBuffer)
-	{
-		Renderer::Submit([this, commandBuffer = commandBuffer]()
-		{
-			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			vkCmdEndRenderPass(vkcmdBuf);
-		});
-		
-		if (m_Info.DebugColor != LinearColor(0.f))
-			Renderer::EndDebugRegion(commandBuffer);
+		Resize(width, height);
 	}
 
 	void VulkanRenderPass::Resize(uint32 width, uint32 height)
@@ -291,85 +246,32 @@ namespace Athena
 			});
 		}
 
-		for (auto& attachment : m_ColorAttachments)
-			attachment->Resize(width, height);
-
-		if (m_DepthAttachment)
-			m_DepthAttachment->Resize(width, height);
+		for (auto& attachment : m_Outputs)
+			attachment.Texture->Resize(width, height);
 
 		Renderer::Submit([this]()
 		{
 			VkFramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = m_VulkanRenderPass;
-			framebufferInfo.attachmentCount = m_Info.Attachments.size();
+			framebufferInfo.attachmentCount = m_Outputs.size();
 			framebufferInfo.width = m_Info.Width;
 			framebufferInfo.height = m_Info.Height;
 			framebufferInfo.layers = 1;
 
-			std::vector<VkImageView> attachments;
+			std::vector<VkImageView> attachmentViews;
 
-			for (auto& colorAttachment : m_ColorAttachments)
+			for (auto& attachment : m_Outputs)
 			{
-				VkImageView attachment = colorAttachment.As<VulkanTexture2D>()->GetVulkanImageView();
-				attachments.push_back(attachment);
+				VkImageView view = attachment.Texture.As<VulkanTexture2D>()->GetVulkanImageView();
+				attachmentViews.push_back(view);
 			}
 
-			for (auto& image : m_Info.ExistingImages)
-			{
-				VkImageView attachment = image.As<VulkanImage>()->GetVulkanImageView();
-				attachments.push_back(attachment);
-			}
-
-			if (m_DepthAttachment != nullptr)
-			{
-				VkImageView attachment = m_DepthAttachment.As<VulkanTexture2D>()->GetVulkanImageView();
-				attachments.push_back(attachment);
-			}
-
-			framebufferInfo.attachmentCount = attachments.size();
-			framebufferInfo.pAttachments = attachments.data();
+			framebufferInfo.attachmentCount = attachmentViews.size();
+			framebufferInfo.pAttachments = attachmentViews.data();
 
 			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
 			Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_FB", m_Info.Name));
 		});
-	}
-
-	Ref<Texture2D> VulkanRenderPass::GetOutput(uint32 attachmentIndex) const
-	{
-		ATN_CORE_ASSERT(m_ColorAttachments.size() > attachmentIndex);
-		return m_ColorAttachments[attachmentIndex];
-	}
-
-	Ref<Texture2D> VulkanRenderPass::GetDepthOutput() const
-	{
-		ATN_CORE_ASSERT(m_DepthAttachment);
-		return m_DepthAttachment;
-	}
-
-	uint32 VulkanRenderPass::GetColorAttachmentCount() const
-	{
-		uint32 count = m_ColorAttachments.size();
-		for (const auto& image : m_Info.ExistingImages)
-		{
-			if (Image::IsColorFormat(image->GetInfo().Format))
-				count++;
-		}
-
-		return count;
-	}
-
-	bool VulkanRenderPass::HasDepthAttachment() const
-	{
-		if (m_DepthAttachment)
-			return true;
-
-		for (const auto& image : m_Info.ExistingImages)
-		{
-			if (!Image::IsColorFormat(image->GetInfo().Format))
-				return true;
-		}
-
-		return false;
 	}
 }

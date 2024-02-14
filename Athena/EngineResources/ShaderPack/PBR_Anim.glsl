@@ -3,7 +3,7 @@
 #version 460 core
 #pragma stage : vertex
 
-#include "Buffers.glslh"
+#include "Include/Buffers.glslh"
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec2 a_TexCoords;
@@ -68,8 +68,8 @@ void main()
 #version 460 core
 #pragma stage : fragment
 
-#include "Buffers.glslh"
-#include "Common.glslh"
+#include "Include/Buffers.glslh"
+#include "Include/Common.glslh"
 
 
 struct VertexInterpolators

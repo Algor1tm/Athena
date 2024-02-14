@@ -51,6 +51,9 @@ namespace Athena
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
 
+		void SetLineWidth(float width) { m_Info.LineWidth = width; }
+		float GetLineWidth() const { return m_Info.LineWidth; }
+
 		virtual void SetInput(const String& name, const Ref<ShaderResource>& resource) = 0;
 		virtual void Bake() = 0;
 

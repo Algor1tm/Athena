@@ -59,10 +59,10 @@ namespace Athena
 
 		m_TextureSlots[0] = Renderer::GetWhiteTexture();
 
-		m_QuadVertexPositions[0] = { -0.5f,-0.5f, 0.f, 1.f };
-		m_QuadVertexPositions[1] = { 0.5f, -0.5f, 0.f, 1.f };
-		m_QuadVertexPositions[2] = { 0.5f, 0.5f, 0.f, 1.f };
-		m_QuadVertexPositions[3] = { -0.5f, 0.5f, 0.f, 1.f };
+		m_QuadVertexPositions[0] = { -0.5f,0.5f, 0.f, 1.f };
+		m_QuadVertexPositions[1] = { 0.5f, 0.5f, 0.f, 1.f };
+		m_QuadVertexPositions[2] = { 0.5f, -0.5f, 0.f, 1.f };
+		m_QuadVertexPositions[3] = { -0.5f, -0.5f, 0.f, 1.f };
 
 		
 		PipelineCreateInfo pipelineInfo;
@@ -70,12 +70,11 @@ namespace Athena
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Quad");
 		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-		pipelineInfo.CullMode = CullMode::BACK;
+		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 		pipelineInfo.BlendEnable = true;
 
 		m_QuadPipeline = Pipeline::Create(pipelineInfo);
-		m_QuadPipeline->SetInput("u_Texture", Renderer::GetWhiteTexture());
 		m_QuadPipeline->Bake();
 
 		m_QuadMaterials.push_back(Material::Create(pipelineInfo.Shader, pipelineInfo.Name));
@@ -83,8 +82,8 @@ namespace Athena
 		pipelineInfo.Name = "CirclePipeline";
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Circle");
-		pipelineInfo.Topology = Topology::LINE_LIST;
-		pipelineInfo.CullMode = CullMode::BACK;
+		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 		pipelineInfo.BlendEnable = true;
 
@@ -97,10 +96,10 @@ namespace Athena
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Line");
 		pipelineInfo.Topology = Topology::LINE_LIST;
-		pipelineInfo.CullMode = CullMode::BACK;
+		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 		pipelineInfo.BlendEnable = true;
-		pipelineInfo.LineWidth = m_LineWidth;
+		pipelineInfo.LineWidth = 1;
 
 		m_LinePipeline = Pipeline::Create(pipelineInfo);
 		m_LinePipeline->Bake();
@@ -212,7 +211,7 @@ namespace Athena
 		if (m_QuadVertexBufferIndex == m_QuadVertexBuffers[frameIndex].size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_QuadVB_{}", m_QuadVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_QuadVB_f{}_{}", frameIndex, m_QuadVertexBuffers[frameIndex].size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxQuads * sizeof(QuadVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
@@ -227,7 +226,8 @@ namespace Athena
 
 		buffer->SetData(m_QuadVertexBufferBase, dataSize);
 
-		// TODO: Set textures
+		for (uint32 i = 0; i < m_TextureSlotIndex; ++i)
+			m_QuadMaterials[m_QuadVertexBufferIndex]->Set("u_Textures", m_TextureSlots[i], i);
 
 		DrawCall2D drawCall;
 		drawCall.VertexBufferIndex = m_QuadVertexBufferIndex;
@@ -240,7 +240,7 @@ namespace Athena
 		m_TextureSlotIndex = 1;
 		m_QuadVertexBufferIndex++;
 
-		if (m_QuadVertexBufferIndex > m_QuadMaterials.size())
+		if (m_QuadVertexBufferIndex >= m_QuadMaterials.size())
 		{
 			Ref<Material> newMaterial = Material::Create(m_QuadMaterials[0]->GetShader(), std::format("Renderer2D_Quad_{}", m_QuadMaterials.size()));
 			newMaterial->Set("u_ViewProjection", m_QuadMaterials[0]->Get<Matrix4>("u_ViewProjection"));
@@ -257,7 +257,7 @@ namespace Athena
 		if (m_CircleVertexBufferIndex == m_CircleVertexBuffers[frameIndex].size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_CircleVB_{}", m_CircleVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_CircleVB_f{}_{}", frameIndex, m_CircleVertexBuffers[frameIndex].size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxCircles * sizeof(CircleVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
@@ -292,7 +292,7 @@ namespace Athena
 		if (m_LineVertexBufferIndex == m_LineVertexBuffers[frameIndex].size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_LineVB_{}", m_LineVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_LineVB_f{}_{}", frameIndex, m_LineVertexBuffers[frameIndex].size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxLines * sizeof(LineVertex);
 			vertexBufferInfo.IndexBuffer = nullptr;
@@ -413,7 +413,7 @@ namespace Athena
 		{
 			if (m_TextureSlotIndex >= s_MaxTextureSlots)
 				FlushQuads();
-
+			
 			textureIndex = m_TextureSlotIndex;
 			m_TextureSlots[m_TextureSlotIndex] = texture.GetNativeTexture();
 			m_TextureSlotIndex++;
@@ -494,11 +494,11 @@ namespace Athena
 
 	void SceneRenderer2D::SetLineWidth(float width)
 	{
-		m_LineWidth = width;
+		m_LinePipeline->SetLineWidth(width);
 	}
 
 	float SceneRenderer2D::GetLineWidth()
 	{
-		return m_LineWidth;
+		return m_LinePipeline->GetLineWidth();
 	}
 }

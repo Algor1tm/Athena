@@ -60,52 +60,52 @@ namespace Athena
 
 		for (const auto& [name, texture] : m_MetaData.SampledTextures)
 		{
-			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = texture.Binding;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
-			uboLayoutBinding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutBinding layoutBinding = {};
+			layoutBinding.binding = texture.Binding;
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			layoutBinding.descriptorCount = texture.ArraySize;
+			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
+			layoutBinding.pImmutableSamplers = nullptr;
 
-			bindings[texture.Set].push_back(uboLayoutBinding);
+			bindings[texture.Set].push_back(layoutBinding);
 			stats[texture.Set].SampledTextures++;
 			stats[texture.Set].Samplers++;
 		}
 		for (const auto& [name, texture] : m_MetaData.StorageTextures)
 		{
-			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = texture.Binding;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
-			uboLayoutBinding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutBinding layoutBinding = {};
+			layoutBinding.binding = texture.Binding;
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			layoutBinding.descriptorCount = texture.ArraySize;
+			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
+			layoutBinding.pImmutableSamplers = nullptr;
 
-			bindings[texture.Set].push_back(uboLayoutBinding);
+			bindings[texture.Set].push_back(layoutBinding);
 			stats[texture.Set].StorageTextures++;
 		}
-		for (const auto& [name, ubo] : m_MetaData.UniformBuffers)
+		for (const auto& [name, buffer] : m_MetaData.UniformBuffers)
 		{
-			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = ubo.Binding;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
-			uboLayoutBinding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutBinding layoutBinding = {};
+			layoutBinding.binding = buffer.Binding;
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			layoutBinding.descriptorCount = buffer.ArraySize;
+			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(buffer.StageFlags);
+			layoutBinding.pImmutableSamplers = nullptr;
 
-			bindings[ubo.Set].push_back(uboLayoutBinding);
-			stats[ubo.Set].UBOs++;
+			bindings[buffer.Set].push_back(layoutBinding);
+			stats[buffer.Set].UBOs++;
 		}
-		for (const auto& [name, ubo] : m_MetaData.StorageBuffers)
+		for (const auto& [name, buffer] : m_MetaData.StorageBuffers)
 		{
-			VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-			uboLayoutBinding.binding = ubo.Binding;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-			uboLayoutBinding.descriptorCount = 1;
-			uboLayoutBinding.stageFlags = Vulkan::GetShaderStageFlags(ubo.StageFlags);
-			uboLayoutBinding.pImmutableSamplers = nullptr;
+			VkDescriptorSetLayoutBinding layoutBinding = {};
+			layoutBinding.binding = buffer.Binding;
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			layoutBinding.descriptorCount = buffer.ArraySize;
+			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(buffer.StageFlags);
+			layoutBinding.pImmutableSamplers = nullptr;
 
-			bindings[ubo.Set].push_back(uboLayoutBinding);
-			stats[ubo.Set].SBOs++;
+			bindings[buffer.Set].push_back(layoutBinding);
+			stats[buffer.Set].SBOs++;
 		}
 
 		uint32 setsCount = 0;

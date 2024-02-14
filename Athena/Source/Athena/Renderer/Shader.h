@@ -38,6 +38,7 @@ namespace Athena
 		uint64 Size;
 		uint32 Binding;
 		uint32 Set;
+		uint32 ArraySize;
 		ShaderStage StageFlags;
 	};
 
@@ -46,6 +47,7 @@ namespace Athena
 		ImageType ImageType;
 		uint32 Binding;
 		uint32 Set;
+		uint32 ArraySize;
 		ShaderStage StageFlags;
 	};
 

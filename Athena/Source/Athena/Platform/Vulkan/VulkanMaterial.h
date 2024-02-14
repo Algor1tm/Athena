@@ -15,7 +15,7 @@ namespace Athena
 		VulkanMaterial(const Ref<Shader>& shader, const String& name);
 		~VulkanMaterial();
 
-		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource) override;
+		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex) override;
 		virtual Ref<ShaderResource> GetResource(const String& name) override;
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;

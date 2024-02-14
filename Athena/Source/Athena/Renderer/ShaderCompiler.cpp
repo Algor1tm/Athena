@@ -558,10 +558,6 @@ namespace Athena
 
 			for (const auto& resource : resources.sampled_images)
 			{
-				const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
-				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-
 				if (result.SampledTextures.contains(resource.name))
 				{
 					auto& stageFlags = result.SampledTextures.at(resource.name).StageFlags;
@@ -569,11 +565,17 @@ namespace Athena
 				}
 				else
 				{
+					const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
+					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+					const auto& array = compiler.get_type(resource.type_id).array;
+
 					TextureShaderMetaData textureData;
 					textureData.ImageType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
+					textureData.ArraySize = array.empty() ? 1 : array[0];
 
 					result.SampledTextures[resource.name] = textureData;
 				}
@@ -581,11 +583,6 @@ namespace Athena
 
 			for (const auto& resource : resources.storage_images)
 			{
-				const auto& type = compiler.get_type(resource.base_type_id).image;
-				const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
-				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-
 				if (result.StorageTextures.contains(resource.name))
 				{
 					auto& stageFlags = result.StorageTextures.at(resource.name).StageFlags;
@@ -593,11 +590,17 @@ namespace Athena
 				}
 				else
 				{
+					const auto& dim = compiler.get_type(resource.base_type_id).image.dim;
+					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+					const auto& array = compiler.get_type(resource.type_id).array;
+
 					TextureShaderMetaData textureData;
 					textureData.ImageType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
+					textureData.ArraySize = array.empty() ? 1 : array[0];
 
 					result.StorageTextures[resource.name] = textureData;
 				}
@@ -605,11 +608,6 @@ namespace Athena
 
 			for (const auto& resource : resources.uniform_buffers)
 			{
-				const auto& bufferType = compiler.get_type(resource.base_type_id);
-				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
-				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-
 				if (result.UniformBuffers.contains(resource.name))
 				{
 					auto& stageFlags = result.UniformBuffers.at(resource.name).StageFlags;
@@ -617,11 +615,18 @@ namespace Athena
 				}
 				else
 				{
+					const auto& bufferType = compiler.get_type(resource.base_type_id);
+					uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
+					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+					const auto& array = compiler.get_type(resource.type_id).array;
+
 					BufferShaderMetaData bufferData;
 					bufferData.Size = bufferSize;
 					bufferData.Binding = binding;
 					bufferData.Set = set;
 					bufferData.StageFlags = stage;
+					bufferData.ArraySize = array.empty() ? 1 : array[0];
 
 					result.UniformBuffers[resource.name] = bufferData;
 				}
@@ -633,11 +638,6 @@ namespace Athena
 				// So we make work around and get resource name using base_type_id
 				String resourceName = compiler.get_name(resource.base_type_id);
 
-				const auto& bufferType = compiler.get_type(resource.base_type_id);
-				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
-				uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-				uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-
 				if (result.StorageBuffers.contains(resourceName))
 				{
 					auto& stageFlags = result.StorageBuffers.at(resourceName).StageFlags;
@@ -645,11 +645,18 @@ namespace Athena
 				}
 				else
 				{
+					const auto& bufferType = compiler.get_type(resource.base_type_id);
+					uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
+					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+					const auto& array = compiler.get_type(resource.type_id).array;
+
 					BufferShaderMetaData bufferData;
 					bufferData.Size = bufferSize;
 					bufferData.Binding = binding;
 					bufferData.Set = set;
 					bufferData.StageFlags = stage;
+					bufferData.ArraySize = array.empty() ? 1 : array[0];
 
 					result.StorageBuffers[resourceName] = bufferData;
 				}
@@ -668,19 +675,19 @@ namespace Athena
 
 		ATN_CORE_TRACE("sampled textures: {}", result.SampledTextures.size());
 		for (const auto& [name, texture] : result.SampledTextures)
-			ATN_CORE_TRACE("\t{}: binding {}, set {}", name, texture.Binding, texture.Set);
+			ATN_CORE_TRACE("\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
 
 		ATN_CORE_TRACE("storage textures: {}", result.StorageTextures.size());
 		for (const auto& [name, texture] : result.StorageTextures)
-			ATN_CORE_TRACE("\t{}: binding {}, set {}", name, texture.Binding, texture.Set);
+			ATN_CORE_TRACE("\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
 
 		ATN_CORE_TRACE("uniform buffers: {}", result.UniformBuffers.size());
 		for (const auto& [name, buffer] : result.UniformBuffers)
-			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}", name, buffer.Size, buffer.Binding, buffer.Set);
+			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
 
 		ATN_CORE_TRACE("storage buffers : {}", result.StorageBuffers.size());
 		for (const auto& [name, buffer] : result.StorageBuffers)
-			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}", name, buffer.Size, buffer.Binding, buffer.Set);
+			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
 
 		return result;
 	}

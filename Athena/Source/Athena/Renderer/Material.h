@@ -93,6 +93,9 @@ namespace Athena
 		}
 
 		template <typename T>
+		void Set(const String& name, const Ref<T>& resource, uint32 arrayIndex = 0);
+
+		template <typename T>
 		T Get(const String& name)
 		{
 			return m_PushConstantRange.Get<T>(name);
@@ -108,7 +111,7 @@ namespace Athena
 		Material(const Ref<Shader> shader, const String& name);
 
 	private:
-		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource) = 0;
+		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex) = 0;
 		virtual Ref<ShaderResource> GetResource(const String& name) = 0;
 
 		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range) = 0;
@@ -120,9 +123,9 @@ namespace Athena
 	};
 
 	template <>
-	inline void Material::Set<Ref<Texture2D>>(const String& name, const Ref<Texture2D>& resource)
+	inline void Material::Set<Texture2D>(const String& name, const Ref<Texture2D>& resource, uint32 arrayIndex)
 	{
-		SetResource(name, resource);
+		SetResource(name, resource, arrayIndex);
 	}
 
 	template <>

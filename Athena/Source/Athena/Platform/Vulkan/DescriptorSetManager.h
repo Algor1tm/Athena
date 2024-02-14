@@ -10,14 +10,21 @@
 
 namespace Athena
 {
-	// map of set -> binding -> shader resource
-	using ShaderResourcesTable = std::unordered_map<uint32, std::unordered_map<uint32, Ref<ShaderResource>>>;
+	struct ShaderResourceStorage
+	{
+		std::vector<Ref<ShaderResource>> Storage;
+		ShaderResourceType Type;
+	};
+
+	// map of set -> binding -> shader resource array
+	using ShaderResourcesTable = std::unordered_map<uint32, std::unordered_map<uint32, ShaderResourceStorage>>;
 
 	struct ShaderResourceDescription
 	{
 		ShaderResourceType Type;
 		uint32 Binding;
 		uint32 Set;
+		uint32 ArraySize;
 	}; 
 
 	struct ResourceState
@@ -32,7 +39,7 @@ namespace Athena
 
 	struct WriteDescriptorSet
 	{
-		ResourceState ResourceState;
+		std::vector<ResourceState> ResourcesState;
 		VkWriteDescriptorSet VulkanWriteDescriptorSet;
 	};
 
@@ -51,8 +58,8 @@ namespace Athena
 		DescriptorSetManager(const DescriptorSetManagerCreateInfo& info);
 		~DescriptorSetManager();
 
-		void Set(const String& name, const Ref<ShaderResource>& resource);
-		Ref<ShaderResource> Get(const String& name);
+		void Set(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex = 0);
+		Ref<ShaderResource> Get(const String& name, uint32 arrayIndex = 0);
 
 		bool Validate() const;
 		void Bake();

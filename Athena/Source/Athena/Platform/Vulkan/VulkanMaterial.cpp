@@ -28,9 +28,9 @@ namespace Athena
 		
 	}
 
-	void VulkanMaterial::SetResource(const String& name, const Ref<ShaderResource>& resource)
+	void VulkanMaterial::SetResource(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex)
 	{
-		m_DescriptorSetManager->Set(name, resource);
+		m_DescriptorSetManager->Set(name, resource, arrayIndex);
 	}
 
 	Ref<ShaderResource> VulkanMaterial::GetResource(const String& name)

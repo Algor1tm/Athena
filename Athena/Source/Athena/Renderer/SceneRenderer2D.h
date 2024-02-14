@@ -132,8 +132,6 @@ namespace Athena
 		LineVertex* m_LineVertexBufferBase = nullptr;
 		LineVertex* m_LineVertexBufferPointer = nullptr;
 
-		float m_LineWidth = 2.f;
-
 		Vector4 m_QuadVertexPositions[4];
 	};
 }

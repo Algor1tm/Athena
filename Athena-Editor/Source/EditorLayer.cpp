@@ -49,7 +49,7 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
 
         m_ViewportRenderer = SceneRenderer::Create();
-        m_ViewportRenderer->GetSceneRenderer2D()->SetLineWidth(1.f);
+        m_ViewportRenderer->GetSceneRenderer2D()->SetLineWidth(3.f);
 
         m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);

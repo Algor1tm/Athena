@@ -75,6 +75,9 @@ namespace Athena
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 			vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
 
+			if (m_Info.Topology == Topology::LINE_LIST)
+				vkCmdSetLineWidth(vkcmdBuffer, m_Info.LineWidth);
+
 			m_DescriptorSetManager->RT_InvalidateAndUpdate();
 			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 		});
@@ -225,6 +228,16 @@ namespace Athena
 
 			auto vkShader = m_Info.Shader.As<VulkanShader>();
 
+			std::vector<VkDynamicState> dynamicStates;
+			if (m_Info.Topology == Topology::LINE_LIST)
+				dynamicStates.push_back(VK_DYNAMIC_STATE_LINE_WIDTH);
+
+			VkPipelineDynamicStateCreateInfo dynamicState = {};
+			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			dynamicState.flags = 0;
+			dynamicState.dynamicStateCount = dynamicStates.size();
+			dynamicState.pDynamicStates = dynamicStates.data();
+
 			VkGraphicsPipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 			pipelineInfo.stageCount = vkShader->GetPipelineStages().size();
@@ -236,7 +249,7 @@ namespace Athena
 			pipelineInfo.pMultisampleState = &multisampling;
 			pipelineInfo.pDepthStencilState = &depthStencil;
 			pipelineInfo.pColorBlendState = &colorBlending;
-			pipelineInfo.pDynamicState = nullptr;
+			pipelineInfo.pDynamicState = &dynamicState;
 			pipelineInfo.layout = vkShader->GetPipelineLayout();
 			pipelineInfo.renderPass = m_Info.RenderPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
 			pipelineInfo.subpass = 0;

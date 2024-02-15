@@ -66,8 +66,15 @@ namespace Athena
 			layoutBinding.descriptorCount = texture.ArraySize;
 			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
 			layoutBinding.pImmutableSamplers = nullptr;
-
 			bindings[texture.Set].push_back(layoutBinding);
+
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
+			resourceDesc.Binding = texture.Binding;
+			resourceDesc.Set = texture.Set;
+			resourceDesc.ArraySize = texture.ArraySize;
+			m_ResourcesDescriptionTable[name] = resourceDesc;
+
 			stats[texture.Set].SampledTextures++;
 			stats[texture.Set].Samplers++;
 		}
@@ -79,8 +86,15 @@ namespace Athena
 			layoutBinding.descriptorCount = texture.ArraySize;
 			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(texture.StageFlags);
 			layoutBinding.pImmutableSamplers = nullptr;
-
 			bindings[texture.Set].push_back(layoutBinding);
+
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2DStorage : ShaderResourceType::TextureCubeStorage;
+			resourceDesc.Binding = texture.Binding;
+			resourceDesc.Set = texture.Set;
+			resourceDesc.ArraySize = texture.ArraySize;
+			m_ResourcesDescriptionTable[name] = resourceDesc;
+
 			stats[texture.Set].StorageTextures++;
 		}
 		for (const auto& [name, buffer] : m_MetaData.UniformBuffers)
@@ -91,8 +105,15 @@ namespace Athena
 			layoutBinding.descriptorCount = buffer.ArraySize;
 			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(buffer.StageFlags);
 			layoutBinding.pImmutableSamplers = nullptr;
-
 			bindings[buffer.Set].push_back(layoutBinding);
+
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::UniformBuffer;
+			resourceDesc.Binding = buffer.Binding;
+			resourceDesc.Set = buffer.Set;
+			resourceDesc.ArraySize = buffer.ArraySize;
+			m_ResourcesDescriptionTable[name] = resourceDesc;
+
 			stats[buffer.Set].UBOs++;
 		}
 		for (const auto& [name, buffer] : m_MetaData.StorageBuffers)
@@ -103,8 +124,15 @@ namespace Athena
 			layoutBinding.descriptorCount = buffer.ArraySize;
 			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(buffer.StageFlags);
 			layoutBinding.pImmutableSamplers = nullptr;
-
 			bindings[buffer.Set].push_back(layoutBinding);
+
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::StorageBuffer;
+			resourceDesc.Binding = buffer.Binding;
+			resourceDesc.Set = buffer.Set;
+			resourceDesc.ArraySize = buffer.ArraySize;
+			m_ResourcesDescriptionTable[name] = resourceDesc;
+
 			stats[buffer.Set].SBOs++;
 		}
 

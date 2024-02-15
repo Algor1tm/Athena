@@ -54,7 +54,7 @@ namespace Athena
 		void SetLineWidth(float width) { m_Info.LineWidth = width; }
 		float GetLineWidth() const { return m_Info.LineWidth; }
 
-		virtual void SetInput(const String& name, const Ref<ShaderResource>& resource) = 0;
+		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) = 0;
 		virtual void Bake() = 0;
 
 		const PipelineCreateInfo& GetInfo() const { return m_Info; }

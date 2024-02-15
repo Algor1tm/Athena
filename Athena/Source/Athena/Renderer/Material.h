@@ -111,8 +111,8 @@ namespace Athena
 		Material(const Ref<Shader> shader, const String& name);
 
 	private:
-		virtual void SetResource(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex) = 0;
-		virtual Ref<ShaderResource> GetResource(const String& name) = 0;
+		virtual void SetResource(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex) = 0;
+		virtual Ref<RenderResource> GetResource(const String& name) = 0;
 
 		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range) = 0;
 

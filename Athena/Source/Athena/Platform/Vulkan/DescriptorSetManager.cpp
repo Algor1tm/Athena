@@ -9,130 +9,90 @@
 
 namespace Athena
 {
+	namespace Vulkan
+	{
+		static VkDescriptorType GetDescriptorType(ShaderResourceType type)
+		{
+			switch (type)
+			{
+			case ShaderResourceType::Texture2D:           return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			case ShaderResourceType::TextureCube:         return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			case ShaderResourceType::Texture2DStorage:    return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::TextureCubeStorage:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::UniformBuffer:	      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			case ShaderResourceType::StorageBuffer:	      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			}
+
+			ATN_CORE_ASSERT(false);
+			return (VkDescriptorType)0;
+		}
+	}
+
 	namespace Utils
 	{
-		static std::string_view ResourceTypeToString(ShaderResourceType type)
+		static RenderResourceType ShaderResourceToRenderResource(ShaderResourceType type)
+		{
+			switch (type)
+			{
+			case ShaderResourceType::Texture2D:           return RenderResourceType::Texture2D;
+			case ShaderResourceType::TextureCube:         return RenderResourceType::TextureCube;
+			case ShaderResourceType::Texture2DStorage:    return RenderResourceType::Texture2D;
+			case ShaderResourceType::TextureCubeStorage:  return RenderResourceType::TextureCube;
+			case ShaderResourceType::UniformBuffer:	      return RenderResourceType::UniformBuffer;
+			case ShaderResourceType::StorageBuffer:	      return RenderResourceType::StorageBuffer;
+			}
+
+			ATN_CORE_ASSERT(false);
+			return (RenderResourceType)0;
+		}
+
+		static std::string_view ResourceTypeToString(RenderResourceType type)
 		{
 			switch(type)
 			{
-			case ShaderResourceType::Texture2D:          return "Texture2D";
-			case ShaderResourceType::TextureCube:        return "TextureCube";
-			case ShaderResourceType::UniformBuffer:		 return "UniformBuffer";
-			case ShaderResourceType::StorageBuffer:		 return "StorageBuffer";
+			case RenderResourceType::Texture2D:      return "Texture2D";
+			case RenderResourceType::TextureCube:    return "TextureCube";
+			case RenderResourceType::UniformBuffer:	 return "UniformBuffer";
+			case RenderResourceType::StorageBuffer:	 return "StorageBuffer";
 			}
 
 			ATN_CORE_ASSERT(false);
 			return "";
+		}
+
+		static std::string_view ResourceTypeToString(ShaderResourceType type)
+		{
+			return ResourceTypeToString(Utils::ShaderResourceToRenderResource(type));
 		}
 	}
 
 	DescriptorSetManager::DescriptorSetManager(const DescriptorSetManagerCreateInfo& info)
 	{
 		m_Info = info;
+		m_ResourcesDescriptionTable = &m_Info.Shader->GetResourcesDescription();
+		m_DescriptorPool = VK_NULL_HANDLE;
 
 		// Fill in resources description table usaing shader meta data
-		// And create write descriptor table
+		// And create write descriptor tables
 		m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
-		const ShaderMetaData& metaData = m_Info.Shader->GetMetaData();
 
-		for (const auto& [name, texture] : metaData.SampledTextures)
+		for (const auto& [name, resourceDesc] : *m_ResourcesDescriptionTable)
 		{
-			if (texture.Set >= m_Info.FirstSet && texture.Set <= m_Info.LastSet)
+			if (IsValidSet(resourceDesc.Set))
 			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
-				resourceDesc.Binding = texture.Binding;
-				resourceDesc.Set = texture.Set;
-				resourceDesc.ArraySize = texture.ArraySize;
-				m_ResourcesDescriptionTable[name] = resourceDesc;
-
 				WriteDescriptorSet& wd = m_WriteDescriptorSetTable[0][resourceDesc.Set][resourceDesc.Binding];
-				wd.ResourcesState.resize(texture.ArraySize);
+				wd.ResourcesState.resize(resourceDesc.ArraySize);
 
 				VkWriteDescriptorSet& vulkanWD = wd.VulkanWriteDescriptorSet;
 				vulkanWD.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				vulkanWD.dstBinding = resourceDesc.Binding;
-				vulkanWD.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				vulkanWD.descriptorType = Vulkan::GetDescriptorType(resourceDesc.Type);
 				vulkanWD.dstArrayElement = 0;
-				vulkanWD.descriptorCount = texture.ArraySize;
+				vulkanWD.descriptorCount = resourceDesc.ArraySize;
 
-				m_Resources[texture.Set][texture.Binding].Type = resourceDesc.Type;
-				m_Resources.at(texture.Set).at(texture.Binding).Storage.resize(texture.ArraySize);
-			}
-		}
-		for (const auto& [name, texture] : metaData.StorageTextures)
-		{
-			if (texture.Set >= m_Info.FirstSet && texture.Set <= m_Info.LastSet)
-			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
-				resourceDesc.Binding = texture.Binding;
-				resourceDesc.Set = texture.Set;
-				resourceDesc.ArraySize = texture.ArraySize;
-				m_ResourcesDescriptionTable[name] = resourceDesc;
-
-				WriteDescriptorSet& wd = m_WriteDescriptorSetTable[0][resourceDesc.Set][resourceDesc.Binding];
-				wd.ResourcesState.resize(texture.ArraySize);
-
-				VkWriteDescriptorSet& vulkanWD = wd.VulkanWriteDescriptorSet;
-				vulkanWD.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				vulkanWD.dstBinding = resourceDesc.Binding;
-				vulkanWD.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-				vulkanWD.dstArrayElement = 0;
-				vulkanWD.descriptorCount = texture.ArraySize;
-
-				m_Resources[texture.Set][texture.Binding].Type = resourceDesc.Type;
-				m_Resources.at(texture.Set).at(texture.Binding).Storage.resize(texture.ArraySize);
-			}
-		}
-		for (const auto& [name, buffer] : metaData.UniformBuffers)
-		{
-			if (buffer.Set >= m_Info.FirstSet && buffer.Set <= m_Info.LastSet)
-			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = ShaderResourceType::UniformBuffer;
-				resourceDesc.Binding = buffer.Binding;
-				resourceDesc.Set = buffer.Set;
-				resourceDesc.ArraySize = buffer.ArraySize;
-				m_ResourcesDescriptionTable[name] = resourceDesc;
-
-				WriteDescriptorSet& wd = m_WriteDescriptorSetTable[0][resourceDesc.Set][resourceDesc.Binding];
-				wd.ResourcesState.resize(buffer.ArraySize);
-
-				VkWriteDescriptorSet& vulkanWD = wd.VulkanWriteDescriptorSet;
-				vulkanWD.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				vulkanWD.dstBinding = resourceDesc.Binding;
-				vulkanWD.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				vulkanWD.dstArrayElement = 0;
-				vulkanWD.descriptorCount = buffer.ArraySize;
-
-				m_Resources[buffer.Set][buffer.Binding].Type = resourceDesc.Type;
-				m_Resources.at(buffer.Set).at(buffer.Binding).Storage.resize(buffer.ArraySize);
-			}
-		}
-		for (const auto& [name, buffer] : metaData.StorageBuffers)
-		{
-			if (buffer.Set >= m_Info.FirstSet && buffer.Set <= m_Info.LastSet)
-			{
-				ShaderResourceDescription resourceDesc;
-				resourceDesc.Type = ShaderResourceType::StorageBuffer;
-				resourceDesc.Binding = buffer.Binding;
-				resourceDesc.Set = buffer.Set;
-				resourceDesc.ArraySize = buffer.ArraySize;
-				m_ResourcesDescriptionTable[name] = resourceDesc;
-
-				WriteDescriptorSet& wd = m_WriteDescriptorSetTable[0][resourceDesc.Set][resourceDesc.Binding];
-				wd.ResourcesState.resize(buffer.ArraySize);
-
-				VkWriteDescriptorSet& vulkanWD = wd.VulkanWriteDescriptorSet;
-				vulkanWD.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				vulkanWD.dstBinding = resourceDesc.Binding;
-				vulkanWD.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-				vulkanWD.dstArrayElement = 0;
-				vulkanWD.descriptorCount = buffer.ArraySize;
-
-				m_Resources[buffer.Set][buffer.Binding].Type = resourceDesc.Type;
-				m_Resources.at(buffer.Set).at(buffer.Binding).Storage.resize(buffer.ArraySize);
+				//RenderResourceStorage& resourceStorage = m_Resources[resourceDesc.Set][resourceDesc.Binding];
+				m_Resources[resourceDesc.Set][resourceDesc.Binding].Type = Utils::ShaderResourceToRenderResource(resourceDesc.Type);
+				m_Resources[resourceDesc.Set][resourceDesc.Binding].Storage.resize(resourceDesc.ArraySize);
 			}
 		}
 
@@ -140,65 +100,54 @@ namespace Athena
 			m_WriteDescriptorSetTable[frameIndex] = m_WriteDescriptorSetTable[0];
 
 		// Insert default textures for set 0 (for materials)
-		for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+		for (const auto& [name, resDesc] : *m_ResourcesDescriptionTable)
 		{
-			if (resDesc.Type == ShaderResourceType::Texture2D && resDesc.Set == 0)
+			if (IsValidSet(resDesc.Set) && resDesc.Type == ShaderResourceType::Texture2D && resDesc.Set == 0)
 			{
-				for(uint32 i = 0; i < resDesc.ArraySize; ++i)
+				for (uint32 i = 0; i < resDesc.ArraySize; ++i)
+				{
 					m_Resources[resDesc.Set][resDesc.Binding].Storage[i] = Renderer::GetWhiteTexture();
+				}
 			}
 		}
 	}
 
 	DescriptorSetManager::~DescriptorSetManager()
 	{
-		Renderer::SubmitResourceFree([pool = m_DescriptorPool]()
+		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
-			if(pool != VK_NULL_HANDLE)
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-		});
-	}
-
-	void DescriptorSetManager::Set(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex)
-	{
-		if (m_ResourcesDescriptionTable.contains(name) && resource != nullptr)
-		{
-			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(name);
-			m_Resources[desc.Set][desc.Binding].Storage[arrayIndex] = resource;
-		}
-		else
-		{
-			ATN_CORE_WARN_TAG("Renderer", "DescriptorSetManager '{}' - Failed to set shader resource with name '{}'", m_Info.Name, name);
-		}
-	}
-
-	Ref<ShaderResource> DescriptorSetManager::Get(const String& name, uint32 arrayIndex)
-	{
-		if (m_ResourcesDescriptionTable.contains(name))
-		{
-			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable.at(name);
-
-			if (m_Resources.contains(desc.Set) && m_Resources.at(desc.Set).contains(desc.Binding))
+			Renderer::SubmitResourceFree([pool = m_DescriptorPool]()
 			{
-				const auto& resourceStorage = m_Resources.at(desc.Set).at(desc.Binding);;
-				if (arrayIndex < resourceStorage.Storage.size())
-					return resourceStorage.Storage[arrayIndex];
-			}
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+			});
+		}
+	}
 
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (resource is not present)", m_Info.Name, name);
-		}
-		else
-		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get shader resource with name '{}' (invalid name)", m_Info.Name, name);
-		}
+	void DescriptorSetManager::Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex)
+	{
+		RenderResourceStorage* storage = GetResourceStorage(name, arrayIndex);
+
+		if (storage)
+			storage->Storage[arrayIndex] = resource;
+	}
+
+	Ref<RenderResource> DescriptorSetManager::Get(const String& name, uint32 arrayIndex)
+	{
+		RenderResourceStorage* storage = GetResourceStorage(name, arrayIndex);
+
+		if (storage)
+			return storage->Storage[arrayIndex];
 
 		return nullptr;
 	}
 
 	bool DescriptorSetManager::Validate() const
 	{
-		for (const auto& [name, resDesc] : m_ResourcesDescriptionTable)
+		for (const auto& [name, resDesc] : *m_ResourcesDescriptionTable)
 		{
+			if (!IsValidSet(resDesc.Set))
+				continue;
+
 			if (!m_Resources.contains(resDesc.Set))
 			{
 				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
@@ -227,7 +176,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < resource.Storage.size(); ++i)
 			{
-				if (resDesc.Type != resource.Storage[i]->GetResourceType())
+				if (!IsCompatible(resource.Storage[i]->GetResourceType(), resDesc.Type))
 				{
 					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}', set {}, binding {}, arrayIndex {})", 
 						m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource.Storage[i]->GetResourceType()), resDesc.Set, resDesc.Binding, i);
@@ -315,7 +264,7 @@ namespace Athena
 
 					switch (resource.Type)
 					{
-					case ShaderResourceType::Texture2D:
+					case RenderResourceType::Texture2D:
 					{
 						uint32 imageInfoIndex = imageInfos.size();
 						imageInfos.emplace_back(resource.Storage.size());
@@ -339,7 +288,7 @@ namespace Athena
 						}
 						break;
 					}
-					case ShaderResourceType::TextureCube:
+					case RenderResourceType::TextureCube:
 					{
 						uint32 imageInfoIndex = imageInfos.size();
 						imageInfos.emplace_back(resource.Storage.size());
@@ -363,7 +312,7 @@ namespace Athena
 						}
 						break;
 					}
-					case ShaderResourceType::UniformBuffer:
+					case RenderResourceType::UniformBuffer:
 					{
 						uint32 bufferInfoIndex = bufferInfos.size();
 						bufferInfos.emplace_back(resource.Storage.size());
@@ -385,7 +334,7 @@ namespace Athena
 						}
 						break;
 					}
-					case ShaderResourceType::StorageBuffer:
+					case RenderResourceType::StorageBuffer:
 					{
 						uint32 bufferInfoIndex = bufferInfos.size();
 						bufferInfos.emplace_back(resource.Storage.size());
@@ -446,7 +395,7 @@ namespace Athena
 
 				switch (resource.Type)
 				{
-				case ShaderResourceType::Texture2D:
+				case RenderResourceType::Texture2D:
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 					{
@@ -460,7 +409,7 @@ namespace Athena
 
 					break;
 				}
-				case ShaderResourceType::TextureCube:
+				case RenderResourceType::TextureCube:
 				{
 					const auto& imageInfo = resource.Storage[0].As<VulkanTextureCube>()->GetVulkanDescriptorInfo();
 					if (IsResourceStateChanged(resourceState, imageInfo))
@@ -468,7 +417,7 @@ namespace Athena
 
 					break;
 				}
-				case ShaderResourceType::UniformBuffer:
+				case RenderResourceType::UniformBuffer:
 				{
 					const auto& bufferInfo = resource.Storage[0].As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 					if (IsResourceStateChanged(resourceState, bufferInfo))
@@ -476,7 +425,7 @@ namespace Athena
 
 					break;
 				}
-				case ShaderResourceType::StorageBuffer:
+				case RenderResourceType::StorageBuffer:
 				{
 					const auto& bufferInfo = resource.Storage[0].As<VulkanStorageBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 					if (IsResourceStateChanged(resourceState, bufferInfo))
@@ -509,7 +458,7 @@ namespace Athena
 
 				switch (resource.Type)
 				{
-				case ShaderResourceType::Texture2D:
+				case RenderResourceType::Texture2D:
 				{
 					uint32 imageInfoIndex = imageInfos.size();
 					imageInfos.emplace_back(resource.Storage.size());
@@ -527,7 +476,7 @@ namespace Athena
 					}
 					break;
 				}
-				case ShaderResourceType::TextureCube:
+				case RenderResourceType::TextureCube:
 				{
 					uint32 imageInfoIndex = imageInfos.size();
 					imageInfos.emplace_back(resource.Storage.size());
@@ -545,7 +494,7 @@ namespace Athena
 					}
 					break;
 				}
-				case ShaderResourceType::UniformBuffer:
+				case RenderResourceType::UniformBuffer:
 				{
 					uint32 bufferInfoIndex = bufferInfos.size();
 					bufferInfos.emplace_back(resource.Storage.size());
@@ -561,7 +510,7 @@ namespace Athena
 					}
 					break;
 				}
-				case ShaderResourceType::StorageBuffer:
+				case RenderResourceType::StorageBuffer:
 				{
 					uint32 bufferInfoIndex = bufferInfos.size();
 					bufferInfos.emplace_back(resource.Storage.size());
@@ -590,16 +539,6 @@ namespace Athena
 		}
 
 		m_InvalidatedResources.clear();
-	}
-
-	bool DescriptorSetManager::IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorImageInfo& imageInfo)
-	{
-		return !(oldState.ResourceHandle == imageInfo.imageView && oldState.ImageLayout == imageInfo.imageLayout && oldState.Sampler == imageInfo.sampler);
-	}
-
-	bool DescriptorSetManager::IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorBufferInfo& bufferInfo)
-	{
-		return oldState.ResourceHandle != bufferInfo.buffer;
 	}
 
 	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint)
@@ -632,5 +571,57 @@ namespace Athena
 		}
 
 		return false;
+	}
+
+	RenderResourceStorage* DescriptorSetManager::GetResourceStorage(const String& name, uint32 arrayIndex)
+	{
+		if (m_ResourcesDescriptionTable->contains(name))
+		{
+			const ShaderResourceDescription& desc = m_ResourcesDescriptionTable->at(name);
+
+			if (desc.Set >= m_Info.FirstSet && desc.Set <= m_Info.LastSet)
+			{
+				RenderResourceStorage& storage = m_Resources.at(desc.Set).at(desc.Binding);
+				if (arrayIndex < storage.Storage.size())
+				{
+					return &storage;
+				}
+				else
+				{
+					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (arrayIndex is too big, given - '{}', max - '{}')",
+						m_Info.Name, name, arrayIndex, storage.Storage.size());
+				}
+			}
+			else
+			{
+				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+			}
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+		}
+
+		return nullptr;
+	}
+
+	bool DescriptorSetManager::IsCompatible(RenderResourceType renderType, ShaderResourceType shaderType) const
+	{
+		return Utils::ShaderResourceToRenderResource(shaderType) == renderType;
+	}
+
+	bool DescriptorSetManager::IsValidSet(uint32 set) const
+	{
+		return set >= m_Info.FirstSet && set <= m_Info.LastSet;
+	}
+
+	bool DescriptorSetManager::IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorImageInfo& imageInfo)
+	{
+		return !(oldState.ResourceHandle == imageInfo.imageView && oldState.ImageLayout == imageInfo.imageLayout && oldState.Sampler == imageInfo.sampler);
+	}
+
+	bool DescriptorSetManager::IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorBufferInfo& bufferInfo)
+	{
+		return oldState.ResourceHandle != bufferInfo.buffer;
 	}
 }

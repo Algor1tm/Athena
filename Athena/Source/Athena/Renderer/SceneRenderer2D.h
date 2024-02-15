@@ -16,9 +16,8 @@ namespace Athena
 	{
 		Vector3 Position;
 		LinearColor Color;
-		Vector2 TexCoord;
+		Vector2 TexCoords;
 		int32 TexIndex;
-		float TilingFactor;
 	};
 
 	struct CircleVertex

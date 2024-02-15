@@ -18,9 +18,28 @@ namespace Athena
 		COMPUTE_STAGE  = BIT(4)
 	};
 
+	enum class ShaderResourceType
+	{
+		Unknown = 0,
+		Texture2D,
+		TextureCube,
+		Texture2DStorage,
+		TextureCubeStorage,
+		UniformBuffer,
+		StorageBuffer,
+	};
+
+	struct ShaderResourceDescription
+	{
+		ShaderResourceType Type;
+		uint32 Binding;
+		uint32 Set;
+		uint32 ArraySize;
+	};
+
 	struct StructMemberShaderMetaData
 	{
-		ShaderDataType Type;	// can be Unknown
+		ShaderDataType Type;	// Unknown if custom struct
 		uint32 Size;
 		uint32 Offset;
 	};
@@ -73,7 +92,8 @@ namespace Athena
 		virtual void Reload() = 0;
 		virtual bool IsCompute() = 0;
 
-		const ShaderMetaData& GetMetaData() { return m_MetaData; };
+		const ShaderMetaData& GetMetaData() { return m_MetaData; }
+		const auto& GetResourcesDescription() const { return m_ResourcesDescriptionTable; }
 		bool IsCompiled() const { return m_IsCompiled; }
 		const String& GetName() const { return m_Name; }
 
@@ -82,6 +102,7 @@ namespace Athena
 		FilePath m_FilePath;
 		bool m_IsCompiled;
 		ShaderMetaData m_MetaData;
+		std::unordered_map<String, ShaderResourceDescription> m_ResourcesDescriptionTable;
 	};
 
 	class ATHENA_API ShaderPack : public RefCounted

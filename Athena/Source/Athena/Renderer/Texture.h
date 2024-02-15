@@ -36,7 +36,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture : public ShaderResource
+	class ATHENA_API Texture : public RenderResource
 	{
 	public:
 		virtual ~Texture() = default;
@@ -73,7 +73,7 @@ namespace Athena
 		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::Texture2D; }
+		virtual RenderResourceType GetResourceType() override { return RenderResourceType::Texture2D; }
 
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
@@ -107,7 +107,7 @@ namespace Athena
 	public:
 		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info);
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::TextureCube; }
+		virtual RenderResourceType GetResourceType() override { return RenderResourceType::TextureCube; }
 
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }

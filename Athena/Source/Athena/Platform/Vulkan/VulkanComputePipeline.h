@@ -15,7 +15,7 @@ namespace Athena
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
-		virtual void SetInput(const String& name, const Ref<ShaderResource>& resource) override;
+		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;
 		virtual void Bake() override;
 
 	private:

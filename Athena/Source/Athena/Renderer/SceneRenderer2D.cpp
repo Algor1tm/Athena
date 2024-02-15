@@ -382,9 +382,8 @@ namespace Athena
 		{
 			m_QuadVertexBufferPointer->Position = m_QuadVertexPositions[i] * transform;
 			m_QuadVertexBufferPointer->Color = color;
-			m_QuadVertexBufferPointer->TexCoord = textureCoords[i];
+			m_QuadVertexBufferPointer->TexCoords = textureCoords[i] * tilingFactor;
 			m_QuadVertexBufferPointer->TexIndex = textureIndex;
-			m_QuadVertexBufferPointer->TilingFactor = tilingFactor;
 			m_QuadVertexBufferPointer++;
 		}
 
@@ -423,9 +422,8 @@ namespace Athena
 		{
 			m_QuadVertexBufferPointer->Position = m_QuadVertexPositions[i] * transform;
 			m_QuadVertexBufferPointer->Color = tint;
-			m_QuadVertexBufferPointer->TexCoord = texCoords[i];
+			m_QuadVertexBufferPointer->TexCoords = texCoords[i] * tilingFactor;
 			m_QuadVertexBufferPointer->TexIndex = textureIndex;
-			m_QuadVertexBufferPointer->TilingFactor = tilingFactor;
 			m_QuadVertexBufferPointer++;
 		}
 

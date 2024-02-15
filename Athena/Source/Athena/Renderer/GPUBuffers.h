@@ -207,26 +207,26 @@ namespace Athena
 	};
 
 
-	class ATHENA_API UniformBuffer : public ShaderResource
+	class ATHENA_API UniformBuffer : public RenderResource
 	{
 	public:
 		static Ref<UniformBuffer> Create(const String& name, uint64 size);
 		virtual ~UniformBuffer() = default;
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::UniformBuffer; }
+		virtual RenderResourceType GetResourceType() override { return RenderResourceType::UniformBuffer; }
 
 		virtual uint64 GetSize() = 0;
 		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 	};
 
 
-	class ATHENA_API StorageBuffer : public ShaderResource
+	class ATHENA_API StorageBuffer : public RenderResource
 	{
 	public:
 		static Ref<StorageBuffer> Create(const String& name, uint64 size);
 		virtual ~StorageBuffer() = default;
 
-		virtual ShaderResourceType GetResourceType() override { return ShaderResourceType::StorageBuffer; }
+		virtual RenderResourceType GetResourceType() override { return RenderResourceType::StorageBuffer; }
 
 		virtual uint64 GetSize() = 0;
 		virtual void RT_SetData(const void* data, uint64 size, uint64 offset = 0) = 0;

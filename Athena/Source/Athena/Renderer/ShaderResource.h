@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	enum class ShaderResourceType
+	enum class RenderResourceType
 	{
 		Texture2D = 1,
 		TextureCube,
@@ -13,10 +13,10 @@ namespace Athena
 		StorageBuffer,
 	};
 
-	class ATHENA_API ShaderResource: public RefCounted
+	class ATHENA_API RenderResource: public RefCounted
 	{
 	public:
-		virtual ~ShaderResource() = default;
-		virtual ShaderResourceType GetResourceType() = 0;
+		virtual ~RenderResource() = default;
+		virtual RenderResourceType GetResourceType() = 0;
 	};
 }

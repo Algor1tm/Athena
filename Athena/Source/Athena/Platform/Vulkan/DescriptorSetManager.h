@@ -10,22 +10,14 @@
 
 namespace Athena
 {
-	struct ShaderResourceStorage
+	struct RenderResourceStorage
 	{
-		std::vector<Ref<ShaderResource>> Storage;
-		ShaderResourceType Type;
+		std::vector<Ref<RenderResource>> Storage;
+		RenderResourceType Type;
 	};
 
 	// map of set -> binding -> shader resource array
-	using ShaderResourcesTable = std::unordered_map<uint32, std::unordered_map<uint32, ShaderResourceStorage>>;
-
-	struct ShaderResourceDescription
-	{
-		ShaderResourceType Type;
-		uint32 Binding;
-		uint32 Set;
-		uint32 ArraySize;
-	}; 
+	using RenderResourcesTable = std::unordered_map<uint32, std::unordered_map<uint32, RenderResourceStorage>>;
 
 	struct ResourceState
 	{
@@ -58,8 +50,8 @@ namespace Athena
 		DescriptorSetManager(const DescriptorSetManagerCreateInfo& info);
 		~DescriptorSetManager();
 
-		void Set(const String& name, const Ref<ShaderResource>& resource, uint32 arrayIndex = 0);
-		Ref<ShaderResource> Get(const String& name, uint32 arrayIndex = 0);
+		void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0);
+		Ref<RenderResource> Get(const String& name, uint32 arrayIndex = 0);
 
 		bool Validate() const;
 		void Bake();
@@ -69,14 +61,18 @@ namespace Athena
 		bool IsInvalidated(uint32 set, uint32 binding);
 
 	private:
+		RenderResourceStorage* GetResourceStorage(const String& name, uint32 arrayIndex);
+		bool IsCompatible(RenderResourceType renderType, ShaderResourceType shaderType) const;
+		bool IsValidSet(uint32 set) const;
+
 		bool IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorImageInfo& imageInfo);
 		bool IsResourceStateChanged(const ResourceState& oldState, const VkDescriptorBufferInfo& bufferInfo);
 
 	private:
 		DescriptorSetManagerCreateInfo m_Info;
-		std::unordered_map<String, ShaderResourceDescription> m_ResourcesDescriptionTable;
-		ShaderResourcesTable m_Resources;
-		ShaderResourcesTable m_InvalidatedResources;
+		const std::unordered_map<String, ShaderResourceDescription>* m_ResourcesDescriptionTable;
+		RenderResourcesTable m_Resources;
+		RenderResourcesTable m_InvalidatedResources;
 		std::vector<std::vector<VkDescriptorSet>> m_DescriptorSets;
 		std::vector<std::unordered_map<uint32, std::unordered_map<uint32, WriteDescriptorSet>>> m_WriteDescriptorSetTable;
 		VkDescriptorPool m_DescriptorPool;

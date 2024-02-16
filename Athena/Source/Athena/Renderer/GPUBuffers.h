@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
-#include "Athena/Renderer/ShaderResource.h"
+#include "Athena/Renderer/RenderResource.h"
 
 
 namespace Athena

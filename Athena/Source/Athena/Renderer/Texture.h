@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/ShaderResource.h"
+#include "Athena/Renderer/RenderResource.h"
 #include "Athena/Renderer/Image.h"
 
 #include <array>

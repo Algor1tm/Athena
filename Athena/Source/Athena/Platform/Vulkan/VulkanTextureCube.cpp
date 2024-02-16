@@ -9,6 +9,8 @@ namespace Athena
 	VulkanTextureCube::VulkanTextureCube(const TextureCubeCreateInfo& info)
 	{
 		m_Info = info;
+		m_Sampler = VK_NULL_HANDLE;
+		m_DescriptorInfo.sampler = m_Sampler;
 
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
@@ -100,7 +102,6 @@ namespace Athena
 	const VkDescriptorImageInfo& VulkanTextureCube::GetVulkanDescriptorInfo(uint32 mip)
 	{
 		m_DescriptorInfo.imageView = GetVulkanImageView();
-		m_DescriptorInfo.sampler = m_Sampler;
 		m_DescriptorInfo.imageLayout = m_Image.As<VulkanImage>()->GetLayout();
 
 		if (mip != 0)

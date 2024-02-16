@@ -8,6 +8,8 @@ namespace Athena
 	VulkanTexture2D::VulkanTexture2D(const Texture2DCreateInfo& info)
 	{
 		m_Info = info;
+		m_Sampler = VK_NULL_HANDLE;
+		m_DescriptorInfo.sampler = m_Sampler;
 
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
@@ -44,9 +46,11 @@ namespace Athena
 
 		m_Image = image;
 
+		m_Sampler = VK_NULL_HANDLE;
+
 		m_DescriptorInfo.imageLayout = m_Info.Usage & ImageUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorInfo.imageView = VK_NULL_HANDLE;
-		m_DescriptorInfo.sampler = VK_NULL_HANDLE;
+		m_DescriptorInfo.sampler = m_Sampler;
 
 		SetSampler(m_Info.SamplerInfo);
 	}
@@ -122,7 +126,6 @@ namespace Athena
 	const VkDescriptorImageInfo& VulkanTexture2D::GetVulkanDescriptorInfo(uint32 mip)
 	{
 		m_DescriptorInfo.imageView = GetVulkanImageView();
-		m_DescriptorInfo.sampler = m_Sampler;
 		m_DescriptorInfo.imageLayout = m_Image.As<VulkanImage>()->GetLayout();
 
 		if (mip != 0)

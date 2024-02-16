@@ -23,7 +23,8 @@ void main()
     vec2 texCoords = vec2(unnormalizedTexCoords.xy) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
 
     vec3 direction = ImageCubeCoordsToWorldDirection(texCoords, unnormalizedTexCoords.z);
-    
+    direction.y = -direction.y;
+
     float roughness = float(u_MipLevel) / MAX_SKYBOX_MAP_LOD;
 
     vec3 N = direction;    

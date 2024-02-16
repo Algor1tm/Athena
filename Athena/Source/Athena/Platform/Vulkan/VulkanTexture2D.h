@@ -23,7 +23,7 @@ namespace Athena
 		const VkDescriptorImageInfo& GetVulkanDescriptorInfo(uint32 mip = 0);
 
 	private:
-		VkSampler m_Sampler = VK_NULL_HANDLE;
+		VkSampler m_Sampler;
 		VkDescriptorImageInfo m_DescriptorInfo;
 	};
 }

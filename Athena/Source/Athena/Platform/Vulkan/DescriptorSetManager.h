@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/ShaderResource.h"
+#include "Athena/Renderer/RenderResource.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/Texture.h"
 

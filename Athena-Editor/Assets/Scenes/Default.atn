@@ -125,7 +125,11 @@ Entities:
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
-      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
-      Resolution: 2048
       Intensity: 1
       LOD: 0
+      Resolution: 256
+      Type: 2
+      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
+      Turbidity: 1.97599995
+      Azimuth: 4.17399979
+      Inclination: 1.79499996

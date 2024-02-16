@@ -152,6 +152,7 @@ namespace Athena
 
 			if (m_Info.MipLevels > 1)
 			{
+				m_ImageViewsPerMip.clear();
 				m_ImageViewsPerMip.reserve(m_Info.MipLevels);
 				for (uint32 mip = 0; mip < m_Info.MipLevels; ++mip)
 				{
@@ -173,6 +174,8 @@ namespace Athena
 					m_ImageViewsPerMip.push_back(mipView);
 				}
 			}
+
+			m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		});
 	}
 
@@ -397,7 +400,7 @@ namespace Athena
 			blit.srcSubresource.aspectMask = barrier.subresourceRange.aspectMask;
 			blit.srcSubresource.mipLevel = level - 1;
 			blit.srcSubresource.baseArrayLayer = 0;
-			blit.srcSubresource.layerCount = 6;
+			blit.srcSubresource.layerCount = m_Info.Layers;
 			blit.dstOffsets[0] = { 0, 0, 0 };
 			blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
 			blit.dstSubresource.aspectMask = barrier.subresourceRange.aspectMask;

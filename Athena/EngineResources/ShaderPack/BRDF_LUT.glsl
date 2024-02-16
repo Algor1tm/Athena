@@ -1,5 +1,9 @@
 //////////////////////// Athena BRDF_LUT Shader ////////////////////////
 
+// References:
+// https://learnopengl.com/PBR/IBL/Specular-IBL
+
+
 #version 460 core
 #pragma stage : compute
 

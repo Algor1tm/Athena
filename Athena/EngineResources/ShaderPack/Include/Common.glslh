@@ -1,5 +1,10 @@
 //////////////////////// PBR Functions ////////////////////////
 
+// References:
+// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+// https://learnopengl.com/PBR/IBL/Specular-IBL
+
+
 #define PI 3.14159265358979323846
 
 

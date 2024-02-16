@@ -249,8 +249,8 @@ namespace Athena
 
 		if (lightEnv.EnvironmentMap)
 		{
-			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceMap();
-			auto environmentMap = lightEnv.EnvironmentMap->GetPrefilteredMap();
+			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceTexture();
+			auto environmentMap = lightEnv.EnvironmentMap->GetEnvironmentTexture();
 
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);

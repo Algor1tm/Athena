@@ -413,10 +413,16 @@ namespace Athena
 					if (skyLightComponent)
 					{
 						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
-						FilePath envPath = skyLightComponent["FilePath"].as<String>();
-						uint32 resolution = skyLightComponent["Resolution"].as<uint32>();
-						if (!envPath.empty())
-							lightComp.EnvironmentMap = EnvironmentMap::Create(envPath, resolution);
+						const auto& envMap = lightComp.EnvironmentMap;
+
+						envMap->SetResolution(skyLightComponent["Resolution"].as<uint32>());
+						envMap->SetType((EnvironmentMapType)skyLightComponent["Type"].as<uint32>());
+						envMap->SetFilePath(skyLightComponent["FilePath"].as<String>());
+
+						float turbidity = skyLightComponent["Turbidity"].as<float>();
+						float azimuth = skyLightComponent["Azimuth"].as<float>();
+						float inclination = skyLightComponent["Inclination"].as<float>();
+						envMap->SetPreethamParams(turbidity, azimuth, inclination);
 
 						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
 						lightComp.LOD = skyLightComponent["LOD"].as<float>();
@@ -622,11 +628,15 @@ namespace Athena
 		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
 			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
 			{
-				String filepath = lightComponent.EnvironmentMap ? lightComponent.EnvironmentMap->GetFilePath().string() : "";
-				output << YAML::Key << "FilePath" << filepath;
-				output << YAML::Key << "Resolution" << lightComponent.EnvironmentMap->GetResolution();
+				const auto& envMap = lightComponent.EnvironmentMap;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 				output << YAML::Key << "LOD" << YAML::Value << lightComponent.LOD;
+				output << YAML::Key << "Resolution" << envMap->GetResolution();
+				output << YAML::Key << "Type" << (int)envMap->GetType();
+				output << YAML::Key << "FilePath" << envMap->GetFilePath().string();
+				output << YAML::Key << "Turbidity" << envMap->GetTurbidity();
+				output << YAML::Key << "Azimuth" << envMap->GetAzimuth();
+				output << YAML::Key << "Inclination" << envMap->GetInclination();
 			});
 
 		out << YAML::EndMap;

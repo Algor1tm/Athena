@@ -1,5 +1,9 @@
 //////////////////////// Athena Panorama To Cubemap Shader ////////////////////////
 
+// References:
+// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+
+
 #version 460 core
 #pragma stage : compute
 

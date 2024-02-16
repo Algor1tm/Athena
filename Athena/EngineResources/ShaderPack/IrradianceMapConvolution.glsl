@@ -1,5 +1,9 @@
 //////////////////////// Athena Irradiance Map Convolution Shader ////////////////////////
 
+// References:
+// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+
+
 #version 460 core
 #pragma stage : compute
 

@@ -279,6 +279,7 @@ namespace Athena
 				{
 					WriteDescriptorSet& storedWriteDescriptor = m_WriteDescriptorSetTable[frameIndex].at(set).at(binding);
 					VkWriteDescriptorSet& writeDescriptor = storedWriteDescriptor.VulkanWriteDescriptorSet;
+					VkDescriptorType descriptorType = writeDescriptor.descriptorType;
 
 					writeDescriptor.dstSet = m_DescriptorSets[frameIndex].at(set - m_Info.FirstSet);
 
@@ -294,6 +295,10 @@ namespace Athena
 							ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
 							VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
 							imageInfo = resource.Storage[i].As<VulkanTexture2D>()->GetVulkanDescriptorInfo(resource.MipLevel);
+
+							// Force to have general layout if storage image only at bake(initialization)
+							if (descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+								imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 							writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 							resourceState.ResourceHandle = imageInfo.imageView;
@@ -318,6 +323,10 @@ namespace Athena
 							ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
 							VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
 							imageInfo = resource.Storage[i].As<VulkanTextureCube>()->GetVulkanDescriptorInfo(resource.MipLevel);
+
+							// Force to have general layout if storage image only at bake(initialization)
+							if (descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+								imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 							writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 							resourceState.ResourceHandle = imageInfo.imageView;

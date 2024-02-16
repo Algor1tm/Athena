@@ -230,6 +230,48 @@ namespace Athena
 		Ref<EnvironmentMap> EnvironmentMap;
 		float LOD = 0.f;
 		float Intensity = 1.f;
+
+		SkyLightComponent()
+		{
+			EnvironmentMap = EnvironmentMap::Create(256);
+		}
+
+		SkyLightComponent(const SkyLightComponent& other)
+		{
+			LOD = other.LOD;
+			Intensity = other.Intensity;
+
+			const auto& otherEnv = other.EnvironmentMap;
+
+			EnvironmentMap = EnvironmentMap::Create(otherEnv->GetResolution());
+			EnvironmentMap->SetType(otherEnv->GetType());
+			EnvironmentMap->SetFilePath(otherEnv->GetFilePath());
+			float turbidity = otherEnv->GetTurbidity();
+			float azimuth = otherEnv->GetAzimuth();
+			float inclination = otherEnv->GetInclination();
+			EnvironmentMap->SetPreethamParams(turbidity, azimuth, inclination);
+		}
+
+		SkyLightComponent(SkyLightComponent&& other) noexcept
+		{
+			EnvironmentMap = other.EnvironmentMap;
+			LOD = other.LOD;
+			Intensity = other.Intensity;
+			other.EnvironmentMap = nullptr;
+		}
+
+		SkyLightComponent& operator=(SkyLightComponent&& other) noexcept
+		{
+			if (&other != this)
+			{
+				EnvironmentMap = other.EnvironmentMap;
+				LOD = other.LOD;
+				Intensity = other.Intensity;
+				other.EnvironmentMap = nullptr;
+			}
+
+			return *this;
+		}
 	};
 
 

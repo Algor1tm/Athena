@@ -110,7 +110,7 @@ namespace Athena
 		texCubeInfo.Name = "Renderer_BlackTextureCube";
 		texCubeInfo.Format = ImageFormat::RGBA8;
 		texCubeInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-		texCubeInfo.InitialData = nullptr;
+		texCubeInfo.InitialData = &blackTextureData;
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
 		texCubeInfo.MipLevels = 1;

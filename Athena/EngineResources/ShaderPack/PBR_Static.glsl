@@ -165,7 +165,8 @@ vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughnes
 
     vec3 reflectedVec = reflect(-viewDir, normal); 
 
-    vec3 envMapReflectedColor = textureLod(u_EnvironmentMap, reflectedVec, roughness * MAX_SKYBOX_MAP_LOD).rgb;  
+    float lod = u_Scene.EnvironmentLOD + roughness * (MAX_SKYBOX_MAP_LOD - u_Scene.EnvironmentLOD);
+    vec3 envMapReflectedColor = textureLod(u_EnvironmentMap, reflectedVec, lod).rgb;  
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
     vec3 specularIBL = envMapReflectedColor * (reflectedLight * envBRDF.x + envBRDF.y);
 

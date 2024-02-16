@@ -35,7 +35,6 @@ namespace Athena
 		// TODO: Anisotropy
 	};
 
-
 	class ATHENA_API Texture : public RenderResource
 	{
 	public:
@@ -44,7 +43,9 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) = 0;
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
-		void GenerateMipMap(uint32 levels) { m_Image->GenerateMipMap(levels); }
+		void BlitMipMap(uint32 levels) { m_Image->BlitMipMap(levels); }
+		void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) { m_Image->BlitMipMap(cmdBuffer, levels); }
+
 		const Ref<Image>& GetImage() const { return m_Image; }
 
 	protected:

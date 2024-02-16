@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
@@ -67,7 +68,9 @@ namespace Athena
 		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height);
 		virtual ~Image() = default;
 
-		virtual void GenerateMipMap(uint32 levels) = 0;
+		virtual void BlitMipMap(uint32 levels) = 0;
+		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) = 0;
+
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
 		const ImageCreateInfo& GetInfo() const { return m_Info; }

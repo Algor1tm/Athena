@@ -28,12 +28,17 @@ namespace Athena
 		
 	}
 
-	void VulkanMaterial::SetResource(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex)
+	void VulkanMaterial::Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex)
 	{
 		m_DescriptorSetManager->Set(name, resource, arrayIndex);
 	}
 
-	Ref<RenderResource> VulkanMaterial::GetResource(const String& name)
+	void VulkanMaterial::Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip)
+	{
+		m_DescriptorSetManager->Set(name, resource, arrayIndex, mip);
+	}
+
+	Ref<RenderResource> VulkanMaterial::GetResourceInternal(const String& name)
 	{
 		return m_DescriptorSetManager->Get(name);
 	}
@@ -49,7 +54,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanMaterial::RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range)
+	void VulkanMaterial::RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data)
 	{
 		Ref<Shader> shader = GetShader();
 
@@ -63,7 +68,7 @@ namespace Athena
 				Vulkan::GetShaderStageFlags(pushConstant.StageFlags),
 				0,
 				pushConstant.Size,
-				range.GetData());
+				data);
 		}
 	}
 }

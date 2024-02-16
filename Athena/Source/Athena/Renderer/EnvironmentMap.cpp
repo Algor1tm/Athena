@@ -55,6 +55,7 @@ namespace Athena
 
 		Ref<ComputePass> pass = ComputePass::Create(passInfo);
 
+
 		// Panorama To Cubemap Pipeline
 		ComputePipelineCreateInfo pipelineInfo;
 		pipelineInfo.Name = "PanoramaToCubemapPipeline";
@@ -66,6 +67,7 @@ namespace Athena
 		panoramaToCubePipeline->SetInput("u_Cubemap", m_PrefilteredMap);
 		panoramaToCubePipeline->Bake();
 
+
 		// Irradiance Pipeline
 		pipelineInfo.Name = "IrradianceMapPipeline";
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
@@ -76,6 +78,16 @@ namespace Athena
 		irradiancePipeline->SetInput("u_IrradianceMap", m_IrradianceMap);
 		irradiancePipeline->Bake();
 
+		// Mip Filter Pipeline
+		pipelineInfo.Name = "EnvMipFilterPipeline";
+		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
+		pipelineInfo.WorkGroupSize = { 8, 4, 1 };
+
+		Ref<ComputePipeline> mipFilterPipeline = ComputePipeline::Create(pipelineInfo);
+		mipFilterPipeline->SetInput("u_EnvironmentMap", m_PrefilteredMap);
+		mipFilterPipeline->Bake();
+
+		// Immediate command buffer
 		RenderCommandBufferCreateInfo cmdBufferInfo;
 		cmdBufferInfo.Name = "EnvMapGeneration";
 		cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
@@ -92,11 +104,24 @@ namespace Athena
 			irradiancePipeline->Bind(commandBuffer);
 			Renderer::Dispatch(commandBuffer, irradiancePipeline, { m_IrradianceMapResolution, m_IrradianceMapResolution, 6 });
 
+			m_PrefilteredMap->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
+
+			//mipFilterPipeline->Bind(commandBuffer);
+			//for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
+			//{
+			//	uint32 mipResolution = m_Resolution * Math::Pow(0.5f, (float)mip);
+
+			//	Ref<Material> mipMaterial = Material::Create(pipelineInfo.Shader, std::format("{}_{}", pipelineInfo.Name, mip));
+			//	mipMaterial->Set("u_EnvironmentMipImage", m_PrefilteredMap, 0, mip);
+			//	mipMaterial->Set("u_MipLevel", mip);
+
+			//	mipMaterial->Bind(commandBuffer);
+			//	Renderer::Dispatch(commandBuffer, mipFilterPipeline, { mipResolution, mipResolution, 6 }, mipMaterial);
+			//}
+
 			pass->End(commandBuffer);
 		}
 		commandBuffer->End();
 		commandBuffer->Submit();
-
-		m_PrefilteredMap->GenerateMipMap(ShaderDef::MAX_SKYBOX_MAP_LOD);
 	}
 }

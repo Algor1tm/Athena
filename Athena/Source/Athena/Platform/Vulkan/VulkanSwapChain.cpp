@@ -263,7 +263,6 @@ namespace Athena
 				if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 				{
 					Recreate();
-
 					VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
 				}
 				else

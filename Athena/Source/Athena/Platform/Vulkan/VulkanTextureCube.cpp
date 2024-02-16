@@ -97,11 +97,14 @@ namespace Athena
 		return m_Image.As<VulkanImage>()->GetVulkanImageView();
 	}
 
-	const VkDescriptorImageInfo& VulkanTextureCube::GetVulkanDescriptorInfo()
+	const VkDescriptorImageInfo& VulkanTextureCube::GetVulkanDescriptorInfo(uint32 mip)
 	{
 		m_DescriptorInfo.imageView = GetVulkanImageView();
 		m_DescriptorInfo.sampler = m_Sampler;
 		m_DescriptorInfo.imageLayout = m_Image.As<VulkanImage>()->GetLayout();
+
+		if (mip != 0)
+			m_DescriptorInfo.imageView = m_Image.As<VulkanImage>()->GetVulkanImageViewMip(mip);
 
 		// Set default layout if image has not initalized yet
 		if (m_DescriptorInfo.imageLayout == VK_IMAGE_LAYOUT_UNDEFINED)

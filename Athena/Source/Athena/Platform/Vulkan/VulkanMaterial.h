@@ -15,11 +15,12 @@ namespace Athena
 		VulkanMaterial(const Ref<Shader>& shader, const String& name);
 		~VulkanMaterial();
 
-		virtual void SetResource(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex) override;
-		virtual Ref<RenderResource> GetResource(const String& name) override;
+		virtual void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex) override;
+		virtual void Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip) override;
+		virtual Ref<RenderResource> GetResourceInternal(const String& name) override;
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
-		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const PushConstantRange& range) override;
+		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data) override;
 
 	private:
 		VkPipelineBindPoint m_PipelineBindPoint;

@@ -3,6 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/ShaderResource.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/Texture.h"
 
 #include <vulkan/vulkan.h>
 #include <unordered_map>
@@ -14,9 +15,10 @@ namespace Athena
 	{
 		std::vector<Ref<RenderResource>> Storage;
 		RenderResourceType Type;
+		uint32 MipLevel = 0;	// TODO: different mip level for each texture in array
 	};
 
-	// map of set -> binding -> shader resource array
+	// map of set -> binding -> render resource array
 	using RenderResourcesTable = std::unordered_map<uint32, std::unordered_map<uint32, RenderResourceStorage>>;
 
 	struct ResourceState
@@ -51,6 +53,7 @@ namespace Athena
 		~DescriptorSetManager();
 
 		void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0);
+		void Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip);
 		Ref<RenderResource> Get(const String& name, uint32 arrayIndex = 0);
 
 		bool Validate() const;

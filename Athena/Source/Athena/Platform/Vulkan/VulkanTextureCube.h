@@ -21,7 +21,7 @@ namespace Athena
 		VkSampler GetVulkanSampler() const { return m_Sampler; }
 		VkImage GetVulkanImage() const;
 		VkImageView GetVulkanImageView() const;
-		const VkDescriptorImageInfo& GetVulkanDescriptorInfo();
+		const VkDescriptorImageInfo& GetVulkanDescriptorInfo(uint32 mip = 0);
 
 	private:
 		VkSampler m_Sampler = VK_NULL_HANDLE;

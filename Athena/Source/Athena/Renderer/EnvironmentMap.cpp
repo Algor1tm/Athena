@@ -63,7 +63,6 @@ namespace Athena
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "PreethamPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PreethamSky");
-			pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 
 			m_PreethamPipeline = ComputePipeline::Create(pipelineInfo);
 			m_PreethamPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
@@ -84,7 +83,6 @@ namespace Athena
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "IrradianceMapPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
-			pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 
 			m_IrradiancePipeline = ComputePipeline::Create(pipelineInfo);
 			m_IrradiancePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
@@ -104,7 +102,6 @@ namespace Athena
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "MipFilterPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
-			pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 
 			m_MipFilterPipeline = ComputePipeline::Create(pipelineInfo);
 			m_MipFilterPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
@@ -180,7 +177,6 @@ namespace Athena
 		ComputePipelineCreateInfo pipelineInfo;
 		pipelineInfo.Name = "PanoramaToCubemapPipeline";
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PanoramaToCubemap");
-		pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 
 		Ref<ComputePipeline> panoramaToCubePipeline = ComputePipeline::Create(pipelineInfo);
 		panoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);

@@ -493,6 +493,7 @@ namespace Athena
 	{
 		ShaderMetaData result;
 		result.PushConstant.Size = 0;
+		result.WorkGroupSize = { 0, 0, 0 };
 
 		ATN_CORE_INFO_TAG("Renderer", "Reflecting Shader '{}'", m_Name);
 
@@ -501,6 +502,7 @@ namespace Athena
 			spirv_cross::Compiler compiler(src);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
+			// VERTEX BUFFER LAYOUT
 			if (stage == ShaderStage::VERTEX_STAGE)
 			{
 				std::vector<VertexBufferElement> elements;
@@ -517,6 +519,23 @@ namespace Athena
 				result.VertexBufferLayout = elements;
 			}
 
+			// WORK GROUP SIZE
+			if (stage == ShaderStage::COMPUTE_STAGE)
+			{
+				auto entryPoints = compiler.get_entry_points_and_stages();
+				for (const auto& entry : entryPoints)
+				{
+					if (entry.execution_model == spv::ExecutionModelGLCompute || entry.execution_model == spv::ExecutionModelKernel)
+					{
+						const spirv_cross::SPIREntryPoint& spirEntry = compiler.get_entry_point(entry.name, entry.execution_model);
+						result.WorkGroupSize.x = spirEntry.workgroup_size.x;
+						result.WorkGroupSize.y = spirEntry.workgroup_size.y;
+						result.WorkGroupSize.z = spirEntry.workgroup_size.z;
+					}
+				}
+			}
+
+			// PUSH CONSTANTS
 			if (result.PushConstant.Size != 0)
 			{
 				result.PushConstant.StageFlags = ShaderStage(result.PushConstant.StageFlags | stage);
@@ -556,6 +575,7 @@ namespace Athena
 				}
 			}
 
+			// SAMPLED IMAGES
 			for (const auto& resource : resources.sampled_images)
 			{
 				if (result.SampledTextures.contains(resource.name))
@@ -581,6 +601,7 @@ namespace Athena
 				}
 			}
 
+			// STORAGE IMAGES
 			for (const auto& resource : resources.storage_images)
 			{
 				if (result.StorageTextures.contains(resource.name))
@@ -606,6 +627,7 @@ namespace Athena
 				}
 			}
 
+			// UNIFORM BUFFERS
 			for (const auto& resource : resources.uniform_buffers)
 			{
 				if (result.UniformBuffers.contains(resource.name))
@@ -632,6 +654,7 @@ namespace Athena
 				}
 			}
 
+			// STORAGE BUFFERS
 			for (const auto& resource : resources.storage_buffers)
 			{
 				// Spirv-cross seems to be treating storage buffers differently (resource.name is incorrect)

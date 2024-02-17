@@ -8,6 +8,7 @@
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanIndexBuffer.h"
+#include "Athena/Platform/Vulkan/VulkanComputePipeline.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
@@ -94,7 +95,7 @@ namespace Athena
 			if (material)
 				material->RT_UpdateForRendering(commandBuffer);
 
-			Vector3i workGroupSize = pipeline->GetInfo().WorkGroupSize;
+			Vector3i workGroupSize = pipeline.As<VulkanComputePipeline>()->GetWorkGroupSize();
 			uint32 groupCountX = Math::Ceil((float)imageSize.x / workGroupSize.x);
 			uint32 groupCountY = Math::Ceil((float)imageSize.y / workGroupSize.y);
 			uint32 groupCountZ = Math::Ceil((float)imageSize.z / workGroupSize.z);

@@ -73,6 +73,7 @@ namespace Athena
 	struct ShaderMetaData
 	{
 		VertexBufferLayout VertexBufferLayout;
+		Vector3i WorkGroupSize;
 
 		std::unordered_map<String, TextureShaderMetaData> SampledTextures;
 		std::unordered_map<String, TextureShaderMetaData> StorageTextures;

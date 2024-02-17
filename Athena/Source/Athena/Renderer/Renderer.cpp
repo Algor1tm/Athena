@@ -184,7 +184,6 @@ namespace Athena
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "BRDF_LUT_Pipeline";
 			pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
-			pipelineInfo.WorkGroupSize = { 8, 4, 1 };
 			
 			Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
 			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);

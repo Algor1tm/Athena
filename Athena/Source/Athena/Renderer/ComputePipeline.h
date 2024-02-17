@@ -13,7 +13,6 @@ namespace Athena
 	{
 		String Name;
 		Ref<Shader> Shader;
-		Vector3i WorkGroupSize;
 	};
 
 

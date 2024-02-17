@@ -60,4 +60,9 @@ namespace Athena
 	{
 		m_DescriptorSetManager.Bake();
 	}
+
+	Vector3i VulkanComputePipeline::GetWorkGroupSize() const
+	{
+		return m_Info.Shader->GetMetaData().WorkGroupSize;
+	}
 }

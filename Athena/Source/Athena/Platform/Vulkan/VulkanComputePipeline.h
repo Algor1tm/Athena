@@ -18,6 +18,8 @@ namespace Athena
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;
 		virtual void Bake() override;
 
+		Vector3i GetWorkGroupSize() const;
+
 	private:
 		DescriptorSetManager m_DescriptorSetManager;
 		VkPipeline m_VulkanPipeline;

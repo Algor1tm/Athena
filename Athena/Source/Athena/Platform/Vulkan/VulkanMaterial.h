@@ -24,6 +24,6 @@ namespace Athena
 
 	private:
 		VkPipelineBindPoint m_PipelineBindPoint;
-		Ref<DescriptorSetManager> m_DescriptorSetManager;
+		DescriptorSetManager m_DescriptorSetManager;
 	};
 }

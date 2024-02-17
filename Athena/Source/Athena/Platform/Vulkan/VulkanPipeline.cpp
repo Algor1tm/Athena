@@ -58,7 +58,7 @@ namespace Athena
 		setManagerInfo.Shader = m_Info.Shader;
 		setManagerInfo.FirstSet = 1;
 		setManagerInfo.LastSet = 4;
-		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(setManagerInfo);
+		m_DescriptorSetManager = DescriptorSetManager(setManagerInfo);
 
 		CreatePipeline(info.RenderPass->GetInfo().Width, info.RenderPass->GetInfo().Height);
 	}
@@ -78,8 +78,8 @@ namespace Athena
 			if (m_Info.Topology == Topology::LINE_LIST)
 				vkCmdSetLineWidth(vkcmdBuffer, m_Info.LineWidth);
 
-			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
+			m_DescriptorSetManager.RT_InvalidateAndUpdate();
+			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 		});
 	}
 
@@ -99,12 +99,12 @@ namespace Athena
 
 	void VulkanPipeline::SetInput(const String& name, const Ref<RenderResource>& resource)
 	{
-		m_DescriptorSetManager->Set(name, resource);
+		m_DescriptorSetManager.Set(name, resource);
 	}
 
 	void VulkanPipeline::Bake()
 	{
-		m_DescriptorSetManager->Bake();
+		m_DescriptorSetManager.Bake();
 	}
 
 	void VulkanPipeline::CreatePipeline(uint32 width, uint32 height)

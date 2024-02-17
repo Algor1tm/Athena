@@ -26,9 +26,8 @@ vec2 SampleSphericalMap(vec3 dir)
 void main()
 {
     ivec3 unnormalizedTexCoords = ivec3(gl_GlobalInvocationID.xyz);
-    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
+    vec3 direction = GetWorldDirectionFromCubeCoords(unnormalizedTexCoords, vec2(gl_NumWorkGroups * gl_WorkGroupSize));
 
-    vec3 direction = ImageCubeCoordsToWorldDirection(texCoords, unnormalizedTexCoords.z);
     vec2 uv = SampleSphericalMap(direction);
     vec3 panoramaColor = texture(u_PanoramaTex, uv).rgb;
 

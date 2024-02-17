@@ -18,7 +18,7 @@ namespace Athena
 		setManagerInfo.Shader = m_Info.Shader;
 		setManagerInfo.FirstSet = 1;
 		setManagerInfo.LastSet = 4;
-		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(setManagerInfo);
+		m_DescriptorSetManager = DescriptorSetManager(setManagerInfo);
 
 		auto vkShader = m_Info.Shader.As<VulkanShader>();
 
@@ -46,18 +46,18 @@ namespace Athena
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 			vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_VulkanPipeline);
 
-			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
+			m_DescriptorSetManager.RT_InvalidateAndUpdate();
+			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 		});
 	}
 
 	void VulkanComputePipeline::SetInput(const String& name, const Ref<RenderResource>& resource)
 	{
-		m_DescriptorSetManager->Set(name, resource);
+		m_DescriptorSetManager.Set(name, resource);
 	}
 
 	void VulkanComputePipeline::Bake()
 	{
-		m_DescriptorSetManager->Bake();
+		m_DescriptorSetManager.Bake();
 	}
 }

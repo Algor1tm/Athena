@@ -18,11 +18,14 @@ namespace Athena
 
 	void VulkanComputePass::Begin(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
+		if (m_Info.DebugColor != LinearColor(0.f))
+			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
+
 		Renderer::Submit([instance = Ref(this), commandBuffer]()
 		{
 			VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			for (const auto& image : instance->m_Info.Outputs)
+			for (const auto& image : instance->m_Outputs)
 			{
 				bool isAttachment = image->GetInfo().Usage & ImageUsage::ATTACHMENT;
 
@@ -41,7 +44,7 @@ namespace Athena
 		{
 			VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			for (const auto& image : instance->m_Info.Outputs)
+			for (const auto& image : instance->m_Outputs)
 			{
 				bool isAttachment = image->GetInfo().Usage & ImageUsage::ATTACHMENT;
 
@@ -53,5 +56,8 @@ namespace Athena
 				image.As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, sourceStage, destinationStage);
 			}
 		});
+
+		if (m_Info.DebugColor != LinearColor(0.f))
+			Renderer::EndDebugRegion(commandBuffer);
 	}
 }

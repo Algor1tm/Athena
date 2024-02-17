@@ -45,18 +45,20 @@ namespace Athena
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "PanoramaToCubePass";
-			passInfo.Outputs.push_back(m_EnvironmentTexture->GetImage());
+			passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
 
 			m_PanoramaToCubePass = ComputePass::Create(passInfo);
+			m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture->GetImage());
 		}
 
 		// Preetham
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "PreethamPass";
-			passInfo.Outputs.push_back(m_EnvironmentTexture->GetImage());
+			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_PreethamPass = ComputePass::Create(passInfo);
+			m_PreethamPass->SetOutput(m_EnvironmentTexture->GetImage());
 
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "PreethamPipeline";
@@ -74,9 +76,10 @@ namespace Athena
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "IrradiancePass";
-			passInfo.Outputs.push_back(m_IrradianceTexture->GetImage());
+			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_IrradiancePass = ComputePass::Create(passInfo);
+			m_IrradiancePass->SetOutput(m_IrradianceTexture->GetImage());
 
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "IrradianceMapPipeline";
@@ -93,9 +96,10 @@ namespace Athena
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "MipFilterPass";
-			passInfo.Outputs.push_back(m_EnvironmentTexture->GetImage());
+			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_MipFilterPass = ComputePass::Create(passInfo);
+			m_MipFilterPass->SetOutput(m_EnvironmentTexture->GetImage());
 
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "MipFilterPipeline";
@@ -216,8 +220,12 @@ namespace Athena
 		else if (m_Type == EnvironmentMapType::PREETHAM)
 			LoadPreetham(commandBuffer);
 
+		Renderer::BeginDebugRegion(commandBuffer, "EnvironmentBlitMipMap", { 0.6f, 0.4f, 0.2f, 1.f });
+		{
+			m_EnvironmentTexture->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
+		}
+		Renderer::EndDebugRegion(commandBuffer);
 
-		m_EnvironmentTexture->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
 
 		m_IrradiancePass->Begin(commandBuffer);
 		{

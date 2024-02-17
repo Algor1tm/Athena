@@ -19,9 +19,7 @@ layout(r11f_g11f_b10f, set = 1, binding = 1) uniform imageCube u_IrradianceMap;
 void main()
 {
     ivec3 unnormalizedTexCoords = ivec3(gl_GlobalInvocationID.xyz);
-    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
-
-    vec3 direction = ImageCubeCoordsToWorldDirection(texCoords, unnormalizedTexCoords.z);
+    vec3 direction = GetWorldDirectionFromCubeCoords(unnormalizedTexCoords, vec2(gl_NumWorkGroups * gl_WorkGroupSize));
     
     // the sample direction equals the hemisphere's orientation 
     vec3 normal = direction;

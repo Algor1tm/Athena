@@ -274,6 +274,7 @@ namespace Athena
 
 		m_CameraData.View = cameraInfo.ViewMatrix;
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
+		m_CameraData.ViewProjection = cameraInfo.ViewMatrix * cameraInfo.ProjectionMatrix;
 		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
 		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
 

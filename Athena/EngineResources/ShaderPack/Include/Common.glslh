@@ -115,9 +115,11 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 
 
 //////////////////////// Other Functions ////////////////////////
-
-vec3 ImageCubeCoordsToWorldDirection(vec2 texCoords, int cubeFace)
+vec3 GetWorldDirectionFromCubeCoords(ivec3 unnormalizedTexCoords, vec2 faceSize)
 {
+    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / faceSize;
+    int cubeFace = unnormalizedTexCoords.z;
+
     texCoords = texCoords  * 2.0 - 1.0;
 
     vec3 direction;
@@ -126,7 +128,7 @@ vec3 ImageCubeCoordsToWorldDirection(vec2 texCoords, int cubeFace)
         case 0: direction = vec3(1.0, texCoords.y, -texCoords.x); break;
         case 1: direction = vec3(-1.0, texCoords.y, texCoords.x); break;
         case 2: direction = vec3(texCoords.x, -1.0, texCoords.y); break;
-        case 3: direction = vec3(texCoords.x,  1.0, -texCoords.y); break;
+        case 3: direction = vec3(texCoords.x, 1.0, -texCoords.y); break;
         case 4: direction = vec3(texCoords.x, texCoords.y, 1.0); break;
         case 5: direction = vec3(-texCoords.x, texCoords.y, -1.0); break;
         default: direction = vec3(0.0);

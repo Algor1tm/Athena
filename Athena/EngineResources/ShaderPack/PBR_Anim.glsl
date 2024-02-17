@@ -51,7 +51,7 @@ void main()
     mat4 transform = u_Transform * bonesTransform;
 
     vec4 worldPos = transform * vec4(a_Position, 1.0);
-    gl_Position = u_Camera.Projection * u_Camera.View * worldPos;
+    gl_Position = u_Camera.ViewProjection * worldPos;
 
     Interpolators.WorldPos = worldPos.xyz;
     Interpolators.TexCoords = a_TexCoords;

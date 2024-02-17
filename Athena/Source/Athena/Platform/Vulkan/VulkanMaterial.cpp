@@ -17,8 +17,8 @@ namespace Athena
 		info.Shader = shader;
 		info.FirstSet = 0;
 		info.LastSet = 0;
-		m_DescriptorSetManager = Ref<DescriptorSetManager>::Create(info);
-		m_DescriptorSetManager->Bake();
+		m_DescriptorSetManager = DescriptorSetManager(info);
+		m_DescriptorSetManager.Bake();
 
 		m_PipelineBindPoint = shader->IsCompute() ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
 	}
@@ -30,17 +30,17 @@ namespace Athena
 
 	void VulkanMaterial::Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex)
 	{
-		m_DescriptorSetManager->Set(name, resource, arrayIndex);
+		m_DescriptorSetManager.Set(name, resource, arrayIndex);
 	}
 
 	void VulkanMaterial::Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip)
 	{
-		m_DescriptorSetManager->Set(name, resource, arrayIndex, mip);
+		m_DescriptorSetManager.Set(name, resource, arrayIndex, mip);
 	}
 
 	Ref<RenderResource> VulkanMaterial::GetResourceInternal(const String& name)
 	{
-		return m_DescriptorSetManager->Get(name);
+		return m_DescriptorSetManager.Get(name);
 	}
 
 	void VulkanMaterial::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
@@ -49,8 +49,8 @@ namespace Athena
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			m_DescriptorSetManager->RT_InvalidateAndUpdate();
-			m_DescriptorSetManager->RT_BindDescriptorSets(vkcmdBuffer, m_PipelineBindPoint);
+			m_DescriptorSetManager.RT_InvalidateAndUpdate();
+			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, m_PipelineBindPoint);
 		});
 	}
 

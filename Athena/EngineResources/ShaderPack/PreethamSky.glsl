@@ -118,11 +118,12 @@ vec3 CalculateSkyLuminanceRGB( in vec3 s, in vec3 e, in float t )
 void main()
 {
     ivec3 unnormalizedTexCoords = ivec3(gl_GlobalInvocationID.xyz);
-    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
-    vec3 direction = ImageCubeCoordsToWorldDirection(texCoords, unnormalizedTexCoords.z);
-    
+	vec3 direction = GetWorldDirectionFromCubeCoords(unnormalizedTexCoords, vec2(gl_NumWorkGroups * gl_WorkGroupSize));
+
     vec3 sunDir = normalize( vec3( sin(u_Inclination) * cos(u_Azimuth), cos(u_Inclination), sin(u_Inclination) * sin(u_Azimuth) ) );
     vec3 skyLuminance = CalculateSkyLuminanceRGB( sunDir, direction, u_Turbidity );
     
-	imageStore(u_EnvironmentMap, unnormalizedTexCoords, vec4( skyLuminance, 1.0 ));
+	vec3 color = skyLuminance * 0.05;
+	color = pow(color, vec3(2.2));
+	imageStore(u_EnvironmentMap, unnormalizedTexCoords, vec4( color, 1.0 ));
 }

@@ -26,7 +26,7 @@ namespace Athena
 		void CreatePipeline(uint32 width, uint32 height);
 
 	private:
-		Ref<DescriptorSetManager> m_DescriptorSetManager;
+		DescriptorSetManager m_DescriptorSetManager;
 		VkPipeline m_VulkanPipeline;
 	};
 }

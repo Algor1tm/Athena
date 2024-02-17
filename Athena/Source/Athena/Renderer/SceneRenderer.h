@@ -78,6 +78,7 @@ namespace Athena
 	{
 		Matrix4 View;
 		Matrix4 Projection;
+		Matrix4 ViewProjection;
 		Matrix4 RotationView;
 		Vector3 Position;
 	};

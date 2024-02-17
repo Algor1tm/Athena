@@ -46,9 +46,10 @@ namespace Athena
 	};
 
 
-	class ATHENA_API DescriptorSetManager : public RefCounted
+	class ATHENA_API DescriptorSetManager
 	{
 	public:
+		DescriptorSetManager() = default;
 		DescriptorSetManager(const DescriptorSetManagerCreateInfo& info);
 		~DescriptorSetManager();
 

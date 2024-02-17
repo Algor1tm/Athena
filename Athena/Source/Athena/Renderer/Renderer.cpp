@@ -176,9 +176,10 @@ namespace Athena
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "BRDF_LUT_Pass";
-			passInfo.Outputs.push_back(s_Data.BRDF_LUT->GetImage());
+			passInfo.DebugColor = { 0.f, 0.f, 0.f, 1.f };
 
 			Ref<ComputePass> pass = ComputePass::Create(passInfo);
+			pass->SetOutput(s_Data.BRDF_LUT->GetImage());
 
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "BRDF_LUT_Pipeline";

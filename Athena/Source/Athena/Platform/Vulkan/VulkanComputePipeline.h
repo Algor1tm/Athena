@@ -19,7 +19,7 @@ namespace Athena
 		virtual void Bake() override;
 
 	private:
-		Ref<DescriptorSetManager> m_DescriptorSetManager;
+		DescriptorSetManager m_DescriptorSetManager;
 		VkPipeline m_VulkanPipeline;
 	};
 }

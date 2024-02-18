@@ -334,7 +334,7 @@ namespace Athena
 				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 				if (!path.empty())
 				{
-					texture = Texture2D::Create(path);
+					texture = Texture2D::Create(path, texName == "u_Albedo" ? true : false);
 					mat->Set(texName, texture);
 					mat->Set(useTexName, (uint32)true);
 				}
@@ -600,7 +600,7 @@ namespace Athena
 							std::string_view extent = path.substr(path.size() - 4, path.size());
 							if (extent == ".png\0")
 							{
-								sprite.Texture = Texture2D::Create(FilePath(path));
+								sprite.Texture = Texture2D::Create(FilePath(path), true);
 								sprite.Color = LinearColor::White;
 							}
 							else
@@ -618,7 +618,7 @@ namespace Athena
 						FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 						if (!path.empty())
 						{
-							sprite.Texture = Texture2D::Create(path);
+							sprite.Texture = Texture2D::Create(path, true);
 							sprite.Color = LinearColor::White;
 						}
 					}

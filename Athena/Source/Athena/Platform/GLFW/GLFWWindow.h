@@ -107,7 +107,8 @@ namespace Athena
 				}
 				else
 				{
-					data.Mode = WindowMode::Default;
+					bool isMaximized = glfwGetWindowAttrib(window, GLFW_MAXIMIZED);
+					data.Mode = isMaximized ? WindowMode::Maximized : WindowMode::Default;
 
 					Ref<WindowRestoreEvent> event = Ref<WindowRestoreEvent>::Create();
 					data.EventCallback(event);

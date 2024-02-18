@@ -31,13 +31,13 @@ namespace Athena
 		}
 
 		// Acquire function pointers
-#ifdef ATN_DEBUG
-		m_DebugMarkBeginPFN = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerBeginEXT");
-		m_DebugMarkEndPFN = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerEndEXT");
-		m_DebugMarkInsertPFN = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerInsertEXT");
+#ifdef VULKAN_ENABLE_DEBUG_INFO
+		m_DebugMarkerBeginPFN = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerBeginEXT");
+		m_DebugMarkerEndPFN = (PFN_vkCmdDebugMarkerEndEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerEndEXT");
+		m_DebugMarkerInsertPFN = (PFN_vkCmdDebugMarkerInsertEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerInsertEXT");
 #endif
 	}
-
+	 
 	void VulkanRenderer::Shutdown()
 	{
 		Renderer::SubmitResourceFree([vkCommandBuffers = m_VkCommandBuffers]()
@@ -106,7 +106,7 @@ namespace Athena
 
 	void VulkanRenderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
 	{
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 		Renderer::Submit([this, commandBuffer, name, color]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -119,25 +119,25 @@ namespace Athena
 			markerInfo.color[3] = color[3];
 			markerInfo.pMarkerName = name.data();
 
-			m_DebugMarkBeginPFN(vkcmdBuffer, &markerInfo);
+			m_DebugMarkerBeginPFN(vkcmdBuffer, &markerInfo);
 		});
 #endif
 	}
 
 	void VulkanRenderer::EndDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 		Renderer::Submit([this, commandBuffer]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			m_DebugMarkEndPFN(vkcmdBuffer);
+			m_DebugMarkerEndPFN(vkcmdBuffer);
 		});
 #endif
 	}
 
 	void VulkanRenderer::InsertDebugMarker(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
 	{
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 		Renderer::Submit([this, commandBuffer, name, color]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -150,7 +150,7 @@ namespace Athena
 			markerInfo.color[3] = color[3];
 			markerInfo.pMarkerName = name.data();
 
-			m_DebugMarkInsertPFN(vkcmdBuffer, &markerInfo);
+			m_DebugMarkerInsertPFN(vkcmdBuffer, &markerInfo);
 		});
 #endif
 	}

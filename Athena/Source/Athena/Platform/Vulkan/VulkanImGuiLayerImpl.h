@@ -7,22 +7,6 @@
 #include <vulkan/vulkan.h>
 
 
-namespace std
-{
-	// TODO: need to properly hash textures, 
-	// for now there is no garantuee, that there are no textures with same names
-	template<>
-	struct hash<Athena::Ref<Athena::Image>>
-	{
-		size_t operator()(const Athena::Ref<Athena::Image>& tex) const
-		{
-			const std::string& name = tex.As<Athena::VulkanImage>()->GetInfo().Name;
-			return hash<string>()(name);
-		}
-	};
-}
-
-
 namespace Athena
 {
 	class VulkanImGuiLayerImpl : public ImGuiLayerImpl

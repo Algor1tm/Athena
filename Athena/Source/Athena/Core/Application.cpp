@@ -121,26 +121,29 @@ namespace Athena
 
 	void Application::RenderImGui()
 	{
-		Renderer::BeginDebugRegion(Renderer::GetRenderCommandBuffer(), "UIOverlayPass", { 0.8f, 0.7f, 0.1f, 1.f });
+		if (!m_Config.EnableImGui)
+			return;
+
+		if(!m_Minimized)
+			Renderer::BeginDebugRegion(Renderer::GetRenderCommandBuffer(), "UIOverlayPass", { 0.8f, 0.7f, 0.1f, 1.f });
+
 		Renderer::Submit([this]()
 		{
 			Timer timer = Timer();
+			ATN_PROFILE_SCOPE("Application::RenderImGui")
 
-			if (m_Config.EnableImGui)
+			m_ImGuiLayer->Begin();
 			{
-				ATN_PROFILE_SCOPE("Application::RenderImGui")
-
-				m_ImGuiLayer->Begin();
-				{
-					for (Ref<Layer> layer : m_LayerStack)
-						layer->OnImGuiRender();
-				}
-				m_ImGuiLayer->End(m_Minimized);
+				for (Ref<Layer> layer : m_LayerStack)
+					layer->OnImGuiRender();
 			}
+			m_ImGuiLayer->End(m_Minimized);
 
 			m_Statistics.Application_RenderImGui = timer.ElapsedTime();
 		});
-		Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
+
+		if (!m_Minimized)
+			Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)

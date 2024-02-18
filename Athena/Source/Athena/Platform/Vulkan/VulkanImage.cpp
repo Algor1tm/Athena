@@ -64,6 +64,7 @@ namespace Athena
 		m_Info.Width = 0;
 		m_Info.Height = 0;
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		m_Hash = 0;
 
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
@@ -135,6 +136,7 @@ namespace Athena
 
 			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
 			Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
+			m_Hash = (uint64)m_Image.GetImage();
 
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

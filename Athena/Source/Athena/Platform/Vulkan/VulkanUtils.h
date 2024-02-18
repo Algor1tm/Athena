@@ -94,7 +94,7 @@ namespace Athena::Vulkan
 
     inline void SetObjectDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
     {
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
         static PFN_vkDebugMarkerSetObjectNameEXT PFN_DebugMarkerSetObjectName = nullptr;
 
         if (PFN_DebugMarkerSetObjectName == nullptr)
@@ -107,6 +107,13 @@ namespace Athena::Vulkan
         nameInfo.objectType = type;
         nameInfo.object = (uint64)object;
         nameInfo.pObjectName = name.c_str();
+
+        String subName;
+        if (name.size() >= VULKAN_MAX_DEBUG_NAME_LENGTH)
+        {
+            subName = name.substr(0, VULKAN_MAX_DEBUG_NAME_LENGTH);
+            nameInfo.pObjectName = subName.c_str();
+        }
 
         PFN_DebugMarkerSetObjectName(VulkanContext::GetLogicalDevice(), &nameInfo);
 #endif
@@ -204,6 +211,8 @@ namespace Athena::Vulkan
     {
         switch (format)
         {
+        case ImageFormat::R8:              return VK_FORMAT_R8_UNORM;
+        case ImageFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
         case ImageFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
         case ImageFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
         case ImageFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;

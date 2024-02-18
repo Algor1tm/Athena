@@ -11,6 +11,8 @@ namespace Athena
 	{
 		NONE = 0,
 		// Color
+		R8,
+		R8_SRGB,
 		RGB8,
 		RGB8_SRGB,
 		RGBA8,
@@ -64,8 +66,8 @@ namespace Athena
 	{
 	public:
 		static Ref<Image> Create(const ImageCreateInfo& info);
-		static Ref<Image> Create(const FilePath& path);
-		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height);
+		static Ref<Image> Create(const FilePath& path, bool sRGB = false);
+		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false);
 		virtual ~Image() = default;
 
 		virtual void BlitMipMap(uint32 levels) = 0;
@@ -73,6 +75,7 @@ namespace Athena
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
+		uint64 GetHash() const { return m_Hash; }
 		const ImageCreateInfo& GetInfo() const { return m_Info; }
 
 	public:
@@ -84,8 +87,8 @@ namespace Athena
 
 	protected:
 		ImageCreateInfo m_Info;
+		uint64 m_Hash = 0;
 	};
-
 
 	inline bool Image::IsDepthFormat(ImageFormat format)
 	{
@@ -134,6 +137,8 @@ namespace Athena
 	{
 		switch (format)
 		{
+		case ImageFormat::R8:			   return 1;
+		case ImageFormat::R8_SRGB:			   return 1;
 		case ImageFormat::RGB8:			   return 3 * 1;
 		case ImageFormat::RGB8_SRGB:	   return 3 * 1;
 		case ImageFormat::RGBA8:		   return 4 * 1;
@@ -153,4 +158,16 @@ namespace Athena
 		ATN_CORE_ASSERT(false);
 		return false;
 	}
+}
+
+namespace std
+{
+	template<>
+	struct hash<Athena::Ref<Athena::Image>>
+	{
+		size_t operator()(const Athena::Ref<Athena::Image>& tex) const
+		{
+			return tex->GetHash();
+		}
+	};
 }

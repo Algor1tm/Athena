@@ -36,7 +36,20 @@ namespace Athena
 		return { input.x, input.y, input.z };
 	}
 
-	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, const FilePath& path)
+	static String ConvertaiStringName(const aiString& aiName)
+	{
+		const uint32 nameMaxLength = 30;
+
+		if (aiName.length >= nameMaxLength)
+		{
+			String name = aiName.C_Str();
+			return name.substr(0, nameMaxLength);
+		}
+
+		return aiName.C_Str();
+	}
+
+	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
 	{
 		Ref<Texture2D> result = nullptr;
 
@@ -49,7 +62,7 @@ namespace Athena
 				void* data = embeddedTex->pcData;
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
-				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height);
+				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height, srgb);
 			}
 			else
 			{
@@ -57,7 +70,7 @@ namespace Athena
 				path.replace_filename(texFilepath.C_Str());
 				if (FileSystem::Exists(path))
 				{
-					result = Texture2D::Create(path);
+					result = Texture2D::Create(path, srgb);
 				}
 				else
 				{
@@ -109,26 +122,26 @@ namespace Athena
 
 		Ref<Texture2D> texture;
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, true, path))
 			result->Set("u_AlbedoMap", texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, true, path))
 			result->Set("u_AlbedoMap", texture);
 
 		result->Set("u_UseAlbedoMap", uint32(texture != nullptr));
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, false, path))
 			result->Set("u_NormalMap", texture);
 
 		result->Set("u_UseNormalMap", uint32(texture != nullptr));
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, false, path))
 			result->Set("u_RoughnessMap", texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, false, path))
 			result->Set("u_RoughnessMap", texture);
 
 		result->Set("u_UseRoughnessMap", uint32(texture != nullptr));
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, false, path))
 			result->Set("u_MetalnessMap", texture);
 
 		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
@@ -195,7 +208,7 @@ namespace Athena
 		if (!indices.empty())
 		{
 			IndexBufferCreateInfo indexBufferInfo;
-			indexBufferInfo.Name = std::format("{}_IndexBuffer", aimesh->mName.C_Str());
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
 			indexBufferInfo.Data = indices.data();
 			indexBufferInfo.Count = indices.size();
 			indexBufferInfo.Usage = BufferUsage::STATIC;
@@ -204,7 +217,7 @@ namespace Athena
 		}
 
 		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Name = std::format("{}_VertexBuffer", aimesh->mName.C_Str());
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", ConvertaiStringName(aimesh->mName));
 		vertexBufferInfo.Data = vertices.data();
 		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
 		vertexBufferInfo.IndexBuffer = indexBuffer;
@@ -302,7 +315,7 @@ namespace Athena
 		if (!indices.empty())
 		{
 			IndexBufferCreateInfo indexBufferInfo;
-			indexBufferInfo.Name = std::format("{}_IndexBuffer", aimesh->mName.C_Str());
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
 			indexBufferInfo.Data = indices.data();
 			indexBufferInfo.Count = indices.size();
 			indexBufferInfo.Usage = BufferUsage::STATIC;
@@ -311,7 +324,7 @@ namespace Athena
 		}
 
 		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Name = std::format("{}_VertexBuffer", aimesh->mName.C_Str());
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", ConvertaiStringName(aimesh->mName));
 		vertexBufferInfo.Data = vertices.data();
 		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
 		vertexBufferInfo.IndexBuffer = indexBuffer;
@@ -364,7 +377,7 @@ namespace Athena
 
 	static Ref<Skeleton> LoadSkeleton(const aiScene* aiscene)
 	{
-		if (aiscene->mNumAnimations < 0)
+		if (aiscene->mNumAnimations <= 0)
 			return nullptr;
 
 		const aiNode* root = aiscene->mRootNode;

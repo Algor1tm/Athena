@@ -61,10 +61,10 @@ namespace Athena
 		void OnRuntimeStart();
 		void OnSimulationStart();
 
-		void OnRender(Ref<SceneRenderer> renderer, const EditorCamera& camera);
-		void OnRender(Ref<SceneRenderer> renderer);
+		void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
+		void OnRender(const Ref<SceneRenderer>& renderer);
 
-		void OnRender2D(Ref<SceneRenderer2D> renderer2D);
+		void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
 
 		void LoadAllScripts();
 
@@ -85,7 +85,7 @@ namespace Athena
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
 
-		void RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far);
+		void RenderScene(const Ref<SceneRenderer>& renderer, const Matrix4& view, const Matrix4& proj, float near, float far);
 
 		TransformComponent GetWorldTransform(entt::entity entity);
 

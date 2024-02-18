@@ -225,7 +225,7 @@ namespace Athena
 		{
 			m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
 		}
-
+		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();

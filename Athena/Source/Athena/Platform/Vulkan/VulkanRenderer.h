@@ -31,8 +31,8 @@ namespace Athena
 
 	private:
 		std::vector<VkCommandBuffer> m_VkCommandBuffers;
-		PFN_vkCmdDebugMarkerBeginEXT m_DebugMarkBeginPFN;
-		PFN_vkCmdDebugMarkerEndEXT m_DebugMarkEndPFN;
-		PFN_vkCmdDebugMarkerInsertEXT m_DebugMarkInsertPFN;
+		PFN_vkCmdDebugMarkerBeginEXT m_DebugMarkerBeginPFN;
+		PFN_vkCmdDebugMarkerEndEXT m_DebugMarkerEndPFN;
+		PFN_vkCmdDebugMarkerInsertEXT m_DebugMarkerInsertPFN;
 	};
 }

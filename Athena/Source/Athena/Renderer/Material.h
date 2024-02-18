@@ -35,7 +35,6 @@ namespace Athena
 
 		Ref<Shader> GetShader() const { return m_Shader; }
 		const String& GetName() const { return m_Name; }
-		uint64 GetHash() const { return m_Hash; }
 
 	protected:
 		Material(const Ref<Shader> shader, const String& name);
@@ -54,7 +53,6 @@ namespace Athena
 		String m_Name;
 		byte m_Buffer[128];
 		const std::unordered_map<String, StructMemberShaderMetaData>* m_BufferMembers;
-		uint64 m_Hash;
 	};
 
 	template <>

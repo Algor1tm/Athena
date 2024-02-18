@@ -46,7 +46,7 @@ namespace Athena
 	}
 
 
-	Ref<Image> Image::Create(const FilePath& filepath)
+	Ref<Image> Image::Create(const FilePath& filepath, bool sRGB)
 	{
 		int width, height, channels;
 		bool HDR = false;
@@ -64,6 +64,7 @@ namespace Athena
 			case 4: format = ImageFormat::RGBA32F; break;
 			default:
 				ATN_CORE_ERROR("Failed to load image from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
+				ATN_CORE_ASSERT(false);
 				return nullptr;
 			}
 		}
@@ -72,19 +73,21 @@ namespace Athena
 			data = stbi_load(path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
-			case 3: format = ImageFormat::RGB8_SRGB; break;
-			case 4: format = ImageFormat::RGBA8_SRGB; break;
+			case 1: format = sRGB ? ImageFormat::R8_SRGB    : ImageFormat::R8;	  break;
+			case 3: format = sRGB ? ImageFormat::RGB8_SRGB  : ImageFormat::RGB8;  break;
+			case 4: format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8; break;
 			default:
 				ATN_CORE_ERROR("Failed to load image from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
+				ATN_CORE_ASSERT(false);
 				return nullptr;
 			}
 		}
 		ATN_CORE_ASSERT(data);
 
-		if (format == ImageFormat::RGB8_SRGB)
+		if (format == ImageFormat::RGB8_SRGB || format == ImageFormat::RGB8)
 		{
 			data = Utils::ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = ImageFormat::RGBA8_SRGB;
+			format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8;
 		}
 		else if (format == ImageFormat::RGB32F)
 		{
@@ -109,7 +112,7 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Image> Image::Create(const String& name, const void* inputData, uint32 inputWidth, uint32 inputHeight)
+	Ref<Image> Image::Create(const String& name, const void* inputData, uint32 inputWidth, uint32 inputHeight, bool sRGB)
 	{
 		int width, height, channels;
 		void* data = nullptr;
@@ -122,17 +125,19 @@ namespace Athena
 
 		switch (channels)
 		{
-		case 3: format = ImageFormat::RGB8_SRGB; break;
-		case 4: format = ImageFormat::RGBA8_SRGB; break;
+		case 1: format = sRGB ? ImageFormat::R8_SRGB    : ImageFormat::R8;    break;
+		case 3: format = sRGB ? ImageFormat::RGB8_SRGB  : ImageFormat::RGB8;  break;
+		case 4: format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8; break;
 		default:
 			ATN_CORE_ERROR("Failed to load image from memory, width = {}, height = {}, channels = {}", width, height, channels);
+			ATN_CORE_ASSERT(false);
 			return nullptr;
 		}
 
-		if (format == ImageFormat::RGB8_SRGB)
+		if (channels == 3)
 		{
 			data = Utils::ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = ImageFormat::RGBA8_SRGB;
+			format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8;
 		}
 
 		ImageCreateInfo info;

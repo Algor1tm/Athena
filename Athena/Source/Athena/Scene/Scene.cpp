@@ -498,12 +498,12 @@ namespace Athena
 		}
 	}
 
-	void Scene::OnRender(Ref<SceneRenderer> renderer, const EditorCamera& camera)
+	void Scene::OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera)
 	{
 		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
 	}
 
-	void Scene::OnRender(Ref<SceneRenderer> renderer)
+	void Scene::OnRender(const Ref<SceneRenderer>& renderer)
 	{
 		// Choose camera
 		SceneCamera* mainCamera = nullptr;
@@ -535,7 +535,7 @@ namespace Athena
 		}
 	}
 
-	void Scene::OnRender2D(Ref<SceneRenderer2D> renderer2D)
+	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
 		auto quads = GetAllEntitiesWith<SpriteComponent>();
 		for (auto entity : quads)
@@ -556,7 +556,7 @@ namespace Athena
 		}
 	}
 
-	void Scene::RenderScene(Ref<SceneRenderer> renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
+	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
 		ATN_PROFILE_FUNC()
 

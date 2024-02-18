@@ -7,6 +7,14 @@
 
 #include <vulkan/vulkan.h>
 
+#define VULKAN_MAX_DEBUG_NAME_LENGTH 30
+
+#ifdef ATN_DEBUG
+	#define VULKAN_ENABLE_DEBUG_INFO
+#else
+
+#endif
+
 
 namespace Athena
 {

@@ -1,27 +1,22 @@
 Scene: UnNamed
 Entities:
   - IDComponent:
-      ID: 18100746580937150330
+      ID: 10335089509406061649
     TagComponent:
-      Tag: DirLight
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0.76768744, -0.640824497, 0, 0]
-      Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 3.79999995
-  - IDComponent:
-      ID: 8278415375090471571
-    TagComponent:
-      Tag: Sponza
+      Tag: SkyLight
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.057190001, 0.0571899563, 0.0571899563]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\Sponza.fbx
-      Visible: true
+      Scale: [1, 1, 1]
+    SkyLightComponent:
+      Intensity: 1
+      LOD: 0
+      Resolution: 256
+      Type: 2
+      FilePath: ""
+      Turbidity: 2.29299998
+      Azimuth: 0.224000007
+      Inclination: 1.39100003
   - IDComponent:
       ID: 95899466008981868
     TagComponent:
@@ -43,9 +38,25 @@ Entities:
         OrthographicFarClip: 1
       Primary: true
       FixedAspectRatio: false
-Environment:
-  EnvMap FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
-  Ambient Light Intensity: 1
-  EnvMap LOD: 0
-  Exposure: 1
-  Gamma: 2.20000005
+  - IDComponent:
+      ID: 8278415375090471571
+    TagComponent:
+      Tag: Sponza
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.057190001, 0.0571899563, 0.0571899563]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Sponza.fbx
+      Visible: true
+  - IDComponent:
+      ID: 18100746580937150330
+    TagComponent:
+      Tag: DirLight
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0.76768744, -0.640824497, 0, 0]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1

@@ -21,9 +21,9 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const FilePath& path)
+	Ref<Texture2D> Texture2D::Create(const FilePath& path, bool sRGB)
 	{
-		Ref<Image> image = Image::Create(path);
+		Ref<Image> image = Image::Create(path, sRGB);
 		TextureSamplerCreateInfo samplerInfo;
 		samplerInfo.MinFilter = TextureFilter::LINEAR;
 		samplerInfo.MagFilter = TextureFilter::LINEAR;
@@ -36,9 +36,9 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const String& name, const void* data, uint32 width, uint32 height)
+	Ref<Texture2D> Texture2D::Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB)
 	{
-		Ref<Image> image = Image::Create(name, data, width, height);
+		Ref<Image> image = Image::Create(name, data, width, height, sRGB);
 		TextureSamplerCreateInfo samplerInfo;
 		samplerInfo.MinFilter = TextureFilter::LINEAR;
 		samplerInfo.MagFilter = TextureFilter::LINEAR;

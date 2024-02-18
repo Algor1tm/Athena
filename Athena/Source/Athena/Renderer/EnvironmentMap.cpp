@@ -208,6 +208,9 @@ namespace Athena
 
 	void EnvironmentMap::Load()
 	{
+		if (m_Type == EnvironmentMapType::STATIC && m_FilePath.empty())
+			return;
+
 		Ref<RenderCommandBuffer> commandBuffer = Renderer::GetRenderCommandBuffer();
 
 		if (m_Type == EnvironmentMapType::STATIC)

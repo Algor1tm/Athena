@@ -83,7 +83,6 @@ namespace Athena
 
 	void SettingsPanel::OnImGuiRender()
 	{
-
 		if (ImGui::Begin("Editor Settings"))
 		{
 			UI::ShiftCursorY(2.f);
@@ -102,6 +101,54 @@ namespace Athena
 		ImGui::PopStyleVar();
 
 		SceneRendererSettings& settings = m_ViewportRenderer->GetSettings();
+		ShaderPack& shaderPack = *Renderer::GetShaderPack();
+
+		bool shaderPackOpen = UI::TreeNode("ShaderPack", false);
+		if (!shaderPackOpen)
+		{
+			float frameHeight = ImGui::GetFrameHeight();
+			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+			ImVec2 textSize = ImGui::CalcTextSize("Reload All");
+
+			ImGui::SameLine(regionAvail.x - frameHeight);
+			UI::ShiftCursor(-textSize.x, 0.f);
+			if (ImGui::Button("Reload All"))
+				shaderPack.Reload();
+
+			UI::ShiftCursorY(-3.f);
+		}
+
+		if (shaderPackOpen)
+		{
+			if (UI::BeginPropertyTable())
+			{
+				for (const auto& [name, shader] : shaderPack)
+				{
+					bool isCompiled = shader->IsCompiled();
+
+					if (!isCompiled)
+						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+					UI::PropertyRow(name, ImGui::GetFrameHeight());
+
+					if (!isCompiled)
+						ImGui::PopStyleColor();
+
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10.f, 3.f});
+					ImGui::PushID(name.c_str());
+
+					if (UI::ButtonCentered("Reload"))
+						shader->Reload();
+
+					ImGui::PopID();
+					ImGui::PopStyleVar();
+				}
+
+				UI::EndPropertyTable();
+			}
+
+			UI::TreePop();
+		}
 
 		if (UI::TreeNode("Debug", false))
 		{

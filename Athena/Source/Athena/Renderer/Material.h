@@ -17,7 +17,7 @@ namespace Athena
 		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
 		static Ref<Material> CreatePBRStatic(const String& name);
 		static Ref<Material> CreatePBRAnim(const String& name);
-		virtual ~Material() = default;
+		virtual ~Material();
 
 		void Set(const String& name, const Matrix4& value);
 		void Set(const String& name, const Vector4& value);
@@ -33,8 +33,9 @@ namespace Athena
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer);
 
-		Ref<Shader> GetShader() { return m_Shader; }
-		const String& GetName() { return m_Name; }
+		Ref<Shader> GetShader() const { return m_Shader; }
+		const String& GetName() const { return m_Name; }
+		uint64 GetHash() const { return m_Hash; }
 
 	protected:
 		Material(const Ref<Shader> shader, const String& name);
@@ -42,6 +43,7 @@ namespace Athena
 	private:
 		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data) = 0;
 		virtual Ref<RenderResource> GetResourceInternal(const String& name) = 0;
+		virtual void OnReload() = 0;
 
 		bool TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData);
 		void SetInternal(const String& name, ShaderDataType dataType, const void* data);
@@ -52,6 +54,7 @@ namespace Athena
 		String m_Name;
 		byte m_Buffer[128];
 		const std::unordered_map<String, StructMemberShaderMetaData>* m_BufferMembers;
+		uint64 m_Hash;
 	};
 
 	template <>

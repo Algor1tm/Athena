@@ -15,7 +15,7 @@ namespace Athena
 		VulkanPipeline(const PipelineCreateInfo& info);
 		~VulkanPipeline();
 
-		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
 		virtual void SetViewport(uint32 width, uint32 height) override;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;
@@ -23,10 +23,12 @@ namespace Athena
 
 	private:
 		void CleanUp();
-		void CreatePipeline(uint32 width, uint32 height);
+		void RecreatePipeline();
 
 	private:
 		DescriptorSetManager m_DescriptorSetManager;
 		VkPipeline m_VulkanPipeline;
+		Vector2u m_ViewportSize;
+		uint64 m_Hash;
 	};
 }

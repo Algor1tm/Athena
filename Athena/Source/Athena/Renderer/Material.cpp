@@ -2,6 +2,7 @@
 
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanMaterial.h"
+#include "Athena/Math/Random.h"
 
 
 namespace Athena
@@ -34,6 +35,18 @@ namespace Athena
 		: m_Shader(shader), m_Name(name), m_BufferMembers(&shader->GetMetaData().PushConstant.Members)
 	{
 		memset(m_Buffer, 0, sizeof(m_Buffer));
+		m_Hash = Math::Random::UInt64();	// TODO: maybe try to hash more clever way
+
+		m_Shader->AddOnReloadCallback(m_Hash, [this]()
+		{
+			m_BufferMembers = &m_Shader->GetMetaData().PushConstant.Members;
+			OnReload();
+		});
+	}
+
+	Material::~Material()
+	{
+		m_Shader->RemoveOnReloadCallback(m_Hash);
 	}
 
 	void Material::Set(const String& name, const Matrix4& value)

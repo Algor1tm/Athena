@@ -63,7 +63,7 @@ namespace Athena
 		style.FrameBorderSize = m_Theme.Style.FrameBorderSize;
 		style.ScrollbarSize = m_Theme.Style.ScrollbarSize;
 		style.WindowRounding = m_Theme.Style.WindowRounding;
-
+		style.FramePadding = { m_Theme.Style.FramePadding.x, m_Theme.Style.FramePadding.y };
 
 		// Titlebar
 		colors[ImGuiCol_TitleBg] = ImColor(m_Theme.Titlebar);

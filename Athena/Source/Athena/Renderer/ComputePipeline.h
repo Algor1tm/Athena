@@ -22,7 +22,7 @@ namespace Athena
 		static Ref<ComputePipeline> Create(const ComputePipelineCreateInfo& info);
 		virtual ~ComputePipeline() = default;
 		
-		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) = 0;
 		virtual void Bake() = 0;

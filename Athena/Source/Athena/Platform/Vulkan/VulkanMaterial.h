@@ -21,6 +21,7 @@ namespace Athena
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
 		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data) override;
+		virtual void OnReload() override;
 
 	private:
 		VkPipelineBindPoint m_PipelineBindPoint;

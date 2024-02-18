@@ -16,6 +16,7 @@ namespace Athena::UI
 		theme.Style.FrameBorderSize = 1.f;
 		theme.Style.ScrollbarSize = 11.f;
 		theme.Style.WindowRounding = 5.f;
+		theme.Style.FramePadding = { 2.35f, 2.35f };
 
 		theme.Titlebar = IM_COL32(21, 21, 21, 255);
 		theme.Background = IM_COL32(27, 27, 27, 255);
@@ -24,6 +25,7 @@ namespace Athena::UI
 		
 		theme.Accent = IM_COL32(0, 112, 224, 255);
 		theme.Text = IM_COL32(255, 255, 255, 255);
+		theme.ErrorText = IM_COL32(240, 40, 40, 255);
 		
 		theme.FrameBg = IM_COL32(8, 8, 8, 255);
 		theme.FrameBgActive = IM_COL32(8, 8, 8, 255);
@@ -51,6 +53,7 @@ namespace Athena::UI
 			UI::PropertyDrag("FrameBorderSize", &theme.Style.FrameBorderSize, 0.05f);
 			UI::PropertyDrag("ScrollbarSize", &theme.Style.ScrollbarSize, 0.05f);
 			UI::PropertyDrag("WindowRounding", &theme.Style.WindowRounding, 0.05f);
+			UI::PropertyDrag("FramePadding", &theme.Style.FramePadding, 0.05f);
 
 			UI::EndPropertyTable();
 		}

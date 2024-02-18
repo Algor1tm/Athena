@@ -198,8 +198,8 @@ namespace Athena
 			{
 				pass->Begin(commandBuffer);
 
-				pipeline->Bind(commandBuffer);
-				Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
+				if(pipeline->Bind(commandBuffer))
+					Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
 
 				pass->End(commandBuffer);
 			}

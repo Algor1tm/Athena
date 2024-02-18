@@ -31,6 +31,19 @@ namespace Athena
 		return nullptr;
 	}
 
+	void Shader::AddOnReloadCallback(uint64 hash, const std::function<void()>& callback)
+	{
+		ATN_CORE_ASSERT(!m_OnReloadCallbacks.contains(hash));
+		m_OnReloadCallbacks[hash] = callback;
+	}
+
+	void Shader::RemoveOnReloadCallback(uint64 hash)
+	{
+		ATN_CORE_ASSERT(m_OnReloadCallbacks.contains(hash));
+		m_OnReloadCallbacks.erase(hash);
+	}
+
+
 	Ref<ShaderPack> ShaderPack::Create(const FilePath& path)
 	{
 		Ref<ShaderPack> result = Ref<ShaderPack>::Create();
@@ -83,7 +96,7 @@ namespace Athena
 		return m_Shaders.at(name);
 	}
 
-	bool ShaderPack::Exists(const String& name)
+	bool ShaderPack::Exists(const String& name) const
 	{
 		return (m_Shaders.find(name) != m_Shaders.end());
 	}
@@ -92,5 +105,17 @@ namespace Athena
 	{
 		for (const auto& [key, shader] : m_Shaders)
 			shader->Reload();
+	}
+
+	bool ShaderPack::IsCompiled() const
+	{
+		for (const auto& [key, shader] : m_Shaders)
+		{
+			bool isCompiled = shader->IsCompiled();
+			if (!isCompiled)
+				return false;
+		}
+
+		return true;
 	}
 }

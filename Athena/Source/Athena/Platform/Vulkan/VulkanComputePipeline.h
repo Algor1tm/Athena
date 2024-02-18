@@ -13,15 +13,21 @@ namespace Athena
 		VulkanComputePipeline(const ComputePipelineCreateInfo& info);
 		~VulkanComputePipeline();
 
-		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;
 		virtual void Bake() override;
 
-		Vector3i GetWorkGroupSize() const;
+		Vector3u GetWorkGroupSize() const;
+
+	private:
+		void CleanUp();
+		void RecreatePipeline();
 
 	private:
 		DescriptorSetManager m_DescriptorSetManager;
 		VkPipeline m_VulkanPipeline;
+		Vector3u m_WorkGroupSize;
+		uint64 m_Hash;
 	};
 }

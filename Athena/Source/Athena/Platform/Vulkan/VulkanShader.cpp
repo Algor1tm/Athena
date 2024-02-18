@@ -28,6 +28,11 @@ namespace Athena
 	{
 		CleanUp();
 		CompileOrGetFromCache(true);
+
+		for (const auto& [_, callback] : m_OnReloadCallbacks)
+		{
+			callback();
+		}
 	}
 
 	bool VulkanShader::IsCompute()
@@ -39,12 +44,12 @@ namespace Athena
 	{
 		ShaderCompiler compiler(m_FilePath, m_Name);
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
-		ATN_CORE_ASSERT(m_IsCompiled, "Failed to compile shader!");
+
+		if (!m_IsCompiled)
+			return;
 
 		m_MetaData = compiler.Reflect();
-
-		if (m_IsCompiled)
-			CreateVulkanShaderModulesAndStages(compiler);
+		CreateVulkanShaderModulesAndStages(compiler);
 
 		struct DescriptorSetLayoutStatistics
 		{
@@ -225,5 +230,10 @@ namespace Athena
 
 			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
 		});
+
+		m_PipelineShaderStages.clear();
+		m_DescriptorSetLayouts.clear();
+		m_VulkanShaderModules.clear();
+		m_PipelineLayout = VK_NULL_HANDLE;
 	}
 }

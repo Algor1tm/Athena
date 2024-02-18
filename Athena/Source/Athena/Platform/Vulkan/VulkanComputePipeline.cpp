@@ -1,4 +1,5 @@
 #include "VulkanComputePipeline.h"
+#include "Athena/Math/Random.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
@@ -12,6 +13,9 @@ namespace Athena
 		ATN_CORE_ASSERT(info.Shader->IsCompute(), "Compute pipeline require compute shader!");
 
 		m_Info = info;
+		m_Hash = Math::Random::UInt64(); 	// TODO: maybe try to hash more clever way
+		m_VulkanPipeline = VK_NULL_HANDLE;
+		m_WorkGroupSize = m_Info.Shader->GetMetaData().WorkGroupSize;
 
 		DescriptorSetManagerCreateInfo setManagerInfo;
 		setManagerInfo.Name = info.Name;
@@ -20,27 +24,26 @@ namespace Athena
 		setManagerInfo.LastSet = 4;
 		m_DescriptorSetManager = DescriptorSetManager(setManagerInfo);
 
-		auto vkShader = m_Info.Shader.As<VulkanShader>();
+		RecreatePipeline();
 
-		VkComputePipelineCreateInfo pipelineInfo = {};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-		pipelineInfo.stage = vkShader->GetPipelineStages()[0];
-		pipelineInfo.layout = vkShader->GetPipelineLayout();
-
-		VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
-		Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
+		m_Info.Shader->AddOnReloadCallback(m_Hash, [this]()
+		{
+			m_WorkGroupSize = m_Info.Shader->GetMetaData().WorkGroupSize;
+			RecreatePipeline();
+		});
 	}
 
 	VulkanComputePipeline::~VulkanComputePipeline()
 	{
-		Renderer::SubmitResourceFree([pipeline = m_VulkanPipeline]()
-		{
-			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), pipeline, nullptr);
-		});
+		m_Info.Shader->RemoveOnReloadCallback(m_Hash);
+		CleanUp();
 	}
 
-	void VulkanComputePipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
+	bool VulkanComputePipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
+		if (!m_Info.Shader->IsCompiled())
+			return false;
+
 		Renderer::Submit([this, commandBuffer]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -49,6 +52,8 @@ namespace Athena
 			m_DescriptorSetManager.RT_InvalidateAndUpdate();
 			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 		});
+
+		return true;
 	}
 
 	void VulkanComputePipeline::SetInput(const String& name, const Ref<RenderResource>& resource)
@@ -61,8 +66,40 @@ namespace Athena
 		m_DescriptorSetManager.Bake();
 	}
 
-	Vector3i VulkanComputePipeline::GetWorkGroupSize() const
+	Vector3u VulkanComputePipeline::GetWorkGroupSize() const
 	{
-		return m_Info.Shader->GetMetaData().WorkGroupSize;
+		return m_WorkGroupSize;
+	}
+
+	void VulkanComputePipeline::CleanUp()
+	{
+		if (m_VulkanPipeline != VK_NULL_HANDLE)
+		{
+			Renderer::SubmitResourceFree([pipeline = m_VulkanPipeline]()
+			{
+				vkDestroyPipeline(VulkanContext::GetLogicalDevice(), pipeline, nullptr);
+			});
+		}
+	}
+
+	void VulkanComputePipeline::RecreatePipeline()
+	{
+		CleanUp();
+
+		if (!m_Info.Shader->IsCompiled())
+			return;
+
+		Renderer::Submit([this]()
+		{
+			auto vkShader = m_Info.Shader.As<VulkanShader>();
+
+			VkComputePipelineCreateInfo pipelineInfo = {};
+			pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			pipelineInfo.stage = vkShader->GetPipelineStages()[0];
+			pipelineInfo.layout = vkShader->GetPipelineLayout();
+
+			VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
+			Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
+		});
 	}
 }

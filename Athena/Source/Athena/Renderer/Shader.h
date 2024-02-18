@@ -73,7 +73,7 @@ namespace Athena
 	struct ShaderMetaData
 	{
 		VertexBufferLayout VertexBufferLayout;
-		Vector3i WorkGroupSize;
+		Vector3u WorkGroupSize;
 
 		std::unordered_map<String, TextureShaderMetaData> SampledTextures;
 		std::unordered_map<String, TextureShaderMetaData> StorageTextures;
@@ -93,8 +93,12 @@ namespace Athena
 		virtual void Reload() = 0;
 		virtual bool IsCompute() = 0;
 
+		void AddOnReloadCallback(uint64 hash, const std::function<void()>& callback);
+		void RemoveOnReloadCallback(uint64 hash);
+
 		const ShaderMetaData& GetMetaData() { return m_MetaData; }
 		const auto& GetResourcesDescription() const { return m_ResourcesDescriptionTable; }
+
 		bool IsCompiled() const { return m_IsCompiled; }
 		const String& GetName() const { return m_Name; }
 
@@ -104,6 +108,7 @@ namespace Athena
 		bool m_IsCompiled;
 		ShaderMetaData m_MetaData;
 		std::unordered_map<String, ShaderResourceDescription> m_ResourcesDescriptionTable;
+		std::unordered_map<uint64, std::function<void()>> m_OnReloadCallbacks;
 	};
 
 	class ATHENA_API ShaderPack : public RefCounted
@@ -116,10 +121,14 @@ namespace Athena
 		Ref<Shader> Load(const FilePath& path, const String& name);
 		Ref<Shader> Get(const String& name);
 
-		bool Exists(const String& name);
+		bool Exists(const String& name) const;
 		void Reload();
+		bool IsCompiled() const;
 
 		const FilePath GetDirectory() const { return m_Directory; };
+
+		auto begin() { return m_Shaders.begin(); }
+		auto end() { return m_Shaders.end(); }
 
 	private:
 		void LoadDirectory(const FilePath& path);

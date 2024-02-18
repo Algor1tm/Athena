@@ -1,5 +1,5 @@
 #include "VulkanPipeline.h"
-
+#include "Athena/Math/Random.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanRenderPass.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
@@ -52,6 +52,8 @@ namespace Athena
 	VulkanPipeline::VulkanPipeline(const PipelineCreateInfo& info)
 	{
 		m_Info = info;
+		m_Hash = Math::Random::UInt64(); 	// TODO: maybe try to hash more clever way
+		m_VulkanPipeline = VK_NULL_HANDLE;
 
 		DescriptorSetManagerCreateInfo setManagerInfo;
 		setManagerInfo.Name = info.Name;
@@ -60,16 +62,28 @@ namespace Athena
 		setManagerInfo.LastSet = 4;
 		m_DescriptorSetManager = DescriptorSetManager(setManagerInfo);
 
-		CreatePipeline(info.RenderPass->GetInfo().Width, info.RenderPass->GetInfo().Height);
+		m_ViewportSize.x = info.RenderPass->GetInfo().Width;
+		m_ViewportSize.y = info.RenderPass->GetInfo().Height;
+
+		RecreatePipeline();
+
+		m_Info.Shader->AddOnReloadCallback(m_Hash, [this]()
+		{ 
+			RecreatePipeline(); 
+		});
 	}
 
 	VulkanPipeline::~VulkanPipeline()
 	{
+		m_Info.Shader->RemoveOnReloadCallback(m_Hash);
 		CleanUp();
 	}
 
-	void VulkanPipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
+	bool VulkanPipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
+		if (!m_Info.Shader->IsCompiled())
+			return false;
+
 		Renderer::Submit([this, commandBuffer]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -81,20 +95,27 @@ namespace Athena
 			m_DescriptorSetManager.RT_InvalidateAndUpdate();
 			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 		});
+
+		return true;
 	}
 
 	void VulkanPipeline::SetViewport(uint32 width, uint32 height)
 	{
-		CleanUp();
-		CreatePipeline(width, height);
+		m_ViewportSize.x = width;
+		m_ViewportSize.y = height;
+
+		RecreatePipeline();
 	}
 
 	void VulkanPipeline::CleanUp()
 	{
-		Renderer::SubmitResourceFree([pipeline = m_VulkanPipeline]()
+		if (m_VulkanPipeline != VK_NULL_HANDLE)
 		{
-			vkDestroyPipeline(VulkanContext::GetLogicalDevice(), pipeline, nullptr);
-		});
+			Renderer::SubmitResourceFree([pipeline = m_VulkanPipeline]()
+			{
+				vkDestroyPipeline(VulkanContext::GetLogicalDevice(), pipeline, nullptr);
+			});
+		}
 	}
 
 	void VulkanPipeline::SetInput(const String& name, const Ref<RenderResource>& resource)
@@ -107,9 +128,14 @@ namespace Athena
 		m_DescriptorSetManager.Bake();
 	}
 
-	void VulkanPipeline::CreatePipeline(uint32 width, uint32 height)
+	void VulkanPipeline::RecreatePipeline()
 	{
-		Renderer::Submit([this, width, height]()
+		CleanUp();
+
+		if (!m_Info.Shader->IsCompiled())
+			return;
+
+		Renderer::Submit([this]()
 		{
 			const VertexBufferLayout& vertexBufferLayout = m_Info.Shader->GetMetaData().VertexBufferLayout;
 
@@ -148,8 +174,8 @@ namespace Athena
 			VkViewport viewport = {};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
-			viewport.width = width;
-			viewport.height = height;
+			viewport.width = m_ViewportSize.x;
+			viewport.height = m_ViewportSize.y;
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 			viewportState.pViewports = &viewport;
@@ -157,7 +183,7 @@ namespace Athena
 
 			VkRect2D scissor = {};
 			scissor.offset = { 0, 0 };
-			scissor.extent = { width, height };
+			scissor.extent = { m_ViewportSize.x, m_ViewportSize.y };
 			viewportState.pScissors = &scissor;
 			viewportState.scissorCount = 1;
 

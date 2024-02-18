@@ -117,11 +117,8 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
 
-			RenderPassAttachment colorOutput = { "SceneCompositeColor", ImageFormat::RGBA8 };
-			colorOutput.LoadOp = AttachmentLoadOp::DONT_CARE;
-
 			m_CompositePass = RenderPass::Create(passInfo);
-			m_CompositePass->SetOutput(colorOutput);
+			m_CompositePass->SetOutput({ "SceneCompositeColor", ImageFormat::RGBA8 });
 			m_CompositePass->Bake();
 
 
@@ -185,7 +182,6 @@ namespace Athena
 		m_CompositePipeline->SetViewport(width, height);
 
 		m_Renderer2DPass->Resize(width, height);
-
 		m_SceneRenderer2D->OnViewportResize(width, height);
 	}
 
@@ -315,24 +311,26 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_GeometryPass->Begin(commandBuffer);
-		{
-			Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
-			m_StaticGeometryPipeline->Bind(commandBuffer);
 
+
+		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
+		if (m_StaticGeometryPipeline->Bind(commandBuffer))
+		{
 			for (const auto& drawCall : m_StaticGeometryList)
 			{
-				if(m_StaticGeometryList.UpdateMaterial(drawCall))
+				if (m_StaticGeometryList.UpdateMaterial(drawCall))
 					drawCall.Material->Bind(commandBuffer);
 
 				drawCall.Material->Set("u_Transform", drawCall.Transform);
 				Renderer::RenderGeometry(commandBuffer, m_StaticGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
 			}
-			Renderer::EndDebugRegion(commandBuffer);
+		}
+		Renderer::EndDebugRegion(commandBuffer);
 			
 
-			Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
-			m_AnimGeometryPipeline->Bind(commandBuffer);
-
+		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
+		if (m_AnimGeometryPipeline->Bind(commandBuffer))
+		{
 			for (const auto& drawCall : m_AnimGeometryList)
 			{
 				if (m_AnimGeometryList.UpdateMaterial(drawCall))
@@ -342,16 +340,18 @@ namespace Athena
 				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
 				Renderer::RenderGeometry(commandBuffer, m_AnimGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
 			}
-			Renderer::EndDebugRegion(commandBuffer);
-
-
-			Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
-			{
-				m_SkyboxPipeline->Bind(commandBuffer);
-				Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
-			}
-			Renderer::EndDebugRegion(commandBuffer);
 		}
+		Renderer::EndDebugRegion(commandBuffer);
+
+
+		Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
+		if (m_SkyboxPipeline->Bind(commandBuffer))
+		{
+			Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
+		}
+		Renderer::EndDebugRegion(commandBuffer);
+
+
 		m_GeometryPass->End(commandBuffer);
 
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
@@ -363,8 +363,8 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_CompositePass->Begin(commandBuffer);
+		if (m_CompositePipeline->Bind(commandBuffer))
 		{
-			m_CompositePipeline->Bind(commandBuffer);
 			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
 		}
 		m_CompositePass->End(commandBuffer);

@@ -71,4 +71,9 @@ namespace Athena
 				data);
 		}
 	}
+
+	void VulkanMaterial::OnReload()
+	{
+
+	}
 }

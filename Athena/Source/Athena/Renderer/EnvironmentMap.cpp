@@ -184,8 +184,8 @@ namespace Athena
 		panoramaToCubePipeline->Bake();
 
 		m_PanoramaToCubePass->Begin(commandBuffer);
+		if (panoramaToCubePipeline->Bind(commandBuffer))
 		{
-			panoramaToCubePipeline->Bind(commandBuffer);
 			Renderer::Dispatch(commandBuffer, panoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
 		}
 		m_PanoramaToCubePass->End(commandBuffer);
@@ -194,9 +194,8 @@ namespace Athena
 	void EnvironmentMap::LoadPreetham(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		m_PreethamPass->Begin(commandBuffer);
+		if (m_PreethamPipeline->Bind(commandBuffer))
 		{
-			m_PreethamPipeline->Bind(commandBuffer);
-
 			m_PreethamMaterial->Set("u_Turbidity", m_Turbidity);
 			m_PreethamMaterial->Set("u_Azimuth", m_Azimuth);
 			m_PreethamMaterial->Set("u_Inclination", m_Inclination);
@@ -224,16 +223,16 @@ namespace Athena
 
 
 		m_IrradiancePass->Begin(commandBuffer);
+		if (m_IrradiancePipeline->Bind(commandBuffer))
 		{
-			m_IrradiancePipeline->Bind(commandBuffer);
 			Renderer::Dispatch(commandBuffer, m_IrradiancePipeline, { m_IrradianceMapResolution, m_IrradianceMapResolution, 6 });
 		}
 		m_IrradiancePass->End(commandBuffer);
 
 
 		m_MipFilterPass->Begin(commandBuffer);
+		if (m_MipFilterPipeline->Bind(commandBuffer))
 		{
-			m_MipFilterPipeline->Bind(commandBuffer);
 			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
 				uint32 mipResolution = m_Resolution * Math::Pow(0.5f, (float)mip);

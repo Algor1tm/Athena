@@ -201,6 +201,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = {
 				{ ShaderDataType::Float2, "a_Position" },
 				{ ShaderDataType::Float2, "a_TexCoords"} };
+
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::NONE;
@@ -242,6 +243,11 @@ namespace Athena
 	Ref<Image> SceneRenderer::GetFinalImage()
 	{
 		return m_CompositePass->GetOutput("SceneCompositeColor")->GetImage();
+	}
+
+	Ref<Image> SceneRenderer::GetShadowMap()
+	{
+		return m_DirShadowMapPass->GetDepthOutput()->GetImage();
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)

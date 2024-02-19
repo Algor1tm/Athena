@@ -8,7 +8,6 @@ namespace Athena
 	VulkanTexture2D::VulkanTexture2D(const Texture2DCreateInfo& info)
 	{
 		m_Info = info;
-		m_Hash = 0;
 		m_Sampler = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = m_Sampler;
 
@@ -33,7 +32,6 @@ namespace Athena
 
 	VulkanTexture2D::VulkanTexture2D(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo)
 	{
-		m_Hash = 0;
 		const ImageCreateInfo& imageInfo = image->GetInfo();
 
 		m_Info.Name = imageInfo.Name;
@@ -112,7 +110,6 @@ namespace Athena
 			Vulkan::SetObjectDebugName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
 
 			m_DescriptorInfo.sampler = m_Sampler;
-			m_Hash = (uint64)m_Sampler;
 		});
 	}
 

@@ -44,37 +44,53 @@ namespace Athena
 
 	void Material::Set(const String& name, const Matrix4& value)
 	{
-		Renderer::Submit([this, name, value]()
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Mat4, &offset))
+			return;
+
+		Renderer::Submit([this, offset , value]()
 		{
-			SetInternal(name, ShaderDataType::Mat4, &value);
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
 		});
 	}
 
 	void Material::Set(const String& name, const Vector4& value)
 	{
-		Renderer::Submit([this, name, value]()
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float4, &offset))
+			return;
+
+		Renderer::Submit([this, offset, value]()
 		{
-			SetInternal(name, ShaderDataType::Float4, &value);
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
 		});
 	}
 
 	void Material::Set(const String& name, float value)
 	{
-		Renderer::Submit([this, name, value]()
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float, &offset))
+			return;
+
+		Renderer::Submit([this, offset, value]()
 		{
-			SetInternal(name, ShaderDataType::Float, &value);
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
 		});
 	}
 
 	void Material::Set(const String& name, uint32 value)
 	{
-		Renderer::Submit([this, name, value]()
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::UInt, &offset))
+			return;
+
+		Renderer::Submit([this, offset, value]()
 		{
-			SetInternal(name, ShaderDataType::UInt, &value);
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
 		});
 	}
 
-	bool Material::TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData)
+	bool Material::GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset)
 	{
 		if (!m_BufferMembers->contains(name))
 		{
@@ -82,32 +98,24 @@ namespace Athena
 			return false;
 		}
 
-		*memberData = m_BufferMembers->at(name);
-		if (memberData->Type != dataType)
+		const auto& data = m_BufferMembers->at(name);
+		if (data.Type != dataType)
 		{
 			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
-					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(memberData->Type), ShaderDataTypeToString(dataType));
+					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(data.Type), ShaderDataTypeToString(dataType));
 			return false;
 		}
 
+		*offset = data.Offset;
 		return true;
-	}
-
-	void Material::SetInternal(const String& name, ShaderDataType dataType, const void* data)
-	{
-		StructMemberShaderMetaData memberData;
-		if (TryGetMemberData(name, dataType, &memberData))
-		{
-			memcpy(&m_Buffer[memberData.Offset], data, memberData.Size);
-		}
 	}
 
 	bool Material::GetInternal(const String& name, ShaderDataType dataType, void** data)
 	{
-		StructMemberShaderMetaData memberData;
-		if (TryGetMemberData(name, dataType, &memberData))
+		uint32 offset;
+		if (GetMemberOffset(name, dataType, &offset))
 		{
-			*data = &m_Buffer[memberData.Offset];
+			*data = &m_Buffer[offset];
 			return true;
 		}
 

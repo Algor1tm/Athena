@@ -75,7 +75,6 @@ namespace Athena
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 
-		uint64 GetHash() const { return m_Hash; }
 		const ImageCreateInfo& GetInfo() const { return m_Info; }
 
 	public:
@@ -87,7 +86,6 @@ namespace Athena
 
 	protected:
 		ImageCreateInfo m_Info;
-		uint64 m_Hash = 0;
 	};
 
 	inline bool Image::IsDepthFormat(ImageFormat format)
@@ -158,16 +156,4 @@ namespace Athena
 		ATN_CORE_ASSERT(false);
 		return false;
 	}
-}
-
-namespace std
-{
-	template<>
-	struct hash<Athena::Ref<Athena::Image>>
-	{
-		size_t operator()(const Athena::Ref<Athena::Image>& tex) const
-		{
-			return tex->GetHash();
-		}
-	};
 }

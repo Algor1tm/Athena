@@ -193,6 +193,18 @@ namespace Athena
 			UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
 
 			UI::EndPropertyTable();
+
+			if (UI::TreeNode("ShadowMap", false))
+			{
+				static int layer = 0;
+				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
+
+				Ref<Image> shadowMap = m_ViewportRenderer->GetShadowMap();
+				ImGui::Image(UI::GetTextureLayerID(shadowMap, layer), { 256, 256 });
+
+				UI::TreePop();
+			}
+
 			UI::TreePop();
 		}
 

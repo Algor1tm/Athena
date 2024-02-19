@@ -42,8 +42,7 @@ namespace Athena
 	private:
 		virtual Ref<RenderResource> GetResourceInternal(const String& name) = 0;
 
-		bool TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData);
-		void SetInternal(const String& name, ShaderDataType dataType, const void* data);
+		bool GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset);
 		bool GetInternal(const String& name, ShaderDataType dataType, void** data);
 
 	private:

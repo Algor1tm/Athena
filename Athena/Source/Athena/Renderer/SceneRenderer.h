@@ -167,6 +167,7 @@ namespace Athena
 		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
+		Ref<Image> GetShadowMap();
 		Ref<RenderPass> GetRenderer2DPass() { return m_Renderer2DPass; }
 		Ref<SceneRenderer2D> GetSceneRenderer2D() { return m_SceneRenderer2D; }
 

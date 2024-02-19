@@ -17,17 +17,6 @@ layout(location = 6) in vec4 a_Weights;
 layout(push_constant) uniform MaterialData
 {
     mat4 u_Transform;
-
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_Emission;
-
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
-    uint u_UseMetalnessMap;
-
     uint u_BonesOffset;
 };
 

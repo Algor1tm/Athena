@@ -26,17 +26,18 @@ layout(location = 0) out VertexInterpolators Interpolators;
 layout(push_constant) uniform MaterialData
 {
     mat4 u_Transform;
+    uint u_BonesOffset;
+
+    uint u_UseAlbedoMap;
+    uint u_UseNormalMap;
+    uint u_UseRoughnessMap;
+
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;
     float u_Emission;
 
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
     uint u_UseMetalnessMap;
-
-    uint u_BonesOffset;
 };
 
 
@@ -87,14 +88,17 @@ layout(location = 0) out vec4 o_Color;
 layout(push_constant) uniform MaterialData
 {
     mat4 u_Transform;
+    uint u_BonesOffset;
+
+    uint u_UseAlbedoMap;
+    uint u_UseNormalMap;
+    uint u_UseRoughnessMap;
+
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;
     float u_Emission;
 
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
     uint u_UseMetalnessMap;
 };
 

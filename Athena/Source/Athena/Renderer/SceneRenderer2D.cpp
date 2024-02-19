@@ -414,7 +414,7 @@ namespace Athena
 
 		for (uint32 i = 1; i < m_TextureSlotIndex; ++i)
 		{
-			if (*m_TextureSlots[i] == *texture.GetNativeTexture())
+			if (m_TextureSlots[i] == texture.GetNativeTexture())
 			{
 				textureIndex = i;
 				break;

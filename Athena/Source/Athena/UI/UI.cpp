@@ -6,12 +6,41 @@ namespace Athena::UI
 {
 	void* GetTextureID(const Ref<Texture2D>& texture)
 	{
-		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
+		return GetTextureID(texture->GetImage());
+	}
+
+	void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
+	{
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
+		return GetTextureMipID(texture->GetImage(), mip);
+	}
+
+	void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
+	{
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
+
+		return GetTextureLayerID(texture->GetImage(), layer);
 	}
 
 	void* GetTextureID(const Ref<Image>& image)
 	{
 		return Application::Get().GetImGuiLayer()->GetTextureID(image);
+	}
+
+	void* GetTextureMipID(const Ref<Image>& image, uint32 mip)
+	{
+		return Application::Get().GetImGuiLayer()->GetTextureMipID(image, mip);
+	}
+
+	void* GetTextureLayerID(const Ref<Image>& image, uint32 layer)
+	{
+		return Application::Get().GetImGuiLayer()->GetTextureLayerID(image, layer);
 	}
 
 	void PushFont(Fonts font)
@@ -97,7 +126,7 @@ namespace Athena::UI
 		if (defaultOpen)
 			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 3, 5 });
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2, 5 });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 		bool result = ImGui::TreeNodeEx(label.data(), flags, label.data());
 		ImGui::PopStyleVar(2);
@@ -126,7 +155,7 @@ namespace Athena::UI
 
 	void PropertyRow(std::string_view label, float height)
 	{
-		const float offset = 15.f;
+		const float offset = 12.f;
 
 		ImGui::TableNextRow(ImGuiTableRowFlags_None, height + offset);
 

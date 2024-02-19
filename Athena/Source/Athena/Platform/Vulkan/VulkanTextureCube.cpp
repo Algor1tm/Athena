@@ -9,7 +9,6 @@ namespace Athena
 	VulkanTextureCube::VulkanTextureCube(const TextureCubeCreateInfo& info)
 	{
 		m_Info = info;
-		m_Hash = 0;
 		m_Sampler = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = m_Sampler;
 
@@ -87,7 +86,6 @@ namespace Athena
 			Vulkan::SetObjectDebugName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
 
 			m_DescriptorInfo.sampler = m_Sampler;
-			m_Hash = (uint64)m_Sampler;
 		});
 	}
 

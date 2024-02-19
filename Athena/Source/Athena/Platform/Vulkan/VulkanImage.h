@@ -26,6 +26,7 @@ namespace Athena
 		VkImageLayout GetLayout() const { return m_Layout; }
 
 		VkImageView GetVulkanImageViewMip(uint32 mip) const { return m_ImageViewsPerMip[mip]; }
+		VkImageView GetVulkanImageViewLayer(uint32 layer) const { return m_ImageViewsPerLayer[layer]; }
 
 		void RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
 
@@ -38,5 +39,6 @@ namespace Athena
 		VulkanImageAllocation m_Image;
 		VkImageView m_ImageView = VK_NULL_HANDLE;
 		std::vector<VkImageView> m_ImageViewsPerMip;
+		std::vector<VkImageView> m_ImageViewsPerLayer;
 	};
 }

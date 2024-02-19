@@ -67,7 +67,6 @@ namespace Athena
 		m_Info.Width = 0;
 		m_Info.Height = 0;
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		m_Hash = 0;
 
 		if (info.MipLevels == 0)
 			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
@@ -139,7 +138,6 @@ namespace Athena
 
 			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
 			Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
-			m_Hash = (uint64)m_Image.GetImage();
 
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -157,6 +155,7 @@ namespace Athena
 
 			if (m_Info.MipLevels > 1)
 			{
+				uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
 				m_ImageViewsPerMip.clear();
 				m_ImageViewsPerMip.reserve(m_Info.MipLevels);
 				for (uint32 mip = 0; mip < m_Info.MipLevels; ++mip)
@@ -164,19 +163,44 @@ namespace Athena
 					VkImageViewCreateInfo viewInfo = {};
 					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 					viewInfo.image = m_Image.GetImage();
-					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
+					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, layerCount);
 					viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 					viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 					viewInfo.subresourceRange.baseMipLevel = mip;
 					viewInfo.subresourceRange.levelCount = 1;
 					viewInfo.subresourceRange.baseArrayLayer = 0;
-					viewInfo.subresourceRange.layerCount = m_Info.Layers;
+					viewInfo.subresourceRange.layerCount = layerCount;
 
 					VkImageView mipView;
 
 					VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &mipView));
 					Vulkan::SetObjectDebugName(mipView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewMip{}_{}", mip, m_Info.Name));
 					m_ImageViewsPerMip.push_back(mipView);
+				}
+			}
+
+			if (m_Info.Layers > 1 && m_Info.Type != ImageType::IMAGE_CUBE)
+			{
+				m_ImageViewsPerLayer.clear();
+				m_ImageViewsPerLayer.reserve(m_Info.Layers);
+				for (uint32 layer = 0; layer < m_Info.Layers; ++layer)
+				{
+					VkImageViewCreateInfo viewInfo = {};
+					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+					viewInfo.image = m_Image.GetImage();
+					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, 1);
+					viewInfo.format = Vulkan::GetFormat(m_Info.Format);
+					viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+					viewInfo.subresourceRange.baseMipLevel = 0;
+					viewInfo.subresourceRange.levelCount = 1;
+					viewInfo.subresourceRange.baseArrayLayer = layer;
+					viewInfo.subresourceRange.layerCount = 1;
+
+					VkImageView layerView;
+
+					VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &layerView));
+					Vulkan::SetObjectDebugName(layerView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewLayer{}_{}", layer, m_Info.Name));
+					m_ImageViewsPerLayer.push_back(layerView);
 				}
 			}
 
@@ -189,10 +213,13 @@ namespace Athena
 		if (m_ImageView == VK_NULL_HANDLE && m_Image.GetImage() == VK_NULL_HANDLE)
 			return;
 
-		Renderer::SubmitResourceFree([vkImageView = m_ImageView, image = m_Image, mipViews = m_ImageViewsPerMip, name = m_Info.Name]()
+		Renderer::SubmitResourceFree([vkImageView = m_ImageView, image = m_Image, mipViews = m_ImageViewsPerMip, layerViews = m_ImageViewsPerLayer, name = m_Info.Name]()
 		{
 			for (VkImageView mipView : mipViews)
 				vkDestroyImageView(VulkanContext::GetLogicalDevice(), mipView, nullptr);
+
+			for (VkImageView layerView : layerViews)
+				vkDestroyImageView(VulkanContext::GetLogicalDevice(), layerView, nullptr);
 
 			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 			VulkanContext::GetAllocator()->DestroyImage(image, name);

@@ -26,7 +26,11 @@ namespace Athena::UI
 	};
 
 	ATHENA_API void* GetTextureID(const Ref<Texture2D>& texture);
+	ATHENA_API void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip);
+	ATHENA_API void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer);
 	ATHENA_API void* GetTextureID(const Ref<Image>& image);
+	ATHENA_API void* GetTextureMipID(const Ref<Image>& image, uint32 mip);
+	ATHENA_API void* GetTextureLayerID(const Ref<Image>& image, uint32 layer);
 
 	ATHENA_API void PushFont(Fonts font);
 	ATHENA_API void PopFont();

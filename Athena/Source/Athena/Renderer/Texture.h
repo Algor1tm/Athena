@@ -46,12 +46,10 @@ namespace Athena
 		void BlitMipMap(uint32 levels) { m_Image->BlitMipMap(levels); }
 		void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) { m_Image->BlitMipMap(cmdBuffer, levels); }
 
-		uint64 GetHash() const { return m_Hash; }
 		const Ref<Image>& GetImage() const { return m_Image; }
 
 	protected:
 		Ref<Image> m_Image;
-		uint64 m_Hash = 0;
 	};
 
 
@@ -86,11 +84,6 @@ namespace Athena
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
 		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
-
-		bool operator==(const Texture2D& other) const
-		{
-			return GetHash() == other.GetHash();
-		}
 
 	protected:
 		Texture2DCreateInfo m_Info;

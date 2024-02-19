@@ -128,6 +128,19 @@ namespace Athena
 		m_DescriptorSetManager.Bake();
 	}
 
+	void VulkanPipeline::RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
+	{
+		if (m_PushConstantStageFlags != 0)
+		{
+			vkCmdPushConstants(commandBuffer,
+				m_PipelineLayout,
+				m_PushConstantStageFlags,
+				0,
+				m_PushConstantSize,
+				material->RT_GetPushConstantData());
+		}
+	}
+
 	void VulkanPipeline::RecreatePipeline()
 	{
 		CleanUp();
@@ -135,23 +148,28 @@ namespace Athena
 		if (!m_Info.Shader->IsCompiled())
 			return;
 
+		const auto& pushConstant = m_Info.Shader->GetMetaData().PushConstant;
+		m_PushConstantStageFlags = Vulkan::GetShaderStageFlags(pushConstant.StageFlags);
+		m_PushConstantSize = pushConstant.Size;
+		m_PipelineLayout = m_Info.Shader.As<VulkanShader>()->GetPipelineLayout();
+
 		Renderer::Submit([this]()
 		{
-			const VertexBufferLayout& vertexBufferLayout = m_Info.Shader->GetMetaData().VertexBufferLayout;
+			const VertexBufferLayout& vertexLayout = m_Info.VertexLayout;
 
 			VkVertexInputBindingDescription bindingDescription = {};
 			bindingDescription.binding = 0;
-			bindingDescription.stride = vertexBufferLayout.GetStride();
+			bindingDescription.stride = vertexLayout.GetStride();
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-			std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexBufferLayout.GetElementsNum());
-			for (uint32 i = 0; i < vertexBufferLayout.GetElementsNum(); ++i)
+			std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexLayout.GetElementsNum());
+			for (uint32 i = 0; i < vertexLayout.GetElementsNum(); ++i)
 			{
-				const auto& elem = vertexBufferLayout.GetElements()[i];
+				const auto& elem = vertexLayout.GetElements()[i];
 
 				attributeDescriptions[i].binding = 0;
-				attributeDescriptions[i].location = elem.Location;
-				attributeDescriptions[i].format = Vulkan::GetFormat(elem.Type, elem.Normalized);
+				attributeDescriptions[i].location = i;
+				attributeDescriptions[i].format = Vulkan::GetFormat(elem.Type);
 				attributeDescriptions[i].offset = elem.Offset;
 			}
 
@@ -276,7 +294,7 @@ namespace Athena
 			pipelineInfo.pDepthStencilState = &depthStencil;
 			pipelineInfo.pColorBlendState = &colorBlending;
 			pipelineInfo.pDynamicState = &dynamicState;
-			pipelineInfo.layout = vkShader->GetPipelineLayout();
+			pipelineInfo.layout = m_PipelineLayout;
 			pipelineInfo.renderPass = m_Info.RenderPass.As<VulkanRenderPass>()->GetVulkanRenderPass();
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;

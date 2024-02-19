@@ -44,8 +44,11 @@ namespace Athena
 			return (VkImageType)0;
 		}
 
-		static VkImageViewType GetImageViewType(ImageType type)
+		static VkImageViewType GetImageViewType(ImageType type, uint32 layers)
 		{
+			if (type == ImageType::IMAGE_2D && layers > 1)
+				return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+
 			switch (type)
 			{
 			case ImageType::IMAGE_2D: return VK_IMAGE_VIEW_TYPE_2D;
@@ -141,7 +144,7 @@ namespace Athena
 			VkImageViewCreateInfo viewInfo = {};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			viewInfo.image = m_Image.GetImage();
-			viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type);
+			viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
 			viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 			viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 			viewInfo.subresourceRange.baseMipLevel = 0;
@@ -161,7 +164,7 @@ namespace Athena
 					VkImageViewCreateInfo viewInfo = {};
 					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 					viewInfo.image = m_Image.GetImage();
-					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type);
+					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
 					viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 					viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 					viewInfo.subresourceRange.baseMipLevel = mip;

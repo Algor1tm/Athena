@@ -11,7 +11,7 @@ namespace Athena
 {
 	enum ShaderStage
 	{
-		UNDEFINED      = BIT(0),
+		UNDEFINED	   = BIT(0),
 		VERTEX_STAGE   = BIT(1),
 		FRAGMENT_STAGE = BIT(2),
 		GEOMETRY_STAGE = BIT(3),
@@ -72,14 +72,12 @@ namespace Athena
 
 	struct ShaderMetaData
 	{
-		VertexBufferLayout VertexBufferLayout;
-		Vector3u WorkGroupSize;
-
 		std::unordered_map<String, TextureShaderMetaData> SampledTextures;
 		std::unordered_map<String, TextureShaderMetaData> StorageTextures;
 		std::unordered_map<String, BufferShaderMetaData> UniformBuffers;
 		std::unordered_map<String, BufferShaderMetaData> StorageBuffers;
 		PushConstantShaderMetaData PushConstant;
+		Vector3u WorkGroupSize;
 	};
 
 	class ATHENA_API Shader : public RefCounted

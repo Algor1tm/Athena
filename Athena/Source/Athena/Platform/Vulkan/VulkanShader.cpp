@@ -10,6 +10,7 @@ namespace Athena
 	{
 		m_FilePath = path;
 		m_Name = name;
+		m_PipelineLayout = VK_NULL_HANDLE;
 		CompileOrGetFromCache(false);
 	}
 
@@ -228,7 +229,8 @@ namespace Athena
 			for(const auto& setLayout : setLayouts)
 				vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
 
-			vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
+			if(pipelineLayout)
+				vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
 		});
 
 		m_PipelineShaderStages.clear();

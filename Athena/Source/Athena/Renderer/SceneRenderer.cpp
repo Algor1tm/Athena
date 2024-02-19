@@ -29,15 +29,83 @@ namespace Athena
 		profilerInfo.MaxPipelineQueriesCount = 1;
 		m_Profiler = GPUProfiler::Create(profilerInfo);
 
+		m_StaticGeometryList = DrawList(false);
+		m_AnimGeometryList = DrawList(true);
+
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
 		m_SceneUBO = UniformBuffer::Create("SceneUBO", sizeof(SceneData));
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData));
+		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 
 		uint64 maxNumBones = ShaderDef::MAX_NUM_BONES_PER_MESH * ShaderDef::MAX_NUM_ANIMATED_MESHES;
 		m_BonesSBO = StorageBuffer::Create("BonesSBO", maxNumBones * sizeof(Matrix4));
 
 		m_BonesData = std::vector<Matrix4>(maxNumBones);
 		m_BonesDataOffset = 0;
+
+		// Dir ShadowMap Pass
+		{
+			for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
+				m_ShadowsData.DirLightViewProjection[i] = Matrix4::Identity();
+
+			uint64 s_ShadowMapSize = 1024;
+
+			Texture2DCreateInfo shadowMapInfo;
+			shadowMapInfo.Name = "DirShadowMap";
+			shadowMapInfo.Format = ImageFormat::DEPTH32F;
+			shadowMapInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED);
+			shadowMapInfo.Width = s_ShadowMapSize;
+			shadowMapInfo.Height = s_ShadowMapSize;
+			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
+			shadowMapInfo.MipLevels = 1;
+			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+			RenderPassCreateInfo passInfo;
+			passInfo.Name = "DirShadowMapPass";
+			passInfo.Width = s_ShadowMapSize;
+			passInfo.Height = s_ShadowMapSize;
+			passInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
+			passInfo.DebugColor = { 0.7f, 0.8f, 0.7f, 1.f };
+
+			RenderPassAttachment output = RenderPassAttachment(Texture2D::Create(shadowMapInfo));
+			output.LoadOp = AttachmentLoadOp::CLEAR;
+			output.DepthClearColor = 1.f;
+
+			m_DirShadowMapPass = RenderPass::Create(passInfo);
+			m_DirShadowMapPass->SetOutput(output);
+			m_DirShadowMapPass->Bake();
+
+
+			PipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "DirShadowMapStatic";
+			pipelineInfo.RenderPass = m_DirShadowMapPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Static");
+			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::FRONT;
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.BlendEnable = false;
+
+			m_DirShadowMapStaticPipeline = Pipeline::Create(pipelineInfo);
+			m_DirShadowMapStaticPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
+			m_DirShadowMapStaticPipeline->Bake();
+
+			pipelineInfo.Name = "DirShadowMapAnim";
+			pipelineInfo.RenderPass = m_DirShadowMapPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Anim");
+			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::FRONT;
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.BlendEnable = false;
+
+			m_DirShadowMapAnimPipeline = Pipeline::Create(pipelineInfo);
+			m_DirShadowMapAnimPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
+			m_DirShadowMapAnimPipeline->SetInput("u_BonesData", m_BonesSBO);
+			m_DirShadowMapAnimPipeline->Bake();
+		}
 
 		// Geometry Pass
 		{
@@ -57,6 +125,7 @@ namespace Athena
 			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Static");
+			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
@@ -76,6 +145,7 @@ namespace Athena
 			pipelineInfo.Name = "AnimGeometryPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Anim");
+			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
@@ -96,6 +166,8 @@ namespace Athena
 			pipelineInfo.Name = "SkyboxPipeline";
 			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
+			pipelineInfo.VertexLayout = { 
+				{ ShaderDataType::Float3, "a_Position" } };
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
@@ -126,6 +198,9 @@ namespace Athena
 			pipelineInfo.Name = "SceneCompositePipeline";
 			pipelineInfo.RenderPass = m_CompositePass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SceneComposite");
+			pipelineInfo.VertexLayout = {
+				{ ShaderDataType::Float2, "a_Position" },
+				{ ShaderDataType::Float2, "a_TexCoords"} };
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::NONE;
@@ -293,9 +368,11 @@ namespace Athena
 			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
 			m_SceneUBO->RT_SetData(&m_SceneData, sizeof(SceneData));
 			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
+			m_ShadowsUBO->RT_SetData(&m_ShadowsData, sizeof(ShadowsData));
 			m_BonesSBO->RT_SetData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
 		});
 
+		DirShadowMapPass();
 		GeometryPass();
 		SceneCompositePass();
 
@@ -305,25 +382,44 @@ namespace Athena
 		m_AnimGeometryList.Clear();
 	}
 
-	void SceneRenderer::GeometryPass()
+	void SceneRenderer::DirShadowMapPass()
 	{
-		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
+		m_Profiler->BeginTimeQuery();
+		m_DirShadowMapPass->Begin(commandBuffer);
+
+		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
+		if (m_DirShadowMapStaticPipeline->Bind(commandBuffer))
+		{
+			m_StaticGeometryList.Flush(m_DirShadowMapStaticPipeline, false);
+		}
+		Renderer::EndDebugRegion(commandBuffer);
+
+
+		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
+		if (m_DirShadowMapAnimPipeline->Bind(commandBuffer))
+		{
+			m_AnimGeometryList.Flush(m_DirShadowMapAnimPipeline, false);
+		}
+		Renderer::EndDebugRegion(commandBuffer);
+
+		m_DirShadowMapPass->End(commandBuffer);
+		m_Statistics.DirShadowMapPass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::GeometryPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
 		m_GeometryPass->Begin(commandBuffer);
 
 
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		if (m_StaticGeometryPipeline->Bind(commandBuffer))
 		{
-			for (const auto& drawCall : m_StaticGeometryList)
-			{
-				if (m_StaticGeometryList.UpdateMaterial(drawCall))
-					drawCall.Material->Bind(commandBuffer);
-
-				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderGeometry(commandBuffer, m_StaticGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
-			}
+			m_StaticGeometryList.Flush(m_StaticGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 			
@@ -331,15 +427,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		if (m_AnimGeometryPipeline->Bind(commandBuffer))
 		{
-			for (const auto& drawCall : m_AnimGeometryList)
-			{
-				if (m_AnimGeometryList.UpdateMaterial(drawCall))
-					drawCall.Material->Bind(commandBuffer);
-
-				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
-				Renderer::RenderGeometry(commandBuffer, m_AnimGeometryPipeline, drawCall.VertexBuffer, drawCall.Material);
-			}
+			m_AnimGeometryList.Flush(m_AnimGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -353,22 +441,22 @@ namespace Athena
 
 
 		m_GeometryPass->End(commandBuffer);
-
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::SceneCompositePass()
 	{
-		m_Profiler->BeginTimeQuery();
 		auto commandBuffer = m_RenderCommandBuffer;
 
+		m_Profiler->BeginTimeQuery();
 		m_CompositePass->Begin(commandBuffer);
+
 		if (m_CompositePipeline->Bind(commandBuffer))
 		{
 			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
 		}
-		m_CompositePass->End(commandBuffer);
 
+		m_CompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}
 }

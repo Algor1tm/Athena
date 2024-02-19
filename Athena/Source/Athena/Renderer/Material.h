@@ -31,7 +31,7 @@ namespace Athena
 		T Get(const String& name);
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
-		void RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer);
+		const byte* RT_GetPushConstantData() const { return m_Buffer; }
 
 		Ref<Shader> GetShader() const { return m_Shader; }
 		const String& GetName() const { return m_Name; }
@@ -40,9 +40,7 @@ namespace Athena
 		Material(const Ref<Shader> shader, const String& name);
 
 	private:
-		virtual void RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data) = 0;
 		virtual Ref<RenderResource> GetResourceInternal(const String& name) = 0;
-		virtual void OnReload() = 0;
 
 		bool TryGetMemberData(const String& name, ShaderDataType dataType, StructMemberShaderMetaData* memberData);
 		void SetInternal(const String& name, ShaderDataType dataType, const void* data);

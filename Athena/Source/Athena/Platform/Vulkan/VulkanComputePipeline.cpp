@@ -82,12 +82,30 @@ namespace Athena
 		}
 	}
 
+	void VulkanComputePipeline::RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
+	{
+		if (m_PushConstantStageFlags != 0)
+		{
+			vkCmdPushConstants(commandBuffer,
+				m_PipelineLayout,
+				m_PushConstantStageFlags,
+				0,
+				m_PushConstantSize,
+				material->RT_GetPushConstantData());
+		}
+	}
+
 	void VulkanComputePipeline::RecreatePipeline()
 	{
 		CleanUp();
 
 		if (!m_Info.Shader->IsCompiled())
 			return;
+
+		const auto& pushConstant = m_Info.Shader->GetMetaData().PushConstant;
+		m_PushConstantStageFlags = Vulkan::GetShaderStageFlags(pushConstant.StageFlags);
+		m_PushConstantSize = pushConstant.Size;
+		m_PipelineLayout = m_Info.Shader.As<VulkanShader>()->GetPipelineLayout();
 
 		Renderer::Submit([this]()
 		{
@@ -96,7 +114,7 @@ namespace Athena
 			VkComputePipelineCreateInfo pipelineInfo = {};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 			pipelineInfo.stage = vkShader->GetPipelineStages()[0];
-			pipelineInfo.layout = vkShader->GetPipelineLayout();
+			pipelineInfo.layout = m_PipelineLayout;
 
 			VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
 			Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);

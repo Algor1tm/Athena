@@ -114,12 +114,6 @@ namespace Athena
 		return false;
 	}
 
-	void Material::RT_UpdateForRendering(const Ref<RenderCommandBuffer>& commandBuffer)
-	{
-		RT_SetPushConstant(commandBuffer, m_Buffer);
-	}
-
-
 	Ref<Material> MaterialTable::Get(const String& name) const
 	{
 		return m_Materials.at(name);

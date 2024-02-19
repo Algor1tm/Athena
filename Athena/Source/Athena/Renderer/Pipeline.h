@@ -3,6 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/RenderResource.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 
@@ -34,6 +35,7 @@ namespace Athena
 		String Name;
 		Ref<RenderPass> RenderPass;
 		Ref<Shader> Shader;
+		VertexBufferLayout VertexLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		float LineWidth = 1.f;
 		CullMode CullMode = CullMode::BACK;

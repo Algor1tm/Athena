@@ -12,7 +12,7 @@ namespace Athena
 
 	enum class ShaderLanguage
 	{
-		UNDEFINED,
+		NONE,
 		GLSL,
 		HLSL
 	};

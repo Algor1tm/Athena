@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/ComputePipeline.h"
+#include "Athena/Renderer/Material.h"
 #include "Athena/Platform/Vulkan/DescriptorSetManager.h"
 
 
@@ -20,6 +21,8 @@ namespace Athena
 
 		Vector3u GetWorkGroupSize() const;
 
+		void RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);
+
 	private:
 		void CleanUp();
 		void RecreatePipeline();
@@ -29,5 +32,9 @@ namespace Athena
 		VkPipeline m_VulkanPipeline;
 		Vector3u m_WorkGroupSize;
 		uint64 m_Hash;
+
+		VkPipelineLayout m_PipelineLayout;
+		VkShaderStageFlags m_PushConstantStageFlags;
+		uint32 m_PushConstantSize;
 	};
 }

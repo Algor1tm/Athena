@@ -1,12 +1,11 @@
 #pragma once 
 
 #include "Athena/Core/Core.h"
-
 #include "Athena/Math/Matrix.h"
-
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Pipeline.h"
 
 #include <deque>
 
@@ -25,22 +24,19 @@ namespace Athena
 	class ATHENA_API DrawList
 	{
 	public:
-		DrawList() = default;
+		DrawList(bool isAnimated = false);
 
 		void Push(const DrawCall& drawCall);
 		void Sort();
-
-		uint32 Size() const { return m_Array.size(); }
-		bool Empty() const { return m_Array.empty(); }
+		void Flush(const Ref<Pipeline>& pipeline, bool bindMaterials = true);
 		void Clear();
 
+	private:
 		bool UpdateMaterial(const DrawCall& drawCall);
-
-		std::vector<DrawCall>::const_iterator begin();
-		std::vector<DrawCall>::const_iterator end();
 
 	private:
 		std::vector<DrawCall> m_Array;
 		Ref<Material> m_LastMaterial = nullptr;
+		bool m_IsAnimated;
 	};
 }

@@ -257,7 +257,7 @@ namespace Athena
 			framebufferInfo.attachmentCount = m_Outputs.size();
 			framebufferInfo.width = m_Info.Width;
 			framebufferInfo.height = m_Info.Height;
-			framebufferInfo.layers = 1;
+			framebufferInfo.layers = m_Info.Layers;
 
 			std::vector<VkImageView> attachmentViews;
 

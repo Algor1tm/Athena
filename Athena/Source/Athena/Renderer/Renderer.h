@@ -81,6 +81,16 @@ namespace Athena
 		Vector3 Normal;
 		Vector3 Tangent;
 		Vector3 Bitangent;
+
+		static VertexBufferLayout GetLayout()
+		{
+			return { 
+				{ ShaderDataType::Float3, "a_Position"  }, 
+				{ ShaderDataType::Float2, "a_TexCoords" }, 
+				{ ShaderDataType::Float3, "a_Normal"    },
+				{ ShaderDataType::Float3, "a_Tangent"   }, 
+				{ ShaderDataType::Float3, "a_Bitangent" } };
+		}
 	};
 
 	struct AnimVertex
@@ -92,6 +102,18 @@ namespace Athena
 		Vector3 Bitangent;
 		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
+
+		static VertexBufferLayout GetLayout()
+		{
+			return {
+				{ ShaderDataType::Float3, "a_Position"  },
+				{ ShaderDataType::Float2, "a_TexCoords" },
+				{ ShaderDataType::Float3, "a_Normal"    },
+				{ ShaderDataType::Float3, "a_Tangent"   },
+				{ ShaderDataType::Float3, "a_Bitangent" },
+				{ ShaderDataType::Int4,   "a_Tangent"   },
+				{ ShaderDataType::Float4, "a_Bitangent" } };
+		}
 	};
 
 	class ATHENA_API ShaderPack;

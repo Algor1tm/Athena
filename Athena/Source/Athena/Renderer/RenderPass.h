@@ -56,8 +56,9 @@ namespace Athena
 	{
 		String Name;
 		Ref<RenderPass> InputPass;
-		uint32 Width;
-		uint32 Height;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		uint32 Layers = 1;
 		LinearColor DebugColor = LinearColor(0.f, 0.f, 0.f, 0.f);
 	};
 

@@ -1,12 +1,17 @@
 #include "DrawList.h"
 
 #include "Athena/Renderer/Material.h"
-
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Math/Common.h"
 
 
 namespace Athena
 {
+	DrawList::DrawList(bool isAnimated) 
+	{
+		m_IsAnimated = isAnimated;
+	}
+
 	void DrawList::Push(const DrawCall& drawCall)
 	{
 		m_Array.push_back(drawCall);
@@ -26,6 +31,37 @@ namespace Athena
 		});
 	}
 
+	void DrawList::Flush(const Ref<Pipeline>& pipeline, bool bindMaterials)
+	{
+		auto commandBuffer = Renderer::GetRenderCommandBuffer();
+
+		if (m_IsAnimated)
+		{
+			for (const auto& drawCall : m_Array)
+			{
+				if (bindMaterials && UpdateMaterial(drawCall))
+					drawCall.Material->Bind(commandBuffer);
+
+				drawCall.Material->Set("u_Transform", drawCall.Transform);
+				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
+				Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
+			}
+		}
+		else
+		{
+			for (const auto& drawCall : m_Array)
+			{
+				if (bindMaterials && UpdateMaterial(drawCall))
+					drawCall.Material->Bind(commandBuffer);
+
+				drawCall.Material->Set("u_Transform", drawCall.Transform);
+				Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
+			}
+		}
+
+		m_LastMaterial = nullptr;
+	}
+
 	bool DrawList::UpdateMaterial(const DrawCall& drawCall)
 	{
 		if (drawCall.Material != m_LastMaterial)
@@ -35,16 +71,5 @@ namespace Athena
 		}
 
 		return false;
-	}
-
-	std::vector<DrawCall>::const_iterator DrawList::begin()
-	{
-		m_LastMaterial = nullptr;
-		return m_Array.begin();
-	}
-
-	std::vector<DrawCall>::const_iterator DrawList::end()
-	{
-		return m_Array.end();
 	}
 }

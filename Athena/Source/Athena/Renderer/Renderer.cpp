@@ -78,6 +78,7 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_MESH", std::to_string(MAX_NUM_BONES_PER_MESH));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_ANIMATED_MESHES", std::to_string(MAX_NUM_ANIMATED_MESHES));
+		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
 
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();

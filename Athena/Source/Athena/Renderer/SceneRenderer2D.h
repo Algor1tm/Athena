@@ -17,7 +17,7 @@ namespace Athena
 		Vector3 Position;
 		LinearColor Color;
 		Vector2 TexCoords;
-		int32 TexIndex;
+		uint32 TexIndex;
 	};
 
 	struct CircleVertex

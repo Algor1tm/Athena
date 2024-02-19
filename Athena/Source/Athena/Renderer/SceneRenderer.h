@@ -100,22 +100,27 @@ namespace Athena
 		uint32 PointLightCount = 0;
 	};
 
+	//struct ShadowsData
+	//{
+	//	struct CascadeSplitInfo
+	//	{
+	//		Vector2 LightFrustumPlanes;
+	//		float SplitDepth;
+	//		float __Padding;
+	//	};
+
+	//	Matrix4 LightViewProjMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+	//	Matrix4 LightViewMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
+	//	CascadeSplitInfo CascadeSplits[ShaderDef::SHADOW_CASCADES_COUNT];
+	//	float MaxDistance = 200.f;
+	//	float FadeOut = 10.f;
+	//	float LightSize = 0.5f;
+	//	bool SoftShadows = true;
+	//};
+
 	struct ShadowsData
 	{
-		struct CascadeSplitInfo
-		{
-			Vector2 LightFrustumPlanes;
-			float SplitDepth;
-			float __Padding;
-		};
-
-		Matrix4 LightViewProjMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
-		Matrix4 LightViewMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
-		CascadeSplitInfo CascadeSplits[ShaderDef::SHADOW_CASCADES_COUNT];
-		float MaxDistance = 200.f;
-		float FadeOut = 10.f;
-		float LightSize = 0.5f;
-		bool SoftShadows = true;
+		Matrix4 DirLightViewProjection[ShaderDef::SHADOW_CASCADES_COUNT];
 	};
 
 	struct BloomData
@@ -131,6 +136,7 @@ namespace Athena
 
 	struct SceneRendererStatistics
 	{
+		Time DirShadowMapPass;
 		Time GeometryPass;
 		Time SceneCompositePass;
 		PipelineStatistics PipelineStats;
@@ -165,6 +171,7 @@ namespace Athena
 		Ref<SceneRenderer2D> GetSceneRenderer2D() { return m_SceneRenderer2D; }
 
 	private:
+		void DirShadowMapPass();
 		void GeometryPass();
 		void SceneCompositePass();
 
@@ -177,6 +184,10 @@ namespace Athena
 		Ref<Pipeline> m_AnimGeometryPipeline;
 		Ref<Pipeline> m_SkyboxPipeline;
 
+		Ref<RenderPass> m_DirShadowMapPass;
+		Ref<Pipeline> m_DirShadowMapStaticPipeline;
+		Ref<Pipeline> m_DirShadowMapAnimPipeline;
+
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;
 
@@ -185,12 +196,14 @@ namespace Athena
 		CameraData m_CameraData;
 		SceneData m_SceneData;
 		LightData m_LightData;
+		ShadowsData m_ShadowsData;
 		std::vector<Matrix4> m_BonesData;
 		uint32 m_BonesDataOffset;
 
 		Ref<UniformBuffer> m_CameraUBO;
 		Ref<UniformBuffer> m_SceneUBO;
 		Ref<StorageBuffer> m_LightSBO;
+		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<StorageBuffer> m_BonesSBO;
 
 		Vector2u m_ViewportSize = { 1, 1 };

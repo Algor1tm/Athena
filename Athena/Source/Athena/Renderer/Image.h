@@ -138,7 +138,7 @@ namespace Athena
 		switch (format)
 		{
 		case ImageFormat::R8:			   return 1;
-		case ImageFormat::R8_SRGB:			   return 1;
+		case ImageFormat::R8_SRGB:		   return 1;
 		case ImageFormat::RGB8:			   return 3 * 1;
 		case ImageFormat::RGB8_SRGB:	   return 3 * 1;
 		case ImageFormat::RGBA8:		   return 4 * 1;

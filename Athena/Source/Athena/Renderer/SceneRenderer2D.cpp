@@ -69,6 +69,12 @@ namespace Athena
 		pipelineInfo.Name = "QuadPipeline";
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Quad");
+		pipelineInfo.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Color"    },
+			{ ShaderDataType::Float2, "a_TexCoords"},
+			{ ShaderDataType::UInt,   "a_TexIndex" }};
+
 		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
@@ -82,6 +88,13 @@ namespace Athena
 		pipelineInfo.Name = "CirclePipeline";
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Circle");
+		pipelineInfo.VertexLayout = {
+			{ ShaderDataType::Float3, "a_WorldPosition" },
+			{ ShaderDataType::Float3, "a_LocalPosition" },
+			{ ShaderDataType::Float4, "a_Color"         },
+			{ ShaderDataType::Float,  "a_Thickness"     },
+			{ ShaderDataType::Float,  "a_Fade"          }};
+
 		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
@@ -95,6 +108,10 @@ namespace Athena
 		pipelineInfo.Name = "LinePipeline";
 		pipelineInfo.RenderPass = renderPass;
 		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Line");
+		pipelineInfo.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Color"    }};
+
 		pipelineInfo.Topology = Topology::LINE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
 		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;

@@ -53,27 +53,4 @@ namespace Athena
 			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, m_PipelineBindPoint);
 		});
 	}
-
-	void VulkanMaterial::RT_SetPushConstant(const Ref<RenderCommandBuffer>& commandBuffer, const void* data)
-	{
-		Ref<Shader> shader = GetShader();
-
-		if (shader->GetMetaData().PushConstant.Enabled)
-		{
-			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			const auto& pushConstant = shader->GetMetaData().PushConstant;
-
-			vkCmdPushConstants(vkcmdBuffer,
-				shader.As<VulkanShader>()->GetPipelineLayout(),
-				Vulkan::GetShaderStageFlags(pushConstant.StageFlags),
-				0,
-				pushConstant.Size,
-				data);
-		}
-	}
-
-	void VulkanMaterial::OnReload()
-	{
-
-	}
 }

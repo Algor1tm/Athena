@@ -6,7 +6,7 @@
 layout (location = 0) in vec3 a_Position;
 layout (location = 1) in vec4 a_Color;
 layout (location = 2) in vec2 a_TexCoords;
-layout (location = 3) in int a_TexIndex;
+layout (location = 3) in uint a_TexIndex;
 
 struct VertexInterpolators
 {
@@ -15,7 +15,7 @@ struct VertexInterpolators
 };
 
 layout (location = 0) out VertexInterpolators Interpolators;
-layout (location = 3) flat out int v_TexIndex;
+layout (location = 2) flat out uint v_TexIndex;
 
 layout(push_constant) uniform CameraData
 {
@@ -41,7 +41,7 @@ struct VertexInterpolators
 };
 
 layout (location = 0) in VertexInterpolators Interpolators;
-layout (location = 3) flat in int v_TexIndex;
+layout (location = 2) flat in uint v_TexIndex;
 
 layout(location = 0) out vec4 o_Color;
 
@@ -52,7 +52,7 @@ void main()
 {
 	vec4 color = Interpolators.Color;
 
-	switch(int(v_TexIndex))
+	switch(v_TexIndex)
 	{
 		case 0:  color *= texture(u_Textures[ 0], Interpolators.TexCoords); break;
 		case 1:  color *= texture(u_Textures[ 1], Interpolators.TexCoords); break;

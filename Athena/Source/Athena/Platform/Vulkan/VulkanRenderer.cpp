@@ -9,6 +9,7 @@
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanIndexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanComputePipeline.h"
+#include "Athena/Platform/Vulkan/VulkanPipeline.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
@@ -58,8 +59,8 @@ namespace Athena
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			if(material)
-				material->RT_UpdateForRendering(commandBuffer);
+			if (material)
+				pipeline.As<VulkanPipeline>()->RT_SetPushConstants(vkcmdBuffer, material);
 			
 			Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
 			VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
@@ -77,7 +78,7 @@ namespace Athena
 			}
 			else
 			{
-				uint32 stride = pipeline->GetInfo().Shader->GetMetaData().VertexBufferLayout.GetStride();
+				uint32 stride = pipeline->GetInfo().VertexLayout.GetStride();
 				uint32 vbSize = vertexBuffer->GetSize();
 				uint32 count = vertexCount == 0 ? vbSize / stride : vertexCount;
 
@@ -93,7 +94,7 @@ namespace Athena
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 			if (material)
-				material->RT_UpdateForRendering(commandBuffer);
+				pipeline.As<VulkanComputePipeline>()->RT_SetPushConstants(vkcmdBuffer, material);
 
 			Vector3i workGroupSize = pipeline.As<VulkanComputePipeline>()->GetWorkGroupSize();
 			uint32 groupCountX = Math::Ceil((float)imageSize.x / workGroupSize.x);

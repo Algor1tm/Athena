@@ -198,7 +198,7 @@ namespace Athena
 
 	bool ShaderCompiler::CompileOrGetFromCache(bool forceCompile)
 	{
-		if (m_Language == ShaderLanguage::UNDEFINED)
+		if (m_Language == ShaderLanguage::NONE)
 			return false;
 
 		Timer compilationTimer;
@@ -432,25 +432,25 @@ namespace Athena
 			shaderStageExistMap.at(stage.Stage) = true;
 		}
 
-		if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		{
-			errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
-		}
+		//if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		//{
+		//	errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
+		//}
 
-		if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		{
-			errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
-		}
+		//if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
+		//{
+		//	errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
+		//}
 
-		if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
-		{
-			errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
-		}
+		//if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
+		//{
+		//	errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
+		//}
 
-		if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && stages.size() != 1)
-		{
-			errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
-		}
+		//if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && stages.size() != 1)
+		//{
+		//	errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
+		//}
 
 		if (errorMsg.size() != 0)
 		{
@@ -485,7 +485,7 @@ namespace Athena
 		}
 		else
 		{
-			m_Language = ShaderLanguage::UNDEFINED;
+			m_Language = ShaderLanguage::NONE;
 		}
 	}
 
@@ -494,6 +494,7 @@ namespace Athena
 		ShaderMetaData result;
 		result.PushConstant.Size = 0;
 		result.WorkGroupSize = { 0, 0, 0 };
+		result.PushConstant.StageFlags = ShaderStage::UNDEFINED;
 
 		ATN_CORE_INFO_TAG("Renderer", "Reflecting Shader '{}'", m_Name);
 
@@ -501,23 +502,6 @@ namespace Athena
 		{
 			spirv_cross::Compiler compiler(src);
 			spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-
-			// VERTEX BUFFER LAYOUT
-			if (stage == ShaderStage::VERTEX_STAGE)
-			{
-				std::vector<VertexBufferElement> elements;
-				elements.reserve(resources.stage_inputs.size());
-				for (const auto& resource : resources.stage_inputs)
-				{
-					uint32 location = compiler.get_decoration(resource.id, spv::DecorationLocation);
-					ShaderDataType elemType = Utils::SpirvTypeToShaderDataType(compiler.get_type(resource.type_id));
-					ATN_CORE_ASSERT(elemType != ShaderDataType::Unknown);
-
-					elements.push_back({ elemType, resource.name, location });
-				}
-
-				result.VertexBufferLayout = elements;
-			}
 
 			// WORK GROUP SIZE
 			if (stage == ShaderStage::COMPUTE_STAGE)
@@ -687,10 +671,6 @@ namespace Athena
 		}
 
 		result.PushConstant.Enabled = result.PushConstant.Size != 0;
-
-		ATN_CORE_TRACE("vertex inputs: {}", result.VertexBufferLayout.GetElementsNum());
-		for (const auto& elem : result.VertexBufferLayout)
-			ATN_CORE_TRACE("\t{}: {} bytes", elem.Name, elem.Size);
 
 		ATN_CORE_TRACE("push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
 		for (const auto& [name, member] : result.PushConstant.Members)

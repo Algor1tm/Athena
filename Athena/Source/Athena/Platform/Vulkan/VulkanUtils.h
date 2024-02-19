@@ -234,14 +234,14 @@ namespace Athena::Vulkan
         return (VkFormat)0;
     }
 
-    inline VkFormat GetFormat(ShaderDataType type, bool isNormalized)
+    inline VkFormat GetFormat(ShaderDataType type)
     {
         switch (type)
         {
-        case ShaderDataType::Float:  return isNormalized ? VK_FORMAT_R16_UNORM : VK_FORMAT_R32_SFLOAT;
-        case ShaderDataType::Float2: return isNormalized ? VK_FORMAT_R16G16_UNORM : VK_FORMAT_R32G32_SFLOAT;
-        case ShaderDataType::Float3: return isNormalized ? VK_FORMAT_R16G16B16_UNORM : VK_FORMAT_R32G32B32_SFLOAT;
-        case ShaderDataType::Float4: return isNormalized ? VK_FORMAT_R16G16B16A16_UNORM : VK_FORMAT_R32G32B32A32_SFLOAT;
+        case ShaderDataType::Float:  return VK_FORMAT_R32_SFLOAT;
+        case ShaderDataType::Float2: return VK_FORMAT_R32G32_SFLOAT;
+        case ShaderDataType::Float3: return VK_FORMAT_R32G32B32_SFLOAT;
+        case ShaderDataType::Float4: return VK_FORMAT_R32G32B32A32_SFLOAT;
 
         case ShaderDataType::Int:  return VK_FORMAT_R32_SINT;
         case ShaderDataType::Int2: return VK_FORMAT_R32G32_SINT;

@@ -103,7 +103,7 @@ namespace Athena
 			vksamplerInfo.minLod = 0.f;
 			vksamplerInfo.maxLod = m_Info.MipLevels;
 			vksamplerInfo.mipLodBias = 0.f;
-			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 			vksamplerInfo.unnormalizedCoordinates = false;
 
 			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_Sampler));

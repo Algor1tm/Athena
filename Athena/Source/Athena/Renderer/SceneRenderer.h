@@ -44,7 +44,6 @@ namespace Athena
 
 	struct ShadowSettings
 	{
-		bool EnableShadows = true;
 		bool SoftShadows = true;
 		float LightSize = 0.5f;
 		float MaxDistance = 200.f;
@@ -81,14 +80,17 @@ namespace Athena
 		Matrix4 ViewProjection;
 		Matrix4 RotationView;
 		Vector3 Position;
+		float NearClip;
+		float FarClip;
 	};
 
-	struct SceneData
+	struct RendererData
 	{
 		float Exposure = 1.f;
 		float Gamma = 2.2f;
 		float EnvironmentIntensity = 1.f;
 		float EnvironmentLOD = 0.f;
+		int32 DebugShadowCascades = 0;
 	};
 
 	struct LightData
@@ -118,9 +120,20 @@ namespace Athena
 	//	bool SoftShadows = true;
 	//};
 
+	struct Cascade
+	{
+		Vector2 LightFrustumPlanes;
+		float SplitDepth;
+		float _Padding;
+	};
+
 	struct ShadowsData
 	{
+		Matrix4 DirLightView[ShaderDef::SHADOW_CASCADES_COUNT];
 		Matrix4 DirLightViewProjection[ShaderDef::SHADOW_CASCADES_COUNT];
+		Cascade Cascades[ShaderDef::SHADOW_CASCADES_COUNT];
+		float MaxDistance = 200.f;
+		float FadeOut = 10.f;
 	};
 
 	struct BloomData
@@ -176,6 +189,11 @@ namespace Athena
 		void GeometryPass();
 		void SceneCompositePass();
 
+		void CalculateCascadeLightSpaces(const DirectionalLight& light);
+
+	private:
+		const uint32 m_ShadowMapResolution = 2048;
+
 	private:
 		DrawList m_StaticGeometryList;
 		DrawList m_AnimGeometryList;
@@ -195,14 +213,14 @@ namespace Athena
 		Ref<RenderPass> m_Renderer2DPass;
 
 		CameraData m_CameraData;
-		SceneData m_SceneData;
+		RendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
 		std::vector<Matrix4> m_BonesData;
 		uint32 m_BonesDataOffset;
 
 		Ref<UniformBuffer> m_CameraUBO;
-		Ref<UniformBuffer> m_SceneUBO;
+		Ref<UniformBuffer> m_RendererUBO;
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<StorageBuffer> m_BonesSBO;

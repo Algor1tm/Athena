@@ -29,6 +29,6 @@ layout(set = 1, binding = 2) uniform samplerCube u_EnvironmentMap;
 
 void main()
 {
-    vec3 color = textureLod(u_EnvironmentMap, v_TexCoords, u_Scene.EnvironmentLOD).rgb * u_Scene.EnvironmentIntensity;
+    vec3 color = textureLod(u_EnvironmentMap, v_TexCoords, u_Renderer.EnvironmentLOD).rgb * u_Renderer.EnvironmentIntensity;
     o_Color = vec4(color, 1);
 }

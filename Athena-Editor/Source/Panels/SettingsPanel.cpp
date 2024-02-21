@@ -179,11 +179,10 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
+		if (UI::TreeNode("Shadows") && UI::BeginPropertyTable())
 		{
 			ShadowSettings& shadowSettings = settings.ShadowSettings;
 
-			UI::PropertyCheckbox("Enable Shadows", &shadowSettings.EnableShadows);
 			UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
 			UI::PropertyDrag("Light Size", &shadowSettings.LightSize, 0.025f);
 			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);

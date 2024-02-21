@@ -11,11 +11,11 @@ namespace Athena::Math
 	{
 		Matrix<T, 4, 4> out(0.f);
 		out[0][0] = static_cast<T>(2) / (right - left);
-		out[1][1] = static_cast<T>(2) / (top - bottom);
-		out[2][2] = static_cast<T>(1) / (zFar - zNear);
+		out[1][1] = static_cast<T>(2) / (bottom - top);
+		out[2][2] = static_cast<T>(1) / (zNear - zFar);
 		out[3][0] = -(right + left) / (right - left);
-		out[3][1] = -(top + bottom) / (top - bottom);
-		out[3][2] = -zNear / (zFar - zNear);
+		out[3][1] = -(top + bottom) / (bottom - top);
+		out[3][2] = zNear / (zNear - zFar);
 		out[3][3] = static_cast<T>(1);
 
 		return out;
@@ -28,12 +28,9 @@ namespace Athena::Math
 		T invTan = T(1) / Math::Tan(verticalFOV / static_cast<T>(2));
 		out[0][0] = invTan / aspectRatio;
 		out[1][1] = -invTan;
-		//out[2][2] = -(zFar + zNear) / (zFar - zNear);
-		//out[3][2] = static_cast<T>(-2) * (zFar * zNear) / (zFar - zNear);
-		out[2][3] = static_cast<T>(-1);
-
 		out[2][2] = zFar / (zNear - zFar);
 		out[3][2] = -(zFar * zNear) / (zFar - zNear);
+		out[2][3] = static_cast<T>(-1);
 
 		return out;
 	}

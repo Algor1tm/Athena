@@ -37,15 +37,11 @@ void main()
 #version 460 core
 #pragma stage : geometry
 
+#include "Include/Shadows.glslh"
 
 layout(triangles, invocations = SHADOW_CASCADES_COUNT) in;
 layout(triangle_strip, max_vertices = 3) out;
     
-layout(std140, set = 1, binding = 0) uniform u_ShadowsData
-{
-    mat4 u_DirLightViewProjection[SHADOW_CASCADES_COUNT];
-};
-
 void main()
 {          
     for (int i = 0; i < 3; ++i)

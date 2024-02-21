@@ -6,6 +6,8 @@
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Image.h"
 
+#include <map>
+
 
 namespace Athena
 {
@@ -132,7 +134,7 @@ namespace Athena
 		void LoadDirectory(const FilePath& path);
 
 	private:
-		std::unordered_map<String, Ref<Shader>> m_Shaders;
+		std::map<String, Ref<Shader>> m_Shaders;
 		FilePath m_Directory;
 	};
 }

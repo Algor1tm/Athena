@@ -59,7 +59,7 @@ void main()
 
 #include "Include/Buffers.glslh"
 #include "Include/Common.glslh"
-
+#include "Include/Shadows.glslh"
 
 struct VertexInterpolators
 {
@@ -92,9 +92,9 @@ layout(set = 0, binding = 1) uniform sampler2D u_NormalMap;
 layout(set = 0, binding = 2) uniform sampler2D u_RoughnessMap;
 layout(set = 0, binding = 3) uniform sampler2D u_MetalnessMap;
 
-layout(set = 1, binding = 4) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 5) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 6) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 5) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 6) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 7) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -165,12 +165,12 @@ vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughnes
 
     vec3 reflectedVec = reflect(-viewDir, normal); 
 
-    float lod = u_Scene.EnvironmentLOD + roughness * (MAX_SKYBOX_MAP_LOD - u_Scene.EnvironmentLOD);
+    float lod = u_Renderer.EnvironmentLOD + roughness * (MAX_SKYBOX_MAP_LOD - u_Renderer.EnvironmentLOD);
     vec3 envMapReflectedColor = textureLod(u_EnvironmentMap, reflectedVec, lod).rgb;  
     vec2 envBRDF = texture(u_BRDF_LUT, vec2(NdotV, roughness)).rg;
     vec3 specularIBL = envMapReflectedColor * (reflectedLight * envBRDF.x + envBRDF.y);
 
-    vec3 ambient = (diffuseIBL * albedo + specularIBL) * u_Scene.EnvironmentIntensity;
+    vec3 ambient = (diffuseIBL * albedo + specularIBL) * u_Renderer.EnvironmentIntensity;
     return ambient;
 }
 
@@ -194,7 +194,8 @@ void main()
     float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Interpolators.TexCoords).r : u_Metalness;
     
     // Compute lightning from all light sources
-    vec3 viewDir = normalize(u_Camera.Position.xyz - Interpolators.WorldPos);
+    vec3 viewDir = normalize(u_Camera.Position - Interpolators.WorldPos);
+    float distanceFromCamera = distance(u_Camera.Position, Interpolators.WorldPos);
     vec3 totalIrradiance = vec3(0.0);
     
     for (int i = 0; i < g_DirectionalLightCount; ++i)
@@ -202,7 +203,10 @@ void main()
         vec3 dir = normalize(g_DirectionalLights[i].Direction);
         vec3 radiance = ComputeDirectionalLightRadiance(i);
         
-        totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
+        float shadow = ComputeDirectionalLightShadow(dir, normal, Interpolators.WorldPos, distanceFromCamera, u_Camera.View);
+        
+        if(shadow < 1.0)
+            totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
     for (int j = 0; j < g_PointLightCount; ++j)
@@ -213,10 +217,17 @@ void main()
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
+    // Compute image based lightning
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
+
     vec3 emission = albedo.rgb * u_Emission;
-    
     vec3 hdrColor = totalIrradiance + ambient + emission;
     
+    if(bool(u_Renderer.DebugShadowCascades))
+    {
+        vec3 cascadeDebugColor = GetCascadeDebugColor(Interpolators.WorldPos, u_Camera.View);
+        hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.5);
+    }
+
     o_Color = vec4(hdrColor, albedo.a);
 }

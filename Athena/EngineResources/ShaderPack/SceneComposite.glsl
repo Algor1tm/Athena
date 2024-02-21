@@ -29,7 +29,7 @@ void main()
 {
     vec3 hdrColor = texture(u_SceneHDRColor, v_TexCoords).rgb;
     
-    vec3 color = vec3(1.0) - exp(-hdrColor * u_Scene.Exposure);
-    color = pow(color, vec3(1.0 / u_Scene.Gamma));
+    vec3 color = vec3(1.0) - exp(-hdrColor * u_Renderer.Exposure);
+    color = pow(color, vec3(1.0 / u_Renderer.Gamma));
     o_Color = vec4(color, 1.0);
 }

@@ -7,15 +7,18 @@ layout(std140, set = 1, binding = 0) uniform u_CameraData
     mat4 ViewProjection;
     mat4 RotationView;
     vec3 Position;
+    float NearClip;
+    float FarClip;
 } u_Camera;
 
-layout(std140, set = 1, binding = 1) uniform u_SceneData
+layout(std140, set = 1, binding = 1) uniform u_RendererData
 {
     float Exposure;
     float Gamma;
     float EnvironmentIntensity;
     float EnvironmentLOD;
-} u_Scene;
+    int DebugShadowCascades;
+} u_Renderer;
 
 struct DirectionalLight
 {

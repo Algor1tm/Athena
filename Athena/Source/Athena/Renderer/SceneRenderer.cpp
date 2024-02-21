@@ -33,7 +33,7 @@ namespace Athena
 		m_AnimGeometryList = DrawList(true);
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
-		m_SceneUBO = UniformBuffer::Create("SceneUBO", sizeof(SceneData));
+		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData));
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 
@@ -48,24 +48,22 @@ namespace Athena
 			for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
 				m_ShadowsData.DirLightViewProjection[i] = Matrix4::Identity();
 
-			uint64 s_ShadowMapSize = 1024;
-
 			Texture2DCreateInfo shadowMapInfo;
 			shadowMapInfo.Name = "DirShadowMap";
 			shadowMapInfo.Format = ImageFormat::DEPTH32F;
 			shadowMapInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED);
-			shadowMapInfo.Width = s_ShadowMapSize;
-			shadowMapInfo.Height = s_ShadowMapSize;
+			shadowMapInfo.Width = m_ShadowMapResolution;
+			shadowMapInfo.Height = m_ShadowMapResolution;
 			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			shadowMapInfo.MipLevels = 1;
 			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
 
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DirShadowMapPass";
-			passInfo.Width = s_ShadowMapSize;
-			passInfo.Height = s_ShadowMapSize;
+			passInfo.Width = m_ShadowMapResolution;
+			passInfo.Height = m_ShadowMapResolution;
 			passInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			passInfo.DebugColor = { 0.7f, 0.8f, 0.7f, 1.f };
 
@@ -111,6 +109,7 @@ namespace Athena
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "GeometryPass";
+			passInfo.InputPass = m_DirShadowMapPass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
@@ -135,7 +134,9 @@ namespace Athena
 
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_StaticGeometryPipeline->SetInput("u_LightData", m_LightSBO);
-			m_StaticGeometryPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_StaticGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
+			m_StaticGeometryPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
+			m_StaticGeometryPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
 			m_StaticGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
@@ -155,7 +156,7 @@ namespace Athena
 
 			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_AnimGeometryPipeline->SetInput("u_LightData", m_LightSBO);
-			m_AnimGeometryPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_AnimGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_AnimGeometryPipeline->SetInput("u_BonesData", m_BonesSBO);
 			m_AnimGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
 			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
@@ -175,7 +176,7 @@ namespace Athena
 
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
 			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
-			m_SkyboxPipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_SkyboxPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_SkyboxPipeline->Bake();
 		}
@@ -210,7 +211,7 @@ namespace Athena
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
 
 			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("GeometryHDRColor"));
-			m_CompositePipeline->SetInput("u_SceneData", m_SceneUBO);
+			m_CompositePipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_CompositePipeline->Bake();
 		}
 
@@ -321,8 +322,13 @@ namespace Athena
 		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
 			m_LightData.PointLights[i] = lightEnv.PointLights[i];
 
-		m_SceneData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
-		m_SceneData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
+		if (m_LightData.DirectionalLightCount > 0)
+		{
+			CalculateCascadeLightSpaces(m_LightData.DirectionalLights[0]);	// Pick first directional light for now
+		}
+
+		m_RendererData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
+		m_RendererData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
 
 		if (lightEnv.EnvironmentMap)
 		{
@@ -354,9 +360,15 @@ namespace Athena
 		m_CameraData.ViewProjection = cameraInfo.ViewMatrix * cameraInfo.ProjectionMatrix;
 		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
 		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
+		m_CameraData.NearClip = cameraInfo.NearClip;
+		m_CameraData.FarClip = cameraInfo.FarClip;
 
-		m_SceneData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
-		m_SceneData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
+		m_RendererData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
+		m_RendererData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
+		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
+
+		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
+		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
 
 		m_BonesDataOffset = 0;
 	}
@@ -372,7 +384,7 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
-			m_SceneUBO->RT_SetData(&m_SceneData, sizeof(SceneData));
+			m_RendererUBO->RT_SetData(&m_RendererData, sizeof(RendererData));
 			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->RT_SetData(&m_ShadowsData, sizeof(ShadowsData));
 			m_BonesSBO->RT_SetData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
@@ -464,5 +476,113 @@ namespace Athena
 
 		m_CompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)
+	{
+		float cameraNear = m_CameraData.NearClip;
+		float cameraFar = m_CameraData.FarClip;
+
+		const float splitWeight = m_Settings.ShadowSettings.ExponentialSplitFactor;
+
+		// Split cascades
+		for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
+		{
+			float percent = (i + 1) / float(ShaderDef::SHADOW_CASCADES_COUNT);
+
+			float log = cameraNear * Math::Pow(cameraFar / cameraNear, percent);
+			float uniform = Math::Lerp(cameraNear, cameraFar, percent);
+			float split = Math::Lerp(uniform, log, splitWeight);
+
+			m_ShadowsData.Cascades[i].SplitDepth = split;
+		}
+
+		Matrix4 invCamera = Math::Inverse(m_CameraData.View * m_CameraData.Projection);
+
+		float lastSplit = 0.f;
+		float averageFrustumSize = 0.f;
+
+		// Build light space matrices
+		for (uint32 layer = 0; layer < ShaderDef::SHADOW_CASCADES_COUNT; ++layer)
+		{
+			// convert to range (0, 1]
+			float split = (m_ShadowsData.Cascades[layer].SplitDepth - cameraNear) / (cameraFar - cameraNear);
+
+			std::array<Vector3, 8> frustumCorners = {
+				//Near face
+				Vector3{  1.0f, -1.0f, -1.0f },
+				Vector3{ -1.0f, -1.0f, -1.0f },
+				Vector3{  1.0f,  1.0f, -1.0f },
+				Vector3{ -1.0f,  1.0f, -1.0f },
+
+				//Far face
+				Vector3{  1.0f, -1.0f, 1.0f },
+				Vector3{ -1.0f, -1.0f, 1.0f },
+				Vector3{  1.0f,  1.0f, 1.0f },
+				Vector3{ -1.0f,  1.0f, 1.0f },
+			};
+
+			// Transform frustum to world space
+			for (uint32 j = 0; j < frustumCorners.size(); ++j)
+			{
+				Vector4 cornerWorldSpace = Vector4(frustumCorners[j], 1.f) * invCamera;
+				frustumCorners[j] = cornerWorldSpace / cornerWorldSpace.w;
+			}
+
+			for (uint32_t j = 0; j < 4; ++j)
+			{
+				Vector3 dist = frustumCorners[j + 4] - frustumCorners[j];
+				frustumCorners[j + 4] = frustumCorners[j] + (dist * split);
+				frustumCorners[j] = frustumCorners[j] + (dist * lastSplit);
+			}
+
+			Vector3 frustumCenter = Vector3(0.f);
+			for (const auto& corner : frustumCorners)
+				frustumCenter += corner;
+
+			frustumCenter /= frustumCorners.size();
+
+			// Build bounding box
+			float radius = 0.0f;
+			for (uint32 j = 0; j < frustumCorners.size(); ++j)
+			{
+				float distance = (frustumCorners[j] - frustumCenter).Length();
+				radius = Math::Max(radius, distance);
+			}
+			radius = Math::Ceil(radius * 16.0f) / 16.0f;
+
+			Vector3 maxExtents = Vector3(radius);
+			Vector3 minExtents = -maxExtents;
+
+			minExtents.z += m_Settings.ShadowSettings.NearPlaneOffset;
+			maxExtents.z += m_Settings.ShadowSettings.FarPlaneOffset;
+
+			Matrix4 lightView = Math::LookAt(frustumCenter + light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
+			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.f, maxExtents.z - minExtents.z);
+
+			Matrix4 lightSpace = lightView * lightProjection;
+
+			// Error reducing step
+			Vector4 shadowOrigin = Vector4(0.f, 0.f, 0.f, 1.f);
+			shadowOrigin = shadowOrigin * lightSpace;
+			shadowOrigin = shadowOrigin * (m_ShadowMapResolution / 2.f);
+
+			Vector4 roundedOrigin = Math::Round(shadowOrigin);
+			Vector4 roundOffset = roundedOrigin - shadowOrigin;
+			roundOffset = roundOffset * (2.f / m_ShadowMapResolution);
+			roundOffset.z = 0.f;
+			roundOffset.w = 0.f;
+
+			lightProjection[3] += roundOffset;
+
+			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
+			m_ShadowsData.DirLightView[layer] = lightView;
+
+			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z, maxExtents.z };
+
+			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.x - minExtents.x);
+
+			lastSplit = split;
+		}
 	}
 }

@@ -237,9 +237,7 @@ namespace Athena
 			return m_ImageViewsMap.at(view).Set;
 
 		ImageInfo info;
-
-		if(layer > 0)
-			info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewLayer(layer);
+		info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewLayer(layer);
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
 			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());

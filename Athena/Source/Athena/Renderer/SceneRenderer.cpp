@@ -580,13 +580,13 @@ namespace Athena
 			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
 			m_ShadowsData.DirLightView[layer] = lightView;
 
-			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z / cameraNear, maxExtents.z / cameraFar};
+			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z, maxExtents.z };
 
-			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.x - minExtents.x);
+			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.z - minExtents.z);
 
 			lastSplit = split;
 		}
 
-		//m_ShadowsData.LightSize /= averageFrustumSize;
+		m_ShadowsData.LightSize /= averageFrustumSize;
 	}
 }

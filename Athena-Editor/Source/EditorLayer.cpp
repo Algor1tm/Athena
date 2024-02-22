@@ -50,8 +50,8 @@ namespace Athena
 
         m_ViewportRenderer = SceneRenderer::Create();
         m_ViewportRenderer->GetSceneRenderer2D()->SetLineWidth(3.f);
-
-        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 100.f);
+        
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 300.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
         EditorResources::Init(m_Config.EditorResources);

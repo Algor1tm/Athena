@@ -176,7 +176,7 @@ namespace Athena
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
 	private:
-		const uint32 m_ShadowMapResolution = 4096;
+		const uint32 m_ShadowMapResolution = 1024;
 
 	private:
 		DrawList m_StaticGeometryList;

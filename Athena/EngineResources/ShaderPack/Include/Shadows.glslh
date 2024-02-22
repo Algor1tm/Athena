@@ -1,10 +1,11 @@
 //////////////////////// Athena Shadows ////////////////////////
 
-#define BLOCKER_SEARCH_SAMPLES 16
-#define PCF_FILTER_SAMPLES 32
+#define BLOCKER_SEARCH_SAMPLES 64
+#define PCF_FILTER_SAMPLES 64
 
 //#define ROTATE_SAMPLE
 
+//#define SHADOW_PCF
 
 const vec2 PoissonDisk[64] = vec2[](
 	vec2(0.0617981, 0.07294159),
@@ -249,7 +250,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float random)
 
 	// STEP 1: blocker search
 	float searchSize = u_LightSize * clamp(depth - 0.02, 0, 1) / depth;
-	vec2 blockerInfo = FindBlocker(uv, depth, cascade, scale, searchSize, rotationTrig);
+	vec2 blockerInfo = FindBlocker(uv, depth, cascade, 1.0, searchSize, rotationTrig);
 
 	if (blockerInfo.y < 1.0)
 	{
@@ -261,7 +262,8 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float random)
 	float penumbra = (depth - blockerInfo.x);
 
 	float filterRadiusUV = penumbra * u_LightSize;
-	filterRadiusUV *= filterRadiusUV;
+	filterRadiusUV += 0.0005;
+	//filterRadiusUV *= filterRadiusUV;
 
 	// STEP 3: PCF filter
 	float shadow = PCF_Filter(uv, depth, cascade, scale, filterRadiusUV, penumbra, rotationTrig);
@@ -276,9 +278,46 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float random)
 =========================================================================================================================================
 */
 
+float ShadowPCF(vec3 shadowCoords, int cascade, int filterSize)
+{
+	float shadow = 0.0;
+	vec2 uv = shadowCoords.xy;
+	float depth = shadowCoords.z;
+	vec2 texelSize = vec2(1.0) / vec2(textureSize(u_DirShadowMap, 0));
+
+	for(int x = -filterSize; x <= filterSize; ++x)
+	{
+		for(int y = -filterSize; y <= filterSize; ++y)
+		{
+			vec2 offset = vec2(x, y) * texelSize;
+			shadow += SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
+		}
+	}
+
+	int samples = 2 * filterSize + 1;
+	return shadow / float(samples * samples);
+}
+
 float ShadowHard(vec3 shadowCoords, int cascade)
 {
     return SampleShadowMapCompare(shadowCoords, cascade);
+}
+
+float Shadow(vec3 shadowCoords, int cascade, vec3 worldPos)
+{
+	if(bool(u_SoftShadows))
+	{
+
+#ifdef SHADOW_PCF
+		return ShadowPCF(shadowCoords, cascade, 3);
+#else
+		float random = ValueNoise(worldPos);
+		return ShadowPCSS(shadowCoords, cascade, random);
+#endif
+
+	}
+	
+	return ShadowHard(shadowCoords, cascade);
 }
 
 float ComputeDirectionalLightShadow(vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView)
@@ -292,11 +331,9 @@ float ComputeDirectionalLightShadow(vec3 lightDir, vec3 normal, vec3 worldPos, f
 
     if(shadowCoords.z > 1.0) return 0.0;
 
-	float random = ValueNoise(worldPos);
+	float shadow = Shadow(shadowCoords, cascade, worldPos);
 
-	float shadow = bool(u_SoftShadows) ? ShadowPCSS(shadowCoords, cascade, random) : ShadowHard(shadowCoords, cascade);
-
-    return (1.0 - fadeOut) * (1 - shadow);
+    return (1.0 - fadeOut) * (1.0 - shadow);
 }
 
 /*

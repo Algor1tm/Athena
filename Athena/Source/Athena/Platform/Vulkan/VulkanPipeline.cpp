@@ -145,6 +145,8 @@ namespace Athena
 	{
 		CleanUp();
 
+		m_VulkanPipeline = VK_NULL_HANDLE;
+
 		if (!m_Info.Shader->IsCompiled())
 			return;
 

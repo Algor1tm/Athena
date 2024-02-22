@@ -49,6 +49,8 @@ namespace Athena
                     ImGui::Text("VRAM: %.3f Mb", videoMemoryUsage);
                     ImGui::Spacing();
 
+                    ImGui::Text("CPUWait: %.3f ms", appstats.CPUWait.AsMilliseconds());
+                    ImGui::Text("GPUWait: %.3f ms", appstats.GPUWait.AsMilliseconds());
                     ImGui::Text("Application::ProcessEvents: %.3f ms", appstats.Application_ProcessEvents.AsMilliseconds());
                     ImGui::Text("Application::OnUpdate: %.3f ms", appstats.Application_OnUpdate.AsMilliseconds());
                     ImGui::Text("Application::RenderImGui: %.3f ms", appstats.Application_RenderImGui.AsMilliseconds());

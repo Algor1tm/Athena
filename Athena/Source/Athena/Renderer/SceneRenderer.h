@@ -102,24 +102,6 @@ namespace Athena
 		uint32 PointLightCount = 0;
 	};
 
-	//struct ShadowsData
-	//{
-	//	struct CascadeSplitInfo
-	//	{
-	//		Vector2 LightFrustumPlanes;
-	//		float SplitDepth;
-	//		float __Padding;
-	//	};
-
-	//	Matrix4 LightViewProjMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
-	//	Matrix4 LightViewMatrices[ShaderDef::SHADOW_CASCADES_COUNT];
-	//	CascadeSplitInfo CascadeSplits[ShaderDef::SHADOW_CASCADES_COUNT];
-	//	float MaxDistance = 200.f;
-	//	float FadeOut = 10.f;
-	//	float LightSize = 0.5f;
-	//	bool SoftShadows = true;
-	//};
-
 	struct Cascade
 	{
 		Vector2 LightFrustumPlanes;
@@ -134,6 +116,8 @@ namespace Athena
 		Cascade Cascades[ShaderDef::SHADOW_CASCADES_COUNT];
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
+		float LightSize = 1.f;
+		int SoftShadows = true;
 	};
 
 	struct BloomData
@@ -192,7 +176,7 @@ namespace Athena
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
 	private:
-		const uint32 m_ShadowMapResolution = 2048;
+		const uint32 m_ShadowMapResolution = 4096;
 
 	private:
 		DrawList m_StaticGeometryList;

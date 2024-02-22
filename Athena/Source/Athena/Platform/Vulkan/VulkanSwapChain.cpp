@@ -241,7 +241,8 @@ namespace Athena
 		Renderer::Submit([this]()
 		{
 			ATN_PROFILE_SCOPE("VulkanSwapChain::AcquireImage")
-			Timer timer = Timer();
+
+			auto& appStats = Application::Get().GetStats();
 
 			if (m_Dirty)
 				Recreate();
@@ -251,12 +252,18 @@ namespace Athena
 
 			{
 				ATN_PROFILE_SCOPE("vkWaitForFences")
+
+				Timer timer = Timer();
+
 				vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
 				vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
+
+				appStats.CPUWait = timer.ElapsedTime();
 			}
 
 			{
 				ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
+				Timer timer = Timer();
 
 				VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
 
@@ -269,9 +276,9 @@ namespace Athena
 				{
 					VK_CHECK(result);
 				}
-			}
 
-			Application::Get().GetStats().SwapChain_AcquireImage = timer.ElapsedTime();
+				appStats.SwapChain_AcquireImage = timer.ElapsedTime();
+			}
 		});
 	}
 

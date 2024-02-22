@@ -100,7 +100,7 @@ namespace Athena
 
 					for (uint32 i = 0; i < count; i += 2)
 					{
-						Time resolvedTime = Time::Microseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
+						Time resolvedTime = Time::Milliseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
 						resolvedTimeStats[i / 2] = resolvedTime;
 					}
 				}

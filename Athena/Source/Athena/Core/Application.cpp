@@ -58,6 +58,8 @@ namespace Athena
 		{
 			ATN_PROFILE_FRAME("MainThread")
 
+			//ResetStats();
+
 			Time start = timer.ElapsedTime();
 			m_Statistics.FrameTime = frameTime;
 
@@ -221,5 +223,19 @@ namespace Athena
 		{
 			m_ImGuiLayer = nullptr;
 		}
+	}
+
+	void Application::ResetStats()
+	{
+		m_Statistics.FrameTime = 0;
+		m_Statistics.CPUWait = 0;
+		m_Statistics.GPUWait = 0;
+		m_Statistics.Application_ProcessEvents = 0;
+		m_Statistics.Application_OnUpdate = 0;
+		m_Statistics.Application_RenderImGui = 0;
+		m_Statistics.Renderer_WaitAndRender = 0;
+		m_Statistics.SwapChain_Present = 0;
+		m_Statistics.SwapChain_AcquireImage = 0;
+		m_Statistics.Renderer_QueueSubmit = 0;
 	}
 }

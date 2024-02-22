@@ -36,6 +36,8 @@ namespace Athena
 	struct ApplicationStatistics
 	{
 		Time FrameTime;
+		Time CPUWait;
+		Time GPUWait;
 		Time Application_ProcessEvents;
 		Time Application_OnUpdate;
 		Time Application_RenderImGui;
@@ -77,6 +79,8 @@ namespace Athena
 
 		void CreateMainWindow(WindowCreateInfo info);
 		void InitImGui();
+
+		void ResetStats();
 
 	private:
 		AppConfig m_Config;

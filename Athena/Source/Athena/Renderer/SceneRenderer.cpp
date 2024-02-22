@@ -369,6 +369,8 @@ namespace Athena
 
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
+		m_ShadowsData.LightSize = m_Settings.ShadowSettings.LightSize;
+		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
 		m_BonesDataOffset = 0;
 	}
@@ -578,11 +580,13 @@ namespace Athena
 			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
 			m_ShadowsData.DirLightView[layer] = lightView;
 
-			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z, maxExtents.z };
+			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z / cameraNear, maxExtents.z / cameraFar};
 
 			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.x - minExtents.x);
 
 			lastSplit = split;
 		}
+
+		//m_ShadowsData.LightSize /= averageFrustumSize;
 	}
 }

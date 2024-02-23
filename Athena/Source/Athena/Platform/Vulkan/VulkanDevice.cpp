@@ -222,16 +222,16 @@ namespace Athena
 			}
 		}
 
-		String message = "Device supported extensions: \n\t";
-		for (auto ext : supportedExtensions)
-			message += std::format("'{}'\n\t", ext.extensionName);
+		//String message = "Device supported extensions: \n\t";
+		//for (auto ext : supportedExtensions)
+		//	message += std::format("'{}'\n\t", ext.extensionName);
+		//
+		//ATN_CORE_TRACE_TAG("Vulkan", message);
 
-		ATN_CORE_TRACE_TAG("Vulkan", message);
-
-		message = "Device required extensions: \n\t";
+		String message = "Device required extensions: \n\t";
 		for (auto ext : requiredExtensions)
 			message += std::format("'{}'\n\t", ext);
-
+		
 		ATN_CORE_INFO_TAG("Vulkan", message);
 
 		if (!missingExtensions.empty())
@@ -243,7 +243,7 @@ namespace Athena
 				message += std::format("'{}'\n\t", ext);
 
 			ATN_CORE_ERROR_TAG("Vulkan", message);
-			//ATN_CORE_VERIFY(false);
+			ATN_CORE_VERIFY(false);
 		}
 
 		return missingExtensions.empty();

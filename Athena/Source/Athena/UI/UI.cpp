@@ -115,7 +115,7 @@ namespace Athena::UI
 		return false;
 	}
 
-	bool TreeNode(std::string_view label, bool defaultOpen)
+	bool TreeNode(std::string_view label, bool defaultOpen, bool nested)
 	{
 		ImGuiTreeNodeFlags flags =
 			ImGuiTreeNodeFlags_AllowItemOverlap |
@@ -126,7 +126,9 @@ namespace Athena::UI
 		if (defaultOpen)
 			flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2, 5 });
+		float framePaddingY = nested ? 3 : 5;
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2, framePaddingY });
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 		bool result = ImGui::TreeNodeEx(label.data(), flags, label.data());
 		ImGui::PopStyleVar(2);
@@ -145,7 +147,7 @@ namespace Athena::UI
 			ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_SizingFixedFit;
 
 		UI::ShiftCursorY(1.f);
-		return ImGui::BeginTable("table", 2, tableFlags);
+		return ImGui::BeginTable("__PropertyTable", 2, tableFlags);
 	}
 
 	void EndPropertyTable()

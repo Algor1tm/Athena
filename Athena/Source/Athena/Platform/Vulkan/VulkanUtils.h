@@ -305,6 +305,18 @@ namespace Athena::Vulkan
         return (VkSamplerAddressMode)0;
     }
 
+    inline VkCompareOp GetCompareOp(TextureCompareOperator compare)
+    {
+        switch (compare)
+        {
+        case TextureCompareOperator::NONE: return VK_COMPARE_OP_NEVER;
+        case TextureCompareOperator::LEQUAL: return VK_COMPARE_OP_LESS_OR_EQUAL;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkCompareOp)0;
+    }
+
     static VkShaderStageFlags GetShaderStageFlags(ShaderStage stageFlags)
     {
         uint64 flags = 0;

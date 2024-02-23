@@ -26,12 +26,19 @@ namespace Athena
 		MIRRORED_CLAMP_TO_EDGE = 5
 	};
 
+	enum class TextureCompareOperator
+	{
+		NONE = 0,
+		LEQUAL = 1
+	};
+
 	struct TextureSamplerCreateInfo
 	{
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;
 		TextureFilter MipMapFilter = TextureFilter::LINEAR;
 		TextureWrap Wrap = TextureWrap::REPEAT;
+		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 		// TODO: Anisotropy
 	};
 
@@ -141,5 +148,19 @@ namespace Athena
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
+	};
+
+
+	class ATHENA_API Sampler: public RenderResource
+	{
+	public:
+		static Ref<Sampler> Create(const TextureSamplerCreateInfo& info);
+		virtual ~Sampler() = default;
+
+		virtual RenderResourceType GetResourceType() override { return RenderResourceType::Sampler; }
+		const TextureSamplerCreateInfo& GetInfo() const { return m_Info; }
+
+	protected:
+		TextureSamplerCreateInfo m_Info;
 	};
 }

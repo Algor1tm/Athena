@@ -82,7 +82,6 @@ namespace Athena
 			m_ResourcesDescriptionTable[name] = resourceDesc;
 
 			stats[texture.Set].SampledTextures++;
-			stats[texture.Set].Samplers++;
 		}
 		for (const auto& [name, texture] : m_MetaData.StorageTextures)
 		{
@@ -102,6 +101,25 @@ namespace Athena
 			m_ResourcesDescriptionTable[name] = resourceDesc;
 
 			stats[texture.Set].StorageTextures++;
+		}
+		for (const auto& [name, sampler] : m_MetaData.Samplers)
+		{
+			VkDescriptorSetLayoutBinding layoutBinding = {};
+			layoutBinding.binding = sampler.Binding;
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+			layoutBinding.descriptorCount = sampler.ArraySize;
+			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(sampler.StageFlags);
+			layoutBinding.pImmutableSamplers = nullptr;
+			bindings[sampler.Set].push_back(layoutBinding);
+
+			ShaderResourceDescription resourceDesc;
+			resourceDesc.Type = ShaderResourceType::Sampler;
+			resourceDesc.Binding = sampler.Binding;
+			resourceDesc.Set = sampler.Set;
+			resourceDesc.ArraySize = sampler.ArraySize;
+			m_ResourcesDescriptionTable[name] = resourceDesc;
+
+			stats[sampler.Set].Samplers++;
 		}
 		for (const auto& [name, buffer] : m_MetaData.UniformBuffers)
 		{
@@ -159,8 +177,8 @@ namespace Athena
 
 			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
 			const auto& setStats = stats[set];
-			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} samplers, {} storage textures, {} ubos, {} sbos", 
-				set, setStats.SampledTextures, setStats.Samplers, setStats.StorageTextures, setStats.UBOs, setStats.SBOs);
+			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} storage textures, {} separate samplers, {} ubos, {} sbos", 
+				set, setStats.SampledTextures, setStats.StorageTextures, setStats.Samplers, setStats.UBOs, setStats.SBOs);
 		}
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};

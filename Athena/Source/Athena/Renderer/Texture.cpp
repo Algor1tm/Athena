@@ -5,6 +5,7 @@
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
+#include "Athena/Platform/Vulkan/VulkanSampler.h"
 
 
 namespace Athena
@@ -65,6 +66,17 @@ namespace Athena
 		switch (Renderer::GetAPI())
 		{
 		case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info);
+		case Renderer::API::None: return nullptr;
+		}
+
+		return nullptr;
+	}
+
+	Ref<Sampler> Sampler::Create(const TextureSamplerCreateInfo& info)
+	{
+		switch (Renderer::GetAPI())
+		{
+		case Renderer::API::Vulkan: return Ref<VulkanSampler>::Create(info);
 		case Renderer::API::None: return nullptr;
 		}
 

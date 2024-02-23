@@ -187,13 +187,21 @@ namespace Athena
 			UI::PropertyDrag("Light Size", &shadowSettings.LightSize, 0.025f);
 			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
 			UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
-			UI::PropertySlider("Split Factor", &shadowSettings.ExponentialSplitFactor, 0.f, 1.f);
-			UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
-			UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
 
 			UI::EndPropertyTable();
 
-			if (UI::TreeNode("ShadowMap", false))
+			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
+			{
+				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
+				UI::PropertyDrag("Blend Distance", &shadowSettings.CascadeBlendDistance);
+				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
+				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
+
+				UI::EndPropertyTable();
+				UI::TreePop();
+			}
+
+			if (UI::TreeNode("ShadowMap", false, true))
 			{
 				static int layer = 0;
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);

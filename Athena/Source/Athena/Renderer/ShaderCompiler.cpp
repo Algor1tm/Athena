@@ -611,6 +611,30 @@ namespace Athena
 				}
 			}
 
+			// SEPARATE SAMPLERS
+			for (const auto& resource : resources.separate_samplers)
+			{
+				if (result.Samplers.contains(resource.name))
+				{
+					auto& stageFlags = result.Samplers.at(resource.name).StageFlags;
+					stageFlags = ShaderStage(stageFlags | stage);
+				}
+				else
+				{
+					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+					const auto& array = compiler.get_type(resource.type_id).array;
+
+					SamplerShaderMetaData samplerData;
+					samplerData.Binding = binding;
+					samplerData.Set = set;
+					samplerData.StageFlags = stage;
+					samplerData.ArraySize = array.empty() ? 1 : array[0];
+
+					result.Samplers[resource.name] = samplerData;
+				}
+			}
+
 			// UNIFORM BUFFERS
 			for (const auto& resource : resources.uniform_buffers)
 			{

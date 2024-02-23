@@ -217,7 +217,6 @@ void main()
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
-    // Compute image based lightning
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
 
     vec3 emission = albedo.rgb * u_Emission;
@@ -227,12 +226,6 @@ void main()
     {
         vec3 cascadeDebugColor = GetCascadeDebugColor(Interpolators.WorldPos, u_Camera.View);
         hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.5);
-
-        //float value = PenumbraDebug(Interpolators.WorldPos, u_Camera.View);
-        //hdrColor.rgb = vec3(value);
-
-        //float value = FindBlockerDebug(Interpolators.WorldPos, u_Camera.View);
-        //hdrColor.rgb = vec3(value);
     }
 
     o_Color = vec4(hdrColor, albedo.a);

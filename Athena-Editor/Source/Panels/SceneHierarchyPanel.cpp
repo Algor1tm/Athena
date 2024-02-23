@@ -736,7 +736,7 @@ namespace Athena
 				Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 				if (animator)
 				{
-					if (UI::TreeNode("Animations") && UI::BeginPropertyTable())
+					if (UI::TreeNode("Animations", true, true) && UI::BeginPropertyTable())
 					{
 						Ref<Animation> active = animator->GetCurrentAnimation();
 						active = active ? active : (animator->GetAllAnimations().size() > 0 ? animator->GetAllAnimations()[0] : nullptr);

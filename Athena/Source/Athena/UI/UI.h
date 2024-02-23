@@ -46,7 +46,7 @@ namespace Athena::UI
 	ATHENA_API bool TextInputWithHint(const std::string_view hint, String& destination, ImGuiInputTextFlags flags = 0);
 
 	// Tree
-	ATHENA_API bool TreeNode(std::string_view label, bool defaultOpen = true);
+	ATHENA_API bool TreeNode(std::string_view label, bool defaultOpen = true, bool nested = false);
 	ATHENA_API void TreePop();
 
 	// Properties

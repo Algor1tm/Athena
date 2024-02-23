@@ -48,7 +48,8 @@ namespace Athena
 		float LightSize = 0.5f;
 		float MaxDistance = 200.f;
 		float FadeOut = 15.f;
-		float ExponentialSplitFactor = 0.91f;
+		float CascadeBlendDistance = 10.f;
+		float CascadeSplit = 0.91f;
 		float NearPlaneOffset = -15.f;
 		float FarPlaneOffset = 15.f;
 	};
@@ -176,26 +177,29 @@ namespace Athena
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
 	private:
-		const uint32 m_ShadowMapResolution = 1024;
+		const uint32 m_ShadowMapResolution = 2048;
 
 	private:
+		// DrawLists
 		DrawList m_StaticGeometryList;
 		DrawList m_AnimGeometryList;
+
+		// Render Passes
+		Ref<RenderPass> m_DirShadowMapPass;
+		Ref<Pipeline> m_DirShadowMapStaticPipeline;
+		Ref<Pipeline> m_DirShadowMapAnimPipeline;
 
 		Ref<RenderPass> m_GeometryPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
 		Ref<Pipeline> m_SkyboxPipeline;
 
-		Ref<RenderPass> m_DirShadowMapPass;
-		Ref<Pipeline> m_DirShadowMapStaticPipeline;
-		Ref<Pipeline> m_DirShadowMapAnimPipeline;
-
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;
 
 		Ref<RenderPass> m_Renderer2DPass;
 
+		// CPU Data
 		CameraData m_CameraData;
 		RendererData m_RendererData;
 		LightData m_LightData;
@@ -203,12 +207,15 @@ namespace Athena
 		std::vector<Matrix4> m_BonesData;
 		uint32 m_BonesDataOffset;
 
+		// GPU Data
 		Ref<UniformBuffer> m_CameraUBO;
 		Ref<UniformBuffer> m_RendererUBO;
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<StorageBuffer> m_BonesSBO;
+		Ref<Texture2D> m_ShadowMapSampler;
 
+		// Other
 		Vector2u m_ViewportSize = { 1, 1 };
 
 		Ref<SceneRenderer2D> m_SceneRenderer2D;

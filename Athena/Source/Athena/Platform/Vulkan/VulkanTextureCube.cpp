@@ -74,8 +74,8 @@ namespace Athena
 			vksamplerInfo.addressModeW = Vulkan::GetWrap(m_Info.SamplerInfo.Wrap);
 			vksamplerInfo.anisotropyEnable = false;
 			vksamplerInfo.maxAnisotropy = 1.f;
-			vksamplerInfo.compareEnable = false;
-			vksamplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+			vksamplerInfo.compareEnable = m_Info.SamplerInfo.Compare == TextureCompareOperator::NONE ? false : true;
+			vksamplerInfo.compareOp = Vulkan::GetCompareOp(m_Info.SamplerInfo.Compare);
 			vksamplerInfo.minLod = 0.f;
 			vksamplerInfo.maxLod = m_Info.MipLevels;
 			vksamplerInfo.mipLodBias = 0.f;

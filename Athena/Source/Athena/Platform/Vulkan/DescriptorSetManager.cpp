@@ -5,6 +5,7 @@
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Platform/Vulkan/VulkanSampler.h"
 
 
 namespace Athena
@@ -19,6 +20,7 @@ namespace Athena
 			case ShaderResourceType::Texture2DStorage:    return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			case ShaderResourceType::TextureCube:         return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			case ShaderResourceType::TextureCubeStorage:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::Sampler:			  return VK_DESCRIPTOR_TYPE_SAMPLER;
 			case ShaderResourceType::UniformBuffer:	      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case ShaderResourceType::StorageBuffer:	      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
@@ -38,6 +40,7 @@ namespace Athena
 			case ShaderResourceType::TextureCube:         return RenderResourceType::TextureCube;
 			case ShaderResourceType::Texture2DStorage:    return RenderResourceType::Texture2D;
 			case ShaderResourceType::TextureCubeStorage:  return RenderResourceType::TextureCube;
+			case ShaderResourceType::Sampler:			  return RenderResourceType::Sampler;
 			case ShaderResourceType::UniformBuffer:	      return RenderResourceType::UniformBuffer;
 			case ShaderResourceType::StorageBuffer:	      return RenderResourceType::StorageBuffer;
 			}
@@ -52,6 +55,7 @@ namespace Athena
 			{
 			case RenderResourceType::Texture2D:      return "Texture2D";
 			case RenderResourceType::TextureCube:    return "TextureCube";
+			case RenderResourceType::Sampler:		 return "Sampler";
 			case RenderResourceType::UniformBuffer:	 return "UniformBuffer";
 			case RenderResourceType::StorageBuffer:	 return "StorageBuffer";
 			}
@@ -289,6 +293,7 @@ namespace Athena
 					{
 						uint32 imageInfoIndex = imageInfos.size();
 						imageInfos.emplace_back(resource.Storage.size());
+						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 
 						for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						{
@@ -300,7 +305,6 @@ namespace Athena
 							if (descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
 								imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-							writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 							resourceState.ResourceHandle = imageInfo.imageView;
 							resourceState.ImageLayout = imageInfo.imageLayout;
 							resourceState.Sampler = imageInfo.sampler;
@@ -317,6 +321,7 @@ namespace Athena
 					{
 						uint32 imageInfoIndex = imageInfos.size();
 						imageInfos.emplace_back(resource.Storage.size());
+						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 
 						for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						{
@@ -328,10 +333,31 @@ namespace Athena
 							if (descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
 								imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-							writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 							resourceState.ResourceHandle = imageInfo.imageView;
 							resourceState.ImageLayout = imageInfo.imageLayout;
 							resourceState.Sampler = imageInfo.sampler;
+
+							if (resourceState.ResourceHandle == nullptr)
+							{
+								m_InvalidatedResources[set][binding] = resource;
+								break;
+							}
+						}
+						break;
+					}
+					case RenderResourceType::Sampler:
+					{
+						uint32 imageInfoIndex = imageInfos.size();
+						imageInfos.emplace_back(resource.Storage.size());
+						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
+
+						for (uint32 i = 0; i < resource.Storage.size(); ++i)
+						{
+							ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
+							VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
+							imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
+
+							resourceState.ResourceHandle = imageInfo.sampler;
 
 							if (resourceState.ResourceHandle == nullptr)
 							{
@@ -345,6 +371,7 @@ namespace Athena
 					{
 						uint32 bufferInfoIndex = bufferInfos.size();
 						bufferInfos.emplace_back(resource.Storage.size());
+						writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 
 						for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						{
@@ -352,7 +379,6 @@ namespace Athena
 							VkDescriptorBufferInfo& bufferInfo = bufferInfos[bufferInfoIndex][i];
 							bufferInfo = resource.Storage[i].As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 
-							writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 							resourceState.ResourceHandle = bufferInfo.buffer;
 
 							if (resourceState.ResourceHandle == nullptr)
@@ -367,6 +393,7 @@ namespace Athena
 					{
 						uint32 bufferInfoIndex = bufferInfos.size();
 						bufferInfos.emplace_back(resource.Storage.size());
+						writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 
 						for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						{
@@ -374,7 +401,6 @@ namespace Athena
 							VkDescriptorBufferInfo& bufferInfo = bufferInfos[bufferInfoIndex][i];
 							bufferInfo = resource.Storage[i].As<VulkanStorageBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 
-							writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 							resourceState.ResourceHandle = bufferInfo.buffer;
 
 							if (resourceState.ResourceHandle == nullptr)
@@ -450,6 +476,19 @@ namespace Athena
 					}
 					break;
 				}
+				case RenderResourceType::Sampler:
+				{
+					for (uint32 i = 0; i < resource.Storage.size(); ++i)
+					{
+						const auto& imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
+						if (IsResourceStateChanged(wd.ResourcesState[i], imageInfo))
+						{
+							m_InvalidatedResources[set][binding] = resource;
+							break;
+						}
+					}
+					break;
+				}
 				case RenderResourceType::UniformBuffer:
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
@@ -504,6 +543,7 @@ namespace Athena
 				{
 					uint32 imageInfoIndex = imageInfos.size();
 					imageInfos.emplace_back(resource.Storage.size());
+					writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 					{
@@ -511,7 +551,6 @@ namespace Athena
 						VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
 						imageInfo = resource.Storage[i].As<VulkanTexture2D>()->GetVulkanDescriptorInfo(resource.MipLevel);
 
-						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 						resourceState.ResourceHandle = imageInfo.imageView;
 						resourceState.ImageLayout = imageInfo.imageLayout;
 						resourceState.Sampler = imageInfo.sampler;
@@ -522,6 +561,7 @@ namespace Athena
 				{
 					uint32 imageInfoIndex = imageInfos.size();
 					imageInfos.emplace_back(resource.Storage.size());
+					writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 					{
@@ -529,10 +569,25 @@ namespace Athena
 						VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
 						imageInfo = resource.Storage[i].As<VulkanTextureCube>()->GetVulkanDescriptorInfo(resource.MipLevel);
 
-						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
 						resourceState.ResourceHandle = imageInfo.imageView;
 						resourceState.ImageLayout = imageInfo.imageLayout;
 						resourceState.Sampler = imageInfo.sampler;
+					}
+					break;
+				}
+				case RenderResourceType::Sampler:
+				{
+					uint32 imageInfoIndex = imageInfos.size();
+					imageInfos.emplace_back(resource.Storage.size());
+					writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
+
+					for (uint32 i = 0; i < resource.Storage.size(); ++i)
+					{
+						ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
+						VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
+						imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
+
+						resourceState.ResourceHandle = imageInfo.sampler;
 					}
 					break;
 				}
@@ -540,6 +595,7 @@ namespace Athena
 				{
 					uint32 bufferInfoIndex = bufferInfos.size();
 					bufferInfos.emplace_back(resource.Storage.size());
+					writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 					{
@@ -547,7 +603,6 @@ namespace Athena
 						VkDescriptorBufferInfo& bufferInfo = bufferInfos[bufferInfoIndex][i];
 						bufferInfo = resource.Storage[i].As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 
-						writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 						resourceState.ResourceHandle = bufferInfo.buffer;
 					}
 					break;
@@ -556,6 +611,7 @@ namespace Athena
 				{
 					uint32 bufferInfoIndex = bufferInfos.size();
 					bufferInfos.emplace_back(resource.Storage.size());
+					writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 					{
@@ -563,7 +619,6 @@ namespace Athena
 						VkDescriptorBufferInfo& bufferInfo = bufferInfos[bufferInfoIndex][i];
 						bufferInfo = resource.Storage[i].As<VulkanStorageBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 
-						writeDescriptor.pBufferInfo = bufferInfos[bufferInfoIndex].data();
 						resourceState.ResourceHandle = bufferInfo.buffer;
 					}
 					break;

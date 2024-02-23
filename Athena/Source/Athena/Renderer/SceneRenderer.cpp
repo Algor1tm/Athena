@@ -67,7 +67,8 @@ namespace Athena
 			passInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			passInfo.DebugColor = { 0.7f, 0.8f, 0.7f, 1.f };
 
-			RenderPassAttachment output = RenderPassAttachment(Texture2D::Create(shadowMapInfo));
+			Ref<Texture2D> shadowMap = Texture2D::Create(shadowMapInfo);
+			RenderPassAttachment output = RenderPassAttachment(shadowMap);
 			output.LoadOp = AttachmentLoadOp::CLEAR;
 			output.DepthClearColor = 1.f;
 
@@ -103,6 +104,13 @@ namespace Athena
 			m_DirShadowMapAnimPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
 			m_DirShadowMapAnimPipeline->SetInput("u_BonesData", m_BonesSBO);
 			m_DirShadowMapAnimPipeline->Bake();
+
+			TextureSamplerCreateInfo samplerInfo;
+			samplerInfo.MinFilter = TextureFilter::LINEAR;
+			samplerInfo.MagFilter = TextureFilter::LINEAR;
+			samplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
+			samplerInfo.Compare = TextureCompareOperator::LEQUAL;
+			m_ShadowMapSampler = Texture2D::Create(shadowMap->GetImage(), samplerInfo);
 		}
 
 		// Geometry Pass
@@ -137,6 +145,7 @@ namespace Athena
 			m_StaticGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_StaticGeometryPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
 			m_StaticGeometryPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
+			m_StaticGeometryPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
 			m_StaticGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
 			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
@@ -483,9 +492,9 @@ namespace Athena
 	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)
 	{
 		float cameraNear = m_CameraData.NearClip;
-		float cameraFar = m_CameraData.FarClip;
+		float cameraFar = Math::Min(m_CameraData.FarClip, m_ShadowsData.MaxDistance);
 
-		const float splitWeight = m_Settings.ShadowSettings.ExponentialSplitFactor;
+		const float splitWeight = m_Settings.ShadowSettings.CascadeSplit;
 
 		// Split cascades
 		for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)

@@ -27,6 +27,7 @@ namespace Athena
 		TextureCube,
 		Texture2DStorage,
 		TextureCubeStorage,
+		Sampler,
 		UniformBuffer,
 		StorageBuffer,
 	};
@@ -72,12 +73,22 @@ namespace Athena
 		ShaderStage StageFlags;
 	};
 
+	struct SamplerShaderMetaData
+	{
+		uint32 Binding;
+		uint32 Set;
+		uint32 ArraySize;
+		ShaderStage StageFlags;
+	};
+
 	struct ShaderMetaData
 	{
 		std::unordered_map<String, TextureShaderMetaData> SampledTextures;
 		std::unordered_map<String, TextureShaderMetaData> StorageTextures;
+		std::unordered_map<String, SamplerShaderMetaData> Samplers;
 		std::unordered_map<String, BufferShaderMetaData> UniformBuffers;
 		std::unordered_map<String, BufferShaderMetaData> StorageBuffers;
+
 		PushConstantShaderMetaData PushConstant;
 		Vector3u WorkGroupSize;
 	};

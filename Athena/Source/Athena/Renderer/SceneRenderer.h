@@ -100,8 +100,9 @@ namespace Athena
 
 	struct Cascade
 	{
-		Vector2 LightFrustumPlanes;
-		float SplitDepth;
+		float Near;
+		float Far;
+		float SplitDepth;	// 0 to 1 range
 		float _Padding;
 	};
 

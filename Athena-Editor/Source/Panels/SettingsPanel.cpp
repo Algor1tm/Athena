@@ -175,7 +175,7 @@ namespace Athena
 
 			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
 			{
-				UI::PropertyDrag("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.05f);
+				UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
 				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
 				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
 				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);

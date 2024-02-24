@@ -202,7 +202,7 @@ void main()
     {
         normal = texture(u_NormalMap, Interpolators.TexCoords).rgb;
         normal = normal * 2 - 1;
-        normal = Interpolators.TBN * normal;
+        normal = normalize(Interpolators.TBN * normal);
     }
     
     float roughness = bool(u_UseRoughnessMap) ? texture(u_RoughnessMap, Interpolators.TexCoords).r : u_Roughness;

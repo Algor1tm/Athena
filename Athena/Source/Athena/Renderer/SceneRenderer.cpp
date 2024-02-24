@@ -505,7 +505,7 @@ namespace Athena
 	void SceneRenderer::CalculateCascadeLightSpaces(DirectionalLight& light)
 	{
 		float cameraNear = m_CameraData.NearClip;
-		float cameraFar = Math::Min(m_CameraData.FarClip, m_ShadowsData.MaxDistance);
+		float cameraFar = m_CameraData.FarClip;
 
 		const float splitWeight = m_Settings.ShadowSettings.CascadeSplit;
 
@@ -524,7 +524,6 @@ namespace Athena
 		Matrix4 invCamera = Math::Inverse(m_CameraData.View * m_CameraData.Projection);
 
 		float lastSplit = 0.f;
-		float averageFrustumSize = 0.f;
 
 		// Build light space matrices
 		for (uint32 layer = 0; layer < ShaderDef::SHADOW_CASCADES_COUNT; ++layer)
@@ -602,13 +601,10 @@ namespace Athena
 			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
 			m_ShadowsData.DirLightView[layer] = lightView;
 
-			m_ShadowsData.Cascades[layer].LightFrustumPlanes = { minExtents.z, maxExtents.z };
-
-			averageFrustumSize = Math::Max(averageFrustumSize, maxExtents.z - minExtents.z);
+			m_ShadowsData.Cascades[layer].Near = cameraNear * split;
+			m_ShadowsData.Cascades[layer].Far = cameraFar * split;
 
 			lastSplit = split;
 		}
-
-		light.LightSize /= averageFrustumSize;
 	}
 }

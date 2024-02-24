@@ -791,7 +791,9 @@ namespace Athena
 			if (UI::BeginPropertyTable())
 			{
 				UI::PropertyColor3("Color", lightComponent.Color.Data());
-				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 100.f);
+				UI::PropertyCheckbox("Cast Shadows", &lightComponent.CastShadows);
+				UI::PropertyDrag("LightSize", &lightComponent.LightSize, 0.025f, 0.f, 100.f);
 
 				UI::EndPropertyTable();
 			}

@@ -393,6 +393,8 @@ namespace Athena
 
 						lightComp.Color = directionalLightComponent["Color"].as<LinearColor>();
 						lightComp.Intensity = directionalLightComponent["Intensity"].as<float>();
+						lightComp.CastShadows = directionalLightComponent["CastShadows"].as<bool>();
+						lightComp.LightSize = directionalLightComponent["LightSize"].as<float>();
 					}
 				}
 
@@ -614,6 +616,8 @@ namespace Athena
 			{
 				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "CastShadows" << YAML::Value << lightComponent.CastShadows;
+				output << YAML::Key << "LightSize" << YAML::Value << lightComponent.LightSize;
 			});
 
 		SerializeComponent<PointLightComponent>(out, "PointLightComponent", entity,

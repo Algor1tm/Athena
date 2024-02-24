@@ -20,9 +20,6 @@ namespace Athena
 		switch (antialiasing)
 		{
 		case Antialising::NONE: return "None";
-		case Antialising::MSAA_2X: return "MSAA 2X (2D Only)";
-		case Antialising::MSAA_4X: return "MSAA 4X (2D Only)";
-		case Antialising::MSAA_8X: return "MSAA 8X (2D Only)";
 		}
 
 		ATN_ASSERT(false);
@@ -34,15 +31,6 @@ namespace Athena
 		if(str == "None")
 			return Antialising::NONE;
 
-		if(str == "MSAA 2X (2D Only)")
-			return Antialising::MSAA_2X;
-
-		if (str == "MSAA 4X (2D Only)")
-			return Antialising::MSAA_4X;
-
-		if (str == "MSAA 8X (2D Only)")
-			return Antialising::MSAA_8X;
-
 		ATN_ASSERT(false);
 		return (Antialising)0;
 	}
@@ -52,7 +40,6 @@ namespace Athena
 		switch (view)
 		{
 		case DebugView::NONE: return "None";
-		case DebugView::WIREFRAME: return "Wireframe";
 		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
 		}
 
@@ -64,9 +51,6 @@ namespace Athena
 	{
 		if (str == "None")
 			return DebugView::NONE;
-
-		if (str == "Wireframe")
-			return DebugView::WIREFRAME;
 
 		if (str == "ShadowCascades")
 			return DebugView::SHADOW_CASCADES;
@@ -155,7 +139,7 @@ namespace Athena
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			std::string_view views[] = { "None", "Wireframe", "ShadowCascades" };
+			std::string_view views[] = { "None", "ShadowCascades" };
 			std::string_view selected = DebugViewToString(settings.DebugView);
 			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{
@@ -184,7 +168,6 @@ namespace Athena
 			ShadowSettings& shadowSettings = settings.ShadowSettings;
 
 			UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
-			UI::PropertyDrag("Light Size", &shadowSettings.LightSize, 0.025f);
 			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
 			UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
 
@@ -192,8 +175,8 @@ namespace Athena
 
 			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
 			{
+				UI::PropertyDrag("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.05f);
 				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
-				UI::PropertyDrag("Blend Distance", &shadowSettings.CascadeBlendDistance);
 				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
 				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
 
@@ -238,25 +221,13 @@ namespace Athena
 
 		if (UI::TreeNode("Other", false) && UI::BeginPropertyTable())
 		{
-			std::string_view views[] = { "None", "MSAA 2X (2D Only)", "MSAA 4X (2D Only)", "MSAA 8X (2D Only)"};
+			std::string_view views[] = { "None" };
 			std::string_view selected = AntialisingToString(settings.AntialisingMethod);
 
 			if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
 			{
 				settings.AntialisingMethod = StringToAntialising(selected);
 			}
-
-			//UI::PropertyRow("Reload Shaders", ImGui::GetFrameHeight());
-			//{
-			//	ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-			//	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-			//	if (ImGui::Button("Reload Shaders"))
-			//	{
-			//		Renderer::GetShaderLibrary()->Reload();
-			//	}
-			//	ImGui::PopStyleVar();
-			//	ImGui::PopStyleColor();
-			//}
 
 			UI::EndPropertyTable();
 			UI::TreePop();

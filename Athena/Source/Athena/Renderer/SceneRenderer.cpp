@@ -56,8 +56,8 @@ namespace Athena
 			shadowMapInfo.Height = m_ShadowMapResolution;
 			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			shadowMapInfo.MipLevels = 1;
-			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
+			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
 
 			RenderPassCreateInfo passInfo;
@@ -314,27 +314,40 @@ namespace Athena
 
 		if (m_LightData.DirectionalLightCount > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
 			m_LightData.DirectionalLightCount = ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT;
 		}
 
 		m_LightData.PointLightCount = lightEnv.PointLights.size();
 		if (m_LightData.PointLightCount > ShaderDef::MAX_POINT_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("SceneRenderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
+		// For now pick first directional light that cast shadows, others won't cast shadows
+		bool castsShadows = false;
 		for (uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
-			m_LightData.DirectionalLights[i] = lightEnv.DirectionalLights[i];
+		{
+			DirectionalLight& light = m_LightData.DirectionalLights[i];
+			light = lightEnv.DirectionalLights[i];
+			light.Direction.Normalize();
+
+			if (castsShadows && light.CastShadows)
+			{
+				ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than 1 DirectionalLight, that casts shadows!");
+				light.CastShadows = false;
+			}
+
+			if (light.CastShadows)
+			{
+				CalculateCascadeLightSpaces(light);
+				castsShadows = true;
+			}
+		}
 
 		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
 			m_LightData.PointLights[i] = lightEnv.PointLights[i];
-
-		if (m_LightData.DirectionalLightCount > 0)
-		{
-			CalculateCascadeLightSpaces(m_LightData.DirectionalLights[0]);	// Pick first directional light for now
-		}
 
 		m_RendererData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_RendererData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
@@ -378,7 +391,7 @@ namespace Athena
 
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
-		m_ShadowsData.LightSize = m_Settings.ShadowSettings.LightSize;
+		m_ShadowsData.CascadeBlendDistance = m_Settings.ShadowSettings.CascadeBlendDistance;
 		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
 		m_BonesDataOffset = 0;
@@ -489,7 +502,7 @@ namespace Athena
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}
 
-	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)
+	void SceneRenderer::CalculateCascadeLightSpaces(DirectionalLight& light)
 	{
 		float cameraNear = m_CameraData.NearClip;
 		float cameraFar = Math::Min(m_CameraData.FarClip, m_ShadowsData.MaxDistance);
@@ -596,6 +609,6 @@ namespace Athena
 			lastSplit = split;
 		}
 
-		m_ShadowsData.LightSize /= averageFrustumSize;
+		light.LightSize /= averageFrustumSize;
 	}
 }

@@ -23,17 +23,13 @@ namespace Athena
 {
 	enum class Antialising
 	{
-		NONE = 0,
-		MSAA_2X = 1,
-		MSAA_4X = 2,
-		MSAA_8X = 3,
+		NONE = 0
 	};
 
 	enum class DebugView
 	{
 		NONE = 0,
-		WIREFRAME = 1,
-		SHADOW_CASCADES = 2
+		SHADOW_CASCADES = 1
 	};
 
 	struct LightEnvironmentSettings
@@ -45,10 +41,9 @@ namespace Athena
 	struct ShadowSettings
 	{
 		bool SoftShadows = true;
-		float LightSize = 0.5f;
 		float MaxDistance = 200.f;
 		float FadeOut = 15.f;
-		float CascadeBlendDistance = 10.f;
+		float CascadeBlendDistance = 0.5f;
 		float CascadeSplit = 0.91f;
 		float NearPlaneOffset = -15.f;
 		float FarPlaneOffset = 15.f;
@@ -70,7 +65,7 @@ namespace Athena
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
 		DebugView DebugView = DebugView::NONE;
-		Antialising AntialisingMethod = Antialising::MSAA_2X;
+		Antialising AntialisingMethod = Antialising::NONE;
 	};
 
 
@@ -117,7 +112,7 @@ namespace Athena
 		Cascade Cascades[ShaderDef::SHADOW_CASCADES_COUNT];
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
-		float LightSize = 1.f;
+		float CascadeBlendDistance = 0.5f;
 		int SoftShadows = true;
 	};
 
@@ -174,7 +169,7 @@ namespace Athena
 		void GeometryPass();
 		void SceneCompositePass();
 
-		void CalculateCascadeLightSpaces(const DirectionalLight& light);
+		void CalculateCascadeLightSpaces(DirectionalLight& light);
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;

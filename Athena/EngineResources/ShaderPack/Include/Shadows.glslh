@@ -3,6 +3,8 @@
 #define BLOCKER_SEARCH_SAMPLES 16
 #define PCF_FILTER_SAMPLES 16
 
+//#define BLEND_CASCADES
+
 const vec2 PoissonDisk[16] = vec2[](
     vec2( -0.9420162,  -0.39906216 ),
     vec2( 0.94558609,  -0.76890725 ),
@@ -36,7 +38,7 @@ layout(std140, set = 1, binding = 4) uniform u_ShadowsData
 	Cascade u_Cascades[SHADOW_CASCADES_COUNT];
 	float u_ShadowMaxDistance;
 	float u_MaxDistanceFadeOut;
-	float u_LightSize;
+    float u_CascadeBlendDistance;
 	int u_SoftShadows;
 };
 
@@ -72,15 +74,12 @@ vec3 GetShadowCoords(vec3 worldPos, int cascade)
 =========================================================================================================================================
 */
 
-int GetShadowCascade(vec3 worldPos, mat4 cameraView)
+int GetShadowCascade(float depthViewSpace)
 {
-    vec4 worldPosViewSpace = cameraView * vec4(worldPos, 1.0);
-    float depthValue = abs(worldPosViewSpace.z);
-
     int cascade = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthValue < u_Cascades[i].SplitDepth)
+        if(depthViewSpace < u_Cascades[i].SplitDepth)
         {
             cascade = i;
             break;
@@ -166,7 +165,7 @@ float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV)
 	return sum;
 }
 
-float ShadowPCSS(vec3 shadowCoords, int cascade, vec3 worldPos)
+float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec3 worldPos)
 {
     vec4 viewPos = u_DirLightView[cascade] * vec4(worldPos, 1.0);
     float zReceiver = -viewPos.z / viewPos.w;
@@ -175,7 +174,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, vec3 worldPos)
     float lightFarPlane = u_Cascades[cascade].LightFrustumPlanes.y;
 
     // STEP 1: blocker search 
-    float searchWidth = u_LightSize * (zReceiver - lightNearPlane) / zReceiver;
+    float searchWidth = lightSize * (zReceiver - lightNearPlane) / zReceiver;
     vec2 blockerInfo = FindBlocker(shadowCoords.xy, shadowCoords.z, cascade, searchWidth);
 
 	int numBlockers = int(blockerInfo.y);
@@ -190,8 +189,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, vec3 worldPos)
 
     // STEP 2: penumbra size
     float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
-    float filterRadiusUV =  penumbraRatio * u_LightSize * lightNearPlane / zReceiver;
-    //filterRadiusUV *= filterRadiusUV;
+    float filterRadiusUV =  penumbraRatio * lightSize * lightNearPlane / zReceiver;
 
     // STEP 3: filtering 
     return PCF_Filter(shadowCoords.xy, shadowCoords.z, cascade, filterRadiusUV);
@@ -209,35 +207,60 @@ float ShadowHard(vec3 shadowCoords, int cascade)
     return SampleShadowMapCompare(shadowCoords, cascade);
 }
 
-float Shadow(vec3 shadowCoords, int cascade, vec3 worldPos)
+float Shadow(vec3 shadowCoords, int cascade, float lightSize, vec3 worldPos)
 {
 	if(bool(u_SoftShadows))
 	{
-		return ShadowPCSS(shadowCoords, cascade, worldPos);
+		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize, worldPos);
 	}
 	
-	return ShadowHard(shadowCoords, cascade);
+	return 1.0 - ShadowHard(shadowCoords, cascade);
 }
 
-float ComputeDirectionalLightShadow(vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView)
+float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView)
 {
     float fadeOut = GetShadowMaxDistanceFade(distanceFromCamera);
     if(fadeOut >= 1.0)
         return 0.0;
 
-    int cascade = GetShadowCascade(worldPos, cameraView);
+    vec4 wposViewSpace = cameraView * vec4(worldPos, 1.0);
+    float depthViewSpace = abs(wposViewSpace.z);
+
+    int cascade = GetShadowCascade(depthViewSpace);
     vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
 
 	float bias = GetBias(normal, lightDir, cascade);
 
-	shadowCoords.z -= bias;
+	//shadowCoords.z -= bias;
 
     if(shadowCoords.z > 1.0) 
 		return 0.0;
 
-	float shadow = Shadow(shadowCoords, cascade, worldPos);
+	float shadow = Shadow(shadowCoords, cascade, lightSize, worldPos);
 
-    return (1.0 - fadeOut) * (1.0 - shadow);
+#if defined(BLEND_CASCADES)
+
+    float lightNear = u_Cascades[cascade].LightFrustumPlanes.x;
+    float lightFar = u_Cascades[cascade].LightFrustumPlanes.y;
+
+    float alpha = (depthViewSpace - lightNear) / (lightFar - lightNear);
+
+    if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
+    {
+        // get alpha to 0..1 range over the blend distance
+        alpha = (alpha - (1.0 - u_CascadeBlendDistance)) / u_CascadeBlendDistance;
+
+        int nextCascade = cascade + 1;
+        shadowCoords = GetShadowCoords(worldPos, nextCascade);
+
+        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize, worldPos);
+
+        shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));
+    }
+
+#endif
+
+    return (1.0 - fadeOut) * shadow;
 }
 
 /*
@@ -248,7 +271,10 @@ float ComputeDirectionalLightShadow(vec3 lightDir, vec3 normal, vec3 worldPos, f
 
 vec3 GetCascadeDebugColor(vec3 worldPos, mat4 cameraView)
 {
-    int cascade = GetShadowCascade(worldPos, cameraView);
+    vec4 wposViewSpace = cameraView * vec4(worldPos, 1.0);
+    float depthViewSpace = abs(wposViewSpace.z);
+
+    int cascade = GetShadowCascade(depthViewSpace);
 
     const vec3 debugColors[4] = vec3[](
         vec3(1.0, 0.0, 0.0), 
@@ -256,5 +282,24 @@ vec3 GetCascadeDebugColor(vec3 worldPos, mat4 cameraView)
         vec3(0.0, 0.0, 1.0), 
         vec3(1.0, 1.0, 0.0));
 
-   return debugColors[cascade];
+    vec3 color = debugColors[cascade];
+
+#if defined(BLEND_CASCADES)
+
+    float lightNear = u_Cascades[cascade].LightFrustumPlanes.x;
+    float lightFar = u_Cascades[cascade].LightFrustumPlanes.y;
+
+    float alpha = (depthViewSpace - lightNear) / (lightFar - lightNear);
+
+    if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
+    {
+        // get alpha to 0..1 range over the blend distance
+        alpha = (alpha - (1.0 - u_CascadeBlendDistance)) / u_CascadeBlendDistance;
+
+        vec3 colorNextCascade = debugColors[cascade + 1];
+        color = mix(color, colorNextCascade, clamp(alpha, 0.0, 1.0));
+    }
+#endif
+
+   return color;
 }

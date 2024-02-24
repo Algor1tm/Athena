@@ -123,17 +123,14 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
 
-vec3 ComputeDirectionalLightRadiance(int index)
+vec3 ComputeDirectionalLightRadiance(DirectionalLight light)
 {
-    DirectionalLight light = g_DirectionalLights[index];
     vec3 radiance = light.Color.rgb * light.Intensity;
     return radiance;
 }
 
-vec3 ComputePointLightRadiance(int index, vec3 worldPos)
+vec3 ComputePointLightRadiance(PointLight light, vec3 worldPos)
 {
-    PointLight light = g_PointLights[index];
-    
     float dist = length(worldPos - light.Position);
     float attenuationFactor = dist / light.Radius;
 
@@ -200,10 +197,13 @@ void main()
     
     for (int i = 0; i < g_DirectionalLightCount; ++i)
     {
-        vec3 dir = normalize(g_DirectionalLights[i].Direction);
-        vec3 radiance = ComputeDirectionalLightRadiance(i);
+        DirectionalLight light = g_DirectionalLights[i];
+        vec3 dir = light.Direction;
+        vec3 radiance = ComputeDirectionalLightRadiance(light);
         
-        float shadow = ComputeDirectionalLightShadow(dir, normal, Interpolators.WorldPos, distanceFromCamera, u_Camera.View);
+        float shadow = 0.0;
+        if(bool(light.CastShadows))
+            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, Interpolators.WorldPos, distanceFromCamera, u_Camera.View);
         
         if(shadow < 1.0)
             totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
@@ -211,8 +211,9 @@ void main()
     
     for (int j = 0; j < g_PointLightCount; ++j)
     {
-        vec3 dir = normalize(Interpolators.WorldPos - g_PointLights[j].Position);
-        vec3 radiance = ComputePointLightRadiance(j, Interpolators.WorldPos);
+        PointLight light = g_PointLights[j];
+        vec3 dir = normalize(Interpolators.WorldPos - light.Position);
+        vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
         
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
@@ -225,7 +226,7 @@ void main()
     if(bool(u_Renderer.DebugShadowCascades))
     {
         vec3 cascadeDebugColor = GetCascadeDebugColor(Interpolators.WorldPos, u_Camera.View);
-        hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.5);
+        hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.3);
     }
 
     o_Color = vec4(hdrColor, albedo.a);

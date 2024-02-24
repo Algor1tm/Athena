@@ -23,11 +23,13 @@ Entities:
       Tag: DirectionalLight
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [0.848312557, -0.331071168, -0.332202762, -0.245762154]
-      Scale: [0.999999881, 0.99999994, 0.99999994]
+      Rotation: [0.847493291, -0.407507718, 0.0355958939, 0.338268399]
+      Scale: [1, 1, 1]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
       Intensity: 1
+      CastShadows: true
+      LightSize: 0.300000012
   - IDComponent:
       ID: 2835139583361043602
     TagComponent:
@@ -89,9 +91,9 @@ Entities:
     TagComponent:
       Tag: StarWarsTrouper
     TransformComponent:
-      Translation: [-3.89203954, 0.348539472, 5.32893705]
-      Rotation: [0.617765903, -1.27286555e-08, 0.786362052, -1.27286555e-08]
-      Scale: [8.59394741, 8.59394741, 8.59394741]
+      Translation: [-3.8856256, 0.407431513, 5.32549858]
+      Rotation: [-0.504666567, -0.0320248231, -0.861124933, 0.0524407066]
+      Scale: [8.5938921, 8.59392357, 8.59414291]
     ParentComponent:
       Parent: 2151942939999983161
     StaticMeshComponent:

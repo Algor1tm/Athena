@@ -214,7 +214,9 @@ namespace Athena
 	struct DirectionalLightComponent
 	{
 		LinearColor Color = LinearColor::White;
-		float Intensity = 1;
+		float Intensity = 1.f;
+		bool CastShadows = true;
+		float LightSize = 0.4f;
 	};
 
 	struct PointLightComponent

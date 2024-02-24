@@ -593,7 +593,14 @@ namespace Athena
 			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
 
 			Vector3 direction = transform.Rotation * Vector3::Forward();
-			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
+
+			DirectionalLight dirLight;
+			dirLight.Color = light.Color;
+			dirLight.Intensity = light.Intensity;
+			dirLight.Direction = direction;
+			dirLight.CastShadows = light.CastShadows;
+			dirLight.LightSize = light.LightSize;
+
 			lightEnv.DirectionalLights.push_back(dirLight);
 		}
 
@@ -603,7 +610,13 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& light = pointLights.get<PointLightComponent>(entity);
 
-			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
+			PointLight pointLight;
+			pointLight.Color = light.Color;
+			pointLight.Position = transform.Translation;
+			pointLight.Intensity = light.Intensity;
+			pointLight.Radius = light.Radius;
+			pointLight.FallOff = light.FallOff;
+
 			lightEnv.PointLights.push_back(pointLight);
 		}
 

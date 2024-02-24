@@ -15,6 +15,8 @@ namespace Athena
 		Vector4 Color;
 		Vector3 Direction;
 		float Intensity;
+		float LightSize;
+		int CastShadows;
 	};
 
 	struct PointLight

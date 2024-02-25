@@ -16,7 +16,7 @@ namespace Athena
 		VulkanPipeline(const PipelineCreateInfo& info);
 		~VulkanPipeline();
 
-		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;
 		virtual void SetViewport(uint32 width, uint32 height) override;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;

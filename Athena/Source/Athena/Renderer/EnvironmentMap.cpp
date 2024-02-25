@@ -1,5 +1,4 @@
 #include "EnvironmentMap.h"
-#include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/Renderer.h"
 
@@ -45,71 +44,60 @@ namespace Athena
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "PanoramaToCubePass";
+			passInfo.Shader = Renderer::GetShaderPack()->Get("PanoramaToCubemap");
 			passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
 
 			m_PanoramaToCubePass = ComputePass::Create(passInfo);
-			m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture->GetImage());
+			m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture);
+			m_PanoramaToCubePass->SetInput("u_PanoramaTex", Renderer::GetWhiteTexture());
+			m_PanoramaToCubePass->SetInput("u_Cubemap", m_EnvironmentTexture);
+			m_PanoramaToCubePass->Bake();
 		}
 
 		// Preetham
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "PreethamPass";
+			passInfo.Shader = Renderer::GetShaderPack()->Get("PreethamSky");
 			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_PreethamPass = ComputePass::Create(passInfo);
-			m_PreethamPass->SetOutput(m_EnvironmentTexture->GetImage());
+			m_PreethamPass->SetOutput(m_EnvironmentTexture);
+			m_PreethamPass->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
+			m_PreethamPass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "PreethamPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PreethamSky");
-
-			m_PreethamPipeline = ComputePipeline::Create(pipelineInfo);
-			m_PreethamPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
-			m_PreethamPipeline->Bake();
-
-			m_PreethamMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+			m_PreethamMaterial = Material::Create(passInfo.Shader, passInfo.Name);
 		}
 
 		// Irradiance Pipeline
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "IrradiancePass";
+			passInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
 			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_IrradiancePass = ComputePass::Create(passInfo);
-			m_IrradiancePass->SetOutput(m_IrradianceTexture->GetImage());
-
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "IrradianceMapPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
-
-			m_IrradiancePipeline = ComputePipeline::Create(pipelineInfo);
-			m_IrradiancePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
-			m_IrradiancePipeline->SetInput("u_IrradianceMap", m_IrradianceTexture);
-			m_IrradiancePipeline->Bake();
+			m_IrradiancePass->SetOutput(m_IrradianceTexture);
+			m_IrradiancePass->SetInput("u_Cubemap", m_EnvironmentTexture);
+			m_IrradiancePass->SetInput("u_IrradianceMap", m_IrradianceTexture);
+			m_IrradiancePass->Bake();
 		}
 
 		// Mip Filter Pipeline
 		{
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "MipFilterPass";
+			passInfo.Shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
 			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
 
 			m_MipFilterPass = ComputePass::Create(passInfo);
-			m_MipFilterPass->SetOutput(m_EnvironmentTexture->GetImage());
-
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "MipFilterPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
-
-			m_MipFilterPipeline = ComputePipeline::Create(pipelineInfo);
-			m_MipFilterPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
-			m_MipFilterPipeline->Bake();
+			m_MipFilterPass->SetOutput(m_EnvironmentTexture);
+			m_MipFilterPass->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
+			m_MipFilterPass->Bake();
 
 			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
-				Ref<Material> mipMaterial = Material::Create(pipelineInfo.Shader, std::format("{}_{}", pipelineInfo.Name, mip));
+				Ref<Material> mipMaterial = Material::Create(passInfo.Shader, std::format("{}_{}", passInfo.Name, mip - 1));
 				mipMaterial->Set("u_EnvironmentMipImage", m_EnvironmentTexture, 0, mip);
 				mipMaterial->Set("u_MipLevel", mip);
 
@@ -174,34 +162,21 @@ namespace Athena
 	{
 		Ref<Texture2D> panorama = Texture2D::Create(m_FilePath);
 
-		ComputePipelineCreateInfo pipelineInfo;
-		pipelineInfo.Name = "PanoramaToCubemapPipeline";
-		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PanoramaToCubemap");
-
-		Ref<ComputePipeline> panoramaToCubePipeline = ComputePipeline::Create(pipelineInfo);
-		panoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
-		panoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
-		panoramaToCubePipeline->Bake();
-
 		m_PanoramaToCubePass->Begin(commandBuffer);
-		if (panoramaToCubePipeline->Bind(commandBuffer))
-		{
-			Renderer::Dispatch(commandBuffer, panoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
-		}
+		Renderer::Dispatch(commandBuffer, m_PanoramaToCubePass, { m_Resolution, m_Resolution, 6 });
 		m_PanoramaToCubePass->End(commandBuffer);
 	}
 
 	void EnvironmentMap::LoadPreetham(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		m_PreethamPass->Begin(commandBuffer);
-		if (m_PreethamPipeline->Bind(commandBuffer))
 		{
 			m_PreethamMaterial->Set("u_Turbidity", m_Turbidity);
 			m_PreethamMaterial->Set("u_Azimuth", m_Azimuth);
 			m_PreethamMaterial->Set("u_Inclination", m_Inclination);
 			m_PreethamMaterial->Bind(commandBuffer);
 
-			Renderer::Dispatch(commandBuffer, m_PreethamPipeline, { m_Resolution, m_Resolution, 6 }, m_PreethamMaterial);
+			Renderer::Dispatch(commandBuffer, m_PreethamPass, { m_Resolution, m_Resolution, 6 }, m_PreethamMaterial);
 		}
 		m_PreethamPass->End(commandBuffer);
 	}
@@ -219,30 +194,22 @@ namespace Athena
 			LoadPreetham(commandBuffer);
 
 		Renderer::BeginDebugRegion(commandBuffer, "EnvironmentBlitMipMap", { 0.6f, 0.4f, 0.2f, 1.f });
-		{
-			m_EnvironmentTexture->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
-		}
+		m_EnvironmentTexture->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
 		Renderer::EndDebugRegion(commandBuffer);
 
 
 		m_IrradiancePass->Begin(commandBuffer);
-		if (m_IrradiancePipeline->Bind(commandBuffer))
-		{
-			Renderer::Dispatch(commandBuffer, m_IrradiancePipeline, { m_IrradianceMapResolution, m_IrradianceMapResolution, 6 });
-		}
+		Renderer::Dispatch(commandBuffer, m_IrradiancePass, { m_IrradianceMapResolution, m_IrradianceMapResolution, 6 });
 		m_IrradiancePass->End(commandBuffer);
 
 
 		m_MipFilterPass->Begin(commandBuffer);
-		if (m_MipFilterPipeline->Bind(commandBuffer))
+		for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 		{
-			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
-			{
-				uint32 mipResolution = m_Resolution * Math::Pow(0.5f, (float)mip);
+			uint32 mipResolution = m_Resolution * Math::Pow(0.5f, (float)mip);
 
-				m_MipFilterMaterials[mip]->Bind(commandBuffer);
-				Renderer::Dispatch(commandBuffer, m_MipFilterPipeline, { mipResolution, mipResolution, 6 }, m_MipFilterMaterials[mip]);
-			}
+			m_MipFilterMaterials[mip]->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_MipFilterPass, { mipResolution, mipResolution, 6 }, m_MipFilterMaterials[mip]);
 		}
 		m_MipFilterPass->End(commandBuffer);
 

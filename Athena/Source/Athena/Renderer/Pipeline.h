@@ -50,7 +50,7 @@ namespace Athena
 		static Ref<Pipeline> Create(const PipelineCreateInfo& info);
 		virtual ~Pipeline() = default;
 		
-		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
 
 		void SetLineWidth(float width) { m_Info.LineWidth = width; }

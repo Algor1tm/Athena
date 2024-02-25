@@ -172,8 +172,10 @@ namespace Athena
 
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		if (!m_QuadDrawList.empty() && m_QuadPipeline->Bind(commandBuffer))
+		if (!m_QuadDrawList.empty())
 		{
+			m_QuadPipeline->Bind(commandBuffer);
+
 			Ref<Material> prevMaterial = m_QuadMaterials[m_QuadDrawList[0].VertexBufferIndex];
 			prevMaterial->Bind(commandBuffer);
 
@@ -192,8 +194,10 @@ namespace Athena
 			}
 		}
 
-		if (!m_CircleDrawList.empty() && m_CirclePipeline->Bind(commandBuffer))
+		if (!m_CircleDrawList.empty())
 		{
+			m_CirclePipeline->Bind(commandBuffer);
+
 			for (const auto& drawCall : m_CircleDrawList)
 			{
 				Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
@@ -201,8 +205,10 @@ namespace Athena
 			}
 		}
 
-		if (!m_LineDrawList.empty() && m_LinePipeline->Bind(commandBuffer))
+		if (!m_LineDrawList.empty())
 		{
+			m_LinePipeline->Bind(commandBuffer);
+
 			for (const auto& drawCall : m_LineDrawList)
 			{
 				Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];

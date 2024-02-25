@@ -5,7 +5,6 @@
 
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/ComputePass.h"
 
 
@@ -177,18 +176,12 @@ namespace Athena
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "BRDF_LUT_Pass";
-			passInfo.DebugColor = { 0.f, 0.f, 0.f, 1.f };
+			passInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
 
 			Ref<ComputePass> pass = ComputePass::Create(passInfo);
-			pass->SetOutput(s_Data.BRDF_LUT->GetImage());
-
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "BRDF_LUT_Pipeline";
-			pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
-			
-			Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
-			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
-			pipeline->Bake();
+			pass->SetOutput(s_Data.BRDF_LUT);
+			pass->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
+			pass->Bake();
 			
 			cmdBufferInfo.Name = "BRDF_LUT_Generation";
 			cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
@@ -198,10 +191,7 @@ namespace Athena
 			commandBuffer->Begin();
 			{
 				pass->Begin(commandBuffer);
-
-				if(pipeline->Bind(commandBuffer))
-					Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
-
+				Renderer::Dispatch(commandBuffer, pass, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
 				pass->End(commandBuffer);
 			}
 			commandBuffer->End();
@@ -284,9 +274,9 @@ namespace Athena
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.CubeVertexBuffer, material);
 	}
 
-	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
+	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePass>& pass, Vector3i imageSize, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
+		s_Data.RendererAPI->Dispatch(cmdBuffer, pass, imageSize, material);
 	}
 
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)

@@ -79,10 +79,10 @@ namespace Athena
 		CleanUp();
 	}
 
-	bool VulkanPipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
+	void VulkanPipeline::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		if (!m_Info.Shader->IsCompiled())
-			return false;
+			return;
 
 		Renderer::Submit([this, commandBuffer]()
 		{
@@ -95,8 +95,6 @@ namespace Athena
 			m_DescriptorSetManager.RT_InvalidateAndUpdate();
 			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 		});
-
-		return true;
 	}
 
 	void VulkanPipeline::SetViewport(uint32 width, uint32 height)

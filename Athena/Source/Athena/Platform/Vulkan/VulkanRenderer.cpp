@@ -8,7 +8,7 @@
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanIndexBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanComputePipeline.h"
+#include "Athena/Platform/Vulkan/VulkanComputePass.h"
 #include "Athena/Platform/Vulkan/VulkanPipeline.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
@@ -55,6 +55,9 @@ namespace Athena
 
 	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
 	{
+		if (!pipeline->GetInfo().Shader->IsCompiled())
+			return;
+
 		Renderer::Submit([commandBuffer, pipeline, vertexBuffer, material, vertexCount]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
@@ -87,16 +90,20 @@ namespace Athena
 		});
 	}
 
-	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
+	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePass>& pass, Vector3i imageSize, const Ref<Material>& material)
 	{
-		Renderer::Submit([commandBuffer, pipeline, imageSize, material]() 
+		if (!pass->GetInfo().Shader->IsCompiled())
+			return;
+
+		Renderer::Submit([commandBuffer, pass, imageSize, material]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			Ref<VulkanComputePass> vkPass = pass.As<VulkanComputePass>();
 
 			if (material)
-				pipeline.As<VulkanComputePipeline>()->RT_SetPushConstants(vkcmdBuffer, material);
+				vkPass->RT_SetPushConstants(vkcmdBuffer, material);
 
-			Vector3i workGroupSize = pipeline.As<VulkanComputePipeline>()->GetWorkGroupSize();
+			Vector3i workGroupSize = vkPass->GetWorkGroupSize();
 			uint32 groupCountX = Math::Ceil((float)imageSize.x / workGroupSize.x);
 			uint32 groupCountY = Math::Ceil((float)imageSize.y / workGroupSize.y);
 			uint32 groupCountZ = Math::Ceil((float)imageSize.z / workGroupSize.z);

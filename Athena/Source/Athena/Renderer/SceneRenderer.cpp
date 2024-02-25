@@ -420,16 +420,16 @@ namespace Athena
 		m_DirShadowMapPass->Begin(commandBuffer);
 
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
-		if (m_DirShadowMapStaticPipeline->Bind(commandBuffer))
 		{
+			m_DirShadowMapStaticPipeline->Bind(commandBuffer);
 			m_StaticGeometryList.FlushShadowPass(m_DirShadowMapStaticPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
 
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
-		if (m_DirShadowMapAnimPipeline->Bind(commandBuffer))
 		{
+			m_DirShadowMapAnimPipeline->Bind(commandBuffer);
 			m_AnimGeometryList.FlushShadowPass(m_DirShadowMapAnimPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
@@ -447,24 +447,24 @@ namespace Athena
 
 
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
-		if (m_StaticGeometryPipeline->Bind(commandBuffer))
 		{
+			m_StaticGeometryPipeline->Bind(commandBuffer);
 			m_StaticGeometryList.Flush(m_StaticGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 			
 
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
-		if (m_AnimGeometryPipeline->Bind(commandBuffer))
 		{
+			m_AnimGeometryPipeline->Bind(commandBuffer);
 			m_AnimGeometryList.Flush(m_AnimGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
 
 		Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
-		if (m_SkyboxPipeline->Bind(commandBuffer))
 		{
+			m_SkyboxPipeline->Bind(commandBuffer);
 			Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
@@ -480,12 +480,10 @@ namespace Athena
 
 		m_Profiler->BeginTimeQuery();
 		m_CompositePass->Begin(commandBuffer);
-
-		if (m_CompositePipeline->Bind(commandBuffer))
 		{
+			m_CompositePipeline->Bind(commandBuffer);
 			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
 		}
-
 		m_CompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}

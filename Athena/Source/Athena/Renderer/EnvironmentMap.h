@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/ComputePass.h"
-#include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
 
 
@@ -61,16 +60,11 @@ namespace Athena
 		FilePath m_FilePath;
 
 		Ref<ComputePass> m_PreethamPass;
-		Ref<ComputePipeline> m_PreethamPipeline;
 		Ref<Material> m_PreethamMaterial;
-
 		Ref<ComputePass> m_PanoramaToCubePass;
-
 		Ref<ComputePass> m_IrradiancePass;
-		Ref<ComputePipeline> m_IrradiancePipeline;
 
 		Ref<ComputePass> m_MipFilterPass;
-		Ref<ComputePipeline> m_MipFilterPipeline;
 		std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> m_MipFilterMaterials;
 	};
 }

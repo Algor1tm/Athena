@@ -434,7 +434,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		if (m_DirShadowMapStaticPipeline->Bind(commandBuffer))
 		{
-			m_StaticGeometryList.Flush(m_DirShadowMapStaticPipeline, false);
+			m_StaticGeometryList.Flush(m_DirShadowMapStaticPipeline, true);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -442,7 +442,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		if (m_DirShadowMapAnimPipeline->Bind(commandBuffer))
 		{
-			m_AnimGeometryList.Flush(m_DirShadowMapAnimPipeline, false);
+			m_AnimGeometryList.Flush(m_DirShadowMapAnimPipeline, true);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -502,12 +502,13 @@ namespace Athena
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}
 
-	void SceneRenderer::CalculateCascadeLightSpaces(DirectionalLight& light)
+	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)
 	{
 		float cameraNear = m_CameraData.NearClip;
 		float cameraFar = m_CameraData.FarClip;
 
-		const float splitWeight = m_Settings.ShadowSettings.CascadeSplit;
+		float splitWeight = m_Settings.ShadowSettings.CascadeSplit;
+		float cascadeNear = 0.f;
 
 		// Split cascades
 		for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
@@ -516,20 +517,23 @@ namespace Athena
 
 			float log = cameraNear * Math::Pow(cameraFar / cameraNear, percent);
 			float uniform = Math::Lerp(cameraNear, cameraFar, percent);
-			float split = Math::Lerp(uniform, log, splitWeight);
+			float cascadeFar = Math::Lerp(uniform, log, splitWeight);
 
-			m_ShadowsData.Cascades[i].SplitDepth = split;
+			m_ShadowsData.CascadePlanes[i].x = cascadeNear;
+			m_ShadowsData.CascadePlanes[i].y = cascadeFar;
+
+			cascadeNear = cascadeFar;
 		}
 
 		Matrix4 invCamera = Math::Inverse(m_CameraData.View * m_CameraData.Projection);
-
 		float lastSplit = 0.f;
 
 		// Build light space matrices
 		for (uint32 layer = 0; layer < ShaderDef::SHADOW_CASCADES_COUNT; ++layer)
 		{
+			float cascadeFar = m_ShadowsData.CascadePlanes[layer].y;
 			// convert to range (0, 1]
-			float split = (m_ShadowsData.Cascades[layer].SplitDepth - cameraNear) / (cameraFar - cameraNear);
+			float split = (cascadeFar - cameraNear) / (cameraFar - cameraNear);
 
 			std::array<Vector3, 8> frustumCorners = {
 				//Near face
@@ -599,10 +603,6 @@ namespace Athena
 			lightProjection[3] += roundOffset;
 
 			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
-			m_ShadowsData.DirLightView[layer] = lightView;
-
-			m_ShadowsData.Cascades[layer].Near = cameraNear * split;
-			m_ShadowsData.Cascades[layer].Far = cameraFar * split;
 
 			lastSplit = split;
 		}

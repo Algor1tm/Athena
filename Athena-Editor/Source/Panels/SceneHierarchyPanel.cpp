@@ -315,6 +315,10 @@ namespace Athena
 				DrawMaterialProperty(material, "u_RoughnessMap", "u_UseRoughnessMap", "u_Roughness");
 				DrawMaterialProperty(material, "u_MetalnessMap", "u_UseMetalnessMap", "u_Metalness");
 
+				bool castShadows = material->GetFlag(MaterialFlag::CAST_SHADOWS);
+				if(UI::PropertyCheckbox("Cast Shadows", &castShadows))
+					material->SetFlag(MaterialFlag::CAST_SHADOWS, castShadows);
+
 				UI::EndPropertyTable();
 				UI::TreePop();
 				ImGui::Spacing();

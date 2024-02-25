@@ -31,32 +31,23 @@ namespace Athena
 		});
 	}
 
-	void DrawList::Flush(const Ref<Pipeline>& pipeline, bool bindMaterials)
+	void DrawList::Flush(const Ref<Pipeline>& pipeline, bool shadowPass)
 	{
 		auto commandBuffer = Renderer::GetRenderCommandBuffer();
 
-		if (m_IsAnimated)
+		for (const auto& drawCall : m_Array)
 		{
-			for (const auto& drawCall : m_Array)
-			{
-				if (bindMaterials && UpdateMaterial(drawCall))
-					drawCall.Material->Bind(commandBuffer);
+			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+				continue;
 
-				drawCall.Material->Set("u_Transform", drawCall.Transform);
+			if (!shadowPass && UpdateMaterial(drawCall))
+				drawCall.Material->Bind(commandBuffer);
+
+			if(m_IsAnimated)
 				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
-				Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
-			}
-		}
-		else
-		{
-			for (const auto& drawCall : m_Array)
-			{
-				if (bindMaterials && UpdateMaterial(drawCall))
-					drawCall.Material->Bind(commandBuffer);
 
-				drawCall.Material->Set("u_Transform", drawCall.Transform);
-				Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
-			}
+			drawCall.Material->Set("u_Transform", drawCall.Transform);
+			Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
 		}
 
 		m_LastMaterial = nullptr;

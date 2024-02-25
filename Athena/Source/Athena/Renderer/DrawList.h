@@ -28,7 +28,7 @@ namespace Athena
 
 		void Push(const DrawCall& drawCall);
 		void Sort();
-		void Flush(const Ref<Pipeline>& pipeline, bool bindMaterials = true);
+		void Flush(const Ref<Pipeline>& pipeline, bool shadowPass = false);
 		void Clear();
 
 	private:

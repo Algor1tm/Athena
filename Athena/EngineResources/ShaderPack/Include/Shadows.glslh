@@ -1,7 +1,7 @@
 //////////////////////// Athena Shadows ////////////////////////
 
 // References:
-// https://github.com/TheMasonX/UnityPCSS/blob/master/Assets/PCSS/Shaders/PCSS.shader#L439
+// https://github.com/TheMasonX/UnityPCSS/blob/master/Assets/PCSS/Shaders/PCSS.shader
 // https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
 
 
@@ -9,6 +9,8 @@
 #define PCF_FILTER_SAMPLES 64
 
 #define BLEND_CASCADES
+#define DEBUG_BLEND_CASCADES
+
 //#define ROTATE_SAMPLE
 
 const vec2 PoissonDisk[64] = {
@@ -78,19 +80,11 @@ const vec2 PoissonDisk[64] = {
 	vec2(-0.4230408, -0.7129914),
 };
 
-struct Cascade
-{
-	float Near;
-	float Far;
-	float SplitDepth;	// 0 to 1 range
-	float _Padding;
-};
 
 layout(std140, set = 1, binding = 4) uniform u_ShadowsData
 {
-	mat4 u_DirLightView[SHADOW_CASCADES_COUNT];
 	mat4 u_DirLightViewProjection[SHADOW_CASCADES_COUNT];
-	Cascade u_Cascades[SHADOW_CASCADES_COUNT];
+	vec4 u_CascadePlanes[SHADOW_CASCADES_COUNT];	// stores only x and y (near and far)
 	float u_ShadowMaxDistance;
 	float u_MaxDistanceFadeOut;
     float u_CascadeBlendDistance;
@@ -151,7 +145,7 @@ int GetShadowCascade(float depthViewSpace)
     int cascade = SHADOW_CASCADES_COUNT;
     for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
     {
-        if(depthViewSpace < u_Cascades[i].SplitDepth)
+        if(depthViewSpace < u_CascadePlanes[i].y)
         {
             cascade = i;
             break;
@@ -269,6 +263,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, float random)
     //float penumbra = depth * depth - avgBlockerDepth * avgBlockerDepth;
 	float penumbra = depth - avgBlockerDepth;
 
+	//float filterRadiusUV = penumbra * lightSize;
     float filterRadiusUV = clamp(penumbra * lightSize, 0.005, 0.05);
 
     float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, rotationTrig);
@@ -321,10 +316,10 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
 
 #if defined(BLEND_CASCADES)
 
-    float lightNear = u_Cascades[cascade].Near;
-    float lightFar = u_Cascades[cascade].Far;
+    float near = u_CascadePlanes[cascade].x;
+    float far = u_CascadePlanes[cascade].y;
 
-    float alpha = (depthViewSpace - lightNear) / (lightFar - lightNear);
+    float alpha = (depthViewSpace - near) / (far - near);
 
     if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
     {
@@ -365,12 +360,12 @@ vec3 GetCascadeDebugColor(vec3 worldPos, mat4 cameraView)
 
     vec3 color = debugColors[cascade];
 
-#if defined(BLEND_CASCADES)
+#if defined(DEBUG_BLEND_CASCADES) && defined(BLEND_CASCADES)
 
-    float lightNear = u_Cascades[cascade].Near;
-    float lightFar = u_Cascades[cascade].Far;
+    float near = u_CascadePlanes[cascade].x;
+    float far = u_CascadePlanes[cascade].y;
 
-    float alpha = (depthViewSpace - lightNear) / (lightFar - lightNear);
+    float alpha = (depthViewSpace - near) / (far - near);
 
     if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
     {

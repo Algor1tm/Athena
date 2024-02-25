@@ -35,6 +35,8 @@ namespace Athena
 		: m_Shader(shader), m_Name(name), m_BufferMembers(&shader->GetMetaData().PushConstant.Members)
 	{
 		memset(m_Buffer, 0, sizeof(m_Buffer));
+
+		m_Flags[MaterialFlag::CAST_SHADOWS] = true;
 	}
 
 	Material::~Material()

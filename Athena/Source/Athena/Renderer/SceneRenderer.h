@@ -98,19 +98,10 @@ namespace Athena
 		uint32 PointLightCount = 0;
 	};
 
-	struct Cascade
-	{
-		float Near;
-		float Far;
-		float SplitDepth;	// 0 to 1 range
-		float _Padding;
-	};
-
 	struct ShadowsData
 	{
-		Matrix4 DirLightView[ShaderDef::SHADOW_CASCADES_COUNT];
 		Matrix4 DirLightViewProjection[ShaderDef::SHADOW_CASCADES_COUNT];
-		Cascade Cascades[ShaderDef::SHADOW_CASCADES_COUNT];
+		Vector4 CascadePlanes[ShaderDef::SHADOW_CASCADES_COUNT];
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
 		float CascadeBlendDistance = 0.5f;
@@ -170,7 +161,7 @@ namespace Athena
 		void GeometryPass();
 		void SceneCompositePass();
 
-		void CalculateCascadeLightSpaces(DirectionalLight& light);
+		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;

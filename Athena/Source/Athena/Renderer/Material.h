@@ -11,6 +11,11 @@
 
 namespace Athena
 {
+	enum class MaterialFlag
+	{
+		CAST_SHADOWS = 1
+	};
+
 	class ATHENA_API Material : public RefCounted
 	{
 	public:
@@ -29,6 +34,9 @@ namespace Athena
 
 		template <typename T>
 		T Get(const String& name);
+
+		bool GetFlag(MaterialFlag flag) const { return m_Flags.at(flag); }
+		void SetFlag(MaterialFlag flag, bool value) { m_Flags.at(flag) = value; }
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		const byte* RT_GetPushConstantData() const { return m_Buffer; }
@@ -50,6 +58,7 @@ namespace Athena
 		String m_Name;
 		byte m_Buffer[128];
 		const std::unordered_map<String, StructMemberShaderMetaData>* m_BufferMembers;
+		std::unordered_map<MaterialFlag, bool> m_Flags;
 	};
 
 	template <>

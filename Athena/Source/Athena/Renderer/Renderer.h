@@ -82,7 +82,7 @@ namespace Athena
 		Vector3 Tangent;
 		Vector3 Bitangent;
 
-		static VertexBufferLayout GetLayout()
+		static VertexLayout GetLayout()
 		{
 			return { 
 				{ ShaderDataType::Float3, "a_Position"  }, 
@@ -103,7 +103,7 @@ namespace Athena
 		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 
-		static VertexBufferLayout GetLayout()
+		static VertexLayout GetLayout()
 		{
 			return {
 				{ ShaderDataType::Float3, "a_Position"  },

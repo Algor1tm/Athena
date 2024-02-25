@@ -31,19 +31,35 @@ namespace Athena
 		});
 	}
 
-	void DrawList::Flush(const Ref<Pipeline>& pipeline, bool shadowPass)
+	void DrawList::Flush(const Ref<Pipeline>& pipeline)
 	{
 		auto commandBuffer = Renderer::GetRenderCommandBuffer();
 
 		for (const auto& drawCall : m_Array)
 		{
-			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
-				continue;
-
-			if (!shadowPass && UpdateMaterial(drawCall))
+			if (UpdateMaterial(drawCall))
 				drawCall.Material->Bind(commandBuffer);
 
 			if(m_IsAnimated)
+				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
+
+			drawCall.Material->Set("u_Transform", drawCall.Transform);
+			Renderer::RenderGeometry(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material);
+		}
+
+		m_LastMaterial = nullptr;
+	}
+
+	void DrawList::FlushShadowPass(const Ref<Pipeline>& pipeline)
+	{
+		auto commandBuffer = Renderer::GetRenderCommandBuffer();
+
+		for (const auto& drawCall : m_Array)
+		{
+			if (!drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+				continue;
+
+			if (m_IsAnimated)
 				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
 
 			drawCall.Material->Set("u_Transform", drawCall.Transform);

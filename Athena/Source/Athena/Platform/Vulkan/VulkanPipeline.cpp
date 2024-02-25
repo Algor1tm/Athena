@@ -157,7 +157,7 @@ namespace Athena
 
 		Renderer::Submit([this]()
 		{
-			const VertexBufferLayout& vertexLayout = m_Info.VertexLayout;
+			const VertexLayout& vertexLayout = m_Info.VertexLayout;
 
 			VkVertexInputBindingDescription bindingDescription = {};
 			bindingDescription.binding = 0;

@@ -346,8 +346,8 @@ namespace Athena
 			ImGui::SameLine();
 			                                                                          
 			bool useTexture = mat->Get<uint32>(useTexName);
-			ImGui::Checkbox("Use", &useTexture);
-			mat->Set(useTexName, (uint32)useTexture);
+			if(ImGui::Checkbox("Use", &useTexture))
+				mat->Set(useTexName, (uint32)useTexture);
 			
 			if (!uniformName.empty())
 			{
@@ -355,19 +355,19 @@ namespace Athena
 				if (uniformName == "u_Albedo")
 				{
 					Vector4 albedo = mat->Get<Vector4>(uniformName);
-					ImGui::ColorEdit4(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs);
-					mat->Set(uniformName, albedo);
+					if(ImGui::ColorEdit4(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs))
+						mat->Set(uniformName, albedo);
 
 					float emission = mat->Get<float>("u_Emission");
-					ImGui::DragFloat("u_Emission", &emission);
-					mat->Set("u_Emission", emission);
+					if(ImGui::DragFloat("u_Emission", &emission))
+						mat->Set("u_Emission", emission);
 				}
 				else
 				{
 					float uniform = mat->Get<float>(uniformName);
 					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-					ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f);
-					mat->Set(uniformName, uniform);
+					if(ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f))
+						mat->Set(uniformName, uniform);
 				}
 			}
 		}

@@ -92,13 +92,8 @@ namespace Athena
 			m_DirShadowMapStaticPipeline->Bake();
 
 			pipelineInfo.Name = "DirShadowMapAnim";
-			pipelineInfo.RenderPass = m_DirShadowMapPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Anim");
 			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::FRONT;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
-			pipelineInfo.BlendEnable = false;
 
 			m_DirShadowMapAnimPipeline = Pipeline::Create(pipelineInfo);
 			m_DirShadowMapAnimPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
@@ -153,13 +148,8 @@ namespace Athena
 
 
 			pipelineInfo.Name = "AnimGeometryPipeline";
-			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Anim");
 			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
-			pipelineInfo.BlendEnable = true;
 
 			m_AnimGeometryPipeline = Pipeline::Create(pipelineInfo);
 
@@ -167,6 +157,9 @@ namespace Athena
 			m_AnimGeometryPipeline->SetInput("u_LightData", m_LightSBO);
 			m_AnimGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_AnimGeometryPipeline->SetInput("u_BonesData", m_BonesSBO);
+			m_AnimGeometryPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
+			m_AnimGeometryPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
+			m_AnimGeometryPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
 			m_AnimGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
 			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
@@ -174,13 +167,8 @@ namespace Athena
 
 
 			pipelineInfo.Name = "SkyboxPipeline";
-			pipelineInfo.RenderPass = m_GeometryPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
-			pipelineInfo.VertexLayout = { 
-				{ ShaderDataType::Float3, "a_Position" } };
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.VertexLayout = { { ShaderDataType::Float3, "a_Position" } };
 			pipelineInfo.BlendEnable = false;
 
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
@@ -434,7 +422,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		if (m_DirShadowMapStaticPipeline->Bind(commandBuffer))
 		{
-			m_StaticGeometryList.Flush(m_DirShadowMapStaticPipeline, true);
+			m_StaticGeometryList.FlushShadowPass(m_DirShadowMapStaticPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -442,7 +430,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		if (m_DirShadowMapAnimPipeline->Bind(commandBuffer))
 		{
-			m_AnimGeometryList.Flush(m_DirShadowMapAnimPipeline, true);
+			m_AnimGeometryList.FlushShadowPass(m_DirShadowMapAnimPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 

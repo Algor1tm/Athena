@@ -22,12 +22,26 @@ namespace Athena
 
 	VulkanShader::~VulkanShader()
 	{
-		CleanUp();
+		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules, setLayouts = m_DescriptorSetLayouts, pipelineLayout = m_PipelineLayout]()
+		{
+			for (const auto& [stage, src] : shaderModules)
+				vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), nullptr);
+
+			for (const auto& setLayout : setLayouts)
+				vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
+
+			if (pipelineLayout)
+				vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
+		});
+
+		m_PipelineShaderStages.clear();
+		m_DescriptorSetLayouts.clear();
+		m_VulkanShaderModules.clear();
+		m_PipelineLayout = VK_NULL_HANDLE;
 	}
 
 	void VulkanShader::Reload()
 	{
-		CleanUp();
 		CompileOrGetFromCache(true);
 
 		for (const auto& [_, callback] : m_OnReloadCallbacks)
@@ -43,6 +57,22 @@ namespace Athena
 
 	void VulkanShader::CompileOrGetFromCache(bool forceCompile)
 	{
+		// TODO: For now hot reloading does not affect any shader resources information, such as: 
+		// descriptor set layouts and pipeline layout (how would we add new resources or delete old resources in materials and pipelines?)
+
+		if (!m_VulkanShaderModules.empty())
+		{
+			Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules]()
+			{
+				for (const auto& [stage, src] : shaderModules)
+					vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), nullptr);
+			});
+
+			m_PipelineShaderStages.clear();
+			m_VulkanShaderModules.clear();
+		}
+
+
 		ShaderCompiler compiler(m_FilePath, m_Name);
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
 
@@ -51,6 +81,9 @@ namespace Athena
 
 		m_MetaData = compiler.Reflect();
 		CreateVulkanShaderModulesAndStages(compiler);
+
+		if (m_PipelineLayout)
+			return;
 
 		struct DescriptorSetLayoutStatistics
 		{
@@ -235,25 +268,5 @@ namespace Athena
 
 			m_PipelineShaderStages.push_back(shaderStageInfo);
 		}
-	}
-
-	void VulkanShader::CleanUp()
-	{
-		Renderer::SubmitResourceFree([shaderModules = m_VulkanShaderModules, setLayouts = m_DescriptorSetLayouts, pipelineLayout = m_PipelineLayout]()
-		{
-			for (const auto& [stage, src] : shaderModules)
-				vkDestroyShaderModule(VulkanContext::GetLogicalDevice(), shaderModules.at(stage), nullptr);
-
-			for(const auto& setLayout : setLayouts)
-				vkDestroyDescriptorSetLayout(VulkanContext::GetLogicalDevice(), setLayout, nullptr);
-
-			if(pipelineLayout)
-				vkDestroyPipelineLayout(VulkanContext::GetLogicalDevice(), pipelineLayout, nullptr);
-		});
-
-		m_PipelineShaderStages.clear();
-		m_DescriptorSetLayouts.clear();
-		m_VulkanShaderModules.clear();
-		m_PipelineLayout = VK_NULL_HANDLE;
 	}
 }

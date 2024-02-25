@@ -51,3 +51,14 @@ layout(std430, set = 1, binding = 3) readonly buffer u_BonesData
 {
     mat4 g_Bones[MAX_NUM_BONES_PER_MESH * MAX_NUM_ANIMATED_MESHES];
 };
+
+mat4 GetBonesTransform(uint bonesOffset, ivec4 boneIDs, vec4 weights)
+{
+    mat4 bonesTransform = g_Bones[bonesOffset + boneIDs[0]] * weights[0];
+    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
+    {
+        bonesTransform += g_Bones[bonesOffset + boneIDs[i]] * weights[i];
+    }
+
+    return bonesTransform;
+}

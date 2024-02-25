@@ -7,6 +7,9 @@
 
 #include <vulkan/vulkan.h>
 
+
+#define VULKAN_MIN_SUPPORTED_VERSION VK_MAKE_API_VERSION(0, 1, 3, 0)
+
 #define VULKAN_MAX_DEBUG_NAME_LENGTH 30
 
 #ifdef ATN_DEBUG

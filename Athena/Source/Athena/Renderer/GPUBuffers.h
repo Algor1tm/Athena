@@ -55,15 +55,15 @@ namespace Athena
 	}
 
 
-	struct VertexBufferElement
+	struct VertexElement
 	{
 		String Name;
 		ShaderDataType Type;
 		uint32 Size;
 		uint32 Offset;
 
-		VertexBufferElement() = default;
-		VertexBufferElement(ShaderDataType type, const String& name)
+		VertexElement() = default;
+		VertexElement(ShaderDataType type, const String& name)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0) {}
 
 		uint32 GetComponentCount() const
@@ -89,22 +89,22 @@ namespace Athena
 	};
 
 
-	class ATHENA_API VertexBufferLayout
+	class ATHENA_API VertexLayout
 	{
 	public:
-		using iterator = std::vector<VertexBufferElement>::iterator;
-		using const_iterator = std::vector<VertexBufferElement>::const_iterator;
+		using iterator = std::vector<VertexElement>::iterator;
+		using const_iterator = std::vector<VertexElement>::const_iterator;
 
 	public:
-		VertexBufferLayout() = default;
+		VertexLayout() = default;
 
-		VertexBufferLayout(const std::initializer_list<VertexBufferElement>& elements)
+		VertexLayout(const std::initializer_list<VertexElement>& elements)
 			: m_Elements(elements)
 		{
 			CalculateOffsetsAndStride();
 		}
 
-		VertexBufferLayout(const std::vector<VertexBufferElement>& elements)
+		VertexLayout(const std::vector<VertexElement>& elements)
 			: m_Elements(elements) 
 		{
 			CalculateOffsetsAndStride();
@@ -112,7 +112,7 @@ namespace Athena
 
 		uint32 GetStride() const { return m_Stride; }
 
-		const std::vector<VertexBufferElement>& GetElements() const { return m_Elements; }
+		const std::vector<VertexElement>& GetElements() const { return m_Elements; }
 		uint32 GetElementsNum() const { return m_Elements.size(); }
 
 		iterator	   begin()	     { return m_Elements.begin(); }
@@ -133,7 +133,7 @@ namespace Athena
 		}
 
 	private:
-		std::vector<VertexBufferElement> m_Elements;
+		std::vector<VertexElement> m_Elements;
 		uint32 m_Stride = 0;
 	};
 
@@ -147,9 +147,9 @@ namespace Athena
 	struct IndexBufferCreateInfo
 	{
 		String Name;
-		const void* Data;
-		uint32 Count;
-		BufferUsage Usage;
+		const void* Data = nullptr;
+		uint32 Count = 0;
+		BufferUsage Usage = BufferUsage::STATIC;
 	};
 
 	class ATHENA_API IndexBuffer : public RefCounted
@@ -170,10 +170,10 @@ namespace Athena
 	struct VertexBufferCreateInfo
 	{
 		String Name;
-		const void* Data;
-		uint64 Size;
+		const void* Data = nullptr;
+		uint64 Size = 0;
 		Ref<IndexBuffer> IndexBuffer;
-		BufferUsage Usage;
+		BufferUsage Usage = BufferUsage::STATIC;
 	};
 
 	class ATHENA_API VertexBuffer : public RefCounted
@@ -185,6 +185,7 @@ namespace Athena
 		virtual void SetData(const void* data, uint64 size, uint64 offset = 0) = 0;
 
 		uint64 GetSize() const { return m_Info.Size; }
+
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
 

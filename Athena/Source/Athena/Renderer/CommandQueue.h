@@ -35,8 +35,6 @@ namespace Athena
 				return sizeof(FuncT);
 			};
 
-			// Element size = sizeof(CommandFn) + sizeof(FuncT)
-
 			new(m_BufferEnd) CommandFn(commandFn);
 			m_BufferEnd = (void*)((uint64)m_BufferEnd + sizeof(CommandFn));
 

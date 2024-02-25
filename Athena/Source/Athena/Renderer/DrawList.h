@@ -28,7 +28,10 @@ namespace Athena
 
 		void Push(const DrawCall& drawCall);
 		void Sort();
-		void Flush(const Ref<Pipeline>& pipeline, bool shadowPass = false);
+
+		void Flush(const Ref<Pipeline>& pipeline);
+		void FlushShadowPass(const Ref<Pipeline>& pipeline);
+
 		void Clear();
 
 	private:

@@ -23,14 +23,7 @@ layout(push_constant) uniform MaterialData
 
 void main()
 {
-    mat4 bonesTransform = g_Bones[u_BonesOffset + a_BoneIDs[0]] * a_Weights[0];
-    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
-    {
-        bonesTransform += g_Bones[u_BonesOffset + a_BoneIDs[i]] * a_Weights[i];
-    }
-
-    mat4 transform = u_Transform * bonesTransform;
-
+    mat4 transform = u_Transform * GetBonesTransform(u_BonesOffset, a_BoneIDs, a_Weights);
     gl_Position = transform * vec4(a_Position, 1.0);
 }
 

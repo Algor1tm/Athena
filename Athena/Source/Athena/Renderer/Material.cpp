@@ -92,6 +92,18 @@ namespace Athena
 		});
 	}
 
+	void Material::Set(const String& name, int32 value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Int, &offset))
+			return;
+
+		Renderer::Submit([this, offset, value]()
+		{
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
+		});
+	}
+
 	bool Material::GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset)
 	{
 		if (!m_BufferMembers->contains(name))

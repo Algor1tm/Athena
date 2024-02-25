@@ -27,7 +27,6 @@ namespace Athena
 	private:
 		void CompileOrGetFromCache(bool forceCompile);
 		void CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler);
-		void CleanUp();
 
 	private:
 		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;

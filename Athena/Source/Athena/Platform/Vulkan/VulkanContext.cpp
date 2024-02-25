@@ -10,6 +10,38 @@ namespace Athena
 
 	namespace Utils
 	{
+		static bool CheckMinSupportedVersion(uint32 variant, uint32 major, uint32 minor, uint32 patch)
+		{
+			const uint32 minVariant = VK_API_VERSION_VARIANT(VULKAN_MIN_SUPPORTED_VERSION);
+			const uint32 minMajor = VK_API_VERSION_MAJOR(VULKAN_MIN_SUPPORTED_VERSION);
+			const uint32 minMinor = VK_API_VERSION_MINOR(VULKAN_MIN_SUPPORTED_VERSION);
+			const uint32 minPatch = VK_API_VERSION_PATCH(VULKAN_MIN_SUPPORTED_VERSION);
+
+			ATN_CORE_INFO_TAG("Vulkan", "Min supported version: {}.{}.{}.{}", minVariant, minMajor, minMinor, minPatch);
+
+			if (variant > minVariant)
+				return true;
+			else if (variant < minVariant)
+				return false;
+
+			if (major > minMajor)
+				return true;
+			else if (major < minMajor)
+				return false;
+
+			if (minor > minMinor)
+				return true;
+			else if (minor < minMinor)
+				return false;
+
+			if (patch > minPatch)
+				return true;
+			else if (patch < minPatch)
+				return false;
+
+			return true;
+		}
+
 		static bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
 		{
 			uint32 supportedExtensionCount = 0;
@@ -136,12 +168,18 @@ namespace Athena
 
 			ATN_CORE_INFO_TAG("Vulkan", "Version: {}.{}.{}.{}", variant, major, minor, patch);
 
+			if (!Utils::CheckMinSupportedVersion(variant, major, minor, patch))
+			{
+				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version is unsupported!");
+				ATN_CORE_VERIFY(false);
+			}
+
 			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			appInfo.pNext = nullptr;
 			appInfo.pApplicationName = Application::Get().GetConfig().Name.c_str();
 			appInfo.pEngineName = "Athena";
-			appInfo.apiVersion = version;
+			appInfo.apiVersion = VULKAN_MIN_SUPPORTED_VERSION;
 
 			// Select Extensions
 			// Note: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions

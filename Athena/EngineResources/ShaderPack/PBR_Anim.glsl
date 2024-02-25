@@ -43,13 +43,7 @@ layout(push_constant) uniform MaterialData
 
 void main()
 {
-    mat4 bonesTransform = g_Bones[u_BonesOffset + a_BoneIDs[0]] * a_Weights[0];
-    for(int i = 1; i < MAX_NUM_BONES_PER_VERTEX; ++i)
-    {
-        bonesTransform += g_Bones[u_BonesOffset + a_BoneIDs[i]] * a_Weights[i];
-    }
-
-    mat4 transform = u_Transform * bonesTransform;
+    mat4 transform = u_Transform * GetBonesTransform(u_BonesOffset, a_BoneIDs, a_Weights);
 
     vec4 worldPos = transform * vec4(a_Position, 1.0);
     gl_Position = u_Camera.ViewProjection * worldPos;
@@ -71,7 +65,7 @@ void main()
 
 #include "Include/Buffers.glslh"
 #include "Include/Common.glslh"
-
+#include "Include/Shadows.glslh"
 
 struct VertexInterpolators
 {
@@ -107,9 +101,9 @@ layout(set = 0, binding = 1) uniform sampler2D u_NormalMap;
 layout(set = 0, binding = 2) uniform sampler2D u_RoughnessMap;
 layout(set = 0, binding = 3) uniform sampler2D u_MetalnessMap;
 
-layout(set = 1, binding = 4) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 5) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 6) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 5) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 6) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 7) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -138,17 +132,14 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }
 
-vec3 ComputeDirectionalLightRadiance(int index)
+vec3 ComputeDirectionalLightRadiance(DirectionalLight light)
 {
-    DirectionalLight light = g_DirectionalLights[index];
     vec3 radiance = light.Color.rgb * light.Intensity;
     return radiance;
 }
 
-vec3 ComputePointLightRadiance(int index, vec3 worldPos)
+vec3 ComputePointLightRadiance(PointLight light, vec3 worldPos)
 {
-    PointLight light = g_PointLights[index];
-    
     float dist = length(worldPos - light.Position);
     float attenuationFactor = dist / light.Radius;
 
@@ -209,29 +200,43 @@ void main()
     float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Interpolators.TexCoords).r : u_Metalness;
     
     // Compute lightning from all light sources
-    vec3 viewDir = normalize(u_Camera.Position.xyz - Interpolators.WorldPos);
+    vec3 viewDir = normalize(u_Camera.Position - Interpolators.WorldPos);
+    float distanceFromCamera = distance(u_Camera.Position, Interpolators.WorldPos);
     vec3 totalIrradiance = vec3(0.0);
     
     for (int i = 0; i < g_DirectionalLightCount; ++i)
     {
-        vec3 dir = normalize(g_DirectionalLights[i].Direction);
-        vec3 radiance = ComputeDirectionalLightRadiance(i);
+        DirectionalLight light = g_DirectionalLights[i];
+        vec3 dir = light.Direction;
+        vec3 radiance = ComputeDirectionalLightRadiance(light);
         
-        totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
+        float shadow = 0.0;
+        if(bool(light.CastShadows))
+            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, Interpolators.WorldPos, distanceFromCamera, u_Camera.View);
+        
+        if(shadow < 1.0)
+            totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
     for (int j = 0; j < g_PointLightCount; ++j)
     {
-        vec3 dir = normalize(Interpolators.WorldPos - g_PointLights[j].Position);
-        vec3 radiance = ComputePointLightRadiance(j, Interpolators.WorldPos);
+        PointLight light = g_PointLights[j];
+        vec3 dir = normalize(Interpolators.WorldPos - light.Position);
+        vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
         
         totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
+
     vec3 emission = albedo.rgb * u_Emission;
-    
     vec3 hdrColor = totalIrradiance + ambient + emission;
     
+    if(bool(u_Renderer.DebugShadowCascades))
+    {
+        vec3 cascadeDebugColor = GetCascadeDebugColor(Interpolators.WorldPos, u_Camera.View);
+        hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.3);
+    }
+
     o_Color = vec4(hdrColor, albedo.a);
 }

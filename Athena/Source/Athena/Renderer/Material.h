@@ -28,6 +28,7 @@ namespace Athena
 		void Set(const String& name, const Vector4& value);
 		void Set(const String& name, float value);
 		void Set(const String& name, uint32 value);
+		void Set(const String& name, int32 value);
 
 		virtual void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0) = 0;
 		virtual void Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip) = 0;

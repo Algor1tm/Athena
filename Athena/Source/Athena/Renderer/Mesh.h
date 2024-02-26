@@ -18,8 +18,6 @@ namespace Athena
 {
 	struct SubMesh
 	{
-		~SubMesh();
-
 		String Name;
 		Ref<VertexBuffer> VertexBuffer;
 		Ref<Material> Material;

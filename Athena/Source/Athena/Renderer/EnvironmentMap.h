@@ -61,6 +61,7 @@ namespace Athena
 
 		Ref<ComputePass> m_PreethamPass;
 		Ref<Material> m_PreethamMaterial;
+
 		Ref<ComputePass> m_PanoramaToCubePass;
 		Ref<ComputePass> m_IrradiancePass;
 

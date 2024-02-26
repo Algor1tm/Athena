@@ -155,4 +155,18 @@ namespace Athena
 	{
 		return m_Materials.contains(name);
 	}
+
+	void MaterialTable::Invalidate()
+	{
+		std::vector<String> removeList;
+
+		for (const auto& [name, material] : m_Materials)
+		{
+			if (material->GetCount() == 1)
+				removeList.push_back(name);
+		}
+
+		for (const auto& name : removeList)
+			m_Materials.erase(name);
+	}
 }

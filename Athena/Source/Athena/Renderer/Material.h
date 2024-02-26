@@ -118,6 +118,8 @@ namespace Athena
 
 		bool Exists(const String& name) const;
 
+		void Invalidate();
+
 	private:
 		std::unordered_map<String, Ref<Material>> m_Materials;
 	};

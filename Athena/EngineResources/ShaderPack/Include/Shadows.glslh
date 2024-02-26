@@ -5,13 +5,8 @@
 // https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
 
 
-#define BLOCKER_SEARCH_SAMPLES 64
-#define PCF_FILTER_SAMPLES 64
-
 #define BLEND_CASCADES
 #define DEBUG_BLEND_CASCADES
-
-//#define ROTATE_SAMPLE
 
 const vec2 PoissonDisk[64] = {
 	vec2(0.0617981, 0.07294159),
@@ -122,18 +117,6 @@ float GetBias(vec3 normal, vec3 lightDir, int cascade)
     return max(0.0001 * (1.0 - dot(normal, lightDir)), 0.0001);
 }
 
-float ValueNoise(vec3 pos)
-{
-	vec3 Noise_skew = pos + 0.2127 + pos.x * pos.y * pos.z * 0.3713;
-	vec3 Noise_rnd = 4.789 * sin(489.123 * (Noise_skew));
-	return fract(Noise_rnd.x * Noise_rnd.y * Noise_rnd.z * (1.0 + Noise_skew.x));
-}
-
-vec2 Rotate(vec2 pos, vec2 rotationTrig)
-{
-	return vec2(pos.x * rotationTrig.x - pos.y * rotationTrig.y, pos.y * rotationTrig.x + pos.x * rotationTrig.y);
-}
-
 /*
 =========================================================================================================================================
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++   Cascades    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -168,15 +151,27 @@ float GetCascadeScale(int cascade)
     float scale = 1.0;
     switch(cascade)
     {
-    case 0: scale = 1.0;
-    case 1: scale = 2.0;
-    case 2: scale = 4.0;
-    case 3: scale = 8.0;
+    case 0: scale = 8.0; break;
+    case 1: scale = 8.0; break;
+    case 2: scale = 8.0; break;
+    case 3: scale = 8.0; break;
     }
     
    return 1.0 / scale;
 }
 
+int GetCascadeSamples(int cascade)
+{
+	switch(cascade)
+	{
+	case 0: return 64;
+	case 1: return 32;
+	case 2: return 32;
+	case 3: return 16;
+	}
+
+	return 32;
+}
 
 /*
 =========================================================================================================================================
@@ -189,18 +184,14 @@ float PenumbraSize(float zReceiver, float zBlocker)
     return (zReceiver - zBlocker) / zBlocker;
 }
 
-vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, vec2 rotationTrig)
+vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, int samples)
 {
 	float numBlockers = 0.0;
 	float blockerSum = 0.0;
 
-	for(int i = 0; i < BLOCKER_SEARCH_SAMPLES; ++i)
+	for(int i = 0; i < samples; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * searchSize * scale;
-
-#if defined(ROTATE_SAMPLE)
-		offset = Rotate(offset, rotationTrig);
-#endif
 		float shadowMapDepth = SampleShadowMapDepth(uv + offset, cascade);
 
 		if(shadowMapDepth < depth)
@@ -215,49 +206,44 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scal
 	return vec2(avgBlockerDepth, numBlockers);
 }
 
-float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, vec2 rotationTrig)
+float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, int samples)
 {
 	float sum = 0.0;
 
-	for(int i = 0; i < PCF_FILTER_SAMPLES; ++i)
+	for(int i = 0; i < samples; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * filterRadiusUV * scale;
-
-#if defined(ROTATE_SAMPLE)
-		offset = Rotate(offset, rotationTrig);
-#endif
-
 		float value = SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
 
 		sum += value;
 	}
 
-	sum /= PCF_FILTER_SAMPLES;
+	sum /= samples;
 	return sum;
 }
 
-float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, float random)
+float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
 {
     vec2 uv = shadowCoords.xy;
     float depth = shadowCoords.z;
     float scale = GetCascadeScale(cascade);
 
-	float rotationAngle = random * 3.1415926;
-	vec2 rotationTrig = vec2(cos(rotationAngle), sin(rotationAngle));
+	int samples = GetCascadeSamples(cascade);
 
     // STEP 1: blocker search
     float searchSize = lightSize * clamp(depth - 0.02, 0.0, 1.0) / depth;
-    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, rotationTrig);
+    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, samples);
 
     int numBlockers = int(blockerInfo.y);
     float avgBlockerDepth = blockerInfo.x;
 
-    if(numBlockers < 1)
-    {
-        //There are no occluders so early out (this saves filtering)
+    // There are no occluders so early out
+    if(numBlockers == 0)
         return 1.0;
-    }
 
+	// Do not perform filtering if full shadowed
+	if(numBlockers == samples)
+		return 0.0;
 
     // STEP 2: penumbra size
     //float penumbra = depth * depth - avgBlockerDepth * avgBlockerDepth;
@@ -266,7 +252,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, float random)
 	//float filterRadiusUV = penumbra * lightSize;
     float filterRadiusUV = clamp(penumbra * lightSize, 0.005, 0.05);
 
-    float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, rotationTrig);
+    float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, samples);
     return shadow;
 }
 
@@ -282,11 +268,11 @@ float ShadowHard(vec3 shadowCoords, int cascade)
     return SampleShadowMapCompare(shadowCoords, cascade);
 }
 
-float Shadow(vec3 shadowCoords, int cascade, float lightSize, float random)
+float Shadow(vec3 shadowCoords, int cascade, float lightSize)
 {
 	if(bool(u_SoftShadows))
 	{
-		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize, random);
+		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize);
 	}
 	
 	return 1.0 - ShadowHard(shadowCoords, cascade);
@@ -304,15 +290,13 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
     int cascade = GetShadowCascade(depthViewSpace);
     vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
 
-	float random = ValueNoise(worldPos.xyz);
-
 	//float bias = GetBias(normal, lightDir, cascade);
 	//shadowCoords.z -= bias;
 
     if(shadowCoords.z > 1.0) 
 		return 0.0;
 
-	float shadow = Shadow(shadowCoords, cascade, lightSize, random);
+	float shadow = Shadow(shadowCoords, cascade, lightSize);
 
 #if defined(BLEND_CASCADES)
 
@@ -329,7 +313,7 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
         int nextCascade = cascade + 1;
         shadowCoords = GetShadowCoords(worldPos, nextCascade);
 
-        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize, random);
+        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize);
 
         shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));
     }

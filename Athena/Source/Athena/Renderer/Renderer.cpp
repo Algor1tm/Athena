@@ -238,6 +238,8 @@ namespace Athena
 			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
 
+		s_Data.MaterialTable->Invalidate();
+
 		s_Data.RendererAPI->OnUpdate();
 		s_Data.RenderCommandBuffer->Begin();
 	}

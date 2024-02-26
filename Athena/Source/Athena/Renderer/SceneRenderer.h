@@ -45,7 +45,7 @@ namespace Athena
 		float FadeOut = 15.f;
 		float CascadeBlendDistance = 0.5f;
 		float CascadeSplit = 0.91f;
-		float NearPlaneOffset = -15.f;
+		float NearPlaneOffset = -70.f;
 		float FarPlaneOffset = 15.f;
 	};
 

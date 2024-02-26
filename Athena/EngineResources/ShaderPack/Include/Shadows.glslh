@@ -160,17 +160,30 @@ float GetCascadeScale(int cascade)
    return 1.0 / scale;
 }
 
-int GetCascadeSamples(int cascade)
+int GetCascadeBlockerSamples(int cascade)
+{
+	switch(cascade)
+	{
+	case 0: return 32;
+	case 1: return 32;
+	case 2: return 16;
+	case 3: return 16;
+	}
+
+	return 16;
+}
+
+int GetCascadeFilterSamples(int cascade)
 {
 	switch(cascade)
 	{
 	case 0: return 64;
 	case 1: return 32;
-	case 2: return 32;
+	case 2: return 16;
 	case 3: return 16;
 	}
 
-	return 32;
+	return 16;
 }
 
 /*
@@ -184,12 +197,12 @@ float PenumbraSize(float zReceiver, float zBlocker)
     return (zReceiver - zBlocker) / zBlocker;
 }
 
-vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, int samples)
+vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, int numSamples)
 {
 	float numBlockers = 0.0;
 	float blockerSum = 0.0;
 
-	for(int i = 0; i < samples; ++i)
+	for(int i = 0; i < numSamples; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * searchSize * scale;
 		float shadowMapDepth = SampleShadowMapDepth(uv + offset, cascade);
@@ -206,11 +219,11 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scal
 	return vec2(avgBlockerDepth, numBlockers);
 }
 
-float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, int samples)
+float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, int numSamples)
 {
 	float sum = 0.0;
 
-	for(int i = 0; i < samples; ++i)
+	for(int i = 0; i < numSamples; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * filterRadiusUV * scale;
 		float value = SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
@@ -218,7 +231,7 @@ float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float 
 		sum += value;
 	}
 
-	sum /= samples;
+	sum /= numSamples;
 	return sum;
 }
 
@@ -228,11 +241,11 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
     float depth = shadowCoords.z;
     float scale = GetCascadeScale(cascade);
 
-	int samples = GetCascadeSamples(cascade);
+	int numSamples = GetCascadeBlockerSamples(cascade);
 
     // STEP 1: blocker search
     float searchSize = lightSize * clamp(depth - 0.02, 0.0, 1.0) / depth;
-    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, samples);
+    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, numSamples);
 
     int numBlockers = int(blockerInfo.y);
     float avgBlockerDepth = blockerInfo.x;
@@ -242,7 +255,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
         return 1.0;
 
 	// Do not perform filtering if full shadowed
-	if(numBlockers == samples)
+	if(numBlockers == numSamples)
 		return 0.0;
 
     // STEP 2: penumbra size
@@ -250,9 +263,10 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
 	float penumbra = depth - avgBlockerDepth;
 
 	//float filterRadiusUV = penumbra * lightSize;
-    float filterRadiusUV = clamp(penumbra * lightSize, 0.005, 0.05);
+    float filterRadiusUV = clamp(penumbra * lightSize, 0.005, 0.1);
+	numSamples = GetCascadeFilterSamples(cascade);
 
-    float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, samples);
+    float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, numSamples);
     return shadow;
 }
 

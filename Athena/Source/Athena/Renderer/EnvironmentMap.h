@@ -43,6 +43,8 @@ namespace Athena
 		void LoadPreetham(const Ref<RenderCommandBuffer>& commandBuffer);
 		void Load();
 
+		bool IsEmpty();
+
 	private:
 		Ref<TextureCube> m_EnvironmentTexture;
 		Ref<TextureCube> m_IrradianceTexture;

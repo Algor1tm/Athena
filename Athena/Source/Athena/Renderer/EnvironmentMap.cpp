@@ -1,6 +1,7 @@
 #include "EnvironmentMap.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Core/FileSystem.h"
 
 
 namespace Athena
@@ -144,6 +145,9 @@ namespace Athena
 
 	Ref<TextureCube> EnvironmentMap::GetEnvironmentTexture()
 	{
+		if (IsEmpty())
+			return Renderer::GetBlackTextureCube();
+
 		if (m_Dirty)
 			Load();
 
@@ -152,6 +156,9 @@ namespace Athena
 
 	Ref<TextureCube> EnvironmentMap::GetIrradianceTexture()
 	{
+		if (IsEmpty())
+			return Renderer::GetBlackTextureCube();
+
 		if (m_Dirty)
 			Load();
 
@@ -161,6 +168,7 @@ namespace Athena
 	void EnvironmentMap::LoadFromFile(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		Ref<Texture2D> panorama = Texture2D::Create(m_FilePath);
+		m_PanoramaToCubePass->SetInput("u_PanoramaTex", panorama);
 
 		m_PanoramaToCubePass->Begin(commandBuffer);
 		Renderer::Dispatch(commandBuffer, m_PanoramaToCubePass, { m_Resolution, m_Resolution, 6 });
@@ -183,9 +191,6 @@ namespace Athena
 
 	void EnvironmentMap::Load()
 	{
-		if (m_Type == EnvironmentMapType::STATIC && m_FilePath.empty())
-			return;
-
 		Ref<RenderCommandBuffer> commandBuffer = Renderer::GetRenderCommandBuffer();
 
 		if (m_Type == EnvironmentMapType::STATIC)
@@ -214,5 +219,13 @@ namespace Athena
 		m_MipFilterPass->End(commandBuffer);
 
 		m_Dirty = false;
+	}
+
+	bool EnvironmentMap::IsEmpty()
+	{
+		if (m_Type == EnvironmentMapType::STATIC && !FileSystem::Exists(m_FilePath))
+			return true;
+
+		return false;
 	}
 }

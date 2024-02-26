@@ -848,7 +848,7 @@ namespace Athena
 
 				const auto& envMap = lightComponent.EnvironmentMap;
 
-				const std::string_view resolutions[] = { "256", "512", "1024", "2048", "4096" };
+				const std::string_view resolutions[] = { "128", "256", "512", "1024", "2048", "4096" };
 				String selectedStr = std::to_string(envMap->GetResolution());
 				std::string_view selected = selectedStr.data();
 

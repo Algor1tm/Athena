@@ -22,6 +22,9 @@ namespace Athena
 		VkRenderPass GetVulkanRenderPass() const { return m_VulkanRenderPass; };
 
 	private:
+		void BuildDependencies(std::vector<VkSubpassDependency>& dependencies);
+
+	private:
 		VkFramebuffer m_VulkanFramebuffer = VK_NULL_HANDLE;
 		VkRenderPass m_VulkanRenderPass = VK_NULL_HANDLE;
 		std::vector<VkClearValue> m_ClearColors;

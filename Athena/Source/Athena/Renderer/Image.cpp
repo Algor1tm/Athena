@@ -104,7 +104,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.MipLevels = 1;
+		info.GenerateMipLevels = false;
 
 		Ref<Image> result = Image::Create(info);
 
@@ -149,7 +149,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.MipLevels = 1;
+		info.GenerateMipLevels = false;
 
 		Ref<Image> result = Image::Create(info);
 		stbi_image_free(data);

@@ -11,9 +11,6 @@ namespace Athena
 		m_Sampler = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = m_Sampler;
 
-		if (info.MipLevels == 0)
-			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
-
 		ImageCreateInfo imageInfo;
 		imageInfo.Name = m_Info.Name;
 		imageInfo.Format = m_Info.Format;
@@ -23,7 +20,7 @@ namespace Athena
 		imageInfo.Width = m_Info.Width;
 		imageInfo.Height = m_Info.Height;
 		imageInfo.Layers = m_Info.Layers;
-		imageInfo.MipLevels = m_Info.MipLevels;
+		imageInfo.GenerateMipLevels = m_Info.GenerateMipLevels;
 
 		m_Image = Image::Create(imageInfo);
 
@@ -41,7 +38,7 @@ namespace Athena
 		m_Info.Width = imageInfo.Width;
 		m_Info.Height = imageInfo.Height;
 		m_Info.Layers = imageInfo.Layers;
-		m_Info.MipLevels = imageInfo.MipLevels;
+		m_Info.GenerateMipLevels = imageInfo.GenerateMipLevels;
 		m_Info.SamplerInfo = samplerInfo;
 
 		m_Image = image;
@@ -101,7 +98,7 @@ namespace Athena
 			vksamplerInfo.compareEnable = m_Info.SamplerInfo.Compare == TextureCompareOperator::NONE ? false : true;
 			vksamplerInfo.compareOp = Vulkan::GetCompareOp(m_Info.SamplerInfo.Compare);
 			vksamplerInfo.minLod = 0.f;
-			vksamplerInfo.maxLod = m_Info.MipLevels;
+			vksamplerInfo.maxLod = GetMipLevelsCount();
 			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 			vksamplerInfo.unnormalizedCoordinates = false;

@@ -43,7 +43,7 @@ namespace Athena
 		m_BonesData = std::vector<Matrix4>(maxNumBones);
 		m_BonesDataOffset = 0;
 
-		// Dir ShadowMap Pass
+		// DIR SHADOW MAP PASS
 		{
 			for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
 				m_ShadowsData.DirLightViewProjection[i] = Matrix4::Identity();
@@ -55,7 +55,7 @@ namespace Athena
 			shadowMapInfo.Width = m_ShadowMapResolution;
 			shadowMapInfo.Height = m_ShadowMapResolution;
 			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
-			shadowMapInfo.MipLevels = 1;
+			shadowMapInfo.GenerateMipLevels = false;
 			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
 			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
@@ -108,7 +108,7 @@ namespace Athena
 			m_ShadowMapSampler = Texture2D::Create(shadowMap->GetImage(), samplerInfo);
 		}
 
-		// Geometry Pass
+		// GEOMETRY PASS
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "GeometryPass";
@@ -178,7 +178,45 @@ namespace Athena
 			m_SkyboxPipeline->Bake();
 		}
 
-		// Composite Pass
+		// BLOOM PASS
+		{
+			Texture2DCreateInfo texInfo;
+			texInfo.Name = "BloomTexture";
+			texInfo.Format = ImageFormat::RGBA16F;
+			texInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
+			texInfo.Width = 1;
+			texInfo.Height = 1;
+			texInfo.Layers = 1;
+			texInfo.GenerateMipLevels = true;
+			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
+			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
+			texInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
+			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
+
+			m_BloomTexture = Texture2D::Create(texInfo);
+
+			ComputePassCreateInfo passInfo;
+			passInfo.Name = "BloomPass";
+			passInfo.DebugColor = { 1.f, 0.05f, 0.55f, 1.f };
+
+			m_BloomPass = ComputePass::Create(passInfo);
+			m_BloomPass->SetOutput(m_BloomTexture);
+			m_BloomPass->Bake();
+
+			//ComputePipelineCreateInfo pipelineInfo;
+			//pipelineInfo.Name = "BloomDownsample";
+			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomDownsample");
+			//
+			//m_BloomDownsample = ComputePipeline::Create(pipelineInfo);
+			//m_BloomDownsample->Bake();
+			//
+			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomUpsample");
+			//
+			//m_BloomUpsample = ComputePipeline::Create(pipelineInfo);
+			//m_BloomUpsample->Bake();
+		}
+
+		// COMPOSITE PASS
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";

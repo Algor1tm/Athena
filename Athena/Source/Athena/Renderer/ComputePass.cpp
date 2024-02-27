@@ -16,4 +16,27 @@ namespace Athena
 
 		return nullptr;
 	}
+
+	void ComputePass::SetOutput(const Ref<Texture2D>& texture)
+	{
+		m_Texture2DOutputs.push_back(texture);
+	}
+
+	void ComputePass::SetOutput(const Ref<TextureCube>& texture)
+	{
+		m_TextureCubeOutputs.push_back(texture);
+	}
+
+	Ref<Texture2D> ComputePass::GetOutput(const String& name)
+	{
+		for (const auto& output : m_Texture2DOutputs)
+		{
+			if (output->GetName() == name)
+			{
+				return output;
+			}
+		}
+
+		return nullptr;
+	}
 }

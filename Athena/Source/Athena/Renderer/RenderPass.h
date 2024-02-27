@@ -28,7 +28,7 @@ namespace Athena
 			texInfo.Width = 1;
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
-			texInfo.MipLevels = 1;
+			texInfo.GenerateMipLevels = false;
 			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 			texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;

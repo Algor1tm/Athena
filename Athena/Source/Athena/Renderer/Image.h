@@ -59,7 +59,7 @@ namespace Athena
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
-		uint32 MipLevels = 1;
+		bool GenerateMipLevels = false;
 	};
 
 	class ATHENA_API Image : public RefCounted
@@ -72,6 +72,7 @@ namespace Athena
 
 		virtual void BlitMipMap(uint32 levels) = 0;
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) = 0;
+		virtual uint32 GetMipLevelsCount() const = 0;
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 

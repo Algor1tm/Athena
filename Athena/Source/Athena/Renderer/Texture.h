@@ -52,6 +52,7 @@ namespace Athena
 
 		void BlitMipMap(uint32 levels) { m_Image->BlitMipMap(levels); }
 		void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) { m_Image->BlitMipMap(cmdBuffer, levels); }
+		uint32 GetMipLevelsCount() const { return m_Image->GetMipLevelsCount(); }
 
 		const Ref<Image>& GetImage() const { return m_Image; }
 
@@ -69,7 +70,7 @@ namespace Athena
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
-		uint32 MipLevels = 1;	// if 0 - mip levels will be max
+		bool GenerateMipLevels = false;
 		TextureSamplerCreateInfo SamplerInfo;
 	};
 
@@ -106,7 +107,7 @@ namespace Athena
 		const void* InitialData = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
-		uint32 MipLevels = 1;	// if 0 - mip levels will be max
+		bool GenerateMipLevels = false;
 		TextureSamplerCreateInfo SamplerInfo;
 	};
 

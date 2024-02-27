@@ -21,6 +21,8 @@ namespace Athena
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) override;
 		void RT_BlitMipMap(VkCommandBuffer vkcmdBuffer, uint32 levels);
 
+		virtual uint32 GetMipLevelsCount() const override { return m_MipLevels; }
+
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }
 		VkImageView GetVulkanImageView() const { return m_ImageView; }
 		VkImageLayout GetLayout() const { return m_Layout; }
@@ -35,6 +37,7 @@ namespace Athena
 		void CleanUp();
 
 	private:
+		uint32 m_MipLevels;
 		VkImageLayout m_Layout;
 		VulkanImageAllocation m_Image;
 		VkImageView m_ImageView = VK_NULL_HANDLE;

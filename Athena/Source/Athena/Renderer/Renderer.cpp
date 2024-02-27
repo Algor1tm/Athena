@@ -2,7 +2,6 @@
 
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
-
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ComputePass.h"
@@ -92,7 +91,7 @@ namespace Athena
 		texInfo.Width = 1;
 		texInfo.Height = 1;
 		texInfo.Layers = 1;
-		texInfo.MipLevels = 1;
+		texInfo.GenerateMipLevels = false;
 		texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
@@ -113,7 +112,7 @@ namespace Athena
 		texCubeInfo.InitialData = &blackTextureData;
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
-		texCubeInfo.MipLevels = 1;
+		texCubeInfo.GenerateMipLevels = false;
 		texCubeInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
 		texCubeInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
 		texCubeInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
@@ -166,7 +165,7 @@ namespace Athena
 			brdfLutInfo.Width = 512;
 			brdfLutInfo.Height = 512;
 			brdfLutInfo.Layers = 1;
-			brdfLutInfo.MipLevels = 1;
+			brdfLutInfo.GenerateMipLevels = false;
 			brdfLutInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			brdfLutInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 			brdfLutInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
@@ -176,12 +175,18 @@ namespace Athena
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "BRDF_LUT_Pass";
-			passInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
 
 			Ref<ComputePass> pass = ComputePass::Create(passInfo);
 			pass->SetOutput(s_Data.BRDF_LUT);
-			pass->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
 			pass->Bake();
+
+			ComputePipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "BRDF_LUT_Pipeline";
+			pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
+
+			Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
+			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
+			pipeline->Bake();
 			
 			cmdBufferInfo.Name = "BRDF_LUT_Generation";
 			cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
@@ -191,7 +196,8 @@ namespace Athena
 			commandBuffer->Begin();
 			{
 				pass->Begin(commandBuffer);
-				Renderer::Dispatch(commandBuffer, pass, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
+				pipeline->Bind(commandBuffer);
+				Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
 				pass->End(commandBuffer);
 			}
 			commandBuffer->End();
@@ -276,9 +282,9 @@ namespace Athena
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.CubeVertexBuffer, material);
 	}
 
-	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePass>& pass, Vector3i imageSize, const Ref<Material>& material)
+	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->Dispatch(cmdBuffer, pass, imageSize, material);
+		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
 	}
 
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)

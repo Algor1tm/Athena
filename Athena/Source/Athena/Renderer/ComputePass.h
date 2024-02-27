@@ -13,7 +13,6 @@ namespace Athena
 	struct ComputePassCreateInfo
 	{
 		String Name;
-		Ref<Shader> Shader;
 		LinearColor DebugColor = LinearColor(0.f);
 	};
 
@@ -26,28 +25,18 @@ namespace Athena
 		virtual void Begin(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
-		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) = 0;
-		virtual void Bake() = 0;
+		void Bake() const {};	// LOL
 
-		void SetOutput(const Ref<Texture2D>& texture)
-		{
-			m_Outputs.push_back(texture->GetImage());
-		}
+		void SetOutput(const Ref<Texture2D>& texture);
+		void SetOutput(const Ref<TextureCube>& texture);
 
-		void SetOutput(const Ref<TextureCube>& texture)
-		{
-			m_Outputs.push_back(texture->GetImage());
-		}
-
-		void SetOutput(const Ref<Image>& image)
-		{
-			m_Outputs.push_back(image);
-		}
+		Ref<Texture2D> GetOutput(const String& name);
 
 		const ComputePassCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
 		ComputePassCreateInfo m_Info;
-		std::vector<Ref<Image>> m_Outputs;
+		std::vector<Ref<Texture2D>> m_Texture2DOutputs;
+		std::vector<Ref<TextureCube>> m_TextureCubeOutputs;
 	};
 }

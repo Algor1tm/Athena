@@ -8,6 +8,8 @@
 #include "Athena/Renderer/GPUProfiler.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/RenderPass.h"
+#include "Athena/Renderer/ComputePass.h"
+#include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 #include "Athena/Renderer/Material.h"
@@ -180,6 +182,12 @@ namespace Athena
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
 		Ref<Pipeline> m_SkyboxPipeline;
+
+		Ref<Texture2D> m_BloomTexture;
+		Ref<ComputePass> m_BloomPass;
+		Ref<ComputePipeline> m_BloomDownsample;
+		Ref<ComputePipeline> m_BloomUpsample;
+		std::vector<Ref<Material>> m_BloomMaterials;
 
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;

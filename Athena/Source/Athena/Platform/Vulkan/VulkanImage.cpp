@@ -63,13 +63,12 @@ namespace Athena
 
 	VulkanImage::VulkanImage(const ImageCreateInfo& info)
 	{
+		ATN_CORE_ASSERT(!(info.GenerateMipLevels && info.Layers > 1 && info.Type == ImageType::IMAGE_2D), "Currently does not support mip levels and multilayered 2D texture!");
+
 		m_Info = info;
 		m_Info.Width = 0;
 		m_Info.Height = 0;
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-		if (info.MipLevels == 0)
-			m_Info.MipLevels = Math::Floor(Math::Log2(Math::Max((float)info.Width, (float)info.Height))) + 1;
 
 		Resize(info.Width, info.Height);
 
@@ -84,9 +83,6 @@ namespace Athena
 				localBuffer.Release();
 				m_Info.InitialData = nullptr;
 			});
-
-			if (m_Info.MipLevels != 1)
-				BlitMipMap(m_Info.MipLevels);
 		}
 	}
 
@@ -103,6 +99,11 @@ namespace Athena
 		m_Info.Width = width;
 		m_Info.Height = height;
 
+		if (m_Info.GenerateMipLevels)
+			m_MipLevels = Math::Floor(Math::Log2(Math::Max<float>(m_Info.Width, m_Info.Height))) + 1;
+		else
+			m_MipLevels = 1;
+
 		CleanUp();
 
 		Renderer::Submit([this]() mutable
@@ -114,7 +115,7 @@ namespace Athena
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			}
 
-			if (m_Info.MipLevels != 1)
+			if (m_Info.GenerateMipLevels)
 			{
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -127,7 +128,7 @@ namespace Athena
 			imageInfo.extent.width = m_Info.Width;
 			imageInfo.extent.height = m_Info.Height;
 			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = m_Info.MipLevels;
+			imageInfo.mipLevels = m_MipLevels;
 			imageInfo.arrayLayers = m_Info.Layers;
 			imageInfo.format = Vulkan::GetFormat(m_Info.Format);
 			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -146,19 +147,19 @@ namespace Athena
 			viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 			viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = m_Info.MipLevels;
+			viewInfo.subresourceRange.levelCount = m_MipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = 0;
 			viewInfo.subresourceRange.layerCount = m_Info.Layers;
 
 			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 			Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
 
-			if (m_Info.MipLevels > 1)
+			if (m_Info.GenerateMipLevels)
 			{
 				uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
 				m_ImageViewsPerMip.clear();
-				m_ImageViewsPerMip.reserve(m_Info.MipLevels);
-				for (uint32 mip = 0; mip < m_Info.MipLevels; ++mip)
+				m_ImageViewsPerMip.reserve(m_MipLevels);
+				for (uint32 mip = 0; mip < m_MipLevels; ++mip)
 				{
 					VkImageViewCreateInfo viewInfo = {};
 					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -237,7 +238,7 @@ namespace Athena
 		barrier.image = m_Image.GetImage();
 		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = m_Info.MipLevels;
+		barrier.subresourceRange.levelCount = m_MipLevels;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = m_Info.Layers;
 
@@ -363,9 +364,9 @@ namespace Athena
 
 	void VulkanImage::RT_BlitMipMap(VkCommandBuffer commandBuffer, uint32 levels)
 	{
-		if (levels < 2 || levels > m_Info.MipLevels)
+		if (levels < 2 || levels > m_MipLevels)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to generate invalid number of mip map levels (given - {}, max level - {}) of image '{}'!", levels, m_Info.MipLevels, m_Info.Name);
+			ATN_CORE_WARN_TAG("Renderer", "Attempt to generate invalid number of mip map levels (given - {}, max level - {}) of image '{}'!", levels, m_MipLevels, m_Info.Name);
 			ATN_CORE_ASSERT(false);
 			return;
 		}
@@ -388,7 +389,7 @@ namespace Athena
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
 
-		for (uint32 level = 1; level < m_Info.MipLevels; ++level)
+		for (uint32 level = 1; level < m_MipLevels; ++level)
 		{
 			bool firstMip = level == 1;
 
@@ -467,7 +468,7 @@ namespace Athena
 			if (mipHeight > 1) mipHeight /= 2;
 		}
 
-		barrier.subresourceRange.baseMipLevel = m_Info.MipLevels - 1;
+		barrier.subresourceRange.baseMipLevel = m_MipLevels - 1;
 		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;

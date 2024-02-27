@@ -8,7 +8,7 @@
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanIndexBuffer.h"
-#include "Athena/Platform/Vulkan/VulkanComputePass.h"
+#include "Athena/Platform/Vulkan/VulkanComputePipeline.h"
 #include "Athena/Platform/Vulkan/VulkanPipeline.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
@@ -90,20 +90,20 @@ namespace Athena
 		});
 	}
 
-	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePass>& pass, Vector3i imageSize, const Ref<Material>& material)
+	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
 	{
-		if (!pass->GetInfo().Shader->IsCompiled())
+		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
 
-		Renderer::Submit([commandBuffer, pass, imageSize, material]()
+		Renderer::Submit([commandBuffer, pipeline, imageSize, material]()
 		{
 			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			Ref<VulkanComputePass> vkPass = pass.As<VulkanComputePass>();
+			Ref<VulkanComputePipeline> vkPipeline = pipeline.As<VulkanComputePipeline>();
 
 			if (material)
-				vkPass->RT_SetPushConstants(vkcmdBuffer, material);
+				vkPipeline->RT_SetPushConstants(vkcmdBuffer, material);
 
-			Vector3i workGroupSize = vkPass->GetWorkGroupSize();
+			Vector3i workGroupSize = vkPipeline->GetWorkGroupSize();
 			uint32 groupCountX = Math::Ceil((float)imageSize.x / workGroupSize.x);
 			uint32 groupCountY = Math::Ceil((float)imageSize.y / workGroupSize.y);
 			uint32 groupCountZ = Math::Ceil((float)imageSize.z / workGroupSize.z);

@@ -212,10 +212,15 @@ void main()
     for (int j = 0; j < g_PointLightCount; ++j)
     {
         PointLight light = g_PointLights[j];
-        vec3 dir = normalize(Interpolators.WorldPos - light.Position);
-        vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
+        float dist = length(Interpolators.WorldPos - light.Position);
+
+        if(dist <= light.Radius)
+        {
+            vec3 dir = normalize(Interpolators.WorldPos - light.Position);
+            vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
         
-        totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
+            totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
+        }
     }
     
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);

@@ -7,7 +7,7 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
-#include "Athena/Renderer/ComputePass.h"
+#include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Pipeline.h"
 
 
@@ -158,7 +158,7 @@ namespace Athena
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 
-		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePass>& pass, Vector3i imageSize, const Ref<Material>& material = nullptr);
+		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
 		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image);
 
 		static void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);

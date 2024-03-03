@@ -8,7 +8,7 @@ layout (location = 1) in vec4 a_Color;
 
 layout (location = 0) out vec4 v_Color;
 
-layout(push_constant) uniform CameraData
+layout(push_constant) uniform u_CameraData
 {
 	mat4 u_ViewProjection;
 };

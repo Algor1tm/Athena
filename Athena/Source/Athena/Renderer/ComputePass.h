@@ -10,10 +10,15 @@
 
 namespace Athena
 {
+	class RenderPass;
+	class ComputePass;
+
 	struct ComputePassCreateInfo
 	{
 		String Name;
 		LinearColor DebugColor = LinearColor(0.f);
+		Ref<RenderPass> InputRenderPass;
+		Ref<ComputePass> InputComputePass;
 	};
 
 	class ATHENA_API ComputePass: public RefCounted
@@ -25,7 +30,7 @@ namespace Athena
 		virtual void Begin(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 
-		void Bake() const {};	// LOL
+		virtual void Bake() = 0;
 
 		void SetOutput(const Ref<Texture2D>& texture);
 		void SetOutput(const Ref<TextureCube>& texture);

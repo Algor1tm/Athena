@@ -124,6 +124,9 @@ void main()
     vec3 skyLuminance = CalculateSkyLuminanceRGB( sunDir, direction, u_Turbidity );
     
 	vec3 color = skyLuminance * 0.05;
-	color = pow(color, vec3(2.2));
+
+	// Apply inverse gamma correction
+	color = pow(color, vec3(DISPLAY_GAMMA));
+
 	imageStore(u_EnvironmentMap, unnormalizedTexCoords, vec4( color, 1.0 ));
 }

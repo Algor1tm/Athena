@@ -88,7 +88,7 @@ Entities:
     PointLightComponent:
       Color: [0, 0, 1, 1]
       Intensity: 5
-      Radius: 10
+      Radius: 17.5
       FallOff: 1
   - IDComponent:
       ID: 2835139583361043602
@@ -127,11 +127,11 @@ Entities:
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
-      Intensity: 1
+      Intensity: 0.493999988
       LOD: 0
       Resolution: 256
       Type: 2
       FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
-      Turbidity: 2.15199995
-      Azimuth: 4.17399979
-      Inclination: 1.48099995
+      Turbidity: 2.21600008
+      Azimuth: 4.12799978
+      Inclination: 1.32000005

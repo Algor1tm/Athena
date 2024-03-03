@@ -112,6 +112,45 @@ namespace Athena
 		});
 	}
 
+	void VulkanRenderer::MemoryDependency(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		Renderer::Submit([commandBuffer, this]()
+		{
+			VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			VkMemoryBarrier memBarrier = {};
+			memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+			memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+			memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			vkCmdPipelineBarrier(
+				cmdBuffer,
+				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT,
+				1, &memBarrier,
+				0, nullptr,
+				0, nullptr
+			);
+		});
+	}
+
+	void VulkanRenderer::ExecutionDependency(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		Renderer::Submit([commandBuffer, this]()
+		{
+			VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			vkCmdPipelineBarrier(
+				cmdBuffer,
+				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT,
+				0, nullptr,
+				0, nullptr,
+				0, nullptr
+			);
+		});
+	}
+
 	void VulkanRenderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
 	{
 #ifdef VULKAN_ENABLE_DEBUG_INFO

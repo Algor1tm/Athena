@@ -19,7 +19,16 @@ namespace Athena
 		virtual void Begin(const Ref<RenderCommandBuffer>& commandBuffer) override;
 		virtual void End(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
-	private:
+		virtual void Bake() override;
 
+	private:
+		struct BarrierInfo
+		{
+			VkAccessFlags SrcAccess;
+			VkPipelineStageFlags SrcStageFlags;
+		};
+
+	private:
+		std::vector<BarrierInfo> m_Barriers;
 	};
 }

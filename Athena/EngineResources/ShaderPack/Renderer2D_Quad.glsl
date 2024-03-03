@@ -17,7 +17,7 @@ struct VertexInterpolators
 layout (location = 0) out VertexInterpolators Interpolators;
 layout (location = 2) flat out uint v_TexIndex;
 
-layout(push_constant) uniform CameraData
+layout(push_constant) uniform u_CameraData
 {
 	mat4 u_ViewProjection;
 };

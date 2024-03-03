@@ -14,7 +14,7 @@ layout(location = 5) in ivec4 a_BoneIDs;
 layout(location = 6) in vec4 a_Weights;
 
 
-layout(push_constant) uniform MaterialData
+layout(push_constant) uniform u_MaterialData
 {
     mat4 u_Transform;
     uint u_BonesOffset;

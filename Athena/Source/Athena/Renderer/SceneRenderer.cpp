@@ -4,8 +4,6 @@
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
 
-#include "Athena/Platform/Vulkan/VulkanImage.h"
-#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 namespace Athena
 {
@@ -199,6 +197,7 @@ namespace Athena
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "BloomPass";
+			passInfo.InputRenderPass = m_GeometryPass;
 			passInfo.DebugColor = { 1.f, 0.05f, 0.55f, 1.f };
 
 			m_BloomPass = ComputePass::Create(passInfo);
@@ -253,8 +252,10 @@ namespace Athena
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
 
 			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("SceneHDRColor"));
-			m_CompositePipeline->SetInput("u_RendererData", m_RendererUBO);
+			m_CompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("BloomTexture"));
 			m_CompositePipeline->Bake();
+
+			m_CompositeMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
 		}
 
 		// Renderer2D Pass
@@ -421,10 +422,6 @@ namespace Athena
 		m_CameraData.NearClip = cameraInfo.NearClip;
 		m_CameraData.FarClip = cameraInfo.FarClip;
 
-		m_RendererData.Exposure = m_Settings.LightEnvironmentSettings.Exposure;
-		m_RendererData.Gamma = m_Settings.LightEnvironmentSettings.Gamma;
-		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
-
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
 		m_ShadowsData.CascadeBlendDistance = m_Settings.ShadowSettings.CascadeBlendDistance;
@@ -434,6 +431,12 @@ namespace Athena
 			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
 		else
 			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
+
+		m_CompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
+		m_CompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
+		m_CompositeMaterial->Set("u_EnableBloom", (uint32)m_Settings.BloomSettings.Enable);
+
+		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 
 		m_BonesDataOffset = 0;
 	}
@@ -530,7 +533,7 @@ namespace Athena
 
 	void SceneRenderer::BloomPass()
 	{
-		if (!m_Settings.BloomSettings.EnableBloom)
+		if (!m_Settings.BloomSettings.Enable)
 			return;
 
 		auto commandBuffer = m_RenderCommandBuffer;
@@ -585,63 +588,13 @@ namespace Athena
 				material->Bind(commandBuffer);
 
 				Renderer::Dispatch(commandBuffer, m_BloomDownsample, { mipSize.x, mipSize.y, 1 }, material);
-
-				// Read after write barrier
-				Renderer::Submit([commandBuffer, this]()
-				{
-					VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-
-					VkMemoryBarrier memBarrier = {};
-					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-					memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-					memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-					vkCmdPipelineBarrier(
-						cmdBuffer,
-						VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-						VK_DEPENDENCY_BY_REGION_BIT,
-						1, &memBarrier,
-						0, nullptr,
-						0, nullptr
-					);
-				});
-
-				//Renderer::ReadAfterWriteBarrier(commandBuffer);
+				Renderer::MemoryDependency(commandBuffer);
 			}
-
-			//Renderer::Submit([commandBuffer, this]()
-			//{
-			//	Ref<VulkanImage> image = m_BloomPass->GetAllOutputs()[0]->GetImage().As<VulkanImage>();
-			//	VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-
-			//	image->RT_TransitionLayout(cmdBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-			//		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-			//});
 
 			// Read from mip and write to mip - 1
 			m_BloomUpsample->Bind(commandBuffer);
 			for (uint32 mip = mipLevels - 1; mip > 0; --mip)
 			{
-				// Read after write barrier
-				Renderer::Submit([commandBuffer, this]()
-				{
-					VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-
-					VkMemoryBarrier memBarrier = {};
-					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-					memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-					memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-					vkCmdPipelineBarrier(
-						cmdBuffer,
-						VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-						VK_DEPENDENCY_BY_REGION_BIT,
-						1, &memBarrier,
-						0, nullptr,
-						0, nullptr
-					);
-				});
-
 				Ref<Material> material = m_BloomMaterials[mip - 1];
 
 				Vector2u mipSize = m_BloomTexture->GetMipSize(mip - 1);
@@ -650,6 +603,9 @@ namespace Athena
 				material->Bind(commandBuffer);
 
 				Renderer::Dispatch(commandBuffer, m_BloomUpsample, { mipSize.x, mipSize.y, 1 }, material);
+
+				if(mip != 1)
+					Renderer::MemoryDependency(commandBuffer);
 			}
 		}
 		m_BloomPass->End(commandBuffer);
@@ -664,7 +620,7 @@ namespace Athena
 		m_CompositePass->Begin(commandBuffer);
 		{
 			m_CompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline, m_CompositeMaterial);
 		}
 		m_CompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();

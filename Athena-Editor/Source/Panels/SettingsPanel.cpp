@@ -15,6 +15,34 @@
 
 namespace Athena
 {
+	static std::string_view TonemapModeToString(TonemapMode mode)
+	{
+		switch (mode)
+		{
+		case TonemapMode::NONE: return "None";
+		case TonemapMode::ACES: return "ACES";
+		case TonemapMode::EXPOSURE: return "Exposure";
+		}
+
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
+
+	static TonemapMode StringToTonemapMode(std::string_view str)
+	{
+		if (str == "None")
+			return TonemapMode::NONE;
+
+		if (str == "ACES")
+			return TonemapMode::ACES;
+		
+		if (str == "Exposure")
+			return TonemapMode::EXPOSURE;
+
+		ATN_CORE_ASSERT(false);
+		return TonemapMode::NONE;
+	}
+
 	static std::string_view AntialisingToString(Antialising antialiasing)
 	{
 		switch (antialiasing)
@@ -152,17 +180,6 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("LightEnvironmentSettings") && UI::BeginPropertyTable())
-		{
-			LightEnvironmentSettings& lightSettings = settings.LightEnvironmentSettings;
-
-			UI::PropertyDrag("Exposure", &lightSettings.Exposure, 0.05);
-			UI::PropertyDrag("Gamma", &lightSettings.Gamma, 0.05);
-
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
-
 		if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
 		{
 			ShadowSettings& shadowSettings = settings.ShadowSettings;
@@ -198,11 +215,11 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Bloom") && UI::BeginPropertyTable())
+		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
 		{
 			BloomSettings& bloomSettings = settings.BloomSettings;
 
-			UI::PropertyCheckbox("Enable Bloom", &bloomSettings.EnableBloom);
+			UI::PropertyCheckbox("Enable Bloom", &bloomSettings.Enable);
 			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.1f, 0, 10);
 			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.1f, 0, 10);
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
@@ -231,14 +248,27 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Other", false) && UI::BeginPropertyTable())
+		if (UI::TreeNode("PostProcessing", false) && UI::BeginPropertyTable())
 		{
-			std::string_view views[] = { "None" };
-			std::string_view selected = AntialisingToString(settings.AntialisingMethod);
+			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
-			if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
 			{
-				settings.AntialisingMethod = StringToAntialising(selected);
+				std::string_view views[] = { "None", "ACES", "Exposure" };
+				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
+
+				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
+					postProcess.TonemapMode = StringToTonemapMode(selected);
+
+				if (postProcess.TonemapMode == TonemapMode::EXPOSURE)
+					UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+			}
+
+			{
+				std::string_view views[] = { "None" };
+				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
+
+				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
+					postProcess.AntialisingMethod = StringToAntialising(selected);
 			}
 
 			UI::EndPropertyTable();

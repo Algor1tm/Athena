@@ -248,6 +248,9 @@ namespace Athena
 
 			m_MipFilterMaterials[mip]->Bind(commandBuffer);
 			Renderer::Dispatch(commandBuffer, m_MipFilterPipeline, { mipResolution, mipResolution, 6 }, m_MipFilterMaterials[mip]);
+
+			if (mip != ShaderDef::MAX_SKYBOX_MAP_LOD - 1)
+				Renderer::MemoryDependency(commandBuffer);
 		}
 		m_MipFilterPass->End(commandBuffer);
 

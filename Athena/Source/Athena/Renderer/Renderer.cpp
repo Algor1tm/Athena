@@ -77,6 +77,7 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_MESH", std::to_string(MAX_NUM_BONES_PER_MESH));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_ANIMATED_MESHES", std::to_string(MAX_NUM_ANIMATED_MESHES));
 		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
+		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
 
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
@@ -285,6 +286,16 @@ namespace Athena
 	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
 	{
 		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
+	}
+
+	void Renderer::MemoryDependency(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->MemoryDependency(cmdBuffer);
+	}
+
+	void Renderer::ExecutionDependency(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->ExecutionDependency(cmdBuffer);
 	}
 
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)

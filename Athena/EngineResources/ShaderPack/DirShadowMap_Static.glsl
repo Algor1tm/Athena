@@ -11,7 +11,7 @@ layout(location = 3) in vec3 a_Tangent;
 layout(location = 4) in vec3 a_Bitangent;
 
 
-layout(push_constant) uniform MaterialData
+layout(push_constant) uniform u_MaterialData
 {
     mat4 u_Transform;
 };

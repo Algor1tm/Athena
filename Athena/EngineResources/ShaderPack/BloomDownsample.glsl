@@ -22,7 +22,7 @@ layout(set = 1, binding = 1) uniform sampler2D u_BloomTexture;
 layout(r11f_g11f_b10f, set = 0, binding = 1) uniform writeonly image2D u_BloomTextureMip;
 
 
-layout(push_constant) uniform BloomData
+layout(push_constant) uniform u_BloomData
 {
 	float u_Intensity;
     float u_Threshold;

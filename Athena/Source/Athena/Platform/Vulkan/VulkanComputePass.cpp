@@ -27,32 +27,30 @@ namespace Athena
 		{
 			VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
-			for (const auto& image : instance->m_Texture2DOutputs)
+			for (uint32 i = 0; i < instance->m_Texture2DOutputs.size(); ++i)
 			{
-				bool isAttachment = image->GetInfo().Usage & ImageUsage::ATTACHMENT;
+				VkAccessFlags srcAccess = VK_ACCESS_NONE;
+				VkPipelineStageFlags srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
-				VkImageLayout newLayout = VK_IMAGE_LAYOUT_GENERAL;
-				VkPipelineStageFlags sourceStage = isAttachment ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+				if (!instance->m_Barriers.empty())
+				{
+					srcAccess = instance->m_Barriers[i].SrcAccess;
+					srcStage = instance->m_Barriers[i].SrcStageFlags;
+				}
 
-				VkAccessFlags srcAccess = isAttachment ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_NONE;
-				VkAccessFlags dstAccess = VK_ACCESS_SHADER_WRITE_BIT;
-
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
+				Ref<VulkanImage> image = instance->m_Texture2DOutputs[i]->GetImage().As<VulkanImage>();
+				image->RT_TransitionLayout(cmdBuffer, 
+					VK_IMAGE_LAYOUT_GENERAL, 
+					srcAccess, VK_ACCESS_SHADER_WRITE_BIT, 
+					srcStage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 			}
 
 			for (const auto& image : instance->m_TextureCubeOutputs)
 			{
-				bool isAttachment = image->GetInfo().Usage & ImageUsage::ATTACHMENT;
-
-				VkImageLayout newLayout = VK_IMAGE_LAYOUT_GENERAL;
-				VkPipelineStageFlags sourceStage = isAttachment ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-
-				VkAccessFlags srcAccess = isAttachment ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_NONE;
-				VkAccessFlags dstAccess = VK_ACCESS_SHADER_WRITE_BIT;
-
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, 
+					VK_IMAGE_LAYOUT_GENERAL, 
+					VK_ACCESS_NONE, VK_ACCESS_SHADER_WRITE_BIT,
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 			}
 		});
 	}
@@ -65,32 +63,81 @@ namespace Athena
 
 			for (const auto& image : instance->m_Texture2DOutputs)
 			{
-				VkImageLayout newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-				VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-				VkAccessFlags srcAccess = VK_ACCESS_SHADER_WRITE_BIT;
-				VkAccessFlags dstAccess = VK_ACCESS_SHADER_READ_BIT;
-
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer,
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+					VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+					VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			}
 
 			for (const auto& image : instance->m_TextureCubeOutputs)
 			{
-				VkImageLayout newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-				VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-				VkAccessFlags srcAccess = VK_ACCESS_SHADER_WRITE_BIT;
-				VkAccessFlags dstAccess = VK_ACCESS_SHADER_READ_BIT;
-
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, 
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+					VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+					VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			}
 		});
 
 		if (m_Info.DebugColor != LinearColor(0.f))
 			Renderer::EndDebugRegion(commandBuffer);
+	}
+
+	void VulkanComputePass::Bake()
+	{
+		if (!m_Info.InputRenderPass && !m_Info.InputComputePass)
+			return;
+
+		ATN_CORE_ASSERT(!(m_Info.InputRenderPass && m_Info.InputComputePass));
+
+		for (const auto& texture : m_Texture2DOutputs)
+		{
+			if (m_Info.InputRenderPass)
+			{
+				bool sharedAttachment = false;
+				for (const auto& inputAttachment : m_Info.InputRenderPass->GetAllOutputs())
+				{
+					if (texture == inputAttachment.Texture)
+						sharedAttachment = true;
+				}
+
+				bool colorFormat = Image::IsColorFormat(texture->GetFormat());
+				BarrierInfo barrier;
+				if (sharedAttachment)
+				{
+					barrier.SrcAccess = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+					barrier.SrcStageFlags = colorFormat ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+				}
+				else
+				{
+					barrier.SrcAccess = VK_ACCESS_SHADER_READ_BIT;
+					barrier.SrcStageFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+				}
+
+				m_Barriers.push_back(barrier);
+			}
+			else if (m_Info.InputComputePass)
+			{
+				bool sharedAttachment = false;
+				for (const auto& inputAttachment : m_Info.InputComputePass->GetAllOutputs())
+				{
+					if (texture == inputAttachment)
+						sharedAttachment = true;
+				}
+
+				BarrierInfo barrier;
+				if (sharedAttachment)
+				{
+					barrier.SrcAccess = VK_ACCESS_SHADER_WRITE_BIT;
+					barrier.SrcStageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+				}
+				else
+				{
+					barrier.SrcAccess = VK_ACCESS_SHADER_READ_BIT;
+					barrier.SrcStageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+				}
+
+				m_Barriers.push_back(barrier);
+			}
+		}
 	}
 }

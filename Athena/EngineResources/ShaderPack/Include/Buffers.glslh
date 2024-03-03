@@ -13,8 +13,6 @@ layout(std140, set = 1, binding = 0) uniform u_CameraData
 
 layout(std140, set = 1, binding = 1) uniform u_RendererData
 {
-    float Exposure;
-    float Gamma;
     float EnvironmentIntensity;
     float EnvironmentLOD;
     int DebugShadowCascades;

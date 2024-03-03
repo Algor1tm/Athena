@@ -34,10 +34,18 @@ namespace Athena
 		SHADOW_CASCADES = 1
 	};
 
-	struct LightEnvironmentSettings
+	enum class TonemapMode
 	{
-		float Exposure = 1;
-		float Gamma = 2.2f;
+		NONE,
+		ACES,
+		EXPOSURE,
+	};
+
+	struct PostProcessingSettings
+	{
+		TonemapMode TonemapMode = TonemapMode::ACES;
+		float Exposure = 1.f;
+		Antialising AntialisingMethod = Antialising::NONE;
 	};
 
 	struct ShadowSettings
@@ -53,7 +61,7 @@ namespace Athena
 
 	struct BloomSettings
 	{
-		bool EnableBloom = true;
+		bool Enable = true;
 		float Intensity = 1;
 		float Threshold = 1.5;
 		float Knee = 0.1;
@@ -63,11 +71,10 @@ namespace Athena
 
 	struct SceneRendererSettings
 	{
-		LightEnvironmentSettings LightEnvironmentSettings;
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
+		PostProcessingSettings PostProcessingSettings;
 		DebugView DebugView = DebugView::NONE;
-		Antialising AntialisingMethod = Antialising::NONE;
 	};
 
 
@@ -84,8 +91,6 @@ namespace Athena
 
 	struct RendererData
 	{
-		float Exposure = 1.f;
-		float Gamma = 2.2f;
 		float EnvironmentIntensity = 1.f;
 		float EnvironmentLOD = 0.f;
 		int32 DebugShadowCascades = 0;
@@ -183,6 +188,7 @@ namespace Athena
 
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;
+		Ref<Material> m_CompositeMaterial;
 
 		Ref<RenderPass> m_Renderer2DPass;
 

@@ -22,7 +22,7 @@ struct VertexInterpolators
 
 layout(location = 0) out VertexInterpolators Interpolators;
 
-layout(push_constant) uniform MaterialData
+layout(push_constant) uniform u_MaterialData
 {
     mat4 u_Transform;
     vec4 u_Albedo;
@@ -73,7 +73,7 @@ layout(location = 0) in VertexInterpolators Interpolators;
 layout(location = 0) out vec4 o_Color;
 
 
-layout(push_constant) uniform MaterialData
+layout(push_constant) uniform u_MaterialData
 {
     mat4 u_Transform;
     vec4 u_Albedo;

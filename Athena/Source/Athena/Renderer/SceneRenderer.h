@@ -110,21 +110,11 @@ namespace Athena
 		int SoftShadows = true;
 	};
 
-	struct BloomData
-	{
-		float Intensity;
-		float Threshold;
-		float Knee;
-		float DirtIntensity;
-		Vector2 TexelSize;
-		bool EnableThreshold;
-		int32 MipLevel;
-	};
-
 	struct SceneRendererStatistics
 	{
 		Time DirShadowMapPass;
 		Time GeometryPass;
+		Time BloomPass;
 		Time SceneCompositePass;
 		PipelineStatistics PipelineStats;
 	};
@@ -157,10 +147,12 @@ namespace Athena
 		Ref<Image> GetShadowMap();
 		Ref<RenderPass> GetRenderer2DPass() { return m_Renderer2DPass; }
 		Ref<SceneRenderer2D> GetSceneRenderer2D() { return m_SceneRenderer2D; }
+		Ref<Texture2D> GetBloomTexture() { return m_BloomTexture; }
 
 	private:
 		void DirShadowMapPass();
 		void GeometryPass();
+		void BloomPass();
 		void SceneCompositePass();
 
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);

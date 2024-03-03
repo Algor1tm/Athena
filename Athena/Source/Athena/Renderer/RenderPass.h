@@ -31,7 +31,7 @@ namespace Athena
 			texInfo.GenerateMipLevels = false;
 			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			Texture = Texture2D::Create(texInfo);
 			LoadOp = AttachmentLoadOp::CLEAR;

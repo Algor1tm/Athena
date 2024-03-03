@@ -30,7 +30,7 @@ namespace Athena
 		VkImageView GetVulkanImageViewMip(uint32 mip) const { return m_ImageViewsPerMip[mip]; }
 		VkImageView GetVulkanImageViewLayer(uint32 layer) const { return m_ImageViewsPerLayer[layer]; }
 
-		void RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
+		void RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
 
 	private:
 		void RT_UploadData(const void* data, uint32 width, uint32 height);

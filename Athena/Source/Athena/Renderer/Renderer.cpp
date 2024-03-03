@@ -86,7 +86,7 @@ namespace Athena
 		Texture2DCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
 		texInfo.Format = ImageFormat::RGBA8;
-		texInfo.Usage = ImageUsage::DEFAULT;
+		texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
 		texInfo.InitialData = &whiteTextureData;
 		texInfo.Width = 1;
 		texInfo.Height = 1;
@@ -139,11 +139,11 @@ namespace Athena
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
 		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
-		float quadVertices[] = { -1.f,  1.f,  0.f, 0.f,
-								  1.f,  1.f,  1.f, 0.f,
-								  1.f, -1.f,  1.f, -1.f,
-								 -1.f, -1.f,  0.f, -1.f, };
-
+		float quadVertices[] = { -1.f,  1.f,  0.f, 1.f,
+								  1.f,  1.f,  1.f, 1.f,
+								  1.f, -1.f,  1.f, 0.f,
+								 -1.f, -1.f,  0.f, 0.f, };
+		 
 		indexBufInfo.Name = "Renderer_QuadIB";
 		indexBufInfo.Data = quadIndices;
 		indexBufInfo.Count = std::size(quadIndices);

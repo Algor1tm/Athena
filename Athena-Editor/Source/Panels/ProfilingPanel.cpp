@@ -74,6 +74,7 @@ namespace Athena
                         auto& stats = m_SceneRenderer->GetStatistics();
                         ImGui::Text("ShadowMapPass: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
                         ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass.AsMilliseconds());
+                        ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         
                         if (UI::TreeNode("Pipeline Statistics"))

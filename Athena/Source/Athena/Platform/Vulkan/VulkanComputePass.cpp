@@ -35,7 +35,10 @@ namespace Athena
 				VkPipelineStageFlags sourceStage = isAttachment ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, sourceStage, destinationStage);
+				VkAccessFlags srcAccess = isAttachment ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_NONE;
+				VkAccessFlags dstAccess = VK_ACCESS_SHADER_WRITE_BIT;
+
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
 			}
 
 			for (const auto& image : instance->m_TextureCubeOutputs)
@@ -46,7 +49,10 @@ namespace Athena
 				VkPipelineStageFlags sourceStage = isAttachment ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, sourceStage, destinationStage);
+				VkAccessFlags srcAccess = isAttachment ? VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT : VK_ACCESS_NONE;
+				VkAccessFlags dstAccess = VK_ACCESS_SHADER_WRITE_BIT;
+
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
 			}
 		});
 	}
@@ -64,7 +70,10 @@ namespace Athena
 				VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, sourceStage, destinationStage);
+				VkAccessFlags srcAccess = VK_ACCESS_SHADER_WRITE_BIT;
+				VkAccessFlags dstAccess = VK_ACCESS_SHADER_READ_BIT;
+
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
 			}
 
 			for (const auto& image : instance->m_TextureCubeOutputs)
@@ -74,7 +83,10 @@ namespace Athena
 				VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 				VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, sourceStage, destinationStage);
+				VkAccessFlags srcAccess = VK_ACCESS_SHADER_WRITE_BIT;
+				VkAccessFlags dstAccess = VK_ACCESS_SHADER_READ_BIT;
+
+				image->GetImage().As<VulkanImage>()->RT_TransitionLayout(cmdBuffer, newLayout, srcAccess, dstAccess, sourceStage, destinationStage);
 			}
 		});
 

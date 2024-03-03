@@ -163,7 +163,7 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Shadows") && UI::BeginPropertyTable())
+		if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
 		{
 			ShadowSettings& shadowSettings = settings.ShadowSettings;
 
@@ -198,7 +198,7 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
+		if (UI::TreeNode("Bloom") && UI::BeginPropertyTable())
 		{
 			BloomSettings& bloomSettings = settings.BloomSettings;
 
@@ -216,6 +216,18 @@ namespace Athena
 			}
 
 			UI::EndPropertyTable();
+
+			if (UI::TreeNode("BloomTexture", false, true))
+			{
+				Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
+
+				static int mip = 0;
+				ImGui::SliderInt("Mip", &mip, 0, bloomTexture->GetMipLevelsCount() - 4);
+				ImGui::Image(UI::GetTextureMipID(bloomTexture, mip), { 256, 256 });
+
+				UI::TreePop();
+			}
+
 			UI::TreePop();
 		}
 

@@ -2,6 +2,7 @@
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Log.h"
+#include "Athena/Math/Common.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
@@ -10,6 +11,17 @@
 
 namespace Athena
 {
+	Vector2u Texture::GetMipSize(uint32 mip) const
+	{
+		uint32 width = m_Image->GetInfo().Width;
+		uint32 height = m_Image->GetInfo().Height;
+
+		Vector2u mipSize;
+		mipSize.x = float(width) * Math::Pow<float>(0.5f, mip);
+		mipSize.y = float(height) * Math::Pow<float>(0.5f, mip);
+
+		return mipSize;
+	}
 
 	Ref<Texture2D> Texture2D::Create(const Texture2DCreateInfo& info)
 	{

@@ -53,6 +53,7 @@ namespace Athena
 		void BlitMipMap(uint32 levels) { m_Image->BlitMipMap(levels); }
 		void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) { m_Image->BlitMipMap(cmdBuffer, levels); }
 		uint32 GetMipLevelsCount() const { return m_Image->GetMipLevelsCount(); }
+		Vector2u GetMipSize(uint32 mip) const;
 
 		const Ref<Image>& GetImage() const { return m_Image; }
 

@@ -31,6 +31,7 @@ namespace Athena
 		void SetOutput(const Ref<TextureCube>& texture);
 
 		Ref<Texture2D> GetOutput(const String& name);
+		const std::vector<Ref<Texture2D>>& GetAllOutputs() const { return m_Texture2DOutputs; }
 
 		const ComputePassCreateInfo& GetInfo() const { return m_Info; }
 

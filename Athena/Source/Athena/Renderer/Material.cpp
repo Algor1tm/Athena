@@ -56,6 +56,18 @@ namespace Athena
 		});
 	}
 
+	void Material::Set(const String& name, const Vector2& value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float2, &offset))
+			return;
+
+		Renderer::Submit([this, offset, value]()
+		{
+			memcpy(&m_Buffer[offset], &value, sizeof(value));
+		});
+	}
+
 	void Material::Set(const String& name, const Vector4& value)
 	{
 		uint32 offset;
@@ -116,7 +128,7 @@ namespace Athena
 		if (data.Type != dataType)
 		{
 			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
-					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(data.Type), ShaderDataTypeToString(dataType));
+					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(dataType), ShaderDataTypeToString(data.Type));
 			return false;
 		}
 

@@ -97,8 +97,8 @@ namespace Athena
 			vksamplerInfo.maxAnisotropy = 1.f;
 			vksamplerInfo.compareEnable = m_Info.SamplerInfo.Compare == TextureCompareOperator::NONE ? false : true;
 			vksamplerInfo.compareOp = Vulkan::GetCompareOp(m_Info.SamplerInfo.Compare);
-			vksamplerInfo.minLod = 0.f;
-			vksamplerInfo.maxLod = GetMipLevelsCount();
+			vksamplerInfo.minLod = 0;
+			vksamplerInfo.maxLod = VK_LOD_CLAMP_NONE;
 			vksamplerInfo.mipLodBias = 0.f;
 			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 			vksamplerInfo.unnormalizedCoordinates = false;

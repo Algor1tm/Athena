@@ -117,9 +117,9 @@ namespace Athena
 		vksamplerInfo.magFilter = VK_FILTER_LINEAR;
 		vksamplerInfo.minFilter = VK_FILTER_LINEAR;
 		vksamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		vksamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		vksamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		vksamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		vksamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		vksamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		vksamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		vksamplerInfo.anisotropyEnable = false;
 		vksamplerInfo.maxAnisotropy = 1.f;
 		vksamplerInfo.compareEnable = false;
@@ -259,8 +259,7 @@ namespace Athena
 			return m_ImageViewsMap.at(view).Set;
 
 		ImageInfo info;
-		if (mip > 0)
-			info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewMip(mip);
+		info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewMip(mip);
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
 			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());

@@ -25,6 +25,7 @@ namespace Athena
 		virtual ~Material();
 
 		void Set(const String& name, const Matrix4& value);
+		void Set(const String& name, const Vector2& value);
 		void Set(const String& name, const Vector4& value);
 		void Set(const String& name, float value);
 		void Set(const String& name, uint32 value);

@@ -157,7 +157,6 @@ namespace Athena
 			if (m_Info.GenerateMipLevels)
 			{
 				uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
-				m_ImageViewsPerMip.clear();
 				m_ImageViewsPerMip.reserve(m_MipLevels);
 				for (uint32 mip = 0; mip < m_MipLevels; ++mip)
 				{
@@ -182,7 +181,6 @@ namespace Athena
 
 			if (m_Info.Layers > 1 && m_Info.Type != ImageType::IMAGE_CUBE)
 			{
-				m_ImageViewsPerLayer.clear();
 				m_ImageViewsPerLayer.reserve(m_Info.Layers);
 				for (uint32 layer = 0; layer < m_Info.Layers; ++layer)
 				{
@@ -225,14 +223,19 @@ namespace Athena
 			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 			VulkanContext::GetAllocator()->DestroyImage(image, name);
 		});
+
+		m_ImageViewsPerMip.clear();
+		m_ImageViewsPerLayer.clear();
 	}
 
-	void VulkanImage::RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
+	void VulkanImage::RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
 	{
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = m_Layout;
 		barrier.newLayout = newLayout;
+		barrier.srcAccessMask = srcAccess;
+		barrier.dstAccessMask = dstAccess;
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = m_Image.GetImage();

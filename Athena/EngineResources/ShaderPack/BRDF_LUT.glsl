@@ -58,7 +58,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
 void main()
 {
     ivec2 unnormalizedTexCoords = ivec2(gl_GlobalInvocationID.xy);
-    vec2 texCoords = vec2(unnormalizedTexCoords.x + 1, unnormalizedTexCoords.y) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
+    vec2 texCoords = (unnormalizedTexCoords + 0.5) / vec2(gl_NumWorkGroups * gl_WorkGroupSize);
 
     vec2 integratedBRDF = IntegrateBRDF(texCoords.x, texCoords.y);
     imageStore(u_BRDF_LUT, unnormalizedTexCoords, vec4(integratedBRDF, 0, 1));

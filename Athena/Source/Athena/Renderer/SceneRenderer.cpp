@@ -4,6 +4,8 @@
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
 
+#include "Athena/Platform/Vulkan/VulkanImage.h"
+#include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 namespace Athena
 {
@@ -118,8 +120,8 @@ namespace Athena
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
 			m_GeometryPass = RenderPass::Create(passInfo);
-			m_GeometryPass->SetOutput({ "GeometryHDRColor", ImageFormat::RGBA16F });
-			m_GeometryPass->SetOutput({ "GeometryDepth", ImageFormat::DEPTH24STENCIL8 });
+			m_GeometryPass->SetOutput({ "SceneHDRColor", ImageFormat::RGBA16F });
+			m_GeometryPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH24STENCIL8 });
 			m_GeometryPass->Bake();
 
 
@@ -182,7 +184,7 @@ namespace Athena
 		{
 			Texture2DCreateInfo texInfo;
 			texInfo.Name = "BloomTexture";
-			texInfo.Format = ImageFormat::RGBA16F;
+			texInfo.Format = ImageFormat::R11G11B10F;
 			texInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
 			texInfo.Width = 1;
 			texInfo.Height = 1;
@@ -191,7 +193,7 @@ namespace Athena
 			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
 			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
 			texInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
+			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			m_BloomTexture = Texture2D::Create(texInfo);
 
@@ -203,17 +205,22 @@ namespace Athena
 			m_BloomPass->SetOutput(m_BloomTexture);
 			m_BloomPass->Bake();
 
-			//ComputePipelineCreateInfo pipelineInfo;
-			//pipelineInfo.Name = "BloomDownsample";
-			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomDownsample");
-			//
-			//m_BloomDownsample = ComputePipeline::Create(pipelineInfo);
-			//m_BloomDownsample->Bake();
-			//
-			//pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomUpsample");
-			//
-			//m_BloomUpsample = ComputePipeline::Create(pipelineInfo);
-			//m_BloomUpsample->Bake();
+			ComputePipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "BloomDownsample";
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomDownsample");
+			
+			m_BloomDownsample = ComputePipeline::Create(pipelineInfo);
+			m_BloomDownsample->SetInput("u_BloomTexture", m_BloomTexture);
+			m_BloomDownsample->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("SceneHDRColor"));
+			m_BloomDownsample->Bake();
+			
+			pipelineInfo.Name = "BloomUpsample";
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomUpsample");
+			
+			m_BloomUpsample = ComputePipeline::Create(pipelineInfo);
+			m_BloomUpsample->SetInput("u_BloomTexture", m_BloomTexture);
+			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
+			m_BloomUpsample->Bake();
 		}
 
 		// COMPOSITE PASS
@@ -245,7 +252,7 @@ namespace Athena
 
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
 
-			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("GeometryHDRColor"));
+			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("SceneHDRColor"));
 			m_CompositePipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_CompositePipeline->Bake();
 		}
@@ -260,7 +267,7 @@ namespace Athena
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
 			RenderPassAttachment colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
-			RenderPassAttachment depthOutput = m_GeometryPass->GetOutput("GeometryDepth");
+			RenderPassAttachment depthOutput = m_GeometryPass->GetOutput("SceneDepth");
 
 			m_Renderer2DPass = RenderPass::Create(passInfo);
 			m_Renderer2DPass->SetOutput(colorOutput);
@@ -294,6 +301,9 @@ namespace Athena
 		m_StaticGeometryPipeline->SetViewport(width, height);
 		m_AnimGeometryPipeline->SetViewport(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
+
+		m_BloomTexture->Resize(width, height);
+		m_BloomMaterials.clear();
 
 		m_CompositePass->Resize(width, height);
 		m_CompositePipeline->SetViewport(width, height);
@@ -420,6 +430,11 @@ namespace Athena
 		m_ShadowsData.CascadeBlendDistance = m_Settings.ShadowSettings.CascadeBlendDistance;
 		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
+		if (m_Settings.BloomSettings.DirtTexture)
+			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
+		else
+			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
+
 		m_BonesDataOffset = 0;
 	}
 
@@ -442,6 +457,7 @@ namespace Athena
 
 		DirShadowMapPass();
 		GeometryPass();
+		BloomPass();
 		SceneCompositePass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
@@ -510,6 +526,134 @@ namespace Athena
 
 		m_GeometryPass->End(commandBuffer);
 		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::BloomPass()
+	{
+		if (!m_Settings.BloomSettings.EnableBloom)
+			return;
+
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		// Calculate number of downsample passes
+		const uint32 downSampleResLimit = 8;
+
+		uint32 width = m_BloomTexture->GetWidth();
+		uint32 height = m_BloomTexture->GetHeight();
+		uint32 mipLevels = 1;
+
+		while (width >= downSampleResLimit && height >= downSampleResLimit)
+		{
+			width /= 2;
+			height /= 2;
+
+			mipLevels++;
+		}
+
+		// Init materials
+		m_BloomMaterials.resize(mipLevels);
+		for(uint32 mip = 0; mip < mipLevels; ++mip)
+		{
+			Ref<Material>& material = m_BloomMaterials[mip];
+
+			// Recreate (on window resized)
+			if (material == nullptr)
+			{
+				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), std::format("BloomMaterial_{}", mip));
+				material->Set("u_BloomTextureMip", m_BloomTexture, 0, mip);
+			}
+
+			material->Set("u_Intensity", m_Settings.BloomSettings.Intensity);
+			material->Set("u_Threshold", m_Settings.BloomSettings.Threshold);
+			material->Set("u_Knee", m_Settings.BloomSettings.Knee);
+			material->Set("u_DirtIntensity", m_Settings.BloomSettings.DirtIntensity);
+		}
+
+		m_Profiler->BeginTimeQuery();
+		m_BloomPass->Begin(commandBuffer);
+		{
+			// Read from mip - 1 and write to mip
+			m_BloomDownsample->Bind(commandBuffer);
+			for (uint32 mip = 1; mip < mipLevels; ++mip)
+			{
+				Ref<Material> material = m_BloomMaterials[mip];
+
+				Vector2u mipSize = m_BloomTexture->GetMipSize(mip);
+				material->Set("u_TexelSize", Vector2(1.f, 1.f) / Vector2(mipSize));
+				material->Set("u_ReadMipLevel", mip - 1);
+
+				material->Bind(commandBuffer);
+
+				Renderer::Dispatch(commandBuffer, m_BloomDownsample, { mipSize.x, mipSize.y, 1 }, material);
+
+				// Read after write barrier
+				Renderer::Submit([commandBuffer, this]()
+				{
+					VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+					VkMemoryBarrier memBarrier = {};
+					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+					memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+					memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+					vkCmdPipelineBarrier(
+						cmdBuffer,
+						VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+						VK_DEPENDENCY_BY_REGION_BIT,
+						1, &memBarrier,
+						0, nullptr,
+						0, nullptr
+					);
+				});
+
+				//Renderer::ReadAfterWriteBarrier(commandBuffer);
+			}
+
+			//Renderer::Submit([commandBuffer, this]()
+			//{
+			//	Ref<VulkanImage> image = m_BloomPass->GetAllOutputs()[0]->GetImage().As<VulkanImage>();
+			//	VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+			//	image->RT_TransitionLayout(cmdBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+			//		VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+			//});
+
+			// Read from mip and write to mip - 1
+			m_BloomUpsample->Bind(commandBuffer);
+			for (uint32 mip = mipLevels - 1; mip > 0; --mip)
+			{
+				// Read after write barrier
+				Renderer::Submit([commandBuffer, this]()
+				{
+					VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+					VkMemoryBarrier memBarrier = {};
+					memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+					memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+					memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+					vkCmdPipelineBarrier(
+						cmdBuffer,
+						VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+						VK_DEPENDENCY_BY_REGION_BIT,
+						1, &memBarrier,
+						0, nullptr,
+						0, nullptr
+					);
+				});
+
+				Ref<Material> material = m_BloomMaterials[mip - 1];
+
+				Vector2u mipSize = m_BloomTexture->GetMipSize(mip - 1);
+				material->Set("u_TexelSize", Vector2(1.f, 1.f) / Vector2(mipSize));
+				material->Set("u_ReadMipLevel", mip);
+				material->Bind(commandBuffer);
+
+				Renderer::Dispatch(commandBuffer, m_BloomUpsample, { mipSize.x, mipSize.y, 1 }, material);
+			}
+		}
+		m_BloomPass->End(commandBuffer);
+		m_Statistics.BloomPass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::SceneCompositePass()

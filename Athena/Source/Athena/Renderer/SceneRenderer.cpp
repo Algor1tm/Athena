@@ -270,18 +270,16 @@ namespace Athena
 			RenderPassAttachment colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
 			RenderPassAttachment depthOutput = m_GeometryPass->GetOutput("SceneDepth");
 
-			m_Renderer2DPass = RenderPass::Create(passInfo);
-			m_Renderer2DPass->SetOutput(colorOutput);
-			m_Renderer2DPass->SetOutput(depthOutput);
-			m_Renderer2DPass->Bake();
-
-			m_SceneRenderer2D = SceneRenderer2D::Create(m_Renderer2DPass);
+			m_Render2DPass = RenderPass::Create(passInfo);
+			m_Render2DPass->SetOutput(colorOutput);
+			m_Render2DPass->SetOutput(depthOutput);
+			m_Render2DPass->Bake();
 		}
 	}
 
 	void SceneRenderer::Shutdown()
 	{
-		m_SceneRenderer2D.Release();
+		
 	}
 
 	Ref<Image> SceneRenderer::GetFinalImage()
@@ -309,8 +307,12 @@ namespace Athena
 		m_CompositePass->Resize(width, height);
 		m_CompositePipeline->SetViewport(width, height);
 
-		m_Renderer2DPass->Resize(width, height);
-		m_SceneRenderer2D->OnViewportResize(width, height);
+		m_Render2DPass->Resize(width, height);
+	}
+
+	void SceneRenderer::OnRender2D(const Render2DCallback& callback)
+	{
+		m_Render2DCallback = callback;
 	}
 
 	void SceneRenderer::Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform)
@@ -462,6 +464,7 @@ namespace Athena
 		GeometryPass();
 		BloomPass();
 		SceneCompositePass();
+		Render2DPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
 
@@ -624,6 +627,22 @@ namespace Athena
 		}
 		m_CompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::Render2DPass()
+	{
+		if (!m_Render2DCallback)
+			return;
+
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_Render2DPass->Begin(commandBuffer);
+		{
+			m_Render2DCallback();
+		}
+		m_Render2DPass->End(commandBuffer);
+		m_Statistics.Render2DPass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)

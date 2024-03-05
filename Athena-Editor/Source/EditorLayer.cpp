@@ -49,7 +49,10 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
 
         m_ViewportRenderer = SceneRenderer::Create();
-        m_ViewportRenderer->GetSceneRenderer2D()->SetLineWidth(3.f);
+        m_ViewportRenderer->OnRender2D([this]() { OnRender2D(); });
+
+        m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
+        m_Renderer2D->SetLineWidth(3.f);
         
         m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 300.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
@@ -89,6 +92,7 @@ namespace Athena
             ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize")
 
             m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
+            m_Renderer2D->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
@@ -123,8 +127,6 @@ namespace Athena
             break;
         }
         }
-
-        OnRender2D();
     }
 
     void EditorLayer::OnImGuiRender()
@@ -177,7 +179,7 @@ namespace Athena
         ImGui::End();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
-        m_EditorCamera->SetMoveSpeedLevel(settingsPanel->GetEditorSettings().CameraSpeedLevel);
+        m_EditorCamera->SetMoveSpeedLevel(m_EditorCtx->EditorSettings.CameraSpeedLevel);
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
@@ -379,10 +381,7 @@ namespace Athena
 
     void EditorLayer::OnRender2D()
     {
-        auto commandBuffer = Renderer::GetRenderCommandBuffer();
-
-        m_ViewportRenderer->GetRenderer2DPass()->Begin(commandBuffer);
-        Ref<SceneRenderer2D> renderer2D = m_ViewportRenderer->GetSceneRenderer2D();
+        Ref<SceneRenderer2D> renderer2D = m_Renderer2D;
 
         if (m_EditorCtx->SceneState == SceneState::Play)
         {
@@ -407,7 +406,7 @@ namespace Athena
         m_EditorCtx->ActiveScene->OnRender2D(renderer2D);
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
-        if (settingsPanel->GetEditorSettings().ShowPhysicsColliders)
+        if (m_EditorCtx->EditorSettings.ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
@@ -438,6 +437,31 @@ namespace Athena
             }
         }
         
+        const Vector2 iconScale = { 0.075f, 0.075f };
+        if (m_EditorCtx->EditorSettings.ShowRendererIcons)
+        {
+            auto camerasView = m_EditorScene->GetAllEntitiesWith<TransformComponent, CameraComponent>();
+            for (auto entity : camerasView)
+            {
+                const auto& transform = camerasView.get<TransformComponent>(entity);
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+            }
+
+            auto pointLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
+            for (auto entity : pointLightsView)
+            {
+                const auto& transform = pointLightsView.get<TransformComponent>(entity);
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+            }
+
+            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
+            for (auto entity : dirLightsView)
+            {
+                const auto& transform = dirLightsView.get<TransformComponent>(entity);
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+            }
+        }
+
         Entity selectedEntity = m_EditorCtx->SelectedEntity;
         if (selectedEntity)
         {
@@ -513,8 +537,6 @@ namespace Athena
         }
 
         renderer2D->EndScene();
-
-        m_ViewportRenderer->GetRenderer2DPass()->End(commandBuffer);
     }
 
     void EditorLayer::DrawAboutModal()
@@ -568,7 +590,7 @@ namespace Athena
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
 
-        if (settingsPanel->GetEditorSettings().ReloadScriptsOnStart)
+        if (m_EditorCtx->EditorSettings.ReloadScriptsOnStart)
         {
             m_EditorCtx->ActiveScene->LoadAllScripts();
         }

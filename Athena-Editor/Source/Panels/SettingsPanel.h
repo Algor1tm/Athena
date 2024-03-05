@@ -8,14 +8,6 @@
 
 namespace Athena
 {
-	struct EditorSettings
-	{
-		bool ShowPhysicsColliders = false;
-		float CameraSpeedLevel = 0.3f;
-		bool ReloadScriptsOnStart = true;
-	};
-
-
 	class SettingsPanel: public Panel
 	{
 	public:
@@ -23,10 +15,8 @@ namespace Athena
 
 		virtual void OnImGuiRender() override;
 		void SetContext(const Ref<SceneRenderer>& renderer) { m_ViewportRenderer = renderer; }
-		const EditorSettings& GetEditorSettings() { return m_EditorSettings; }
 
 	private:
 		Ref<SceneRenderer> m_ViewportRenderer;
-		EditorSettings m_EditorSettings;
 	};
 }

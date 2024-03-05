@@ -76,7 +76,8 @@ namespace Athena
                         ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass.AsMilliseconds());
                         ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
-                        
+                        ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
+
                         if (UI::TreeNode("Pipeline Statistics", false))
                         {
                             ImGui::Text("InputAssemblyVertices: %lld", stats.PipelineStats.InputAssemblyVertices);

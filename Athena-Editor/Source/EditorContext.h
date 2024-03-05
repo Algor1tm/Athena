@@ -12,9 +12,19 @@ namespace Athena
 		Edit = 0, Play = 1, Simulation = 2
 	};
 
+	struct EditorSettings
+	{
+		bool GizmosLocalTransform = true;
+		float CameraSpeedLevel = 0.3f;
+		bool ShowRendererIcons = false;
+		bool ShowPhysicsColliders = false;
+		bool ReloadScriptsOnStart = true;
+	};
+
 	struct EditorContext : public RefCounted
 	{
 		Entity SelectedEntity;
+		EditorSettings EditorSettings;
 		Ref<Scene> ActiveScene;
 		SceneState SceneState;
 	};

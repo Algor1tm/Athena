@@ -121,9 +121,11 @@ namespace Athena
 		Time GeometryPass;
 		Time BloomPass;
 		Time SceneCompositePass;
+		Time Render2DPass;
 		PipelineStatistics PipelineStats;
 	};
 
+	using Render2DCallback = std::function<void()>;
 
 	class ATHENA_API SceneRenderer : public RefCounted
 	{
@@ -149,9 +151,10 @@ namespace Athena
 		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
+		void OnRender2D(const Render2DCallback& callback);
+
 		Ref<Image> GetShadowMap();
-		Ref<RenderPass> GetRenderer2DPass() { return m_Renderer2DPass; }
-		Ref<SceneRenderer2D> GetSceneRenderer2D() { return m_SceneRenderer2D; }
+		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
 		Ref<Texture2D> GetBloomTexture() { return m_BloomTexture; }
 
 	private:
@@ -159,6 +162,7 @@ namespace Athena
 		void GeometryPass();
 		void BloomPass();
 		void SceneCompositePass();
+		void Render2DPass();
 
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
@@ -190,7 +194,8 @@ namespace Athena
 		Ref<Pipeline> m_CompositePipeline;
 		Ref<Material> m_CompositeMaterial;
 
-		Ref<RenderPass> m_Renderer2DPass;
+		Ref<RenderPass> m_Render2DPass;
+		Render2DCallback m_Render2DCallback;
 
 		// CPU Data
 		CameraData m_CameraData;
@@ -211,7 +216,6 @@ namespace Athena
 		// Other
 		Vector2u m_ViewportSize = { 1, 1 };
 
-		Ref<SceneRenderer2D> m_SceneRenderer2D;
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Ref<GPUProfiler> m_Profiler;
 		SceneRendererStatistics m_Statistics;

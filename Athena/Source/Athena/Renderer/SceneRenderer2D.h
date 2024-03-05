@@ -55,18 +55,21 @@ namespace Athena
 		void BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix);
 		void EndScene();
 
-		void DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color = LinearColor::White);
-		void DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
-		void DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector2 position, Vector2 size, const LinearColor& color = LinearColor::White);
+		void DrawQuad(Vector3 position, Vector2 size, const LinearColor& color = LinearColor::White);
+		void DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector3 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
-		void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
-		void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color = LinearColor::White);
-		void DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
+		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
+		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White);
 		void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+
+		void DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const LinearColor& color = LinearColor::White);
+		void DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f);
 
@@ -98,6 +101,7 @@ namespace Athena
 	private:
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
+		Matrix4 m_InverseViewCamera;
 
 		Ref<Pipeline> m_QuadPipeline;
 		std::vector<Ref<Material>> m_QuadMaterials;

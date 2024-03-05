@@ -101,7 +101,7 @@ void main()
     float grain = FilmGrain();
     float grainStrength = 0.05;
 
-    //color -= vec3(grain * grainStrength);
+    //color += vec3(grain * grainStrength);
 
     o_Color = vec4(color, 1.0);
 }

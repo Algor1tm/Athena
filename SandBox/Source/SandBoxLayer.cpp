@@ -39,11 +39,6 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	m_Scene->OnUpdateRuntime(frameTime);
 	m_Scene->OnRender(m_SceneRenderer);
 
-	auto commandBuffer = Renderer::GetRenderCommandBuffer();
-	m_SceneRenderer->GetRenderer2DPass()->Begin(commandBuffer);
-	m_Scene->OnRender2D(m_SceneRenderer->GetSceneRenderer2D());
-	m_SceneRenderer->GetRenderer2DPass()->End(commandBuffer);
-
 	Renderer::BlitToScreen(Renderer::GetRenderCommandBuffer(), m_SceneRenderer->GetFinalImage());
 }
 

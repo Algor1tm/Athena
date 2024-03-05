@@ -158,13 +158,13 @@ namespace Athena
 		// Create Vulkan Instance
 		{
 			// Select Vulkan Version
-			uint32 version = 0;
-			VK_CHECK(vkEnumerateInstanceVersion(&version));
+			uint32 currentVersion = 0;
+			VK_CHECK(vkEnumerateInstanceVersion(&currentVersion));
 
-			uint32 variant = VK_API_VERSION_VARIANT(version);
-			uint32 major = VK_API_VERSION_MAJOR(version);
-			uint32 minor = VK_API_VERSION_MINOR(version);
-			uint32 patch = VK_API_VERSION_PATCH(version);
+			uint32 variant = VK_API_VERSION_VARIANT(currentVersion);
+			uint32 major = VK_API_VERSION_MAJOR(currentVersion);
+			uint32 minor = VK_API_VERSION_MINOR(currentVersion);
+			uint32 patch = VK_API_VERSION_PATCH(currentVersion);
 
 			ATN_CORE_INFO_TAG("Vulkan", "Version: {}.{}.{}.{}", variant, major, minor, patch);
 
@@ -179,10 +179,13 @@ namespace Athena
 			appInfo.pNext = nullptr;
 			appInfo.pApplicationName = Application::Get().GetConfig().Name.c_str();
 			appInfo.pEngineName = "Athena";
+#ifdef ATN_DEBUG
 			appInfo.apiVersion = VULKAN_MIN_SUPPORTED_VERSION;
-
+#else
+			appInfo.apiVersion = currentVersion;
+#endif
 			// Select Extensions
-			// Note: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
+			// NOTE: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
 			std::vector<const char*> extensions = {
 				"VK_KHR_surface",
 				"VK_KHR_win32_surface",

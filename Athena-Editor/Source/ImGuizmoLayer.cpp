@@ -37,9 +37,10 @@ namespace Athena
                 snapValue = 45.f;
 
             Vector3 snapValues = Vector3(snapValue);
+            ImGuizmo::MODE mode = m_EditorCtx->EditorSettings.GizmosLocalTransform ? ImGuizmo::MODE::LOCAL : ImGuizmo::MODE::WORLD;
 
             ImGuizmo::Manipulate(cameraView.Data(), cameraProjection.Data(),
-                m_GuizmoOperation, ImGuizmo::LOCAL, worldTransformMatrix.Data(),
+                m_GuizmoOperation, mode, worldTransformMatrix.Data(),
                 nullptr, snap ? snapValues.Data() : nullptr);
 
             if (ImGuizmo::IsUsing())

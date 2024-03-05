@@ -142,6 +142,8 @@ namespace Athena
 	{
 		m_RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
 
+		m_InverseViewCamera = Math::AffineInverse(viewMatrix);
+
 		Matrix4 viewProj = viewMatrix * projectionMatrix;
 
 		for(const auto& quadMaterial : m_QuadMaterials)
@@ -337,36 +339,36 @@ namespace Athena
 		m_LineVertexBufferIndex++;
 	}
 
-	void SceneRenderer2D::DrawQuad(const Vector2& position, const Vector2& size, const LinearColor& color)
+	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const LinearColor& color)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, color);
 	}
 
-	void SceneRenderer2D::DrawQuad(const Vector3& position, const Vector2& size, const LinearColor& color)
+	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const LinearColor& color)
 	{
 		Matrix4 transform = Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
 		DrawQuad(transform, color);
 	}
 
-	void SceneRenderer2D::DrawQuad(const Vector2& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawQuad(const Vector3& position, const Vector2& size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const LinearColor& color)
+	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const LinearColor& color)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, color);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const LinearColor& color)
+	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const LinearColor& color)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -374,12 +376,12 @@ namespace Athena
 		DrawQuad(transform, color);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -449,6 +451,23 @@ namespace Athena
 		m_QuadIndexCount += 6;
 	}
 
+	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const LinearColor& color)
+	{
+		Vector3 cameraPos = m_InverseViewCamera[3];
+		float distance = Math::Distance(cameraPos, position);
+		size *= distance;
+		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseViewCamera);
+		DrawQuad(transform, color);
+	}
+
+	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	{
+		Vector3 cameraPos = m_InverseViewCamera[3];
+		float distance = Math::Distance(cameraPos, position);
+		size *= distance;
+		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseViewCamera);
+		DrawQuad(transform, texture, tint, tilingFactor);
+	}
 
 	void SceneRenderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade)
 	{

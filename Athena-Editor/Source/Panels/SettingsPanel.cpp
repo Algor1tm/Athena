@@ -97,13 +97,28 @@ namespace Athena
 	{
 		if (ImGui::Begin("Editor Settings"))
 		{
-			UI::ShiftCursorY(2.f);
-			ImGui::Text("Show Physics Colliders"); ImGui::SameLine(); ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.ShowPhysicsColliders);
+			if (UI::BeginPropertyTable())
+			{
+				EditorSettings& settings = m_EditorCtx.EditorSettings;
 
-			ImGui::Text("Camera Speed");
-			ImGui::SameLine();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-			ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyCheckbox("GizmosLocal", &settings.GizmosLocalTransform);
+				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
+				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
+				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);
+
+				UI::PropertyRow("Reload Scripts", ImGui::GetFrameHeight());
+				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+				if (ImGui::Button("Reload All Scripts"))
+				{
+					m_EditorCtx.ActiveScene->LoadAllScripts();
+				}
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
+
+				UI::EndPropertyTable();
+			}
 		}
 
 		ImGui::End();
@@ -274,24 +289,6 @@ namespace Athena
 			UI::EndPropertyTable();
 			UI::TreePop();
 		}
-
-		ImGui::End();
-
-		ImGui::Begin("ScriptEngine");
-		
-		ImGui::Text("Reload Scripts On Start");
-		ImGui::SameLine();
-		ImGui::Checkbox("##OnStart", &m_EditorSettings.ReloadScriptsOnStart);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-		if (ImGui::Button("Reload All Scripts"))
-		{
-			m_EditorCtx.ActiveScene->LoadAllScripts();
-		}
-		ImGui::PopStyleVar();
-		ImGui::PopStyleColor();
-
 
 		ImGui::End();
 	}

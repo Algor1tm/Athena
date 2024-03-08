@@ -117,6 +117,7 @@ namespace Athena
 
 	struct SceneRendererStatistics
 	{
+		Time GPUTime;
 		Time DirShadowMapPass;
 		Time GeometryPass;
 		Time BloomPass;
@@ -140,8 +141,6 @@ namespace Athena
 		const SceneRendererStatistics& GetStatistics() { return m_Statistics; }
 		Vector2u GetViewportSize() { return m_ViewportSize; }
 
-		Ref<Image> GetFinalImage();
-
 		void OnViewportResize(uint32 width, uint32 height);
 
 		void BeginScene(const CameraInfo& cameraInfo);
@@ -153,9 +152,10 @@ namespace Athena
 
 		void OnRender2D(const Render2DCallback& callback);
 
-		Ref<Image> GetShadowMap();
-		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
+		Ref<Texture2D> GetFinalImage();
+		Ref<Texture2D> GetShadowMap();
 		Ref<Texture2D> GetBloomTexture() { return m_BloomTexture; }
+		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
 
 	private:
 		void DirShadowMapPass();

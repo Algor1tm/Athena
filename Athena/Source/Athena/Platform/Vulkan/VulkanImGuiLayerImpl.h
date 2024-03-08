@@ -9,18 +9,19 @@
 
 namespace Athena
 {
-	struct ImageView
+	struct TextureView
 	{
-		Ref<Image> Image;
+		Ref<Texture2D> Texture;
 		uint32 MipLevel = 0;
 		uint32 Layer = 0;
 
-		bool operator==(const ImageView& other) const = default;
+		bool operator==(const TextureView& other) const = default;
 	};
 
-	struct ImageInfo
+	struct TextureInfo
 	{
 		VkImageView VulkanImageView = VK_NULL_HANDLE;
+		VkSampler VulkanSampler = VK_NULL_HANDLE;
 		VkDescriptorSet Set = VK_NULL_HANDLE;
 	};
 }
@@ -31,20 +32,20 @@ namespace std
 	using namespace Athena;
 
 	template<>
-	struct hash<Ref<Image>>
+	struct hash<Ref<Texture2D>>
 	{
-		size_t operator()(const Ref<Image>& value) const
+		size_t operator()(const Ref<Texture2D>& value) const
 		{
 			return (size_t)value.Raw();
 		}
 	};
 
 	template<>
-	struct hash<ImageView>
+	struct hash<TextureView>
 	{
-		size_t operator()(const ImageView& value) const
+		size_t operator()(const TextureView& value) const
 		{
-			return (size_t)((byte*)value.Image.Raw() + value.Layer + value.MipLevel);
+			return (size_t)((byte*)value.Texture.Raw() + value.Layer + value.MipLevel);
 		}
 	};
 }
@@ -63,9 +64,9 @@ namespace Athena
 
 		virtual void OnSwapChainRecreate() override;
 
-		virtual void* GetTextureID(const Ref<Image>& image) override;
-		virtual void* GetTextureMipID(const Ref<Image>& image, uint32 mip) override;
-		virtual void* GetTextureLayerID(const Ref<Image>& image, uint32 layer) override;
+		virtual void* GetTextureID(const Ref<Texture2D>& texture) override;
+		virtual void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip) override;
+		virtual void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer) override;
 
 	private:
 		void RecreateFramebuffers();
@@ -75,10 +76,9 @@ namespace Athena
 	private:
 		VkDescriptorPool m_ImGuiDescriptorPool;
 		VkRenderPass m_ImGuiRenderPass;
-
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
-		std::unordered_map<Ref<Image>, ImageInfo> m_ImagesMap;
-		std::unordered_map<ImageView, ImageInfo> m_ImageViewsMap;
-		VkSampler m_UISampler;
+
+		std::unordered_map<Ref<Texture2D>, TextureInfo> m_TexturesMap;
+		std::unordered_map<TextureView, TextureInfo> m_TextureViewsMap;
 	};
 }

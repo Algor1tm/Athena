@@ -319,12 +319,12 @@ namespace Athena
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { buttonPaddingX, 0.f });
                 ImGui::SetCursorScreenPos({ rectMin.x + rectPadding.x, rectMin.y + rectPadding.y });
 
-                Ref<Image> playIcon = EditorResources::GetIcon("Viewport_Play");
-                Ref<Image> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
-                Ref<Image> stopIcon = EditorResources::GetIcon("Viewport_Stop");
+                Ref<Texture2D> playIcon = EditorResources::GetIcon("Viewport_Play");
+                Ref<Texture2D> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
+                Ref<Texture2D> stopIcon = EditorResources::GetIcon("Viewport_Stop");
 
                 {
-                    Ref<Image> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Play", buttonSize))
                     {
@@ -340,7 +340,7 @@ namespace Athena
                 ImGui::SameLine();
 
                 {
-                    Ref<Image> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
 
                     if (ImGui::InvisibleButton("Simulate", buttonSize))
                     {
@@ -375,7 +375,6 @@ namespace Athena
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-
         return Entity{};
     }
 
@@ -390,7 +389,7 @@ namespace Athena
             {
 				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-				Matrix4 view = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix());
+				Matrix4 view = Math::AffineInverse(camera.GetWorldTransform().AsMatrix());
                 renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
@@ -438,27 +437,38 @@ namespace Athena
         }
         
         const Vector2 iconScale = { 0.075f, 0.075f };
-        if (m_EditorCtx->EditorSettings.ShowRendererIcons)
+        if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
             auto camerasView = m_EditorScene->GetAllEntitiesWith<TransformComponent, CameraComponent>();
             for (auto entity : camerasView)
-            {
-                const auto& transform = camerasView.get<TransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+            { 
+                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
+                const auto& transform = sceneEntity.GetWorldTransform();
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, { 0.1f, 0.1f }, EditorResources::GetIcon("Viewport_Camera"));
             }
 
             auto pointLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
             for (auto entity : pointLightsView)
             {
-                const auto& transform = pointLightsView.get<TransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
+                const auto& transform = sceneEntity.GetWorldTransform();
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
             }
 
             auto dirLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
             for (auto entity : dirLightsView)
             {
-                const auto& transform = dirLightsView.get<TransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale);
+                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
+                const auto& transform = sceneEntity.GetWorldTransform();
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, {0.12f, 0.12f}, EditorResources::GetIcon("Viewport_DirLight"));
+            }
+
+            auto skyLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, SkyLightComponent>();
+            for (auto entity : skyLightsView)
+            {
+                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
+                const auto& transform = sceneEntity.GetWorldTransform();
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
             }
         }
 
@@ -468,14 +478,7 @@ namespace Athena
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
             TransformComponent worldTransform = selectedEntity.GetWorldTransform();
 
-            if (selectedEntity.HasComponent<CameraComponent>())
-            {
-                float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
-                float scale = 0.1f * distance;
-                Matrix4 rectTransform = Math::ConstructTransform(worldTransform.Translation, {scale, scale, scale}, worldTransform.Rotation);
-                renderer2D->DrawRect(rectTransform, color);
-            }
-            else if (selectedEntity.HasComponent<StaticMeshComponent>())
+            if (selectedEntity.HasComponent<StaticMeshComponent>())
             {
                 const AABB& box = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
                 

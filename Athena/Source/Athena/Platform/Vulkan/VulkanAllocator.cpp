@@ -123,6 +123,57 @@ namespace Athena
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
 
+	VkSampler VulkanAllocator::AllocateSampler(const TextureSamplerCreateInfo& info)
+	{
+		if (m_SamplersMap.contains(info))
+		{
+			auto& samplerInfo = m_SamplersMap.at(info);
+			samplerInfo.RefCount++;
+			return samplerInfo.Sampler;
+		}
+
+		VkSampler sampler;
+
+		VkSamplerCreateInfo vksamplerInfo = {};
+		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		vksamplerInfo.magFilter = Vulkan::GetFilter(info.MagFilter);
+		vksamplerInfo.minFilter = Vulkan::GetFilter(info.MinFilter);
+		vksamplerInfo.mipmapMode = Vulkan::GetMipMapMode(info.MipMapFilter);
+		vksamplerInfo.addressModeU = Vulkan::GetWrap(info.Wrap);
+		vksamplerInfo.addressModeV = Vulkan::GetWrap(info.Wrap);
+		vksamplerInfo.addressModeW = Vulkan::GetWrap(info.Wrap);
+		vksamplerInfo.anisotropyEnable = false;
+		vksamplerInfo.maxAnisotropy = 1.f;
+		vksamplerInfo.compareEnable = info.Compare == TextureCompareOperator::NONE ? false : true;
+		vksamplerInfo.compareOp = Vulkan::GetCompareOp(info.Compare);
+		vksamplerInfo.minLod = 0;
+		vksamplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+		vksamplerInfo.mipLodBias = 0.f;
+		vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		vksamplerInfo.unnormalizedCoordinates = false;
+
+		VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &sampler));
+
+		m_SamplersMap[info] = { sampler, 1 };
+		return sampler;
+	}
+
+	void VulkanAllocator::DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler)
+	{
+		ATN_CORE_ASSERT(m_SamplersMap.contains(info));
+
+		auto& samplerInfo = m_SamplersMap.at(info);
+		ATN_CORE_ASSERT(samplerInfo.Sampler == sampler);
+
+		samplerInfo.RefCount--;
+
+		if (samplerInfo.RefCount == 0)
+		{
+			vkDestroySampler(VulkanContext::GetLogicalDevice(), samplerInfo.Sampler, nullptr);
+			m_SamplersMap.erase(info);
+		}
+	}
+
 	void VulkanAllocator::OnUpdate()
 	{
 		vmaSetCurrentFrameIndex(m_Allocator, Renderer::GetCurrentFrameIndex());

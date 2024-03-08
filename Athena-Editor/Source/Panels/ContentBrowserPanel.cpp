@@ -94,7 +94,7 @@ namespace Athena
 				ImGui::PushID(filename.data());
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
 
-				Ref<Image> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
+				Ref<Texture2D> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
 				ImGui::ImageButton(UI::GetTextureID(icon), m_ItemSize);
 
 				bool enteredIntoFolder = false;

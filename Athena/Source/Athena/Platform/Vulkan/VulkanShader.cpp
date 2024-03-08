@@ -127,32 +127,13 @@ namespace Athena
 			bindings[texture.Set].push_back(layoutBinding);
 
 			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2DStorage : ShaderResourceType::TextureCubeStorage;
+			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::RWTexture2D : ShaderResourceType::RWTextureCube;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 			resourceDesc.ArraySize = texture.ArraySize;
 			m_ResourcesDescriptionTable[name] = resourceDesc;
 
 			stats[texture.Set].StorageTextures++;
-		}
-		for (const auto& [name, sampler] : m_MetaData.Samplers)
-		{
-			VkDescriptorSetLayoutBinding layoutBinding = {};
-			layoutBinding.binding = sampler.Binding;
-			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-			layoutBinding.descriptorCount = sampler.ArraySize;
-			layoutBinding.stageFlags = Vulkan::GetShaderStageFlags(sampler.StageFlags);
-			layoutBinding.pImmutableSamplers = nullptr;
-			bindings[sampler.Set].push_back(layoutBinding);
-
-			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = ShaderResourceType::Sampler;
-			resourceDesc.Binding = sampler.Binding;
-			resourceDesc.Set = sampler.Set;
-			resourceDesc.ArraySize = sampler.ArraySize;
-			m_ResourcesDescriptionTable[name] = resourceDesc;
-
-			stats[sampler.Set].Samplers++;
 		}
 		for (const auto& [name, buffer] : m_MetaData.UniformBuffers)
 		{

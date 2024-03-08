@@ -111,38 +111,16 @@ namespace Athena
 		Vulkan::EndSingleTimeCommands(vkCommandBuffer);
 
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-		VkSamplerCreateInfo vksamplerInfo = {};
-		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		vksamplerInfo.magFilter = VK_FILTER_LINEAR;
-		vksamplerInfo.minFilter = VK_FILTER_LINEAR;
-		vksamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		vksamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		vksamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		vksamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		vksamplerInfo.anisotropyEnable = false;
-		vksamplerInfo.maxAnisotropy = 1.f;
-		vksamplerInfo.compareEnable = false;
-		vksamplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-		vksamplerInfo.minLod = 0.f;
-		vksamplerInfo.maxLod = 1;
-		vksamplerInfo.mipLodBias = 0.f;
-		vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-		vksamplerInfo.unnormalizedCoordinates = false;
-
-		VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_UISampler));
-		Vulkan::SetObjectDebugName(m_UISampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, "Sampler_DefaultUI");
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()
 	{
-		m_ImagesMap.clear();
-		m_ImageViewsMap.clear();
+		m_TexturesMap.clear();
+		m_TextureViewsMap.clear();
 
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, 
-			framebuffers = m_SwapChainFramebuffers, uiSampler = m_UISampler]()
+			framebuffers = m_SwapChainFramebuffers]()
 		{
-			vkDestroySampler(VulkanContext::GetLogicalDevice(), uiSampler, nullptr);
 			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, nullptr);
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
 
@@ -226,97 +204,105 @@ namespace Athena
 		}
 	}
 
-	void* VulkanImGuiLayerImpl::GetTextureLayerID(const Ref<Image>& image, uint32 layer)
+	void* VulkanImGuiLayerImpl::GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
 	{
-		if (image == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		ImageView view = { image, 0, layer };
+		TextureView view = { texture, 0, layer };
 
-		if (m_ImageViewsMap.contains(view))
-			return m_ImageViewsMap.at(view).Set;
+		if (m_TextureViewsMap.contains(view))
+			return m_TextureViewsMap.at(view).Set;
 
-		ImageInfo info;
-		info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewLayer(layer);
+		TextureInfo info;
+		info.VulkanImageView = texture->GetImage().As<VulkanImage>()->GetVulkanImageViewLayer(layer);
+		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		info.Set = ImGui_ImplVulkan_AddTexture(m_UISampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		m_ImageViewsMap[view] = info;
+		m_TextureViewsMap[view] = info;
 		return info.Set;
 	}
 
-	void* VulkanImGuiLayerImpl::GetTextureMipID(const Ref<Image>& image, uint32 mip)
+	void* VulkanImGuiLayerImpl::GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
 	{
-		if (image == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		ImageView view = { image, mip, 0 };
+		TextureView view = { texture, mip, 0 };
 
-		if (m_ImageViewsMap.contains(view))
-			return m_ImageViewsMap.at(view).Set;
+		if (m_TextureViewsMap.contains(view))
+			return m_TextureViewsMap.at(view).Set;
 
-		ImageInfo info;
-		info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageViewMip(mip);
+		TextureInfo info;
+		info.VulkanImageView = texture->GetImage().As<VulkanImage>()->GetVulkanImageViewMip(mip);
+		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		info.Set = ImGui_ImplVulkan_AddTexture(m_UISampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		m_ImageViewsMap[view] = info;
+		m_TextureViewsMap[view] = info;
 		return info.Set;
 	}
 
-	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<Image>& image)
+	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<Texture2D>& texture)
 	{
-		if (image == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+		if (texture == nullptr)
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		if (m_ImagesMap.contains(image))
-			return m_ImagesMap.at(image).Set;
+		if (m_TexturesMap.contains(texture))
+			return m_TexturesMap.at(texture).Set;
 
-		ImageInfo info;
-		info.VulkanImageView = image.As<VulkanImage>()->GetVulkanImageView();
+		TextureInfo info;
+		info.VulkanImageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();
+		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(Renderer::GetWhiteTexture()->GetImage());
+			return GetTextureID(Renderer::GetWhiteTexture());
 
-		info.Set = ImGui_ImplVulkan_AddTexture(m_UISampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-		m_ImagesMap[image] = info;
+		m_TexturesMap[texture] = info;
 		return info.Set;
 	}
 
 	void VulkanImGuiLayerImpl::InvalidateDescriptorSets()
 	{
-		std::vector<Ref<Image>> imagesToRemove;
-		for (auto& [image, imageInfo] : m_ImagesMap)
+		std::vector<Ref<Texture2D>> texturesToRemove;
+		for (auto& [texture, info] : m_TexturesMap)
 		{
-			VkImageView imageView = image.As<VulkanImage>()->GetVulkanImageView();
+			VkImageView imageView = texture.As<VulkanTexture2D>()->GetVulkanImageView();
 
 			// All instances of texture has been deleted except one in texture map
-			if (image->GetCount() == 1 || imageView == VK_NULL_HANDLE)
+			if (texture->GetCount() == 1 || imageView == VK_NULL_HANDLE)
 			{
-				RemoveDescriptorSet(imageInfo.Set);
-				imagesToRemove.push_back(image);
+				RemoveDescriptorSet(info.Set);
+				texturesToRemove.push_back(texture);
+				continue;
 			}
 
+			VkSampler sampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
+
 			// Check if texture has been modified and update descriptor set
-			if (imageInfo.VulkanImageView != imageView)
+			if (info.VulkanImageView != imageView || info.VulkanSampler != sampler)
 			{
-				RemoveDescriptorSet(imageInfo.Set);
-				imageInfo.VulkanImageView = imageView;
-				imageInfo.Set = ImGui_ImplVulkan_AddTexture(m_UISampler, imageInfo.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				RemoveDescriptorSet(info.Set);
+
+				info.VulkanImageView = imageView;
+				info.VulkanSampler = sampler;
+				info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			}
 		}
 
-		// TODO: Invalidate ImageViewsMap
+		// TODO: Invalidate TextureViewsMap
 
-		for (const auto& texture : imagesToRemove)
-			m_ImagesMap.erase(texture);
+		for (const auto& texture : texturesToRemove)
+			m_TexturesMap.erase(texture);
 	}
 
 	void VulkanImGuiLayerImpl::RemoveDescriptorSet(VkDescriptorSet set)

@@ -16,9 +16,9 @@ namespace Athena
 	{
 		bool GizmosLocalTransform = true;
 		float CameraSpeedLevel = 0.3f;
-		bool ShowRendererIcons = false;
+		bool ShowRendererIcons = true;
 		bool ShowPhysicsColliders = false;
-		bool ReloadScriptsOnStart = true;
+		bool ReloadScriptsOnStart = false;
 	};
 
 	struct EditorContext : public RefCounted

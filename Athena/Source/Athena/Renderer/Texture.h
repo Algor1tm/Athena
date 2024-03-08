@@ -34,6 +34,9 @@ namespace Athena
 
 	struct TextureSamplerCreateInfo
 	{
+		// For hashing
+		bool operator==(const TextureSamplerCreateInfo& other) const = default;
+
 		TextureFilter MinFilter = TextureFilter::LINEAR;
 		TextureFilter MagFilter = TextureFilter::LINEAR;
 		TextureFilter MipMapFilter = TextureFilter::LINEAR;
@@ -150,19 +153,5 @@ namespace Athena
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
-	};
-
-
-	class ATHENA_API Sampler: public RenderResource
-	{
-	public:
-		static Ref<Sampler> Create(const TextureSamplerCreateInfo& info);
-		virtual ~Sampler() = default;
-
-		virtual RenderResourceType GetResourceType() override { return RenderResourceType::Sampler; }
-		const TextureSamplerCreateInfo& GetInfo() const { return m_Info; }
-
-	protected:
-		TextureSamplerCreateInfo m_Info;
 	};
 }

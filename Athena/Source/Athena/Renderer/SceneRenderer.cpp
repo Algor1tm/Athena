@@ -282,14 +282,14 @@ namespace Athena
 		
 	}
 
-	Ref<Image> SceneRenderer::GetFinalImage()
+	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return m_CompositePass->GetOutput("SceneCompositeColor")->GetImage();
+		return m_CompositePass->GetOutput("SceneCompositeColor");
 	}
 
-	Ref<Image> SceneRenderer::GetShadowMap()
+	Ref<Texture2D> SceneRenderer::GetShadowMap()
 	{
-		return m_DirShadowMapPass->GetDepthOutput()->GetImage();
+		return m_DirShadowMapPass->GetDepthOutput();
 	}
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
@@ -467,6 +467,8 @@ namespace Athena
 		Render2DPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
+		m_Statistics.GPUTime = m_Statistics.DirShadowMapPass + m_Statistics.GeometryPass + 
+			m_Statistics.BloomPass + m_Statistics.SceneCompositePass + m_Statistics.Render2DPass;
 
 		m_StaticGeometryList.Clear();
 		m_AnimGeometryList.Clear();

@@ -63,7 +63,6 @@ namespace Athena
 		{
 			TransformComponent inverseOldWorldTransform = oldWorldTransform.Inverse();
 
-			// newParentTransform == oldParentTransform
 			TransformComponent parentTransform;
 			parentTransform.Rotation = oldWorldTransform.Rotation * Rotation.GetInversed();
 			parentTransform.Translation = -(parentTransform.Rotation * Translation) + oldWorldTransform.Translation;

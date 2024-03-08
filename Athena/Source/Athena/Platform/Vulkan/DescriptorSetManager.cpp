@@ -5,7 +5,6 @@
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Platform/Vulkan/VulkanSampler.h"
 
 
 namespace Athena
@@ -17,10 +16,9 @@ namespace Athena
 			switch (type)
 			{
 			case ShaderResourceType::Texture2D:           return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			case ShaderResourceType::Texture2DStorage:    return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::RWTexture2D:		  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			case ShaderResourceType::TextureCube:         return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			case ShaderResourceType::TextureCubeStorage:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-			case ShaderResourceType::Sampler:			  return VK_DESCRIPTOR_TYPE_SAMPLER;
+			case ShaderResourceType::RWTextureCube:       return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			case ShaderResourceType::UniformBuffer:	      return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case ShaderResourceType::StorageBuffer:	      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
@@ -38,9 +36,8 @@ namespace Athena
 			{
 			case ShaderResourceType::Texture2D:           return RenderResourceType::Texture2D;
 			case ShaderResourceType::TextureCube:         return RenderResourceType::TextureCube;
-			case ShaderResourceType::Texture2DStorage:    return RenderResourceType::Texture2D;
-			case ShaderResourceType::TextureCubeStorage:  return RenderResourceType::TextureCube;
-			case ShaderResourceType::Sampler:			  return RenderResourceType::Sampler;
+			case ShaderResourceType::RWTexture2D:         return RenderResourceType::Texture2D;
+			case ShaderResourceType::RWTextureCube:       return RenderResourceType::TextureCube;
 			case ShaderResourceType::UniformBuffer:	      return RenderResourceType::UniformBuffer;
 			case ShaderResourceType::StorageBuffer:	      return RenderResourceType::StorageBuffer;
 			}
@@ -55,7 +52,6 @@ namespace Athena
 			{
 			case RenderResourceType::Texture2D:      return "Texture2D";
 			case RenderResourceType::TextureCube:    return "TextureCube";
-			case RenderResourceType::Sampler:		 return "Sampler";
 			case RenderResourceType::UniformBuffer:	 return "UniformBuffer";
 			case RenderResourceType::StorageBuffer:	 return "StorageBuffer";
 			}
@@ -345,28 +341,6 @@ namespace Athena
 						}
 						break;
 					}
-					case RenderResourceType::Sampler:
-					{
-						uint32 imageInfoIndex = imageInfos.size();
-						imageInfos.emplace_back(resource.Storage.size());
-						writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
-
-						for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						{
-							ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
-							VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
-							imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
-
-							resourceState.ResourceHandle = imageInfo.sampler;
-
-							if (resourceState.ResourceHandle == nullptr)
-							{
-								m_InvalidatedResources[set][binding] = resource;
-								break;
-							}
-						}
-						break;
-					}
 					case RenderResourceType::UniformBuffer:
 					{
 						uint32 bufferInfoIndex = bufferInfos.size();
@@ -476,19 +450,6 @@ namespace Athena
 					}
 					break;
 				}
-				case RenderResourceType::Sampler:
-				{
-					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-					{
-						const auto& imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
-						if (IsResourceStateChanged(wd.ResourcesState[i], imageInfo))
-						{
-							m_InvalidatedResources[set][binding] = resource;
-							break;
-						}
-					}
-					break;
-				}
 				case RenderResourceType::UniformBuffer:
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
@@ -572,22 +533,6 @@ namespace Athena
 						resourceState.ResourceHandle = imageInfo.imageView;
 						resourceState.ImageLayout = imageInfo.imageLayout;
 						resourceState.Sampler = imageInfo.sampler;
-					}
-					break;
-				}
-				case RenderResourceType::Sampler:
-				{
-					uint32 imageInfoIndex = imageInfos.size();
-					imageInfos.emplace_back(resource.Storage.size());
-					writeDescriptor.pImageInfo = imageInfos[imageInfoIndex].data();
-
-					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-					{
-						ResourceState& resourceState = storedWriteDescriptor.ResourcesState[i];
-						VkDescriptorImageInfo& imageInfo = imageInfos[imageInfoIndex][i];
-						imageInfo = resource.Storage[i].As<VulkanSampler>()->GetVulkanDescriptorInfo();
-
-						resourceState.ResourceHandle = imageInfo.sampler;
 					}
 					break;
 				}

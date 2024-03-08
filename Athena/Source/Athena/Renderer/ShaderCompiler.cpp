@@ -234,6 +234,7 @@ namespace Athena
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
+		options.SetTargetSpirv(shaderc_spirv_version_1_6);
 		options.SetGenerateDebugInfo();
 		options.SetIncluder(std::make_unique<FileSystemIncluder>());
 
@@ -313,7 +314,7 @@ namespace Athena
 		}
 
 		result.StageDescriptions = PreProcessShaderStages();
-		result.ParseResult = CheckShaderStages(result.StageDescriptions);
+		result.ParseResult = !result.StageDescriptions.empty();
 
 		result.NeedRecompile = false;
 		for (const auto& [_, path, __] : result.StageDescriptions)
@@ -410,55 +411,6 @@ namespace Athena
 		}
 
 		return result;
-	}
-
-	bool ShaderCompiler::CheckShaderStages(const std::vector<StageDescription>& stages)
-	{
-		std::string_view errorMsg = "";
-
-		if (stages.size() == 0)
-		{
-			errorMsg = "Found 0 shader stages.";
-		}
-
-		std::unordered_map<ShaderStage, bool> shaderStageExistMap;
-		shaderStageExistMap[ShaderStage::VERTEX_STAGE] = false;
-		shaderStageExistMap[ShaderStage::FRAGMENT_STAGE] = false;
-		shaderStageExistMap[ShaderStage::GEOMETRY_STAGE] = false;
-		shaderStageExistMap[ShaderStage::COMPUTE_STAGE] = false;
-
-		for (const auto& stage : stages)
-		{
-			shaderStageExistMap.at(stage.Stage) = true;
-		}
-
-		//if (shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && !shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		//{
-		//	errorMsg = "Has VERTEX_STAGE but no FRAGMENT_STAGE.";
-		//}
-
-		//if (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) && shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE))
-		//{
-		//	errorMsg = "Has FRAGMENT_STAGE but no VERTEX_STAGE.";
-		//}
-
-		//if (shaderStageExistMap.at(ShaderStage::GEOMETRY_STAGE) && (!shaderStageExistMap.at(ShaderStage::VERTEX_STAGE) || shaderStageExistMap.at(ShaderStage::FRAGMENT_STAGE)))
-		//{
-		//	errorMsg = "Has GEOMETRY_STAGE but no VERTEX_SHADER or FRAGMENT_STAGE.";
-		//}
-
-		//if (shaderStageExistMap.at(ShaderStage::COMPUTE_STAGE) && stages.size() != 1)
-		//{
-		//	errorMsg = "Compute shader must have only 1 stage - COMPUTE_STAGE.";
-		//}
-
-		if (errorMsg.size() != 0)
-		{
-			ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", m_Name, errorMsg);
-			return false;
-		}
-
-		return true;
 	}
 
 	void ShaderCompiler::GetLanguageAndEntryPoints()
@@ -608,30 +560,6 @@ namespace Athena
 					textureData.ArraySize = array.empty() ? 1 : array[0];
 
 					result.StorageTextures[resource.name] = textureData;
-				}
-			}
-
-			// SEPARATE SAMPLERS
-			for (const auto& resource : resources.separate_samplers)
-			{
-				if (result.Samplers.contains(resource.name))
-				{
-					auto& stageFlags = result.Samplers.at(resource.name).StageFlags;
-					stageFlags = ShaderStage(stageFlags | stage);
-				}
-				else
-				{
-					uint32 binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-					uint32 set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-					const auto& array = compiler.get_type(resource.type_id).array;
-
-					SamplerShaderMetaData samplerData;
-					samplerData.Binding = binding;
-					samplerData.Set = set;
-					samplerData.StageFlags = stage;
-					samplerData.ArraySize = array.empty() ? 1 : array[0];
-
-					result.Samplers[resource.name] = samplerData;
 				}
 			}
 

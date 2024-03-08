@@ -54,9 +54,9 @@ namespace Athena
 
 	VulkanTexture2D::~VulkanTexture2D()
 	{
-		Renderer::SubmitResourceFree([vkSampler = m_Sampler]()
+		Renderer::SubmitResourceFree([samplerInfo = m_Info.SamplerInfo, vkSampler = m_Sampler]()
 		{
-			vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
+			VulkanContext::GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 		});
 	}
 
@@ -75,9 +75,9 @@ namespace Athena
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			Renderer::SubmitResourceFree([vkSampler = m_Sampler]()
+			Renderer::SubmitResourceFree([this]()
 			{
-				vkDestroySampler(VulkanContext::GetLogicalDevice(), vkSampler, nullptr);
+				VulkanContext::GetAllocator()->DestroySampler(m_Info.SamplerInfo, m_Sampler);
 			});
 		}
 
@@ -85,27 +85,7 @@ namespace Athena
 
 		Renderer::Submit([this]()
 		{
-			VkSamplerCreateInfo vksamplerInfo = {};
-			vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			vksamplerInfo.magFilter = Vulkan::GetFilter(m_Info.SamplerInfo.MagFilter);
-			vksamplerInfo.minFilter = Vulkan::GetFilter(m_Info.SamplerInfo.MinFilter);
-			vksamplerInfo.mipmapMode = Vulkan::GetMipMapMode(m_Info.SamplerInfo.MipMapFilter);
-			vksamplerInfo.addressModeU = Vulkan::GetWrap(m_Info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeV = Vulkan::GetWrap(m_Info.SamplerInfo.Wrap);
-			vksamplerInfo.addressModeW = Vulkan::GetWrap(m_Info.SamplerInfo.Wrap);
-			vksamplerInfo.anisotropyEnable = false;
-			vksamplerInfo.maxAnisotropy = 1.f;
-			vksamplerInfo.compareEnable = m_Info.SamplerInfo.Compare == TextureCompareOperator::NONE ? false : true;
-			vksamplerInfo.compareOp = Vulkan::GetCompareOp(m_Info.SamplerInfo.Compare);
-			vksamplerInfo.minLod = 0;
-			vksamplerInfo.maxLod = VK_LOD_CLAMP_NONE;
-			vksamplerInfo.mipLodBias = 0.f;
-			vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-			vksamplerInfo.unnormalizedCoordinates = false;
-
-			VK_CHECK(vkCreateSampler(VulkanContext::GetLogicalDevice(), &vksamplerInfo, nullptr, &m_Sampler));
-			Vulkan::SetObjectDebugName(m_Sampler, VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, std::format("Sampler_{}", m_Info.Name));
-
+			m_Sampler = VulkanContext::GetAllocator()->AllocateSampler(m_Info.SamplerInfo);
 			m_DescriptorInfo.sampler = m_Sampler;
 		});
 	}

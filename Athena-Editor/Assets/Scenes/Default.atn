@@ -5,7 +5,7 @@ Entities:
     TagComponent:
       Tag: SkyLight
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0.617748141, 9.80921936, 0]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
@@ -22,9 +22,9 @@ Entities:
     TagComponent:
       Tag: DirectionalLight
     TransformComponent:
-      Translation: [0, 0, 0]
+      Translation: [0.510611534, 2.93948317, 1.60206532]
       Rotation: [0.438086182, -0.887036324, -0.0710452348, -0.127277657]
-      Scale: [1, 1.0000236, 1.00001967]
+      Scale: [0.999999881, 1.0000236, 1.00001967]
     DirectionalLightComponent:
       Color: [1, 1, 1, 1]
       Intensity: 1

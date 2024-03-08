@@ -54,7 +54,6 @@ namespace Athena
 		std::vector<StageDescription> GetHLSLStageDescriptions();
 		std::vector<StageDescription> GetGLSLStageDescriptions();
 
-		bool CheckShaderStages(const std::vector<StageDescription>& stages);
 		void GetLanguageAndEntryPoints();
 
 	private:

@@ -1,10 +1,28 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/Texture.h"
 
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
 
+
+namespace std
+{
+	using namespace Athena;
+
+	template<>
+	struct hash<TextureSamplerCreateInfo>
+	{
+		size_t operator()(const TextureSamplerCreateInfo& value) const
+		{
+			string str = std::format("{}{}{}{}{}", (uint32)value.MinFilter, (uint32)value.MagFilter, 
+				(uint32)value.MipMapFilter, (uint32)value.Wrap, (uint32)value.Compare);
+
+			return hash<string>()(str);
+		}
+	};
+}
 
 namespace Athena
 {
@@ -45,6 +63,12 @@ namespace Athena
 		VmaAllocation m_Allocation = VK_NULL_HANDLE;
 	};
 
+	struct VulkanSamplerAllocation
+	{
+		VkSampler Sampler = VK_NULL_HANDLE;
+		uint64 RefCount = 0;
+	};
+
 
 	class VulkanAllocator : public RefCounted
 	{
@@ -60,6 +84,9 @@ namespace Athena
 
 		VmaAllocator GetInternalAllocator() { return m_Allocator; }
 
+		VkSampler AllocateSampler(const TextureSamplerCreateInfo& info);
+		void DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler);
+
 		void OnUpdate();
 
 		// return in Kb
@@ -68,5 +95,6 @@ namespace Athena
 	private:
 		VmaAllocator m_Allocator;
 		VkPhysicalDeviceMemoryProperties m_MemoryProps;
+		std::unordered_map<TextureSamplerCreateInfo, VulkanSamplerAllocation> m_SamplersMap;
 	};
 }

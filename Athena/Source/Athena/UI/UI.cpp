@@ -9,7 +9,7 @@ namespace Athena::UI
 		if (texture == nullptr)
 			return GetTextureID(Renderer::GetWhiteTexture());
 
-		return GetTextureID(texture->GetImage());
+		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
 	}
 
 	void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
@@ -17,7 +17,7 @@ namespace Athena::UI
 		if (texture == nullptr)
 			return GetTextureID(Renderer::GetWhiteTexture());
 
-		return GetTextureMipID(texture->GetImage(), mip);
+		return Application::Get().GetImGuiLayer()->GetTextureMipID(texture, mip);
 	}
 
 	void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
@@ -25,22 +25,7 @@ namespace Athena::UI
 		if (texture == nullptr)
 			return GetTextureID(Renderer::GetWhiteTexture());
 
-		return GetTextureLayerID(texture->GetImage(), layer);
-	}
-
-	void* GetTextureID(const Ref<Image>& image)
-	{
-		return Application::Get().GetImGuiLayer()->GetTextureID(image);
-	}
-
-	void* GetTextureMipID(const Ref<Image>& image, uint32 mip)
-	{
-		return Application::Get().GetImGuiLayer()->GetTextureMipID(image, mip);
-	}
-
-	void* GetTextureLayerID(const Ref<Image>& image, uint32 layer)
-	{
-		return Application::Get().GetImGuiLayer()->GetTextureLayerID(image, layer);
+		return Application::Get().GetImGuiLayer()->GetTextureLayerID(texture, layer);
 	}
 
 	void PushFont(Fonts font)
@@ -382,7 +367,7 @@ namespace Athena::UI
 		return result;
 	}
 
-	void ButtonImage(const Ref<Image>& imageNormal, const Ref<Image>& imageHovered, const Ref<Image>& imagePressed,
+	void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax)
 	{
@@ -395,12 +380,12 @@ namespace Athena::UI
 			drawList->AddImage(UI::GetTextureID(imageNormal), rectMin, rectMax, ImVec2(0, 0), ImVec2(1, 1), tintNormal);
 	}
 	
-	void ButtonImage(const Ref<Image>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
+	void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed)
 	{
 		ButtonImage(image, image, image, tintNormal, tintHovered, tintPressed, ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
 	}
 
-	void DrawImage(const Ref<Image>& image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
+	void DrawImage(const Ref<Texture2D>& image, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 	{
 		ImGui::Image(UI::GetTextureID(image), size, { 0, 0 }, { 1, 1 }, tint_col, border_col);
 	}

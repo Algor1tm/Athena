@@ -221,7 +221,7 @@ namespace Athena
 				static int layer = 0;
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
 
-				Ref<Image> shadowMap = m_ViewportRenderer->GetShadowMap();
+				Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
 				ImGui::Image(UI::GetTextureLayerID(shadowMap, layer), { 256, 256 });
 
 				UI::TreePop();

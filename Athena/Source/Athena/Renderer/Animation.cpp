@@ -89,6 +89,7 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		TranslationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
@@ -108,6 +109,7 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		RotationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
@@ -127,6 +129,7 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		ScaleKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,

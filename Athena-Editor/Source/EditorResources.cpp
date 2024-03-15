@@ -15,6 +15,8 @@ namespace Athena
 
 		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Logo/LogoWhite.png");
 
+		m_Icons["EmptyTexture"] = Texture2D::Create(m_Path / "Icons/Editor/Other/EmptyTexture.png", false);
+
 		m_Icons["Titlebar_CloseWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/CloseWindow.png", true);
 		m_Icons["Titlebar_MinimizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png", true);
 		m_Icons["Titlebar_RestoreWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png", true);
@@ -22,7 +24,7 @@ namespace Athena
 
 		m_Icons["Viewport_Play"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Play.png", true);
 		m_Icons["Viewport_Simulate"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Simulate.png", true);
-		m_Icons["Viewport_Stop"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Stop.png", true);
+		m_Icons["Viewport_Stop"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Stop.png", false);
 		m_Icons["Viewport_Camera"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Camera.png", true);
 		m_Icons["Viewport_PointLight"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/PointLight.png", true);
 		m_Icons["Viewport_SpotLight"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/SpotLight.png", true);

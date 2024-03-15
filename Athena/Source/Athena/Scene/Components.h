@@ -296,7 +296,7 @@ namespace Athena
 	};
 
 	using AllComponents =
-		ComponentGroup<TransformComponent, ParentComponent, ChildComponent,
+		ComponentGroup<WorldTransformComponent, TransformComponent, ParentComponent, ChildComponent,
 		SpriteComponent, CircleComponent, CameraComponent, 
 		ScriptComponent, NativeScriptComponent, 
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 

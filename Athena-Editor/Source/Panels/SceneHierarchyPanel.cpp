@@ -1,19 +1,16 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Athena/Core/PlatformUtils.h"
-
 #include "Athena/Input/Input.h"
-
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer.h"
-
 #include "Athena/Scene/Components.h"
-
 #include "Athena/Scripting/ScriptEngine.h"
-
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
+
+#include "EditorResources.h"
 
 #include <ImGui/imgui.h>
 
@@ -332,8 +329,12 @@ namespace Athena
 		{
 			float imageSize = 45.f;
 			Ref<Texture2D> texture = mat->Get<Ref<Texture2D>>(texName);
+			Ref<Texture2D> displayTexture = texture;
 
-			if (UI::PropertyImage(texName.data(), texture ? texture : Renderer::GetWhiteTexture(), { imageSize, imageSize, }))
+			if (!texture || texture == Renderer::GetWhiteTexture())
+				displayTexture = EditorResources::GetIcon("EmptyTexture");
+
+			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
 			{
 				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
 				if (!path.empty())

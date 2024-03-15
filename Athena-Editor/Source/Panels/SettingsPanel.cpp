@@ -2,12 +2,11 @@
 
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
-
 #include "Athena/Scripting/ScriptEngine.h"
-
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 
+#include "EditorResources.h"
 #include "EditorLayer.h"
 
 #include <ImGui/imgui.h>
@@ -241,7 +240,11 @@ namespace Athena
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
 			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
-			if (UI::PropertyImage("Dirt Texture", bloomSettings.DirtTexture, { 45.f, 45.f }))
+			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
+			if (!displayTex || displayTex == Renderer::GetBlackTexture())
+				displayTex = EditorResources::GetIcon("EmptyTexture");
+
+			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
 			{
 				FilePath path = FileDialogs::OpenFile("DirtTexture (*png)\0*.png\0");
 				if (!path.empty())

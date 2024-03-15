@@ -1367,13 +1367,29 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.colorAttachmentCount = 1;
         subpass.pColorAttachments = &color_attachment;
+
+        //////////////////////// ATHENA /////////////////////////
+
+        //VkSubpassDependency dependency = {};
+        //dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        //dependency.dstSubpass = 0;
+        //dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //dependency.srcAccessMask = 0;
+        //dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+        // Need specifically this dependency for compatibility between Athena ImGui render pass and this render pass
         VkSubpassDependency dependency = {};
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependency.srcAccessMask = 0;
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+        //////////////////////// ATHENA /////////////////////////
+
         VkRenderPassCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         info.attachmentCount = 1;

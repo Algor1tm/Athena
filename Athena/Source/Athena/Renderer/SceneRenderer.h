@@ -103,6 +103,9 @@ namespace Athena
 
 		PointLight PointLights[ShaderDef::MAX_POINT_LIGHT_COUNT];
 		uint32 PointLightCount = 0;
+
+		SpotLight SpotLights[ShaderDef::MAX_SPOT_LIGHT_COUNT];
+		uint32 SpotLightCount = 0;
 	};
 
 	struct ShadowsData

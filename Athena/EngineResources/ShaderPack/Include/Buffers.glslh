@@ -36,6 +36,18 @@ struct PointLight
     float FallOff;
 };
 
+struct SpotLight
+{
+	vec4 Color;
+	vec3 Position;
+	float Intensity;
+	vec3 Direction;
+	float SpotAngle;    // Cosine of the half angle
+    float InnerFallOff;
+	float Range;
+	float RangeFallOff;
+};
+
 layout(std430, set = 1, binding = 2) readonly buffer u_LightData
 {
     DirectionalLight g_DirectionalLights[MAX_DIRECTIONAL_LIGHT_COUNT];
@@ -43,6 +55,9 @@ layout(std430, set = 1, binding = 2) readonly buffer u_LightData
 
     PointLight g_PointLights[MAX_POINT_LIGHT_COUNT];
     int g_PointLightCount;
+
+    SpotLight g_SpotLights[MAX_SPOT_LIGHT_COUNT];
+    int g_SpotLightCount;
 };
 
 layout(std430, set = 1, binding = 3) readonly buffer u_BonesData

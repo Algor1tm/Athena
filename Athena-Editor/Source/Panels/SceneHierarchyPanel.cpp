@@ -359,7 +359,7 @@ namespace Athena
 						mat->Set(uniformName, albedo);
 
 					float emission = mat->Get<float>("u_Emission");
-					if(ImGui::DragFloat("u_Emission", &emission))
+					if(ImGui::DragFloat("u_Emission", &emission, 1.f, 0.f, 500.f))
 						mat->Set("u_Emission", emission);
 				}
 				else
@@ -423,6 +423,7 @@ namespace Athena
 			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
 			DrawAddComponentEntry<DirectionalLightComponent>(entity, "DirectionalLight");
 			DrawAddComponentEntry<PointLightComponent>(entity, "PointLight");
+			DrawAddComponentEntry<SpotLightComponent>(entity, "SpotLight");
 			DrawAddComponentEntry<SkyLightComponent>(entity, "SkyLight");
 
 			ImGui::EndPopup();
@@ -811,6 +812,21 @@ namespace Athena
 				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
 				UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
 				UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
+
+				UI::EndPropertyTable();
+			}
+		});
+
+		DrawComponent<SpotLightComponent>(entity, "SpotLight", [](SpotLightComponent& lightComponent)
+		{
+			if (UI::BeginPropertyTable())
+			{
+				UI::PropertyColor3("Color", lightComponent.Color.Data());
+				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+				UI::PropertySlider("Spot Angle", &lightComponent.SpotAngle, 0.f, 180.f);
+				UI::PropertyDrag("Inner FallOff", &lightComponent.InnerFallOff, 0.1f, 0.f, 100.f);
+				UI::PropertyDrag("Range", &lightComponent.Range, 2.5f, 0.f, 10000.f);
+				UI::PropertyDrag("Range FallOff", &lightComponent.RangeFallOff, 0.1f, 0.f, 100.f);
 
 				UI::EndPropertyTable();
 			}

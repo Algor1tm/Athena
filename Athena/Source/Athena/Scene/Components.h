@@ -226,6 +226,16 @@ namespace Athena
 		float FallOff = 1.f;
 	};
 
+	struct SpotLightComponent
+	{
+		LinearColor Color = LinearColor::White;
+		float Intensity = 1.f;
+		float SpotAngle = 30.f;
+		float InnerFallOff = 1.f;
+		float Range = 10.f;
+		float RangeFallOff = 1.f;
+	};
+
 	struct SkyLightComponent
 	{
 		Ref<EnvironmentMap> EnvironmentMap;
@@ -286,7 +296,8 @@ namespace Athena
 		SpriteComponent, CircleComponent, CameraComponent, 
 		ScriptComponent, NativeScriptComponent, 
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
-		StaticMeshComponent, DirectionalLightComponent, PointLightComponent, SkyLightComponent>;
+		StaticMeshComponent, 
+		DirectionalLightComponent, PointLightComponent, SpotLightComponent, SkyLightComponent>;
 
 
 	template <typename T>

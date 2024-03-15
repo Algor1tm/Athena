@@ -9,7 +9,7 @@
 
 #include "Include/Common.glslh"
 
-#define SAMPLE_COUNT 1024
+#define SAMPLE_COUNT 512
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 

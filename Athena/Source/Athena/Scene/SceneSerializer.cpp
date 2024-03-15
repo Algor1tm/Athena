@@ -411,6 +411,20 @@ namespace Athena
 				}
 
 				{
+					const auto pointLightComponent = entityNode["SpotLightComponent"];
+					if (pointLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<SpotLightComponent>();
+						lightComp.Color = pointLightComponent["Color"].as<LinearColor>();
+						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
+						lightComp.SpotAngle = pointLightComponent["SpotAngle"].as<float>();
+						lightComp.InnerFallOff = pointLightComponent["InnerFallOff"].as<float>();
+						lightComp.Range = pointLightComponent["Range"].as<float>();
+						lightComp.RangeFallOff = pointLightComponent["RangeFallOff"].as<float>();
+					}
+				}
+
+				{
 					const auto skyLightComponent = entityNode["SkyLightComponent"];
 					if (skyLightComponent)
 					{
@@ -628,6 +642,18 @@ namespace Athena
 				output << YAML::Key << "Radius" << YAML::Value << lightComponent.Radius;
 				output << YAML::Key << "FallOff" << YAML::Value << lightComponent.FallOff;
 			});
+
+		SerializeComponent<SpotLightComponent>(out, "SpotLightComponent", entity,
+			[](YAML::Emitter& output, const SpotLightComponent& lightComponent)
+			{
+				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "SpotAngle" << YAML::Value << lightComponent.SpotAngle;
+				output << YAML::Key << "InnerFallOff" << YAML::Value << lightComponent.InnerFallOff;
+				output << YAML::Key << "Range" << YAML::Value << lightComponent.Range;
+				output << YAML::Key << "RangeFallOff" << YAML::Value << lightComponent.RangeFallOff;
+			});
+
 
 		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
 			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)

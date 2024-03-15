@@ -436,7 +436,7 @@ namespace Athena
             }
         }
         
-        const Vector2 iconScale = { 0.075f, 0.075f };
+        const Vector2 iconScale = Vector2( 0.075f, 0.075f ) * m_EditorCtx->EditorSettings.RendererIconsScale;
         if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
             auto camerasView = m_EditorScene->GetAllEntitiesWith<TransformComponent, CameraComponent>();
@@ -444,7 +444,15 @@ namespace Athena
             { 
                 Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
                 const auto& transform = sceneEntity.GetWorldTransform();
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, { 0.1f, 0.1f }, EditorResources::GetIcon("Viewport_Camera"));
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
+            }
+
+            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
+            for (auto entity : dirLightsView)
+            {
+                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
+                const auto& transform = sceneEntity.GetWorldTransform();
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
             }
 
             auto pointLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
@@ -455,12 +463,12 @@ namespace Athena
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
             }
 
-            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
-            for (auto entity : dirLightsView)
+            auto spotLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, SpotLightComponent>();
+            for (auto entity : spotLightsView)
             {
                 Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
                 const auto& transform = sceneEntity.GetWorldTransform();
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, {0.12f, 0.12f}, EditorResources::GetIcon("Viewport_DirLight"));
+                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
             }
 
             auto skyLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, SkyLightComponent>();
@@ -536,6 +544,91 @@ namespace Athena
 
                     renderer2D->DrawLine(p0, p1, color);
                 }
+            }
+            else if (selectedEntity.HasComponent<SpotLightComponent>())
+            {
+                auto& comp = selectedEntity.GetComponent<SpotLightComponent>();
+                float spotAngle = Math::Radians(comp.SpotAngle / 2.f);
+                if (spotAngle == 0.f)
+                    spotAngle = 0.001f;
+
+                Vector3 direction = worldTransform.Rotation * Vector3::Forward();
+                direction.Normalize();
+
+                Vector3 origin = worldTransform.Translation;
+
+                // Circle
+                Vector3 circleCenter = origin + direction * (Math::Cos(spotAngle) * comp.Range);
+                float radius = Math::Sin(spotAngle) * comp.Range;
+                float angleStep = Math::Radians(15.f);
+
+                for (float angle = 0.f; angle < 2 * Math::PI<float>() - angleStep; angle += angleStep)
+                {
+                    Vector3 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle), 0.f };
+                    Vector3 offset1 = { radius * Math::Cos(angle + angleStep), radius * Math::Sin(angle + angleStep), 0.f };
+
+                    offset0 = worldTransform.Rotation * offset0;
+                    offset1 = worldTransform.Rotation * offset1;
+
+                    Vector3 p0 = circleCenter + offset0;
+                    Vector3 p1 = circleCenter + offset1;
+
+                    renderer2D->DrawLine(p0, p1, color);
+                }
+
+                // Arcs horizontal and vertical
+                circleCenter = origin;
+                radius = comp.Range;
+                float begin = Math::PI<float>() / 2.f - spotAngle;
+                float end = Math::PI<float>() / 2.f + spotAngle;
+
+                angleStep = (end - begin) / 10.f;
+
+                int counter = 0;
+                int maxCounter = (int)Math::Floor((end + 0.001f - angleStep - begin) / angleStep);
+
+                for (float angle = begin; angle < end - angleStep + 0.001f; angle += angleStep)
+                {
+                    Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
+                    Vector2 offset1 = { radius * Math::Cos(angle + angleStep), radius * Math::Sin(angle + angleStep) };
+
+                    Vector3 horizonOff0 = { offset0.x, 0.f, offset0.y };
+                    Vector3 horizonOff1 = { offset1.x, 0.f, offset1.y };
+
+                    horizonOff0 = worldTransform.Rotation * horizonOff0;
+                    horizonOff1 = worldTransform.Rotation * horizonOff1;
+
+                    Vector3 h0 = circleCenter - horizonOff0;
+                    Vector3 h1 = circleCenter - horizonOff1;
+
+                    renderer2D->DrawLine(h0, h1, color);
+
+                    Vector3 verticalOff0 = { 0.f, offset0.x, offset0.y };
+                    Vector3 verticalOff1 = { 0.f, offset1.x, offset1.y };
+
+                    verticalOff0 = worldTransform.Rotation * verticalOff0;
+                    verticalOff1 = worldTransform.Rotation * verticalOff1;
+
+                    Vector3 v0 = circleCenter - verticalOff0;
+                    Vector3 v1 = circleCenter - verticalOff1;
+
+                    renderer2D->DrawLine(v0, v1, color);
+
+                    // Lines from origin on corners
+                    if (counter == 0)
+                    {
+                        renderer2D->DrawLine(origin, h0, color);
+                        renderer2D->DrawLine(origin, v0, color);
+                    }
+                    else if (counter == maxCounter)
+                    {
+                        renderer2D->DrawLine(origin, h1, color);
+                        renderer2D->DrawLine(origin, v1, color);
+                    }
+
+                    counter++;
+                }
+
             }
         }
 

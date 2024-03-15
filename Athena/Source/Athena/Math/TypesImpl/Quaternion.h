@@ -46,6 +46,13 @@ namespace Athena::Math
 		}
 
 		template <typename Q>
+		constexpr Quaternion(Q pitch, Q yaw, Q roll)
+			: Quaternion(Vector<Q, 3>(pitch, yaw, roll))
+		{
+
+		}
+
+		template <typename Q>
 		constexpr Quaternion(const Vector<Q, 4>& vec4)
 			: w(static_cast<T>(vec4.x)),
 			  x(static_cast<T>(vec4.y)),

@@ -364,6 +364,13 @@ namespace Athena
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
+		m_LightData.SpotLightCount = lightEnv.SpotLights.size();
+		if (m_LightData.SpotLightCount > ShaderDef::MAX_SPOT_LIGHT_COUNT)
+		{
+			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} SpotLights!", ShaderDef::MAX_SPOT_LIGHT_COUNT);
+			m_LightData.SpotLightCount = ShaderDef::MAX_SPOT_LIGHT_COUNT;
+		}
+
 		// For now pick first directional light that cast shadows, others won't cast shadows
 		bool castsShadows = false;
 		for (uint32 i = 0; i < m_LightData.DirectionalLightCount; ++i)
@@ -386,7 +393,16 @@ namespace Athena
 		}
 
 		for (uint32 i = 0; i < m_LightData.PointLightCount; ++i)
+		{
 			m_LightData.PointLights[i] = lightEnv.PointLights[i];
+		}
+
+		for (uint32 i = 0; i < m_LightData.SpotLightCount; ++i)
+		{
+			m_LightData.SpotLights[i] = lightEnv.SpotLights[i];
+			m_LightData.SpotLights[i].Direction.Normalize();
+			m_LightData.SpotLights[i].SpotAngle = Math::Cos(Math::Radians(m_LightData.SpotLights[i].SpotAngle / 2.0));
+		}
 
 		m_RendererData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_RendererData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
@@ -609,7 +625,7 @@ namespace Athena
 
 				Renderer::Dispatch(commandBuffer, m_BloomUpsample, { mipSize.x, mipSize.y, 1 }, material);
 
-				if(mip != 1)
+				if (mip != 1)
 					Renderer::MemoryDependency(commandBuffer);
 			}
 		}

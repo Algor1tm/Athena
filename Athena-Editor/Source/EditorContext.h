@@ -17,6 +17,7 @@ namespace Athena
 		bool GizmosLocalTransform = true;
 		float CameraSpeedLevel = 0.3f;
 		bool ShowRendererIcons = true;
+		float RendererIconsScale = 1.f;
 		bool ShowPhysicsColliders = false;
 		bool ReloadScriptsOnStart = false;
 	};

@@ -132,15 +132,46 @@ vec3 ComputeDirectionalLightRadiance(DirectionalLight light)
 vec3 ComputePointLightRadiance(PointLight light, vec3 worldPos)
 {
     float dist = length(worldPos - light.Position);
+
+    if(dist >= light.Radius)
+        return vec3(0.0);
+
     float attenuationFactor = dist / light.Radius;
 
-    float attenuation = 0.0;
-    if (attenuationFactor < 1.0)
-    {
-        float factor2 = attenuationFactor * attenuationFactor;
-        attenuation = (1.0 - factor2) * (1.0 - factor2) / (1 + light.FallOff * attenuationFactor);
-        attenuation = clamp(attenuation, 0.0, 1.0);
-    }
+    float factor2 = attenuationFactor * attenuationFactor;
+    float attenuation = (1.0 - factor2) * (1.0 - factor2) / (1 + light.FallOff * factor2);
+    attenuation = clamp(attenuation, 0.0, 1.0);
+
+    vec3 radiance = light.Color.rgb * light.Intensity * attenuation;
+    return radiance;
+}
+
+vec3 ComputeSpotLightRadiance(SpotLight light, vec3 worldPos)
+{
+    float dist = length(worldPos - light.Position);
+
+    if(dist >= light.Range)
+        return vec3(0.0);
+
+    vec3 lightToPixel = normalize(worldPos - light.Position);
+    float theta = dot(lightToPixel, light.Direction);
+
+    if(theta < light.SpotAngle)
+        return vec3(0.0);
+
+    float distFactor = dist / light.Range;
+
+    float distFactor2 = distFactor * distFactor;
+    float rangeAttenuation = (1.0 - distFactor2) * (1.0 - distFactor2) / (1 + light.RangeFallOff * distFactor2);
+    rangeAttenuation = clamp(rangeAttenuation, 0.0, 1.0);
+    
+    float thetaFactor = 1.0 - (theta - light.SpotAngle) / (1.0 - light.SpotAngle);
+
+    float thetaFactor2 = thetaFactor * thetaFactor;
+    float innerAttenuation = (1.0 - thetaFactor2) * (1.0 - thetaFactor2) / (1 + light.InnerFallOff * thetaFactor2);
+    innerAttenuation = clamp(innerAttenuation, 0.0, 1.0);
+
+    float attenuation = rangeAttenuation * innerAttenuation;
 
     vec3 radiance = light.Color.rgb * light.Intensity * attenuation;
     return radiance;
@@ -179,7 +210,7 @@ void main()
     if (bool(u_UseAlbedoMap))
         albedo *= texture(u_AlbedoMap, Interpolators.TexCoords);
     
-    vec3 normal = Interpolators.Normal;
+    vec3 normal = normalize(Interpolators.Normal);
     if(bool(u_UseNormalMap))
     {
         normal = texture(u_NormalMap, Interpolators.TexCoords).rgb;
@@ -212,13 +243,23 @@ void main()
     for (int j = 0; j < g_PointLightCount; ++j)
     {
         PointLight light = g_PointLights[j];
-        float dist = length(Interpolators.WorldPos - light.Position);
-
-        if(dist <= light.Radius)
+        vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
+        
+        if(radiance != vec3(0.0))
         {
             vec3 dir = normalize(Interpolators.WorldPos - light.Position);
-            vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
+            totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
+        }
+    }
+
+    for (int j = 0; j < g_SpotLightCount; ++j)
+    {
+        SpotLight light = g_SpotLights[j];
+        vec3 radiance = ComputeSpotLightRadiance(light, Interpolators.WorldPos);
         
+        if(radiance != vec3(0.0))
+        {
+            vec3 dir = normalize(Interpolators.WorldPos - light.Position);
             totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
         }
     }

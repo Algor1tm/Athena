@@ -11,6 +11,9 @@
 
 #define SAMPLE_DELTA 0.025
 
+// Large values in environment map produces artifacts
+#define MAX_FLOAT_VALUE 150.0
+
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(set = 1, binding = 0) uniform samplerCube u_Cubemap;
@@ -43,7 +46,8 @@ void main()
             // tangent space to world
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-            irradiance += texture(u_Cubemap, sampleVec).rgb * cos(theta) * sin(theta);
+            vec3 color = clamp(texture(u_Cubemap, sampleVec).rgb, 0.0, MAX_FLOAT_VALUE);
+            irradiance += color * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

@@ -103,6 +103,7 @@ namespace Athena
 
 				UI::PropertyCheckbox("GizmosLocal", &settings.GizmosLocalTransform);
 				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
+				UI::PropertySlider("RendererIconsScale", &settings.RendererIconsScale, 0.4f, 3.f);
 				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
 				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
 				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);

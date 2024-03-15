@@ -319,7 +319,7 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
 
     float alpha = (depthViewSpace - near) / (far - near);
 
-    if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
+    if(u_CascadeBlendDistance != 0.0 && alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
     {
         // get alpha to 0..1 range over the blend distance
         alpha = (alpha - (1.0 - u_CascadeBlendDistance)) / u_CascadeBlendDistance;

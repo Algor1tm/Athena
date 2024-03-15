@@ -592,12 +592,10 @@ namespace Athena
 			auto transform = GetWorldTransform(entity);
 			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
 
-			Vector3 direction = transform.Rotation * Vector3::Forward();
-
 			DirectionalLight dirLight;
 			dirLight.Color = light.Color;
 			dirLight.Intensity = light.Intensity;
-			dirLight.Direction = direction;
+			dirLight.Direction = transform.Rotation * Vector3::Forward();
 			dirLight.CastShadows = light.CastShadows;
 			dirLight.LightSize = light.LightSize;
 
@@ -618,6 +616,25 @@ namespace Athena
 			pointLight.FallOff = light.FallOff;
 
 			lightEnv.PointLights.push_back(pointLight);
+		}
+
+		auto spotLights = GetAllEntitiesWith<SpotLightComponent>();
+		for (auto entity : spotLights)
+		{
+			auto transform = GetWorldTransform(entity);
+			const auto& light = spotLights.get<SpotLightComponent>(entity);
+
+			SpotLight spotLight;
+			spotLight.Color = light.Color;
+			spotLight.Position = transform.Translation;
+			spotLight.SpotAngle = light.SpotAngle;
+			spotLight.Intensity = light.Intensity;
+			spotLight.Direction = transform.Rotation * Vector3::Forward();
+			spotLight.Range = light.Range;
+			spotLight.RangeFallOff = light.RangeFallOff;
+			spotLight.InnerFallOff = light.InnerFallOff;
+
+			lightEnv.SpotLights.push_back(spotLight);
 		}
 
 		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();

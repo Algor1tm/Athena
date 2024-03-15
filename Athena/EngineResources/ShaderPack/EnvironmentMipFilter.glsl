@@ -9,7 +9,7 @@
 
 #include "Include/Common.glslh"
 
-#define SAMPLE_COUNT 512
+#define SAMPLE_COUNT 1024
 
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
@@ -53,9 +53,9 @@ void main()
 
             float resolution = textureSize(u_EnvironmentMap, 0).x;
             float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
-            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf);
 
-            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+            float mipLevel = 0.5 * log2(saSample / saTexel) + 1.0; 
 
             prefilteredColor += textureLod(u_EnvironmentMap, L, mipLevel).rgb * NdotL;
             totalWeight      += NdotL;

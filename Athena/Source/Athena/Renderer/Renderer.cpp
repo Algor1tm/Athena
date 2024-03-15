@@ -17,7 +17,6 @@ namespace Athena
 		uint32 CurrentResourceFreeQueueIndex = 0;
 		RenderCapabilities RenderCaps;
 
-		CommandQueue RenderThreadCommandQueue;
 		std::vector<CommandQueue> ResourceFreeQueues; 
 		Ref<RenderCommandBuffer> RenderCommandBuffer;
 
@@ -44,8 +43,6 @@ namespace Athena
 		s_Data.Config = config;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
 		s_Data.CurrentResourceFreeQueueIndex = s_Data.CurrentFrameIndex;
-
-		s_Data.RenderThreadCommandQueue = CommandQueue(1024 * 1024 * 10);		// 10 Mb
 
 		s_Data.ResourceFreeQueues.resize(s_Data.Config.MaxFramesInFlight + 1);
 		for (uint32 i = 0; i < s_Data.ResourceFreeQueues.size(); ++i)
@@ -259,16 +256,6 @@ namespace Athena
 		s_Data.RenderCommandBuffer->Submit();
 	}
 
-	void Renderer::WaitAndRender()
-	{
-		ATN_PROFILE_FUNC()
-		Timer timer = Timer();
-
-		s_Data.RenderThreadCommandQueue.Flush();
-
-		Application::Get().GetStats().Renderer_WaitAndRender = timer.ElapsedTime();
-	}
-
 	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
 	{
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, vertexCount);
@@ -412,11 +399,6 @@ namespace Athena
 	Ref<VertexBuffer> Renderer::GetQuadVertexBuffer()
 	{
 		return s_Data.QuadVertexBuffer;
-	}
-
-	CommandQueue& Renderer::GetRenderThreadCommandQueue()
-	{
-		return s_Data.RenderThreadCommandQueue;
 	}
 
 	CommandQueue& Renderer::GetResourceFreeQueue()

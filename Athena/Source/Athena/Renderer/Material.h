@@ -41,7 +41,7 @@ namespace Athena
 		void SetFlag(MaterialFlag flag, bool value) { m_Flags.at(flag) = value; }
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
-		const byte* RT_GetPushConstantData() const { return m_Buffer; }
+		const byte* GetPushConstantData() const { return m_Buffer; }
 
 		Ref<Shader> GetShader() const { return m_Shader; }
 		const String& GetName() const { return m_Name; }

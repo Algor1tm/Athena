@@ -66,7 +66,7 @@ namespace Athena
 		});
 	}
 
-	void VulkanIndexBuffer::SetData(const void* data, uint64 size, uint64 offset)
+	void VulkanIndexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
 		ATN_CORE_VERIFY(m_Info.Usage == BufferUsage::DYNAMIC);
 

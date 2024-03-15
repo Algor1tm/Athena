@@ -83,11 +83,8 @@ namespace Athena
 
 		m_Info.SamplerInfo = samplerInfo;
 
-		Renderer::Submit([this]()
-		{
-			m_Sampler = VulkanContext::GetAllocator()->AllocateSampler(m_Info.SamplerInfo);
-			m_DescriptorInfo.sampler = m_Sampler;
-		});
+		m_Sampler = VulkanContext::GetAllocator()->AllocateSampler(m_Info.SamplerInfo);
+		m_DescriptorInfo.sampler = m_Sampler;
 	}
 
 	VkImage VulkanTexture2D::GetVulkanImage() const 

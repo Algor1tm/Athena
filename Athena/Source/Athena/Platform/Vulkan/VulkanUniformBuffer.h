@@ -16,7 +16,7 @@ namespace Athena
 		VulkanUniformBuffer(const String& name, uint64 size);
 		~VulkanUniformBuffer();
 
-		virtual void RT_SetData(const void* data, uint64 size, uint64 offset) override;
+		virtual void UploadData(const void* data, uint64 size, uint64 offset) override;
 		virtual uint64 GetSize() override { return m_Size; }
 
 		VkBuffer GetVulkanBuffer(uint32 frameIndex) { return m_VulkanUBSet[frameIndex].GetBuffer(); }

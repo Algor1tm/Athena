@@ -19,7 +19,7 @@ namespace Athena
 
 		virtual void BlitMipMap(uint32 levels) override;
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) override;
-		void RT_BlitMipMap(VkCommandBuffer vkcmdBuffer, uint32 levels);
+		void BlitMipMap(VkCommandBuffer vkcmdBuffer, uint32 levels);
 
 		virtual uint32 GetMipLevelsCount() const override { return m_MipLevels; }
 
@@ -30,10 +30,10 @@ namespace Athena
 		VkImageView GetVulkanImageViewMip(uint32 mip) const { return m_ImageViewsPerMip[mip]; }
 		VkImageView GetVulkanImageViewLayer(uint32 layer) const { return m_ImageViewsPerLayer[layer]; }
 
-		void RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
+		void TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage);
 
 	private:
-		void RT_UploadData(const void* data, uint32 width, uint32 height);
+		void UploadData(const void* data, uint32 width, uint32 height);
 		void CleanUp();
 
 	private:

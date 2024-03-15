@@ -405,7 +405,7 @@ namespace Athena
 		}
 	}
 
-	void DescriptorSetManager::RT_InvalidateAndUpdate()
+	void DescriptorSetManager::InvalidateAndUpdate()
 	{
 		if (m_DescriptorSets.size() == 0)
 			return;
@@ -583,7 +583,7 @@ namespace Athena
 		m_InvalidatedResources.clear();
 	}
 
-	void DescriptorSetManager::RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint)
+	void DescriptorSetManager::BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint)
 	{
 		if (m_DescriptorSets.size() == 0)
 			return;

@@ -59,8 +59,8 @@ namespace Athena
 
 		bool Validate() const;
 		void Bake();
-		void RT_InvalidateAndUpdate();
-		void RT_BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint);
+		void InvalidateAndUpdate();
+		void BindDescriptorSets(VkCommandBuffer vkcommandBuffer, VkPipelineBindPoint bindPoint);
 
 		bool IsInvalidated(uint32 set, uint32 binding);
 

@@ -140,9 +140,9 @@ namespace Athena
 		static uint32 GetCurrentFrameIndex();
 
 		template <typename FuncT>
-		static void Submit(FuncT&& func)
+		static void Defer(FuncT&& func)
 		{
-			GetRenderThreadCommandQueue().Submit(std::forward<FuncT>(func));
+			GetResourceFreeQueue().Submit(std::forward<FuncT>(func));
 		}
 
 		template <typename FuncT>
@@ -153,7 +153,6 @@ namespace Athena
 
 		static void BeginFrame();
 		static void EndFrame();
-		static void WaitAndRender();
 
 		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 vertexCount = 0);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
@@ -190,7 +189,6 @@ namespace Athena
 		static Ref<VertexBuffer> GetQuadVertexBuffer();
 
 	private:
-		static CommandQueue& GetRenderThreadCommandQueue();
 		static CommandQueue& GetResourceFreeQueue();
 	};
 

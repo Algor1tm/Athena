@@ -75,95 +75,86 @@ namespace Athena
 
 	void VulkanProfiler::Reset()
 	{
-		Renderer::Submit([this]()
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+
+		// Reset time query
 		{
-			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+			uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+			uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-			// Reset time query
+			if (count > 0)
 			{
-				uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
-				uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
+				auto& timestamps = m_Timestamps[Renderer::GetCurrentFrameIndex()];
+				auto& resolvedTimeStats = m_ResolvedTimeStats[Renderer::GetCurrentFrameIndex()];
 
-				if (count > 0)
+				vkGetQueryPoolResults(VulkanContext::GetLogicalDevice(),
+					m_TimeQueryPool,
+					start,
+					count,
+					count * sizeof(uint64),
+					timestamps.data(),
+					sizeof(uint64),
+					VK_QUERY_RESULT_64_BIT);
+
+				for (uint32 i = 0; i < count; i += 2)
 				{
-					auto& timestamps = m_Timestamps[Renderer::GetCurrentFrameIndex()];
-					auto& resolvedTimeStats = m_ResolvedTimeStats[Renderer::GetCurrentFrameIndex()];
-
-					vkGetQueryPoolResults(VulkanContext::GetLogicalDevice(),
-						m_TimeQueryPool,
-						start,
-						count,
-						count * sizeof(uint64),
-						timestamps.data(),
-						sizeof(uint64),
-						VK_QUERY_RESULT_64_BIT);
-
-					for (uint32 i = 0; i < count; i += 2)
-					{
-						Time resolvedTime = Time::Milliseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
-						resolvedTimeStats[i / 2] = resolvedTime;
-					}
+					Time resolvedTime = Time::Milliseconds((double)(timestamps[i + 1] - timestamps[i]) / (double)m_Frequency);
+					resolvedTimeStats[i / 2] = resolvedTime;
 				}
-
-				vkCmdResetQueryPool(commandBuffer, m_TimeQueryPool, start, count);
-
-				m_TimestampsCount[Renderer::GetCurrentFrameIndex()] = 0;
-				m_CurrentTimeQueryIndex = 0;
 			}
 
-			// Reset pipeline query
+			vkCmdResetQueryPool(commandBuffer, m_TimeQueryPool, start, count);
+
+			m_TimestampsCount[Renderer::GetCurrentFrameIndex()] = 0;
+			m_CurrentTimeQueryIndex = 0;
+		}
+
+		// Reset pipeline query
+		{
+			uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+			uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
+
+			if (count > 0)
 			{
-				uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
-				uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
-
-				if (count > 0)
-				{
-					vkGetQueryPoolResults(VulkanContext::GetLogicalDevice(),
-						m_PipelineStatsQueryPool,
-						start,
-						count,
-						count * sizeof(PipelineStatistics),
-						m_ResolvedPipelineStats[Renderer::GetCurrentFrameIndex()].data(),
-						sizeof(PipelineStatistics),
-						VK_QUERY_RESULT_64_BIT);
-				}
-
-				vkCmdResetQueryPool(commandBuffer, m_PipelineStatsQueryPool, start, count);
-
-				m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] = 0;
-				m_CurrentPipelineQueryIndex = 0;
+				vkGetQueryPoolResults(VulkanContext::GetLogicalDevice(),
+					m_PipelineStatsQueryPool,
+					start,
+					count,
+					count * sizeof(PipelineStatistics),
+					m_ResolvedPipelineStats[Renderer::GetCurrentFrameIndex()].data(),
+					sizeof(PipelineStatistics),
+					VK_QUERY_RESULT_64_BIT);
 			}
-		});
+
+			vkCmdResetQueryPool(commandBuffer, m_PipelineStatsQueryPool, start, count);
+
+			m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] = 0;
+			m_CurrentPipelineQueryIndex = 0;
+		}
 	}
 
 	void VulkanProfiler::BeginTimeQuery()
 	{
-		Renderer::Submit([this]()
-		{
-			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
-			uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
 
-			m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
-		});
+		m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 	}
 
 	Time VulkanProfiler::EndTimeQuery()
 	{
-		Renderer::Submit([this]()
-		{
-			ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
+		ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
 
-			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
-			uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
+		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
 
-			m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
-		});
+		m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 
 		uint32 index = m_CurrentTimeQueryIndex;
 		m_CurrentTimeQueryIndex++;
@@ -173,30 +164,24 @@ namespace Athena
 
 	void VulkanProfiler::BeginPipelineStatsQuery()
 	{
-		Renderer::Submit([this]()
-		{
-			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
-			uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+		uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdBeginQuery(commandBuffer, m_PipelineStatsQueryPool, start + count, 0);
-		});
+		vkCmdBeginQuery(commandBuffer, m_PipelineStatsQueryPool, start + count, 0);
 	}
 
 	const PipelineStatistics& VulkanProfiler::EndPipelineStatsQuery()
 	{
-		Renderer::Submit([this]()
-		{
-			ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
+		ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
 
-			VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
-			uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
+		uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
-			vkCmdEndQuery(commandBuffer, m_PipelineStatsQueryPool, start + count);
+		vkCmdEndQuery(commandBuffer, m_PipelineStatsQueryPool, start + count);
 
-			m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()]++;
-		});
+		m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()]++;
 
 		uint32 index = m_CurrentPipelineQueryIndex;
 		m_CurrentPipelineQueryIndex++;

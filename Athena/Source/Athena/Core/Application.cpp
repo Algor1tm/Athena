@@ -51,9 +51,6 @@ namespace Athena
 		Timer timer;
 		Time frameTime = 0;
 
-		// Initialize rendering stuff
-		Renderer::WaitAndRender();
-
 		while (m_Running)
 		{
 			ATN_PROFILE_FRAME("MainThread")
@@ -84,7 +81,7 @@ namespace Athena
 				// Render UI
 				RenderImGui();
 
-				// Submit commands to GPU and queue present
+				// Submit commands to GPU and present
 				Renderer::EndFrame();
 				m_Window->SwapBuffers();
 			}
@@ -96,9 +93,6 @@ namespace Athena
 				// Immitate VSync when minimized
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
-
-			// Execute renderer commands
-			Renderer::WaitAndRender();
 
 			frameTime = timer.ElapsedTime() - start;
 		}
@@ -123,29 +117,20 @@ namespace Athena
 
 	void Application::RenderImGui()
 	{
+		ATN_PROFILE_FUNC();
+		Timer timer = Timer();
+
 		if (!m_Config.EnableImGui)
 			return;
 
-		if(!m_Minimized)
-			Renderer::BeginDebugRegion(Renderer::GetRenderCommandBuffer(), "UIOverlayPass", { 0.8f, 0.7f, 0.1f, 1.f });
-
-		Renderer::Submit([this]()
+		m_ImGuiLayer->Begin();
 		{
-			Timer timer = Timer();
-			ATN_PROFILE_SCOPE("Application::RenderImGui")
+			for (Ref<Layer> layer : m_LayerStack)
+				layer->OnImGuiRender();
+		}
+		m_ImGuiLayer->End(m_Minimized);
 
-			m_ImGuiLayer->Begin();
-			{
-				for (Ref<Layer> layer : m_LayerStack)
-					layer->OnImGuiRender();
-			}
-			m_ImGuiLayer->End(m_Minimized);
-
-			m_Statistics.Application_RenderImGui = timer.ElapsedTime();
-		});
-
-		if (!m_Minimized)
-			Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
+		m_Statistics.Application_RenderImGui = timer.ElapsedTime();
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)
@@ -233,7 +218,6 @@ namespace Athena
 		m_Statistics.Application_ProcessEvents = 0;
 		m_Statistics.Application_OnUpdate = 0;
 		m_Statistics.Application_RenderImGui = 0;
-		m_Statistics.Renderer_WaitAndRender = 0;
 		m_Statistics.SwapChain_Present = 0;
 		m_Statistics.SwapChain_AcquireImage = 0;
 		m_Statistics.Renderer_QueueSubmit = 0;

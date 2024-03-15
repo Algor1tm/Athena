@@ -238,80 +238,74 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		Renderer::Submit([this]()
+		ATN_PROFILE_FUNC();
+
+		auto& appStats = Application::Get().GetStats();
+
+		if (m_Dirty)
+			Recreate();
+
+		VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
+		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+
 		{
-			ATN_PROFILE_SCOPE("VulkanSwapChain::AcquireImage")
+			ATN_PROFILE_SCOPE("vkWaitForFences")
 
-			auto& appStats = Application::Get().GetStats();
-
-			if (m_Dirty)
-				Recreate();
-
-			VkDevice logicalDevice = VulkanContext::GetLogicalDevice();
-			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-
-			{
-				ATN_PROFILE_SCOPE("vkWaitForFences")
-
-				Timer timer = Timer();
-
-				vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
-				vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
-
-				appStats.CPUWait = timer.ElapsedTime();
-			}
-
-			{
-				ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
-				Timer timer = Timer();
-
-				VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
-
-				if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-				{
-					Recreate();
-					VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
-				}
-				else
-				{
-					VK_CHECK(result);
-				}
-
-				appStats.SwapChain_AcquireImage = timer.ElapsedTime();
-			}
-		});
-	}
-
-	void VulkanSwapChain::Present()
-	{
-		Renderer::Submit([this]()
-		{
-			ATN_PROFILE_SCOPE("VulkanSwapChain::Present")
 			Timer timer = Timer();
 
-			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
+			vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
 
-			VkPresentInfoKHR presentInfo = {};
-			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-			presentInfo.waitSemaphoreCount = 1;
-			presentInfo.pWaitSemaphores = &frameData.RenderCompleteSemaphore;
-			presentInfo.swapchainCount = 1;
-			presentInfo.pSwapchains = &m_VkSwapChain;
-			presentInfo.pImageIndices = &m_ImageIndex;
+			appStats.CPUWait = timer.ElapsedTime();
+		}
 
-			VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
+		{
+			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
+			Timer timer = Timer();
+
+			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 			{
-				m_Dirty = true;
+				Recreate();
+				VK_CHECK(vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
 			}
 			else
 			{
 				VK_CHECK(result);
 			}
 
-			Application::Get().GetStats().SwapChain_Present = timer.ElapsedTime();
-		});
+			appStats.SwapChain_AcquireImage = timer.ElapsedTime();
+		}
+	}
+
+	void VulkanSwapChain::Present()
+	{
+		ATN_PROFILE_FUNC()
+		Timer timer = Timer();
+
+		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &frameData.RenderCompleteSemaphore;
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &m_VkSwapChain;
+		presentInfo.pImageIndices = &m_ImageIndex;
+
+		VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			m_Dirty = true;
+		}
+		else
+		{
+			VK_CHECK(result);
+		}
+
+		Application::Get().GetStats().SwapChain_Present = timer.ElapsedTime();
 	}
 
 	VkImage VulkanSwapChain::GetCurrentVulkanImage()

@@ -74,15 +74,8 @@ namespace Athena
 
 		if (m_Info.InitialData != nullptr)
 		{
-			Buffer localBuffer = Buffer::Copy(m_Info.InitialData, m_Info.Width * m_Info.Height * (uint64)Image::BytesPerPixel(m_Info.Format));
-
-			Renderer::Submit([this, localBuffer]() mutable
-			{
-				RT_UploadData(localBuffer.Data(), m_Info.Width, m_Info.Height);
-
-				localBuffer.Release();
-				m_Info.InitialData = nullptr;
-			});
+			UploadData(m_Info.InitialData, m_Info.Width, m_Info.Height);
+			m_Info.InitialData = nullptr;
 		}
 	}
 
@@ -106,105 +99,102 @@ namespace Athena
 
 		CleanUp();
 
-		Renderer::Submit([this]() mutable
+		VkImageUsageFlags imageUsage = Vulkan::GetImageUsage(m_Info.Usage, m_Info.Format);
+
+		if (m_Info.InitialData != nullptr)
 		{
-			VkImageUsageFlags imageUsage = Vulkan::GetImageUsage(m_Info.Usage, m_Info.Format);
+			imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		}
 
-			if (m_Info.InitialData != nullptr)
+		if (m_Info.GenerateMipLevels)
+		{
+			imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		}
+
+		VkImageCreateInfo imageInfo = {};
+		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.flags = m_Info.Type == ImageType::IMAGE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+		imageInfo.imageType = Vulkan::GetImageType(m_Info.Type);
+		imageInfo.extent.width = m_Info.Width;
+		imageInfo.extent.height = m_Info.Height;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = m_MipLevels;
+		imageInfo.arrayLayers = m_Info.Layers;
+		imageInfo.format = Vulkan::GetFormat(m_Info.Format);
+		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage = imageUsage;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+		m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
+		Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
+
+		VkImageViewCreateInfo viewInfo = {};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = m_Image.GetImage();
+		viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
+		viewInfo.format = Vulkan::GetFormat(m_Info.Format);
+		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = m_MipLevels;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = m_Info.Layers;
+
+		VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
+		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
+
+		if (m_Info.GenerateMipLevels)
+		{
+			uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
+			m_ImageViewsPerMip.reserve(m_MipLevels);
+			for (uint32 mip = 0; mip < m_MipLevels; ++mip)
 			{
-				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-			}
+				VkImageViewCreateInfo viewInfo = {};
+				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				viewInfo.image = m_Image.GetImage();
+				viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, layerCount);
+				viewInfo.format = Vulkan::GetFormat(m_Info.Format);
+				viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+				viewInfo.subresourceRange.baseMipLevel = mip;
+				viewInfo.subresourceRange.levelCount = 1;
+				viewInfo.subresourceRange.baseArrayLayer = 0;
+				viewInfo.subresourceRange.layerCount = layerCount;
 
-			if (m_Info.GenerateMipLevels)
+				VkImageView mipView;
+
+				VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &mipView));
+				Vulkan::SetObjectDebugName(mipView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewMip{}_{}", mip, m_Info.Name));
+				m_ImageViewsPerMip.push_back(mipView);
+			}
+		}
+
+		if (m_Info.Layers > 1 && m_Info.Type != ImageType::IMAGE_CUBE)
+		{
+			m_ImageViewsPerLayer.reserve(m_Info.Layers);
+			for (uint32 layer = 0; layer < m_Info.Layers; ++layer)
 			{
-				imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-				imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+				VkImageViewCreateInfo viewInfo = {};
+				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				viewInfo.image = m_Image.GetImage();
+				viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, 1);
+				viewInfo.format = Vulkan::GetFormat(m_Info.Format);
+				viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+				viewInfo.subresourceRange.baseMipLevel = 0;
+				viewInfo.subresourceRange.levelCount = 1;
+				viewInfo.subresourceRange.baseArrayLayer = layer;
+				viewInfo.subresourceRange.layerCount = 1;
+
+				VkImageView layerView;
+
+				VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &layerView));
+				Vulkan::SetObjectDebugName(layerView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewLayer{}_{}", layer, m_Info.Name));
+				m_ImageViewsPerLayer.push_back(layerView);
 			}
+		}
 
-			VkImageCreateInfo imageInfo = {};
-			imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			imageInfo.flags = m_Info.Type == ImageType::IMAGE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
-			imageInfo.imageType = Vulkan::GetImageType(m_Info.Type);
-			imageInfo.extent.width = m_Info.Width;
-			imageInfo.extent.height = m_Info.Height;
-			imageInfo.extent.depth = 1;
-			imageInfo.mipLevels = m_MipLevels;
-			imageInfo.arrayLayers = m_Info.Layers;
-			imageInfo.format = Vulkan::GetFormat(m_Info.Format);
-			imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-			imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageInfo.usage = imageUsage;
-			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-
-			m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
-			Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
-
-			VkImageViewCreateInfo viewInfo = {};
-			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = m_Image.GetImage();
-			viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
-			viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-			viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
-			viewInfo.subresourceRange.baseMipLevel = 0;
-			viewInfo.subresourceRange.levelCount = m_MipLevels;
-			viewInfo.subresourceRange.baseArrayLayer = 0;
-			viewInfo.subresourceRange.layerCount = m_Info.Layers;
-
-			VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
-			Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
-
-			if (m_Info.GenerateMipLevels)
-			{
-				uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
-				m_ImageViewsPerMip.reserve(m_MipLevels);
-				for (uint32 mip = 0; mip < m_MipLevels; ++mip)
-				{
-					VkImageViewCreateInfo viewInfo = {};
-					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					viewInfo.image = m_Image.GetImage();
-					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, layerCount);
-					viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-					viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
-					viewInfo.subresourceRange.baseMipLevel = mip;
-					viewInfo.subresourceRange.levelCount = 1;
-					viewInfo.subresourceRange.baseArrayLayer = 0;
-					viewInfo.subresourceRange.layerCount = layerCount;
-
-					VkImageView mipView;
-
-					VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &mipView));
-					Vulkan::SetObjectDebugName(mipView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewMip{}_{}", mip, m_Info.Name));
-					m_ImageViewsPerMip.push_back(mipView);
-				}
-			}
-
-			if (m_Info.Layers > 1 && m_Info.Type != ImageType::IMAGE_CUBE)
-			{
-				m_ImageViewsPerLayer.reserve(m_Info.Layers);
-				for (uint32 layer = 0; layer < m_Info.Layers; ++layer)
-				{
-					VkImageViewCreateInfo viewInfo = {};
-					viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					viewInfo.image = m_Image.GetImage();
-					viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, 1);
-					viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-					viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
-					viewInfo.subresourceRange.baseMipLevel = 0;
-					viewInfo.subresourceRange.levelCount = 1;
-					viewInfo.subresourceRange.baseArrayLayer = layer;
-					viewInfo.subresourceRange.layerCount = 1;
-
-					VkImageView layerView;
-
-					VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &layerView));
-					Vulkan::SetObjectDebugName(layerView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewLayer{}_{}", layer, m_Info.Name));
-					m_ImageViewsPerLayer.push_back(layerView);
-				}
-			}
-
-			m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
-		});
+		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
 
 	void VulkanImage::CleanUp()
@@ -228,7 +218,7 @@ namespace Athena
 		m_ImageViewsPerLayer.clear();
 	}
 
-	void VulkanImage::RT_TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
+	void VulkanImage::TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
 	{
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -257,7 +247,7 @@ namespace Athena
 		m_Layout = newLayout;
 	}
 
-	void VulkanImage::RT_UploadData(const void* data, uint32 width, uint32 height)
+	void VulkanImage::UploadData(const void* data, uint32 width, uint32 height)
 	{
 		VkDeviceSize imageSize = width * height * (uint64)Image::BytesPerPixel(m_Info.Format);
 
@@ -348,24 +338,18 @@ namespace Athena
 
 	void VulkanImage::BlitMipMap(uint32 levels)
 	{
-		Renderer::Submit([this, levels]()
-		{
-			VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
-			RT_BlitMipMap(commandBuffer, levels);
-			Vulkan::EndSingleTimeCommands(commandBuffer);
-		});
+		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
+		BlitMipMap(commandBuffer, levels);
+		Vulkan::EndSingleTimeCommands(commandBuffer);
 	}
 
 	void VulkanImage::BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels)
 	{
-		Renderer::Submit([this, cmdBuffer, levels]()
-		{
-			VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			RT_BlitMipMap(commandBuffer, levels);
-		});
+		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		BlitMipMap(commandBuffer, levels);
 	}
 
-	void VulkanImage::RT_BlitMipMap(VkCommandBuffer commandBuffer, uint32 levels)
+	void VulkanImage::BlitMipMap(VkCommandBuffer commandBuffer, uint32 levels)
 	{
 		if (levels < 2 || levels > m_MipLevels)
 		{

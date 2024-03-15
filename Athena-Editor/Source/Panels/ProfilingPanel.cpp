@@ -56,7 +56,6 @@ namespace Athena
                     ImGui::Text("Application::RenderImGui: %.3f ms", appstats.Application_RenderImGui.AsMilliseconds());
                     ImGui::Spacing();
 
-                    ImGui::Text("Renderer::WaitAndRender: %.3f ms", appstats.Renderer_WaitAndRender.AsMilliseconds());
                     ImGui::Text("SwapChain::Present: %.3f ms", appstats.SwapChain_Present.AsMilliseconds());
                     ImGui::Text("SwapChain::AcquireImage: %.3f ms", appstats.SwapChain_AcquireImage.AsMilliseconds());
                     ImGui::Text("Renderer::QueueSubmit: %.3f ms", appstats.Renderer_QueueSubmit.AsMilliseconds());

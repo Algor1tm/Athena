@@ -245,7 +245,7 @@ namespace Athena
 		Ref<VertexBuffer> buffer = m_QuadVertexBuffers[Renderer::GetCurrentFrameIndex()][m_QuadVertexBufferIndex];
 		uint64 dataSize = (byte*)m_QuadVertexBufferPointer - (byte*)m_QuadVertexBufferBase;
 
-		buffer->SetData(m_QuadVertexBufferBase, dataSize);
+		buffer->UploadData(m_QuadVertexBufferBase, dataSize);
 
 		for (uint32 i = 0; i < m_TextureSlotIndex; ++i)
 			m_QuadMaterials[m_QuadVertexBufferIndex]->Set("u_Textures", m_TextureSlots[i], i);
@@ -291,7 +291,7 @@ namespace Athena
 		Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][m_CircleVertexBufferIndex];
 		uint64 dataSize = (byte*)m_CircleVertexBufferPointer - (byte*)m_CircleVertexBufferBase;
 
-		buffer->SetData(m_CircleVertexBufferBase, dataSize);
+		buffer->UploadData(m_CircleVertexBufferBase, dataSize);
 
 		DrawCall2D drawCall;
 		drawCall.VertexBufferIndex = m_CircleVertexBufferIndex;
@@ -326,7 +326,7 @@ namespace Athena
 		Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][m_LineVertexBufferIndex];
 		uint64 dataSize = (byte*)m_LineVertexBufferPointer - (byte*)m_LineVertexBufferBase;
 
-		buffer->SetData(m_LineVertexBufferBase, dataSize);
+		buffer->UploadData(m_LineVertexBufferBase, dataSize);
 
 		DrawCall2D drawCall;
 		drawCall.VertexBufferIndex = m_LineVertexBufferIndex;

@@ -44,14 +44,11 @@ namespace Athena
 		if (!m_Info.Shader->IsCompiled())
 			return false;
 
-		Renderer::Submit([this, commandBuffer]()
-		{
-			VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_VulkanPipeline);
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_VulkanPipeline);
 
-			m_DescriptorSetManager.RT_InvalidateAndUpdate();
-			m_DescriptorSetManager.RT_BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
-		});
+		m_DescriptorSetManager.InvalidateAndUpdate();
+		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 
 		return true;
 	}
@@ -91,7 +88,7 @@ namespace Athena
 				m_PushConstantStageFlags,
 				0,
 				m_PushConstantSize,
-				material->RT_GetPushConstantData());
+				material->GetPushConstantData());
 		}
 	}
 
@@ -107,17 +104,14 @@ namespace Athena
 		m_PushConstantSize = pushConstant.Size;
 		m_PipelineLayout = m_Info.Shader.As<VulkanShader>()->GetPipelineLayout();
 
-		Renderer::Submit([this]()
-		{
-			auto vkShader = m_Info.Shader.As<VulkanShader>();
+		auto vkShader = m_Info.Shader.As<VulkanShader>();
 
-			VkComputePipelineCreateInfo pipelineInfo = {};
-			pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-			pipelineInfo.stage = vkShader->GetPipelineStages()[0];
-			pipelineInfo.layout = m_PipelineLayout;
+		VkComputePipelineCreateInfo pipelineInfo = {};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+		pipelineInfo.stage = vkShader->GetPipelineStages()[0];
+		pipelineInfo.layout = m_PipelineLayout;
 
-			VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
-			Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
-		});
+		VK_CHECK(vkCreateComputePipelines(VulkanContext::GetLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VulkanPipeline));
+		Vulkan::SetObjectDebugName(m_VulkanPipeline, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT, m_Info.Name);
 	}
 }

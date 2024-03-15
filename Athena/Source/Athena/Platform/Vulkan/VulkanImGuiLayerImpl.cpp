@@ -159,11 +159,15 @@ namespace Athena
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		Renderer::BeginDebugRegion(Renderer::GetRenderCommandBuffer(), "UIOverlayPass", { 0.8f, 0.7f, 0.1f, 1.f });
+		{
+			vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
-		vkCmdEndRenderPass(commandBuffer);
+			vkCmdEndRenderPass(commandBuffer);
+		}
+		Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
 	}
 
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()

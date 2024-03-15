@@ -15,7 +15,7 @@ namespace Athena
 		switch (m_Info.Usage)
 		{
 		case RenderCommandBufferUsage::PRESENT: count = Renderer::GetFramesInFlight(); break;
-		case RenderCommandBufferUsage::IMMEDIATE: count = 1;
+		case RenderCommandBufferUsage::IMMEDIATE: count = 1; break;
 		}
 
 		VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
@@ -41,27 +41,21 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::Begin()
 	{
-		Renderer::Submit([this]()
-		{
-			VkCommandBuffer vkCommandBuffer = GetVulkanCommandBuffer();
+		VkCommandBuffer vkCommandBuffer = GetVulkanCommandBuffer();
 
-			if (m_Info.Usage != RenderCommandBufferUsage::IMMEDIATE)
-				VK_CHECK(vkResetCommandBuffer(vkCommandBuffer, 0));
+		if (m_Info.Usage != RenderCommandBufferUsage::IMMEDIATE)
+			VK_CHECK(vkResetCommandBuffer(vkCommandBuffer, 0));
 
-			VkCommandBufferBeginInfo cmdBufBeginInfo = {};
-			cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		VkCommandBufferBeginInfo cmdBufBeginInfo = {};
+		cmdBufBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		cmdBufBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-			VK_CHECK(vkBeginCommandBuffer(vkCommandBuffer, &cmdBufBeginInfo));
-		});
+		VK_CHECK(vkBeginCommandBuffer(vkCommandBuffer, &cmdBufBeginInfo));
 	}
 
 	void VulkanRenderCommandBuffer::End()
 	{
-		Renderer::Submit([this]()
-		{
-			VK_CHECK(vkEndCommandBuffer(GetVulkanCommandBuffer()));
-		});
+		VK_CHECK(vkEndCommandBuffer(GetVulkanCommandBuffer()));
 	}
 
 	void VulkanRenderCommandBuffer::Submit()
@@ -75,59 +69,53 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitForPresent()
 	{
-		Renderer::Submit([instance = Ref(this)]()
+		ATN_PROFILE_SCOPE("VulkanRenderCommandBuffer::Submit")
+
+		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
+
+		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		// Submit commands to queue
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &frameData.ImageAcquiredSemaphore;
+		submitInfo.pWaitDstStageMask = waitStage;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
+
 		{
-			ATN_PROFILE_SCOPE("VulkanRenderCommandBuffer::Submit")
+			ATN_PROFILE_SCOPE("vkQueueSubmit")
+			Timer timer = Timer();
 
-			const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-			VkCommandBuffer commandBuffer = instance->GetVulkanCommandBuffer();
-
-			VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-			// Submit commands to queue
-			VkSubmitInfo submitInfo = {};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = &frameData.ImageAcquiredSemaphore;
-			submitInfo.pWaitDstStageMask = waitStage;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
-			submitInfo.signalSemaphoreCount = 1;
-			submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
-
-			{
-				ATN_PROFILE_SCOPE("vkQueueSubmit")
-				Timer timer = Timer();
-
-				VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
-				Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
-			}
-		});
+			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+			Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
+		}
 	}
 
 	void VulkanRenderCommandBuffer::SubmitImmediate()
 	{
-		Renderer::Submit([instance = Ref(this)]()
-		{
-			VkCommandBuffer commandBuffer = instance->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
 
-			VkSubmitInfo submitInfo = {};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
 
-			VkFenceCreateInfo fenceInfo = {};
-			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-			fenceInfo.flags = 0;
+		VkFenceCreateInfo fenceInfo = {};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = 0;
 
-			VkFence fence;
-			VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
+		VkFence fence;
+		VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
 
-			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
+		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
 
-			VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-			vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
-		});
+		VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
 	}
 
 	VkCommandBuffer VulkanRenderCommandBuffer::GetVulkanCommandBuffer()

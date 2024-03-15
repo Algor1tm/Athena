@@ -467,14 +467,11 @@ namespace Athena
 		m_StaticGeometryList.Sort();
 		m_AnimGeometryList.Sort();
 
-		Renderer::Submit([this]()
-		{
-			m_CameraUBO->RT_SetData(&m_CameraData, sizeof(CameraData));
-			m_RendererUBO->RT_SetData(&m_RendererData, sizeof(RendererData));
-			m_LightSBO->RT_SetData(&m_LightData, sizeof(LightData));
-			m_ShadowsUBO->RT_SetData(&m_ShadowsData, sizeof(ShadowsData));
-			m_BonesSBO->RT_SetData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
-		});
+		m_CameraUBO->UploadData(&m_CameraData, sizeof(CameraData));
+		m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
+		m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
+		m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
+		m_BonesSBO->UploadData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
 
 		DirShadowMapPass();
 		GeometryPass();

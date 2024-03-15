@@ -71,32 +71,26 @@ namespace Athena
 		if(m_Info.DebugColor != LinearColor(0.f))
 			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
 
-		Renderer::Submit([this, commandBuffer = commandBuffer]()
-		{
-			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			uint32 width = m_Info.Width;
-			uint32 height = m_Info.Height;
+		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		uint32 width = m_Info.Width;
+		uint32 height = m_Info.Height;
 
-			VkRenderPassBeginInfo renderPassBeginInfo = {};
-			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassBeginInfo.renderPass = m_VulkanRenderPass;
-			renderPassBeginInfo.framebuffer = m_VulkanFramebuffer;
-			renderPassBeginInfo.renderArea.offset = { 0, 0 };
-			renderPassBeginInfo.renderArea.extent = { width , height };
-			renderPassBeginInfo.clearValueCount = m_ClearColors.size();
-			renderPassBeginInfo.pClearValues = m_ClearColors.data();
+		VkRenderPassBeginInfo renderPassBeginInfo = {};
+		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassBeginInfo.renderPass = m_VulkanRenderPass;
+		renderPassBeginInfo.framebuffer = m_VulkanFramebuffer;
+		renderPassBeginInfo.renderArea.offset = { 0, 0 };
+		renderPassBeginInfo.renderArea.extent = { width , height };
+		renderPassBeginInfo.clearValueCount = m_ClearColors.size();
+		renderPassBeginInfo.pClearValues = m_ClearColors.data();
 
-			vkCmdBeginRenderPass(vkcmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		});
+		vkCmdBeginRenderPass(vkcmdBuf, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void VulkanRenderPass::End(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Renderer::Submit([this, commandBuffer = commandBuffer]()
-		{
-			VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
-			vkCmdEndRenderPass(vkcmdBuf);
-		});
+		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		vkCmdEndRenderPass(vkcmdBuf);
 		
 		if (m_Info.DebugColor != LinearColor(0.f))
 			Renderer::EndDebugRegion(commandBuffer);
@@ -207,30 +201,27 @@ namespace Athena
 		for (auto& attachment : m_Outputs)
 			attachment.Texture->Resize(width, height);
 
-		Renderer::Submit([this]()
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = m_VulkanRenderPass;
+		framebufferInfo.attachmentCount = m_Outputs.size();
+		framebufferInfo.width = m_Info.Width;
+		framebufferInfo.height = m_Info.Height;
+		framebufferInfo.layers = m_Info.Layers;
+
+		std::vector<VkImageView> attachmentViews;
+
+		for (auto& attachment : m_Outputs)
 		{
-			VkFramebufferCreateInfo framebufferInfo = {};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_VulkanRenderPass;
-			framebufferInfo.attachmentCount = m_Outputs.size();
-			framebufferInfo.width = m_Info.Width;
-			framebufferInfo.height = m_Info.Height;
-			framebufferInfo.layers = m_Info.Layers;
+			VkImageView view = attachment.Texture.As<VulkanTexture2D>()->GetVulkanImageView();
+			attachmentViews.push_back(view);
+		}
 
-			std::vector<VkImageView> attachmentViews;
+		framebufferInfo.attachmentCount = attachmentViews.size();
+		framebufferInfo.pAttachments = attachmentViews.data();
 
-			for (auto& attachment : m_Outputs)
-			{
-				VkImageView view = attachment.Texture.As<VulkanTexture2D>()->GetVulkanImageView();
-				attachmentViews.push_back(view);
-			}
-
-			framebufferInfo.attachmentCount = attachmentViews.size();
-			framebufferInfo.pAttachments = attachmentViews.data();
-
-			VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
-			Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_FB", m_Info.Name));
-		});
+		VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
+		Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_FB", m_Info.Name));
 	}
 
 	void VulkanRenderPass::BuildDependencies(std::vector<VkSubpassDependency>& dependencies)

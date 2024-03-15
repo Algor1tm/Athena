@@ -15,7 +15,7 @@ namespace Athena
 		VulkanIndexBuffer(const IndexBufferCreateInfo& info);
 		~VulkanIndexBuffer();
 
-		virtual void SetData(const void* data, uint64 size, uint64 offset = 0) override;
+		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) override;
 		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer.GetBuffer(); }
 
 	private:

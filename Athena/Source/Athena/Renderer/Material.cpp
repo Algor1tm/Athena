@@ -50,10 +50,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::Mat4, &offset))
 			return;
 
-		Renderer::Submit([this, offset , value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	void Material::Set(const String& name, const Vector2& value)
@@ -62,10 +59,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::Float2, &offset))
 			return;
 
-		Renderer::Submit([this, offset, value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	void Material::Set(const String& name, const Vector4& value)
@@ -74,10 +68,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::Float4, &offset))
 			return;
 
-		Renderer::Submit([this, offset, value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	void Material::Set(const String& name, float value)
@@ -86,10 +77,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::Float, &offset))
 			return;
 
-		Renderer::Submit([this, offset, value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	void Material::Set(const String& name, uint32 value)
@@ -98,10 +86,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::UInt, &offset))
 			return;
 
-		Renderer::Submit([this, offset, value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	void Material::Set(const String& name, int32 value)
@@ -110,10 +95,7 @@ namespace Athena
 		if (!GetMemberOffset(name, ShaderDataType::Int, &offset))
 			return;
 
-		Renderer::Submit([this, offset, value]()
-		{
-			memcpy(&m_Buffer[offset], &value, sizeof(value));
-		});
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
 	}
 
 	bool Material::GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset)

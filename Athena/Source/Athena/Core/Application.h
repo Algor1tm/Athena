@@ -41,7 +41,6 @@ namespace Athena
 		Time Application_ProcessEvents;
 		Time Application_OnUpdate;
 		Time Application_RenderImGui;
-		Time Renderer_WaitAndRender;
 		Time SwapChain_Present;
 		Time SwapChain_AcquireImage;
 		Time Renderer_QueueSubmit;

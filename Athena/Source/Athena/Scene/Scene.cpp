@@ -139,6 +139,7 @@ namespace Athena
 		entity.AddComponent<IDComponent>(id);
 		entity.AddComponent<TagComponent>(name);
 		entity.AddComponent<TransformComponent>();
+		entity.AddComponent<WorldTransformComponent>();
 
 		m_EntityMap[id] = entity;
 
@@ -274,6 +275,9 @@ namespace Athena
 	void Scene::OnUpdateEditor(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
+
+		UpdateWorldTransforms();
+
 		// Update Animations
 		{
 			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
@@ -292,6 +296,9 @@ namespace Athena
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
+
+		UpdateWorldTransforms();
+
 		// Update scripts
 		{
 			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate")
@@ -338,6 +345,23 @@ namespace Athena
 	void Scene::OnUpdateSimulation(Time frameTime)
 	{
 		ATN_PROFILE_FUNC()
+
+		UpdateWorldTransforms();
+
+		// Update Animations
+		{
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+				auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
+			{
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
+				{
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				}
+			}
+		}
+
 		UpdatePhysics(frameTime);
 	}
 
@@ -345,6 +369,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC()
 
+		UpdateWorldTransforms();
 		OnPhysics2DStart();
 
 		// Scripting
@@ -371,6 +396,7 @@ namespace Athena
 
 	void Scene::OnSimulationStart()
 	{
+		UpdateWorldTransforms();
 		OnPhysics2DStart();
 	}
 
@@ -414,6 +440,49 @@ namespace Athena
 		return Entity{};
 	}
 
+	void Scene::UpdateWorldTransforms()
+	{
+		ATN_PROFILE_FUNC();
+
+		auto baseEntities = m_Registry.view<WorldTransformComponent, TransformComponent>(entt::exclude<ParentComponent>);
+		for (auto entt : baseEntities)
+		{
+			const TransformComponent& transform = baseEntities.get<TransformComponent>(entt);
+			WorldTransformComponent& worldTransform = baseEntities.get<WorldTransformComponent>(entt);
+
+			worldTransform.Translation = transform.Translation;
+			worldTransform.Rotation = transform.Rotation;
+			worldTransform.Scale = transform.Scale;
+
+			Entity entity = { entt, this };
+			if (entity.HasComponent<ChildComponent>())
+			{
+				const std::vector<Entity>& children = entity.GetComponent<ChildComponent>().Children;
+
+				for(auto& child: children)
+					UpdateWorldTransform(child, worldTransform);
+			}
+		}
+	}
+
+	void Scene::UpdateWorldTransform(Entity entity, const WorldTransformComponent& parentTransform)
+	{
+		const TransformComponent& localTransform = entity.GetComponent<TransformComponent>();
+		WorldTransformComponent& worldTransform = entity.GetComponent<WorldTransformComponent>();
+
+		worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
+		worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
+		worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+
+		if (entity.HasComponent<ChildComponent>())
+		{
+			const std::vector<Entity>& children = entity.GetComponent<ChildComponent>().Children;
+
+			for (auto& child : children)
+				UpdateWorldTransform(child, worldTransform);
+		}
+	}
+
 	void Scene::OnPhysics2DStart()
 	{
 		ATN_PROFILE_FUNC()
@@ -422,7 +491,7 @@ namespace Athena
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
 		{
 			Entity entity = Entity(entityID, this);
-			TransformComponent transform = entity.GetWorldTransform();
+			const WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
 
 			b2BodyDef bodyDef;
 			bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
@@ -476,12 +545,11 @@ namespace Athena
 		constexpr uint32 positionIterations = 2;
 		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
-		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent>();
-		for (auto entityID : rigidBodies2D)
+		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent, WorldTransformComponent, TransformComponent>();
+		for (auto entity : rigidBodies2D)
 		{
-			Entity entity = { entityID, this };
-			TransformComponent oldWorldTransform = entity.GetWorldTransform();
-			TransformComponent newWorldTransform = oldWorldTransform;
+			WorldTransformComponent oldWorldTransform = rigidBodies2D.get<WorldTransformComponent>(entity);
+			WorldTransformComponent& newWorldTransform = rigidBodies2D.get<WorldTransformComponent>(entity);
 
 			const auto& rb2D = rigidBodies2D.get<Rigidbody2DComponent>(entity);
 
@@ -494,7 +562,7 @@ namespace Athena
 			eulerAngles.z = body->GetAngle();
 			newWorldTransform.Rotation = Quaternion(eulerAngles);
 
-			entity.GetComponent<TransformComponent>().ConvertToLocalTransform(newWorldTransform, oldWorldTransform);
+			rigidBodies2D.get<TransformComponent>(entity).UpdateLocalTransform(newWorldTransform, oldWorldTransform);
 		}
 	}
 
@@ -507,9 +575,9 @@ namespace Athena
 	{
 		// Choose camera
 		SceneCamera* mainCamera = nullptr;
-		TransformComponent cameraTransform;
+		WorldTransformComponent cameraTransform;
 		{
-			auto cameras = m_Registry.view<CameraComponent>();
+			auto cameras = m_Registry.view<CameraComponent, WorldTransformComponent>();
 			for (auto entity : cameras)
 			{
 				auto& camera = cameras.get<CameraComponent>(entity);
@@ -517,7 +585,7 @@ namespace Athena
 				if (camera.Primary)
 				{
 					mainCamera = &camera.Camera;
-					cameraTransform = GetWorldTransform(entity);
+					cameraTransform = cameras.get<WorldTransformComponent>(entity);
 					break;
 				}
 			}
@@ -537,19 +605,19 @@ namespace Athena
 
 	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
-		auto quads = GetAllEntitiesWith<SpriteComponent>();
+		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
 		for (auto entity : quads)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = quads.get<WorldTransformComponent>(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
 			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
 		}
 
-		auto circles = GetAllEntitiesWith<CircleComponent>();
+		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
 		for (auto entity : circles)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = circles.get<WorldTransformComponent>(entity);
 			const auto& circle = circles.get<CircleComponent>(entity);
 
 			renderer2D->DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
@@ -562,10 +630,10 @@ namespace Athena
 
 		renderer->BeginScene({ view, proj, near, far });
 
-		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
+		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
 		for (auto entity : staticMeshes)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = staticMeshes.get<WorldTransformComponent>(entity);
 			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
 
 			if (meshComponent.Visible)
@@ -586,10 +654,10 @@ namespace Athena
 
 		LightEnvironment lightEnv;
 
-		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
+		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
 		for (auto entity : dirLights)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = dirLights.get<WorldTransformComponent>(entity);
 			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
 
 			DirectionalLight dirLight;
@@ -602,10 +670,10 @@ namespace Athena
 			lightEnv.DirectionalLights.push_back(dirLight);
 		}
 
-		auto pointLights = GetAllEntitiesWith<PointLightComponent>();
+		auto pointLights = GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
 		for (auto entity : pointLights)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = pointLights.get<WorldTransformComponent>(entity);
 			const auto& light = pointLights.get<PointLightComponent>(entity);
 
 			PointLight pointLight;
@@ -618,10 +686,10 @@ namespace Athena
 			lightEnv.PointLights.push_back(pointLight);
 		}
 
-		auto spotLights = GetAllEntitiesWith<SpotLightComponent>();
+		auto spotLights = GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
 		for (auto entity : spotLights)
 		{
-			auto transform = GetWorldTransform(entity);
+			const auto& transform = spotLights.get<WorldTransformComponent>(entity);
 			const auto& light = spotLights.get<SpotLightComponent>(entity);
 
 			SpotLight spotLight;
@@ -641,7 +709,7 @@ namespace Athena
 		if (skyLights.size() > 1)
 			ATN_CORE_WARN_TAG("Scene", "Attempt to submit more than 1 SkyLight in the scene!");
 
-		if (skyLights.size() == 1)
+		if (!skyLights.empty())
 		{
 			auto entity = skyLights[0];
 			const auto& light = skyLights.get<SkyLightComponent>(entity);
@@ -655,11 +723,5 @@ namespace Athena
 		renderer->SubmitLightEnvironment(lightEnv);
 
 		renderer->EndScene();
-	}
-
-	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)
-	{
-		Entity entity = { enttentity, this };
-		return entity.GetWorldTransform();
 	}
 }

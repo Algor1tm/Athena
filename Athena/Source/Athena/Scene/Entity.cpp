@@ -14,23 +14,4 @@ namespace Athena
 	{
 		return GetComponent<TagComponent>().Tag; 
 	}
-
-	TransformComponent Entity::GetWorldTransform() const
-	{
-		if (HasComponent<ParentComponent>())
-		{
-			const TransformComponent& parentTransform = GetComponent<ParentComponent>().Parent.GetWorldTransform();
-			const TransformComponent& localTransform = GetComponent<TransformComponent>();
-
-			TransformComponent worldTransform;
-
-			worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
-			worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
-			worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
-
-			return worldTransform;
-		}
-
-		return GetComponent<TransformComponent>();
-	}
 }

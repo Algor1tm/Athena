@@ -34,6 +34,22 @@ namespace Athena
 			: Tag(tag) {}
 	};
 
+	struct WorldTransformComponent
+	{
+		Vector3 Translation = { 0.f, 0.f, 0.f };
+		Quaternion Rotation = { 1.f, 0.f, 0.f, 0.f };
+		Vector3 Scale = { 1.f, 1.f, 1.f };
+
+		WorldTransformComponent() = default;
+		WorldTransformComponent(const Vector3& position)
+			: Translation(position) {}
+
+		Matrix4 AsMatrix() const
+		{
+			return Math::ConstructTransform(Translation, Scale, Rotation);
+		}
+	};
+
 	struct TransformComponent
 	{
 		Vector3 Translation = { 0.f, 0.f, 0.f };
@@ -49,20 +65,8 @@ namespace Athena
 			return Math::ConstructTransform(Translation, Scale, Rotation);
 		}
 
-		TransformComponent Inverse() const
+		TransformComponent& UpdateLocalTransform(const WorldTransformComponent& newWorldTransform, const WorldTransformComponent& oldWorldTransform)
 		{
-			TransformComponent result;
-			result.Translation = -Translation;
-			result.Rotation = Rotation.GetInversed();
-			result.Scale = Vector3(1.f) / Scale;
-
-			return result;
-		}
-
-		TransformComponent& ConvertToLocalTransform(const TransformComponent& newWorldTransform, const TransformComponent& oldWorldTransform)
-		{
-			TransformComponent inverseOldWorldTransform = oldWorldTransform.Inverse();
-
 			TransformComponent parentTransform;
 			parentTransform.Rotation = oldWorldTransform.Rotation * Rotation.GetInversed();
 			parentTransform.Translation = -(parentTransform.Rotation * Translation) + oldWorldTransform.Translation;

@@ -28,7 +28,7 @@ namespace Athena
             cameraProjection[1][1] = -cameraProjection[1][1]; // invert y
             const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
-            TransformComponent worldTransform = m_EditorCtx->SelectedEntity.GetWorldTransform();
+            const WorldTransformComponent& worldTransform = m_EditorCtx->SelectedEntity.GetComponent<WorldTransformComponent>();
             Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
 
             bool snap = Input::IsKeyPressed(Keyboard::LCtrl);
@@ -48,12 +48,12 @@ namespace Athena
                 Vector3 translation, rotation, scale;
                 Math::DecomposeTransform(worldTransformMatrix, translation, rotation, scale);
 
-                TransformComponent newWorldTransform;
+                WorldTransformComponent newWorldTransform;
                 newWorldTransform.Translation = translation;
                 newWorldTransform.Rotation = rotation;
                 newWorldTransform.Scale = scale;
 
-               m_EditorCtx->SelectedEntity.GetComponent<TransformComponent>().ConvertToLocalTransform(newWorldTransform, worldTransform);
+               m_EditorCtx->SelectedEntity.GetComponent<TransformComponent>().UpdateLocalTransform(newWorldTransform, worldTransform);
             }
         }
 	}

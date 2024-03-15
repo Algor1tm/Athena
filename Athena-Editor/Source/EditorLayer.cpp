@@ -389,7 +389,7 @@ namespace Athena
             {
 				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-				Matrix4 view = Math::AffineInverse(camera.GetWorldTransform().AsMatrix());
+				Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
                 renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
@@ -439,43 +439,38 @@ namespace Athena
         const Vector2 iconScale = Vector2( 0.075f, 0.075f ) * m_EditorCtx->EditorSettings.RendererIconsScale;
         if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
-            auto camerasView = m_EditorScene->GetAllEntitiesWith<TransformComponent, CameraComponent>();
+            auto camerasView = m_EditorScene->GetAllEntitiesWith<CameraComponent, WorldTransformComponent>();
             for (auto entity : camerasView)
             { 
-                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
-                const auto& transform = sceneEntity.GetWorldTransform();
+                const auto& transform = camerasView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
             }
 
-            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, DirectionalLightComponent>();
+            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
             for (auto entity : dirLightsView)
             {
-                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
-                const auto& transform = sceneEntity.GetWorldTransform();
+                const auto& transform = dirLightsView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
             }
 
-            auto pointLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, PointLightComponent>();
+            auto pointLightsView = m_EditorScene->GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
             for (auto entity : pointLightsView)
             {
-                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
-                const auto& transform = sceneEntity.GetWorldTransform();
+                const auto& transform = pointLightsView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
             }
 
-            auto spotLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, SpotLightComponent>();
+            auto spotLightsView = m_EditorScene->GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
             for (auto entity : spotLightsView)
             {
-                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
-                const auto& transform = sceneEntity.GetWorldTransform();
+                const auto& transform = spotLightsView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
             }
 
-            auto skyLightsView = m_EditorScene->GetAllEntitiesWith<TransformComponent, SkyLightComponent>();
+            auto skyLightsView = m_EditorScene->GetAllEntitiesWith<SkyLightComponent, WorldTransformComponent>();
             for (auto entity : skyLightsView)
             {
-                Entity sceneEntity = { entity, m_EditorCtx->ActiveScene.Raw() };
-                const auto& transform = sceneEntity.GetWorldTransform();
+                const auto& transform = skyLightsView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
             }
         }
@@ -484,7 +479,7 @@ namespace Athena
         if (selectedEntity)
         {
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
-            TransformComponent worldTransform = selectedEntity.GetWorldTransform();
+            const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
 
             if (selectedEntity.HasComponent<StaticMeshComponent>())
             {

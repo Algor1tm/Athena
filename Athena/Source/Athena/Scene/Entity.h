@@ -82,7 +82,6 @@ namespace Athena
 
 		UUID GetID() const;
 		const String& GetName() const;
-		TransformComponent GetWorldTransform() const;
 
 		operator bool() const { return m_EntityHandle != entt::null; }
 		operator uint32() const  { return (uint32)m_EntityHandle; }

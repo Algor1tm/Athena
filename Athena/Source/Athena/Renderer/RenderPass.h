@@ -7,17 +7,17 @@
 
 namespace Athena
 {
-	enum class AttachmentLoadOp
+	enum class RenderTargetLoadOp
 	{
 		DONT_CARE = 0,
 		CLEAR = 2,
 		LOAD = 1
 	};
 
-	struct RenderPassAttachment
+	struct RenderTarget
 	{
-		RenderPassAttachment() = default;
-		RenderPassAttachment(const String& name, ImageFormat format)
+		RenderTarget() = default;
+		RenderTarget(const String& name, ImageFormat format)
 		{
 			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC;
 
@@ -34,17 +34,17 @@ namespace Athena
 			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			Texture = Texture2D::Create(texInfo);
-			LoadOp = AttachmentLoadOp::CLEAR;
+			LoadOp = RenderTargetLoadOp::CLEAR;
 		}
 
-		RenderPassAttachment(const Ref<Texture2D>& texture)
+		RenderTarget(const Ref<Texture2D>& texture)
 		{
 			Texture = texture;
-			LoadOp = AttachmentLoadOp::LOAD;
+			LoadOp = RenderTargetLoadOp::LOAD;
 		}
 
 		Ref<Texture2D> Texture;
-		AttachmentLoadOp LoadOp = AttachmentLoadOp::CLEAR;
+		RenderTargetLoadOp LoadOp = RenderTargetLoadOp::CLEAR;
 		LinearColor ClearColor = { 0.f, 0.f, 0.f, 1.0f };
 		float DepthClearColor = 1.f;
 		uint32 StencilClearColor = 1.f;
@@ -74,18 +74,18 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) = 0;
 		virtual void Bake() = 0;
 
-		void SetOutput(const RenderPassAttachment& attachment);
+		void SetOutput(const RenderTarget& target);
 		Ref<Texture2D> GetOutput(const String& name) const;
 		Ref<Texture2D> GetDepthOutput() const;
 		const auto& GetAllOutputs() const { return m_Outputs; }
 
-		uint32 GetColorAttachmentCount() const;
-		bool HasDepthAttachment() const;
+		uint32 GetColorTargetsCount() const;
+		bool HasDepthRenderTarget() const;
 
 		const RenderPassCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
 		RenderPassCreateInfo m_Info;
-		std::vector<RenderPassAttachment> m_Outputs;
+		std::vector<RenderTarget> m_Outputs;
 	};
 }

@@ -68,6 +68,7 @@ namespace Athena
 
 	void VulkanIndexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
+		ATN_PROFILE_FUNC();
 		ATN_CORE_VERIFY(m_Info.Usage == BufferUsage::DYNAMIC);
 
 		void* mappedData = m_IndexBuffer.MapMemory();

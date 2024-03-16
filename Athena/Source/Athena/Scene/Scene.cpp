@@ -274,13 +274,13 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 
 		// Update Animations
 		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
 			auto view = m_Registry.view<StaticMeshComponent>();
 			for (auto entity : view)
 			{
@@ -295,13 +295,13 @@ namespace Athena
 
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 
 		// Update scripts
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate")
+			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate");
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
@@ -325,7 +325,7 @@ namespace Athena
 
 		// Update Animations
 		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
 			auto view = m_Registry.view<StaticMeshComponent>();
 			for (auto entity : view)
 			{
@@ -344,13 +344,13 @@ namespace Athena
 
 	void Scene::OnUpdateSimulation(Time frameTime)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 
 		// Update Animations
 		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations")
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
 				auto view = m_Registry.view<StaticMeshComponent>();
 			for (auto entity : view)
 			{
@@ -367,14 +367,14 @@ namespace Athena
 
 	void Scene::OnRuntimeStart()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 		OnPhysics2DStart();
 
 		// Scripting
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart")
+			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
 
 			PrivateScriptEngine::OnRuntimeStart(this);
 
@@ -485,7 +485,7 @@ namespace Athena
 
 	void Scene::OnPhysics2DStart()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
@@ -539,7 +539,7 @@ namespace Athena
 
 	void Scene::UpdatePhysics(Time frameTime)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		constexpr uint32 velocityIterations = 6;
 		constexpr uint32 positionIterations = 2;
@@ -605,6 +605,8 @@ namespace Athena
 
 	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
+		ATN_PROFILE_FUNC();
+
 		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
 		for (auto entity : quads)
 		{
@@ -626,7 +628,7 @@ namespace Athena
 
 	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		renderer->BeginScene({ view, proj, near, far });
 

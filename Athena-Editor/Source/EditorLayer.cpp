@@ -79,7 +79,7 @@ namespace Athena
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
 
@@ -89,7 +89,7 @@ namespace Athena
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
         {
-            ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize")
+            ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize");
 
             m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_Renderer2D->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
@@ -131,7 +131,7 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
 
@@ -518,9 +518,11 @@ namespace Athena
                 const Vector3& position = worldTransform.Translation;
                 float radius = selectedEntity.GetComponent<PointLightComponent>().Radius;
 
-                constexpr float step = Math::Radians(10.f);
-                for (float angle = 0.f; angle < 2 * Math::PI<float>() - step; angle += step)
+                constexpr uint32 linesCount = 36;
+                constexpr float step = (2 * Math::PI<float>()) / linesCount;
+                for (uint32 i = 0; i < linesCount; ++i)
                 {
+                    float angle = i * step;
                     Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
                     Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
 
@@ -555,12 +557,15 @@ namespace Athena
                 // Circle
                 Vector3 circleCenter = origin + direction * (Math::Cos(spotAngle) * comp.Range);
                 float radius = Math::Sin(spotAngle) * comp.Range;
-                float angleStep = Math::Radians(15.f);
 
-                for (float angle = 0.f; angle < 2 * Math::PI<float>() - angleStep; angle += angleStep)
+                uint32 linesCount = 24;
+                float step = (2 * Math::PI<float>()) / linesCount;
+
+                for (uint32 i = 0; i < linesCount; ++i)
                 {
+                    float angle = i * step;
                     Vector3 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle), 0.f };
-                    Vector3 offset1 = { radius * Math::Cos(angle + angleStep), radius * Math::Sin(angle + angleStep), 0.f };
+                    Vector3 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step), 0.f };
 
                     offset0 = worldTransform.Rotation * offset0;
                     offset1 = worldTransform.Rotation * offset1;
@@ -577,15 +582,14 @@ namespace Athena
                 float begin = Math::PI<float>() / 2.f - spotAngle;
                 float end = Math::PI<float>() / 2.f + spotAngle;
 
-                angleStep = (end - begin) / 10.f;
+                linesCount = 12;
+                step = (end - begin) / linesCount;
 
-                int counter = 0;
-                int maxCounter = (int)Math::Floor((end + 0.001f - angleStep - begin) / angleStep);
-
-                for (float angle = begin; angle < end - angleStep + 0.001f; angle += angleStep)
+                for (uint32 i = 0; i < linesCount; ++i)
                 {
+                    float angle = begin + i * step;
                     Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
-                    Vector2 offset1 = { radius * Math::Cos(angle + angleStep), radius * Math::Sin(angle + angleStep) };
+                    Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
 
                     Vector3 horizonOff0 = { offset0.x, 0.f, offset0.y };
                     Vector3 horizonOff1 = { offset1.x, 0.f, offset1.y };
@@ -610,18 +614,16 @@ namespace Athena
                     renderer2D->DrawLine(v0, v1, color);
 
                     // Lines from origin on corners
-                    if (counter == 0)
+                    if (i == 0)
                     {
                         renderer2D->DrawLine(origin, h0, color);
                         renderer2D->DrawLine(origin, v0, color);
                     }
-                    else if (counter == maxCounter)
+                    else if (i == linesCount - 1)
                     {
                         renderer2D->DrawLine(origin, h1, color);
                         renderer2D->DrawLine(origin, v1, color);
                     }
-
-                    counter++;
                 }
 
             }
@@ -676,7 +678,7 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
@@ -703,7 +705,7 @@ namespace Athena
 
     void EditorLayer::OnSceneStop()
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         m_EditorCtx->SceneState = SceneState::Edit;
 
@@ -713,7 +715,7 @@ namespace Athena
 
     void EditorLayer::OnSceneSimulate()
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();
@@ -729,7 +731,7 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        ATN_PROFILE_FUNC()
+        ATN_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();

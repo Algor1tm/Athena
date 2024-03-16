@@ -67,9 +67,8 @@ namespace Athena
 			passInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			passInfo.DebugColor = { 0.7f, 0.8f, 0.7f, 1.f };
 
-			Ref<Texture2D> shadowMap = Texture2D::Create(shadowMapInfo);
-			RenderPassAttachment output = RenderPassAttachment(shadowMap);
-			output.LoadOp = AttachmentLoadOp::CLEAR;
+			RenderTarget output = RenderTarget(Texture2D::Create(shadowMapInfo));
+			output.LoadOp = RenderTargetLoadOp::CLEAR;
 			output.DepthClearColor = 1.f;
 
 			m_DirShadowMapPass = RenderPass::Create(passInfo);
@@ -105,7 +104,7 @@ namespace Athena
 			samplerInfo.MagFilter = TextureFilter::LINEAR;
 			samplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
 			samplerInfo.Compare = TextureCompareOperator::LEQUAL;
-			m_ShadowMapSampler = Texture2D::Create(shadowMap->GetImage(), samplerInfo);
+			m_ShadowMapSampler = Texture2D::Create(output.Texture->GetImage(), samplerInfo);
 		}
 
 		// GEOMETRY PASS
@@ -267,8 +266,8 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
-			RenderPassAttachment colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
-			RenderPassAttachment depthOutput = m_GeometryPass->GetOutput("SceneDepth");
+			RenderTarget colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
+			RenderTarget depthOutput = m_GeometryPass->GetOutput("SceneDepth");
 
 			m_Render2DPass = RenderPass::Create(passInfo);
 			m_Render2DPass->SetOutput(colorOutput);
@@ -461,6 +460,8 @@ namespace Athena
 
 	void SceneRenderer::EndScene()
 	{
+		ATN_PROFILE_FUNC();
+
 		m_Profiler->Reset();
 		m_Profiler->BeginPipelineStatsQuery();
 

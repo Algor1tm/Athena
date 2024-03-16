@@ -131,7 +131,7 @@ namespace Athena
 
 	bool VulkanSwapChain::Recreate()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		vkDeviceWaitIdle(VulkanContext::GetLogicalDevice());
 
@@ -249,7 +249,7 @@ namespace Athena
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 		{
-			ATN_PROFILE_SCOPE("vkWaitForFences")
+			ATN_PROFILE_SCOPE("vkWaitForFences");
 
 			Timer timer = Timer();
 
@@ -260,7 +260,7 @@ namespace Athena
 		}
 
 		{
-			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR")
+			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR");
 			Timer timer = Timer();
 
 			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
@@ -281,7 +281,7 @@ namespace Athena
 
 	void VulkanSwapChain::Present()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		Timer timer = Timer();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());

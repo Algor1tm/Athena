@@ -167,7 +167,7 @@ namespace Athena
 
 	void SceneSerializer::SerializeToFile(const FilePath& path)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -192,7 +192,7 @@ namespace Athena
 
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		if (!FileSystem::Exists(path))
 		{

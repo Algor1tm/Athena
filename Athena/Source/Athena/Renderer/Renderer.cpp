@@ -228,7 +228,7 @@ namespace Athena
 
 	void Renderer::BeginFrame()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.Config.MaxFramesInFlight;
 		s_Data.CurrentResourceFreeQueueIndex = (s_Data.CurrentResourceFreeQueueIndex + 1) % (s_Data.Config.MaxFramesInFlight + 1);
 
@@ -239,7 +239,7 @@ namespace Athena
 		// then it will be freed on 'i + FramesInFlight + 1' frame, so it guarantees
 		// that currently used resource will not be freed
 		{
-			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush")
+			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush");
 			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
 
@@ -251,7 +251,7 @@ namespace Athena
 
 	void Renderer::EndFrame()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		s_Data.RenderCommandBuffer->End();
 		s_Data.RenderCommandBuffer->Submit();
 	}

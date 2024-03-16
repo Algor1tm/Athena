@@ -83,20 +83,20 @@ namespace Athena
 
 		ATN_CORE_ASSERT(!(m_Info.InputRenderPass && m_Info.InputComputePass));
 
-		for (const auto& texture : m_Texture2DOutputs)
+		for (const auto& outputTarget : m_Texture2DOutputs)
 		{
 			if (m_Info.InputRenderPass)
 			{
-				bool sharedAttachment = false;
-				for (const auto& inputAttachment : m_Info.InputRenderPass->GetAllOutputs())
+				bool sharedTarget = false;
+				for (const auto& inputTarget : m_Info.InputRenderPass->GetAllOutputs())
 				{
-					if (texture == inputAttachment.Texture)
-						sharedAttachment = true;
+					if (outputTarget == inputTarget.Texture)
+						sharedTarget = true;
 				}
 
-				bool colorFormat = Image::IsColorFormat(texture->GetFormat());
+				bool colorFormat = Image::IsColorFormat(outputTarget->GetFormat());
 				BarrierInfo barrier;
-				if (sharedAttachment)
+				if (sharedTarget)
 				{
 					barrier.SrcAccess = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 					barrier.SrcStageFlags = colorFormat ? VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT : VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
@@ -111,15 +111,15 @@ namespace Athena
 			}
 			else if (m_Info.InputComputePass)
 			{
-				bool sharedAttachment = false;
-				for (const auto& inputAttachment : m_Info.InputComputePass->GetAllOutputs())
+				bool sharedTarget = false;
+				for (const auto& inputTarget : m_Info.InputComputePass->GetAllOutputs())
 				{
-					if (texture == inputAttachment)
-						sharedAttachment = true;
+					if (outputTarget == inputTarget)
+						sharedTarget = true;
 				}
 
 				BarrierInfo barrier;
-				if (sharedAttachment)
+				if (sharedTarget)
 				{
 					barrier.SrcAccess = VK_ACCESS_SHADER_WRITE_BIT;
 					barrier.SrcStageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;

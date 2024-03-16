@@ -68,6 +68,7 @@ namespace Athena
 
 	void VulkanVertexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
+		ATN_PROFILE_FUNC();
 		ATN_CORE_ASSERT(m_Info.Usage == BufferUsage::DYNAMIC);
 
 		void* mappedData = m_VertexBuffer.MapMemory();

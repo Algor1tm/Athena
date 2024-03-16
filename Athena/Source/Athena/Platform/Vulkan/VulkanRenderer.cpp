@@ -188,6 +188,8 @@ namespace Athena
 
 	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
 	{
+		ATN_PROFILE_FUNC();
+
 		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
 		VkImage sourceImage = image.As<VulkanImage>()->GetVulkanImage();

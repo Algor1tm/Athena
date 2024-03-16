@@ -407,7 +407,7 @@ namespace Athena
 
 	void DescriptorSetManager::InvalidateAndUpdate()
 	{
-		if (m_DescriptorSets.size() == 0)
+		if (m_DescriptorSets.empty())
 			return;
 
 		uint32 frameIndex = Renderer::GetCurrentFrameIndex();

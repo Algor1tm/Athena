@@ -134,7 +134,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::NewFrame()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 
 		InvalidateDescriptorSets();
 
@@ -172,7 +172,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		RecreateFramebuffers();
 	}
 

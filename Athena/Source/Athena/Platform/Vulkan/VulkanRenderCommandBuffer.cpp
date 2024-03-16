@@ -69,7 +69,7 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitForPresent()
 	{
-		ATN_PROFILE_SCOPE("VulkanRenderCommandBuffer::Submit")
+		ATN_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
@@ -88,7 +88,7 @@ namespace Athena
 		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
 
 		{
-			ATN_PROFILE_SCOPE("vkQueueSubmit")
+			ATN_PROFILE_SCOPE("vkQueueSubmit");
 			Timer timer = Timer();
 
 			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));

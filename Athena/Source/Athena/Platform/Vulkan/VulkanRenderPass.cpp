@@ -10,13 +10,13 @@ namespace Athena
 {
 	namespace Vulkan
 	{
-		static VkAttachmentLoadOp GetLoadOp(AttachmentLoadOp loadOp)
+		static VkAttachmentLoadOp GetLoadOp(RenderTargetLoadOp loadOp)
 		{
 			switch (loadOp)
 			{
-			case AttachmentLoadOp::DONT_CARE: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			case AttachmentLoadOp::CLEAR: return VK_ATTACHMENT_LOAD_OP_CLEAR;
-			case AttachmentLoadOp::LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
+			case RenderTargetLoadOp::DONT_CARE: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			case RenderTargetLoadOp::CLEAR: return VK_ATTACHMENT_LOAD_OP_CLEAR;
+			case RenderTargetLoadOp::LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
 			}
 
 			ATN_CORE_ASSERT(false);
@@ -35,7 +35,7 @@ namespace Athena
 			return (VkImageLayout)0;
 		}
 
-		static VkClearValue GetClearValue(const RenderPassAttachment& info)
+		static VkClearValue GetClearValue(const RenderTarget& info)
 		{
 			VkClearValue result = {};
 
@@ -120,7 +120,7 @@ namespace Athena
 			attachmentDesc.stencilLoadOp = loadOp;
 			attachmentDesc.stencilStoreOp = storeOp;
 
-			attachmentDesc.initialLayout = attachment.LoadOp == AttachmentLoadOp::LOAD ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+			attachmentDesc.initialLayout = attachment.LoadOp == RenderTargetLoadOp::LOAD ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			attachments.push_back(attachmentDesc);
@@ -167,7 +167,7 @@ namespace Athena
 
 		for (const auto& attachment : m_Outputs)
 		{
-			if (attachment.LoadOp == AttachmentLoadOp::CLEAR)
+			if (attachment.LoadOp == RenderTargetLoadOp::CLEAR)
 			{
 				VkClearValue clearValue = Vulkan::GetClearValue(attachment);
 				m_ClearColors.push_back(clearValue);
@@ -229,26 +229,26 @@ namespace Athena
 		if (!m_Info.InputPass)
 			return;
 
-		bool hasSharedColorAttachment = false;
-		bool hasSharedDepthAttachment = false;
+		bool hasSharedColorTarget = false;
+		bool hasSharedDepthTarget = false;
 
-		// Check if we have output attachments from previous render pass
-		for (const auto& inputAttachment : m_Info.InputPass->GetAllOutputs())
+		// Check if we have output target from previous render pass
+		for (const auto& inputTarget : m_Info.InputPass->GetAllOutputs())
 		{
-			for (const auto& attachment : m_Outputs)
+			for (const auto& outputTarget : m_Outputs)
 			{
-				if (attachment.Texture == inputAttachment.Texture)
+				if (outputTarget.Texture == inputTarget.Texture)
 				{
-					if (Image::IsColorFormat(attachment.Texture->GetFormat()))
-						hasSharedColorAttachment = true;
+					if (Image::IsColorFormat(outputTarget.Texture->GetFormat()))
+						hasSharedColorTarget = true;
 					else
-						hasSharedDepthAttachment = true;
+						hasSharedDepthTarget = true;
 				}
 			}
 		}
 
 		// Color Attachment
-		if (hasSharedColorAttachment)
+		if (hasSharedColorTarget)
 		{
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -261,7 +261,7 @@ namespace Athena
 			dependencies.push_back(dependency);
 		}
 		// Shader access
-		else if(m_Info.InputPass->GetColorAttachmentCount() > 0)
+		else if(m_Info.InputPass->GetColorTargetsCount() > 0)
 		{
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -275,7 +275,7 @@ namespace Athena
 		}
 
 		// Depth Attachment
-		if (hasSharedDepthAttachment)
+		if (hasSharedDepthTarget)
 		{
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -288,7 +288,7 @@ namespace Athena
 			dependencies.push_back(dependency);
 		}
 		// Shader access
-		else if(m_Info.InputPass->HasDepthAttachment())
+		else if(m_Info.InputPass->HasDepthRenderTarget())
 		{
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;

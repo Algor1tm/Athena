@@ -17,19 +17,19 @@ namespace Athena
 		return nullptr;
 	}
 
-	void RenderPass::SetOutput(const RenderPassAttachment& attachment)
+	void RenderPass::SetOutput(const RenderTarget& target)
 	{
-		ATN_CORE_ASSERT(attachment.Texture);
-		m_Outputs.push_back(attachment);
+		ATN_CORE_ASSERT(target.Texture);
+		m_Outputs.push_back(target);
 	}
 
 	Ref<Texture2D> RenderPass::GetOutput(const String& name) const
 	{
-		for (const auto& attachment : m_Outputs)
+		for (const auto& target : m_Outputs)
 		{
-			if (attachment.Texture->GetName() == name)
+			if (target.Texture->GetName() == name)
 			{
-				return attachment.Texture;
+				return target.Texture;
 			}
 		}
 
@@ -38,23 +38,23 @@ namespace Athena
 
 	Ref<Texture2D> RenderPass::GetDepthOutput() const
 	{
-		for (const auto& attachment : m_Outputs)
+		for (const auto& target : m_Outputs)
 		{
-			if (Image::IsDepthFormat(attachment.Texture->GetFormat()))
+			if (Image::IsDepthFormat(target.Texture->GetFormat()))
 			{
-				return attachment.Texture;
+				return target.Texture;
 			}
 		}
 
 		return nullptr;
 	}
 
-	uint32 RenderPass::GetColorAttachmentCount() const
+	uint32 RenderPass::GetColorTargetsCount() const
 	{
 		uint32 count = 0;
-		for (const auto& attachment : m_Outputs)
+		for (const auto& target : m_Outputs)
 		{
-			if (Image::IsColorFormat(attachment.Texture->GetFormat()))
+			if (Image::IsColorFormat(target.Texture->GetFormat()))
 			{
 				count++;
 			}
@@ -63,11 +63,11 @@ namespace Athena
 		return count;
 	}
 
-	bool RenderPass::HasDepthAttachment() const
+	bool RenderPass::HasDepthRenderTarget() const
 	{
-		for (const auto& attachment : m_Outputs)
+		for (const auto& target : m_Outputs)
 		{
-			if (Image::IsDepthFormat(attachment.Texture->GetFormat()))
+			if (Image::IsDepthFormat(target.Texture->GetFormat()))
 			{
 				return true;
 			}

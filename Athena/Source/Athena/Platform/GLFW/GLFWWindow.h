@@ -300,13 +300,12 @@ namespace Athena
 
 	void Window::PollEvents()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		glfwPollEvents();
 	}
 
 	void Window::SwapBuffers()
 	{
-		ATN_PROFILE_FUNC()
 		m_SwapChain->Present();
 	}
 

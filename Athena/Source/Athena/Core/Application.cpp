@@ -53,7 +53,7 @@ namespace Athena
 
 		while (m_Running)
 		{
-			ATN_PROFILE_FRAME("MainThread")
+			ATN_PROFILE_FRAME("MainThread");
 
 			//ResetStats();
 
@@ -100,7 +100,7 @@ namespace Athena
 
 	void Application::ProcessEvents()
 	{
-		ATN_PROFILE_FUNC()
+		ATN_PROFILE_FUNC();
 		Timer timer = Timer();
 
 		m_Window->PollEvents();

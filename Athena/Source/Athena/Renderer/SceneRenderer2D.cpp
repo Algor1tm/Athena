@@ -168,6 +168,8 @@ namespace Athena
 
 	void SceneRenderer2D::EndScene()
 	{
+		ATN_PROFILE_FUNC();
+
 		FlushQuads();
 		FlushCircles();
 		FlushLines();

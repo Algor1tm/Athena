@@ -33,6 +33,7 @@ namespace Athena
 			}
 		}
 
+		ATN_CORE_ASSERT(false);
 		return nullptr;
 	}
 
@@ -46,6 +47,7 @@ namespace Athena
 			}
 		}
 
+		ATN_CORE_ASSERT(false);
 		return nullptr;
 	}
 

@@ -247,6 +247,11 @@ namespace Athena
 		m_Layout = newLayout;
 	}
 
+	void VulkanImage::RenderPassUpdateLayout(VkImageLayout newLayout)
+	{
+		m_Layout = newLayout;
+	}
+
 	void VulkanImage::UploadData(const void* data, uint32 width, uint32 height)
 	{
 		VkDeviceSize imageSize = width * height * (uint64)Image::BytesPerPixel(m_Info.Format);

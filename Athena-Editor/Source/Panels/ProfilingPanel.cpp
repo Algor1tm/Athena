@@ -67,6 +67,7 @@ namespace Athena
                 {
                     if (m_SceneRenderer)
                     {
+                        auto& settings = m_SceneRenderer->GetSettings();
                         size = m_SceneRenderer->GetViewportSize();
                         ImGui::Text("ViewportSize: { %u, %u }", size.x, size.y);
 
@@ -74,9 +75,12 @@ namespace Athena
                         ImGui::Text("GPUTime: %.3f ms", stats.GPUTime.AsMilliseconds());
                         ImGui::Text("ShadowMapPass: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
                         ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass.AsMilliseconds());
-                        ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
+                        if(settings.BloomSettings.Enable)
+                            ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
+                        if(settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
+                            ImGui::Text("FXAAPass: %.3f ms", stats.FXAAPass.AsMilliseconds());
 
                         if (UI::TreeNode("Pipeline Statistics", false))
                         {

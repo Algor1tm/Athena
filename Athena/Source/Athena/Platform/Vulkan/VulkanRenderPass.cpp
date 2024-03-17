@@ -23,7 +23,7 @@ namespace Athena
 			return (VkAttachmentLoadOp)0;
 		}
 
-		static VkImageLayout GetAttachmentImageLayout(ImageFormat format)
+		static VkImageLayout GetAttachmentOptimalLayout(ImageFormat format)
 		{
 			if (Image::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -71,6 +71,9 @@ namespace Athena
 		if(m_Info.DebugColor != LinearColor(0.f))
 			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
 
+		for (const auto& output : m_Outputs)
+			output.Texture->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(output.Texture->GetFormat()));
+
 		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 		uint32 width = m_Info.Width;
 		uint32 height = m_Info.Height;
@@ -92,6 +95,9 @@ namespace Athena
 		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 		vkCmdEndRenderPass(vkcmdBuf);
 		
+		for (const auto& output : m_Outputs)
+			output.Texture->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 		if (m_Info.DebugColor != LinearColor(0.f))
 			Renderer::EndDebugRegion(commandBuffer);
 	}
@@ -130,7 +136,7 @@ namespace Athena
 			{
 				VkAttachmentReference colorAttachmentRef;
 				colorAttachmentRef.attachment = attachments.size() - 1;
-				colorAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(format);
+				colorAttachmentRef.layout = Vulkan::GetAttachmentOptimalLayout(format);
 
 				colorAttachmentRefs.push_back(colorAttachmentRef);
 			}
@@ -139,7 +145,7 @@ namespace Athena
 				ATN_CORE_ASSERT(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
 
 				depthStencilAttachmentRef.attachment = attachments.size() - 1;
-				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentImageLayout(format);
+				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentOptimalLayout(format);
 				hasDepthStencil = true;
 			}
 		}

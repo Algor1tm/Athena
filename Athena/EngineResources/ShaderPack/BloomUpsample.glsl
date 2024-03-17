@@ -34,14 +34,14 @@ layout(push_constant) uniform u_BloomData
 
 shared vec3 s_Pixels[TILE_PIXEL_COUNT];
 
-void StorePixel(int idx, vec4 color)
+void StorePixel(int idx, vec3 color)
 {
     s_Pixels[idx] = color.rgb;
 }
 
-vec4 LoadPixel(uint idx)
+vec3 LoadPixel(uint idx)
 {
-    return vec4(s_Pixels[idx], 1.0);
+    return s_Pixels[idx];
 }
 
 
@@ -57,7 +57,7 @@ void main()
         vec2 uv        = (baseIndex + 0.5) * u_TexelSize;
         vec2 uvOffset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_TexelSize;
         
-        vec4 color = textureLod(u_BloomTexture, (uv + uvOffset), u_ReadMipLevel);
+        vec3 color = textureLod(u_BloomTexture, (uv + uvOffset), u_ReadMipLevel).rgb;
         StorePixel(i, color);
     }
 
@@ -66,7 +66,7 @@ void main()
 
     uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
 
-    vec4 s;
+    vec3 s;
     s  = LoadPixel(center - TILE_SIZE - 1);
     s += LoadPixel(center - TILE_SIZE    ) * 2.0;
     s += LoadPixel(center - TILE_SIZE + 1);
@@ -79,18 +79,18 @@ void main()
     s += LoadPixel(center + TILE_SIZE    ) * 2.0;
     s += LoadPixel(center + TILE_SIZE + 1);
 
-    vec4 bloom = s * (1.0 / 16.0) * u_Intensity;
-    vec4 outPixel = bloom;
+    vec3 bloom = s * (1.0 / 16.0) * u_Intensity;
+    vec3 outPixel = bloom;
 
     if(!lastPass)
-        outPixel += imageLoad(u_BloomTextureMip, pixelCoords);
+        outPixel += imageLoad(u_BloomTextureMip, pixelCoords).rgb;
 
     // Apply dirt texture in last pass
     if (lastPass)
     {
         vec2 uv  = (vec2(pixelCoords) + vec2(0.5, 0.5)) * u_TexelSize;
-        outPixel += texture(u_DirtTexture, uv) * u_DirtIntensity * bloom;
+        outPixel += texture(u_DirtTexture, uv).rgb * u_DirtIntensity * bloom;
     }
 
-    imageStore(u_BloomTextureMip, pixelCoords, outPixel);
+    imageStore(u_BloomTextureMip, pixelCoords, vec4(outPixel, 1.0));
 }

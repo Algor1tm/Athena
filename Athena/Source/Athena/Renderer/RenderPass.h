@@ -19,7 +19,7 @@ namespace Athena
 		RenderTarget() = default;
 		RenderTarget(const String& name, ImageFormat format)
 		{
-			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC;
+			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED;
 
 			Texture2DCreateInfo texInfo;
 			texInfo.Name = name;

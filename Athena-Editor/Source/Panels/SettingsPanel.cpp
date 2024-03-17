@@ -47,6 +47,7 @@ namespace Athena
 		switch (antialiasing)
 		{
 		case Antialising::NONE: return "None";
+		case Antialising::FXAA: return "FXAA";
 		}
 
 		ATN_ASSERT(false);
@@ -57,6 +58,9 @@ namespace Athena
 	{
 		if(str == "None")
 			return Antialising::NONE;
+
+		if (str == "FXAA")
+			return Antialising::FXAA;
 
 		ATN_ASSERT(false);
 		return (Antialising)0;
@@ -283,7 +287,7 @@ namespace Athena
 			}
 
 			{
-				std::string_view views[] = { "None" };
+				std::string_view views[] = { "None", "FXAA" };
 				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
 
 				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))

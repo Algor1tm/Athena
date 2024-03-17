@@ -19,11 +19,13 @@ namespace Athena
 
 	void ComputePass::SetOutput(const Ref<Texture2D>& texture)
 	{
+		ATN_CORE_ASSERT(texture);
 		m_Texture2DOutputs.push_back(texture);
 	}
 
 	void ComputePass::SetOutput(const Ref<TextureCube>& texture)
 	{
+		ATN_CORE_ASSERT(texture);
 		m_TextureCubeOutputs.push_back(texture);
 	}
 
@@ -37,6 +39,7 @@ namespace Athena
 			}
 		}
 
+		ATN_CORE_ASSERT(false);
 		return nullptr;
 	}
 }

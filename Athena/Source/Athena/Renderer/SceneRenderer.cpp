@@ -67,7 +67,7 @@ namespace Athena
 			passInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			passInfo.DebugColor = { 0.7f, 0.8f, 0.7f, 1.f };
 
-			RenderTarget output = RenderTarget(Texture2D::Create(shadowMapInfo));
+			RenderTarget output = Texture2D::Create(shadowMapInfo);
 			output.LoadOp = RenderTargetLoadOp::CLEAR;
 			output.DepthClearColor = 1.f;
 
@@ -223,6 +223,12 @@ namespace Athena
 
 		// COMPOSITE PASS
 		{
+			Texture2DCreateInfo texInfo;
+			texInfo.Name = "SceneColor";
+			texInfo.Format = ImageFormat::RGBA8;
+			texInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::STORAGE | ImageUsage::TRANSFER_SRC);
+			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";
 			passInfo.InputPass = m_GeometryPass;
@@ -230,10 +236,12 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
 
-			m_CompositePass = RenderPass::Create(passInfo);
-			m_CompositePass->SetOutput({ "SceneCompositeColor", ImageFormat::RGBA8 });
-			m_CompositePass->Bake();
+			RenderTarget target = Texture2D::Create(texInfo);
+			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
 
+			m_CompositePass = RenderPass::Create(passInfo);
+			m_CompositePass->SetOutput(target);
+			m_CompositePass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "SceneCompositePipeline";
@@ -266,13 +274,43 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
-			RenderTarget colorOutput = m_CompositePass->GetOutput("SceneCompositeColor");
+			RenderTarget colorOutput = m_CompositePass->GetOutput("SceneColor");
 			RenderTarget depthOutput = m_GeometryPass->GetOutput("SceneDepth");
 
 			m_Render2DPass = RenderPass::Create(passInfo);
 			m_Render2DPass->SetOutput(colorOutput);
 			m_Render2DPass->SetOutput(depthOutput);
 			m_Render2DPass->Bake();
+		}
+
+		// FXAA Compute Pass
+		{
+			Texture2DCreateInfo texInfo;
+			texInfo.Name = "PostProcessTex";
+			texInfo.Format = ImageFormat::RGBA8;
+			texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
+			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+			m_PostProcessTexture = Texture2D::Create(texInfo);
+
+			ComputePassCreateInfo passInfo;
+			passInfo.Name = "FXAAPass";
+			passInfo.InputRenderPass = m_Render2DPass;
+			passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
+
+			m_FXAAPass = ComputePass::Create(passInfo);
+			m_FXAAPass->SetOutput(m_PostProcessTexture);
+			m_FXAAPass->Bake();
+
+			ComputePipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "FXAAPipeline";
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("FXAA");
+
+			m_FXAAPipeline = ComputePipeline::Create(pipelineInfo);
+			m_FXAAPipeline->SetInput("u_SceneColor", m_Render2DPass->GetOutput("SceneColor"));
+			m_FXAAPipeline->SetInput("u_PostProcessTex", m_PostProcessTexture);
+			m_FXAAPipeline->SetInput("u_RendererData", m_RendererUBO);
+			m_FXAAPipeline->Bake();
 		}
 	}
 
@@ -283,7 +321,10 @@ namespace Athena
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		return m_CompositePass->GetOutput("SceneCompositeColor");
+		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
+			return m_FXAAPass->GetOutput("PostProcessTex");
+		else
+			return m_Render2DPass->GetOutput("SceneColor");
 	}
 
 	Ref<Texture2D> SceneRenderer::GetShadowMap()
@@ -307,6 +348,8 @@ namespace Athena
 		m_CompositePipeline->SetViewport(width, height);
 
 		m_Render2DPass->Resize(width, height);
+
+		m_PostProcessTexture->Resize(width, height);
 	}
 
 	void SceneRenderer::OnRender2D(const Render2DCallback& callback)
@@ -453,6 +496,8 @@ namespace Athena
 		m_CompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
 		m_CompositeMaterial->Set("u_EnableBloom", (uint32)m_Settings.BloomSettings.Enable);
 
+		m_RendererData.ViewportSize = m_ViewportSize;
+		m_RendererData.InverseViewportSize = Vector2(1.f) / m_RendererData.ViewportSize;
 		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 
 		m_BonesDataOffset = 0;
@@ -479,6 +524,7 @@ namespace Athena
 		BloomPass();
 		SceneCompositePass();
 		Render2DPass();
+		FXAAPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
 		m_Statistics.GPUTime = m_Statistics.DirShadowMapPass + m_Statistics.GeometryPass + 
@@ -659,6 +705,23 @@ namespace Athena
 		}
 		m_Render2DPass->End(commandBuffer);
 		m_Statistics.Render2DPass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::FXAAPass()
+	{
+		if (m_Settings.PostProcessingSettings.AntialisingMethod != Antialising::FXAA)
+			return;
+
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_FXAAPass->Begin(commandBuffer);
+		{
+			m_FXAAPipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_FXAAPipeline, { m_ViewportSize.x, m_ViewportSize.y, 1 });
+		}
+		m_FXAAPass->End(commandBuffer);
+		m_Statistics.FXAAPass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)

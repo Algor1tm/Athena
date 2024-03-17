@@ -35,20 +35,20 @@ layout(push_constant) uniform u_BloomData
 
 shared vec3 s_Pixels[TILE_PIXEL_COUNT];
 
-void StorePixel(int idx, vec4 color)
+void StorePixel(int idx, vec3 color)
 {
-    s_Pixels[idx] = color.rgb;
+    s_Pixels[idx] = color;
 }
 
-vec4 LoadPixel(uint idx)
+vec3 LoadPixel(uint idx)
 {
-    return vec4(s_Pixels[idx], 1.0);
+    return s_Pixels[idx];
 }
 
 
 // x -> threshold, yzw -> (threshold - knee, 2.0 * knee, 0.25 * knee)
 // Curve = (threshold - knee, knee * 2.0, knee * 0.25)
-vec4 QuadraticThreshold(vec4 color, float threshold, vec3 curve)
+vec3 QuadraticThreshold(vec3 color, float threshold, vec3 curve)
 {
     const float epsilon = 1.0e-4;
 
@@ -71,9 +71,9 @@ float Luma(vec3 c)
 }
 
 // [Karis2013] proposed reducing the dynamic range before averaging
-vec4 KarisAverage(vec4 c)
+vec3 KarisAverage(vec3 c)
 {
-    return c / (1.0 + Luma(c.rgb));
+    return c / (1.0 + Luma(c));
 }
 
 void main()
@@ -89,14 +89,14 @@ void main()
         vec2 uvOffset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_TexelSize;
         
         // On first pass read from scene texture
-        vec4 color;
+        vec3 color;
         if(firstPass)
         {
-            color = texture(u_SceneHDRColor, uv + uvOffset);
+            color = texture(u_SceneHDRColor, uv + uvOffset).rgb;
         }
         else
         {
-            color = textureLod(u_BloomTexture, uv + uvOffset, u_ReadMipLevel);
+            color = textureLod(u_BloomTexture, uv + uvOffset, u_ReadMipLevel).rgb;
         }
 
         StorePixel(i, color);
@@ -107,24 +107,24 @@ void main()
 
     uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
     
-    vec4 A = LoadPixel(center - TILE_SIZE - 1);
-    vec4 B = LoadPixel(center - TILE_SIZE    );
-    vec4 C = LoadPixel(center - TILE_SIZE + 1);
-    vec4 F = LoadPixel(center - 1            );
-    vec4 G = LoadPixel(center                );
-    vec4 H = LoadPixel(center + 1            );
-    vec4 K = LoadPixel(center + TILE_SIZE - 1);
-    vec4 L = LoadPixel(center + TILE_SIZE    );
-    vec4 M = LoadPixel(center + TILE_SIZE + 1);
+    vec3 A = LoadPixel(center - TILE_SIZE - 1);
+    vec3 B = LoadPixel(center - TILE_SIZE    );
+    vec3 C = LoadPixel(center - TILE_SIZE + 1);
+    vec3 F = LoadPixel(center - 1            );
+    vec3 G = LoadPixel(center                );
+    vec3 H = LoadPixel(center + 1            );
+    vec3 K = LoadPixel(center + TILE_SIZE - 1);
+    vec3 L = LoadPixel(center + TILE_SIZE    );
+    vec3 M = LoadPixel(center + TILE_SIZE + 1);
 
-    vec4 D = (A + B + G + F) * 0.25;
-    vec4 E = (B + C + H + G) * 0.25;
-    vec4 I = (F + G + L + K) * 0.25;
-    vec4 J = (G + H + M + L) * 0.25;
+    vec3 D = (A + B + G + F) * 0.25;
+    vec3 E = (B + C + H + G) * 0.25;
+    vec3 I = (F + G + L + K) * 0.25;
+    vec3 J = (G + H + M + L) * 0.25;
 
     vec2 div = (1.0 / 4.0) * vec2(0.5, 0.125);
 
-    vec4 color  = KarisAverage((D + E + I + J) * div.x);
+    vec3 color  = KarisAverage((D + E + I + J) * div.x);
          color += KarisAverage((A + B + G + F) * div.y);
          color += KarisAverage((B + C + H + G) * div.y);
          color += KarisAverage((F + G + L + K) * div.y);
@@ -136,5 +136,5 @@ void main()
         color = QuadraticThreshold(color, u_Threshold, curve);
     }
 
-    imageStore(u_BloomTextureMip, pixelCoords, color);
+    imageStore(u_BloomTextureMip, pixelCoords, vec4(color, 1.0));
 }

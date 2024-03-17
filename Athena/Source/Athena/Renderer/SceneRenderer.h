@@ -25,7 +25,8 @@ namespace Athena
 {
 	enum class Antialising
 	{
-		NONE = 0
+		NONE = 0,
+		FXAA = 1
 	};
 
 	enum class DebugView
@@ -91,9 +92,11 @@ namespace Athena
 
 	struct RendererData
 	{
-		float EnvironmentIntensity = 1.f;
-		float EnvironmentLOD = 0.f;
-		int32 DebugShadowCascades = 0;
+		Vector2 ViewportSize;
+		Vector2 InverseViewportSize;
+		float EnvironmentIntensity;
+		float EnvironmentLOD ;
+		int32 DebugShadowCascades;
 	};
 
 	struct LightData
@@ -126,6 +129,7 @@ namespace Athena
 		Time BloomPass;
 		Time SceneCompositePass;
 		Time Render2DPass;
+		Time FXAAPass;
 		PipelineStatistics PipelineStats;
 	};
 
@@ -166,6 +170,7 @@ namespace Athena
 		void BloomPass();
 		void SceneCompositePass();
 		void Render2DPass();
+		void FXAAPass();
 
 		void CalculateCascadeLightSpaces(const DirectionalLight& light);
 
@@ -199,6 +204,10 @@ namespace Athena
 
 		Ref<RenderPass> m_Render2DPass;
 		Render2DCallback m_Render2DCallback;
+
+		Ref<Texture2D> m_PostProcessTexture;
+		Ref<ComputePass> m_FXAAPass;
+		Ref<ComputePipeline> m_FXAAPipeline;
 
 		// CPU Data
 		CameraData m_CameraData;

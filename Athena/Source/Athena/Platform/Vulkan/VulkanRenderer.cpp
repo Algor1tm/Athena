@@ -106,7 +106,7 @@ namespace Athena
 		vkCmdDispatch(vkcmdBuffer, groupCountX, groupCountY, groupCountZ);
 	}
 
-	void VulkanRenderer::MemoryDependency(const Ref<RenderCommandBuffer>& commandBuffer)
+	void VulkanRenderer::InsertMemoryBarrier(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 
@@ -125,7 +125,7 @@ namespace Athena
 		);
 	}
 
-	void VulkanRenderer::ExecutionDependency(const Ref<RenderCommandBuffer>& commandBuffer)
+	void VulkanRenderer::InsertExecutionBarrier(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
 

@@ -861,7 +861,7 @@ namespace Athena
 			if (UI::BeginPropertyTable())
 			{
 				UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
-				UI::PropertySlider("Environment Map LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
+				UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
 
 				const auto& envMap = lightComponent.EnvironmentMap;
 

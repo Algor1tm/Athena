@@ -54,7 +54,7 @@ namespace Athena
         m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
         m_Renderer2D->SetLineWidth(3.f);
         
-        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 300.f);
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 10.f, 100.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
         EditorResources::Init(m_Config.EditorResources);
@@ -180,6 +180,8 @@ namespace Athena
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         m_EditorCamera->SetMoveSpeedLevel(m_EditorCtx->EditorSettings.CameraSpeedLevel);
+        m_EditorCamera->SetNearClip(m_EditorCtx->EditorSettings.NearFarClips.x);
+        m_EditorCamera->SetFarClip(m_EditorCtx->EditorSettings.NearFarClips.y);
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)

@@ -118,7 +118,7 @@ namespace Athena
 
 			m_GeometryPass = RenderPass::Create(passInfo);
 			m_GeometryPass->SetOutput({ "SceneHDRColor", ImageFormat::RGBA16F });
-			m_GeometryPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH24STENCIL8 });
+			m_GeometryPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH32F });
 			m_GeometryPass->Bake();
 
 
@@ -129,7 +129,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.DepthCompare = DepthCompare::LESS;
 			pipelineInfo.BlendEnable = true;
 
 			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
@@ -167,6 +167,7 @@ namespace Athena
 
 			pipelineInfo.Name = "SkyboxPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.VertexLayout = { { ShaderDataType::Float3, "a_Position" } };
 			pipelineInfo.BlendEnable = false;
 
@@ -321,10 +322,13 @@ namespace Athena
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
+		if(m_Settings.DebugView == DebugView::DEPTH)
+			return m_Render2DPass->GetOutput("SceneDepth");
+
 		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
 			return m_FXAAPass->GetOutput("PostProcessTex");
-		else
-			return m_Render2DPass->GetOutput("SceneColor");
+		
+		return m_Render2DPass->GetOutput("SceneColor");
 	}
 
 	Ref<Texture2D> SceneRenderer::GetShadowMap()
@@ -653,7 +657,7 @@ namespace Athena
 				material->Bind(commandBuffer);
 
 				Renderer::Dispatch(commandBuffer, m_BloomDownsample, { mipSize.x, mipSize.y, 1 }, material);
-				Renderer::MemoryDependency(commandBuffer);
+				Renderer::InsertMemoryBarrier(commandBuffer);
 			}
 
 			// Read from mip and write to mip - 1
@@ -670,7 +674,7 @@ namespace Athena
 				Renderer::Dispatch(commandBuffer, m_BloomUpsample, { mipSize.x, mipSize.y, 1 }, material);
 
 				if (mip != 1)
-					Renderer::MemoryDependency(commandBuffer);
+					Renderer::InsertMemoryBarrier(commandBuffer);
 			}
 		}
 		m_BloomPass->End(commandBuffer);

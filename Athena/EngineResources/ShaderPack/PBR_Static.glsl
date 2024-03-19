@@ -275,5 +275,5 @@ void main()
         hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.3);
     }
 
-    o_Color = vec4(hdrColor, albedo.a);
+    o_Color = vec4(hdrColor, 1.0);
 }

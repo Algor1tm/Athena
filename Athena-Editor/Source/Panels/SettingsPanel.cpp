@@ -72,6 +72,7 @@ namespace Athena
 		{
 		case DebugView::NONE: return "None";
 		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
+		case DebugView::DEPTH: return "Depth";
 		}
 
 		ATN_ASSERT(false);
@@ -85,6 +86,9 @@ namespace Athena
 
 		if (str == "ShadowCascades")
 			return DebugView::SHADOW_CASCADES;
+
+		if (str == "Depth")
+			return DebugView::DEPTH;
 
 		ATN_ASSERT(false);
 		return (DebugView)0;
@@ -108,6 +112,7 @@ namespace Athena
 				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
 				UI::PropertySlider("RendererIconsScale", &settings.RendererIconsScale, 0.4f, 3.f);
 				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
 				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
 				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);
 
@@ -186,7 +191,7 @@ namespace Athena
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			std::string_view views[] = { "None", "ShadowCascades" };
+			std::string_view views[] = { "None", "ShadowCascades", "Depth" };
 			std::string_view selected = DebugViewToString(settings.DebugView);
 			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{

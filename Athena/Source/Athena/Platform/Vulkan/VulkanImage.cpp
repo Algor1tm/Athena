@@ -76,6 +76,9 @@ namespace Athena
 		{
 			UploadData(m_Info.InitialData, m_Info.Width, m_Info.Height);
 			m_Info.InitialData = nullptr;
+
+			if(m_Info.GenerateMipLevels)
+				BlitMipMap(GetMipLevelsCount());
 		}
 	}
 

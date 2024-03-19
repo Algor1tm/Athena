@@ -46,7 +46,7 @@ namespace Athena
 	}
 
 
-	Ref<Image> Image::Create(const FilePath& filepath, bool sRGB)
+	Ref<Image> Image::Create(const FilePath& filepath, bool sRGB, bool genMips)
 	{
 		int width, height, channels;
 		bool HDR = false;
@@ -104,7 +104,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipLevels = false;
+		info.GenerateMipLevels = genMips;
 
 		Ref<Image> result = Image::Create(info);
 
@@ -112,7 +112,7 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Image> Image::Create(const String& name, const void* inputData, uint32 inputWidth, uint32 inputHeight, bool sRGB)
+	Ref<Image> Image::Create(const String& name, const void* inputData, uint32 inputWidth, uint32 inputHeight, bool sRGB, bool genMips)
 	{
 		int width, height, channels;
 		void* data = nullptr;
@@ -149,7 +149,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipLevels = false;
+		info.GenerateMipLevels = genMips;
 
 		Ref<Image> result = Image::Create(info);
 		stbi_image_free(data);

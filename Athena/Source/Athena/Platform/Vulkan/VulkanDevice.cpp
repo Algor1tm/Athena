@@ -110,6 +110,7 @@ namespace Athena
 			deviceFeatures.geometryShader = VK_TRUE;
 			deviceFeatures.wideLines = VK_TRUE;
 			deviceFeatures.pipelineStatisticsQuery = VK_TRUE;
+			deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 			VkDeviceCreateInfo deviceCI = {};
 			deviceCI.pNext = &resetFeatures;

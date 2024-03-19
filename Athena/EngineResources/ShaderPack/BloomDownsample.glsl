@@ -32,19 +32,26 @@ layout(push_constant) uniform u_BloomData
     uint u_ReadMipLevel;
 };
 
+vec3 Sample(vec2 uv, int xOff, int yOff)
+{
+    if(u_ReadMipLevel == 0)
+        return texture(u_SceneHDRColor, uv + vec2(xOff, yOff) * u_TexelSize).rgb;
+
+    return textureLod(u_BloomTexture, uv + vec2(xOff, yOff) * u_TexelSize, u_ReadMipLevel).rgb;
+}
 
 shared vec3 s_Pixels[TILE_PIXEL_COUNT];
 
-void StorePixel(int idx, vec3 color)
+void StorePixel(uint idx, vec3 color)
 {
     s_Pixels[idx] = color;
 }
 
-vec3 LoadPixel(uint idx)
+vec3 LoadPixel(uint center, int xOff, int yOff)
 {
+    uint idx = center + xOff + yOff * TILE_SIZE;
     return s_Pixels[idx];
 }
-
 
 // x -> threshold, yzw -> (threshold - knee, 2.0 * knee, 0.25 * knee)
 // Curve = (threshold - knee, knee * 2.0, knee * 0.25)
@@ -80,61 +87,81 @@ void main()
 {
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID);
     ivec2 baseIndex = ivec2(gl_WorkGroupID) * GROUP_SIZE - FILTER_RADIUS;
-    bool firstPass = u_ReadMipLevel == 0;
+    vec2 uv = (vec2(baseIndex) + 0.5) * u_TexelSize;
 
     // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
     for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
     {
-        vec2 uv       = (vec2(baseIndex) + 0.5) * u_TexelSize;
-        vec2 uvOffset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_TexelSize;
-        
-        // On first pass read from scene texture
-        vec3 color;
-        if(firstPass)
-        {
-            color = texture(u_SceneHDRColor, uv + uvOffset).rgb;
-        }
-        else
-        {
-            color = textureLod(u_BloomTexture, uv + uvOffset, u_ReadMipLevel).rgb;
-        }
+        int xOff = i % TILE_SIZE;
+        int yOff = i / TILE_SIZE;
 
+        vec3 color = Sample(uv, xOff, yOff);
         StorePixel(i, color);
     }
 
     memoryBarrierShared();
     barrier();
 
-    uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
-    
-    vec3 A = LoadPixel(center - TILE_SIZE - 1);
-    vec3 B = LoadPixel(center - TILE_SIZE    );
-    vec3 C = LoadPixel(center - TILE_SIZE + 1);
-    vec3 F = LoadPixel(center - 1            );
-    vec3 G = LoadPixel(center                );
-    vec3 H = LoadPixel(center + 1            );
-    vec3 K = LoadPixel(center + TILE_SIZE - 1);
-    vec3 L = LoadPixel(center + TILE_SIZE    );
-    vec3 M = LoadPixel(center + TILE_SIZE + 1);
+    // 36-texel downsample (13 bilinear fetches)
+    /*--------------------------
+          A    B    C  
+             D    E
+          F    G    H
+             I    J
+          K    L    M
+    --------------------------*/
 
+
+    bool firstPass = u_ReadMipLevel == 0;
+    uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
+
+    vec3 A = LoadPixel(center, -1, -1);
+    vec3 B = LoadPixel(center,  0, -1);
+    vec3 C = LoadPixel(center,  1, -1);
+
+    vec3 F = LoadPixel(center, -1,  0);
+    vec3 G = LoadPixel(center,  0,  0);
+    vec3 H = LoadPixel(center,  1,  0);
+
+    vec3 K = LoadPixel(center, -1,  1);
+    vec3 L = LoadPixel(center,  0,  1);
+    vec3 M = LoadPixel(center,  1,  1);
+
+    // Seems that these values are not exactly correct, but despite this bloom result is excellent
     vec3 D = (A + B + G + F) * 0.25;
     vec3 E = (B + C + H + G) * 0.25;
     vec3 I = (F + G + L + K) * 0.25;
     vec3 J = (G + H + M + L) * 0.25;
 
-    vec2 div = (1.0 / 4.0) * vec2(0.5, 0.125);
+    vec3 result;
 
-    vec3 color  = KarisAverage((D + E + I + J) * div.x);
-         color += KarisAverage((A + B + G + F) * div.y);
-         color += KarisAverage((B + C + H + G) * div.y);
-         color += KarisAverage((F + G + L + K) * div.y);
-         color += KarisAverage((G + H + M + L) * div.y);
-
-    if (firstPass)
+    // Apply KarisAverage and Threshold in first pass
+    if(firstPass)
     {
+        vec3 red    = 0.5   * (D + E + J + I) * 0.25;
+        vec3 yellow = 0.125 * (G + F + A + B) * 0.25;
+        vec3 green  = 0.125 * (G + B + C + H) * 0.25;
+        vec3 blue   = 0.125 * (G + H + L + M) * 0.25;
+        vec3 purple = 0.125 * (G + L + K + F) * 0.25;
+
+        red    = KarisAverage(red);
+        yellow = KarisAverage(yellow);
+        green  = KarisAverage(green);
+        blue   = KarisAverage(blue);
+        purple = KarisAverage(purple);
+        
+        result = red + yellow + green + blue + purple;
+
         vec3 curve = vec3(u_Threshold - u_Knee, 2.0 * u_Knee, 0.25 * u_Knee);
-        color = QuadraticThreshold(color, u_Threshold, curve);
+        result = QuadraticThreshold(result, u_Threshold, curve);
+    }
+    else
+    {
+	    result  = G * 0.125;
+	    result += (A + C + K + M) * 0.03125;
+	    result += (B + F + H + L) * 0.0625;
+	    result += (D + E + I + J) * 0.125;
     }
 
-    imageStore(u_BloomTextureMip, pixelCoords, vec4(color, 1.0));
+    imageStore(u_BloomTextureMip, pixelCoords, vec4(result, 1.0));
 }

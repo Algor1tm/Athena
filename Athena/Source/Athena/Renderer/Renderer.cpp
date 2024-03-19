@@ -276,14 +276,14 @@ namespace Athena
 		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
 	}
 
-	void Renderer::MemoryDependency(const Ref<RenderCommandBuffer>& cmdBuffer)
+	void Renderer::InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer)
 	{
-		s_Data.RendererAPI->MemoryDependency(cmdBuffer);
+		s_Data.RendererAPI->InsertMemoryBarrier(cmdBuffer);
 	}
 
-	void Renderer::ExecutionDependency(const Ref<RenderCommandBuffer>& cmdBuffer)
+	void Renderer::InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer)
 	{
-		s_Data.RendererAPI->ExecutionDependency(cmdBuffer);
+		s_Data.RendererAPI->InsertExecutionBarrier(cmdBuffer);
 	}
 
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)

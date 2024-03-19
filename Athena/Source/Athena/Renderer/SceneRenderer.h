@@ -32,7 +32,8 @@ namespace Athena
 	enum class DebugView
 	{
 		NONE = 0,
-		SHADOW_CASCADES = 1
+		SHADOW_CASCADES = 1,
+		DEPTH
 	};
 
 	enum class TonemapMode

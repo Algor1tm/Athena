@@ -54,7 +54,7 @@ void main()
     // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
     for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
     {
-        vec2 uv        = (baseIndex + 0.5) * u_TexelSize;
+        vec2 uv       = (baseIndex + 0.5) * u_TexelSize;
         vec2 uvOffset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_TexelSize;
         
         vec3 color = textureLod(u_BloomTexture, (uv + uvOffset), u_ReadMipLevel).rgb;
@@ -65,6 +65,13 @@ void main()
     barrier();
 
     uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
+
+    // 9-tap tent filter
+    /*--------------------------
+              | 1  2  1 |
+     1 / 16 * | 2  4  2 |
+              | 1  2  1 |
+    --------------------------*/
 
     vec3 s;
     s  = LoadPixel(center - TILE_SIZE - 1);

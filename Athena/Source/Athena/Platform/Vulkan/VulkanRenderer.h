@@ -18,8 +18,8 @@ namespace Athena
 
 		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount) override;
 		virtual void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material) override;
-		virtual void MemoryDependency(const Ref<RenderCommandBuffer>& cmdBuffer) override;
-		virtual void ExecutionDependency(const Ref<RenderCommandBuffer>& cmdBuffer) override;
+		virtual void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) override;
+		virtual void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) override;
 
 		virtual void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) override;
 		virtual void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer) override;

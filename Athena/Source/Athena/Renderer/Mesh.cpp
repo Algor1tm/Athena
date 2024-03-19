@@ -62,7 +62,7 @@ namespace Athena
 				void* data = embeddedTex->pcData;
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
-				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height, srgb);
+				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height, srgb, true);
 			}
 			else
 			{
@@ -70,7 +70,7 @@ namespace Athena
 				path.replace_filename(texFilepath.C_Str());
 				if (FileSystem::Exists(path))
 				{
-					result = Texture2D::Create(path, srgb);
+					result = Texture2D::Create(path, srgb, true);
 				}
 				else
 				{
@@ -469,12 +469,15 @@ namespace Athena
 		const unsigned int flags =
 			aiProcess_GenUVCoords |
 			aiProcess_CalcTangentSpace |
-			aiProcess_GenNormals |
+			aiProcess_GenSmoothNormals |
+			aiProcess_FixInfacingNormals |
 			aiProcess_GenBoundingBoxes |
+			aiProcess_FindInvalidData | 
 
 			aiProcess_SortByPType |
 			aiProcess_FindDegenerates |
 			aiProcess_ImproveCacheLocality |
+			aiProcess_JoinIdenticalVertices |
 			aiProcess_LimitBoneWeights |
 
 			aiProcess_RemoveRedundantMaterials |

@@ -82,8 +82,8 @@ namespace Athena
 	{
 	public:
 		static Ref<Texture2D> Create(const Texture2DCreateInfo& info);
-		static Ref<Texture2D> Create(const FilePath& path, bool sRGB = false);
-		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false);
+		static Ref<Texture2D> Create(const FilePath& path, bool sRGB = false, bool genMips = false);
+		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 
 		virtual RenderResourceType GetResourceType() override { return RenderResourceType::Texture2D; }

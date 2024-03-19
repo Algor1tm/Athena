@@ -66,8 +66,8 @@ namespace Athena
 	{
 	public:
 		static Ref<Image> Create(const ImageCreateInfo& info);
-		static Ref<Image> Create(const FilePath& path, bool sRGB = false);
-		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false);
+		static Ref<Image> Create(const FilePath& path, bool sRGB = false, bool genMips = false);
+		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 		virtual ~Image() = default;
 
 		virtual void BlitMipMap(uint32 levels) = 0;

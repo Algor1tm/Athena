@@ -134,6 +134,12 @@ namespace Athena
 
 		VkSampler sampler;
 
+		// Disable for now
+		bool enableAnisotropy = false;
+		enableAnisotropy = enableAnisotropy && info.MagFilter == TextureFilter::LINEAR;
+		enableAnisotropy = enableAnisotropy && info.MinFilter == TextureFilter::LINEAR;
+		enableAnisotropy = enableAnisotropy && info.MipMapFilter == TextureFilter::LINEAR;
+
 		VkSamplerCreateInfo vksamplerInfo = {};
 		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		vksamplerInfo.magFilter = Vulkan::GetFilter(info.MagFilter);
@@ -142,8 +148,8 @@ namespace Athena
 		vksamplerInfo.addressModeU = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeV = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeW = Vulkan::GetWrap(info.Wrap);
-		vksamplerInfo.anisotropyEnable = false;
-		vksamplerInfo.maxAnisotropy = 1.f;
+		vksamplerInfo.anisotropyEnable = enableAnisotropy;
+		vksamplerInfo.maxAnisotropy = Renderer::GetRenderCaps().MaxSamplerAnisotropy;
 		vksamplerInfo.compareEnable = info.Compare == TextureCompareOperator::NONE ? false : true;
 		vksamplerInfo.compareOp = Vulkan::GetCompareOp(info.Compare);
 		vksamplerInfo.minLod = 0;

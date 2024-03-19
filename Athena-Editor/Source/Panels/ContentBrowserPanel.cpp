@@ -25,116 +25,115 @@ namespace Athena
 
 	void ContentBrowserPanel::OnImGuiRender()
 	{
-		if (ImGui::Begin("Content Browser"))
+		ImGui::Begin("Content Browser");
+		
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
+		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
+
+		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Undo")), m_ButtonSize))
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
-			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-
-			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Undo")), m_ButtonSize))
+			if (m_CurrentNode->ParentNode != nullptr)
 			{
-				if (m_CurrentNode->ParentNode != nullptr)
-				{
-					m_CurrentNode = m_CurrentNode->ParentNode;
-				}
+				m_CurrentNode = m_CurrentNode->ParentNode;
 			}
-
-			ImGui::SameLine();
-
-			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Redo")), m_ButtonSize))
-			{
-				// TODO
-			}
-
-			ImGui::SameLine();
-
-			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Refresh")), m_ButtonSize))
-			{
-				Refresh();
-			}
-
-			ImGui::SameLine();
-
-			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
-
-			ImGui::PushItemWidth(regionAvail.x * 0.15f);
-
-			String oldString = m_SearchString;
-			UI::TextInputWithHint("Search...", m_SearchString);
-
-			if (oldString != m_SearchString && !m_SearchString.empty())
-			{
-				Search();
-			}
-
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor();
-
-			ImGui::SameLine();
-
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + regionAvail.x * 0.01f);
-			ImGui::Text(m_CurrentNode->FilePath.c_str());
-
-
-			ImGui::Separator();
-
-			bool showSearchResult = !m_SearchString.empty();
-			uint32 nodeCount = showSearchResult ? m_SearchResult.size() : m_CurrentNode->Children.size();
-
-			float cellSize = m_Padding + m_ItemSize.x;
-			float panelWidth = regionAvail.x;
-
-			ImGui::Columns(int(panelWidth / cellSize), 0, false);
-
-			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
-			for (uint32 i = 0; i < nodeCount; ++i)
-			{
-				auto& node = showSearchResult ? *m_SearchResult[i] : m_CurrentNode->Children[i];
-				const auto& filename = node.FileName;
-
-				ImGui::PushID(filename.data());
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
-
-				Ref<Texture2D> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
-				ImGui::ImageButton(UI::GetTextureID(icon), m_ItemSize);
-
-				bool enteredIntoFolder = false;
-				if (node.IsFolder && ImGui::IsItemClicked())
-				{
-					enteredIntoFolder = true;
-				}
-				else
-				{
-					if (ImGui::BeginDragDropSource())
-					{
-						const auto& path = node.FilePath;
-
-						ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", path.data(), strlen(path.data()) + 1, ImGuiCond_Once);
-						ImGui::Text(path.c_str());
-						ImGui::EndDragDropSource();
-					}
-				}
-				ImGui::PopStyleColor();
-				ImGui::PopID();
-
-				ImGui::TextWrapped(filename.data());
-				ImGui::NextColumn();
-
-				if (enteredIntoFolder)
-				{
-					if (showSearchResult)
-					{
-						m_SearchResult.clear();
-						m_SearchString.clear();
-					}
-
-					m_CurrentNode = &node;
-					break;
-				}
-			}
-			ImGui::PopStyleVar();
-
-			ImGui::EndColumns();
 		}
+
+		ImGui::SameLine();
+
+		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Redo")), m_ButtonSize))
+		{
+			// TODO
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Refresh")), m_ButtonSize))
+		{
+			Refresh();
+		}
+
+		ImGui::SameLine();
+
+		ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+
+		ImGui::PushItemWidth(regionAvail.x * 0.15f);
+
+		String oldString = m_SearchString;
+		UI::TextInputWithHint("Search...", m_SearchString);
+
+		if (oldString != m_SearchString && !m_SearchString.empty())
+		{
+			Search();
+		}
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + regionAvail.x * 0.01f);
+		ImGui::Text(m_CurrentNode->FilePath.c_str());
+
+		ImGui::Separator();
+
+		bool showSearchResult = !m_SearchString.empty();
+		uint32 nodeCount = showSearchResult ? m_SearchResult.size() : m_CurrentNode->Children.size();
+
+		float cellSize = m_Padding + m_ItemSize.x;
+		float panelWidth = regionAvail.x;
+
+		ImGui::Columns(int(panelWidth / cellSize), 0, false);
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
+		for (uint32 i = 0; i < nodeCount; ++i)
+		{
+			auto& node = showSearchResult ? *m_SearchResult[i] : m_CurrentNode->Children[i];
+			const auto& filename = node.FileName;
+
+			ImGui::PushID(filename.data());
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
+
+			Ref<Texture2D> icon = node.IsFolder ? EditorResources::GetIcon("ContentBrowser_Folder") : EditorResources::GetIcon("ContentBrowser_File");
+			ImGui::ImageButton(UI::GetTextureID(icon), m_ItemSize);
+
+			bool enteredIntoFolder = false;
+			if (node.IsFolder && ImGui::IsItemClicked())
+			{
+				enteredIntoFolder = true;
+			}
+			else
+			{
+				if (ImGui::BeginDragDropSource())
+				{
+					const auto& path = node.FilePath;
+
+					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", path.data(), strlen(path.data()) + 1, ImGuiCond_Once);
+					ImGui::Text(path.c_str());
+					ImGui::EndDragDropSource();
+				}
+			}
+			ImGui::PopStyleColor();
+			ImGui::PopID();
+
+			ImGui::TextWrapped(filename.data());
+			ImGui::NextColumn();
+
+			if (enteredIntoFolder)
+			{
+				if (showSearchResult)
+				{
+					m_SearchResult.clear();
+					m_SearchString.clear();
+				}
+
+				m_CurrentNode = &node;
+				break;
+			}
+		}
+		ImGui::PopStyleVar();
+
+		ImGui::EndColumns();
+		
 
 		ImGui::End();
 	}

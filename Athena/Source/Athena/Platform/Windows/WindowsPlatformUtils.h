@@ -181,6 +181,11 @@ namespace Athena
 		return s_Data.CPUCaps;
 	}
 
+	void Platform::OpenInBrowser(const std::wstring& url)
+	{
+		ShellExecute(NULL, L"open", url.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	}
+
 	double Platform::GetHighPrecisionTime()
 	{
 		// We need timer before platform initialization
@@ -228,13 +233,13 @@ namespace Athena
 	}
 
 
-	FilePath FileDialogs::OpenFile(std::string_view filter)
+	FilePath FileDialogs::OpenFile(std::wstring_view filter)
 	{
-		OPENFILENAMEA ofn;
-		CHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+		OPENFILENAME ofn;
+		WCHAR szFile[260] = { 0 };
+		ZeroMemory(&ofn, sizeof(OPENFILENAME));
 
-		ofn.lStructSize = sizeof(OPENFILENAMEA);
+		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = s_Data.WindowHandle;
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
@@ -242,20 +247,20 @@ namespace Athena
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 
-		if (GetOpenFileNameA(&ofn) == TRUE)
+		if (GetOpenFileName(&ofn) == TRUE)
 			return ofn.lpstrFile;
 
 		WINAPI_CHECK_LASTERROR();
 		return {};
 	}
 
-	FilePath FileDialogs::SaveFile(std::string_view filter)
+	FilePath FileDialogs::SaveFile(std::wstring_view filter)
 	{
-		OPENFILENAMEA ofn;
-		CHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+		OPENFILENAME ofn;
+		WCHAR szFile[260] = { 0 };
+		ZeroMemory(&ofn, sizeof(OPENFILENAME));
 
-		ofn.lStructSize = sizeof(OPENFILENAMEA);
+		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = s_Data.WindowHandle;
 		ofn.lpstrFile = szFile;
 		ofn.nMaxFile = sizeof(szFile);
@@ -263,11 +268,15 @@ namespace Athena
 		ofn.nFilterIndex = 1;
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
-		if (GetSaveFileNameA(&ofn) == TRUE)
+		if (GetSaveFileName(&ofn) == TRUE)
 			return ofn.lpstrFile;
 
 		WINAPI_CHECK_LASTERROR();
 		return {};
 	}
-}
 
+	void FileDialogs::OpenInFileExplorer(const FilePath& path)
+	{
+		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	}
+}

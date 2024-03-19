@@ -74,7 +74,7 @@ namespace Athena
 		for (const auto& output : m_Outputs)
 			output.Texture->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(output.Texture->GetFormat()));
 
-		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 width = m_Info.Width;
 		uint32 height = m_Info.Height;
 
@@ -92,7 +92,7 @@ namespace Athena
 
 	void VulkanRenderPass::End(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdEndRenderPass(vkcmdBuf);
 		
 		for (const auto& output : m_Outputs)

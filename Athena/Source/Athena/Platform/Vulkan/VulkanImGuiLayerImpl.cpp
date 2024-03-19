@@ -147,7 +147,7 @@ namespace Athena
 		ATN_PROFILE_FUNC()
 
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
-		VkCommandBuffer commandBuffer = Renderer::GetRenderCommandBuffer().As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = Renderer::GetRenderCommandBuffer().As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

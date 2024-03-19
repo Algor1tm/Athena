@@ -18,7 +18,7 @@ namespace Athena
 		float CameraSpeedLevel = 0.3f;
 		bool ShowRendererIcons = true;
 		float RendererIconsScale = 1.f;
-		Vector2 NearFarClips = { 1.f, 300.f };
+		Vector2 NearFarClips = { 1.f, 200.f };
 		bool ShowPhysicsColliders = false;
 		bool ReloadScriptsOnStart = false;
 	};

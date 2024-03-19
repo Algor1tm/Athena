@@ -227,7 +227,7 @@ namespace Athena
 			Texture2DCreateInfo texInfo;
 			texInfo.Name = "SceneColor";
 			texInfo.Format = ImageFormat::RGBA8;
-			texInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::STORAGE | ImageUsage::TRANSFER_SRC);
+			texInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED | ImageUsage::TRANSFER_SRC);
 			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			RenderPassCreateInfo passInfo;
@@ -289,7 +289,7 @@ namespace Athena
 			Texture2DCreateInfo texInfo;
 			texInfo.Name = "PostProcessTex";
 			texInfo.Format = ImageFormat::RGBA8;
-			texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
+			texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE | ImageUsage::TRANSFER_SRC);
 			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			m_PostProcessTexture = Texture2D::Create(texInfo);

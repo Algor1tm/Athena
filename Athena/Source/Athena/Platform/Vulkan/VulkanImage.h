@@ -21,6 +21,8 @@ namespace Athena
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) override;
 		void BlitMipMap(VkCommandBuffer vkcmdBuffer, uint32 levels);
 
+		virtual void WriteContentToBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, Buffer& dstBuffer) override;
+
 		virtual uint32 GetMipLevelsCount() const override { return m_MipLevels; }
 
 		VkImage GetVulkanImage() const { return m_Image.GetImage(); }

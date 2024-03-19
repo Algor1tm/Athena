@@ -4,6 +4,7 @@
 #include "Athena/Renderer/Renderer.h"
 
 #include <stb_image/stb_image.h>
+#include <stb_image/stb_image_write.h>
 
 
 namespace Athena
@@ -43,6 +44,13 @@ namespace Athena
 			stbi_image_free(data);
 			return newData;
 		}
+
+		static std::vector<char> ConvertPathToUTF8(const FilePath& path)
+		{
+			std::vector<char> utf8Path(path.u8string().size() + 1);
+			stbiw_convert_wchar_to_utf8(utf8Path.data(), utf8Path.size(), path.c_str());
+			return utf8Path;
+		}
 	}
 
 
@@ -53,10 +61,10 @@ namespace Athena
 		ImageFormat format = ImageFormat::RGBA8;
 		void* data = nullptr;
 
-		String path = filepath.string();
-		if (stbi_is_hdr(path.data()))
+		auto utf8Path = Utils::ConvertPathToUTF8(filepath);
+		if (stbi_is_hdr(utf8Path.data()))
 		{
-			data = stbi_loadf(path.data(), &width, &height, &channels, 0);
+			data = stbi_loadf(utf8Path.data(), &width, &height, &channels, 0);
 			HDR = true;
 			switch (channels)
 			{
@@ -70,7 +78,7 @@ namespace Athena
 		}
 		else
 		{
-			data = stbi_load(path.data(), &width, &height, &channels, 0);
+			data = stbi_load(utf8Path.data(), &width, &height, &channels, 0);
 			switch (channels)
 			{
 			case 1: format = sRGB ? ImageFormat::R8_SRGB    : ImageFormat::R8;	  break;
@@ -156,6 +164,12 @@ namespace Athena
 		return result;
 	}
 
+	void Image::SaveContentToFile(const FilePath& path, Buffer imageData)
+	{
+		auto utf8Path = Utils::ConvertPathToUTF8(path);
+		uint32 bpp = Image::BytesPerPixel(m_Info.Format);
+		stbi_write_png(utf8Path.data(), m_Info.Width, m_Info.Height, bpp, imageData.Data(), bpp * m_Info.Width);
+	}
 
 	Ref<Image> Image::Create(const ImageCreateInfo& info)
 	{

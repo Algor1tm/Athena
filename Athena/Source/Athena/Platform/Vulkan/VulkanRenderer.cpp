@@ -58,7 +58,7 @@ namespace Athena
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
 
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		if (material)
 			pipeline.As<VulkanPipeline>()->RT_SetPushConstants(vkcmdBuffer, material);
@@ -92,7 +92,7 @@ namespace Athena
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
 
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		Ref<VulkanComputePipeline> vkPipeline = pipeline.As<VulkanComputePipeline>();
 
 		if (material)
@@ -108,7 +108,7 @@ namespace Athena
 
 	void VulkanRenderer::InsertMemoryBarrier(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		VkMemoryBarrier memBarrier = {};
 		memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
@@ -127,7 +127,7 @@ namespace Athena
 
 	void VulkanRenderer::InsertExecutionBarrier(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		vkCmdPipelineBarrier(
 			cmdBuffer,
@@ -142,7 +142,7 @@ namespace Athena
 	void VulkanRenderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
 	{
 #ifdef VULKAN_ENABLE_DEBUG_INFO
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		VkDebugMarkerMarkerInfoEXT markerInfo = {};
 		markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -159,7 +159,7 @@ namespace Athena
 	void VulkanRenderer::EndDebugRegion(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 #ifdef VULKAN_ENABLE_DEBUG_INFO
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		m_DebugMarkerEndPFN(vkcmdBuffer);
 #endif
 	}
@@ -167,7 +167,7 @@ namespace Athena
 	void VulkanRenderer::InsertDebugMarker(const Ref<RenderCommandBuffer>& commandBuffer, std::string_view name, const Vector4& color)
 	{
 #ifdef VULKAN_ENABLE_DEBUG_INFO
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		VkDebugMarkerMarkerInfoEXT markerInfo = {};
 		markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
@@ -190,7 +190,7 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC();
 
-		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		VkImage sourceImage = image.As<VulkanImage>()->GetVulkanImage();
 		VkImage swapChainImage = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetCurrentVulkanImage();

@@ -75,7 +75,7 @@ namespace Athena
 
 	void VulkanProfiler::Reset()
 	{
-		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		// Reset time query
 		{
@@ -135,7 +135,7 @@ namespace Athena
 
 	void VulkanProfiler::BeginTimeQuery()
 	{
-		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
@@ -148,7 +148,7 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
 
-		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
@@ -164,7 +164,7 @@ namespace Athena
 
 	void VulkanProfiler::BeginPipelineStatsQuery()
 	{
-		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 
@@ -175,7 +175,7 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
 
-		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()];
 

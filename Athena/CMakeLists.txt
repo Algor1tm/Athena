@@ -24,6 +24,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"ThirdParty/pybind11/include/*.h"
 	"ThirdParty/pybind11/include/*.cpp"
 	"ThirdParty/stb_image/stb_image.h"
+	"ThirdParty/stb_image/stb_image_write.h"
 	"ThirdParty/stb_image/stb_image.cpp"
 	"ThirdParty/entt/entt.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.h"
@@ -43,6 +44,7 @@ target_compile_definitions(Athena PUBLIC
 	$<$<CONFIG:Debug>:ATN_DEBUG>
 	$<$<CONFIG:Release>:ATN_RELEASE>
 	ATN_SIMD
+	STBIW_WINDOWS_UTF8
 	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
 )
 
@@ -141,5 +143,5 @@ target_link_libraries(Athena PRIVATE pybind11::embed)
 # Windows specific code
 if(WIN32)
 	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
-	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS)
+	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS UNICODE)
 endif(WIN32)

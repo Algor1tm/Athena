@@ -18,7 +18,7 @@ namespace Athena
 		virtual void End() override;
 		virtual void Submit() override;
 
-		VkCommandBuffer GetVulkanCommandBuffer();
+		VkCommandBuffer GetActiveCommandBuffer();
 
 	private:
 		void SubmitForPresent();

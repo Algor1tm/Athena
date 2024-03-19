@@ -38,6 +38,10 @@
 #define ATN_EXPAND_MACRO(x) x
 #define ATN_STRINGIFY_MACRO(x) #x
 
+#ifndef ATN_PLATFORM_WINDOWS
+	#define TEXT(quote) L##quote
+#endif
+
 // Debug break macro
 #ifdef ATN_ENABLE_DEBUGBREAK
 	#if defined(ATN_PLATFORM_WINDOWS)

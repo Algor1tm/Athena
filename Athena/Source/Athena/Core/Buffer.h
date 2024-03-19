@@ -1,3 +1,4 @@
+#pragma once
 #include "Athena/Core/Core.h"
 
 
@@ -61,6 +62,11 @@ namespace Athena
 			free(m_Data);
 			m_Data = nullptr;
 			m_Size = 0;
+		}
+
+		void Write(void* data, uint64 size, uint64 offset = 0)
+		{
+			memcpy(m_Data, data, size);
 		}
 
 		template<typename T>

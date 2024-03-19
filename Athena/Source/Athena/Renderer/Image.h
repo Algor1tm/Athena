@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Buffer.h"
 #include "Athena/Core/Log.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 
@@ -73,6 +74,10 @@ namespace Athena
 		virtual void BlitMipMap(uint32 levels) = 0;
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) = 0;
 		virtual uint32 GetMipLevelsCount() const = 0;
+
+		virtual void WriteContentToBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, Buffer& dstBuffer) = 0;
+		// TODO: remove this function from image class
+		void SaveContentToFile(const FilePath& path, Buffer imageData);
 
 		virtual void Resize(uint32 width, uint32 height) = 0;
 

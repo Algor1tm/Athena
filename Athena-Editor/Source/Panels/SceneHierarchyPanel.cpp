@@ -153,7 +153,7 @@ namespace Athena
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
+		if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonLeft) && ImGui::IsWindowHovered())
 			m_EditorCtx.SelectedEntity = {};
 
 		if (ImGui::BeginPopupContextItem("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
@@ -336,7 +336,7 @@ namespace Athena
 
 			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
 			{
-				FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
 				if (!path.empty())
 				{
 					texture = Texture2D::Create(path, texName == "u_Albedo" ? true : false);
@@ -621,7 +621,7 @@ namespace Athena
 					ImVec2 cursor = ImGui::GetCursorPos();
 					if (ImGui::Button("Browse"))
 					{
-						FilePath path = FileDialogs::OpenFile("Texture (*png)\0*.png\0");
+						FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
 						if (!path.empty())
 						{
 							sprite.Texture = Texture2D::Create(path, true);
@@ -894,7 +894,7 @@ namespace Athena
 
 						if (ImGui::Button(label.data()))
 						{
-							FilePath filepath = FileDialogs::OpenFile("EnvironmentMap (*hdr)\0*.hdr\0");
+							FilePath filepath = FileDialogs::OpenFile(TEXT("EnvironmentMap (*.hdr)\0*.hdr\0"));
 							if (!filepath.empty())
 							{
 								envMap->SetFilePath(filepath);

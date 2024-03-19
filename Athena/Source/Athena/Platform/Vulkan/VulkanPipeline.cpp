@@ -84,7 +84,7 @@ namespace Athena
 		if (!m_Info.Shader->IsCompiled())
 			return;
 
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
 
 		if (m_Info.Topology == Topology::LINE_LIST)

@@ -44,7 +44,7 @@ namespace Athena
 		if (!m_Info.Shader->IsCompiled())
 			return false;
 
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_VulkanPipeline);
 
 		m_DescriptorSetManager.InvalidateAndUpdate();

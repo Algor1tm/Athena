@@ -235,6 +235,19 @@ namespace Athena
                         m_ThemeEditorOpen = !m_ThemeEditorOpen;
                     }
 
+                    if (ImGui::MenuItem("Take Screenshot"))
+                    {
+                        FilePath path = FileDialogs::OpenFile(TEXT("Screenshot (*.png)\0*.png\0"));
+                        Ref<Image> image = m_ViewportRenderer->GetFinalImage()->GetImage();
+                        const auto& imageInfo = image->GetInfo();
+                        Buffer buffer;
+
+                        image->WriteContentToBuffer(Renderer::GetRenderCommandBuffer(), buffer);
+                        image->SaveContentToFile(path, buffer);
+
+                        buffer.Release();
+                    }
+
                     ImGui::EndMenu();
                 }
 
@@ -243,6 +256,11 @@ namespace Athena
                     if (ImGui::MenuItem("About", NULL, false))
                     {
                         m_AboutModalOpen = true;
+                    }
+
+                    if (ImGui::MenuItem("Github", NULL, false))
+                    {
+                        Platform::OpenInBrowser(TEXT("https://github.com/Algor1tm/Athena"));
                     }
                     
                     ImGui::EndMenu();
@@ -518,7 +536,9 @@ namespace Athena
             else if (selectedEntity.HasComponent<PointLightComponent>())
             {
                 const Vector3& position = worldTransform.Translation;
-                float radius = selectedEntity.GetComponent<PointLightComponent>().Radius;
+                const auto& comp = selectedEntity.GetComponent<PointLightComponent>();
+                float radius = comp.Radius;
+                LinearColor selectColor = comp.Color;
 
                 constexpr uint32 linesCount = 36;
                 constexpr float step = (2 * Math::PI<float>()) / linesCount;
@@ -531,22 +551,23 @@ namespace Athena
                     Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f );
                     Vector3 p1 = position + Vector3(offset1.x, offset1.y, 0.f);
 
-                    renderer2D->DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
 
 					p0 = position + Vector3(offset0.x, 0.f, offset0.y);
 					p1 = position + Vector3(offset1.x, 0.f, offset1.y);
 
-                    renderer2D->DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
 
 					p0 = position + Vector3(0.f, offset0.x, offset0.y);
 					p1 = position + Vector3(0.f, offset1.x, offset1.y);
 
-                    renderer2D->DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
                 }
             }
             else if (selectedEntity.HasComponent<SpotLightComponent>())
             {
                 auto& comp = selectedEntity.GetComponent<SpotLightComponent>();
+                LinearColor selectColor = comp.Color;
                 float spotAngle = Math::Radians(comp.SpotAngle / 2.f);
                 if (spotAngle == 0.f)
                     spotAngle = 0.001f;
@@ -575,7 +596,7 @@ namespace Athena
                     Vector3 p0 = circleCenter + offset0;
                     Vector3 p1 = circleCenter + offset1;
 
-                    renderer2D->DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
                 }
 
                 // Arcs horizontal and vertical
@@ -602,7 +623,7 @@ namespace Athena
                     Vector3 h0 = circleCenter - horizonOff0;
                     Vector3 h1 = circleCenter - horizonOff1;
 
-                    renderer2D->DrawLine(h0, h1, color);
+                    renderer2D->DrawLine(h0, h1, selectColor);
 
                     Vector3 verticalOff0 = { 0.f, offset0.x, offset0.y };
                     Vector3 verticalOff1 = { 0.f, offset1.x, offset1.y };
@@ -613,18 +634,18 @@ namespace Athena
                     Vector3 v0 = circleCenter - verticalOff0;
                     Vector3 v1 = circleCenter - verticalOff1;
 
-                    renderer2D->DrawLine(v0, v1, color);
+                    renderer2D->DrawLine(v0, v1, selectColor);
 
                     // Lines from origin on corners
                     if (i == 0)
                     {
-                        renderer2D->DrawLine(origin, h0, color);
-                        renderer2D->DrawLine(origin, v0, color);
+                        renderer2D->DrawLine(origin, h0, selectColor);
+                        renderer2D->DrawLine(origin, v0, selectColor);
                     }
                     else if (i == linesCount - 1)
                     {
-                        renderer2D->DrawLine(origin, h1, color);
-                        renderer2D->DrawLine(origin, v1, color);
+                        renderer2D->DrawLine(origin, h1, selectColor);
+                        renderer2D->DrawLine(origin, v1, selectColor);
                     }
                 }
 
@@ -870,7 +891,7 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::SaveFile(TEXT("Athena Scene (*atn)\0*.atn\0"));
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
@@ -889,7 +910,7 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::OpenFile(TEXT("Athena Scene (*.atn)\0*.atn\0"));
         if (!filepath.empty())
             OpenScene(filepath);
         else

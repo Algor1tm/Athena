@@ -45,7 +45,7 @@ namespace Athena
 
 	void VulkanMaterial::Bind(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		m_DescriptorSetManager.InvalidateAndUpdate();
 		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, m_PipelineBindPoint);

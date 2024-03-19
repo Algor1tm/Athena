@@ -21,9 +21,9 @@ namespace Athena
 		static void Init();
 		static const CPUCapabilities& GetCPUCapabilities();
 
+		static void OpenInBrowser(const std::wstring& url);
 		// In milliseconds
 		static double GetHighPrecisionTime();
-
 		// In bytes
 		static uint64 GetMemoryUsage();
 	};
@@ -31,7 +31,9 @@ namespace Athena
 	class ATHENA_API FileDialogs
 	{
 	public:
-		static FilePath OpenFile(std::string_view filter);
-		static FilePath SaveFile(std::string_view filter);
+		static FilePath OpenFile(std::wstring_view filter);
+		static FilePath SaveFile(std::wstring_view filter);
+
+		static void OpenInFileExplorer(const FilePath& path);
 	};
 }

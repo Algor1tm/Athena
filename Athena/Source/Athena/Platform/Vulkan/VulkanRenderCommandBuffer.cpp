@@ -41,7 +41,7 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::Begin()
 	{
-		VkCommandBuffer vkCommandBuffer = GetVulkanCommandBuffer();
+		VkCommandBuffer vkCommandBuffer = GetActiveCommandBuffer();
 
 		if (m_Info.Usage != RenderCommandBufferUsage::IMMEDIATE)
 			VK_CHECK(vkResetCommandBuffer(vkCommandBuffer, 0));
@@ -55,7 +55,7 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::End()
 	{
-		VK_CHECK(vkEndCommandBuffer(GetVulkanCommandBuffer()));
+		VK_CHECK(vkEndCommandBuffer(GetActiveCommandBuffer()));
 	}
 
 	void VulkanRenderCommandBuffer::Submit()
@@ -72,7 +72,7 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
-		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
 		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -98,7 +98,7 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitImmediate()
 	{
-		VkCommandBuffer commandBuffer = GetVulkanCommandBuffer();
+		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -118,7 +118,7 @@ namespace Athena
 		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
 	}
 
-	VkCommandBuffer VulkanRenderCommandBuffer::GetVulkanCommandBuffer()
+	VkCommandBuffer VulkanRenderCommandBuffer::GetActiveCommandBuffer()
 	{
 		ATN_CORE_ASSERT(!m_CommandBuffers.empty());
 

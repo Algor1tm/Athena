@@ -23,7 +23,7 @@ namespace Athena
 		if (m_Info.DebugColor != LinearColor(0.f))
 			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
 
-		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		for (uint32 i = 0; i < m_Texture2DOutputs.size(); ++i)
 		{
@@ -54,7 +54,7 @@ namespace Athena
 
 	void VulkanComputePass::End(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetVulkanCommandBuffer();
+		VkCommandBuffer cmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		for (const auto& image : m_Texture2DOutputs)
 		{

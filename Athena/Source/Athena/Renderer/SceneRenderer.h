@@ -26,19 +26,19 @@ namespace Athena
 	enum class Antialising
 	{
 		NONE = 0,
-		FXAA = 1
+		FXAA
 	};
 
 	enum class DebugView
 	{
 		NONE = 0,
-		SHADOW_CASCADES = 1,
-		DEPTH
+		SHADOW_CASCADES,
+		GBUFFER,
 	};
 
 	enum class TonemapMode
 	{
-		NONE,
+		NONE = 0,
 		ACES,
 		EXPOSURE,
 	};
@@ -126,7 +126,9 @@ namespace Athena
 	{
 		Time GPUTime;
 		Time DirShadowMapPass;
-		Time GeometryPass;
+		Time GBufferPass;
+		Time LightingPass;
+		Time SkyboxPass;
 		Time BloomPass;
 		Time SceneCompositePass;
 		Time Render2DPass;
@@ -163,11 +165,15 @@ namespace Athena
 		Ref<Texture2D> GetFinalImage();
 		Ref<Texture2D> GetShadowMap();
 		Ref<Texture2D> GetBloomTexture() { return m_BloomTexture; }
+
+		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
 
 	private:
 		void DirShadowMapPass();
-		void GeometryPass();
+		void GBufferPass();
+		void LightingPass();
+		void SkyboxPass();
 		void BloomPass();
 		void SceneCompositePass();
 		void Render2DPass();
@@ -188,9 +194,14 @@ namespace Athena
 		Ref<Pipeline> m_DirShadowMapStaticPipeline;
 		Ref<Pipeline> m_DirShadowMapAnimPipeline;
 
-		Ref<RenderPass> m_GeometryPass;
+		Ref<RenderPass> m_GBufferPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
+
+		Ref<RenderPass> m_LightingPass;
+		Ref<Pipeline> m_LightingPipeline;
+
+		Ref<RenderPass> m_SkyboxPass;
 		Ref<Pipeline> m_SkyboxPipeline;
 
 		Ref<Texture2D> m_BloomTexture;

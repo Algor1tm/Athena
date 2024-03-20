@@ -213,6 +213,8 @@ namespace Athena::Vulkan
         {
         case ImageFormat::R8:              return VK_FORMAT_R8_UNORM;
         case ImageFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
+        case ImageFormat::RG8:             return VK_FORMAT_R8G8_UNORM;
+        case ImageFormat::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
         case ImageFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
         case ImageFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
         case ImageFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;

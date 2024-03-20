@@ -35,8 +35,43 @@ namespace Athena
         const auto& [viewportX, viewportY] = ImGui::GetContentRegionAvail();
         m_Description.Size = { viewportX, viewportY };
 
-        Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
-        ImGui::Image(UI::GetTextureID(image), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
+        if (m_ViewportRenderer->GetSettings().DebugView != DebugView::GBUFFER)
+        {
+            Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
+            ImGui::Image(UI::GetTextureID(image), ImVec2((float)m_Description.Size.x, (float)m_Description.Size.y));
+        }
+        else
+        {
+            Ref<RenderPass> gbuffer = m_ViewportRenderer->GetGBufferPass();
+            const uint32 rows = 2;
+            const uint32 columns = 3;
+            const uint32 texNum = rows * columns;
+
+            std::array<Ref<Texture2D>, texNum> textures;
+            textures[0] = gbuffer->GetOutput("SceneDepth");
+            textures[1] = gbuffer->GetOutput("SceneAlbedo");
+            textures[2] = gbuffer->GetOutput("ScenePositionEmission");
+            textures[3] = gbuffer->GetOutput("SceneNormals");
+            textures[4] = gbuffer->GetOutput("SceneRoughnessMetalness");
+            textures[5] = Renderer::GetBlackTexture(); // TODO: Ambient Occlusion map
+            
+            ImVec2 textureSize = { viewportX / columns, viewportY / rows };
+            ImVec2 pos = cursor;
+            for (uint32 x = 0; x < columns; ++x)
+            {
+                for (uint32 y = 0; y < rows; ++y)
+                {
+                    uint32 index = x + y * columns;
+
+                    ImVec2 imagePos = pos;
+                    imagePos.x += x * textureSize.x;
+                    imagePos.y += y * textureSize.y;
+
+                    ImGui::SetCursorPos(imagePos);
+                    ImGui::Image(UI::GetTextureID(textures[index]), textureSize);
+                }
+            }
+        }
 
         if (ImGui::BeginDragDropTarget())
         {

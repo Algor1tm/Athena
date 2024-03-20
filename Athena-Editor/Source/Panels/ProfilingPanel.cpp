@@ -74,9 +74,10 @@ namespace Athena
                         auto& stats = m_SceneRenderer->GetStatistics();
                         ImGui::Text("GPUTime: %.3f ms", stats.GPUTime.AsMilliseconds());
                         ImGui::Text("ShadowMapPass: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
-                        ImGui::Text("GeometryPass: %.3f ms", stats.GeometryPass.AsMilliseconds());
-                        if(settings.BloomSettings.Enable)
-                            ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
+                        ImGui::Text("GBufferPass: %.3f ms", stats.GBufferPass.AsMilliseconds());
+                        ImGui::Text("LightingPass: %.3f ms", stats.LightingPass.AsMilliseconds());
+                        ImGui::Text("SkyboxPass: %.3f ms", stats.SkyboxPass.AsMilliseconds());
+                        ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
                         if(settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)

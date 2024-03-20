@@ -82,6 +82,7 @@ namespace Athena
 			switch (channels)
 			{
 			case 1: format = sRGB ? ImageFormat::R8_SRGB    : ImageFormat::R8;	  break;
+			case 2: format = sRGB ? ImageFormat::RG8_SRGB   : ImageFormat::RG8;	  break;
 			case 3: format = sRGB ? ImageFormat::RGB8_SRGB  : ImageFormat::RGB8;  break;
 			case 4: format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8; break;
 			default:
@@ -134,6 +135,7 @@ namespace Athena
 		switch (channels)
 		{
 		case 1: format = sRGB ? ImageFormat::R8_SRGB    : ImageFormat::R8;    break;
+		case 2: format = sRGB ? ImageFormat::RG8_SRGB   : ImageFormat::RG8;   break;
 		case 3: format = sRGB ? ImageFormat::RGB8_SRGB  : ImageFormat::RGB8;  break;
 		case 4: format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8; break;
 		default:

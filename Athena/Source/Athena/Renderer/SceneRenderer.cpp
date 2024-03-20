@@ -25,7 +25,7 @@ namespace Athena
 		GPUProfilerCreateInfo profilerInfo;
 		profilerInfo.Name = "SceneRendererProfiler";
 		profilerInfo.RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
-		profilerInfo.MaxTimestampsCount = 16;
+		profilerInfo.MaxTimestampsCount = 32;
 		profilerInfo.MaxPipelineQueriesCount = 1;
 		m_Profiler = GPUProfiler::Create(profilerInfo);
 
@@ -107,68 +107,117 @@ namespace Athena
 			m_ShadowMapSampler = Texture2D::Create(output.Texture->GetImage(), samplerInfo);
 		}
 
-		// GEOMETRY PASS
+		// GBUFFER PASS
 		{
 			RenderPassCreateInfo passInfo;
-			passInfo.Name = "GeometryPass";
-			passInfo.InputPass = m_DirShadowMapPass;
+			passInfo.Name = "GBufferPass";
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
-			m_GeometryPass = RenderPass::Create(passInfo);
-			m_GeometryPass->SetOutput({ "SceneHDRColor", ImageFormat::RGBA16F });
-			m_GeometryPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH32F });
-			m_GeometryPass->Bake();
-
+			m_GBufferPass = RenderPass::Create(passInfo);
+			// RGBA -> RGB - albedo, A - empty
+			m_GBufferPass->SetOutput({ "SceneAlbedo", ImageFormat::RGBA8 });
+			// RGBA -> RGB - position, A - emission
+			m_GBufferPass->SetOutput({ "ScenePositionEmission", ImageFormat::RGBA16F });
+			// RGBA -> RGB - normal, A - empty
+			m_GBufferPass->SetOutput({ "SceneNormals", ImageFormat::RG16F });
+			// RG -> R - roughness, G - metalness
+			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", ImageFormat::RG8 });
+			m_GBufferPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH32F });
+			m_GBufferPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "StaticGeometryPipeline";
-			pipelineInfo.RenderPass = m_GeometryPass;
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Static");
+			pipelineInfo.RenderPass = m_GBufferPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Static");
 			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompare = DepthCompare::LESS;
-			pipelineInfo.BlendEnable = true;
+			pipelineInfo.BlendEnable = false;
 
 			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
-
 			m_StaticGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
-			m_StaticGeometryPipeline->SetInput("u_LightData", m_LightSBO);
-			m_StaticGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
-			m_StaticGeometryPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
-			m_StaticGeometryPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
-			m_StaticGeometryPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
-			m_StaticGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
-			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 			m_StaticGeometryPipeline->Bake();
 
-
 			pipelineInfo.Name = "AnimGeometryPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PBR_Anim");
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Anim");
 			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
 
 			m_AnimGeometryPipeline = Pipeline::Create(pipelineInfo);
-
 			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
-			m_AnimGeometryPipeline->SetInput("u_LightData", m_LightSBO);
-			m_AnimGeometryPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_AnimGeometryPipeline->SetInput("u_BonesData", m_BonesSBO);
-			m_AnimGeometryPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
-			m_AnimGeometryPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
-			m_AnimGeometryPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
-			m_AnimGeometryPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
-			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 			m_AnimGeometryPipeline->Bake();
+		}
 
+		// LIGHTING PASS
+		{
+			RenderPassCreateInfo passInfo;
+			passInfo.Name = "LightingPass";
+			passInfo.Width = m_ViewportSize.x;
+			passInfo.Height = m_ViewportSize.y;
+			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
+			m_LightingPass = RenderPass::Create(passInfo);
+			m_LightingPass->SetOutput({ "SceneHDRColor", ImageFormat::RGBA16F });
+			m_LightingPass->Bake();
+
+			PipelineCreateInfo pipelineInfo;
+			pipelineInfo.Name = "LightingPipeline";
+			pipelineInfo.RenderPass = m_LightingPass;
+			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Lighting");
+			pipelineInfo.VertexLayout = {
+				{ ShaderDataType::Float2, "a_Position" },
+				{ ShaderDataType::Float2, "a_TexCoords"} };
+
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthCompare = DepthCompare::NONE;
+			pipelineInfo.BlendEnable = false;
+
+			m_LightingPipeline = Pipeline::Create(pipelineInfo);
+
+			m_LightingPipeline->SetInput("u_CameraData", m_CameraUBO);
+			m_LightingPipeline->SetInput("u_LightData", m_LightSBO);
+			m_LightingPipeline->SetInput("u_RendererData", m_RendererUBO);
+			m_LightingPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
+			m_LightingPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
+			m_LightingPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
+			m_LightingPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
+			m_LightingPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_LightingPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+
+			m_LightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
+			m_LightingPipeline->SetInput("u_ScenePositionEmission", m_GBufferPass->GetOutput("ScenePositionEmission"));
+			m_LightingPipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormals"));
+			m_LightingPipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
+
+			m_LightingPipeline->Bake();
+		}
+
+		// SKYBOX PASS
+		{
+			RenderPassCreateInfo passInfo;
+			passInfo.Name = "SkyboxPass";
+			passInfo.InputPass = m_LightingPass;
+			passInfo.Width = m_ViewportSize.x;
+			passInfo.Height = m_ViewportSize.y;
+			passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
+
+			m_SkyboxPass = RenderPass::Create(passInfo);
+			m_SkyboxPass->SetOutput(m_LightingPass->GetOutput("SceneHDRColor"));
+			m_SkyboxPass->SetOutput(m_GBufferPass->GetOutput("SceneDepth"));
+			m_SkyboxPass->Bake();
+
+			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "SkyboxPipeline";
+			pipelineInfo.RenderPass = m_SkyboxPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.VertexLayout = { { ShaderDataType::Float3, "a_Position" } };
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = false;
 
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
@@ -197,7 +246,7 @@ namespace Athena
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "BloomPass";
-			passInfo.InputRenderPass = m_GeometryPass;
+			passInfo.InputRenderPass = m_SkyboxPass;
 			passInfo.DebugColor = { 1.f, 0.05f, 0.55f, 1.f };
 
 			m_BloomPass = ComputePass::Create(passInfo);
@@ -207,15 +256,15 @@ namespace Athena
 			ComputePipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "BloomDownsample";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomDownsample");
-			
+
 			m_BloomDownsample = ComputePipeline::Create(pipelineInfo);
 			m_BloomDownsample->SetInput("u_BloomTexture", m_BloomTexture);
-			m_BloomDownsample->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("SceneHDRColor"));
+			m_BloomDownsample->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
 			m_BloomDownsample->Bake();
-			
+
 			pipelineInfo.Name = "BloomUpsample";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("BloomUpsample");
-			
+
 			m_BloomUpsample = ComputePipeline::Create(pipelineInfo);
 			m_BloomUpsample->SetInput("u_BloomTexture", m_BloomTexture);
 			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
@@ -232,7 +281,7 @@ namespace Athena
 
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";
-			passInfo.InputPass = m_GeometryPass;
+			passInfo.InputPass = m_SkyboxPass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
@@ -259,7 +308,7 @@ namespace Athena
 
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
 
-			m_CompositePipeline->SetInput("u_SceneHDRColor", m_GeometryPass->GetOutput("SceneHDRColor"));
+			m_CompositePipeline->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
 			m_CompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("BloomTexture"));
 			m_CompositePipeline->Bake();
 
@@ -276,7 +325,7 @@ namespace Athena
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
 			RenderTarget colorOutput = m_CompositePass->GetOutput("SceneColor");
-			RenderTarget depthOutput = m_GeometryPass->GetOutput("SceneDepth");
+			RenderTarget depthOutput = m_GBufferPass->GetOutput("SceneDepth");
 
 			m_Render2DPass = RenderPass::Create(passInfo);
 			m_Render2DPass->SetOutput(colorOutput);
@@ -317,17 +366,14 @@ namespace Athena
 
 	void SceneRenderer::Shutdown()
 	{
-		
+
 	}
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		if(m_Settings.DebugView == DebugView::DEPTH)
-			return m_Render2DPass->GetOutput("SceneDepth");
-
 		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
 			return m_FXAAPass->GetOutput("PostProcessTex");
-		
+
 		return m_Render2DPass->GetOutput("SceneColor");
 	}
 
@@ -340,9 +386,14 @@ namespace Athena
 	{
 		m_ViewportSize = { width, height };
 
-		m_GeometryPass->Resize(width, height);
+		m_GBufferPass->Resize(width, height);
 		m_StaticGeometryPipeline->SetViewport(width, height);
 		m_AnimGeometryPipeline->SetViewport(width, height);
+
+		m_LightingPass->Resize(width, height);
+		m_LightingPipeline->SetViewport(width, height);
+
+		m_SkyboxPass->Resize(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
 
 		m_BloomTexture->Resize(width, height);
@@ -458,18 +509,14 @@ namespace Athena
 			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceTexture();
 			auto environmentMap = lightEnv.EnvironmentMap->GetEnvironmentTexture();
 
-			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
-			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);
-			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", irradianceMap);
-			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", environmentMap);
+			m_LightingPipeline->SetInput("u_IrradianceMap", irradianceMap);
+			m_LightingPipeline->SetInput("u_EnvironmentMap", environmentMap);
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", environmentMap);
 		}
 		else
 		{
-			m_StaticGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
-			m_StaticGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			m_AnimGeometryPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
-			m_AnimGeometryPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_LightingPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+			m_LightingPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 		}
 	}
@@ -524,15 +571,17 @@ namespace Athena
 		m_BonesSBO->UploadData(m_BonesData.data(), m_BonesDataOffset * sizeof(Matrix4));
 
 		DirShadowMapPass();
-		GeometryPass();
+		GBufferPass();
+		LightingPass();
+		SkyboxPass();
 		BloomPass();
 		SceneCompositePass();
 		Render2DPass();
 		FXAAPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
-		m_Statistics.GPUTime = m_Statistics.DirShadowMapPass + m_Statistics.GeometryPass + 
-			m_Statistics.BloomPass + m_Statistics.SceneCompositePass + m_Statistics.Render2DPass;
+		m_Statistics.GPUTime = m_Statistics.DirShadowMapPass + m_Statistics.GBufferPass + m_Statistics.LightingPass + 
+			m_Statistics.SkyboxPass + m_Statistics.BloomPass + m_Statistics.SceneCompositePass + m_Statistics.Render2DPass;
 
 		m_StaticGeometryList.Clear();
 		m_AnimGeometryList.Clear();
@@ -564,13 +613,12 @@ namespace Athena
 		m_Statistics.DirShadowMapPass = m_Profiler->EndTimeQuery();
 	}
 
-	void SceneRenderer::GeometryPass()
+	void SceneRenderer::GBufferPass()
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_Profiler->BeginTimeQuery();
-		m_GeometryPass->Begin(commandBuffer);
-
+		m_GBufferPass->Begin(commandBuffer);
 
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		{
@@ -578,7 +626,7 @@ namespace Athena
 			m_StaticGeometryList.Flush(m_StaticGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
-			
+
 
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		{
@@ -587,17 +635,36 @@ namespace Athena
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
+		m_GBufferPass->End(commandBuffer);
+		m_Statistics.GBufferPass = m_Profiler->EndTimeQuery();
+	}
 
-		Renderer::BeginDebugRegion(commandBuffer, "Skybox", { 0.3f, 0.6f, 0.6f, 1.f });
+	void SceneRenderer::LightingPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_LightingPass->Begin(commandBuffer);
+		{
+			m_LightingPipeline->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_LightingPipeline);
+		}
+		m_LightingPass->End(commandBuffer);
+		m_Statistics.LightingPass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::SkyboxPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_SkyboxPass->Begin(commandBuffer);
 		{
 			m_SkyboxPipeline->Bind(commandBuffer);
 			Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
 		}
-		Renderer::EndDebugRegion(commandBuffer);
-
-
-		m_GeometryPass->End(commandBuffer);
-		m_Statistics.GeometryPass = m_Profiler->EndTimeQuery();
+		m_SkyboxPass->End(commandBuffer);
+		m_Statistics.SkyboxPass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::BloomPass()

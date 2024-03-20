@@ -23,12 +23,12 @@ namespace Athena
 
 	Ref<Material> Material::CreatePBRStatic(const String& name)
 	{
-		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Static"), name);
+		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Static"), name);
 	}
 
 	Ref<Material> Material::CreatePBRAnim(const String& name)
 	{
-		return Material::Create(Renderer::GetShaderPack()->Get("PBR_Anim"), name);
+		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Anim"), name);
 	}
 
 	Material::Material(const Ref<Shader> shader, const String& name)

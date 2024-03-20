@@ -6,7 +6,6 @@
 // Vector<float, 4>,  Matrix<float, 4, 4> 
 // 1. Cannot be constexpr.
 // 2. Have strict alignment.
-// 3. Math functions that works with these classes do not constexpr.
 
 
 // Athena currently does not support ARM NEON

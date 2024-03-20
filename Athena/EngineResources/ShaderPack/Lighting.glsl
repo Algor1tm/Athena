@@ -1,63 +1,17 @@
-//////////////////////// Athena PBR Shader ////////////////////////
+//////////////////////// Athena Lighting Shader ////////////////////////
 
 #version 460 core
 #pragma stage : vertex
 
-#include "Include/Buffers.glslh"
-
-layout(location = 0) in vec3 a_Position;
+layout(location = 0) in vec2 a_Position;
 layout(location = 1) in vec2 a_TexCoords;
-layout(location = 2) in vec3 a_Normal;
-layout(location = 3) in vec3 a_Tangent;
-layout(location = 4) in vec3 a_Bitangent;
-layout(location = 5) in ivec4 a_BoneIDs;
-layout(location = 6) in vec4 a_Weights;
 
-struct VertexInterpolators
-{
-    vec3 WorldPos;
-    vec2 TexCoords;
-    vec3 Normal;
-    mat3 TBN;
-};
-
-layout(location = 0) out VertexInterpolators Interpolators;
-
-layout(push_constant) uniform u_MaterialData
-{
-    mat4 u_Transform;
-    uint u_BonesOffset;
-
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
-
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_Emission;
-
-    uint u_UseMetalnessMap;
-};
-
+layout(location = 0) out vec2 v_TexCoords;
 
 void main()
 {
-    mat4 transform = u_Transform * GetBonesTransform(u_BonesOffset, a_BoneIDs, a_Weights);
-
-    vec4 worldPos = transform * vec4(a_Position, 1.0);
-    gl_Position = u_Camera.ViewProjection * worldPos;
-
-    Interpolators.WorldPos = worldPos.xyz;
-    Interpolators.TexCoords = a_TexCoords;
-    Interpolators.Normal = normalize(transform * vec4(a_Normal, 0)).xyz;
-
-    vec3 T = normalize(transform * vec4(a_Tangent, 0)).xyz;
-    vec3 B = normalize(transform * vec4(a_Bitangent, 0)).xyz;
-    vec3 N =  Interpolators.Normal;
-    T = normalize(T - dot(T, N) * N);
-    
-    Interpolators.TBN = mat3(T, B, N);
+    gl_Position = vec4(a_Position, 0, 1);
+    v_TexCoords = a_TexCoords;
 }
 
 #version 460 core
@@ -67,43 +21,17 @@ void main()
 #include "Include/Common.glslh"
 #include "Include/Shadows.glslh"
 
-struct VertexInterpolators
-{
-    vec3 WorldPos;
-    vec2 TexCoords;
-    vec3 Normal;
-    mat3 TBN;
-};
-
-layout(location = 0) in VertexInterpolators Interpolators;
+layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;
 
+layout(set = 1, binding = 7) uniform sampler2D u_SceneAlbedo;
+layout(set = 1, binding = 9) uniform sampler2D u_ScenePositionEmission;
+layout(set = 1, binding = 8) uniform sampler2D u_SceneNormals;
+layout(set = 1, binding = 10) uniform sampler2D u_SceneRoughnessMetalness;
 
-layout(push_constant) uniform u_MaterialData
-{
-    mat4 u_Transform;
-    uint u_BonesOffset;
-
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
-
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_Emission;
-
-    uint u_UseMetalnessMap;
-};
-
-layout(set = 0, binding = 0) uniform sampler2D u_AlbedoMap;
-layout(set = 0, binding = 1) uniform sampler2D u_NormalMap;
-layout(set = 0, binding = 2) uniform sampler2D u_RoughnessMap;
-layout(set = 0, binding = 3) uniform sampler2D u_MetalnessMap;
-
-layout(set = 1, binding = 5) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 6) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 7) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 11) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 12) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 13) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -211,28 +139,29 @@ vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughnes
     return ambient;
 }
 
-
 void main()
 {
     // Get PBR parameters
-    vec4 albedo = u_Albedo;
-    if (bool(u_UseAlbedoMap))
-        albedo *= texture(u_AlbedoMap, Interpolators.TexCoords);
+    vec2 unpackedNormal = texture(u_SceneNormals, v_TexCoords).rg;
+    if(unpackedNormal == vec2(0.0))
+        discard;
+
+    vec3 normal = UnpackNormal(unpackedNormal);
+    vec3 albedo = texture(u_SceneAlbedo, v_TexCoords).rgb;
+
+    vec4 posEm = texture(u_ScenePositionEmission, v_TexCoords);
+    vec3 worldPos = posEm.xyz;
+    float emission = posEm.w;
+
+    vec2 rm = texture(u_SceneRoughnessMetalness, v_TexCoords).rg;
+
+    float roughness = rm.r;
+    float metalness = rm.g;
     
-    vec3 normal = normalize(Interpolators.Normal);
-    if(bool(u_UseNormalMap))
-    {
-        normal = texture(u_NormalMap, Interpolators.TexCoords).rgb;
-        normal = normal * 2 - 1;
-        normal = normalize(Interpolators.TBN * normal);
-    }
-    
-    float roughness = bool(u_UseRoughnessMap) ? texture(u_RoughnessMap, Interpolators.TexCoords).r : u_Roughness;
-    float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Interpolators.TexCoords).r : u_Metalness;
-    
+
     // Compute lightning from all light sources
-    vec3 viewDir = normalize(u_Camera.Position - Interpolators.WorldPos);
-    float distanceFromCamera = distance(u_Camera.Position, Interpolators.WorldPos);
+    vec3 viewDir = normalize(u_Camera.Position - worldPos);
+    float distanceFromCamera = distance(u_Camera.Position, worldPos);
     vec3 totalIrradiance = vec3(0.0);
     
     for (int i = 0; i < g_DirectionalLightCount; ++i)
@@ -243,7 +172,7 @@ void main()
         
         float shadow = 0.0;
         if(bool(light.CastShadows))
-            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, Interpolators.WorldPos, distanceFromCamera, u_Camera.View);
+            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, worldPos, distanceFromCamera, u_Camera.View);
         
         if(shadow < 1.0)
             totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
@@ -252,11 +181,11 @@ void main()
     for (int j = 0; j < g_PointLightCount; ++j)
     {
         PointLight light = g_PointLights[j];
-        vec3 radiance = ComputePointLightRadiance(light, Interpolators.WorldPos);
+        vec3 radiance = ComputePointLightRadiance(light, worldPos);
         
         if(radiance != vec3(0.0))
         {
-            vec3 dir = normalize(Interpolators.WorldPos - light.Position);
+            vec3 dir = normalize(worldPos - light.Position);
             totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
         }
     }
@@ -264,23 +193,23 @@ void main()
     for (int j = 0; j < g_SpotLightCount; ++j)
     {
         SpotLight light = g_SpotLights[j];
-        vec3 radiance = ComputeSpotLightRadiance(light, Interpolators.WorldPos);
+        vec3 radiance = ComputeSpotLightRadiance(light, worldPos);
         
         if(radiance != vec3(0.0))
         {
-            vec3 dir = normalize(Interpolators.WorldPos - light.Position);
+            vec3 dir = normalize(worldPos - light.Position);
             totalIrradiance += LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
         }
     }
     
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
+    vec3 emissionColor = albedo.rgb * emission;
 
-    vec3 emission = albedo.rgb * u_Emission;
-    vec3 hdrColor = totalIrradiance + ambient + emission;
+    vec3 hdrColor = totalIrradiance + ambient + emissionColor;
     
     if(bool(u_Renderer.DebugShadowCascades))
     {
-        vec3 cascadeDebugColor = GetCascadeDebugColor(Interpolators.WorldPos, u_Camera.View);
+        vec3 cascadeDebugColor = GetCascadeDebugColor(worldPos, u_Camera.View);
         hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.3);
     }
 

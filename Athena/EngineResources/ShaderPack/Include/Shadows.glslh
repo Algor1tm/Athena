@@ -113,8 +113,8 @@ layout(std140, set = 1, binding = 4) uniform u_ShadowsData
 	int u_SoftShadows;
 };
 
-layout(set = 1, binding = 8) uniform sampler2DArray u_DirShadowMap;
-layout(set = 1, binding = 9) uniform sampler2DArrayShadow u_DirShadowMapShadow;
+layout(set = 1, binding = 5) uniform sampler2DArray u_DirShadowMap;
+layout(set = 1, binding = 6) uniform sampler2DArrayShadow u_DirShadowMapShadow;
 
 /*
 =========================================================================================================================================

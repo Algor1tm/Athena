@@ -148,6 +148,18 @@ namespace Athena
 		VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
 
+		VkComponentMapping swizzling = {};
+		swizzling.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		swizzling.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		swizzling.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		swizzling.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		if (Image::IsDepthFormat(m_Info.Format))
+		{
+			swizzling.g = VK_COMPONENT_SWIZZLE_R;
+			swizzling.b = VK_COMPONENT_SWIZZLE_R;
+		}
+
 		if (m_Info.GenerateMipLevels)
 		{
 			uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
@@ -188,6 +200,7 @@ namespace Athena
 				viewInfo.subresourceRange.levelCount = 1;
 				viewInfo.subresourceRange.baseArrayLayer = layer;
 				viewInfo.subresourceRange.layerCount = 1;
+				viewInfo.components = swizzling;
 
 				VkImageView layerView;
 

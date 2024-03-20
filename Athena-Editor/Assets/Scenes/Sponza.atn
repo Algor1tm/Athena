@@ -12,7 +12,7 @@ Entities:
       Color: [1, 1, 1, 1]
       Intensity: 1
       CastShadows: true
-      LightSize: 0.0500000007
+      LightSize: 0.5
   - IDComponent:
       ID: 8278415375090471571
     TagComponent:

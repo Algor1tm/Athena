@@ -54,7 +54,7 @@ namespace Athena
         m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
         m_Renderer2D->SetLineWidth(3.f);
         
-        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 10.f, 100.f);
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 200.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
 
         EditorResources::Init(m_Config.EditorResources);
@@ -239,10 +239,9 @@ namespace Athena
                     {
                         FilePath path = FileDialogs::OpenFile(TEXT("Screenshot (*.png)\0*.png\0"));
                         Ref<Image> image = m_ViewportRenderer->GetFinalImage()->GetImage();
-                        const auto& imageInfo = image->GetInfo();
                         Buffer buffer;
 
-                        image->WriteContentToBuffer(Renderer::GetRenderCommandBuffer(), buffer);
+                        image->WriteContentToBuffer(&buffer);
                         image->SaveContentToFile(path, buffer);
 
                         buffer.Release();

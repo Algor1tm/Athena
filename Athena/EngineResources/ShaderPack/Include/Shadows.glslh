@@ -5,8 +5,35 @@
 // https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
 
 
-#define BLEND_CASCADES
 #define DEBUG_BLEND_CASCADES
+#define SHADOWS_PRESET 3
+
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 0)
+	#define BLOCKER_SEARCH_SAMPLES 16
+	#define PCF_SEARCH_SAMPLES	   16
+	#define BLEND_CASCADES		   0
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 1)
+	#define BLOCKER_SEARCH_SAMPLES 32
+	#define PCF_SEARCH_SAMPLES	   32
+	#define BLEND_CASCADES		   0
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 2)
+	#define BLOCKER_SEARCH_SAMPLES 32
+	#define PCF_SEARCH_SAMPLES	   32
+	#define BLEND_CASCADES		   1
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 3)
+	#define BLOCKER_SEARCH_SAMPLES 32
+	#define PCF_SEARCH_SAMPLES	   64
+	#define BLEND_CASCADES		   1
+#endif
+/*--------------------------------------------------------------------------*/
+
 
 const vec2 PoissonDisk[64] = {
 	vec2(0.0617981, 0.07294159),
@@ -151,39 +178,43 @@ float GetCascadeScale(int cascade)
     float scale = 1.0;
     switch(cascade)
     {
-    case 0: scale = 8.0; break;
-    case 1: scale = 8.0; break;
-    case 2: scale = 8.0; break;
-    case 3: scale = 8.0; break;
+    case 0: scale = 2.0; break;
+    case 1: scale = 4.0; break;
+    case 2: scale = 5.0; break;
+    case 3: scale = 6.0; break;
     }
     
    return 1.0 / scale;
 }
 
 int GetCascadeBlockerSamples(int cascade)
-{
+{	
+	int samples = 0;
+
 	switch(cascade)
 	{
-	case 0: return 32;
-	case 1: return 32;
-	case 2: return 16;
-	case 3: return 16;
+	case 0: samples = BLOCKER_SEARCH_SAMPLES / 1; break;
+	case 1: samples = BLOCKER_SEARCH_SAMPLES / 2; break;
+	case 2: samples = BLOCKER_SEARCH_SAMPLES / 2; break;
+	case 3: samples = BLOCKER_SEARCH_SAMPLES / 4; break;
 	}
 
-	return 16;
+	return max(samples, 16);
 }
 
 int GetCascadeFilterSamples(int cascade)
 {
+	int samples = 0;
+
 	switch(cascade)
 	{
-	case 0: return 64;
-	case 1: return 32;
-	case 2: return 16;
-	case 3: return 16;
+	case 0: samples = PCF_SEARCH_SAMPLES / 1; break;
+	case 1: samples = PCF_SEARCH_SAMPLES / 2; break;
+	case 2: samples = PCF_SEARCH_SAMPLES / 2; break;
+	case 3: samples = PCF_SEARCH_SAMPLES / 4; break;
 	}
 
-	return 16;
+	return max(samples, 16);
 }
 
 /*
@@ -263,7 +294,8 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
 	float penumbra = depth - avgBlockerDepth;
 
 	//float filterRadiusUV = penumbra * lightSize;
-    float filterRadiusUV = clamp(penumbra * lightSize, 0.005, 0.1);
+    float filterRadiusUV = clamp(penumbra * lightSize, 0.002, 0.1);
+
 	numSamples = GetCascadeFilterSamples(cascade);
 
     float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, numSamples);
@@ -312,7 +344,7 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
 
 	float shadow = Shadow(shadowCoords, cascade, lightSize);
 
-#if defined(BLEND_CASCADES)
+#if BLEND_CASCADES == 1
 
     float near = u_CascadePlanes[cascade].x;
     float far = u_CascadePlanes[cascade].y;
@@ -358,7 +390,7 @@ vec3 GetCascadeDebugColor(vec3 worldPos, mat4 cameraView)
 
     vec3 color = debugColors[cascade];
 
-#if defined(DEBUG_BLEND_CASCADES) && defined(BLEND_CASCADES)
+#if defined(DEBUG_BLEND_CASCADES) && BLEND_CASCADES == 1
 
     float near = u_CascadePlanes[cascade].x;
     float far = u_CascadePlanes[cascade].y;

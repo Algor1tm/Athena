@@ -483,7 +483,7 @@ namespace Athena
 		m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
-	void VulkanImage::WriteContentToBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, Buffer& buffer)
+	void VulkanImage::WriteContentToBuffer(Buffer* buffer)
 	{
 		ATN_CORE_ASSERT(m_Info.Type != ImageType::IMAGE_CUBE, "Not implemented!");
 
@@ -568,10 +568,10 @@ namespace Athena
 
 		Vulkan::EndSingleTimeCommands(commandBuffer);
 
-		buffer.Allocate(size);
+		buffer->Allocate(size);
 
 		void* memory = bufAlloc.MapMemory();
-		buffer.Write(memory, size);
+		buffer->Write(memory, size);
 		bufAlloc.UnmapMemory();
 
 		VulkanContext::GetAllocator()->DestroyBuffer(bufAlloc);

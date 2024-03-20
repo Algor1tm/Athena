@@ -173,7 +173,7 @@ namespace Athena
 		void Render2DPass();
 		void FXAAPass();
 
-		void CalculateCascadeLightSpaces(const DirectionalLight& light);
+		void CalculateCascadeLightSpaces(DirectionalLight& light);
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;

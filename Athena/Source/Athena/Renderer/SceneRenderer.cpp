@@ -728,7 +728,7 @@ namespace Athena
 		m_Statistics.FXAAPass = m_Profiler->EndTimeQuery();
 	}
 
-	void SceneRenderer::CalculateCascadeLightSpaces(const DirectionalLight& light)
+	void SceneRenderer::CalculateCascadeLightSpaces(DirectionalLight& light)
 	{
 		float cameraNear = m_CameraData.NearClip;
 		float cameraFar = m_CameraData.FarClip;
@@ -753,6 +753,7 @@ namespace Athena
 
 		Matrix4 invCamera = Math::Inverse(m_CameraData.View * m_CameraData.Projection);
 		float lastSplit = 0.f;
+		float frustumSize = 0.f;
 
 		// Build light space matrices
 		for (uint32 layer = 0; layer < ShaderDef::SHADOW_CASCADES_COUNT; ++layer)
@@ -830,7 +831,12 @@ namespace Athena
 
 			m_ShadowsData.DirLightViewProjection[layer] = lightView * lightProjection;
 
+			frustumSize = Math::Max(frustumSize, maxExtents.z - minExtents.z);
+
 			lastSplit = split;
 		}
+
+		// ehhhh
+		light.LightSize /= 8.f;
 	}
 }

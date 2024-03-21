@@ -14,7 +14,6 @@ layout(location = 4) in vec3 a_Bitangent;
 
 struct VertexInterpolators
 {
-    vec3 WorldPos;
     vec2 TexCoords;
     vec3 Normal;
     mat3 TBN;
@@ -42,7 +41,6 @@ void main()
     vec4 worldPos = u_Transform * vec4(a_Position, 1.0);
     gl_Position = u_Camera.ViewProjection * worldPos;
 
-    Interpolators.WorldPos = worldPos.xyz;
     Interpolators.TexCoords = a_TexCoords;
     Interpolators.Normal = normalize(u_Transform * vec4(a_Normal, 0)).xyz;
 
@@ -61,7 +59,6 @@ void main()
 
 struct VertexInterpolators
 {
-    vec3 WorldPos;
     vec2 TexCoords;
     vec3 Normal;
     mat3 TBN;
@@ -70,9 +67,8 @@ struct VertexInterpolators
 layout(location = 0) in VertexInterpolators Interpolators;
 
 layout(location = 0) out vec4 o_Albedo;
-layout(location = 1) out vec4 o_PositionEmission;
-layout(location = 2) out vec4 o_Normals;
-layout(location = 3) out vec2 o_RoughnessMetalness;
+layout(location = 1) out vec4 o_NormalsEmission;
+layout(location = 2) out vec2 o_RoughnessMetalness;
 
 layout(push_constant) uniform u_MaterialData
 {
@@ -112,9 +108,8 @@ void main()
     float metalness = bool(u_UseMetalnessMap) ? texture(u_MetalnessMap, Interpolators.TexCoords).r : u_Metalness;
 
     o_Albedo = vec4(albedo.rgb, 1.0);
-    o_PositionEmission.xyz = Interpolators.WorldPos;
-    o_PositionEmission.w = u_Emission;
-    o_Normals.xy = PackNormal(normal);
+    o_NormalsEmission.rgb = normal * 0.5 + 0.5;
+    o_NormalsEmission.a = u_Emission + 1.0;
     o_RoughnessMetalness.r = roughness;
     o_RoughnessMetalness.g = metalness;
 }

@@ -113,15 +113,13 @@ namespace Athena
 			passInfo.Name = "GBufferPass";
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
+			passInfo.DebugColor = { 0.25f, 0.05f, 0.3f, 1.f };
 
 			m_GBufferPass = RenderPass::Create(passInfo);
 			// RGBA -> RGB - albedo, A - empty
 			m_GBufferPass->SetOutput({ "SceneAlbedo", ImageFormat::RGBA8 });
-			// RGBA -> RGB - position, A - emission
-			m_GBufferPass->SetOutput({ "ScenePositionEmission", ImageFormat::RGBA16F });
-			// RGBA -> RGB - normal, A - empty
-			m_GBufferPass->SetOutput({ "SceneNormals", ImageFormat::RG16F });
+			// RGBA -> RGB - normal, A - emission
+			m_GBufferPass->SetOutput({ "SceneNormalsEmission", ImageFormat::RGBA16F });
 			// RG -> R - roughness, G - metalness
 			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", ImageFormat::RG8 });
 			m_GBufferPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH32F });
@@ -188,9 +186,9 @@ namespace Athena
 			m_LightingPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
 			m_LightingPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
 
+			m_LightingPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
 			m_LightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
-			m_LightingPipeline->SetInput("u_ScenePositionEmission", m_GBufferPass->GetOutput("ScenePositionEmission"));
-			m_LightingPipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormals"));
+			m_LightingPipeline->SetInput("u_SceneNormalsEmission", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 			m_LightingPipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
 
 			m_LightingPipeline->Bake();
@@ -526,10 +524,13 @@ namespace Athena
 		m_RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
 
 		m_CameraData.View = cameraInfo.ViewMatrix;
+		m_CameraData.InverseView = Math::Inverse(cameraInfo.ViewMatrix);
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
+		m_CameraData.InverseProjection = Math::Inverse(cameraInfo.ProjectionMatrix);
 		m_CameraData.ViewProjection = cameraInfo.ViewMatrix * cameraInfo.ProjectionMatrix;
+		m_CameraData.InverseViewProjection = Math::Inverse(m_CameraData.ViewProjection);
 		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
-		m_CameraData.Position = Math::AffineInverse(cameraInfo.ViewMatrix)[3];
+		m_CameraData.Position = m_CameraData.InverseView[3];
 		m_CameraData.NearClip = cameraInfo.NearClip;
 		m_CameraData.FarClip = cameraInfo.FarClip;
 

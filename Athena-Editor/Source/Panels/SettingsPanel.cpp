@@ -244,8 +244,8 @@ namespace Athena
 			BloomSettings& bloomSettings = settings.BloomSettings;
 
 			UI::PropertyCheckbox("Enable Bloom", &bloomSettings.Enable);
-			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.1f, 0, 10);
-			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.1f, 0, 10);
+			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
+			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
 			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 

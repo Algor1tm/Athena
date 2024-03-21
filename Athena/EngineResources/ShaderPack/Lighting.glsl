@@ -24,9 +24,9 @@ void main()
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;
 
-layout(set = 1, binding = 7) uniform sampler2D u_SceneAlbedo;
-layout(set = 1, binding = 9) uniform sampler2D u_ScenePositionEmission;
-layout(set = 1, binding = 8) uniform sampler2D u_SceneNormals;
+layout(set = 1, binding = 7) uniform sampler2D u_SceneDepth;
+layout(set = 1, binding = 8) uniform sampler2D u_SceneAlbedo;
+layout(set = 1, binding = 9) uniform sampler2D u_SceneNormalsEmission;
 layout(set = 1, binding = 10) uniform sampler2D u_SceneRoughnessMetalness;
 
 layout(set = 1, binding = 11) uniform sampler2D u_BRDF_LUT;
@@ -141,24 +141,26 @@ vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughnes
 
 void main()
 {
-    // Get PBR parameters
-    vec2 unpackedNormal = texture(u_SceneNormals, v_TexCoords).rg;
-    if(unpackedNormal == vec2(0.0))
+    // Unpack GBuffer
+    float depth = texture(u_SceneDepth, v_TexCoords).r;
+    if(depth == 1.0)
         discard;
 
-    vec3 normal = UnpackNormal(unpackedNormal);
+    vec4 clipSpace = vec4(v_TexCoords * 2.0 - 1.0, depth, 1.0);
+    vec4 viewPos = u_Camera.InverseProjection * clipSpace;
+    viewPos /= viewPos.w;
+    vec3 worldPos = vec3(u_Camera.InverseView * viewPos);
+
+    vec4 normalEmission = texture(u_SceneNormalsEmission, v_TexCoords);
+    vec3 normal = normalEmission.rgb * 2.0 - 1.0;
+    float emission = normalEmission.a - 1.0;
+
     vec3 albedo = texture(u_SceneAlbedo, v_TexCoords).rgb;
 
-    vec4 posEm = texture(u_ScenePositionEmission, v_TexCoords);
-    vec3 worldPos = posEm.xyz;
-    float emission = posEm.w;
-
     vec2 rm = texture(u_SceneRoughnessMetalness, v_TexCoords).rg;
-
     float roughness = rm.r;
     float metalness = rm.g;
     
-
     // Compute lightning from all light sources
     vec3 viewDir = normalize(u_Camera.Position - worldPos);
     float distanceFromCamera = distance(u_Camera.Position, worldPos);

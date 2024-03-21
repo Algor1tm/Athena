@@ -83,8 +83,11 @@ namespace Athena
 	struct CameraData
 	{
 		Matrix4 View;
+		Matrix4 InverseView;
 		Matrix4 Projection;
+		Matrix4 InverseProjection;
 		Matrix4 ViewProjection;
+		Matrix4 InverseViewProjection;
 		Matrix4 RotationView;
 		Vector3 Position;
 		float NearClip;

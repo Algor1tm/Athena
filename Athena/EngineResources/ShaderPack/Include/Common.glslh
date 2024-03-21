@@ -147,20 +147,3 @@ vec3 GetWorldDirectionFromCubeCoords(ivec3 unnormalizedTexCoords, vec2 faceSize)
 
     return normalize(direction);
 }
-
-vec2 PackNormal ( vec3 normal )
-{
-    vec2 result;
-    result.xy = normalize ( normal.xy ) * sqrt ( normal.z * 0.5f + 0.5f );
-
-    return result;
-}
-
-vec3 UnpackNormal ( vec2 packedNormal )
-{
-    vec3 result;
-    result.z = ( packedNormal.x * packedNormal.x + packedNormal.y * packedNormal.y ) * 2.0f - 1.0f;
-    result.xy = normalize ( packedNormal.xy ) * sqrt ( 1.0 - result.z * result.z );
-
-    return result;
-}

@@ -49,11 +49,11 @@ namespace Athena
 
             std::array<Ref<Texture2D>, texNum> textures;
             textures[0] = gbuffer->GetOutput("SceneDepth");
-            textures[1] = gbuffer->GetOutput("SceneAlbedo");
-            textures[2] = gbuffer->GetOutput("ScenePositionEmission");
-            textures[3] = gbuffer->GetOutput("SceneNormals");
-            textures[4] = gbuffer->GetOutput("SceneRoughnessMetalness");
-            textures[5] = Renderer::GetBlackTexture(); // TODO: Ambient Occlusion map
+            textures[1] = gbuffer->GetOutput("SceneNormalsEmission");
+            textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness");
+            textures[3] = Renderer::GetBlackTexture();  // TODO: Add Ambient Occlusion map
+            textures[4] = gbuffer->GetOutput("SceneAlbedo");
+            textures[5] = Renderer::GetBlackTexture(); 
             
             ImVec2 textureSize = { viewportX / columns, viewportY / rows };
             ImVec2 pos = cursor;

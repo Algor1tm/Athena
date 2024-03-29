@@ -6,11 +6,11 @@
 
 namespace Athena
 {
-	Ref<ComputePipeline> ComputePipeline::Create(const ComputePipelineCreateInfo& info)
+	Ref<ComputePipeline> ComputePipeline::Create(const Ref<Shader>& shader)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanComputePipeline>::Create(info);
+		case Renderer::API::Vulkan: return Ref<VulkanComputePipeline>::Create(shader);
 		case Renderer::API::None: return nullptr;
 		}
 

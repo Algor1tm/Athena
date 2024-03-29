@@ -17,6 +17,8 @@ namespace Athena
 	{
 	public:
 		virtual ~RenderResource() = default;
-		virtual RenderResourceType GetResourceType() = 0;
+
+		virtual RenderResourceType GetResourceType() const = 0;
+		virtual const String& GetName() const = 0;
 	};
 }

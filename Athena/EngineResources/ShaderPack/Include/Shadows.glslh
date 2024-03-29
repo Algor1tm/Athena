@@ -103,7 +103,7 @@ const vec2 PoissonDisk[64] = {
 };
 
 
-layout(std140, set = 1, binding = 4) uniform u_ShadowsData
+layout(std140, set = 1, binding = 5) uniform u_ShadowsData
 {
 	mat4 u_DirLightViewProjection[SHADOW_CASCADES_COUNT];
 	vec4 u_CascadePlanes[SHADOW_CASCADES_COUNT];	// stores only x and y (near and far)
@@ -113,8 +113,8 @@ layout(std140, set = 1, binding = 4) uniform u_ShadowsData
 	int u_SoftShadows;
 };
 
-layout(set = 1, binding = 5) uniform sampler2DArray u_DirShadowMap;
-layout(set = 1, binding = 6) uniform sampler2DArrayShadow u_DirShadowMapShadow;
+layout(set = 1, binding = 6) uniform sampler2DArray u_DirShadowMap;
+layout(set = 1, binding = 7) uniform sampler2DArrayShadow u_DirShadowMapShadow;
 
 /*
 =========================================================================================================================================

@@ -66,17 +66,19 @@ namespace Athena
 		cmdBufferInfo.Usage = RenderCommandBufferUsage::PRESENT;
 
 		s_Data.RenderCommandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
-
+		
 		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
 		Renderer::SetGlobalShaderMacros("MAX_SPOT_LIGHT_COUNT", std::to_string(MAX_SPOT_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT_PER_TILE", std::to_string(MAX_POINT_LIGHT_COUNT_PER_TILE));
+		Renderer::SetGlobalShaderMacros("LIGHT_TILE_SIZE", std::to_string(LIGHT_TILE_SIZE));
 		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_MESH", std::to_string(MAX_NUM_BONES_PER_MESH));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_ANIMATED_MESHES", std::to_string(MAX_NUM_ANIMATED_MESHES));
 		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
 		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
-
+		
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
@@ -126,14 +128,14 @@ namespace Athena
 		indexBufInfo.Name = "Renderer_CubeIB";
 		indexBufInfo.Data = cubeIndices;
 		indexBufInfo.Count = std::size(cubeIndices);
-		indexBufInfo.Usage = BufferUsage::STATIC;
+		indexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		VertexBufferCreateInfo vertexBufInfo;
 		vertexBufInfo.Name = "Renderer_CubeVB";
 		vertexBufInfo.Data = cubeVertices;
 		vertexBufInfo.Size = sizeof(cubeVertices);
 		vertexBufInfo.IndexBuffer = IndexBuffer::Create(indexBufInfo);
-		vertexBufInfo.Usage = BufferUsage::STATIC;
+		vertexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		s_Data.CubeVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
@@ -179,11 +181,7 @@ namespace Athena
 			pass->SetOutput(s_Data.BRDF_LUT);
 			pass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "BRDF_LUT_Pipeline";
-			pipelineInfo.Shader = GetShaderPack()->Get("BRDF_LUT");
-
-			Ref<ComputePipeline> pipeline = ComputePipeline::Create(pipelineInfo);
+			Ref<ComputePipeline> pipeline = ComputePipeline::Create(GetShaderPack()->Get("BRDF_LUT"));
 			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
 			pipeline->Bake();
 			

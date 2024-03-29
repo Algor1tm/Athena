@@ -52,11 +52,7 @@ namespace Athena
 			m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture);
 			m_PanoramaToCubePass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "PanoramaToCubePipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PanoramaToCubemap");
-
-			m_PanoramaToCubePipeline = ComputePipeline::Create(pipelineInfo);
+			m_PanoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
 			m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", Renderer::GetWhiteTexture());
 			m_PanoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
 			m_PanoramaToCubePipeline->Bake();
@@ -72,15 +68,11 @@ namespace Athena
 			m_PreethamPass->SetOutput(m_EnvironmentTexture);
 			m_PreethamPass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "PreethamPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("PreethamSky");
-
-			m_PreethamPipeline = ComputePipeline::Create(pipelineInfo);
+			m_PreethamPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PreethamSky"));
 			m_PreethamPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
 			m_PreethamPipeline->Bake();
 
-			m_PreethamMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+			m_PreethamMaterial = Material::Create(m_PreethamPipeline->GetShader(), m_PreethamPipeline->GetName());
 		}
 
 		// Irradiance Pipeline
@@ -93,11 +85,7 @@ namespace Athena
 			m_IrradiancePass->SetOutput(m_IrradianceTexture);
 			m_IrradiancePass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "IrradiancePipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("IrradianceMapConvolution");
-
-			m_IrradiancePipeline = ComputePipeline::Create(pipelineInfo);
+			m_IrradiancePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("IrradianceMapConvolution"));
 			m_IrradiancePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
 			m_IrradiancePipeline->SetInput("u_IrradianceMap", m_IrradianceTexture);
 			m_IrradiancePipeline->Bake();
@@ -113,17 +101,15 @@ namespace Athena
 			m_MipFilterPass->SetOutput(m_EnvironmentTexture);
 			m_MipFilterPass->Bake();
 
-			ComputePipelineCreateInfo pipelineInfo;
-			pipelineInfo.Name = "MipFilterPipeline";
-			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
+			Ref<Shader> shader = Renderer::GetShaderPack()->Get("EnvironmentMipFilter");
 
-			m_MipFilterPipeline = ComputePipeline::Create(pipelineInfo);
+			m_MipFilterPipeline = ComputePipeline::Create(shader);
 			m_MipFilterPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
 			m_MipFilterPipeline->Bake();
 
 			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
-				Ref<Material> mipMaterial = Material::Create(pipelineInfo.Shader, std::format("{}_{}", pipelineInfo.Name, mip - 1));
+				Ref<Material> mipMaterial = Material::Create(shader, std::format("{}_{}", shader->GetName(), mip - 1));
 				mipMaterial->Set("u_EnvironmentMipImage", m_EnvironmentTexture, 0, mip);
 				mipMaterial->Set("u_MipLevel", mip);
 

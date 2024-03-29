@@ -1,29 +1,373 @@
 Scene: UnNamed
 Entities:
   - IDComponent:
-      ID: 18100746580937150330
+      ID: 31052898998760552
     TagComponent:
-      Tag: DirLight
+      Tag: Light
     TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [0.76768744, -0.640824497, 0, 0]
+      Translation: [63.222084, 12.8267412, -25.7983208]
+      Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      CastShadows: true
-      LightSize: 0.5
+    PointLightComponent:
+      Color: [1, 0.0733243227, 0.405977249, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
   - IDComponent:
-      ID: 8278415375090471571
+      ID: 13152973353284931726
     TagComponent:
-      Tag: Sponza
+      Tag: Light
+    TransformComponent:
+      Translation: [-9.17261314, 28.9878311, -25.7983208]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.0733243227, 0.405977249, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 11144820038000384701
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-61.2739258, 28.9878311, -20.5835152]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 0.0783267617, 1, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 6254601020620762965
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-40.2777328, 28.9878311, 27.4545612]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 0.803659737, 1, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 12001152650384810179
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [33.8537521, 28.9878311, 27.4545612]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.200882912, 1, 0.0733243227, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 14877471483334770694
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [33.8537521, 50.2692947, -2.03068209]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.0983358026, 0.0733243227, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 9567734809322500150
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [33.8537521, 48.4503708, -2.03068209]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.0983358026, 0.0733243227, 1]
+      Intensity: 22.7999992
+      Radius: 35
+      FallOff: 1
+  - IDComponent:
+      ID: 3904118801466876686
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-50.7497177, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.518528581, 0.0733243227, 1, 1]
+      Intensity: 16.3999996
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 8259629675702185137
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-32.2920609, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0933332443, 0.0733243227, 1, 1]
+      Intensity: 16.3999996
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 3751050777741484870
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-14.281724, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 0.503522098, 1, 1]
+      Intensity: 16.3999996
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 1506839288669349478
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [4.40265846, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 1, 0.571052909, 1]
+      Intensity: 16.3999996
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 3681144932139328098
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [25.453949, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.200882912, 1, 0.0733243227, 1]
+      Intensity: 16.3999996
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 10325253399623947272
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [60.5607262, 11.7575064, 21.0059738]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.773645997, 0.0733243227, 1]
+      Intensity: 31
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 6572605763513727676
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-25.7605133, 60.1205368, 6.48523998]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.776147246, 1, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 42.5
+      FallOff: 1
+  - IDComponent:
+      ID: 4842803147944923553
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [29.6543293, 28.398531, 6.48523998]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 1, 0.971236706, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 10552273798618972409
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [18.0389938, 28.398531, -9.94589806]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.0983358026, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 4690329933049272151
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-6.88269997, 28.398531, -9.94589806]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.926216185, 1, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 18225226715922321733
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-6.88269997, 28.398531, 5.87990427]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.47350812, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 2399721313653129713
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-55.9675369, 28.398531, 5.87990427]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.251883328, 1, 0.158794463, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 15808853123135941338
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-55.9675369, 28.398531, -11.0866346]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.99886471, 0.158794463, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 16486544425693663554
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-55.9675369, 2.82088494, 0.650385857]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.158794463, 0.960267246, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 5937850142583274467
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-11.1979303, 2.82088494, -12.3678341]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.158794463, 0.960267246, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 11790602577327695647
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [32.7843819, 2.82088494, -12.3678341]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.27591753, 1, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 20
+      FallOff: 1
+  - IDComponent:
+      ID: 4122013538007299080
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [29.8251724, 9.90094757, -26.4003773]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.773645997, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 18203819125393008479
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [-29.6689339, 9.90094757, -26.4003773]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.0733243227, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 1825792303960392897
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [0, 9.90094757, -26.4003773]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.34845072, 0.0733243227, 1]
+      Intensity: 8.60000038
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 14155271515227389845
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [0, 9.90094757, 0.6807971]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [0.0733243227, 1, 0.921213746, 1]
+      Intensity: 8.60000038
+      Radius: 22.5
+      FallOff: 1
+  - IDComponent:
+      ID: 10335089509406061649
+    TagComponent:
+      Tag: SkyLight
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.057190001, 0.0571899563, 0.0571899563]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\Sponza.fbx
-      Visible: true
+      Scale: [1, 1, 1]
+    SkyLightComponent:
+      Intensity: 0.202999994
+      LOD: 1.06500006
+      Resolution: 256
+      Type: 1
+      FilePath: D:\Development\CppProjects\Athena-dev\Athena\Athena-Editor\Assets\EnvironmentMaps\pink_sunrise_4k.hdr
+      Turbidity: 2.29299998
+      Azimuth: 0.224000007
+      Inclination: 1.39100003
   - IDComponent:
       ID: 95899466008981868
     TagComponent:
@@ -46,19 +390,39 @@ Entities:
       Primary: true
       FixedAspectRatio: false
   - IDComponent:
-      ID: 10335089509406061649
+      ID: 8278415375090471571
     TagComponent:
-      Tag: SkyLight
+      Tag: Sponza
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
+      Scale: [0.057190001, 0.0571899563, 0.0571899563]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Sponza.fbx
+      Visible: true
+  - IDComponent:
+      ID: 18100746580937150330
+    TagComponent:
+      Tag: DirLight
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [0.76768744, -0.640824497, 0, 0]
       Scale: [1, 1, 1]
-    SkyLightComponent:
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
       Intensity: 1
-      LOD: 0
-      Resolution: 256
-      Type: 2
-      FilePath: ""
-      Turbidity: 2.29299998
-      Azimuth: 0.224000007
-      Inclination: 1.39100003
+      CastShadows: true
+      LightSize: 0.400000006
+  - IDComponent:
+      ID: 4321357037010885674
+    TagComponent:
+      Tag: Light
+    TransformComponent:
+      Translation: [68.4662094, 42.004303, 1.21342802]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    PointLightComponent:
+      Color: [1, 0.773645997, 0.0733243227, 1]
+      Intensity: 36
+      Radius: 25
+      FallOff: 1

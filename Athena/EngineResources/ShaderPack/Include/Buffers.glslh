@@ -18,9 +18,11 @@ layout(std140, set = 1, binding = 1) uniform u_RendererData
 {
     vec2 ViewportSize;
     vec2 InverseViewportSize;
+    ivec4 ViewportTilesCount;  // xy - per width and height, z - all tiles, w - empty 
     float EnvironmentIntensity;
     float EnvironmentLOD;
     int DebugShadowCascades;
+    int DebugLightComplexity;
 } u_Renderer;
 
 struct DirectionalLight
@@ -65,7 +67,18 @@ layout(std430, set = 1, binding = 2) readonly buffer u_LightData
     int g_SpotLightCount;
 };
 
-layout(std430, set = 1, binding = 3) readonly buffer u_BonesData
+struct TileVisibleLights
+{
+	uint LightCount;
+	uint LightIndices[MAX_POINT_LIGHT_COUNT_PER_TILE];
+};
+
+layout(std430, set = 1, binding = 3) buffer u_VisibleLightsData
+{
+    TileVisibleLights u_VisibleLights[];
+};
+
+layout(std430, set = 1, binding = 4) readonly buffer u_BonesData
 {
     mat4 g_Bones[MAX_NUM_BONES_PER_MESH * MAX_NUM_ANIMATED_MESHES];
 };

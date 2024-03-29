@@ -86,13 +86,13 @@ namespace Athena
 		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 
-		virtual RenderResourceType GetResourceType() override { return RenderResourceType::Texture2D; }
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
+		virtual const String& GetName() const override { return m_Info.Name; }
 
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
 		ImageFormat GetFormat() const { return m_Info.Format; }
-		const String& GetName() const { return m_Info.Name; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
 		const Texture2DCreateInfo& GetInfo() const { return m_Info; };
@@ -120,13 +120,13 @@ namespace Athena
 	public:
 		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info);
 
-		virtual RenderResourceType GetResourceType() override { return RenderResourceType::TextureCube; }
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::TextureCube; }
+		virtual const String& GetName() const override { return m_Info.Name; }
 
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
 		ImageFormat GetFormat() const { return m_Info.Format; }
-		const String& GetName() const { return m_Info.Name; }
 
 		const TextureCubeCreateInfo& GetInfo() const { return m_Info; };
 

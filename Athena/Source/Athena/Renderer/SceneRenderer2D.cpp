@@ -44,7 +44,7 @@ namespace Athena
 		indexBufferInfo.Name = "Renderer2D_QuadIB";
 		indexBufferInfo.Data = indices;
 		indexBufferInfo.Count = s_MaxIndices;
-		indexBufferInfo.Usage = BufferUsage::STATIC;
+		indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
 		delete[] indices;
@@ -238,7 +238,7 @@ namespace Athena
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxQuads * sizeof(QuadVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
-			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
 			m_QuadVertexBuffers[frameIndex].push_back(newBuffer);
@@ -284,7 +284,7 @@ namespace Athena
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxCircles * sizeof(CircleVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
-			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
 			m_CircleVertexBuffers[frameIndex].push_back(newBuffer);
@@ -319,7 +319,7 @@ namespace Athena
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxLines * sizeof(LineVertex);
 			vertexBufferInfo.IndexBuffer = nullptr;
-			vertexBufferInfo.Usage = BufferUsage::DYNAMIC;
+			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
 			m_LineVertexBuffers[frameIndex].push_back(newBuffer);

@@ -137,11 +137,11 @@ namespace Athena
 		uint32 m_Stride = 0;
 	};
 
-	
-	enum class BufferUsage
+	enum class BufferMemoryFlags
 	{
-		STATIC,
-		DYNAMIC
+		GPU_ONLY = 0,
+		CPU_WRITEABLE,
+		// TODO: add CPU_READABLE 
 	};
 
 	struct IndexBufferCreateInfo
@@ -149,7 +149,7 @@ namespace Athena
 		String Name;
 		const void* Data = nullptr;
 		uint32 Count = 0;
-		BufferUsage Usage = BufferUsage::STATIC;
+		BufferMemoryFlags Flags = BufferMemoryFlags::GPU_ONLY;
 	};
 
 	class ATHENA_API IndexBuffer : public RefCounted
@@ -173,7 +173,7 @@ namespace Athena
 		const void* Data = nullptr;
 		uint64 Size = 0;
 		Ref<IndexBuffer> IndexBuffer;
-		BufferUsage Usage = BufferUsage::STATIC;
+		BufferMemoryFlags Flags = BufferMemoryFlags::GPU_ONLY;
 	};
 
 	class ATHENA_API VertexBuffer : public RefCounted
@@ -200,22 +200,33 @@ namespace Athena
 		static Ref<UniformBuffer> Create(const String& name, uint64 size);
 		virtual ~UniformBuffer() = default;
 
-		virtual RenderResourceType GetResourceType() override { return RenderResourceType::UniformBuffer; }
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::UniformBuffer; }
+		virtual const String& GetName() const override { return m_Name; }
+		uint64 GetSize() const { return m_Size; }
 
-		virtual uint64 GetSize() = 0;
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+
+	protected:
+		String m_Name;
+		uint64 m_Size;
 	};
 
 
 	class ATHENA_API StorageBuffer : public RenderResource
 	{
 	public:
-		static Ref<StorageBuffer> Create(const String& name, uint64 size);
+		static Ref<StorageBuffer> Create(const String& name, uint64 size, BufferMemoryFlags flags);
 		virtual ~StorageBuffer() = default;
 
-		virtual RenderResourceType GetResourceType() override { return RenderResourceType::StorageBuffer; }
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::StorageBuffer; }
+		virtual const String& GetName() const override { return m_Name; }
+		uint64 GetSize() const { return m_Size; };
 
-		virtual uint64 GetSize() = 0;
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		virtual void Resize(uint64 size) = 0;
+
+	protected:
+		String m_Name;
+		uint64 m_Size;
 	};
 }

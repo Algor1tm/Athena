@@ -33,6 +33,7 @@ namespace Athena
 	{
 		NONE = 0,
 		SHADOW_CASCADES,
+		LIGHT_COMPLEXITY,
 		GBUFFER,
 	};
 
@@ -98,9 +99,11 @@ namespace Athena
 	{
 		Vector2 ViewportSize;
 		Vector2 InverseViewportSize;
+		Vector4i ViewportTilesCount;	// xy - per width and height, z - all tiles, w - empty
 		float EnvironmentIntensity;
-		float EnvironmentLOD ;
+		float EnvironmentLOD;
 		int32 DebugShadowCascades;
+		int32 DebugLightComplexity;
 	};
 
 	struct LightData
@@ -113,6 +116,12 @@ namespace Athena
 
 		SpotLight SpotLights[ShaderDef::MAX_SPOT_LIGHT_COUNT];
 		uint32 SpotLightCount = 0;
+	};
+
+	struct TileVisibleLights
+	{
+		uint32 Count;
+		uint32 LightIndices[ShaderDef::MAX_POINT_LIGHT_COUNT_PER_TILE];
 	};
 
 	struct ShadowsData
@@ -130,7 +139,8 @@ namespace Athena
 		Time GPUTime;
 		Time DirShadowMapPass;
 		Time GBufferPass;
-		Time LightingPass;
+		Time LightCullingPass;
+		Time DeferredLightingPass;
 		Time SkyboxPass;
 		Time BloomPass;
 		Time SceneCompositePass;
@@ -175,6 +185,7 @@ namespace Athena
 	private:
 		void DirShadowMapPass();
 		void GBufferPass();
+		void LightCullingPass();
 		void LightingPass();
 		void SkyboxPass();
 		void BloomPass();
@@ -200,6 +211,9 @@ namespace Athena
 		Ref<RenderPass> m_GBufferPass;
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
+
+		Ref<ComputePass> m_LightCullingPass;
+		Ref<ComputePipeline> m_LightCullingPipeline;
 
 		Ref<RenderPass> m_LightingPass;
 		Ref<Pipeline> m_LightingPipeline;
@@ -236,6 +250,7 @@ namespace Athena
 		Ref<UniformBuffer> m_CameraUBO;
 		Ref<UniformBuffer> m_RendererUBO;
 		Ref<StorageBuffer> m_LightSBO;
+		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<StorageBuffer> m_BonesSBO;
 		Ref<Texture2D> m_ShadowMapSampler;

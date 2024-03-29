@@ -127,23 +127,23 @@ void main()
     vec3 L = LoadPixel(center,  0,  1);
     vec3 M = LoadPixel(center,  1,  1);
 
-    // Seems that these values are not exactly correct, but despite this bloom result is excellent
+    // Seems that these values are not exactly correct, but despite this bloom result is ok
     vec3 D = (A + B + G + F) * 0.25;
     vec3 E = (B + C + H + G) * 0.25;
     vec3 I = (F + G + L + K) * 0.25;
     vec3 J = (G + H + M + L) * 0.25;
+
+    vec3 red    = 0.5   * (D + E + J + I) * 0.25;
+    vec3 yellow = 0.125 * (G + F + A + B) * 0.25;
+    vec3 green  = 0.125 * (G + B + C + H) * 0.25;
+    vec3 blue   = 0.125 * (G + H + L + M) * 0.25;
+    vec3 purple = 0.125 * (G + L + K + F) * 0.25;
 
     vec3 result;
 
     // Apply KarisAverage and Threshold in first pass
     if(firstPass)
     {
-        vec3 red    = 0.5   * (D + E + J + I) * 0.25;
-        vec3 yellow = 0.125 * (G + F + A + B) * 0.25;
-        vec3 green  = 0.125 * (G + B + C + H) * 0.25;
-        vec3 blue   = 0.125 * (G + H + L + M) * 0.25;
-        vec3 purple = 0.125 * (G + L + K + F) * 0.25;
-
         red    = KarisAverage(red);
         yellow = KarisAverage(yellow);
         green  = KarisAverage(green);
@@ -157,10 +157,14 @@ void main()
     }
     else
     {
+        result = red + yellow + green + blue + purple;
+
+#if 0
 	    result  = G * 0.125;
 	    result += (A + C + K + M) * 0.03125;
 	    result += (B + F + H + L) * 0.0625;
 	    result += (D + E + I + J) * 0.125;
+#endif
     }
 
     imageStore(u_BloomTextureMip, pixelCoords, vec4(result, 1.0));

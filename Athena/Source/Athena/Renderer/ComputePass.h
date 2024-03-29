@@ -2,7 +2,6 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 #include "Athena/Renderer/RenderResource.h"
 #include "Athena/Renderer/Shader.h"
@@ -32,17 +31,15 @@ namespace Athena
 
 		virtual void Bake() = 0;
 
-		void SetOutput(const Ref<Texture2D>& texture);
-		void SetOutput(const Ref<TextureCube>& texture);
+		void SetOutput(const Ref<RenderResource>& resource);
 
-		Ref<Texture2D> GetOutput(const String& name);
-		const std::vector<Ref<Texture2D>>& GetAllOutputs() const { return m_Texture2DOutputs; }
+		Ref<RenderResource> GetOutput(const String& name);
+		const std::vector<Ref<RenderResource>>& GetAllOutputs() const { return m_Outputs; }
 
 		const ComputePassCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
 		ComputePassCreateInfo m_Info;
-		std::vector<Ref<Texture2D>> m_Texture2DOutputs;
-		std::vector<Ref<TextureCube>> m_TextureCubeOutputs;
+		std::vector<Ref<RenderResource>> m_Outputs;
 	};
 }

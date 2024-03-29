@@ -211,7 +211,7 @@ namespace Athena
 			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
 			indexBufferInfo.Data = indices.data();
 			indexBufferInfo.Count = indices.size();
-			indexBufferInfo.Usage = BufferUsage::STATIC;
+			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 			indexBuffer = IndexBuffer::Create(indexBufferInfo);
 		}
@@ -221,7 +221,7 @@ namespace Athena
 		vertexBufferInfo.Data = vertices.data();
 		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
 		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::STATIC;
+		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
@@ -318,7 +318,7 @@ namespace Athena
 			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
 			indexBufferInfo.Data = indices.data();
 			indexBufferInfo.Count = indices.size();
-			indexBufferInfo.Usage = BufferUsage::STATIC;
+			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 			indexBuffer = IndexBuffer::Create(indexBufferInfo);
 		}
@@ -328,7 +328,7 @@ namespace Athena
 		vertexBufferInfo.Data = vertices.data();
 		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
 		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Usage = BufferUsage::STATIC;
+		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 	
 		return VertexBuffer::Create(vertexBufferInfo);
 	}

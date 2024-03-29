@@ -6,7 +6,6 @@
 // https://learnopengl.com/PBR/IBL/Diffuse-irradiance
 // https://learnopengl.com/PBR/IBL/Specular-IBL
 
-
 #define PI 3.14159265358979323846
 
 
@@ -146,4 +145,9 @@ vec3 GetWorldDirectionFromCubeCoords(ivec3 unnormalizedTexCoords, vec2 faceSize)
     }
 
     return normalize(direction);
+}
+
+float LinearizeDepth(float depth, float zNear, float zFar)
+{
+    return zNear * zFar / (zFar - depth * (zFar - zNear));
 }

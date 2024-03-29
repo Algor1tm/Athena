@@ -89,7 +89,7 @@ namespace Athena
 
 	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
 	{
-		if (!pipeline->GetInfo().Shader->IsCompiled())
+		if (!pipeline->GetShader()->IsCompiled())
 			return;
 
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();

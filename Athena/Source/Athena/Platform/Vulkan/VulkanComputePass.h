@@ -29,6 +29,7 @@ namespace Athena
 		};
 
 	private:
+		// Barrier for each corresponding output
 		std::vector<BarrierInfo> m_Barriers;
 	};
 }

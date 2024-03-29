@@ -1,5 +1,4 @@
 #include "ComputePass.h"
-
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanComputePass.h"
 
@@ -17,21 +16,16 @@ namespace Athena
 		return nullptr;
 	}
 
-	void ComputePass::SetOutput(const Ref<Texture2D>& texture)
+	void ComputePass::SetOutput(const Ref<RenderResource>& resource)
 	{
-		ATN_CORE_ASSERT(texture);
-		m_Texture2DOutputs.push_back(texture);
+		ATN_CORE_ASSERT(resource);
+		ATN_CORE_ASSERT(resource->GetResourceType() != RenderResourceType::UniformBuffer);
+		m_Outputs.push_back(resource);
 	}
 
-	void ComputePass::SetOutput(const Ref<TextureCube>& texture)
+	Ref<RenderResource> ComputePass::GetOutput(const String& name)
 	{
-		ATN_CORE_ASSERT(texture);
-		m_TextureCubeOutputs.push_back(texture);
-	}
-
-	Ref<Texture2D> ComputePass::GetOutput(const String& name)
-	{
-		for (const auto& output : m_Texture2DOutputs)
+		for (const auto& output : m_Outputs)
 		{
 			if (output->GetName() == name)
 			{

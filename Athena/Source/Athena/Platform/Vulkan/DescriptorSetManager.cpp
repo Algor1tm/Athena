@@ -404,7 +404,7 @@ namespace Athena
 
 				if (!descriptorsToUpdate.empty())
 				{
-					ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Bake Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
+					//ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Bake Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
 					vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 				}
 			}

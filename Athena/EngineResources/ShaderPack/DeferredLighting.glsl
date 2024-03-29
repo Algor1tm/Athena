@@ -1,4 +1,4 @@
-//////////////////////// Athena Lighting Shader ////////////////////////
+//////////////////////// Athena Deferred Lighting Shader ////////////////////////
 
 #version 460 core
 #pragma stage : vertex
@@ -24,14 +24,14 @@ void main()
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;
 
-layout(set = 1, binding = 7) uniform sampler2D u_SceneDepth;
-layout(set = 1, binding = 8) uniform sampler2D u_SceneAlbedo;
-layout(set = 1, binding = 9) uniform sampler2D u_SceneNormalsEmission;
-layout(set = 1, binding = 10) uniform sampler2D u_SceneRoughnessMetalness;
+layout(set = 1, binding = 8) uniform sampler2D u_SceneDepth;
+layout(set = 1, binding = 9) uniform sampler2D u_SceneAlbedo;
+layout(set = 1, binding = 10) uniform sampler2D u_SceneNormalsEmission;
+layout(set = 1, binding = 11) uniform sampler2D u_SceneRoughnessMetalness;
 
-layout(set = 1, binding = 11) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 12) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 13) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 12) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 13) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 14) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -139,6 +139,24 @@ vec3 IBL(vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughnes
     return ambient;
 }
 
+vec3 GetLightComplexityDebugColor(uint count)
+{
+    if(count < 2)
+        return vec3(0, 0.2, 1);
+    if(count < 3)
+        return vec3(0, 1, 1);
+    if(count <= 4)
+        return vec3(0, 1, 0);
+    if(count <= 8)
+        return vec3(1, 1, 0);
+    if(count <= 12)
+        return vec3(1, 0.4, 0);
+    if(count <= 32)
+        return vec3(1.0, 0.05, 0);
+    return vec3(0, 0, 0);
+}
+
+
 void main()
 {
     // Unpack GBuffer
@@ -180,9 +198,17 @@ void main()
             totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);
     }
     
-    for (int j = 0; j < g_PointLightCount; ++j)
+    ivec2 tileID = ivec2(gl_FragCoord.xy / LIGHT_TILE_SIZE);
+	uint tileIndex = tileID.y * u_Renderer.ViewportTilesCount.x + tileID.x;
+    TileVisibleLights tileData = u_VisibleLights[tileIndex];
+    //
+    //for (int j = 0; j < g_PointLightCount; ++j)
+    //{
+    //    PointLight light = g_PointLights[j];
+    for (int j = 0; j < tileData.LightCount; ++j)
     {
-        PointLight light = g_PointLights[j];
+        uint lightIndex = tileData.LightIndices[j];
+        PointLight light = g_PointLights[lightIndex];
         vec3 radiance = ComputePointLightRadiance(light, worldPos);
         
         if(radiance != vec3(0.0))
@@ -212,7 +238,15 @@ void main()
     if(bool(u_Renderer.DebugShadowCascades))
     {
         vec3 cascadeDebugColor = GetCascadeDebugColor(worldPos, u_Camera.View);
-        hdrColor.rgb = mix(hdrColor.rgb, cascadeDebugColor, 0.3);
+        hdrColor = mix(hdrColor, cascadeDebugColor, 0.3);
+    }
+    else if(bool(u_Renderer.DebugLightComplexity))
+    {
+        if(tileData.LightCount != 0)
+        {
+            vec3 color = GetLightComplexityDebugColor(tileData.LightCount);
+            hdrColor = mix(hdrColor, vec3(color), 0.65);
+        }   
     }
 
     o_Color = vec4(hdrColor, 1.0);

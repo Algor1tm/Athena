@@ -11,7 +11,7 @@ namespace Athena
 	class ATHENA_API VulkanComputePipeline : public ComputePipeline
 	{
 	public:
-		VulkanComputePipeline(const ComputePipelineCreateInfo& info);
+		VulkanComputePipeline(const Ref<Shader>& shader);
 		~VulkanComputePipeline();
 
 		virtual bool Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;

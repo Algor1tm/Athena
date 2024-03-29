@@ -4,7 +4,10 @@
 //  https://github.com/bartwronski/CSharpRenderer/blob/master/shaders/FXAA.hlsl#L338
 //  https://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
 
-
+// TODO: test these versions : 
+//  https://github.com/redagito/RTR2014/blob/master/data/shadersource/post/fxaa_fragment.glsl
+//  https://github.com/hotstreams/limitless-engine/blob/master/shaders/functions/fxaa.glsl 
+ 
 #version 460 core
 #pragma stage : compute
 

@@ -12,7 +12,7 @@ namespace Athena
 
 		Ref<VulkanAllocator> allocator = VulkanContext::GetAllocator();
 
-		if (m_Info.Usage == BufferUsage::STATIC)
+		if (m_Info.Flags == BufferMemoryFlags::GPU_ONLY)
 		{
 			VkDeviceSize bufferSize = m_Info.Count * sizeof(uint32);
 
@@ -35,7 +35,7 @@ namespace Athena
 
 			allocator->DestroyBuffer(stagingBuffer);
 		}
-		else if (m_Info.Usage == BufferUsage::DYNAMIC)
+		else if (m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE)
 		{
 			VkDeviceSize bufferSize = m_Info.Count * sizeof(uint32);
 
@@ -68,8 +68,7 @@ namespace Athena
 
 	void VulkanIndexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_PROFILE_FUNC();
-		ATN_CORE_VERIFY(m_Info.Usage == BufferUsage::DYNAMIC);
+		ATN_CORE_VERIFY(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
 		void* mappedData = m_IndexBuffer.MapMemory();
 		memcpy((byte*)mappedData + offset, data, size);

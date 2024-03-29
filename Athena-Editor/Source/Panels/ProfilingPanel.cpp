@@ -75,13 +75,13 @@ namespace Athena
                         ImGui::Text("GPUTime: %.3f ms", stats.GPUTime.AsMilliseconds());
                         ImGui::Text("ShadowMapPass: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
                         ImGui::Text("GBufferPass: %.3f ms", stats.GBufferPass.AsMilliseconds());
-                        ImGui::Text("LightingPass: %.3f ms", stats.LightingPass.AsMilliseconds());
+                        ImGui::Text("LightCullingPass: %.3f ms", stats.LightCullingPass.AsMilliseconds());
+                        ImGui::Text("DeferredLightingPass: %.3f ms", stats.DeferredLightingPass.AsMilliseconds());
                         ImGui::Text("SkyboxPass: %.3f ms", stats.SkyboxPass.AsMilliseconds());
                         ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
-                        if(settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
-                            ImGui::Text("FXAAPass: %.3f ms", stats.FXAAPass.AsMilliseconds());
+                        ImGui::Text("FXAAPass: %.3f ms", stats.FXAAPass.AsMilliseconds());
 
                         if (UI::TreeNode("Pipeline Statistics", false))
                         {

@@ -43,11 +43,11 @@ namespace Athena
 	}
 
 
-	Ref<StorageBuffer> StorageBuffer::Create(const String& name, uint64 size)
+	Ref<StorageBuffer> StorageBuffer::Create(const String& name, uint64 size, BufferMemoryFlags flags)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanStorageBuffer>::Create(name, size);;
+		case Renderer::API::Vulkan: return Ref<VulkanStorageBuffer>::Create(name, size, flags);;
 		case Renderer::API::None: return nullptr;
 		}
 

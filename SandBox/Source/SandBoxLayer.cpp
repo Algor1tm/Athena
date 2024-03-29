@@ -40,6 +40,9 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	m_Scene->OnRender(m_SceneRenderer);
 
 	Renderer::BlitToScreen(Renderer::GetRenderCommandBuffer(), m_SceneRenderer->GetFinalImage()->GetImage());
+
+	if (Input::IsKeyPressed(Keyboard::Escape))
+		Application::Get().Close();
 }
 
 void SandBoxLayer::OnImGuiRender()
@@ -62,9 +65,11 @@ bool SandBoxLayer::OnWindowResize(WindowResizeEvent& event)
 	uint32 width = event.GetWidth();
 	uint32 height = event.GetHeight();
 
-	m_Scene->OnViewportResize(width, height);
-	m_SceneRenderer->OnViewportResize(width, height);
+	if (width != 0 && height != 0)
+	{
+		m_Scene->OnViewportResize(width, height);
+		m_SceneRenderer->OnViewportResize(width, height);
+	}
 
 	return false;
 }
-

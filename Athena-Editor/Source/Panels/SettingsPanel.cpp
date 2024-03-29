@@ -72,6 +72,7 @@ namespace Athena
 		{
 		case DebugView::NONE: return "None";
 		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
+		case DebugView::LIGHT_COMPLEXITY: return "LightComplexity";
 		case DebugView::GBUFFER: return "GBuffer";
 		}
 
@@ -86,6 +87,9 @@ namespace Athena
 
 		if (str == "ShadowCascades")
 			return DebugView::SHADOW_CASCADES;
+
+		if (str == "LightComplexity")
+			return DebugView::LIGHT_COMPLEXITY;
 
 		if (str == "GBuffer")
 			return DebugView::GBUFFER;
@@ -191,7 +195,7 @@ namespace Athena
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			std::string_view views[] = { "None", "ShadowCascades", "GBuffer" };
+			std::string_view views[] = { "None", "ShadowCascades", "LightComplexity", "GBuffer" };
 			std::string_view selected = DebugViewToString(settings.DebugView);
 			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{

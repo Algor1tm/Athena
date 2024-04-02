@@ -3,6 +3,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanRenderPass.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
+#include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 
 
@@ -150,17 +151,34 @@ namespace Athena
 		m_PushConstantSize = pushConstant.Size;
 		m_PipelineLayout = m_Info.Shader.As<VulkanShader>()->GetPipelineLayout();
 
-		const VertexLayout& vertexLayout = m_Info.VertexLayout;
+		std::vector<VkVertexInputBindingDescription> bindingDescriptions;
 
-		VkVertexInputBindingDescription bindingDescription = {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = vertexLayout.GetStride();
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexLayout.GetElementsNum());
-		for (uint32 i = 0; i < vertexLayout.GetElementsNum(); ++i)
+		uint32 vertexElemsNum = m_Info.VertexLayout.GetElementsNum();
+		if (vertexElemsNum != 0)
 		{
-			const auto& elem = vertexLayout.GetElements()[i];
+			VkVertexInputBindingDescription bindingDescription = {};
+			bindingDescription.binding = 0;
+			bindingDescription.stride = m_Info.VertexLayout.GetStride();
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+			bindingDescriptions.push_back(bindingDescription);
+		}
+
+		uint32 instanceElemsNum = m_Info.InstanceLayout.GetElementsNum();
+		if (instanceElemsNum != 0)
+		{
+			VkVertexInputBindingDescription bindingDescription = {};
+			bindingDescription.binding = 1;
+			bindingDescription.stride = m_Info.InstanceLayout.GetStride();
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+
+			bindingDescriptions.push_back(bindingDescription);
+		}
+
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexElemsNum + instanceElemsNum);
+		for (uint32 i = 0; i < vertexElemsNum; ++i)
+		{
+			const auto& elem = m_Info.VertexLayout.GetElements()[i];
 
 			attributeDescriptions[i].binding = 0;
 			attributeDescriptions[i].location = i;
@@ -168,10 +186,21 @@ namespace Athena
 			attributeDescriptions[i].offset = elem.Offset;
 		}
 
+		for (uint32 i = 0; i < instanceElemsNum; ++i)
+		{
+			const auto& elem = m_Info.InstanceLayout.GetElements()[i];
+			uint32 location = vertexElemsNum + i;
+
+			attributeDescriptions[location].binding = 1;
+			attributeDescriptions[location].location = location;
+			attributeDescriptions[location].format = Vulkan::GetFormat(elem.Type);
+			attributeDescriptions[location].offset = elem.Offset;
+		}
+
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+		vertexInputInfo.vertexBindingDescriptionCount = bindingDescriptions.size();
+		vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 		vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 

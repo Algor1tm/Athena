@@ -111,6 +111,22 @@ namespace Athena
 	}
 }
 
+// TODO: Move to Utils.h maybe
+namespace Athena::Utils
+{
+	inline String MemorySizeToString(uint64 bytes)
+	{
+		// MBs
+		if (bytes > 1024 * 1024)
+			return std::format("{:.2f} MBs", (float)bytes / (1024.f * 1024.f));
+
+		// KBs
+		if (bytes > 1024)
+			return std::format("{:.2f} KBs", (float)bytes / 1024.f);
+
+		return std::format("{} bytes", bytes);
+	}
+}
 
 namespace fmt
 {

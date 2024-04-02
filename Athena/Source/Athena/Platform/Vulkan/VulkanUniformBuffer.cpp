@@ -44,6 +44,9 @@ namespace Athena
 
 	void VulkanUniformBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
+		if (size == 0)
+			return;
+
 		auto& ubo = m_VulkanUBSet[Renderer::GetCurrentFrameIndex()];
 
 		void* mappedMemory = ubo.MapMemory();

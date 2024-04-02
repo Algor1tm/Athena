@@ -41,6 +41,8 @@ namespace Athena
 		void* MapMemory();
 		void UnmapMemory();
 
+		operator bool() const { return !(m_Buffer == VK_NULL_HANDLE && m_Allocation == VK_NULL_HANDLE); }
+
 	private:
 		VkBuffer m_Buffer = VK_NULL_HANDLE;
 		VmaAllocation m_Allocation = VK_NULL_HANDLE;
@@ -57,6 +59,8 @@ namespace Athena
 
 		VkImage GetImage() const { return m_Image; }
 		VmaAllocation GetAllocation() const { return m_Allocation; }
+
+		operator bool() const { return !(m_Image == VK_NULL_HANDLE && m_Allocation == VK_NULL_HANDLE); }
 
 	private:
 		VkImage m_Image = VK_NULL_HANDLE;

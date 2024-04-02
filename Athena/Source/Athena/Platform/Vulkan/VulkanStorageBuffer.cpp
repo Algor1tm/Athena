@@ -37,6 +37,9 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(m_Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
+		if (size == 0)
+			return;
+
 		auto& ubo = m_VulkanSBSet[Renderer::GetCurrentFrameIndex()];
 
 		void* mappedMemory = ubo.MapMemory();

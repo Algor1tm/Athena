@@ -12,7 +12,36 @@
 
 namespace Athena
 {
-	struct DrawCall
+	struct StaticDrawCall
+	{
+		Ref<VertexBuffer> VertexBuffer;
+		Ref<Material> Material;
+		Matrix4 Transform;
+	};
+
+	class ATHENA_API DrawListStatic
+	{
+	public:
+		void Push(const StaticDrawCall& drawCall);
+		void Sort();
+
+		void Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
+		void FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
+
+		void SetInstanceOffset(uint32 offset) { m_InstanceOffset = offset; }
+		uint32 GetInstancesCount() const;
+
+		uint64 Size() const { return m_Array.size(); }
+		void Clear();
+
+		const auto& GetArray() const { return m_Array; }
+
+	private:
+		std::vector<StaticDrawCall> m_Array;
+		uint32 m_InstanceOffset = 0;
+	};
+
+	struct AnimDrawCall
 	{
 		Ref<VertexBuffer> VertexBuffer;
 		Ref<Material> Material;
@@ -20,26 +49,24 @@ namespace Athena
 		uint32 BonesOffset = 0;
 	};
 
-
-	class ATHENA_API DrawList
+	class ATHENA_API DrawListAnim
 	{
 	public:
-		DrawList(bool isAnimated = false);
-
-		void Push(const DrawCall& drawCall);
+		void Push(const AnimDrawCall& drawCall);
 		void Sort();
 
-		void Flush(const Ref<Pipeline>& pipeline);
-		void FlushShadowPass(const Ref<Pipeline>& pipeline);
+		void Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
+		void FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
 
+		void SetInstanceOffset(uint32 offset) { m_InstanceOffset = offset; }
+
+		uint64 Size() const { return m_Array.size(); }
 		void Clear();
 
-	private:
-		bool UpdateMaterial(const DrawCall& drawCall);
+		const auto& GetArray() const { return m_Array; }
 
 	private:
-		std::vector<DrawCall> m_Array;
-		Ref<Material> m_LastMaterial = nullptr;
-		bool m_IsAnimated;
+		std::vector<AnimDrawCall> m_Array;
+		uint32 m_InstanceOffset = 0;
 	};
 }

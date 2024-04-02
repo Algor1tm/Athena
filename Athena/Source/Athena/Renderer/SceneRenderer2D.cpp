@@ -53,10 +53,6 @@ namespace Athena
 		m_CircleVertexBufferBase = new CircleVertex[s_MaxCircleVertices];
 		m_LineVertexBufferBase = new LineVertex[s_MaxLineVertices];
 
-		m_QuadVertexBuffers.resize(Renderer::GetFramesInFlight());
-		m_CircleVertexBuffers.resize(Renderer::GetFramesInFlight());
-		m_LineVertexBuffers.resize(Renderer::GetFramesInFlight());
-
 		m_TextureSlots[0] = Renderer::GetWhiteTexture();
 
 		m_QuadVertexPositions[0] = { -0.5f,0.5f, 0.f, 1.f };
@@ -186,7 +182,7 @@ namespace Athena
 			for (const auto& drawCall : m_QuadDrawList)
 			{
 				Ref<Material> material = m_QuadMaterials[drawCall.VertexBufferIndex];
-				Ref<VertexBuffer> buffer = m_QuadVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+				Ref<VertexBuffer> buffer = m_QuadVertexBuffers[drawCall.VertexBufferIndex];
 
 				if (prevMaterial != material)
 				{
@@ -204,7 +200,7 @@ namespace Athena
 
 			for (const auto& drawCall : m_CircleDrawList)
 			{
-				Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+				Ref<VertexBuffer> buffer = m_CircleVertexBuffers[drawCall.VertexBufferIndex];
 				Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, buffer, m_CircleMaterial, drawCall.VertexCount);
 			}
 		}
@@ -215,7 +211,7 @@ namespace Athena
 
 			for (const auto& drawCall : m_LineDrawList)
 			{
-				Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][drawCall.VertexBufferIndex];
+				Ref<VertexBuffer> buffer = m_LineVertexBuffers[drawCall.VertexBufferIndex];
 				Renderer::RenderGeometry(commandBuffer, m_LinePipeline, buffer, m_LineMaterial, drawCall.VertexCount);
 			}
 		}
@@ -230,21 +226,20 @@ namespace Athena
 		if (m_QuadIndexCount == 0)
 			return;
 
-		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
-		if (m_QuadVertexBufferIndex == m_QuadVertexBuffers[frameIndex].size())
+		if (m_QuadVertexBufferIndex == m_QuadVertexBuffers.size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_QuadVB_f{}_{}", frameIndex, m_QuadVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_QuadVB_{}_f", m_QuadVertexBuffers.size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxQuads * sizeof(QuadVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
 			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
-			m_QuadVertexBuffers[frameIndex].push_back(newBuffer);
+			m_QuadVertexBuffers.push_back(newBuffer);
 		}
 
-		Ref<VertexBuffer> buffer = m_QuadVertexBuffers[Renderer::GetCurrentFrameIndex()][m_QuadVertexBufferIndex];
+		Ref<VertexBuffer> buffer = m_QuadVertexBuffers[m_QuadVertexBufferIndex];
 		uint64 dataSize = (byte*)m_QuadVertexBufferPointer - (byte*)m_QuadVertexBufferBase;
 
 		buffer->UploadData(m_QuadVertexBufferBase, dataSize);
@@ -276,21 +271,20 @@ namespace Athena
 		if (m_CircleIndexCount == 0)
 			return;
 
-		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
-		if (m_CircleVertexBufferIndex == m_CircleVertexBuffers[frameIndex].size())
+		if (m_CircleVertexBufferIndex == m_CircleVertexBuffers.size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_CircleVB_f{}_{}", frameIndex, m_CircleVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_CircleVB_{}_f", m_CircleVertexBuffers.size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxCircles * sizeof(CircleVertex);
 			vertexBufferInfo.IndexBuffer = m_IndexBuffer;
 			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
-			m_CircleVertexBuffers[frameIndex].push_back(newBuffer);
+			m_CircleVertexBuffers.push_back(newBuffer);
 		}
 
-		Ref<VertexBuffer> buffer = m_CircleVertexBuffers[Renderer::GetCurrentFrameIndex()][m_CircleVertexBufferIndex];
+		Ref<VertexBuffer> buffer = m_CircleVertexBuffers[m_CircleVertexBufferIndex];
 		uint64 dataSize = (byte*)m_CircleVertexBufferPointer - (byte*)m_CircleVertexBufferBase;
 
 		buffer->UploadData(m_CircleVertexBufferBase, dataSize);
@@ -311,21 +305,20 @@ namespace Athena
 		if (m_LineVertexCount == 0)
 			return;
 
-		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
-		if (m_LineVertexBufferIndex == m_LineVertexBuffers[frameIndex].size())
+		if (m_LineVertexBufferIndex == m_LineVertexBuffers.size())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
-			vertexBufferInfo.Name = std::format("Renderer2D_LineVB_f{}_{}", frameIndex, m_LineVertexBuffers[frameIndex].size());
+			vertexBufferInfo.Name = std::format("Renderer2D_LineVB_{}_f", m_LineVertexBuffers.size());
 			vertexBufferInfo.Data = nullptr;
 			vertexBufferInfo.Size = s_MaxLines * sizeof(LineVertex);
 			vertexBufferInfo.IndexBuffer = nullptr;
 			vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 			Ref<VertexBuffer> newBuffer = VertexBuffer::Create(vertexBufferInfo);
-			m_LineVertexBuffers[frameIndex].push_back(newBuffer);
+			m_LineVertexBuffers.push_back(newBuffer);
 		}
 
-		Ref<VertexBuffer> buffer = m_LineVertexBuffers[Renderer::GetCurrentFrameIndex()][m_LineVertexBufferIndex];
+		Ref<VertexBuffer> buffer = m_LineVertexBuffers[m_LineVertexBufferIndex];
 		uint64 dataSize = (byte*)m_LineVertexBufferPointer - (byte*)m_LineVertexBufferBase;
 
 		buffer->UploadData(m_LineVertexBufferBase, dataSize);

@@ -35,7 +35,8 @@ namespace Athena
 		String Name;
 		Ref<RenderPass> RenderPass;
 		Ref<Shader> Shader;
-		VertexLayout VertexLayout;
+		VertexMemoryLayout VertexLayout;
+		VertexMemoryLayout InstanceLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		float LineWidth = 1.f;
 		CullMode CullMode = CullMode::BACK;

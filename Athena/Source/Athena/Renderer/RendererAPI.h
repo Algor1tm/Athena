@@ -21,7 +21,10 @@ namespace Athena
 
 		virtual void OnUpdate() = 0;
 
+		virtual void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0) = 0;
 		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount = 0) = 0;
+		virtual void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer) = 0;
+
 		virtual void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i workGroupSize, const Ref<Material>& material) = 0;
 		virtual void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
 		virtual void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;

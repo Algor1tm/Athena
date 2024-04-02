@@ -10,31 +10,6 @@
 
 namespace Athena
 {
-	namespace Utils
-	{
-		static std::string_view DeviceSizeAbbreviation(VkDeviceSize size)
-		{
-			if (size > 1024 * 1024)
-				return "MBs";
-			
-			if (size > 1024)
-				return "KBs";
-
-			return "bytes";
-		}
-
-		static float DeviceSizeUnits(VkDeviceSize size)
-		{
-			if (size > 1024 * 1024)
-				return (float)size / (1024.f * 1024.f);
-
-			if (size > 1024)
-				return (float)size / 1024.f;
-
-			return size;
-		}
-	}
-
 	void* VulkanBufferAllocation::MapMemory()
 	{
 		void* mappedData;
@@ -84,7 +59,7 @@ namespace Athena
 
 		VkDeviceSize size = allocation->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Renderer", "Allocating buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+			ATN_CORE_INFO_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemorySizeToString(size));
 
 		return VulkanBufferAllocation(buffer, allocation);
 	}
@@ -101,7 +76,7 @@ namespace Athena
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
 		VkDeviceSize size = allocation->GetSize();
-		ATN_CORE_INFO_TAG("Renderer", "Allocating image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+		ATN_CORE_INFO_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemorySizeToString(size));
 
 		return VulkanImageAllocation(image, allocation);
 	}
@@ -110,7 +85,7 @@ namespace Athena
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Renderer", "Destroying buffer '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+			ATN_CORE_INFO_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemorySizeToString(size));
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
@@ -118,7 +93,7 @@ namespace Athena
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
 		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_CORE_INFO_TAG("Renderer", "Destroying image '{}' size of {:^.2f} {}", name, Utils::DeviceSizeUnits(size), Utils::DeviceSizeAbbreviation(size));
+		ATN_CORE_INFO_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemorySizeToString(size));
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
@@ -134,7 +109,7 @@ namespace Athena
 
 		VkSampler sampler;
 
-		bool enableAnisotropy = true;
+		bool enableAnisotropy = Renderer::GetRenderCaps().MaxSamplerAnisotropy != 0.f;
 		enableAnisotropy = enableAnisotropy && info.MagFilter == TextureFilter::LINEAR;
 		enableAnisotropy = enableAnisotropy && info.MinFilter == TextureFilter::LINEAR;
 		enableAnisotropy = enableAnisotropy && info.MipMapFilter == TextureFilter::LINEAR;

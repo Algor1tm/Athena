@@ -73,6 +73,7 @@ namespace Athena
 		MAX_NUM_BONES_PER_VERTEX = 4,
 		MAX_NUM_BONES_PER_MESH = 120,
 		MAX_NUM_ANIMATED_MESHES = 100,
+		MAX_NUM_MESHES = 1024,
 
 		MAX_SKYBOX_MAP_LOD = 8,
 	};
@@ -85,7 +86,7 @@ namespace Athena
 		Vector3 Tangent;
 		Vector3 Bitangent;
 
-		static VertexLayout GetLayout()
+		static VertexMemoryLayout GetLayout()
 		{
 			return { 
 				{ ShaderDataType::Float3, "a_Position"  }, 
@@ -106,7 +107,7 @@ namespace Athena
 		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 
-		static VertexLayout GetLayout()
+		static VertexMemoryLayout GetLayout()
 		{
 			return {
 				{ ShaderDataType::Float3, "a_Position"  },
@@ -156,9 +157,11 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
+		static void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0);
 		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 vertexCount = 0);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
+		static void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer);
 
 		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
 		static void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer);

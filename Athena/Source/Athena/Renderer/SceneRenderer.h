@@ -16,6 +16,7 @@
 #include "Athena/Renderer/Light.h"
 #include "Athena/Renderer/DrawList.h"
 #include "Athena/Renderer/Pipeline.h"
+#include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 
 #include "Athena/Math/Matrix.h"
@@ -134,6 +135,14 @@ namespace Athena
 		int SoftShadows = true;
 	};
 
+	struct InstanceTransformData
+	{
+		Vector3 TRow0;
+		Vector3 TRow1;
+		Vector3 TRow2;
+		Vector3 TRow3;
+	};
+
 	struct SceneRendererStatistics
 	{
 		Time GPUTime;
@@ -147,6 +156,11 @@ namespace Athena
 		Time Render2DPass;
 		Time FXAAPass;
 		PipelineStatistics PipelineStats;
+
+		uint32 Meshes;
+		uint32 Instances;
+
+		uint32 AnimMeshes;
 	};
 
 	using Render2DCallback = std::function<void()>;
@@ -169,8 +183,7 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
-		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Matrix4& transform = Matrix4::Identity());
-		void Submit(const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, const Ref<Animator>& animator, const Matrix4& transform = Matrix4::Identity());
+		void Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
 		void OnRender2D(const Render2DCallback& callback);
@@ -193,15 +206,18 @@ namespace Athena
 		void Render2DPass();
 		void FXAAPass();
 
+		void CalculateInstanceTransforms();
 		void CalculateCascadeLightSpaces(DirectionalLight& light);
+
+		void ResetStats();
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;
 
 	private:
 		// DrawLists
-		DrawList m_StaticGeometryList;
-		DrawList m_AnimGeometryList;
+		DrawListStatic m_StaticGeometryList;
+		DrawListAnim m_AnimGeometryList;
 
 		// Render Passes
 		Ref<RenderPass> m_DirShadowMapPass;
@@ -215,8 +231,8 @@ namespace Athena
 		Ref<ComputePass> m_LightCullingPass;
 		Ref<ComputePipeline> m_LightCullingPipeline;
 
-		Ref<RenderPass> m_LightingPass;
-		Ref<Pipeline> m_LightingPipeline;
+		Ref<RenderPass> m_DeferredLightingPass;
+		Ref<Pipeline> m_DeferredLightingPipeline;
 
 		Ref<RenderPass> m_SkyboxPass;
 		Ref<Pipeline> m_SkyboxPipeline;
@@ -243,8 +259,10 @@ namespace Athena
 		RendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
-		std::vector<Matrix4> m_BonesData;
+		Matrix4* m_BonesData;
 		uint32 m_BonesDataOffset;
+		InstanceTransformData* m_TransformsData;
+		uint32 m_TransformsDataOffset;
 
 		// GPU Data
 		Ref<UniformBuffer> m_CameraUBO;
@@ -254,6 +272,7 @@ namespace Athena
 		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<StorageBuffer> m_BonesSBO;
 		Ref<Texture2D> m_ShadowMapSampler;
+		Ref<VertexBuffer> m_InstancesData;
 
 		// Other
 		Vector2u m_ViewportSize = { 1, 1 };

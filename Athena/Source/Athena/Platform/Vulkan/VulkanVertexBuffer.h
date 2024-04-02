@@ -16,9 +16,15 @@ namespace Athena
 		~VulkanVertexBuffer();
 
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) override;
-		VkBuffer GetVulkanVertexBuffer() { return m_VertexBuffer.GetBuffer(); }
+		virtual void Resize(uint64 size) override;
+
+		VkBuffer GetVulkanVertexBuffer() const;
+
+	private:
+		void CleanUp();
 
 	private:
 		VulkanBufferAllocation m_VertexBuffer;
+		std::vector<VulkanBufferAllocation> m_VertexBufferSet;
 	};
 }

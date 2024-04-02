@@ -89,22 +89,22 @@ namespace Athena
 	};
 
 
-	class ATHENA_API VertexLayout
+	class ATHENA_API VertexMemoryLayout
 	{
 	public:
 		using iterator = std::vector<VertexElement>::iterator;
 		using const_iterator = std::vector<VertexElement>::const_iterator;
 
 	public:
-		VertexLayout() = default;
+		VertexMemoryLayout() = default;
 
-		VertexLayout(const std::initializer_list<VertexElement>& elements)
+		VertexMemoryLayout(const std::initializer_list<VertexElement>& elements)
 			: m_Elements(elements)
 		{
 			CalculateOffsetsAndStride();
 		}
 
-		VertexLayout(const std::vector<VertexElement>& elements)
+		VertexMemoryLayout(const std::vector<VertexElement>& elements)
 			: m_Elements(elements) 
 		{
 			CalculateOffsetsAndStride();
@@ -159,6 +159,7 @@ namespace Athena
 		virtual ~IndexBuffer() = default;
 
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		virtual void Resize(uint64 size) = 0;
 
 		uint32 GetCount() const { return m_Info.Count; }
 		const IndexBufferCreateInfo& GetInfo() const { return m_Info; }
@@ -183,9 +184,9 @@ namespace Athena
 		virtual ~VertexBuffer() = default;
 
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		virtual void Resize(uint64 size) = 0;
 
 		uint64 GetSize() const { return m_Info.Size; }
-
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
 
@@ -200,11 +201,12 @@ namespace Athena
 		static Ref<UniformBuffer> Create(const String& name, uint64 size);
 		virtual ~UniformBuffer() = default;
 
+		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::UniformBuffer; }
 		virtual const String& GetName() const override { return m_Name; }
-		uint64 GetSize() const { return m_Size; }
 
-		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
+		uint64 GetSize() const { return m_Size; }
 
 	protected:
 		String m_Name;
@@ -218,15 +220,18 @@ namespace Athena
 		static Ref<StorageBuffer> Create(const String& name, uint64 size, BufferMemoryFlags flags);
 		virtual ~StorageBuffer() = default;
 
-		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::StorageBuffer; }
-		virtual const String& GetName() const override { return m_Name; }
-		uint64 GetSize() const { return m_Size; };
-
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) = 0;
 		virtual void Resize(uint64 size) = 0;
+
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::StorageBuffer; }
+		virtual const String& GetName() const override { return m_Name; }
+
+		uint64 GetSize() const { return m_Size; };
 
 	protected:
 		String m_Name;
 		uint64 m_Size;
 	};
+
+	// TODO: DynamicGPUBuffer<T>
 }

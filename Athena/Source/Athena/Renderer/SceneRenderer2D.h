@@ -105,7 +105,7 @@ namespace Athena
 
 		Ref<Pipeline> m_QuadPipeline;
 		std::vector<Ref<Material>> m_QuadMaterials;
-		std::vector<std::vector<Ref<VertexBuffer>>> m_QuadVertexBuffers;
+		std::vector<Ref<VertexBuffer>> m_QuadVertexBuffers;
 		std::vector<DrawCall2D> m_QuadDrawList;
 		uint32 m_QuadIndexCount = 0;
 		uint32 m_QuadVertexBufferIndex = 0;
@@ -118,7 +118,7 @@ namespace Athena
 
 		Ref<Pipeline> m_CirclePipeline;
 		Ref<Material> m_CircleMaterial;
-		std::vector<std::vector<Ref<VertexBuffer>>> m_CircleVertexBuffers;
+		std::vector<Ref<VertexBuffer>> m_CircleVertexBuffers;
 		std::vector<DrawCall2D> m_CircleDrawList;
 		uint32 m_CircleIndexCount = 0;
 		uint32 m_CircleVertexBufferIndex = 0;
@@ -128,7 +128,7 @@ namespace Athena
 
 		Ref<Pipeline> m_LinePipeline;
 		Ref<Material> m_LineMaterial;
-		std::vector<std::vector<Ref<VertexBuffer>>> m_LineVertexBuffers;
+		std::vector<Ref<VertexBuffer>> m_LineVertexBuffers;
 		std::vector<DrawCall2D> m_LineDrawList;
 		uint32 m_LineVertexCount = 0;
 		uint32 m_LineVertexBufferIndex = 0;

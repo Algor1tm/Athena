@@ -201,14 +201,17 @@ void main()
     ivec2 tileID = ivec2(gl_FragCoord.xy / LIGHT_TILE_SIZE);
 	uint tileIndex = tileID.y * u_Renderer.ViewportTilesCount.x + tileID.x;
     TileVisibleLights tileData = u_VisibleLights[tileIndex];
-    //
+
+#if 0
     //for (int j = 0; j < g_PointLightCount; ++j)
     //{
     //    PointLight light = g_PointLights[j];
+#else
     for (int j = 0; j < tileData.LightCount; ++j)
     {
         uint lightIndex = tileData.LightIndices[j];
         PointLight light = g_PointLights[lightIndex];
+#endif
         vec3 radiance = ComputePointLightRadiance(light, worldPos);
         
         if(radiance != vec3(0.0))

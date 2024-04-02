@@ -640,17 +640,7 @@ namespace Athena
 
 			if (meshComponent.Visible)
 			{
-				const auto& subMeshes = meshComponent.Mesh->GetAllSubMeshes();
-				for (uint32 i = 0; i < subMeshes.size(); ++i)
-				{
-					Ref<Material> material = subMeshes[i].Material;
-					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
-
-					if (animator != nullptr)
-						renderer->Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix());
-					else
-						renderer->Submit(subMeshes[i].VertexBuffer, material, transform.AsMatrix());
-				}
+				renderer->Submit(meshComponent.Mesh, transform.AsMatrix());
 			}
 		}
 

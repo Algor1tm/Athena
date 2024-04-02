@@ -4,13 +4,18 @@
 #pragma stage : vertex
 
 #include "Include/Buffers.glslh"
-
+#include "Include/Common.glslh"
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec2 a_TexCoords;
 layout(location = 2) in vec3 a_Normal;
 layout(location = 3) in vec3 a_Tangent;
 layout(location = 4) in vec3 a_Bitangent;
+
+layout(location = 5) in vec3 a_TRow0;
+layout(location = 6) in vec3 a_TRow1;
+layout(location = 7) in vec3 a_TRow2;
+layout(location = 8) in vec3 a_TRow3;
 
 struct VertexInterpolators
 {
@@ -23,7 +28,6 @@ layout(location = 0) out VertexInterpolators Interpolators;
 
 layout(push_constant) uniform u_MaterialData
 {
-    mat4 u_Transform;
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;
@@ -38,14 +42,16 @@ layout(push_constant) uniform u_MaterialData
 
 void main()
 {
-    vec4 worldPos = u_Transform * vec4(a_Position, 1.0);
+    mat4 transform = GetTransform(a_TRow0, a_TRow1, a_TRow2, a_TRow3);
+
+    vec4 worldPos = transform * vec4(a_Position, 1.0);
     gl_Position = u_Camera.ViewProjection * worldPos;
 
     Interpolators.TexCoords = a_TexCoords;
-    Interpolators.Normal = normalize(u_Transform * vec4(a_Normal, 0)).xyz;
+    Interpolators.Normal = normalize(transform * vec4(a_Normal, 0)).xyz;
 
-    vec3 T = normalize(u_Transform * vec4(a_Tangent, 0)).xyz;
-    vec3 B = normalize(u_Transform * vec4(a_Bitangent, 0)).xyz;
+    vec3 T = normalize(transform * vec4(a_Tangent, 0)).xyz;
+    vec3 B = normalize(transform * vec4(a_Bitangent, 0)).xyz;
     vec3 N =  Interpolators.Normal;
     T = normalize(T - dot(T, N) * N);
     
@@ -72,7 +78,6 @@ layout(location = 2) out vec2 o_RoughnessMetalness;
 
 layout(push_constant) uniform u_MaterialData
 {
-    mat4 u_Transform;
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;

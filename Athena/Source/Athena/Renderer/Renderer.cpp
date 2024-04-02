@@ -254,6 +254,11 @@ namespace Athena
 		s_Data.RenderCommandBuffer->Submit();
 	}
 
+	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	{
+		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, vertexBuffer, material, instanceCount, firstInstance);
+	}
+
 	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
 	{
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, vertexCount);
@@ -267,6 +272,11 @@ namespace Athena
 	void Renderer::RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
 	{
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.CubeVertexBuffer, material);
+	}
+
+	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer)
+	{
+		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, vertexBuffer);
 	}
 
 	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

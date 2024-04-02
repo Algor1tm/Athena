@@ -364,7 +364,7 @@ Entities:
       LOD: 1.06500006
       Resolution: 256
       Type: 1
-      FilePath: D:\Development\CppProjects\Athena-dev\Athena\Athena-Editor\Assets\EnvironmentMaps\pink_sunrise_4k.hdr
+      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
       Turbidity: 2.29299998
       Azimuth: 0.224000007
       Inclination: 1.39100003

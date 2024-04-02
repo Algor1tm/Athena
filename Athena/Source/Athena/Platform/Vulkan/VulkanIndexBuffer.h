@@ -16,9 +16,15 @@ namespace Athena
 		~VulkanIndexBuffer();
 
 		virtual void UploadData(const void* data, uint64 size, uint64 offset = 0) override;
-		VkBuffer GetVulkanIndexBuffer() { return m_IndexBuffer.GetBuffer(); }
+		virtual void Resize(uint64 size) override;
+
+		VkBuffer GetVulkanIndexBuffer() const;
+
+	private:
+		void CleanUp();
 
 	private:
 		VulkanBufferAllocation m_IndexBuffer;
+		std::vector<VulkanBufferAllocation> m_IndexBufferSet;
 	};
 }

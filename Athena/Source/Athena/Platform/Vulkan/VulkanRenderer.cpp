@@ -53,6 +53,29 @@ namespace Athena
 		VulkanContext::GetAllocator()->OnUpdate();
 	}
 
+	void VulkanRenderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	{
+		if (!pipeline->GetInfo().Shader->IsCompiled())
+			return;
+
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
+
+		if (material)
+			pipeline.As<VulkanPipeline>()->RT_SetPushConstants(vkcmdBuffer, material);
+
+		Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
+		VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
+
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vulkanVertexBuffer, offsets);
+
+		Ref<VulkanIndexBuffer> indexBuffer = vkVertexBuffer->GetIndexBuffer().As<VulkanIndexBuffer>();
+		uint32 count =indexBuffer->GetCount();
+
+		vkCmdBindIndexBuffer(vkcmdBuffer, indexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(vkcmdBuffer, count, instanceCount, 0, 0, firstInstance);
+	}
+
 	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
 	{
 		if (!pipeline->GetInfo().Shader->IsCompiled())
@@ -85,6 +108,15 @@ namespace Athena
 
 			vkCmdDraw(vkcmdBuffer, count, 1, 0, 0);
 		}
+	}
+
+	void VulkanRenderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<VertexBuffer> vertexBuffer)
+	{
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
+		VkBuffer vkBuffer = vertexBuffer.As<VulkanVertexBuffer>()->GetVulkanVertexBuffer();
+
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(vkcmdBuffer, 1, 1, &vkBuffer, offsets);
 	}
 
 	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

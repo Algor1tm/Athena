@@ -52,7 +52,6 @@ namespace Athena
         m_ViewportRenderer->OnRender2D([this]() { OnRender2D(); });
 
         m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
-        m_Renderer2D->SetLineWidth(3.f);
         
         m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 200.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
@@ -400,6 +399,8 @@ namespace Athena
     void EditorLayer::OnRender2D()
     {
         Ref<SceneRenderer2D> renderer2D = m_Renderer2D;
+
+        renderer2D->SetLineWidth(3.f);
 
         if (m_EditorCtx->SceneState == SceneState::Play)
         {

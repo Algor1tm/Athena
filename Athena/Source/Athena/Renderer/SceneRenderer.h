@@ -6,7 +6,7 @@
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/GPUProfiler.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
@@ -259,10 +259,7 @@ namespace Athena
 		RendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
-		Matrix4* m_BonesData;
 		uint32 m_BonesDataOffset;
-		InstanceTransformData* m_TransformsData;
-		uint32 m_TransformsDataOffset;
 
 		// GPU Data
 		Ref<UniformBuffer> m_CameraUBO;
@@ -270,9 +267,10 @@ namespace Athena
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
-		Ref<StorageBuffer> m_BonesSBO;
 		Ref<Texture2D> m_ShadowMapSampler;
-		Ref<VertexBuffer> m_InstancesData;
+
+		DynamicGPUBuffer<StorageBuffer> m_BonesSBO;
+		DynamicGPUBuffer<VertexBuffer> m_TransformsStorage;
 
 		// Other
 		Vector2u m_ViewportSize = { 1, 1 };

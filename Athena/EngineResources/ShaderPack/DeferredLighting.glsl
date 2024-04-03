@@ -151,8 +151,9 @@ vec3 GetLightComplexityDebugColor(uint count)
         return vec3(1, 1, 0);
     if(count <= 12)
         return vec3(1, 0.4, 0);
-    if(count <= 32)
+    if(count < MAX_POINT_LIGHT_COUNT_PER_TILE)
         return vec3(1.0, 0.05, 0);
+
     return vec3(0, 0, 0);
 }
 

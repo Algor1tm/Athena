@@ -162,6 +162,8 @@ namespace Athena
 		virtual void Resize(uint64 size) = 0;
 
 		uint32 GetCount() const { return m_Info.Count; }
+		uint32 GetSize() const { return m_Info.Count * sizeof(uint32); };
+		const String& GetName() const { return m_Info.Name; }
 		const IndexBufferCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
@@ -188,6 +190,7 @@ namespace Athena
 
 		uint64 GetSize() const { return m_Info.Size; }
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
+		const String& GetName() const { return m_Info.Name; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
@@ -233,5 +236,63 @@ namespace Athena
 		uint64 m_Size;
 	};
 
-	// TODO: DynamicGPUBuffer<T>
+	template <typename T>
+	class DynamicGPUBuffer
+	{
+	public:
+		DynamicGPUBuffer() = default;
+		DynamicGPUBuffer(const Ref<T>& buffer)
+			: m_GPUBuffer(buffer) {}
+
+		void Push(const void* data, uint64 size)
+		{
+			uint64 newOffset = m_DataOffset + size;
+
+			if (m_CPUBuffer.size() < newOffset)
+			{
+				uint64 newSize = newOffset * 2.f;
+				m_CPUBuffer.resize(newSize);
+			}
+
+			auto begin = m_CPUBuffer.begin() + m_DataOffset;
+			memcpy(&(*begin), data, size);
+
+			m_DataOffset = newOffset;
+		}
+
+		void Flush()
+		{
+			// Increase size if not enough
+			if (m_GPUBuffer->GetSize() < m_DataOffset)
+			{
+				uint64 newSize = m_DataOffset * 2.f;
+
+				ATN_CORE_WARN_TAG("Renderer", "{} allocating from {} to {}", m_GPUBuffer->GetName(), 
+					Utils::MemorySizeToString(m_GPUBuffer->GetSize()), Utils::MemorySizeToString(newSize));
+
+				m_GPUBuffer->Resize(newSize);
+			}
+
+			// TODO: Decrease size when too much allocated
+
+			m_GPUBuffer->UploadData(m_CPUBuffer.data(), m_DataOffset);
+			m_DataOffset = 0;
+		}
+
+		// Only for StorageBuffer and UniformBuffer
+		operator Ref<RenderResource>() const 
+		{ 
+			return m_GPUBuffer.As<RenderResource>(); 
+		}
+
+		Ref<T> Get() const
+		{
+			return m_GPUBuffer;
+		}
+
+	private:
+		Ref<T> m_GPUBuffer;
+		std::vector<byte> m_CPUBuffer;
+		uint64 m_DataOffset = 0;
+	};
 }

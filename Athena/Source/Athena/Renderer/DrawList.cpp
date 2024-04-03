@@ -121,7 +121,7 @@ namespace Athena
 
 	uint32 DrawListStatic::GetInstancesCount() const
 	{
-		uint32 instances = 0;
+		uint32 instances = 1;
 
 		Ref<VertexBuffer> instanceVertexBuffer;
 		Ref<Material> instanceMaterial;

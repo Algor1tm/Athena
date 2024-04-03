@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Matrix.h"
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Pipeline.h"
 

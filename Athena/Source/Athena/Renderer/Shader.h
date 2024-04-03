@@ -2,8 +2,7 @@
 
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
-
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Image.h"
 
 #include <map>

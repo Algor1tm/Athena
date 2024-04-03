@@ -88,9 +88,6 @@ namespace Athena
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
 
-		if (m_Info.Topology == Topology::LINE_LIST)
-			vkCmdSetLineWidth(vkcmdBuffer, m_Info.LineWidth);
-
 		m_DescriptorSetManager.InvalidateAndUpdate();
 		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
@@ -101,6 +98,12 @@ namespace Athena
 		m_ViewportSize.y = height;
 
 		RecreatePipeline();
+	}
+
+	void VulkanPipeline::SetLineWidth(const Ref<RenderCommandBuffer>& commandBuffer, float width)
+	{
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
+		vkCmdSetLineWidth(vkcmdBuffer, width);
 	}
 
 	void VulkanPipeline::CleanUp()
@@ -234,7 +237,7 @@ namespace Athena
 		rasterizer.depthClampEnable = VK_FALSE;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizer.lineWidth = m_Info.LineWidth;
+		rasterizer.lineWidth = 1.f;
 		rasterizer.cullMode = Vulkan::GetCullMode(m_Info.CullMode);
 		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;

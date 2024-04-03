@@ -1,9 +1,6 @@
 #include "Athena/Core/Core.h"
-
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
-
 #include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #include <vulkan/vulkan.h>

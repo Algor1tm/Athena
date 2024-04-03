@@ -104,7 +104,7 @@ void main()
 		vec4 position = vec4(light.Position.xyz, 1.0);
 		float radius = light.Radius;
 
-		// We check if the light exists in our frustum
+		// Sphere frustum intersection test
 		float dist = 0.0;
 		for (uint j = 0; j < 6; j++) 
 		{
@@ -117,7 +117,8 @@ void main()
 		if (dist > 0.0)
 		{
 			uint offset = atomicAdd(s_VisibleLightCount, 1);
-			if(offset >= MAX_POINT_LIGHT_COUNT_PER_TILE)
+
+			if(offset >= MAX_POINT_LIGHT_COUNT_PER_TILE - 1)
 				break;
 
 			s_VisibleLightIndices[offset] = int(lightIndex);
@@ -126,11 +127,13 @@ void main()
 
 	barrier();
 
+
 /*---------------------------------------------------------------------------------
 	Step 4: One thread should fill the global light buffer
 -----------------------------------------------------------------------------------*/
 	if (gl_LocalInvocationIndex == 0) 
 	{
+		s_VisibleLightCount = min(s_VisibleLightCount, MAX_POINT_LIGHT_COUNT_PER_TILE);
 		u_VisibleLights[tileIndex].LightCount = s_VisibleLightCount;
 
 		for (uint i = 0; i < s_VisibleLightCount; i++) 

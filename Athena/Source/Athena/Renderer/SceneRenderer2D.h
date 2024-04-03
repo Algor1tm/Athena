@@ -5,7 +5,7 @@
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Camera.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Pipeline.h"
 #include "Athena/Renderer/Material.h"
 
@@ -35,10 +35,18 @@ namespace Athena
 		LinearColor Color;
 	};
 
-	struct DrawCall2D
+	struct QuadBatch
 	{
-		uint32 VertexBufferIndex;
+		uint32 VertexOffset;
+		uint32 IndexCount;
+		Ref<Material> Material;
+	};
+
+	struct LineBatch
+	{
+		uint32 VertexOffset;
 		uint32 VertexCount;
+		float LineWidth;
 	};
 
 	class ATHENA_API SceneRenderer2D : public RefCounted
@@ -83,57 +91,45 @@ namespace Athena
 
 	private:
 		void FlushQuads();
-		void FlushCircles();
+		void NextBatchQuads();
+
 		void FlushLines();
+		void NextBatchLines();
+
+		void FlushIndexBuffer();
 
 	private:
-		// Max Geometry per batch
-		const uint32 s_MaxQuads = 500;
-		const uint32 s_MaxQuadVertices = s_MaxQuads * 4;
-		const uint32 s_MaxCircles = 300;
-		const uint32 s_MaxCircleVertices = s_MaxCircles * 4;
-		const uint32 s_MaxLines = 300;
-		const uint32 s_MaxLineVertices = s_MaxLines * 2;
-		const uint32 s_MaxIndices = Math::Max(s_MaxQuads, s_MaxCircles) * 6;
-
 		static const uint32 s_MaxTextureSlots = 32;   // TODO: RenderCaps
 
 	private:
+		bool m_BeginScene = false;
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
-		Ref<IndexBuffer> m_IndexBuffer;
+		Matrix4 m_ViewProjectionCamera;
 		Matrix4 m_InverseViewCamera;
 
+		// Shared indices for quads and circles
+		DynamicGPUBuffer<IndexBuffer> m_IndexBuffer;
+		std::vector<uint32> m_IndicesCount; // Per frame in flight
+
 		Ref<Pipeline> m_QuadPipeline;
-		std::vector<Ref<Material>> m_QuadMaterials;
-		std::vector<Ref<VertexBuffer>> m_QuadVertexBuffers;
-		std::vector<DrawCall2D> m_QuadDrawList;
-		uint32 m_QuadIndexCount = 0;
-		uint32 m_QuadVertexBufferIndex = 0;
-		QuadVertex* m_QuadVertexBufferBase = nullptr;
-		QuadVertex* m_QuadVertexBufferPointer = nullptr;
+		DynamicGPUBuffer<VertexBuffer> m_QuadVertexBuffer;
+		std::vector<QuadBatch> m_QuadBatches;	// TODO: clear batches(materials) when too much allocated
+		uint32 m_QuadBatchIndex = 0;
 
 		std::array<Ref<Texture2D>, s_MaxTextureSlots> m_TextureSlots;
 		uint32 m_TextureSlotIndex = 1; // 0 - white texture
 
-
 		Ref<Pipeline> m_CirclePipeline;
 		Ref<Material> m_CircleMaterial;
-		std::vector<Ref<VertexBuffer>> m_CircleVertexBuffers;
-		std::vector<DrawCall2D> m_CircleDrawList;
-		uint32 m_CircleIndexCount = 0;
-		uint32 m_CircleVertexBufferIndex = 0;
-		CircleVertex* m_CircleVertexBufferBase = nullptr;
-		CircleVertex* m_CircleVertexBufferPointer = nullptr;
-
+		DynamicGPUBuffer<VertexBuffer> m_CircleVertexBuffer;
+		uint64 m_CircleIndexCount = 0;
 
 		Ref<Pipeline> m_LinePipeline;
 		Ref<Material> m_LineMaterial;
-		std::vector<Ref<VertexBuffer>> m_LineVertexBuffers;
-		std::vector<DrawCall2D> m_LineDrawList;
-		uint32 m_LineVertexCount = 0;
-		uint32 m_LineVertexBufferIndex = 0;
-		LineVertex* m_LineVertexBufferBase = nullptr;
-		LineVertex* m_LineVertexBufferPointer = nullptr;
+		DynamicGPUBuffer<VertexBuffer> m_LineVertexBuffer;
+		std::vector<LineBatch> m_LineBatches;
+		uint32 m_LineBatchIndex = 0;
+		float m_LineWidth = 1.f;
 
 		Vector4 m_QuadVertexPositions[4];
 	};

@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/RenderPass.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/RenderResource.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
 
@@ -38,7 +37,6 @@ namespace Athena
 		VertexMemoryLayout VertexLayout;
 		VertexMemoryLayout InstanceLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
-		float LineWidth = 1.f;
 		CullMode CullMode = CullMode::BACK;
 		DepthCompare DepthCompare = DepthCompare::NONE;
 		bool BlendEnable = true;
@@ -54,8 +52,7 @@ namespace Athena
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		virtual void SetViewport(uint32 width, uint32 height) = 0;
 
-		void SetLineWidth(float width) { m_Info.LineWidth = width; }
-		float GetLineWidth() const { return m_Info.LineWidth; }
+		virtual void SetLineWidth(const Ref<RenderCommandBuffer>& commandBuffer, float width) = 0;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) = 0;
 		virtual void Bake() = 0;

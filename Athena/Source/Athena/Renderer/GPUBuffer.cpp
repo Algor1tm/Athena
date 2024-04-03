@@ -1,4 +1,4 @@
-#include "GPUBuffers.h"
+#include "GPUBuffer.h"
 
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanVertexBuffer.h"

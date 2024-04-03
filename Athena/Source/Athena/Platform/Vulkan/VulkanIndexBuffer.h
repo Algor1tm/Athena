@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanAllocator.h"
 
 #include <vulkan/vulkan.h>

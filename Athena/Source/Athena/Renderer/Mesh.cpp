@@ -409,11 +409,6 @@ namespace Athena
 		info.TicksPerSecond = aianimation->mTicksPerSecond;
 		info.Skeleton = skeleton;
 
-		if (aianimation->mNumChannels > ShaderDef::MAX_NUM_BONES_PER_MESH)
-		{
-			ATN_CORE_ERROR_TAG("Animation", "'{}' has more than {} bones, other bones will be discarded", info.Name, (uint32)ShaderDef::MAX_NUM_BONES_PER_MESH);
-		}
-
 		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
 		{

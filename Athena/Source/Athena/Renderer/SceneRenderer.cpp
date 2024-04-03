@@ -34,10 +34,7 @@ namespace Athena
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 
-		uint64 maxNumBones = ShaderDef::MAX_NUM_BONES_PER_MESH * ShaderDef::MAX_NUM_ANIMATED_MESHES;
-		m_BonesSBO = StorageBuffer::Create("BonesSBO", maxNumBones * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
-
-		m_BonesData = new Matrix4[maxNumBones];
+		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
 		m_BonesDataOffset = 0;
 
 		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights) * 1, BufferMemoryFlags::GPU_ONLY);
@@ -47,9 +44,6 @@ namespace Athena
 		// To fix that, we need some sort of Asset Manager to store 'MeshSource', to which
 		// StaticMeshes would refer to.
 
-		m_TransformsData = new InstanceTransformData[ShaderDef::MAX_NUM_MESHES];
-		m_TransformsDataOffset = 0;
-
 		VertexMemoryLayout instanceLayout = {
 				{ ShaderDataType::Float3, "a_TRow0" },
 				{ ShaderDataType::Float3, "a_TRow1" },
@@ -57,11 +51,11 @@ namespace Athena
 				{ ShaderDataType::Float3, "a_TRow2" } };
 
 		VertexBufferCreateInfo instanceBufferInfo;
-		instanceBufferInfo.Name = "InstancesData";
-		instanceBufferInfo.Size = sizeof(InstanceTransformData) * ShaderDef::MAX_NUM_MESHES;
+		instanceBufferInfo.Name = "TransformsStorage";
+		instanceBufferInfo.Size = sizeof(InstanceTransformData) * 1;
 		instanceBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
-		m_InstancesData = VertexBuffer::Create(instanceBufferInfo);
+		m_TransformsStorage = VertexBuffer::Create(instanceBufferInfo);
 
 		VertexMemoryLayout fullscreenQuadLayout = {
 				{ ShaderDataType::Float2, "a_Position" },
@@ -395,8 +389,7 @@ namespace Athena
 
 	void SceneRenderer::Shutdown()
 	{
-		delete[] m_BonesData;
-		delete[] m_TransformsData;
+
 	}
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
@@ -464,12 +457,6 @@ namespace Athena
 
 			if (animator)
 			{
-				if (m_BonesDataOffset >= ShaderDef::MAX_NUM_BONES_PER_MESH * ShaderDef::MAX_NUM_ANIMATED_MESHES)
-				{
-					ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} animated meshes", ShaderDef::MAX_NUM_ANIMATED_MESHES);
-					return;
-				}
-
 				AnimDrawCall drawCall;
 				drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
 				drawCall.Transform = transform;
@@ -477,7 +464,8 @@ namespace Athena
 				drawCall.BonesOffset = m_BonesDataOffset;
 
 				const auto& bones = animator->GetBoneTransforms();
-				memcpy(&m_BonesData[m_BonesDataOffset], bones.data(), bones.size() * sizeof(Matrix4));
+				m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
+
 				m_BonesDataOffset += bones.size();
 
 				m_AnimGeometryList.Push(drawCall);
@@ -604,7 +592,6 @@ namespace Athena
 		m_RendererData.DebugLightComplexity = m_Settings.DebugView == DebugView::LIGHT_COMPLEXITY ? 1 : 0;
 
 		m_BonesDataOffset = 0;
-		m_TransformsDataOffset = 0;
 	}
 
 	void SceneRenderer::EndScene()
@@ -628,14 +615,16 @@ namespace Athena
 		{
 			ATN_PROFILE_SCOPE("SceneRenderer::UploadData");
 
-			m_InstancesData->UploadData(m_TransformsData, m_TransformsDataOffset * sizeof(InstanceTransformData));
-			m_BonesSBO->UploadData(m_BonesData, m_BonesDataOffset * sizeof(Matrix4));
+			m_BonesSBO.Flush();
+			m_TransformsStorage.Flush();
+			Renderer::BindInstanceRateBuffer(m_RenderCommandBuffer, m_TransformsStorage.Get());
 
 			m_CameraUBO->UploadData(&m_CameraData, sizeof(CameraData));
 			m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
 		}
+
 
 		DirShadowMapPass();
 		GBufferPass();
@@ -997,14 +986,13 @@ namespace Athena
 		const auto& staticDrawCalls = m_StaticGeometryList.GetArray();
 		for (const auto& draw : staticDrawCalls)
 		{
-			InstanceTransformData& transformsData = m_TransformsData[m_TransformsDataOffset];
+			InstanceTransformData transformData;
+			transformData.TRow0 = draw.Transform[0];
+			transformData.TRow1 = draw.Transform[1];
+			transformData.TRow2 = draw.Transform[2];
+			transformData.TRow3 = draw.Transform[3];
 
-			transformsData.TRow0 = draw.Transform[0];
-			transformsData.TRow1 = draw.Transform[1];
-			transformsData.TRow2 = draw.Transform[2];
-			transformsData.TRow3 = draw.Transform[3];
-
-			m_TransformsDataOffset++;
+			m_TransformsStorage.Push(&transformData, sizeof(InstanceTransformData));
 		}
 
 		m_AnimGeometryList.SetInstanceOffset(staticDrawCalls.size());
@@ -1012,17 +1000,16 @@ namespace Athena
 		const auto& animDrawCalls = m_AnimGeometryList.GetArray();
 		for (const auto& draw : animDrawCalls)
 		{
-			InstanceTransformData& transformsData = m_TransformsData[m_TransformsDataOffset];
+			InstanceTransformData transformData;
+			transformData.TRow0 = draw.Transform[0];
+			transformData.TRow1 = draw.Transform[1];
+			transformData.TRow2 = draw.Transform[2];
+			transformData.TRow3 = draw.Transform[3];
 
-			transformsData.TRow0 = draw.Transform[0];
-			transformsData.TRow1 = draw.Transform[1];
-			transformsData.TRow2 = draw.Transform[2];
-			transformsData.TRow3 = draw.Transform[3];
-
-			m_TransformsDataOffset++;
+			m_TransformsStorage.Push(&transformData, sizeof(InstanceTransformData));
 		}
 
-		Renderer::BindInstanceRateBuffer(m_RenderCommandBuffer, m_InstancesData);
+		
 	}
 
 	void SceneRenderer::ResetStats()

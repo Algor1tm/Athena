@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 
 #include "Athena/Renderer/CommandQueue.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/RenderCommandBuffer.h"
@@ -71,10 +71,6 @@ namespace Athena
 		SHADOW_CASCADES_COUNT = 4,
 
 		MAX_NUM_BONES_PER_VERTEX = 4,
-		MAX_NUM_BONES_PER_MESH = 120,
-		MAX_NUM_ANIMATED_MESHES = 100,
-		MAX_NUM_MESHES = 1024,
-
 		MAX_SKYBOX_MAP_LOD = 8,
 	};
 
@@ -158,7 +154,7 @@ namespace Athena
 		static void EndFrame();
 
 		static void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0);
-		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 vertexCount = 0);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 offset = 0, uint32 count = 0);
 		static void RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 		static void RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
 		static void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer);

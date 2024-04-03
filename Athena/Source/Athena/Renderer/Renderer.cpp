@@ -74,8 +74,6 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("LIGHT_TILE_SIZE", std::to_string(LIGHT_TILE_SIZE));
 		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
-		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_MESH", std::to_string(MAX_NUM_BONES_PER_MESH));
-		Renderer::SetGlobalShaderMacros("MAX_NUM_ANIMATED_MESHES", std::to_string(MAX_NUM_ANIMATED_MESHES));
 		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
 		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
 		
@@ -259,9 +257,9 @@ namespace Athena
 		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, vertexBuffer, material, instanceCount, firstInstance);
 	}
 
-	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 vertexCount)
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset, uint32 count)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, vertexCount);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, offset, count);
 	}
 
 	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)

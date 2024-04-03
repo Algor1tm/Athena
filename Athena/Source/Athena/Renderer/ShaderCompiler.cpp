@@ -3,7 +3,6 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Time.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/GPUBuffers.h"
 
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>

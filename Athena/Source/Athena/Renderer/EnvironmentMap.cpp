@@ -3,6 +3,7 @@
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
@@ -53,7 +54,7 @@ namespace Athena
 			m_PanoramaToCubePass->Bake();
 
 			m_PanoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
-			m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", Renderer::GetWhiteTexture());
+			m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", TextureGenerator::GetWhiteTexture());
 			m_PanoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
 			m_PanoramaToCubePipeline->Bake();
 		}
@@ -157,7 +158,7 @@ namespace Athena
 	Ref<TextureCube> EnvironmentMap::GetEnvironmentTexture()
 	{
 		if (IsEmpty())
-			return Renderer::GetBlackTextureCube();
+			return TextureGenerator::GetBlackTextureCube();
 
 		if (m_Dirty)
 			Load();
@@ -168,7 +169,7 @@ namespace Athena
 	Ref<TextureCube> EnvironmentMap::GetIrradianceTexture()
 	{
 		if (IsEmpty())
-			return Renderer::GetBlackTextureCube();
+			return TextureGenerator::GetBlackTextureCube();
 
 		if (m_Dirty)
 			Load();

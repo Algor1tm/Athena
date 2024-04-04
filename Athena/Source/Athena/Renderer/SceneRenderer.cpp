@@ -3,6 +3,7 @@
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
@@ -221,9 +222,10 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
-			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", Renderer::GetBRDF_LUT());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_PCSSNoise", TextureGenerator::GetBlueNoise());
+			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", TextureGenerator::GetBRDF_LUT());
+			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
 
 			m_DeferredLightingPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
@@ -260,7 +262,7 @@ namespace Athena
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
 			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_SkyboxPipeline->SetInput("u_RendererData", m_RendererUBO);
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
 			m_SkyboxPipeline->Bake();
 		}
 
@@ -297,7 +299,7 @@ namespace Athena
 
 			m_BloomUpsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomUpsample"));
 			m_BloomUpsample->SetInput("u_BloomTexture", m_BloomTexture);
-			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
+			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
 			m_BloomUpsample->Bake();
 		}
 
@@ -407,8 +409,10 @@ namespace Athena
 
 	void SceneRenderer::OnViewportResize(uint32 width, uint32 height)
 	{
-		if (m_ViewportSize == Vector2u(width, height))
-			return;
+		m_OriginalViewportSize = { width, height };
+
+		width = m_Settings.Quality.RendererScale * width;
+		height = m_Settings.Quality.RendererScale * height;
 
 		m_ViewportSize = { width, height };
 
@@ -440,11 +444,18 @@ namespace Athena
 		m_Render2DPass->Resize(width, height);
 
 		m_PostProcessTexture->Resize(width, height);
+
+		m_ViewportResizeCallback(width, height);
 	}
 
-	void SceneRenderer::OnRender2D(const Render2DCallback& callback)
+	void SceneRenderer::SetOnRender2DCallback(const Render2DCallback& callback)
 	{
 		m_Render2DCallback = callback;
+	}
+
+	void SceneRenderer::SetOnViewportResizeCallback(const OnViewportResizeCallback& callback)
+	{
+		m_ViewportResizeCallback = callback;
 	}
 
 	void SceneRenderer::Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform)
@@ -553,9 +564,9 @@ namespace Athena
 		}
 		else
 		{
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", Renderer::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", Renderer::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
 		}
 	}
 
@@ -582,7 +593,7 @@ namespace Athena
 		if (m_Settings.BloomSettings.DirtTexture)
 			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
 		else
-			m_BloomUpsample->SetInput("u_DirtTexture", Renderer::GetBlackTexture());
+			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
 
 		m_CompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
 		m_CompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
@@ -750,7 +761,8 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		// Calculate number of downsample passes
-		const uint32 downSampleResLimit = 8;
+		const uint32 downSampleResLimit = 4;
+		const uint32 maxMipLevels = 8;
 
 		uint32 width = m_BloomTexture->GetWidth();
 		uint32 height = m_BloomTexture->GetHeight();
@@ -762,6 +774,8 @@ namespace Athena
 			height /= 2;
 
 			mipLevels++;
+			//if (mipLevels >= maxMipLevels)
+			//	break;
 		}
 
 		// Init materials
@@ -1008,8 +1022,6 @@ namespace Athena
 
 			m_TransformsStorage.Push(&transformData, sizeof(InstanceTransformData));
 		}
-
-		
 	}
 
 	void SceneRenderer::ResetStats()
@@ -1026,5 +1038,10 @@ namespace Athena
 
 		memset(&m_Statistics, 0, sizeof(m_Statistics));
 		m_Statistics.GPUTime = gpuTime;
+	}
+
+	void SceneRenderer::ApplySettings()
+	{
+		OnViewportResize(m_OriginalViewportSize.x, m_OriginalViewportSize.y);
 	}
 }

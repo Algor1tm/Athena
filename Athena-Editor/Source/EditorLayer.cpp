@@ -49,9 +49,13 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
 
         m_ViewportRenderer = SceneRenderer::Create();
-        m_ViewportRenderer->OnRender2D([this]() { OnRender2D(); });
-
         m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
+
+        m_ViewportRenderer->SetOnRender2DCallback(
+            [this]() { OnRender2D(); });
+
+        m_ViewportRenderer->SetOnViewportResizeCallback(
+            [this](uint32 width, uint32 height) { m_Renderer2D->OnViewportResize(width, height); });
         
         m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 200.f);
         //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
@@ -83,7 +87,7 @@ namespace Athena
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
 
         const auto& vpDesc = viewportPanel->GetDescription();
-        const auto& rendererSize = m_ViewportRenderer->GetViewportSize();
+        const auto& rendererSize = m_EditorCtx->ActiveScene->GetViewportSize();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
@@ -91,7 +95,6 @@ namespace Athena
             ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize");
 
             m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
-            m_Renderer2D->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }

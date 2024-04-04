@@ -1,7 +1,7 @@
 #include "ViewportPanel.h"
 
-#include "Athena/Core/Application.h"
 #include "Athena/UI/UI.h"
+#include "Athena/Renderer/TextureGenerator.h"
 #include "ImGuizmoLayer.h"
 
 #include <ImGui/imgui.h>
@@ -51,9 +51,9 @@ namespace Athena
             textures[0] = gbuffer->GetOutput("SceneDepth");
             textures[1] = gbuffer->GetOutput("SceneNormalsEmission");
             textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness");
-            textures[3] = Renderer::GetBlackTexture();  // TODO: Add Ambient Occlusion map
+            textures[3] = TextureGenerator::GetBlackTexture();  // TODO: Add Ambient Occlusion map
             textures[4] = gbuffer->GetOutput("SceneAlbedo");
-            textures[5] = Renderer::GetBlackTexture(); 
+            textures[5] = m_ViewportRenderer->GetFinalImage();
             
             ImVec2 textureSize = { viewportX / columns, viewportY / rows };
             ImVec2 pos = cursor;

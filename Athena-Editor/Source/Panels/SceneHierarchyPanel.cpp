@@ -5,6 +5,7 @@
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/TextureGenerator.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
@@ -331,7 +332,7 @@ namespace Athena
 			Ref<Texture2D> texture = mat->Get<Ref<Texture2D>>(texName);
 			Ref<Texture2D> displayTexture = texture;
 
-			if (!texture || texture == Renderer::GetWhiteTexture())
+			if (!texture || texture == TextureGenerator::GetWhiteTexture())
 				displayTexture = EditorResources::GetIcon("EmptyTexture");
 
 			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
@@ -632,7 +633,7 @@ namespace Athena
 					ImGui::SetCursorPos({ cursor.x, cursor.y + imageSize / 1.8f });
 					if (ImGui::Button("Reset"))
 					{
-						sprite.Texture = Renderer::GetWhiteTexture();
+						sprite.Texture = TextureGenerator::GetWhiteTexture();
 					}
 				}
 

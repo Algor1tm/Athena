@@ -1,10 +1,10 @@
 #include "SceneRenderer2D.h"
 
 #include "Athena/Math/Transforms.h"
-
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
@@ -55,7 +55,7 @@ namespace Athena
 
 		m_QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		m_TextureSlots[0] = Renderer::GetWhiteTexture();
+		m_TextureSlots[0] = TextureGenerator::GetWhiteTexture();
 
 		m_QuadVertexPositions[0] = { -0.5f,0.5f, 0.f, 1.f };
 		m_QuadVertexPositions[1] = { 0.5f, 0.5f, 0.f, 1.f };

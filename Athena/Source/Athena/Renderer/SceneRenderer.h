@@ -73,12 +73,18 @@ namespace Athena
 		Ref<Texture2D> DirtTexture;
 	};
 
+	struct QualitySettings
+	{
+		float RendererScale = 1.f;
+	};
+
 	struct SceneRendererSettings
 	{
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
 		PostProcessingSettings PostProcessingSettings;
 		DebugView DebugView = DebugView::NONE;
+		QualitySettings Quality;
 	};
 
 
@@ -159,11 +165,11 @@ namespace Athena
 
 		uint32 Meshes;
 		uint32 Instances;
-
 		uint32 AnimMeshes;
 	};
 
 	using Render2DCallback = std::function<void()>;
+	using OnViewportResizeCallback = std::function<void(uint32, uint32)>;
 
 	class ATHENA_API SceneRenderer : public RefCounted
 	{
@@ -186,7 +192,8 @@ namespace Athena
 		void Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
-		void OnRender2D(const Render2DCallback& callback);
+		void SetOnRender2DCallback(const Render2DCallback& callback);
+		void SetOnViewportResizeCallback(const OnViewportResizeCallback& callback);
 
 		Ref<Texture2D> GetFinalImage();
 		Ref<Texture2D> GetShadowMap();
@@ -194,6 +201,8 @@ namespace Athena
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
+
+		void ApplySettings();
 
 	private:
 		void DirShadowMapPass();
@@ -274,6 +283,8 @@ namespace Athena
 
 		// Other
 		Vector2u m_ViewportSize = { 1, 1 };
+		Vector2u m_OriginalViewportSize = { 1, 1 };
+		OnViewportResizeCallback m_ViewportResizeCallback;
 
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Ref<GPUProfiler> m_Profiler;

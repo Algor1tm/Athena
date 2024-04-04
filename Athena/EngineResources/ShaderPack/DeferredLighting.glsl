@@ -24,14 +24,14 @@ void main()
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;
 
-layout(set = 1, binding = 8) uniform sampler2D u_SceneDepth;
-layout(set = 1, binding = 9) uniform sampler2D u_SceneAlbedo;
-layout(set = 1, binding = 10) uniform sampler2D u_SceneNormalsEmission;
-layout(set = 1, binding = 11) uniform sampler2D u_SceneRoughnessMetalness;
+layout(set = 1, binding = 9) uniform sampler2D u_SceneDepth;
+layout(set = 1, binding = 10) uniform sampler2D u_SceneAlbedo;
+layout(set = 1, binding = 11) uniform sampler2D u_SceneNormalsEmission;
+layout(set = 1, binding = 12) uniform sampler2D u_SceneRoughnessMetalness;
 
-layout(set = 1, binding = 12) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 13) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 14) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 13) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 14) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 15) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -185,6 +185,8 @@ void main()
     float distanceFromCamera = distance(u_Camera.Position, worldPos);
     vec3 totalIrradiance = vec3(0.0);
     
+    vec2 screenUV = vec2(gl_FragCoord);
+
     for (int i = 0; i < g_DirectionalLightCount; ++i)
     {
         DirectionalLight light = g_DirectionalLights[i];
@@ -193,7 +195,7 @@ void main()
         
         float shadow = 0.0;
         if(bool(light.CastShadows))
-            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, worldPos, distanceFromCamera, u_Camera.View);
+            shadow = ComputeDirectionalLightShadow(light.LightSize, dir, normal, worldPos, distanceFromCamera, u_Camera.View, screenUV);
         
         if(shadow < 1.0)
             totalIrradiance += (1 - shadow) * LightContribution(dir, radiance, normal, viewDir, albedo.rgb, metalness, roughness);

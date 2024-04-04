@@ -5,6 +5,7 @@
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ComputePass.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
@@ -26,15 +27,11 @@ namespace Athena
 		Ref<ShaderPack> ShaderPack;
 		Ref<MaterialTable> MaterialTable;
 
-		Ref<Texture2D> WhiteTexture;
-		Ref<Texture2D> BlackTexture;
-		Ref<TextureCube> BlackTextureCube;
-		Ref<Texture2D> BRDF_LUT;
 		Ref<VertexBuffer> CubeVertexBuffer;
 		Ref<VertexBuffer> QuadVertexBuffer;
 	};
 
-	RendererData s_Data;
+	static RendererData s_Data;
 
 	void Renderer::Init(const RendererConfig& config)
 	{
@@ -80,45 +77,6 @@ namespace Athena
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
-		uint32 whiteTextureData = 0xffffffff;
-
-		Texture2DCreateInfo texInfo;
-		texInfo.Name = "Renderer_WhiteTexture";
-		texInfo.Format = ImageFormat::RGBA8;
-		texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-		texInfo.InitialData = &whiteTextureData;
-		texInfo.Width = 1;
-		texInfo.Height = 1;
-		texInfo.Layers = 1;
-		texInfo.GenerateMipLevels = false;
-		texInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
-		texInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
-		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
-		texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
-
-		s_Data.WhiteTexture = Texture2D::Create(texInfo);
-
-		uint32 blackTextureData = 0xff000000;
-		texInfo.InitialData = &blackTextureData;
-		texInfo.Name = "Renderer_BlackTexture";
-
-		s_Data.BlackTexture = Texture2D::Create(texInfo); 
-
-		TextureCubeCreateInfo texCubeInfo;
-		texCubeInfo.Name = "Renderer_BlackTextureCube";
-		texCubeInfo.Format = ImageFormat::RGBA8;
-		texCubeInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-		texCubeInfo.InitialData = &blackTextureData;
-		texCubeInfo.Width = 1;
-		texCubeInfo.Height = 1;
-		texCubeInfo.GenerateMipLevels = false;
-		texCubeInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
-
-		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo);
-
 		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
 		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
 
@@ -154,72 +112,27 @@ namespace Athena
 
 		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-		// BRDF_LUT GENERATION
-		{
-			Texture2DCreateInfo brdfLutInfo;
-			brdfLutInfo.Name = "Renderer_BRDF_LUT";
-			brdfLutInfo.Format = ImageFormat::RG16F;
-			brdfLutInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
-			brdfLutInfo.InitialData = nullptr;
-			brdfLutInfo.Width = 512;
-			brdfLutInfo.Height = 512;
-			brdfLutInfo.Layers = 1;
-			brdfLutInfo.GenerateMipLevels = false;
-			brdfLutInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-			brdfLutInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			brdfLutInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
-			brdfLutInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
-
-			s_Data.BRDF_LUT = Texture2D::Create(brdfLutInfo);
-
-			ComputePassCreateInfo passInfo;
-			passInfo.Name = "BRDF_LUT_Pass";
-
-			Ref<ComputePass> pass = ComputePass::Create(passInfo);
-			pass->SetOutput(s_Data.BRDF_LUT);
-			pass->Bake();
-
-			Ref<ComputePipeline> pipeline = ComputePipeline::Create(GetShaderPack()->Get("BRDF_LUT"));
-			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
-			pipeline->Bake();
-			
-			cmdBufferInfo.Name = "BRDF_LUT_Generation";
-			cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
-			
-			Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
-			
-			commandBuffer->Begin();
-			{
-				pass->Begin(commandBuffer);
-				pipeline->Bind(commandBuffer);
-				Renderer::Dispatch(commandBuffer, pipeline, { brdfLutInfo.Width, brdfLutInfo.Height, 1 });
-				pass->End(commandBuffer);
-			}
-			commandBuffer->End();
-			commandBuffer->Submit();
-		}
+		TextureGenerator::Init();
 	}
 
 	void Renderer::Shutdown()
 	{
-		s_Data.MaterialTable.Release();
+		TextureGenerator::Shutdown();
 
-		s_Data.WhiteTexture.Release();
-		s_Data.BlackTexture.Release();
-		s_Data.BlackTextureCube.Release();
-		s_Data.BRDF_LUT.Release();
+		s_Data.MaterialTable.Release();
 		s_Data.CubeVertexBuffer.Release();
 		s_Data.QuadVertexBuffer.Release();
 
 		s_Data.ShaderPack.Release();
 
-		s_Data.RendererAPI->Shutdown();
 		s_Data.RendererAPI->WaitDeviceIdle();
 
 		for (auto& queue : s_Data.ResourceFreeQueues)
 		{
 			queue.Flush();
 		}
+
+		s_Data.RendererAPI->Shutdown();
 	}
 
 	void Renderer::BeginFrame()
@@ -375,36 +288,6 @@ namespace Athena
 	uint64 Renderer::GetMemoryUsage()
 	{
 		return s_Data.RendererAPI->GetMemoryUsage();
-	}
-
-	Ref<Texture2D> Renderer::GetBRDF_LUT()
-	{
-		return s_Data.BRDF_LUT;
-	}
-
-	Ref<Texture2D> Renderer::GetWhiteTexture()
-	{
-		return s_Data.WhiteTexture;
-	}
-
-	Ref<Texture2D> Renderer::GetBlackTexture()
-	{
-		return s_Data.BlackTexture;
-	}
-
-	Ref<TextureCube> Renderer::GetBlackTextureCube()
-	{
-		return s_Data.BlackTextureCube;
-	}
-
-	Ref<VertexBuffer> Renderer::GetCubeVertexBuffer()
-	{
-		return s_Data.CubeVertexBuffer;
-	}
-
-	Ref<VertexBuffer> Renderer::GetQuadVertexBuffer()
-	{
-		return s_Data.QuadVertexBuffer;
 	}
 
 	CommandQueue& Renderer::GetResourceFreeQueue()

@@ -1,7 +1,8 @@
 #include "Image.h"
 
-#include "Athena/Platform/Vulkan/VulkanImage.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Platform/Vulkan/VulkanImage.h"
 
 #include <stb_image/stb_image.h>
 #include <stb_image/stb_image_write.h>
@@ -56,6 +57,8 @@ namespace Athena
 
 	Ref<Image> Image::Create(const FilePath& filepath, bool sRGB, bool genMips)
 	{
+		ATN_CORE_VERIFY(FileSystem::Exists(filepath));
+
 		int width, height, channels;
 		bool HDR = false;
 		ImageFormat format = ImageFormat::RGBA8;

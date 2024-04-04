@@ -2,10 +2,10 @@
 
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/TextureGenerator.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
-
 #include "EditorResources.h"
 #include "EditorLayer.h"
 
@@ -254,7 +254,7 @@ namespace Athena
 			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
 			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
-			if (!displayTex || displayTex == Renderer::GetBlackTexture())
+			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
 				displayTex = EditorResources::GetIcon("EmptyTexture");
 
 			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
@@ -304,6 +304,19 @@ namespace Athena
 			}
 
 			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Quality", false) && UI::BeginPropertyTable())
+		{
+			QualitySettings& quality = settings.Quality;
+			UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 1.5f);
+
+			UI::EndPropertyTable();
+
+			if (UI::ButtonCentered("Apply"))
+				m_ViewportRenderer->ApplySettings();
+
 			UI::TreePop();
 		}
 

@@ -74,48 +74,6 @@ namespace Athena
 		MAX_SKYBOX_MAP_LOD = 8,
 	};
 
-	struct StaticVertex
-	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
-
-		static VertexMemoryLayout GetLayout()
-		{
-			return { 
-				{ ShaderDataType::Float3, "a_Position"  }, 
-				{ ShaderDataType::Float2, "a_TexCoords" }, 
-				{ ShaderDataType::Float3, "a_Normal"    },
-				{ ShaderDataType::Float3, "a_Tangent"   }, 
-				{ ShaderDataType::Float3, "a_Bitangent" } };
-		}
-	};
-
-	struct AnimVertex
-	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
-		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
-		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
-
-		static VertexMemoryLayout GetLayout()
-		{
-			return {
-				{ ShaderDataType::Float3, "a_Position"  },
-				{ ShaderDataType::Float2, "a_TexCoords" },
-				{ ShaderDataType::Float3, "a_Normal"    },
-				{ ShaderDataType::Float3, "a_Tangent"   },
-				{ ShaderDataType::Float3, "a_Bitangent" },
-				{ ShaderDataType::Int4,   "a_Tangent"   },
-				{ ShaderDataType::Float4, "a_Bitangent" } };
-		}
-	};
-
 	class ATHENA_API ShaderPack;
 	struct RendererConfig;
 
@@ -180,14 +138,6 @@ namespace Athena
 		static void SetGlobalShaderMacros(const String& name, const String& value);
 
 		static Ref<MaterialTable> GetMaterialTable();
-
-		static Ref<Texture2D> GetBRDF_LUT();
-		static Ref<Texture2D> GetWhiteTexture();
-		static Ref<Texture2D> GetBlackTexture();
-		static Ref<TextureCube> GetBlackTextureCube();
-
-		static Ref<VertexBuffer> GetCubeVertexBuffer();
-		static Ref<VertexBuffer> GetQuadVertexBuffer();
 
 	private:
 		static CommandQueue& GetResourceFreeQueue();

@@ -35,7 +35,6 @@ namespace Athena
 		virtual uint64 GetMemoryUsage() override;
 
 	private:
-		std::vector<VkCommandBuffer> m_VkCommandBuffers;
 		PFN_vkCmdDebugMarkerBeginEXT m_DebugMarkerBeginPFN;
 		PFN_vkCmdDebugMarkerEndEXT m_DebugMarkerEndPFN;
 		PFN_vkCmdDebugMarkerInsertEXT m_DebugMarkerInsertPFN;

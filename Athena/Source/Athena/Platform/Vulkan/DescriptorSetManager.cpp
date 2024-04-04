@@ -1,10 +1,12 @@
 #include "DescriptorSetManager.h"
+
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 #include "Athena/Platform/Vulkan/VulkanUniformBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
@@ -110,12 +112,12 @@ namespace Athena
 				if (resource.Type == RenderResourceType::Texture2D)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = Renderer::GetWhiteTexture();
+						resource.Storage[i] = TextureGenerator::GetWhiteTexture();
 				}
 				else if(resource.Type == RenderResourceType::TextureCube)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = Renderer::GetBlackTextureCube();
+						resource.Storage[i] = TextureGenerator::GetBlackTextureCube();
 				}
 			}
 		}
@@ -581,7 +583,7 @@ namespace Athena
 
 			if (!descriptorsToUpdate.empty())
 			{
-				ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
+				ATN_CORE_INFO_TAG("Renderer", "Updating descriptor set '{}' (set = {}, frameIndex = {})", m_Info.Name, set, frameIndex);
 				vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 			}
 		}

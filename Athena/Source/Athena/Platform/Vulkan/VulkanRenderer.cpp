@@ -19,18 +19,6 @@ namespace Athena
 	{
 		VulkanContext::Init();
 
-		// Create Command buffers
-		{
-			VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
-			cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
-			cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-			cmdBufAllocInfo.commandBufferCount = Renderer::GetFramesInFlight();
-
-			m_VkCommandBuffers.resize(Renderer::GetFramesInFlight());
-			VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_VkCommandBuffers.data()));
-		}
-
 		// Acquire function pointers
 #ifdef VULKAN_ENABLE_DEBUG_INFO
 		m_DebugMarkerBeginPFN = (PFN_vkCmdDebugMarkerBeginEXT)vkGetDeviceProcAddr(VulkanContext::GetLogicalDevice(), "vkCmdDebugMarkerBeginEXT");
@@ -41,11 +29,7 @@ namespace Athena
 	 
 	void VulkanRenderer::Shutdown()
 	{
-		Renderer::SubmitResourceFree([vkCommandBuffers = m_VkCommandBuffers]()
-		{
-			vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), vkCommandBuffers.size(), vkCommandBuffers.data());
-			VulkanContext::Shutdown();
-		});
+		VulkanContext::Shutdown();
 	}
 
 	void VulkanRenderer::OnUpdate()

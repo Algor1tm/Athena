@@ -70,6 +70,7 @@ namespace Athena
 		void LoadAllScripts();
 
 		void OnViewportResize(uint32 width, uint32 height);
+		Vector2u GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
 
 		void SetSceneName(const String& name) { m_Name = name; }
 		const String& GetSceneName() const { return m_Name; };

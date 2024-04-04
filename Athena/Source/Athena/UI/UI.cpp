@@ -6,25 +6,16 @@ namespace Athena::UI
 {
 	void* GetTextureID(const Ref<Texture2D>& texture)
 	{
-		if (texture == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture());
-
 		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
 	}
 
 	void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
 	{
-		if (texture == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture());
-
 		return Application::Get().GetImGuiLayer()->GetTextureMipID(texture, mip);
 	}
 
 	void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
 	{
-		if (texture == nullptr)
-			return GetTextureID(Renderer::GetWhiteTexture());
-
 		return Application::Get().GetImGuiLayer()->GetTextureLayerID(texture, layer);
 	}
 
@@ -304,12 +295,12 @@ namespace Athena::UI
 		return pressed;
 	}
 
-	void PropertyText(std::string_view label, std::string_view v)
+	void PropertyText(std::string_view label, std::string_view value)
 	{
 		float height = ImGui::GetFrameHeight();
 		PropertyRow(label, height);
 
-		ImGui::Text(v.data());
+		ImGui::Text(value.data());
 	}
 
 	bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem)

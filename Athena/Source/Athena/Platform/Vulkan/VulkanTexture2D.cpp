@@ -75,9 +75,9 @@ namespace Athena
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			Renderer::SubmitResourceFree([this]()
+			Renderer::SubmitResourceFree([this, samplerInfo = m_Info.SamplerInfo, vkSampler = m_Sampler]()
 			{
-				VulkanContext::GetAllocator()->DestroySampler(m_Info.SamplerInfo, m_Sampler);
+				VulkanContext::GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 			});
 		}
 

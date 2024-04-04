@@ -6,35 +6,101 @@
 
 
 #define DEBUG_BLEND_CASCADES
-#define SHADOWS_PRESET 3
+//#define USE_BIAS
+
+#define SHADOWS_PRESET 2
 
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 0)
 	#define BLOCKER_SEARCH_SAMPLES 16
 	#define PCF_SEARCH_SAMPLES	   16
 	#define BLEND_CASCADES		   0
+	#define POISSON_16
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 1)
-	#define BLOCKER_SEARCH_SAMPLES 32
-	#define PCF_SEARCH_SAMPLES	   32
-	#define BLEND_CASCADES		   0
+	#define BLOCKER_SEARCH_SAMPLES 16
+	#define PCF_SEARCH_SAMPLES	   16
+	#define BLEND_CASCADES		   1
+	#define POISSON_16
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 2)
 	#define BLOCKER_SEARCH_SAMPLES 32
 	#define PCF_SEARCH_SAMPLES	   32
 	#define BLEND_CASCADES		   1
+	#define POISSON_32
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 3)
-	#define BLOCKER_SEARCH_SAMPLES 32
+	#define BLOCKER_SEARCH_SAMPLES 64
 	#define PCF_SEARCH_SAMPLES	   64
 	#define BLEND_CASCADES		   1
+	#define POISSON_64
+#endif
+#if (SHADOWS_PRESET == 4)
+	#define BLOCKER_SEARCH_SAMPLES 64
+	#define PCF_SEARCH_SAMPLES	   64
+	#define BLEND_CASCADES		   1
+	#define POISSON_64
+	#define ROTATE_SAMPLE
 #endif
 /*--------------------------------------------------------------------------*/
 
-
+#if defined(POISSON_16)
+const vec2 PoissonDisk[16] = vec2[](
+    vec2( -0.9420162,  -0.39906216 ),
+    vec2( 0.94558609,  -0.76890725 ),
+    vec2( -0.0941841,  -0.92938870 ),
+    vec2( 0.34495938,   0.29387760 ),
+    vec2( -0.91588581,  0.45771432 ),
+    vec2( -0.81544232, -0.87912464 ),
+    vec2( -0.38277543,  0.27676845 ),
+    vec2( 0.97484398,   0.75648379 ),
+    vec2( 0.44323325,  -0.97511554 ),
+    vec2( 0.53742981,  -0.47373420 ),
+    vec2( -0.26496911, -0.41893023 ),
+    vec2( 0.79197514,   0.19090188 ),
+    vec2( -0.24188840,  0.99706507 ),
+    vec2( -0.81409955,  0.91437590 ),
+    vec2( 0.19984126,   0.78641367 ),
+    vec2( 0.14383161,  -0.14100790 ));
+#elif defined(POISSON_32)
+const vec2 PoissonDisk[32] = {
+	vec2(0.06407013, 0.05409927),
+	vec2(0.7366577, 0.5789394),
+	vec2(-0.6270542, -0.5320278),
+	vec2(-0.4096107, 0.8411095),
+	vec2(0.6849564, -0.4990818),
+	vec2(-0.874181, -0.04579735),
+	vec2(0.9989998, 0.0009880066),
+	vec2(-0.004920578, -0.9151649),
+	vec2(0.1805763, 0.9747483),
+	vec2(-0.2138451, 0.2635818),
+	vec2(0.109845, 0.3884785),
+	vec2(0.06876755, -0.3581074),
+	vec2(0.374073, -0.7661266),
+	vec2(0.3079132, -0.1216763),
+	vec2(-0.3794335, -0.8271583),
+	vec2(-0.203878, -0.07715034),
+	vec2(0.5912697, 0.1469799),
+	vec2(-0.88069, 0.3031784),
+	vec2(0.5040108, 0.8283722),
+	vec2(-0.5844124, 0.5494877),
+	vec2(0.6017799, -0.1726654),
+	vec2(-0.5554981, 0.1559997),
+	vec2(-0.3016369, -0.3900928),
+	vec2(-0.5550632, -0.1723762),
+	vec2(0.925029, 0.2995041),
+	vec2(-0.2473137, 0.5538505),
+	vec2(0.9183037, -0.2862392),
+	vec2(0.2469421, 0.6718712),
+	vec2(0.3916397, -0.4328209),
+	vec2(-0.03576927, -0.6220032),
+	vec2(-0.04661255, 0.7995201),
+	vec2(0.4402924, 0.3640312),
+};
+#elif defined(POISSON_64)
 const vec2 PoissonDisk[64] = {
 	vec2(0.0617981, 0.07294159),
 	vec2(0.6470215, 0.7474022),
@@ -101,7 +167,7 @@ const vec2 PoissonDisk[64] = {
 	vec2(-0.1154335, 0.8248222),
 	vec2(-0.4230408, -0.7129914),
 };
-
+#endif
 
 layout(std140, set = 1, binding = 5) uniform u_ShadowsData
 {
@@ -115,6 +181,7 @@ layout(std140, set = 1, binding = 5) uniform u_ShadowsData
 
 layout(set = 1, binding = 6) uniform sampler2DArray u_DirShadowMap;
 layout(set = 1, binding = 7) uniform sampler2DArrayShadow u_DirShadowMapShadow;
+layout(set = 1, binding = 8) uniform sampler2D u_PCSSNoise;
 
 /*
 =========================================================================================================================================
@@ -141,7 +208,12 @@ vec3 GetShadowCoords(vec3 worldPos, int cascade)
 
 float GetBias(vec3 normal, vec3 lightDir, int cascade)
 {
-    return max(0.0001 * (1.0 - dot(normal, lightDir)), 0.0001);
+    return max(0.00001 * (1.0 - dot(normal, lightDir)), 0.00001);
+}
+
+vec2 Rotate(vec2 pos, vec2 rotationTrig)
+{
+	return vec2(pos.x * rotationTrig.x - pos.y * rotationTrig.y, pos.y * rotationTrig.x + pos.x * rotationTrig.y);
 }
 
 /*
@@ -178,43 +250,13 @@ float GetCascadeScale(int cascade)
     float scale = 1.0;
     switch(cascade)
     {
-    case 0: scale = 2.0; break;
-    case 1: scale = 4.0; break;
-    case 2: scale = 5.0; break;
-    case 3: scale = 6.0; break;
+    case 0: scale = 1.0; break;
+    case 1: scale = 2.0; break;
+    case 2: scale = 3.0; break;
+    case 3: scale = 4.0; break;
     }
     
    return 1.0 / scale;
-}
-
-int GetCascadeBlockerSamples(int cascade)
-{	
-	int samples = 0;
-
-	switch(cascade)
-	{
-	case 0: samples = BLOCKER_SEARCH_SAMPLES / 1; break;
-	case 1: samples = BLOCKER_SEARCH_SAMPLES / 2; break;
-	case 2: samples = BLOCKER_SEARCH_SAMPLES / 2; break;
-	case 3: samples = BLOCKER_SEARCH_SAMPLES / 4; break;
-	}
-
-	return max(samples, 16);
-}
-
-int GetCascadeFilterSamples(int cascade)
-{
-	int samples = 0;
-
-	switch(cascade)
-	{
-	case 0: samples = PCF_SEARCH_SAMPLES / 1; break;
-	case 1: samples = PCF_SEARCH_SAMPLES / 2; break;
-	case 2: samples = PCF_SEARCH_SAMPLES / 2; break;
-	case 3: samples = PCF_SEARCH_SAMPLES / 4; break;
-	}
-
-	return max(samples, 16);
 }
 
 /*
@@ -228,14 +270,19 @@ float PenumbraSize(float zReceiver, float zBlocker)
     return (zReceiver - zBlocker) / zBlocker;
 }
 
-vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, int numSamples)
+vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, vec2 rotationTrig)
 {
 	float numBlockers = 0.0;
 	float blockerSum = 0.0;
 
-	for(int i = 0; i < numSamples; ++i)
+	for(int i = 0; i < BLOCKER_SEARCH_SAMPLES; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * searchSize * scale;
+
+#if defined(ROTATE_SAMPLE)
+		offset = Rotate(offset, rotationTrig);
+#endif
+
 		float shadowMapDepth = SampleShadowMapDepth(uv + offset, cascade);
 
 		if(shadowMapDepth < depth)
@@ -250,33 +297,42 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scal
 	return vec2(avgBlockerDepth, numBlockers);
 }
 
-float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, int numSamples)
+float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, vec2 rotationTrig)
 {
 	float sum = 0.0;
 
-	for(int i = 0; i < numSamples; ++i)
+	for(int i = 0; i < PCF_SEARCH_SAMPLES; ++i)
 	{
 		vec2 offset = PoissonDisk[i] * filterRadiusUV * scale;
-		float value = SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
 
+#if defined(ROTATE_SAMPLE)
+		offset = Rotate(offset, rotationTrig);
+#endif
+
+		float value = SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
 		sum += value;
 	}
 
-	sum /= numSamples;
+	sum /= PCF_SEARCH_SAMPLES;
 	return sum;
 }
 
-float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
+float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
 {
     vec2 uv = shadowCoords.xy;
     float depth = shadowCoords.z;
     float scale = GetCascadeScale(cascade);
 
-	int numSamples = GetCascadeBlockerSamples(cascade);
+	float random = texture(u_PCSSNoise, noiseUV / textureSize(u_PCSSNoise, 0).xy).r;
+	random = 2.0 * random - 1.0;
+
+	float rotationAngle = random * 3.1415926;
+	vec2 rotationTrig = vec2(cos(rotationAngle), sin(rotationAngle));
+	//rotationTrig = vec2(0, 1);
 
     // STEP 1: blocker search
     float searchSize = lightSize * clamp(depth - 0.02, 0.0, 1.0) / depth;
-    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, numSamples);
+    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, rotationTrig);
 
     int numBlockers = int(blockerInfo.y);
     float avgBlockerDepth = blockerInfo.x;
@@ -286,7 +342,7 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
         return 1.0;
 
 	// Do not perform filtering if full shadowed
-	if(numBlockers == numSamples)
+	if(numBlockers == BLOCKER_SEARCH_SAMPLES)
 		return 0.0;
 
     // STEP 2: penumbra size
@@ -294,12 +350,9 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize)
 	float penumbra = depth - avgBlockerDepth;
 
 	//float filterRadiusUV = penumbra * lightSize;
-    float filterRadiusUV = clamp(penumbra * lightSize, 0.002, 0.1);
+    float filterRadiusUV = clamp(penumbra * lightSize, 0.001, 0.1);
 
-	numSamples = GetCascadeFilterSamples(cascade);
-
-    float shadow = PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, numSamples);
-    return shadow;
+    return PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, rotationTrig);
 }
 
 
@@ -314,17 +367,17 @@ float ShadowHard(vec3 shadowCoords, int cascade)
     return SampleShadowMapCompare(shadowCoords, cascade);
 }
 
-float Shadow(vec3 shadowCoords, int cascade, float lightSize)
+float Shadow(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
 {
 	if(bool(u_SoftShadows))
 	{
-		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize);
+		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize, noiseUV);
 	}
 	
 	return 1.0 - ShadowHard(shadowCoords, cascade);
 }
 
-float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView)
+float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView, vec2 noiseUV)
 {
     float fadeOut = GetShadowMaxDistanceFade(distanceFromCamera);
     if(fadeOut >= 1.0)
@@ -336,13 +389,15 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
     int cascade = GetShadowCascade(depthViewSpace);
     vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
 
-	//float bias = GetBias(normal, lightDir, cascade);
-	//shadowCoords.z -= bias;
+#if defined(USE_BIAS)
+	float bias = GetBias(normal, lightDir, cascade);
+	shadowCoords.z += bias;
+#endif
 
     if(shadowCoords.z > 1.0) 
 		return 0.0;
 
-	float shadow = Shadow(shadowCoords, cascade, lightSize);
+	float shadow = Shadow(shadowCoords, cascade, lightSize, noiseUV);
 
 #if BLEND_CASCADES == 1
 
@@ -359,7 +414,7 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
         int nextCascade = cascade + 1;
         shadowCoords = GetShadowCoords(worldPos, nextCascade);
 
-        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize);
+        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize, noiseUV);
 
         shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));
     }

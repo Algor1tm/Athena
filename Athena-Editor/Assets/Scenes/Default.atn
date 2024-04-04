@@ -1,6 +1,155 @@
 Scene: Default
 Entities:
   - IDComponent:
+      ID: 16471898377765283841
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [0.438165843, 6.87918901, -2.26552606]
+      Rotation: [0.978859007, 0.108237937, -0.0959274396, 0.144629061]
+      Scale: [1, 0.99999994, 1]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Cube.obj
+      Visible: true
+  - IDComponent:
+      ID: 4442543154444817618
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [-1.31703436, 2.98000145, 3.50187826]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 2.77572393, 1]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Cube.obj
+      Visible: true
+  - IDComponent:
+      ID: 15204102483634061799
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [0, 2.52208328, -11.8393393]
+      Rotation: [1, 0, 0, 0]
+      Scale: [10.8226414, 8.20835114, 1]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\Cube.obj
+      Visible: true
+  - IDComponent:
+      ID: 9453339502114578766
+    TagComponent:
+      Tag: SkyLight
+    TransformComponent:
+      Translation: [0.617748141, 9.80921936, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    SkyLightComponent:
+      Intensity: 1.00100005
+      LOD: 0
+      Resolution: 256
+      Type: 2
+      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
+      Turbidity: 2.6329999
+      Azimuth: 4.91800022
+      Inclination: 1.32000005
+  - IDComponent:
+      ID: 14844919457741134000
+    TagComponent:
+      Tag: DirectionalLight
+    TransformComponent:
+      Translation: [-4.76235437, 10.0545406, 0.705213785]
+      Rotation: [0.331707746, -0.932052374, -0.055727344, -0.134695753]
+      Scale: [1, 1.00003445, 1.00003266]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      CastShadows: true
+      LightSize: 0.400000006
+  - IDComponent:
+      ID: 2835139583361043602
+    TagComponent:
+      Tag: RedLight
+    TransformComponent:
+      Translation: [2.44086814, 4.63818932, -5.49453211]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ParentComponent:
+      Parent: 2151942939999983161
+    PointLightComponent:
+      Color: [1, 0, 0, 1]
+      Intensity: 13.3000002
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
+      ID: 2517320845403321880
+    TagComponent:
+      Tag: BlueLight
+    TransformComponent:
+      Translation: [-5.28855801, 4.85125685, 7.50214195]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ParentComponent:
+      Parent: 2151942939999983161
+    PointLightComponent:
+      Color: [0, 0, 1, 1]
+      Intensity: 5
+      Radius: 17.5
+      FallOff: 1
+  - IDComponent:
+      ID: 6684149830295041235
+    TagComponent:
+      Tag: GreenSpotLight
+    TransformComponent:
+      Translation: [4.63184881, 6.35351419, 15.9331255]
+      Rotation: [0.935840547, -0.352423728, 0, 0]
+      Scale: [1, 0.999996781, 0.999996781]
+    ParentComponent:
+      Parent: 2151942939999983161
+    SpotLightComponent:
+      Color: [0.173303723, 0.91452992, 0.128766462, 1]
+      Intensity: 12.6000004
+      SpotAngle: 48.0859985
+      InnerFallOff: 1
+      Range: 32.5
+      RangeFallOff: 1
+  - IDComponent:
+      ID: 2151942939999983161
+    TagComponent:
+      Tag: Primitives
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.147900015, 0.147900015, 0.147900015]
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\BlenderScene.fbx
+      Visible: true
+  - IDComponent:
+      ID: 9434107904280492893
+    TagComponent:
+      Tag: StarWarsTrouper
+    TransformComponent:
+      Translation: [-6.5058198, 0.400519013, 4.93542004]
+      Rotation: [0.444412827, -0.000498579349, 0.895817876, 0.00269886269]
+      Scale: [8.59380913, 8.59389496, 8.59405327]
+    ParentComponent:
+      Parent: 2151942939999983161
+    StaticMeshComponent:
+      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
+      Visible: true
+  - IDComponent:
+      ID: 3148190026798035267
+    TagComponent:
+      Tag: PinkLight
+    TransformComponent:
+      Translation: [7.50940561, 5.16589022, -4.34297895]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ParentComponent:
+      Parent: 2151942939999983161
+    PointLightComponent:
+      Color: [0.93670845, 0, 1, 1]
+      Intensity: 5
+      Radius: 10
+      FallOff: 1
+  - IDComponent:
       ID: 17196797334220725082
     TagComponent:
       Tag: Camera
@@ -21,119 +170,3 @@ Entities:
         OrthographicFarClip: 10
       Primary: true
       FixedAspectRatio: false
-  - IDComponent:
-      ID: 3148190026798035267
-    TagComponent:
-      Tag: PinkLight
-    TransformComponent:
-      Translation: [7.50940561, 5.16589022, -4.34297895]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 2151942939999983161
-    PointLightComponent:
-      Color: [0.93670845, 0, 1, 1]
-      Intensity: 5
-      Radius: 10
-      FallOff: 1
-  - IDComponent:
-      ID: 9434107904280492893
-    TagComponent:
-      Tag: StarWarsTrouper
-    TransformComponent:
-      Translation: [-3.8856256, 0.407431513, 5.32549858]
-      Rotation: [0.444413006, -0.000498580048, 0.895817816, 0.00269886223]
-      Scale: [8.5938139, 8.59389496, 8.59406567]
-    ParentComponent:
-      Parent: 2151942939999983161
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\StormTrooper\silly_dancing.fbx
-      Visible: true
-  - IDComponent:
-      ID: 2151942939999983161
-    TagComponent:
-      Tag: Primitives
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [0.147900015, 0.147900015, 0.147900015]
-    StaticMeshComponent:
-      FilePath: Assets\Meshes\BlenderScene.fbx
-      Visible: true
-  - IDComponent:
-      ID: 6684149830295041235
-    TagComponent:
-      Tag: GreenSpotLight
-    TransformComponent:
-      Translation: [4.63184881, 6.35351419, 15.9331255]
-      Rotation: [0.935840547, -0.352423728, 0, 0]
-      Scale: [1, 0.999996781, 0.999996781]
-    ParentComponent:
-      Parent: 2151942939999983161
-    SpotLightComponent:
-      Color: [0.173303723, 0.91452992, 0.128766462, 1]
-      Intensity: 12.6000004
-      SpotAngle: 48.0859985
-      InnerFallOff: 1
-      Range: 32.5
-      RangeFallOff: 1
-  - IDComponent:
-      ID: 2517320845403321880
-    TagComponent:
-      Tag: BlueLight
-    TransformComponent:
-      Translation: [-5.28855801, 4.85125685, 7.50214195]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 2151942939999983161
-    PointLightComponent:
-      Color: [0, 0, 1, 1]
-      Intensity: 5
-      Radius: 17.5
-      FallOff: 1
-  - IDComponent:
-      ID: 2835139583361043602
-    TagComponent:
-      Tag: RedLight
-    TransformComponent:
-      Translation: [2.44086814, 4.63818932, -5.49453211]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 2151942939999983161
-    PointLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 13.3000002
-      Radius: 10
-      FallOff: 1
-  - IDComponent:
-      ID: 14844919457741134000
-    TagComponent:
-      Tag: DirectionalLight
-    TransformComponent:
-      Translation: [-4.76235437, 10.0545406, 0.705213785]
-      Rotation: [0.331707746, -0.932052374, -0.055727344, -0.134695753]
-      Scale: [1, 1.00003445, 1.00003266]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      CastShadows: true
-      LightSize: 1.95000005
-  - IDComponent:
-      ID: 9453339502114578766
-    TagComponent:
-      Tag: SkyLight
-    TransformComponent:
-      Translation: [0.617748141, 9.80921936, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    SkyLightComponent:
-      Intensity: 1.00100005
-      LOD: 0
-      Resolution: 256
-      Type: 2
-      FilePath: Assets\EnvironmentMaps\pink_sunrise_4k.hdr
-      Turbidity: 2.6329999
-      Azimuth: 4.91800022
-      Inclination: 1.32000005

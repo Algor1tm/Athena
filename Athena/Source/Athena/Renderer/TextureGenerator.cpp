@@ -24,12 +24,12 @@ namespace Athena
 	void TextureGenerator::Init()
 	{
 		uint32 whiteTextureData = 0xffffffff;
+		Buffer texData = Buffer::Copy(&whiteTextureData, sizeof(uint32));
 
 		Texture2DCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
 		texInfo.Format = ImageFormat::RGBA8;
 		texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-		texInfo.InitialData = &whiteTextureData;
 		texInfo.Width = 1;
 		texInfo.Height = 1;
 		texInfo.Layers = 1;
@@ -39,13 +39,30 @@ namespace Athena
 		texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
 		texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
 
-		s_Data.WhiteTexture = Texture2D::Create(texInfo);
+		s_Data.WhiteTexture = Texture2D::Create(texInfo, texData);
 
 		uint32 blackTextureData = 0xff000000;
-		texInfo.InitialData = &blackTextureData;
+		texData.Write(&blackTextureData, sizeof(uint32));
+
 		texInfo.Name = "Renderer_BlackTexture";
 
-		s_Data.BlackTexture = Texture2D::Create(texInfo);
+		s_Data.BlackTexture = Texture2D::Create(texInfo, texData);
+
+		TextureCubeCreateInfo texCubeInfo;
+		texCubeInfo.Name = "Renderer_BlackTextureCube";
+		texCubeInfo.Format = ImageFormat::RGBA8;
+		texCubeInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
+		texCubeInfo.Width = 1;
+		texCubeInfo.Height = 1;
+		texCubeInfo.GenerateMipLevels = false;
+		texCubeInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
+		texCubeInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
+
+		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, texData);
+
+		texData.Release();
 
 		// BLUE NOISE
 		{
@@ -67,11 +84,11 @@ namespace Athena
 			}
 
 			stbi_image_free(data);
+			texData = Buffer::Copy(newData, width * height * Image::BytesPerPixel(ImageFormat::R8));
 
 			texInfo.Name = "Renderer_BlueNoise";
 			texInfo.Format = ImageFormat::R8;
 			texInfo.Usage = ImageUsage(ImageUsage::SAMPLED);
-			texInfo.InitialData = newData;
 			texInfo.Width = width;
 			texInfo.Height = height;
 			texInfo.Layers = 1;
@@ -81,30 +98,16 @@ namespace Athena
 			texInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
 			texInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
 
-			s_Data.BlueNoise = Texture2D::Create(texInfo);
+			s_Data.BlueNoise = Texture2D::Create(texInfo, texData);
+
+			texData.Release();
 		}
-
-		TextureCubeCreateInfo texCubeInfo;
-		texCubeInfo.Name = "Renderer_BlackTextureCube";
-		texCubeInfo.Format = ImageFormat::RGBA8;
-		texCubeInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-		texCubeInfo.InitialData = &blackTextureData;
-		texCubeInfo.Width = 1;
-		texCubeInfo.Height = 1;
-		texCubeInfo.GenerateMipLevels = false;
-		texCubeInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.MipMapFilter = TextureFilter::NEAREST;
-		texCubeInfo.SamplerInfo.Wrap = TextureWrap::REPEAT;
-
-		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo);
 
 		// BRDF_LUT
 		{
 			texInfo.Name = "Renderer_BRDF_LUT";
 			texInfo.Format = ImageFormat::RG16F;
 			texInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
-			texInfo.InitialData = nullptr;
 			texInfo.Width = 512;
 			texInfo.Height = 512;
 			texInfo.Layers = 1;

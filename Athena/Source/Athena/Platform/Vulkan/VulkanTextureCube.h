@@ -12,7 +12,7 @@ namespace Athena
 	class ATHENA_API VulkanTextureCube : public TextureCube
 	{
 	public:
-		VulkanTextureCube(const TextureCubeCreateInfo& info);
+		VulkanTextureCube(const TextureCubeCreateInfo& info, Buffer data);
 		~VulkanTextureCube();
 
 		virtual void Resize(uint32 width, uint32 height) override;

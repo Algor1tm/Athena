@@ -40,8 +40,6 @@ namespace Athena
 		SAMPLED		 = BIT(1),
 		STORAGE		 = BIT(2),
 		ATTACHMENT	 = BIT(3),
-		TRANSFER_SRC = BIT(4),
-		TRANSFER_DST = BIT(5),
 
 		DEFAULT = SAMPLED
 	};
@@ -58,7 +56,6 @@ namespace Athena
 		ImageFormat Format = ImageFormat::RGBA8;
 		ImageUsage Usage = ImageUsage::DEFAULT;
 		ImageType Type = ImageType::IMAGE_2D;
-		const void* InitialData = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
@@ -68,13 +65,11 @@ namespace Athena
 	class ATHENA_API Image : public RefCounted
 	{
 	public:
-		static Ref<Image> Create(const ImageCreateInfo& info);
+		static Ref<Image> Create(const ImageCreateInfo& info, Buffer data = Buffer());
 		static Ref<Image> Create(const FilePath& path, bool sRGB = false, bool genMips = false);
 		static Ref<Image> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 		virtual ~Image() = default;
 
-		virtual void BlitMipMap(uint32 levels) = 0;
-		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) = 0;
 		virtual uint32 GetMipLevelsCount() const = 0;
 
 		virtual void WriteContentToBuffer(Buffer* dstBuffer) = 0;

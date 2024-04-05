@@ -22,11 +22,11 @@ namespace Athena
 		return mipSize;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const Texture2DCreateInfo& info)
+	Ref<Texture2D> Texture2D::Create(const Texture2DCreateInfo& info, Buffer data)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanTexture2D>::Create(info);
+		case Renderer::API::Vulkan: return Ref<VulkanTexture2D>::Create(info, data);
 		case Renderer::API::None: return nullptr;
 		}
 
@@ -72,11 +72,11 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<TextureCube> TextureCube::Create(const TextureCubeCreateInfo& info)
+	Ref<TextureCube> TextureCube::Create(const TextureCubeCreateInfo& info, Buffer data)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info);
+		case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info, data);
 		case Renderer::API::None: return nullptr;
 		}
 

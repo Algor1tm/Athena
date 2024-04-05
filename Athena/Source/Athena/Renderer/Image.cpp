@@ -107,20 +107,23 @@ namespace Athena
 			format = ImageFormat::RGBA32F;
 		}
 
+		Buffer buffer = Buffer::Copy(data, width * height * Image::BytesPerPixel(format));
+
 		ImageCreateInfo info;
 		info.Name = filepath.filename().string();
 		info.Format = format;
 		info.Usage = ImageUsage::DEFAULT;
 		info.Type = ImageType::IMAGE_2D;
-		info.InitialData = data;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
 		info.GenerateMipLevels = genMips;
 
-		Ref<Image> result = Image::Create(info);
+		Ref<Image> result = Image::Create(info, buffer);
 
 		stbi_image_free(data);
+		buffer.Release();
+
 		return result;
 	}
 
@@ -153,19 +156,23 @@ namespace Athena
 			format = sRGB ? ImageFormat::RGBA8_SRGB : ImageFormat::RGBA8;
 		}
 
+		Buffer buffer = Buffer::Copy(data, width * height * Image::BytesPerPixel(format));
+
 		ImageCreateInfo info;
 		info.Name = name;
 		info.Format = format;
 		info.Usage = ImageUsage::DEFAULT;
 		info.Type = ImageType::IMAGE_2D;
-		info.InitialData = data;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
 		info.GenerateMipLevels = genMips;
 
-		Ref<Image> result = Image::Create(info);
+		Ref<Image> result = Image::Create(info, buffer);
+
 		stbi_image_free(data);
+		buffer.Release();
+
 		return result;
 	}
 
@@ -176,11 +183,11 @@ namespace Athena
 		stbi_write_png(utf8Path.data(), m_Info.Width, m_Info.Height, bpp, imageData.Data(), bpp * m_Info.Width);
 	}
 
-	Ref<Image> Image::Create(const ImageCreateInfo& info)
+	Ref<Image> Image::Create(const ImageCreateInfo& info, Buffer data)
 	{
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::Vulkan: return Ref<VulkanImage>::Create(info);
+		case Renderer::API::Vulkan: return Ref<VulkanImage>::Create(info, data);
 		case Renderer::API::None: return nullptr;
 		}
 

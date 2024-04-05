@@ -205,6 +205,11 @@ namespace Athena
 		s_Data.RendererAPI->InsertExecutionBarrier(cmdBuffer);
 	}
 
+	void Renderer::BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture)
+	{
+		s_Data.RendererAPI->BlitMipMap(cmdBuffer, texture);
+	}
+
 	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
 	{
 		s_Data.RendererAPI->BlitToScreen(cmdBuffer, image);

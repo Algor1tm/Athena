@@ -10,7 +10,7 @@ namespace Athena
 	class VulkanTexture2D : public Texture2D
 	{
 	public:
-		VulkanTexture2D(const Texture2DCreateInfo& info);
+		VulkanTexture2D(const Texture2DCreateInfo& info, Buffer data);
 		VulkanTexture2D(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
 		~VulkanTexture2D();
 

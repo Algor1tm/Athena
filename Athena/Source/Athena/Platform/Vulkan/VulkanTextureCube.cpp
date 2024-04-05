@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	VulkanTextureCube::VulkanTextureCube(const TextureCubeCreateInfo& info)
+	VulkanTextureCube::VulkanTextureCube(const TextureCubeCreateInfo& info, Buffer data)
 	{
 		m_Info = info;
 		m_Sampler = VK_NULL_HANDLE;
@@ -17,13 +17,12 @@ namespace Athena
 		imageInfo.Format = m_Info.Format;
 		imageInfo.Usage = m_Info.Usage;
 		imageInfo.Type = ImageType::IMAGE_CUBE;
-		imageInfo.InitialData = m_Info.InitialData;
 		imageInfo.Width = m_Info.Width;
 		imageInfo.Height = m_Info.Height;
 		imageInfo.Layers = 6;
 		imageInfo.GenerateMipLevels = m_Info.GenerateMipLevels;
 
-		m_Image = Image::Create(imageInfo);
+		m_Image = Image::Create(imageInfo, data);
 
 		SetSampler(m_Info.SamplerInfo);
 	}

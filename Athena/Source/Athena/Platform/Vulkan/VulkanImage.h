@@ -12,14 +12,10 @@ namespace Athena
 	class VulkanImage : public Image
 	{
 	public:
-		VulkanImage(const ImageCreateInfo& info);
+		VulkanImage(const ImageCreateInfo& info, Buffer data);
 		~VulkanImage();
 
 		virtual void Resize(uint32 width, uint32 height) override;
-
-		virtual void BlitMipMap(uint32 levels) override;
-		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) override;
-		void BlitMipMap(VkCommandBuffer vkcmdBuffer, uint32 levels);
 
 		virtual void WriteContentToBuffer(Buffer* dstBuffer) override;
 
@@ -36,7 +32,7 @@ namespace Athena
 		void RenderPassUpdateLayout(VkImageLayout newLayout);
 
 	private:
-		void UploadData(const void* data, uint32 width, uint32 height);
+		void UploadData(Buffer data, uint32 width, uint32 height);
 		void CleanUp();
 
 	private:

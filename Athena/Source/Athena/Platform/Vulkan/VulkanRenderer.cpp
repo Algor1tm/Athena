@@ -202,6 +202,18 @@ namespace Athena
 		vkDeviceWaitIdle(VulkanContext::GetDevice()->GetLogicalDevice());
 	}
 
+	void VulkanRenderer::BlitMipMap(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Texture>& texture)
+	{
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
+		Ref<VulkanImage> image = texture->GetImage().As<VulkanImage>();
+		const auto& info = image->GetInfo();
+
+		Vulkan::BlitMipMap(vkcmdBuffer, image->GetVulkanImage(), info.Width, info.Height, info.Layers, info.Format, image->GetMipLevelsCount());
+
+		// HACK
+		image->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
+
 	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
 	{
 		ATN_PROFILE_FUNC();

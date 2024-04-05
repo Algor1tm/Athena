@@ -6,7 +6,9 @@
 
 
 #define DEBUG_BLEND_CASCADES
+
 //#define USE_BIAS
+//#define ROTATE_SAMPLE
 
 #define SHADOWS_PRESET 2
 
@@ -37,13 +39,6 @@
 	#define PCF_SEARCH_SAMPLES	   64
 	#define BLEND_CASCADES		   1
 	#define POISSON_64
-#endif
-#if (SHADOWS_PRESET == 4)
-	#define BLOCKER_SEARCH_SAMPLES 64
-	#define PCF_SEARCH_SAMPLES	   64
-	#define BLEND_CASCADES		   1
-	#define POISSON_64
-	#define ROTATE_SAMPLE
 #endif
 /*--------------------------------------------------------------------------*/
 

@@ -5,7 +5,7 @@
 
 namespace Athena
 {
-	VulkanTexture2D::VulkanTexture2D(const Texture2DCreateInfo& info)
+	VulkanTexture2D::VulkanTexture2D(const Texture2DCreateInfo& info, Buffer data)
 	{
 		m_Info = info;
 		m_Sampler = VK_NULL_HANDLE;
@@ -16,13 +16,12 @@ namespace Athena
 		imageInfo.Format = m_Info.Format;
 		imageInfo.Usage = m_Info.Usage;
 		imageInfo.Type = ImageType::IMAGE_2D;
-		imageInfo.InitialData = m_Info.InitialData;
 		imageInfo.Width = m_Info.Width;
 		imageInfo.Height = m_Info.Height;
 		imageInfo.Layers = m_Info.Layers;
 		imageInfo.GenerateMipLevels = m_Info.GenerateMipLevels;
 
-		m_Image = Image::Create(imageInfo);
+		m_Image = Image::Create(imageInfo, data);
 
 		SetSampler(m_Info.SamplerInfo);
 	}
@@ -34,7 +33,6 @@ namespace Athena
 		m_Info.Name = imageInfo.Name;
 		m_Info.Format = imageInfo.Format;
 		m_Info.Usage = imageInfo.Usage;
-		m_Info.InitialData = imageInfo.InitialData;
 		m_Info.Width = imageInfo.Width;
 		m_Info.Height = imageInfo.Height;
 		m_Info.Layers = imageInfo.Layers;

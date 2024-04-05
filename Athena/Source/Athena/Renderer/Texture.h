@@ -53,8 +53,6 @@ namespace Athena
 		virtual void Resize(uint32 width, uint32 height) = 0;
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
-		void BlitMipMap(uint32 levels) { m_Image->BlitMipMap(levels); }
-		void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, uint32 levels) { m_Image->BlitMipMap(cmdBuffer, levels); }
 		uint32 GetMipLevelsCount() const { return m_Image->GetMipLevelsCount(); }
 		Vector2u GetMipSize(uint32 mip) const;
 
@@ -70,7 +68,6 @@ namespace Athena
 		String Name;
 		ImageFormat Format = ImageFormat::RGBA8;
 		ImageUsage Usage = ImageUsage::DEFAULT;
-		const void* InitialData = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
@@ -81,7 +78,7 @@ namespace Athena
 	class ATHENA_API Texture2D : public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(const Texture2DCreateInfo& info);
+		static Ref<Texture2D> Create(const Texture2DCreateInfo& info, Buffer data = Buffer());
 		static Ref<Texture2D> Create(const FilePath& path, bool sRGB = false, bool genMips = false);
 		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 		static Ref<Texture2D> Create(const Ref<Image>& image, const TextureSamplerCreateInfo& samplerInfo);
@@ -108,7 +105,6 @@ namespace Athena
 		String Name;
 		ImageFormat Format = ImageFormat::RGBA8;
 		ImageUsage Usage = ImageUsage::DEFAULT;
-		const void* InitialData = nullptr;
 		uint32 Width = 1;
 		uint32 Height = 1;
 		bool GenerateMipLevels = false;
@@ -118,7 +114,7 @@ namespace Athena
 	class ATHENA_API TextureCube: public Texture
 	{
 	public:
-		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info);
+		static Ref<TextureCube> Create(const TextureCubeCreateInfo& info, Buffer data = Buffer());
 
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::TextureCube; }
 		virtual const String& GetName() const override { return m_Info.Name; }

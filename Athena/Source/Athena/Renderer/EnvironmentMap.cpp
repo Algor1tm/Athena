@@ -25,7 +25,6 @@ namespace Athena
 		cubemapInfo.Name = "EnvironmentMap";
 		cubemapInfo.Format = ImageFormat::R11G11B10F;
 		cubemapInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
-		cubemapInfo.InitialData = nullptr;
 		cubemapInfo.Width = m_Resolution;
 		cubemapInfo.Height = m_Resolution;
 		cubemapInfo.GenerateMipLevels = true;
@@ -215,7 +214,9 @@ namespace Athena
 			LoadPreetham(commandBuffer);
 
 		Renderer::BeginDebugRegion(commandBuffer, "EnvironmentBlitMipMap", { 0.6f, 0.4f, 0.2f, 1.f });
-		m_EnvironmentTexture->BlitMipMap(commandBuffer, ShaderDef::MAX_SKYBOX_MAP_LOD);
+		{
+			Renderer::BlitMipMap(commandBuffer, m_EnvironmentTexture);
+		}
 		Renderer::EndDebugRegion(commandBuffer);
 
 

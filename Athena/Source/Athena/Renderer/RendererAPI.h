@@ -29,8 +29,8 @@ namespace Athena
 		virtual void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
 		virtual void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
 
+		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture) = 0;
 		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image) = 0;
-		virtual void WaitDeviceIdle() = 0;
 
 		virtual void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) = 0;
 		virtual void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
@@ -38,5 +38,6 @@ namespace Athena
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) = 0;
 		virtual uint64 GetMemoryUsage() = 0;
+		virtual void WaitDeviceIdle() = 0;
 	};
 }

@@ -31,6 +31,11 @@ namespace Athena
             const WorldTransformComponent& worldTransform = m_EditorCtx->SelectedEntity.GetComponent<WorldTransformComponent>();
             Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
 
+            // Discard if not in viewport space
+            Vector4 viewPos = Vector4(0, 0, 0, 1) * worldTransformMatrix * cameraView;
+            if (viewPos.z > 0)
+                return;
+
             bool snap = Input::IsKeyPressed(Keyboard::LCtrl);
             float snapValue = 0.5f;
             if (m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)

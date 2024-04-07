@@ -41,7 +41,7 @@
 #include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Shader.h"

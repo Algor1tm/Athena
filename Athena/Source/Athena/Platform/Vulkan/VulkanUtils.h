@@ -276,7 +276,7 @@ namespace Athena::Vulkan
     {
         switch (type)
         {
-        case TextureType::TEXTURE_2D: return VK_IMAGE_TYPE_2D;
+        case TextureType::TEXTURE_2D:   return VK_IMAGE_TYPE_2D;
         case TextureType::TEXTURE_CUBE: return VK_IMAGE_TYPE_2D;
         }
 
@@ -338,10 +338,10 @@ namespace Athena::Vulkan
     {
         switch (wrap)
         {
-        case TextureWrap::REPEAT: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        case TextureWrap::CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        case TextureWrap::CLAMP_TO_BORDER: return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-        case TextureWrap::MIRRORED_REPEAT: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case TextureWrap::REPEAT:                 return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case TextureWrap::CLAMP_TO_EDGE:          return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case TextureWrap::CLAMP_TO_BORDER:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case TextureWrap::MIRRORED_REPEAT:        return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
         case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
         }
 
@@ -353,8 +353,9 @@ namespace Athena::Vulkan
     {
         switch (compare)
         {
-        case TextureCompareOperator::NONE: return VK_COMPARE_OP_NEVER;
-        case TextureCompareOperator::LEQUAL: return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case TextureCompareOperator::NONE:             return VK_COMPARE_OP_NEVER;
+        case TextureCompareOperator::LESS_OR_EQUAL:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case TextureCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
         }
 
         ATN_CORE_ASSERT(false);

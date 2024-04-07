@@ -39,7 +39,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 	m_Scene->OnUpdateRuntime(frameTime);
 	m_Scene->OnRender(m_SceneRenderer);
 
-	Renderer::BlitToScreen(Renderer::GetRenderCommandBuffer(), m_SceneRenderer->GetFinalImage()->GetImage());
+	Renderer::BlitToScreen(Renderer::GetRenderCommandBuffer(), m_SceneRenderer->GetFinalImage());
 
 	if (Input::IsKeyPressed(Keyboard::Escape))
 		Application::Get().Close();

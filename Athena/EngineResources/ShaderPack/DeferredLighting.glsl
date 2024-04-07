@@ -162,7 +162,7 @@ void main()
 {
     // Unpack GBuffer
     float depth = texture(u_SceneDepth, v_TexCoords).r;
-    if(depth == 1.0)
+    if(depth == 0.0)
         discard;
 
     vec4 clipSpace = vec4(v_TexCoords * 2.0 - 1.0, depth, 1.0);

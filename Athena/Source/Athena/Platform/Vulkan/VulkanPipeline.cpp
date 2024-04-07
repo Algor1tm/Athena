@@ -16,7 +16,7 @@ namespace Athena
 			switch (topology)
 			{
 			case Topology::TRIANGLE_LIST: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-			case Topology::LINE_LIST: return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+			case Topology::LINE_LIST:     return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 			}
 
 			ATN_CORE_ASSERT(false);
@@ -27,8 +27,8 @@ namespace Athena
 		{
 			switch (cullMode)
 			{
-			case CullMode::NONE: return VK_CULL_MODE_NONE;
-			case CullMode::BACK: return VK_CULL_MODE_BACK_BIT;
+			case CullMode::NONE:  return VK_CULL_MODE_NONE;
+			case CullMode::BACK:  return VK_CULL_MODE_BACK_BIT;
 			case CullMode::FRONT: return VK_CULL_MODE_FRONT_BIT;
 			}
 
@@ -36,13 +36,15 @@ namespace Athena
 			return (VkCullModeFlags)0;
 		}
 
-		static VkCompareOp GetDepthCompare(DepthCompare depthCompare)
+		static VkCompareOp GetDepthCompare(DepthCompareOperator depthCompare)
 		{
 			switch (depthCompare)
 			{
-			case DepthCompare::NONE: return VK_COMPARE_OP_NEVER;
-			case DepthCompare::LESS: return VK_COMPARE_OP_LESS;
-			case DepthCompare::LESS_OR_EQUAL: return VK_COMPARE_OP_LESS_OR_EQUAL;
+			case DepthCompareOperator::NONE:			 return VK_COMPARE_OP_NEVER;
+			case DepthCompareOperator::LESS:			 return VK_COMPARE_OP_LESS;
+			case DepthCompareOperator::LESS_OR_EQUAL:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+			case DepthCompareOperator::GREATER:		     return VK_COMPARE_OP_GREATER;
+			case DepthCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
 			}
 
 			ATN_CORE_ASSERT(false);
@@ -260,14 +262,13 @@ namespace Athena
 		multisampling.alphaToCoverageEnable = VK_FALSE;
 		multisampling.alphaToOneEnable = VK_FALSE;
 
-		bool enableDepthTest = m_Info.DepthCompare != DepthCompare::NONE;
 		VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.depthTestEnable = enableDepthTest;
-		depthStencil.depthWriteEnable = enableDepthTest;
-		depthStencil.depthCompareOp = Vulkan::GetDepthCompare(m_Info.DepthCompare);
+		depthStencil.depthTestEnable = m_Info.DepthTest;
+		depthStencil.depthWriteEnable = m_Info.DepthWrite;
+		depthStencil.depthCompareOp = Vulkan::GetDepthCompare(m_Info.DepthCompareOp);
 		depthStencil.depthBoundsTestEnable = VK_FALSE;
-		depthStencil.stencilTestEnable = enableDepthTest;
+		depthStencil.stencilTestEnable = depthStencil.depthTestEnable;
 		depthStencil.back.compareOp = depthStencil.depthCompareOp;
 		depthStencil.back.failOp = VK_STENCIL_OP_KEEP;
 		depthStencil.back.depthFailOp = VK_STENCIL_OP_KEEP;

@@ -13,7 +13,7 @@ void main()
     v_TexCoords = a_Position;
 
     vec4 pos = u_Camera.Projection * u_Camera.RotationView * vec4(a_Position, 1.0);
-    gl_Position = pos.xyww;
+    gl_Position = vec4(pos.xy, 0, pos.w);
 }
 
 

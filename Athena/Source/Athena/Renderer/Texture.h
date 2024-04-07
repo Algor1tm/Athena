@@ -71,7 +71,8 @@ namespace Athena
 	enum class TextureCompareOperator
 	{
 		NONE = 0,
-		LEQUAL = 1
+		LESS_OR_EQUAL,
+		GREATER_OR_EQUAL
 	};
 
 	struct TextureSamplerCreateInfo

@@ -103,7 +103,7 @@ namespace Athena
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::FRONT;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.DepthCompareOp = DepthCompareOperator::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = false;
 
 			m_DirShadowMapStaticPipeline = Pipeline::Create(pipelineInfo);
@@ -125,7 +125,7 @@ namespace Athena
 			viewInfo.Sampler.MinFilter = TextureFilter::LINEAR;
 			viewInfo.Sampler.MagFilter = TextureFilter::LINEAR;
 			viewInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_BORDER;
-			viewInfo.Sampler.Compare = TextureCompareOperator::LEQUAL;
+			viewInfo.Sampler.Compare = TextureCompareOperator::LESS_OR_EQUAL;
 
 			m_ShadowMapSampler = output.Texture->GetView(viewInfo);
 		}
@@ -156,7 +156,7 @@ namespace Athena
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::LESS;
+			pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER;
 			pipelineInfo.BlendEnable = false;
 
 			m_StaticGeometryPipeline = Pipeline::Create(pipelineInfo);
@@ -213,7 +213,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = fullscreenQuadLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::NONE;
+			pipelineInfo.DepthTest = false;
 			pipelineInfo.BlendEnable = false;
 
 			m_DeferredLightingPipeline = Pipeline::Create(pipelineInfo);
@@ -259,7 +259,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = { { ShaderDataType::Float3, "a_Position" } };
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+			pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
 			pipelineInfo.BlendEnable = false;
 
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
@@ -335,7 +335,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = fullscreenQuadLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthCompare = DepthCompare::NONE;
+			pipelineInfo.DepthTest = false;
 			pipelineInfo.BlendEnable = false;
 
 			m_CompositePipeline = Pipeline::Create(pipelineInfo);
@@ -448,7 +448,8 @@ namespace Athena
 
 		m_PostProcessTexture->Resize(width, height);
 
-		m_ViewportResizeCallback(width, height);
+		if(m_ViewportResizeCallback)
+			m_ViewportResizeCallback(width, height);
 	}
 
 	void SceneRenderer::SetOnRender2DCallback(const Render2DCallback& callback)
@@ -920,16 +921,16 @@ namespace Athena
 
 			std::array<Vector3, 8> frustumCorners = {
 				//Near face
-				Vector3{  1.0f, -1.0f, -1.0f },
-				Vector3{ -1.0f, -1.0f, -1.0f },
-				Vector3{  1.0f,  1.0f, -1.0f },
-				Vector3{ -1.0f,  1.0f, -1.0f },
+				Vector3{  1.0f, -1.0f, 1.f },
+				Vector3{ -1.0f, -1.0f, 1.f },
+				Vector3{  1.0f,  1.0f, 1.f },
+				Vector3{ -1.0f,  1.0f, 1.f },
 
 				//Far face
-				Vector3{  1.0f, -1.0f, 1.0f },
-				Vector3{ -1.0f, -1.0f, 1.0f },
-				Vector3{  1.0f,  1.0f, 1.0f },
-				Vector3{ -1.0f,  1.0f, 1.0f },
+				Vector3{  1.0f, -1.0f, 0.0f },
+				Vector3{ -1.0f, -1.0f, 0.0f },
+				Vector3{  1.0f,  1.0f, 0.0f },
+				Vector3{ -1.0f,  1.0f, 0.0f },
 			};
 
 			// Transform frustum to world space

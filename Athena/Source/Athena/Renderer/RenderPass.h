@@ -46,7 +46,7 @@ namespace Athena
 		Ref<Texture2D> Texture;
 		RenderTargetLoadOp LoadOp = RenderTargetLoadOp::CLEAR;
 		LinearColor ClearColor = { 0.f, 0.f, 0.f, 1.0f };
-		float DepthClearColor = 1.f;
+		float DepthClearColor = 0.f;
 		uint32 StencilClearColor = 1.f;
 	};
 

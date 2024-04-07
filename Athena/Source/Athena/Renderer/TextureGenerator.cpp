@@ -1,6 +1,7 @@
 #include "TextureGenerator.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
@@ -24,7 +25,7 @@ namespace Athena
 	void TextureGenerator::Init()
 	{
 		uint32 whiteTextureData = 0xffffffff;
-		Buffer texData = Buffer::Copy(&whiteTextureData, sizeof(uint32));
+		Buffer texData = Buffer::Move(&whiteTextureData, sizeof(uint32));
 
 		TextureCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
@@ -62,45 +63,17 @@ namespace Athena
 
 		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, texData);
 
-		texData.Release();
-
 		// BLUE NOISE
 		{
 			const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 			FilePath path = resourcesPath / "Textures/BlueNoise.png";
 
-			int width, height, channels;
-			Vector<byte, 3>* data = nullptr;
+			TextureImportOptions options;
+			options.Name = "Renderer_BlueNoise";
+			options.sRGB = false;
+			options.GenerateMipMaps = false;
 
-			data = (Vector<byte, 3>*)stbi_load(path.string().data(), &width, &height, &channels, 0);
-			ATN_CORE_ASSERT(channels == 3);
-
-			uint64 newSize = width * height * Texture::BytesPerPixel(TextureFormat::R8);
-			Vector<byte, 1>* newData = (Vector<byte, 1>*)malloc(newSize);
-
-			for (uint64 i = 0; i < width * height; ++i)
-			{
-				newData[i][0] = data[i][0];
-			}
-
-			stbi_image_free(data);
-			texData = Buffer::Copy(newData, width * height * Texture::BytesPerPixel(TextureFormat::R8));
-
-			texInfo.Name = "Renderer_BlueNoise";
-			texInfo.Format = TextureFormat::R8;
-			texInfo.Usage = TextureUsage(TextureUsage::SAMPLED);
-			texInfo.Width = width;
-			texInfo.Height = height;
-			texInfo.Layers = 1;
-			texInfo.GenerateMipLevels = false;
-			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MipMapFilter = TextureFilter::NEAREST;
-			texInfo.Sampler.Wrap = TextureWrap::REPEAT;
-
-			s_Data.BlueNoise = Texture2D::Create(texInfo, texData);
-
-			texData.Release();
+			s_Data.BlueNoise = TextureImporter::Load(path, options);
 		}
 
 		// BRDF_LUT

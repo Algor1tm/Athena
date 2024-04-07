@@ -34,4 +34,10 @@ namespace Athena::Math
 
 		return out;
 	}
+
+	template <typename T>
+	constexpr Matrix<T, 4, 4> PerspectiveReverseZ(T verticalFOV, T aspectRatio, T zNear, T zFar)
+	{
+		return Perspective(verticalFOV, aspectRatio, zFar, zNear);
+	}
 }

@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 
 #ifdef CreateDirectory
-	#undef CreateDirectory;
+	#undef CreateDirectory
 #endif
 
 

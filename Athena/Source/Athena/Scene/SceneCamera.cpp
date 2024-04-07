@@ -41,7 +41,7 @@ namespace Athena
 		}
 		else if (m_ProjectionType == ProjectionType::Perspective)
 		{
-			m_ProjectionMatrix = Math::Perspective(m_PerspectiveData.VerticalFOV, m_AspecRatio,
+			m_ProjectionMatrix = Math::PerspectiveReverseZ(m_PerspectiveData.VerticalFOV, m_AspecRatio,
 				m_PerspectiveData.NearClip, m_PerspectiveData.FarClip);
 		}
 	}

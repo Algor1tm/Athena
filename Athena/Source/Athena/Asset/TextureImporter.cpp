@@ -203,11 +203,13 @@ namespace Athena
 			return;
 		}
 
-		//auto utf8Path = Utils::ConvertPathToUTF8(path);
-		String utf8Path = path.string();
+		uint32 width = texture->GetWidth();
+		uint32 height = texture->GetHeight();
+
+		auto utf8Path = Utils::ConvertPathToUTF8(path);
 		uint32 bpp = Texture::BytesPerPixel(texture->GetFormat());
 
-		bool result = stbi_write_png(utf8Path.data(), texture->GetWidth(), texture->GetHeight(), bpp, buffer.Data(), bpp * texture->GetWidth());
+		bool result = stbi_write_png(utf8Path.data(), width, height, bpp, buffer.Data(), bpp * width);
 
 		buffer.Release();
 

@@ -44,7 +44,7 @@ namespace Athena
 		appinfo.WindowInfo.Height = 900;
 		appinfo.WindowInfo.Title = "SandBox";
 		appinfo.WindowInfo.VSync = true;
-		appinfo.WindowInfo.StartMode = WindowMode::Fullscreen;
+		appinfo.WindowInfo.StartMode = WindowMode::Maximized;
 		appinfo.WindowInfo.CustomTitlebar = false;
 		appinfo.WindowInfo.WindowResizeable = true;
 		appinfo.WindowInfo.Icon = "EditorResources/Icons/Logo/LogoBlack.png";

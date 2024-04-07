@@ -22,11 +22,13 @@ namespace Athena
 		FRONT
 	};
 
-	enum class DepthCompare
+	enum class DepthCompareOperator
 	{
 		NONE = 0,
 		LESS,
-		LESS_OR_EQUAL
+		LESS_OR_EQUAL,
+		GREATER,
+		GREATER_OR_EQUAL
 	};
 
 	struct PipelineCreateInfo
@@ -38,7 +40,9 @@ namespace Athena
 		VertexMemoryLayout InstanceLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		CullMode CullMode = CullMode::BACK;
-		DepthCompare DepthCompare = DepthCompare::NONE;
+		bool DepthTest = true;
+		bool DepthWrite = true;
+		DepthCompareOperator DepthCompareOp = DepthCompareOperator::LESS_OR_EQUAL;
 		bool BlendEnable = true;
 	};
 

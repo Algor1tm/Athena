@@ -155,7 +155,7 @@ namespace Athena
 	void PerspectiveEditorCameraBase::RecalculateProjection()
 	{
 		m_AspectRatio = m_ViewportWidth / m_ViewportHeight;
-		m_ProjectionMatrix = Math::Perspective(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
+		m_ProjectionMatrix = Math::PerspectiveReverseZ(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
 	}
 
 

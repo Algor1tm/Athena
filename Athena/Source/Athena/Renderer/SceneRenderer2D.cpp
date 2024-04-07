@@ -75,7 +75,8 @@ namespace Athena
 
 		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
+		pipelineInfo.DepthWrite = false;
 		pipelineInfo.BlendEnable = true;
 
 		m_QuadPipeline = Pipeline::Create(pipelineInfo);
@@ -102,7 +103,8 @@ namespace Athena
 
 		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
+		pipelineInfo.DepthWrite = false;
 		pipelineInfo.BlendEnable = true;
 
 		m_CirclePipeline = Pipeline::Create(pipelineInfo);
@@ -119,7 +121,8 @@ namespace Athena
 
 		pipelineInfo.Topology = Topology::LINE_LIST;
 		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompare = DepthCompare::LESS_OR_EQUAL;
+		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
+		pipelineInfo.DepthWrite = false;
 		pipelineInfo.BlendEnable = true;
 
 		m_LinePipeline = Pipeline::Create(pipelineInfo);

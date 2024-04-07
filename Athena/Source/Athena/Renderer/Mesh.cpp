@@ -1,6 +1,7 @@
 #include "Mesh.h"
 
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
@@ -56,13 +57,19 @@ namespace Athena
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
 		{
+			TextureImportOptions options;
+			options.sRGB = srgb;
+			options.GenerateMipMaps = true;
+
 			const aiTexture* embeddedTex = aiscene->GetEmbeddedTexture(texFilepath.C_Str());
 			if (embeddedTex)
 			{
 				void* data = embeddedTex->pcData;
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
-				result = Texture2D::Create(String(texFilepath.C_Str(), texFilepath.length), data, width, height, srgb, true);
+
+				options.Name = String(texFilepath.C_Str(), texFilepath.length);
+				result = TextureImporter::Load(data, width, height, options);
 			}
 			else
 			{
@@ -70,7 +77,7 @@ namespace Athena
 				path.replace_filename(texFilepath.C_Str());
 				if (FileSystem::Exists(path))
 				{
-					result = Texture2D::Create(path, srgb, true);
+					result = TextureImporter::Load(path, options);
 				}
 				else
 				{

@@ -38,9 +38,11 @@ layout(push_constant) uniform u_Uniforms
     bool u_EnableBloom;
 };
 
-// https://www.shadertoy.com/view/XsGfWV
+
 vec3 Tonemap_ACES(vec3 hdrColor)
 {
+#if 1 // https://www.shadertoy.com/view/XsGfWV
+
     mat3 m1 = mat3(
     0.59719, 0.07600, 0.02840,
     0.35458, 0.90834, 0.13383,
@@ -57,6 +59,18 @@ vec3 Tonemap_ACES(vec3 hdrColor)
 	vec3 a = v * (v + 0.0245786) - 0.000090537;
 	vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
 	return clamp(m2 * (a / b), 0.0, 1.0);	
+
+#else // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+
+    return clamp((hdrColor * (a * hdrColor + b)) / (hdrColor * (c * hdrColor + d) + e), 0.0, 1.0);
+
+#endif
 }
 
 vec3 Tonemap_Exposure(vec3 hdrColor, float exposure)

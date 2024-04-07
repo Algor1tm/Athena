@@ -212,17 +212,16 @@ namespace Athena
 	{
 	public:
 		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer data = Buffer());
-		static Ref<Texture2D> Create(const FilePath& path, bool sRGB = false, bool genMips = false);
-		static Ref<Texture2D> Create(const String& name, const void* data, uint32 width, uint32 height, bool sRGB = false, bool genMips = false);
 
 		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
 
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
 		virtual const String& GetName() const override { return m_Info.Name; }
 
-		// TODO: remove this function from image class
-		void SaveContentToFile(const FilePath& path, Buffer imageData);
 		const FilePath& GetFilePath() const { return m_FilePath; }
+
+	private:
+		friend class TextureImporter;
 
 	private:
 		FilePath m_FilePath;

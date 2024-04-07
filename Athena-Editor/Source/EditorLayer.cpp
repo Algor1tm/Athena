@@ -3,7 +3,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
-
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 
 #include "Athena/Input/Input.h"
@@ -239,14 +239,20 @@ namespace Athena
 
                     if (ImGui::MenuItem("Take Screenshot"))
                     {
-                        FilePath path = FileDialogs::OpenFile(TEXT("Screenshot (*.png)\0*.png\0"));
                         Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
-                        Buffer buffer;
 
-                        image->WriteContentToBuffer(&buffer);
-                        image->SaveContentToFile(path, buffer);
+                        std::ostringstream oss;
+                        auto t = std::time(nullptr);
+                        auto tm = *std::localtime(&t);
+                        oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
 
-                        buffer.Release();
+                        String dateTime = oss.str();
+
+                        if (!FileSystem::Exists("Screenshots"))
+                            FileSystem::CreateDirectory("Screenshots");
+
+                        FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
+                        TextureExporter::ExportPNG(path, image);
                     }
 
                     ImGui::EndMenu();
@@ -292,7 +298,7 @@ namespace Athena
                             if (target.HasComponent<SpriteComponent>())
                             {
                                 auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = Texture2D::Create(FilePath(path));
+                                sprite.Texture = TextureImporter::Load(path, true);
                                 sprite.Color = LinearColor::White;
                                 m_EditorCtx->SelectedEntity = target;
                             }

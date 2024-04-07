@@ -1,5 +1,6 @@
 #include "SettingsPanel.h"
 
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/TextureGenerator.h"
@@ -261,7 +262,13 @@ namespace Athena
 			{
 				FilePath path = FileDialogs::OpenFile(TEXT("DirtTexture (*.png)\0*.png\0"));
 				if (!path.empty())
-					bloomSettings.DirtTexture = Texture2D::Create(path);
+				{
+					TextureImportOptions options;
+					options.sRGB = false;
+					options.GenerateMipMaps = false;
+
+					bloomSettings.DirtTexture = TextureImporter::Load(path, options);
+				}
 			}
 
 			UI::EndPropertyTable();

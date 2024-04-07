@@ -1,4 +1,6 @@
 #include "EditorResources.h"
+
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/TextureGenerator.h"
 
 
@@ -12,29 +14,34 @@ namespace Athena
 	{
 		m_Path = path;
 
-		m_Icons["Logo"] = Texture2D::Create(m_Path / "Icons/Logo/LogoWhite.png");
+		TextureImportOptions options;
+		options.sRGB = false;
+		options.GenerateMipMaps = false;
 
-		m_Icons["EmptyTexture"] = Texture2D::Create(m_Path / "Icons/Editor/Other/EmptyTexture.png", false);
+		m_Icons["Logo"] = TextureImporter::Load(m_Path / "Icons/Logo/LogoWhite.png", options);
+		m_Icons["EmptyTexture"] = TextureImporter::Load(m_Path / "Icons/Editor/Other/EmptyTexture.png", options);
+		m_Icons["Viewport_Stop"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/Stop.png", options);
 
-		m_Icons["Titlebar_CloseWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/CloseWindow.png", true);
-		m_Icons["Titlebar_MinimizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png", true);
-		m_Icons["Titlebar_RestoreWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png", true);
-		m_Icons["Titlebar_MaximizeWindow"] = Texture2D::Create(m_Path / "Icons/Editor/Titlebar/MaximizeWindow.png", true);
+		options.sRGB = true;
 
-		m_Icons["Viewport_Play"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Play.png", true);
-		m_Icons["Viewport_Simulate"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Simulate.png", true);
-		m_Icons["Viewport_Stop"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Stop.png", false);
-		m_Icons["Viewport_Camera"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/Camera.png", true);
-		m_Icons["Viewport_PointLight"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/PointLight.png", true);
-		m_Icons["Viewport_SpotLight"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/SpotLight.png", true);
+		m_Icons["Titlebar_CloseWindow"] = TextureImporter::Load(m_Path / "Icons/Editor/Titlebar/CloseWindow.png", options);
+		m_Icons["Titlebar_MinimizeWindow"] = TextureImporter::Load(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png", options);
+		m_Icons["Titlebar_RestoreWindow"] = TextureImporter::Load(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png", options);
+		m_Icons["Titlebar_MaximizeWindow"] = TextureImporter::Load(m_Path / "Icons/Editor/Titlebar/MaximizeWindow.png", options);
+
+		m_Icons["Viewport_Play"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/Play.png", options);
+		m_Icons["Viewport_Simulate"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/Simulate.png", options);
+		m_Icons["Viewport_Camera"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/Camera.png", options);
+		m_Icons["Viewport_PointLight"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/PointLight.png", options);
+		m_Icons["Viewport_SpotLight"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/SpotLight.png", options);
 		m_Icons["Viewport_DirLight"] = m_Icons["Viewport_SpotLight"];
-		m_Icons["Viewport_SkyLight"] = Texture2D::Create(m_Path / "Icons/Editor/Viewport/SkyLight.png", true);
+		m_Icons["Viewport_SkyLight"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/SkyLight.png", options);
 
-		m_Icons["ContentBrowser_Folder"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Folder.png", true);
-		m_Icons["ContentBrowser_File"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/File.png", true);
-		m_Icons["ContentBrowser_Undo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Undo.png", true);
-		m_Icons["ContentBrowser_Redo"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Redo.png", true);
-		m_Icons["ContentBrowser_Refresh"] = Texture2D::Create(m_Path / "Icons/Editor/ContentBrowser/Refresh.png", true);
+		m_Icons["ContentBrowser_Folder"] = TextureImporter::Load(m_Path / "Icons/Editor/ContentBrowser/Folder.png", options);
+		m_Icons["ContentBrowser_File"] = TextureImporter::Load(m_Path / "Icons/Editor/ContentBrowser/File.png", options);
+		m_Icons["ContentBrowser_Undo"] = TextureImporter::Load(m_Path / "Icons/Editor/ContentBrowser/Undo.png", options);
+		m_Icons["ContentBrowser_Redo"] = TextureImporter::Load(m_Path / "Icons/Editor/ContentBrowser/Redo.png", options);
+		m_Icons["ContentBrowser_Refresh"] = TextureImporter::Load(m_Path / "Icons/Editor/ContentBrowser/Refresh.png", options);
 	}
 
 	void EditorResources::Shutdown()

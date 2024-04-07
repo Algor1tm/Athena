@@ -1,6 +1,7 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Athena/Core/PlatformUtils.h"
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
@@ -340,7 +341,7 @@ namespace Athena
 				FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
 				if (!path.empty())
 				{
-					texture = Texture2D::Create(path, texName == "u_Albedo" ? true : false);
+					texture = TextureImporter::Load(path, texName == "u_Albedo" ? true : false);
 					mat->Set(texName, texture);
 					mat->Set(useTexName, (uint32)true);
 				}
@@ -607,7 +608,7 @@ namespace Athena
 							std::string_view extent = path.substr(path.size() - 4, path.size());
 							if (extent == ".png\0")
 							{
-								sprite.Texture = Texture2D::Create(FilePath(path), true);
+								sprite.Texture = TextureImporter::Load(FilePath(path), true);
 								sprite.Color = LinearColor::White;
 							}
 							else
@@ -625,7 +626,7 @@ namespace Athena
 						FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
 						if (!path.empty())
 						{
-							sprite.Texture = Texture2D::Create(path, true);
+							sprite.Texture = TextureImporter::Load(path, true);
 							sprite.Color = LinearColor::White;
 						}
 					}

@@ -28,6 +28,14 @@ namespace Athena
 			return result;
 		}
 
+		static Buffer Move(const void* data, uint64 size)
+		{
+			Buffer result;
+			result.m_Data = (byte*)data;
+			result.m_Size = size;
+			return result;
+		}
+
 		byte* Data() 
 		{
 			return m_Data; 
@@ -84,7 +92,7 @@ namespace Athena
 			return !(*this == other);
 		}
 
-	protected:
+	private:
 		byte* m_Data = nullptr;
 		uint64 m_Size = 0;
 	};

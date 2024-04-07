@@ -7,14 +7,7 @@
 #version 460 core
 #pragma stage : compute
 
-#define GROUP_SIZE         8
-#define GROUP_THREAD_COUNT (GROUP_SIZE * GROUP_SIZE)
-#define FILTER_SIZE        3
-#define FILTER_RADIUS      (FILTER_SIZE / 2)
-#define TILE_SIZE          (GROUP_SIZE + 2 * FILTER_RADIUS)
-#define TILE_PIXEL_COUNT   (TILE_SIZE * TILE_SIZE)
-
-layout(local_size_x = GROUP_SIZE, local_size_y = GROUP_SIZE) in;
+layout(local_size_x = 8, local_size_y = 4) in;
 
 layout(set = 1, binding = 0) uniform sampler2D u_BloomTexture;
 layout(set = 1, binding = 1) uniform sampler2D u_DirtTexture;
@@ -32,39 +25,16 @@ layout(push_constant) uniform u_BloomData
     uint u_ReadMipLevel;
 };
 
-shared vec3 s_Pixels[TILE_PIXEL_COUNT];
-
-void StorePixel(int idx, vec3 color)
+vec3 Sample(vec2 uv, float xOff, float yOff)
 {
-    s_Pixels[idx] = color.rgb;
+    return textureLod(u_BloomTexture, uv + vec2(xOff, yOff) * u_TexelSize, u_ReadMipLevel).rgb;
 }
-
-vec3 LoadPixel(uint idx)
-{
-    return s_Pixels[idx];
-}
-
 
 void main()
 {
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    vec2 baseIndex = ivec2(gl_WorkGroupID) * GROUP_SIZE - FILTER_RADIUS;
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID);
+    vec2 uv = (gl_GlobalInvocationID.xy + 0.5) * u_TexelSize;
     bool lastPass = u_ReadMipLevel == 1;
-
-    // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
-    for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
-    {
-        vec2 uv       = (baseIndex + 0.5) * u_TexelSize;
-        vec2 uvOffset = vec2(i % TILE_SIZE, i / TILE_SIZE) * u_TexelSize;
-        
-        vec3 color = textureLod(u_BloomTexture, (uv + uvOffset), u_ReadMipLevel).rgb;
-        StorePixel(i, color);
-    }
-
-    memoryBarrierShared();
-    barrier();
-
-    uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
 
     // 9-tap tent filter
     /*--------------------------
@@ -74,17 +44,17 @@ void main()
     --------------------------*/
 
     vec3 s;
-    s  = LoadPixel(center - TILE_SIZE - 1);
-    s += LoadPixel(center - TILE_SIZE    ) * 2.0;
-    s += LoadPixel(center - TILE_SIZE + 1);
+    s  = Sample(uv, -2, -2);
+    s += Sample(uv, -2,  0) * 2.0;
+    s += Sample(uv, -2,  2);
 
-    s += LoadPixel(center - 1) * 2.0;
-    s += LoadPixel(center    ) * 4.0;
-    s += LoadPixel(center + 1) * 2.0;
+    s += Sample(uv,  0, -2) * 2.0;
+    s += Sample(uv,  0,  0) * 4.0;
+    s += Sample(uv,  0,  2) * 2.0;
 
-    s += LoadPixel(center + TILE_SIZE - 1);
-    s += LoadPixel(center + TILE_SIZE    ) * 2.0;
-    s += LoadPixel(center + TILE_SIZE + 1);
+    s += Sample(uv,  2, -2);
+    s += Sample(uv,  2,  0) * 2.0;
+    s += Sample(uv,  2,  2);
 
     vec3 bloom = s * (1.0 / 16.0) * u_Intensity;
     vec3 outPixel = bloom;

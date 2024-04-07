@@ -7,20 +7,12 @@
 #version 460 core
 #pragma stage : compute
 
-#define GROUP_SIZE         8
-#define GROUP_THREAD_COUNT (GROUP_SIZE * GROUP_SIZE)
-#define FILTER_SIZE        3
-#define FILTER_RADIUS      (FILTER_SIZE / 2)
-#define TILE_SIZE          (GROUP_SIZE + 2 * FILTER_RADIUS)
-#define TILE_PIXEL_COUNT   (TILE_SIZE * TILE_SIZE)
-
-layout(local_size_x = GROUP_SIZE, local_size_y = GROUP_SIZE) in;
+layout(local_size_x = 8, local_size_y = 4) in;
 
 layout(set = 1, binding = 0) uniform sampler2D u_SceneHDRColor;
 layout(set = 1, binding = 1) uniform sampler2D u_BloomTexture;
 
 layout(r11f_g11f_b10f, set = 0, binding = 1) uniform writeonly image2D u_BloomTextureMip;
-
 
 layout(push_constant) uniform u_BloomData
 {
@@ -31,27 +23,6 @@ layout(push_constant) uniform u_BloomData
     vec2 u_TexelSize;
     uint u_ReadMipLevel;
 };
-
-vec3 Sample(vec2 uv, int xOff, int yOff)
-{
-    if(u_ReadMipLevel == 0)
-        return texture(u_SceneHDRColor, uv + vec2(xOff, yOff) * u_TexelSize).rgb;
-
-    return textureLod(u_BloomTexture, uv + vec2(xOff, yOff) * u_TexelSize, u_ReadMipLevel).rgb;
-}
-
-shared vec3 s_Pixels[TILE_PIXEL_COUNT];
-
-void StorePixel(uint idx, vec3 color)
-{
-    s_Pixels[idx] = color;
-}
-
-vec3 LoadPixel(uint center, int xOff, int yOff)
-{
-    uint idx = center + xOff + yOff * TILE_SIZE;
-    return s_Pixels[idx];
-}
 
 // x -> threshold, yzw -> (threshold - knee, 2.0 * knee, 0.25 * knee)
 // Curve = (threshold - knee, knee * 2.0, knee * 0.25)
@@ -83,24 +54,19 @@ vec3 KarisAverage(vec3 c)
     return c / (1.0 + Luma(c));
 }
 
+vec3 Sample(vec2 uv, float xOff, float yOff)
+{
+    if(u_ReadMipLevel == 0)
+        return texture(u_SceneHDRColor, uv + vec2(xOff, yOff) * u_TexelSize).rgb;
+
+    return textureLod(u_BloomTexture, uv + vec2(xOff, yOff) * u_TexelSize, u_ReadMipLevel).rgb;
+}
+
 void main()
 {
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID);
-    ivec2 baseIndex = ivec2(gl_WorkGroupID) * GROUP_SIZE - FILTER_RADIUS;
-    vec2 uv = (vec2(baseIndex) + 0.5) * u_TexelSize;
-
-    // The first (TILE_PIXEL_COUNT - GROUP_THREAD_COUNT) threads load at most 2 texel values
-    for (int i = int(gl_LocalInvocationIndex); i < TILE_PIXEL_COUNT; i += GROUP_THREAD_COUNT)
-    {
-        int xOff = i % TILE_SIZE;
-        int yOff = i / TILE_SIZE;
-
-        vec3 color = Sample(uv, xOff, yOff);
-        StorePixel(i, color);
-    }
-
-    memoryBarrierShared();
-    barrier();
+    vec2 uv = (gl_GlobalInvocationID.xy + 0.5) * u_TexelSize;
+    bool firstPass = u_ReadMipLevel == 0;
 
     // 36-texel downsample (13 bilinear fetches)
     /*--------------------------
@@ -111,27 +77,22 @@ void main()
           K    L    M
     --------------------------*/
 
+    vec3 A = Sample(uv, -1, -1);
+    vec3 B = Sample(uv,  0, -1);
+    vec3 C = Sample(uv,  1, -1);
 
-    bool firstPass = u_ReadMipLevel == 0;
-    uint center = (gl_LocalInvocationID.x + FILTER_RADIUS) + (gl_LocalInvocationID.y + FILTER_RADIUS) * TILE_SIZE;
+    vec3 F = Sample(uv, -1,  0);
+    vec3 G = Sample(uv,  0,  0);
+    vec3 H = Sample(uv,  1,  0);
 
-    vec3 A = LoadPixel(center, -1, -1);
-    vec3 B = LoadPixel(center,  0, -1);
-    vec3 C = LoadPixel(center,  1, -1);
+    vec3 K = Sample(uv, -1,  1);
+    vec3 L = Sample(uv,  0,  1);
+    vec3 M = Sample(uv,  1,  1);
 
-    vec3 F = LoadPixel(center, -1,  0);
-    vec3 G = LoadPixel(center,  0,  0);
-    vec3 H = LoadPixel(center,  1,  0);
-
-    vec3 K = LoadPixel(center, -1,  1);
-    vec3 L = LoadPixel(center,  0,  1);
-    vec3 M = LoadPixel(center,  1,  1);
-
-    // Seems that these values are not exactly correct, but despite this bloom result is ok
-    vec3 D = (A + B + G + F) * 0.25;
-    vec3 E = (B + C + H + G) * 0.25;
-    vec3 I = (F + G + L + K) * 0.25;
-    vec3 J = (G + H + M + L) * 0.25;
+    vec3 D = Sample(uv, -0.5, -0.5);
+    vec3 E = Sample(uv, -0.5,  0.5);
+    vec3 I = Sample(uv,  0.5, -0.5);
+    vec3 J = Sample(uv,  0.5,  0.5);
 
     vec3 red    = 0.5   * (D + E + J + I) * 0.25;
     vec3 yellow = 0.125 * (G + F + A + B) * 0.25;

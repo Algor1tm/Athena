@@ -7,6 +7,8 @@ Athena/EngineResources/Cache/
 Athena-Editor/Assets/Scripts/Internal/*.dll
 Athena-Editor/Assets/Scripts/Internal/*.pyd
 
+Athena-Editor/Screenshots/
+
 .vscode/
 .idea/
 

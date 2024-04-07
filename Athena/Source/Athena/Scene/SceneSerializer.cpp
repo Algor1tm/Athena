@@ -1,7 +1,7 @@
 #include "Athena/Scene/SceneSerializer.h"
 
 #include "Athena/Core/FileSystem.h"
-
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
 
@@ -305,7 +305,7 @@ namespace Athena
 						const auto& path = FilePath(textureNode.as<String>());
 						if (!path.empty())
 						{
-							Ref<Texture2D> texture = Texture2D::Create(path);
+							Ref<Texture2D> texture = TextureImporter::Load(path, true);
 							sprite.Texture = Texture2DInstance(texture, texCoords);
 						}
 						else

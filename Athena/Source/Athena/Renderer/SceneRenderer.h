@@ -68,7 +68,7 @@ namespace Athena
 		bool Enable = true;
 		float Intensity = 1;
 		float Threshold = 1.5;
-		float Knee = 0.1;
+		float Knee = 0.1f;
 		float DirtIntensity = 2;
 		Ref<Texture2D> DirtTexture;
 	};

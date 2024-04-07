@@ -1,5 +1,6 @@
 #include "EnvironmentMap.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
@@ -178,7 +179,7 @@ namespace Athena
 
 	void EnvironmentMap::LoadFromFile(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
-		Ref<Texture2D> panorama = Texture2D::Create(m_FilePath);
+		Ref<Texture2D> panorama = TextureImporter::Load(m_FilePath, TextureImportOptions());
 		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
 
 		m_PanoramaToCubePass->Begin(commandBuffer);

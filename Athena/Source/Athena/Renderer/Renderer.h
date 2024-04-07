@@ -122,7 +122,7 @@ namespace Athena
 		static void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer);
 
 		static void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture);
-		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image);
+		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture);
 
 		static void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);
 		static void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer);

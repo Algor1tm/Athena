@@ -9,14 +9,9 @@ namespace Athena::UI
 		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
 	}
 
-	void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
+	void* GetTextureID(const Ref<TextureView>& texture)
 	{
-		return Application::Get().GetImGuiLayer()->GetTextureMipID(texture, mip);
-	}
-
-	void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
-	{
-		return Application::Get().GetImGuiLayer()->GetTextureLayerID(texture, layer);
+		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
 	}
 
 	void PushFont(Fonts font)

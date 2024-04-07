@@ -240,7 +240,7 @@ namespace Athena
                     if (ImGui::MenuItem("Take Screenshot"))
                     {
                         FilePath path = FileDialogs::OpenFile(TEXT("Screenshot (*.png)\0*.png\0"));
-                        Ref<Image> image = m_ViewportRenderer->GetFinalImage()->GetImage();
+                        Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
                         Buffer buffer;
 
                         image->WriteContentToBuffer(&buffer);

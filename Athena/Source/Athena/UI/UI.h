@@ -6,7 +6,6 @@
 
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Image.h"
 
 #include <ImGui/imgui.h>
 #include <ImGui/imgui_internal.h>
@@ -26,8 +25,7 @@ namespace Athena::UI
 	};
 
 	ATHENA_API void* GetTextureID(const Ref<Texture2D>& texture);
-	ATHENA_API void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip);
-	ATHENA_API void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer);
+	ATHENA_API void* GetTextureID(const Ref<TextureView>& texture);
 
 	ATHENA_API void PushFont(Fonts font);
 	ATHENA_API void PopFont();

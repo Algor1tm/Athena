@@ -172,7 +172,7 @@ void main()
 
     vec4 normalEmission = texture(u_SceneNormalsEmission, v_TexCoords);
     vec3 normal = normalEmission.rgb * 2.0 - 1.0;
-    float emission = normalEmission.a - 1.0;
+    float emission = normalEmission.a;
 
     vec3 albedo = texture(u_SceneAlbedo, v_TexCoords).rgb;
 

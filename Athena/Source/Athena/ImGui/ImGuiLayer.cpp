@@ -129,14 +129,9 @@ namespace Athena
 		return m_ImGuiImpl->GetTextureID(texture);
 	}
 
-	void* ImGuiLayer::GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
+	void* ImGuiLayer::GetTextureID(const Ref<TextureView>& texture)
 	{
-		return m_ImGuiImpl->GetTextureMipID(texture, mip);
-	}
-
-	void* ImGuiLayer::GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
-	{
-		return m_ImGuiImpl->GetTextureLayerID(texture, layer);
+		return m_ImGuiImpl->GetTextureID(texture);
 	}
 
 	void ImGuiLayer::OnAttach()

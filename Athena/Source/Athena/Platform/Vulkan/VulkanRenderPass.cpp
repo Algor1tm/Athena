@@ -23,12 +23,12 @@ namespace Athena
 			return (VkAttachmentLoadOp)0;
 		}
 
-		static VkImageLayout GetAttachmentOptimalLayout(ImageFormat format)
+		static VkImageLayout GetAttachmentOptimalLayout(TextureFormat format)
 		{
-			if (Image::IsColorFormat(format))
+			if (Texture::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-			if (Image::IsDepthFormat(format) || Image::IsStencilFormat(format))
+			if (Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format))
 				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			ATN_CORE_ASSERT(false);
@@ -39,7 +39,7 @@ namespace Athena
 		{
 			VkClearValue result = {};
 
-			if (Image::IsColorFormat(info.Texture->GetFormat()))
+			if (Texture::IsColorFormat(info.Texture->GetFormat()))
 			{
 				result.color = { info.ClearColor[0], info.ClearColor[1], info.ClearColor[2], info.ClearColor[3] };
 			}
@@ -72,7 +72,7 @@ namespace Athena
 			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
 
 		for (const auto& output : m_Outputs)
-			output.Texture->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(output.Texture->GetFormat()));
+			output.Texture.As<VulkanTexture2D>()->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(output.Texture->GetFormat()));
 
 		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 width = m_Info.Width;
@@ -96,7 +96,7 @@ namespace Athena
 		vkCmdEndRenderPass(vkcmdBuf);
 		
 		for (const auto& output : m_Outputs)
-			output.Texture->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			output.Texture.As<VulkanTexture2D>()->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		if (m_Info.DebugColor != LinearColor(0.f))
 			Renderer::EndDebugRegion(commandBuffer);
@@ -112,7 +112,7 @@ namespace Athena
 
 		for (const auto& attachment : m_Outputs)
 		{
-			ImageFormat format = attachment.Texture->GetFormat();
+			TextureFormat format = attachment.Texture->GetFormat();
 
 			VkAttachmentDescription attachmentDesc = {};
 			attachmentDesc.format = Vulkan::GetFormat(format);
@@ -131,8 +131,7 @@ namespace Athena
 
 			attachments.push_back(attachmentDesc);
 
-
-			if (Image::IsColorFormat(format))
+			if (Texture::IsColorFormat(format))
 			{
 				VkAttachmentReference colorAttachmentRef;
 				colorAttachmentRef.attachment = attachments.size() - 1;
@@ -245,7 +244,7 @@ namespace Athena
 			{
 				if (outputTarget.Texture == inputTarget.Texture)
 				{
-					if (Image::IsColorFormat(outputTarget.Texture->GetFormat()))
+					if (Texture::IsColorFormat(outputTarget.Texture->GetFormat()))
 						hasSharedColorTarget = true;
 					else
 						hasSharedDepthTarget = true;

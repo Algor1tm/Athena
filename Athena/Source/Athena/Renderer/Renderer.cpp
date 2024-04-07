@@ -210,9 +210,9 @@ namespace Athena
 		s_Data.RendererAPI->BlitMipMap(cmdBuffer, texture);
 	}
 
-	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
+	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
 	{
-		s_Data.RendererAPI->BlitToScreen(cmdBuffer, image);
+		s_Data.RendererAPI->BlitToScreen(cmdBuffer, texture);
 	}
 
 	void Renderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color)

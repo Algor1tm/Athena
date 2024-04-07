@@ -4,6 +4,7 @@
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanTextureView.h"
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
 #include "Athena/Renderer/TextureGenerator.h"
@@ -208,42 +209,17 @@ namespace Athena
 		}
 	}
 
-	void* VulkanImGuiLayerImpl::GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer)
+	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<TextureView>& view)
 	{
-		if (texture == nullptr)
+		if (view == nullptr)
 			return GetTextureID(TextureGenerator::GetWhiteTexture());
-
-		TextureView view = { texture, 0, layer };
 
 		if (m_TextureViewsMap.contains(view))
 			return m_TextureViewsMap.at(view).Set;
 
 		TextureInfo info;
-		info.VulkanImageView = texture->GetImage().As<VulkanImage>()->GetVulkanImageViewLayer(layer);
-		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
-
-		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
-
-		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		m_TextureViewsMap[view] = info;
-		return info.Set;
-	}
-
-	void* VulkanImGuiLayerImpl::GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip)
-	{
-		if (texture == nullptr)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
-
-		TextureView view = { texture, mip, 0 };
-
-		if (m_TextureViewsMap.contains(view))
-			return m_TextureViewsMap.at(view).Set;
-
-		TextureInfo info;
-		info.VulkanImageView = texture->GetImage().As<VulkanImage>()->GetVulkanImageViewMip(mip);
-		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
+		info.VulkanImageView = view.As<VulkanTextureView>()->GetVulkanImageView();
+		info.VulkanSampler = view.As<VulkanTextureView>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
 			return GetTextureID(TextureGenerator::GetWhiteTexture());
@@ -277,6 +253,36 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::InvalidateDescriptorSets()
 	{
+		std::vector<Ref<TextureView>> viewsToRemove;
+		for (auto& [view, info] : m_TextureViewsMap)
+		{
+			VkImageView imageView = view.As<VulkanTextureView>()->GetVulkanImageView();
+
+			// All instances of texture has been deleted except one in texture map
+			if (view->GetCount() == 1 || imageView == VK_NULL_HANDLE)
+			{
+				RemoveDescriptorSet(info.Set);
+				viewsToRemove.push_back(view);
+				continue;
+			}
+
+			VkSampler sampler = view.As<VulkanTextureView>()->GetVulkanSampler();
+
+			// Check if texture has been modified and update descriptor set
+			if (info.VulkanImageView != imageView || info.VulkanSampler != sampler)
+			{
+				RemoveDescriptorSet(info.Set);
+
+				info.VulkanImageView = imageView;
+				info.VulkanSampler = sampler;
+				info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			}
+		}
+
+		for (const auto& view : viewsToRemove)
+			m_TextureViewsMap.erase(view);
+
+
 		std::vector<Ref<Texture2D>> texturesToRemove;
 		for (auto& [texture, info] : m_TexturesMap)
 		{
@@ -303,10 +309,9 @@ namespace Athena
 			}
 		}
 
-		// TODO: Invalidate TextureViewsMap
-
 		for (const auto& texture : texturesToRemove)
 			m_TexturesMap.erase(texture);
+
 	}
 
 	void VulkanImGuiLayerImpl::RemoveDescriptorSet(VkDescriptorSet set)

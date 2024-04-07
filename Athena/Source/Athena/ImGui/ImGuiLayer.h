@@ -24,8 +24,7 @@ namespace Athena
 		virtual void RenderDrawData(uint32 width, uint32 height) = 0;
 
 		virtual void* GetTextureID(const Ref<Texture2D>& texture) = 0;
-		virtual void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip) = 0;
-		virtual void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer) = 0;
+		virtual void* GetTextureID(const Ref<TextureView>& texture) = 0;
 
 		virtual void OnSwapChainRecreate() = 0;
 	};
@@ -43,8 +42,7 @@ namespace Athena
 		void UpdateImGuiTheme();
 
 		void* GetTextureID(const Ref<Texture2D>& texture);
-		void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip);
-		void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer);
+		void* GetTextureID(const Ref<TextureView>& texture);
 
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;

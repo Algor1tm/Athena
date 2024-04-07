@@ -3,7 +3,7 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
 #include "Athena/Renderer/GPUBuffer.h"
-#include "Athena/Renderer/Image.h"
+#include "Athena/Renderer/Texture.h"
 
 #include <map>
 
@@ -64,7 +64,7 @@ namespace Athena
 
 	struct TextureShaderMetaData
 	{
-		ImageType ImageType;
+		TextureType TextureType;
 		uint32 Binding;
 		uint32 Set;
 		uint32 ArraySize;

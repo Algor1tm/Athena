@@ -9,27 +9,29 @@
 
 namespace Athena
 {
-	class ATHENA_API VulkanTextureCube : public TextureCube
+	class VulkanTextureView : public TextureView
 	{
 	public:
-		VulkanTextureCube(const TextureCreateInfo& info, Buffer data);
-		~VulkanTextureCube();
+		VulkanTextureView(const Ref<Texture>& texture, const TextureViewCreateInfo& info);
+		~VulkanTextureView();
 
-		virtual void Resize(uint32 width, uint32 height) override;
-		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) override;
-
-		virtual void WriteContentToBuffer(Buffer* dstBuffer) override;
+		virtual RenderResourceType GetResourceType() const override { return m_ResourceType; }
+		virtual void Invalidate() override;
 
 		Ref<VulkanImage> GetImage() const { return m_Image; }
-
+		VkImageView GetVulkanImageView() const { return m_ImageView; }
 		VkSampler GetVulkanSampler() const { return m_Sampler; }
-		VkImage GetVulkanImage() const;
-		VkImageView GetVulkanImageView() const;
+
 		const VkDescriptorImageInfo& GetVulkanDescriptorInfo();
 
 	private:
+		void CleanUp();
+
+	private:
 		Ref<VulkanImage> m_Image;
+		VkImageView m_ImageView = VK_NULL_HANDLE;
 		VkSampler m_Sampler = VK_NULL_HANDLE;
+		RenderResourceType m_ResourceType;
 		VkDescriptorImageInfo m_DescriptorInfo;
 	};
 }

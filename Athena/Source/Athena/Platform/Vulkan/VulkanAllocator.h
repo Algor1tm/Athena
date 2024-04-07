@@ -7,23 +7,6 @@
 #include <vma/vk_mem_alloc.h>
 
 
-namespace std
-{
-	using namespace Athena;
-
-	template<>
-	struct hash<TextureSamplerCreateInfo>
-	{
-		size_t operator()(const TextureSamplerCreateInfo& value) const
-		{
-			string str = std::format("{}{}{}{}{}", (uint32)value.MinFilter, (uint32)value.MagFilter, 
-				(uint32)value.MipMapFilter, (uint32)value.Wrap, (uint32)value.Compare);
-
-			return hash<string>()(str);
-		}
-	};
-}
-
 namespace Athena
 {
 	class VulkanBufferAllocation
@@ -88,7 +71,7 @@ namespace Athena
 
 		VmaAllocator GetInternalAllocator() { return m_Allocator; }
 
-		VkSampler AllocateSampler(const TextureSamplerCreateInfo& info);
+		VkSampler CreateSampler(const TextureSamplerCreateInfo& info);
 		void DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler);
 
 		void OnUpdate();

@@ -123,7 +123,7 @@ void main()
 
     o_Albedo = vec4(albedo.rgb, 1.0);
     o_NormalsEmission.rgb = normal * 0.5 + 0.5;
-    o_NormalsEmission.a = u_Emission + 1.0;
+    o_NormalsEmission.a = u_Emission;
     o_RoughnessMetalness.r = roughness;
     o_RoughnessMetalness.g = metalness;
 }

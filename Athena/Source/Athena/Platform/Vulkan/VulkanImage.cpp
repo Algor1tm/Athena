@@ -8,67 +8,37 @@ namespace Athena
 {
 	namespace Vulkan
 	{
-		static VkImageUsageFlags GetImageUsage(ImageUsage usage, ImageFormat format)
+		static VkImageUsageFlags GetImageUsage(TextureUsage usage, TextureFormat format)
 		{
-			bool depthStencil = Image::IsDepthFormat(format) || Image::IsStencilFormat(format);
+			bool depthStencil = Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format);
 
 			VkImageUsageFlags flags = 0;
 
-			if(usage & ImageUsage::SAMPLED)
+			if(usage & TextureUsage::SAMPLED)
 				flags |= VK_IMAGE_USAGE_SAMPLED_BIT;
 
-			if (usage & ImageUsage::STORAGE)
+			if (usage & TextureUsage::STORAGE)
 				flags |= VK_IMAGE_USAGE_STORAGE_BIT;
 
-			if(usage & ImageUsage::ATTACHMENT)
+			if(usage & TextureUsage::ATTACHMENT)
 				flags |= depthStencil ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 			return (VkImageUsageFlags)flags;
 		}
-
-		static VkImageType GetImageType(ImageType type)
-		{
-			switch (type)
-			{
-			case ImageType::IMAGE_2D: return VK_IMAGE_TYPE_2D;
-			case ImageType::IMAGE_CUBE: return VK_IMAGE_TYPE_2D;
-			}
-
-			ATN_CORE_ASSERT(false);
-			return (VkImageType)0;
-		}
-
-		static VkImageViewType GetImageViewType(ImageType type, uint32 layers)
-		{
-			if (type == ImageType::IMAGE_2D && layers > 1)
-				return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-
-			switch (type)
-			{
-			case ImageType::IMAGE_2D: return VK_IMAGE_VIEW_TYPE_2D;
-			case ImageType::IMAGE_CUBE: return VK_IMAGE_VIEW_TYPE_CUBE;
-			}
-
-			ATN_CORE_ASSERT(false);
-			return (VkImageViewType)0;
-		}
 	}
 
-
-	VulkanImage::VulkanImage(const ImageCreateInfo& info, Buffer data)
+	VulkanImage::VulkanImage(const TextureCreateInfo& info, TextureType type, Buffer data)
 	{
-		ATN_CORE_ASSERT(!(info.GenerateMipLevels && info.Layers > 1 && info.Type == ImageType::IMAGE_2D), "Currently does not support mip levels and multilayered 2D texture!");
-
 		m_Info = info;
-		m_Info.Width = 0;
-		m_Info.Height = 0;
+		m_Type = type;
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
+		m_Info.Width = 0;
+		m_Info.Height = 0;
 		Resize(info.Width, info.Height);
 
 		if (data.Size() != 0)
 		{
-			ATN_CORE_ASSERT(data.Size() >= m_Info.Width * m_Info.Height * Image::BytesPerPixel(m_Info.Format), "Buffer is too small");
 			UploadData(data, m_Info.Width, m_Info.Height);
 		}
 	}
@@ -98,15 +68,17 @@ namespace Athena
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
+		uint32 layers = m_Type == TextureType::TEXTURE_CUBE ? m_Info.Layers * 6 : m_Info.Layers;
+
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.flags = m_Info.Type == ImageType::IMAGE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
-		imageInfo.imageType = Vulkan::GetImageType(m_Info.Type);
+		imageInfo.flags = m_Type == TextureType::TEXTURE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
+		imageInfo.imageType = Vulkan::GetImageType(m_Type);
 		imageInfo.extent.width = m_Info.Width;
 		imageInfo.extent.height = m_Info.Height;
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = m_MipLevels;
-		imageInfo.arrayLayers = m_Info.Layers;
+		imageInfo.arrayLayers = layers;
 		imageInfo.format = Vulkan::GetFormat(m_Info.Format);
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -120,78 +92,16 @@ namespace Athena
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image.GetImage();
-		viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, m_Info.Layers);
+		viewInfo.viewType = Vulkan::GetImageViewType(m_Type, layers);
 		viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = m_MipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = m_Info.Layers;
+		viewInfo.subresourceRange.layerCount = layers;
 
 		VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
-
-		VkComponentMapping swizzling = {};
-		swizzling.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		swizzling.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		swizzling.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		swizzling.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		if (Image::IsDepthFormat(m_Info.Format))
-		{
-			swizzling.g = VK_COMPONENT_SWIZZLE_R;
-			swizzling.b = VK_COMPONENT_SWIZZLE_R;
-		}
-
-		if (m_Info.GenerateMipLevels)
-		{
-			uint32 layerCount = m_Info.Type == ImageType::IMAGE_CUBE ? 6 : 1;
-			m_ImageViewsPerMip.reserve(m_MipLevels);
-			for (uint32 mip = 0; mip < m_MipLevels; ++mip)
-			{
-				VkImageViewCreateInfo viewInfo = {};
-				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.image = m_Image.GetImage();
-				viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, layerCount);
-				viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-				viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
-				viewInfo.subresourceRange.baseMipLevel = mip;
-				viewInfo.subresourceRange.levelCount = 1;
-				viewInfo.subresourceRange.baseArrayLayer = 0;
-				viewInfo.subresourceRange.layerCount = layerCount;
-
-				VkImageView mipView;
-
-				VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &mipView));
-				Vulkan::SetObjectDebugName(mipView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewMip{}_{}", mip, m_Info.Name));
-				m_ImageViewsPerMip.push_back(mipView);
-			}
-		}
-
-		if (m_Info.Layers > 1 && m_Info.Type != ImageType::IMAGE_CUBE)
-		{
-			m_ImageViewsPerLayer.reserve(m_Info.Layers);
-			for (uint32 layer = 0; layer < m_Info.Layers; ++layer)
-			{
-				VkImageViewCreateInfo viewInfo = {};
-				viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				viewInfo.image = m_Image.GetImage();
-				viewInfo.viewType = Vulkan::GetImageViewType(m_Info.Type, 1);
-				viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-				viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
-				viewInfo.subresourceRange.baseMipLevel = 0;
-				viewInfo.subresourceRange.levelCount = 1;
-				viewInfo.subresourceRange.baseArrayLayer = layer;
-				viewInfo.subresourceRange.layerCount = 1;
-				viewInfo.components = swizzling;
-
-				VkImageView layerView;
-
-				VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &layerView));
-				Vulkan::SetObjectDebugName(layerView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageViewLayer{}_{}", layer, m_Info.Name));
-				m_ImageViewsPerLayer.push_back(layerView);
-			}
-		}
 
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
@@ -201,24 +111,17 @@ namespace Athena
 		if (m_ImageView == VK_NULL_HANDLE && m_Image.GetImage() == VK_NULL_HANDLE)
 			return;
 
-		Renderer::SubmitResourceFree([vkImageView = m_ImageView, image = m_Image, mipViews = m_ImageViewsPerMip, layerViews = m_ImageViewsPerLayer, name = m_Info.Name]()
+		Renderer::SubmitResourceFree([vkImageView = m_ImageView, image = m_Image, name = m_Info.Name]()
 		{
-			for (VkImageView mipView : mipViews)
-				vkDestroyImageView(VulkanContext::GetLogicalDevice(), mipView, nullptr);
-
-			for (VkImageView layerView : layerViews)
-				vkDestroyImageView(VulkanContext::GetLogicalDevice(), layerView, nullptr);
-
 			vkDestroyImageView(VulkanContext::GetLogicalDevice(), vkImageView, nullptr);
 			VulkanContext::GetAllocator()->DestroyImage(image, name);
 		});
-
-		m_ImageViewsPerMip.clear();
-		m_ImageViewsPerLayer.clear();
 	}
 
 	void VulkanImage::TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
 	{
+		uint32 layers = m_Type == TextureType::TEXTURE_CUBE ? m_Info.Layers * 6 : m_Info.Layers;
+
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = m_Layout;
@@ -232,7 +135,7 @@ namespace Athena
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = m_MipLevels;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = m_Info.Layers;
+		barrier.subresourceRange.layerCount = layers;
 
 		vkCmdPipelineBarrier(
 			cmdBuffer,
@@ -253,7 +156,9 @@ namespace Athena
 
 	void VulkanImage::UploadData(Buffer data, uint32 width, uint32 height)
 	{
-		VkDeviceSize imageSize = width * height * (uint64)Image::BytesPerPixel(m_Info.Format);
+		ATN_CORE_ASSERT(data.Size() >= m_Info.Width * m_Info.Height * Texture::BytesPerPixel(m_Info.Format), "Buffer is too small");
+
+		VkDeviceSize imageSize = width * height * (uint64)Texture::BytesPerPixel(m_Info.Format);
 
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -362,12 +267,12 @@ namespace Athena
 
 	void VulkanImage::WriteContentToBuffer(Buffer* buffer)
 	{
-		ATN_CORE_ASSERT(m_Info.Type != ImageType::IMAGE_CUBE, "Not implemented!");
+		ATN_CORE_ASSERT(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
 
 		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
 		uint32 width = m_Info.Width;
 		uint32 height = m_Info.Height;
-		uint32 size = m_Info.Width * m_Info.Height * Image::BytesPerPixel(m_Info.Format);
+		uint32 size = m_Info.Width * m_Info.Height * Texture::BytesPerPixel(m_Info.Format);
 
 		VkImage srcImage = GetVulkanImage();
 

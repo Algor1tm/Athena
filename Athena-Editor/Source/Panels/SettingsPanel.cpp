@@ -235,7 +235,7 @@ namespace Athena
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
 
 				Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
-				ImGui::Image(UI::GetTextureLayerID(shadowMap, layer), { 256, 256 });
+				ImGui::Image(UI::GetTextureID(shadowMap->GetLayerView(layer)), {256, 256});
 
 				UI::TreePop();
 			}
@@ -272,7 +272,7 @@ namespace Athena
 
 				static int mip = 0;
 				ImGui::SliderInt("Mip", &mip, 0, bloomTexture->GetMipLevelsCount() - 4);
-				ImGui::Image(UI::GetTextureMipID(bloomTexture, mip), { 256, 256 });
+				ImGui::Image(UI::GetTextureID(bloomTexture->GetMipView(mip)), {256, 256});
 
 				UI::TreePop();
 			}

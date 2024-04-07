@@ -17,21 +17,21 @@ namespace Athena
 	struct RenderTarget
 	{
 		RenderTarget() = default;
-		RenderTarget(const String& name, ImageFormat format)
+		RenderTarget(const String& name, TextureFormat format)
 		{
-			uint32 usage = ImageUsage::ATTACHMENT | ImageUsage::SAMPLED;
+			uint32 usage = TextureUsage::ATTACHMENT | TextureUsage::SAMPLED;
 
-			Texture2DCreateInfo texInfo;
+			TextureCreateInfo texInfo;
 			texInfo.Name = name;
 			texInfo.Format = format;
-			texInfo.Usage = (ImageUsage)usage;
+			texInfo.Usage = (TextureUsage)usage;
 			texInfo.Width = 1;
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
 			texInfo.GenerateMipLevels = false;
-			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
+			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			Texture = Texture2D::Create(texInfo);
 			LoadOp = RenderTargetLoadOp::CLEAR;

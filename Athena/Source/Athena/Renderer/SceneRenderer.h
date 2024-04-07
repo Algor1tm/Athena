@@ -201,6 +201,7 @@ namespace Athena
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
+		Ref<Pipeline> GetSkyboxPipeline() { return m_SkyboxPipeline; }
 
 		void ApplySettings();
 
@@ -276,7 +277,7 @@ namespace Athena
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
-		Ref<Texture2D> m_ShadowMapSampler;
+		Ref<TextureView> m_ShadowMapSampler;
 
 		DynamicGPUBuffer<StorageBuffer> m_BonesSBO;
 		DynamicGPUBuffer<VertexBuffer> m_TransformsStorage;

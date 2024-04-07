@@ -9,15 +9,6 @@
 
 namespace Athena
 {
-	struct TextureView
-	{
-		Ref<Texture2D> Texture;
-		uint32 MipLevel = 0;
-		uint32 Layer = 0;
-
-		bool operator==(const TextureView& other) const = default;
-	};
-
 	struct TextureInfo
 	{
 		VkImageView VulkanImageView = VK_NULL_HANDLE;
@@ -41,11 +32,11 @@ namespace std
 	};
 
 	template<>
-	struct hash<TextureView>
+	struct hash<Ref<TextureView>>
 	{
-		size_t operator()(const TextureView& value) const
+		size_t operator()(const Ref<TextureView>& value) const
 		{
-			return (size_t)((byte*)value.Texture.Raw() + value.Layer + value.MipLevel);
+			return (size_t)value.Raw();
 		}
 	};
 }
@@ -65,8 +56,7 @@ namespace Athena
 		virtual void OnSwapChainRecreate() override;
 
 		virtual void* GetTextureID(const Ref<Texture2D>& texture) override;
-		virtual void* GetTextureMipID(const Ref<Texture2D>& texture, uint32 mip) override;
-		virtual void* GetTextureLayerID(const Ref<Texture2D>& texture, uint32 layer) override;
+		virtual void* GetTextureID(const Ref<TextureView>& texture) override;
 
 	private:
 		void RecreateFramebuffers();
@@ -79,6 +69,6 @@ namespace Athena
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
 		std::unordered_map<Ref<Texture2D>, TextureInfo> m_TexturesMap;
-		std::unordered_map<TextureView, TextureInfo> m_TextureViewsMap;
+		std::unordered_map<Ref<TextureView>, TextureInfo> m_TextureViewsMap;
 	};
 }

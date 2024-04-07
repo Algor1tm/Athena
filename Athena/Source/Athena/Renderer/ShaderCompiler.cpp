@@ -75,16 +75,16 @@ namespace Athena
 			return ShaderStage::UNDEFINED;
 		}
 
-		static ImageType SpirvDimToImageType(const spv::Dim& dim)
+		static TextureType SpirvDimToImageType(const spv::Dim& dim)
 		{
 			switch (dim)
 			{
-			case spv::Dim2D: return ImageType::IMAGE_2D;
-			case spv::DimCube: return ImageType::IMAGE_CUBE;
+			case spv::Dim2D: return TextureType::TEXTURE_2D;
+			case spv::DimCube: return TextureType::TEXTURE_CUBE;
 			}
 
 			ATN_CORE_ASSERT(false);
-			return ImageType::IMAGE_2D;
+			return TextureType::TEXTURE_2D;
 		}
 
 
@@ -526,7 +526,7 @@ namespace Athena
 					const auto& array = compiler.get_type(resource.type_id).array;
 
 					TextureShaderMetaData textureData;
-					textureData.ImageType = Utils::SpirvDimToImageType(dim);
+					textureData.TextureType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;
@@ -552,7 +552,7 @@ namespace Athena
 					const auto& array = compiler.get_type(resource.type_id).array;
 
 					TextureShaderMetaData textureData;
-					textureData.ImageType = Utils::SpirvDimToImageType(dim);
+					textureData.TextureType = Utils::SpirvDimToImageType(dim);
 					textureData.Binding = binding;
 					textureData.Set = set;
 					textureData.StageFlags = stage;

@@ -47,14 +47,17 @@ namespace Athena
             const uint32 columns = 3;
             const uint32 texNum = rows * columns;
 
-            std::array<Ref<Texture2D>, texNum> textures;
-            textures[0] = gbuffer->GetOutput("SceneDepth");
-            textures[1] = gbuffer->GetOutput("SceneNormalsEmission");
-            textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness");
-            textures[3] = TextureGenerator::GetBlackTexture();  // TODO: Add Ambient Occlusion map
-            textures[4] = gbuffer->GetOutput("SceneAlbedo");
-            textures[5] = m_ViewportRenderer->GetFinalImage();
+            TextureViewCreateInfo viewInfo;
+            viewInfo.EnableAlphaBlending = false;
             
+            std::array<Ref<TextureView>, texNum> textures;
+            textures[0] = gbuffer->GetOutput("SceneDepth")->GetView(viewInfo);
+            textures[1] = gbuffer->GetOutput("SceneNormalsEmission")->GetView(viewInfo);
+            textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness")->GetView(viewInfo);
+            textures[3] = TextureGenerator::GetBlackTexture()->GetView(viewInfo);  // TODO: Add Ambient Occlusion map
+            textures[4] = gbuffer->GetOutput("SceneAlbedo")->GetView(viewInfo);
+            textures[5] = m_ViewportRenderer->GetFinalImage()->GetView(viewInfo);
+
             ImVec2 textureSize = { viewportX / columns, viewportY / rows };
             ImVec2 pos = cursor;
             for (uint32 x = 0; x < columns; ++x)

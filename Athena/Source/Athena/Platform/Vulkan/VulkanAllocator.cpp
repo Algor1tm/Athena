@@ -98,7 +98,7 @@ namespace Athena
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
 
-	VkSampler VulkanAllocator::AllocateSampler(const TextureSamplerCreateInfo& info)
+	VkSampler VulkanAllocator::CreateSampler(const TextureSamplerCreateInfo& info)
 	{
 		if (m_SamplersMap.contains(info))
 		{

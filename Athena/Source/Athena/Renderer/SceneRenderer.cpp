@@ -67,17 +67,17 @@ namespace Athena
 			for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
 				m_ShadowsData.DirLightViewProjection[i] = Matrix4::Identity();
 
-			Texture2DCreateInfo shadowMapInfo;
+			TextureCreateInfo shadowMapInfo;
 			shadowMapInfo.Name = "DirShadowMap";
-			shadowMapInfo.Format = ImageFormat::DEPTH32F;
-			shadowMapInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED);
+			shadowMapInfo.Format = TextureFormat::DEPTH32F;
+			shadowMapInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED);
 			shadowMapInfo.Width = m_ShadowMapResolution;
 			shadowMapInfo.Height = m_ShadowMapResolution;
 			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
 			shadowMapInfo.GenerateMipLevels = false;
-			shadowMapInfo.SamplerInfo.MinFilter = TextureFilter::NEAREST;
-			shadowMapInfo.SamplerInfo.MagFilter = TextureFilter::NEAREST;
-			shadowMapInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
+			shadowMapInfo.Sampler.MinFilter = TextureFilter::NEAREST;
+			shadowMapInfo.Sampler.MagFilter = TextureFilter::NEAREST;
+			shadowMapInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_BORDER;
 
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DirShadowMapPass";
@@ -119,12 +119,15 @@ namespace Athena
 			m_DirShadowMapAnimPipeline->SetInput("u_BonesData", m_BonesSBO);
 			m_DirShadowMapAnimPipeline->Bake();
 
-			TextureSamplerCreateInfo samplerInfo;
-			samplerInfo.MinFilter = TextureFilter::LINEAR;
-			samplerInfo.MagFilter = TextureFilter::LINEAR;
-			samplerInfo.Wrap = TextureWrap::CLAMP_TO_BORDER;
-			samplerInfo.Compare = TextureCompareOperator::LEQUAL;
-			m_ShadowMapSampler = Texture2D::Create(output.Texture->GetImage(), samplerInfo);
+			TextureViewCreateInfo viewInfo;
+			viewInfo.LayerCount = ShaderDef::SHADOW_CASCADES_COUNT;
+			viewInfo.OverrideSampler = true;
+			viewInfo.Sampler.MinFilter = TextureFilter::LINEAR;
+			viewInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+			viewInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_BORDER;
+			viewInfo.Sampler.Compare = TextureCompareOperator::LEQUAL;
+
+			m_ShadowMapSampler = output.Texture->GetView(viewInfo);
 		}
 
 		// GBUFFER PASS
@@ -137,12 +140,12 @@ namespace Athena
 
 			m_GBufferPass = RenderPass::Create(passInfo);
 			// RGBA -> RGB - albedo, A - empty
-			m_GBufferPass->SetOutput({ "SceneAlbedo", ImageFormat::RGBA8 });
+			m_GBufferPass->SetOutput({ "SceneAlbedo", TextureFormat::RGBA8 });
 			// RGBA -> RGB - normal, A - emission
-			m_GBufferPass->SetOutput({ "SceneNormalsEmission", ImageFormat::RGBA16F });
+			m_GBufferPass->SetOutput({ "SceneNormalsEmission", TextureFormat::RGBA16F });
 			// RG -> R - roughness, G - metalness
-			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", ImageFormat::RG8 });
-			m_GBufferPass->SetOutput({ "SceneDepth", ImageFormat::DEPTH32F });
+			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", TextureFormat::RG8 });
+			m_GBufferPass->SetOutput({ "SceneDepth", TextureFormat::DEPTH32F });
 			m_GBufferPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
@@ -200,7 +203,7 @@ namespace Athena
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
 			m_DeferredLightingPass = RenderPass::Create(passInfo);
-			m_DeferredLightingPass->SetOutput({ "SceneHDRColor", ImageFormat::RGBA16F });
+			m_DeferredLightingPass->SetOutput({ "SceneHDRColor", TextureFormat::RGBA16F });
 			m_DeferredLightingPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
@@ -268,18 +271,18 @@ namespace Athena
 
 		// BLOOM PASS
 		{
-			Texture2DCreateInfo texInfo;
+			TextureCreateInfo texInfo;
 			texInfo.Name = "BloomTexture";
-			texInfo.Format = ImageFormat::R11G11B10F;
-			texInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
+			texInfo.Format = TextureFormat::R11G11B10F;
+			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.Width = 1;
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
 			texInfo.GenerateMipLevels = true;
-			texInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
-			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
+			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+			texInfo.Sampler.MipMapFilter = TextureFilter::LINEAR;
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			m_BloomTexture = Texture2D::Create(texInfo);
 
@@ -305,11 +308,11 @@ namespace Athena
 
 		// COMPOSITE PASS
 		{
-			Texture2DCreateInfo texInfo;
+			TextureCreateInfo texInfo;
 			texInfo.Name = "SceneColor";
-			texInfo.Format = ImageFormat::RGBA8;
-			texInfo.Usage = ImageUsage(ImageUsage::ATTACHMENT | ImageUsage::SAMPLED);
-			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.Format = TextureFormat::RGBA8;
+			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED);
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";
@@ -364,11 +367,11 @@ namespace Athena
 
 		// FXAA Compute Pass
 		{
-			Texture2DCreateInfo texInfo;
+			TextureCreateInfo texInfo;
 			texInfo.Name = "PostProcessTex";
-			texInfo.Format = ImageFormat::RGBA8;
-			texInfo.Usage = ImageUsage(ImageUsage::SAMPLED | ImageUsage::STORAGE);
-			texInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.Format = TextureFormat::RGBA8;
+			texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			m_PostProcessTexture = Texture2D::Create(texInfo);
 
@@ -788,7 +791,7 @@ namespace Athena
 			if (material == nullptr)
 			{
 				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), std::format("BloomMaterial_{}", mip));
-				material->Set("u_BloomTextureMip", m_BloomTexture, 0, mip);
+				material->Set("u_BloomTextureMip", m_BloomTexture->GetMipView(mip));
 			}
 
 			material->Set("u_Intensity", m_Settings.BloomSettings.Intensity);

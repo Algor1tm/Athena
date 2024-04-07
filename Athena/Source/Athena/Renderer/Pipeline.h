@@ -55,6 +55,8 @@ namespace Athena
 		virtual void SetLineWidth(const Ref<RenderCommandBuffer>& commandBuffer, float width) = 0;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) = 0;
+		virtual Ref<RenderResource> GetInput(const String& name) = 0;
+
 		virtual void Bake() = 0;
 
 		const PipelineCreateInfo& GetInfo() const { return m_Info; }

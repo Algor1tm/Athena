@@ -37,7 +37,7 @@ namespace Athena
 			{
 			case RenderResourceType::Texture2D:
 			{
-				Ref<VulkanImage> image = output.As<Texture2D>()->GetImage().As<VulkanImage>();
+				Ref<VulkanImage> image = output.As<VulkanTexture2D>()->GetImage();
 				image->TransitionLayout(cmdBuffer,
 					VK_IMAGE_LAYOUT_GENERAL,
 					barrier.SrcAccess, VK_ACCESS_SHADER_WRITE_BIT,
@@ -47,7 +47,7 @@ namespace Athena
 			}
 			case RenderResourceType::TextureCube:
 			{
-				Ref<VulkanImage> image = output.As<Texture2D>()->GetImage().As<VulkanImage>();
+				Ref<VulkanImage> image = output.As<VulkanTextureCube>()->GetImage();
 				image->TransitionLayout(cmdBuffer,
 					VK_IMAGE_LAYOUT_GENERAL,
 					barrier.SrcAccess, VK_ACCESS_SHADER_WRITE_BIT,
@@ -89,7 +89,7 @@ namespace Athena
 			{
 			case RenderResourceType::Texture2D:
 			{
-				Ref<VulkanImage> image = output.As<Texture2D>()->GetImage().As<VulkanImage>();
+				Ref<VulkanImage> image = output.As<VulkanTexture2D>()->GetImage();
 				image->TransitionLayout(cmdBuffer,
 					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 					VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
@@ -99,7 +99,7 @@ namespace Athena
 			}
 			case RenderResourceType::TextureCube:
 			{
-				Ref<VulkanImage> image = output.As<Texture2D>()->GetImage().As<VulkanImage>();
+				Ref<VulkanImage> image = output.As<VulkanTextureCube>()->GetImage();
 				image->TransitionLayout(cmdBuffer,
 					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 					VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
@@ -160,7 +160,7 @@ namespace Athena
 							sharedTarget = true;
 					}
 
-					bool colorFormat = Image::IsColorFormat(outputTarget->GetFormat());
+					bool colorFormat = Texture::IsColorFormat(outputTarget->GetFormat());
 					BarrierInfo barrier;
 					if (sharedTarget)
 					{

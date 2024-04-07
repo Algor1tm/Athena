@@ -3,6 +3,8 @@
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Platform/Vulkan/VulkanContext.h"
 #include "Athena/Platform/Vulkan/VulkanImage.h"
+#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
+#include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 
 #include <vulkan/vulkan.h>
 
@@ -208,29 +210,29 @@ namespace Athena::Vulkan
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(ImageFormat format)
+    inline VkFormat GetFormat(TextureFormat format)
     {
         switch (format)
         {
-        case ImageFormat::R8:              return VK_FORMAT_R8_UNORM;
-        case ImageFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
-        case ImageFormat::RG8:             return VK_FORMAT_R8G8_UNORM;
-        case ImageFormat::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
-        case ImageFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
-        case ImageFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
-        case ImageFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
-        case ImageFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
+        case TextureFormat::R8:              return VK_FORMAT_R8_UNORM;
+        case TextureFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
+        case TextureFormat::RG8:             return VK_FORMAT_R8G8_UNORM;
+        case TextureFormat::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
+        case TextureFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
+        case TextureFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
+        case TextureFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
+        case TextureFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
 
-        case ImageFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
-        case ImageFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
-        case ImageFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
-        case ImageFormat::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
-        case ImageFormat::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case ImageFormat::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case TextureFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
+        case TextureFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case TextureFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
+        case TextureFormat::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
+        case TextureFormat::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case TextureFormat::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        case ImageFormat::DEPTH16:         return VK_FORMAT_D16_UNORM;
-        case ImageFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case ImageFormat::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
+        case TextureFormat::DEPTH16:         return VK_FORMAT_D16_UNORM;
+        case TextureFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case TextureFormat::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
         }
 
         ATN_CORE_ASSERT(false);
@@ -258,15 +260,54 @@ namespace Athena::Vulkan
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetImageAspectMask(ImageFormat format)
+    inline VkImageAspectFlagBits GetImageAspectMask(TextureFormat format)
     {
-        uint32 depthBit = Image::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
-        uint32 stencilBit = Image::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
 
         if (!depthBit && !stencilBit)
             return VK_IMAGE_ASPECT_COLOR_BIT;
 
         return VkImageAspectFlagBits(depthBit | stencilBit);
+    }
+
+
+    inline VkImageType GetImageType(TextureType type)
+    {
+        switch (type)
+        {
+        case TextureType::TEXTURE_2D: return VK_IMAGE_TYPE_2D;
+        case TextureType::TEXTURE_CUBE: return VK_IMAGE_TYPE_2D;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkImageType)0;
+    }
+
+    inline VkImageViewType GetImageViewType(TextureType type, uint32 layers)
+    {
+        if (type == TextureType::TEXTURE_2D)
+        {
+            if (layers == 1)
+                return VK_IMAGE_VIEW_TYPE_2D;
+
+            else if(layers > 1)
+                return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        }
+        else if (type == TextureType::TEXTURE_CUBE)
+        {
+            if (layers == 1)
+                return VK_IMAGE_VIEW_TYPE_2D;
+
+            else if (layers == 6)
+                return VK_IMAGE_VIEW_TYPE_CUBE;
+
+            else if (layers > 6 && layers % 6 == 0)
+                return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+        }
+
+        ATN_CORE_ASSERT(false);
+        return (VkImageViewType)0;
     }
 
     inline VkFilter GetFilter(TextureFilter filter)
@@ -339,6 +380,21 @@ namespace Athena::Vulkan
         return flags;
     }
 
+    inline Ref<VulkanImage> GetImage(const Ref<Texture>& texture)
+    {
+        if (texture->GetType() == TextureType::TEXTURE_2D)
+        {
+            return texture.As<VulkanTexture2D>()->GetImage();
+        }
+        else if (texture->GetType() == TextureType::TEXTURE_CUBE)
+        {
+            return texture.As<VulkanTextureCube>()->GetImage();
+        }
+
+        ATN_CORE_ASSERT(false);
+        return nullptr;
+    }
+
     inline VkCommandBuffer BeginSingleTimeCommands()
     {
         VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
@@ -397,7 +453,7 @@ namespace Athena::Vulkan
         EndSingleTimeCommands(vkCommandBuffer);
     }
 
-    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, ImageFormat format, uint32 mipLevels)
+    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, TextureFormat format, uint32 mipLevels)
     {
         int32 mipWidth = width;
         int32 mipHeight = height;

@@ -122,6 +122,11 @@ namespace Athena
 		m_DescriptorSetManager.Set(name, resource);
 	}
 
+	Ref<RenderResource> VulkanPipeline::GetInput(const String& name)
+	{
+		return m_DescriptorSetManager.Get(name);
+	}
+
 	void VulkanPipeline::Bake()
 	{
 		m_DescriptorSetManager.Bake();

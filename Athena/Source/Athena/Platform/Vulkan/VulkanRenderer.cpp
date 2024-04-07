@@ -205,8 +205,8 @@ namespace Athena
 	void VulkanRenderer::BlitMipMap(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Texture>& texture)
 	{
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
-		Ref<VulkanImage> image = texture->GetImage().As<VulkanImage>();
-		const auto& info = image->GetInfo();
+		Ref<VulkanImage> image = Vulkan::GetImage(texture);
+		const auto& info = texture->GetInfo();
 
 		Vulkan::BlitMipMap(vkcmdBuffer, image->GetVulkanImage(), info.Width, info.Height, info.Layers, info.Format, image->GetMipLevelsCount());
 
@@ -214,14 +214,16 @@ namespace Athena
 		image->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
-	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image)
+	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
 	{
 		ATN_PROFILE_FUNC();
 
 		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
-		VkImage sourceImage = image.As<VulkanImage>()->GetVulkanImage();
-		VkImage swapChainImage = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>()->GetCurrentVulkanImage();
+		Window& window = Application::Get().GetWindow();
+
+		VkImage sourceImage = texture.As<VulkanTexture2D>()->GetVulkanImage();
+		VkImage swapChainImage = window.GetSwapChain().As<VulkanSwapChain>()->GetCurrentVulkanImage();
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
@@ -277,10 +279,15 @@ namespace Athena
 		VkImageBlit imageBlitRegion = {};
 		imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlitRegion.srcSubresource.layerCount = 1;
-		imageBlitRegion.srcOffsets[1] = { (int)image->GetInfo().Width, (int)image->GetInfo().Height, 1 };
+		imageBlitRegion.srcOffsets[1] = { (int)texture->GetWidth(), (int)texture->GetHeight(), 1};
 		imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlitRegion.dstSubresource.layerCount = 1;
-		imageBlitRegion.dstOffsets[1] = { (int)image->GetInfo().Width, (int)image->GetInfo().Height, 1 };
+		imageBlitRegion.dstOffsets[1] = { (int)window.GetWidth(), (int)window.GetHeight(), 1};
+
+		VkFilter filter = VK_FILTER_LINEAR;
+
+		if (texture->GetWidth() == window.GetWidth() && texture->GetHeight() == window.GetHeight())
+			filter = VK_FILTER_NEAREST;
 
 		vkCmdBlitImage(
 			commandBuffer,
@@ -288,8 +295,7 @@ namespace Athena
 			swapChainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
 			&imageBlitRegion,
-			VK_FILTER_NEAREST);
-
+			filter);
 
 		{
 			barrier.image = sourceImage;

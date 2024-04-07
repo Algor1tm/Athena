@@ -108,7 +108,7 @@ namespace Athena
 			bindings[texture.Set].push_back(layoutBinding);
 
 			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
+			resourceDesc.Type = texture.TextureType == TextureType::TEXTURE_2D ? ShaderResourceType::Texture2D : ShaderResourceType::TextureCube;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 			resourceDesc.ArraySize = texture.ArraySize;
@@ -127,7 +127,7 @@ namespace Athena
 			bindings[texture.Set].push_back(layoutBinding);
 
 			ShaderResourceDescription resourceDesc;
-			resourceDesc.Type = texture.ImageType == ImageType::IMAGE_2D ? ShaderResourceType::RWTexture2D : ShaderResourceType::RWTextureCube;
+			resourceDesc.Type = texture.TextureType == TextureType::TEXTURE_2D ? ShaderResourceType::RWTexture2D : ShaderResourceType::RWTextureCube;
 			resourceDesc.Binding = texture.Binding;
 			resourceDesc.Set = texture.Set;
 			resourceDesc.ArraySize = texture.ArraySize;

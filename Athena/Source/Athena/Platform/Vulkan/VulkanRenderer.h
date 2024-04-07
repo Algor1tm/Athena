@@ -29,7 +29,7 @@ namespace Athena
 		virtual void InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) override;
 
 		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture) override;
-		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Image>& image) override;
+		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture) override;
 
 		virtual void GetRenderCapabilities(RenderCapabilities& caps) override;
 		virtual uint64 GetMemoryUsage() override;

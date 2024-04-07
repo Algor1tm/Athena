@@ -33,11 +33,6 @@ namespace Athena
 		m_DescriptorSetManager.Set(name, resource, arrayIndex);
 	}
 
-	void VulkanMaterial::Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip)
-	{
-		m_DescriptorSetManager.Set(name, resource, arrayIndex, mip);
-	}
-
 	Ref<RenderResource> VulkanMaterial::GetResourceInternal(const String& name)
 	{
 		return m_DescriptorSetManager.Get(name);

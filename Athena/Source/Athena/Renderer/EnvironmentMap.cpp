@@ -21,17 +21,17 @@ namespace Athena
 		m_Type = EnvironmentMapType::PREETHAM;
 		m_Resolution = resolution;
 
-		TextureCubeCreateInfo cubemapInfo;
+		TextureCreateInfo cubemapInfo;
 		cubemapInfo.Name = "EnvironmentMap";
-		cubemapInfo.Format = ImageFormat::R11G11B10F;
-		cubemapInfo.Usage = ImageUsage(ImageUsage::STORAGE | ImageUsage::SAMPLED);
+		cubemapInfo.Format = TextureFormat::R11G11B10F;
+		cubemapInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 		cubemapInfo.Width = m_Resolution;
 		cubemapInfo.Height = m_Resolution;
 		cubemapInfo.GenerateMipLevels = true;
-		cubemapInfo.SamplerInfo.MinFilter = TextureFilter::LINEAR;
-		cubemapInfo.SamplerInfo.MagFilter = TextureFilter::LINEAR;
-		cubemapInfo.SamplerInfo.MipMapFilter = TextureFilter::LINEAR;
-		cubemapInfo.SamplerInfo.Wrap = TextureWrap::CLAMP_TO_EDGE;
+		cubemapInfo.Sampler.MinFilter = TextureFilter::LINEAR;
+		cubemapInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+		cubemapInfo.Sampler.MipMapFilter = TextureFilter::LINEAR;
+		cubemapInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 		m_EnvironmentTexture = TextureCube::Create(cubemapInfo);
 
@@ -110,7 +110,7 @@ namespace Athena
 			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
 				Ref<Material> mipMaterial = Material::Create(shader, std::format("{}_{}", shader->GetName(), mip - 1));
-				mipMaterial->Set("u_EnvironmentMipImage", m_EnvironmentTexture, 0, mip);
+				mipMaterial->Set("u_EnvironmentMipImage", m_EnvironmentTexture->GetMipView(mip));
 				mipMaterial->Set("u_MipLevel", mip);
 
 				m_MipFilterMaterials[mip] = mipMaterial;

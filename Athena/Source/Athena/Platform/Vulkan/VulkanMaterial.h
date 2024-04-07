@@ -16,7 +16,6 @@ namespace Athena
 		~VulkanMaterial();
 
 		virtual void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex) override;
-		virtual void Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip) override;
 		virtual Ref<RenderResource> GetResourceInternal(const String& name) override;
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) override;

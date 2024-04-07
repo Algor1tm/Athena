@@ -22,6 +22,7 @@ namespace Athena
 		virtual void SetLineWidth(const Ref<RenderCommandBuffer>& commandBuffer, float width) override;
 
 		virtual void SetInput(const String& name, const Ref<RenderResource>& resource) override;
+		virtual Ref<RenderResource> GetInput(const String& name) override;;
 		virtual void Bake() override;
 
 		void RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);

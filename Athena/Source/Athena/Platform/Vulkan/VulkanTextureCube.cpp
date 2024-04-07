@@ -6,30 +6,20 @@
 
 namespace Athena
 {
-	VulkanTextureCube::VulkanTextureCube(const TextureCubeCreateInfo& info, Buffer data)
+	VulkanTextureCube::VulkanTextureCube(const TextureCreateInfo& info, Buffer data)
 	{
 		m_Info = info;
 		m_Sampler = VK_NULL_HANDLE;
 		m_DescriptorInfo.sampler = m_Sampler;
 
-		ImageCreateInfo imageInfo;
-		imageInfo.Name = m_Info.Name;
-		imageInfo.Format = m_Info.Format;
-		imageInfo.Usage = m_Info.Usage;
-		imageInfo.Type = ImageType::IMAGE_CUBE;
-		imageInfo.Width = m_Info.Width;
-		imageInfo.Height = m_Info.Height;
-		imageInfo.Layers = 6;
-		imageInfo.GenerateMipLevels = m_Info.GenerateMipLevels;
+		m_Image = Ref<VulkanImage>::Create(info, TextureType::TEXTURE_CUBE, data);
 
-		m_Image = Image::Create(imageInfo, data);
-
-		SetSampler(m_Info.SamplerInfo);
+		SetSampler(m_Info.Sampler);
 	}
 
 	VulkanTextureCube::~VulkanTextureCube()
 	{
-		Renderer::SubmitResourceFree([samplerInfo = m_Info.SamplerInfo, vkSampler = m_Sampler]()
+		Renderer::SubmitResourceFree([samplerInfo = m_Info.Sampler, vkSampler = m_Sampler]()
 		{
 			VulkanContext::GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 		});
@@ -44,45 +34,49 @@ namespace Athena
 		m_Info.Height = height;
 
 		m_Image->Resize(width, height);
+
+		InvalidateViews();
 	}
 
 	void VulkanTextureCube::SetSampler(const TextureSamplerCreateInfo& samplerInfo)
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			Renderer::SubmitResourceFree([this, samplerInfo = m_Info.SamplerInfo, vkSampler = m_Sampler]()
+			Renderer::SubmitResourceFree([this, samplerInfo = m_Info.Sampler, vkSampler = m_Sampler]()
 			{
 				VulkanContext::GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 			});
 		}
 
-		m_Info.SamplerInfo = samplerInfo;
+		m_Info.Sampler = samplerInfo;
 
-		m_Sampler = VulkanContext::GetAllocator()->AllocateSampler(m_Info.SamplerInfo);
+		m_Sampler = VulkanContext::GetAllocator()->CreateSampler(m_Info.Sampler);
 		m_DescriptorInfo.sampler = m_Sampler;
+	}
+
+	void VulkanTextureCube::WriteContentToBuffer(Buffer* dstBuffer)
+	{
+		m_Image->WriteContentToBuffer(dstBuffer);
 	}
 
 	VkImage VulkanTextureCube::GetVulkanImage() const
 	{
-		return m_Image.As<VulkanImage>()->GetVulkanImage();
+		return m_Image->GetVulkanImage();
 	}
 
 	VkImageView VulkanTextureCube::GetVulkanImageView() const
 	{
-		return m_Image.As<VulkanImage>()->GetVulkanImageView();
+		return m_Image->GetVulkanImageView();
 	}
 
-	const VkDescriptorImageInfo& VulkanTextureCube::GetVulkanDescriptorInfo(uint32 mip)
+	const VkDescriptorImageInfo& VulkanTextureCube::GetVulkanDescriptorInfo()
 	{
 		m_DescriptorInfo.imageView = GetVulkanImageView();
-		m_DescriptorInfo.imageLayout = m_Image.As<VulkanImage>()->GetLayout();
-
-		if (mip != 0)
-			m_DescriptorInfo.imageView = m_Image.As<VulkanImage>()->GetVulkanImageViewMip(mip);
+		m_DescriptorInfo.imageLayout = m_Image->GetLayout();
 
 		// Set default layout if image has not initalized yet
 		if (m_DescriptorInfo.imageLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-			m_DescriptorInfo.imageLayout = m_Info.Usage & ImageUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			m_DescriptorInfo.imageLayout = m_Info.Usage & TextureUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		return m_DescriptorInfo;
 	}

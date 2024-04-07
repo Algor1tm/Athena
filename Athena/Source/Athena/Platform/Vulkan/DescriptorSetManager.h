@@ -14,8 +14,8 @@ namespace Athena
 	struct RenderResourceStorage
 	{
 		std::vector<Ref<RenderResource>> Storage;
-		RenderResourceType Type;
-		uint32 MipLevel = 0;	// TODO: different mip level for each texture in array
+		ShaderResourceType Type;
+		bool IsDescriptorImageType;
 	};
 
 	// map of set -> binding -> render resource array
@@ -54,7 +54,6 @@ namespace Athena
 		~DescriptorSetManager();
 
 		void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0);
-		void Set(const String& name, const Ref<Texture>& resource, uint32 arrayIndex, uint32 mip);
 		Ref<RenderResource> Get(const String& name, uint32 arrayIndex = 0);
 
 		bool Validate() const;
@@ -66,6 +65,9 @@ namespace Athena
 
 	private:
 		RenderResourceStorage* GetResourceStorage(const String& name, uint32 arrayIndex);
+		const VkDescriptorImageInfo& GetDescriptorImage(const Ref<RenderResource>& resource);
+		const VkDescriptorBufferInfo& GetDescriptorBuffer(const Ref<RenderResource>& resource, uint32 frameIndex);
+
 		bool IsCompatible(RenderResourceType renderType, ShaderResourceType shaderType) const;
 		bool IsValidSet(uint32 set) const;
 

@@ -34,10 +34,8 @@ namespace Athena
 		texInfo.Width = 1;
 		texInfo.Height = 1;
 		texInfo.Layers = 1;
-		texInfo.GenerateMipLevels = false;
-		texInfo.Sampler.MinFilter = TextureFilter::NEAREST;
-		texInfo.Sampler.MagFilter = TextureFilter::NEAREST;
-		texInfo.Sampler.MipMapFilter = TextureFilter::NEAREST;
+		texInfo.GenerateMipMap = false;
+		texInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
 		s_Data.WhiteTexture = Texture2D::Create(texInfo, texData);
@@ -55,10 +53,8 @@ namespace Athena
 		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
-		texCubeInfo.GenerateMipLevels = false;
-		texCubeInfo.Sampler.MinFilter = TextureFilter::NEAREST;
-		texCubeInfo.Sampler.MagFilter = TextureFilter::NEAREST;
-		texCubeInfo.Sampler.MipMapFilter = TextureFilter::NEAREST;
+		texCubeInfo.GenerateMipMap = false;
+		texCubeInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texCubeInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
 		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, texData);
@@ -84,10 +80,8 @@ namespace Athena
 			texInfo.Width = 512;
 			texInfo.Height = 512;
 			texInfo.Layers = 1;
-			texInfo.GenerateMipLevels = false;
-			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MipMapFilter = TextureFilter::LINEAR;
+			texInfo.GenerateMipMap = false;
+			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			s_Data.BRDF_LUT = Texture2D::Create(texInfo);

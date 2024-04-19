@@ -141,14 +141,6 @@ namespace Athena
 		int SoftShadows = true;
 	};
 
-	struct InstanceTransformData
-	{
-		Vector3 TRow0;
-		Vector3 TRow1;
-		Vector3 TRow2;
-		Vector3 TRow3;
-	};
-
 	struct SceneRendererStatistics
 	{
 		Time GPUTime;
@@ -159,6 +151,7 @@ namespace Athena
 		Time SkyboxPass;
 		Time BloomPass;
 		Time SceneCompositePass;
+		Time JumpFloodPass;
 		Time Render2DPass;
 		Time FXAAPass;
 		PipelineStatistics PipelineStats;
@@ -192,6 +185,8 @@ namespace Athena
 		void Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
 
+		void SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
+
 		void SetOnRender2DCallback(const Render2DCallback& callback);
 		void SetOnViewportResizeCallback(const OnViewportResizeCallback& callback);
 
@@ -213,6 +208,7 @@ namespace Athena
 		void SkyboxPass();
 		void BloomPass();
 		void SceneCompositePass();
+		void JumpFloodPass();
 		void Render2DPass();
 		void FXAAPass();
 
@@ -221,13 +217,22 @@ namespace Athena
 
 		void ResetStats();
 
+		void SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform);
+		void SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform);
+
 	private:
 		const uint32 m_ShadowMapResolution = 2048;
+
+		const float m_OutlineWidth = 1.3f;
+		const Vector4 m_OutlineColor = { 1.f, 0.5f, 0.f, 1.f };
 
 	private:
 		// DrawLists
 		DrawListStatic m_StaticGeometryList;
 		DrawListAnim m_AnimGeometryList;
+
+		DrawListStatic m_SelectStaticGeometryList;
+		DrawListAnim m_SelectAnimGeometryList;
 
 		// Render Passes
 		Ref<RenderPass> m_DirShadowMapPass;
@@ -256,6 +261,18 @@ namespace Athena
 		Ref<RenderPass> m_CompositePass;
 		Ref<Pipeline> m_CompositePipeline;
 		Ref<Material> m_CompositeMaterial;
+
+		Ref<RenderPass> m_SelectedGeometryPass;
+		Ref<Pipeline> m_SelectedStaticGeomPipeline;
+		Ref<Pipeline> m_SelectedAnimGeomPipeline;
+		Ref<RenderPass> m_JumpFloodInitPass;
+		Ref<Pipeline> m_JumpFloodInitPipeline;
+		Ref<RenderPass> m_JumpFloodPasses[2];
+		Ref<Pipeline> m_JumpFloodPipelines[2];
+		Ref<Material> m_JumpFloodMaterial;
+		Ref<RenderPass> m_JumpFloodCompositePass;
+		Ref<Pipeline> m_JumpFloodCompositePipeline;
+		Ref<Material> m_JumpFloodCompositeMaterial;
 
 		Ref<RenderPass> m_Render2DPass;
 		Render2DCallback m_Render2DCallback;

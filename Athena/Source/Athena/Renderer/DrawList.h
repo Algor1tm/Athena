@@ -12,6 +12,14 @@
 
 namespace Athena
 {
+	struct InstanceTransformData
+	{
+		Vector3 TRow0;
+		Vector3 TRow1;
+		Vector3 TRow2;
+		Vector3 TRow3;
+	};
+
 	struct StaticDrawCall
 	{
 		Ref<VertexBuffer> VertexBuffer;
@@ -26,15 +34,15 @@ namespace Athena
 		void Sort();
 
 		void Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
-		void FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
+		void FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass = false);
 
 		void SetInstanceOffset(uint32 offset) { m_InstanceOffset = offset; }
+		void EmplaceInstanceTransforms(std::vector<InstanceTransformData>& data);
+
 		uint32 GetInstancesCount() const;
 
 		uint64 Size() const { return m_Array.size(); }
 		void Clear();
-
-		const auto& GetArray() const { return m_Array; }
 
 	private:
 		std::vector<StaticDrawCall> m_Array;
@@ -56,9 +64,10 @@ namespace Athena
 		void Sort();
 
 		void Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
-		void FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline);
+		void FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass = false);
 
 		void SetInstanceOffset(uint32 offset) { m_InstanceOffset = offset; }
+		void EmplaceInstanceTransforms(std::vector<InstanceTransformData>& data);
 
 		uint64 Size() const { return m_Array.size(); }
 		void Clear();

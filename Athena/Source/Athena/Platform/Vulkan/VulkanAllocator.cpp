@@ -110,18 +110,16 @@ namespace Athena
 		VkSampler sampler;
 
 		bool enableAnisotropy = Renderer::GetRenderCaps().MaxSamplerAnisotropy != 0.f;
-		enableAnisotropy = enableAnisotropy && info.MagFilter == TextureFilter::LINEAR;
-		enableAnisotropy = enableAnisotropy && info.MinFilter == TextureFilter::LINEAR;
-		enableAnisotropy = enableAnisotropy && info.MipMapFilter == TextureFilter::LINEAR;
+		enableAnisotropy = enableAnisotropy && info.Filter == TextureFilter::LINEAR;
 
 		// Clamp to 2.f for now
 		float maxAnisotropy = Math::Min(2.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
 
 		VkSamplerCreateInfo vksamplerInfo = {};
 		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		vksamplerInfo.magFilter = Vulkan::GetFilter(info.MagFilter);
-		vksamplerInfo.minFilter = Vulkan::GetFilter(info.MinFilter);
-		vksamplerInfo.mipmapMode = Vulkan::GetMipMapMode(info.MipMapFilter);
+		vksamplerInfo.magFilter = Vulkan::GetFilter(info.Filter);
+		vksamplerInfo.minFilter = Vulkan::GetFilter(info.Filter);
+		vksamplerInfo.mipmapMode = Vulkan::GetMipMapMode(info.Filter);
 		vksamplerInfo.addressModeU = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeV = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeW = Vulkan::GetWrap(info.Wrap);

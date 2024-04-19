@@ -74,9 +74,8 @@ namespace Athena
 			shadowMapInfo.Width = m_ShadowMapResolution;
 			shadowMapInfo.Height = m_ShadowMapResolution;
 			shadowMapInfo.Layers = ShaderDef::SHADOW_CASCADES_COUNT;
-			shadowMapInfo.GenerateMipLevels = false;
-			shadowMapInfo.Sampler.MinFilter = TextureFilter::NEAREST;
-			shadowMapInfo.Sampler.MagFilter = TextureFilter::NEAREST;
+			shadowMapInfo.GenerateMipMap = false;
+			shadowMapInfo.Sampler.Filter = TextureFilter::NEAREST;
 			shadowMapInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_BORDER;
 
 			RenderPassCreateInfo passInfo;
@@ -122,8 +121,7 @@ namespace Athena
 			TextureViewCreateInfo viewInfo;
 			viewInfo.LayerCount = ShaderDef::SHADOW_CASCADES_COUNT;
 			viewInfo.OverrideSampler = true;
-			viewInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-			viewInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+			viewInfo.Sampler.Filter = TextureFilter::LINEAR;
 			viewInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_BORDER;
 			viewInfo.Sampler.Compare = TextureCompareOperator::LESS_OR_EQUAL;
 
@@ -278,10 +276,8 @@ namespace Athena
 			texInfo.Width = 1;
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
-			texInfo.GenerateMipLevels = true;
-			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MipMapFilter = TextureFilter::LINEAR;
+			texInfo.GenerateMipMap = true;
+			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			m_BloomTexture = Texture2D::Create(texInfo);
@@ -347,7 +343,147 @@ namespace Athena
 			m_CompositeMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
 		}
 
-		// Renderer2D Pass
+		// JUMP FLOOD
+		{
+			// MESH FILL PASS
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "JumpFloodMeshFillPass";
+				passInfo.InputPass = m_CompositePass;
+				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
+
+				m_SelectedGeometryPass = RenderPass::Create(passInfo);
+				m_SelectedGeometryPass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8 });
+				m_SelectedGeometryPass->Bake();
+
+				PipelineCreateInfo pipelineInfo;
+				pipelineInfo.Name = "JumpFloodStaticMeshPipeline";
+				pipelineInfo.RenderPass = m_SelectedGeometryPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_MeshFill_Static");
+				pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+				pipelineInfo.InstanceLayout = instanceLayout;
+				pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+				pipelineInfo.CullMode = CullMode::BACK;
+				pipelineInfo.DepthTest = false;
+				pipelineInfo.BlendEnable = false;
+
+				m_SelectedStaticGeomPipeline = Pipeline::Create(pipelineInfo);
+
+				m_SelectedStaticGeomPipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_SelectedStaticGeomPipeline->Bake();
+
+				pipelineInfo.Name = "JumpFloodAnimMeshPipeline";
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_MeshFill_Anim");
+				pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+
+				m_SelectedAnimGeomPipeline = Pipeline::Create(pipelineInfo);
+				m_SelectedAnimGeomPipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_SelectedAnimGeomPipeline->SetInput("u_BonesData", m_BonesSBO);
+				m_SelectedAnimGeomPipeline->Bake();
+			}
+
+			// TEXTURES INIT
+			Ref<Texture2D> jumpFloodTextures[2];
+			for (uint32 i = 0; i < 2; ++i)
+			{
+				TextureCreateInfo texInfo;
+				texInfo.Name = std::format("JumpFloodPingPong_{}", i);
+				texInfo.Format = TextureFormat::RG16F;
+				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::ATTACHMENT);
+				texInfo.Sampler.Filter = TextureFilter::NEAREST;
+				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+				jumpFloodTextures[i] = Texture2D::Create(texInfo);
+			}
+
+			PipelineCreateInfo pipelineInfo;
+			pipelineInfo.VertexLayout = fullscreenQuadLayout;
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthTest = false;
+			pipelineInfo.BlendEnable = false;
+
+			// JUMP FLOOD INIT
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "JumpFloodInitPass";
+				passInfo.InputPass = m_SelectedGeometryPass;
+				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
+
+				m_JumpFloodInitPass = RenderPass::Create(passInfo);
+				m_JumpFloodInitPass->SetOutput(jumpFloodTextures[0]);
+				m_JumpFloodInitPass->Bake();
+
+				pipelineInfo.Name = "JumpFloodInitPipeline";
+				pipelineInfo.RenderPass = m_JumpFloodInitPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Init");
+
+				m_JumpFloodInitPipeline = Pipeline::Create(pipelineInfo);
+
+				m_JumpFloodInitPipeline->SetInput("u_SilhouetteTexture", m_SelectedGeometryPass->GetOutput("JumpFloodSilhouette"));
+				m_JumpFloodInitPipeline->Bake();
+			}
+
+			// JUMP FLOOD PASS
+			{
+				for (uint32 i = 0; i < 2; ++i)
+				{
+					uint32 index = (i + 1) % 2;
+					bool even = index % 2 == 0;
+					std::string_view label = even ? "Even" : "Odd";
+
+					RenderPassCreateInfo passInfo;
+					passInfo.Name = std::format("JumpFloodPass{}", label);
+					passInfo.InputPass = even ? m_JumpFloodPasses[1] : m_JumpFloodInitPass;
+					passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
+
+					m_JumpFloodPasses[index] = RenderPass::Create(passInfo);
+					m_JumpFloodPasses[index]->SetOutput(jumpFloodTextures[index]);
+					m_JumpFloodPasses[index]->Bake();
+
+					pipelineInfo.Name = std::format("JumpFloodPipeline", label);
+					pipelineInfo.RenderPass = m_JumpFloodPasses[index];
+					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Pass");
+
+					m_JumpFloodPipelines[index] = Pipeline::Create(pipelineInfo);;
+					m_JumpFloodPipelines[index]->SetInput("u_Texture", jumpFloodTextures[even ? 1 : 0]);
+					m_JumpFloodPipelines[index]->Bake();
+				}
+
+				m_JumpFloodMaterial = Material::Create(Renderer::GetShaderPack()->Get("JumpFlood_Pass"), "JumpFloodMaterial");
+			}
+
+			// JUMP FLOOD COMPOSITE
+			{
+				uint32 jumps = Math::Ceil(Math::Log2(m_OutlineWidth + 1.f)) - 1;
+				uint32 index = jumps % 2 == 1 ? 0 : 1;
+
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "JumpFloodCompositePass";
+				passInfo.InputPass = m_JumpFloodPasses[index];
+				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
+
+				m_JumpFloodCompositePass = RenderPass::Create(passInfo);
+				m_JumpFloodCompositePass->SetOutput(m_CompositePass->GetOutput("SceneColor"));
+				m_JumpFloodCompositePass->Bake();
+
+				pipelineInfo.Name = "JumpFloodCompositePipeline";
+				pipelineInfo.RenderPass = m_JumpFloodCompositePass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Composite");
+				pipelineInfo.BlendEnable = true;
+
+				m_JumpFloodCompositePipeline = Pipeline::Create(pipelineInfo);
+				m_JumpFloodCompositePipeline->SetInput("u_Texture", m_JumpFloodPasses[index]->GetOutput(std::format("JumpFloodPingPong_{}", index)));
+				m_JumpFloodCompositePipeline->Bake();
+
+				m_JumpFloodCompositeMaterial = Material::Create(pipelineInfo.Shader, "JumpFloodCompositeMaterial");
+
+				m_JumpFloodCompositeMaterial->Set("u_OutlineColor", m_OutlineColor);
+				m_JumpFloodCompositeMaterial->Set("u_OutlineWidth", m_OutlineWidth);
+			}
+		}
+
+		// RENDERER 2D Pass
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "Renderer2DPass";
@@ -365,7 +501,7 @@ namespace Athena
 			m_Render2DPass->Bake();
 		}
 
-		// FXAA Compute Pass
+		// FXAA COMPUTE PASS
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "PostProcessTex";
@@ -444,6 +580,19 @@ namespace Athena
 		m_CompositePass->Resize(width, height);
 		m_CompositePipeline->SetViewport(width, height);
 
+		m_SelectedGeometryPass->Resize(width, height);
+		m_SelectedStaticGeomPipeline->SetViewport(width, height);
+		m_SelectedAnimGeomPipeline->SetViewport(width, height);
+		m_JumpFloodInitPass->Resize(width, height);
+		m_JumpFloodInitPipeline->SetViewport(width, height);
+		for (uint32 i = 0; i < 2; ++i)
+		{
+			m_JumpFloodPasses[i]->Resize(width, height);
+			m_JumpFloodPipelines[i]->SetViewport(width, height);
+		}
+		m_JumpFloodCompositePass->Resize(width, height);
+		m_JumpFloodCompositePipeline->SetViewport(width, height);
+
 		m_Render2DPass->Resize(width, height);
 
 		m_PostProcessTexture->Resize(width, height);
@@ -464,36 +613,63 @@ namespace Athena
 
 	void SceneRenderer::Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform)
 	{
+		if (mesh->HasAnimations())
+		{
+			SubmitAnimMesh(m_AnimGeometryList, mesh, mesh->GetAnimator(), transform);
+		}
+		else
+		{
+			SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
+		}
+	}
+
+	void SceneRenderer::SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	{
+		if (mesh->HasAnimations())
+		{
+			SubmitAnimMesh(m_SelectAnimGeometryList, mesh, mesh->GetAnimator(), transform);
+		}
+		else
+		{
+			SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
+		}
+	}
+
+	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	{
 		const auto& subMeshes = mesh->GetAllSubMeshes();
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
 			Ref<Material> material = subMeshes[i].Material;
-			Ref<Animator> animator = mesh->GetAnimator();
 
-			if (animator)
-			{
-				AnimDrawCall drawCall;
-				drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-				drawCall.Transform = transform;
-				drawCall.Material = material;
-				drawCall.BonesOffset = m_BonesDataOffset;
+			StaticDrawCall drawCall;
+			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
+			drawCall.Transform = transform;
+			drawCall.Material = material;
 
-				const auto& bones = animator->GetBoneTransforms();
-				m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
+			list.Push(drawCall);
+		}
+	}
 
-				m_BonesDataOffset += bones.size();
+	void SceneRenderer::SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform)
+	{
+		const auto& subMeshes = mesh->GetAllSubMeshes();
+		for (uint32 i = 0; i < subMeshes.size(); ++i)
+		{
+			Ref<Material> material = subMeshes[i].Material;
 
-				m_AnimGeometryList.Push(drawCall);
-			}
-			else
-			{
-				StaticDrawCall drawCall;
-				drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-				drawCall.Transform = transform;
-				drawCall.Material = material;
+			AnimDrawCall drawCall;
+			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
+			drawCall.Transform = transform;
+			drawCall.Material = material;
+			drawCall.BonesOffset = m_BonesDataOffset;
 
-				m_StaticGeometryList.Push(drawCall);
-			}
+			const auto& bones = animator->GetBoneTransforms();
+			m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
+
+			m_BonesDataOffset += bones.size();
+
+			list.Push(drawCall);
 		}
 	}
 
@@ -605,8 +781,6 @@ namespace Athena
 
 		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 		m_RendererData.DebugLightComplexity = m_Settings.DebugView == DebugView::LIGHT_COMPLEXITY ? 1 : 0;
-
-		m_BonesDataOffset = 0;
 	}
 
 	void SceneRenderer::EndScene()
@@ -623,6 +797,9 @@ namespace Athena
 
 			m_StaticGeometryList.Sort();
 			m_AnimGeometryList.Sort();
+
+			m_SelectStaticGeometryList.Sort();
+			m_SelectAnimGeometryList.Sort();
 
 			CalculateInstanceTransforms();
 		}
@@ -651,6 +828,7 @@ namespace Athena
 			BloomPass();
 
 		SceneCompositePass();
+		JumpFloodPass();
 		Render2DPass();
 
 		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
@@ -663,6 +841,9 @@ namespace Athena
 
 		m_StaticGeometryList.Clear();
 		m_AnimGeometryList.Clear();
+		m_SelectStaticGeometryList.Clear();
+		m_SelectAnimGeometryList.Clear();
+		m_BonesDataOffset = 0;
 	}
 
 	void SceneRenderer::DirShadowMapPass()
@@ -675,7 +856,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		{
 			m_DirShadowMapStaticPipeline->Bind(commandBuffer);
-			m_StaticGeometryList.FlushShadowPass(commandBuffer, m_DirShadowMapStaticPipeline);
+			m_StaticGeometryList.FlushNoMaterials(commandBuffer, m_DirShadowMapStaticPipeline, true);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -683,7 +864,7 @@ namespace Athena
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		{
 			m_DirShadowMapAnimPipeline->Bind(commandBuffer);
-			m_AnimGeometryList.FlushShadowPass(commandBuffer, m_DirShadowMapAnimPipeline);
+			m_AnimGeometryList.FlushNoMaterials(commandBuffer, m_DirShadowMapAnimPipeline, true);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
 
@@ -855,6 +1036,63 @@ namespace Athena
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}
 
+	void SceneRenderer::JumpFloodPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		Renderer::BeginDebugRegion(commandBuffer, "JumpFlood", { 0.9f, 0.5f, 0.3f, 1.f });
+
+		m_SelectedGeometryPass->Begin(commandBuffer);
+		{
+			m_SelectedStaticGeomPipeline->Bind(commandBuffer);
+			m_SelectStaticGeometryList.FlushNoMaterials(commandBuffer, m_SelectedStaticGeomPipeline);
+
+			m_SelectedAnimGeomPipeline->Bind(commandBuffer);
+			m_SelectAnimGeometryList.FlushNoMaterials(commandBuffer, m_SelectedAnimGeomPipeline);
+		}
+		m_SelectedGeometryPass->End(commandBuffer);
+
+
+		m_JumpFloodInitPass->Begin(commandBuffer);
+		{
+			m_JumpFloodInitPipeline->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodInitPipeline);
+		}
+		m_JumpFloodInitPass->End(commandBuffer);
+
+
+		// calculate the number of jump flood passes needed for the current outline width
+		// + 1.0f to handle half pixel inset of the init pass and antialiasing
+		uint32 jumps = Math::Ceil(Math::Log2(m_OutlineWidth + 1.f)) - 1;
+		uint32 index = 1; // Init pass initializes 0 index texture
+
+		for(int32 i = jumps; i >= 0; --i)
+		{
+			int stepWidth = Math::Pow(2, i) + 0.5f;
+
+			m_JumpFloodPasses[index]->Begin(commandBuffer);
+
+			m_JumpFloodMaterial->Set("u_StepWidth", stepWidth);
+			m_JumpFloodPipelines[index]->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodPipelines[index], m_JumpFloodMaterial);
+
+			m_JumpFloodPasses[index]->End(commandBuffer);
+
+			index = (index + 1) % 2;
+		}
+
+		m_JumpFloodCompositePass->Begin(commandBuffer);
+		{
+			m_JumpFloodCompositePipeline->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodCompositePipeline, m_JumpFloodCompositeMaterial);
+		}
+		m_JumpFloodCompositePass->End(commandBuffer);
+
+		Renderer::EndDebugRegion(commandBuffer);
+		m_Statistics.JumpFloodPass = m_Profiler->EndTimeQuery();
+	}
+
 	void SceneRenderer::Render2DPass()
 	{
 		if (!m_Render2DCallback)
@@ -999,33 +1237,21 @@ namespace Athena
 
 	void SceneRenderer::CalculateInstanceTransforms()
 	{
+		std::vector<InstanceTransformData> transformData;
+
 		m_StaticGeometryList.SetInstanceOffset(0);
+		m_StaticGeometryList.EmplaceInstanceTransforms(transformData);
 
-		const auto& staticDrawCalls = m_StaticGeometryList.GetArray();
-		for (const auto& draw : staticDrawCalls)
-		{
-			InstanceTransformData transformData;
-			transformData.TRow0 = draw.Transform[0];
-			transformData.TRow1 = draw.Transform[1];
-			transformData.TRow2 = draw.Transform[2];
-			transformData.TRow3 = draw.Transform[3];
+		m_AnimGeometryList.SetInstanceOffset(transformData.size());
+		m_AnimGeometryList.EmplaceInstanceTransforms(transformData);
 
-			m_TransformsStorage.Push(&transformData, sizeof(InstanceTransformData));
-		}
+		m_SelectStaticGeometryList.SetInstanceOffset(transformData.size());
+		m_SelectStaticGeometryList.EmplaceInstanceTransforms(transformData);
 
-		m_AnimGeometryList.SetInstanceOffset(staticDrawCalls.size());
+		m_SelectAnimGeometryList.SetInstanceOffset(transformData.size());
+		m_SelectAnimGeometryList.EmplaceInstanceTransforms(transformData);
 
-		const auto& animDrawCalls = m_AnimGeometryList.GetArray();
-		for (const auto& draw : animDrawCalls)
-		{
-			InstanceTransformData transformData;
-			transformData.TRow0 = draw.Transform[0];
-			transformData.TRow1 = draw.Transform[1];
-			transformData.TRow2 = draw.Transform[2];
-			transformData.TRow3 = draw.Transform[3];
-
-			m_TransformsStorage.Push(&transformData, sizeof(InstanceTransformData));
-		}
+		m_TransformsStorage.Push(transformData.data(), transformData.size() * sizeof(InstanceTransformData));
 	}
 
 	void SceneRenderer::ResetStats()
@@ -1037,6 +1263,7 @@ namespace Athena
 			m_Statistics.SkyboxPass + 
 			m_Statistics.BloomPass + 
 			m_Statistics.SceneCompositePass +
+			m_Statistics.JumpFloodPass +
 			m_Statistics.Render2DPass + 
 			m_Statistics.FXAAPass;
 

@@ -56,7 +56,7 @@ namespace Athena
 		m_Info.Width = width;
 		m_Info.Height = height;
 
-		if (m_Info.GenerateMipLevels)
+		if (m_Info.GenerateMipMap)
 			m_MipLevels = Math::Floor(Math::Log2(Math::Max<float>(m_Info.Width, m_Info.Height))) + 1;
 		else
 			m_MipLevels = 1;
@@ -222,7 +222,7 @@ namespace Athena
 
 			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-			if (m_Info.GenerateMipLevels)
+			if (m_Info.GenerateMipMap)
 			{
 				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;

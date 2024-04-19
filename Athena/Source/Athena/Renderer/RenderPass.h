@@ -28,19 +28,18 @@ namespace Athena
 			texInfo.Width = 1;
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
-			texInfo.GenerateMipLevels = false;
-			texInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-			texInfo.Sampler.MagFilter = TextureFilter::LINEAR;
+			texInfo.GenerateMipMap = false;
+			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			Texture = Texture2D::Create(texInfo);
 			LoadOp = RenderTargetLoadOp::CLEAR;
 		}
 
-		RenderTarget(const Ref<Texture2D>& texture)
+		RenderTarget(const Ref<Texture2D>& texture, RenderTargetLoadOp loadOp = RenderTargetLoadOp::LOAD)
 		{
 			Texture = texture;
-			LoadOp = RenderTargetLoadOp::LOAD;
+			LoadOp = loadOp;
 		}
 
 		Ref<Texture2D> Texture;

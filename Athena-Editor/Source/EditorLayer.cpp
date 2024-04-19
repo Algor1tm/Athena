@@ -184,6 +184,17 @@ namespace Athena
         m_EditorCamera->SetMoveSpeedLevel(m_EditorCtx->EditorSettings.CameraSpeedLevel);
         m_EditorCamera->SetNearClip(m_EditorCtx->EditorSettings.NearFarClips.x);
         m_EditorCamera->SetFarClip(m_EditorCtx->EditorSettings.NearFarClips.y);
+
+        if (m_EditorCtx->SelectedEntity)
+        {
+            Entity entity = m_EditorCtx->SelectedEntity;
+            if (entity.HasComponent<StaticMeshComponent>())
+            {
+                Ref<StaticMesh> mesh = entity.GetComponent<StaticMeshComponent>().Mesh;
+                WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+                m_ViewportRenderer->SubmitSelectionContext(mesh, transform.AsMatrix());
+            }
+        }
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
@@ -510,38 +521,17 @@ namespace Athena
             LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
             const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
 
-            if (selectedEntity.HasComponent<StaticMeshComponent>())
-            {
-                const AABB& box = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
-                
-                AABB transformedBox = box.Transform(worldTransform.AsMatrix());
-
-                Vector3 min = transformedBox.GetMinPoint();
-                Vector3 max = transformedBox.GetMaxPoint();
-
-                // front
-                renderer2D->DrawLine(max, { max.x, min.y, max.z }, color);
-                renderer2D->DrawLine({ max.x, min.y, max.z }, { min.x, min.y, max.z }, color);
-                renderer2D->DrawLine({ min.x, min.y, max.z }, { min.x, max.y, max.z }, color);
-                renderer2D->DrawLine({ min.x, max.y, max.z }, max, color);
-                // back
-                renderer2D->DrawLine(min, { min.x, max.y, min.z }, color);
-                renderer2D->DrawLine({ min.x, max.y, min.z }, { max.x, max.y, min.z }, color);
-                renderer2D->DrawLine({ max.x, max.y, min.z }, { max.x, min.y, min.z }, color);
-                renderer2D->DrawLine({ max.x, min.y, min.z }, min, color);
-
-                // left
-                renderer2D->DrawLine(min, { min.x, min.y, max.z }, color);
-                renderer2D->DrawLine({ min.x, max.y, min.z }, { min.x, max.y, max.z }, color);
-
-                // right
-                renderer2D->DrawLine(max, { max.x, max.y, min.z }, color);
-                renderer2D->DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color);
-            }
-            else if(selectedEntity.HasComponent<SpriteComponent>() || selectedEntity.HasComponent<CircleComponent>())
+            // 2D Outline
+            if(selectedEntity.HasComponent<SpriteComponent>())
             {
                 renderer2D->DrawRect(worldTransform.AsMatrix(), color);
             }
+            else if (selectedEntity.HasComponent<CircleComponent>())
+            {
+                renderer2D->DrawRect(worldTransform.AsMatrix(), color);
+            }
+
+            // Light Outline
             else if (selectedEntity.HasComponent<PointLightComponent>())
             {
                 const Vector3& position = worldTransform.Translation;

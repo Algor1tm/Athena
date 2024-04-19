@@ -139,7 +139,7 @@ namespace Athena
 		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_TimeQueryPool, start + count);
 
 		m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 	}
@@ -152,7 +152,7 @@ namespace Athena
 		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
 		uint32 count = m_TimestampsCount[Renderer::GetCurrentFrameIndex()];
 
-		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, m_TimeQueryPool, start + count);
+		vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_TimeQueryPool, start + count);
 
 		m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 

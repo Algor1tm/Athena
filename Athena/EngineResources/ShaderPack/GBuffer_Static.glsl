@@ -26,19 +26,6 @@ struct VertexInterpolators
 
 layout(location = 0) out VertexInterpolators Interpolators;
 
-layout(push_constant) uniform u_MaterialData
-{
-    vec4 u_Albedo;
-    float u_Roughness;
-    float u_Metalness;
-    float u_Emission;
-
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
-    uint u_UseMetalnessMap;
-};
-
 
 void main()
 {

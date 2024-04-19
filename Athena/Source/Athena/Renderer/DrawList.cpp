@@ -77,7 +77,7 @@ namespace Athena
 			Renderer::RenderGeometryInstanced(commandBuffer, pipeline, instanceVertexBuffer, instanceMaterial, instanceCount, instanceOffset);
 	}
 
-	void DrawListStatic::FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline)
+	void DrawListStatic::FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass)
 	{
 		Ref<VertexBuffer> instanceVertexBuffer;
 		uint32 instanceOffset = m_InstanceOffset;
@@ -88,7 +88,7 @@ namespace Athena
 			if (instanceCount == 0)
 				instanceVertexBuffer = drawCall.VertexBuffer;
 
-			if (!drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
 			{
 				if(instanceCount != 0)
 					Renderer::RenderGeometryInstanced(commandBuffer, pipeline, instanceVertexBuffer, nullptr, instanceCount, instanceOffset);
@@ -116,6 +116,22 @@ namespace Athena
 		{
 			if((*(m_Array.end() - 1)).Material->GetFlag(MaterialFlag::CAST_SHADOWS))
 				Renderer::RenderGeometryInstanced(commandBuffer, pipeline, instanceVertexBuffer, nullptr, instanceCount, instanceOffset);
+		}
+	}
+
+	void DrawListStatic::EmplaceInstanceTransforms(std::vector<InstanceTransformData>& data)
+	{
+		data.reserve(m_Array.size());
+
+		for (const auto& draw : m_Array)
+		{
+			InstanceTransformData transformData;
+			transformData.TRow0 = draw.Transform[0];
+			transformData.TRow1 = draw.Transform[1];
+			transformData.TRow2 = draw.Transform[2];
+			transformData.TRow3 = draw.Transform[3];
+
+			data.push_back(transformData);
 		}
 	}
 
@@ -181,19 +197,35 @@ namespace Athena
 		}
 	}
 
-	void DrawListAnim::FlushShadowPass(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline)
+	void DrawListAnim::FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass)
 	{
 		uint32 instanceOffset = m_InstanceOffset;
 
 		for (const auto& drawCall : m_Array)
 		{
-			if (drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
-			{
-				drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
-				Renderer::RenderGeometryInstanced(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material, 1, instanceOffset);
-			}
+			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+				continue;
+
+			drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);
+			Renderer::RenderGeometryInstanced(commandBuffer, pipeline, drawCall.VertexBuffer, drawCall.Material, 1, instanceOffset);
 			
 			instanceOffset++;
+		}
+	}
+
+	void DrawListAnim::EmplaceInstanceTransforms(std::vector<InstanceTransformData>& data)
+	{
+		data.reserve(m_Array.size());
+
+		for (const auto& draw : m_Array)
+		{
+			InstanceTransformData transformData;
+			transformData.TRow0 = draw.Transform[0];
+			transformData.TRow1 = draw.Transform[1];
+			transformData.TRow2 = draw.Transform[2];
+			transformData.TRow3 = draw.Transform[3];
+
+			data.push_back(transformData);
 		}
 	}
 }

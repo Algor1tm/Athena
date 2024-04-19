@@ -24,8 +24,15 @@ namespace Athena
             ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
-            Matrix4 cameraProjection = m_Camera->GetProjectionMatrix();
+            // Need to recreate projection matrix, because ImGuizmo 
+            // does not work properly with reversed Z projection
+            float fov = m_Camera->GetFOV();
+            float znear = m_Camera->GetNearClip();
+            float zfar = m_Camera->GetFarClip();
+            float aspectRatio = m_Camera->GetAspectRatio();
+            Matrix4 cameraProjection = Math::Perspective(fov, aspectRatio, znear, zfar);
             cameraProjection[1][1] = -cameraProjection[1][1]; // invert y
+
             const Matrix4& cameraView = m_Camera->GetViewMatrix();
 
             const WorldTransformComponent& worldTransform = m_EditorCtx->SelectedEntity.GetComponent<WorldTransformComponent>();

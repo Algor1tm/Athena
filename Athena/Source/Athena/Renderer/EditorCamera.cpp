@@ -15,8 +15,10 @@ namespace Athena
 	}
 
 	OrthographicCamera::OrthographicCamera(float aspectRatio, bool rotation)
-		: m_AspectRatio(aspectRatio), m_EnableRotation(rotation)
 	{
+		m_AspectRatio = aspectRatio;
+		m_EnableRotation = rotation;
+
 		RecalculateView();
 		RecalculateProjection();
 	}
@@ -98,8 +100,12 @@ namespace Athena
 	}
 
 	PerspectiveEditorCameraBase::PerspectiveEditorCameraBase(float fov, float aspectRatio, float nearClip, float farClip)
-		: EditorCamera(nearClip, farClip), m_FOV(fov), m_AspectRatio(aspectRatio)
 	{
+		m_NearClip = nearClip;
+		m_FarClip = farClip;
+		m_AspectRatio = aspectRatio;
+		m_FOV = fov;
+			 
 		RecalculateProjection();
 	}
 

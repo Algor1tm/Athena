@@ -78,7 +78,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipLevels = options.GenerateMipMaps;
+		info.GenerateMipMap = options.GenerateMipMaps;
 		info.Sampler = options.Sampler;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);
@@ -121,7 +121,7 @@ namespace Athena
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipLevels = options.GenerateMipMaps;
+		info.GenerateMipMap = options.GenerateMipMaps;
 		info.Sampler = options.Sampler;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);

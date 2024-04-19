@@ -20,7 +20,6 @@ namespace Athena
 	{
 	public:
 		EditorCamera() = default;
-		EditorCamera(float nearClip, float farClip) : Camera(nearClip, farClip) {}
 
 		virtual ~EditorCamera() = default;
 
@@ -35,11 +34,15 @@ namespace Athena
 		virtual void SetNearClip(float near) = 0;
 		virtual void SetFarClip(float far) = 0;
 
+		virtual float GetFOV() const = 0;
+
+		float GetAspectRatio() const { return m_AspectRatio; }
 		void SetMoveSpeedLevel(float level) { m_MoveSpeedLevel = level; }
 
 	protected:
 		Matrix4 m_ViewMatrix = Matrix4::Identity();
 		float m_MoveSpeedLevel = 1.f;
+		float m_AspectRatio = 1.778f;
 	};
 
 
@@ -72,8 +75,10 @@ namespace Athena
 		inline void SetCameraSpeed(float speed) { m_CameraSpeed = speed; }
 		inline void SetCameraRotationSpeed(float speed) { m_CameraRotationSpeed = speed; }
 
+		// TODO: Remove
 		virtual void SetNearClip(float near) override {}
 		virtual void SetFarClip(float far) override {}
+		virtual float GetFOV() const override { return 0.f; }
 
 	private:
 		void RecalculateProjection();
@@ -86,9 +91,7 @@ namespace Athena
 		float m_Rotation = 0;
 		bool m_EnableRotation = false;
 
-		float m_AspectRatio = 1.778f;
 		float m_ZoomLevel = 1.f;
-
 		float m_CameraSpeed = 3.f;
 		float m_CameraRotationSpeed = 1.f;
 	};
@@ -111,6 +114,8 @@ namespace Athena
 		virtual void SetNearClip(float near) override;
 		virtual void SetFarClip(float far) override;
 
+		virtual float GetFOV() const override { return m_FOV; }
+
 	protected:
 		void RecalculateProjection();
 		Vector2 UpdateMousePosition();
@@ -122,7 +127,6 @@ namespace Athena
 
 	private:
 		float m_FOV = Math::PI<float>() / 2.f;
-		float m_AspectRatio = 1.778f;
 		float m_Yaw = 0.f, m_Pitch = 0.0f;
 
 		Vector2 m_InitialMousePosition = { 0.0f, 0.0f };

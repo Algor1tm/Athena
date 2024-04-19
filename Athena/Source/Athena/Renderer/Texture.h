@@ -79,9 +79,7 @@ namespace Athena
 	{
 		bool operator==(const TextureSamplerCreateInfo& other) const = default;
 
-		TextureFilter MinFilter = TextureFilter::LINEAR;
-		TextureFilter MagFilter = TextureFilter::LINEAR;
-		TextureFilter MipMapFilter = TextureFilter::LINEAR;
+		TextureFilter Filter = TextureFilter::LINEAR;
 		TextureWrap Wrap = TextureWrap::REPEAT;
 		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
@@ -114,9 +112,7 @@ namespace std
 	{
 		size_t operator()(const TextureSamplerCreateInfo& value) const
 		{
-			string str = std::format("{}{}{}{}{}", (uint32)value.MinFilter, (uint32)value.MagFilter,
-				(uint32)value.MipMapFilter, (uint32)value.Wrap, (uint32)value.Compare);
-
+			string str = std::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
 			return hash<string>()(str);
 		}
 	};
@@ -164,7 +160,7 @@ namespace Athena
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
-		bool GenerateMipLevels = false;
+		bool GenerateMipMap = false;
 		TextureSamplerCreateInfo Sampler;
 	};
 

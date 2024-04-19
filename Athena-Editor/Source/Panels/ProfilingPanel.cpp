@@ -78,6 +78,7 @@ namespace Athena
                         ImGui::Text("SkyboxPass: %.3f ms", stats.SkyboxPass.AsMilliseconds());
                         ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
+                        ImGui::Text("JumpFloodPass: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
                         ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
                         ImGui::Text("FXAAPass: %.3f ms", stats.FXAAPass.AsMilliseconds());
 

@@ -71,19 +71,29 @@ namespace Athena
 		if(m_Info.DebugColor != LinearColor(0.f))
 			Renderer::BeginDebugRegion(commandBuffer, m_Info.Name, m_Info.DebugColor);
 
-		for (const auto& output : m_Outputs)
-			output.Texture.As<VulkanTexture2D>()->GetImage().As<VulkanImage>()->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(output.Texture->GetFormat()));
-
 		VkCommandBuffer vkcmdBuf = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
-		uint32 width = m_Info.Width;
-		uint32 height = m_Info.Height;
+
+		for(uint32 i = 0; i < m_Outputs.size(); ++i)
+		{
+			Ref<VulkanImage> image = m_Outputs[i].Texture.As<VulkanTexture2D>()->GetImage().As<VulkanImage>();
+			VkImageLayout requiredLayout = m_InitalLayouts[i];
+
+			if (requiredLayout != VK_IMAGE_LAYOUT_UNDEFINED && image->GetLayout() != requiredLayout)
+			{
+				image->TransitionLayout(vkcmdBuf, m_InitalLayouts[i], 
+					VK_ACCESS_NONE, VK_ACCESS_SHADER_WRITE_BIT, 
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			}
+
+			image->RenderPassUpdateLayout(Vulkan::GetAttachmentOptimalLayout(m_Outputs[i].Texture->GetFormat()));
+		}
 
 		VkRenderPassBeginInfo renderPassBeginInfo = {};
 		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassBeginInfo.renderPass = m_VulkanRenderPass;
 		renderPassBeginInfo.framebuffer = m_VulkanFramebuffer;
 		renderPassBeginInfo.renderArea.offset = { 0, 0 };
-		renderPassBeginInfo.renderArea.extent = { width , height };
+		renderPassBeginInfo.renderArea.extent = { m_Info.Width , m_Info.Height };
 		renderPassBeginInfo.clearValueCount = m_ClearColors.size();
 		renderPassBeginInfo.pClearValues = m_ClearColors.data();
 
@@ -130,6 +140,8 @@ namespace Athena
 			attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			attachments.push_back(attachmentDesc);
+
+			m_InitalLayouts.push_back(attachmentDesc.initialLayout);
 
 			if (Texture::IsColorFormat(format))
 			{

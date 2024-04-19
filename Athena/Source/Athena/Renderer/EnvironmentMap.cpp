@@ -28,10 +28,8 @@ namespace Athena
 		cubemapInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 		cubemapInfo.Width = m_Resolution;
 		cubemapInfo.Height = m_Resolution;
-		cubemapInfo.GenerateMipLevels = true;
-		cubemapInfo.Sampler.MinFilter = TextureFilter::LINEAR;
-		cubemapInfo.Sampler.MagFilter = TextureFilter::LINEAR;
-		cubemapInfo.Sampler.MipMapFilter = TextureFilter::LINEAR;
+		cubemapInfo.GenerateMipMap = true;
+		cubemapInfo.Sampler.Filter = TextureFilter::LINEAR;
 		cubemapInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 		m_EnvironmentTexture = TextureCube::Create(cubemapInfo);
@@ -39,7 +37,7 @@ namespace Athena
 		cubemapInfo.Name = "EnvIrradianceMap";
 		cubemapInfo.Width = m_IrradianceMapResolution;
 		cubemapInfo.Height = m_IrradianceMapResolution;
-		cubemapInfo.GenerateMipLevels = false;
+		cubemapInfo.GenerateMipMap = false;
 
 		m_IrradianceTexture = TextureCube::Create(cubemapInfo);
 

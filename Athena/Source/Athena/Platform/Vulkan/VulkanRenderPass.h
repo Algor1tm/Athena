@@ -28,5 +28,6 @@ namespace Athena
 		VkFramebuffer m_VulkanFramebuffer = VK_NULL_HANDLE;
 		VkRenderPass m_VulkanRenderPass = VK_NULL_HANDLE;
 		std::vector<VkClearValue> m_ClearColors;
+		std::vector<VkImageLayout> m_InitalLayouts;
 	};
 }

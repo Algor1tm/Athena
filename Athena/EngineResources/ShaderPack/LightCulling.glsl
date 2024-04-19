@@ -43,7 +43,7 @@ void main()
 -----------------------------------------------------------------------------------*/
 	float maxDepth, minDepth;
 	float depth = texture(u_SceneDepth, uv).r;
-	depth = LinearizeDepth(depth, u_Camera.NearClip, u_Camera.FarClip);
+	depth = LinearizeDepth(depth, u_Camera.FarClip, u_Camera.NearClip);
 
 	uint depthInt = floatBitsToUint(depth);
 	atomicMin(s_MinDepthInt, depthInt);

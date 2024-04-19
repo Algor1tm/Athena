@@ -258,13 +258,13 @@ namespace Athena
 		Ref<ComputePipeline> m_BloomUpsample;
 		std::vector<Ref<Material>> m_BloomMaterials;
 
-		Ref<RenderPass> m_CompositePass;
-		Ref<Pipeline> m_CompositePipeline;
-		Ref<Material> m_CompositeMaterial;
+		Ref<RenderPass> m_SceneCompositePass;
+		Ref<Pipeline> m_SceneCompositePipeline;
+		Ref<Material> m_SceneCompositeMaterial;
 
-		Ref<RenderPass> m_SelectedGeometryPass;
-		Ref<Pipeline> m_SelectedStaticGeomPipeline;
-		Ref<Pipeline> m_SelectedAnimGeomPipeline;
+		Ref<RenderPass> m_JumpFloodSilhouettePass;
+		Ref<Pipeline> m_JFSilhouetteStaticPipeline;
+		Ref<Pipeline> m_JFSilhouetteAnimPipeline;
 		Ref<RenderPass> m_JumpFloodInitPass;
 		Ref<Pipeline> m_JumpFloodInitPipeline;
 		Ref<RenderPass> m_JumpFloodPasses[2];

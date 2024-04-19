@@ -33,6 +33,9 @@ namespace Athena
 		m_Type = type;
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
+		if (type == TextureType::TEXTURE_CUBE)
+			m_Info.Layers *= 6;
+
 		m_Info.Width = 0;
 		m_Info.Height = 0;
 		Resize(info.Width, info.Height);
@@ -68,8 +71,6 @@ namespace Athena
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-		uint32 layers = m_Type == TextureType::TEXTURE_CUBE ? m_Info.Layers * 6 : m_Info.Layers;
-
 		VkImageCreateInfo imageInfo = {};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.flags = m_Type == TextureType::TEXTURE_CUBE ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
@@ -78,7 +79,7 @@ namespace Athena
 		imageInfo.extent.height = m_Info.Height;
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = m_MipLevels;
-		imageInfo.arrayLayers = layers;
+		imageInfo.arrayLayers = m_Info.Layers;
 		imageInfo.format = Vulkan::GetFormat(m_Info.Format);
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -92,13 +93,13 @@ namespace Athena
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image.GetImage();
-		viewInfo.viewType = Vulkan::GetImageViewType(m_Type, layers);
+		viewInfo.viewType = Vulkan::GetImageViewType(m_Type, m_Info.Layers);
 		viewInfo.format = Vulkan::GetFormat(m_Info.Format);
 		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = m_MipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = layers;
+		viewInfo.subresourceRange.layerCount = m_Info.Layers;
 
 		VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
 		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
@@ -120,8 +121,6 @@ namespace Athena
 
 	void VulkanImage::TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess, VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
 	{
-		uint32 layers = m_Type == TextureType::TEXTURE_CUBE ? m_Info.Layers * 6 : m_Info.Layers;
-
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		barrier.oldLayout = m_Layout;
@@ -135,7 +134,7 @@ namespace Athena
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = m_MipLevels;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = layers;
+		barrier.subresourceRange.layerCount = m_Info.Layers;
 
 		vkCmdPipelineBarrier(
 			cmdBuffer,

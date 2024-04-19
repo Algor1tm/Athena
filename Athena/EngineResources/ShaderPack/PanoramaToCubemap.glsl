@@ -31,5 +31,8 @@ void main()
     vec2 uv = SampleSphericalMap(direction);
     vec3 panoramaColor = texture(u_PanoramaTex, uv).rgb;
 
+    // large values lead to artifacts
+    panoramaColor = clamp(panoramaColor, 0.0, 150.0);
+
     imageStore(u_Cubemap, unnormalizedTexCoords, vec4(panoramaColor, 1));
 }

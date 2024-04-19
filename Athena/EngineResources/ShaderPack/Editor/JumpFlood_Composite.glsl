@@ -44,11 +44,11 @@ void main()
 
     vec2 encodedPos = texelFetch(u_Texture, uvInt, 0).rg;
 
-    //if(encodedPos.y == -1.0)
-    //{
-    //    o_Color = vec4(0.0);
-    //    return;
-    //}
+    if(encodedPos.y == -1.0)
+    {
+        o_Color = vec4(0.0);
+        return;
+    }
 
     vec2 nearestPos = (encodedPos + ENCODE_OFFSET) * texSize / ENCODE_SCALE;
     vec2 currentPos = uvInt;

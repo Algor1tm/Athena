@@ -175,6 +175,7 @@ namespace Athena
 		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
 
 		virtual void WriteContentToBuffer(Buffer* dstBuffer) = 0;
+		virtual uint32 GetImageLayerCount() const = 0;
 
 		Vector2u GetMipSize(uint32 mip) const;
 		uint32 GetMipLevelsCount() const;
@@ -215,6 +216,7 @@ namespace Athena
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
 		virtual const String& GetName() const override { return m_Info.Name; }
 
+		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
 
 	private:
@@ -233,6 +235,8 @@ namespace Athena
 
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::TextureCube; }
 		virtual const String& GetName() const override { return m_Info.Name; }
+
+		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
 	};
 
 	class ATHENA_API Texture2DInstance

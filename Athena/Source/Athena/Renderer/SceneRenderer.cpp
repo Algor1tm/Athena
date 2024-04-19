@@ -320,13 +320,13 @@ namespace Athena
 			RenderTarget target = Texture2D::Create(texInfo);
 			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
 
-			m_CompositePass = RenderPass::Create(passInfo);
-			m_CompositePass->SetOutput(target);
-			m_CompositePass->Bake();
+			m_SceneCompositePass = RenderPass::Create(passInfo);
+			m_SceneCompositePass->SetOutput(target);
+			m_SceneCompositePass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "SceneCompositePipeline";
-			pipelineInfo.RenderPass = m_CompositePass;
+			pipelineInfo.RenderPass = m_SceneCompositePass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SceneComposite");
 			pipelineInfo.VertexLayout = fullscreenQuadLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
@@ -334,13 +334,13 @@ namespace Athena
 			pipelineInfo.DepthTest = false;
 			pipelineInfo.BlendEnable = false;
 
-			m_CompositePipeline = Pipeline::Create(pipelineInfo);
+			m_SceneCompositePipeline = Pipeline::Create(pipelineInfo);
 
-			m_CompositePipeline->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
-			m_CompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("BloomTexture"));
-			m_CompositePipeline->Bake();
+			m_SceneCompositePipeline->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
+			m_SceneCompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("BloomTexture"));
+			m_SceneCompositePipeline->Bake();
 
-			m_CompositeMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+			m_SceneCompositeMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
 		}
 
 		// JUMP FLOOD
@@ -348,18 +348,18 @@ namespace Athena
 			// MESH FILL PASS
 			{
 				RenderPassCreateInfo passInfo;
-				passInfo.Name = "JumpFloodMeshFillPass";
-				passInfo.InputPass = m_CompositePass;
+				passInfo.Name = "JumpFloodSilhouettePass";
+				passInfo.InputPass = m_SceneCompositePass;
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
-				m_SelectedGeometryPass = RenderPass::Create(passInfo);
-				m_SelectedGeometryPass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8 });
-				m_SelectedGeometryPass->Bake();
+				m_JumpFloodSilhouettePass = RenderPass::Create(passInfo);
+				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8 });
+				m_JumpFloodSilhouettePass->Bake();
 
 				PipelineCreateInfo pipelineInfo;
-				pipelineInfo.Name = "JumpFloodStaticMeshPipeline";
-				pipelineInfo.RenderPass = m_SelectedGeometryPass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_MeshFill_Static");
+				pipelineInfo.Name = "JFSilhouetteStaticPipeline";
+				pipelineInfo.RenderPass = m_JumpFloodSilhouettePass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Silhouette_Static");
 				pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 				pipelineInfo.InstanceLayout = instanceLayout;
 				pipelineInfo.Topology = Topology::TRIANGLE_LIST;
@@ -367,19 +367,19 @@ namespace Athena
 				pipelineInfo.DepthTest = false;
 				pipelineInfo.BlendEnable = false;
 
-				m_SelectedStaticGeomPipeline = Pipeline::Create(pipelineInfo);
+				m_JFSilhouetteStaticPipeline = Pipeline::Create(pipelineInfo);
 
-				m_SelectedStaticGeomPipeline->SetInput("u_CameraData", m_CameraUBO);
-				m_SelectedStaticGeomPipeline->Bake();
+				m_JFSilhouetteStaticPipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_JFSilhouetteStaticPipeline->Bake();
 
-				pipelineInfo.Name = "JumpFloodAnimMeshPipeline";
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_MeshFill_Anim");
+				pipelineInfo.Name = "JFSilhouetteAnimPipeline";
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Silhouette_Anim");
 				pipelineInfo.VertexLayout = AnimVertex::GetLayout();
 
-				m_SelectedAnimGeomPipeline = Pipeline::Create(pipelineInfo);
-				m_SelectedAnimGeomPipeline->SetInput("u_CameraData", m_CameraUBO);
-				m_SelectedAnimGeomPipeline->SetInput("u_BonesData", m_BonesSBO);
-				m_SelectedAnimGeomPipeline->Bake();
+				m_JFSilhouetteAnimPipeline = Pipeline::Create(pipelineInfo);
+				m_JFSilhouetteAnimPipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_JFSilhouetteAnimPipeline->SetInput("u_BonesData", m_BonesSBO);
+				m_JFSilhouetteAnimPipeline->Bake();
 			}
 
 			// TEXTURES INIT
@@ -407,7 +407,7 @@ namespace Athena
 			{
 				RenderPassCreateInfo passInfo;
 				passInfo.Name = "JumpFloodInitPass";
-				passInfo.InputPass = m_SelectedGeometryPass;
+				passInfo.InputPass = m_JumpFloodSilhouettePass;
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
 				m_JumpFloodInitPass = RenderPass::Create(passInfo);
@@ -420,7 +420,7 @@ namespace Athena
 
 				m_JumpFloodInitPipeline = Pipeline::Create(pipelineInfo);
 
-				m_JumpFloodInitPipeline->SetInput("u_SilhouetteTexture", m_SelectedGeometryPass->GetOutput("JumpFloodSilhouette"));
+				m_JumpFloodInitPipeline->SetInput("u_SilhouetteTexture", m_JumpFloodSilhouettePass->GetOutput("JumpFloodSilhouette"));
 				m_JumpFloodInitPipeline->Bake();
 			}
 
@@ -464,7 +464,7 @@ namespace Athena
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
 				m_JumpFloodCompositePass = RenderPass::Create(passInfo);
-				m_JumpFloodCompositePass->SetOutput(m_CompositePass->GetOutput("SceneColor"));
+				m_JumpFloodCompositePass->SetOutput(m_SceneCompositePass->GetOutput("SceneColor"));
 				m_JumpFloodCompositePass->Bake();
 
 				pipelineInfo.Name = "JumpFloodCompositePipeline";
@@ -487,12 +487,12 @@ namespace Athena
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "Renderer2DPass";
-			passInfo.InputPass = m_CompositePass;
+			passInfo.InputPass = m_SceneCompositePass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
-			RenderTarget colorOutput = m_CompositePass->GetOutput("SceneColor");
+			RenderTarget colorOutput = m_SceneCompositePass->GetOutput("SceneColor");
 			RenderTarget depthOutput = m_GBufferPass->GetOutput("SceneDepth");
 
 			m_Render2DPass = RenderPass::Create(passInfo);
@@ -577,12 +577,12 @@ namespace Athena
 		m_BloomTexture->Resize(width, height);
 		m_BloomMaterials.clear();
 
-		m_CompositePass->Resize(width, height);
-		m_CompositePipeline->SetViewport(width, height);
+		m_SceneCompositePass->Resize(width, height);
+		m_SceneCompositePipeline->SetViewport(width, height);
 
-		m_SelectedGeometryPass->Resize(width, height);
-		m_SelectedStaticGeomPipeline->SetViewport(width, height);
-		m_SelectedAnimGeomPipeline->SetViewport(width, height);
+		m_JumpFloodSilhouettePass->Resize(width, height);
+		m_JFSilhouetteStaticPipeline->SetViewport(width, height);
+		m_JFSilhouetteAnimPipeline->SetViewport(width, height);
 		m_JumpFloodInitPass->Resize(width, height);
 		m_JumpFloodInitPipeline->SetViewport(width, height);
 		for (uint32 i = 0; i < 2; ++i)
@@ -775,9 +775,9 @@ namespace Athena
 		else
 			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
 
-		m_CompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
-		m_CompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
-		m_CompositeMaterial->Set("u_EnableBloom", (uint32)m_Settings.BloomSettings.Enable);
+		m_SceneCompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
+		m_SceneCompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
+		m_SceneCompositeMaterial->Set("u_EnableBloom", (uint32)m_Settings.BloomSettings.Enable);
 
 		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 		m_RendererData.DebugLightComplexity = m_Settings.DebugView == DebugView::LIGHT_COMPLEXITY ? 1 : 0;
@@ -788,6 +788,8 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 
 		ResetStats();
+
+		bool hasSelectedGeometry = m_SelectStaticGeometryList.Size() != 0 || m_SelectAnimGeometryList.Size() != 0;
 
 		m_Profiler->Reset();
 		m_Profiler->BeginPipelineStatsQuery();
@@ -828,7 +830,10 @@ namespace Athena
 			BloomPass();
 
 		SceneCompositePass();
-		JumpFloodPass();
+
+		if(hasSelectedGeometry)
+			JumpFloodPass();
+
 		Render2DPass();
 
 		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
@@ -1027,12 +1032,12 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_Profiler->BeginTimeQuery();
-		m_CompositePass->Begin(commandBuffer);
+		m_SceneCompositePass->Begin(commandBuffer);
 		{
-			m_CompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_CompositePipeline, m_CompositeMaterial);
+			m_SceneCompositePipeline->Bind(commandBuffer);
+			Renderer::RenderFullscreenQuad(commandBuffer, m_SceneCompositePipeline, m_SceneCompositeMaterial);
 		}
-		m_CompositePass->End(commandBuffer);
+		m_SceneCompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
 	}
 
@@ -1043,15 +1048,15 @@ namespace Athena
 		m_Profiler->BeginTimeQuery();
 		Renderer::BeginDebugRegion(commandBuffer, "JumpFlood", { 0.9f, 0.5f, 0.3f, 1.f });
 
-		m_SelectedGeometryPass->Begin(commandBuffer);
+		m_JumpFloodSilhouettePass->Begin(commandBuffer);
 		{
-			m_SelectedStaticGeomPipeline->Bind(commandBuffer);
-			m_SelectStaticGeometryList.FlushNoMaterials(commandBuffer, m_SelectedStaticGeomPipeline);
+			m_JFSilhouetteStaticPipeline->Bind(commandBuffer);
+			m_SelectStaticGeometryList.FlushNoMaterials(commandBuffer, m_JFSilhouetteStaticPipeline);
 
-			m_SelectedAnimGeomPipeline->Bind(commandBuffer);
-			m_SelectAnimGeometryList.FlushNoMaterials(commandBuffer, m_SelectedAnimGeomPipeline);
+			m_JFSilhouetteAnimPipeline->Bind(commandBuffer);
+			m_SelectAnimGeometryList.FlushNoMaterials(commandBuffer, m_JFSilhouetteAnimPipeline);
 		}
-		m_SelectedGeometryPass->End(commandBuffer);
+		m_JumpFloodSilhouettePass->End(commandBuffer);
 
 
 		m_JumpFloodInitPass->Begin(commandBuffer);

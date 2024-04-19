@@ -32,15 +32,6 @@ layout(set = 1, binding = 0) uniform sampler2D u_SilhouetteTexture;
 
 void main()
 {
-
-#if 0
-    float value = texture(u_SilhouetteTexture, v_TexCoords).r;
-    bool unlit = value < 0.99;
-
-    o_EncodedPosition = unlit ? vec2(-1.0) : v_TexCoords * ENCODE_SCALE - ENCODE_OFFSET;
-
-    // Edge detection
-#else
     vec2 texSize = textureSize(u_SilhouetteTexture, 0);
     vec2 texelSize = 1.0 / texSize;
 
@@ -74,5 +65,4 @@ void main()
 
     vec2 offset = dir * (1.0 - values[1][1]);
     o_EncodedPosition = (uvInt + offset) * texelSize * ENCODE_SCALE - ENCODE_OFFSET;
-#endif
 }

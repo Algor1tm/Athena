@@ -236,7 +236,11 @@ namespace Athena
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
 
 				Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
-				ImGui::Image(UI::GetTextureID(shadowMap->GetLayerView(layer)), {256, 256});
+				TextureViewCreateInfo view;
+				view.BaseLayer = layer;
+				view.GrayScale = true;
+
+				ImGui::Image(UI::GetTextureID(shadowMap->GetView(view)), {256, 256});
 
 				UI::TreePop();
 			}
@@ -244,11 +248,24 @@ namespace Athena
 			UI::TreePop();
 		}
 
+		if (UI::TreeNode("Ambient Occlusion", false) && UI::BeginPropertyTable())
+		{
+			AmbientOcclusionSettings& ao = settings.AOSettings;
+
+			UI::PropertyCheckbox("Enable", &ao.Enable);
+			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
+			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
+			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
+
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
 		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
 		{
 			BloomSettings& bloomSettings = settings.BloomSettings;
 
-			UI::PropertyCheckbox("Enable Bloom", &bloomSettings.Enable);
+			UI::PropertyCheckbox("Enable", &bloomSettings.Enable);
 			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
 			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);

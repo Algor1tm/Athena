@@ -73,6 +73,14 @@ namespace Athena
 		Ref<Texture2D> DirtTexture;
 	};
 
+	struct AmbientOcclusionSettings
+	{
+		bool Enable = true;
+		float Intensity = 1.4f;
+		float Radius = 0.7f;
+		float Bias = 0.025f;
+	};
+
 	struct QualitySettings
 	{
 		float RendererScale = 1.f;
@@ -82,6 +90,7 @@ namespace Athena
 	{
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
+		AmbientOcclusionSettings AOSettings;
 		PostProcessingSettings PostProcessingSettings;
 		DebugView DebugView = DebugView::NONE;
 		QualitySettings Quality;
@@ -141,12 +150,23 @@ namespace Athena
 		int SoftShadows = true;
 	};
 
+	struct AOData
+	{
+		Vector4 SamplesKernel[64];
+		Vector4 KernelNoise[16];
+		float Intensity;
+		float Radius;
+		float Bias;
+	};
+
 	struct SceneRendererStatistics
 	{
 		Time GPUTime;
 		Time DirShadowMapPass;
 		Time GBufferPass;
 		Time LightCullingPass;
+		Time SSAOPass;
+		Time SSAODenoisePass;
 		Time DeferredLightingPass;
 		Time SkyboxPass;
 		Time BloomPass;
@@ -196,6 +216,7 @@ namespace Athena
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
+		Ref<RenderPass> GetSSAOPass() { return m_SSAODenoisePass; }
 		Ref<Pipeline> GetSkyboxPipeline() { return m_SkyboxPipeline; }
 
 		void ApplySettings();
@@ -203,6 +224,7 @@ namespace Athena
 	private:
 		void DirShadowMapPass();
 		void GBufferPass();
+		void SSAOPass();
 		void LightCullingPass();
 		void LightingPass();
 		void SkyboxPass();
@@ -258,6 +280,11 @@ namespace Athena
 		Ref<ComputePipeline> m_BloomUpsample;
 		std::vector<Ref<Material>> m_BloomMaterials;
 
+		Ref<RenderPass> m_SSAOPass;
+		Ref<Pipeline> m_SSAOPipeline;
+		Ref<RenderPass> m_SSAODenoisePass;
+		Ref<Pipeline> m_SSAODenoisePipeline;
+
 		Ref<RenderPass> m_SceneCompositePass;
 		Ref<Pipeline> m_SceneCompositePipeline;
 		Ref<Material> m_SceneCompositeMaterial;
@@ -286,6 +313,7 @@ namespace Athena
 		RendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
+		AOData m_AmbientOcclusionData;
 		uint32 m_BonesDataOffset;
 
 		// GPU Data
@@ -294,6 +322,7 @@ namespace Athena
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
+		Ref<UniformBuffer> m_AmbientOcclusionUBO;
 		Ref<TextureView> m_ShadowMapSampler;
 
 		DynamicGPUBuffer<StorageBuffer> m_BonesSBO;

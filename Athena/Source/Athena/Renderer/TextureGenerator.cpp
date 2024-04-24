@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Application.h"
 #include "Athena/Asset/TextureImporter.h"
+#include "Athena/Math/Random.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
@@ -14,12 +15,13 @@ namespace Athena
 	{
 		Ref<Texture2D> WhiteTexture;
 		Ref<Texture2D> BlackTexture;
+		Ref<TextureCube> BlackTextureCube;
+
 		Ref<Texture2D> BRDF_LUT;
 		Ref<Texture2D> BlueNoise;
-		Ref<TextureCube> BlackTextureCube;
 	};
 
-	TextureGeneratorData s_Data;
+	static TextureGeneratorData s_Data;
 
 
 	void TextureGenerator::Init()
@@ -147,5 +149,46 @@ namespace Athena
 	Ref<Texture2D> TextureGenerator::GetBlueNoise()
 	{
 		return s_Data.BlueNoise;
+	}
+
+	std::vector<Vector3> TextureGenerator::GetAOKernel(uint32 numSamples)
+	{
+		std::vector<Vector3> ssaoKernel(numSamples);
+
+		for (uint32 i = 0; i < numSamples; ++i)
+		{
+			// Hemisphere in tangent space
+			Vector3 sample;
+			sample.x = Math::Random::Float(-1, 1);
+			sample.y = Math::Random::Float(-1, 1);
+			sample.z = Math::Random::Float(0, 1);
+
+			sample.Normalize();
+
+			// Distribute more kernels closer to origin
+			float scale = i / (float)numSamples;
+			scale = Math::Lerp(0.1f, 1.f, scale * scale);
+			sample *= scale;
+
+			ssaoKernel[i] = sample;
+		}
+
+		return ssaoKernel;
+	}
+
+	std::vector<Vector2> TextureGenerator::GetAOKernelNoise(uint32 numSamples)
+	{
+		std::vector<Vector2> ssaoNoise(numSamples);
+		for (uint32 i = 0; i < numSamples; ++i)
+		{
+			Vector2 sample;
+			sample.x = Math::Random::Float(-1, 1);
+			sample.y = Math::Random::Float(-1, 1);
+			sample.Normalize();
+
+			ssaoNoise[i] = sample;
+		}
+
+		return ssaoNoise;
 	}
 }

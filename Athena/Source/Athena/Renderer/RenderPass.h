@@ -17,7 +17,7 @@ namespace Athena
 	struct RenderTarget
 	{
 		RenderTarget() = default;
-		RenderTarget(const String& name, TextureFormat format)
+		RenderTarget(const String& name, TextureFormat format, TextureFilter filter = TextureFilter::LINEAR)
 		{
 			uint32 usage = TextureUsage::ATTACHMENT | TextureUsage::SAMPLED;
 
@@ -29,7 +29,7 @@ namespace Athena
 			texInfo.Height = 1;
 			texInfo.Layers = 1;
 			texInfo.GenerateMipMap = false;
-			texInfo.Sampler.Filter = TextureFilter::LINEAR;
+			texInfo.Sampler.Filter = filter;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
 			Texture = Texture2D::Create(texInfo);

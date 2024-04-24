@@ -43,20 +43,24 @@ namespace Athena
         else
         {
             Ref<RenderPass> gbuffer = m_ViewportRenderer->GetGBufferPass();
+            Ref<RenderPass> aoPass = m_ViewportRenderer->GetSSAOPass();
             const uint32 rows = 2;
             const uint32 columns = 3;
             const uint32 texNum = rows * columns;
 
-            TextureViewCreateInfo viewInfo;
-            viewInfo.EnableAlphaBlending = false;
+            TextureViewCreateInfo view;
+            view.EnableAlphaBlending = false;
             
+            TextureViewCreateInfo grayScaleView;
+            grayScaleView.GrayScale = true;
+
             std::array<Ref<TextureView>, texNum> textures;
-            textures[0] = gbuffer->GetOutput("SceneDepth")->GetView(viewInfo);
-            textures[1] = gbuffer->GetOutput("SceneNormalsEmission")->GetView(viewInfo);
-            textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness")->GetView(viewInfo);
-            textures[3] = TextureGenerator::GetBlackTexture()->GetView(viewInfo);  // TODO: Add Ambient Occlusion map
-            textures[4] = gbuffer->GetOutput("SceneAlbedo")->GetView(viewInfo);
-            textures[5] = m_ViewportRenderer->GetFinalImage()->GetView(viewInfo);
+            textures[0] = gbuffer->GetOutput("SceneDepth")->GetView(grayScaleView);
+            textures[1] = gbuffer->GetOutput("SceneNormalsEmission")->GetView(view);
+            textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness")->GetView(view);
+            textures[3] = aoPass->GetOutput("SceneAO")->GetView(grayScaleView);
+            textures[4] = gbuffer->GetOutput("SceneAlbedo")->GetView(view);
+            textures[5] = m_ViewportRenderer->GetFinalImage()->GetView(view);
 
             ImVec2 textureSize = { viewportX / columns, viewportY / rows };
             ImVec2 pos = cursor;

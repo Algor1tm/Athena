@@ -14,8 +14,12 @@ namespace Athena
 
 		static Ref<Texture2D> GetWhiteTexture();
 		static Ref<Texture2D> GetBlackTexture();
+		static Ref<TextureCube> GetBlackTextureCube();
+
 		static Ref<Texture2D> GetBRDF_LUT();
 		static Ref<Texture2D> GetBlueNoise();
-		static Ref<TextureCube> GetBlackTextureCube();
+
+		static std::vector<Vector3> GetAOKernel(uint32 numSamples);
+		static std::vector<Vector2> GetAOKernelNoise(uint32 numSamples);
 	};
 }

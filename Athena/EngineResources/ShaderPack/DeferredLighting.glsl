@@ -28,10 +28,11 @@ layout(set = 1, binding = 9) uniform sampler2D u_SceneDepth;
 layout(set = 1, binding = 10) uniform sampler2D u_SceneAlbedo;
 layout(set = 1, binding = 11) uniform sampler2D u_SceneNormalsEmission;
 layout(set = 1, binding = 12) uniform sampler2D u_SceneRoughnessMetalness;
+layout(set = 1, binding = 13) uniform sampler2D u_SceneAO;
 
-layout(set = 1, binding = 13) uniform sampler2D u_BRDF_LUT;
-layout(set = 1, binding = 14) uniform samplerCube u_EnvironmentMap;
-layout(set = 1, binding = 15) uniform samplerCube u_IrradianceMap;
+layout(set = 1, binding = 14) uniform sampler2D u_BRDF_LUT;
+layout(set = 1, binding = 15) uniform samplerCube u_EnvironmentMap;
+layout(set = 1, binding = 16) uniform samplerCube u_IrradianceMap;
 
 
 vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec3 viewDir, vec3 albedo, float metalness, float roughness)
@@ -165,10 +166,7 @@ void main()
     if(depth == 0.0)
         discard;
 
-    vec4 clipSpace = vec4(v_TexCoords * 2.0 - 1.0, depth, 1.0);
-    vec4 viewPos = u_Camera.InverseProjection * clipSpace;
-    viewPos /= viewPos.w;
-    vec3 worldPos = vec3(u_Camera.InverseView * viewPos);
+    vec3 worldPos = WorldPositionFromDepth(v_TexCoords, depth, u_Camera.InverseProjection, u_Camera.InverseView);
 
     vec4 normalEmission = texture(u_SceneNormalsEmission, v_TexCoords);
     vec3 normal = normalEmission.rgb * 2.0 - 1.0;
@@ -180,6 +178,8 @@ void main()
     float roughness = rm.r;
     float metalness = rm.g;
     
+    float ao = texture(u_SceneAO, v_TexCoords).r;
+
     // Compute lightning from all light sources
     vec3 viewDir = normalize(u_Camera.Position - worldPos);
     float distanceFromCamera = distance(u_Camera.Position, worldPos);
@@ -239,7 +239,7 @@ void main()
     vec3 ambient = IBL(normal, viewDir, albedo.rgb, metalness, roughness);
     vec3 emissionColor = albedo.rgb * emission;
 
-    vec3 hdrColor = totalIrradiance + ambient + emissionColor;
+    vec3 hdrColor = (totalIrradiance + ambient) * ao + emissionColor;
     
     if(bool(u_Renderer.DebugShadowCascades))
     {

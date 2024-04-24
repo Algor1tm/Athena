@@ -69,8 +69,7 @@ namespace Athena
 		if (!m_Info.EnableAlphaBlending)
 			swizzling.a = VK_COMPONENT_SWIZZLE_ONE;
 
-		// TODO: this exists only because of UI
-		if (Texture::IsDepthFormat(format))
+		if (m_Info.GrayScale)
 		{
 			swizzling.g = VK_COMPONENT_SWIZZLE_R;
 			swizzling.b = VK_COMPONENT_SWIZZLE_R;

@@ -71,16 +71,18 @@ namespace Athena
 
                         auto& stats = m_SceneRenderer->GetStatistics();
                         ImGui::Text("GPUTime: %.3f ms", stats.GPUTime.AsMilliseconds());
-                        ImGui::Text("ShadowMapPass: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
-                        ImGui::Text("GBufferPass: %.3f ms", stats.GBufferPass.AsMilliseconds());
-                        ImGui::Text("LightCullingPass: %.3f ms", stats.LightCullingPass.AsMilliseconds());
-                        ImGui::Text("DeferredLightingPass: %.3f ms", stats.DeferredLightingPass.AsMilliseconds());
-                        ImGui::Text("SkyboxPass: %.3f ms", stats.SkyboxPass.AsMilliseconds());
-                        ImGui::Text("BloomPass: %.3f ms", stats.BloomPass.AsMilliseconds());
-                        ImGui::Text("SceneCompositePass: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
-                        ImGui::Text("JumpFloodPass: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
-                        ImGui::Text("Render2DPass: %.3f ms", stats.Render2DPass.AsMilliseconds());
-                        ImGui::Text("FXAAPass: %.3f ms", stats.FXAAPass.AsMilliseconds());
+                        ImGui::Text("DirShadowMap: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
+                        ImGui::Text("GBuffer: %.3f ms", stats.GBufferPass.AsMilliseconds());
+                        ImGui::Text("LightCulling: %.3f ms", stats.LightCullingPass.AsMilliseconds());
+                        ImGui::Text("SSAO: %.3f ms", stats.SSAOPass.AsMilliseconds());
+                        ImGui::Text("SSAO-Denoise: %.3f ms", stats.SSAODenoisePass.AsMilliseconds());
+                        ImGui::Text("DeferredLighting: %.3f ms", stats.DeferredLightingPass.AsMilliseconds());
+                        ImGui::Text("Skybox: %.3f ms", stats.SkyboxPass.AsMilliseconds());
+                        ImGui::Text("Bloom: %.3f ms", stats.BloomPass.AsMilliseconds());
+                        ImGui::Text("SceneComposite: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
+                        ImGui::Text("JumpFlood: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
+                        ImGui::Text("Render2D: %.3f ms", stats.Render2DPass.AsMilliseconds());
+                        ImGui::Text("FXAA: %.3f ms", stats.FXAAPass.AsMilliseconds());
 
                         if (UI::TreeNode("Pipeline Statistics", false))
                         {

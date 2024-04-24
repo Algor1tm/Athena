@@ -32,13 +32,14 @@ namespace Athena
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
 		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
-		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
+		m_AmbientOcclusionUBO = UniformBuffer::Create("AmbientOcclusionUBO", sizeof(AOData));
 
 		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
-		m_BonesDataOffset = 0;
-
+		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
 		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights) * 1, BufferMemoryFlags::GPU_ONLY);
+
+		m_BonesDataOffset = 0;
 
 		// For now instance rendering does not fully used, because we do not
 		// reuse vertex buffers, (every vertex buffer has only 1 instance).
@@ -138,12 +139,12 @@ namespace Athena
 
 			m_GBufferPass = RenderPass::Create(passInfo);
 			// RGBA -> RGB - albedo, A - empty
-			m_GBufferPass->SetOutput({ "SceneAlbedo", TextureFormat::RGBA8 });
+			m_GBufferPass->SetOutput({ "SceneAlbedo", TextureFormat::RGBA8, TextureFilter::NEAREST });
 			// RGBA -> RGB - normal, A - emission
-			m_GBufferPass->SetOutput({ "SceneNormalsEmission", TextureFormat::RGBA16F });
+			m_GBufferPass->SetOutput({ "SceneNormalsEmission", TextureFormat::RGBA16F, TextureFilter::NEAREST });
 			// RG -> R - roughness, G - metalness
-			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", TextureFormat::RG8 });
-			m_GBufferPass->SetOutput({ "SceneDepth", TextureFormat::DEPTH32F });
+			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", TextureFormat::RG8, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneDepth", TextureFormat::DEPTH32F, TextureFilter::NEAREST });
 			m_GBufferPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
@@ -191,11 +192,82 @@ namespace Athena
 			m_LightCullingPipeline->Bake();
 		}
 
+		// SSAO
+		{
+			PipelineCreateInfo pipelineInfo;
+			pipelineInfo.VertexLayout = fullscreenQuadLayout;
+			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
+			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthTest = false;
+			pipelineInfo.BlendEnable = false;
+
+			// SSAO PASS
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "SSAOPass";
+				passInfo.Width = m_ViewportSize.x;
+				passInfo.Height = m_ViewportSize.y;
+				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+
+				RenderTarget sceneAO = { "SceneAO-Source", TextureFormat::R8 };
+				sceneAO.ClearColor = Vector4(1.0);
+
+				m_SSAOPass = RenderPass::Create(passInfo);
+				m_SSAOPass->SetOutput(sceneAO);
+				m_SSAOPass->Bake();
+
+				pipelineInfo.Name = "SSAOPipeline";
+				pipelineInfo.RenderPass = m_SSAOPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO");
+
+				m_SSAOPipeline = Pipeline::Create(pipelineInfo);
+				m_SSAOPipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_SSAOPipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SSAOPipeline->SetInput("u_AOData", m_AmbientOcclusionUBO);
+				m_SSAOPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
+				m_SSAOPipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
+				m_SSAOPipeline->Bake();
+
+				std::vector<Vector3> kernel = TextureGenerator::GetAOKernel(64);
+				for (uint32 i = 0; i < 64; ++i)
+					m_AmbientOcclusionData.SamplesKernel[i] = kernel[i];
+
+				std::vector<Vector2> noise = TextureGenerator::GetAOKernelNoise(16);
+				for (uint32 i = 0; i < 16; ++i)
+					m_AmbientOcclusionData.KernelNoise[i] = noise[i];
+			}
+
+			// SSAO Denoise
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "SSAO-DenoisePass";
+				passInfo.InputPass = m_SSAOPass;
+				passInfo.Width = m_ViewportSize.x;
+				passInfo.Height = m_ViewportSize.y;
+				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+
+				RenderTarget sceneAO = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
+				sceneAO.ClearColor = Vector4(1.0);
+
+				m_SSAODenoisePass = RenderPass::Create(passInfo);
+				m_SSAODenoisePass->SetOutput(sceneAO);
+				m_SSAODenoisePass->Bake();
+
+				pipelineInfo.Name = "SSAODenoisePipeline";
+				pipelineInfo.RenderPass = m_SSAODenoisePass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO-Denoise");
+
+				m_SSAODenoisePipeline = Pipeline::Create(pipelineInfo);
+				m_SSAODenoisePipeline->SetInput("u_AOTexture", m_SSAOPass->GetOutput("SceneAO-Source"));
+				m_SSAODenoisePipeline->Bake();
+			}
+		}
+
 		// DEFERRED LIGHTING PASS
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DeferredLightingPass";
-			//passInfo.InputPass = m_GBufferPass;
+			passInfo.InputPass = m_SSAODenoisePass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
@@ -232,6 +304,7 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
 			m_DeferredLightingPipeline->SetInput("u_SceneNormalsEmission", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 			m_DeferredLightingPipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
+			m_DeferredLightingPipeline->SetInput("u_SceneAO", m_SSAODenoisePass->GetOutput("SceneAO"));
 
 			m_DeferredLightingPipeline->Bake();
 		}
@@ -353,13 +426,13 @@ namespace Athena
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
 				m_JumpFloodSilhouettePass = RenderPass::Create(passInfo);
-				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8 });
+				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8, TextureFilter::NEAREST });
 				m_JumpFloodSilhouettePass->Bake();
 
 				PipelineCreateInfo pipelineInfo;
 				pipelineInfo.Name = "JFSilhouetteStaticPipeline";
 				pipelineInfo.RenderPass = m_JumpFloodSilhouettePass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Silhouette_Static");
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Static");
 				pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 				pipelineInfo.InstanceLayout = instanceLayout;
 				pipelineInfo.Topology = Topology::TRIANGLE_LIST;
@@ -373,7 +446,7 @@ namespace Athena
 				m_JFSilhouetteStaticPipeline->Bake();
 
 				pipelineInfo.Name = "JFSilhouetteAnimPipeline";
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Silhouette_Anim");
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Anim");
 				pipelineInfo.VertexLayout = AnimVertex::GetLayout();
 
 				m_JFSilhouetteAnimPipeline = Pipeline::Create(pipelineInfo);
@@ -416,7 +489,7 @@ namespace Athena
 
 				pipelineInfo.Name = "JumpFloodInitPipeline";
 				pipelineInfo.RenderPass = m_JumpFloodInitPass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Init");
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Init");
 
 				m_JumpFloodInitPipeline = Pipeline::Create(pipelineInfo);
 
@@ -443,14 +516,14 @@ namespace Athena
 
 					pipelineInfo.Name = std::format("JumpFloodPipeline", label);
 					pipelineInfo.RenderPass = m_JumpFloodPasses[index];
-					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Pass");
+					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Pass");
 
 					m_JumpFloodPipelines[index] = Pipeline::Create(pipelineInfo);;
 					m_JumpFloodPipelines[index]->SetInput("u_Texture", jumpFloodTextures[even ? 1 : 0]);
 					m_JumpFloodPipelines[index]->Bake();
 				}
 
-				m_JumpFloodMaterial = Material::Create(Renderer::GetShaderPack()->Get("JumpFlood_Pass"), "JumpFloodMaterial");
+				m_JumpFloodMaterial = Material::Create(Renderer::GetShaderPack()->Get("JumpFlood-Pass"), "JumpFloodMaterial");
 			}
 
 			// JUMP FLOOD COMPOSITE
@@ -469,7 +542,7 @@ namespace Athena
 
 				pipelineInfo.Name = "JumpFloodCompositePipeline";
 				pipelineInfo.RenderPass = m_JumpFloodCompositePass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood_Composite");
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Composite");
 				pipelineInfo.BlendEnable = true;
 
 				m_JumpFloodCompositePipeline = Pipeline::Create(pipelineInfo);
@@ -492,12 +565,9 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.9f, 0.1f, 0.2f, 1.f };
 
-			RenderTarget colorOutput = m_SceneCompositePass->GetOutput("SceneColor");
-			RenderTarget depthOutput = m_GBufferPass->GetOutput("SceneDepth");
-
 			m_Render2DPass = RenderPass::Create(passInfo);
-			m_Render2DPass->SetOutput(colorOutput);
-			m_Render2DPass->SetOutput(depthOutput);
+			m_Render2DPass->SetOutput(m_SceneCompositePass->GetOutput("SceneColor"));
+			m_Render2DPass->SetOutput(m_GBufferPass->GetOutput("SceneDepth"));
 			m_Render2DPass->Bake();
 		}
 
@@ -573,6 +643,11 @@ namespace Athena
 
 		m_SkyboxPass->Resize(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
+
+		m_SSAOPass->Resize(width, height);
+		m_SSAOPipeline->SetViewport(width, height);
+		m_SSAODenoisePass->Resize(width, height);
+		m_SSAODenoisePipeline->SetViewport(width, height);
 
 		m_BloomTexture->Resize(width, height);
 		m_BloomMaterials.clear();
@@ -781,6 +856,10 @@ namespace Athena
 
 		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 		m_RendererData.DebugLightComplexity = m_Settings.DebugView == DebugView::LIGHT_COMPLEXITY ? 1 : 0;
+
+		m_AmbientOcclusionData.Intensity = m_Settings.AOSettings.Intensity;
+		m_AmbientOcclusionData.Radius = m_Settings.AOSettings.Radius;
+		m_AmbientOcclusionData.Bias = m_Settings.AOSettings.Bias;
 	}
 
 	void SceneRenderer::EndScene()
@@ -817,12 +896,14 @@ namespace Athena
 			m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
+			m_AmbientOcclusionUBO->UploadData(&m_AmbientOcclusionData, sizeof(AOData));
 		}
 
 
 		DirShadowMapPass();
 		GBufferPass();
 		LightCullingPass();
+		SSAOPass();
 		LightingPass();
 		SkyboxPass();
 
@@ -916,6 +997,35 @@ namespace Athena
 		}
 		m_LightCullingPass->End(commandBuffer);
 		m_Statistics.LightCullingPass = m_Profiler->EndTimeQuery();
+	}
+
+	void SceneRenderer::SSAOPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_SSAOPass->Begin(commandBuffer);
+		{
+			if (m_Settings.AOSettings.Enable)
+			{
+				m_SSAOPipeline->Bind(commandBuffer);
+				Renderer::RenderFullscreenQuad(commandBuffer, m_SSAOPipeline);
+			}
+		}
+		m_SSAOPass->End(commandBuffer);
+		m_Statistics.SSAOPass = m_Profiler->EndTimeQuery();
+
+		m_Profiler->BeginTimeQuery();
+		m_SSAODenoisePass->Begin(commandBuffer);
+		{
+			if (m_Settings.AOSettings.Enable)
+			{
+				m_SSAODenoisePipeline->Bind(commandBuffer);
+				Renderer::RenderFullscreenQuad(commandBuffer, m_SSAODenoisePipeline);
+			}
+		}
+		m_SSAODenoisePass->End(commandBuffer);
+		m_Statistics.SSAODenoisePass = m_Profiler->EndTimeQuery();
 	}
 
 	void SceneRenderer::LightingPass()

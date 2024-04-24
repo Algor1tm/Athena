@@ -96,6 +96,7 @@ namespace Athena
 		uint32 LayerCount = 1;
 
 		bool EnableAlphaBlending = true;
+		bool GrayScale = false;
 
 		bool OverrideSampler = false;
 		TextureSamplerCreateInfo Sampler;
@@ -124,6 +125,7 @@ namespace std
 		{
 			size_t hash = value.BaseMipLevel ^ value.MipLevelCount + value.BaseLayer ^ value.LayerCount;
 			hash = (hash << 1) + value.EnableAlphaBlending;
+			hash = (hash << 1) + value.GrayScale;
 			hash = (hash << 1) + value.OverrideSampler;
 			return hash;
 		}

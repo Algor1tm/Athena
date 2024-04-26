@@ -10,6 +10,13 @@
 
 namespace Athena
 {
+#define COMPILATION_FAILED_LOG(name, errorMsg) \
+	ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", name, errorMsg)
+
+#define COMPILATION_STAGE_FAILED_LOG(name, stage, errorMsg) \
+	ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) compilation failed, error message:\n{}\n", name, Utils::ShaderStageToString(stage), errorMsg)
+
+
 	namespace Utils
 	{
 		static FilePath GetCachedFilePath(const FilePath& path, ShaderStage stage)
@@ -146,46 +153,129 @@ namespace Athena
 		}
 	}
 
-	class FileSystemIncluder : public shaderc::CompileOptions::IncluderInterface
-	{
-	public:
-		virtual shaderc_include_result* GetInclude(
-			const char* requested_source,   // relative src path
-			shaderc_include_type type,
-			const char* requesting_source,	// dst path
-			size_t include_depth) override
-		{
-			FilePath dstParentPath = FilePath(requesting_source).parent_path();
-			FilePath srcPath = dstParentPath / requested_source;
-
-			m_SourcePath = srcPath.string();
-			m_Source = FileSystem::ReadFile(srcPath);
-
-			shaderc_include_result* result = new shaderc_include_result();
-
-			result->source_name = m_SourcePath.c_str();
-			result->source_name_length = m_SourcePath.size();
-			result->content = m_Source.c_str();
-			result->content_length = m_Source.size();
-
-			return result;
-		}
-
-		virtual void ReleaseInclude(shaderc_include_result* data) override
-		{
-			delete data;
-		}
-
-	private:
-		String m_SourcePath;
-		String m_Source;
-	};
-
-
-	ShaderCompiler::ShaderCompiler(const FilePath& filepath, const String& name)
+	GlslIncluder::GlslIncluder(const FilePath& filepath, const String& name)
 	{
 		m_FilePath = filepath;
 		m_Name = name;
+	}
+
+	bool GlslIncluder::ProcessIncludes(String& source, ShaderStage stage)
+	{
+		m_IncludedFiles.clear();
+		m_Stage = stage;
+
+		bool noIncludes;
+		return ProcessIncludesRecursive(source, m_FilePath, &noIncludes);
+	}
+
+	bool GlslIncluder::ProcessIncludesRecursive(String& source, const FilePath& sourcePath, bool* noIncludes)
+	{
+		if (!IsFileAlreadyIncluded(sourcePath))
+			m_IncludedFiles.push_back(sourcePath);
+
+		const char includeToken[] = "#include ";
+		const char beginToken = '\"';
+		const char endToken = beginToken;
+
+		uint64 includePos = source.find(includeToken, 0);
+
+		if (includePos == String::npos)
+		{
+			*noIncludes = true;
+			return true;
+		}
+
+		*noIncludes = false;
+
+		uint64 beginPos = source.find(beginToken, includePos);
+		uint64 endPos = source.find(endToken, beginPos + 1);
+		uint64 eol = source.find_first_of("\r\n", includePos);
+
+		if (beginPos == endPos || eol < beginPos || eol < endPos)
+		{
+			COMPILATION_STAGE_FAILED_LOG(m_Name, m_Stage, "Failed to parse includes");
+			return false;
+		}
+
+		FilePath includePath = source.substr(beginPos + 1, endPos - beginPos - 1);
+
+		FilePath fullIncludePath = sourcePath.parent_path() / includePath;
+		bool exists = true;
+
+		if (!FileSystem::Exists(fullIncludePath))
+		{
+			exists = false;
+			for (const auto& includeDir : m_IncludeDirs)
+			{
+				fullIncludePath = includeDir / includePath;
+				if (FileSystem::Exists(fullIncludePath))
+				{
+					exists = true;
+					break;
+				}
+			}
+		}
+
+		if (!exists)
+		{
+			String errorMsg = fmt::format("Invalid include path {}", includePath);
+			COMPILATION_STAGE_FAILED_LOG(m_Name, m_Stage, errorMsg);
+			return false;
+		}
+
+		// #pragma once
+		if (IsFileAlreadyIncluded(fullIncludePath))
+		{
+			source.erase(includePos, eol - includePos);
+		}
+		else
+		{
+			String includeContext = FileSystem::ReadFile(fullIncludePath);
+			bool result = ProcessIncludesRecursive(includeContext, fullIncludePath, noIncludes);
+
+			if (result == false)
+				return false;
+
+			source.erase(includePos, eol - includePos);
+			source.insert(includePos, includeContext);
+		}
+
+		*noIncludes = false;
+		while (*noIncludes == false)
+		{
+			bool result = ProcessIncludesRecursive(source, sourcePath, noIncludes);
+
+			if (result == false)
+				return false;
+		}
+
+		return true;
+	}
+
+	bool GlslIncluder::IsFileAlreadyIncluded(const FilePath& path)
+	{
+		for (const auto& includedFile : m_IncludedFiles)
+		{
+			if (std::filesystem::equivalent(includedFile, path))
+				return true;
+		}
+
+		return false;
+	}
+
+	void GlslIncluder::AddIncludeDir(const FilePath& path)
+	{
+		m_IncludeDirs.push_back(path);
+	}
+
+
+	ShaderCompiler::ShaderCompiler(const FilePath& filepath, const String& name)
+		: m_Includer(filepath, name)
+	{
+		m_FilePath = filepath;
+		m_Name = name;
+
+		m_Includer.AddIncludeDir(Renderer::GetShaderPackDirectory());
 
 		GetLanguageAndEntryPoints();
 	}
@@ -235,7 +325,6 @@ namespace Athena
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
 		options.SetTargetSpirv(shaderc_spirv_version_1_6);
 		options.SetGenerateDebugInfo();
-		options.SetIncluder(std::make_unique<FileSystemIncluder>());
 
 		if (m_Language == ShaderLanguage::GLSL)
 		{
@@ -262,7 +351,7 @@ namespace Athena
 
 			if (preResult.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) preprocess failed, error message:\n{}\n", m_Name, Utils::ShaderStageToString(stage), preResult.GetErrorMessage());
+				COMPILATION_STAGE_FAILED_LOG(m_Name, stage, preResult.GetErrorMessage());
 				compiled = false;
 				break;
 			}
@@ -274,7 +363,7 @@ namespace Athena
 
 			if (module.GetCompilationStatus() != shaderc_compilation_status_success)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) compilation failed, error message:\n{}\n", m_Name, Utils::ShaderStageToString(stage), module.GetErrorMessage());
+				COMPILATION_STAGE_FAILED_LOG(m_Name, stage, module.GetErrorMessage());
 				compiled = false;
 				break;
 			}
@@ -307,7 +396,9 @@ namespace Athena
 
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			ATN_CORE_ERROR_TAG("Vulkan", "Invalid filepath for shader {}!", m_FilePath);
+			String errorMsg = fmt::format("Invalid filepath for shader {}!", m_FilePath);
+			COMPILATION_FAILED_LOG(m_Name, errorMsg);
+
 			result.ParseResult = false;
 			return result;
 		}
@@ -322,6 +413,20 @@ namespace Athena
 			{
 				result.NeedRecompile = true;
 				break;
+			}
+		}
+
+		if (result.NeedRecompile)
+		{
+			for (auto& [stage, _, source] : result.StageDescriptions)
+			{
+				bool includeResult = m_Includer.ProcessIncludes(source, stage);
+
+				if (includeResult == false)
+				{
+					result.ParseResult = false;
+					break;
+				}
 			}
 		}
 
@@ -383,7 +488,7 @@ namespace Athena
 
 			if (stage == ShaderStage::UNDEFINED)
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "Failed to parse glsl shader stage!");
+				COMPILATION_FAILED_LOG(m_Name, "Failed to parse glsl shader stage!");
 				return {};
 			}
 

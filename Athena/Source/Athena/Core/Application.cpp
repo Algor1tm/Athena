@@ -20,7 +20,7 @@ namespace Athena
 		if (m_Config.WorkingDirectory != FilePath())
 			FileSystem::SetWorkingDirectory(m_Config.WorkingDirectory);
 
-		if (m_Config.CleanCache)
+		if (m_Config.CleanCacheOnLoad)
 			FileSystem::Remove(m_Config.EngineResourcesPath / "Cache");
 
 		Log::Init(m_Config.EnableConsole);

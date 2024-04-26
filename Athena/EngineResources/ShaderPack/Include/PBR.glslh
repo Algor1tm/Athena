@@ -1,0 +1,76 @@
+// References:
+// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+// https://learnopengl.com/PBR/IBL/Specular-IBL
+
+#include "Include/Common.glslh"
+
+
+float DistributionGGX(vec3 normal, vec3 halfWay, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float normalDotHalfWay = max(dot(normal, halfWay), 0.0);
+	
+    float numerator = a2;
+    float denominator = normalDotHalfWay * normalDotHalfWay * (a2 - 1.0) + 1.0;
+
+    // With roughness = 0.0 and NdotH = 1.0 denominator becomes 0, 
+    // which leads to NAN values
+    denominator = max(denominator, 0.0001);
+
+    denominator = PI * denominator * denominator;
+
+    return numerator / denominator;
+}
+
+float GeometrySchlickGGX(float normalDotView, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float numerator = normalDotView;
+    float denominator = normalDotView * (1.0 - k) + k;
+	
+    return numerator / denominator;
+}
+
+float GeometrySmith(vec3 normal, vec3 view, vec3 lightDir, float roughness)
+{
+    float normalDotView = max(dot(normal, view), 0.0);
+    float normalDotLightDir = max(dot(normal, lightDir), 0.0);
+    float ggx2 = GeometrySchlickGGX(normalDotView, roughness);
+    float ggx1 = GeometrySchlickGGX(normalDotLightDir, roughness);
+	
+    return ggx1 * ggx2;
+}
+
+vec3 FresnelShlick(float cosHalfWayAndView, vec3 reflectivityAtZeroIncidence)
+{
+    return reflectivityAtZeroIncidence + (1.0 - reflectivityAtZeroIncidence) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
+}
+
+vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
+} 
+
+float GeometrySchlickGGX_IBL(float normalDotView, float roughness)
+{
+    float r = roughness;
+    float k = (r * r) / 2.0;
+
+    float numerator = normalDotView;
+    float denominator = normalDotView * (1.0 - k) + k;
+	
+    return numerator / denominator;
+}
+
+float GeometrySmith_IBL(vec3 normal, vec3 view, vec3 lightDir, float roughness)
+{
+    float normalDotView = max(dot(normal, view), 0.0);
+    float normalDotLightDir = max(dot(normal, lightDir), 0.0);
+    float ggx2 = GeometrySchlickGGX_IBL(normalDotView, roughness);
+    float ggx1 = GeometrySchlickGGX_IBL(normalDotLightDir, roughness);
+	
+    return ggx1 * ggx2;
+}

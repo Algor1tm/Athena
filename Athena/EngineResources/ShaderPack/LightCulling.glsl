@@ -7,7 +7,7 @@
 #version 460 core
 #pragma stage : compute
 
-#include "Include/Buffers.glslh"
+#include "Include/Lighting.glslh"
 #include "Include/Common.glslh"
 
 layout(local_size_x = LIGHT_TILE_SIZE, local_size_y = LIGHT_TILE_SIZE, local_size_z = 1) in;

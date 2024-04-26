@@ -623,6 +623,9 @@ namespace Athena
 		width = m_Settings.Quality.RendererScale * width;
 		height = m_Settings.Quality.RendererScale * height;
 
+		uint32 halfWidth = (width + 1) / 2;
+		uint32 halfHeight = (height + 1) / 2;
+
 		m_ViewportSize = { width, height };
 
 		m_RendererData.ViewportSize = m_ViewportSize;
@@ -644,8 +647,16 @@ namespace Athena
 		m_SkyboxPass->Resize(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
 
-		m_SSAOPass->Resize(width, height);
-		m_SSAOPipeline->SetViewport(width, height);
+		if (m_Settings.AOSettings.HalfSize)
+		{
+			m_SSAOPass->Resize(halfWidth, halfHeight);
+			m_SSAOPipeline->SetViewport(halfWidth, halfHeight);
+		}
+		else
+		{
+			m_SSAOPass->Resize(width, height);
+			m_SSAOPipeline->SetViewport(width, height);
+		}
 		m_SSAODenoisePass->Resize(width, height);
 		m_SSAODenoisePipeline->SetViewport(width, height);
 

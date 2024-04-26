@@ -8,6 +8,7 @@
 #pragma stage : compute
 
 #include "Include/Common.glslh"
+#include "Include/PBR.glslh"
 
 #define SAMPLE_COUNT 2048
 

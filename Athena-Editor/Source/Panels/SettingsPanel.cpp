@@ -254,6 +254,10 @@ namespace Athena
 
 			UI::PropertyCheckbox("Enable", &ao.Enable);
 			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
+
+			if (UI::PropertyCheckbox("HalfSize", &ao.HalfSize))
+				m_ViewportRenderer->ApplySettings();
+
 			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
 			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
 

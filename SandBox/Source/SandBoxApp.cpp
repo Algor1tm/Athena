@@ -33,7 +33,7 @@ namespace Athena
 		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.WorkingDirectory = "../Athena-Editor";
 		appinfo.AppConfig.EngineResourcesPath = "../Athena/EngineResources";
-		appinfo.AppConfig.CleanCache = false;
+		appinfo.AppConfig.CleanCacheOnLoad = false;
 
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 		appinfo.RendererConfig.MaxFramesInFlight = 3;

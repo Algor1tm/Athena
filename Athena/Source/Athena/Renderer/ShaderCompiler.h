@@ -8,6 +8,27 @@
 
 namespace Athena
 {
+	class ATHENA_API GlslIncluder
+	{
+	public:
+		GlslIncluder(const FilePath& filepath, const String& name);
+
+		bool ProcessIncludes(String& source, ShaderStage stage);
+		void AddIncludeDir(const FilePath& path);
+
+	private:
+		bool ProcessIncludesRecursive(String& source, const FilePath& workingDir, bool* noIncludes);
+		bool IsFileAlreadyIncluded(const FilePath& path);
+
+	private:
+		FilePath m_FilePath;
+		String m_Name;
+		ShaderStage m_Stage;
+		std::vector<FilePath> m_IncludeDirs;
+		std::vector<FilePath> m_IncludedFiles;
+	};
+
+
 	using ShaderBinaries = std::unordered_map<ShaderStage, std::vector<uint32>>;
 
 	enum class ShaderLanguage
@@ -16,7 +37,6 @@ namespace Athena
 		GLSL,
 		HLSL
 	};
-
 
 	class ATHENA_API ShaderCompiler
 	{
@@ -61,6 +81,7 @@ namespace Athena
 		String m_Name;
 		ShaderLanguage m_Language;
 		ShaderBinaries m_SPIRVBinaries;
+		GlslIncluder m_Includer;
 
 		std::unordered_map<ShaderStage, std::string_view> m_StageToEntryPointMap;
 	};

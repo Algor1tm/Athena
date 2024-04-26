@@ -1,82 +1,59 @@
 /////////////////////////////////////////////////////////////////////////
-/////////////////////////// PBR Functions ///////////////////////////////
+//////////////////////////// Utillity Functions ////////////////////////////
 /////////////////////////////////////////////////////////////////////////
-
-// References:
-// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
-// https://learnopengl.com/PBR/IBL/Specular-IBL
 
 #define PI 3.14159265358979323846
 
 
-float DistributionGGX(vec3 normal, vec3 halfWay, float roughness)
+vec3 GetWorldDirectionFromCubeCoords(ivec3 unnormalizedTexCoords, vec2 faceSize)
 {
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float normalDotHalfWay = max(dot(normal, halfWay), 0.0);
-	
-    float numerator = a2;
-    float denominator = normalDotHalfWay * normalDotHalfWay * (a2 - 1.0) + 1.0;
+    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / faceSize;
+    int cubeFace = unnormalizedTexCoords.z;
 
-    // With roughness = 0.0 and NdotH = 1.0 denominator becomes 0, 
-    // which leads to NAN values
-    denominator = max(denominator, 0.0001);
+    texCoords = texCoords * 2.0 - 1.0;
 
-    denominator = PI * denominator * denominator;
+    vec3 direction;
+    switch(cubeFace)
+    {
+        case 0: direction = vec3(1.0, texCoords.y, -texCoords.x); break;
+        case 1: direction = vec3(-1.0, texCoords.y, texCoords.x); break;
+        case 2: direction = vec3(texCoords.x, -1.0, texCoords.y); break;
+        case 3: direction = vec3(texCoords.x, 1.0, -texCoords.y); break;
+        case 4: direction = vec3(texCoords.x, texCoords.y, 1.0); break;
+        case 5: direction = vec3(-texCoords.x, texCoords.y, -1.0); break;
+        default: direction = vec3(0.0);
+    }
 
-    return numerator / denominator;
+    return normalize(direction);
 }
 
-float GeometrySchlickGGX(float normalDotView, float roughness)
+vec3 WorldPositionFromDepth(vec2 texCoords, float depth, mat4 invProj, mat4 invView)
 {
-    float r = (roughness + 1.0);
-    float k = (r * r) / 8.0;
+    vec4 clipSpace = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
+    vec4 viewPos = invProj * clipSpace;
+    viewPos /= viewPos.w;
+    vec3 worldPos = vec3(invView * viewPos);
 
-    float numerator = normalDotView;
-    float denominator = normalDotView * (1.0 - k) + k;
-	
-    return numerator / denominator;
+    return worldPos;
 }
 
-float GeometrySmith(vec3 normal, vec3 view, vec3 lightDir, float roughness)
+vec3 ViewPositionFromDepth(vec2 texCoords, float depth, mat4 invProj)
 {
-    float normalDotView = max(dot(normal, view), 0.0);
-    float normalDotLightDir = max(dot(normal, lightDir), 0.0);
-    float ggx2 = GeometrySchlickGGX(normalDotView, roughness);
-    float ggx1 = GeometrySchlickGGX(normalDotLightDir, roughness);
-	
-    return ggx1 * ggx2;
+    vec4 clipSpace = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
+    vec4 viewPos = invProj * clipSpace;
+    viewPos /= viewPos.w;
+
+    return viewPos.xyz;
 }
 
-vec3 FresnelShlick(float cosHalfWayAndView, vec3 reflectivityAtZeroIncidence)
+float LinearizeDepth(float depth, float zNear, float zFar)
 {
-    return reflectivityAtZeroIncidence + (1.0 - reflectivityAtZeroIncidence) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
+    return zNear * zFar / (zFar - depth * (zFar - zNear));
 }
 
-vec3 FresnelSchlickRoughness(float cosHalfWayAndView, vec3 F0, float roughness)
+float Random(vec2 seed)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosHalfWayAndView, 0.0, 1.0), 5.0);
-} 
-
-float GeometrySchlickGGX_IBL(float normalDotView, float roughness)
-{
-    float r = roughness;
-    float k = (r * r) / 2.0;
-
-    float numerator = normalDotView;
-    float denominator = normalDotView * (1.0 - k) + k;
-	
-    return numerator / denominator;
-}
-
-float GeometrySmith_IBL(vec3 normal, vec3 view, vec3 lightDir, float roughness)
-{
-    float normalDotView = max(dot(normal, view), 0.0);
-    float normalDotLightDir = max(dot(normal, lightDir), 0.0);
-    float ggx2 = GeometrySchlickGGX_IBL(normalDotView, roughness);
-    float ggx1 = GeometrySchlickGGX_IBL(normalDotLightDir, roughness);
-	
-    return ggx1 * ggx2;
+    return fract(sin(dot(seed, vec2(12.9898,78.233))) * 43758.5453);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -119,67 +96,4 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	
     vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
     return normalize(sampleVec);
-}
-
-/////////////////////////////////////////////////////////////////////////
-//////////////////////////// Utillity Functions ////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-
-vec3 GetWorldDirectionFromCubeCoords(ivec3 unnormalizedTexCoords, vec2 faceSize)
-{
-    vec2 texCoords = vec2(unnormalizedTexCoords.xy) / faceSize;
-    int cubeFace = unnormalizedTexCoords.z;
-
-    texCoords = texCoords * 2.0 - 1.0;
-
-    vec3 direction;
-    switch(cubeFace)
-    {
-        case 0: direction = vec3(1.0, texCoords.y, -texCoords.x); break;
-        case 1: direction = vec3(-1.0, texCoords.y, texCoords.x); break;
-        case 2: direction = vec3(texCoords.x, -1.0, texCoords.y); break;
-        case 3: direction = vec3(texCoords.x, 1.0, -texCoords.y); break;
-        case 4: direction = vec3(texCoords.x, texCoords.y, 1.0); break;
-        case 5: direction = vec3(-texCoords.x, texCoords.y, -1.0); break;
-        default: direction = vec3(0.0);
-    }
-
-    return normalize(direction);
-}
-
-mat4 GetTransform(vec3 row0, vec3 row1, vec3 row2, vec3 row3)
-{
-    return mat4(row0.x, row0.y, row0.z, 0, 
-                row1.x, row1.y, row1.z, 0, 
-                row2.x, row2.y, row2.z, 0,
-                row3.x, row3.y, row3.z, 1);
-}
-
-vec3 WorldPositionFromDepth(vec2 texCoords, float depth, mat4 invProj, mat4 invView)
-{
-    vec4 clipSpace = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
-    vec4 viewPos = invProj * clipSpace;
-    viewPos /= viewPos.w;
-    vec3 worldPos = vec3(invView * viewPos);
-
-    return worldPos;
-}
-
-vec3 ViewPositionFromDepth(vec2 texCoords, float depth, mat4 invProj)
-{
-    vec4 clipSpace = vec4(texCoords * 2.0 - 1.0, depth, 1.0);
-    vec4 viewPos = invProj * clipSpace;
-    viewPos /= viewPos.w;
-
-    return viewPos.xyz;
-}
-
-float LinearizeDepth(float depth, float zNear, float zFar)
-{
-    return zNear * zFar / (zFar - depth * (zFar - zNear));
-}
-
-float Random(vec2 seed)
-{
-    return fract(sin(dot(seed, vec2(12.9898,78.233))) * 43758.5453);
 }

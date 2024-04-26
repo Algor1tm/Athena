@@ -3,7 +3,6 @@
 #version 460 core
 #pragma stage : vertex
 
-#include "../Include/Common.glslh"
 #include "../Include/Buffers.glslh"
 
 layout(location = 0) in vec3 a_Position;

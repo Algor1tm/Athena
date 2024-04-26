@@ -80,5 +80,6 @@ void main()
     }
 
     occlusion = 1.0 - (occlusion / NUM_SAMPLES) * u_Intensity;
+
     o_AOValue = occlusion;
 }

@@ -292,7 +292,7 @@ namespace Athena
 
 		Timer compilationTimer;
 
-		PreProcessResult result = PreProcess();
+		PreProcessResult result = PreProcess(forceCompile);
 
 		if (!result.ParseResult)
 			return false;
@@ -389,7 +389,7 @@ namespace Athena
 		}
 	}
 
-	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess()
+	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess(bool forceCompile)
 	{
 		PreProcessResult result;
 		result.ParseResult = true;
@@ -405,14 +405,18 @@ namespace Athena
 
 		result.StageDescriptions = PreProcessShaderStages();
 		result.ParseResult = !result.StageDescriptions.empty();
+		result.NeedRecompile = true;
 
-		result.NeedRecompile = false;
-		for (const auto& [_, path, __] : result.StageDescriptions)
+		if (!forceCompile)
 		{
-			if (!FileSystem::Exists(path))
+			result.NeedRecompile = false;
+			for (const auto& [_, path, __] : result.StageDescriptions)
 			{
-				result.NeedRecompile = true;
-				break;
+				if (!FileSystem::Exists(path))
+				{
+					result.NeedRecompile = true;
+					break;
+				}
 			}
 		}
 
@@ -494,13 +498,6 @@ namespace Athena
 
 			uint64 nextPos = source.find(versionToken, pos + versionToken.size());
 			String stageSource = source.substr(pos, nextPos - pos);
-
-			// Add empty lines, for debugger
-			uint64 linesCount = std::count(source.begin(), source.begin() + pos, '\n');
-			String linesStr(linesCount, '\n');
-
-			if(linesCount)
-				stageSource.insert(0, linesStr);
 
 			pos = nextPos;
 			if (nextPos == std::string::npos)

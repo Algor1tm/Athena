@@ -69,7 +69,7 @@ namespace Athena
 		bool CompileAndWriteToCache(const PreProcessResult& result);
 		void ReadFromCache(const PreProcessResult& result);
 
-		PreProcessResult PreProcess();
+		PreProcessResult PreProcess(bool forceCompile);
 		std::vector<StageDescription> PreProcessShaderStages();
 		std::vector<StageDescription> GetHLSLStageDescriptions();
 		std::vector<StageDescription> GetGLSLStageDescriptions();

@@ -41,14 +41,14 @@ namespace Athena
 	enum class TonemapMode
 	{
 		NONE = 0,
-		ACES,
-		EXPOSURE,
+		ACES_FILMIC,
+		ACES_TRUE,
 	};
 
 	struct PostProcessingSettings
 	{
-		TonemapMode TonemapMode = TonemapMode::ACES;
-		float Exposure = 1.f;
+		TonemapMode TonemapMode = TonemapMode::ACES_FILMIC;
+		float Exposure = 1.6f;
 		Antialising AntialisingMethod = Antialising::NONE;
 	};
 
@@ -66,10 +66,10 @@ namespace Athena
 	struct BloomSettings
 	{
 		bool Enable = true;
-		float Intensity = 1;
-		float Threshold = 1.5;
+		float Intensity = 0.8f;
+		float Threshold = 1.5f;
 		float Knee = 0.1f;
-		float DirtIntensity = 2;
+		float DirtIntensity = 2.f;
 		Ref<Texture2D> DirtTexture;
 	};
 
@@ -77,7 +77,7 @@ namespace Athena
 	{
 		bool Enable = true;
 		float Intensity = 2.f;
-		bool HalfSize = false;
+		bool HalfRes = false;
 		float Radius = 0.5f;
 		float Bias = 0.f;
 	};

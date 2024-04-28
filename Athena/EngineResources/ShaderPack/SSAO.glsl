@@ -70,7 +70,7 @@ void main()
         offset.xy = offset.xy * 0.5 + 0.5;
 
         float sampleDepth = texture(u_SceneDepth, offset.xy).r;
-        sampleDepth = ViewPositionFromDepth(offset.xy, sampleDepth, u_Camera.InverseProjection).z;
+        sampleDepth = -LinearizeDepth(1.0 - sampleDepth, u_Camera.NearClip, u_Camera.FarClip);
 
         if(sampleDepth >= samplePos.z + u_Bias)
         {

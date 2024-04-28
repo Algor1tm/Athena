@@ -27,8 +27,8 @@ layout(set = 1, binding = 5) uniform sampler2D u_BloomTexture;
 
 
 #define TONEMAP_MODE_NONE 0
-#define TONEMAP_MODE_ACES 1
-#define TONEMAP_MODE_EXPOSURE 2
+#define TONEMAP_MODE_ACES_FILMIC 1
+#define TONEMAP_MODE_ACES_TRUE 2
 
 
 layout(push_constant) uniform u_Uniforms
@@ -39,10 +39,23 @@ layout(push_constant) uniform u_Uniforms
 };
 
 
-vec3 Tonemap_ACES(vec3 hdrColor)
+// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+vec3 Tonemap_ACES_FILMIC(vec3 hdrColor, float exposure)
 {
-#if 1 // https://www.shadertoy.com/view/XsGfWV
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
 
+    hdrColor *= exposure * 0.6f;
+
+    return clamp((hdrColor * (a * hdrColor + b)) / (hdrColor * (c * hdrColor + d) + e), 0.0, 1.0);
+}
+
+// https://www.shadertoy.com/view/XsGfWV
+vec3 Tonemap_ACES_TRUE(vec3 hdrColor, float exposure)
+{
     mat3 m1 = mat3(
         0.59719, 0.07600, 0.02840,
         0.35458, 0.90834, 0.13383,
@@ -55,36 +68,21 @@ vec3 Tonemap_ACES(vec3 hdrColor)
         -0.07367, -0.00605,  1.07602
 	);
 
+    hdrColor *= exposure * 0.6f;
+
 	vec3 v = m1 * hdrColor;    
 	vec3 a = v * (v + 0.0245786) - 0.000090537;
 	vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
 	return clamp(m2 * (a / b), 0.0, 1.0);	
-
-#else // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
-
-    float a = 2.51;
-    float b = 0.03;
-    float c = 2.43;
-    float d = 0.59;
-    float e = 0.14;
-
-    return clamp((hdrColor * (a * hdrColor + b)) / (hdrColor * (c * hdrColor + d) + e), 0.0, 1.0);
-
-#endif
-}
-
-vec3 Tonemap_Exposure(vec3 hdrColor, float exposure)
-{
-    return vec3(1.0) - exp(-hdrColor * exposure);
 }
 
 vec3 Tonemap(vec3 hdrColor)
 {
-    if(u_Mode == TONEMAP_MODE_EXPOSURE)
-        return Tonemap_Exposure(hdrColor, u_Exposure);
+    if(u_Mode == TONEMAP_MODE_ACES_FILMIC)
+        return Tonemap_ACES_FILMIC(hdrColor, u_Exposure);
     
-    if(u_Mode == TONEMAP_MODE_ACES)
-        return Tonemap_ACES(hdrColor);
+    if(u_Mode == TONEMAP_MODE_ACES_TRUE)
+        return Tonemap_ACES_TRUE(hdrColor, u_Exposure);
 
     return clamp(hdrColor, 0.0, 1.0);
 };
@@ -112,10 +110,12 @@ void main()
     vec3 color = Tonemap(hdrColor);
     color = GammaCorrect(color);
 
+#if FILM_GRAIN
     float grain = FilmGrain();
     float grainStrength = 0.05;
 
-    //color += vec3(grain * grainStrength);
+    color += vec3(grain * grainStrength);
+#endif
 
     o_Color = vec4(color, 1.0);
 }

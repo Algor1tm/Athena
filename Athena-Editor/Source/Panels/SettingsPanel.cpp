@@ -20,8 +20,8 @@ namespace Athena
 		switch (mode)
 		{
 		case TonemapMode::NONE: return "None";
-		case TonemapMode::ACES: return "ACES";
-		case TonemapMode::EXPOSURE: return "Exposure";
+		case TonemapMode::ACES_FILMIC: return "ACES-Filmic";
+		case TonemapMode::ACES_TRUE: return "ACES-True";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -33,11 +33,11 @@ namespace Athena
 		if (str == "None")
 			return TonemapMode::NONE;
 
-		if (str == "ACES")
-			return TonemapMode::ACES;
+		if (str == "ACES-Filmic")
+			return TonemapMode::ACES_FILMIC;
 		
-		if (str == "Exposure")
-			return TonemapMode::EXPOSURE;
+		if (str == "ACES-True")
+			return TonemapMode::ACES_TRUE;
 
 		ATN_CORE_ASSERT(false);
 		return TonemapMode::NONE;
@@ -255,7 +255,7 @@ namespace Athena
 			UI::PropertyCheckbox("Enable", &ao.Enable);
 			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
 
-			if (UI::PropertyCheckbox("HalfSize", &ao.HalfSize))
+			if (UI::PropertyCheckbox("HalfRes", &ao.HalfRes))
 				m_ViewportRenderer->ApplySettings();
 
 			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
@@ -313,14 +313,13 @@ namespace Athena
 			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
 			{
-				std::string_view views[] = { "None", "ACES", "Exposure" };
+				std::string_view views[] = { "None", "ACES-Filmic", "ACES-True" };
 				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
 
 				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
 					postProcess.TonemapMode = StringToTonemapMode(selected);
 
-				if (postProcess.TonemapMode == TonemapMode::EXPOSURE)
-					UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+				UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
 			}
 
 			{

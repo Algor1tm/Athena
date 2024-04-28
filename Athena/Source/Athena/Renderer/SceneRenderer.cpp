@@ -647,7 +647,7 @@ namespace Athena
 		m_SkyboxPass->Resize(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
 
-		if (m_Settings.AOSettings.HalfSize)
+		if (m_Settings.AOSettings.HalfRes)
 		{
 			m_SSAOPass->Resize(halfWidth, halfHeight);
 			m_SSAOPipeline->SetViewport(halfWidth, halfHeight);
@@ -1284,13 +1284,11 @@ namespace Athena
 			float split = (cascadeFar - cameraNear) / (cameraFar - cameraNear);
 
 			std::array<Vector3, 8> frustumCorners = {
-				//Near face
 				Vector3{  1.0f, -1.0f, 1.f },
 				Vector3{ -1.0f, -1.0f, 1.f },
 				Vector3{  1.0f,  1.0f, 1.f },
 				Vector3{ -1.0f,  1.0f, 1.f },
 
-				//Far face
 				Vector3{  1.0f, -1.0f, 0.0f },
 				Vector3{ -1.0f, -1.0f, 0.0f },
 				Vector3{  1.0f,  1.0f, 0.0f },

@@ -4,14 +4,12 @@
 #pragma stage : vertex
 
 layout(location = 0) in vec2 a_Position;
-layout(location = 1) in vec2 a_TexCoords;
-
 layout(location = 0) out vec2 v_TexCoords;
 
 void main()
 {
-    gl_Position = vec4(a_Position, 0, 1);
-    v_TexCoords = a_TexCoords;
+    v_TexCoords = vec2( (gl_VertexIndex << 1) & 2, (gl_VertexIndex) & 2 );
+    gl_Position = vec4( v_TexCoords * vec2( 2.0, 2.0 ) + vec2( -1.0, -1.0), 0.0, 1.0 );
 }
 
 #version 460 core
@@ -48,7 +46,7 @@ vec3 Tonemap_ACES_FILMIC(vec3 hdrColor, float exposure)
     float d = 0.59;
     float e = 0.14;
 
-    hdrColor *= exposure * 0.6f;
+    hdrColor *= exposure * 0.6;
 
     return clamp((hdrColor * (a * hdrColor + b)) / (hdrColor * (c * hdrColor + d) + e), 0.0, 1.0);
 }
@@ -68,7 +66,7 @@ vec3 Tonemap_ACES_TRUE(vec3 hdrColor, float exposure)
         -0.07367, -0.00605,  1.07602
 	);
 
-    hdrColor *= exposure * 0.6f;
+    hdrColor *= exposure * 0.6;
 
 	vec3 v = m1 * hdrColor;    
 	vec3 a = v * (v + 0.0245786) - 0.000090537;

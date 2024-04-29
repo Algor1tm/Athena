@@ -63,6 +63,14 @@ namespace Athena
 				{ ShaderDataType::Float2, "a_Position" },
 				{ ShaderDataType::Float2, "a_TexCoords"} };
 
+		PipelineCreateInfo fullscreenPipeline;
+		fullscreenPipeline.VertexLayout = {
+			{ ShaderDataType::Float2, "a_Position" } };
+		fullscreenPipeline.Topology = Topology::TRIANGLE_LIST;
+		fullscreenPipeline.CullMode = CullMode::NONE;
+		fullscreenPipeline.DepthTest = false;
+		fullscreenPipeline.BlendEnable = false;
+
 		// DIR SHADOW MAP PASS
 		{
 			for (uint32 i = 0; i < ShaderDef::SHADOW_CASCADES_COUNT; ++i)
@@ -194,13 +202,6 @@ namespace Athena
 
 		// SSAO
 		{
-			PipelineCreateInfo pipelineInfo;
-			pipelineInfo.VertexLayout = fullscreenQuadLayout;
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthTest = false;
-			pipelineInfo.BlendEnable = false;
-
 			// SSAO PASS
 			{
 				RenderPassCreateInfo passInfo;
@@ -216,6 +217,7 @@ namespace Athena
 				m_SSAOPass->SetOutput(sceneAO);
 				m_SSAOPass->Bake();
 
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 				pipelineInfo.Name = "SSAOPipeline";
 				pipelineInfo.RenderPass = m_SSAOPass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO");
@@ -253,6 +255,7 @@ namespace Athena
 				m_SSAODenoisePass->SetOutput(sceneAO);
 				m_SSAODenoisePass->Bake();
 
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 				pipelineInfo.Name = "SSAODenoisePipeline";
 				pipelineInfo.RenderPass = m_SSAODenoisePass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO-Denoise");
@@ -276,15 +279,10 @@ namespace Athena
 			m_DeferredLightingPass->SetOutput({ "SceneHDRColor", TextureFormat::RGBA16F });
 			m_DeferredLightingPass->Bake();
 
-			PipelineCreateInfo pipelineInfo;
+			PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 			pipelineInfo.Name = "DeferredLightingPipeline";
 			pipelineInfo.RenderPass = m_DeferredLightingPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DeferredLighting");
-			pipelineInfo.VertexLayout = fullscreenQuadLayout;
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthTest = false;
-			pipelineInfo.BlendEnable = false;
 
 			m_DeferredLightingPipeline = Pipeline::Create(pipelineInfo);
 
@@ -323,15 +321,13 @@ namespace Athena
 			m_SkyboxPass->SetOutput(m_GBufferPass->GetOutput("SceneDepth"));
 			m_SkyboxPass->Bake();
 
-			PipelineCreateInfo pipelineInfo;
+			PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 			pipelineInfo.Name = "SkyboxPipeline";
 			pipelineInfo.RenderPass = m_SkyboxPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Skybox");
-			pipelineInfo.VertexLayout = { { ShaderDataType::Float3, "a_Position" } };
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
+			pipelineInfo.DepthTest = true;
+			pipelineInfo.DepthWrite = true;
 			pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
-			pipelineInfo.BlendEnable = false;
 
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
 			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -375,7 +371,7 @@ namespace Athena
 			m_BloomUpsample->Bake();
 		}
 
-		// COMPOSITE PASS
+		// SCENE COMPOSITE PASS
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "SceneColor";
@@ -397,15 +393,10 @@ namespace Athena
 			m_SceneCompositePass->SetOutput(target);
 			m_SceneCompositePass->Bake();
 
-			PipelineCreateInfo pipelineInfo;
+			PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 			pipelineInfo.Name = "SceneCompositePipeline";
 			pipelineInfo.RenderPass = m_SceneCompositePass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SceneComposite");
-			pipelineInfo.VertexLayout = fullscreenQuadLayout;
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthTest = false;
-			pipelineInfo.BlendEnable = false;
 
 			m_SceneCompositePipeline = Pipeline::Create(pipelineInfo);
 
@@ -469,13 +460,6 @@ namespace Athena
 				jumpFloodTextures[i] = Texture2D::Create(texInfo);
 			}
 
-			PipelineCreateInfo pipelineInfo;
-			pipelineInfo.VertexLayout = fullscreenQuadLayout;
-			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::BACK;
-			pipelineInfo.DepthTest = false;
-			pipelineInfo.BlendEnable = false;
-
 			// JUMP FLOOD INIT
 			{
 				RenderPassCreateInfo passInfo;
@@ -487,6 +471,7 @@ namespace Athena
 				m_JumpFloodInitPass->SetOutput(jumpFloodTextures[0]);
 				m_JumpFloodInitPass->Bake();
 
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 				pipelineInfo.Name = "JumpFloodInitPipeline";
 				pipelineInfo.RenderPass = m_JumpFloodInitPass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Init");
@@ -514,6 +499,7 @@ namespace Athena
 					m_JumpFloodPasses[index]->SetOutput(jumpFloodTextures[index]);
 					m_JumpFloodPasses[index]->Bake();
 
+					PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 					pipelineInfo.Name = std::format("JumpFloodPipeline", label);
 					pipelineInfo.RenderPass = m_JumpFloodPasses[index];
 					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Pass");
@@ -540,6 +526,7 @@ namespace Athena
 				m_JumpFloodCompositePass->SetOutput(m_SceneCompositePass->GetOutput("SceneColor"));
 				m_JumpFloodCompositePass->Bake();
 
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
 				pipelineInfo.Name = "JumpFloodCompositePipeline";
 				pipelineInfo.RenderPass = m_JumpFloodCompositePass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Composite");
@@ -845,8 +832,8 @@ namespace Athena
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
 		m_CameraData.InverseProjection = Math::Inverse(cameraInfo.ProjectionMatrix);
 		m_CameraData.ViewProjection = cameraInfo.ViewMatrix * cameraInfo.ProjectionMatrix;
-		m_CameraData.InverseViewProjection = Math::Inverse(m_CameraData.ViewProjection);
-		m_CameraData.RotationView = cameraInfo.ViewMatrix.AsMatrix3();
+		//m_CameraData.InverseViewProjection = Math::Inverse(m_CameraData.ViewProjection);
+		m_CameraData.InverseViewProjection = Math::Inverse(Matrix4(cameraInfo.ViewMatrix.AsMatrix3()) * cameraInfo.ProjectionMatrix);
 		m_CameraData.Position = m_CameraData.InverseView[3];
 		m_CameraData.NearClip = cameraInfo.NearClip;
 		m_CameraData.FarClip = cameraInfo.FarClip;
@@ -1020,7 +1007,7 @@ namespace Athena
 			if (m_Settings.AOSettings.Enable)
 			{
 				m_SSAOPipeline->Bind(commandBuffer);
-				Renderer::RenderFullscreenQuad(commandBuffer, m_SSAOPipeline);
+				Renderer::RenderFullscreen(commandBuffer, m_SSAOPipeline);
 			}
 		}
 		m_SSAOPass->End(commandBuffer);
@@ -1032,7 +1019,7 @@ namespace Athena
 			if (m_Settings.AOSettings.Enable)
 			{
 				m_SSAODenoisePipeline->Bind(commandBuffer);
-				Renderer::RenderFullscreenQuad(commandBuffer, m_SSAODenoisePipeline);
+				Renderer::RenderFullscreen(commandBuffer, m_SSAODenoisePipeline);
 			}
 		}
 		m_SSAODenoisePass->End(commandBuffer);
@@ -1047,7 +1034,7 @@ namespace Athena
 		m_DeferredLightingPass->Begin(commandBuffer);
 		{
 			m_DeferredLightingPipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_DeferredLightingPipeline);
+			Renderer::RenderFullscreen(commandBuffer, m_DeferredLightingPipeline);
 		}
 		m_DeferredLightingPass->End(commandBuffer);
 		m_Statistics.DeferredLightingPass = m_Profiler->EndTimeQuery();
@@ -1061,7 +1048,7 @@ namespace Athena
 		m_SkyboxPass->Begin(commandBuffer);
 		{
 			m_SkyboxPipeline->Bind(commandBuffer);
-			Renderer::RenderNDCCube(commandBuffer, m_SkyboxPipeline);
+			Renderer::RenderFullscreen(commandBuffer, m_SkyboxPipeline);
 		}
 		m_SkyboxPass->End(commandBuffer);
 		m_Statistics.SkyboxPass = m_Profiler->EndTimeQuery();
@@ -1156,7 +1143,7 @@ namespace Athena
 		m_SceneCompositePass->Begin(commandBuffer);
 		{
 			m_SceneCompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_SceneCompositePipeline, m_SceneCompositeMaterial);
+			Renderer::RenderFullscreen(commandBuffer, m_SceneCompositePipeline, m_SceneCompositeMaterial);
 		}
 		m_SceneCompositePass->End(commandBuffer);
 		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
@@ -1183,7 +1170,7 @@ namespace Athena
 		m_JumpFloodInitPass->Begin(commandBuffer);
 		{
 			m_JumpFloodInitPipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodInitPipeline);
+			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodInitPipeline);
 		}
 		m_JumpFloodInitPass->End(commandBuffer);
 
@@ -1201,7 +1188,7 @@ namespace Athena
 
 			m_JumpFloodMaterial->Set("u_StepWidth", stepWidth);
 			m_JumpFloodPipelines[index]->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodPipelines[index], m_JumpFloodMaterial);
+			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodPipelines[index], m_JumpFloodMaterial);
 
 			m_JumpFloodPasses[index]->End(commandBuffer);
 
@@ -1211,7 +1198,7 @@ namespace Athena
 		m_JumpFloodCompositePass->Begin(commandBuffer);
 		{
 			m_JumpFloodCompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreenQuad(commandBuffer, m_JumpFloodCompositePipeline, m_JumpFloodCompositeMaterial);
+			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodCompositePipeline, m_JumpFloodCompositeMaterial);
 		}
 		m_JumpFloodCompositePass->End(commandBuffer);
 

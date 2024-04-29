@@ -7,10 +7,10 @@ layout(std140, set = 1, binding = 0) uniform u_CameraData
     mat4 Projection;
     mat4 InverseProjection;
     mat4 ViewProjection;
-    mat4 InverseViewProjection;
-    mat4 RotationView;
+    mat4 InverseViewProjection; // no translation
     vec3 Position;
     float NearClip;
+    vec3 _Pad0;
     float FarClip;
 } u_Camera;
 

@@ -4,14 +4,12 @@
 #pragma stage : vertex
 
 layout(location = 0) in vec2 a_Position;
-layout(location = 1) in vec2 a_TexCoords;
-
 layout(location = 0) out vec2 v_TexCoords;
 
 void main()
 {
-    gl_Position = vec4(a_Position, 0, 1);
-    v_TexCoords = a_TexCoords;
+    v_TexCoords = vec2( (gl_VertexIndex << 1) & 2, (gl_VertexIndex) & 2 );
+    gl_Position = vec4( v_TexCoords * vec2( 2.0, 2.0 ) + vec2( -1.0, -1.0), 0.0, 1.0 );
 }
 
 #version 460 core
@@ -35,7 +33,7 @@ layout(std140, set = 1, binding = 5) uniform u_AOData
     float u_Intensity;
     float u_Radius;
     float u_Bias;
-    float _Padding0;
+    float _Pad0;
 };
 
 void main()
@@ -70,7 +68,7 @@ void main()
         offset.xy = offset.xy * 0.5 + 0.5;
 
         float sampleDepth = texture(u_SceneDepth, offset.xy).r;
-        sampleDepth = -LinearizeDepth(1.0 - sampleDepth, u_Camera.NearClip, u_Camera.FarClip);
+        sampleDepth = -LinearizeDepth(sampleDepth, u_Camera.FarClip, u_Camera.NearClip);
 
         if(sampleDepth >= samplePos.z + u_Bias)
         {

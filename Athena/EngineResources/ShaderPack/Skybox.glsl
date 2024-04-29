@@ -5,15 +5,16 @@
 
 #include "Include/Buffers.glslh"
 
-layout(location = 0) in vec3 a_Position;
+layout(location = 0) in vec2 a_Position;
 layout(location = 0) out vec3 v_TexCoords;
 
 void main()
 {
-    v_TexCoords = a_Position;
+    vec2 uv = vec2( (gl_VertexIndex << 1) & 2, (gl_VertexIndex) & 2 );
+    vec4 ndcPos = vec4( uv * vec2( 2.0, 2.0 ) + vec2( -1.0, -1.0), 0.0, 1.0 );
 
-    vec4 pos = u_Camera.Projection * u_Camera.RotationView * vec4(a_Position, 1.0);
-    gl_Position = vec4(pos.xy, 0, pos.w);
+    gl_Position = ndcPos;
+    v_TexCoords = vec3(u_Camera.InverseViewProjection * ndcPos);
 }
 
 

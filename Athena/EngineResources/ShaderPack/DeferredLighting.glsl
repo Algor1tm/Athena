@@ -4,14 +4,12 @@
 #pragma stage : vertex
 
 layout(location = 0) in vec2 a_Position;
-layout(location = 1) in vec2 a_TexCoords;
-
 layout(location = 0) out vec2 v_TexCoords;
 
 void main()
 {
-    gl_Position = vec4(a_Position, 0, 1);
-    v_TexCoords = a_TexCoords;
+    v_TexCoords = vec2( (gl_VertexIndex << 1) & 2, (gl_VertexIndex) & 2 );
+    gl_Position = vec4( v_TexCoords * vec2( 2.0, 2.0 ) + vec2( -1.0, -1.0), 0.0, 1.0 );
 }
 
 #version 460 core
@@ -43,9 +41,11 @@ void main()
 
     vec4 normalEmission = texture(u_SceneNormalsEmission, v_TexCoords);
     vec3 normal = normalEmission.rgb * 2.0 - 1.0;
-    float emission = normalEmission.a;
 
     vec3 albedo = texture(u_SceneAlbedo, v_TexCoords).rgb;
+
+    float emissionIntensity = normalEmission.a;
+    vec3 emissionColor = albedo.rgb;
 
     vec2 rm = texture(u_SceneRoughnessMetalness, v_TexCoords).rg;
     float roughness = rm.r;
@@ -56,11 +56,11 @@ void main()
     // Compute Light
     vec3 viewDir = normalize(u_Camera.Position - worldPos);
 
-    vec3 directionalLight = GetDirectionalLight(normal, albedo.rgb, roughness, metalness, worldPos, viewDir, vec2(gl_FragCoord));
+    vec3 directional = GetDirectionalLight(normal, albedo.rgb, roughness, metalness, worldPos, viewDir, vec2(gl_FragCoord));
     vec3 ambient = GetAmbientLight(normal, albedo.rgb, metalness, roughness, viewDir) * ao;
-    vec3 emissionColor = albedo.rgb * emission;
+    vec3 emission = emissionColor * emissionIntensity;
 
-    vec3 hdrColor = directionalLight + ambient + emissionColor;
+    vec3 hdrColor = directional + ambient + emission;
     
     // Debug info
     if(bool(u_Renderer.DebugShadowCascades))

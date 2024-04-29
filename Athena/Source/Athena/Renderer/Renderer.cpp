@@ -27,8 +27,7 @@ namespace Athena
 		Ref<ShaderPack> ShaderPack;
 		Ref<MaterialTable> MaterialTable;
 
-		Ref<VertexBuffer> CubeVertexBuffer;
-		Ref<VertexBuffer> QuadVertexBuffer;
+		Ref<VertexBuffer> FullscreenVertexBuffer;
 	};
 
 	static RendererData s_Data;
@@ -77,40 +76,19 @@ namespace Athena
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
-		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
-		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
-
-		IndexBufferCreateInfo indexBufInfo;
-		indexBufInfo.Name = "Renderer_CubeIB";
-		indexBufInfo.Data = cubeIndices;
-		indexBufInfo.Count = std::size(cubeIndices);
-		indexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+		// Fake vertex buffer (does not actually used by vertex shader)
+		// Contains fullscreen triangle positions
+		// v0 = (-1, -1), v1 = (3, -1), v2 = (-1, 3).
+		float fullscreenVertices[] = { -1, -1, 3, -1, -1, 3 };
 
 		VertexBufferCreateInfo vertexBufInfo;
-		vertexBufInfo.Name = "Renderer_CubeVB";
-		vertexBufInfo.Data = cubeVertices;
-		vertexBufInfo.Size = sizeof(cubeVertices);
-		vertexBufInfo.IndexBuffer = IndexBuffer::Create(indexBufInfo);
+		vertexBufInfo.Name = "Renderer_FullscreenVB";
+		vertexBufInfo.Data = fullscreenVertices;
+		vertexBufInfo.Size = sizeof(fullscreenVertices);
+		vertexBufInfo.IndexBuffer = nullptr;
 		vertexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-		s_Data.CubeVertexBuffer = VertexBuffer::Create(vertexBufInfo);
-
-		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
-		float quadVertices[] = { -1.f,  1.f,  0.f, 1.f,
-								  1.f,  1.f,  1.f, 1.f,
-								  1.f, -1.f,  1.f, 0.f,
-								 -1.f, -1.f,  0.f, 0.f, };
-		 
-		indexBufInfo.Name = "Renderer_QuadIB";
-		indexBufInfo.Data = quadIndices;
-		indexBufInfo.Count = std::size(quadIndices);
-
-		vertexBufInfo.Name = "Renderer_QuadVB";
-		vertexBufInfo.Data = quadVertices;
-		vertexBufInfo.Size = sizeof(quadVertices);
-		vertexBufInfo.IndexBuffer = IndexBuffer::Create(indexBufInfo);
-
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(vertexBufInfo);
+		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
 		TextureGenerator::Init();
 	}
@@ -120,8 +98,7 @@ namespace Athena
 		TextureGenerator::Shutdown();
 
 		s_Data.MaterialTable.Release();
-		s_Data.CubeVertexBuffer.Release();
-		s_Data.QuadVertexBuffer.Release();
+		s_Data.FullscreenVertexBuffer.Release();
 
 		s_Data.ShaderPack.Release();
 
@@ -175,14 +152,9 @@ namespace Athena
 		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, offset, count);
 	}
 
-	void Renderer::RenderFullscreenQuad(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
+	void Renderer::RenderFullscreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.QuadVertexBuffer, material);
-	}
-
-	void Renderer::RenderNDCCube(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
-	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.CubeVertexBuffer, material);
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.FullscreenVertexBuffer, material);
 	}
 
 	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer)

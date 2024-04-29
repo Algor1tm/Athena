@@ -79,7 +79,7 @@ namespace Athena
 		float Intensity = 2.f;
 		bool HalfRes = false;
 		float Radius = 0.5f;
-		float Bias = 0.f;
+		float Bias = 0.025f;
 	};
 
 	struct QualitySettings
@@ -106,9 +106,9 @@ namespace Athena
 		Matrix4 InverseProjection;
 		Matrix4 ViewProjection;
 		Matrix4 InverseViewProjection;
-		Matrix4 RotationView;
 		Vector3 Position;
 		float NearClip;
+		Vector3 _Pad0;
 		float FarClip;
 	};
 
@@ -158,6 +158,7 @@ namespace Athena
 		float Intensity;
 		float Radius;
 		float Bias;
+		float _Pad0;
 	};
 
 	struct SceneRendererStatistics

@@ -33,7 +33,8 @@ namespace Athena
 
 		void SetOutput(const Ref<RenderResource>& resource);
 
-		Ref<RenderResource> GetOutput(const String& name);
+		Ref<RenderResource> GetOutput(const String& name) const;
+		Ref<RenderResource> GetOutput(uint32_t index) const;
 		const std::vector<Ref<RenderResource>>& GetAllOutputs() const { return m_Outputs; }
 
 		const ComputePassCreateInfo& GetInfo() const { return m_Info; }

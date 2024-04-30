@@ -23,7 +23,7 @@ namespace Athena
 		m_Outputs.push_back(resource);
 	}
 
-	Ref<RenderResource> ComputePass::GetOutput(const String& name)
+	Ref<RenderResource> ComputePass::GetOutput(const String& name) const
 	{
 		for (const auto& output : m_Outputs)
 		{
@@ -32,6 +32,15 @@ namespace Athena
 				return output;
 			}
 		}
+
+		ATN_CORE_ASSERT(false);
+		return nullptr;
+	}
+
+	Ref<RenderResource> ComputePass::GetOutput(uint32_t index) const
+	{
+		if (index < m_Outputs.size())
+			return m_Outputs[index];
 
 		ATN_CORE_ASSERT(false);
 		return nullptr;

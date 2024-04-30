@@ -144,7 +144,7 @@ namespace Athena
 		m_TimestampsCount[Renderer::GetCurrentFrameIndex()]++;
 	}
 
-	Time VulkanProfiler::EndTimeQuery()
+	void VulkanProfiler::EndTimeQuery(Time* time)
 	{
 		ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
 
@@ -159,7 +159,8 @@ namespace Athena
 		uint32 index = m_CurrentTimeQueryIndex;
 		m_CurrentTimeQueryIndex++;
 
-		return m_ResolvedTimeStats[Renderer::GetCurrentFrameIndex()][index];
+		if(time != nullptr)
+			*time = m_ResolvedTimeStats[Renderer::GetCurrentFrameIndex()][index];
 	}
 
 	void VulkanProfiler::BeginPipelineStatsQuery()

@@ -37,6 +37,15 @@ namespace Athena
 		return nullptr;
 	}
 
+	Ref<Texture2D> RenderPass::GetOutput(uint32 index) const
+	{
+		if (index < m_Outputs.size())
+			return m_Outputs[index].Texture;
+
+		ATN_CORE_ASSERT(false);
+		return nullptr;
+	}
+
 	Ref<Texture2D> RenderPass::GetDepthOutput() const
 	{
 		for (const auto& target : m_Outputs)

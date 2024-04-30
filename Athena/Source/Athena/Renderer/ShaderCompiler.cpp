@@ -403,7 +403,7 @@ namespace Athena
 			return result;
 		}
 
-		result.StageDescriptions = PreProcessShaderStages();
+		result.StageDescriptions = ParseShaderStages();
 		result.ParseResult = !result.StageDescriptions.empty();
 		result.NeedRecompile = true;
 
@@ -437,7 +437,7 @@ namespace Athena
 		return result;
 	}
 
-	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::PreProcessShaderStages()
+	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::ParseShaderStages()
 	{
 		if (m_Language == ShaderLanguage::GLSL)
 			return GetGLSLStageDescriptions();

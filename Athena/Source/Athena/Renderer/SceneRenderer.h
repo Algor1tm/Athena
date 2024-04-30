@@ -27,7 +27,8 @@ namespace Athena
 	enum class Antialising
 	{
 		NONE = 0,
-		FXAA
+		FXAA,
+		SMAA
 	};
 
 	enum class DebugView
@@ -49,7 +50,7 @@ namespace Athena
 	{
 		TonemapMode TonemapMode = TonemapMode::ACES_FILMIC;
 		float Exposure = 1.6f;
-		Antialising AntialisingMethod = Antialising::NONE;
+		Antialising AntialisingMethod = Antialising::SMAA;
 	};
 
 	struct ShadowSettings
@@ -175,7 +176,7 @@ namespace Athena
 		Time SceneCompositePass;
 		Time JumpFloodPass;
 		Time Render2DPass;
-		Time FXAAPass;
+		Time AAPass;
 		PipelineStatistics PipelineStats;
 
 		uint32 Meshes;
@@ -221,6 +222,7 @@ namespace Athena
 		Ref<RenderPass> GetSSAOPass() { return m_SSAODenoisePass; }
 		Ref<Pipeline> GetSkyboxPipeline() { return m_SkyboxPipeline; }
 
+		Antialising GetAntialising() { return m_Settings.PostProcessingSettings.AntialisingMethod; }
 		void ApplySettings();
 
 	private:
@@ -235,6 +237,7 @@ namespace Athena
 		void JumpFloodPass();
 		void Render2DPass();
 		void FXAAPass();
+		void SMAAPass();
 
 		void CalculateInstanceTransforms();
 		void CalculateCascadeLightSpaces(DirectionalLight& light);
@@ -306,9 +309,17 @@ namespace Athena
 		Ref<RenderPass> m_Render2DPass;
 		Render2DCallback m_Render2DCallback;
 
-		Ref<Texture2D> m_PostProcessTexture;
+		Ref<Texture2D> m_PostProcessTextures[2];
+
 		Ref<ComputePass> m_FXAAPass;
 		Ref<ComputePipeline> m_FXAAPipeline;
+
+		Ref<RenderPass> m_SMAAEdgesPass;
+		Ref<Pipeline> m_SMAAEdgesPipeline;
+		Ref<RenderPass> m_SMAAWeightsPass;
+		Ref<Pipeline> m_SMAAWeightsPipeline;
+		Ref<RenderPass> m_SMAABlendingPass;
+		Ref<Pipeline> m_SMAABlendingPipeline;
 
 		// CPU Data
 		CameraData m_CameraData;

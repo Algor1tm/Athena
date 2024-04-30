@@ -32,10 +32,8 @@ namespace Athena
 	{
 		if (str == "None")
 			return TonemapMode::NONE;
-
 		if (str == "ACES-Filmic")
 			return TonemapMode::ACES_FILMIC;
-		
 		if (str == "ACES-True")
 			return TonemapMode::ACES_TRUE;
 
@@ -49,6 +47,7 @@ namespace Athena
 		{
 		case Antialising::NONE: return "None";
 		case Antialising::FXAA: return "FXAA";
+		case Antialising::SMAA: return "SMAA";
 		}
 
 		ATN_ASSERT(false);
@@ -59,9 +58,10 @@ namespace Athena
 	{
 		if(str == "None")
 			return Antialising::NONE;
-
-		if (str == "FXAA")
+		else if (str == "FXAA")
 			return Antialising::FXAA;
+		else if (str == "SMAA")
+			return Antialising::SMAA;
 
 		ATN_ASSERT(false);
 		return (Antialising)0;
@@ -323,7 +323,7 @@ namespace Athena
 			}
 
 			{
-				std::string_view views[] = { "None", "FXAA" };
+				std::string_view views[] = { "None", "FXAA", "SMAA"};
 				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
 
 				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
@@ -337,7 +337,7 @@ namespace Athena
 		if (UI::TreeNode("Quality", false) && UI::BeginPropertyTable())
 		{
 			QualitySettings& quality = settings.Quality;
-			UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 1.5f);
+			UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 4.f);
 
 			UI::EndPropertyTable();
 

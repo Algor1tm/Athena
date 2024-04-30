@@ -19,7 +19,7 @@ namespace Athena
 		virtual void Reset() override;
 
 		virtual void BeginTimeQuery() override;
-		virtual Time EndTimeQuery() override;
+		virtual void EndTimeQuery(Time* time) override;
 
 		virtual void BeginPipelineStatsQuery() override;
 		virtual const PipelineStatistics& EndPipelineStatsQuery() override;

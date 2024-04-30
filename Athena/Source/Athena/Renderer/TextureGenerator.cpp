@@ -7,7 +7,6 @@
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
 
-#include <stb_image/stb_image.h>
 
 namespace Athena
 {
@@ -17,8 +16,10 @@ namespace Athena
 		Ref<Texture2D> BlackTexture;
 		Ref<TextureCube> BlackTextureCube;
 
-		Ref<Texture2D> BRDF_LUT;
 		Ref<Texture2D> BlueNoise;
+		Ref<Texture2D> SMAA_AreaLUT;
+		Ref<Texture2D> SMAA_SearchLUT;
+		Ref<Texture2D> BRDF_LUT;
 	};
 
 	static TextureGeneratorData s_Data;
@@ -61,9 +62,10 @@ namespace Athena
 
 		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, texData);
 
+		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
+
 		// BLUE NOISE
 		{
-			const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 			FilePath path = resourcesPath / "Textures/BlueNoise.png";
 
 			TextureImportOptions options;
@@ -72,6 +74,30 @@ namespace Athena
 			options.GenerateMipMaps = false;
 
 			s_Data.BlueNoise = TextureImporter::Load(path, options);
+		}
+
+		// SMAA Area texture
+		{
+			FilePath path = resourcesPath / "Textures/SMAA-AreaTex.png";
+
+			TextureImportOptions options;
+			options.Name = "Renderer_SMAA-AreaTex";
+			options.sRGB = false;
+			options.GenerateMipMaps = false;
+
+			s_Data.SMAA_AreaLUT = TextureImporter::Load(path, options);
+		}
+
+		// SMAA Search texture
+		{
+			FilePath path = resourcesPath / "Textures/SMAA-SearchTex.png";
+
+			TextureImportOptions options;
+			options.Name = "Renderer_SMAA-SearchTex";
+			options.sRGB = false;
+			options.GenerateMipMaps = false;
+
+			s_Data.SMAA_SearchLUT = TextureImporter::Load(path, options);
 		}
 
 		// BRDF_LUT
@@ -122,6 +148,8 @@ namespace Athena
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
 		s_Data.BlueNoise.Release();
+		s_Data.SMAA_AreaLUT.Release();
+		s_Data.SMAA_SearchLUT.Release();
 		s_Data.BRDF_LUT.Release();
 		s_Data.BlackTextureCube.Release();
 	}
@@ -129,6 +157,16 @@ namespace Athena
 	Ref<Texture2D> TextureGenerator::GetBRDF_LUT()
 	{
 		return s_Data.BRDF_LUT;
+	}
+
+	Ref<Texture2D> TextureGenerator::GetSMAA_AreaLUT()
+	{
+		return s_Data.SMAA_AreaLUT;
+	}
+
+	Ref<Texture2D> TextureGenerator::GetSMAA_SearchLUT()
+	{
+		return s_Data.SMAA_SearchLUT;
 	}
 
 	Ref<Texture2D> TextureGenerator::GetWhiteTexture()

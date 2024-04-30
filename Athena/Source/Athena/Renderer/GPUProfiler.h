@@ -39,7 +39,7 @@ namespace Athena
 		virtual void Reset() = 0;
 
 		virtual void BeginTimeQuery() = 0;
-		virtual Time EndTimeQuery() = 0;
+		virtual void EndTimeQuery(Time* time) = 0;
 
 		virtual void BeginPipelineStatsQuery() = 0;
 		virtual const PipelineStatistics& EndPipelineStatsQuery() = 0;

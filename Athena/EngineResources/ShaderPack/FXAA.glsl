@@ -4,10 +4,11 @@
 //  https://github.com/bartwronski/CSharpRenderer/blob/master/shaders/FXAA.hlsl#L338
 //  https://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
 
-// TODO: test these versions : 
-//  https://github.com/redagito/RTR2014/blob/master/data/shadersource/post/fxaa_fragment.glsl
-//  https://github.com/hotstreams/limitless-engine/blob/master/shaders/functions/fxaa.glsl 
- 
+ // TODO: test SMAA :
+ //     https://github.com/iryoku/smaa/blob/master/SMAA.hlsl
+ //     https://github.com/dmnsgn/glsl-smaa
+
+
 #version 460 core
 #pragma stage : compute
 
@@ -23,7 +24,7 @@
 layout(local_size_x = GROUP_SIZE, local_size_y = GROUP_SIZE) in;
 
 layout(set = 1, binding = 4) uniform sampler2D u_SceneColor;
-layout(rgba8, set = 1, binding = 5) uniform image2D u_PostProcessTex;
+layout(rgba8, set = 1, binding = 5) uniform image2D u_Texture;
 
 
 shared vec3 s_Pixels[TILE_PIXEL_COUNT];
@@ -192,7 +193,7 @@ void main()
 
     if(range < max(FXAA_EDGE_THRESHOLD_MIN, rangeMax * FXAA_EDGE_THRESHOLD))
     {
-        imageStore(u_PostProcessTex, pixelCoords, vec4(rgbM, 1));
+        imageStore(u_Texture, pixelCoords, vec4(rgbM, 1));
         return;
     }
 
@@ -361,5 +362,5 @@ void main()
     result = mix(rgbL, rgbF, blendL); 
 #endif
 
-    imageStore(u_PostProcessTex, pixelCoords, vec4(result, 1));
+    imageStore(u_Texture, pixelCoords, vec4(result, 1));
 }

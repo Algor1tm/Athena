@@ -207,9 +207,10 @@ namespace Athena
 		uint32 height = texture->GetHeight();
 
 		auto utf8Path = Utils::ConvertPathToUTF8(path);
+		uint32 channels = Texture::ChannelsNum(texture->GetFormat());
 		uint32 bpp = Texture::BytesPerPixel(texture->GetFormat());
 
-		bool result = stbi_write_png(utf8Path.data(), width, height, bpp, buffer.Data(), bpp * width);
+		bool result = stbi_write_png(utf8Path.data(), width, height, channels, buffer.Data(), bpp * width);
 
 		buffer.Release();
 

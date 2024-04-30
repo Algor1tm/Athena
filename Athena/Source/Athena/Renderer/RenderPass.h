@@ -74,8 +74,11 @@ namespace Athena
 		virtual void Bake() = 0;
 
 		void SetOutput(const RenderTarget& target);
+
 		Ref<Texture2D> GetOutput(const String& name) const;
+		Ref<Texture2D> GetOutput(uint32 index) const;
 		Ref<Texture2D> GetDepthOutput() const;
+
 		const auto& GetAllOutputs() const { return m_Outputs; }
 
 		uint32 GetColorTargetsCount() const;

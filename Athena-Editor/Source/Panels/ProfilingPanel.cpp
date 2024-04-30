@@ -66,7 +66,9 @@ namespace Athena
                     if (m_SceneRenderer)
                     {
                         auto& settings = m_SceneRenderer->GetSettings();
+                        Antialising antialising = m_SceneRenderer->GetAntialising();
                         size = m_SceneRenderer->GetViewportSize();
+
                         ImGui::Text("ViewportSize: { %u, %u }", size.x, size.y);
 
                         auto& stats = m_SceneRenderer->GetStatistics();
@@ -82,7 +84,11 @@ namespace Athena
                         ImGui::Text("SceneComposite: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         ImGui::Text("JumpFlood: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
                         ImGui::Text("Render2D: %.3f ms", stats.Render2DPass.AsMilliseconds());
-                        ImGui::Text("FXAA: %.3f ms", stats.FXAAPass.AsMilliseconds());
+
+                        if (antialising == Antialising::FXAA)
+                            ImGui::Text("FXAA: %.3f ms", stats.AAPass.AsMilliseconds());
+                        else if (antialising == Antialising::SMAA)
+                            ImGui::Text("SMAA: %.3f ms", stats.AAPass.AsMilliseconds());
 
                         if (UI::TreeNode("Pipeline Statistics", false))
                         {

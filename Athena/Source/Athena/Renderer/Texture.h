@@ -201,6 +201,7 @@ namespace Athena
 		static bool IsColorFormat(TextureFormat format);
 		static bool IsHDRFormat(TextureFormat format);
 		static uint32 BytesPerPixel(TextureFormat format);
+		static uint32 ChannelsNum(TextureFormat format);
 
 	protected:
 		TextureCreateInfo m_Info;
@@ -327,6 +328,37 @@ namespace Athena
 		case TextureFormat::DEPTH16:    	 return 2;
 		case TextureFormat::DEPTH24STENCIL8: return 4;
 		case TextureFormat::DEPTH32F:		 return 4;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return false;
+	}
+
+	inline uint32 Texture::ChannelsNum(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TextureFormat::R8:			   
+		case TextureFormat::R8_SRGB:
+		case TextureFormat::DEPTH16:
+		case TextureFormat::DEPTH32F: 
+			return 1;
+		case TextureFormat::RG8:
+		case TextureFormat::RG8_SRGB:
+		case TextureFormat::RG16F:
+		case TextureFormat::DEPTH24STENCIL8: 
+			return 2;
+		case TextureFormat::RGB8:
+		case TextureFormat::RGB8_SRGB:	
+		case TextureFormat::R11G11B10F:	 
+		case TextureFormat::RGB16F:	
+		case TextureFormat::RGB32F:
+			return 3;
+		case TextureFormat::RGBA8:	
+		case TextureFormat::RGBA8_SRGB:
+		case TextureFormat::RGBA16F:
+		case TextureFormat::RGBA32F:
+			return 4;
 		}
 
 		ATN_CORE_ASSERT(false);

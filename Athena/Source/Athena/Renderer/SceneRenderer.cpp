@@ -558,15 +558,105 @@ namespace Athena
 			m_Render2DPass->Bake();
 		}
 
-		// FXAA COMPUTE PASS
+		// Reusable post-process textures (ping - pong)
 		{
 			TextureCreateInfo texInfo;
-			texInfo.Name = "PostProcessTex";
 			texInfo.Format = TextureFormat::RGBA8;
-			texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED | TextureUsage::STORAGE);
+			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.GenerateMipMap = false;
 
-			m_PostProcessTexture = Texture2D::Create(texInfo);
+			for (uint32 i = 0; i < 2; ++i)
+			{
+				texInfo.Name = std::format("PostProcessTex_{}", i);
+				m_PostProcessTextures[i] = Texture2D::Create(texInfo);
+			}
+		}
+
+		// SMAA
+		{
+			// Edge detection
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "SMAAEdgesPass";
+				passInfo.InputPass = m_Render2DPass;
+				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
+
+				RenderTarget smaaEdges = m_PostProcessTextures[0];
+				smaaEdges.LoadOp = RenderTargetLoadOp::CLEAR;
+
+				m_SMAAEdgesPass = RenderPass::Create(passInfo);
+				m_SMAAEdgesPass->SetOutput(smaaEdges);
+				m_SMAAEdgesPass->Bake();
+
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
+				pipelineInfo.Name = "SMAAEdgesPipeline";
+				pipelineInfo.RenderPass = m_SMAAEdgesPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Edges");
+
+				m_SMAAEdgesPipeline = Pipeline::Create(pipelineInfo);
+				m_SMAAEdgesPipeline->SetInput("u_Texture", m_Render2DPass->GetOutput("SceneColor"));
+				m_SMAAEdgesPipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SMAAEdgesPipeline->Bake();
+			}
+			
+			// Blending Weight Calculation
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "SMAAWeightsPass";
+				passInfo.InputPass = m_SMAAEdgesPass;
+				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
+
+				RenderTarget smaaWeights = m_PostProcessTextures[1];
+				smaaWeights.LoadOp = RenderTargetLoadOp::CLEAR;
+
+				m_SMAAWeightsPass = RenderPass::Create(passInfo);
+				m_SMAAWeightsPass->SetOutput(smaaWeights);
+				m_SMAAWeightsPass->Bake();
+
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
+				pipelineInfo.Name = "SMAAWeightsPipeline";
+				pipelineInfo.RenderPass = m_SMAAWeightsPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Weights");
+
+				m_SMAAWeightsPipeline = Pipeline::Create(pipelineInfo);
+				m_SMAAWeightsPipeline->SetInput("u_Edges", m_SMAAEdgesPass->GetOutput(0));
+				m_SMAAWeightsPipeline->SetInput("u_AreaTex", TextureGenerator::GetSMAA_AreaLUT());
+				m_SMAAWeightsPipeline->SetInput("u_SearchTex", TextureGenerator::GetSMAA_SearchLUT());
+				m_SMAAWeightsPipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SMAAWeightsPipeline->Bake();
+			}
+
+			// SMAA Neighborhood Blending
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "SMAABlendingPass";
+				passInfo.InputPass = m_SMAAWeightsPass;
+				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
+
+				RenderTarget smaaBlend = m_PostProcessTextures[0];
+				smaaBlend.LoadOp = RenderTargetLoadOp::CLEAR;
+
+				m_SMAABlendingPass = RenderPass::Create(passInfo);
+				m_SMAABlendingPass->SetOutput(smaaBlend);
+				m_SMAABlendingPass->Bake();
+
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
+				pipelineInfo.Name = "SMAABlendingPipeline";
+				pipelineInfo.RenderPass = m_SMAABlendingPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Blending");
+
+				m_SMAABlendingPipeline = Pipeline::Create(pipelineInfo);
+				m_SMAABlendingPipeline->SetInput("u_SceneColor", m_Render2DPass->GetOutput(0));
+				m_SMAABlendingPipeline->SetInput("u_BlendTex", m_SMAAWeightsPass->GetOutput(0));
+				m_SMAABlendingPipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SMAABlendingPipeline->Bake();
+			}
+		}
+
+		// FXAA COMPUTE PASS
+		{
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "FXAAPass";
@@ -574,12 +664,12 @@ namespace Athena
 			passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
 
 			m_FXAAPass = ComputePass::Create(passInfo);
-			m_FXAAPass->SetOutput(m_PostProcessTexture);
+			m_FXAAPass->SetOutput(m_PostProcessTextures[0]);
 			m_FXAAPass->Bake();
 
 			m_FXAAPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("FXAA"));
 			m_FXAAPipeline->SetInput("u_SceneColor", m_Render2DPass->GetOutput("SceneColor"));
-			m_FXAAPipeline->SetInput("u_PostProcessTex", m_PostProcessTexture);
+			m_FXAAPipeline->SetInput("u_Texture", m_PostProcessTextures[0]);
 			m_FXAAPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_FXAAPipeline->Bake();
 		}
@@ -592,8 +682,13 @@ namespace Athena
 
 	Ref<Texture2D> SceneRenderer::GetFinalImage()
 	{
-		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
-			return m_FXAAPass->GetOutput("PostProcessTex");
+		Antialising antialising = GetAntialising();
+
+		if (antialising == Antialising::FXAA)
+			return m_FXAAPass->GetOutput(0);
+
+		else if (antialising == Antialising::SMAA)
+			return m_SMAABlendingPass->GetOutput(0);
 
 		return m_Render2DPass->GetOutput("SceneColor");
 	}
@@ -668,7 +763,15 @@ namespace Athena
 
 		m_Render2DPass->Resize(width, height);
 
-		m_PostProcessTexture->Resize(width, height);
+		m_PostProcessTextures[0]->Resize(width, height);
+		m_PostProcessTextures[1]->Resize(width, height);
+
+		m_SMAAEdgesPass->Resize(width, height);
+		m_SMAAEdgesPipeline->SetViewport(width, height);
+		m_SMAAWeightsPass->Resize(width, height);
+		m_SMAAWeightsPipeline->SetViewport(width, height);
+		m_SMAABlendingPass->Resize(width, height);
+		m_SMAABlendingPipeline->SetViewport(width, height);
 
 		if(m_ViewportResizeCallback)
 			m_ViewportResizeCallback(width, height);
@@ -832,8 +935,7 @@ namespace Athena
 		m_CameraData.Projection = cameraInfo.ProjectionMatrix;
 		m_CameraData.InverseProjection = Math::Inverse(cameraInfo.ProjectionMatrix);
 		m_CameraData.ViewProjection = cameraInfo.ViewMatrix * cameraInfo.ProjectionMatrix;
-		//m_CameraData.InverseViewProjection = Math::Inverse(m_CameraData.ViewProjection);
-		m_CameraData.InverseViewProjection = Math::Inverse(Matrix4(cameraInfo.ViewMatrix.AsMatrix3()) * cameraInfo.ProjectionMatrix);
+		m_CameraData.InverseViewProjection = Math::Inverse(Matrix4(cameraInfo.ViewMatrix.AsMatrix3()) * cameraInfo.ProjectionMatrix); // no translation
 		m_CameraData.Position = m_CameraData.InverseView[3];
 		m_CameraData.NearClip = cameraInfo.NearClip;
 		m_CameraData.FarClip = cameraInfo.FarClip;
@@ -867,6 +969,7 @@ namespace Athena
 		ResetStats();
 
 		bool hasSelectedGeometry = m_SelectStaticGeometryList.Size() != 0 || m_SelectAnimGeometryList.Size() != 0;
+		Antialising antialising = GetAntialising();
 
 		m_Profiler->Reset();
 		m_Profiler->BeginPipelineStatsQuery();
@@ -915,8 +1018,11 @@ namespace Athena
 
 		Render2DPass();
 
-		if (m_Settings.PostProcessingSettings.AntialisingMethod == Antialising::FXAA)
+		if (antialising == Antialising::FXAA)
 			FXAAPass();
+
+		else if (antialising == Antialising::SMAA)
+			SMAAPass();
 
 		m_Statistics.PipelineStats = m_Profiler->EndPipelineStatsQuery();
 		m_Statistics.Meshes = m_StaticGeometryList.Size();
@@ -953,7 +1059,7 @@ namespace Athena
 		Renderer::EndDebugRegion(commandBuffer);
 
 		m_DirShadowMapPass->End(commandBuffer);
-		m_Statistics.DirShadowMapPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.DirShadowMapPass);
 	}
 
 	void SceneRenderer::GBufferPass()
@@ -963,14 +1069,12 @@ namespace Athena
 		m_Profiler->BeginTimeQuery();
 		m_GBufferPass->Begin(commandBuffer);
 
-
 		Renderer::BeginDebugRegion(commandBuffer, "StaticGeometry", { 0.8f, 0.4f, 0.2f, 1.f });
 		{
 			m_StaticGeometryPipeline->Bind(commandBuffer);
 			m_StaticGeometryList.Flush(commandBuffer, m_StaticGeometryPipeline);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
-
 
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		{
@@ -980,7 +1084,7 @@ namespace Athena
 		Renderer::EndDebugRegion(commandBuffer);
 
 		m_GBufferPass->End(commandBuffer);
-		m_Statistics.GBufferPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.GBufferPass);
 	}
 
 	void SceneRenderer::LightCullingPass()
@@ -994,36 +1098,28 @@ namespace Athena
 			Renderer::Dispatch(commandBuffer, m_LightCullingPipeline, { m_ViewportSize, 1 });
 		}
 		m_LightCullingPass->End(commandBuffer);
-		m_Statistics.LightCullingPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.LightCullingPass);
 	}
 
 	void SceneRenderer::SSAOPass()
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		m_Profiler->BeginTimeQuery();
-		m_SSAOPass->Begin(commandBuffer);
+		if (!m_Settings.AOSettings.Enable)
 		{
-			if (m_Settings.AOSettings.Enable)
-			{
-				m_SSAOPipeline->Bind(commandBuffer);
-				Renderer::RenderFullscreen(commandBuffer, m_SSAOPipeline);
-			}
+			// Perform image layout transitions
+			m_SSAODenoisePass->Begin(commandBuffer);
+			m_SSAODenoisePass->End(commandBuffer);
+			return;
 		}
-		m_SSAOPass->End(commandBuffer);
-		m_Statistics.SSAOPass = m_Profiler->EndTimeQuery();
 
 		m_Profiler->BeginTimeQuery();
-		m_SSAODenoisePass->Begin(commandBuffer);
-		{
-			if (m_Settings.AOSettings.Enable)
-			{
-				m_SSAODenoisePipeline->Bind(commandBuffer);
-				Renderer::RenderFullscreen(commandBuffer, m_SSAODenoisePipeline);
-			}
-		}
-		m_SSAODenoisePass->End(commandBuffer);
-		m_Statistics.SSAODenoisePass = m_Profiler->EndTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_SSAOPass, m_SSAOPipeline);
+		m_Profiler->EndTimeQuery(&m_Statistics.SSAOPass);
+
+		m_Profiler->BeginTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_SSAODenoisePass, m_SSAODenoisePipeline);
+		m_Profiler->EndTimeQuery(&m_Statistics.SSAODenoisePass);
 	}
 
 	void SceneRenderer::LightingPass()
@@ -1031,13 +1127,8 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_Profiler->BeginTimeQuery();
-		m_DeferredLightingPass->Begin(commandBuffer);
-		{
-			m_DeferredLightingPipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_DeferredLightingPipeline);
-		}
-		m_DeferredLightingPass->End(commandBuffer);
-		m_Statistics.DeferredLightingPass = m_Profiler->EndTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_DeferredLightingPass, m_DeferredLightingPipeline);
+		m_Profiler->EndTimeQuery(&m_Statistics.DeferredLightingPass);
 	}
 
 	void SceneRenderer::SkyboxPass()
@@ -1045,13 +1136,8 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_Profiler->BeginTimeQuery();
-		m_SkyboxPass->Begin(commandBuffer);
-		{
-			m_SkyboxPipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_SkyboxPipeline);
-		}
-		m_SkyboxPass->End(commandBuffer);
-		m_Statistics.SkyboxPass = m_Profiler->EndTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_SkyboxPass, m_SkyboxPipeline);
+		m_Profiler->EndTimeQuery(&m_Statistics.SkyboxPass);
 	}
 
 	void SceneRenderer::BloomPass()
@@ -1132,7 +1218,7 @@ namespace Athena
 			}
 		}
 		m_BloomPass->End(commandBuffer);
-		m_Statistics.BloomPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.BloomPass);
 	}
 
 	void SceneRenderer::SceneCompositePass()
@@ -1140,13 +1226,8 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		m_Profiler->BeginTimeQuery();
-		m_SceneCompositePass->Begin(commandBuffer);
-		{
-			m_SceneCompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_SceneCompositePipeline, m_SceneCompositeMaterial);
-		}
-		m_SceneCompositePass->End(commandBuffer);
-		m_Statistics.SceneCompositePass = m_Profiler->EndTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_SceneCompositePass, m_SceneCompositePipeline, m_SceneCompositeMaterial);
+		m_Profiler->EndTimeQuery(&m_Statistics.SceneCompositePass);
 	}
 
 	void SceneRenderer::JumpFloodPass()
@@ -1166,14 +1247,7 @@ namespace Athena
 		}
 		m_JumpFloodSilhouettePass->End(commandBuffer);
 
-
-		m_JumpFloodInitPass->Begin(commandBuffer);
-		{
-			m_JumpFloodInitPipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodInitPipeline);
-		}
-		m_JumpFloodInitPass->End(commandBuffer);
-
+		Renderer::FullscreenPass(commandBuffer, m_JumpFloodInitPass, m_JumpFloodInitPipeline);
 
 		// calculate the number of jump flood passes needed for the current outline width
 		// + 1.0f to handle half pixel inset of the init pass and antialiasing
@@ -1184,26 +1258,16 @@ namespace Athena
 		{
 			int stepWidth = Math::Pow(2, i) + 0.5f;
 
-			m_JumpFloodPasses[index]->Begin(commandBuffer);
-
 			m_JumpFloodMaterial->Set("u_StepWidth", stepWidth);
-			m_JumpFloodPipelines[index]->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodPipelines[index], m_JumpFloodMaterial);
-
-			m_JumpFloodPasses[index]->End(commandBuffer);
+			Renderer::FullscreenPass(commandBuffer, m_JumpFloodPasses[index], m_JumpFloodPipelines[index], m_JumpFloodMaterial);
 
 			index = (index + 1) % 2;
 		}
 
-		m_JumpFloodCompositePass->Begin(commandBuffer);
-		{
-			m_JumpFloodCompositePipeline->Bind(commandBuffer);
-			Renderer::RenderFullscreen(commandBuffer, m_JumpFloodCompositePipeline, m_JumpFloodCompositeMaterial);
-		}
-		m_JumpFloodCompositePass->End(commandBuffer);
+		Renderer::FullscreenPass(commandBuffer, m_JumpFloodCompositePass, m_JumpFloodCompositePipeline, m_JumpFloodCompositeMaterial);
 
 		Renderer::EndDebugRegion(commandBuffer);
-		m_Statistics.JumpFloodPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.JumpFloodPass);
 	}
 
 	void SceneRenderer::Render2DPass()
@@ -1219,7 +1283,7 @@ namespace Athena
 			m_Render2DCallback();
 		}
 		m_Render2DPass->End(commandBuffer);
-		m_Statistics.Render2DPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.Render2DPass);
 	}
 
 	void SceneRenderer::FXAAPass()
@@ -1233,7 +1297,20 @@ namespace Athena
 			Renderer::Dispatch(commandBuffer, m_FXAAPipeline, { m_ViewportSize.x, m_ViewportSize.y, 1 });
 		}
 		m_FXAAPass->End(commandBuffer);
-		m_Statistics.FXAAPass = m_Profiler->EndTimeQuery();
+		m_Profiler->EndTimeQuery(&m_Statistics.AAPass);
+	}
+
+	void SceneRenderer::SMAAPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+
+		Renderer::FullscreenPass(commandBuffer, m_SMAAEdgesPass, m_SMAAEdgesPipeline);
+		Renderer::FullscreenPass(commandBuffer, m_SMAAWeightsPass, m_SMAAWeightsPipeline);
+		Renderer::FullscreenPass(commandBuffer, m_SMAABlendingPass, m_SMAABlendingPipeline);
+
+		m_Profiler->EndTimeQuery(&m_Statistics.AAPass);
 	}
 
 	void SceneRenderer::CalculateCascadeLightSpaces(DirectionalLight& light)
@@ -1376,7 +1453,7 @@ namespace Athena
 			m_Statistics.SceneCompositePass +
 			m_Statistics.JumpFloodPass +
 			m_Statistics.Render2DPass + 
-			m_Statistics.FXAAPass;
+			m_Statistics.AAPass;
 
 		memset(&m_Statistics, 0, sizeof(m_Statistics));
 		m_Statistics.GPUTime = gpuTime;

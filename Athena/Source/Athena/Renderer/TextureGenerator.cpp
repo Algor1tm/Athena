@@ -66,12 +66,13 @@ namespace Athena
 
 		// BLUE NOISE
 		{
-			FilePath path = resourcesPath / "Textures/BlueNoise.png";
+			FilePath path = resourcesPath / "Textures/BlueNoise16x16.png";
 
 			TextureImportOptions options;
 			options.Name = "Renderer_BlueNoise";
 			options.sRGB = false;
 			options.GenerateMipMaps = false;
+			options.MaxChannelsNum = 1;
 
 			s_Data.BlueNoise = TextureImporter::Load(path, options);
 		}

@@ -7,10 +7,9 @@
 
 #define DEBUG_BLEND_CASCADES
 
-//#define USE_BIAS
-//#define ROTATE_SAMPLE
+#define ROTATE_SAMPLE
 
-#define SHADOWS_PRESET 2
+#define SHADOWS_PRESET 1
 
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 0)
@@ -51,7 +50,9 @@ layout(std140, set = 1, binding = 5) uniform u_ShadowsData
 	float u_ShadowMaxDistance;
 	float u_MaxDistanceFadeOut;
     float u_CascadeBlendDistance;
+    float u_BiasGradient;
 	int u_SoftShadows;
+    vec3 _Pad0;
 };
 
 layout(set = 1, binding = 6) uniform sampler2DArray u_DirShadowMap;
@@ -64,12 +65,12 @@ layout(set = 1, binding = 8) uniform sampler2D u_PCSSNoise;
 =========================================================================================================================================
 */
 
-float SampleShadowMapDepth(vec2 uv, int cascade)
+float SampleShadowMap_Hard(vec2 uv, int cascade)
 {
     return texture(u_DirShadowMap, vec3(uv, cascade)).r;
 }
 
-float SampleShadowMapCompare(vec3 shadowCoords, int cascade)
+float SampleShadowMap_Soft(vec3 shadowCoords, int cascade)
 {
     return texture(u_DirShadowMapShadow, vec4(shadowCoords.xy, cascade, shadowCoords.z));
 }
@@ -83,7 +84,16 @@ vec3 GetShadowCoords(vec3 worldPos, int cascade)
 
 float GetBias(vec3 normal, vec3 lightDir, int cascade)
 {
-    return max(0.00001 * (1.0 - dot(normal, lightDir)), 0.00001);
+    float scale = 1.0;
+    switch(cascade)
+    {
+    case 0: scale = 1.0; break;
+    case 1: scale = 1.0; break;
+    case 2: scale = 1.4; break;
+    case 3: scale = 1.4; break;
+    }
+
+    return -max(0.001 * (1.0 - dot(normal, lightDir)), 0.001) * scale;
 }
 
 vec2 Rotate(vec2 pos, vec2 rotationTrig)
@@ -126,12 +136,12 @@ float GetCascadeScale(int cascade)
     switch(cascade)
     {
     case 0: scale = 1.0; break;
-    case 1: scale = 2.0; break;
-    case 2: scale = 3.0; break;
-    case 3: scale = 4.0; break;
+    case 1: scale = 1.5; break;
+    case 2: scale = 1.5; break;
+    case 3: scale = 1.5; break;
     }
     
-   return 1.0 / scale;
+    return 1.0 / scale;
 }
 
 /*
@@ -145,10 +155,11 @@ float PenumbraSize(float zReceiver, float zBlocker)
     return (zReceiver - zBlocker) / zBlocker;
 }
 
-vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scale, vec2 rotationTrig)
+vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float bias, float scale, vec2 rotationTrig)
 {
 	float numBlockers = 0.0;
 	float blockerSum = 0.0;
+    float depthBiased = depth + bias * u_BiasGradient;
 
 	for(int i = 0; i < BLOCKER_SEARCH_SAMPLES; ++i)
 	{
@@ -158,9 +169,9 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scal
 		offset = Rotate(offset, rotationTrig);
 #endif
 
-		float shadowMapDepth = SampleShadowMapDepth(uv + offset, cascade);
+		float shadowMapDepth = SampleShadowMap_Hard(uv + offset, cascade);
 
-		if(shadowMapDepth < depth)
+		if(shadowMapDepth < depthBiased)
 		{
 			blockerSum += shadowMapDepth;
 			numBlockers += 1.0;
@@ -172,9 +183,10 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float scal
 	return vec2(avgBlockerDepth, numBlockers);
 }
 
-float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float scale, vec2 rotationTrig)
+float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float bias, float scale, vec2 rotationTrig)
 {
 	float sum = 0.0;
+    float depthBiased = depth + bias * u_BiasGradient;
 
 	for(int i = 0; i < PCF_SEARCH_SAMPLES; ++i)
 	{
@@ -184,7 +196,7 @@ float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float 
 		offset = Rotate(offset, rotationTrig);
 #endif
 
-		float value = SampleShadowMapCompare(vec3(uv + offset, depth), cascade);
+		float value = SampleShadowMap_Soft(vec3(uv + offset, depthBiased), cascade);
 		sum += value;
 	}
 
@@ -192,7 +204,7 @@ float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float 
 	return sum;
 }
 
-float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
+float ShadowPCSS(vec3 shadowCoords, int cascade, float bias, float lightSize, vec2 noiseUV)
 {
     vec2 uv = shadowCoords.xy;
     float depth = shadowCoords.z;
@@ -203,11 +215,10 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
 
 	float rotationAngle = random * 3.1415926;
 	vec2 rotationTrig = vec2(cos(rotationAngle), sin(rotationAngle));
-	//rotationTrig = vec2(0, 1);
 
     // STEP 1: blocker search
     float searchSize = lightSize * clamp(depth - 0.02, 0.0, 1.0) / depth;
-    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, scale, rotationTrig);
+    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, bias, scale, rotationTrig);
 
     int numBlockers = int(blockerInfo.y);
     float avgBlockerDepth = blockerInfo.x;
@@ -225,9 +236,9 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
 	float penumbra = depth - avgBlockerDepth;
 
 	//float filterRadiusUV = penumbra * lightSize;
-    float filterRadiusUV = clamp(penumbra * lightSize, 0.001, 0.1);
+    float filterRadiusUV = clamp(penumbra * lightSize, 0.0009, 0.1);
 
-    return PCF_Filter(uv, depth, cascade, filterRadiusUV, scale, rotationTrig);
+    return PCF_Filter(uv, depth, cascade, filterRadiusUV, bias, scale, rotationTrig);
 }
 
 
@@ -237,19 +248,20 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
 =========================================================================================================================================
 */
 
-float ShadowHard(vec3 shadowCoords, int cascade)
+float ShadowHard(vec3 shadowCoords, int cascade, float bias)
 {
-    return SampleShadowMapCompare(shadowCoords, cascade);
+    shadowCoords.z += bias * u_BiasGradient;
+    return SampleShadowMap_Soft(shadowCoords, cascade);
 }
 
-float Shadow(vec3 shadowCoords, int cascade, float lightSize, vec2 noiseUV)
+float Shadow(vec3 shadowCoords, int cascade, float bias, float lightSize, vec2 noiseUV)
 {
 	if(bool(u_SoftShadows))
 	{
-		return 1.0 - ShadowPCSS(shadowCoords, cascade, lightSize, noiseUV);
+		return 1.0 - ShadowPCSS(shadowCoords, cascade, bias, lightSize, noiseUV);
 	}
 	
-	return 1.0 - ShadowHard(shadowCoords, cascade);
+	return 1.0 - ShadowHard(shadowCoords, cascade, bias);
 }
 
 float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView, vec2 noiseUV)
@@ -264,15 +276,12 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
     int cascade = GetShadowCascade(depthViewSpace);
     vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
 
-#if defined(USE_BIAS)
 	float bias = GetBias(normal, lightDir, cascade);
-	shadowCoords.z += bias;
-#endif
 
     if(shadowCoords.z > 1.0) 
 		return 0.0;
 
-	float shadow = Shadow(shadowCoords, cascade, lightSize, noiseUV);
+	float shadow = Shadow(shadowCoords, cascade, bias, lightSize, noiseUV);
 
 #if BLEND_CASCADES == 1
 
@@ -289,7 +298,8 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
         int nextCascade = cascade + 1;
         shadowCoords = GetShadowCoords(worldPos, nextCascade);
 
-        float shadowNextCascade = Shadow(shadowCoords, nextCascade, lightSize, noiseUV);
+        bias = GetBias(normal, lightDir, nextCascade);
+        float shadowNextCascade = Shadow(shadowCoords, nextCascade, bias, lightSize, noiseUV);
 
         shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));
     }

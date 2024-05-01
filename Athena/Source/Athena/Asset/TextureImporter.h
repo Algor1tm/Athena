@@ -12,6 +12,7 @@ namespace Athena
 		TextureUsage Usage = TextureUsage::DEFAULT;
 		bool sRGB = false;
 		bool GenerateMipMaps = true;
+		uint32 MaxChannelsNum = 4;	 // 3 is not supported
 
 		TextureSamplerCreateInfo Sampler;
 	};
@@ -28,8 +29,8 @@ namespace Athena
 		static TextureFormat GetFormat(uint32 channels, bool sRGB);
 		static TextureFormat GetHDRFormat(uint32 channels);
 
-		static void* ConvertRGBToRGBA(Vector<byte, 3>* data, uint32 width, uint32 height);
-		static void* ConvertRGB32FToRGBA32F(Vector3* data, uint32 width, uint32 height);
+		static void* ExtractChannels(byte* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels);
+		static void* ExtractChannelsHDR(float* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels);
 	};
 
 

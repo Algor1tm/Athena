@@ -110,7 +110,7 @@ namespace Athena
 			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-			pipelineInfo.CullMode = CullMode::FRONT;
+			pipelineInfo.CullMode = CullMode::BACK;
 			pipelineInfo.DepthCompareOp = DepthCompareOperator::LESS_OR_EQUAL;
 			pipelineInfo.BlendEnable = false;
 
@@ -943,6 +943,7 @@ namespace Athena
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
 		m_ShadowsData.CascadeBlendDistance = m_Settings.ShadowSettings.CascadeBlendDistance;
+		m_ShadowsData.BiasGradient = m_Settings.ShadowSettings.BiasGradient;
 		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
 		if (m_Settings.BloomSettings.DirtTexture)

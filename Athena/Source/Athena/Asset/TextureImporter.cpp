@@ -33,16 +33,23 @@ namespace Athena
 	Ref<Texture2D> TextureImporter::Load(const FilePath& filepath, const TextureImportOptions& options)
 	{
 		ATN_CORE_VERIFY(FileSystem::Exists(filepath));
+		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
+
+		uint32 maxChannels = options.MaxChannelsNum;
+		if (maxChannels == 3) // image tiling optimal
+			maxChannels = 4;
 
 		int width, height, channels;
 		TextureFormat format = TextureFormat::NONE;
 		void* data = nullptr;
+		bool HDR = false;
 
 		auto utf8Path = Utils::ConvertPathToUTF8(filepath);
 		if (stbi_is_hdr(utf8Path.data()))
 		{
 			data = stbi_loadf(utf8Path.data(), &width, &height, &channels, 0);
 			format = GetHDRFormat(channels);
+			HDR = true;
 		}
 		else
 		{
@@ -53,19 +60,20 @@ namespace Athena
 		if (data == nullptr || format == TextureFormat::NONE)
 		{
 			ATN_CORE_ERROR("Failed to load image from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_VERIFY(false);
 			return nullptr;
 		}
 
-		if (format == TextureFormat::RGB8_SRGB || format == TextureFormat::RGB8)
+		bool extract = channels == 3 || maxChannels < channels;
+		if (HDR == false && extract)
 		{
-			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = options.sRGB ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
+			format = GetFormat(maxChannels, options.sRGB);
 		}
-		else if (format == TextureFormat::RGB32F)
+		else if (extract)
 		{
-			data = ConvertRGB32FToRGBA32F((Vector3*)data, width, height);
-			format = TextureFormat::RGBA32F;
+			data = ExtractChannelsHDR((float*)data, width, height, channels, maxChannels);
+			format = GetHDRFormat(maxChannels);
 		}
 
 		uint64 size = width * height * Texture::BytesPerPixel(format);
@@ -90,6 +98,12 @@ namespace Athena
 
 	Ref<Texture2D> TextureImporter::Load(const void* inputData, uint32 inputWidth, uint32 inputHeight, const TextureImportOptions& options)
 	{
+		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
+
+		uint32 maxChannels = options.MaxChannelsNum;
+		if (maxChannels == 3) // image tiling optimal
+			maxChannels = 4;
+
 		int width, height, channels;
 		void* data = nullptr;
 
@@ -105,10 +119,10 @@ namespace Athena
 			return nullptr;
 		}
 
-		if (channels == 3)
+		if (channels == 3 || maxChannels < channels)
 		{
-			data = ConvertRGBToRGBA((Vector<byte, 3>*)data, width, height);
-			format = options.sRGB ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
+			format = GetFormat(maxChannels, options.sRGB);
 		}
 
 		uint64 dataSize = width * height * Texture::BytesPerPixel(format);
@@ -147,7 +161,6 @@ namespace Athena
 	{
 		switch (channels)
 		{
-		case 2: return TextureFormat::RG16F;
 		case 3: return TextureFormat::RGB32F;
 		case 4: return TextureFormat::RGBA32F;
 		}
@@ -156,34 +169,44 @@ namespace Athena
 		return TextureFormat::NONE;
 	}
 
-	void* TextureImporter::ConvertRGBToRGBA(Vector<byte, 3>* data, uint32 width, uint32 height)
+	void* TextureImporter::ExtractChannels(byte* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels)
 	{
-		uint64 newSize = width * height * Texture::BytesPerPixel(TextureFormat::RGBA8);
-		Vector<byte, 4>* newData = (Vector<byte, 4>*)malloc(newSize);
+		uint64 newSize = width * height * desiredChannels;
+		byte* newData = (byte*)malloc(newSize);
+		uint32 minChannel = Math::Min(channels, desiredChannels);
 
-		for (uint64 i = 0; i < width * height; ++i)
+		uint64 k = 0;
+		for (uint64 i = 0; i < width * height * channels; i += channels)
 		{
-			newData[i][0] = data[i][0];
-			newData[i][1] = data[i][1];
-			newData[i][2] = data[i][2];
-			newData[i][3] = 255;
+			for (uint32 j = 0; j < minChannel; ++j)
+				newData[k + j] = data[i + j];
+			
+			for(uint32 j = minChannel; j < desiredChannels; ++j)
+				newData[k + j] = 255;
+
+			k += desiredChannels;
 		}
 
 		stbi_image_free(data);
 		return newData;
 	}
 
-	void* TextureImporter::ConvertRGB32FToRGBA32F(Vector3 * data, uint32 width, uint32 height)
+	void* TextureImporter::ExtractChannelsHDR(float* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels)
 	{
-		uint64 newSize = width * height * Texture::BytesPerPixel(TextureFormat::RGBA32F);
-		Vector4* newData = (Vector4*)malloc(newSize);
+		uint64 newSize = width * height * desiredChannels * 4;
+		float* newData = (float*)malloc(newSize);
+		uint32 minChannel = Math::Min(channels, desiredChannels);
 
-		for (uint64 i = 0; i < width * height; ++i)
+		uint64 k = 0;
+		for (uint64 i = 0; i < width * height * channels; i += channels)
 		{
-			newData[i][0] = data[i][0];
-			newData[i][1] = data[i][1];
-			newData[i][2] = data[i][2];
-			newData[i][3] = 1.f;
+			for (uint32 j = 0; j < minChannel; ++j)
+				newData[k + j] = data[i + j];
+
+			for (uint32 j = minChannel; j < desiredChannels; ++j)
+				newData[k + j] = 1.f;
+
+			k += desiredChannels;
 		}
 
 		stbi_image_free(data);

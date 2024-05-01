@@ -216,7 +216,8 @@ namespace Athena
 			UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
 			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
 			UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
-
+			UI::PropertyDrag("Bias Gradient", &shadowSettings.BiasGradient);
+				
 			UI::EndPropertyTable();
 
 			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())

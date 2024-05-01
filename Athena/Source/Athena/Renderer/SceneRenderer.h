@@ -58,6 +58,7 @@ namespace Athena
 		bool SoftShadows = true;
 		float MaxDistance = 200.f;
 		float FadeOut = 15.f;
+		float BiasGradient = 1.f;
 		float CascadeBlendDistance = 0.5f;
 		float CascadeSplit = 0.91f;
 		float NearPlaneOffset = -70.f;
@@ -149,7 +150,9 @@ namespace Athena
 		float MaxDistance = 200.f;
 		float FadeOut = 10.f;
 		float CascadeBlendDistance = 0.5f;
+		float BiasGradient = 1.f;
 		int SoftShadows = true;
+		Vector3 _Pad0;
 	};
 
 	struct AOData

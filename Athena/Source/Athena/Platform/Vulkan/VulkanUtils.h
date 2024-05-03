@@ -223,6 +223,7 @@ namespace Athena::Vulkan
         case TextureFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
         case TextureFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
 
+        case TextureFormat::R32F:            return VK_FORMAT_R32_SFLOAT;
         case TextureFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
         case TextureFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
         case TextureFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;

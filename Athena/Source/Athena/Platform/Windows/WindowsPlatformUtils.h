@@ -21,7 +21,7 @@ namespace Athena
 		static bool CheckLastError()
 		{
 			DWORD errorMessageID = GetLastError();
-			if (errorMessageID == 0) 
+			if (errorMessageID == ERROR_SUCCESS)
 				return true;
 
 			LPSTR messageBuffer = nullptr;

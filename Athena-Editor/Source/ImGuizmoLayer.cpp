@@ -26,9 +26,10 @@ namespace Athena
 
             // Need to recreate projection matrix, because ImGuizmo 
             // does not work properly with reversed Z projection
-            float fov = m_Camera->GetFOV();
-            float znear = m_Camera->GetNearClip();
-            float zfar = m_Camera->GetFarClip();
+            CameraInfo info = m_Camera->GetCameraInfo();
+            float fov = info.FOV;
+            float znear = info.NearClip;
+            float zfar = info.FarClip;
             float aspectRatio = m_Camera->GetAspectRatio();
             Matrix4 cameraProjection = Math::Perspective(fov, aspectRatio, znear, zfar);
             cameraProjection[1][1] = -cameraProjection[1][1]; // invert y

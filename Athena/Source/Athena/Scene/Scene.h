@@ -90,7 +90,7 @@ namespace Athena
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
 
-		void RenderScene(const Ref<SceneRenderer>& renderer, const Matrix4& view, const Matrix4& proj, float near, float far);
+		void RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

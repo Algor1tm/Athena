@@ -568,7 +568,7 @@ namespace Athena
 
 	void Scene::OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera)
 	{
-		RenderScene(renderer, camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.GetNearClip(), camera.GetFarClip());
+		RenderScene(renderer, camera.GetCameraInfo());
 	}
 
 	void Scene::OnRender(const Ref<SceneRenderer>& renderer)
@@ -594,12 +594,10 @@ namespace Athena
 		// Render 
 		if (mainCamera)
 		{
-			Matrix4 viewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
-			Matrix4 projectionMatrix = mainCamera->GetProjectionMatrix();
-			float near = mainCamera->GetNearClip();
-			float far = mainCamera->GetFarClip();
+			CameraInfo info = mainCamera->GetCameraInfo();
+			info.ViewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
 
-			RenderScene(renderer, viewMatrix, projectionMatrix, near, far);
+			RenderScene(renderer, info);
 		}
 	}
 
@@ -626,11 +624,11 @@ namespace Athena
 		}
 	}
 
-	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const Matrix4& view, const Matrix4& proj, float near, float far)
+	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
 	{
 		ATN_PROFILE_FUNC();
 
-		renderer->BeginScene({ view, proj, near, far });
+		renderer->BeginScene(cameraInfo);
 
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
 		for (auto entity : staticMeshes)

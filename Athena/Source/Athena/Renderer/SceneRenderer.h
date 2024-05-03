@@ -77,11 +77,11 @@ namespace Athena
 
 	struct AmbientOcclusionSettings
 	{
-		bool Enable = true;
+		bool Enable = false;
 		float Intensity = 2.f;
-		bool HalfRes = false;
-		float Radius = 0.5f;
-		float Bias = 0.025f;
+		float Radius = 2.f;
+		float Bias = 0.1f;
+		float BlurSharpness = 40.f;
 	};
 
 	struct QualitySettings
@@ -110,8 +110,9 @@ namespace Athena
 		Matrix4 InverseViewProjection;
 		Vector3 Position;
 		float NearClip;
-		Vector3 _Pad0;
 		float FarClip;
+		float FOV;
+		Vector2 _Pad0;
 	};
 
 	struct RendererData
@@ -155,13 +156,21 @@ namespace Athena
 		Vector3 _Pad0;
 	};
 
-	struct AOData
+	struct HBAOData
 	{
-		Vector4 SamplesKernel[64];
-		Vector4 KernelNoise[16];
+		Vector4 Float2Offsets[16];
+		Vector4 Jitters[16];
+		Vector2 InvResolution;
+		Vector2 InvQuarterResolution;
+
+		float R2;
+		float NegInvR2;
+		float RadiusToScreen;
+		float AOMultiplier;
+
 		float Intensity;
-		float Radius;
 		float Bias;
+		float BlurSharpness;
 		float _Pad0;
 	};
 
@@ -171,8 +180,9 @@ namespace Athena
 		Time DirShadowMapPass;
 		Time GBufferPass;
 		Time LightCullingPass;
-		Time SSAOPass;
-		Time SSAODenoisePass;
+		Time HBAODeinterleavePass;
+		Time HBAOComputePass;
+		Time HBAOBlurPass;
 		Time DeferredLightingPass;
 		Time SkyboxPass;
 		Time BloomPass;
@@ -222,7 +232,7 @@ namespace Athena
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
-		Ref<RenderPass> GetSSAOPass() { return m_SSAODenoisePass; }
+		Ref<RenderPass> GetAOPass() { return m_HBAOBlurPass; }
 		Ref<Pipeline> GetSkyboxPipeline() { return m_SkyboxPipeline; }
 
 		Antialising GetAntialising() { return m_Settings.PostProcessingSettings.AntialisingMethod; }
@@ -231,7 +241,7 @@ namespace Athena
 	private:
 		void DirShadowMapPass();
 		void GBufferPass();
-		void SSAOPass();
+		void HBAOPass();
 		void LightCullingPass();
 		void LightingPass();
 		void SkyboxPass();
@@ -276,6 +286,13 @@ namespace Athena
 		Ref<ComputePass> m_LightCullingPass;
 		Ref<ComputePipeline> m_LightCullingPipeline;
 
+		Ref<ComputePass> m_HBAODeinterleavePass;
+		Ref<ComputePipeline> m_HBAODeinterleavePipeline;
+		Ref<ComputePass> m_HBAOComputePass;
+		Ref<ComputePipeline> m_HBAOComputePipeline;
+		Ref<RenderPass> m_HBAOBlurPass;
+		Ref<Pipeline> m_HBAOBlurPipeline;
+
 		Ref<RenderPass> m_DeferredLightingPass;
 		Ref<Pipeline> m_DeferredLightingPipeline;
 
@@ -287,11 +304,6 @@ namespace Athena
 		Ref<ComputePipeline> m_BloomDownsample;
 		Ref<ComputePipeline> m_BloomUpsample;
 		std::vector<Ref<Material>> m_BloomMaterials;
-
-		Ref<RenderPass> m_SSAOPass;
-		Ref<Pipeline> m_SSAOPipeline;
-		Ref<RenderPass> m_SSAODenoisePass;
-		Ref<Pipeline> m_SSAODenoisePipeline;
 
 		Ref<RenderPass> m_SceneCompositePass;
 		Ref<Pipeline> m_SceneCompositePipeline;
@@ -329,7 +341,7 @@ namespace Athena
 		RendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
-		AOData m_AmbientOcclusionData;
+		HBAOData m_HBAOData;
 		uint32 m_BonesDataOffset;
 
 		// GPU Data
@@ -338,7 +350,7 @@ namespace Athena
 		Ref<StorageBuffer> m_LightSBO;
 		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
-		Ref<UniformBuffer> m_AmbientOcclusionUBO;
+		Ref<UniformBuffer> m_HBAO_UBO;
 		Ref<TextureView> m_ShadowMapSampler;
 
 		DynamicGPUBuffer<StorageBuffer> m_BonesSBO;

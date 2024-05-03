@@ -6,7 +6,7 @@
 
 #define SMAA_PRESET_MEDIUM
 
-#include "Include/Buffers.glslh"
+#include "Buffers.glslh"
 
 #define SMAA_GLSL_4
 #define SMAA_RT_METRICS float4(u_Renderer.InverseViewportSize, u_Renderer.ViewportSize)

@@ -1,7 +1,5 @@
 
-#if defined(POISSON_16)
-
-const vec2 PoissonDisk[16] = vec2[](
+const vec2 PoissonDisk_16[16] = vec2[](
     vec2( -0.9420162,  -0.39906216 ),
     vec2( 0.94558609,  -0.76890725 ),
     vec2( -0.0941841,  -0.92938870 ),
@@ -19,9 +17,7 @@ const vec2 PoissonDisk[16] = vec2[](
     vec2( 0.19984126,   0.78641367 ),
     vec2( 0.14383161,  -0.14100790 ));
 
-#elif defined(POISSON_32)
-
-const vec2 PoissonDisk[32] = {
+const vec2 PoissonDisk_32[32] = {
 	vec2(0.06407013, 0.05409927),
 	vec2(0.7366577, 0.5789394),
 	vec2(-0.6270542, -0.5320278),
@@ -56,9 +52,7 @@ const vec2 PoissonDisk[32] = {
 	vec2(0.4402924, 0.3640312),
 };
 
-#elif defined(POISSON_64)
-
-const vec2 PoissonDisk[64] = {
+const vec2 PoissonDisk_64[64] = {
 	vec2(0.0617981, 0.07294159),
 	vec2(0.6470215, 0.7474022),
 	vec2(-0.5987766, -0.7512833),
@@ -124,5 +118,3 @@ const vec2 PoissonDisk[64] = {
 	vec2(-0.1154335, 0.8248222),
 	vec2(-0.4230408, -0.7129914),
 };
-
-#endif

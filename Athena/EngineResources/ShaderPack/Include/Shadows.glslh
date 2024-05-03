@@ -6,38 +6,33 @@
 
 
 #define DEBUG_BLEND_CASCADES
-
 #define ROTATE_SAMPLE
 
-#define SHADOWS_PRESET 1
+#define SHADOWS_PRESET 2
 
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 0)
 	#define BLOCKER_SEARCH_SAMPLES 16
 	#define PCF_SEARCH_SAMPLES	   16
 	#define BLEND_CASCADES		   0
-	#define POISSON_16
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 1)
 	#define BLOCKER_SEARCH_SAMPLES 16
 	#define PCF_SEARCH_SAMPLES	   16
 	#define BLEND_CASCADES		   1
-	#define POISSON_16
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 2)
-	#define BLOCKER_SEARCH_SAMPLES 32
+	#define BLOCKER_SEARCH_SAMPLES 16
 	#define PCF_SEARCH_SAMPLES	   32
 	#define BLEND_CASCADES		   1
-	#define POISSON_32
 #endif
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 3)
-	#define BLOCKER_SEARCH_SAMPLES 64
+	#define BLOCKER_SEARCH_SAMPLES 32
 	#define PCF_SEARCH_SAMPLES	   64
 	#define BLEND_CASCADES		   1
-	#define POISSON_64
 #endif
 /*--------------------------------------------------------------------------*/
 
@@ -75,6 +70,28 @@ float SampleShadowMap_Soft(vec3 shadowCoords, int cascade)
     return texture(u_DirShadowMapShadow, vec4(shadowCoords.xy, cascade, shadowCoords.z));
 }
 
+vec2 SamplePoissonPCF(int i)
+{
+    #if (PCF_SEARCH_SAMPLES == 16)
+        return PoissonDisk_16[i];
+    #elif (PCF_SEARCH_SAMPLES == 32)
+        return PoissonDisk_32[i];
+    #elif (PCF_SEARCH_SAMPLES == 64)
+        return PoissonDisk_64[i];
+    #endif
+}
+
+vec2 SamplePoissonBlocker(int i)
+{
+    #if (BLOCKER_SEARCH_SAMPLES == 16)
+        return PoissonDisk_16[i];
+    #elif (BLOCKER_SEARCH_SAMPLES == 32)
+        return PoissonDisk_32[i];
+    #elif (BLOCKER_SEARCH_SAMPLES == 64)
+        return PoissonDisk_64[i];
+    #endif
+}
+
 vec3 GetShadowCoords(vec3 worldPos, int cascade)
 {
 	 vec4 lightSpacePosition = u_DirLightViewProjection[cascade] * vec4(worldPos, 1.0);
@@ -82,18 +99,12 @@ vec3 GetShadowCoords(vec3 worldPos, int cascade)
      return vec3(uv, lightSpacePosition.z);
 }
 
-float GetBias(vec3 normal, vec3 lightDir, int cascade)
+float GetBias(vec3 normal, vec3 lightDir)
 {
-    float scale = 1.0;
-    switch(cascade)
-    {
-    case 0: scale = 1.0; break;
-    case 1: scale = 1.0; break;
-    case 2: scale = 1.4; break;
-    case 3: scale = 1.4; break;
-    }
+    float theta = dot(-normal, lightDir);
+    return -max(0.001 * sqrt(1 - theta * theta) / theta, 0.001); // tan(acos(theta)
 
-    return -max(0.001 * (1.0 - dot(normal, lightDir)), 0.001) * scale;
+    //return -max(0.0012 * (1.0 - dot(-normal, lightDir)), 0.0012);
 }
 
 vec2 Rotate(vec2 pos, vec2 rotationTrig)
@@ -163,7 +174,7 @@ vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float bias
 
 	for(int i = 0; i < BLOCKER_SEARCH_SAMPLES; ++i)
 	{
-		vec2 offset = PoissonDisk[i] * searchSize * scale;
+		vec2 offset = SamplePoissonBlocker(i) * searchSize * scale;
 
 #if defined(ROTATE_SAMPLE)
 		offset = Rotate(offset, rotationTrig);
@@ -190,7 +201,7 @@ float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float 
 
 	for(int i = 0; i < PCF_SEARCH_SAMPLES; ++i)
 	{
-		vec2 offset = PoissonDisk[i] * filterRadiusUV * scale;
+		vec2 offset = SamplePoissonPCF(i) * filterRadiusUV * scale;
 
 #if defined(ROTATE_SAMPLE)
 		offset = Rotate(offset, rotationTrig);
@@ -276,7 +287,7 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
     int cascade = GetShadowCascade(depthViewSpace);
     vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
 
-	float bias = GetBias(normal, lightDir, cascade);
+	float bias = GetBias(normal, lightDir);
 
     if(shadowCoords.z > 1.0) 
 		return 0.0;
@@ -298,7 +309,6 @@ float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal,
         int nextCascade = cascade + 1;
         shadowCoords = GetShadowCoords(worldPos, nextCascade);
 
-        bias = GetBias(normal, lightDir, nextCascade);
         float shadowNextCascade = Shadow(shadowCoords, nextCascade, bias, lightSize, noiseUV);
 
         shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));

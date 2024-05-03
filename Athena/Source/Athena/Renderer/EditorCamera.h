@@ -24,6 +24,7 @@ namespace Athena
 		virtual ~EditorCamera() = default;
 
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
+		const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
 		virtual void OnUpdate(Time frameTime) = 0;
 		virtual void OnEvent(Event& event) = 0;
@@ -34,15 +35,16 @@ namespace Athena
 		virtual void SetNearClip(float near) = 0;
 		virtual void SetFarClip(float far) = 0;
 
-		virtual float GetFOV() const = 0;
-
 		float GetAspectRatio() const { return m_AspectRatio; }
 		void SetMoveSpeedLevel(float level) { m_MoveSpeedLevel = level; }
 
 	protected:
 		Matrix4 m_ViewMatrix = Matrix4::Identity();
+		Matrix4 m_ProjectionMatrix = Matrix4::Identity();
 		float m_MoveSpeedLevel = 1.f;
 		float m_AspectRatio = 1.778f;
+		float m_NearClip = 1.f;
+		float m_FarClip = 1000.f;
 	};
 
 
@@ -75,10 +77,10 @@ namespace Athena
 		inline void SetCameraSpeed(float speed) { m_CameraSpeed = speed; }
 		inline void SetCameraRotationSpeed(float speed) { m_CameraRotationSpeed = speed; }
 
-		// TODO: Remove
-		virtual void SetNearClip(float near) override {}
-		virtual void SetFarClip(float far) override {}
-		virtual float GetFOV() const override { return 0.f; }
+		//virtual void SetNearClip(float near) override;
+		//virtual void SetFarClip(float far) override;
+
+		virtual CameraInfo GetCameraInfo() const override;
 
 	private:
 		void RecalculateProjection();
@@ -114,7 +116,7 @@ namespace Athena
 		virtual void SetNearClip(float near) override;
 		virtual void SetFarClip(float far) override;
 
-		virtual float GetFOV() const override { return m_FOV; }
+		virtual CameraInfo GetCameraInfo() const override;
 
 	protected:
 		void RecalculateProjection();

@@ -4,7 +4,7 @@
 #pragma stage : vertex
 
 #define SMAA_INCLUDE_PS 0
-#include "SMAA.glslh"
+#include "Include/SMAA.glslh"
 
 layout(location = 0) in vec2 a_Position;
 
@@ -22,7 +22,7 @@ void main()
 #version 460 core
 #pragma stage : fragment
 
-#include "SMAA.glslh"
+#include "Include/SMAA.glslh"
 
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 1) in vec4 v_Offset;

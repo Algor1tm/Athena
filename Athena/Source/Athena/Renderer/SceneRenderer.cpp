@@ -33,7 +33,7 @@ namespace Athena
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
 		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
-		m_AmbientOcclusionUBO = UniformBuffer::Create("AmbientOcclusionUBO", sizeof(AOData));
+		m_HBAO_UBO = UniformBuffer::Create("HBAO-UBO", sizeof(HBAOData));
 
 		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
@@ -200,69 +200,72 @@ namespace Athena
 			m_LightCullingPipeline->Bake();
 		}
 
-		// SSAO
+		// HBAO
 		{
-			// SSAO PASS
+			// Deinterleave
 			{
-				RenderPassCreateInfo passInfo;
-				passInfo.Name = "SSAOPass";
-				passInfo.Width = m_ViewportSize.x;
-				passInfo.Height = m_ViewportSize.y;
+				TextureCreateInfo texInfo;
+				texInfo.Name = "HBAO-DepthLayers";
+				texInfo.Format = TextureFormat::R32F;
+				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+				texInfo.Layers = 16;
+				texInfo.Sampler.Filter = TextureFilter::NEAREST;
+				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+				Ref<Texture2D> hbaoLayers = Texture2D::Create(texInfo);
+
+				ComputePassCreateInfo passInfo;
+				passInfo.Name = "HBAO-Deinterleave";
+				passInfo.InputRenderPass = m_GBufferPass;
 				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
 
-				RenderTarget sceneAO = { "SceneAO-Source", TextureFormat::R8 };
-				sceneAO.ClearColor = Vector4(1.0);
+				m_HBAODeinterleavePass = ComputePass::Create(passInfo);
+				m_HBAODeinterleavePass->SetOutput(hbaoLayers);
+				m_HBAODeinterleavePass->Bake();
 
-				m_SSAOPass = RenderPass::Create(passInfo);
-				m_SSAOPass->SetOutput(sceneAO);
-				m_SSAOPass->Bake();
-
-				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-				pipelineInfo.Name = "SSAOPipeline";
-				pipelineInfo.RenderPass = m_SSAOPass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO");
-
-				m_SSAOPipeline = Pipeline::Create(pipelineInfo);
-				m_SSAOPipeline->SetInput("u_CameraData", m_CameraUBO);
-				m_SSAOPipeline->SetInput("u_RendererData", m_RendererUBO);
-				m_SSAOPipeline->SetInput("u_AOData", m_AmbientOcclusionUBO);
-				m_SSAOPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
-				m_SSAOPipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
-				m_SSAOPipeline->Bake();
-
-				std::vector<Vector3> kernel = TextureGenerator::GetAOKernel(64);
-				for (uint32 i = 0; i < 64; ++i)
-					m_AmbientOcclusionData.SamplesKernel[i] = kernel[i];
-
-				std::vector<Vector2> noise = TextureGenerator::GetAOKernelNoise(16);
-				for (uint32 i = 0; i < 16; ++i)
-					m_AmbientOcclusionData.KernelNoise[i] = noise[i];
+				m_HBAODeinterleavePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("HBAO-Deinterleave"));
+				m_HBAODeinterleavePipeline->SetInput("u_DepthLayers", hbaoLayers);
+				m_HBAODeinterleavePipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_HBAODeinterleavePipeline->SetInput("u_HBAOData", m_HBAO_UBO);
+				m_HBAODeinterleavePipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
+				m_HBAODeinterleavePipeline->Bake();
 			}
 
-			// SSAO Denoise
+			// Compute
 			{
-				RenderPassCreateInfo passInfo;
-				passInfo.Name = "SSAO-DenoisePass";
-				passInfo.InputPass = m_SSAOPass;
-				passInfo.Width = m_ViewportSize.x;
-				passInfo.Height = m_ViewportSize.y;
+				TextureCreateInfo texInfo;
+				texInfo.Name = "HBAO-Output";
+				texInfo.Format = TextureFormat::RG16F;
+				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+				texInfo.Sampler.Filter = TextureFilter::LINEAR;
+				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+				Ref<Texture2D> hbaoOutput = Texture2D::Create(texInfo);
+
+				ComputePassCreateInfo passInfo;
+				passInfo.Name = "HBAO-Compute";
+				passInfo.InputComputePass = m_HBAODeinterleavePass;
 				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
 
-				RenderTarget sceneAO = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
-				sceneAO.ClearColor = Vector4(1.0);
+				m_HBAOComputePass = ComputePass::Create(passInfo);
+				m_HBAOComputePass->SetOutput(hbaoOutput);
+				m_HBAOComputePass->Bake();
 
-				m_SSAODenoisePass = RenderPass::Create(passInfo);
-				m_SSAODenoisePass->SetOutput(sceneAO);
-				m_SSAODenoisePass->Bake();
+				m_HBAOComputePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("HBAO-Compute"));
+				m_HBAOComputePipeline->SetInput("u_Output", hbaoOutput);
+				m_HBAOComputePipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_HBAOComputePipeline->SetInput("u_HBAOData", m_HBAO_UBO);
+				m_HBAOComputePipeline->SetInput("u_DepthLayers", m_HBAODeinterleavePass->GetOutput("HBAO-DepthLayers"));
+				m_HBAOComputePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
+				m_HBAOComputePipeline->Bake();
 
-				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-				pipelineInfo.Name = "SSAODenoisePipeline";
-				pipelineInfo.RenderPass = m_SSAODenoisePass;
-				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SSAO-Denoise");
-
-				m_SSAODenoisePipeline = Pipeline::Create(pipelineInfo);
-				m_SSAODenoisePipeline->SetInput("u_AOTexture", m_SSAOPass->GetOutput("SceneAO-Source"));
-				m_SSAODenoisePipeline->Bake();
+				std::vector<Vector4> jitters = Noise::GetHBAOJitters(16);
+				
+				for (uint32 i = 0; i < 16; ++i)
+				{
+					m_HBAOData.Jitters[i] = jitters[i];
+					m_HBAOData.Float2Offsets[i] = Vector4(float(i % 4) + 0.5f, float(i / 4) + 0.5f, 0.0f, 0.0f);
+				}
 			}
 		}
 
@@ -270,7 +273,7 @@ namespace Athena
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DeferredLightingPass";
-			passInfo.InputPass = m_SSAODenoisePass;
+			//passInfo.InputPass = m_SSAODenoisePass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
@@ -302,7 +305,7 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
 			m_DeferredLightingPipeline->SetInput("u_SceneNormalsEmission", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 			m_DeferredLightingPipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
-			m_DeferredLightingPipeline->SetInput("u_SceneAO", m_SSAODenoisePass->GetOutput("SceneAO"));
+			m_DeferredLightingPipeline->SetInput("u_SceneAO", TextureGenerator::GetWhiteTexture());
 
 			m_DeferredLightingPipeline->Bake();
 		}
@@ -579,7 +582,7 @@ namespace Athena
 			// Edge detection
 			{
 				RenderPassCreateInfo passInfo;
-				passInfo.Name = "SMAAEdgesPass";
+				passInfo.Name = "SMAA-EdgesPass";
 				passInfo.InputPass = m_Render2DPass;
 				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
 
@@ -591,7 +594,7 @@ namespace Athena
 				m_SMAAEdgesPass->Bake();
 
 				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-				pipelineInfo.Name = "SMAAEdgesPipeline";
+				pipelineInfo.Name = "SMAA-EdgesPipeline";
 				pipelineInfo.RenderPass = m_SMAAEdgesPass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Edges");
 
@@ -604,7 +607,7 @@ namespace Athena
 			// Blending Weight Calculation
 			{
 				RenderPassCreateInfo passInfo;
-				passInfo.Name = "SMAAWeightsPass";
+				passInfo.Name = "SMAA-WeightsPass";
 				passInfo.InputPass = m_SMAAEdgesPass;
 				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
 
@@ -616,7 +619,7 @@ namespace Athena
 				m_SMAAWeightsPass->Bake();
 
 				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-				pipelineInfo.Name = "SMAAWeightsPipeline";
+				pipelineInfo.Name = "SMAA-WeightsPipeline";
 				pipelineInfo.RenderPass = m_SMAAWeightsPass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Weights");
 
@@ -631,7 +634,7 @@ namespace Athena
 			// SMAA Neighborhood Blending
 			{
 				RenderPassCreateInfo passInfo;
-				passInfo.Name = "SMAABlendingPass";
+				passInfo.Name = "SMAA-BlendingPass";
 				passInfo.InputPass = m_SMAAWeightsPass;
 				passInfo.DebugColor = { 0.75f, 0.1f, 0.8f, 1.f };
 
@@ -643,7 +646,7 @@ namespace Athena
 				m_SMAABlendingPass->Bake();
 
 				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-				pipelineInfo.Name = "SMAABlendingPipeline";
+				pipelineInfo.Name = "SMAA-BlendingPipeline";
 				pipelineInfo.RenderPass = m_SMAABlendingPass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("SMAA-Blending");
 
@@ -708,6 +711,9 @@ namespace Athena
 		uint32 halfWidth = (width + 1) / 2;
 		uint32 halfHeight = (height + 1) / 2;
 
+		uint32 quarterWidth = ((width + 3) / 4);
+		uint32 quarterHeight = ((height + 3) / 4);
+
 		m_ViewportSize = { width, height };
 
 		m_RendererData.ViewportSize = m_ViewportSize;
@@ -716,6 +722,9 @@ namespace Athena
 		m_RendererData.ViewportTilesCount.y = (height - 1) / ShaderDef::LIGHT_TILE_SIZE + 1;
 		m_RendererData.ViewportTilesCount.z = m_RendererData.ViewportTilesCount.x * m_RendererData.ViewportTilesCount.y;
 		m_RendererData.ViewportTilesCount.w = 0;
+
+		m_HBAOData.InvResolution = m_RendererData.InverseViewportSize;
+		m_HBAOData.InvQuarterResolution = Vector2(1.f) / Vector2(quarterWidth, quarterHeight);
 
 		m_VisibleLightsSBO->Resize(sizeof(TileVisibleLights) * m_RendererData.ViewportTilesCount.z);
 
@@ -729,18 +738,8 @@ namespace Athena
 		m_SkyboxPass->Resize(width, height);
 		m_SkyboxPipeline->SetViewport(width, height);
 
-		if (m_Settings.AOSettings.HalfRes)
-		{
-			m_SSAOPass->Resize(halfWidth, halfHeight);
-			m_SSAOPipeline->SetViewport(halfWidth, halfHeight);
-		}
-		else
-		{
-			m_SSAOPass->Resize(width, height);
-			m_SSAOPipeline->SetViewport(width, height);
-		}
-		m_SSAODenoisePass->Resize(width, height);
-		m_SSAODenoisePipeline->SetViewport(width, height);
+		m_HBAODeinterleavePass->GetOutput(0).As<Texture2D>()->Resize(quarterWidth, quarterHeight);
+		m_HBAOComputePass->GetOutput(0).As<Texture2D>()->Resize(width, height);
 
 		m_BloomTexture->Resize(width, height);
 		m_BloomMaterials.clear();
@@ -939,6 +938,7 @@ namespace Athena
 		m_CameraData.Position = m_CameraData.InverseView[3];
 		m_CameraData.NearClip = cameraInfo.NearClip;
 		m_CameraData.FarClip = cameraInfo.FarClip;
+		m_CameraData.FOV = cameraInfo.FOV;
 
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
@@ -958,9 +958,16 @@ namespace Athena
 		m_RendererData.DebugShadowCascades = m_Settings.DebugView == DebugView::SHADOW_CASCADES ? 1 : 0;
 		m_RendererData.DebugLightComplexity = m_Settings.DebugView == DebugView::LIGHT_COMPLEXITY ? 1 : 0;
 
-		m_AmbientOcclusionData.Intensity = m_Settings.AOSettings.Intensity;
-		m_AmbientOcclusionData.Radius = m_Settings.AOSettings.Radius;
-		m_AmbientOcclusionData.Bias = m_Settings.AOSettings.Bias;
+		m_HBAOData.Intensity = m_Settings.AOSettings.Intensity;
+		m_HBAOData.Bias = m_Settings.AOSettings.Bias;
+		m_HBAOData.BlurSharpness = m_Settings.AOSettings.BlurSharpness;
+
+		float radius = m_Settings.AOSettings.Radius;
+		float projScale = float(m_ViewportSize.y) / (Math::Tan(cameraInfo.FOV * 0.5f) * 2.0f);
+		m_HBAOData.R2 = radius * radius;
+		m_HBAOData.NegInvR2 = -1.f / m_HBAOData.R2;
+		m_HBAOData.RadiusToScreen = radius * 0.5f * projScale / 4.f;
+		m_HBAOData.AOMultiplier = 1.0f / (1.0f - m_HBAOData.Bias);
 	}
 
 	void SceneRenderer::EndScene()
@@ -998,14 +1005,13 @@ namespace Athena
 			m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
-			m_AmbientOcclusionUBO->UploadData(&m_AmbientOcclusionData, sizeof(AOData));
+			m_HBAO_UBO->UploadData(&m_HBAOData, sizeof(HBAOData));
 		}
-
 
 		DirShadowMapPass();
 		GBufferPass();
 		LightCullingPass();
-		SSAOPass();
+		HBAOPass();
 		LightingPass();
 		SkyboxPass();
 
@@ -1021,7 +1027,6 @@ namespace Athena
 
 		if (antialising == Antialising::FXAA)
 			FXAAPass();
-
 		else if (antialising == Antialising::SMAA)
 			SMAAPass();
 
@@ -1102,25 +1107,29 @@ namespace Athena
 		m_Profiler->EndTimeQuery(&m_Statistics.LightCullingPass);
 	}
 
-	void SceneRenderer::SSAOPass()
+	void SceneRenderer::HBAOPass()
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		if (!m_Settings.AOSettings.Enable)
+		auto [quarterWidth, quarterHeight] = (m_ViewportSize + 3) / 4;
+
+		m_Profiler->BeginTimeQuery();
+		m_HBAODeinterleavePass->Begin(commandBuffer);
 		{
-			// Perform image layout transitions
-			m_SSAODenoisePass->Begin(commandBuffer);
-			m_SSAODenoisePass->End(commandBuffer);
-			return;
+			m_HBAODeinterleavePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_HBAODeinterleavePipeline, { quarterWidth, quarterHeight, 1 });
 		}
+		m_HBAODeinterleavePass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.HBAODeinterleavePass);
 
 		m_Profiler->BeginTimeQuery();
-		Renderer::FullscreenPass(commandBuffer, m_SSAOPass, m_SSAOPipeline);
-		m_Profiler->EndTimeQuery(&m_Statistics.SSAOPass);
-
-		m_Profiler->BeginTimeQuery();
-		Renderer::FullscreenPass(commandBuffer, m_SSAODenoisePass, m_SSAODenoisePipeline);
-		m_Profiler->EndTimeQuery(&m_Statistics.SSAODenoisePass);
+		m_HBAOComputePass->Begin(commandBuffer);
+		{
+			m_HBAOComputePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_HBAOComputePipeline, { quarterWidth, quarterHeight, 16 });
+		}
+		m_HBAOComputePass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.HBAOComputePass);
 	}
 
 	void SceneRenderer::LightingPass()
@@ -1448,6 +1457,9 @@ namespace Athena
 		Time gpuTime = m_Statistics.DirShadowMapPass + 
 			m_Statistics.GBufferPass + 
 			m_Statistics.LightCullingPass + 
+			m_Statistics.HBAODeinterleavePass +
+			m_Statistics.HBAOComputePass +
+			m_Statistics.HBAOBlurPass +
 			m_Statistics.DeferredLightingPass +
 			m_Statistics.SkyboxPass + 
 			m_Statistics.BloomPass + 

@@ -20,8 +20,11 @@ namespace Athena
 		static Ref<Texture2D> GetSMAA_AreaLUT();
 		static Ref<Texture2D> GetSMAA_SearchLUT();
 		static Ref<Texture2D> GetBlueNoise();
+	};
 
-		static std::vector<Vector3> GetAOKernel(uint32 numSamples);
-		static std::vector<Vector2> GetAOKernelNoise(uint32 numSamples);
+	class ATHENA_API Noise
+	{
+	public:
+		static std::vector<Vector4> GetHBAOJitters(uint32 numSamples);
 	};
 }

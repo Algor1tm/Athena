@@ -190,44 +190,26 @@ namespace Athena
 		return s_Data.BlueNoise;
 	}
 
-	std::vector<Vector3> TextureGenerator::GetAOKernel(uint32 numSamples)
+	std::vector<Vector4> Noise::GetHBAOJitters(uint32 numSamples)
 	{
-		std::vector<Vector3> ssaoKernel(numSamples);
+		std::vector<Vector4> result(numSamples);
 
-		for (uint32 i = 0; i < numSamples; ++i)
+		const uint32 numDir = 8;
+		for (int i = 0; i < numSamples; i++)
 		{
-			// Hemisphere in tangent space
-			Vector3 sample;
-			sample.x = Math::Random::Float(-1, 1);
-			sample.y = Math::Random::Float(-1, 1);
-			sample.z = Math::Random::Float(0, 1);
+			// Use random rotation angles in [0,2PI/NUM_DIRECTIONS)
 
-			sample.Normalize();
+			float rand1 = Math::Random::Float(0, 1);
+			float rand2 = Math::Random::Float(0, 1);
 
-			// Distribute more kernels closer to origin
-			float scale = i / (float)numSamples;
-			scale = Math::Lerp(0.1f, 1.f, scale * scale);
-			sample *= scale;
+			float angle = 2 * Math::PI<float>() * rand1 / numDir;
 
-			ssaoKernel[i] = sample;
+			result[i].x = Math::Cos(angle);
+			result[i].y = Math::Sin(angle);
+			result[i].z = rand2;
+			result[i].w = 0;
 		}
 
-		return ssaoKernel;
-	}
-
-	std::vector<Vector2> TextureGenerator::GetAOKernelNoise(uint32 numSamples)
-	{
-		std::vector<Vector2> ssaoNoise(numSamples);
-		for (uint32 i = 0; i < numSamples; ++i)
-		{
-			Vector2 sample;
-			sample.x = Math::Random::Float(-1, 1);
-			sample.y = Math::Random::Float(-1, 1);
-			sample.Normalize();
-
-			ssaoNoise[i] = sample;
-		}
-
-		return ssaoNoise;
+		return result;
 	}
 }

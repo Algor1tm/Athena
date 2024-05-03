@@ -24,6 +24,7 @@ namespace Athena
 		RGBA8,
 		RGBA8_SRGB,
 
+		R32F,
 		RG16F,
 		RGB16F,
 		R11G11B10F,
@@ -294,6 +295,7 @@ namespace Athena
 	{
 		switch (format)
 		{
+		case TextureFormat::R32F:		return true;
 		case TextureFormat::RG16F:		return true;
 		case TextureFormat::R11G11B10F: return true;
 		case TextureFormat::RGB16F:		return true;
@@ -318,6 +320,8 @@ namespace Athena
 		case TextureFormat::RGB8_SRGB:	   return 3 * 1;
 		case TextureFormat::RGBA8:		   return 4 * 1;
 		case TextureFormat::RGBA8_SRGB:	   return 4 * 1;
+
+		case TextureFormat::R32F:		   return 1 * 4;
 		case TextureFormat::RG16F:		   return 2 * 2;
 		case TextureFormat::R11G11B10F:	   return 4;
 		case TextureFormat::RGB16F:		   return 3 * 2;
@@ -340,6 +344,7 @@ namespace Athena
 		{
 		case TextureFormat::R8:			   
 		case TextureFormat::R8_SRGB:
+		case TextureFormat::R32F:
 		case TextureFormat::DEPTH16:
 		case TextureFormat::DEPTH32F: 
 			return 1;

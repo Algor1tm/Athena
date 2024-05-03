@@ -10,12 +10,16 @@ namespace Athena
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top, bool rotation)
 		: m_Position(0.f), m_Rotation(0.f), m_EnableRotation(rotation)
 	{
+		m_NearClip = -1.f;
+		m_FarClip = 1.f;
 		RecalculateView();
 		RecalculateProjection();
 	}
 
 	OrthographicCamera::OrthographicCamera(float aspectRatio, bool rotation)
 	{
+		m_NearClip = -1.f;
+		m_FarClip = 1.f;
 		m_AspectRatio = aspectRatio;
 		m_EnableRotation = rotation;
 
@@ -25,8 +29,6 @@ namespace Athena
 
 	void OrthographicCamera::SetProjection(float left, float right, float bottom, float top)
 	{
-		m_NearClip = -1.f;
-		m_FarClip = 1.f;
 		m_ProjectionMatrix = Math::Ortho(left, right, bottom, top, m_NearClip, m_FarClip);
 	}
 
@@ -88,6 +90,29 @@ namespace Athena
 		return false;
 	}
 
+	//void OrthographicCamera::SetNearClip(float near)
+	//{
+	//	m_NearClip = near;
+	//	RecalculateProjection();
+	//}
+
+	//void OrthographicCamera::SetFarClip(float far)
+	//{
+	//	m_FarClip = far;
+	//	RecalculateProjection();
+	//}
+
+	CameraInfo OrthographicCamera::GetCameraInfo() const
+	{
+		CameraInfo info;
+		info.NearClip = m_NearClip;
+		info.NearClip = m_FarClip;
+		info.ProjectionMatrix = m_ProjectionMatrix;
+		info.ViewMatrix = m_ViewMatrix;
+		info.FOV = 0.f;
+
+		return info;
+	}
 
 
 	Vector2 PerspectiveEditorCameraBase::UpdateMousePosition()
@@ -164,6 +189,17 @@ namespace Athena
 		m_ProjectionMatrix = Math::PerspectiveReverseZ(m_FOV, m_AspectRatio, m_NearClip, m_FarClip);
 	}
 
+	CameraInfo PerspectiveEditorCameraBase::GetCameraInfo() const
+	{
+		CameraInfo info;
+		info.NearClip = m_NearClip;
+		info.FarClip = m_FarClip;
+		info.ProjectionMatrix = m_ProjectionMatrix;
+		info.ViewMatrix = m_ViewMatrix;
+		info.FOV = m_FOV;
+
+		return info;
+	}
 
 	MeshViewerCamera::MeshViewerCamera(float fov, float aspectRatio, float nearClip, float farClip)
 		: PerspectiveEditorCameraBase(fov, aspectRatio, nearClip, farClip)

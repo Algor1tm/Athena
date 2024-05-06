@@ -57,8 +57,7 @@ namespace Athena
         m_ViewportRenderer->SetOnViewportResizeCallback(
             [this](uint32 width, uint32 height) { m_Renderer2D->OnViewportResize(width, height); });
         
-        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(50.f), 16.f / 9.f, 1.f, 200.f);
-        //m_EditorCamera = Ref<OrthographicCamera>::Create(-1.f, 1.f, -1.f, 1.f, true);
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(45.f), 16.f / 9.f, 1.f, 200.f);
 
         EditorResources::Init(m_Config.EditorResources);
 

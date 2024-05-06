@@ -77,11 +77,11 @@ namespace Athena
 
 	struct AmbientOcclusionSettings
 	{
-		bool Enable = false;
+		bool Enable = true;
 		float Intensity = 2.f;
-		float Radius = 2.f;
+		float Radius = 1.5f;
 		float Bias = 0.1f;
-		float BlurSharpness = 40.f;
+		float BlurSharpness = 25.f;
 	};
 
 	struct QualitySettings
@@ -163,7 +163,7 @@ namespace Athena
 		Vector2 InvResolution;
 		Vector2 InvQuarterResolution;
 
-		float R2;
+		Vector4 ProjInfo;
 		float NegInvR2;
 		float RadiusToScreen;
 		float AOMultiplier;
@@ -171,7 +171,7 @@ namespace Athena
 		float Intensity;
 		float Bias;
 		float BlurSharpness;
-		float _Pad0;
+		Vector2 _Pad0;
 	};
 
 	struct SceneRendererStatistics
@@ -232,7 +232,7 @@ namespace Athena
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
-		Ref<RenderPass> GetAOPass() { return m_HBAOBlurPass; }
+		Ref<RenderPass> GetAOPass() { return m_HBAOBlurYPass; }
 		Ref<Pipeline> GetSkyboxPipeline() { return m_SkyboxPipeline; }
 
 		Antialising GetAntialising() { return m_Settings.PostProcessingSettings.AntialisingMethod; }
@@ -290,8 +290,10 @@ namespace Athena
 		Ref<ComputePipeline> m_HBAODeinterleavePipeline;
 		Ref<ComputePass> m_HBAOComputePass;
 		Ref<ComputePipeline> m_HBAOComputePipeline;
-		Ref<RenderPass> m_HBAOBlurPass;
-		Ref<Pipeline> m_HBAOBlurPipeline;
+		Ref<RenderPass> m_HBAOBlurXPass;
+		Ref<Pipeline> m_HBAOBlurXPipeline;
+		Ref<RenderPass> m_HBAOBlurYPass;
+		Ref<Pipeline> m_HBAOBlurYPipeline;
 
 		Ref<RenderPass> m_DeferredLightingPass;
 		Ref<Pipeline> m_DeferredLightingPipeline;

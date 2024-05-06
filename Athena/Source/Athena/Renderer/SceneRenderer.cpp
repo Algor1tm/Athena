@@ -253,7 +253,6 @@ namespace Athena
 
 				m_HBAOComputePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("HBAO-Compute"));
 				m_HBAOComputePipeline->SetInput("u_Output", hbaoOutput);
-				m_HBAOComputePipeline->SetInput("u_CameraData", m_CameraUBO);
 				m_HBAOComputePipeline->SetInput("u_HBAOData", m_HBAO_UBO);
 				m_HBAOComputePipeline->SetInput("u_DepthLayers", m_HBAODeinterleavePass->GetOutput("HBAO-DepthLayers"));
 				m_HBAOComputePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
@@ -267,13 +266,62 @@ namespace Athena
 					m_HBAOData.Float2Offsets[i] = Vector4(float(i % 4) + 0.5f, float(i / 4) + 0.5f, 0.0f, 0.0f);
 				}
 			}
+
+			// Blur X
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "HBAO-BlurX";
+				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+
+				RenderTarget blurTarget = { "HBAO-BlurredX", TextureFormat::RG16F, TextureFilter::LINEAR };
+				blurTarget.ClearColor = Vector4(1.0);
+
+				m_HBAOBlurXPass = RenderPass::Create(passInfo);
+				m_HBAOBlurXPass->SetOutput(blurTarget);
+				m_HBAOBlurXPass->Bake();
+
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
+				pipelineInfo.Name = "HBAO-BlurXPipeline";
+				pipelineInfo.RenderPass = m_HBAOBlurXPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("HBAO-BlurX");
+
+				m_HBAOBlurXPipeline = Pipeline::Create(pipelineInfo);
+				m_HBAOBlurXPipeline->SetInput("u_HBAOData", m_HBAO_UBO);
+				m_HBAOBlurXPipeline->SetInput("u_AODepth", m_HBAOComputePass->GetOutput("HBAO-Output"));
+				m_HBAOBlurXPipeline->Bake();
+			}
+
+			// Blur Y
+			{
+				RenderPassCreateInfo passInfo;
+				passInfo.Name = "HBAO-BlurY";
+				passInfo.InputPass = m_HBAOBlurXPass;
+				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+
+				RenderTarget blurTarget = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
+				blurTarget.ClearColor = Vector4(1.0);
+
+				m_HBAOBlurYPass = RenderPass::Create(passInfo);
+				m_HBAOBlurYPass->SetOutput(blurTarget);
+				m_HBAOBlurYPass->Bake();
+
+				PipelineCreateInfo pipelineInfo = fullscreenPipeline;
+				pipelineInfo.Name = "HBAO-BlurYPipeline";
+				pipelineInfo.RenderPass = m_HBAOBlurYPass;
+				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("HBAO-BlurY");
+
+				m_HBAOBlurYPipeline = Pipeline::Create(pipelineInfo);
+				m_HBAOBlurYPipeline->SetInput("u_HBAOData", m_HBAO_UBO);
+				m_HBAOBlurYPipeline->SetInput("u_AODepth", m_HBAOBlurXPass->GetOutput("HBAO-BlurredX"));
+				m_HBAOBlurYPipeline->Bake();
+			}
 		}
 
 		// DEFERRED LIGHTING PASS
 		{
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DeferredLightingPass";
-			//passInfo.InputPass = m_SSAODenoisePass;
+			passInfo.InputPass = m_HBAOBlurYPass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
@@ -305,7 +353,7 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
 			m_DeferredLightingPipeline->SetInput("u_SceneNormalsEmission", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 			m_DeferredLightingPipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
-			m_DeferredLightingPipeline->SetInput("u_SceneAO", TextureGenerator::GetWhiteTexture());
+			m_DeferredLightingPipeline->SetInput("u_SceneAO", m_HBAOBlurYPass->GetOutput("SceneAO"));
 
 			m_DeferredLightingPipeline->Bake();
 		}
@@ -345,9 +393,6 @@ namespace Athena
 			texInfo.Name = "BloomTexture";
 			texInfo.Format = TextureFormat::R11G11B10F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
-			texInfo.Width = 1;
-			texInfo.Height = 1;
-			texInfo.Layers = 1;
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -631,7 +676,7 @@ namespace Athena
 				m_SMAAWeightsPipeline->Bake();
 			}
 
-			// SMAA Neighborhood Blending
+			// Neighborhood Blending
 			{
 				RenderPassCreateInfo passInfo;
 				passInfo.Name = "SMAA-BlendingPass";
@@ -740,6 +785,10 @@ namespace Athena
 
 		m_HBAODeinterleavePass->GetOutput(0).As<Texture2D>()->Resize(quarterWidth, quarterHeight);
 		m_HBAOComputePass->GetOutput(0).As<Texture2D>()->Resize(width, height);
+		m_HBAOBlurXPass->Resize(width, height);
+		m_HBAOBlurXPipeline->SetViewport(width, height);
+		m_HBAOBlurYPass->Resize(width, height);
+		m_HBAOBlurYPipeline->SetViewport(width, height);
 
 		m_BloomTexture->Resize(width, height);
 		m_BloomMaterials.clear();
@@ -964,10 +1013,12 @@ namespace Athena
 
 		float radius = m_Settings.AOSettings.Radius;
 		float projScale = float(m_ViewportSize.y) / (Math::Tan(cameraInfo.FOV * 0.5f) * 2.0f);
-		m_HBAOData.R2 = radius * radius;
-		m_HBAOData.NegInvR2 = -1.f / m_HBAOData.R2;
+		float projX = m_CameraData.InverseProjection[0][0];
+		float projY = m_CameraData.InverseProjection[1][1];
+		m_HBAOData.NegInvR2 = -1.f / (radius * radius);
 		m_HBAOData.RadiusToScreen = radius * 0.5f * projScale / 4.f;
 		m_HBAOData.AOMultiplier = 1.0f / (1.0f - m_HBAOData.Bias);
+		m_HBAOData.ProjInfo = Vector4(2.0, 2.0, -1.0, -1.0) * Vector4(projX, projY, projX, projY);
 	}
 
 	void SceneRenderer::EndScene()
@@ -1012,10 +1063,11 @@ namespace Athena
 		GBufferPass();
 		LightCullingPass();
 		HBAOPass();
+
 		LightingPass();
 		SkyboxPass();
 
-		if (m_Settings.BloomSettings.Enable)
+		if(m_Settings.BloomSettings.Enable)
 			BloomPass();
 
 		SceneCompositePass();
@@ -1055,7 +1107,6 @@ namespace Athena
 			m_StaticGeometryList.FlushNoMaterials(commandBuffer, m_DirShadowMapStaticPipeline, true);
 		}
 		Renderer::EndDebugRegion(commandBuffer);
-
 
 		Renderer::BeginDebugRegion(commandBuffer, "AnimatedGeometry", { 0.8f, 0.4f, 0.8f, 1.f });
 		{
@@ -1111,6 +1162,14 @@ namespace Athena
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
 
+		if (!m_Settings.AOSettings.Enable)
+		{
+			// Clear
+			m_HBAOBlurYPass->Begin(commandBuffer);
+			m_HBAOBlurYPass->End(commandBuffer);
+			return;
+		}
+
 		auto [quarterWidth, quarterHeight] = (m_ViewportSize + 3) / 4;
 
 		m_Profiler->BeginTimeQuery();
@@ -1130,6 +1189,11 @@ namespace Athena
 		}
 		m_HBAOComputePass->End(commandBuffer);
 		m_Profiler->EndTimeQuery(&m_Statistics.HBAOComputePass);
+
+		m_Profiler->BeginTimeQuery();
+		Renderer::FullscreenPass(commandBuffer, m_HBAOBlurXPass, m_HBAOBlurXPipeline);
+		Renderer::FullscreenPass(commandBuffer, m_HBAOBlurYPass, m_HBAOBlurYPipeline);
+		m_Profiler->EndTimeQuery(&m_Statistics.HBAOBlurPass);
 	}
 
 	void SceneRenderer::LightingPass()

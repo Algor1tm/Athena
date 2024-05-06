@@ -198,7 +198,6 @@ namespace Athena
 		for (int i = 0; i < numSamples; i++)
 		{
 			// Use random rotation angles in [0,2PI/NUM_DIRECTIONS)
-
 			float rand1 = Math::Random::Float(0, 1);
 			float rand2 = Math::Random::Float(0, 1);
 

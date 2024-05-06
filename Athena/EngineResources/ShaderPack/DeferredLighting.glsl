@@ -40,7 +40,8 @@ void main()
     vec3 worldPos = WorldPositionFromDepth(v_TexCoords, depth, u_Camera.InverseProjection, u_Camera.InverseView);
 
     vec4 normalEmission = texture(u_SceneNormalsEmission, v_TexCoords);
-    vec3 normal = normalEmission.rgb * 2.0 - 1.0;
+    vec3 viewSpaceNormal = normalEmission.rgb * 2.0 - 1.0;
+    vec3 normal = normalize(vec3(u_Camera.InverseView * vec4(viewSpaceNormal, 0.0)));
 
     vec3 albedo = texture(u_SceneAlbedo, v_TexCoords).rgb;
 

@@ -58,7 +58,7 @@ namespace Athena
             textures[0] = gbuffer->GetOutput("SceneDepth")->GetView(grayScaleView);
             textures[1] = gbuffer->GetOutput("SceneNormalsEmission")->GetView(view);
             textures[2] = gbuffer->GetOutput("SceneRoughnessMetalness")->GetView(view);
-           // textures[3] = aoPass->GetOutput("SceneAO")->GetView(grayScaleView);
+            textures[3] = aoPass->GetOutput("SceneAO")->GetView(grayScaleView);
             textures[4] = gbuffer->GetOutput("SceneAlbedo")->GetView(view);
             textures[5] = m_ViewportRenderer->GetFinalImage()->GetView(view);
 

@@ -29,15 +29,15 @@ layout(location = 0) out VertexInterpolators Interpolators;
 void main()
 {
     mat4 transform = GetTransform(a_TRow0, a_TRow1, a_TRow2, a_TRow3);
+    mat4 viewTransform = u_Camera.View * transform;
 
-    vec4 worldPos = transform * vec4(a_Position, 1.0);
-    gl_Position = u_Camera.ViewProjection * worldPos;
+    gl_Position = u_Camera.Projection * viewTransform * vec4(a_Position, 1.0);
 
     Interpolators.TexCoords = a_TexCoords;
-    Interpolators.Normal = normalize(transform * vec4(a_Normal, 0)).xyz;
+    Interpolators.Normal = normalize(viewTransform * vec4(a_Normal, 0)).xyz;
 
-    vec3 T = normalize(transform * vec4(a_Tangent, 0)).xyz;
-    vec3 B = normalize(transform * vec4(a_Bitangent, 0)).xyz;
+    vec3 T = normalize(viewTransform * vec4(a_Tangent, 0)).xyz;
+    vec3 B = normalize(viewTransform * vec4(a_Bitangent, 0)).xyz;
     vec3 N =  Interpolators.Normal;
     T = normalize(T - dot(T, N) * N);
     

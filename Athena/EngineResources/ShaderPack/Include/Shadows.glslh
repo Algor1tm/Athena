@@ -8,7 +8,7 @@
 #define DEBUG_BLEND_CASCADES
 #define ROTATE_SAMPLE
 
-#define SHADOWS_PRESET 2
+#define SHADOWS_PRESET 1
 
 /*--------------------------------------------------------------------------*/
 #if (SHADOWS_PRESET == 0)
@@ -237,10 +237,6 @@ float ShadowPCSS(vec3 shadowCoords, int cascade, float bias, float lightSize, ve
     // There are no occluders so early out
     if(numBlockers == 0)
         return 1.0;
-
-	// Do not perform filtering if full shadowed
-	if(numBlockers == BLOCKER_SEARCH_SAMPLES)
-		return 0.0;
 
     // STEP 2: penumbra size
     //float penumbra = depth * depth - avgBlockerDepth * avgBlockerDepth;

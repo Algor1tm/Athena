@@ -330,6 +330,20 @@ namespace Athena
 				}
 
 				{
+					const auto& textComponentNode = entityNode["TextComponent"];
+					if (textComponentNode)
+					{
+						auto& text = deserializedEntity.AddComponent<TextComponent>();
+
+						text.Text = textComponentNode["Text"].as<String>();
+						text.Font = Font::Create(textComponentNode["Font"].as<String>());
+						text.Color = textComponentNode["Color"].as<LinearColor>();
+						text.Kerning = textComponentNode["Kerning"].as<float>();
+						text.LineSpacing = textComponentNode["LineSpacing"].as<float>();
+					}
+				}
+
+				{
 					const auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
 					if (rigidbody2DComponentNode)
 					{
@@ -584,6 +598,15 @@ namespace Athena
 				output << YAML::Key << "Color" << YAML::Value << circle.Color;
 				output << YAML::Key << "Thickness" << YAML::Value << circle.Thickness;
 				output << YAML::Key << "Fade" << YAML::Value << circle.Fade;
+			});
+
+		SerializeComponent<TextComponent>(out, "TextComponent", entity, [](YAML::Emitter& output, const TextComponent& text)
+			{
+				output << YAML::Key << "Text" << YAML::Value << text.Text;
+				output << YAML::Key << "Font" << YAML::Value << text.Font->GetFilePath().string();
+				output << YAML::Key << "Color" << YAML::Value << text.Color;
+				output << YAML::Key << "Kerning" << YAML::Value << text.Kerning;
+				output << YAML::Key << "LineSpacing" << YAML::Value << text.LineSpacing;
 			});
 
 		SerializeComponent<Rigidbody2DComponent>(out, "Rigidbody2DComponent", entity,

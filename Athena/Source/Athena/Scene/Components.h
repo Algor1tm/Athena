@@ -109,6 +109,28 @@ namespace Athena
 			: Color(color) {}
 	};
 
+	struct TextComponent
+	{
+		String Text;
+		Ref<Font> Font = Font::GetDefault();
+		LinearColor Color;
+		float Kerning = 0.0f;
+		float LineSpacing = 0.0f;
+
+		TextComponent() = default;
+		TextComponent(TextComponent&& other) = default;
+		TextComponent& operator=(TextComponent&& other) noexcept = default;
+
+		TextComponent(const TextComponent& other)
+		{
+			Font = Font::Create(other.Font->GetFilePath());
+			Text = other.Text;
+			Color = other.Color;
+			Kerning = other.Kerning;
+			LineSpacing = other.LineSpacing;
+		}
+	};
+
 	struct CameraComponent
 	{
 		SceneCamera Camera;
@@ -119,24 +141,6 @@ namespace Athena
 	struct ScriptComponent
 	{
 		std::string Name;
-	};
-
-	// Forward declaration (defined in NativeScript.h)
-	class ATHENA_API NativeScript;
-
-	struct NativeScriptComponent
-	{
-		NativeScript* Script = nullptr;
-
-		NativeScript*(*InstantiateScript)() = nullptr;
-		void (*DestroyScript)(NativeScriptComponent*) = nullptr;
-		
-		template <typename T>
-		void Bind()
-		{
-			InstantiateScript = []() { return static_cast<NativeScript*>(new T()); };
-			DestroyScript = [](NativeScriptComponent* nsc) { delete nsc->Script; nsc->Script = nullptr; };
-		}
 	};
 
 
@@ -184,29 +188,13 @@ namespace Athena
 		bool Visible = true;
 
 		StaticMeshComponent() = default;
+		StaticMeshComponent(StaticMeshComponent&& other) = default;
+		StaticMeshComponent& operator=(StaticMeshComponent&& other) noexcept = default;
+
 		StaticMeshComponent(const StaticMeshComponent& other)
 		{
 			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
 			Visible = other.Visible;
-		}
-
-		StaticMeshComponent(StaticMeshComponent&& other) noexcept
-		{
-			Mesh = other.Mesh;
-			Visible = other.Visible;
-			other.Mesh = nullptr;
-		}
-
-		StaticMeshComponent& operator=(StaticMeshComponent&& other) noexcept
-		{
-			if (&other != this)
-			{
-				Mesh = other.Mesh;
-				Visible = other.Visible;
-				other.Mesh = nullptr;
-			}
-
-			return *this;
 		}
 	};
 
@@ -293,8 +281,8 @@ namespace Athena
 
 	using AllComponents =
 		ComponentGroup<WorldTransformComponent, TransformComponent, ParentComponent, ChildComponent,
-		SpriteComponent, CircleComponent, CameraComponent, 
-		ScriptComponent, NativeScriptComponent, 
+		SpriteComponent, CircleComponent, TextComponent, 
+		ScriptComponent, CameraComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
 		StaticMeshComponent, 
 		DirectionalLightComponent, PointLightComponent, SpotLightComponent, SkyLightComponent>;

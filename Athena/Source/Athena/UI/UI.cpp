@@ -4,6 +4,22 @@
 
 namespace Athena::UI
 {
+	namespace Utils
+	{
+		int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
+		{
+			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+			{
+				String* str = (String*)data->UserData;
+				ATN_CORE_ASSERT(&(*str->begin()) == data->Buf);
+				str->resize(data->BufSize); 
+				data->Buf = &(*str->begin());
+			}
+
+			return 0;
+		}
+	}
+
 	void* GetTextureID(const Ref<Texture2D>& texture)
 	{
 		return Application::Get().GetImGuiLayer()->GetTextureID(texture);
@@ -84,6 +100,15 @@ namespace Athena::UI
 		}
 
 		return false;
+	}
+
+	bool InputTextMultiline(std::string_view label, String& dst, ImVec2 size, ImGuiInputTextFlags flags)
+	{
+		if (dst.empty())
+			dst.push_back('\0');
+
+		flags |= ImGuiInputTextFlags_CallbackResize;
+		return ImGui::InputTextMultiline("##TextInput", dst.data(), dst.size(), size, flags, Utils::InputTextResizeCallback, (void*)&dst);
 	}
 
 	bool TreeNode(std::string_view label, bool defaultOpen, bool nested)

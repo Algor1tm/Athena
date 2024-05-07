@@ -81,7 +81,7 @@ namespace Athena
 		float Intensity = 2.f;
 		float Radius = 1.5f;
 		float Bias = 0.1f;
-		float BlurSharpness = 25.f;
+		float BlurSharpness = 12.f;
 	};
 
 	struct QualitySettings

@@ -24,6 +24,7 @@ namespace Athena
 
 	void SceneRenderer2D::Init(const Ref<RenderPass>& renderPass)
 	{
+		
 		m_IndicesCount.resize(Renderer::GetFramesInFlight());
 
 		IndexBufferCreateInfo indexBufferInfo;

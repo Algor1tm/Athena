@@ -1,15 +1,18 @@
 cmake_minimum_required (VERSION 3.5)
 
-function(AddLibrary TARGET_NAME TARGET_PATH)
-    add_subdirectory("${TARGET_PATH}")
-    EnableMultiProcessorCompilation(${TARGET_NAME})
-    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER Dependencies)
-
+function(SetBuildDirectory TARGET_NAME)
     set_target_properties(${TARGET_NAME}
 	PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}"
 	LIBRARY_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}"
 	RUNTIME_OUTPUT_DIRECTORY "${BUILD_FOLDER}/ThirdParty/${TARGET_NAME}")
+endfunction()
+
+function(AddLibrary TARGET_NAME TARGET_PATH)
+    add_subdirectory("${TARGET_PATH}")
+    EnableMultiProcessorCompilation(${TARGET_NAME})
+    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER Dependencies)
+	SetBuildDirectory(${TARGET_NAME})
 
     target_link_libraries(Athena PRIVATE ${TARGET_NAME})
 endfunction()
@@ -81,7 +84,7 @@ add_custom_command(TARGET Athena POST_BUILD
      "${BUILD_FOLDER}/SandBox/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
 
 # Delete shader cache on project compile
-add_custom_command(TARGET Athena POST_BUILD COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/Shaders/")
+#add_custom_command(TARGET Athena POST_BUILD COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/ShaderPack/")
 
 # Precompile Header
 target_precompile_headers(Athena PRIVATE
@@ -107,7 +110,9 @@ target_include_directories(Athena PRIVATE
 	${OPTICK_INCLUDE_DIR}
 	${PYBIND11_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
-	${YAML_CPP_INCLUDE_DIR})
+	${YAML_CPP_INCLUDE_DIR}
+	${MSDF_ATLAS_GEN_INCLUDE_DIR}
+	${MSDF_GEN_INCLUDE_DIR})
 
 
 AddLibrary("Box2D" "${THIRD_PARTY_DIR}/Box2D")
@@ -120,6 +125,17 @@ target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static comp
 
 AddLibrary(OptickCore "${THIRD_PARTY_DIR}/Optick/OptickCore")
 
+AddLibrary(msdf-atlas-gen "${THIRD_PARTY_DIR}/msdf-atlas-gen")
+set_property(TARGET msdf-atlas-gen PROPERTY FOLDER "Dependencies/msdfgen")
+
+EnableMultiProcessorCompilation(msdfgen)
+set_property(TARGET msdfgen PROPERTY FOLDER "Dependencies/msdfgen")
+SetBuildDirectory(msdfgen)
+target_compile_definitions(Athena PUBLIC MSDFGEN_PUBLIC=)
+
+EnableMultiProcessorCompilation(freetype)
+set_property(TARGET freetype PROPERTY FOLDER "Dependencies/msdfgen")
+SetBuildDirectory(freetype)
 
 
 if (Vulkan_FOUND)

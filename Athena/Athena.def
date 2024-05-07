@@ -42,6 +42,7 @@ EXPORTS
 	?ImageButton@ImGui@@YA_NPEBDPEAXAEBUImVec2@@22AEBUImVec4@@3@Z
 	?Indent@ImGui@@YAXM@Z
 	?InputText@ImGui@@YA_NPEBDPEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
+	?InputTextMultiline@ImGui@@YA_NPEBDPEAD_KAEBUImVec2@@HP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
 	?InvisibleButton@ImGui@@YA_NPEBDAEBUImVec2@@H@Z
 	?IsAnyItemActive@ImGui@@YA_NXZ
 	?IsItemClicked@ImGui@@YA_NH@Z

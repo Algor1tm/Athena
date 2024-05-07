@@ -39,6 +39,7 @@ namespace Athena::UI
 
 	ATHENA_API bool TextInput(const String& label, String& destination, ImGuiInputTextFlags flags = 0);
 	ATHENA_API bool TextInputWithHint(const std::string_view hint, String& destination, ImGuiInputTextFlags flags = 0);
+	ATHENA_API bool InputTextMultiline(std::string_view label, String& dst, ImVec2 size, ImGuiInputTextFlags flags = 0);
 
 	// Tree
 	ATHENA_API bool TreeNode(std::string_view label, bool defaultOpen = true, bool nested = false);
@@ -69,6 +70,7 @@ namespace Athena::UI
 	// Widgets
 	ATHENA_API bool ComboBox(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool ComboBox(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
+
 
 	ATHENA_API void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,

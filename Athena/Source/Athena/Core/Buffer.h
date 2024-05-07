@@ -55,7 +55,9 @@ namespace Athena
 		{
 			Release();
 
-			m_Data = (byte*)malloc(size);
+			if(size != 0)
+				m_Data = (byte*)malloc(size);
+
 			m_Size = size;
 		}
 
@@ -68,7 +70,7 @@ namespace Athena
 
 		void Write(void* data, uint64 size, uint64 offset = 0)
 		{
-			memcpy(m_Data, data, size);
+			memcpy(m_Data + offset, data, size);
 		}
 
 		template<typename T>

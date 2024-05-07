@@ -170,3 +170,19 @@ Entities:
     StaticMeshComponent:
       FilePath: Assets\Meshes\Cube.obj
       Visible: true
+  - IDComponent:
+      ID: 1454649843796548308
+    TagComponent:
+      Tag: Text
+    TransformComponent:
+      Translation: [0, 2.67366886, 1.19556236]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ParentComponent:
+      Parent: 15204102483634061799
+    TextComponent:
+      Text: ""
+      Font: ../Athena/EngineResources\Fonts/Open_Sans/OpenSans-Medium.ttf
+      Color: [1, 1, 1, 1]
+      Kerning: 0
+      LineSpacing: 0

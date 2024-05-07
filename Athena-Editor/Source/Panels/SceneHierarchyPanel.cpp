@@ -420,6 +420,7 @@ namespace Athena
 			DrawAddComponentEntry<ScriptComponent>(entity, "Script");
 			DrawAddComponentEntry<SpriteComponent>(entity, "Sprite");
 			DrawAddComponentEntry<CircleComponent>(entity, "Circle");
+			DrawAddComponentEntry<TextComponent>(entity, "Text");
 			DrawAddComponentEntry<Rigidbody2DComponent>(entity, "Rigidbody2D");
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
@@ -604,16 +605,11 @@ namespace Athena
 					{
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 						{
-							std::string_view path = (const char*)payload->Data;
-							std::string_view extent = path.substr(path.size() - 4, path.size());
-							if (extent == ".png\0")
+							FilePath path = (const char*)payload->Data;
+							if (path.extension() == ".png\0")
 							{
 								sprite.Texture = TextureImporter::Load(FilePath(path), true);
 								sprite.Color = LinearColor::White;
-							}
-							else
-							{
-								ATN_ERROR_TAG("SceneHierarchyPanel", "Invalid texture sprite format '{}'", extent);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -649,6 +645,46 @@ namespace Athena
 				UI::PropertyColor4("Color", circle.Color.Data());
 				UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
 				UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
+
+				UI::EndPropertyTable();
+			}
+		});
+
+		DrawComponent<TextComponent>(entity, "Text", [](TextComponent& text)
+		{
+			if (UI::BeginPropertyTable())
+			{
+				UI::PropertyRow("Text", ImGui::GetFrameHeight());
+				UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
+
+				bool isDefault = Font::GetDefault()->GetFilePath() == text.Font->GetFilePath();
+				String fontName = isDefault ? "Default" : text.Font->GetFilePath().filename().string();
+
+				UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10, 4});
+				if (ImGui::Button(fontName.c_str()))
+				{
+					FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0"));
+					if (!filepath.empty() && filepath.extension() == ".ttf")
+						text.Font = Font::Create(filepath);
+				}
+
+				ImGui::PopStyleVar();
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					{
+						FilePath filepath = (const char*)payload->Data;
+						if (filepath.extension() == ".ttf")
+							text.Font = Font::Create(filepath);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				UI::PropertyColor4("Color", text.Color.Data());
+				UI::PropertyDrag("Kerning", &text.Kerning);
+				UI::PropertyDrag("Line Spacing", &text.LineSpacing);
 
 				UI::EndPropertyTable();
 			}
@@ -736,7 +772,32 @@ namespace Athena
 			{
 				String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
 
-				UI::PropertyText("Mesh", meshFilename.c_str());
+				String name = meshComponent.Mesh->GetFilePath().filename().string();
+
+				UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
+				if (ImGui::Button(name.c_str()))
+				{
+					FilePath filepath = FileDialogs::OpenFile(TEXT("Mesh *.gltf\0*.fbx\0.obj\0.blend\0"));
+					String ext = filepath.extension().string();
+					if (!filepath.empty() && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+						meshComponent.Mesh = StaticMesh::Create(filepath);
+				}
+
+				ImGui::PopStyleVar();
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					{
+						FilePath filepath = (const char*)payload->Data;
+						String ext = filepath.extension().string();
+						if (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend")
+							meshComponent.Mesh = StaticMesh::Create(filepath);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
 				UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 
 				UI::EndPropertyTable();
@@ -898,9 +959,7 @@ namespace Athena
 						{
 							FilePath filepath = FileDialogs::OpenFile(TEXT("EnvironmentMap (*.hdr)\0*.hdr\0"));
 							if (!filepath.empty())
-							{
 								envMap->SetFilePath(filepath);
-							}
 						}
 					}
 				}

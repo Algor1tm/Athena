@@ -58,10 +58,10 @@ void main()
     vec3 viewDir = normalize(u_Camera.Position - worldPos);
 
     vec3 directional = GetDirectionalLight(normal, albedo.rgb, roughness, metalness, worldPos, viewDir, vec2(gl_FragCoord));
-    vec3 ambient = GetAmbientLight(normal, albedo.rgb, metalness, roughness, viewDir) * ao;
+    vec3 ambient = GetAmbientLight(normal, albedo.rgb, metalness, roughness, viewDir);
     vec3 emission = emissionColor * emissionIntensity;
 
-    vec3 hdrColor = directional + ambient + emission;
+    vec3 hdrColor = directional + ambient * ao + emission;
     
     // Debug info
     if(bool(u_Renderer.DebugShadowCascades))

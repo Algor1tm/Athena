@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/Font.h"
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ComputePass.h"
@@ -91,10 +92,12 @@ namespace Athena
 		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
 		TextureGenerator::Init();
+		Font::Init();
 	}
 
 	void Renderer::Shutdown()
 	{
+		Font::Shutdown();
 		TextureGenerator::Shutdown();
 
 		s_Data.MaterialTable.Release();

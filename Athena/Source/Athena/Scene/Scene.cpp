@@ -8,7 +8,6 @@
 
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
-#include "Athena/Scene/NativeScript.h"
 
 #include "Athena/Scripting/PrivateScriptEngine.h"
 
@@ -308,19 +307,6 @@ namespace Athena
 				Entity entity = { id, this };
 				PrivateScriptEngine::OnUpdateEntity(entity, frameTime);
 			}
-
-			m_Registry.view<NativeScriptComponent>().each([=](auto entityID, auto& nsc)
-				{
-					if (!nsc.Script)
-					{
-						nsc.Script = nsc.InstantiateScript();
-						nsc.Script->m_Entity = Entity(entityID, this);
-
-						nsc.Script->Init();
-					}
-
-					nsc.Script->OnUpdate(frameTime);
-				});
 		}
 
 		// Update Animations

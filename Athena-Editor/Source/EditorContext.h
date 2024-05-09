@@ -16,7 +16,7 @@ namespace Athena
 	{
 		bool GizmosLocalTransform = true;
 		float CameraSpeedLevel = 0.3f;
-		bool ShowRendererIcons = true;
+		bool ShowRendererIcons = false;
 		float RendererIconsScale = 1.f;
 		Vector2 NearFarClips = { 1.f, 200.f };
 		bool ShowPhysicsColliders = false;

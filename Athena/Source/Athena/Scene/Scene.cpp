@@ -608,6 +608,20 @@ namespace Athena
 
 			renderer2D->DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
 		}
+
+		auto textEntities = GetAllEntitiesWith<TextComponent, WorldTransformComponent>();
+		for (auto entity : textEntities)
+		{
+			const auto& transform = textEntities.get<WorldTransformComponent>(entity);
+			const auto& text = textEntities.get<TextComponent>(entity);
+
+			TextParams params;
+			params.Color = text.Color;
+			params.Kerning = text.Kerning;
+			params.LineSpacing = text.LineSpacing;
+
+			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), params);
+		}
 	}
 
 	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)

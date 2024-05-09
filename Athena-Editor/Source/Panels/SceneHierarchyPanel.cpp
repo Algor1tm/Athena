@@ -1,6 +1,7 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Athena/Core/PlatformUtils.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Asset/TextureImporter.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Renderer/Animation.h"
@@ -439,80 +440,71 @@ namespace Athena
 
 		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				DrawVec3Property("Translation", transform.Translation, 0.0f);
+			DrawVec3Property("Translation", transform.Translation, 0.0f);
 
-				Vector3 degrees = Math::Degrees(transform.Rotation.AsEulerAngles());
-				DrawVec3Property("Rotation", degrees, 0.0f);
-				transform.Rotation = Math::Radians(degrees);
+			Vector3 degrees = Math::Degrees(transform.Rotation.AsEulerAngles());
+			DrawVec3Property("Rotation", degrees, 0.0f);
+			transform.Rotation = Math::Radians(degrees);
 
-				DrawVec3Property("Scale", transform.Scale, 1.0f);
+			DrawVec3Property("Scale", transform.Scale, 1.0f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<ScriptComponent>(entity, "Script", [entity](ScriptComponent& script)
 		{
-			if (UI::BeginPropertyTable())
+			auto modules = ScriptEngine::GetAvailableModules();
+
+			UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
+
+			if (!ScriptEngine::ExistsScript(script.Name))
+				return true;
+
+			const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
+			ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);
+
+			for (const auto& [name, field] : fieldsDesc)
 			{
-				auto modules = ScriptEngine::GetAvailableModules();
-
-				UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
-
-				if (!ScriptEngine::ExistsScript(script.Name))
+				auto& fieldStorage = fieldMap.at(name);
+				if (field.Type == ScriptFieldType::Int)
 				{
-					UI::EndPropertyTable();
-					return;
+					int data = fieldStorage.GetValue<int>();
+					if (UI::PropertyDrag(name.c_str(), &data))
+						fieldStorage.SetValue(data);
 				}
-
-				const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
-				ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);
-
-				for (const auto& [name, field] : fieldsDesc)
+				else if (field.Type == ScriptFieldType::Float)
 				{
-					auto& fieldStorage = fieldMap.at(name);
-					if (field.Type == ScriptFieldType::Int)
-					{
-						int data = fieldStorage.GetValue<int>();
-						if (UI::PropertyDrag(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
-					else if (field.Type == ScriptFieldType::Float)
-					{
-						float data = fieldStorage.GetValue<float>();
-						if (UI::PropertyDrag(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
-					else if (field.Type == ScriptFieldType::Bool)
-					{
-						bool data = fieldStorage.GetValue<bool>();
-						if (UI::PropertyCheckbox(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
-					else if (field.Type == ScriptFieldType::Vector2)
-					{
-						Vector2 data = fieldStorage.GetValue<Vector2>();
-						if (UI::PropertyDrag(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
-					else if (field.Type == ScriptFieldType::Vector3)
-					{
-						Vector3 data = fieldStorage.GetValue<Vector3>();
-						if (UI::PropertyDrag(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
-					else if (field.Type == ScriptFieldType::Vector4)
-					{
-						Vector4 data = fieldStorage.GetValue<Vector4>();
-						if (UI::PropertyDrag(name.c_str(), &data))
-							fieldStorage.SetValue(data);
-					}
+					float data = fieldStorage.GetValue<float>();
+					if (UI::PropertyDrag(name.c_str(), &data))
+						fieldStorage.SetValue(data);
 				}
-
-				UI::EndPropertyTable();
+				else if (field.Type == ScriptFieldType::Bool)
+				{
+					bool data = fieldStorage.GetValue<bool>();
+					if (UI::PropertyCheckbox(name.c_str(), &data))
+						fieldStorage.SetValue(data);
+				}
+				else if (field.Type == ScriptFieldType::Vector2)
+				{
+					Vector2 data = fieldStorage.GetValue<Vector2>();
+					if (UI::PropertyDrag(name.c_str(), &data))
+						fieldStorage.SetValue(data);
+				}
+				else if (field.Type == ScriptFieldType::Vector3)
+				{
+					Vector3 data = fieldStorage.GetValue<Vector3>();
+					if (UI::PropertyDrag(name.c_str(), &data))
+						fieldStorage.SetValue(data);
+				}
+				else if (field.Type == ScriptFieldType::Vector4)
+				{
+					Vector4 data = fieldStorage.GetValue<Vector4>();
+					if (UI::PropertyDrag(name.c_str(), &data))
+						fieldStorage.SetValue(data);
+				}
 			}
+
+			return true;
 		});
 
 		DrawComponent<CameraComponent>(entity, "Camera", [](CameraComponent& cameraComponent)
@@ -541,153 +533,137 @@ namespace Athena
 				return (SceneCamera::ProjectionType)0;
 			};
 
-			if (UI::BeginPropertyTable())
+			std::string_view projTypesStrings[] = { "Orthographic", "Perspective" };
+			std::string_view currentTypeString = typeToStr(camera.GetProjectionType());
+
+			if(UI::PropertyCombo("Projection", projTypesStrings, std::size(projTypesStrings), &currentTypeString))
 			{
-				std::string_view projTypesStrings[] = { "Orthographic", "Perspective" };
-				std::string_view currentTypeString = typeToStr(camera.GetProjectionType());
-
-				if(UI::PropertyCombo("Projection", projTypesStrings, std::size(projTypesStrings), &currentTypeString))
-				{
-					camera.SetProjectionType(strToType(currentTypeString));
-				}
-
-				if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
-				{
-					auto perspectiveDesc = camera.GetPerspectiveData();
-					bool used = false;
-
-					float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
-					used = UI::PropertySlider("FOV", &degreesFOV, 0.f, 360.f) || used;
-					used = UI::PropertySlider("NearClip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
-					used = UI::PropertySlider("FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
-
-					if (used)
-					{
-						perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
-						camera.SetPerspectiveData(perspectiveDesc);
-					}
-				}
-
-				else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
-				{
-					auto orthoDesc = camera.GetOrthographicData();
-					bool used = false;
-
-					used = UI::PropertyDrag("Size", &orthoDesc.Size, 0.1f) || used;
-					used = UI::PropertySlider("NearClip", &orthoDesc.NearClip, -10.f, 0.f) || used;
-					used = UI::PropertySlider("FarClip", &orthoDesc.FarClip, 0.f, 10.f) || used;
-
-					if (used)
-					{
-						camera.SetOrthographicData(orthoDesc);
-					}
-				}
-
-				UI::PropertyCheckbox("Primary", &cameraComponent.Primary);
-				UI::PropertyCheckbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
-
-				UI::EndPropertyTable();
+				camera.SetProjectionType(strToType(currentTypeString));
 			}
+
+			if (camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
+			{
+				auto perspectiveDesc = camera.GetPerspectiveData();
+				bool used = false;
+
+				float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
+				used = UI::PropertySlider("FOV", &degreesFOV, 0.f, 360.f) || used;
+				used = UI::PropertySlider("NearClip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
+				used = UI::PropertySlider("FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
+
+				if (used)
+				{
+					perspectiveDesc.VerticalFOV = Math::Radians(degreesFOV);
+					camera.SetPerspectiveData(perspectiveDesc);
+				}
+			}
+
+			else if (camera.GetProjectionType() == SceneCamera::ProjectionType::Orthographic)
+			{
+				auto orthoDesc = camera.GetOrthographicData();
+				bool used = false;
+
+				used = UI::PropertyDrag("Size", &orthoDesc.Size, 0.1f) || used;
+				used = UI::PropertySlider("NearClip", &orthoDesc.NearClip, -10.f, 0.f) || used;
+				used = UI::PropertySlider("FarClip", &orthoDesc.FarClip, 0.f, 10.f) || used;
+
+				if (used)
+				{
+					camera.SetOrthographicData(orthoDesc);
+				}
+			}
+
+			UI::PropertyCheckbox("Primary", &cameraComponent.Primary);
+			UI::PropertyCheckbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
+
+			return true;
 		});
 
 		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
 		{
-			if (UI::BeginPropertyTable())
+			UI::PropertyColor4("Color", sprite.Color.Data());
+			UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
+
+			float imageSize = 45.f;
+			UI::PropertyImage("Texture", sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
+
+			if (ImGui::BeginDragDropTarget())
 			{
-				UI::PropertyColor4("Color", sprite.Color.Data());
-				UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
-
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					float imageSize = 45.f;
-					UI::PropertyImage("Texture", sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
-
-					if (ImGui::BeginDragDropTarget())
+					FilePath path = (const char*)payload->Data;
+					if (path.extension() == ".png\0")
 					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-						{
-							FilePath path = (const char*)payload->Data;
-							if (path.extension() == ".png\0")
-							{
-								sprite.Texture = TextureImporter::Load(FilePath(path), true);
-								sprite.Color = LinearColor::White;
-							}
-						}
-						ImGui::EndDragDropTarget();
-					}
-
-					ImGui::SameLine();
-					ImVec2 cursor = ImGui::GetCursorPos();
-					if (ImGui::Button("Browse"))
-					{
-						FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
-						if (!path.empty())
-						{
-							sprite.Texture = TextureImporter::Load(path, true);
-							sprite.Color = LinearColor::White;
-						}
-					}
-
-					ImGui::SetCursorPos({ cursor.x, cursor.y + imageSize / 1.8f });
-					if (ImGui::Button("Reset"))
-					{
-						sprite.Texture = TextureGenerator::GetWhiteTexture();
+						sprite.Texture = TextureImporter::Load(FilePath(path), true);
+						sprite.Color = LinearColor::White;
 					}
 				}
-
-				UI::EndPropertyTable();
+				ImGui::EndDragDropTarget();
 			}
+
+			ImGui::SameLine();
+			ImVec2 cursor = ImGui::GetCursorPos();
+			if (ImGui::Button("Browse"))
+			{
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
+				if (!path.empty())
+				{
+					sprite.Texture = TextureImporter::Load(path, true);
+					sprite.Color = LinearColor::White;
+				}
+			}
+
+			ImGui::SetCursorPos({ cursor.x, cursor.y + imageSize / 1.8f });
+			if (ImGui::Button("Reset"))
+				sprite.Texture = TextureGenerator::GetWhiteTexture();
+
+			return true;
 		});
 
 		DrawComponent<CircleComponent>(entity, "Circle", [](CircleComponent& circle)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyColor4("Color", circle.Color.Data());
-				UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
-				UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
+			UI::PropertyColor4("Color", circle.Color.Data());
+			UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
+			UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<TextComponent>(entity, "Text", [](TextComponent& text)
 		{
-			if (UI::BeginPropertyTable())
+			UI::PropertyRow("Text", ImGui::GetFrameHeight());
+			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
+			
+			bool isDefault = std::filesystem::equivalent(Font::GetDefault()->GetFilePath(), text.Font->GetFilePath());
+			String fontName = isDefault ? "Default" : text.Font->GetFilePath().filename().string();
+
+			UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10, 4});
+			if (ImGui::Button(fontName.c_str()))
 			{
-				UI::PropertyRow("Text", ImGui::GetFrameHeight());
-				UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
+				FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0"));
+				if (!filepath.empty() && filepath.extension() == ".ttf")
+					text.Font = Font::Create(filepath);
+			}
 
-				bool isDefault = Font::GetDefault()->GetFilePath() == text.Font->GetFilePath();
-				String fontName = isDefault ? "Default" : text.Font->GetFilePath().filename().string();
+			ImGui::PopStyleVar();
 
-				UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10, 4});
-				if (ImGui::Button(fontName.c_str()))
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0"));
-					if (!filepath.empty() && filepath.extension() == ".ttf")
+					FilePath filepath = (const char*)payload->Data;
+					if (filepath.extension() == ".ttf")
 						text.Font = Font::Create(filepath);
 				}
-
-				ImGui::PopStyleVar();
-
-				if (ImGui::BeginDragDropTarget())
-				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-					{
-						FilePath filepath = (const char*)payload->Data;
-						if (filepath.extension() == ".ttf")
-							text.Font = Font::Create(filepath);
-					}
-					ImGui::EndDragDropTarget();
-				}
-
-				UI::PropertyColor4("Color", text.Color.Data());
-				UI::PropertyDrag("Kerning", &text.Kerning);
-				UI::PropertyDrag("Line Spacing", &text.LineSpacing);
-
-				UI::EndPropertyTable();
+				ImGui::EndDragDropTarget();
 			}
+
+			UI::PropertyColor4("Color", text.Color.Data());
+			UI::PropertyDrag("Kerning", &text.Kerning, 0.025f);
+			UI::PropertyDrag("Line Spacing", &text.LineSpacing, 0.025f);
+
+			return true;
 		});
 
 		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
@@ -719,181 +695,161 @@ namespace Athena
 			};
 
 
-			if (UI::BeginPropertyTable())
+			std::string_view bodyTypesStrings[] = { "Static", "Dynamic", "Kinematic"};
+			std::string_view currentBodyType = typeToStr(rb2d.Type);
+
+			if (UI::PropertyCombo("BodyType", bodyTypesStrings, std::size(bodyTypesStrings), &currentBodyType))
 			{
-				std::string_view bodyTypesStrings[] = { "Static", "Dynamic", "Kinematic"};
-				std::string_view currentBodyType = typeToStr(rb2d.Type);
-
-				if (UI::PropertyCombo("BodyType", bodyTypesStrings, std::size(bodyTypesStrings), &currentBodyType))
-				{
-					rb2d.Type = strToType(currentBodyType);
-				}
-
-				UI::PropertyCheckbox("Fixed Rotation", &rb2d.FixedRotation);
-					
-				UI::EndPropertyTable();
+				rb2d.Type = strToType(currentBodyType);
 			}
+
+			UI::PropertyCheckbox("Fixed Rotation", &rb2d.FixedRotation);
+					
+			return true;
 		});
 
 
 		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", [](BoxCollider2DComponent& bc2d)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyDrag("Offset", bc2d.Offset.Data(), 0.1f);
-				UI::PropertyDrag("Size", bc2d.Size.Data(), 0.1f);
-				UI::PropertySlider("Density", &bc2d.Density, 0.f, 1.f);
-				UI::PropertySlider("Friction", &bc2d.Friction, 0.f, 1.f);
-				UI::PropertySlider("Restitution", &bc2d.Restitution, 0.f, 1.f);
-				UI::PropertySlider("RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
+			UI::PropertyDrag("Offset", bc2d.Offset.Data(), 0.1f);
+			UI::PropertyDrag("Size", bc2d.Size.Data(), 0.1f);
+			UI::PropertySlider("Density", &bc2d.Density, 0.f, 1.f);
+			UI::PropertySlider("Friction", &bc2d.Friction, 0.f, 1.f);
+			UI::PropertySlider("Restitution", &bc2d.Restitution, 0.f, 1.f);
+			UI::PropertySlider("RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<CircleCollider2DComponent>(entity, "CircleCollider2D", [](CircleCollider2DComponent& cc2d)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyDrag("Offset", &cc2d.Offset, 0.1f);
-				UI::PropertyDrag("Radius", &cc2d.Radius, 0.1f);
-				UI::PropertySlider("Density", &cc2d.Density, 0.f, 1.f);
-				UI::PropertySlider("Friction", &cc2d.Friction, 0.f, 1.f);
-				UI::PropertySlider("Restitution", &cc2d.Restitution, 0.f, 1.f);
-				UI::PropertySlider("RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
+			UI::PropertyDrag("Offset", &cc2d.Offset, 0.1f);
+			UI::PropertyDrag("Radius", &cc2d.Radius, 0.1f);
+			UI::PropertySlider("Density", &cc2d.Density, 0.f, 1.f);
+			UI::PropertySlider("Friction", &cc2d.Friction, 0.f, 1.f);
+			UI::PropertySlider("Restitution", &cc2d.Restitution, 0.f, 1.f);
+			UI::PropertySlider("RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<StaticMeshComponent>(entity, "StaticMesh", [this, entity](StaticMeshComponent& meshComponent)
 		{
-			if (UI::BeginPropertyTable())
+			String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
+
+			String name = meshComponent.Mesh->GetFilePath().filename().string();
+
+			UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
+			if (ImGui::Button(name.c_str()))
 			{
-				String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
+				FilePath filepath = FileDialogs::OpenFile(TEXT("Mesh *.gltf\0*.fbx\0.obj\0.blend\0"));
+				String ext = filepath.extension().string();
+				if (!filepath.empty() && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+					meshComponent.Mesh = StaticMesh::Create(filepath);
+			}
 
-				String name = meshComponent.Mesh->GetFilePath().filename().string();
+			ImGui::PopStyleVar();
 
-				UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
-				if (ImGui::Button(name.c_str()))
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					FilePath filepath = FileDialogs::OpenFile(TEXT("Mesh *.gltf\0*.fbx\0.obj\0.blend\0"));
+					FilePath filepath = (const char*)payload->Data;
 					String ext = filepath.extension().string();
-					if (!filepath.empty() && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+					if (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend")
 						meshComponent.Mesh = StaticMesh::Create(filepath);
 				}
+				ImGui::EndDragDropTarget();
+			}
 
-				ImGui::PopStyleVar();
+			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
+			UI::EndPropertyTable();
 
-				if (ImGui::BeginDragDropTarget())
+			Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
+			if (animator)
+			{
+				if (UI::TreeNode("Animations", true, true) && UI::BeginPropertyTable())
 				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					Ref<Animation> active = animator->GetCurrentAnimation();
+					active = active ? active : (animator->GetAllAnimations().size() > 0 ? animator->GetAllAnimations()[0] : nullptr);
+
+					std::string_view selectedAnim = active ? active->GetName().c_str() : "";
+
+					const auto& animations = animator->GetAllAnimations();
+					std::vector<std::string_view> animNames(animations.size());
+					for (uint32 i = 0; i < animations.size(); ++i)
+						animNames[i] = animations[i]->GetName();
+
+					if (UI::PropertyCombo("Animation List", animNames.data(), animNames.size(), &selectedAnim))
 					{
-						FilePath filepath = (const char*)payload->Data;
-						String ext = filepath.extension().string();
-						if (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend")
-							meshComponent.Mesh = StaticMesh::Create(filepath);
+						uint32 index = std::distance(animNames.begin(), std::find(animNames.begin(), animNames.end(), selectedAnim));
+						Ref<Animation> anim = animations[index];
+						animator->PlayAnimation(anim);
 					}
-					ImGui::EndDragDropTarget();
-				}
 
-				UI::PropertyCheckbox("Visible", &meshComponent.Visible);
+					{ 
+						bool playNow = active == animator->GetCurrentAnimation();
+						bool check = playNow;
+						UI::PropertyCheckbox("Play", &check);
 
-				UI::EndPropertyTable();
+						if (check && !playNow)
+							animator->PlayAnimation(active);
+						else if (!check && playNow)
+							animator->StopAnimation();
 
-				Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
-				if (animator)
-				{
-					if (UI::TreeNode("Animations", true, true) && UI::BeginPropertyTable())
-					{
-						Ref<Animation> active = animator->GetCurrentAnimation();
-						active = active ? active : (animator->GetAllAnimations().size() > 0 ? animator->GetAllAnimations()[0] : nullptr);
-
-						std::string_view selectedAnim = active ? active->GetName().c_str() : "";
-
-						const auto& animations = animator->GetAllAnimations();
-						std::vector<std::string_view> animNames(animations.size());
-						for (uint32 i = 0; i < animations.size(); ++i)
-							animNames[i] = animations[i]->GetName();
-
-						if (UI::PropertyCombo("Animation List", animNames.data(), animNames.size(), &selectedAnim))
+						if (check)
 						{
-							uint32 index = std::distance(animNames.begin(), std::find(animNames.begin(), animNames.end(), selectedAnim));
-							Ref<Animation> anim = animations[index];
-							animator->PlayAnimation(anim);
+							Ref<Animation> anim = animator->GetCurrentAnimation();
+							uint32 ticks = anim->GetTicksPerSecond();
+							float animTime = animator->GetAnimationTime() / (float)ticks;
+							ImGui::SameLine();
+							ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+							ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
+							animator->SetAnimationTime(animTime * (float)ticks);
 						}
-
-						{ 
-							bool playNow = active == animator->GetCurrentAnimation();
-							bool check = playNow;
-							UI::PropertyCheckbox("Play", &check);
-
-							if (check && !playNow)
-								animator->PlayAnimation(active);
-							else if (!check && playNow)
-								animator->StopAnimation();
-
-							if (check)
-							{
-								Ref<Animation> anim = animator->GetCurrentAnimation();
-								uint32 ticks = anim->GetTicksPerSecond();
-								float animTime = animator->GetAnimationTime() / (float)ticks;
-								ImGui::SameLine();
-								ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-								ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
-								animator->SetAnimationTime(animTime * (float)ticks);
-							}
-						}
-
-						UI::EndPropertyTable();
-
-						UI::TreePop();
-						ImGui::Spacing();
 					}
+
+					UI::EndPropertyTable();
+
+					UI::TreePop();
+					ImGui::Spacing();
 				}
 			}
+
+			return false;
 		});
 
 		DrawComponent<DirectionalLightComponent>(entity, "DirectionalLight", [](DirectionalLightComponent& lightComponent)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyColor3("Color", lightComponent.Color.Data());
-				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 100.f);
-				UI::PropertyCheckbox("Cast Shadows", &lightComponent.CastShadows);
-				UI::PropertyDrag("LightSize", &lightComponent.LightSize, 0.025f, 0.f, 100.f);
+			UI::PropertyColor3("Color", lightComponent.Color.Data());
+			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 100.f);
+			UI::PropertyCheckbox("Cast Shadows", &lightComponent.CastShadows);
+			UI::PropertyDrag("LightSize", &lightComponent.LightSize, 0.025f, 0.f, 100.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<PointLightComponent>(entity, "PointLight", [](PointLightComponent& lightComponent)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyColor3("Color", lightComponent.Color.Data());
-				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
-				UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
-				UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyColor3("Color", lightComponent.Color.Data());
+			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+			UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
+			UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<SpotLightComponent>(entity, "SpotLight", [](SpotLightComponent& lightComponent)
 		{
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyColor3("Color", lightComponent.Color.Data());
-				UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
-				UI::PropertySlider("Spot Angle", &lightComponent.SpotAngle, 0.f, 180.f);
-				UI::PropertyDrag("Inner FallOff", &lightComponent.InnerFallOff, 0.1f, 0.f, 100.f);
-				UI::PropertyDrag("Range", &lightComponent.Range, 2.5f, 0.f, 10000.f);
-				UI::PropertyDrag("Range FallOff", &lightComponent.RangeFallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyColor3("Color", lightComponent.Color.Data());
+			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
+			UI::PropertySlider("Spot Angle", &lightComponent.SpotAngle, 0.f, 180.f);
+			UI::PropertyDrag("Inner FallOff", &lightComponent.InnerFallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyDrag("Range", &lightComponent.Range, 2.5f, 0.f, 10000.f);
+			UI::PropertyDrag("Range FallOff", &lightComponent.RangeFallOff, 0.1f, 0.f, 100.f);
 
-				UI::EndPropertyTable();
-			}
+			return true;
 		});
 
 		DrawComponent<SkyLightComponent>(entity, "SkyLight", [](SkyLightComponent& lightComponent)
@@ -921,64 +877,70 @@ namespace Athena
 				};
 
 
-			if (UI::BeginPropertyTable())
+			UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
+			UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
+
+			const auto& envMap = lightComponent.EnvironmentMap;
+
+			const std::string_view resolutions[] = { "128", "256", "512", "1024", "2048", "4096" };
+			String selectedStr = std::to_string(envMap->GetResolution());
+			std::string_view selected = selectedStr.data();
+
+			if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
 			{
-				UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
-				UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
-
-				const auto& envMap = lightComponent.EnvironmentMap;
-
-				const std::string_view resolutions[] = { "128", "256", "512", "1024", "2048", "4096" };
-				String selectedStr = std::to_string(envMap->GetResolution());
-				std::string_view selected = selectedStr.data();
-
-				if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
-				{
-					uint32 resolution = std::atoi(selected.data());
-					envMap->SetResolution(resolution);
-				}
-
-				std::string_view typesStrings[] = { "Static", "Preetham"};
-				std::string_view type = typeToStr(envMap->GetType());
-
-				if (UI::PropertyCombo("Type", typesStrings, std::size(typesStrings), &type))
-				{
-					envMap->SetType(strToType(type));
-				}
-
-				if (envMap->GetType() == EnvironmentMapType::STATIC)
-				{
-					UI::PropertyRow("FilePath", ImGui::GetFrameHeight());
-					{
-						String label;
-
-						const FilePath& envPath = envMap->GetFilePath();
-						label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
-
-						if (ImGui::Button(label.data()))
-						{
-							FilePath filepath = FileDialogs::OpenFile(TEXT("EnvironmentMap (*.hdr)\0*.hdr\0"));
-							if (!filepath.empty())
-								envMap->SetFilePath(filepath);
-						}
-					}
-				}
-				else if (envMap->GetType() == EnvironmentMapType::PREETHAM)
-				{
-					float turbidity = envMap->GetTurbidity();
-					UI::PropertySlider("Turbidity", &turbidity, 1.8f, 10.f);
-
-					float azimuth = envMap->GetAzimuth();
-					UI::PropertySlider("Azimuth", &azimuth, 0, 2 * Math::PI<float>());
-
-					float inclination = envMap->GetInclination();
-					UI::PropertySlider("Inclination", &inclination, 0, 2 * Math::PI<float>());
-
-					envMap->SetPreethamParams(turbidity, azimuth, inclination);
-				}
-
-				UI::EndPropertyTable();
+				uint32 resolution = std::atoi(selected.data());
+				envMap->SetResolution(resolution);
 			}
+
+			std::string_view typesStrings[] = { "Static", "Preetham"};
+			std::string_view type = typeToStr(envMap->GetType());
+
+			if (UI::PropertyCombo("Type", typesStrings, std::size(typesStrings), &type))
+			{
+				envMap->SetType(strToType(type));
+			}
+			if (envMap->GetType() == EnvironmentMapType::STATIC)
+			{
+				UI::PropertyRow("FilePath", ImGui::GetFrameHeight());
+
+				const FilePath& envPath = envMap->GetFilePath();
+				String label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+
+				if (ImGui::Button(label.data()))
+				{
+					FilePath filepath = FileDialogs::OpenFile(TEXT("EnvironmentMap (*.hdr)\0*.hdr\0"));
+					if (!filepath.empty())
+						envMap->SetFilePath(filepath);
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+					{
+						FilePath filepath = (const char*)payload->Data;
+						String ext = filepath.extension().string();
+						if (ext == ".hdr")
+							envMap->SetFilePath(filepath);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+			}
+			else if (envMap->GetType() == EnvironmentMapType::PREETHAM)
+			{
+				float turbidity = envMap->GetTurbidity();
+				UI::PropertySlider("Turbidity", &turbidity, 1.8f, 10.f);
+
+				float azimuth = envMap->GetAzimuth();
+				UI::PropertySlider("Azimuth", &azimuth, 0, 2 * Math::PI<float>());
+
+				float inclination = envMap->GetInclination();
+				UI::PropertySlider("Inclination", &inclination, 0, 2 * Math::PI<float>());
+
+				envMap->SetPreethamParams(turbidity, azimuth, inclination);
+			}
+
+			return true;
 		});
 	}
 }

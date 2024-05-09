@@ -1,7 +1,9 @@
 #include "Font.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/Buffer.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Math/Common.h"
+#include "Athena/Renderer/FontAtlasGeometryData.h"
 
 #include <thread>
 
@@ -56,30 +58,90 @@ namespace Athena
             return nullptr;
         }
 
-        std::vector<msdf_atlas::GlyphGeometry> glyphs;
-        msdf_atlas::FontGeometry fontGeometry(&glyphs);
+        result->m_AtlasGeometryData = new FontAtlasGeometryData();
+        FontAtlasGeometryData* atlasData = result->m_AtlasGeometryData;
 
-        fontGeometry.loadCharset(font, 1.0, msdf_atlas::Charset::ASCII);
+        atlasData->FontGeometry = msdf_atlas::FontGeometry(&atlasData->Glyphs);
 
-        msdfgen::destroyFont(font);
+        struct CharsetRange
+        {
+            uint32 Begin, End;
+        };
+
+        // From imgui_draw.cpp
+        const CharsetRange charsetRanges[] =
+        {
+            { 0x0020, 0x00FF }, // Basic Latin + Latin Supplement
+            { 0x0400, 0x052F }, // Cyrillic + Cyrillic Supplement
+            { 0x2DE0, 0x2DFF }, // Cyrillic Extended-A
+            { 0xA640, 0xA69F }, // Cyrillic Extended-B
+        };
+
+        msdf_atlas::Charset charset;
+        for (CharsetRange range: charsetRanges)
+        {
+            for (uint32 c = range.Begin; c <= range.End; ++c)
+                charset.add(c);
+        }
+
+        atlasData->FontGeometry.loadCharset(font, 1.0, charset);
 
         const double maxCornerAngle = 3.0;
-        for (msdf_atlas::GlyphGeometry& glyph : glyphs)
+        for (msdf_atlas::GlyphGeometry& glyph : atlasData->Glyphs)
             glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
 
         msdf_atlas::TightAtlasPacker packer;
-        packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
-        packer.setMinimumScale(24.0);
+        //packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
         packer.setPixelRange(2.0);
         packer.setMiterLimit(1.0);
+        packer.setScale(40.f);
 
-        packer.pack(glyphs.data(), glyphs.size());
+        uint32 remaining = packer.pack(atlasData->Glyphs.data(), atlasData->Glyphs.size());
+        ATN_CORE_ASSERT(remaining == 0);
 
         int width = 0, height = 0;
         packer.getDimensions(width, height);
+
+        Buffer buffer = result->GenerateAtlasOrReadFromCache(width, height);
+
+        TextureCreateInfo atlasInfo;
+        atlasInfo.Name = fmt::format("{}_FontAtlas", result->m_FilePath.filename());
+        atlasInfo.Format = TextureFormat::RGBA8;
+        atlasInfo.Usage = TextureUsage::SAMPLED;
+        atlasInfo.Width = width;
+        atlasInfo.Height = height;
+        atlasInfo.Layers = 1;
+        atlasInfo.GenerateMipMap = false;
+        atlasInfo.Sampler.Filter = TextureFilter::LINEAR;
+        atlasInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+        result->m_AtlasTexture = Texture2D::Create(atlasInfo, buffer);
+        buffer.Release();
+        msdfgen::destroyFont(font);
+
+        return result;
+    }
+
+    Buffer Font::GenerateAtlasOrReadFromCache(uint32 width, uint32 height)
+    {
+        FilePath cacheFolder = Application::Get().GetConfig().EngineResourcesPath / "Cache/FontAtlases";
+        FilePath name = m_FilePath.filename();
+        name += ".msdf";
+
+        if (!FileSystem::Exists(cacheFolder))
+            FileSystem::CreateDirectory(cacheFolder);
+
+        for (const auto& dirEntry : std::filesystem::directory_iterator(cacheFolder))
+        {
+            if (!dirEntry.is_directory() && dirEntry.path().filename() == name)
+            {
+                Buffer memory = FileSystem::ReadFileBinary(dirEntry.path());
+                return memory;
+            }
+        }
+
         msdf_atlas::ImmediateAtlasGenerator<float, 3, msdf_atlas::msdfGenerator, msdf_atlas::BitmapAtlasStorage<byte, 3>> generator(width, height);
 
-        // The correct way might be count * 1.5, but we dont want to load all cores
         int threadsCount = std::thread::hardware_concurrency();
         threadsCount = threadsCount * 0.75;
         threadsCount = Math::Max(threadsCount, 1);
@@ -87,7 +149,7 @@ namespace Athena
         msdf_atlas::GeneratorAttributes attributes;
         generator.setAttributes(attributes);
         generator.setThreadCount(threadsCount);
-        generator.generate(glyphs.data(), glyphs.size());
+        generator.generate(m_AtlasGeometryData->Glyphs.data(), m_AtlasGeometryData->Glyphs.size());
 
         msdf_atlas::BitmapAtlasStorage<byte, 3> storage = generator.atlasStorage();
 
@@ -116,21 +178,15 @@ namespace Athena
 
         delete[] bitMapRef.pixels;
 
-        TextureCreateInfo atlasInfo;
-        atlasInfo.Name = fmt::format("{}_FontAtlas", result->m_FilePath.filename());
-        atlasInfo.Format = TextureFormat::RGBA8;
-        atlasInfo.Usage = TextureUsage::SAMPLED;
-        atlasInfo.Width = width;
-        atlasInfo.Height = height;
-        atlasInfo.Layers = 1;
-        atlasInfo.GenerateMipMap = false;
-        atlasInfo.Sampler.Filter = TextureFilter::LINEAR;
-        atlasInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+        // Save to cache
+        FileSystem::WriteFile(cacheFolder / name, (const char*)buffer.Data(), buffer.Size());
 
-        result->m_TextureAtlas = Texture2D::Create(atlasInfo, buffer);
-        buffer.Release();
+        return buffer;
+    }
 
-        return result;
+    Font::~Font()
+    {
+        delete m_AtlasGeometryData;
     }
 
     Ref<Font> Font::GetDefault()

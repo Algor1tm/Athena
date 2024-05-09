@@ -13,6 +13,8 @@
 
 namespace Athena
 {
+	// QUADS
+
 	struct QuadVertex
 	{
 		Vector3 Position;
@@ -20,6 +22,15 @@ namespace Athena
 		Vector2 TexCoords;
 		uint32 TexIndex;
 	};
+
+	struct QuadBatch
+	{
+		uint32 VertexOffset;
+		uint32 IndexCount;
+		Ref<Material> Material;
+	};
+
+	// CIRCLES
 
 	struct CircleVertex
 	{
@@ -30,17 +41,12 @@ namespace Athena
 		float Fade;
 	};
 
+	// LINES
+
 	struct LineVertex
 	{
 		Vector3 Position;
 		LinearColor Color;
-	};
-
-	struct QuadBatch
-	{
-		uint32 VertexOffset;
-		uint32 IndexCount;
-		Ref<Material> Material;
 	};
 
 	struct LineBatch
@@ -49,6 +55,30 @@ namespace Athena
 		uint32 VertexCount;
 		float LineWidth;
 	};
+
+	// TEXT
+
+	struct TextVertex
+	{
+		Vector3 Position;
+		LinearColor Color;
+		Vector2 TexCoords;
+	};
+
+	struct TextBatch
+	{
+		uint32 VertexOffset;
+		uint32 IndexCount;
+		Ref<Material> Material; // contains only 1 atlas texture
+	};
+
+	struct TextParams
+	{
+		LinearColor Color;
+		float Kerning = 0.0f;
+		float LineSpacing = 0.0f;
+	};
+
 
 	class ATHENA_API SceneRenderer2D : public RefCounted
 	{
@@ -87,6 +117,8 @@ namespace Athena
 		void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White);
 
+		void DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, const TextParams& params = TextParams());
+
 		void SetLineWidth(float width);
 		float GetLineWidth();
 
@@ -96,6 +128,9 @@ namespace Athena
 
 		void FlushLines();
 		void NextBatchLines();
+
+		void FlushText();
+		void NextBatchText();
 
 		void FlushIndexBuffer();
 
@@ -107,6 +142,8 @@ namespace Athena
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
 		Matrix4 m_ViewProjectionCamera;
 		Matrix4 m_InverseViewCamera;
+
+		Vector4 m_QuadVertexPositions[4];
 
 		// Shared indices for quads and circles
 		DynamicGPUBuffer<IndexBuffer> m_IndexBuffer;
@@ -132,6 +169,10 @@ namespace Athena
 		uint32 m_LineBatchIndex = 0;
 		float m_LineWidth = 1.f;
 
-		Vector4 m_QuadVertexPositions[4];
+		Ref<Pipeline> m_TextPipeline;
+		DynamicGPUBuffer<VertexBuffer> m_TextVertexBuffer;
+		std::vector<TextBatch> m_TextBatches;	// TODO: clear batches(materials) when too much allocated
+		uint32 m_TextBatchIndex = 0;
+		Ref<Font> m_CurrentFont;
 	};
 }

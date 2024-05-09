@@ -20,7 +20,7 @@ namespace Athena
 		if (FileSystem::Exists(path))
 		{
 			ImGuiIO& io = ImGui::GetIO();
-			font = io.Fonts->AddFontFromFileTTF(path.string().c_str(), size);
+			font = io.Fonts->AddFontFromFileTTF(path.string().c_str(), size, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 			loaded = (bool)font;
 		}
 		

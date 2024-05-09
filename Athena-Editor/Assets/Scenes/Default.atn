@@ -175,14 +175,14 @@ Entities:
     TagComponent:
       Tag: Text
     TransformComponent:
-      Translation: [0, 2.67366886, 1.19556236]
+      Translation: [-10.4819756, 6.97234631, 0.675665855]
       Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
+      Scale: [0.20799996, 0.208000019, 0.208000019]
     ParentComponent:
       Parent: 15204102483634061799
     TextComponent:
-      Text: ""
-      Font: ../Athena/EngineResources\Fonts/Open_Sans/OpenSans-Medium.ttf
+      Text: "Athena\x00�\x00�\x00"
+      Font: Assets\Fonts\comic.ttf
       Color: [1, 1, 1, 1]
       Kerning: 0
       LineSpacing: 0

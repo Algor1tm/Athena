@@ -5,6 +5,7 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/FontAtlasGeometryData.h"
 
 
 namespace Athena
@@ -35,6 +36,7 @@ namespace Athena
 
 		m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
 
+
 		VertexBufferCreateInfo vertexBufferInfo;
 		vertexBufferInfo.Name = "Renderer2D_LineVB";
 		vertexBufferInfo.Data = nullptr;
@@ -44,17 +46,27 @@ namespace Athena
 
 		m_LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
+
 		vertexBufferInfo.Name = "Renderer2D_CircleVB";
 		vertexBufferInfo.Size = 1 * sizeof(CircleVertex);
 		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
 
 		m_CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		vertexBufferInfo.Name = "Renderer2D_QuadVB_0";
+
+		vertexBufferInfo.Name = "Renderer2D_QuadVB";
 		vertexBufferInfo.Size = 1 * sizeof(QuadVertex);
 		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
 
 		m_QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+
+
+		vertexBufferInfo.Name = "Renderer2D_TextVB";
+		vertexBufferInfo.Size = 1 * sizeof(TextVertex);
+		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
+
+		m_TextVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+
 
 		m_TextureSlots[0] = TextureGenerator::GetWhiteTexture();
 
@@ -64,23 +76,25 @@ namespace Athena
 		m_QuadVertexPositions[3] = { -0.5f, -0.5f, 0.f, 1.f };
 
 		
-		PipelineCreateInfo pipelineInfo;
-		pipelineInfo.Name = "QuadPipeline";
-		pipelineInfo.RenderPass = renderPass;
-		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Quad");
-		pipelineInfo.VertexLayout = {
+		PipelineCreateInfo pipelineBase;
+		pipelineBase.RenderPass = renderPass;
+		pipelineBase.CullMode = CullMode::NONE;
+		pipelineBase.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
+		pipelineBase.DepthWrite = false;
+		pipelineBase.BlendEnable = true;
+
+
+		PipelineCreateInfo quadPipeline = pipelineBase;
+		quadPipeline.Name = "QuadPipeline";
+		quadPipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Quad");
+		quadPipeline.VertexLayout = {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Float2, "a_TexCoords"},
 			{ ShaderDataType::UInt,   "a_TexIndex" }};
+		quadPipeline.Topology = Topology::TRIANGLE_LIST;
 
-		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
-		pipelineInfo.DepthWrite = false;
-		pipelineInfo.BlendEnable = true;
-
-		m_QuadPipeline = Pipeline::Create(pipelineInfo);
+		m_QuadPipeline = Pipeline::Create(quadPipeline);
 		m_QuadPipeline->Bake();
 
 		m_QuadBatchIndex = 0;
@@ -88,48 +102,39 @@ namespace Athena
 		quadBatch.IndexCount = 0;
 		quadBatch.VertexOffset = 0;
 		quadBatch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
-		quadBatch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
 
 		m_QuadBatches.push_back(quadBatch);
 
-		pipelineInfo.Name = "CirclePipeline";
-		pipelineInfo.RenderPass = renderPass;
-		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Circle");
-		pipelineInfo.VertexLayout = {
+
+		PipelineCreateInfo circlePipeline = pipelineBase;
+		circlePipeline.Name = "CirclePipeline";
+		circlePipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Circle");
+		circlePipeline.VertexLayout = {
 			{ ShaderDataType::Float3, "a_WorldPosition" },
 			{ ShaderDataType::Float3, "a_LocalPosition" },
 			{ ShaderDataType::Float4, "a_Color"         },
 			{ ShaderDataType::Float,  "a_Thickness"     },
 			{ ShaderDataType::Float,  "a_Fade"          }};
+		circlePipeline.Topology = Topology::TRIANGLE_LIST;
 
-		pipelineInfo.Topology = Topology::TRIANGLE_LIST;
-		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
-		pipelineInfo.DepthWrite = false;
-		pipelineInfo.BlendEnable = true;
-
-		m_CirclePipeline = Pipeline::Create(pipelineInfo);
+		m_CirclePipeline = Pipeline::Create(circlePipeline);
 		m_CirclePipeline->Bake();
 
-		m_CircleMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+		m_CircleMaterial = Material::Create(circlePipeline.Shader, circlePipeline.Name);
 
-		pipelineInfo.Name = "LinePipeline";
-		pipelineInfo.RenderPass = renderPass;
-		pipelineInfo.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Line");
-		pipelineInfo.VertexLayout = {
+
+		PipelineCreateInfo linePipeline = pipelineBase;
+		linePipeline.Name = "LinePipeline";
+		linePipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Line");
+		linePipeline.VertexLayout = {
 			{ ShaderDataType::Float3, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    }};
+		linePipeline.Topology = Topology::LINE_LIST;
 
-		pipelineInfo.Topology = Topology::LINE_LIST;
-		pipelineInfo.CullMode = CullMode::NONE;
-		pipelineInfo.DepthCompareOp = DepthCompareOperator::GREATER_OR_EQUAL;
-		pipelineInfo.DepthWrite = false;
-		pipelineInfo.BlendEnable = true;
-
-		m_LinePipeline = Pipeline::Create(pipelineInfo);
+		m_LinePipeline = Pipeline::Create(linePipeline);
 		m_LinePipeline->Bake();
 
-		m_LineMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
+		m_LineMaterial = Material::Create(linePipeline.Shader, linePipeline.Name);
 
 		m_LineWidth = 1.f;
 		m_LineBatchIndex = 0;
@@ -139,6 +144,27 @@ namespace Athena
 		lineBatch.LineWidth = m_LineWidth;
 
 		m_LineBatches.push_back(lineBatch);
+
+
+		PipelineCreateInfo textPipeline = pipelineBase;
+		textPipeline.Name = "TextPipeline";
+		textPipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Text");
+		textPipeline.VertexLayout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Color"    },
+			{ ShaderDataType::Float2, "a_TexCoords"} };
+		textPipeline.Topology = Topology::TRIANGLE_LIST;
+
+		m_TextPipeline = Pipeline::Create(textPipeline);
+		m_TextPipeline->Bake();
+
+		m_TextBatchIndex = 0;
+		TextBatch textBatch;
+		textBatch.IndexCount = 0;
+		textBatch.VertexOffset = 0;
+		textBatch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
+
+		m_TextBatches.push_back(textBatch);
 	}
 
 	void SceneRenderer2D::Shutdown()
@@ -151,6 +177,7 @@ namespace Athena
 		m_QuadPipeline->SetViewport(width, height);
 		m_LinePipeline->SetViewport(width, height);
 		m_CirclePipeline->SetViewport(width, height);
+		m_TextPipeline->SetViewport(width, height);
 	}
 
 	void SceneRenderer2D::BeginScene(const Matrix4& viewMatrix, const Matrix4& projectionMatrix)
@@ -178,11 +205,18 @@ namespace Athena
 		m_CircleIndexCount = 0;
 
 		for (auto& lineBatch : m_LineBatches)
-		{
 			lineBatch.VertexCount = 0;
-		}
 
 		m_LineBatchIndex = 0;
+
+		for (auto& textBatch : m_TextBatches)
+		{
+			textBatch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
+			textBatch.IndexCount = 0;
+		}
+
+		m_TextBatchIndex = 0;
+		m_CurrentFont = nullptr;
 	}
 
 	void SceneRenderer2D::EndScene()
@@ -191,6 +225,7 @@ namespace Athena
 
 		FlushQuads();
 		FlushLines();
+		FlushText();
 
 		FlushIndexBuffer();
 
@@ -245,16 +280,40 @@ namespace Athena
 			}
 		}
 
+		// TEXT
+		{
+			if (!m_TextBatches.empty() && m_TextBatches[0].IndexCount > 0)
+			{
+				m_TextVertexBuffer.Flush();
+				m_TextPipeline->Bind(commandBuffer);
+			}
+
+			for (const auto& textBatch : m_TextBatches)
+			{
+				if (textBatch.IndexCount > 0)
+				{
+					textBatch.Material->Bind(commandBuffer);
+
+					Renderer::RenderGeometry(commandBuffer, m_TextPipeline, m_TextVertexBuffer.Get(),
+						textBatch.Material, textBatch.VertexOffset, textBatch.IndexCount);
+				}
+			}
+		}
+
 		m_BeginScene = false;
 	}
 
 	void SceneRenderer2D::FlushIndexBuffer()
 	{
 		uint64 quadIndices = 0;
-		for (const auto& draw : m_QuadBatches)
+		for(const auto& draw : m_QuadBatches)
 			quadIndices += draw.IndexCount;
 
-		uint64 maxIndices = Math::Max(m_CircleIndexCount, quadIndices);
+		uint64 textIndices = 0;
+		for (const auto& draw : m_TextBatches)
+			textIndices += draw.IndexCount;
+
+		uint64 maxIndices = Math::Max(m_CircleIndexCount, quadIndices, textIndices);
 
 		if (m_IndicesCount[Renderer::GetCurrentFrameIndex()] < maxIndices)
 		{
@@ -348,6 +407,42 @@ namespace Athena
 		else
 		{
 			m_LineBatches[m_LineBatchIndex].VertexOffset = vertexOffset;
+		}
+	}
+
+	void SceneRenderer2D::FlushText()
+	{
+		const TextBatch& batch = m_TextBatches[m_TextBatchIndex];
+		if (batch.IndexCount == 0)
+			return;
+
+		batch.Material->Set("u_AtlasTexture", m_CurrentFont->GetAtlasTexture());
+	}
+
+	void SceneRenderer2D::NextBatchText()
+	{
+		m_TextBatchIndex++;
+
+		// Offset for next batch
+		const TextBatch& prevBatch = m_TextBatches[m_TextBatchIndex - 1];
+		uint32 vertexOffset = prevBatch.VertexOffset + 4 * prevBatch.IndexCount / 6;
+
+		// If batch already exists update it offset
+		// If not - create new batch
+		if (m_TextBatches.size() <= m_TextBatchIndex)
+		{
+			TextBatch batch;
+			batch.IndexCount = 0;
+			batch.VertexOffset = vertexOffset;
+
+			batch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
+			batch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
+
+			m_TextBatches.push_back(batch);
+		}
+		else
+		{
+			m_TextBatches[m_TextBatchIndex].VertexOffset = vertexOffset;
 		}
 	}
 
@@ -534,6 +629,129 @@ namespace Athena
 		DrawLine(lineVertices[1], lineVertices[2], color);
 		DrawLine(lineVertices[2], lineVertices[3], color);
 		DrawLine(lineVertices[3], lineVertices[0], color);
+	}
+
+	void SceneRenderer2D::DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, const TextParams& params)
+	{
+		if (m_CurrentFont == nullptr && m_TextBatches[m_TextBatchIndex].IndexCount == 0)
+			m_CurrentFont = font;
+
+		if (m_CurrentFont != font)
+		{
+			FlushText();
+			NextBatchText();
+			m_CurrentFont = font;
+		}
+
+		std::u32string unicodeText(text.begin(), text.end());
+
+		Ref<Texture2D> atlasTexture = font->GetAtlasTexture();
+		float texelWidth = 1.0f / atlasTexture->GetWidth();
+		float texelHeight = 1.0f / atlasTexture->GetHeight();
+
+		const auto& fontGeometry = font->GetAtlasGeometryData()->FontGeometry;
+		const auto& metrics = fontGeometry.getMetrics();
+		const auto& glyphs = font->GetAtlasGeometryData()->Glyphs;
+
+		double fsScale = 1.0 / (metrics.ascenderY - metrics.descenderY);
+		double x = 0.0;
+		double y = 0.0;
+
+		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+
+		for (uint32 i = 0; i < unicodeText.size(); ++i)
+		{
+			char32_t character = unicodeText[i];
+
+			if (character == '\0')
+				break;
+
+			if (character == '\r')
+				continue;
+
+			if (character == '\n')
+			{
+				x = 0;
+				y -= fsScale * metrics.lineHeight + params.LineSpacing;
+				continue;
+			}
+
+			if (character == ' ')
+			{
+				float advance;
+
+				if (i < unicodeText.size() - 1)
+				{
+					char nextCharacter = unicodeText[i + 1];
+					double dAdvance;
+					fontGeometry.getAdvance(dAdvance, character, nextCharacter);
+					advance = (float)dAdvance;
+				}
+				else
+				{
+					advance = spaceGlyphAdvance;
+				}
+
+				x += fsScale * advance + params.Kerning;
+				continue;
+			}
+
+			const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
+
+			if (!glyph)
+				glyph = fontGeometry.getGlyph('?');
+
+			if (!glyph)
+				return;
+
+			double al, ab, ar, at;
+			glyph->getQuadAtlasBounds(al, ab, ar, at);
+			Vector2 texCoordMin((float)al, (float)ab);
+			Vector2 texCoordMax((float)ar, (float)at);
+
+			texCoordMin *= Vector2(texelWidth, texelHeight);
+			texCoordMax *= Vector2(texelWidth, texelHeight);
+
+
+			double pl, pb, pr, pt;
+			glyph->getQuadPlaneBounds(pl, pb, pr, pt);
+			Vector2 quadMin((float)pl, (float)pb);
+			Vector2 quadMax((float)pr, (float)pt);
+
+			quadMin *= fsScale, quadMax *= fsScale;
+			quadMin += Vector2(x, y);
+			quadMax += Vector2(x, y);
+
+			TextVertex vertices[4];
+			
+			vertices[0].Position = Vector4(quadMin, 0.0f, 1.0f) * transform;
+			vertices[0].Color = params.Color;
+			vertices[0].TexCoords = texCoordMin;
+
+			vertices[1].Position = Vector4(quadMin.x, quadMax.y, 0.0f, 1.0f) * transform;
+			vertices[1].Color = params.Color;
+			vertices[1].TexCoords = { texCoordMin.x, texCoordMax.y };
+
+			vertices[2].Position = Vector4(quadMax, 0.0f, 1.0f) * transform;
+			vertices[2].Color = params.Color;
+			vertices[2].TexCoords = texCoordMax;
+
+			vertices[3].Position = Vector4(quadMax.x, quadMin.y, 0.0f, 1.0f) * transform;
+			vertices[3].Color = params.Color;
+			vertices[3].TexCoords = { texCoordMax.x, texCoordMin.y };
+
+			m_TextVertexBuffer.Push(vertices, sizeof(vertices));
+			m_TextBatches[m_TextBatchIndex].IndexCount += 6;
+
+			if (i < unicodeText.size() - 1)
+			{
+				double advance = glyph->getAdvance();
+				char nextCharacter = unicodeText[i + 1];
+				fontGeometry.getAdvance(advance, character, nextCharacter);
+
+				x += fsScale * advance + params.Kerning;
+			}
+		}
 	}
 
 	void SceneRenderer2D::SetLineWidth(float width)

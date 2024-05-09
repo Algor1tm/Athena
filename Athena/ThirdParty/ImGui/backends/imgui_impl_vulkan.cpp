@@ -1331,13 +1331,7 @@ void ImGui_ImplVulkanH_CreateWindowSwapChain(VkPhysicalDevice physical_device, V
 
         //////////////////////// ATHENA /////////////////////////
 
-        // ImGui bug, sometimes on external viewports height is zero, thats causing vulkan validation errors
-
-        if (info.imageExtent.width == 0)
-            info.imageExtent.width = 1;
-
-        if (info.imageExtent.height == 0)
-            info.imageExtent.height = 1;
+        // ImGui bug, with drag dropping outside of window, external viewport height is zero, thats causing vulkan validation errors
 
         //////////////////////// ATHENA /////////////////////////
 

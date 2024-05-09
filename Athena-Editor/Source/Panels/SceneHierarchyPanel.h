@@ -82,7 +82,11 @@ namespace Athena
 
 			if (open)
 			{
-				uiFunction(entity.GetComponent<Component>());
+				if (UI::BeginPropertyTable())
+				{
+					if(uiFunction(entity.GetComponent<Component>()))
+						UI::EndPropertyTable();
+				}
 				UI::TreePop();
 				ImGui::Spacing();
 			}

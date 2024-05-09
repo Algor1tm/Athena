@@ -116,6 +116,7 @@ namespace Athena
 		LinearColor Color;
 		float Kerning = 0.0f;
 		float LineSpacing = 0.0f;
+		// TODO: bg color/outline, shadowing, alignment
 
 		TextComponent() = default;
 		TextComponent(TextComponent&& other) = default;

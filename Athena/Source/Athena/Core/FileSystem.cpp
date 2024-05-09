@@ -25,9 +25,9 @@ namespace Athena
 		return result;
 	}
 
-	std::vector<byte> FileSystem::ReadFileBinary(const FilePath& path)
+	Buffer FileSystem::ReadFileBinary(const FilePath& path)
 	{
-		std::vector<byte> result;
+		Buffer result;
 
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in.is_open())
@@ -36,8 +36,8 @@ namespace Athena
 			auto size = in.tellg();
 			in.seekg(0, std::ios::beg);
 
-			result.resize(size);
-			in.read((char*)result.data(), size);
+			result.Allocate(size);
+			in.read((char*)result.Data(), size);
 		}
 		else
 		{

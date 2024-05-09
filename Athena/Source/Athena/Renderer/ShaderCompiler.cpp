@@ -382,10 +382,10 @@ namespace Athena
 	{
 		for (const auto& [stage, cachePath, source] : result.StageDescriptions)
 		{
-			std::vector<byte> bytes = FileSystem::ReadFileBinary(cachePath);
+			Buffer bytes = FileSystem::ReadFileBinary(cachePath);
 
-			m_SPIRVBinaries[stage] = std::vector<uint32>(bytes.size() / sizeof(uint32));
-			memcpy(m_SPIRVBinaries[stage].data(), bytes.data(), bytes.size());
+			m_SPIRVBinaries[stage] = std::vector<uint32>(bytes.Size() / sizeof(uint32));
+			memcpy(m_SPIRVBinaries[stage].data(), bytes.Data(), bytes.Size());
 		}
 	}
 

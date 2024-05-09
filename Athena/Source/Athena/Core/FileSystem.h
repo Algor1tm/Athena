@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Buffer.h"
 
 #ifdef CreateDirectory
 	#undef CreateDirectory
@@ -13,7 +14,7 @@ namespace Athena
 	{
 	public:
 		static String ReadFile(const FilePath& path);
-		static std::vector<byte> ReadFileBinary(const FilePath& path);
+		static Buffer ReadFileBinary(const FilePath& path);
 
 		static bool WriteFile(const FilePath& path, const char* bytes, uint64 size);
 		static bool Remove(const FilePath& path);

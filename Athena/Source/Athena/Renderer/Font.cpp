@@ -180,6 +180,7 @@ namespace Athena
 
         // Save to cache
         FileSystem::WriteFile(cacheFolder / name, (const char*)buffer.Data(), buffer.Size());
+        ATN_CORE_WARN_TAG("Renderer", "Cached MSDF Font Atlas {}, ({}, {})", name, width, height);
 
         return buffer;
     }

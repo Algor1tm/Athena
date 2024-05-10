@@ -5,6 +5,7 @@
 #include <vma/vk_mem_alloc.h>
 
 #include "VulkanAllocator.h"
+#include "Athena/Utils/StringUtils.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 
@@ -59,7 +60,7 @@ namespace Athena
 
 		VkDeviceSize size = allocation->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemorySizeToString(size));
+			ATN_CORE_INFO_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 
 		return VulkanBufferAllocation(buffer, allocation);
 	}
@@ -76,7 +77,7 @@ namespace Athena
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
 		VkDeviceSize size = allocation->GetSize();
-		ATN_CORE_INFO_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemorySizeToString(size));
+		ATN_CORE_INFO_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
 
 		return VulkanImageAllocation(image, allocation);
 	}
@@ -85,7 +86,7 @@ namespace Athena
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
 		if(!name.empty())
-			ATN_CORE_INFO_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemorySizeToString(size));
+			ATN_CORE_INFO_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
@@ -93,7 +94,7 @@ namespace Athena
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
 		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_CORE_INFO_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemorySizeToString(size));
+		ATN_CORE_INFO_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}

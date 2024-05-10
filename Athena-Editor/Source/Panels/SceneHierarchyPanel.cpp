@@ -633,16 +633,20 @@ namespace Athena
 		{
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
-			
+
+			if (!FileSystem::Exists(text.Font->GetFilePath()))
+				text.Font = Font::GetDefault();
+
 			bool isDefault = std::filesystem::equivalent(Font::GetDefault()->GetFilePath(), text.Font->GetFilePath());
 			String fontName = isDefault ? "Default" : text.Font->GetFilePath().filename().string();
 
 			UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10, 4});
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if (ImGui::Button(fontName.c_str()))
 			{
-				FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0"));
-				if (!filepath.empty() && filepath.extension() == ".ttf")
+				FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0*.TTF\0"));
+				String ext = filepath.extension().string();
+				if (ext == ".ttf" || ext == ".TTF")
 					text.Font = Font::Create(filepath);
 			}
 
@@ -653,10 +657,24 @@ namespace Athena
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
 					FilePath filepath = (const char*)payload->Data;
-					if (filepath.extension() == ".ttf")
+					String ext = filepath.extension().string();
+					if (ext == ".ttf" || ext == ".TTF")
 						text.Font = Font::Create(filepath);
 				}
 				ImGui::EndDragDropTarget();
+			}
+
+			if (!isDefault)
+			{
+				ImGui::SameLine();
+
+				auto& style = ImGui::GetStyle();
+				ImVec2 labelSize = ImGui::CalcTextSize("  ");
+				ImVec2 size = ImGui::CalcItemSize({ 0, 0 }, labelSize.x + style.FramePadding.x * 2.0f, labelSize.y + style.FramePadding.y);
+				UI::ShiftCursorY(style.FramePadding.y);
+				if (ImGui::InvisibleButton("ResetFont", size))
+					text.Font = Font::GetDefault();
+				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
 			UI::PropertyColor4("Color", text.Color.Data());

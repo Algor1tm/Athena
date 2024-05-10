@@ -1,8 +1,8 @@
 #include "ProfilingPanel.h"
 
 #include "Athena/Core/Application.h"
-
 #include "Athena/UI/UI.h"
+#include "Athena/Utils/StringUtils.h"
 
 #include <ImGui/imgui.h>
 
@@ -43,8 +43,8 @@ namespace Athena
             {
                 if (ImGui::BeginTabItem("Application"))
                 {
-                    ImGui::Text("RAM: %s", Utils::MemorySizeToString(Platform::GetMemoryUsage()).data());
-                    ImGui::Text("VRAM: %s", Utils::MemorySizeToString(Renderer::GetMemoryUsage()).data());
+                    ImGui::Text("RAM: %s", Utils::MemoryBytesToString(Platform::GetMemoryUsage()).data());
+                    ImGui::Text("VRAM: %s", Utils::MemoryBytesToString(Renderer::GetMemoryUsage()).data());
                     ImGui::Spacing();
 
                     ImGui::Text("CPUWait: %.3f ms", appstats.CPUWait.AsMilliseconds());

@@ -52,13 +52,16 @@ float screenPxRange()
     return max(0.5 * dot(unitRange, screenTexSize), 1.0);
 }
 
-float median(float r, float g, float b) {
+float median(float r, float g, float b)
+{
     return max(min(r, g), min(max(r, g), b));
 }
 
 void main()
 {
-	vec4 texColor = Interpolators.Color * texture(u_AtlasTexture, Interpolators.TexCoords);
+	//o_Color = vec4(1.0);
+	//return;
+
 	vec4 bgColor = vec4(0.0);
 
 	vec3 msd = texture(u_AtlasTexture, Interpolators.TexCoords).rgb;

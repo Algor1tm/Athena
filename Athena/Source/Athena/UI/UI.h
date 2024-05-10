@@ -75,7 +75,7 @@ namespace Athena::UI
 	ATHENA_API void ButtonImage(const Ref<Texture2D>& imageNormal, const Ref<Texture2D>& imageHovered, const Ref<Texture2D>& imagePressed,
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax);
-	ATHENA_API void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed);
+	ATHENA_API void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal = IM_COL32_WHITE, ImU32 tintHovered = IM_COL32_WHITE, ImU32 tintPressed = IM_COL32_WHITE);
 
 	ATHENA_API void DrawImage(const Ref<Texture2D>& image, const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 

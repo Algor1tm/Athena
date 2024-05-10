@@ -1,6 +1,7 @@
 #include "SceneRenderer2D.h"
 
 #include "Athena/Math/Transforms.h"
+#include "Athena/Utils/StringUtils.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
@@ -643,7 +644,7 @@ namespace Athena
 			m_CurrentFont = font;
 		}
 
-		std::u32string unicodeText(text.begin(), text.end());
+		std::u32string unicodeText = Utils::ToUTF32String(text);
 
 		Ref<Texture2D> atlasTexture = font->GetAtlasTexture();
 		float texelWidth = 1.0f / atlasTexture->GetWidth();
@@ -651,7 +652,6 @@ namespace Athena
 
 		const auto& fontGeometry = font->GetAtlasGeometryData()->FontGeometry;
 		const auto& metrics = fontGeometry.getMetrics();
-		const auto& glyphs = font->GetAtlasGeometryData()->Glyphs;
 
 		double fsScale = 1.0 / (metrics.ascenderY - metrics.descenderY);
 		double x = 0.0;
@@ -682,7 +682,7 @@ namespace Athena
 
 				if (i < unicodeText.size() - 1)
 				{
-					char nextCharacter = unicodeText[i + 1];
+					char32_t nextCharacter = unicodeText[i + 1];
 					double dAdvance;
 					fontGeometry.getAdvance(dAdvance, character, nextCharacter);
 					advance = (float)dAdvance;
@@ -702,7 +702,7 @@ namespace Athena
 				glyph = fontGeometry.getGlyph('?');
 
 			if (!glyph)
-				return;
+				continue;
 
 			double al, ab, ar, at;
 			glyph->getQuadAtlasBounds(al, ab, ar, at);

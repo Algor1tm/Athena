@@ -1,6 +1,7 @@
 #include "SceneRenderer2D.h"
 
 #include "Athena/Math/Transforms.h"
+#include "Athena/Math/Projections.h"
 #include "Athena/Utils/StringUtils.h"
 #include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/SceneRenderer.h"
@@ -151,7 +152,7 @@ namespace Athena
 		textPipeline.Name = "TextPipeline";
 		textPipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Text");
 		textPipeline.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Float2, "a_TexCoords"} };
 		textPipeline.Topology = Topology::TRIANGLE_LIST;
@@ -175,6 +176,8 @@ namespace Athena
 
 	void SceneRenderer2D::OnViewportResize(uint32 width, uint32 height)
 	{
+		m_ViewportSize = Vector2u(width, height);
+
 		m_QuadPipeline->SetViewport(width, height);
 		m_LinePipeline->SetViewport(width, height);
 		m_CirclePipeline->SetViewport(width, height);
@@ -188,15 +191,20 @@ namespace Athena
 
 		Matrix4 viewProj = viewMatrix * projectionMatrix;
 
-		m_ViewProjectionCamera = viewProj;
-		m_InverseViewCamera = Math::AffineInverse(viewMatrix);
+		m_ViewProjection = viewProj;
+		m_InverseView = Math::AffineInverse(viewMatrix);
+		m_CameraPos = m_InverseView[3];
+
+		const float aspectRatio = 16.f / 9.f;
+		const float size = 10.f;
+		m_OrthoViewProjection = Math::Ortho(0.f, aspectRatio * size, 0.f, size, size, 0.f);	// z will be equal 1
 
 		m_CircleMaterial->Set("u_ViewProjection", viewProj);
 		m_LineMaterial->Set("u_ViewProjection", viewProj);
 		
 		for (auto& quadBatch : m_QuadBatches)
 		{
-			quadBatch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
+			quadBatch.Material->Set("u_ViewProjection", m_ViewProjection);
 			quadBatch.IndexCount = 0;
 		}
 
@@ -211,10 +219,7 @@ namespace Athena
 		m_LineBatchIndex = 0;
 
 		for (auto& textBatch : m_TextBatches)
-		{
-			textBatch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
 			textBatch.IndexCount = 0;
-		}
 
 		m_TextBatchIndex = 0;
 		m_CurrentFont = nullptr;
@@ -371,7 +376,7 @@ namespace Athena
 			batch.VertexOffset = vertexOffset;
 
 			batch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
-			batch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
+			batch.Material->Set("u_ViewProjection", m_ViewProjection);
 
 			m_QuadBatches.push_back(batch);
 		}
@@ -437,7 +442,6 @@ namespace Athena
 			batch.VertexOffset = vertexOffset;
 
 			batch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
-			batch.Material->Set("u_ViewProjection", m_ViewProjectionCamera);
 
 			m_TextBatches.push_back(batch);
 		}
@@ -560,19 +564,17 @@ namespace Athena
 
 	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const LinearColor& color)
 	{
-		Vector3 cameraPos = m_InverseViewCamera[3];
-		float distance = Math::Distance(cameraPos, position);
+		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;
-		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseViewCamera);
+		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseView);
 		DrawQuad(transform, color);
 	}
 
 	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
-		Vector3 cameraPos = m_InverseViewCamera[3];
-		float distance = Math::Distance(cameraPos, position);
+		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;
-		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseViewCamera);
+		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseView);
 		DrawQuad(transform, texture, tint, tilingFactor);
 	}
 
@@ -632,8 +634,11 @@ namespace Athena
 		DrawLine(lineVertices[3], lineVertices[0], color);
 	}
 
-	void SceneRenderer2D::DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, const TextParams& params)
+	void SceneRenderer2D::DrawText(const String& text, const Ref<Font>& font, const Matrix4& worldTransform, Renderer2DSpace space, const TextParams& params)
 	{
+		if (text.empty() || text[0] == '\0')
+			return;
+
 		if (m_CurrentFont == nullptr && m_TextBatches[m_TextBatchIndex].IndexCount == 0)
 			m_CurrentFont = font;
 
@@ -643,6 +648,13 @@ namespace Athena
 			NextBatchText();
 			m_CurrentFont = font;
 		}
+
+		Matrix4 transform;
+		if(space == Renderer2DSpace::WorldSpace)
+			transform = worldTransform * m_ViewProjection;
+		
+		else if(space == Renderer2DSpace::ScreenSpace)
+			transform = worldTransform * m_OrthoViewProjection;
 
 		std::u32string unicodeText = Utils::ToUTF32String(text);
 
@@ -655,7 +667,7 @@ namespace Athena
 
 		double fsScale = 1.0 / (metrics.ascenderY - metrics.descenderY);
 		double x = 0.0;
-		double y = 0.0;
+		double y = space == Renderer2DSpace::ScreenSpace ? fsScale * metrics.lineHeight + params.LineSpacing : 0.0;
 
 		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
 
@@ -672,7 +684,7 @@ namespace Athena
 			if (character == '\n')
 			{
 				x = 0;
-				y -= fsScale * metrics.lineHeight + params.LineSpacing;
+				y += fsScale * metrics.lineHeight + params.LineSpacing;
 				continue;
 			}
 
@@ -712,11 +724,16 @@ namespace Athena
 			texCoordMin *= Vector2(texelWidth, texelHeight);
 			texCoordMax *= Vector2(texelWidth, texelHeight);
 
-
 			double pl, pb, pr, pt;
 			glyph->getQuadPlaneBounds(pl, pb, pr, pt);
 			Vector2 quadMin((float)pl, (float)pb);
 			Vector2 quadMax((float)pr, (float)pt);
+
+			if (space == Renderer2DSpace::ScreenSpace)
+			{
+				quadMin.y = -quadMin.y;
+				quadMax.y = -quadMax.y;
+			}
 
 			quadMin *= fsScale, quadMax *= fsScale;
 			quadMin += Vector2(x, y);
@@ -746,7 +763,7 @@ namespace Athena
 			if (i < unicodeText.size() - 1)
 			{
 				double advance = glyph->getAdvance();
-				char nextCharacter = unicodeText[i + 1];
+				char32_t nextCharacter = unicodeText[i + 1];
 				fontGeometry.getAdvance(advance, character, nextCharacter);
 
 				x += fsScale * advance + params.Kerning;

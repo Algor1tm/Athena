@@ -113,10 +113,11 @@ namespace Athena
 	{
 		String Text;
 		Ref<Font> Font = Font::GetDefault();
+		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color;
+		float MaxWidth = 10.f;
 		float Kerning = 0.0f;
 		float LineSpacing = 0.0f;
-		// TODO: bg color/outline, shadowing, alignment
 
 		TextComponent() = default;
 		TextComponent(TextComponent&& other) = default;
@@ -126,9 +127,11 @@ namespace Athena
 		{
 			Font = Font::Create(other.Font->GetFilePath());
 			Text = other.Text;
+			Space = other.Space;
 			Color = other.Color;
 			Kerning = other.Kerning;
 			LineSpacing = other.LineSpacing;
+			MaxWidth = other.MaxWidth;
 		}
 	};
 

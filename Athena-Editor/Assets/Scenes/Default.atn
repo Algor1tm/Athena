@@ -5,15 +5,15 @@ Entities:
     TagComponent:
       Tag: Text
     TransformComponent:
-      Translation: [-10.4372778, 7.13546085, 0.675665855]
+      Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.166399956, 0.166400015, 0.166399986]
-    ParentComponent:
-      Parent: 15204102483634061799
+      Scale: [1, 1, 1]
     TextComponent:
       Text: "Athena \nИлья\x00\x00я Ішфіаарівто\x00"
-      Font: ../Athena/EngineResources\Fonts/Open_Sans/OpenSans-Medium.ttf
+      Font: Assets\Fonts\comic.ttf
+      Space: 2
       Color: [1, 1, 1, 1]
+      MaxWidth: 10
       Kerning: 0
       LineSpacing: 0
   - IDComponent:

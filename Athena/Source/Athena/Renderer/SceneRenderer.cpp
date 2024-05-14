@@ -1469,7 +1469,7 @@ namespace Athena
 			maxExtents.z += m_Settings.ShadowSettings.FarPlaneOffset;
 
 			Matrix4 lightView = Math::LookAt(frustumCenter + light.Direction.GetNormalized() * minExtents.z, frustumCenter, Vector3::Up());
-			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.f, maxExtents.z - minExtents.z);
+			Matrix4 lightProjection = Math::Ortho(minExtents.x, maxExtents.x, maxExtents.y, minExtents.y, 0.f, minExtents.z - maxExtents.z);
 
 			Matrix4 lightSpace = lightView * lightProjection;
 

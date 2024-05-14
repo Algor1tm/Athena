@@ -6,15 +6,17 @@
 
 namespace Athena::Math
 {
+	// All matrices use right handed coordinates
+
 	template <typename T>
 	constexpr Matrix<T, 4, 4> Ortho(T left, T right, T bottom, T top, T zNear, T zFar)
 	{
 		Matrix<T, 4, 4> out(0.f);
 		out[0][0] = static_cast<T>(2) / (right - left);
-		out[1][1] = static_cast<T>(2) / (bottom - top);
-		out[2][2] = static_cast<T>(1) / (zNear - zFar);
+		out[1][1] = static_cast<T>(2) / (top - bottom);
+		out[2][2] = static_cast<T>(1) / (zFar - zNear);
 		out[3][0] = -(right + left) / (right - left);
-		out[3][1] = -(top + bottom) / (bottom - top);
+		out[3][1] = -(top + bottom) / (top - bottom);
 		out[3][2] = zNear / (zNear - zFar);
 		out[3][3] = static_cast<T>(1);
 

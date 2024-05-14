@@ -337,7 +337,9 @@ namespace Athena
 
 						text.Text = textComponentNode["Text"].as<String>();
 						text.Font = Font::Create(textComponentNode["Font"].as<String>());
+						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
 						text.Color = textComponentNode["Color"].as<LinearColor>();
+						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
 						text.Kerning = textComponentNode["Kerning"].as<float>();
 						text.LineSpacing = textComponentNode["LineSpacing"].as<float>();
 					}
@@ -604,7 +606,9 @@ namespace Athena
 			{
 				output << YAML::Key << "Text" << YAML::Value << text.Text;
 				output << YAML::Key << "Font" << YAML::Value << text.Font->GetFilePath().string();
+				output << YAML::Key << "Space" << YAML::Value << (int)text.Space;
 				output << YAML::Key << "Color" << YAML::Value << text.Color;
+				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;
 				output << YAML::Key << "Kerning" << YAML::Value << text.Kerning;
 				output << YAML::Key << "LineSpacing" << YAML::Value << text.LineSpacing;
 			});

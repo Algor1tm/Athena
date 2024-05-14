@@ -28,7 +28,7 @@ namespace Athena
 		return "";
 	}
 
-	static TonemapMode StringToTonemapMode(std::string_view str)
+	static TonemapMode TonemapModeFromString(std::string_view str)
 	{
 		if (str == "None")
 			return TonemapMode::NONE;
@@ -54,7 +54,7 @@ namespace Athena
 		return "";
 	}
 
-	static Antialising StringToAntialising(std::string_view str)
+	static Antialising AntialisingFromString(std::string_view str)
 	{
 		if(str == "None")
 			return Antialising::NONE;
@@ -81,7 +81,7 @@ namespace Athena
 		return "";
 	}
 
-	static DebugView StringToDebugView(std::string_view str)
+	static DebugView DebugViewFromString(std::string_view str)
 	{
 		if (str == "None")
 			return DebugView::NONE;
@@ -200,7 +200,7 @@ namespace Athena
 			std::string_view selected = DebugViewToString(settings.DebugView);
 			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{
-				settings.DebugView = StringToDebugView(selected);
+				settings.DebugView = DebugViewFromString(selected);
 			}
 
 			ImGui::Spacing();
@@ -315,7 +315,7 @@ namespace Athena
 				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
 
 				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
-					postProcess.TonemapMode = StringToTonemapMode(selected);
+					postProcess.TonemapMode = TonemapModeFromString(selected);
 
 				UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
 			}
@@ -325,7 +325,7 @@ namespace Athena
 				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
 
 				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
-					postProcess.AntialisingMethod = StringToAntialising(selected);
+					postProcess.AntialisingMethod = AntialisingFromString(selected);
 			}
 
 			UI::EndPropertyTable();

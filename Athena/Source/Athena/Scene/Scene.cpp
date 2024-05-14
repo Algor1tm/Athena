@@ -617,10 +617,11 @@ namespace Athena
 
 			TextParams params;
 			params.Color = text.Color;
+			params.MaxWidth = text.MaxWidth;
 			params.Kerning = text.Kerning;
 			params.LineSpacing = text.LineSpacing;
 
-			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), params);
+			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), text.Space, params);
 		}
 	}
 

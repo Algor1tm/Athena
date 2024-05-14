@@ -78,8 +78,8 @@ namespace Athena
 	struct AmbientOcclusionSettings
 	{
 		bool Enable = true;
-		float Intensity = 2.f;
-		float Radius = 1.5f;
+		float Intensity = 1.3f;
+		float Radius = 1.f;
 		float Bias = 0.1f;
 		float BlurSharpness = 12.f;
 	};

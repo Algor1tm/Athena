@@ -3,7 +3,7 @@
 #version 460 core
 #pragma stage : vertex
 
-layout(location = 0) in vec3 a_Position;
+layout(location = 0) in vec4 a_Position;
 layout(location = 1) in vec4 a_Color;
 layout(location = 2) in vec2 a_TexCoords;
 
@@ -15,17 +15,12 @@ struct VertexInterpolators
 
 layout (location = 0) out VertexInterpolators Interpolators;
 
-layout(push_constant) uniform u_CameraData
-{
-	mat4 u_ViewProjection;
-};
-
 void main()
 {
 	Interpolators.Color = a_Color;
 	Interpolators.TexCoords = a_TexCoords;
 
-	gl_Position = u_ViewProjection * vec4(a_Position, 1);
+	gl_Position = a_Position;
 }
 
 #version 460 core
@@ -59,9 +54,6 @@ float median(float r, float g, float b)
 
 void main()
 {
-	//o_Color = vec4(1.0);
-	//return;
-
 	vec4 bgColor = vec4(0.0);
 
 	vec3 msd = texture(u_AtlasTexture, Interpolators.TexCoords).rgb;

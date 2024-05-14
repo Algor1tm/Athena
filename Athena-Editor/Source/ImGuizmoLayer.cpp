@@ -16,32 +16,58 @@ namespace Athena
 
 	void ImGuizmoLayer::OnImGuiRender() 
 	{
-        if (m_Camera && m_ViewportPanel && m_EditorCtx->SelectedEntity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && m_EditorCtx->SelectedEntity.HasComponent<TransformComponent>())
+        Entity entity = m_EditorCtx->SelectedEntity;
+
+        if (m_Camera && m_ViewportPanel && entity && m_GuizmoOperation != ImGuizmo::OPERATION::BOUNDS && entity.HasComponent<TransformComponent>())
         {
+            bool isOrthographic = false;
+
+            if (entity.HasComponent<TextComponent>())
+            {
+                if(entity.GetComponent<TextComponent>().Space == Renderer2DSpace::ScreenSpace)
+                    isOrthographic = true;
+            }
+
             auto& desc = m_ViewportPanel->GetDescription();
-            ImGuizmo::SetOrthographic(false);
+
+            ImGuizmo::SetOrthographic(isOrthographic);
             ImGuizmo::SetDrawlist();
             ImGuizmo::SetRect(desc.Bounds[0].x, desc.Bounds[0].y,
                 desc.Bounds[1].x - desc.Bounds[0].x, desc.Bounds[1].y - desc.Bounds[0].y);
 
-            // Need to recreate projection matrix, because ImGuizmo 
-            // does not work properly with reversed Z projection
-            CameraInfo info = m_Camera->GetCameraInfo();
-            float fov = info.FOV;
-            float znear = info.NearClip;
-            float zfar = info.FarClip;
-            float aspectRatio = m_Camera->GetAspectRatio();
-            Matrix4 cameraProjection = Math::Perspective(fov, aspectRatio, znear, zfar);
-            cameraProjection[1][1] = -cameraProjection[1][1]; // invert y
+            Matrix4 cameraProjection;
+            Matrix4 cameraView;
 
-            const Matrix4& cameraView = m_Camera->GetViewMatrix();
+            if (isOrthographic)
+            {
+                // Must match with SceneRenderer2D
+                const float size = 10.f;
+                cameraProjection = Math::Ortho(0.f, 16.f / 9.f * size, size, 0.f, 0.f, size); // reverse Y
+                cameraView = Matrix4::Identity();
+            }
+            else
+            {
+                // Need to recreate projection matrix, because ImGuizmo 
+                // does not work properly with reversed Z projection
+
+                CameraInfo info = m_Camera->GetCameraInfo();
+                float fov = info.FOV;
+                float znear = info.NearClip;
+                float zfar = info.FarClip;
+                float aspectRatio = m_Camera->GetAspectRatio();
+
+                cameraProjection = Math::Perspective(fov, aspectRatio, znear, zfar);
+                cameraProjection[1][1] = -cameraProjection[1][1]; // invert y
+
+                cameraView = m_Camera->GetViewMatrix();
+            }
 
             const WorldTransformComponent& worldTransform = m_EditorCtx->SelectedEntity.GetComponent<WorldTransformComponent>();
             Matrix4 worldTransformMatrix = worldTransform.AsMatrix();
 
             // Discard if not in viewport space
             Vector4 viewPos = Vector4(0, 0, 0, 1) * worldTransformMatrix * cameraView;
-            if (viewPos.z > 0)
+            if (!isOrthographic && viewPos.z > 0)
                 return;
 
             bool snap = Input::IsKeyPressed(Keyboard::LCtrl);

@@ -20,6 +20,29 @@
 
 namespace Athena
 {
+	static std::string_view Renderer2DSpaceToString(Renderer2DSpace mode)
+	{
+		switch (mode)
+		{
+		case Renderer2DSpace::WorldSpace: return "WorldSpace";
+		case Renderer2DSpace::ScreenSpace: return "ScreenSpace";
+		}
+
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
+
+	static Renderer2DSpace Renderer2DSpaceFromString(std::string_view str)
+	{
+		if (str == "WorldSpace")
+			return Renderer2DSpace::WorldSpace;
+		if (str == "ScreenSpace")
+			return Renderer2DSpace::ScreenSpace;
+
+		ATN_CORE_ASSERT(false);
+		return (Renderer2DSpace)0;
+	}
+
 	void DrawVec3Property(std::string_view label, Vector3& values, float defaultValues)
 	{
 		UI::PropertyRow(label, ImGui::GetFrameHeight());
@@ -629,7 +652,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<TextComponent>(entity, "Text", [](TextComponent& text)
+		DrawComponent<TextComponent>(entity, "Text", [&entity](TextComponent& text)
 		{
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
@@ -670,14 +693,24 @@ namespace Athena
 
 				auto& style = ImGui::GetStyle();
 				ImVec2 labelSize = ImGui::CalcTextSize("  ");
-				ImVec2 size = ImGui::CalcItemSize({ 0, 0 }, labelSize.x + style.FramePadding.x * 2.0f, labelSize.y + style.FramePadding.y);
+				ImVec2 size = ImGui::CalcItemSize({ 0, 0 }, labelSize.x + style.FramePadding.x * 2.0f, labelSize.y + style.FramePadding.y * 0.5f);
 				UI::ShiftCursorY(style.FramePadding.y);
 				if (ImGui::InvisibleButton("ResetFont", size))
 					text.Font = Font::GetDefault();
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
+			std::string_view views[] = { "WorldSpace", "ScreenSpace" };
+			std::string_view selected = Renderer2DSpaceToString(text.Space);
+
+			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
+			{
+				text.Space = Renderer2DSpaceFromString(selected);
+				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
+			}
+
 			UI::PropertyColor4("Color", text.Color.Data());
+			UI::PropertyDrag("MaxWidth", &text.MaxWidth, 0.2f);
 			UI::PropertyDrag("Kerning", &text.Kerning, 0.025f);
 			UI::PropertyDrag("Line Spacing", &text.LineSpacing, 0.025f);
 

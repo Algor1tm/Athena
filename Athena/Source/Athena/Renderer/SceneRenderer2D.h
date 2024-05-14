@@ -13,6 +13,12 @@
 
 namespace Athena
 {
+	enum class Renderer2DSpace
+	{
+		WorldSpace = 1,
+		ScreenSpace
+	};
+
 	// QUADS
 
 	struct QuadVertex
@@ -60,7 +66,7 @@ namespace Athena
 
 	struct TextVertex
 	{
-		Vector3 Position;
+		LinearColor Position;	// Vector4 has alignment
 		LinearColor Color;
 		Vector2 TexCoords;
 	};
@@ -75,6 +81,7 @@ namespace Athena
 	struct TextParams
 	{
 		LinearColor Color;
+		float MaxWidth = 0.0f;
 		float Kerning = 0.0f;
 		float LineSpacing = 0.0f;
 	};
@@ -117,7 +124,7 @@ namespace Athena
 		void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White);
 
-		void DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, const TextParams& params = TextParams());
+		void DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, Renderer2DSpace space, const TextParams& params = TextParams());
 
 		void SetLineWidth(float width);
 		float GetLineWidth();
@@ -140,8 +147,12 @@ namespace Athena
 	private:
 		bool m_BeginScene = false;
 		Ref<RenderCommandBuffer> m_RenderCommandBuffer;
-		Matrix4 m_ViewProjectionCamera;
-		Matrix4 m_InverseViewCamera;
+		Vector2u m_ViewportSize;
+
+		Vector3 m_CameraPos;
+		Matrix4 m_ViewProjection;
+		Matrix4 m_InverseView;
+		Matrix4 m_OrthoViewProjection;
 
 		Vector4 m_QuadVertexPositions[4];
 

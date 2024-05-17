@@ -292,6 +292,7 @@ namespace Athena
 					{
 						auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
 
+						sprite.Space = (Renderer2DSpace)spriteComponentNode["Space"].as<int>();
 						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
 
 						std::array<Vector2, 4> texCoords;
@@ -323,6 +324,7 @@ namespace Athena
 					{
 						auto& circle = deserializedEntity.AddComponent<CircleComponent>();
 
+						circle.Space = (Renderer2DSpace)circleComponentNode["Space"].as<int>();
 						circle.Color = circleComponentNode["Color"].as<LinearColor>();
 						circle.Thickness = circleComponentNode["Thickness"].as<float>();
 						circle.Fade = circleComponentNode["Fade"].as<float>();
@@ -580,6 +582,7 @@ namespace Athena
 		SerializeComponent<SpriteComponent>(out, "SpriteComponent", entity,
 			[](YAML::Emitter& output, const SpriteComponent& sprite)
 			{
+				output << YAML::Key << "Space" << YAML::Value << (int)sprite.Space;
 				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
 				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilePath().string();
 
@@ -597,6 +600,7 @@ namespace Athena
 
 		SerializeComponent<CircleComponent>(out, "CircleComponent", entity, [](YAML::Emitter& output, const CircleComponent& circle)
 			{
+				output << YAML::Key << "Space" << YAML::Value << (int)circle.Space;
 				output << YAML::Key << "Color" << YAML::Value << circle.Color;
 				output << YAML::Key << "Thickness" << YAML::Value << circle.Thickness;
 				output << YAML::Key << "Fade" << YAML::Value << circle.Fade;

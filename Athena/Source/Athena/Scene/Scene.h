@@ -76,6 +76,7 @@ namespace Athena
 		const String& GetSceneName() const { return m_Name; };
 
 		Entity GetPrimaryCameraEntity();
+		uint64 GetEntitiesCount() { return m_EntityMap.size(); }
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()

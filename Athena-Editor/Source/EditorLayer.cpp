@@ -470,7 +470,7 @@ namespace Athena
                     Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
                     Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, 0.001f));
 
-                    renderer2D->DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
+                    renderer2D->DrawCircle(transform, Renderer2DSpace::WorldSpace, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
                 }
             }
         }
@@ -482,35 +482,35 @@ namespace Athena
             for (auto entity : camerasView)
             { 
                 const auto& transform = camerasView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
             }
 
             auto dirLightsView = m_EditorScene->GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
             for (auto entity : dirLightsView)
             {
                 const auto& transform = dirLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
             }
 
             auto pointLightsView = m_EditorScene->GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
             for (auto entity : pointLightsView)
             {
                 const auto& transform = pointLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
             }
 
             auto spotLightsView = m_EditorScene->GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
             for (auto entity : spotLightsView)
             {
                 const auto& transform = spotLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
             }
 
             auto skyLightsView = m_EditorScene->GetAllEntitiesWith<SkyLightComponent, WorldTransformComponent>();
             for (auto entity : skyLightsView)
             {
                 const auto& transform = skyLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawScreenSpaceQuad(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
             }
         }
 
@@ -523,11 +523,13 @@ namespace Athena
             // 2D Outline
             if(selectedEntity.HasComponent<SpriteComponent>())
             {
-                renderer2D->DrawRect(worldTransform.AsMatrix(), color);
+                if(selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), color);
             }
             else if (selectedEntity.HasComponent<CircleComponent>())
             {
-                renderer2D->DrawRect(worldTransform.AsMatrix(), color);
+                if (selectedEntity.GetComponent<CircleComponent>().Space == Renderer2DSpace::WorldSpace)
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), color);
             }
 
             // Light Outline

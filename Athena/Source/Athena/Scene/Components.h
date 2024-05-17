@@ -88,6 +88,7 @@ namespace Athena
 
 	struct SpriteComponent
 	{
+		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color;
 		Texture2DInstance Texture;
 		float TilingFactor;
@@ -101,6 +102,7 @@ namespace Athena
 
 	struct CircleComponent
 	{
+		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color;
 		float Thickness = 1.f;
 		float Fade = 0.005f;

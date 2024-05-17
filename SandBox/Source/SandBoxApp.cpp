@@ -43,7 +43,7 @@ namespace Athena
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;
 		appinfo.WindowInfo.Title = "SandBox";
-		appinfo.WindowInfo.VSync = true;
+		appinfo.WindowInfo.VSync = false;
 		appinfo.WindowInfo.StartMode = WindowMode::Maximized;
 		appinfo.WindowInfo.CustomTitlebar = false;
 		appinfo.WindowInfo.WindowResizeable = true;
@@ -51,7 +51,7 @@ namespace Athena
 
 		Application* app = new SandBox(appinfo);
 
-		FilePath scene = "Assets/Scenes/Sponza.atn";
+		FilePath scene = "Assets/Scenes/Default.atn";
 
 		app->PushLayer(Ref<SandBoxLayer>::Create(scene));
 

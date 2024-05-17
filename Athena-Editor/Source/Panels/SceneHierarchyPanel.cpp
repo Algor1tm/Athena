@@ -26,6 +26,7 @@ namespace Athena
 		{
 		case Renderer2DSpace::WorldSpace: return "WorldSpace";
 		case Renderer2DSpace::ScreenSpace: return "ScreenSpace";
+		case Renderer2DSpace::Billboard: return "Billboard";
 		}
 
 		ATN_CORE_ASSERT(false);
@@ -38,6 +39,8 @@ namespace Athena
 			return Renderer2DSpace::WorldSpace;
 		if (str == "ScreenSpace")
 			return Renderer2DSpace::ScreenSpace;
+		if (str == "Billboard")
+			return Renderer2DSpace::Billboard;
 
 		ATN_CORE_ASSERT(false);
 		return (Renderer2DSpace)0;
@@ -602,10 +605,9 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<SpriteComponent>(entity, "Sprite", [](SpriteComponent& sprite)
+		DrawComponent<SpriteComponent>(entity, "Sprite", [&entity](SpriteComponent& sprite)
 		{
 			UI::PropertyColor4("Color", sprite.Color.Data());
-			UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
 
 			float imageSize = 45.f;
 			UI::PropertyImage("Texture", sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
@@ -640,12 +642,33 @@ namespace Athena
 			if (ImGui::Button("Reset"))
 				sprite.Texture = TextureGenerator::GetWhiteTexture();
 
+			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard" };
+			std::string_view selected = Renderer2DSpaceToString(sprite.Space);
+
+			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
+			{
+				sprite.Space = Renderer2DSpaceFromString(selected);
+				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
+			}
+
+			UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
+
 			return true;
 		});
 
-		DrawComponent<CircleComponent>(entity, "Circle", [](CircleComponent& circle)
+		DrawComponent<CircleComponent>(entity, "Circle", [&entity](CircleComponent& circle)
 		{
 			UI::PropertyColor4("Color", circle.Color.Data());
+
+			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard" };
+			std::string_view selected = Renderer2DSpaceToString(circle.Space);
+
+			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
+			{
+				circle.Space = Renderer2DSpaceFromString(selected);
+				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
+			}
+
 			UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
 			UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
 
@@ -700,7 +723,7 @@ namespace Athena
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
-			std::string_view views[] = { "WorldSpace", "ScreenSpace" };
+			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard"};
 			std::string_view selected = Renderer2DSpaceToString(text.Space);
 
 			if (UI::PropertyCombo("Space", views, std::size(views), &selected))

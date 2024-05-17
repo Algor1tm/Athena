@@ -3,9 +3,9 @@
 #version 460 core
 #pragma stage : vertex
 
-layout (location = 0) in vec3 a_WorldPosition;
-layout (location = 1) in vec3 a_LocalPosition;
-layout (location = 2) in vec4 a_Color;
+layout (location = 0) in vec4 a_WorldPosition;
+layout (location = 1) in vec4 a_Color;
+layout (location = 2) in vec3 a_LocalPosition;
 layout (location = 3) in float a_Thickness;
 layout (location = 4) in float a_Fade;
 
@@ -19,11 +19,6 @@ struct VertexInterpolators
 
 layout (location = 0) out VertexInterpolators Interpolators;
 
-layout(push_constant) uniform u_CameraData
-{
-	mat4 u_ViewProjection;
-};
-
 void main()
 {
 	Interpolators.LocalPosition = a_LocalPosition;
@@ -31,7 +26,7 @@ void main()
 	Interpolators.Thickness = a_Thickness;
 	Interpolators.Fade = a_Fade;
 
-	gl_Position = u_ViewProjection * vec4(a_WorldPosition, 1);
+	gl_Position = a_WorldPosition;
 }
 
 #version 460 core

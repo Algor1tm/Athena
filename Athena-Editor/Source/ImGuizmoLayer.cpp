@@ -27,6 +27,16 @@ namespace Athena
                 if(entity.GetComponent<TextComponent>().Space == Renderer2DSpace::ScreenSpace)
                     isOrthographic = true;
             }
+            else if (entity.HasComponent<SpriteComponent>())
+            {
+                if (entity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::ScreenSpace)
+                    isOrthographic = true;
+            }
+            else if (entity.HasComponent<CircleComponent>())
+            {
+                if (entity.GetComponent<CircleComponent>().Space == Renderer2DSpace::ScreenSpace)
+                    isOrthographic = true;
+            }
 
             auto& desc = m_ViewportPanel->GetDescription();
 

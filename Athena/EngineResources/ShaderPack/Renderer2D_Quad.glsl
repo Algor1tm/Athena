@@ -3,7 +3,7 @@
 #version 460 core
 #pragma stage : vertex
 
-layout (location = 0) in vec3 a_Position;
+layout (location = 0) in vec4 a_Position;
 layout (location = 1) in vec4 a_Color;
 layout (location = 2) in vec2 a_TexCoords;
 layout (location = 3) in uint a_TexIndex;
@@ -17,18 +17,13 @@ struct VertexInterpolators
 layout (location = 0) out VertexInterpolators Interpolators;
 layout (location = 2) flat out uint v_TexIndex;
 
-layout(push_constant) uniform u_CameraData
-{
-	mat4 u_ViewProjection;
-};
-
 void main()
 {
 	Interpolators.Color = a_Color;
 	Interpolators.TexCoords = a_TexCoords;
 	v_TexIndex = a_TexIndex;
 
-	gl_Position = u_ViewProjection * vec4(a_Position, 1);
+	gl_Position = a_Position;
 }
 
 #version 460 core

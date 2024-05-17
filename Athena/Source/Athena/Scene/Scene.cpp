@@ -597,7 +597,7 @@ namespace Athena
 			const auto& transform = quads.get<WorldTransformComponent>(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
+			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Space, sprite.Color, sprite.TilingFactor);
 		}
 
 		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
@@ -606,7 +606,7 @@ namespace Athena
 			const auto& transform = circles.get<WorldTransformComponent>(entity);
 			const auto& circle = circles.get<CircleComponent>(entity);
 
-			renderer2D->DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
+			renderer2D->DrawCircle(transform.AsMatrix(), circle.Space, circle.Color, circle.Thickness, circle.Fade);
 		}
 
 		auto textEntities = GetAllEntitiesWith<TextComponent, WorldTransformComponent>();

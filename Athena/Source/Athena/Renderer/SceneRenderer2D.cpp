@@ -90,7 +90,7 @@ namespace Athena
 		quadPipeline.Name = "QuadPipeline";
 		quadPipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Quad");
 		quadPipeline.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    },
 			{ ShaderDataType::Float2, "a_TexCoords"},
 			{ ShaderDataType::UInt,   "a_TexIndex" }};
@@ -112,9 +112,9 @@ namespace Athena
 		circlePipeline.Name = "CirclePipeline";
 		circlePipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Circle");
 		circlePipeline.VertexLayout = {
-			{ ShaderDataType::Float3, "a_WorldPosition" },
-			{ ShaderDataType::Float3, "a_LocalPosition" },
+			{ ShaderDataType::Float4, "a_WorldPosition" },
 			{ ShaderDataType::Float4, "a_Color"         },
+			{ ShaderDataType::Float3, "a_LocalPosition" },
 			{ ShaderDataType::Float,  "a_Thickness"     },
 			{ ShaderDataType::Float,  "a_Fade"          }};
 		circlePipeline.Topology = Topology::TRIANGLE_LIST;
@@ -122,21 +122,17 @@ namespace Athena
 		m_CirclePipeline = Pipeline::Create(circlePipeline);
 		m_CirclePipeline->Bake();
 
-		m_CircleMaterial = Material::Create(circlePipeline.Shader, circlePipeline.Name);
-
 
 		PipelineCreateInfo linePipeline = pipelineBase;
 		linePipeline.Name = "LinePipeline";
 		linePipeline.Shader = Renderer::GetShaderPack()->Get("Renderer2D_Line");
 		linePipeline.VertexLayout = {
-			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float4, "a_Position" },
 			{ ShaderDataType::Float4, "a_Color"    }};
 		linePipeline.Topology = Topology::LINE_LIST;
 
 		m_LinePipeline = Pipeline::Create(linePipeline);
 		m_LinePipeline->Bake();
-
-		m_LineMaterial = Material::Create(linePipeline.Shader, linePipeline.Name);
 
 		m_LineWidth = 1.f;
 		m_LineBatchIndex = 0;
@@ -199,12 +195,8 @@ namespace Athena
 		const float size = 10.f;
 		m_OrthoViewProjection = Math::Ortho(0.f, aspectRatio * size, 0.f, size, size, 0.f);	// z will be equal 1
 
-		m_CircleMaterial->Set("u_ViewProjection", viewProj);
-		m_LineMaterial->Set("u_ViewProjection", viewProj);
-		
 		for (auto& quadBatch : m_QuadBatches)
 		{
-			quadBatch.Material->Set("u_ViewProjection", m_ViewProjection);
 			quadBatch.IndexCount = 0;
 		}
 
@@ -263,7 +255,8 @@ namespace Athena
 			m_CircleVertexBuffer.Flush();
 			m_CirclePipeline->Bind(commandBuffer);
 
-			Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, m_CircleVertexBuffer.Get(), m_CircleMaterial, 0, m_CircleIndexCount);
+			Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, m_CircleVertexBuffer.Get(), 
+				nullptr, 0, m_CircleIndexCount);
 		}
 
 		// LINES
@@ -281,7 +274,7 @@ namespace Athena
 					m_LinePipeline->SetLineWidth(commandBuffer, lineBatch.LineWidth);
 
 					Renderer::RenderGeometry(commandBuffer, m_LinePipeline, m_LineVertexBuffer.Get(),
-						m_LineMaterial, lineBatch.VertexOffset, lineBatch.VertexCount);
+						nullptr, lineBatch.VertexOffset, lineBatch.VertexCount);
 				}
 			}
 		}
@@ -460,7 +453,7 @@ namespace Athena
 	{
 		Matrix4 transform = Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
-		DrawQuad(transform, color);
+		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
 	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
@@ -472,7 +465,7 @@ namespace Athena
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
-		DrawQuad(transform, texture, tint, tilingFactor);
+		DrawQuad(transform, texture, Renderer2DSpace::WorldSpace, tint, tilingFactor);
 	}
 
 	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const LinearColor& color)
@@ -485,7 +478,7 @@ namespace Athena
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
-		DrawQuad(transform, color);
+		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
 	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
@@ -498,14 +491,16 @@ namespace Athena
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
 
-		DrawQuad(transform, texture, tint, tilingFactor);
+		DrawQuad(transform, texture, Renderer2DSpace::WorldSpace, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const LinearColor& color)
+	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, Renderer2DSpace space, const LinearColor& color)
 	{
 		const uint32 textureIndex = 0; // White Texture
 		const Vector2 textureCoords[4] = { {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		const float tilingFactor = 1.f;
+
+		Matrix4 transform = GetSpaceTransform(worldTransform, space);
 
 		QuadVertex vertices[4];
 
@@ -521,7 +516,7 @@ namespace Athena
 		m_QuadBatches[m_QuadBatchIndex].IndexCount += 6;
 	}
 
-	void SceneRenderer2D::DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, const Texture2DInstance& texture, Renderer2DSpace space, const LinearColor& tint, float tilingFactor)
 	{
 		const auto& texCoords = texture.GetTexCoords();
 		int32 textureIndex = 0;
@@ -548,6 +543,8 @@ namespace Athena
 			m_TextureSlotIndex++;
 		}
 
+		Matrix4 transform = GetSpaceTransform(worldTransform, space);
+
 		QuadVertex vertices[4];
 
 		for (uint32 i = 0; i < 4; ++i)
@@ -562,24 +559,26 @@ namespace Athena
 		m_QuadBatches[m_QuadBatchIndex].IndexCount += 6;
 	}
 
-	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const LinearColor& color)
+	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const LinearColor& color)
 	{
 		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;
 		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseView);
-		DrawQuad(transform, color);
+		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
 	{
 		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;
 		Matrix4 transform = Math::ConstructTransform(position, { size.x, size.y, 1 }, Quaternion(1, 0, 0, 0) * m_InverseView);
-		DrawQuad(transform, texture, tint, tilingFactor);
+		DrawQuad(transform, texture, Renderer2DSpace::WorldSpace, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawCircle(const Matrix4& transform, const LinearColor& color, float thickness, float fade)
+	void SceneRenderer2D::DrawCircle(const Matrix4& worldTransform, Renderer2DSpace space, const LinearColor& color, float thickness, float fade)
 	{
+		Matrix4 transform = GetSpaceTransform(worldTransform, space);
+
 		CircleVertex vertices[4];
 
 		for (uint32 i = 0; i < 4; ++i)
@@ -599,10 +598,10 @@ namespace Athena
 	{
 		LineVertex vertices[2];
 
-		vertices[0].Position = p0;
+		vertices[0].Position = Vector4(p0, 1.0) * m_ViewProjection;
 		vertices[0].Color = color;
 
-		vertices[1].Position = p1;
+		vertices[1].Position = Vector4(p1, 1.0) * m_ViewProjection;
 		vertices[1].Color = color;
 
 		m_LineVertexBuffer.Push(vertices, sizeof(vertices));
@@ -649,12 +648,7 @@ namespace Athena
 			m_CurrentFont = font;
 		}
 
-		Matrix4 transform;
-		if(space == Renderer2DSpace::WorldSpace)
-			transform = worldTransform * m_ViewProjection;
-		
-		else if(space == Renderer2DSpace::ScreenSpace)
-			transform = worldTransform * m_OrthoViewProjection;
+		Matrix4 transform = GetSpaceTransform(worldTransform, space);
 
 		std::u32string unicodeText = Utils::ToUTF32String(text);
 
@@ -670,6 +664,10 @@ namespace Athena
 		double y = space == Renderer2DSpace::ScreenSpace ? fsScale * metrics.lineHeight + params.LineSpacing : 0.0;
 
 		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
+		double newLineAdvance = -(fsScale * metrics.lineHeight + params.LineSpacing);
+
+		if (space == Renderer2DSpace::ScreenSpace)
+			newLineAdvance = -newLineAdvance;
 
 		for (uint32 i = 0; i < unicodeText.size(); ++i)
 		{
@@ -684,7 +682,7 @@ namespace Athena
 			if (character == '\n')
 			{
 				x = 0;
-				y += fsScale * metrics.lineHeight + params.LineSpacing;
+				y += newLineAdvance;
 				continue;
 			}
 
@@ -771,6 +769,12 @@ namespace Athena
 		}
 	}
 
+	void SceneRenderer2D::DrawScreenSpaceText(const String& text, const Ref<Font>& font, Vector2 position, Vector2 scale, const TextParams& params)
+	{
+		Matrix4 transform = Math::TranslateMatrix(Vector3(position, 1.0)).Scale(Vector3(scale, 1.0));
+		DrawText(text, font, transform, Renderer2DSpace::ScreenSpace, params);
+	}
+
 	void SceneRenderer2D::SetLineWidth(float width)
 	{
 		if (m_BeginScene && m_LineBatches[m_LineBatchIndex].VertexCount != 0)
@@ -785,5 +789,30 @@ namespace Athena
 	float SceneRenderer2D::GetLineWidth()
 	{
 		return m_LineWidth;
+	}
+
+	Matrix4 SceneRenderer2D::GetSpaceTransform(const Matrix4& worldTransform, Renderer2DSpace space)
+	{
+		Matrix4 transform;
+		if (space == Renderer2DSpace::WorldSpace)
+		{
+			transform = worldTransform * m_ViewProjection;
+		}
+		else if (space == Renderer2DSpace::ScreenSpace)
+		{
+			transform = worldTransform * m_OrthoViewProjection;
+		}
+		else if (space == Renderer2DSpace::Billboard) // TODO
+		{
+			Vector3 translation, rotation, scale;
+			Math::DecomposeTransform(worldTransform, translation, rotation, scale);
+
+			Quaternion newRotation = Quaternion(1.0, 0.f, 0.f, 0.0) * m_InverseView;
+
+			transform = Math::ConstructTransform(translation, scale, newRotation);
+			transform = transform * m_ViewProjection;
+		}
+
+		return transform;
 	}
 }

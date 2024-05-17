@@ -10,20 +10,26 @@
 #include "Athena/Renderer/Pipeline.h"
 #include "Athena/Renderer/Material.h"
 
+// WINAPI 
+#ifdef DrawText
+	#undef DrawText
+#endif
+
 
 namespace Athena
 {
 	enum class Renderer2DSpace
 	{
 		WorldSpace = 1,
-		ScreenSpace
+		ScreenSpace,
+		Billboard	// TODO
 	};
 
 	// QUADS
 
 	struct QuadVertex
 	{
-		Vector3 Position;
+		LinearColor Position; 	// Vector4 has alignment 16
 		LinearColor Color;
 		Vector2 TexCoords;
 		uint32 TexIndex;
@@ -40,9 +46,9 @@ namespace Athena
 
 	struct CircleVertex
 	{
-		Vector3 WorldPosition;
-		Vector3 LocalPosition;
+		LinearColor WorldPosition;
 		LinearColor Color;
+		Vector3 LocalPosition;
 		float Thickness;
 		float Fade;
 	};
@@ -51,7 +57,7 @@ namespace Athena
 
 	struct LineVertex
 	{
-		Vector3 Position;
+		Vector4 Position;
 		LinearColor Color;
 	};
 
@@ -66,7 +72,7 @@ namespace Athena
 
 	struct TextVertex
 	{
-		LinearColor Position;	// Vector4 has alignment
+		LinearColor Position;
 		LinearColor Color;
 		Vector2 TexCoords;
 	};
@@ -80,6 +86,10 @@ namespace Athena
 
 	struct TextParams
 	{
+		TextParams() = default;
+		TextParams(const LinearColor& color)
+			: Color(color) {}
+
 		LinearColor Color;
 		float MaxWidth = 0.0f;
 		float Kerning = 0.0f;
@@ -111,20 +121,21 @@ namespace Athena
 		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
-		void DrawQuad(const Matrix4& transform, const LinearColor& color = LinearColor::White);
-		void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White);
+		void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
-		void DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const LinearColor& color = LinearColor::White);
-		void DrawScreenSpaceQuad(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const LinearColor& color = LinearColor::White);
+		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
-		void DrawCircle(const Matrix4& transform, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f);
+		void DrawCircle(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f);
 
 		void DrawLine(const Vector3& p0, const Vector3& p1, const LinearColor& color = LinearColor::White);
 
 		void DrawRect(const Vector3& position, const Vector2& size, const LinearColor& color = LinearColor::White);
 		void DrawRect(const Matrix4& transform, const LinearColor& color = LinearColor::White);
 
-		void DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, Renderer2DSpace space, const TextParams& params = TextParams());
+		void DrawText(const String& text, const Ref<Font>& font, const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const TextParams& params = TextParams());
+		void DrawScreenSpaceText(const String& text, const Ref<Font>& font, Vector2 position, Vector2 scale, const TextParams& params = TextParams());
 
 		void SetLineWidth(float width);
 		float GetLineWidth();
@@ -141,8 +152,10 @@ namespace Athena
 
 		void FlushIndexBuffer();
 
+		Matrix4 GetSpaceTransform(const Matrix4& transform, Renderer2DSpace space);
+
 	private:
-		static const uint32 s_MaxTextureSlots = 32;   // TODO: RenderCaps
+		static const uint32 s_MaxTextureSlots = 32;
 
 	private:
 		bool m_BeginScene = false;
@@ -156,7 +169,7 @@ namespace Athena
 
 		Vector4 m_QuadVertexPositions[4];
 
-		// Shared indices for quads and circles
+		// Shared indices for quads, circles and text
 		DynamicGPUBuffer<IndexBuffer> m_IndexBuffer;
 		std::vector<uint32> m_IndicesCount; // Per frame in flight
 
@@ -169,12 +182,10 @@ namespace Athena
 		uint32 m_TextureSlotIndex = 1; // 0 - white texture
 
 		Ref<Pipeline> m_CirclePipeline;
-		Ref<Material> m_CircleMaterial;
 		DynamicGPUBuffer<VertexBuffer> m_CircleVertexBuffer;
 		uint64 m_CircleIndexCount = 0;
 
 		Ref<Pipeline> m_LinePipeline;
-		Ref<Material> m_LineMaterial;
 		DynamicGPUBuffer<VertexBuffer> m_LineVertexBuffer;
 		std::vector<LineBatch> m_LineBatches;
 		uint32 m_LineBatchIndex = 0;

@@ -7,7 +7,7 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/TextureGenerator.h"
-#include "Athena/Renderer/FontAtlasGeometryData.h"
+#include "Athena/Renderer/FontGeometry.h"
 
 
 namespace Athena
@@ -648,124 +648,56 @@ namespace Athena
 			m_CurrentFont = font;
 		}
 
+		if (params.Shadowing)
+		{
+			TextParams shadowParams = params;
+			shadowParams.Shadowing = false;
+			shadowParams.Color = params.ShadowColor;
+
+			Vector3 offset = { 0.03f, -0.03f, 0.f };
+			if (space == Renderer2DSpace::ScreenSpace)
+				offset.y = -offset.y;
+
+			offset *= params.ShadowDistance;
+
+			Matrix4 shadowTransform = Math::TranslateMatrix(offset) * worldTransform;
+			DrawText(text, font, shadowTransform, space, shadowParams);
+		}
+
 		Matrix4 transform = GetSpaceTransform(worldTransform, space);
 
-		std::u32string unicodeText = Utils::ToUTF32String(text);
+		TextAlignmentOptions options;
+		options.Kerning = params.Kerning;
+		options.LineSpacing = params.LineSpacing;
+		options.MaxWidth = params.MaxWidth;
+		options.InvertY = space == Renderer2DSpace::ScreenSpace;
 
-		Ref<Texture2D> atlasTexture = font->GetAtlasTexture();
-		float texelWidth = 1.0f / atlasTexture->GetWidth();
-		float texelHeight = 1.0f / atlasTexture->GetHeight();
+		FontGeometry* fontGeometry = font->GetFontGeometry();
+		fontGeometry->InitText(text, options);
 
-		const auto& fontGeometry = font->GetAtlasGeometryData()->FontGeometry;
-		const auto& metrics = fontGeometry.getMetrics();
-
-		double fsScale = 1.0 / (metrics.ascenderY - metrics.descenderY);
-		double x = 0.0;
-		double y = space == Renderer2DSpace::ScreenSpace ? fsScale * metrics.lineHeight + params.LineSpacing : 0.0;
-
-		const float spaceGlyphAdvance = fontGeometry.getGlyph(' ')->getAdvance();
-		double newLineAdvance = -(fsScale * metrics.lineHeight + params.LineSpacing);
-
-		if (space == Renderer2DSpace::ScreenSpace)
-			newLineAdvance = -newLineAdvance;
-
-		for (uint32 i = 0; i < unicodeText.size(); ++i)
+		GlyphData glyphData;
+		while (fontGeometry->NextCharacter(&glyphData))
 		{
-			char32_t character = unicodeText[i];
-
-			if (character == '\0')
-				break;
-
-			if (character == '\r')
-				continue;
-
-			if (character == '\n')
-			{
-				x = 0;
-				y += newLineAdvance;
-				continue;
-			}
-
-			if (character == ' ')
-			{
-				float advance;
-
-				if (i < unicodeText.size() - 1)
-				{
-					char32_t nextCharacter = unicodeText[i + 1];
-					double dAdvance;
-					fontGeometry.getAdvance(dAdvance, character, nextCharacter);
-					advance = (float)dAdvance;
-				}
-				else
-				{
-					advance = spaceGlyphAdvance;
-				}
-
-				x += fsScale * advance + params.Kerning;
-				continue;
-			}
-
-			const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
-
-			if (!glyph)
-				glyph = fontGeometry.getGlyph('?');
-
-			if (!glyph)
-				continue;
-
-			double al, ab, ar, at;
-			glyph->getQuadAtlasBounds(al, ab, ar, at);
-			Vector2 texCoordMin((float)al, (float)ab);
-			Vector2 texCoordMax((float)ar, (float)at);
-
-			texCoordMin *= Vector2(texelWidth, texelHeight);
-			texCoordMax *= Vector2(texelWidth, texelHeight);
-
-			double pl, pb, pr, pt;
-			glyph->getQuadPlaneBounds(pl, pb, pr, pt);
-			Vector2 quadMin((float)pl, (float)pb);
-			Vector2 quadMax((float)pr, (float)pt);
-
-			if (space == Renderer2DSpace::ScreenSpace)
-			{
-				quadMin.y = -quadMin.y;
-				quadMax.y = -quadMax.y;
-			}
-
-			quadMin *= fsScale, quadMax *= fsScale;
-			quadMin += Vector2(x, y);
-			quadMax += Vector2(x, y);
-
 			TextVertex vertices[4];
-			
-			vertices[0].Position = Vector4(quadMin, 0.0f, 1.0f) * transform;
+
+			vertices[0].Position = Vector4(glyphData.QuadMin, 0.0f, 1.0f) * transform;
 			vertices[0].Color = params.Color;
-			vertices[0].TexCoords = texCoordMin;
+			vertices[0].TexCoords = glyphData.TexCoordMin;
 
-			vertices[1].Position = Vector4(quadMin.x, quadMax.y, 0.0f, 1.0f) * transform;
+			vertices[1].Position = Vector4(glyphData.QuadMin.x, glyphData.QuadMax.y, 0.0f, 1.0f) * transform;
 			vertices[1].Color = params.Color;
-			vertices[1].TexCoords = { texCoordMin.x, texCoordMax.y };
+			vertices[1].TexCoords = { glyphData.TexCoordMin.x, glyphData.TexCoordMax.y };
 
-			vertices[2].Position = Vector4(quadMax, 0.0f, 1.0f) * transform;
+			vertices[2].Position = Vector4(glyphData.QuadMax, 0.0f, 1.0f) * transform;
 			vertices[2].Color = params.Color;
-			vertices[2].TexCoords = texCoordMax;
+			vertices[2].TexCoords = glyphData.TexCoordMax;
 
-			vertices[3].Position = Vector4(quadMax.x, quadMin.y, 0.0f, 1.0f) * transform;
+			vertices[3].Position = Vector4(glyphData.QuadMax.x, glyphData.QuadMin.y, 0.0f, 1.0f) * transform;
 			vertices[3].Color = params.Color;
-			vertices[3].TexCoords = { texCoordMax.x, texCoordMin.y };
+			vertices[3].TexCoords = { glyphData.TexCoordMax.x, glyphData.TexCoordMin.y };
 
 			m_TextVertexBuffer.Push(vertices, sizeof(vertices));
 			m_TextBatches[m_TextBatchIndex].IndexCount += 6;
-
-			if (i < unicodeText.size() - 1)
-			{
-				double advance = glyph->getAdvance();
-				char32_t nextCharacter = unicodeText[i + 1];
-				fontGeometry.getAdvance(advance, character, nextCharacter);
-
-				x += fsScale * advance + params.Kerning;
-			}
 		}
 	}
 

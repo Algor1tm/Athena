@@ -175,7 +175,7 @@ Entities:
     TagComponent:
       Tag: Text
     TransformComponent:
-      Translation: [-10.467454, 7.18695641, 0.643565178]
+      Translation: [-10.467454, 8.2166605, 0.643565178]
       Rotation: [1, 0, 0, 0]
       Scale: [0.141000018, 0.141000018, 0.141000018]
     ParentComponent:
@@ -187,4 +187,7 @@ Entities:
       Color: [1, 1, 1, 1]
       MaxWidth: 10
       Kerning: 0
-      LineSpacing: 0
+      LineSpacing: -0.100000001
+      Shadowing: false
+      ShadowDistance: 1
+      ShadowColor: [0, 0, 0, 1]

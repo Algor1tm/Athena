@@ -733,9 +733,16 @@ namespace Athena
 			}
 
 			UI::PropertyColor4("Color", text.Color.Data());
-			UI::PropertyDrag("MaxWidth", &text.MaxWidth, 0.2f);
+			UI::PropertyDrag("Max Width", &text.MaxWidth, 0.2f);
 			UI::PropertyDrag("Kerning", &text.Kerning, 0.025f);
 			UI::PropertyDrag("Line Spacing", &text.LineSpacing, 0.025f);
+			UI::PropertyCheckbox("Shadowing", &text.Shadowing);
+
+			if (text.Shadowing)
+			{
+				UI::PropertyDrag("Shadow Distance", &text.ShadowDistance, 0.1f);
+				UI::PropertyColor4("Shadow Color", text.ShadowColor.Data());
+			}
 
 			return true;
 		});

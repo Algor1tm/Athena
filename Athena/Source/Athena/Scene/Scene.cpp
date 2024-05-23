@@ -620,6 +620,9 @@ namespace Athena
 			params.MaxWidth = text.MaxWidth;
 			params.Kerning = text.Kerning;
 			params.LineSpacing = text.LineSpacing;
+			params.Shadowing = text.Shadowing;
+			params.ShadowDistance = text.ShadowDistance;
+			params.ShadowColor = text.ShadowColor;
 
 			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), text.Space, params);
 		}

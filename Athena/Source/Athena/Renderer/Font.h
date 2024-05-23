@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class FontAtlasGeometryData;
+	class FontGeometry;
 
 	class ATHENA_API Font: public RefCounted
 	{
@@ -21,14 +21,14 @@ namespace Athena
 
 		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
-		const FontAtlasGeometryData* GetAtlasGeometryData() const { return m_AtlasGeometryData; }
+		FontGeometry* GetFontGeometry() { return m_FontGeometry; }
 
 	private:
 		Buffer GenerateAtlasOrReadFromCache(uint32 width, uint32 height);
 
 	private:
 		FilePath m_FilePath;
-		FontAtlasGeometryData* m_AtlasGeometryData;
+		FontGeometry* m_FontGeometry;
 		Ref<Texture2D> m_AtlasTexture;
 	};
 }

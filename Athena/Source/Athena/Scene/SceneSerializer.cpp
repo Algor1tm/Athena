@@ -344,6 +344,9 @@ namespace Athena
 						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
 						text.Kerning = textComponentNode["Kerning"].as<float>();
 						text.LineSpacing = textComponentNode["LineSpacing"].as<float>();
+						text.Shadowing = textComponentNode["Shadowing"].as<bool>();
+						text.ShadowDistance = textComponentNode["ShadowDistance"].as<float>();
+						text.ShadowColor = textComponentNode["ShadowColor"].as<LinearColor>();
 					}
 				}
 
@@ -615,6 +618,9 @@ namespace Athena
 				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;
 				output << YAML::Key << "Kerning" << YAML::Value << text.Kerning;
 				output << YAML::Key << "LineSpacing" << YAML::Value << text.LineSpacing;
+				output << YAML::Key << "Shadowing" << YAML::Value << text.Shadowing;
+				output << YAML::Key << "ShadowDistance" << YAML::Value << text.ShadowDistance;
+				output << YAML::Key << "ShadowColor" << YAML::Value << text.ShadowColor;
 			});
 
 		SerializeComponent<Rigidbody2DComponent>(out, "Rigidbody2DComponent", entity,

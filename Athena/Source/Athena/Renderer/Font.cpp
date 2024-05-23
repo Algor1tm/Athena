@@ -3,7 +3,7 @@
 #include "Athena/Core/Buffer.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Math/Common.h"
-#include "Athena/Renderer/FontAtlasGeometryData.h"
+#include "Athena/Renderer/FontGeometry.h"
 
 #include <thread>
 
@@ -58,18 +58,8 @@ namespace Athena
             return nullptr;
         }
 
-        result->m_AtlasGeometryData = new FontAtlasGeometryData();
-        FontAtlasGeometryData* atlasData = result->m_AtlasGeometryData;
-
-        atlasData->FontGeometry = msdf_atlas::FontGeometry(&atlasData->Glyphs);
-
-        struct CharsetRange
-        {
-            uint32 Begin, End;
-        };
-
         // From imgui_draw.cpp
-        const CharsetRange charsetRanges[] =
+        const std::vector<CharsetRange> charsetRanges =
         {
             { 0x0020, 0x00FF }, // Basic Latin + Latin Supplement
             { 0x0400, 0x052F }, // Cyrillic + Cyrillic Supplement
@@ -77,17 +67,11 @@ namespace Athena
             { 0xA640, 0xA69F }, // Cyrillic Extended-B
         };
 
-        msdf_atlas::Charset charset;
-        for (CharsetRange range: charsetRanges)
-        {
-            for (uint32 c = range.Begin; c <= range.End; ++c)
-                charset.add(c);
-        }
-
-        atlasData->FontGeometry.loadCharset(font, 1.0, charset);
+        result->m_FontGeometry = new FontGeometry(font, charsetRanges);
+        std::vector<msdf_atlas::GlyphGeometry>& glyphs = result->m_FontGeometry->GetGlyphs();
 
         const double maxCornerAngle = 3.0;
-        for (msdf_atlas::GlyphGeometry& glyph : atlasData->Glyphs)
+        for (msdf_atlas::GlyphGeometry& glyph : glyphs)
             glyph.edgeColoring(&msdfgen::edgeColoringInkTrap, maxCornerAngle, 0);
 
         msdf_atlas::TightAtlasPacker packer;
@@ -96,7 +80,7 @@ namespace Athena
         packer.setMiterLimit(1.0);
         packer.setScale(40.f);
 
-        uint32 remaining = packer.pack(atlasData->Glyphs.data(), atlasData->Glyphs.size());
+        uint32 remaining = packer.pack(glyphs.data(), glyphs.size());
         ATN_CORE_ASSERT(remaining == 0);
 
         int width = 0, height = 0;
@@ -119,6 +103,9 @@ namespace Athena
         buffer.Release();
         msdfgen::destroyFont(font);
 
+        Vector2 texelSize = { 1.f / width, 1.f / height };
+        result->m_FontGeometry->SetTexelSize(texelSize);
+
         return result;
     }
 
@@ -140,6 +127,8 @@ namespace Athena
             }
         }
 
+        std::vector<msdf_atlas::GlyphGeometry> glyphs = m_FontGeometry->GetGlyphs();
+
         msdf_atlas::ImmediateAtlasGenerator<float, 3, msdf_atlas::msdfGenerator, msdf_atlas::BitmapAtlasStorage<byte, 3>> generator(width, height);
 
         int threadsCount = std::thread::hardware_concurrency();
@@ -149,7 +138,7 @@ namespace Athena
         msdf_atlas::GeneratorAttributes attributes;
         generator.setAttributes(attributes);
         generator.setThreadCount(threadsCount);
-        generator.generate(m_AtlasGeometryData->Glyphs.data(), m_AtlasGeometryData->Glyphs.size());
+        generator.generate(glyphs.data(), glyphs.size());
 
         msdf_atlas::BitmapAtlasStorage<byte, 3> storage = generator.atlasStorage();
 
@@ -187,7 +176,7 @@ namespace Athena
 
     Font::~Font()
     {
-        delete m_AtlasGeometryData;
+        delete m_FontGeometry;
     }
 
     Ref<Font> Font::GetDefault()

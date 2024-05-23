@@ -11,6 +11,7 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/FontGeometry.h"
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
@@ -517,20 +518,48 @@ namespace Athena
         Entity selectedEntity = m_EditorCtx->SelectedEntity;
         if (selectedEntity)
         {
-            LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
+            LinearColor selectColor = { 1.f, 0.5f, 0.f, 1.f };
             const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
 
             // 2D Outline
             if(selectedEntity.HasComponent<SpriteComponent>())
             {
                 if(selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
-                    renderer2D->DrawRect(worldTransform.AsMatrix(), color);
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
             }
             else if (selectedEntity.HasComponent<CircleComponent>())
             {
                 if (selectedEntity.GetComponent<CircleComponent>().Space == Renderer2DSpace::WorldSpace)
-                    renderer2D->DrawRect(worldTransform.AsMatrix(), color);
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
             }
+            else if (selectedEntity.HasComponent<TextComponent>())
+            {
+                const TextComponent& textComponent = selectedEntity.GetComponent<TextComponent>();
+                if (textComponent.Space == Renderer2DSpace::WorldSpace)
+                {
+                    TextAlignmentOptions options;
+                    options.MaxWidth = textComponent.MaxWidth;
+                    options.Kerning = textComponent.Kerning;
+                    options.LineSpacing = textComponent.LineSpacing;
+                    options.InvertY = false;
+
+                    FontGeometry* fontGeometry = textComponent.Font->GetFontGeometry();
+                    float height = fontGeometry->InitText(textComponent.Text, options);
+
+                    Matrix4 transformMatrix = worldTransform.AsMatrix();
+
+                    Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
+                    Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
+                    Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
+                    Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
+
+                    renderer2D->DrawLine(p0, p1, selectColor);
+                    renderer2D->DrawLine(p1, p2, selectColor);
+                    renderer2D->DrawLine(p2, p3, selectColor);
+                    renderer2D->DrawLine(p3, p0, selectColor);
+                }
+            }
+
 
             // Light Outline
             else if (selectedEntity.HasComponent<PointLightComponent>())
@@ -538,7 +567,7 @@ namespace Athena
                 const Vector3& position = worldTransform.Translation;
                 const auto& comp = selectedEntity.GetComponent<PointLightComponent>();
                 float radius = comp.Radius;
-                LinearColor selectColor = comp.Color;
+                selectColor = comp.Color;
 
                 constexpr uint32 linesCount = 36;
                 constexpr float step = (2 * Math::PI<float>()) / linesCount;
@@ -567,7 +596,7 @@ namespace Athena
             else if (selectedEntity.HasComponent<SpotLightComponent>())
             {
                 auto& comp = selectedEntity.GetComponent<SpotLightComponent>();
-                LinearColor selectColor = comp.Color;
+                selectColor = comp.Color;
                 float spotAngle = Math::Radians(comp.SpotAngle / 2.f);
                 if (spotAngle == 0.f)
                     spotAngle = 0.001f;

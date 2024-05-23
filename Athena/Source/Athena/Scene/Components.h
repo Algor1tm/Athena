@@ -116,10 +116,13 @@ namespace Athena
 		String Text;
 		Ref<Font> Font = Font::GetDefault();
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
-		LinearColor Color;
+		LinearColor Color = LinearColor::White;
 		float MaxWidth = 10.f;
 		float Kerning = 0.0f;
 		float LineSpacing = 0.0f;
+		bool Shadowing = false;
+		float ShadowDistance = 1.f;
+		LinearColor ShadowColor = LinearColor::Black;
 
 		TextComponent() = default;
 		TextComponent(TextComponent&& other) = default;
@@ -131,9 +134,12 @@ namespace Athena
 			Text = other.Text;
 			Space = other.Space;
 			Color = other.Color;
+			MaxWidth = other.MaxWidth;
 			Kerning = other.Kerning;
 			LineSpacing = other.LineSpacing;
-			MaxWidth = other.MaxWidth;
+			Shadowing = other.Shadowing;
+			ShadowDistance = other.ShadowDistance;
+			ShadowColor = other.ShadowColor;
 		}
 	};
 

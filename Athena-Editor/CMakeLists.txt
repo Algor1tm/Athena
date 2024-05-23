@@ -34,6 +34,8 @@ target_include_directories(Athena-Editor PRIVATE
 	${IMGUIZMO_INCLUDE_DIR}
 	${OPTICK_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
+	${MSDF_ATLAS_GEN_INCLUDE_DIR}
+	${MSDF_GEN_INCLUDE_DIR}
 )
 
 target_link_libraries(Athena-Editor PRIVATE Athena)

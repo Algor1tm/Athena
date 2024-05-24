@@ -34,6 +34,7 @@ namespace Athena
 		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 		m_HBAO_UBO = UniformBuffer::Create("HBAO-UBO", sizeof(HBAOData));
+		m_SSR_UBO = UniformBuffer::Create("SSR-UBO", sizeof(SSRData));
 
 		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
@@ -178,6 +179,39 @@ namespace Athena
 			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_AnimGeometryPipeline->SetInput("u_BonesData", m_BonesSBO);
 			m_AnimGeometryPipeline->Bake();
+		}
+
+		// Hi-Z
+		{
+			TextureCreateInfo texInfo;
+			texInfo.Name = "HiZBuffer";
+			texInfo.Format = TextureFormat::R32F;
+			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
+			texInfo.GenerateMipMap = true;
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+			texInfo.Sampler.Filter = TextureFilter::LINEAR; // ??
+
+			Ref<Texture2D> hizTexture = Texture2D::Create(texInfo);
+
+			ComputePassCreateInfo passInfo;
+			passInfo.Name = "HiZPass";
+			passInfo.InputRenderPass = m_GBufferPass;
+			passInfo.DebugColor = { 1.f, 1.f, 0.5f, 1.f };
+
+			m_HiZPass = ComputePass::Create(passInfo);
+			m_HiZPass->SetOutput(hizTexture);
+			m_HiZPass->Bake();
+
+			m_HiZPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("HiZ"));
+			m_HiZPipeline->SetInput("u_Output0", hizTexture->GetMipView(0));
+			m_HiZPipeline->SetInput("u_Output1", hizTexture->GetMipView(1));
+			m_HiZPipeline->SetInput("u_Output2", hizTexture->GetMipView(2));
+			m_HiZPipeline->SetInput("u_Output3", hizTexture->GetMipView(3));
+			m_HiZPipeline->SetInput("u_Output4", hizTexture->GetMipView(4));
+			m_HiZPipeline->SetInput("u_SourceNDCDepth", m_GBufferPass->GetOutput("SceneDepth"));
+			m_HiZPipeline->SetInput("u_CameraData", m_CameraUBO);
+			m_HiZPipeline->SetInput("u_RendererData", m_RendererUBO);
+			m_HiZPipeline->Bake();
 		}
 
 		// LIGHT CULLING COMPUTE PASS
@@ -777,6 +811,8 @@ namespace Athena
 		m_StaticGeometryPipeline->SetViewport(width, height);
 		m_AnimGeometryPipeline->SetViewport(width, height);
 
+		m_HiZPass->GetOutput(0).As<Texture2D>()->Resize(width, height);
+
 		m_DeferredLightingPass->Resize(width, height);
 		m_DeferredLightingPipeline->SetViewport(width, height);
 
@@ -1061,6 +1097,7 @@ namespace Athena
 
 		DirShadowMapPass();
 		GBufferPass();
+		HiZPass();
 		LightCullingPass();
 		HBAOPass();
 
@@ -1142,6 +1179,22 @@ namespace Athena
 
 		m_GBufferPass->End(commandBuffer);
 		m_Profiler->EndTimeQuery(&m_Statistics.GBufferPass);
+	}
+
+	void SceneRenderer::HiZPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		auto [halfWidth, halfHeight] = (m_ViewportSize + 1) / 2;
+
+		m_Profiler->BeginTimeQuery();
+		m_HiZPass->Begin(commandBuffer);
+		{
+			m_HiZPipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_HiZPipeline, { halfWidth, halfHeight, 1 });
+		}
+		m_HiZPass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.HiZPass);
 	}
 
 	void SceneRenderer::LightCullingPass()
@@ -1520,6 +1573,7 @@ namespace Athena
 	{
 		Time gpuTime = m_Statistics.DirShadowMapPass + 
 			m_Statistics.GBufferPass + 
+			m_Statistics.HiZPass +
 			m_Statistics.LightCullingPass + 
 			m_Statistics.HBAODeinterleavePass +
 			m_Statistics.HBAOComputePass +
@@ -1528,6 +1582,8 @@ namespace Athena
 			m_Statistics.SkyboxPass + 
 			m_Statistics.BloomPass + 
 			m_Statistics.SceneCompositePass +
+			m_Statistics.SSRComputePass +
+			m_Statistics.SSRCompositePass +
 			m_Statistics.JumpFloodPass +
 			m_Statistics.Render2DPass + 
 			m_Statistics.AAPass;

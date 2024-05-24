@@ -174,11 +174,17 @@ namespace Athena
 		Vector2 _Pad0;
 	};
 
+	struct SSRData
+	{
+
+	};
+
 	struct SceneRendererStatistics
 	{
 		Time GPUTime;
 		Time DirShadowMapPass;
 		Time GBufferPass;
+		Time HiZPass;
 		Time LightCullingPass;
 		Time HBAODeinterleavePass;
 		Time HBAOComputePass;
@@ -187,6 +193,8 @@ namespace Athena
 		Time SkyboxPass;
 		Time BloomPass;
 		Time SceneCompositePass;
+		Time SSRComputePass;
+		Time SSRCompositePass;
 		Time JumpFloodPass;
 		Time Render2DPass;
 		Time AAPass;
@@ -241,8 +249,9 @@ namespace Athena
 	private:
 		void DirShadowMapPass();
 		void GBufferPass();
-		void HBAOPass();
+		void HiZPass();
 		void LightCullingPass();
+		void HBAOPass();
 		void LightingPass();
 		void SkyboxPass();
 		void BloomPass();
@@ -283,6 +292,9 @@ namespace Athena
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
 
+		Ref<ComputePass> m_HiZPass;
+		Ref<ComputePipeline> m_HiZPipeline;
+
 		Ref<ComputePass> m_LightCullingPass;
 		Ref<ComputePipeline> m_LightCullingPipeline;
 
@@ -310,6 +322,11 @@ namespace Athena
 		Ref<RenderPass> m_SceneCompositePass;
 		Ref<Pipeline> m_SceneCompositePipeline;
 		Ref<Material> m_SceneCompositeMaterial;
+
+		Ref<RenderPass> m_SSRComputePass;
+		Ref<Pipeline> m_SSRComputePipeline;
+		Ref<RenderPass> m_SSRCompositePass;
+		Ref<Pipeline> m_SSRCompositePipeline;
 
 		Ref<RenderPass> m_JumpFloodSilhouettePass;
 		Ref<Pipeline> m_JFSilhouetteStaticPipeline;
@@ -353,6 +370,7 @@ namespace Athena
 		Ref<StorageBuffer> m_VisibleLightsSBO;
 		Ref<UniformBuffer> m_ShadowsUBO;
 		Ref<UniformBuffer> m_HBAO_UBO;
+		Ref<UniformBuffer> m_SSR_UBO;
 		Ref<TextureView> m_ShadowMapSampler;
 
 		DynamicGPUBuffer<StorageBuffer> m_BonesSBO;

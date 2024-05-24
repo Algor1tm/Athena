@@ -75,6 +75,7 @@ namespace Athena
                         ImGui::Text("GPUTime: %.3f ms", stats.GPUTime.AsMilliseconds());
                         ImGui::Text("DirShadowMap: %.3f ms", stats.DirShadowMapPass.AsMilliseconds());
                         ImGui::Text("GBuffer: %.3f ms", stats.GBufferPass.AsMilliseconds());
+                        ImGui::Text("HiZ: %.3f ms", stats.HiZPass.AsMilliseconds());
                         ImGui::Text("LightCulling: %.3f ms", stats.LightCullingPass.AsMilliseconds());
                         ImGui::Text("HBAO-Deinterleave: %.3f ms", stats.HBAODeinterleavePass.AsMilliseconds());
                         ImGui::Text("HBAO-Compute: %.3f ms", stats.HBAOComputePass.AsMilliseconds());
@@ -83,6 +84,8 @@ namespace Athena
                         ImGui::Text("Skybox: %.3f ms", stats.SkyboxPass.AsMilliseconds());
                         ImGui::Text("Bloom: %.3f ms", stats.BloomPass.AsMilliseconds());
                         ImGui::Text("SceneComposite: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
+                        ImGui::Text("SSR-Compute: %.3f ms", stats.SSRComputePass.AsMilliseconds());
+                        ImGui::Text("SSR-Composite: %.3f ms", stats.SSRCompositePass.AsMilliseconds());
                         ImGui::Text("JumpFlood: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
                         ImGui::Text("Render2D: %.3f ms", stats.Render2DPass.AsMilliseconds());
 

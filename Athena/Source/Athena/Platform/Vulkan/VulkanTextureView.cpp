@@ -75,14 +75,24 @@ namespace Athena
 			swizzling.b = VK_COMPONENT_SWIZZLE_R;
 		}
 
+		uint32 texMipLevelsCount = m_Texture->GetMipLevelsCount();
+		uint32 viewBaseMipLevel = m_Info.BaseMipLevel;
+		uint32 viewMipLevelCount = m_Info.MipLevelCount;
+		
+		if (viewBaseMipLevel >= texMipLevelsCount)
+			viewBaseMipLevel = texMipLevelsCount - 1;
+
+		if (viewBaseMipLevel + viewMipLevelCount > texMipLevelsCount)
+			viewMipLevelCount = texMipLevelsCount - viewBaseMipLevel;
+
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image->GetVulkanImage();
 		viewInfo.viewType = Vulkan::GetImageViewType(m_Texture->GetType(), m_Info.LayerCount);
 		viewInfo.format = Vulkan::GetFormat(format);
 		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(format);
-		viewInfo.subresourceRange.baseMipLevel = m_Info.BaseMipLevel;
-		viewInfo.subresourceRange.levelCount = m_Info.MipLevelCount;
+		viewInfo.subresourceRange.baseMipLevel = viewBaseMipLevel;
+		viewInfo.subresourceRange.levelCount = viewMipLevelCount;
 		viewInfo.subresourceRange.baseArrayLayer = m_Info.BaseLayer;
 		viewInfo.subresourceRange.layerCount = m_Info.LayerCount;
 		viewInfo.components = swizzling;

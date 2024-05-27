@@ -189,7 +189,7 @@ namespace Athena
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
-			texInfo.Sampler.Filter = TextureFilter::LINEAR; // ??
+			texInfo.Sampler.Filter = TextureFilter::NEAREST; // ??
 
 			Ref<Texture2D> hizTexture = Texture2D::Create(texInfo);
 
@@ -219,7 +219,7 @@ namespace Athena
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "LightCullingPass";
 			passInfo.InputRenderPass = m_GBufferPass;
-			passInfo.DebugColor = { 1.f, 1.f, 0.5f, 1.f };
+			passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
 
 			m_LightCullingPass = ComputePass::Create(passInfo);
 			m_LightCullingPass->SetOutput(m_VisibleLightsSBO);
@@ -251,7 +251,7 @@ namespace Athena
 				ComputePassCreateInfo passInfo;
 				passInfo.Name = "HBAO-Deinterleave";
 				passInfo.InputRenderPass = m_GBufferPass;
-				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
 				m_HBAODeinterleavePass = ComputePass::Create(passInfo);
 				m_HBAODeinterleavePass->SetOutput(hbaoLayers);
@@ -279,7 +279,7 @@ namespace Athena
 				ComputePassCreateInfo passInfo;
 				passInfo.Name = "HBAO-Compute";
 				passInfo.InputComputePass = m_HBAODeinterleavePass;
-				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
 				m_HBAOComputePass = ComputePass::Create(passInfo);
 				m_HBAOComputePass->SetOutput(hbaoOutput);
@@ -305,7 +305,7 @@ namespace Athena
 			{
 				RenderPassCreateInfo passInfo;
 				passInfo.Name = "HBAO-BlurX";
-				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
 				RenderTarget blurTarget = { "HBAO-BlurredX", TextureFormat::RG16F, TextureFilter::LINEAR };
 				blurTarget.ClearColor = Vector4(1.0);
@@ -330,7 +330,7 @@ namespace Athena
 				RenderPassCreateInfo passInfo;
 				passInfo.Name = "HBAO-BlurY";
 				passInfo.InputPass = m_HBAOBlurXPass;
-				passInfo.DebugColor = { 0.7f, 0.7f, 0.7f, 1.f };
+				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
 				RenderTarget blurTarget = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
 				blurTarget.ClearColor = Vector4(1.0);
@@ -353,6 +353,13 @@ namespace Athena
 
 		// DEFERRED LIGHTING PASS
 		{
+			TextureCreateInfo texInfo;
+			texInfo.Name = "SceneHDRColor";
+			texInfo.Format = TextureFormat::RGBA16F;
+			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::STORAGE | TextureUsage::SAMPLED);
+			texInfo.Sampler.Filter = TextureFilter::LINEAR;
+			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "DeferredLightingPass";
 			passInfo.InputPass = m_HBAOBlurYPass;
@@ -360,8 +367,12 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
+			RenderTarget target;
+			target.Texture = Texture2D::Create(texInfo);
+			target.LoadOp = RenderTargetLoadOp::CLEAR;
+
 			m_DeferredLightingPass = RenderPass::Create(passInfo);
-			m_DeferredLightingPass->SetOutput({ "SceneHDRColor", TextureFormat::RGBA16F });
+			m_DeferredLightingPass->SetOutput(target);
 			m_DeferredLightingPass->Bake();
 
 			PipelineCreateInfo pipelineInfo = fullscreenPipeline;
@@ -399,7 +410,7 @@ namespace Athena
 			passInfo.InputPass = m_DeferredLightingPass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
+			passInfo.DebugColor = { 0.4f, 0.8f, 0.2f, 1.f };
 
 			m_SkyboxPass = RenderPass::Create(passInfo);
 			m_SkyboxPass->SetOutput(m_DeferredLightingPass->GetOutput("SceneHDRColor"));
@@ -421,34 +432,122 @@ namespace Athena
 			m_SkyboxPipeline->Bake();
 		}
 
-		// BLOOM PASS
+		// Pre-Convolution Pass
 		{
 			TextureCreateInfo texInfo;
-			texInfo.Name = "BloomTexture";
+			texInfo.Name = "HiColorBuffer";
 			texInfo.Format = TextureFormat::R11G11B10F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			m_BloomTexture = Texture2D::Create(texInfo);
+			m_HiColorBuffer = Texture2D::Create(texInfo);
 
 			ComputePassCreateInfo passInfo;
-			passInfo.Name = "BloomPass";
+			passInfo.Name = "Pre-ConvolutionPass";
 			passInfo.InputRenderPass = m_SkyboxPass;
+			passInfo.DebugColor = { 0.8f, 0.2f, 0.55f, 1.f };
+
+			m_PreConvolutionPass = ComputePass::Create(passInfo);
+			m_PreConvolutionPass->SetOutput(m_HiColorBuffer);
+			m_PreConvolutionPass->Bake();
+
+			m_PreConvolutionPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"));
+			m_PreConvolutionPipeline->Bake();
+
+			for (uint32 i = 0; i < ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT; ++i)
+			{
+				Ref<Material> material = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_{}", i));
+
+				if (i == 0)
+				{
+					material->Set("u_SourceImage", m_DeferredLightingPass->GetOutput("SceneHDRColor"));
+					material->Set("u_FirstPass", (uint32)true);
+				}
+				else
+				{
+					material->Set("u_SourceImage", m_HiColorBuffer->GetMipView(i - 1));
+					material->Set("u_FirstPass", (uint32)false);
+				}
+
+				material->Set("u_OutputImage", m_HiColorBuffer->GetMipView(i));
+
+				m_PreConvolutionMaterials.push_back(material);
+			}
+		}
+
+		// SSR Pass
+		{
+			// SSR-Compute
+			{
+				TextureCreateInfo texInfo;
+				texInfo.Name = "SSRReflectedUV";
+				texInfo.Format = TextureFormat::RG8;
+				texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
+				texInfo.Sampler.Filter = TextureFilter::NEAREST;
+				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
+
+				Ref<Texture2D> ssrTarget = Texture2D::Create(texInfo);
+
+				ComputePassCreateInfo passInfo;
+				passInfo.Name = "SSR-ComputePass";
+				passInfo.InputComputePass = m_PreConvolutionPass;
+				passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
+
+				m_SSRComputePass = ComputePass::Create(passInfo);
+				m_SSRComputePass->SetOutput(ssrTarget);
+				m_SSRComputePass->Bake();
+
+				m_SSRComputePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("SSR-Compute"));
+				m_SSRComputePipeline->SetInput("u_Output", ssrTarget);
+				m_SSRComputePipeline->SetInput("u_HiZBuffer", m_HiZPass->GetOutput("HiZBuffer"));
+				m_SSRComputePipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
+				m_SSRComputePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
+				m_SSRComputePipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
+				m_SSRComputePipeline->SetInput("u_CameraData", m_CameraUBO);
+				m_SSRComputePipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SSRComputePipeline->Bake();
+			}
+
+			// SSR-Composite
+			{
+				ComputePassCreateInfo passInfo;
+				passInfo.Name = "SSR-ComputePass";
+				passInfo.InputComputePass = m_SSRComputePass;
+				passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
+
+				m_SSRCompositePass = ComputePass::Create(passInfo);
+				m_SSRCompositePass->SetOutput(m_DeferredLightingPass->GetOutput("SceneHDRColor"));
+				m_SSRCompositePass->Bake();
+
+				m_SSRCompositePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("SSR-Composite"));
+				m_SSRCompositePipeline->SetInput("u_SceneColorOutput", m_DeferredLightingPass->GetOutput("SceneHDRColor"));
+				m_SSRCompositePipeline->SetInput("u_SSRReflectedUV", m_SSRComputePass->GetOutput("SSRReflectedUV"));
+				m_SSRCompositePipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
+				m_SSRCompositePipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
+				m_SSRCompositePipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SSRCompositePipeline->Bake();
+			}
+		}
+
+		// BLOOM PASS
+		{
+			ComputePassCreateInfo passInfo;
+			passInfo.Name = "BloomPass";
+			passInfo.InputComputePass = m_SSRCompositePass;
 			passInfo.DebugColor = { 1.f, 0.05f, 0.55f, 1.f };
 
 			m_BloomPass = ComputePass::Create(passInfo);
-			m_BloomPass->SetOutput(m_BloomTexture);
+			m_BloomPass->SetOutput(m_HiColorBuffer);
 			m_BloomPass->Bake();
 
 			m_BloomDownsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomDownsample"));
-			m_BloomDownsample->SetInput("u_BloomTexture", m_BloomTexture);
-			m_BloomDownsample->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
+			m_BloomDownsample->SetInput("u_BloomTexture", m_HiColorBuffer);
 			m_BloomDownsample->Bake();
 
 			m_BloomUpsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomUpsample"));
-			m_BloomUpsample->SetInput("u_BloomTexture", m_BloomTexture);
+			m_BloomUpsample->SetInput("u_BloomTexture", m_HiColorBuffer);
 			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
 			m_BloomUpsample->Bake();
 		}
@@ -466,7 +565,7 @@ namespace Athena
 			//passInfo.InputPass = m_SkyboxPass;
 			passInfo.Width = m_ViewportSize.x;
 			passInfo.Height = m_ViewportSize.y;
-			passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
+			passInfo.DebugColor = { 0.8f, 0.7f, 0.1f, 1.f };
 
 			RenderTarget target = Texture2D::Create(texInfo);
 			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
@@ -483,7 +582,7 @@ namespace Athena
 			m_SceneCompositePipeline = Pipeline::Create(pipelineInfo);
 
 			m_SceneCompositePipeline->SetInput("u_SceneHDRColor", m_SkyboxPass->GetOutput("SceneHDRColor"));
-			m_SceneCompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("BloomTexture"));
+			m_SceneCompositePipeline->SetInput("u_BloomTexture", m_BloomPass->GetOutput("HiColorBuffer"));
 			m_SceneCompositePipeline->Bake();
 
 			m_SceneCompositeMaterial = Material::Create(pipelineInfo.Shader, pipelineInfo.Name);
@@ -813,12 +912,6 @@ namespace Athena
 
 		m_HiZPass->GetOutput(0).As<Texture2D>()->Resize(width, height);
 
-		m_DeferredLightingPass->Resize(width, height);
-		m_DeferredLightingPipeline->SetViewport(width, height);
-
-		m_SkyboxPass->Resize(width, height);
-		m_SkyboxPipeline->SetViewport(width, height);
-
 		m_HBAODeinterleavePass->GetOutput(0).As<Texture2D>()->Resize(quarterWidth, quarterHeight);
 		m_HBAOComputePass->GetOutput(0).As<Texture2D>()->Resize(width, height);
 		m_HBAOBlurXPass->Resize(width, height);
@@ -826,7 +919,19 @@ namespace Athena
 		m_HBAOBlurYPass->Resize(width, height);
 		m_HBAOBlurYPipeline->SetViewport(width, height);
 
-		m_BloomTexture->Resize(width, height);
+		m_DeferredLightingPass->Resize(width, height);
+		m_DeferredLightingPipeline->SetViewport(width, height);
+
+		m_SkyboxPass->Resize(width, height);
+		m_SkyboxPipeline->SetViewport(width, height);
+
+		m_HiColorBuffer->Resize(width, height);
+
+		if (m_Settings.SSRSettings.HalfRes)
+			m_SSRComputePass->GetOutput(0).As<Texture2D>()->Resize(halfWidth, halfHeight);
+		else
+			m_SSRComputePass->GetOutput(0).As<Texture2D>()->Resize(width, height);
+
 		m_BloomMaterials.clear();
 
 		m_SceneCompositePass->Resize(width, height);
@@ -1100,9 +1205,12 @@ namespace Athena
 		HiZPass();
 		LightCullingPass();
 		HBAOPass();
-
 		LightingPass();
 		SkyboxPass();
+		PreConvolutionPass();
+
+		if(m_Settings.SSRSettings.Enable)
+			SSRPass();
 
 		if(m_Settings.BloomSettings.Enable)
 			BloomPass();
@@ -1267,6 +1375,59 @@ namespace Athena
 		m_Profiler->EndTimeQuery(&m_Statistics.SkyboxPass);
 	}
 
+	void SceneRenderer::PreConvolutionPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		m_Profiler->BeginTimeQuery();
+		m_PreConvolutionPass->Begin(commandBuffer);
+		{
+			m_PreConvolutionPipeline->Bind(commandBuffer);
+
+			for (uint32 i = 0; i < ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT; ++i)
+			{
+				Ref<Material> material = m_PreConvolutionMaterials[i];
+				material->Bind(commandBuffer);
+
+				Vector2u mipSize = m_HiColorBuffer->GetMipSize(i);
+
+				Renderer::Dispatch(commandBuffer, m_PreConvolutionPipeline, { mipSize, 1 }, material);
+				Renderer::InsertMemoryBarrier(commandBuffer);
+			}
+		}
+		m_PreConvolutionPass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.PreConvolutionPass);
+	}
+
+	void SceneRenderer::SSRPass()
+	{
+		auto commandBuffer = m_RenderCommandBuffer;
+
+		Vector2i resolution = m_ViewportSize;
+
+		if (m_Settings.SSRSettings.HalfRes)
+			resolution = (resolution + 1) / 2;
+
+		m_Profiler->BeginTimeQuery();
+		m_SSRComputePass->Begin(commandBuffer);
+		{
+			m_SSRComputePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_SSRComputePipeline, { resolution, 1 });
+		}
+		m_SSRComputePass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.SSRComputePass);
+
+
+		m_Profiler->BeginTimeQuery();
+		m_SSRCompositePass->Begin(commandBuffer);
+		{
+			m_SSRCompositePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_SSRCompositePipeline, { m_ViewportSize, 1 });
+		}
+		m_SSRCompositePass->End(commandBuffer);
+		m_Profiler->EndTimeQuery(&m_Statistics.SSRCompositePass);
+	}
+
 	void SceneRenderer::BloomPass()
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
@@ -1275,8 +1436,8 @@ namespace Athena
 		const uint32 downSampleResLimit = 4;
 		const uint32 maxMipLevels = 8;
 
-		uint32 width = m_BloomTexture->GetWidth();
-		uint32 height = m_BloomTexture->GetHeight();
+		uint32 width = m_HiColorBuffer->GetWidth();
+		uint32 height = m_HiColorBuffer->GetHeight();
 		uint32 mipLevels = 1;
 
 		while (width >= downSampleResLimit && height >= downSampleResLimit)
@@ -1299,7 +1460,7 @@ namespace Athena
 			if (material == nullptr)
 			{
 				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), std::format("BloomMaterial_{}", mip));
-				material->Set("u_BloomTextureMip", m_BloomTexture->GetMipView(mip));
+				material->Set("u_BloomTextureMip", m_HiColorBuffer->GetMipView(mip));
 			}
 
 			material->Set("u_Intensity", m_Settings.BloomSettings.Intensity);
@@ -1317,7 +1478,7 @@ namespace Athena
 			{
 				Ref<Material> material = m_BloomMaterials[mip];
 
-				Vector2u mipSize = m_BloomTexture->GetMipSize(mip);
+				Vector2u mipSize = m_HiColorBuffer->GetMipSize(mip);
 				material->Set("u_TexelSize", Vector2(1.f, 1.f) / Vector2(mipSize));
 				material->Set("u_ReadMipLevel", mip - 1);
 
@@ -1333,7 +1494,7 @@ namespace Athena
 			{
 				Ref<Material> material = m_BloomMaterials[mip - 1];
 
-				Vector2u mipSize = m_BloomTexture->GetMipSize(mip - 1);
+				Vector2u mipSize = m_HiColorBuffer->GetMipSize(mip - 1);
 				material->Set("u_TexelSize", Vector2(1.f, 1.f) / Vector2(mipSize));
 				material->Set("u_ReadMipLevel", mip);
 				material->Bind(commandBuffer);
@@ -1580,10 +1741,11 @@ namespace Athena
 			m_Statistics.HBAOBlurPass +
 			m_Statistics.DeferredLightingPass +
 			m_Statistics.SkyboxPass + 
-			m_Statistics.BloomPass + 
-			m_Statistics.SceneCompositePass +
+			m_Statistics.PreConvolutionPass +
 			m_Statistics.SSRComputePass +
 			m_Statistics.SSRCompositePass +
+			m_Statistics.BloomPass + 
+			m_Statistics.SceneCompositePass +
 			m_Statistics.JumpFloodPass +
 			m_Statistics.Render2DPass + 
 			m_Statistics.AAPass;

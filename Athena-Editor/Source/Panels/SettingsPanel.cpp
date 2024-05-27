@@ -263,6 +263,18 @@ namespace Athena
 			UI::TreePop();
 		}
 
+		if (UI::TreeNode("SSR", false) && UI::BeginPropertyTable())
+		{
+			SSRSettings& ssr = settings.SSRSettings;
+
+			UI::PropertyCheckbox("Enable", &ssr.Enable);
+			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
+				m_ViewportRenderer->ApplySettings();
+
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
 		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
 		{
 			BloomSettings& bloomSettings = settings.BloomSettings;

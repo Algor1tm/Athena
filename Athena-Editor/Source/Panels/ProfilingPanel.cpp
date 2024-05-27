@@ -82,10 +82,11 @@ namespace Athena
                         ImGui::Text("HBAO-Blur: %.3f ms", stats.HBAOBlurPass.AsMilliseconds());
                         ImGui::Text("DeferredLighting: %.3f ms", stats.DeferredLightingPass.AsMilliseconds());
                         ImGui::Text("Skybox: %.3f ms", stats.SkyboxPass.AsMilliseconds());
-                        ImGui::Text("Bloom: %.3f ms", stats.BloomPass.AsMilliseconds());
-                        ImGui::Text("SceneComposite: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
+                        ImGui::Text("Pre-Convolution: %.3f ms", stats.PreConvolutionPass.AsMilliseconds());
                         ImGui::Text("SSR-Compute: %.3f ms", stats.SSRComputePass.AsMilliseconds());
                         ImGui::Text("SSR-Composite: %.3f ms", stats.SSRCompositePass.AsMilliseconds());
+                        ImGui::Text("Bloom: %.3f ms", stats.BloomPass.AsMilliseconds());
+                        ImGui::Text("SceneComposite: %.3f ms", stats.SceneCompositePass.AsMilliseconds());
                         ImGui::Text("JumpFlood: %.3f ms", stats.JumpFloodPass.AsMilliseconds());
                         ImGui::Text("Render2D: %.3f ms", stats.Render2DPass.AsMilliseconds());
 

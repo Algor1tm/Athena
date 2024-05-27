@@ -69,11 +69,12 @@ namespace Athena
 		bool CompileAndWriteToCache(const PreProcessResult& result);
 		void ReadFromCache(const PreProcessResult& result);
 
-		PreProcessResult PreProcess(bool forceCompile);
+		PreProcessResult PreProcess();
 		std::vector<StageDescription> ParseShaderStages();
 		std::vector<StageDescription> GetHLSLStageDescriptions();
 		std::vector<StageDescription> GetGLSLStageDescriptions();
 
+		FilePath GetCacheFilePath(const FilePath& path, ShaderStage stage, const String& source);
 		void GetLanguageAndEntryPoints();
 
 	private:

@@ -4,6 +4,8 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Renderer/Renderer.h"
 
+#include <xhash>
+
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross/spirv_cross.hpp>
 
@@ -19,23 +21,6 @@ namespace Athena
 
 	namespace Utils
 	{
-		static FilePath GetCachedFilePath(const FilePath& path, ShaderStage stage)
-		{
-			FilePath relativeToShaderPack = std::filesystem::relative(path, Renderer::GetShaderPackDirectory());
-			FilePath cachedPath = Renderer::GetShaderCacheDirectory() / relativeToShaderPack;
-
-			switch (stage)
-			{
-			case ShaderStage::VERTEX_STAGE:    cachedPath += L".cached.vert"; break;
-			case ShaderStage::FRAGMENT_STAGE:  cachedPath += L".cached.frag"; break;
-			case ShaderStage::GEOMETRY_STAGE:  cachedPath += L".cached.geom"; break;
-			case ShaderStage::COMPUTE_STAGE:   cachedPath += L".cached.compute"; break;
-			default: ATN_CORE_ASSERT(false); return "";
-			}
-
-			return cachedPath;
-		}
-
 		static shaderc_shader_kind ShaderStageToShaderCKind(ShaderStage stage)
 		{
 			switch (stage)
@@ -292,7 +277,7 @@ namespace Athena
 
 		Timer compilationTimer;
 
-		PreProcessResult result = PreProcess(forceCompile);
+		PreProcessResult result = PreProcess();
 
 		if (!result.ParseResult)
 			return false;
@@ -389,7 +374,7 @@ namespace Athena
 		}
 	}
 
-	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess(bool forceCompile)
+	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess()
 	{
 		PreProcessResult result;
 		result.ParseResult = true;
@@ -402,21 +387,17 @@ namespace Athena
 			result.ParseResult = false;
 			return result;
 		}
-
+		
 		result.StageDescriptions = ParseShaderStages();
 		result.ParseResult = !result.StageDescriptions.empty();
-		result.NeedRecompile = true;
+		result.NeedRecompile = false;
 
-		if (!forceCompile)
+		for (const auto& [_, path, __] : result.StageDescriptions)
 		{
-			result.NeedRecompile = false;
-			for (const auto& [_, path, __] : result.StageDescriptions)
+			if (!FileSystem::Exists(path))
 			{
-				if (!FileSystem::Exists(path))
-				{
-					result.NeedRecompile = true;
-					break;
-				}
+				result.NeedRecompile = true;
+				break;;
 			}
 		}
 
@@ -463,7 +444,7 @@ namespace Athena
 			{
 				StageDescription stageDesc;
 				stageDesc.Stage = stage;
-				stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
+				stageDesc.FilePathToCache = GetCacheFilePath(m_FilePath, stage, source);
 				stageDesc.Source = source;
 
 				result.push_back(stageDesc);
@@ -505,13 +486,35 @@ namespace Athena
 
 			StageDescription stageDesc;
 			stageDesc.Stage = stage;
-			stageDesc.FilePathToCache = Utils::GetCachedFilePath(m_FilePath, stage);
+			stageDesc.FilePathToCache = GetCacheFilePath(m_FilePath, stage, stageSource);
 			stageDesc.Source = stageSource;
 
 			result.push_back(stageDesc);
 		}
 
 		return result;
+	}
+
+	FilePath ShaderCompiler::GetCacheFilePath(const FilePath& path, ShaderStage stage, const String& source)
+	{
+		FilePath relativeToShaderPack = std::filesystem::relative(path, Renderer::GetShaderPackDirectory());
+		FilePath cachedPath = Renderer::GetShaderCacheDirectory() / relativeToShaderPack;
+
+		switch (stage)
+		{
+		case ShaderStage::VERTEX_STAGE:    cachedPath += L".vert_"; break;
+		case ShaderStage::FRAGMENT_STAGE:  cachedPath += L".frag_"; break;
+		case ShaderStage::GEOMETRY_STAGE:  cachedPath += L".geom_"; break;
+		case ShaderStage::COMPUTE_STAGE:   cachedPath += L".compute_"; break;
+		default: ATN_CORE_ASSERT(false); return "";
+		}
+
+		size_t hash = std::hash<std::string>()(source);
+		String hashString = std::to_string(hash);
+
+		cachedPath += hashString;
+
+		return cachedPath;
 	}
 
 	void ShaderCompiler::GetLanguageAndEntryPoints()

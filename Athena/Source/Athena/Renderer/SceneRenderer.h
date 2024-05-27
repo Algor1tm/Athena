@@ -84,6 +84,12 @@ namespace Athena
 		float BlurSharpness = 12.f;
 	};
 
+	struct SSRSettings
+	{
+		bool Enable = true;
+		bool HalfRes = false;
+	};
+
 	struct QualitySettings
 	{
 		float RendererScale = 1.f;
@@ -94,6 +100,7 @@ namespace Athena
 		ShadowSettings ShadowSettings;
 		BloomSettings BloomSettings;
 		AmbientOcclusionSettings AOSettings;
+		SSRSettings SSRSettings;
 		PostProcessingSettings PostProcessingSettings;
 		DebugView DebugView = DebugView::NONE;
 		QualitySettings Quality;
@@ -191,10 +198,11 @@ namespace Athena
 		Time HBAOBlurPass;
 		Time DeferredLightingPass;
 		Time SkyboxPass;
-		Time BloomPass;
-		Time SceneCompositePass;
+		Time PreConvolutionPass;
 		Time SSRComputePass;
 		Time SSRCompositePass;
+		Time BloomPass;
+		Time SceneCompositePass;
 		Time JumpFloodPass;
 		Time Render2DPass;
 		Time AAPass;
@@ -236,7 +244,7 @@ namespace Athena
 
 		Ref<Texture2D> GetFinalImage();
 		Ref<Texture2D> GetShadowMap();
-		Ref<Texture2D> GetBloomTexture() { return m_BloomTexture; }
+		Ref<Texture2D> GetBloomTexture() { return m_HiColorBuffer; }
 
 		Ref<RenderPass> GetGBufferPass() { return m_GBufferPass; }
 		Ref<RenderPass> GetRender2DPass() { return m_Render2DPass; }
@@ -254,6 +262,8 @@ namespace Athena
 		void HBAOPass();
 		void LightingPass();
 		void SkyboxPass();
+		void PreConvolutionPass();
+		void SSRPass();
 		void BloomPass();
 		void SceneCompositePass();
 		void JumpFloodPass();
@@ -313,7 +323,16 @@ namespace Athena
 		Ref<RenderPass> m_SkyboxPass;
 		Ref<Pipeline> m_SkyboxPipeline;
 
-		Ref<Texture2D> m_BloomTexture;
+		Ref<Texture2D> m_HiColorBuffer;
+		Ref<ComputePass> m_PreConvolutionPass;
+		Ref<ComputePipeline> m_PreConvolutionPipeline;
+		std::vector<Ref<Material>> m_PreConvolutionMaterials;
+
+		Ref<ComputePass> m_SSRComputePass;
+		Ref<ComputePipeline> m_SSRComputePipeline;
+		Ref<ComputePass> m_SSRCompositePass;
+		Ref<ComputePipeline> m_SSRCompositePipeline;
+
 		Ref<ComputePass> m_BloomPass;
 		Ref<ComputePipeline> m_BloomDownsample;
 		Ref<ComputePipeline> m_BloomUpsample;
@@ -322,11 +341,6 @@ namespace Athena
 		Ref<RenderPass> m_SceneCompositePass;
 		Ref<Pipeline> m_SceneCompositePipeline;
 		Ref<Material> m_SceneCompositeMaterial;
-
-		Ref<RenderPass> m_SSRComputePass;
-		Ref<Pipeline> m_SSRComputePipeline;
-		Ref<RenderPass> m_SSRCompositePass;
-		Ref<Pipeline> m_SSRCompositePipeline;
 
 		Ref<RenderPass> m_JumpFloodSilhouettePass;
 		Ref<Pipeline> m_JFSilhouetteStaticPipeline;

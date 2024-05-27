@@ -72,6 +72,10 @@ namespace Athena
 
 		MAX_NUM_BONES_PER_VERTEX = 4,
 		MAX_SKYBOX_MAP_LOD = 8,
+
+		// start from 0
+		HIZ_MIP_LEVEL_COUNT = 5,
+		PRECONVOLUTION_MIP_LEVEL_COUNT = 6
 	};
 
 	class ATHENA_API ShaderPack;

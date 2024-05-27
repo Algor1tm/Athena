@@ -72,6 +72,8 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
 		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
 		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
+		Renderer::SetGlobalShaderMacros("HIZ_MIP_LEVEL_COUNT", std::to_string(HIZ_MIP_LEVEL_COUNT));
+		Renderer::SetGlobalShaderMacros("PRECONVOLUTION_MIP_LEVEL_COUNT", std::to_string(PRECONVOLUTION_MIP_LEVEL_COUNT));
 		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
 		
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);

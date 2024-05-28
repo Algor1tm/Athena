@@ -11,7 +11,7 @@
 
 #define SAMPLE_COUNT 2048
 
-layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(rg16f, set = 1, binding = 0) uniform image2D u_BRDF_LUT;
 

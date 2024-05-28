@@ -7,9 +7,11 @@
 #version 460 core
 #pragma stage : compute
 
-layout(local_size_x = 8, local_size_y = 4) in;
+layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(set = 1, binding = 0) uniform sampler2D u_BloomTexture;
+layout(set = 1, binding = 0) uniform sampler2D u_SceneHDRColor;
+layout(set = 1, binding = 1) uniform sampler2D u_BloomTexture;
+
 layout(r11f_g11f_b10f, set = 0, binding = 0) uniform writeonly image2D u_BloomTextureMip;
 
 layout(push_constant) uniform u_BloomData
@@ -54,6 +56,9 @@ vec3 KarisAverage(vec3 c)
 
 vec3 Sample(vec2 uv, float xOff, float yOff)
 {
+    if(u_ReadMipLevel == 0)
+        return texture(u_SceneHDRColor, uv + vec2(xOff, yOff) * u_TexelSize).rgb;
+
     return textureLod(u_BloomTexture, uv + vec2(xOff, yOff) * u_TexelSize, u_ReadMipLevel).rgb;
 }
 

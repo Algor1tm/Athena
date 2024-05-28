@@ -387,29 +387,32 @@ namespace Athena
 			result.ParseResult = false;
 			return result;
 		}
-		
+
 		result.StageDescriptions = ParseShaderStages();
 		result.ParseResult = !result.StageDescriptions.empty();
 		result.NeedRecompile = false;
 
-		for (const auto& [_, path, __] : result.StageDescriptions)
+		for (auto& stageDesc : result.StageDescriptions)
 		{
-			if (!FileSystem::Exists(path))
+			bool includeResult = m_Includer.ProcessIncludes(stageDesc.Source, stageDesc.Stage);
+
+			if (includeResult == false)
 			{
+				result.ParseResult = false;
 				result.NeedRecompile = true;
-				break;;
+				break;
 			}
+
+			stageDesc.FilePathToCache = GetCacheFilePath(m_FilePath, stageDesc.Stage, stageDesc.Source);
 		}
 
-		if (result.NeedRecompile)
+		if (result.ParseResult)
 		{
-			for (auto& [stage, _, source] : result.StageDescriptions)
+			for (const auto& [_, path, __] : result.StageDescriptions)
 			{
-				bool includeResult = m_Includer.ProcessIncludes(source, stage);
-
-				if (includeResult == false)
+				if (!FileSystem::Exists(path))
 				{
-					result.ParseResult = false;
+					result.NeedRecompile = true;
 					break;
 				}
 			}
@@ -444,7 +447,6 @@ namespace Athena
 			{
 				StageDescription stageDesc;
 				stageDesc.Stage = stage;
-				stageDesc.FilePathToCache = GetCacheFilePath(m_FilePath, stage, source);
 				stageDesc.Source = source;
 
 				result.push_back(stageDesc);
@@ -486,7 +488,6 @@ namespace Athena
 
 			StageDescription stageDesc;
 			stageDesc.Stage = stage;
-			stageDesc.FilePathToCache = GetCacheFilePath(m_FilePath, stage, stageSource);
 			stageDesc.Source = stageSource;
 
 			result.push_back(stageDesc);

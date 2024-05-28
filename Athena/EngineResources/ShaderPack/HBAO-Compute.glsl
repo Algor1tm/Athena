@@ -10,7 +10,7 @@
 #include "Include/Common.glslh"
 #include "Include/HBAO.glslh"
 
-layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 1, binding = 2) uniform sampler2DArray u_DepthLayers;
 layout(set = 1, binding = 3) uniform sampler2D u_SceneNormals;

@@ -19,9 +19,9 @@ namespace Athena
 			switch (type)
 			{
 			case ShaderResourceType::Texture2D:      return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			case ShaderResourceType::RWTexture2D:	 return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::StorageTexture2D:	 return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			case ShaderResourceType::TextureCube:    return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			case ShaderResourceType::RWTextureCube:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case ShaderResourceType::StorageTextureCube:  return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			case ShaderResourceType::UniformBuffer:	 return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case ShaderResourceType::StorageBuffer:	 return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
@@ -53,12 +53,12 @@ namespace Athena
 		{
 			switch (type)
 			{
-			case ShaderResourceType::Texture2D:      return "Texture2D";
-			case ShaderResourceType::TextureCube:    return "TextureCube";
-			case ShaderResourceType::RWTexture2D:    return "RWTexture2D";
-			case ShaderResourceType::RWTextureCube:  return "RWTextureCube";
-			case ShaderResourceType::UniformBuffer:	 return "UniformBuffer";
-			case ShaderResourceType::StorageBuffer:	 return "StorageBuffer";
+			case ShaderResourceType::Texture2D:           return "Texture2D";
+			case ShaderResourceType::TextureCube:         return "TextureCube";
+			case ShaderResourceType::StorageTexture2D:    return "StorageTexture2D";
+			case ShaderResourceType::StorageTextureCube:  return "StorageTextureCube";
+			case ShaderResourceType::UniformBuffer:		  return "UniformBuffer";
+			case ShaderResourceType::StorageBuffer:		  return "StorageBuffer";
 			}
 
 			ATN_CORE_ASSERT(false);
@@ -71,8 +71,8 @@ namespace Athena
 			{
 			case ShaderResourceType::Texture2D:       return true;
 			case ShaderResourceType::TextureCube:     return true;
-			case ShaderResourceType::RWTexture2D:     return true;
-			case ShaderResourceType::RWTextureCube:   return true;
+			case ShaderResourceType::StorageTexture2D:     return true;
+			case ShaderResourceType::StorageTextureCube:   return true;
 			case ShaderResourceType::UniformBuffer:	  return false;
 			case ShaderResourceType::StorageBuffer:	  return false;
 			}
@@ -124,12 +124,12 @@ namespace Athena
 
 			for (auto& [binding, resource] : setData)
 			{
-				if (resource.Type == ShaderResourceType::Texture2D || resource.Type == ShaderResourceType::RWTexture2D)
+				if (resource.Type == ShaderResourceType::Texture2D || resource.Type == ShaderResourceType::StorageTexture2D)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						resource.Storage[i] = TextureGenerator::GetWhiteTexture();
 				}
-				else if(resource.Type == ShaderResourceType::TextureCube || resource.Type == ShaderResourceType::RWTextureCube)
+				else if(resource.Type == ShaderResourceType::TextureCube || resource.Type == ShaderResourceType::StorageTextureCube)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
 						resource.Storage[i] = TextureGenerator::GetBlackTextureCube();
@@ -355,7 +355,7 @@ namespace Athena
 
 				if (!descriptorsToUpdate.empty())
 				{
-					//ATN_CORE_INFO_TAG("Renderer", "DescriptorSetManager '{}' - Bake Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
+					//ATN_CORE_TRACE_TAG("Renderer", "DescriptorSetManager '{}' - Bake Updating descriptors in set {} (frameIndex {})", m_Info.Name, set, frameIndex);
 					vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 				}
 			}
@@ -366,6 +366,8 @@ namespace Athena
 	{
 		if (m_DescriptorSets.empty())
 			return;
+
+		ATN_PROFILE_FUNC();
 
 		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
 
@@ -462,7 +464,7 @@ namespace Athena
 
 			if (!descriptorsToUpdate.empty())
 			{
-				ATN_CORE_INFO_TAG("Renderer", "Updating descriptor set '{}' (set = {}, frameIndex = {})", m_Info.Name, set, frameIndex);
+				ATN_CORE_TRACE_TAG("Renderer", "Updating descriptor set '{}' (set = {}, frameIndex = {})", m_Info.Name, set, frameIndex);
 				vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 			}
 		}
@@ -579,7 +581,7 @@ namespace Athena
 		switch (shaderType)
 		{
 		case ShaderResourceType::Texture2D: shaderTexture2D = true; break;
-		case ShaderResourceType::RWTexture2D: shaderTexture2D = true; break;
+		case ShaderResourceType::StorageTexture2D: shaderTexture2D = true; break;
 		}
 
 		if (renderTexture2D != shaderTexture2D)
@@ -599,7 +601,7 @@ namespace Athena
 		switch (shaderType)
 		{
 		case ShaderResourceType::TextureCube: shaderTextureCube = true; break;
-		case ShaderResourceType::RWTextureCube: shaderTextureCube = true; break;
+		case ShaderResourceType::StorageTextureCube: shaderTextureCube = true; break;
 		}
 
 		if (renderTextureCube != shaderTextureCube)

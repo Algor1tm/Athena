@@ -543,6 +543,7 @@ namespace Athena
 			m_BloomPass->Bake();
 
 			m_BloomDownsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomDownsample"));
+			m_BloomDownsample->SetInput("u_SceneHDRColor", m_SSRCompositePass->GetOutput("SceneHDRColor"));
 			m_BloomDownsample->SetInput("u_BloomTexture", m_HiColorBuffer);
 			m_BloomDownsample->Bake();
 
@@ -554,12 +555,6 @@ namespace Athena
 
 		// SCENE COMPOSITE PASS
 		{
-			TextureCreateInfo texInfo;
-			texInfo.Name = "SceneColor";
-			texInfo.Format = TextureFormat::RGBA8;
-			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED);
-			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
-
 			RenderPassCreateInfo passInfo;
 			passInfo.Name = "SceneCompositePass";
 			//passInfo.InputPass = m_SkyboxPass;
@@ -567,7 +562,7 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.8f, 0.7f, 0.1f, 1.f };
 
-			RenderTarget target = Texture2D::Create(texInfo);
+			RenderTarget target = RenderTarget("SceneColor", TextureFormat::RGBA8);
 			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
 
 			m_SceneCompositePass = RenderPass::Create(passInfo);
@@ -1392,7 +1387,9 @@ namespace Athena
 				Vector2u mipSize = m_HiColorBuffer->GetMipSize(i);
 
 				Renderer::Dispatch(commandBuffer, m_PreConvolutionPipeline, { mipSize, 1 }, material);
-				Renderer::InsertMemoryBarrier(commandBuffer);
+
+				if(i != ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT - 1)
+					Renderer::InsertMemoryBarrier(commandBuffer);
 			}
 		}
 		m_PreConvolutionPass->End(commandBuffer);
@@ -1433,8 +1430,7 @@ namespace Athena
 		auto commandBuffer = m_RenderCommandBuffer;
 
 		// Calculate number of downsample passes
-		const uint32 downSampleResLimit = 4;
-		const uint32 maxMipLevels = 8;
+		const uint32 downSampleResLimit = 8;
 
 		uint32 width = m_HiColorBuffer->GetWidth();
 		uint32 height = m_HiColorBuffer->GetHeight();
@@ -1446,8 +1442,6 @@ namespace Athena
 			height /= 2;
 
 			mipLevels++;
-			//if (mipLevels >= maxMipLevels)
-			//	break;
 		}
 
 		// Init materials

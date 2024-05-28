@@ -24,8 +24,8 @@ namespace Athena
 		Unknown = 0,
 		Texture2D,
 		TextureCube,
-		RWTexture2D,
-		RWTextureCube,
+		StorageTexture2D,
+		StorageTextureCube,
 		UniformBuffer,
 		StorageBuffer,
 	};

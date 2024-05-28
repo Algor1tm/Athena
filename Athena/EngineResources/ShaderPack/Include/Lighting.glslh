@@ -74,16 +74,16 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
     float G = GeometrySmith(normal, viewDir, negativeLightDir, roughness);
     vec3 F = FresnelShlick(max(dot(halfWayVector, viewDir), 0.0), reflectivityAtZeroIncidence);
 
-    vec3 reflectedLight = F;
-    vec3 absorbedLight = vec3(1.0) - reflectedLight;
-        
-    absorbedLight *= 1.0 - metalness;
-
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, negativeLightDir), 0.0) + 0.0001;
     vec3 specular = numerator / denominator;
 
     float normalDotLightDir = max(dot(normal, negativeLightDir), 0.0);
+
+    vec3 reflectedLight = F;
+    vec3 absorbedLight = vec3(1.0) - reflectedLight;
+        
+    absorbedLight *= 1.0 - metalness;
 
     return (absorbedLight * albedo / PI + specular) * lightRadiance * normalDotLightDir;
 }

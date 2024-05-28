@@ -6,7 +6,7 @@
 #include "Include/Buffers.glslh"
 #include "Include/Common.glslh"
 
-layout(local_size_x = 8, local_size_y = 4) in;
+layout(local_size_x = 8, local_size_y = 8) in;
 
 layout(rg8, set = 1, binding = 2) uniform image2D u_Output;
 

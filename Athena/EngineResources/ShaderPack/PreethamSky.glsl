@@ -9,7 +9,7 @@
 
 #include "Include/Common.glslh"
 
-layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(r11f_g11f_b10f, set = 1, binding = 0) uniform writeonly imageCube u_EnvironmentMap;
 

@@ -271,6 +271,13 @@ namespace Athena
 			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
 				m_ViewportRenderer->ApplySettings();
 
+			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
+			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
+
+			int maxSteps = ssr.MaxSteps;
+			UI::PropertyDrag("Max Steps", &maxSteps, 1, 128);
+			ssr.MaxSteps = maxSteps;
+
 			UI::EndPropertyTable();
 			UI::TreePop();
 		}

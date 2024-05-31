@@ -26,7 +26,7 @@ namespace Athena
 		GPUProfilerCreateInfo profilerInfo;
 		profilerInfo.Name = "SceneRendererProfiler";
 		profilerInfo.RenderCommandBuffer = Renderer::GetRenderCommandBuffer();
-		profilerInfo.MaxTimestampsCount = 32;
+		profilerInfo.MaxTimestampsCount = 64;
 		profilerInfo.MaxPipelineQueriesCount = 1;
 		m_Profiler = GPUProfiler::Create(profilerInfo);
 
@@ -482,8 +482,8 @@ namespace Athena
 			// SSR-Compute
 			{
 				TextureCreateInfo texInfo;
-				texInfo.Name = "SSRReflectedUV";
-				texInfo.Format = TextureFormat::RG8;
+				texInfo.Name = "SSR-Output";
+				texInfo.Format = TextureFormat::RGBA8;
 				texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -502,18 +502,17 @@ namespace Athena
 				m_SSRComputePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("SSR-Compute"));
 				m_SSRComputePipeline->SetInput("u_Output", ssrTarget);
 				m_SSRComputePipeline->SetInput("u_HiZBuffer", m_HiZPass->GetOutput("HiZBuffer"));
-				m_SSRComputePipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
 				m_SSRComputePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 				m_SSRComputePipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
+				m_SSRComputePipeline->SetInput("u_SSRData", m_SSR_UBO);
 				m_SSRComputePipeline->SetInput("u_CameraData", m_CameraUBO);
-				m_SSRComputePipeline->SetInput("u_RendererData", m_RendererUBO);
 				m_SSRComputePipeline->Bake();
 			}
 
 			// SSR-Composite
 			{
 				ComputePassCreateInfo passInfo;
-				passInfo.Name = "SSR-ComputePass";
+				passInfo.Name = "SSR-CompositePass";
 				passInfo.InputComputePass = m_SSRComputePass;
 				passInfo.DebugColor = { 0.2f, 0.5f, 1.0f, 1.f };
 
@@ -523,10 +522,14 @@ namespace Athena
 
 				m_SSRCompositePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("SSR-Composite"));
 				m_SSRCompositePipeline->SetInput("u_SceneColorOutput", m_DeferredLightingPass->GetOutput("SceneHDRColor"));
-				m_SSRCompositePipeline->SetInput("u_SSRReflectedUV", m_SSRComputePass->GetOutput("SSRReflectedUV"));
-				m_SSRCompositePipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
+				m_SSRCompositePipeline->SetInput("u_HiZBuffer", m_HiZPass->GetOutput("HiZBuffer"));
+				m_SSRCompositePipeline->SetInput("u_HiColorBuffer", m_PreConvolutionPass->GetOutput("HiColorBuffer"));
+				m_SSRCompositePipeline->SetInput("u_SSROutput", m_SSRComputePass->GetOutput("SSR-Output"));
+				m_SSRCompositePipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
+				m_SSRCompositePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 				m_SSRCompositePipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
-				m_SSRCompositePipeline->SetInput("u_RendererData", m_RendererUBO);
+				m_SSRCompositePipeline->SetInput("u_SSRData", m_SSR_UBO);
+				m_SSRCompositePipeline->SetInput("u_CameraData", m_CameraUBO);
 				m_SSRCompositePipeline->Bake();
 			}
 		}
@@ -1147,14 +1150,21 @@ namespace Athena
 		m_HBAOData.Bias = m_Settings.AOSettings.Bias;
 		m_HBAOData.BlurSharpness = m_Settings.AOSettings.BlurSharpness;
 
-		float radius = m_Settings.AOSettings.Radius;
 		float projScale = float(m_ViewportSize.y) / (Math::Tan(cameraInfo.FOV * 0.5f) * 2.0f);
 		float projX = m_CameraData.InverseProjection[0][0];
 		float projY = m_CameraData.InverseProjection[1][1];
+		Vector4 projInfo = Vector4(2.0, 2.0, -1.0, -1.0) * Vector4(projX, projY, projX, projY);
+
+		float radius = m_Settings.AOSettings.Radius;
 		m_HBAOData.NegInvR2 = -1.f / (radius * radius);
 		m_HBAOData.RadiusToScreen = radius * 0.5f * projScale / 4.f;
 		m_HBAOData.AOMultiplier = 1.0f / (1.0f - m_HBAOData.Bias);
-		m_HBAOData.ProjInfo = Vector4(2.0, 2.0, -1.0, -1.0) * Vector4(projX, projY, projX, projY);
+		m_HBAOData.ProjInfo = projInfo;
+
+		m_SSRData.Intensity = m_Settings.SSRSettings.Intensity;
+		m_SSRData.MaxRoughness = m_Settings.SSRSettings.MaxRoughness;
+		m_SSRData.MaxSteps = m_Settings.SSRSettings.MaxSteps;
+		m_SSRData.ProjInfo = projInfo;
 	}
 
 	void SceneRenderer::EndScene()
@@ -1193,6 +1203,7 @@ namespace Athena
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
 			m_HBAO_UBO->UploadData(&m_HBAOData, sizeof(HBAOData));
+			m_SSR_UBO->UploadData(&m_SSRData, sizeof(SSRData));
 		}
 
 		DirShadowMapPass();

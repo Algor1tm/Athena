@@ -88,6 +88,9 @@ namespace Athena
 	{
 		bool Enable = true;
 		bool HalfRes = false;
+		float Intensity = 1.f;
+		uint32 MaxSteps = 32;
+		float MaxRoughness = 0.75f;
 	};
 
 	struct QualitySettings
@@ -183,7 +186,11 @@ namespace Athena
 
 	struct SSRData
 	{
-
+		float Intensity;
+		uint32 MaxSteps;
+		float MaxRoughness;
+		float _Pad0;
+		Vector4 ProjInfo;
 	};
 
 	struct SceneRendererStatistics
@@ -375,6 +382,7 @@ namespace Athena
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
 		HBAOData m_HBAOData;
+		SSRData m_SSRData;
 		uint32 m_BonesDataOffset;
 
 		// GPU Data

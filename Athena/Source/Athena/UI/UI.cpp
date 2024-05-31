@@ -211,7 +211,7 @@ namespace Athena::UI
 		return active;
 	}
 
-	bool PropertyDrag(std::string_view label, int* v, float speed, float min, float max, const char* format, ImGuiSliderFlags flags)
+	bool PropertyDrag(std::string_view label, int* v, float speed, int min, int max, const char* format, ImGuiSliderFlags flags)
 	{
 		float height = ImGui::GetFrameHeight();
 		PropertyRow(label, height);

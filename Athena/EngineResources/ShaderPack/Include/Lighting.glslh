@@ -72,7 +72,7 @@ vec3 LightContribution(vec3 lightDirection, vec3 lightRadiance, vec3 normal, vec
 
     float NDF = DistributionGGX(normal, halfWayVector, roughness);
     float G = GeometrySmith(normal, viewDir, negativeLightDir, roughness);
-    vec3 F = FresnelShlick(max(dot(halfWayVector, viewDir), 0.0), reflectivityAtZeroIncidence);
+    vec3 F = FresnelSchlick(max(dot(halfWayVector, viewDir), 0.0), reflectivityAtZeroIncidence);
 
     vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, negativeLightDir), 0.0) + 0.0001;

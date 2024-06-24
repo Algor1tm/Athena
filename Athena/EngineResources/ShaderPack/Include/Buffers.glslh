@@ -13,6 +13,7 @@ layout(std140, set = 1, binding = 0) uniform u_CameraData
     float FarClip;
     float FOV;
     vec2 _Pad0;
+    vec4 ProjInfo;
 } u_Camera;
 
 layout(std140, set = 1, binding = 1) uniform u_RendererData

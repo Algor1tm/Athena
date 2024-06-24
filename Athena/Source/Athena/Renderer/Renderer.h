@@ -74,7 +74,7 @@ namespace Athena
 		MAX_SKYBOX_MAP_LOD = 8,
 
 		// start from 0
-		HIZ_MIP_LEVEL_COUNT = 5,
+		HIZ_MIP_LEVEL_COUNT = 11,
 		PRECONVOLUTION_MIP_LEVEL_COUNT = 6
 	};
 

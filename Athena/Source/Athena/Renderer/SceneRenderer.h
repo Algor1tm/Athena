@@ -89,7 +89,7 @@ namespace Athena
 		bool Enable = true;
 		bool HalfRes = false;
 		float Intensity = 1.f;
-		uint32 MaxSteps = 32;
+		uint32 MaxSteps = 128;
 		float MaxRoughness = 0.75f;
 	};
 
@@ -123,6 +123,7 @@ namespace Athena
 		float FarClip;
 		float FOV;
 		Vector2 _Pad0;
+		Vector4 ProjInfo;
 	};
 
 	struct RendererData
@@ -190,7 +191,6 @@ namespace Athena
 		uint32 MaxSteps;
 		float MaxRoughness;
 		float _Pad0;
-		Vector4 ProjInfo;
 	};
 
 	struct SceneRendererStatistics
@@ -309,8 +309,10 @@ namespace Athena
 		Ref<Pipeline> m_StaticGeometryPipeline;
 		Ref<Pipeline> m_AnimGeometryPipeline;
 
+		Ref<Texture2D> m_HiZBuffer;
 		Ref<ComputePass> m_HiZPass;
 		Ref<ComputePipeline> m_HiZPipeline;
+		std::vector<Ref<Material>> m_HiZMaterials;
 
 		Ref<ComputePass> m_LightCullingPass;
 		Ref<ComputePipeline> m_LightCullingPipeline;
@@ -331,6 +333,7 @@ namespace Athena
 		Ref<Pipeline> m_SkyboxPipeline;
 
 		Ref<Texture2D> m_HiColorBuffer;
+		Ref<Texture2D> m_BlurTmpTexture;
 		Ref<ComputePass> m_PreConvolutionPass;
 		Ref<ComputePipeline> m_PreConvolutionPipeline;
 		std::vector<Ref<Material>> m_PreConvolutionMaterials;

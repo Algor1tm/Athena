@@ -275,8 +275,8 @@ namespace Athena
 			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
 
 			int maxSteps = ssr.MaxSteps;
-			UI::PropertyDrag("Max Steps", &maxSteps, 1, 128);
-			ssr.MaxSteps = maxSteps;
+			if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 512))
+				ssr.MaxSteps = maxSteps;
 
 			UI::EndPropertyTable();
 			UI::TreePop();

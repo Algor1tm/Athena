@@ -14,8 +14,8 @@ namespace Athena
 		uint32 height = GetHeight();
 
 		Vector2u mipSize;
-		mipSize.x = float(width) * Math::Pow<float>(0.5f, mip);
-		mipSize.y = float(height) * Math::Pow<float>(0.5f, mip);
+		mipSize.x = Math::Max(float(width) * Math::Pow<float>(0.5f, mip), 1.f);
+		mipSize.y = Math::Max(float(height) * Math::Pow<float>(0.5f, mip), 1.f);
 
 		return mipSize;
 	}
@@ -82,19 +82,6 @@ namespace Athena
 
 	void Texture::InvalidateViews()
 	{
-		// Remove mip views if they exceed max mip level
-		std::vector<TextureViewCreateInfo> viewsToRemove;
-		for (const auto& [info, _] : m_TextureViews)
-		{
-			if (info.BaseMipLevel + info.MipLevelCount > GetMipLevelsCount())
-				viewsToRemove.push_back(info);
-		}
-
-		for (const auto& info : viewsToRemove)
-		{
-			m_TextureViews.erase(info);
-		}
-
 		for (auto& [info, view] : m_TextureViews)
 		{
 			view->Invalidate();

@@ -464,7 +464,7 @@ namespace Athena
 
 			if (!descriptorsToUpdate.empty())
 			{
-				ATN_CORE_TRACE_TAG("Renderer", "Updating descriptor set '{}' (set = {}, frameIndex = {})", m_Info.Name, set, frameIndex);
+				//ATN_CORE_TRACE_TAG("Renderer", "Updating descriptor set '{}' (set = {}, frameIndex = {})", m_Info.Name, set, frameIndex);
 				vkUpdateDescriptorSets(VulkanContext::GetLogicalDevice(), descriptorsToUpdate.size(), descriptorsToUpdate.data(), 0, nullptr);
 			}
 		}

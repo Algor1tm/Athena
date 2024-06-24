@@ -55,7 +55,7 @@ namespace Athena::UI
 	ATHENA_API bool PropertyDrag(std::string_view label, Vector2* value, float speed = 1.f, float min = 0.f, float max = 0.f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertyDrag(std::string_view label, Vector3* value, float speed = 1.f, float min = 0.f, float max = 0.f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertyDrag(std::string_view label, Vector4* value, float speed = 1.f, float min = 0.f, float max = 0.f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
-	ATHENA_API bool PropertyDrag(std::string_view label, int* value, float speed = 1.f, int min = 0.f, int max = 0.f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+	ATHENA_API bool PropertyDrag(std::string_view label, int* value, float speed = 1.f, int min = 0.f, int max = 0.f, const char* format = "%.3d", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertySlider(std::string_view label, float* value, float min, float max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertySlider(std::string_view label, Vector2* value, float min, float max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
 	ATHENA_API bool PropertyColor3(std::string_view label, float color[3], ImGuiColorEditFlags flags = 0);

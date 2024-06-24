@@ -60,10 +60,6 @@ namespace Athena
 
 		m_TransformsStorage = VertexBuffer::Create(instanceBufferInfo);
 
-		VertexMemoryLayout fullscreenQuadLayout = {
-				{ ShaderDataType::Float2, "a_Position" },
-				{ ShaderDataType::Float2, "a_TexCoords"} };
-
 		PipelineCreateInfo fullscreenPipeline;
 		fullscreenPipeline.VertexLayout = {
 			{ ShaderDataType::Float2, "a_Position" } };
@@ -189,9 +185,9 @@ namespace Athena
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
-			texInfo.Sampler.Filter = TextureFilter::NEAREST; // ??
+			texInfo.Sampler.Filter = TextureFilter::NEAREST;
 
-			Ref<Texture2D> hizTexture = Texture2D::Create(texInfo);
+			m_HiZBuffer = Texture2D::Create(texInfo);
 
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "HiZPass";
@@ -199,19 +195,29 @@ namespace Athena
 			passInfo.DebugColor = { 1.f, 1.f, 0.5f, 1.f };
 
 			m_HiZPass = ComputePass::Create(passInfo);
-			m_HiZPass->SetOutput(hizTexture);
+			m_HiZPass->SetOutput(m_HiZBuffer);
 			m_HiZPass->Bake();
 
 			m_HiZPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("HiZ"));
-			m_HiZPipeline->SetInput("u_Output0", hizTexture->GetMipView(0));
-			m_HiZPipeline->SetInput("u_Output1", hizTexture->GetMipView(1));
-			m_HiZPipeline->SetInput("u_Output2", hizTexture->GetMipView(2));
-			m_HiZPipeline->SetInput("u_Output3", hizTexture->GetMipView(3));
-			m_HiZPipeline->SetInput("u_Output4", hizTexture->GetMipView(4));
-			m_HiZPipeline->SetInput("u_SourceNDCDepth", m_GBufferPass->GetOutput("SceneDepth"));
-			m_HiZPipeline->SetInput("u_CameraData", m_CameraUBO);
-			m_HiZPipeline->SetInput("u_RendererData", m_RendererUBO);
 			m_HiZPipeline->Bake();
+
+			for (uint32 i = 0; i < ShaderDef::HIZ_MIP_LEVEL_COUNT; ++i)
+			{
+				Ref<Material> material = Material::Create(Renderer::GetShaderPack()->Get("HiZ"), fmt::format("HiZ_{}", i));
+
+				if (i == 0)
+				{
+					material->Set("u_SourceDepth", m_GBufferPass->GetOutput("SceneDepth"));
+					material->Set("u_OutputDepth", m_HiZBuffer->GetMipView(0));
+				}
+				else
+				{
+					material->Set("u_SourceDepth", m_HiZBuffer->GetMipView(i - 1));
+					material->Set("u_OutputDepth", m_HiZBuffer->GetMipView(i));
+				}
+
+				m_HiZMaterials.push_back(material);
+			}
 		}
 
 		// LIGHT CULLING COMPUTE PASS
@@ -444,6 +450,9 @@ namespace Athena
 
 			m_HiColorBuffer = Texture2D::Create(texInfo);
 
+			texInfo.Name = "TmpBlurTexture";
+			m_BlurTmpTexture = Texture2D::Create(texInfo);
+
 			ComputePassCreateInfo passInfo;
 			passInfo.Name = "Pre-ConvolutionPass";
 			passInfo.InputRenderPass = m_SkyboxPass;
@@ -451,6 +460,7 @@ namespace Athena
 
 			m_PreConvolutionPass = ComputePass::Create(passInfo);
 			m_PreConvolutionPass->SetOutput(m_HiColorBuffer);
+			m_PreConvolutionPass->SetOutput(m_BlurTmpTexture);
 			m_PreConvolutionPass->Bake();
 
 			m_PreConvolutionPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"));
@@ -458,22 +468,35 @@ namespace Athena
 
 			for (uint32 i = 0; i < ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT; ++i)
 			{
-				Ref<Material> material = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_{}", i));
-
 				if (i == 0)
 				{
+					Ref<Material> material = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_{}", i));
 					material->Set("u_SourceImage", m_DeferredLightingPass->GetOutput("SceneHDRColor"));
-					material->Set("u_FirstPass", (uint32)true);
+					material->Set("u_Mode", 1u); // Copy
+					material->Set("u_OutputImage", m_HiColorBuffer->GetMipView(i));
+					m_PreConvolutionMaterials.push_back(material);
+
 				}
 				else
 				{
-					material->Set("u_SourceImage", m_HiColorBuffer->GetMipView(i - 1));
-					material->Set("u_FirstPass", (uint32)false);
+					Ref<Material> materialDown = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_Down{}", i));
+					materialDown->Set("u_SourceImage", m_HiColorBuffer->GetMipView(i - 1));
+					materialDown->Set("u_Mode", 4u); // downsample
+					materialDown->Set("u_OutputImage", m_HiColorBuffer->GetMipView(i));
+					m_PreConvolutionMaterials.push_back(materialDown);
+
+					Ref<Material> materialBlurX = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_BlurX{}", i));
+					materialBlurX->Set("u_SourceImage", m_HiColorBuffer->GetMipView(i));
+					materialBlurX->Set("u_OutputImage", m_BlurTmpTexture->GetMipView(i - 1));
+					materialBlurX->Set("u_Mode", 2u); // blur X
+					m_PreConvolutionMaterials.push_back(materialBlurX);
+
+					Ref<Material> materialBlurY = Material::Create(Renderer::GetShaderPack()->Get("Pre-Convolution"), fmt::format("Pre-Convolution_BlurY{}", i));
+					materialBlurY->Set("u_SourceImage", m_BlurTmpTexture->GetMipView(i - 1));
+					materialBlurY->Set("u_OutputImage", m_HiColorBuffer->GetMipView(i));
+					materialBlurY->Set("u_Mode", 3u); // blur Y
+					m_PreConvolutionMaterials.push_back(materialBlurY);
 				}
-
-				material->Set("u_OutputImage", m_HiColorBuffer->GetMipView(i));
-
-				m_PreConvolutionMaterials.push_back(material);
 			}
 		}
 
@@ -483,7 +506,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "SSR-Output";
-				texInfo.Format = TextureFormat::RGBA8;
+				texInfo.Format = TextureFormat::RGBA16F;
 				texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -908,7 +931,7 @@ namespace Athena
 		m_StaticGeometryPipeline->SetViewport(width, height);
 		m_AnimGeometryPipeline->SetViewport(width, height);
 
-		m_HiZPass->GetOutput(0).As<Texture2D>()->Resize(width, height);
+		m_HiZBuffer->Resize(width, height);
 
 		m_HBAODeinterleavePass->GetOutput(0).As<Texture2D>()->Resize(quarterWidth, quarterHeight);
 		m_HBAOComputePass->GetOutput(0).As<Texture2D>()->Resize(width, height);
@@ -924,6 +947,7 @@ namespace Athena
 		m_SkyboxPipeline->SetViewport(width, height);
 
 		m_HiColorBuffer->Resize(width, height);
+		m_BlurTmpTexture->Resize(halfWidth, halfHeight);
 
 		if (m_Settings.SSRSettings.HalfRes)
 			m_SSRComputePass->GetOutput(0).As<Texture2D>()->Resize(halfWidth, halfHeight);
@@ -1128,6 +1152,10 @@ namespace Athena
 		m_CameraData.FarClip = cameraInfo.FarClip;
 		m_CameraData.FOV = cameraInfo.FOV;
 
+		float projX = m_CameraData.InverseProjection[0][0];
+		float projY = m_CameraData.InverseProjection[1][1];
+		m_CameraData.ProjInfo = Vector4(2.0, 2.0, -1.0, -1.0) * Vector4(projX, projY, projX, projY);
+
 		m_ShadowsData.MaxDistance = m_Settings.ShadowSettings.MaxDistance;
 		m_ShadowsData.FadeOut = m_Settings.ShadowSettings.FadeOut;
 		m_ShadowsData.CascadeBlendDistance = m_Settings.ShadowSettings.CascadeBlendDistance;
@@ -1151,20 +1179,16 @@ namespace Athena
 		m_HBAOData.BlurSharpness = m_Settings.AOSettings.BlurSharpness;
 
 		float projScale = float(m_ViewportSize.y) / (Math::Tan(cameraInfo.FOV * 0.5f) * 2.0f);
-		float projX = m_CameraData.InverseProjection[0][0];
-		float projY = m_CameraData.InverseProjection[1][1];
-		Vector4 projInfo = Vector4(2.0, 2.0, -1.0, -1.0) * Vector4(projX, projY, projX, projY);
 
 		float radius = m_Settings.AOSettings.Radius;
 		m_HBAOData.NegInvR2 = -1.f / (radius * radius);
 		m_HBAOData.RadiusToScreen = radius * 0.5f * projScale / 4.f;
 		m_HBAOData.AOMultiplier = 1.0f / (1.0f - m_HBAOData.Bias);
-		m_HBAOData.ProjInfo = projInfo;
+		m_HBAOData.ProjInfo = m_CameraData.ProjInfo;
 
 		m_SSRData.Intensity = m_Settings.SSRSettings.Intensity;
 		m_SSRData.MaxRoughness = m_Settings.SSRSettings.MaxRoughness;
 		m_SSRData.MaxSteps = m_Settings.SSRSettings.MaxSteps;
-		m_SSRData.ProjInfo = projInfo;
 	}
 
 	void SceneRenderer::EndScene()
@@ -1213,10 +1237,12 @@ namespace Athena
 		HBAOPass();
 		LightingPass();
 		SkyboxPass();
-		PreConvolutionPass();
 
-		if(m_Settings.SSRSettings.Enable)
+		if (m_Settings.SSRSettings.Enable)
+		{
+			PreConvolutionPass();
 			SSRPass();
+		}
 
 		if(m_Settings.BloomSettings.Enable)
 			BloomPass();
@@ -1299,13 +1325,32 @@ namespace Athena
 	{
 		auto commandBuffer = m_RenderCommandBuffer;
 
-		auto [halfWidth, halfHeight] = (m_ViewportSize + 1) / 2;
-
 		m_Profiler->BeginTimeQuery();
 		m_HiZPass->Begin(commandBuffer);
 		{
 			m_HiZPipeline->Bind(commandBuffer);
-			Renderer::Dispatch(commandBuffer, m_HiZPipeline, { halfWidth, halfHeight, 1 });
+
+			uint32 levelCount = Math::Min(m_HiZBuffer->GetMipLevelsCount(), (uint32)ShaderDef::HIZ_MIP_LEVEL_COUNT);
+
+			for (uint32 i = 0; i < levelCount; ++i)
+			{
+				Ref<Material> material = m_HiZMaterials[i];
+				Vector2 u_SourceSize = m_HiZBuffer->GetMipSize(i == 0 ? 0 : i - 1);
+				Vector2 u_OutputSize = m_HiZBuffer->GetMipSize(i);
+
+				material->Set("u_SourceSize", u_SourceSize);
+				material->Set("u_OutputSize", u_OutputSize);
+				material->Set("u_SourceTexelSize", Vector2(1.f) / u_SourceSize);
+				material->Set("u_OutputTexelSize", Vector2(1.f) / u_OutputSize);
+
+				material->Bind(commandBuffer);
+
+				Vector2u mipSize = m_HiZBuffer->GetMipSize(i);
+				Renderer::Dispatch(commandBuffer, m_HiZPipeline, { mipSize, 1 }, material);
+
+				if (i != levelCount - 1)
+					Renderer::InsertMemoryBarrier(commandBuffer);
+			}
 		}
 		m_HiZPass->End(commandBuffer);
 		m_Profiler->EndTimeQuery(&m_Statistics.HiZPass);
@@ -1390,16 +1435,17 @@ namespace Athena
 		{
 			m_PreConvolutionPipeline->Bind(commandBuffer);
 
-			for (uint32 i = 0; i < ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT; ++i)
+			uint32 mipLevel = 0;
+			for (uint32 i = 0; i < m_PreConvolutionMaterials.size(); ++i)
 			{
 				Ref<Material> material = m_PreConvolutionMaterials[i];
 				material->Bind(commandBuffer);
 
-				Vector2u mipSize = m_HiColorBuffer->GetMipSize(i);
-
+				uint32 mipLevel = i == 0 ? 0 : (i + 2) / 3;
+				Vector2u mipSize = m_HiColorBuffer->GetMipSize(mipLevel);
 				Renderer::Dispatch(commandBuffer, m_PreConvolutionPipeline, { mipSize, 1 }, material);
 
-				if(i != ShaderDef::PRECONVOLUTION_MIP_LEVEL_COUNT - 1)
+				if(i != m_PreConvolutionMaterials.size() - 1)
 					Renderer::InsertMemoryBarrier(commandBuffer);
 			}
 		}

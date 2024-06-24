@@ -2,6 +2,8 @@
 
 // Refernces:
 // https://github.com/JoshuaLim007/Unity-ScreenSpaceReflections-URP/blob/main/Shaders/ssr_shader.shader
+// https://sugulee.wordpress.com/2021/01/19/screen-space-reflections-implementation-and-optimization-part-2-hi-z-tracing-method/
+// GPU Pro 5 - Advanced Rendering Techniques
 
 
 #version 460 core
@@ -12,7 +14,7 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(rgba8, set = 1, binding = 2) uniform image2D u_Output;
+layout(rgba16f, set = 1, binding = 2) uniform image2D u_Output;
 
 layout(set = 1, binding = 3) uniform sampler2D u_HiZBuffer;
 layout(set = 1, binding = 4) uniform sampler2D u_SceneNormals;
@@ -24,41 +26,13 @@ layout(std140, set = 1, binding = 6) uniform u_SSRData
 	uint MaxSteps;
 	float MaxRoughness;
 	float _Pad0;
-	vec4 ProjInfo;
 } u_SSR;
 
+#define HIZ_TRACE 1
 
-const float stepStrideLength = 0.1;
-const int binaryStepCount = 16;
-
-
-bool IsSkybox(float eyeDepth)
-{
-	return eyeDepth == -u_Camera.FarClip;
-}
-
-bool IsOutsideScreen(vec2 uv)
-{
-	return uv.x >= 1 || uv.x < 0 || uv.y >= 1 || uv.y < 0;
-}
-
-vec3 GetViewPos(vec2 uv)
-{
-    float viewDepth = texture(u_HiZBuffer, uv).r;
-    vec2 viewUV = uv * u_SSR.ProjInfo.xy + u_SSR.ProjInfo.zw;
-    viewUV *= viewDepth;
-
-    return vec3(viewUV, -viewDepth);
-}
-
-vec2 GetUV(vec3 viewPos)
-{
-	vec4 sampleUV = u_Camera.Projection * vec4(viewPos, 1);
-	sampleUV /= sampleUV.w;
-	sampleUV.xy = sampleUV.xy * 0.5 + 0.5;
-
-	return sampleUV.xy;
-}
+#define HIZ_START_LEVEL 2           
+#define HIZ_MAX_LEVEL HIZ_MIP_LEVEL_COUNT - 1
+#define MAX_THICKNESS 0.015
 
 float ScreenEdgeMask(vec2 clipPos) 
 {
@@ -74,22 +48,186 @@ float ScreenEdgeMask(vec2 clipPos)
     return clamp(t2 * t1, 0, 1);
 }
 
+float GetMaxThickness(float sampleDepth)
+{
+    return MAX_THICKNESS * (1 - sampleDepth);
+}
+
+void PrepareTracing(vec2 uv, float depth, vec3 samplePosVS, vec3 rayDirVS, out vec3 outSamplePosTS, out vec3 outRayDirTS, out float outMaxDistance)
+{
+    vec3 samplePosCS = vec3(uv * 2.0 - 1.0, depth);
+
+    //vec3 rayEndVS = samplePosVS + rayDirVS * 1000.f;
+    vec3 rayEndVS = samplePosVS + rayDirVS * -samplePosVS.z;
+    rayEndVS /= rayEndVS.z > 0 ? -rayEndVS.z : 1;
+    vec4 rayEndCS = u_Camera.Projection * vec4(rayEndVS, 1);
+    rayEndCS /= rayEndCS.w;
+    rayEndCS.z = 1.0 - rayEndCS.z;
+    vec3 rayDirCS = normalize(rayEndCS.xyz - samplePosCS);
+
+    outSamplePosTS = vec3(uv, depth);
+    outRayDirTS = rayDirCS;
+    outRayDirTS.xy *= vec2(0.5, 0.5);
+ 
+    // Compute the maximum distance to trace before the ray goes outside of the visible area.
+    outMaxDistance = 1000;
+
+    if(outRayDirTS.x != 0)
+        outMaxDistance = outRayDirTS.x > 0 ? (1 - outSamplePosTS.x) / outRayDirTS.x : -outSamplePosTS.x / outRayDirTS.x;
+    if(outRayDirTS.y != 0)
+        outMaxDistance = min(outMaxDistance, outRayDirTS.y > 0 ? (1 - outSamplePosTS.y) / outRayDirTS.y : -outSamplePosTS.y / outRayDirTS.y);
+    if(outRayDirTS.z != 0)
+        outMaxDistance = min(outMaxDistance, outRayDirTS.z > 0 ? (1 - outSamplePosTS.z) / outRayDirTS.z : -outSamplePosTS.z / outRayDirTS.z);
+}
+
+void LinearTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool outHit, out vec3 outIntersection)
+{
+    vec3 rayEndTS = samplePosTS + rayDirTS * maxTraceDistance;
+    
+    vec2 viewportSize = textureSize(u_HiZBuffer, 0);
+    vec3 dp = rayEndTS.xyz - samplePosTS.xyz;
+    ivec2 sampleScreenPos = ivec2(samplePosTS.xy * viewportSize);
+    ivec2 endPosScreenPos = ivec2(rayEndTS.xy * viewportSize);
+    ivec2 dp2 = endPosScreenPos - sampleScreenPos;
+    const int maxDist = max(abs(dp2.x), abs(dp2.y));
+    dp /= maxDist;
+    
+    vec4 rayPosTS = vec4(samplePosTS.xyz + dp, 0);
+    vec4 rayStepTS = vec4(dp.xyz, 0);
+	vec4 rayStartPos = rayPosTS;
+
+    int hitIndex = -1;
+    for(int i = 0; i < maxDist && i < u_SSR.MaxSteps; i++)
+    {
+	    float depth = texture(u_HiZBuffer, rayPosTS.xy).r;
+	    float thickness = rayPosTS.z - depth;
+
+	    if(thickness >= 0 && thickness < GetMaxThickness(depth))
+	    {
+	        hitIndex = i;
+		    break;
+	    }
+		
+        rayPosTS += rayStepTS;
+    }
+
+    outHit = hitIndex >= 0;
+    outIntersection = vec3(rayStartPos + rayStepTS * hitIndex);
+}
+
+vec2 GetCellCount(int mipLevel)
+{
+    return textureSize(u_HiZBuffer, mipLevel);
+}
+
+vec2 GetCell(vec2 pos, vec2 cellCount)
+{
+    return floor(pos * cellCount);
+}
+
+vec3 IntersectDepthPlane(vec3 o, vec3 d, float t)
+{
+	return o + d * t;
+}
+
+vec3 IntersectCellBoundary(vec3 o, vec3 d, vec2 cell, vec2 cellCount, vec2 crossStep, vec2 crossOffset)
+{
+	vec2 index = cell + crossStep;
+	vec2 boundary = index / cellCount;
+	boundary += crossOffset;
+	
+	vec2 delta = (boundary - o.xy) / d.xy;
+	float t = min(delta.x, delta.y);
+	
+	vec3 intersection = IntersectDepthPlane(o, d, t);
+
+	return intersection;
+}
+
+float GetMinimumDepthPlane(vec2 p, int mipLevel)
+{
+    return textureLod(u_HiZBuffer, p, mipLevel).r;
+}
+
+bool CrossedCellBoundary(vec2 oldCellIndex, vec2 newCellIndex)
+{
+	return (oldCellIndex.x != newCellIndex.x) || (oldCellIndex.y != newCellIndex.y);
+}
+
+void HiZTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool outHit, out vec3 outIntersection)
+{
+    const int maxLevel = HIZ_MAX_LEVEL;
+    const int startLevel = HIZ_START_LEVEL;
+    const int stopLevel = 0;
+
+    vec2 viewportSize = textureSize(u_HiZBuffer, 0);
+    vec2 crossStep = vec2(rayDirTS.x >= 0 ? 1 : -1, rayDirTS.y >= 0 ? 1 : -1);
+    vec2 crossOffset = crossStep / viewportSize / 128.0;
+    crossStep.xy = clamp(crossStep.xy, 0, 1);
+
+    vec3 ray = samplePosTS;
+    float minZ = ray.z;
+    float maxZ = ray.z + rayDirTS.z * maxTraceDistance;
+    float deltaZ = maxZ - minZ;
+
+    vec3 o = ray;
+    vec3 d = rayDirTS * maxTraceDistance;
+
+    vec2 startCellCount = GetCellCount(startLevel);
+    vec2 rayCell = GetCell(ray.xy, startCellCount);
+    ray = IntersectCellBoundary(o, d, rayCell, startCellCount, crossStep, crossOffset * 128);
+
+    int level = startLevel;
+    uint iter = 0;
+    bool isBackwardRay = rayDirTS.z < 0;
+    float rayDir = isBackwardRay ? -1 : 1;
+
+    while(level >= stopLevel && ray.z * rayDir <= maxZ * rayDir && iter < u_SSR.MaxSteps)
+    {
+        vec2 cellCount = GetCellCount(level);
+        vec2 oldCellIdx = GetCell(ray.xy, cellCount);
+
+        float cellMinZ = GetMinimumDepthPlane((oldCellIdx + 0.5) / cellCount, level);
+        vec3 tmpRay = ((cellMinZ > ray.z) && !isBackwardRay) ? IntersectDepthPlane(o, d, (cellMinZ - minZ) / deltaZ) : ray;
+
+        vec2 newCellIdx = GetCell(tmpRay.xy, cellCount);
+
+        float thickness = level == 0 ? (ray.z - cellMinZ) : 0;
+        bool crossed = (isBackwardRay && (cellMinZ > ray.z)) || (thickness > GetMaxThickness(cellMinZ)) || CrossedCellBoundary(oldCellIdx, newCellIdx);
+        ray = crossed ? IntersectCellBoundary(o, d, oldCellIdx, cellCount, crossStep, crossOffset) : tmpRay;
+        level = crossed ? min(maxLevel, level + 1) : level - 1;
+        
+        ++iter;
+    }
+
+    outHit = level < stopLevel;
+    outIntersection = ray;
+
+    if(outHit)
+    {
+        float depth = textureLod(u_HiZBuffer, ray.xy, 0).r;
+        outHit = depth < 1.0;  // exclude skybox
+    }
+}
+
 void main()
 {
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID);
 	vec2 uv = (pixelCoords + 0.5) / imageSize(u_Output);
 
-	vec3 viewPos = GetViewPos(uv);
+    float depth = texture(u_HiZBuffer, uv).r;
 
-	if(IsSkybox(viewPos.z))
+	if(depth == 1.0)
 	{
 		imageStore(u_Output, pixelCoords, vec4(0.0));
 		return;
 	}
 
-	float roughness = texture(u_SceneRoughnessMetalness, uv).r;
+	vec2 roughnessMetalness = texture(u_SceneRoughnessMetalness, uv).rg;
+    float roughness = roughnessMetalness.x;
+    float metalness = roughnessMetalness.y;
 
-	if(roughness >= u_SSR.MaxRoughness)
+	if(roughness >= u_SSR.MaxRoughness || metalness == 0.0)
 	{
 		imageStore(u_Output, pixelCoords, vec4(0.0));
 		return;
@@ -97,100 +235,36 @@ void main()
 
 	vec3 normal = texture(u_SceneNormals, uv).xyz * 2.0 - 1.0;
 
-	vec3 viewDir = normalize(viewPos);
-	vec3 reflectionRay = reflect(viewDir, normal);
+    vec3 samplePosCS = vec3(uv * 2.0 - 1.0, depth);
+    vec3 samplePosVS = ViewPositionFromDepth(uv, 1.0 - depth, u_Camera.InverseProjection);
 
-	float viewReflectDot = clamp(dot(viewDir, reflectionRay), 0, 1);
-	float cameraViewReflectDot = clamp(dot(vec3(0, 0, -1), reflectionRay), 0, 1);
-	float oneMinusViewReflectDot = sqrt(1 - viewReflectDot);
-	float stride = stepStrideLength / oneMinusViewReflectDot;
-	float thickness = stride * 2;
+    vec3 viewDir = normalize(samplePosVS);
+	vec3 rayDirVS = reflect(viewDir, normal);
 
-	float maxRayLength = u_SSR.MaxSteps * stride;
-    float maxDist = mix(min(-viewPos.z, maxRayLength), maxRayLength, cameraViewReflectDot);
-    uint numSteps = uint(max(maxDist / stride, 0));
+    vec3 samplePosTS;
+    vec3 rayDirTS;
+    float maxTraceDistance;
+    PrepareTracing(uv, depth, samplePosVS, rayDirVS, samplePosTS, rayDirTS, maxTraceDistance);
 
-	int hit = 0;
-	float maskOut = 1;
-	vec3 currentPosition = viewPos;
-	vec2 currentUV = uv;
+    vec3 intersection;
+    bool hit;
 
-	vec3 rayStep = reflectionRay * stride;
-	float depthDelta = 0;
+#if HIZ_TRACE
+    HiZTrace(samplePosTS, rayDirTS, maxTraceDistance, hit, intersection);
+#else
+    LinearTrace(samplePosTS, rayDirTS, maxTraceDistance, hit, intersection);
+#endif
 
-
-	for(int i = 0; i < numSteps; ++i)
-	{
-		currentPosition += rayStep;
-		vec2 sampleUV = GetUV(currentPosition);
-
-		if(IsOutsideScreen(sampleUV))
-			break;
-
-		float sampleDepth = -texture(u_HiZBuffer, sampleUV).r;
-
-		if(abs(viewPos.z - sampleDepth) > 0 && !IsSkybox(sampleDepth))
-		{
-			depthDelta = sampleDepth - currentPosition.z;
-
-			if(depthDelta > 0 && depthDelta < thickness)
-			{
-				currentUV = sampleUV;
-				hit = 1;
-				break;
-			}
-		}
-	}
-
-	int binarySearchSteps = binaryStepCount * hit;
-
-	for(int i = 0; i < binarySearchSteps; ++i)
-	{
-		rayStep *= .5f;
-
-		if (depthDelta > 0) 
-			currentPosition -= rayStep;
-		else if (depthDelta < 0) 
-			currentPosition += rayStep;
-		else 
-			break;
-		
-		currentUV = GetUV(currentPosition);
-
-		float sampleDepth = -texture(u_HiZBuffer, currentUV.xy).r;
-		depthDelta = sampleDepth - currentPosition.z;
-		float minv = 1 / max((oneMinusViewReflectDot * float(i)), 0.001);
-
-		if (abs(depthDelta) > minv)
-		{
-			hit = 0;
-			break;
-		}
-	}
-
-	// back face
-	if(hit == 1)
-	{
-		vec3 currentNormal = texture(u_SceneNormals, currentUV).rgb * 2.0 - 1.0;
-		float backFaceDot = dot(currentNormal, reflectionRay);
-		if(backFaceDot > 0)
-			hit = 0;
-	}
-
-	if(hit == 1)
-	{
-		//maskOut = ScreenEdgeMask(currentUV);
-		maskOut = 1.0;
-		vec3 deltaDir = viewPos - currentPosition;
-		float progress = dot(deltaDir, deltaDir) / (maxDist * maxDist);
-		progress = smoothstep(0.0, 0.5, 1 - progress);
-		maskOut *= progress;
-	}
-	else
-	{
-		maskOut = 0.0;
-		currentUV = vec2(0.0);
-	}
-
-	imageStore(u_Output, pixelCoords, vec4(currentUV, maskOut, 1.0));
+    float mask;
+    if(hit)
+    {
+        float edgeMask = ScreenEdgeMask(intersection.xy * 2.0 - 1.0);
+        mask = edgeMask;
+    }
+    else
+    {
+        mask = 0;
+    }
+    
+	imageStore(u_Output, pixelCoords, vec4(intersection.xy, mask, 0.0));
 }

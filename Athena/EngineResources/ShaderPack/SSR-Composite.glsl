@@ -28,16 +28,16 @@ layout(std140, set = 1, binding = 9) uniform u_SSRData
 	uint MaxSteps;
 	float MaxRoughness;
 	float _Pad0;
-	vec4 ProjInfo;
 } u_SSR;
 
 vec3 GetViewPos(vec2 uv)
 {
-    float viewDepth = texture(u_HiZBuffer, uv).r;
-    vec2 viewUV = uv * u_SSR.ProjInfo.xy + u_SSR.ProjInfo.zw;
-    viewUV *= viewDepth;
+    float depth = texture(u_HiZBuffer, uv).r;
+	float linearDepth = LinearizeDepth(depth, u_Camera.NearClip, u_Camera.FarClip);
+    vec2 viewUV = uv * u_Camera.ProjInfo.xy + u_Camera.ProjInfo.zw;
+    viewUV *= linearDepth;
 
-    return vec3(viewUV, -viewDepth);
+    return vec3(viewUV, -linearDepth);
 }
 
 float RGB2Lum(vec3 c)
@@ -66,12 +66,11 @@ void main()
 	vec2 roughnessMetalness = texture(u_SceneRoughnessMetalness, uv).rg;
 	float roughness = roughnessMetalness.r;
 	float metalness = roughnessMetalness.g;
-	float smoothness = 1.0 - roughness;
 
 	// Emissive mask
-	//float lumin = clamp(RGB2Lum(mainColor) - 1, 0, 1);
-    //float luminMask = 1 - lumin;
-    //luminMask = pow(luminMask, 5);
+	float lumin = clamp(RGB2Lum(mainColor) - 1, 0, 1);
+    float luminMask = lumin;
+    luminMask = pow(luminMask, 5);
 
 	// Fresnel
 	vec3 normal = texture(u_SceneNormals, uv).xyz * 2.0 - 1.0;
@@ -85,8 +84,7 @@ void main()
 	vec3 F0 = vec3(0.04);
     F0 = mix(F0, albedo, metalness);
 
-	float normRoughness = roughness / u_SSR.MaxRoughness;
-    vec3 fresnel = FresnelSchlickRoughness(NdotV, F0, normRoughness); 
+    vec3 fresnel = FresnelSchlickRoughness(NdotV, F0, roughness); 
 
 	// specular and diffuse
 	vec3 Ks = fresnel;
@@ -94,15 +92,13 @@ void main()
 	Kd *= 1 - metalness;
 
 	// Blur
-    const float blurPow = 4;
-	float stepS = smoothstep(1.0 - u_SSR.MaxRoughness, 1, smoothness);
-	float lod = mix(0.0, PRECONVOLUTION_MIP_LEVEL_COUNT - 1, 1 - pow(stepS, blurPow));
+	float lod = mix(0.0, PRECONVOLUTION_MIP_LEVEL_COUNT - 1, roughness);
 	vec3 reflectedColor = textureLod(u_HiColorBuffer, reflectUV, lod).rgb;
 
-	vec3 lightColor = (albedo / PI * Kd + reflectedColor * Ks) * normalDotLightDir;
+	vec3 lightColor = (albedo / PI * Kd +Ks) * reflectedColor * normalDotLightDir;
 
-	float blend = RGB2Lum(fresnel) * maskVal;
-	vec3 result = mix(mainColor, lightColor, blend);
+	float blend = metalness * (1 - roughness) * maskVal;
+	vec3 result = mix(mainColor, lightColor, blend) + mainColor * luminMask;
 
 	imageStore(u_SceneColorOutput, pixelCoords, vec4(result, 1.0));
 }

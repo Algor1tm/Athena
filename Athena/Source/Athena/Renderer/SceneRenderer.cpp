@@ -549,7 +549,7 @@ namespace Athena
 				m_SSRCompositePipeline->SetInput("u_HiColorBuffer", m_PreConvolutionPass->GetOutput("HiColorBuffer"));
 				m_SSRCompositePipeline->SetInput("u_SSROutput", m_SSRComputePass->GetOutput("SSR-Output"));
 				m_SSRCompositePipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
-				m_SSRCompositePipeline->SetInput("u_SceneNormals", m_GBufferPass->GetOutput("SceneNormalsEmission"));
+				m_SSRCompositePipeline->SetInput("u_SceneNormalsEmission", m_GBufferPass->GetOutput("SceneNormalsEmission"));
 				m_SSRCompositePipeline->SetInput("u_SceneRoughnessMetalness", m_GBufferPass->GetOutput("SceneRoughnessMetalness"));
 				m_SSRCompositePipeline->SetInput("u_SSRData", m_SSR_UBO);
 				m_SSRCompositePipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -1179,7 +1179,6 @@ namespace Athena
 		m_HBAOData.BlurSharpness = m_Settings.AOSettings.BlurSharpness;
 
 		float projScale = float(m_ViewportSize.y) / (Math::Tan(cameraInfo.FOV * 0.5f) * 2.0f);
-
 		float radius = m_Settings.AOSettings.Radius;
 		m_HBAOData.NegInvR2 = -1.f / (radius * radius);
 		m_HBAOData.RadiusToScreen = radius * 0.5f * projScale / 4.f;
@@ -1189,6 +1188,9 @@ namespace Athena
 		m_SSRData.Intensity = m_Settings.SSRSettings.Intensity;
 		m_SSRData.MaxRoughness = m_Settings.SSRSettings.MaxRoughness;
 		m_SSRData.MaxSteps = m_Settings.SSRSettings.MaxSteps;
+		m_SSRData.ScreenEdgesFade = m_Settings.SSRSettings.ScreenEdgesFade;
+		m_SSRData.ConeTrace = m_Settings.SSRSettings.ConeTrace;
+		m_SSRData.BackwardRays = m_Settings.SSRSettings.BackwardRays;
 	}
 
 	void SceneRenderer::EndScene()

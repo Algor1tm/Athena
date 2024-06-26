@@ -86,11 +86,14 @@ namespace Athena
 
 	struct SSRSettings
 	{
-		bool Enable = true;
+		bool Enable = false;
 		bool HalfRes = false;
+		bool ConeTrace = false;
 		float Intensity = 1.f;
 		uint32 MaxSteps = 128;
-		float MaxRoughness = 0.75f;
+		float MaxRoughness = 0.5f;
+		float ScreenEdgesFade = 0.1f;
+		bool BackwardRays = true;
 	};
 
 	struct QualitySettings
@@ -190,7 +193,10 @@ namespace Athena
 		float Intensity;
 		uint32 MaxSteps;
 		float MaxRoughness;
-		float _Pad0;
+		float ScreenEdgesFade;
+		uint32 ConeTrace;
+		uint32 BackwardRays;
+		Vector2 _Pad0;
 	};
 
 	struct SceneRendererStatistics

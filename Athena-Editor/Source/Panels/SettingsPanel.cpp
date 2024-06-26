@@ -271,12 +271,16 @@ namespace Athena
 			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
 				m_ViewportRenderer->ApplySettings();
 
+			UI::PropertyCheckbox("ConeTrace", &ssr.ConeTrace);
 			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
 			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
 
 			int maxSteps = ssr.MaxSteps;
-			if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 512))
+			if (UI::PropertyDrag("MaxSteps", &maxSteps, 1, 1024))
 				ssr.MaxSteps = maxSteps;
+
+			UI::PropertySlider("ScreenEdgesFade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
+			UI::PropertyCheckbox("BackwardRays", &ssr.BackwardRays);
 
 			UI::EndPropertyTable();
 			UI::TreePop();

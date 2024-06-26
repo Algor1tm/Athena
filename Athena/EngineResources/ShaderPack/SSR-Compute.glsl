@@ -25,7 +25,10 @@ layout(std140, set = 1, binding = 6) uniform u_SSRData
 	float Intensity;
 	uint MaxSteps;
 	float MaxRoughness;
-	float _Pad0;
+    float ScreenEdgesFade;
+    uint ConeTrace;
+    uint BackwardRays;
+    vec2 _Pad0;
 } u_SSR;
 
 #define HIZ_TRACE 1
@@ -82,6 +85,10 @@ void PrepareTracing(vec2 uv, float depth, vec3 samplePosVS, vec3 rayDirVS, out v
 
 void LinearTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool outHit, out vec3 outIntersection)
 {
+    bool isBackwardRay = rayDirTS.z < 0;
+    if(!bool(u_SSR.BackwardRays) && isBackwardRay)
+        return;
+
     vec3 rayEndTS = samplePosTS + rayDirTS * maxTraceDistance;
     
     vec2 viewportSize = textureSize(u_HiZBuffer, 0);
@@ -160,6 +167,10 @@ void HiZTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool 
     const int startLevel = HIZ_START_LEVEL;
     const int stopLevel = 0;
 
+    bool isBackwardRay = rayDirTS.z < 0;
+    if(!bool(u_SSR.BackwardRays) && isBackwardRay)
+        return;
+
     vec2 viewportSize = textureSize(u_HiZBuffer, 0);
     vec2 crossStep = vec2(rayDirTS.x >= 0 ? 1 : -1, rayDirTS.y >= 0 ? 1 : -1);
     vec2 crossOffset = crossStep / viewportSize / 128.0;
@@ -179,7 +190,6 @@ void HiZTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool 
 
     int level = startLevel;
     uint iter = 0;
-    bool isBackwardRay = rayDirTS.z < 0;
     float rayDir = isBackwardRay ? -1 : 1;
 
     while(level >= stopLevel && ray.z * rayDir <= maxZ * rayDir && iter < u_SSR.MaxSteps)
@@ -202,12 +212,6 @@ void HiZTrace(vec3 samplePosTS, vec3 rayDirTS, float maxTraceDistance, out bool 
 
     outHit = level < stopLevel;
     outIntersection = ray;
-
-    if(outHit)
-    {
-        float depth = textureLod(u_HiZBuffer, ray.xy, 0).r;
-        outHit = depth < 1.0;  // exclude skybox
-    }
 }
 
 void main()
@@ -247,24 +251,27 @@ void main()
     PrepareTracing(uv, depth, samplePosVS, rayDirVS, samplePosTS, rayDirTS, maxTraceDistance);
 
     vec3 intersection;
-    bool hit;
+    bool hit = false;
 
 #if HIZ_TRACE
     HiZTrace(samplePosTS, rayDirTS, maxTraceDistance, hit, intersection);
 #else
     LinearTrace(samplePosTS, rayDirTS, maxTraceDistance, hit, intersection);
 #endif
+    
+    vec4 result = vec4(0.0);
 
-    float mask;
     if(hit)
     {
-        float edgeMask = ScreenEdgeMask(intersection.xy * 2.0 - 1.0);
-        mask = edgeMask;
+        float depth = textureLod(u_HiZBuffer, intersection.xy, 0).r;
+
+        if(depth < 1.0)   // exclude skybox
+        {
+            result.xy = intersection.xy;
+            result.z = depth;
+            result.w = dot(rayDirVS, viewDir);
+        }
     }
-    else
-    {
-        mask = 0;
-    }
-    
-	imageStore(u_Output, pixelCoords, vec4(intersection.xy, mask, 0.0));
+
+	imageStore(u_Output, pixelCoords, result);
 }

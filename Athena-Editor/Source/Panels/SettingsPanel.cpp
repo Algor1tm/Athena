@@ -302,7 +302,7 @@ namespace Athena
 
 			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
 			{
-				FilePath path = FileDialogs::OpenFile(TEXT("DirtTexture (*.png)\0*.png\0"));
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture\0*.png;*.jpg\0"));
 				if (!path.empty())
 				{
 					TextureImportOptions options;

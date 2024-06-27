@@ -91,7 +91,7 @@ namespace Athena
 			: Color(color) {}
 
 		LinearColor Color;
-		float MaxWidth = 0.f;
+		float MaxWidth = 10.f;
 		float Kerning = 0.f;
 		float LineSpacing = 0.f;
 		bool Shadowing = false;

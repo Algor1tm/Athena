@@ -243,6 +243,8 @@ namespace Athena
 			m_CurrentPool = GrabPool();
 			m_UsedPools.push_back(m_CurrentPool);
 
+			allocInfo.descriptorPool = m_CurrentPool;
+
 			allocResult = vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, sets);
 
 			if (allocResult == VK_SUCCESS) 

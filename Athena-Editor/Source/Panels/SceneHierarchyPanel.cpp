@@ -366,7 +366,7 @@ namespace Athena
 
 			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
 			{
-				FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture\0*.png;*.jpg\0"));
 				if (!path.empty())
 				{
 					texture = TextureImporter::Load(path, texName == "u_Albedo" ? true : false);
@@ -631,7 +631,7 @@ namespace Athena
 			ImVec2 cursor = ImGui::GetCursorPos();
 			if (ImGui::Button("Browse"))
 			{
-				FilePath path = FileDialogs::OpenFile(TEXT("Texture (*.png)\0*.png\0"));
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture \0*.png;*.jpg\0"));
 				if (!path.empty())
 				{
 					sprite.Texture = TextureImporter::Load(path, true);
@@ -691,7 +691,7 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if (ImGui::Button(fontName.c_str()))
 			{
-				FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf\0*.TTF\0"));
+				FilePath filepath = FileDialogs::OpenFile(TEXT("Font (*.ttf)\0*.ttf;*.TTF\0"));
 				String ext = filepath.extension().string();
 				if (ext == ".ttf" || ext == ".TTF")
 					text.Font = Font::Create(filepath);
@@ -825,9 +825,9 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if (ImGui::Button(name.c_str()))
 			{
-				FilePath filepath = FileDialogs::OpenFile(TEXT("Mesh *.gltf\0*.fbx\0.obj\0.blend\0"));
+				FilePath filepath = FileDialogs::OpenFile(TEXT("Mesh \0*.fbx;*.gltf;*.obj;*.blend;*.x3d\0"));
 				String ext = filepath.extension().string();
-				if (!filepath.empty() && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+				if (!filepath.empty())
 					meshComponent.Mesh = StaticMesh::Create(filepath);
 			}
 

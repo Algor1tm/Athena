@@ -240,6 +240,7 @@ namespace Athena
 			VK_CHECK(vkEnumerateInstanceVersion(&version));
 
 			s_Data.Allocator = Ref<VulkanAllocator>::Create(version);
+			s_Data.DescriptorSetAllocator = Ref<DescriptorSetAllocator>::Create();
 		}
 
 		// Create synchronization primitives
@@ -289,6 +290,7 @@ namespace Athena
 #endif
 
 		s_Data.Allocator.Release();
+		s_Data.DescriptorSetAllocator.Release();
 		s_Data.Device.Release();
 		
 		vkDestroyInstance(VulkanContext::GetInstance(), nullptr);

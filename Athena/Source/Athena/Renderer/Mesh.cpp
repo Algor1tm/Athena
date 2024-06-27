@@ -89,13 +89,12 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path, bool animated)
+	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path, Ref<MaterialTable> table, bool animated)
 	{
 		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		Ref<MaterialTable> table = Renderer::GetMaterialTable();
 		if (table->Exists(materialName))
 			return table->Get(materialName);
 
@@ -152,7 +151,8 @@ namespace Athena
 			result->Set("u_MetalnessMap", texture);
 
 		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
-
+		
+		table->Add(result);
 		return result;
 	}
 
@@ -340,7 +340,7 @@ namespace Athena
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
-	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<Skeleton> skeleton, AABB& aabb)
+	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<MaterialTable> table, Ref<Skeleton> skeleton, AABB& aabb)
 	{
 		aiMesh* aimesh = aiscene->mMeshes[aiMeshIndex];
 		SubMesh subMesh;
@@ -353,7 +353,10 @@ namespace Athena
 		else
 			subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
-		subMesh.Material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path, skeleton != nullptr);
+		const aiMaterial* aimaterial = aiscene->mMaterials[aimesh->mMaterialIndex];
+		String materialName = aimaterial->GetName().C_Str();
+
+		subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path, table, skeleton != nullptr)->GetName();
 
 		return subMesh;
 	}
@@ -456,7 +459,7 @@ namespace Athena
 		m_SubMeshes.reserve(ainode->mNumMeshes);
 		for (uint32 i = 0; i < ainode->mNumMeshes; ++i)
 		{
-			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_FilePath, localTransform, m_Skeleton, m_AABB);
+			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_FilePath, localTransform, m_MaterialTable, m_Skeleton, m_AABB);
 			m_SubMeshes.push_back(subMesh);
 		}
 
@@ -503,6 +506,7 @@ namespace Athena
 		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
+		result->m_MaterialTable = Ref<MaterialTable>::Create();
 
 		ATN_CORE_TRACE_TAG("StaticMesh", "Create static mesh from '{}'", path);
 

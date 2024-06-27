@@ -10,7 +10,6 @@ namespace Athena
 	Ref<Material> Material::Create(const Ref<Shader>& shader, const String& name)
 	{
 		Ref<Material> material = Ref<VulkanMaterial>::Create(shader, name);
-		Renderer::GetMaterialTable()->Add(material);
 
 		switch (Renderer::GetAPI())
 		{
@@ -148,19 +147,5 @@ namespace Athena
 	bool MaterialTable::Exists(const String& name) const
 	{
 		return m_Materials.contains(name);
-	}
-
-	void MaterialTable::Invalidate()
-	{
-		std::vector<String> removeList;
-
-		for (const auto& [name, material] : m_Materials)
-		{
-			if (material->GetCount() == 1)
-				removeList.push_back(name);
-		}
-
-		for (const auto& name : removeList)
-			m_Materials.erase(name);
 	}
 }

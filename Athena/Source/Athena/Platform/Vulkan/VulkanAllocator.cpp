@@ -175,4 +175,123 @@ namespace Athena
 
 		return result;
 	}
+
+
+	DescriptorSetAllocator::DescriptorSetAllocator()
+	{
+		m_CurrentPool = VK_NULL_HANDLE;
+	}
+
+	DescriptorSetAllocator::~DescriptorSetAllocator()
+	{
+		Renderer::SubmitResourceFree([freePools = m_FreePools, usedPools = m_UsedPools]()
+		{
+			for (auto pool : freePools)
+			{
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+			}
+
+			for (auto pool : usedPools)
+			{
+				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+			}
+		});
+	}
+
+	void DescriptorSetAllocator::ResetPools()
+	{
+		for (auto p : m_UsedPools) 
+		{
+			vkResetDescriptorPool(VulkanContext::GetLogicalDevice(), p, 0);
+			ATN_CORE_WARN_TAG("Vulkan", "Reseting Descriptor Pool");
+
+			m_FreePools.push_back(p);
+		}
+
+		m_UsedPools.clear();
+		m_CurrentPool = VK_NULL_HANDLE;
+	}
+
+	bool DescriptorSetAllocator::Allocate(VkDescriptorSet* sets, VkDescriptorSetAllocateInfo allocInfo)
+	{
+		if (m_CurrentPool == VK_NULL_HANDLE) 
+		{
+			m_CurrentPool = GrabPool();
+			m_UsedPools.push_back(m_CurrentPool);
+		}
+
+		allocInfo.descriptorPool = m_CurrentPool;
+
+		VkResult allocResult = vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, sets);
+		bool needReallocate = false;
+
+		switch (allocResult) 
+		{
+		case VK_SUCCESS:
+			return true;
+		case VK_ERROR_FRAGMENTED_POOL:
+		case VK_ERROR_OUT_OF_POOL_MEMORY:
+			needReallocate = true;
+			break;
+		default:
+			ATN_CORE_ASSERT(false);
+			return false;
+		}
+
+		if (needReallocate) 
+		{
+			m_CurrentPool = GrabPool();
+			m_UsedPools.push_back(m_CurrentPool);
+
+			allocResult = vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, sets);
+
+			if (allocResult == VK_SUCCESS) 
+				return true;
+		}
+		
+		ATN_CORE_ERROR_TAG("Vulkan", "Failed to allocate descriptor set!");
+		ATN_CORE_ASSERT(false);
+
+		return false;
+	}
+
+	VkDescriptorPool DescriptorSetAllocator::CreatePool(uint32 count, VkDescriptorPoolCreateFlags flags)
+	{
+		std::vector<VkDescriptorPoolSize> sizes;
+		sizes.reserve(s_PoolSizes.size());
+
+		for (auto [type, size] : s_PoolSizes)
+		{
+			if(size > 0.f)
+				sizes.push_back({ type, uint32(size * count) });
+		}
+		
+		VkDescriptorPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.flags = flags;
+		poolInfo.maxSets = count;
+		poolInfo.poolSizeCount = sizes.size();
+		poolInfo.pPoolSizes = sizes.data();
+
+		VkDescriptorPool descriptorPool;
+		vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &descriptorPool);
+
+		ATN_CORE_WARN_TAG("Vulkan", "Allocating Descriptor Pool");
+
+		return descriptorPool;
+	}
+
+	VkDescriptorPool DescriptorSetAllocator::GrabPool()
+	{
+		if (m_FreePools.size() > 0)
+		{
+			VkDescriptorPool pool = m_FreePools.back();
+			m_FreePools.pop_back();
+			return pool;
+		}
+		else
+		{
+			return CreatePool(1000, 0);
+		}
+	}
 }

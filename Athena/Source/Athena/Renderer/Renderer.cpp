@@ -26,7 +26,6 @@ namespace Athena
 		FilePath ShaderCacheDirectory;
 		std::unordered_map<String, String> GlobalShaderMacroses;
 		Ref<ShaderPack> ShaderPack;
-		Ref<MaterialTable> MaterialTable;
 
 		Ref<VertexBuffer> FullscreenVertexBuffer;
 	};
@@ -77,7 +76,6 @@ namespace Athena
 		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
 		
 		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
-		s_Data.MaterialTable = Ref<MaterialTable>::Create();
 
 		// Fake vertex buffer (does not actually used by vertex shader)
 		// Contains fullscreen triangle positions
@@ -102,7 +100,6 @@ namespace Athena
 		Font::Shutdown();
 		TextureGenerator::Shutdown();
 
-		s_Data.MaterialTable.Release();
 		s_Data.FullscreenVertexBuffer.Release();
 
 		s_Data.ShaderPack.Release();
@@ -133,8 +130,6 @@ namespace Athena
 			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush");
 			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
-
-		s_Data.MaterialTable->Invalidate();
 
 		s_Data.RendererAPI->OnUpdate();
 		s_Data.RenderCommandBuffer->Begin();
@@ -260,11 +255,6 @@ namespace Athena
 	void Renderer::SetGlobalShaderMacros(const String& name, const String& value)
 	{
 		s_Data.GlobalShaderMacroses[name] = value;
-	}
-
-	Ref<MaterialTable> Renderer::GetMaterialTable()
-	{
-		return s_Data.MaterialTable;
 	}
 
 	const RenderCapabilities& Renderer::GetRenderCaps()

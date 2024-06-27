@@ -33,6 +33,7 @@ namespace Athena
 		VkInstance Instance;
 		VkDebugReportCallbackEXT DebugReport;
 		Ref<VulkanAllocator> Allocator;
+		Ref<DescriptorSetAllocator> DescriptorSetAllocator;
 		Ref<VulkanDevice> Device;
 		std::vector<FrameSyncData> FrameSyncData;
 		VkCommandPool CommandPool;
@@ -48,6 +49,7 @@ namespace Athena
 		static VkInstance GetInstance() { return s_Data.Instance; }
 		static Ref<VulkanAllocator> GetAllocator() { return s_Data.Allocator; }
 		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
+		static Ref<DescriptorSetAllocator> GetDescriptorSetAllocator() { return s_Data.DescriptorSetAllocator; }
 
 		static Ref<VulkanDevice> GetDevice() { return s_Data.Device; }
 		static VkDevice GetLogicalDevice() { return s_Data.Device->GetLogicalDevice(); }

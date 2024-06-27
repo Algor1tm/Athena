@@ -62,8 +62,8 @@ namespace Athena
 	struct SubMesh
 	{
 		String Name;
+		String MaterialName;
 		Ref<VertexBuffer> VertexBuffer;
-		Ref<Material> Material;
 	};
 
 	class ATHENA_API StaticMesh : public RefCounted
@@ -76,7 +76,8 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
-
+		const Ref<MaterialTable>& GetMaterialTable() const { return m_MaterialTable; }
+		
 		const Ref<Animator>& GetAnimator() { return m_Animator; }
 
 		bool HasAnimations() const { return m_Animator != nullptr; }
@@ -89,6 +90,7 @@ namespace Athena
 		String m_Name;
 		AABB m_AABB;
 		std::vector<SubMesh> m_SubMeshes;
+		Ref<MaterialTable> m_MaterialTable;
 
 		Ref<Skeleton> m_Skeleton;
 		Ref<Animator> m_Animator;

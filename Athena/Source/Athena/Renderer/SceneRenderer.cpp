@@ -1025,9 +1025,11 @@ namespace Athena
 	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform)
 	{
 		const auto& subMeshes = mesh->GetAllSubMeshes();
+		const auto& materialTable = mesh->GetMaterialTable();
+
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = subMeshes[i].Material;
+			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
 
 			StaticDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
@@ -1041,9 +1043,11 @@ namespace Athena
 	void SceneRenderer::SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform)
 	{
 		const auto& subMeshes = mesh->GetAllSubMeshes();
+		const auto& materialTable = mesh->GetMaterialTable();
+
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = subMeshes[i].Material;
+			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
 
 			AnimDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;

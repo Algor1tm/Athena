@@ -141,8 +141,6 @@ namespace Athena
 		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
 		static void SetGlobalShaderMacros(const String& name, const String& value);
 
-		static Ref<MaterialTable> GetMaterialTable();
-
 	private:
 		static CommandQueue& GetResourceFreeQueue();
 	};

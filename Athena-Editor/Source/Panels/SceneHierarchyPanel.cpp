@@ -304,12 +304,12 @@ namespace Athena
 		std::vector<String> materials;
 		if(selectedEntity.HasComponent<StaticMeshComponent>())
 		{
-			auto mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
+			Ref<StaticMesh> mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
 			const auto& subMeshes = mesh->GetAllSubMeshes();
 			materials.reserve(subMeshes.size());
 			for (uint32 i = 0; i < subMeshes.size(); ++i)
 			{
-				const String& material = subMeshes[i].Material->GetName();
+				const String& material = subMeshes[i].MaterialName;
 				if (std::find(materials.begin(), materials.end(), material) == materials.end())
 				{
 					materials.push_back(material);
@@ -332,7 +332,8 @@ namespace Athena
 				UI::EndPropertyTable();
 			}
 			
-			Ref<Material> material = Renderer::GetMaterialTable()->Get(m_ActiveMaterial);
+			Ref<MaterialTable> materialTable = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetMaterialTable();
+			Ref<Material> material = materialTable->Get(m_ActiveMaterial);
 
 			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
 			{

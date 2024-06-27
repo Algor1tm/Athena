@@ -45,11 +45,6 @@ vec3 GetViewPos(vec2 uv, float depth)
     return vec3(viewUV, -linearDepth);
 }
 
-float RGB2Lum(vec3 c)
-{
-    return dot(c, vec3(0.2126729, 0.7151522, 0.0721750));
-}
-
 float RoghnessToConeAngle(float roughness)
 {
 	float specularPower = 2 / max(pow(roughness, 2), 0.0001) - 2;

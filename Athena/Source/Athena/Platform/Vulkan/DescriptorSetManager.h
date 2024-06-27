@@ -51,7 +51,6 @@ namespace Athena
 	public:
 		DescriptorSetManager() = default;
 		DescriptorSetManager(const DescriptorSetManagerCreateInfo& info);
-		~DescriptorSetManager();
 
 		void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0);
 		Ref<RenderResource> Get(const String& name, uint32 arrayIndex = 0);
@@ -81,6 +80,5 @@ namespace Athena
 		RenderResourcesTable m_InvalidatedResources;
 		std::vector<std::vector<VkDescriptorSet>> m_DescriptorSets;
 		std::vector<std::unordered_map<uint32, std::unordered_map<uint32, WriteDescriptorSet>>> m_WriteDescriptorSetTable;
-		VkDescriptorPool m_DescriptorPool;
 	};
 }

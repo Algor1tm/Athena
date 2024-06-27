@@ -86,7 +86,6 @@ namespace Athena
 	{
 		m_Info = info;
 		m_ResourcesDescriptionTable = &m_Info.Shader->GetResourcesDescription();
-		m_DescriptorPool = VK_NULL_HANDLE;
 
 		// Fill in resources description table usaing shader meta data
 		// And create write descriptor tables
@@ -135,17 +134,6 @@ namespace Athena
 						resource.Storage[i] = TextureGenerator::GetBlackTextureCube();
 				}
 			}
-		}
-	}
-
-	DescriptorSetManager::~DescriptorSetManager()
-	{
-		if (m_DescriptorPool != VK_NULL_HANDLE)
-		{
-			Renderer::SubmitResourceFree([pool = m_DescriptorPool]()
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-			});
 		}
 	}
 
@@ -223,57 +211,29 @@ namespace Athena
 			return;
 		}
 
-		// Calculate descriptor pool size and allocate it
-		std::unordered_map<VkDescriptorType, uint32> poolSizesMap;
 		uint32 maxSet = 0;
-
 		for (const auto& [set, setData] : m_WriteDescriptorSetTable[0])
 		{
-			for (const auto& [binding, wd] : setData)
-				poolSizesMap[wd.VulkanWriteDescriptorSet.descriptorType] += 1;
-
 			if (set > maxSet)
 				maxSet = set;
 		}
 
 		uint32 setsCount = maxSet - m_Info.FirstSet + 1;
 
-		std::vector<VkDescriptorPoolSize> poolSizes;
-		poolSizes.reserve(poolSizesMap.size());
-		for (const auto& [type, count] : poolSizesMap)
-			poolSizes.emplace_back(type, count);
-
-		VkDescriptorPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.maxSets = setsCount * Renderer::GetFramesInFlight();
-		poolInfo.poolSizeCount = poolSizes.size();
-		poolInfo.pPoolSizes = poolSizes.data();
-
-		// Do not create pool if there are no resources
-		if (poolInfo.maxSets > 0 && poolInfo.poolSizeCount > 0)
-		{
-			VK_CHECK(vkCreateDescriptorPool(VulkanContext::GetDevice()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool));
-		}
-		else
-		{
-			m_DescriptorPool = VK_NULL_HANDLE;
-		}
-
 		const auto& setLayouts = m_Info.Shader.As<VulkanShader>()->GetAllDescriptorSetLayouts();
 		m_DescriptorSets.resize(Renderer::GetFramesInFlight());
 
 		for (uint32 frameIndex = 0; frameIndex < Renderer::GetFramesInFlight(); ++frameIndex)
 		{
-			if (poolSizes.size() > 0)
+			if (m_WriteDescriptorSetTable[0].size() > 0)
 			{
 				VkDescriptorSetAllocateInfo allocInfo = {};
 				allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				allocInfo.descriptorPool = m_DescriptorPool;
 				allocInfo.descriptorSetCount = setsCount;
 				allocInfo.pSetLayouts = &setLayouts[m_Info.FirstSet];
 
 				m_DescriptorSets[frameIndex].resize(setsCount);
-				VK_CHECK(vkAllocateDescriptorSets(VulkanContext::GetLogicalDevice(), &allocInfo, m_DescriptorSets[frameIndex].data()));
+				VulkanContext::GetDescriptorSetAllocator()->Allocate(m_DescriptorSets[frameIndex].data(), allocInfo);
 
 				for (uint32 i = 0; i < setsCount; ++i)
 				{

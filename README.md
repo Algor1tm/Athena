@@ -1,24 +1,35 @@
 # Athena
 Athena is an early-stage Game Engine with a high emphasis on Rendering.   
-Currently working on Windows platform.  
+Currently supports only Windows platform and Visual C++. Vulkan API - the only way to go!
+Expect bugs and instability as it is still under development. The engine is free and open source.
+Feel free to contact me about any questions or issues you have!
 
 # Screenshots
-![Editor-DirtTexture-Bloom](https://github.com/Algor1tm/Athena/assets/68811145/5a9d273a-873b-47fa-a3e6-ac296984e63f)
-
-![Sponza](https://github.com/Algor1tm/Athena/assets/68811145/47bec676-acd3-4769-9936-0ab87812bdf7)
 
 # MainFeatures
+![Editor1](https://github.com/Algor1tm/Athena/assets/68811145/73d81214-1bfe-4be9-a4c1-ffbe234911fb)
+
+![Sponza2](https://github.com/Algor1tm/Athena/assets/68811145/ed4898d1-e80e-42db-a7a3-c0f16adda1f0)
+
+![GBuffer](https://github.com/Algor1tm/Athena/assets/68811145/08a3b7b3-1c85-412f-954a-1a9f4c4ca742)
 
 ### Rendering
 
-- PBR Renderer
-- IBL (Image Based Lightning)
-- Cascaded Shadow maps
-- Full HDR Pipeline
+- Deferred Renderer
+- 2.5D Light Culling
+- PBR, IBL, HDR
+- Atmosphere Rendering
+- PCSS Cascaded Shadows
 - Bloom
 - Skeletal Animations
+- Instancing
+- HBAO+
+- HiZ SSR
+- Jump Flood outline
+- Font Rendering
+- SMAA 1x, FXAA
 
-## Other
+## Engine
 
 - Entity Component System(ECS)
 - Event system
@@ -28,15 +39,14 @@ Currently working on Windows platform.
 - One-click scene loading/saving, YAML serializer(and deserializer) for all components and resources
 - Logging, image & cubemap loading via editor, YAML reading, UUID, random generators and many more!
 
-# TODO
+# Plans
 
-- Depth of field
-- Atmosphere Rendering
-- OIT
-- Forward Plus Renderer
-- Instancing
-- HBAO
-- SSR
+- Asset System
+- Physics
+- Transparency
+- Render Graph
+- Async Compute
+
 
 ## Getting Started
 Visual Studio 2019 or 2022 is recommended.   

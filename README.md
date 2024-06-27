@@ -1,7 +1,7 @@
 # Athena
-Athena is an early-stage Game Engine with a high emphasis on Rendering.   
-Currently supports only Windows platform and Visual C++. Vulkan API - the only way to go!
-Expect bugs and instability as it is still under development. The engine is free and open source.
+Athena is an early-stage Game Engine with a high emphasis on Rendering.     
+Currently supports only Windows platform and Visual C++. Vulkan API - the only way to go!    
+Expect bugs and instability as it is still under development. The engine is free and open source.    
 Feel free to contact me about any questions or issues you have!
 
 # Screenshots
@@ -16,8 +16,8 @@ Feel free to contact me about any questions or issues you have!
 ### Rendering
 
 - Deferred Renderer
-- 2.5D Light Culling
 - PBR, IBL, HDR
+- 2.5D Light Culling
 - Atmosphere Rendering
 - PCSS Cascaded Shadows
 - Bloom
@@ -33,6 +33,7 @@ Feel free to contact me about any questions or issues you have!
 
 - Entity Component System(ECS)
 - Event system
+- Python scripting language
 - Editor with docking support
 - File dialogs, material & component editors
 - Basic Runtime
@@ -48,7 +49,8 @@ Feel free to contact me about any questions or issues you have!
 - Async Compute
 
 
-## Getting Started
-Visual Studio 2019 or 2022 is recommended.   
-To setup projects run one of the scripts in <b>Scripts</b> folder.   
-You will find solution file(.sln) in <b>Build/Projects</b> folder.    
+# Getting Started
+Visual Studio 2019 or 2022 is recommended.  
+For compiling the project you need to have Python 3.7+ and Vulkan SDK with VMA and shader toolchain debug symbols (x64).    
+To setup projects run one of the scripts in <b>Scripts</b> folder.      
+You will find solution file(.sln) in <b>Build/Projects</b> folder.      

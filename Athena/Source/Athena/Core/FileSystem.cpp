@@ -19,10 +19,59 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR("FileSystem::ReadFile: Could not open file: '{0}'", path);
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read file {}", path);
 		}
 
 		return result;
+	}
+
+	Buffer FileSystem::ReadFileBinary(const FilePath& path)
+	{
+		Buffer result;
+
+		std::ifstream in(path, std::ios::in | std::ios::binary);
+		if (in.is_open())
+		{
+			in.seekg(0, std::ios::end);
+			auto size = in.tellg();
+			in.seekg(0, std::ios::beg);
+
+			result.Allocate(size);
+			in.read((char*)result.Data(), size);
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read binary file {}", path);
+		}
+		
+		return result;
+	}
+
+	bool FileSystem::WriteFile(const FilePath& path, const char* bytes, uint64 size)
+	{
+		FilePath parentDir = path.parent_path();
+		if (!FileSystem::Exists(parentDir))
+			FileSystem::CreateDirectory(parentDir);
+
+		std::ofstream out(path, std::ios::out | std::ios::binary);
+		if (out.is_open())
+		{
+			out.write(bytes, size);
+			out.flush();
+			out.close();
+			return true;
+		}
+		else
+		{
+			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to write to file {}", path);
+		}
+
+		return false;
+	}
+
+	bool FileSystem::Remove(const FilePath& path)
+	{
+		return std::filesystem::remove_all(path);
 	}
 
 	FilePath FileSystem::GetWorkingDirectory()
@@ -33,6 +82,11 @@ namespace Athena
 	void FileSystem::SetWorkingDirectory(const FilePath& path)
 	{
 		std::filesystem::current_path(path);
+	}
+
+	void FileSystem::CreateDirectory(const FilePath& path)
+	{
+		std::filesystem::create_directories(path);
 	}
 
 	bool FileSystem::Exists(const FilePath& path)

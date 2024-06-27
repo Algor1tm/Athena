@@ -17,19 +17,29 @@ namespace Athena
 		RecalculateProjection();
 	}
 
-	void SceneCamera::RecalculateProjection()
+	CameraInfo SceneCamera::GetCameraInfo() const
 	{
-		if (m_ProjectionType == ProjectionType::Perspective)
+		CameraInfo info;
+		info.ProjectionMatrix = m_ProjectionMatrix;
+
+		if (m_ProjectionType == ProjectionType::Orthographic)
 		{
-			m_NearClip = m_PerspectiveData.NearClip;
-			m_FarClip = m_PerspectiveData.FarClip;
+			info.NearClip = m_OrthoData.NearClip;
+			info.FarClip = m_OrthoData.FarClip;
+			info.FOV = 0.f;
 		}
-		else if (m_ProjectionType == ProjectionType::Orthographic)
+		else if (m_ProjectionType == ProjectionType::Perspective)
 		{
-			m_NearClip = m_OrthoData.NearClip;
-			m_FarClip = m_OrthoData.FarClip;
+			info.NearClip = m_PerspectiveData.NearClip;
+			info.FarClip = m_PerspectiveData.FarClip;
+			info.FOV = m_PerspectiveData.VerticalFOV;
 		}
 
+		return info;
+	}
+
+	void SceneCamera::RecalculateProjection()
+	{
 		if (m_ProjectionType == ProjectionType::Orthographic)
 		{
 			float orthoLeft = -m_OrthoData.Size * m_AspecRatio * 0.5f;
@@ -41,7 +51,7 @@ namespace Athena
 		}
 		else if (m_ProjectionType == ProjectionType::Perspective)
 		{
-			m_ProjectionMatrix = Math::Perspective(m_PerspectiveData.VerticalFOV, m_AspecRatio,
+			m_ProjectionMatrix = Math::PerspectiveReverseZ(m_PerspectiveData.VerticalFOV, m_AspecRatio,
 				m_PerspectiveData.NearClip, m_PerspectiveData.FarClip);
 		}
 	}

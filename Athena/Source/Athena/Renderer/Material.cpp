@@ -1,120 +1,151 @@
 #include "Material.h"
 
-#include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Platform/Vulkan/VulkanMaterial.h"
+#include "Athena/Math/Random.h"
 
 
 namespace Athena
 {
-	std::unordered_map<String, Ref<Material>> MaterialManager::m_Materials;
-
-
-	Ref<Material> MaterialManager::CreateMaterial(const String& name)
+	Ref<Material> Material::Create(const Ref<Shader>& shader, const String& name)
 	{
-		Ref<Material> material = CreateRef<Material>();
+		Ref<Material> material = Ref<VulkanMaterial>::Create(shader, name);
 
-		if (m_Materials.find(name) != m_Materials.end())
+		switch (Renderer::GetAPI())
 		{
-			uint32 postfix = 0;
-			String newName;
-			do
-			{
-				newName = name + std::to_string(postfix);
-				postfix++;
-			} while (m_Materials.find(name) == m_Materials.end());
-
-			material->m_Name = newName;
-		}
-		else
-		{
-			material->m_Name = name;
+		case Renderer::API::Vulkan: return material;
+		case Renderer::API::None: return nullptr;
 		}
 
-		m_Materials[material->m_Name] = material;
-
-		return material;
+		return nullptr;
 	}
 
-	bool MaterialManager::Exists(const String& name)
+	Ref<Material> Material::CreatePBRStatic(const String& name)
 	{
-		return m_Materials.find(name) != m_Materials.end();
+		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Static"), name);
 	}
 
-	Ref<Material> MaterialManager::Get(const String& name)
+	Ref<Material> Material::CreatePBRAnim(const String& name)
 	{
-		if (m_Materials.find(name) == m_Materials.end())
+		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Anim"), name);
+	}
+
+	Material::Material(const Ref<Shader> shader, const String& name)
+		: m_Shader(shader), m_Name(name), m_BufferMembers(&shader->GetMetaData().PushConstant.Members)
+	{
+		memset(m_Buffer, 0, sizeof(m_Buffer));
+
+		m_Flags[MaterialFlag::CAST_SHADOWS] = true;
+	}
+
+	Material::~Material()
+	{
+		
+	}
+
+	void Material::Set(const String& name, const Matrix4& value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Mat4, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	void Material::Set(const String& name, const Vector2& value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float2, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	void Material::Set(const String& name, const Vector4& value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float4, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	void Material::Set(const String& name, float value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Float, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	void Material::Set(const String& name, uint32 value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::UInt, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	void Material::Set(const String& name, int32 value)
+	{
+		uint32 offset;
+		if (!GetMemberOffset(name, ShaderDataType::Int, &offset))
+			return;
+
+		memcpy(&m_Buffer[offset], &value, sizeof(value));
+	}
+
+	bool Material::GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset)
+	{
+		if (!m_BufferMembers->contains(name))
 		{
-			return nullptr;
-		}
-		else
-		{
-			return m_Materials.at(name);
-		}
-	}
-
-	void MaterialManager::Delete(const String& name)
-	{
-		if (m_Materials.find(name) == m_Materials.end())
-		{
-			ATN_CORE_ERROR("MaterialManager::DeleteMaterial: invalid material name!");
-		}
-		else
-		{
-			m_Materials.erase(name);
-		}
-	}
-
-	void Material::Set(MaterialTexture textureType, const Ref<Texture2D>& texture)
-	{
-		m_TextureMap[textureType] = { texture, true };
-	}
-
-	Ref<Texture2D> Material::Get(MaterialTexture textureType)
-	{
-		if (m_TextureMap.find(textureType) == m_TextureMap.end())
-			return nullptr;
-
-		return m_TextureMap.at(textureType).Texture;
-	}
-
-	bool Material::IsEnabled(MaterialTexture textureType) const
-	{
-		if (m_TextureMap.find(textureType) == m_TextureMap.end())
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
 			return false;
-
-		return m_TextureMap.at(textureType).IsEnabled;
-	}
-
-	void Material::Enable(MaterialTexture textureType, bool enable)
-	{
-		if (m_TextureMap.find(textureType) != m_TextureMap.end())
-			m_TextureMap.at(textureType).IsEnabled = enable;
-	}
-
-	const Material::ShaderData& Material::Bind()
-	{
-		BindTexture(MaterialTexture::ALBEDO_MAP, TextureBinder::ALBEDO_MAP, &m_ShaderData.EnableAlbedoMap);
-		BindTexture(MaterialTexture::NORMAL_MAP, TextureBinder::NORMAL_MAP, &m_ShaderData.EnableNormalMap);
-		BindTexture(MaterialTexture::ROUGHNESS_MAP, TextureBinder::ROUGHNESS_MAP, &m_ShaderData.EnableRoughnessMap);
-		BindTexture(MaterialTexture::METALNESS_MAP, TextureBinder::METALNESS_MAP, &m_ShaderData.EnableMetalnessMap);
-		BindTexture(MaterialTexture::AMBIENT_OCCLUSION_MAP, TextureBinder::AMBIENT_OCCLUSION_MAP, &m_ShaderData.EnableAmbientOcclusionMap);
-
-		return m_ShaderData;
-	}
-
-	void Material::BindTexture(MaterialTexture textureType, TextureBinder binder, int* isEnabled)
-	{
-		if (m_TextureMap.find(textureType) != m_TextureMap.end())
-		{
-			*isEnabled = m_TextureMap.at(textureType).IsEnabled;
-			if (*isEnabled)
-			{
-				m_TextureMap.at(textureType).Texture->Bind(binder);
-			}
 		}
-		else
+
+		const auto& data = m_BufferMembers->at(name);
+		if (data.Type != dataType)
 		{
-			*isEnabled = false;
+			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
+					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(dataType), ShaderDataTypeToString(data.Type));
+			return false;
 		}
+
+		*offset = data.Offset;
+		return true;
+	}
+
+	bool Material::GetInternal(const String& name, ShaderDataType dataType, void** data)
+	{
+		uint32 offset;
+		if (GetMemberOffset(name, dataType, &offset))
+		{
+			*data = &m_Buffer[offset];
+			return true;
+		}
+
+		return false;
+	}
+
+	Ref<Material> MaterialTable::Get(const String& name) const
+	{
+		return m_Materials.at(name);
+	}
+
+	void MaterialTable::Add(const Ref<Material>& material)
+	{
+		m_Materials[material->GetName()] = material;
+	}
+
+	void MaterialTable::Remove(const Ref<Material>& material)
+	{
+		m_Materials.erase(material->GetName());
+	}
+
+	bool MaterialTable::Exists(const String& name) const
+	{
+		return m_Materials.contains(name);
 	}
 }

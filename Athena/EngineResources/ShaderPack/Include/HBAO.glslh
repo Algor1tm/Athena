@@ -1,0 +1,18 @@
+
+layout(std140, set = 1, binding = 5) uniform u_HBAOData
+{
+	vec4 Float2Offsets[16];
+	vec4 Jitters[16];
+	vec2 InvResolution;
+	vec2 InvQuarterResolution;
+
+	vec4 ProjInfo;
+	float NegInvR2;
+	float RadiusToScreen;
+	float AOMultiplier;
+
+	float Intensity;
+	float Bias;
+	float BlurSharpness;
+	vec2 _Pad0;
+} u_HBAO;

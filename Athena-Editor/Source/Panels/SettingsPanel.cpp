@@ -1,31 +1,70 @@
 #include "SettingsPanel.h"
 
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
-
+#include "Athena/Renderer/TextureGenerator.h"
 #include "Athena/Scripting/ScriptEngine.h"
-
+#include "Athena/UI/UI.h"
+#include "Athena/UI/Theme.h"
+#include "EditorResources.h"
 #include "EditorLayer.h"
-
-#include "UI/Widgets.h"
 
 #include <ImGui/imgui.h>
 
 
 namespace Athena
 {
+	static std::string_view TonemapModeToString(TonemapMode mode)
+	{
+		switch (mode)
+		{
+		case TonemapMode::NONE: return "None";
+		case TonemapMode::ACES_FILMIC: return "ACES-Filmic";
+		case TonemapMode::ACES_TRUE: return "ACES-True";
+		}
+
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
+
+	static TonemapMode TonemapModeFromString(std::string_view str)
+	{
+		if (str == "None")
+			return TonemapMode::NONE;
+		if (str == "ACES-Filmic")
+			return TonemapMode::ACES_FILMIC;
+		if (str == "ACES-True")
+			return TonemapMode::ACES_TRUE;
+
+		ATN_CORE_ASSERT(false);
+		return TonemapMode::NONE;
+	}
+
 	static std::string_view AntialisingToString(Antialising antialiasing)
 	{
 		switch (antialiasing)
 		{
 		case Antialising::NONE: return "None";
-		case Antialising::MSAA_2X: return "MSAA 2X (2D Only)";
-		case Antialising::MSAA_4X: return "MSAA 4X (2D Only)";
-		case Antialising::MSAA_8X: return "MSAA 8X (2D Only)";
+		case Antialising::FXAA: return "FXAA";
+		case Antialising::SMAA: return "SMAA";
 		}
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return "";
+	}
+
+	static Antialising AntialisingFromString(std::string_view str)
+	{
+		if(str == "None")
+			return Antialising::NONE;
+		else if (str == "FXAA")
+			return Antialising::FXAA;
+		else if (str == "SMAA")
+			return Antialising::SMAA;
+
+		ATN_ASSERT(false);
+		return (Antialising)0;
 	}
 
 	static std::string_view DebugViewToString(DebugView view)
@@ -33,32 +72,67 @@ namespace Athena
 		switch (view)
 		{
 		case DebugView::NONE: return "None";
-		case DebugView::WIREFRAME: return "Wireframe";
 		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
+		case DebugView::LIGHT_COMPLEXITY: return "LightComplexity";
+		case DebugView::GBUFFER: return "GBuffer";
 		}
 
-		ATN_CORE_ASSERT(false);
+		ATN_ASSERT(false);
 		return "";
 	}
 
-	SettingsPanel::SettingsPanel(std::string_view name)
-		: Panel(name)
+	static DebugView DebugViewFromString(std::string_view str)
+	{
+		if (str == "None")
+			return DebugView::NONE;
+
+		if (str == "ShadowCascades")
+			return DebugView::SHADOW_CASCADES;
+
+		if (str == "LightComplexity")
+			return DebugView::LIGHT_COMPLEXITY;
+
+		if (str == "GBuffer")
+			return DebugView::GBUFFER;
+
+		ATN_ASSERT(false);
+		return (DebugView)0;
+	}
+
+	SettingsPanel::SettingsPanel(std::string_view name, const Ref<EditorContext>& context)
+		: Panel(name, context)
 	{
 
 	}
 
 	void SettingsPanel::OnImGuiRender()
 	{
-
 		if (ImGui::Begin("Editor Settings"))
 		{
-			UI::ShiftCursorY(2.f);
-			UI::DrawImGuiWidget("Show Physics Colliders", [this]() { return ImGui::Checkbox("##Show Physics Colliders", &m_EditorSettings.ShowPhysicsColliders); });
+			if (UI::BeginPropertyTable())
+			{
+				EditorSettings& settings = m_EditorCtx.EditorSettings;
 
-			ImGui::Text("Camera Speed");
-			ImGui::SameLine();
-			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-			ImGui::SliderFloat("##CameraSpeed", &m_EditorSettings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyCheckbox("GizmosLocal", &settings.GizmosLocalTransform);
+				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
+				UI::PropertySlider("RendererIconsScale", &settings.RendererIconsScale, 0.4f, 3.f);
+				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
+				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
+				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);
+
+				UI::PropertyRow("Reload Scripts", ImGui::GetFrameHeight());
+				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
+				if (ImGui::Button("Reload All Scripts"))
+				{
+					m_EditorCtx.ActiveScene->LoadAllScripts();
+				}
+				ImGui::PopStyleVar();
+				ImGui::PopStyleColor();
+
+				UI::EndPropertyTable();
+			}
 		}
 
 		ImGui::End();
@@ -67,141 +141,232 @@ namespace Athena
 		ImGui::Begin("SceneRenderer");
 		ImGui::PopStyleVar();
 
-		if (UI::BeginTreeNode("Debug"))
+		SceneRendererSettings& settings = m_ViewportRenderer->GetSettings();
+		ShaderPack& shaderPack = *Renderer::GetShaderPack();
+
+		bool shaderPackOpen = UI::TreeNode("ShaderPack", false);
+		if (!shaderPackOpen)
 		{
-			auto stats = Renderer::GetStatistics();
+			float frameHeight = ImGui::GetFrameHeight();
+			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+			ImVec2 textSize = ImGui::CalcTextSize("Reload All");
 
-			ImGui::Text("Draw Calls: %d", stats.DrawCalls);
-			ImGui::Text("Dispatch Calls: %d", stats.DispatchCalls);
-			ImGui::Text("Shaders Binded: %d", stats.ShadersBinded);
-			ImGui::Text("Pipelines Binded: %d", stats.PipelinesBinded);
-			ImGui::Text("Render Passes: %d", stats.RenderPasses);
-			ImGui::Text("Compute Passes: %d", stats.ComputePasses);
+			ImGui::SameLine(regionAvail.x - frameHeight);
+			UI::ShiftCursor(-textSize.x, 0.f);
+			if (ImGui::Button("Reload All"))
+				shaderPack.Reload();
 
-			ImGui::Spacing();
-			ImGui::Spacing();
+			UI::ShiftCursorY(-3.f);
+		}
 
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+		if (shaderPackOpen)
+		{
+			if (UI::BeginPropertyTable())
+			{
+				for (const auto& [name, shader] : shaderPack)
+				{
+					bool isCompiled = shader->IsCompiled();
 
+					if (!isCompiled)
+						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+					UI::PropertyRow(name, ImGui::GetFrameHeight());
+
+					if (!isCompiled)
+						ImGui::PopStyleColor();
+
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10.f, 3.f});
+					ImGui::PushID(name.c_str());
+
+					if (UI::ButtonCentered("Reload"))
+						shader->Reload();
+
+					ImGui::PopID();
+					ImGui::PopStyleVar();
+				}
+
+				UI::EndPropertyTable();
+			}
+
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Debug", false))
+		{
 			ImGui::Text("DebugView");
 			ImGui::SameLine();
 
-			if (ImGui::BeginCombo("##DebugView", DebugViewToString(settings.DebugView).data()))
+			std::string_view views[] = { "None", "ShadowCascades", "LightComplexity", "GBuffer" };
+			std::string_view selected = DebugViewToString(settings.DebugView);
+			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{
-				for (uint32 i = 0; i <= (uint32)DebugView::SHADOW_CASCADES; ++i)
-				{
-					DebugView view = (DebugView)i;
-
-					bool isSelected = view == settings.DebugView;
-					UI::Selectable(DebugViewToString(view), &isSelected, [this, view, &settings]()
-						{
-							settings.DebugView = view;
-						});
-				}
-
-				ImGui::EndCombo();
+				settings.DebugView = DebugViewFromString(selected);
 			}
 
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
-		if (UI::BeginTreeNode("Shadows", false))
+		if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
 		{
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
+			ShadowSettings& shadowSettings = settings.ShadowSettings;
 
-			ImGui::Text("Enable Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.ShadowSettings.EnableShadows);
-			ImGui::Text("Soft Shadows"); ImGui::SameLine(); ImGui::Checkbox("##Soft Shadows", &settings.ShadowSettings.SoftShadows);
-			ImGui::Text("Light Size"); ImGui::SameLine(); ImGui::DragFloat("##Light Size", &settings.ShadowSettings.LightSize, 0.025f);
-			ImGui::Text("Max Distance"); ImGui::SameLine(); ImGui::DragFloat("##Max Distance", &settings.ShadowSettings.MaxDistance);
-			ImGui::Text("Fade Out"); ImGui::SameLine(); ImGui::DragFloat("##Fade Out", &settings.ShadowSettings.FadeOut);
-			ImGui::Text("Split Factor"); ImGui::SameLine(); ImGui::SliderFloat("##Split Factor", &settings.ShadowSettings.ExponentialSplitFactor, 0.f, 1.f);
-			ImGui::Text("NearPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##NearPlaneOffset", &settings.ShadowSettings.NearPlaneOffset);
-			ImGui::Text("FarPlaneOffset"); ImGui::SameLine(); ImGui::DragFloat("##FarPlaneOffset", &settings.ShadowSettings.FarPlaneOffset);
+			UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
+			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
+			UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
+			UI::PropertyDrag("Bias Gradient", &shadowSettings.BiasGradient, 0.01f);
+				
+			UI::EndPropertyTable();
 
-			UI::EndTreeNode();
-		}
-
-		if (UI::BeginTreeNode("Bloom"))
-		{
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
-
-			ImGui::Text("Enable Bloom"); ImGui::SameLine(); ImGui::Checkbox("##Enable Shadows", &settings.BloomSettings.EnableBloom);
-			ImGui::Text("Intensity"); ImGui::SameLine(); ImGui::DragFloat("##Intensity", &settings.BloomSettings.Intensity, 0.1f, 0, 10);
-			ImGui::Text("Threshold"); ImGui::SameLine(); ImGui::DragFloat("##Threshold", &settings.BloomSettings.Threshold, 0.1f, 0, 10);
-			ImGui::Text("Knee"); ImGui::SameLine(); ImGui::DragFloat("##Knee", &settings.BloomSettings.Knee, 0.05f, 0, 10);
-			ImGui::Text("DirtIntensity"); ImGui::SameLine(); ImGui::DragFloat("##DirtIntensity", &settings.BloomSettings.DirtIntensity, 0.1f, 0, 200);
-
-			ImGui::Text("Dirt Texture"); 
-			ImGui::SameLine();
-			auto dirtTexture = settings.BloomSettings.DirtTexture ? settings.BloomSettings.DirtTexture : Renderer::GetWhiteTexture();
-			if (ImGui::ImageButton(dirtTexture->GetRendererID(), { 50, 50 }))
+			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
 			{
-				FilePath path = FileDialogs::OpenFile("DirtTexture (*png)\0*.png\0");
+				UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
+				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
+				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
+				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
+
+				UI::EndPropertyTable();
+				UI::TreePop();
+			}
+
+			if (UI::TreeNode("ShadowMap", false, true))
+			{
+				static int layer = 0;
+				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
+
+				Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
+				TextureViewCreateInfo view;
+				view.BaseLayer = layer;
+				view.GrayScale = true;
+
+				ImGui::Image(UI::GetTextureID(shadowMap->GetView(view)), {256, 256});
+
+				UI::TreePop();
+			}
+
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Ambient Occlusion", false) && UI::BeginPropertyTable())
+		{
+			AmbientOcclusionSettings& ao = settings.AOSettings;
+
+			UI::PropertyCheckbox("Enable", &ao.Enable);
+			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
+			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
+			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
+			UI::PropertySlider("BlurSharpness", &ao.BlurSharpness, 0.f, 100.f);
+
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("SSR", false) && UI::BeginPropertyTable())
+		{
+			SSRSettings& ssr = settings.SSRSettings;
+
+			UI::PropertyCheckbox("Enable", &ssr.Enable);
+			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
+				m_ViewportRenderer->ApplySettings();
+
+			UI::PropertyCheckbox("ConeTrace", &ssr.ConeTrace);
+			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
+			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
+
+			int maxSteps = ssr.MaxSteps;
+			if (UI::PropertyDrag("MaxSteps", &maxSteps, 1, 1024))
+				ssr.MaxSteps = maxSteps;
+
+			UI::PropertySlider("ScreenEdgesFade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
+			UI::PropertyCheckbox("BackwardRays", &ssr.BackwardRays);
+
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
+		{
+			BloomSettings& bloomSettings = settings.BloomSettings;
+
+			UI::PropertyCheckbox("Enable", &bloomSettings.Enable);
+			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
+			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
+			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
+			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
+
+			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
+			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
+				displayTex = EditorResources::GetIcon("EmptyTexture");
+
+			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
+			{
+				FilePath path = FileDialogs::OpenFile(TEXT("Texture\0*.png;*.jpg\0"));
 				if (!path.empty())
-					settings.BloomSettings.DirtTexture = Texture2D::Create(path);
-			}
-
-			UI::EndTreeNode();
-		}
-
-		if (UI::BeginTreeNode("Other", false))
-		{
-			SceneRendererSettings& settings = SceneRenderer::GetSettings();
-
-			ImGui::Text("Antialiasing");
-			ImGui::SameLine();
-			if (ImGui::BeginCombo("##Antialiasing", AntialisingToString(settings.AntialisingMethod).data()))
-			{
-				for (uint32 i = 0; i <= (uint32)Antialising::MSAA_8X; ++i)
 				{
-					Antialising antialising = (Antialising)i;
+					TextureImportOptions options;
+					options.sRGB = false;
+					options.GenerateMipMaps = false;
 
-					bool isSelected = antialising == settings.AntialisingMethod;
-					UI::Selectable(AntialisingToString(antialising), &isSelected, [this, antialising, &settings]()
-						{
-							settings.AntialisingMethod = antialising;
-						});
-
+					bloomSettings.DirtTexture = TextureImporter::Load(path, options);
 				}
-
-				ImGui::EndCombo();
 			}
 
-			ImGui::Text("Reload Shaders");
-			ImGui::SameLine();
+			UI::EndPropertyTable();
 
-			ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-			if (ImGui::Button("Reload Shaders"))
+			if (UI::TreeNode("BloomTexture", false, true))
 			{
-				Renderer::GetShaderLibrary()->Reload();
+				Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
+
+				static int mip = 0;
+				ImGui::SliderInt("Mip", &mip, 0, bloomTexture->GetMipLevelsCount() - 4);
+				ImGui::Image(UI::GetTextureID(bloomTexture->GetMipView(mip)), {256, 256});
+
+				UI::TreePop();
 			}
-			ImGui::PopStyleVar();
-			ImGui::PopStyleColor();
 
-			UI::EndTreeNode();
+			UI::TreePop();
 		}
 
-		ImGui::End();
-
-		ImGui::Begin("ScriptEngine");
-		
-		ImGui::Text("Reload Scripts On Start");
-		ImGui::SameLine();
-		ImGui::Checkbox("##OnStart", &m_EditorSettings.ReloadScriptsOnStart);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetDarkColor());
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-		if (ImGui::Button("Reload All Scripts"))
+		if (UI::TreeNode("PostProcessing", false) && UI::BeginPropertyTable())
 		{
-			EditorLayer::Get().GetActiveScene()->LoadAllScripts();
-		}
-		ImGui::PopStyleVar();
-		ImGui::PopStyleColor();
+			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
+			{
+				std::string_view views[] = { "None", "ACES-Filmic", "ACES-True" };
+				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
+
+				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
+					postProcess.TonemapMode = TonemapModeFromString(selected);
+
+				UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+			}
+
+			{
+				std::string_view views[] = { "None", "FXAA", "SMAA"};
+				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
+
+				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
+					postProcess.AntialisingMethod = AntialisingFromString(selected);
+			}
+
+			UI::EndPropertyTable();
+			UI::TreePop();
+		}
+
+		if (UI::TreeNode("Quality", false) && UI::BeginPropertyTable())
+		{
+			QualitySettings& quality = settings.Quality;
+			UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 4.f);
+
+			UI::EndPropertyTable();
+
+			if (UI::ButtonCentered("Apply"))
+				m_ViewportRenderer->ApplySettings();
+
+			UI::TreePop();
+		}
 
 		ImGui::End();
 	}

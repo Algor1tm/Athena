@@ -4,7 +4,7 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Core/PlatformUtils.h"
 
-#include "Athena/Renderer/GraphicsContext.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Panels/Panel.h"
 
@@ -16,14 +16,12 @@ namespace Athena
 	class ProfilingPanel : public Panel
 	{
 	public:
-		ProfilingPanel(std::string_view name);
+		ProfilingPanel(std::string_view name, const Ref<EditorContext>& context);
 
+		void SetContext(Ref<SceneRenderer> sceneRenderer) { m_SceneRenderer = sceneRenderer; }
 		virtual void OnImGuiRender() override;
 
 	private:
-		bool m_IsPlottingFrameRate = false;
-
-		SystemInfo m_SystemInfo;
-		GPUInfo m_GPUInfo;
+		Ref<SceneRenderer> m_SceneRenderer;
 	};
 }

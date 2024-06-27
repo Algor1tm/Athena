@@ -1,13 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Layer.h"
 
 
 namespace Athena
 {
-	class ATHENA_API Layer;
-
-
 	class ATHENA_API LayerStack
 	{
 	public:
@@ -18,10 +16,12 @@ namespace Athena
 		LayerStack() = default;
 		~LayerStack();
 
-		void PushLayer(Ref<Layer> layer);
-		void PushOverlay(Ref<Layer> overlay);
+		void PushLayer(const Ref<Layer>& layer);
+		void PushOverlay(const Ref<Layer>& overlay);
 		void PopLayer(Ref<Layer> layer);
 		void PopOverlay(Ref<Layer> overlay);
+
+		void Clear();
 
 		inline iterator		  begin()		{ return m_Layers.begin(); }
 		inline const_iterator begin() const { return m_Layers.begin(); }

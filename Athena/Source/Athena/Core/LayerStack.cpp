@@ -8,21 +8,18 @@ namespace Athena
 {
 	LayerStack::~LayerStack()
 	{
-		for (Ref<Layer> layer : m_Layers)
-		{
-			layer->OnDetach();
-		}
+		Clear();
 	}
 
 
-	void LayerStack::PushLayer(Ref<Layer> layer)
+	void LayerStack::PushLayer(const Ref<Layer>& layer)
 	{
 		m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
 		++m_LayerInsertIndex;
 	}
 
 
-	void LayerStack::PushOverlay(Ref<Layer> overlay)
+	void LayerStack::PushOverlay(const Ref<Layer>& overlay)
 	{
 		m_Layers.emplace_back(overlay);
 	}
@@ -39,7 +36,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_WARN("Could not pop layer with name = {0}", layer->GetName());
+			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop layer with name = {0}", layer->GetName());
 		}
 	}
 
@@ -54,7 +51,17 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_WARN("Could not pop overlay with name = {0}", overlay->GetName());
+			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop overlay with name = {0}", overlay->GetName());
 		}
+	}
+
+	void LayerStack::Clear()
+	{
+		for (Ref<Layer> layer : m_Layers)
+		{
+			layer->OnDetach();
+		}
+
+		m_Layers.clear();
 	}
 }

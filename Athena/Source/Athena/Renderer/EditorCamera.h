@@ -20,11 +20,11 @@ namespace Athena
 	{
 	public:
 		EditorCamera() = default;
-		EditorCamera(float nearClip, float farClip) : Camera(nearClip, farClip) {}
 
 		virtual ~EditorCamera() = default;
 
 		const Matrix4& GetViewMatrix() const { return m_ViewMatrix; }
+		const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
 		virtual void OnUpdate(Time frameTime) = 0;
 		virtual void OnEvent(Event& event) = 0;
@@ -32,11 +32,19 @@ namespace Athena
 		virtual void SetViewportSize(uint32 width, uint32 height) = 0;
 		virtual Vector3 GetPosition() const = 0;
 
+		virtual void SetNearClip(float near) = 0;
+		virtual void SetFarClip(float far) = 0;
+
+		float GetAspectRatio() const { return m_AspectRatio; }
 		void SetMoveSpeedLevel(float level) { m_MoveSpeedLevel = level; }
 
 	protected:
 		Matrix4 m_ViewMatrix = Matrix4::Identity();
+		Matrix4 m_ProjectionMatrix = Matrix4::Identity();
 		float m_MoveSpeedLevel = 1.f;
+		float m_AspectRatio = 1.778f;
+		float m_NearClip = 1.f;
+		float m_FarClip = 1000.f;
 	};
 
 
@@ -69,6 +77,11 @@ namespace Athena
 		inline void SetCameraSpeed(float speed) { m_CameraSpeed = speed; }
 		inline void SetCameraRotationSpeed(float speed) { m_CameraRotationSpeed = speed; }
 
+		//virtual void SetNearClip(float near) override;
+		//virtual void SetFarClip(float far) override;
+
+		virtual CameraInfo GetCameraInfo() const override;
+
 	private:
 		void RecalculateProjection();
 		void RecalculateView();
@@ -80,24 +93,33 @@ namespace Athena
 		float m_Rotation = 0;
 		bool m_EnableRotation = false;
 
-		float m_AspectRatio = 1.778f;
 		float m_ZoomLevel = 1.f;
-
 		float m_CameraSpeed = 3.f;
 		float m_CameraRotationSpeed = 1.f;
 	};
 
 
-	class ATHENA_API PerspectiveCameraBase
+	class ATHENA_API PerspectiveEditorCameraBase : public EditorCamera
 	{
 	public:
+		PerspectiveEditorCameraBase(float fov, float aspectRatio, float nearClip, float farClip);
+
 		void SetPitch(float pitch) { m_Pitch = pitch; }
 		void SetYaw(float yaw) { m_Yaw = yaw; }
 
 		float GetPitch() const { return m_Pitch; }
 		float GetYaw() const { return m_Yaw; }
 
+		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
+		virtual void SetViewportSize(uint32 width, uint32 height) override;
+
+		virtual void SetNearClip(float near) override;
+		virtual void SetFarClip(float far) override;
+
+		virtual CameraInfo GetCameraInfo() const override;
+
 	protected:
+		void RecalculateProjection();
 		Vector2 UpdateMousePosition();
 
 		Vector3 GetUpDirection() const;
@@ -106,13 +128,15 @@ namespace Athena
 		Quaternion GetOrientation() const;
 
 	private:
+		float m_FOV = Math::PI<float>() / 2.f;
 		float m_Yaw = 0.f, m_Pitch = 0.0f;
 
 		Vector2 m_InitialMousePosition = { 0.0f, 0.0f };
+		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 
 
-	class ATHENA_API MeshViewerCamera : public EditorCamera, public PerspectiveCameraBase
+	class ATHENA_API MeshViewerCamera : public PerspectiveEditorCameraBase
 	{
 	public:
 		MeshViewerCamera() = default;
@@ -125,15 +149,10 @@ namespace Athena
 		inline float GetDistance() const { return m_Distance; }
 		inline void SetDistance(float distance) { m_Distance = distance; }
 
-		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
-		virtual void SetViewportSize(uint32 width, uint32 height) override;
-
 		virtual Vector3 GetPosition() const override { return CalculatePosition(); }
-
 		inline void Pan(const Vector3& offset) { m_FocalPoint += offset; }
 
 	private:
-		void RecalculateProjection();
 		void RecalculateView();
 
 		bool OnMouseScroll(MouseScrolledEvent& event);
@@ -149,17 +168,12 @@ namespace Athena
 		float ZoomSpeed() const;
 
 	private:
-		float m_FOV = Math::PI<float>() / 2.f;
-		float m_AspectRatio = 1.778f;
-
 		Vector3 m_FocalPoint = { 0.0f, 0.0f, 0.0f };
 		float m_Distance = 0.0f;
-
-		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 
 
-	class ATHENA_API FirstPersonCamera : public EditorCamera, public PerspectiveCameraBase
+	class ATHENA_API FirstPersonCamera : public PerspectiveEditorCameraBase
 	{
 	public:
 		FirstPersonCamera() = default;
@@ -168,27 +182,17 @@ namespace Athena
 		virtual void OnUpdate(Time frameTime) override;
 		virtual void OnEvent(Event& event) override;
 
-		Vector2 GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
-		virtual void SetViewportSize(uint32 width, uint32 height) override;
-
 		virtual Vector3 GetPosition() const override { return m_Position; }
 
 	private:
-		void RecalculateProjection();
 		void RecalculateView();
 
 		bool OnMouseScroll(MouseScrolledEvent& event);
-
 		float MoveSpeed() const;
 		float RotationSpeed() const;
 		float ZoomSpeed() const;
 
 	private:
-		float m_FOV = Math::PI<float>() / 2.f; 
-		float m_AspectRatio = 1.778f;
-
 		Vector3 m_Position = { 0.0f, 5.0f, 10.0f };
-
-		float m_ViewportWidth = 1600, m_ViewportHeight = 900;
 	};
 }

@@ -1,316 +1,274 @@
 #include "Renderer.h"
 
-#include "Athena/Renderer/SceneRenderer.h"
-#include "Athena/Renderer/SceneRenderer2D.h"
+#include "Athena/Core/Application.h"
+#include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/Font.h"
+#include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
-
-#include "Athena/Platform/OpenGL/GLRendererAPI.h"
+#include "Athena/Renderer/ComputePass.h"
+#include "Athena/Renderer/TextureGenerator.h"
 
 
 namespace Athena
 {
 	struct RendererData
 	{
-		Scope<RendererAPI> RendererAPI;
-		Renderer::API API = Renderer::API::None;
-		
-		Ref<ShaderLibrary> ShaderPack;
-		String GlobalShaderMacroses;
+		RendererConfig Config;
+		Ref<RendererAPI> RendererAPI;
+		uint32 CurrentFrameIndex = 0;
+		uint32 CurrentResourceFreeQueueIndex = 0;
+		RenderCapabilities RenderCaps;
 
-		Renderer::Statistics Stats;
+		std::vector<CommandQueue> ResourceFreeQueues; 
+		Ref<RenderCommandBuffer> RenderCommandBuffer;
 
-		Ref<Texture2D> WhiteTexture;
-		Ref<Texture2D> BlackTexture;
-		Ref<Texture2D> BRDF_LUT;
-		Ref<VertexBuffer> CubeVertexBuffer;
-		Ref<VertexBuffer> QuadVertexBuffer;
+		FilePath ShaderPackDirectory;
+		FilePath ShaderCacheDirectory;
+		std::unordered_map<String, String> GlobalShaderMacroses;
+		Ref<ShaderPack> ShaderPack;
 
-		const uint32 BRDF_LUTResolution = 512;
+		Ref<VertexBuffer> FullscreenVertexBuffer;
 	};
 
-	RendererData s_Data;
+	static RendererData s_Data;
 
 	void Renderer::Init(const RendererConfig& config)
 	{
-		ATN_CORE_ASSERT(s_Data.RendererAPI == nullptr, "Renderer already exists!");
+		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
-		switch (config.API)
+		s_Data.Config = config;
+		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
+		s_Data.CurrentResourceFreeQueueIndex = s_Data.CurrentFrameIndex;
+
+		s_Data.ResourceFreeQueues.resize(s_Data.Config.MaxFramesInFlight + 1);
+		for (uint32 i = 0; i < s_Data.ResourceFreeQueues.size(); ++i)
 		{
-		case Renderer::API::OpenGL:
-			s_Data.RendererAPI = CreateScope<GLRendererAPI>(); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+			s_Data.ResourceFreeQueues[i] = CommandQueue(1024 * 1024 * 2);	// 2 Mb
 		}
 
-		s_Data.API = config.API;
+		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
+		s_Data.ShaderCacheDirectory = resourcesPath / "Cache/ShaderPack";
+		s_Data.ShaderPackDirectory = resourcesPath / "ShaderPack";
+
+		if (!FileSystem::Exists(s_Data.ShaderCacheDirectory))
+			FileSystem::CreateDirectory(s_Data.ShaderCacheDirectory);
+
+		s_Data.RendererAPI = RendererAPI::Create(s_Data.Config.API);
 		s_Data.RendererAPI->Init();
+		s_Data.RendererAPI->GetRenderCapabilities(s_Data.RenderCaps);
 
-#define DEFINE(name, value) std::format("\r\n#define {} {}", name, value)
+		RenderCommandBufferCreateInfo cmdBufferInfo;
+		cmdBufferInfo.Name = "Renderer_MainCommandBuffer";
+		cmdBufferInfo.Usage = RenderCommandBufferUsage::PRESENT;
 
-		s_Data.GlobalShaderMacroses += DEFINE("ALBEDO_MAP_BINDER", (int32_t)TextureBinder::ALBEDO_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("NORMAL_MAP_BINDER", (int32_t)TextureBinder::NORMAL_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("ROUGHNESS_MAP_BINDER", (int32_t)TextureBinder::ROUGHNESS_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("METALNESS_MAP_BINDER", (int32_t)TextureBinder::METALNESS_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("AO_MAP_BINDER", (int32_t)TextureBinder::AMBIENT_OCCLUSION_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("ENVIRONMENT_MAP_BINDER", (int32_t)TextureBinder::ENVIRONMENT_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("IRRADIANCE_MAP_BINDER", (int32_t)TextureBinder::IRRADIANCE_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("BRDF_LUT_BINDER", (int32_t)TextureBinder::BRDF_LUT);
-		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_MAP_BINDER", (int32_t)TextureBinder::SHADOW_MAP);
-		s_Data.GlobalShaderMacroses += DEFINE("PCF_SAMPLER_BINDER", (int32_t)TextureBinder::PCF_SAMPLER);
+		s_Data.RenderCommandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
 		
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_DIRECTIONAL_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_DIRECTIONAL_LIGHT_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_POINT_LIGHT_COUNT", (int32_t)ShaderConstants::MAX_POINT_LIGHT_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("SHADOW_CASCADES_COUNT", (int32_t)ShaderConstants::SHADOW_CASCADES_COUNT);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES_PER_VERTEX", (int32_t)ShaderConstants::MAX_NUM_BONES_PER_VERTEX);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_NUM_BONES", (int32_t)ShaderConstants::MAX_NUM_BONES);
-		s_Data.GlobalShaderMacroses += DEFINE("MAX_SKYBOX_MAP_LOD", (int32_t)ShaderConstants::MAX_SKYBOX_MAP_LOD);
-
-		s_Data.GlobalShaderMacroses += DEFINE("RENDERER2D_CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::RENDERER2D_CAMERA_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("CAMERA_BUFFER_BINDER", (int32_t)BufferBinder::CAMERA_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("SCENE_BUFFER_BINDER", (int32_t)BufferBinder::SCENE_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("ENVMAP_BUFFER_BINDER", (int32_t)BufferBinder::ENVIRONMENT_MAP_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("ENTITY_BUFFER_BINDER", (int32_t)BufferBinder::ENTITY_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("MATERIAL_BUFFER_BINDER", (int32_t)BufferBinder::MATERIAL_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("SHADOWS_BUFFER_BINDER", (int32_t)BufferBinder::SHADOWS_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("LIGHT_BUFFER_BINDER", (int32_t)BufferBinder::LIGHT_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("BONES_BUFFER_BINDER", (int32_t)BufferBinder::BONES_DATA);
-		s_Data.GlobalShaderMacroses += DEFINE("BLOOM_BUFFER_BINDER", (int32_t)BufferBinder::BLOOM_DATA);
-
-		s_Data.GlobalShaderMacroses += DEFINE("PI", 3.14159265358979323846);
-
-		s_Data.GlobalShaderMacroses += "\r\n";
+		Renderer::SetGlobalShaderMacros("MAX_DIRECTIONAL_LIGHT_COUNT", std::to_string(MAX_DIRECTIONAL_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT", std::to_string(MAX_POINT_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_SPOT_LIGHT_COUNT", std::to_string(MAX_SPOT_LIGHT_COUNT));
+		Renderer::SetGlobalShaderMacros("MAX_POINT_LIGHT_COUNT_PER_TILE", std::to_string(MAX_POINT_LIGHT_COUNT_PER_TILE));
+		Renderer::SetGlobalShaderMacros("LIGHT_TILE_SIZE", std::to_string(LIGHT_TILE_SIZE));
+		Renderer::SetGlobalShaderMacros("MAX_SKYBOX_MAP_LOD", std::to_string(MAX_SKYBOX_MAP_LOD));
+		Renderer::SetGlobalShaderMacros("MAX_NUM_BONES_PER_VERTEX", std::to_string(MAX_NUM_BONES_PER_VERTEX));
+		Renderer::SetGlobalShaderMacros("SHADOW_CASCADES_COUNT", std::to_string(SHADOW_CASCADES_COUNT));
+		Renderer::SetGlobalShaderMacros("HIZ_MIP_LEVEL_COUNT", std::to_string(HIZ_MIP_LEVEL_COUNT));
+		Renderer::SetGlobalShaderMacros("PRECONVOLUTION_MIP_LEVEL_COUNT", std::to_string(PRECONVOLUTION_MIP_LEVEL_COUNT));
+		Renderer::SetGlobalShaderMacros("DISPLAY_GAMMA", std::to_string(2.2));
 		
-#undef DEFINE
+		s_Data.ShaderPack = ShaderPack::Create(s_Data.ShaderPackDirectory);
 
-		s_Data.ShaderPack = CreateRef<ShaderLibrary>();
+		// Fake vertex buffer (does not actually used by vertex shader)
+		// Contains fullscreen triangle positions
+		// v0 = (-1, -1), v1 = (3, -1), v2 = (-1, 3).
+		float fullscreenVertices[] = { -1, -1, 3, -1, -1, 3 };
 
-		s_Data.ShaderPack->LoadIncludeShader("PoissonDisk", config.ShaderPack / "PoissonDisk");
+		VertexBufferCreateInfo vertexBufInfo;
+		vertexBufInfo.Name = "Renderer_FullscreenVB";
+		vertexBufInfo.Data = fullscreenVertices;
+		vertexBufInfo.Size = sizeof(fullscreenVertices);
+		vertexBufInfo.IndexBuffer = nullptr;
+		vertexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-		s_Data.ShaderPack->Load("PBR", config.ShaderPack / "PBR");
-		s_Data.ShaderPack->Load("DirShadowMap", config.ShaderPack / "DirShadowMap");
-		s_Data.ShaderPack->Load("Skybox", config.ShaderPack / "Skybox");
-		s_Data.ShaderPack->Load("BloomDownsample", config.ShaderPack / "BloomDownsample");
-		s_Data.ShaderPack->Load("BloomUpsample", config.ShaderPack / "BloomUpsample");
-		s_Data.ShaderPack->Load("SceneComposite", config.ShaderPack / "SceneComposite");
+		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-		s_Data.ShaderPack->Load("EntityID", config.ShaderPack / "EntityID");
-
-		s_Data.ShaderPack->Load("EquirectangularToCubemap", config.ShaderPack / "EquirectangularToCubemap");
-		s_Data.ShaderPack->Load("IrradianceMapConvolution", config.ShaderPack / "IrradianceMapConvolution");
-		s_Data.ShaderPack->Load("EnvironmentMipFilter", config.ShaderPack / "EnvironmentMipFilter");
-		s_Data.ShaderPack->Load("BRDF_LUT", config.ShaderPack / "BRDF_LUT");
-
-		s_Data.ShaderPack->Load("Debug_Wireframe", config.ShaderPack / "Debug/Wireframe");
-		s_Data.ShaderPack->Load("Debug_ShadowCascades", config.ShaderPack / "Debug/ShadowCascades");
-
-		s_Data.ShaderPack->Load("Renderer2D_Quad", config.ShaderPack / "Renderer2D/Quad");
-		s_Data.ShaderPack->Load("Renderer2D_Circle", config.ShaderPack / "Renderer2D/Circle");
-		s_Data.ShaderPack->Load("Renderer2D_Line", config.ShaderPack / "Renderer2D/Line");
-		s_Data.ShaderPack->Load("Renderer2D_EntityID", config.ShaderPack / "Renderer2D/EntityID");
-
-
-		uint32 cubeIndices[] = { 1, 6, 2, 6, 1, 5,  0, 7, 4, 7, 0, 3,  4, 6, 5, 6, 4, 7,  0, 2, 3, 2, 0, 1,  0, 5, 1, 5, 0, 4,  3, 6, 7, 6, 3, 2 };
-		Vector3 cubeVertices[] = { {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f}, {1.f, -1.f, -1.f}, {-1.f, -1.f, -1.f}, {-1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, {1.f, 1.f, -1.f}, {-1.f, 1.f, -1.f} };
-
-		VertexBufferDescription cubeVBdesc;
-		cubeVBdesc.Data = cubeVertices;
-		cubeVBdesc.Size = sizeof(cubeVertices);
-		cubeVBdesc.Layout = { { ShaderDataType::Float3, "a_Position" } };
-		cubeVBdesc.IndexBuffer = IndexBuffer::Create(cubeIndices, std::size(cubeIndices));
-		cubeVBdesc.Usage = BufferUsage::STATIC;
-
-		s_Data.CubeVertexBuffer = VertexBuffer::Create(cubeVBdesc);
-
-
-		uint32 quadIndices[] = { 0, 1, 2, 2, 3, 0 };
-		float quadVertices[] = { -1.f, -1.f,  0.f, 0.f,
-								  1.f, -1.f,  1.f, 0.f,
-								  1.f,  1.f,  1.f, 1.f,
-								 -1.f,  1.f,  0.f, 1.f, };
-
-		VertexBufferDescription quadVBDesc;
-		quadVBDesc.Data = quadVertices;
-		quadVBDesc.Size = sizeof(quadVertices);
-		quadVBDesc.Layout = { { ShaderDataType::Float2, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } };
-		quadVBDesc.IndexBuffer = IndexBuffer::Create(quadIndices, std::size(quadIndices));
-		quadVBDesc.Usage = BufferUsage::STATIC;
-
-		s_Data.QuadVertexBuffer = VertexBuffer::Create(quadVBDesc);
-
-		s_Data.WhiteTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
-		uint32 whiteTextureData = 0xffffffff;
-		s_Data.WhiteTexture->SetData(&whiteTextureData, sizeof(uint32));
-
-		s_Data.BlackTexture = Texture2D::Create(TextureFormat::RGBA8, 1, 1);
-		uint32 blackTextureData = 0xff000000;
-		s_Data.BlackTexture->SetData(&blackTextureData, sizeof(uint32));
-
-		uint32 width = s_Data.BRDF_LUTResolution;
-		uint32 height = s_Data.BRDF_LUTResolution;
-
-
-		TextureSamplerDescription sampler;
-		sampler.MinFilter = TextureFilter::LINEAR;
-		sampler.MagFilter = TextureFilter::LINEAR;
-		sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
-
-		s_Data.BRDF_LUT = Texture2D::Create(TextureFormat::RG16F, width, height, sampler);
-
-		ComputePass computePass;
-		computePass.Name = "BRDF_LUT";
-
-		Renderer::BeginComputePass(computePass);
-		{
-			Ref<Shader> ComputeBRDF_LUTShader = GetShaderLibrary()->Get("BRDF_LUT");
-			ComputeBRDF_LUTShader->Bind();
-
-			s_Data.BRDF_LUT->BindAsImage();
-			Renderer::Dispatch(width, height);
-
-			ComputeBRDF_LUTShader->UnBind();
-		}
-		Renderer::EndComputePass();
-
-		SceneRenderer::Init();
-		SceneRenderer2D::Init();
+		TextureGenerator::Init();
+		Font::Init();
 	}
 
 	void Renderer::Shutdown()
 	{
-		SceneRenderer2D::Shutdown();
-		SceneRenderer::Shutdown();
+		Font::Shutdown();
+		TextureGenerator::Shutdown();
+
+		s_Data.FullscreenVertexBuffer.Release();
+
+		s_Data.ShaderPack.Release();
+
+		s_Data.RendererAPI->WaitDeviceIdle();
+
+		for (auto& queue : s_Data.ResourceFreeQueues)
+		{
+			queue.Flush();
+		}
+
+		s_Data.RendererAPI->Shutdown();
+	}
+
+	void Renderer::BeginFrame()
+	{
+		ATN_PROFILE_FUNC();
+		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.Config.MaxFramesInFlight;
+		s_Data.CurrentResourceFreeQueueIndex = (s_Data.CurrentResourceFreeQueueIndex + 1) % (s_Data.Config.MaxFramesInFlight + 1);
+
+		Application::Get().GetWindow().GetSwapChain()->AcquireImage();
+
+		// Free resources in queue
+		// If resource is submitted to be freed on 'i' frame index, 
+		// then it will be freed on 'i + FramesInFlight + 1' frame, so it guarantees
+		// that currently used resource will not be freed
+		{
+			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush");
+			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
+		}
+
+		s_Data.RendererAPI->OnUpdate();
+		s_Data.RenderCommandBuffer->Begin();
+	}
+
+	void Renderer::EndFrame()
+	{
+		ATN_PROFILE_FUNC();
+		s_Data.RenderCommandBuffer->End();
+		s_Data.RenderCommandBuffer->Submit();
+	}
+
+	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	{
+		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, vertexBuffer, material, instanceCount, firstInstance);
+	}
+
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset, uint32 count)
+	{
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, offset, count);
+	}
+
+	void Renderer::FullscreenPass(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<RenderPass>& pass, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
+	{
+		pass->Begin(cmdBuffer);
+		{
+			pipeline->Bind(cmdBuffer);
+			s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.FullscreenVertexBuffer, material);
+		}
+		pass->End(cmdBuffer);
+	}
+
+	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer)
+	{
+		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, vertexBuffer);
+	}
+
+	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
+	{
+		s_Data.RendererAPI->Dispatch(cmdBuffer, pipeline, imageSize, material);
+	}
+
+	void Renderer::InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->InsertMemoryBarrier(cmdBuffer);
+	}
+
+	void Renderer::InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->InsertExecutionBarrier(cmdBuffer);
+	}
+
+	void Renderer::BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture)
+	{
+		s_Data.RendererAPI->BlitMipMap(cmdBuffer, texture);
+	}
+
+	void Renderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
+	{
+		s_Data.RendererAPI->BlitToScreen(cmdBuffer, texture);
+	}
+
+	void Renderer::BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color)
+	{
+		s_Data.RendererAPI->BeginDebugRegion(cmdBuffer, name, color);
+	}
+
+	void Renderer::EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer)
+	{
+		s_Data.RendererAPI->EndDebugRegion(cmdBuffer);
+	}
+
+	void Renderer::InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color)
+	{
+		s_Data.RendererAPI->InsertDebugMarker(cmdBuffer, name, color);
+	}
+
+	Ref<RenderCommandBuffer> Renderer::GetRenderCommandBuffer()
+	{
+		return s_Data.RenderCommandBuffer;
+	}
+
+	const RendererConfig& Renderer::GetConfig()
+	{
+		return s_Data.Config;
 	}
 
 	Renderer::API Renderer::GetAPI()
 	{
-		return s_Data.API;
+		return s_Data.Config.API;
 	}
 
-	void Renderer::BindShader(std::string_view name)
+	uint32 Renderer::GetFramesInFlight()
 	{
-		GetShaderLibrary()->Get(name.data())->Bind();
-		s_Data.Stats.ShadersBinded++;
+		return s_Data.Config.MaxFramesInFlight;
 	}
 
-	Ref<ShaderLibrary> Renderer::GetShaderLibrary()
+	uint32 Renderer::GetCurrentFrameIndex()
+	{
+		return s_Data.CurrentFrameIndex;
+	}
+
+	const FilePath& Renderer::GetShaderPackDirectory()
+	{
+		return s_Data.ShaderPackDirectory;
+	}
+
+	const FilePath& Renderer::GetShaderCacheDirectory()
+	{
+		return s_Data.ShaderCacheDirectory;
+	}
+
+	Ref<ShaderPack> Renderer::GetShaderPack()
 	{
 		return s_Data.ShaderPack;
 	}
 
-	const String& Renderer::GetGlobalShaderMacroses()
+	const std::unordered_map<String, String>& Renderer::GetGlobalShaderMacroses()
 	{
 		return s_Data.GlobalShaderMacroses;
 	}
 
-	void Renderer::OnWindowResized(uint32 width, uint32 height)
+	void Renderer::SetGlobalShaderMacros(const String& name, const String& value)
 	{
-		SceneRenderer::OnWindowResized(width, height);
+		s_Data.GlobalShaderMacroses[name] = value;
 	}
 
-	void Renderer::BindPipeline(const Pipeline& pipeline)
+	const RenderCapabilities& Renderer::GetRenderCaps()
 	{
-		s_Data.RendererAPI->BindPipeline(pipeline);
-		s_Data.Stats.PipelinesBinded++;
+		return s_Data.RenderCaps;
 	}
 
-	void Renderer::BeginRenderPass(const RenderPass& pass)
+	uint64 Renderer::GetMemoryUsage()
 	{
-		s_Data.RendererAPI->BeginRenderPass(pass);
+		return s_Data.RendererAPI->GetMemoryUsage();
 	}
 
-	void Renderer::EndRenderPass()
+	CommandQueue& Renderer::GetResourceFreeQueue()
 	{
-		s_Data.RendererAPI->EndRenderPass();
-		s_Data.Stats.RenderPasses++;
-	}
-
-	void Renderer::BeginComputePass(const ComputePass& pass)
-	{
-		s_Data.RendererAPI->BeginComputePass(pass);
-	}
-
-	void Renderer::EndComputePass()
-	{
-		s_Data.RendererAPI->EndComputePass();
-		s_Data.Stats.ComputePasses++;
-	}
-
-	void Renderer::DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount)
-	{
-		s_Data.RendererAPI->DrawTriangles(vertexBuffer, indexCount);
-		s_Data.Stats.DrawCalls++;
-	}
-
-	void Renderer::DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount)
-	{
-		s_Data.RendererAPI->DrawLines(vertexBuffer, vertexCount);
-		s_Data.Stats.DrawCalls++;
-	}
-
-	void Renderer::Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize)
-	{
-		s_Data.RendererAPI->Dispatch(x, y, z, workGroupSize);
-		s_Data.Stats.DispatchCalls++;
-	}
-
-	const Renderer::Statistics& Renderer::GetStatistics()
-	{
-		return s_Data.Stats;
-	}
-
-	void Renderer::ResetStats()
-	{
-		s_Data.Stats = Renderer::Statistics();
-	}
-
-	Ref<Texture2D> Renderer::GetBRDF_LUT()
-	{
-		return s_Data.BRDF_LUT;
-	}
-
-	Ref<Texture2D> Renderer::GetWhiteTexture()
-	{
-		return s_Data.WhiteTexture;
-	}
-
-	Ref<Texture2D> Renderer::GetBlackTexture()
-	{
-		return s_Data.BlackTexture;
-	}
-
-	Ref<VertexBuffer> Renderer::GetCubeVertexBuffer()
-	{
-		return s_Data.CubeVertexBuffer;
-	}
-
-	Ref<VertexBuffer> Renderer::GetQuadVertexBuffer()
-	{
-		return s_Data.QuadVertexBuffer;
-	}
-
-	BufferLayout Renderer::GetStaticVertexLayout()
-	{
-		return 	
-		{
-			{ ShaderDataType::Float3, "a_Position"  },
-			{ ShaderDataType::Float2, "a_TexCoord"  },
-			{ ShaderDataType::Float3, "a_Normal"    },
-			{ ShaderDataType::Float3, "a_Tangent"   },
-			{ ShaderDataType::Float3, "a_Bitangent" }
-		};
-	}
-
-	BufferLayout Renderer::GetAnimVertexLayout()
-	{
-		return 
-		{
-			{ ShaderDataType::Float3, "a_Position"  },
-			{ ShaderDataType::Float2, "a_TexCoord"  },
-			{ ShaderDataType::Float3, "a_Normal"    },
-			{ ShaderDataType::Float3, "a_Tangent"   },
-			{ ShaderDataType::Float3, "a_Bitangent" },
-			{ ShaderDataType::Int4,	  "a_BoneIDs"   },
-			{ ShaderDataType::Float4, "a_Weights"   },
-		};
+		return s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex];
 	}
 }

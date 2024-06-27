@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Matrix.h"
-#include "Vector3.h"
-#include "Vector4.h"
+#include "Athena/Math/TypesImpl/Matrix.h"
+#include "Athena/Math/TypesImpl/Vector3.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
 
 #include "Athena/Math/Common.h"
 #include "Athena/Math/Trigonometric.h"
+
+#include <sstream>
 
 
 namespace Athena::Math
@@ -41,6 +43,13 @@ namespace Athena::Math
 			x = s.x * c.y * c.z - c.x * s.y * s.z;
 			y = c.x * s.y * c.z + s.x * c.y * s.z;
 			z = c.x * c.y * s.z - s.x * s.y * c.z;
+		}
+
+		template <typename Q>
+		constexpr Quaternion(Q pitch, Q yaw, Q roll)
+			: Quaternion(Vector<Q, 3>(pitch, yaw, roll))
+		{
+
 		}
 
 		template <typename Q>
@@ -367,8 +376,8 @@ namespace Athena::Math
 
 namespace Athena
 {
-	template <typename T>
-	inline String ToString(const Math::Quaternion<T>& quat)
+	template <>
+	inline String ToString<Math::Quaternion<float>>(const Math::Quaternion<float>& quat)
 	{
 		std::stringstream stream;
 		stream << "Quaternion(" << quat.w << ", " << quat.x << ", " << quat.y << ", " << quat.z << ")";

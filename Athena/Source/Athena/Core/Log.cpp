@@ -1,15 +1,7 @@
 #include "Log.h"
 
 #if defined(_MSC_VER)
-	#pragma warning (push)
-	#pragma warning( disable: 4996 )
-	#pragma warning( disable: 26451 )
-	#pragma warning( disable: 6285 )
-	#pragma warning( disable: 26437 )
-	#pragma warning( disable: 26115 )
-	#pragma warning( disable: 26498 )
-	#pragma warning( disable: 26800 )
-	#pragma warning( disable: 26495 )
+	#pragma warning(push, 0)
 #endif
 
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -28,22 +20,23 @@
 #include <iostream>
 #include <fstream>
 
-// maximum mumber of lines the output console should have
-static const WORD MAX_CONSOLE_LINES = 1000;
 
-static void RedirectIOToConsole()
+static void CreateConsole()
 {
 	int hConHandle;
 	__int64 lStdHandle;
 	CONSOLE_SCREEN_BUFFER_INFO coninfo;
 	FILE* fp;
 
+	const WORD CONSOLE_LINES = 1000;
+
 	// allocate a console for this app
 	AllocConsole();
 
 	// set the screen buffer to be big enough to let us scroll text
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
-	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+
+	coninfo.dwSize.Y = CONSOLE_LINES;
 	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
 
 	// redirect unbuffered STDOUT to the console
@@ -58,78 +51,52 @@ static void RedirectIOToConsole()
 
 #else
 
-static void RedirectIOToConsole()
+static void CreateConsole()
 {
-
+	ATN_CORE_VERIFY(false, "Not implemented for this platform");
 }
 
 #endif
 
 namespace Athena
 {
-	Ref<spdlog::logger> Log::s_CoreLogger;
-	Ref<spdlog::logger> Log::s_ClientLogger;
+	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
+	std::shared_ptr<spdlog::logger> Log::s_ClientLogger;
 
 
-	void Log::Init()
+	void Log::Init(bool createConsole)
 	{
-		RedirectIOToConsole();
+		if(createConsole)
+			CreateConsole();
 
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 
 		std::vector<spdlog::sink_ptr> logSinks;
-		logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+
 		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("Athena.log", true));
+		logSinks[0]->set_pattern("[%T] [%l] %n: %v");
 
-		logSinks[0]->set_pattern("%^[%T] %n: %v%$");
-		logSinks[1]->set_pattern("[%T] [%l] %n: %v");
+		if (createConsole)
+		{
+			logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
+		}
 
-		s_CoreLogger = CreateRef<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
+		spdlog::level::level_enum loglevel;
+#ifdef ATN_LOG_LEVEL_DEBUG
+		loglevel = spdlog::level::trace;
+#else
+		loglevel = spdlog::level::info;
+#endif
+
+		s_CoreLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
 		spdlog::register_logger(s_CoreLogger);
-		s_CoreLogger->set_level(spdlog::level::trace);
-		s_CoreLogger->flush_on(spdlog::level::trace);
+		s_CoreLogger->set_level(loglevel);
+		s_CoreLogger->flush_on(loglevel);
 
-		s_ClientLogger = CreateRef<spdlog::logger>("APP", begin(logSinks), end(logSinks));
+		s_ClientLogger = std::make_shared<spdlog::logger>("APP", begin(logSinks), end(logSinks));
 		spdlog::register_logger(s_ClientLogger);
-		s_ClientLogger->set_level(spdlog::level::trace);
-		s_ClientLogger->flush_on(spdlog::level::trace);
-	}
-
-	void Log::InitWithoutConsole()
-	{
-		spdlog::set_pattern("%^[%T] %n: %v%$");
-
-		spdlog::sink_ptr logSinks;
-		logSinks = std::make_shared<spdlog::sinks::basic_file_sink_mt>("Athena.log", true);
-
-		logSinks->set_pattern("[%T] [%l] %n: %v");
-
-		s_CoreLogger = CreateRef<spdlog::logger>("ATHENA", logSinks);
-		spdlog::register_logger(s_CoreLogger);
-		s_CoreLogger->set_level(spdlog::level::trace);
-		s_CoreLogger->flush_on(spdlog::level::trace);
-
-		s_ClientLogger = CreateRef<spdlog::logger>("APP", logSinks);
-		spdlog::register_logger(s_ClientLogger);
-		s_ClientLogger->set_level(spdlog::level::trace);
-		s_ClientLogger->flush_on(spdlog::level::trace);
-	}
-
-	void Log::Disable()
-	{
-		s_CoreLogger->set_level(spdlog::level::off);
-		s_CoreLogger->flush_on(spdlog::level::off);
-
-		s_ClientLogger->set_level(spdlog::level::off);
-		s_ClientLogger->flush_on(spdlog::level::off);
-	}
-
-	void Log::Enable()
-	{
-		s_CoreLogger->set_level(spdlog::level::trace);
-		s_CoreLogger->flush_on(spdlog::level::trace);
-
-		s_ClientLogger->set_level(spdlog::level::trace);
-		s_ClientLogger->flush_on(spdlog::level::trace);
+		s_ClientLogger->set_level(loglevel);
+		s_ClientLogger->flush_on(loglevel);
 	}
 }

@@ -1,10 +1,7 @@
 #include "Mesh.h"
 
 #include "Athena/Core/FileSystem.h"
-
-#include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Material.h"
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
@@ -40,20 +37,39 @@ namespace Athena
 		return { input.x, input.y, input.z };
 	}
 
-	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, const FilePath& path)
+	static String ConvertaiStringName(const aiString& aiName)
+	{
+		const uint32 nameMaxLength = 30;
+
+		if (aiName.length >= nameMaxLength)
+		{
+			String name = aiName.C_Str();
+			return name.substr(0, nameMaxLength);
+		}
+
+		return aiName.C_Str();
+	}
+
+	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
 	{
 		Ref<Texture2D> result = nullptr;
 
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
 		{
+			TextureImportOptions options;
+			options.sRGB = srgb;
+			options.GenerateMipMaps = true;
+
 			const aiTexture* embeddedTex = aiscene->GetEmbeddedTexture(texFilepath.C_Str());
 			if (embeddedTex)
 			{
 				void* data = embeddedTex->pcData;
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
-				result = Texture2D::Create(data, width, height);
+
+				options.Name = String(texFilepath.C_Str(), texFilepath.length);
+				result = TextureImporter::Load(data, width, height, options);
 			}
 			else
 			{
@@ -61,11 +77,11 @@ namespace Athena
 				path.replace_filename(texFilepath.C_Str());
 				if (FileSystem::Exists(path))
 				{
-					result = Texture2D::Create(path);
+					result = TextureImporter::Load(path, options);
 				}
 				else
 				{
-					ATN_CORE_WARN("Failed to load texture at {}", path);
+					ATN_CORE_WARN_TAG("StaticMesh", "Invalid texture filepath '{}'", path);
 				}
 			}
 		}
@@ -73,81 +89,71 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
+	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path, Ref<MaterialTable> table, bool animated)
 	{
 		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		if (MaterialManager::Exists(materialName))
-			return MaterialManager::Get(materialName);
+		if (table->Exists(materialName))
+			return table->Get(materialName);
 
-		result = MaterialManager::CreateMaterial(materialName);
+		if (animated)
+			result = Material::CreatePBRAnim(materialName);
+		else
+			result = Material::CreatePBRStatic(materialName);
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
+			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
 		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-			result->Set(MaterialUniform::ALBEDO, Vector3(color.r, color.g, color.b));
+			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
 
 		float roughness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
-			result->Set(MaterialUniform::ROUGHNESS, roughness);
+			result->Set("u_Roughness", roughness);
 
 		float metalness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-			result->Set(MaterialUniform::METALNESS, metalness);
+			result->Set("u_Metalness", metalness);
 
 		float emission;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
-			result->Set(MaterialUniform::EMISSION, emission);
+			result->Set("u_Emission", emission);
 		
+		result->Set("u_UseAlbedoMap", (uint32)true);
+		result->Set("u_UseNormalMap", (uint32)false);
+		result->Set("u_UseRoughnessMap", (uint32)false);
+		result->Set("u_UseMetalnessMap", (uint32)false);
 
 		Ref<Texture2D> texture;
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, path))
-			result->Set(MaterialTexture::ALBEDO_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, path))
-			result->Set(MaterialTexture::ALBEDO_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, true, path))
+			result->Set("u_AlbedoMap", texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, true, path))
+			result->Set("u_AlbedoMap", texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, path))
-			result->Set(MaterialTexture::NORMAL_MAP, texture);
+		result->Set("u_UseAlbedoMap", uint32(texture != nullptr));
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, path))
-			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, path))
-			result->Set(MaterialTexture::ROUGHNESS_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, false, path))
+			result->Set("u_NormalMap", texture);
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, path))
-			result->Set(MaterialTexture::METALNESS_MAP, texture);
+		result->Set("u_UseNormalMap", uint32(texture != nullptr));
 
-		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_AMBIENT_OCCLUSION, path))
-			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
-		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_LIGHTMAP, path))
-			result->Set(MaterialTexture::AMBIENT_OCCLUSION_MAP, texture);
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, false, path))
+			result->Set("u_RoughnessMap", texture);
+		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, false, path))
+			result->Set("u_RoughnessMap", texture);
 
+		result->Set("u_UseRoughnessMap", uint32(texture != nullptr));
+
+		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, false, path))
+			result->Set("u_MetalnessMap", texture);
+
+		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
+		
+		table->Add(result);
 		return result;
-	}
-
-	static Ref<IndexBuffer> LoadIndexBuffer(const aiMesh* aimesh)
-	{
-		uint32 numFaces = aimesh->mNumFaces;
-		aiFace* faces = aimesh->mFaces;
-
-		std::vector<uint32> indicies(numFaces * 3);
-
-		uint32 index = 0;
-		for (uint32 i = 0; i < numFaces; i++)
-		{
-			if (faces[i].mNumIndices != 3)
-				break;
-
-			indicies[index++] = faces[i].mIndices[0];
-			indicies[index++] = faces[i].mIndices[1];
-			indicies[index++] = faces[i].mIndices[2];
-		}
-
-		return IndexBuffer::Create(indicies.data(), indicies.size());
 	}
 
 	static Ref<VertexBuffer> LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform)
@@ -189,14 +195,42 @@ namespace Athena
 			}
 		}
 
-		VertexBufferDescription vBufferDesc;
-		vBufferDesc.Data = vertices.data();
-		vBufferDesc.Size = vertices.size() * sizeof(StaticVertex);
-		vBufferDesc.Layout = Renderer::GetStaticVertexLayout();
-		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
-		vBufferDesc.Usage = BufferUsage::STATIC;
+		uint32 numFaces = aimesh->mNumFaces;
+		aiFace* faces = aimesh->mFaces;
 
-		return VertexBuffer::Create(vBufferDesc);
+		std::vector<uint32> indices(numFaces * 3);
+
+		uint32 index = 0;
+		for (uint32 i = 0; i < numFaces; i++)
+		{
+			if (faces[i].mNumIndices != 3)
+				break;
+
+			indices[index++] = faces[i].mIndices[0];
+			indices[index++] = faces[i].mIndices[1];
+			indices[index++] = faces[i].mIndices[2];
+		}
+
+		Ref<IndexBuffer> indexBuffer = nullptr;
+		if (!indices.empty())
+		{
+			IndexBufferCreateInfo indexBufferInfo;
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
+			indexBufferInfo.Data = indices.data();
+			indexBufferInfo.Count = indices.size();
+			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+
+			indexBuffer = IndexBuffer::Create(indexBufferInfo);
+		}
+
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", ConvertaiStringName(aimesh->mName));
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+
+		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
 	static Ref<VertexBuffer> LoadAnimVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform, const Ref<Skeleton>& skeleton)
@@ -209,15 +243,14 @@ namespace Athena
 			for (uint32 i = 0; i < aimesh->mNumBones; ++i)
 			{
 				aiBone* aibone = aimesh->mBones[i];
-				uint32 boneID = skeleton->GetBoneID(aibone->mName.C_Str());
-
+				uint32 boneID = skeleton->GetBoneIndex(aibone->mName.C_Str());
 				skeleton->SetBoneOffsetMatrix(boneID, ConvertaiMatrix4x4(aibone->mOffsetMatrix));
 
 				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
 				{
 					uint32 vertexID = aibone->mWeights[j].mVertexId;
 					float weight = aibone->mWeights[j].mWeight;
-					for (uint32 k = 0; k < ShaderConstants::MAX_NUM_BONES_PER_VERTEX; ++k)
+					for (uint32 k = 0; k < ShaderDef::MAX_NUM_BONES_PER_VERTEX; ++k)
 					{
 						if (vertices[vertexID].Weights[k] == 0.f)
 						{
@@ -225,9 +258,9 @@ namespace Athena
 							vertices[vertexID].Weights[k] = weight;
 							break;
 						}
-						else if (k == ShaderConstants::MAX_NUM_BONES_PER_VERTEX - 1)
+						else if (k == ShaderDef::MAX_NUM_BONES_PER_VERTEX - 1)
 						{
-							ATN_CORE_WARN("Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+							ATN_CORE_WARN_TAG("StaticMesh", "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
 								boneID, weight);
 						}
 					}
@@ -269,17 +302,45 @@ namespace Athena
 			}
 		}
 
-		VertexBufferDescription vBufferDesc;
-		vBufferDesc.Data = vertices.data();
-		vBufferDesc.Size = vertices.size() * sizeof(AnimVertex);
-		vBufferDesc.Layout = Renderer::GetAnimVertexLayout();
-		vBufferDesc.IndexBuffer = LoadIndexBuffer(aimesh);
-		vBufferDesc.Usage = BufferUsage::STATIC;
+		uint32 numFaces = aimesh->mNumFaces;
+		aiFace* faces = aimesh->mFaces;
 
-		return VertexBuffer::Create(vBufferDesc);
+		std::vector<uint32> indices(numFaces * 3);
+
+		uint32 index = 0;
+		for (uint32 i = 0; i < numFaces; i++)
+		{
+			if (faces[i].mNumIndices != 3)
+				break;
+
+			indices[index++] = faces[i].mIndices[0];
+			indices[index++] = faces[i].mIndices[1];
+			indices[index++] = faces[i].mIndices[2];
+		}
+
+		Ref<IndexBuffer> indexBuffer = nullptr;
+		if (!indices.empty())
+		{
+			IndexBufferCreateInfo indexBufferInfo;
+			indexBufferInfo.Name = std::format("{}_IndexBuffer", ConvertaiStringName(aimesh->mName));
+			indexBufferInfo.Data = indices.data();
+			indexBufferInfo.Count = indices.size();
+			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+
+			indexBuffer = IndexBuffer::Create(indexBufferInfo);
+		}
+
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Name = std::format("{}_VertexBuffer", ConvertaiStringName(aimesh->mName));
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(AnimVertex);
+		vertexBufferInfo.IndexBuffer = indexBuffer;
+		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+	
+		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
-	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<Skeleton> skeleton, AABB& aabb)
+	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<MaterialTable> table, Ref<Skeleton> skeleton, AABB& aabb)
 	{
 		aiMesh* aimesh = aiscene->mMeshes[aiMeshIndex];
 		SubMesh subMesh;
@@ -292,32 +353,41 @@ namespace Athena
 		else
 			subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, localTransform);
 
-		subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path)->GetName();
+		const aiMaterial* aimaterial = aiscene->mMaterials[aimesh->mMaterialIndex];
+		String materialName = aimaterial->GetName().C_Str();
+
+		subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path, table, skeleton != nullptr)->GetName();
 
 		return subMesh;
 	}
 
-	static void LoadBonesHierarchy(const aiNode* bonesRoot, BonesHierarchyInfo& info)
+	static void LoadBones(const aiNode* aiBone, std::vector<Bone>& bones)
 	{
-		String nodeName = bonesRoot->mName.C_Str();
+		String nodeName = aiBone->mName.C_Str();
 		bool isValid = nodeName.find("AssimpFbx") == String::npos && nodeName.find("RootNode") == String::npos;
-		if (bonesRoot->mNumChildren > 0 && !isValid)
+		if (aiBone->mNumChildren > 0 && !isValid)
 		{
-			LoadBonesHierarchy(bonesRoot->mChildren[0], info);
+			LoadBones(aiBone->mChildren[0], bones);
 			return;
 		}
 
-		info.Name = nodeName;
-		info.Children.resize(bonesRoot->mNumChildren);
-		for (uint32 i = 0; i < bonesRoot->mNumChildren; ++i)
+		Bone bone;
+		bone.Name = nodeName;
+		bone.Index = bones.size();
+		bone.Children.resize(aiBone->mNumChildren);
+		bone.OffsetMatrix = Matrix4::Identity();
+		bones.push_back(bone);
+
+		for (uint32 i = 0; i < aiBone->mNumChildren; ++i)
 		{
-			LoadBonesHierarchy(bonesRoot->mChildren[i], info.Children[i]);
+			bones[bone.Index].Children[i] = bones.size();
+			LoadBones(aiBone->mChildren[i], bones);
 		}
 	}
 
 	static Ref<Skeleton> LoadSkeleton(const aiScene* aiscene)
 	{
-		if (aiscene->mNumAnimations < 0)
+		if (aiscene->mNumAnimations <= 0)
 			return nullptr;
 
 		const aiNode* root = aiscene->mRootNode;
@@ -335,26 +405,21 @@ namespace Athena
 		if (bonesRoot == nullptr)
 			return nullptr;
 
-		BonesHierarchyInfo info;
-		LoadBonesHierarchy(bonesRoot, info);
+		std::vector<Bone> bones;
+		LoadBones(bonesRoot, bones);
 
-		return Skeleton::Create(info);
+		return Skeleton::Create(bones);
 	}
 
 	static Ref<Animation> LoadAnimation(const aiAnimation* aianimation, const Ref<Skeleton>& skeleton)
 	{
-		AnimationDescription desc;
-		desc.Name = aianimation->mName.C_Str();
-		desc.Duration = aianimation->mDuration;
-		desc.TicksPerSecond = aianimation->mTicksPerSecond;
-		desc.Skeleton = skeleton;
+		AnimationCreateInfo info;
+		info.Name = aianimation->mName.C_Str();
+		info.Duration = aianimation->mDuration;
+		info.TicksPerSecond = aianimation->mTicksPerSecond;
+		info.Skeleton = skeleton;
 
-		if (aianimation->mNumChannels > ShaderConstants::MAX_NUM_BONES)
-		{
-			ATN_CORE_ERROR("Animation '{}' has more than {} bones, other bones will be discarded", desc.Name, (uint32)ShaderConstants::MAX_NUM_BONES);
-		}
-
-		desc.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
+		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
 		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
 		{
 			aiNodeAnim* channel = aianimation->mChannels[i];
@@ -381,10 +446,10 @@ namespace Athena
 				keyFrames.ScaleKeys[j].Value = ConvertaiVector3D(channel->mScalingKeys[j].mValue);
 			}
 
-			desc.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
+			info.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
 		}
 
-		return Animation::Create(desc);
+		return Animation::Create(info);
 	}
 
 	void StaticMesh::ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform)
@@ -394,7 +459,7 @@ namespace Athena
 		m_SubMeshes.reserve(ainode->mNumMeshes);
 		for (uint32 i = 0; i < ainode->mNumMeshes; ++i)
 		{
-			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_FilePath, localTransform, m_Skeleton, m_AABB);
+			SubMesh subMesh = LoadSubMesh(aiscene, ainode->mMeshes[i], m_FilePath, localTransform, m_MaterialTable, m_Skeleton, m_AABB);
 			m_SubMeshes.push_back(subMesh);
 		}
 
@@ -409,12 +474,15 @@ namespace Athena
 		const unsigned int flags =
 			aiProcess_GenUVCoords |
 			aiProcess_CalcTangentSpace |
-			aiProcess_GenNormals |
+			aiProcess_GenSmoothNormals |
+			aiProcess_FixInfacingNormals |
 			aiProcess_GenBoundingBoxes |
+			aiProcess_FindInvalidData | 
 
 			aiProcess_SortByPType |
 			aiProcess_FindDegenerates |
 			aiProcess_ImproveCacheLocality |
+			aiProcess_JoinIdenticalVertices |
 			aiProcess_LimitBoneWeights |
 
 			aiProcess_RemoveRedundantMaterials |
@@ -422,25 +490,30 @@ namespace Athena
 			aiProcess_OptimizeMeshes |
 
 			aiProcess_Triangulate |
-			aiProcess_EmbedTextures;
+			aiProcess_EmbedTextures |
+			aiProcess_FlipUVs;
 
 		const aiScene* aiscene = aiImportFile(path.string().c_str(), flags);
 
 		if (aiscene == nullptr)
 		{
 			const char* error = aiGetErrorString();
-			ATN_CORE_ERROR("Importer3D Error: {0}", error);
+			ATN_CORE_ERROR_TAG("StaticMesh", "Failed to load mesh from '{}'", path);
+			ATN_CORE_INFO("Error: {}", error);
 			return nullptr;
 		}
 
-		Ref<StaticMesh> result = CreateRef<StaticMesh>();
+		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
+		result->m_MaterialTable = Ref<MaterialTable>::Create();
+
+		ATN_CORE_TRACE_TAG("StaticMesh", "Create static mesh from '{}'", path);
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
 		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());
 
-		if (aiscene->mNumAnimations > 0)
+		if (result->m_Skeleton)
 		{
 			std::vector<Ref<Animation>> animations(aiscene->mNumAnimations);
 
@@ -449,7 +522,7 @@ namespace Athena
 				animations[i] = LoadAnimation(aiscene->mAnimations[i], result->m_Skeleton);
 			}
 
-			result->m_Animator = Animator::Create(animations);
+			result->m_Animator = Animator::Create(animations, result->m_Skeleton);
 		}
 
 		aiReleaseImport(aiscene);

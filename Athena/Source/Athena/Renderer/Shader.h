@@ -2,92 +2,139 @@
 
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
+#include "Athena/Renderer/GPUBuffer.h"
+#include "Athena/Renderer/Texture.h"
 
-#include "Athena/Renderer/GPUBuffers.h"
+#include <map>
 
 
 namespace Athena
 {
-	enum class ShaderType
+	enum ShaderStage
 	{
-		VERTEX_SHADER = 0,
-		FRAGMENT_SHADER = 1,
-		GEOMETRY_SHADER = 2,
-		COMPUTE_SHADER = 3
+		UNDEFINED	   = BIT(0),
+		VERTEX_STAGE   = BIT(1),
+		FRAGMENT_STAGE = BIT(2),
+		GEOMETRY_STAGE = BIT(3),
+		COMPUTE_STAGE  = BIT(4)
 	};
 
-	inline std::string_view ShaderTypeToString(ShaderType type)
+	enum class ShaderResourceType
 	{
-		switch (type)
-		{
-		case ShaderType::VERTEX_SHADER: return "Vertex Shader";
-		case ShaderType::FRAGMENT_SHADER: return "Fragment Shader";
-		case ShaderType::GEOMETRY_SHADER: return "Geometry Shader";
-		case ShaderType::COMPUTE_SHADER: return "Compute Shader";
-		}
+		Unknown = 0,
+		Texture2D,
+		TextureCube,
+		StorageTexture2D,
+		StorageTextureCube,
+		UniformBuffer,
+		StorageBuffer,
+	};
 
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
+	struct ShaderResourceDescription
+	{
+		ShaderResourceType Type;
+		uint32 Binding;
+		uint32 Set;
+		uint32 ArraySize;
+	};
 
+	struct StructMemberShaderMetaData
+	{
+		ShaderDataType Type;	// Unknown if custom struct
+		uint32 Size;
+		uint32 Offset;
+	};
 
-	class ATHENA_API Shader
+	struct PushConstantShaderMetaData
+	{
+		bool Enabled;
+		uint32 Size;
+		std::unordered_map<String, StructMemberShaderMetaData> Members;
+		ShaderStage StageFlags;
+	};
+
+	struct BufferShaderMetaData
+	{
+		uint64 Size;
+		uint32 Binding;
+		uint32 Set;
+		uint32 ArraySize;
+		ShaderStage StageFlags;
+	};
+
+	struct TextureShaderMetaData
+	{
+		TextureType TextureType;
+		uint32 Binding;
+		uint32 Set;
+		uint32 ArraySize;
+		ShaderStage StageFlags;
+	};
+
+	struct ShaderMetaData
+	{
+		std::unordered_map<String, TextureShaderMetaData> SampledTextures;
+		std::unordered_map<String, TextureShaderMetaData> StorageTextures;
+		std::unordered_map<String, BufferShaderMetaData> UniformBuffers;
+		std::unordered_map<String, BufferShaderMetaData> StorageBuffers;
+
+		PushConstantShaderMetaData PushConstant;
+		Vector3u WorkGroupSize;
+	};
+
+	class ATHENA_API Shader : public RefCounted
 	{
 	public:
-		// Pass file without extension
-		//     if RendererAPI = Direct3D extension will be .hlsl
-		//     if RendererAPI = OpenGL extension will be .glsl
 		static Ref<Shader> Create(const FilePath& path);
 		static Ref<Shader> Create(const FilePath& path, const String& name);
-		static Ref<Shader> Create(const String& name, const String& vertexSrc, const String& fragmentSrc);
 
 		virtual ~Shader() = default;
 
-		virtual void Bind() const = 0;
-		virtual void UnBind() const = 0;
-
 		virtual void Reload() = 0;
+		virtual bool IsCompute() = 0;
 
+		void AddOnReloadCallback(uint64 hash, const std::function<void()>& callback);
+		void RemoveOnReloadCallback(uint64 hash);
+
+		const ShaderMetaData& GetMetaData() { return m_MetaData; }
+		const auto& GetResourcesDescription() const { return m_ResourcesDescriptionTable; }
+
+		bool IsCompiled() const { return m_IsCompiled; }
 		const String& GetName() const { return m_Name; }
-
-	protected:
-		std::unordered_map<ShaderType, String> PreProcess(const String& source);
 
 	protected:
 		String m_Name;
 		FilePath m_FilePath;
+		bool m_IsCompiled;
+		ShaderMetaData m_MetaData;
+		std::unordered_map<String, ShaderResourceDescription> m_ResourcesDescriptionTable;
+		std::unordered_map<uint64, std::function<void()>> m_OnReloadCallbacks;
 	};
 
-
-	class ATHENA_API IncludeShader: public Shader
+	class ATHENA_API ShaderPack : public RefCounted
 	{
 	public:
-		static Ref<IncludeShader> Create(const FilePath& path);
-		virtual ~IncludeShader() = default;
-
-	private:
-		virtual void Bind() const override {};
-		virtual void UnBind() const override {};
-	};
-
-
-	class ATHENA_API ShaderLibrary
-	{
-	public:
+		static Ref<ShaderPack> Create(const FilePath& path);
 		void Add(const String& name, const Ref<Shader>& shader);
-		void AddIncludeShader(const String& name, const Ref<IncludeShader>& shader);
 
-		Ref<Shader> Load(const String& name, const FilePath& path);
-		Ref<IncludeShader> LoadIncludeShader(const String& name, const FilePath& path);
-		
+		Ref<Shader> Load(const FilePath& path);
+		Ref<Shader> Load(const FilePath& path, const String& name);
 		Ref<Shader> Get(const String& name);
 
-		bool Exists(const String& name);
-
+		bool Exists(const String& name) const;
 		void Reload();
+		bool IsCompiled() const;
+
+		const FilePath GetDirectory() const { return m_Directory; };
+
+		auto begin() { return m_Shaders.begin(); }
+		auto end() { return m_Shaders.end(); }
 
 	private:
-		std::unordered_map<String, Ref<Shader>> m_Shaders;
-		std::unordered_map<String, Ref<IncludeShader>> m_IncludeShaders;
+		void LoadDirectory(const FilePath& path);
+
+	private:
+		std::map<String, Ref<Shader>> m_Shaders;
+		FilePath m_Directory;
 	};
 }

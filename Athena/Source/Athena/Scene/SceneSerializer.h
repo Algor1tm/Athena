@@ -9,6 +9,7 @@
 namespace YAML
 {
 	class Emitter;
+	class Node;
 }
 
 namespace Athena
@@ -19,10 +20,7 @@ namespace Athena
 		SceneSerializer(const Ref<Scene>& scene);
 
 		void SerializeToFile(const FilePath& path);
-		void SerializeRuntime(const FilePath& path);
-		
 		bool DeserializeFromFile(const FilePath& path);
-		bool DeserializeRuntime(const FilePath& path);
 
 	private:
 		void SerializeEntity(YAML::Emitter& out, Entity entity);

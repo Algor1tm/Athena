@@ -2,90 +2,42 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/GPUBuffers.h"
-#include "Athena/Renderer/Framebuffer.h"
+#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
+#include "Athena/Renderer/Pipeline.h"
 
 
 namespace Athena
 {
-	enum class CullFace
-	{
-		NONE, BACK, FRONT
-	};
-
-	enum class CullDirection
-	{
-		CLOCKWISE, COUNTER_CLOCKWISE
-	};
-
-	enum class DepthFunc
-	{
-		NONE, LESS, LEQUAL
-	};
-
-	enum class BlendFunc
-	{
-		NONE, ONE_MINUS_SRC_ALPHA, 
-	};
-
-	struct Pipeline
-	{
-		CullFace CullFace;
-		CullDirection CullDirection;
-		DepthFunc DepthFunc;
-		BlendFunc BlendFunc;
-	};
-
-	enum ClearBit
-	{
-		CLEAR_NONE_BIT	  = BIT(0),
-		CLEAR_COLOR_BIT   = BIT(1),
-		CLEAR_DEPTH_BIT   = BIT(2),
-		CLEAR_STENCIL_BIT = BIT(3)
-	};
-
-	struct RenderPass
-	{
-		Ref<Framebuffer> TargetFramebuffer;
-		uint32 ClearBit = CLEAR_NONE_BIT;
-		LinearColor ClearColor = LinearColor::Black;
-		String Name;
-	};
-
-	enum BarrierBit
-	{
-		BARRIER_BIT_NONE = BIT(0),
-		BUFFER_UPDATE_BARRIER_BIT = BIT(1),
-		FRAMEBUFFER_BARRIER_BIT = BIT(2),
-		SHADER_IMAGE_BARRIER_BIT = BIT(3),
-		ALL_BARRIERS = BIT(4)
-	};
-
-	struct ComputePass
-	{
-		uint32 BarrierBit = ALL_BARRIERS;
-		String Name;
-	};
-
-	class ATHENA_API RendererAPI
+	class ATHENA_API RendererAPI : public RefCounted
 	{
 	public:
+		static Ref<RendererAPI> Create(Renderer::API api);
 		virtual ~RendererAPI() = default;
 
 		virtual void Init() = 0;
+		virtual void Shutdown() = 0;
 
-		virtual void BindPipeline(const Pipeline& pipeline) = 0;
+		virtual void OnUpdate() = 0;
 
-		virtual void BeginRenderPass(const RenderPass& pass) = 0;
-		virtual void EndRenderPass() = 0;
+		virtual void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0) = 0;
+		virtual void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset = 0, uint32 count = 0) = 0;
+		virtual void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer) = 0;
 
-		virtual void BeginComputePass(const ComputePass& pass) = 0;
-		virtual void EndComputePass() = 0;
+		virtual void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i workGroupSize, const Ref<Material>& material) = 0;
+		virtual void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
+		virtual void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
 
-		virtual void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0) = 0;
-		virtual void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0) = 0;
+		virtual void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture) = 0;
+		virtual void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& image) = 0;
 
-		virtual void Dispatch(uint32 x, uint32 y, uint32 z, Vector3i workGroupSize) = 0;
+		virtual void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) = 0;
+		virtual void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer) = 0;
+		virtual void InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color) = 0;
+
+		virtual void GetRenderCapabilities(RenderCapabilities& caps) = 0;
+		virtual uint64 GetMemoryUsage() = 0;
+		virtual void WaitDeviceIdle() = 0;
 	};
 }

@@ -5,78 +5,93 @@
 #include "Athena/Core/LayerStack.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/Input/ApplicationEvent.h"
-
+#include "Athena/ImGui/ImGuiLayer.h"
+#include "Athena/Input/WindowEvent.h"
 #include "Athena/Renderer/Renderer.h"
-
 #include "Athena/Scripting/ScriptEngine.h"
+
+#include <queue>
 
 
 namespace Athena
 {
-	class ATHENA_API ImGuiLayer;
-
 	struct AppConfig
 	{
+		String Name = "";
 		bool EnableImGui = true;
 		bool EnableConsole = true;
 		FilePath WorkingDirectory = FilePath();
+		FilePath EngineResourcesPath = FilePath();
+		bool CleanCacheOnLoad = false;
 	};
 
-	struct ApplicationDescription
+	struct ApplicationCreateInfo
 	{
+		AppConfig AppConfig;
 		RendererConfig RendererConfig;
 		ScriptConfig ScriptConfig;
-		WindowDescription WindowDesc;
-		AppConfig AppConfig;
+		WindowCreateInfo WindowInfo;
 	};
 
+	struct ApplicationStatistics
+	{
+		Time FrameTime;
+		Time CPUWait;
+		Time GPUWait;
+		Time Application_ProcessEvents;
+		Time Application_OnUpdate;
+		Time Application_RenderImGui;
+		Time SwapChain_Present;
+		Time SwapChain_AcquireImage;
+		Time Renderer_QueueSubmit;
+	};
 
 	class ATHENA_API Application
 	{
 	public:
-		struct Statistics;
-
-	public:
-		Application(const ApplicationDescription& appdesc);
+		Application(const ApplicationCreateInfo& appinfo);
 		virtual ~Application();
 
 		void Run();
-		void OnEvent(Event& event);
 
-		void PushLayer(Ref<Layer> layer);
-		void PushOverlay(Ref<Layer> layer);
+		void PushLayer(const Ref<Layer>& layer);
+		void PushOverlay(const Ref<Layer>& layer);
 
-		inline Ref<ImGuiLayer> GetImGuiLayer() { return m_ImGuiLayer; }
-		inline Window& GetWindow() { return *m_Window; }
-		inline const Statistics& GetStatistics() const { return m_Statistics; }
+		const AppConfig GetConfig() const { return m_Config; }
+
+		const Ref<ImGuiLayer>& GetImGuiLayer() { return m_ImGuiLayer; }
+		Window& GetWindow() { return *m_Window; }
+		ApplicationStatistics& GetStats() { return m_Statistics; }
 
 		void Close();
 
 		inline static Application& Get() { return *s_Instance; }
 
-	public:
-		struct Statistics
-		{
-			Time FrameTime;
-			Time Application_OnUpdate;
-			Time Application_OnEvent;
-			Time Application_OnImGuiRender;
-			Time Window_OnUpdate;
-		};
-
 	private:
+		void ProcessEvents();
+		void RenderImGui();
+
+		void QueueEvent(const Ref<Event>& event);
+		void OnEvent(Event& event);
 		bool OnWindowClose(WindowCloseEvent& event);
 		bool OnWindowResized(WindowResizeEvent& event);
 
+		void CreateMainWindow(WindowCreateInfo info);
+		void InitImGui();
+
+		void ResetStats();
+
 	private:
+		AppConfig m_Config;
 		Scope<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;
 		bool m_Minimized;
 		LayerStack m_LayerStack;
 
-		Statistics m_Statistics;
+		std::queue<Ref<Event>> m_EventQueue;
+
+		ApplicationStatistics m_Statistics;
 
 	private:
 		static Application* s_Instance;

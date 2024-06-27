@@ -323,3 +323,16 @@ namespace Athena::Math
 		return direction - 2 * normal * Math::Dot(direction, normal);
 	}
 }
+
+
+namespace Athena
+{
+	template <>
+	inline String ToString<Math::Vector<float, 2>>(const Math::Vector<float, 2>& vec)
+	{
+		std::stringstream stream;
+		stream << "Vector2" << "(" << vec[0] << ", " << vec[1] << ")";
+
+		return stream.str();
+	}
+}

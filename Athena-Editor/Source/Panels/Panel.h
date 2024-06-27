@@ -1,15 +1,19 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "EditorContext.h"
 
 
 namespace Athena
 {
-	class Panel
+	class Panel : public RefCounted
 	{
 	public:
-		Panel(std::string_view name = "UnNamed")
-			: m_Name(name) {}
+		Panel(std::string_view name, Ref<EditorContext> context)
+			: m_Name(name), m_EditorCtx(*context)
+		{
+			
+		}
 
 		virtual ~Panel() = default;
 
@@ -19,5 +23,6 @@ namespace Athena
 
 	protected:
 		std::string_view m_Name;
+		EditorContext& m_EditorCtx;
 	};
 }

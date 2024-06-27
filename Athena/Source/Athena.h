@@ -16,7 +16,7 @@
 
 
 // --------Input--------------------
-#include "Athena/Input/ApplicationEvent.h"
+#include "Athena/Input/WindowEvent.h"
 #include "Athena/Input/Event.h"
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/MouseEvent.h"
@@ -33,7 +33,6 @@
 #include "Athena/Math/Random.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Math/Projections.h"
-#include "Athena/Math/TypeCasts.h"
 #include "Athena/Math/Constants.h"
 #include "Athena/Math/Limits.h"
 
@@ -42,8 +41,7 @@
 #include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Framebuffer.h"
-#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Shader.h"
@@ -58,7 +56,6 @@
 // --------Scene--------------------
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
-#include "Athena/Scene/NativeScript.h"
 #include "Athena/Scene/Scene.h"
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Scene/SceneSerializer.h"

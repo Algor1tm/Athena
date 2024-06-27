@@ -13,14 +13,14 @@ namespace Athena
 	public:
 		enum class ProjectionType { Perspective = 0, Orthographic = 1 };
 
-		struct OrthographicDescription
+		struct OrthographicData
 		{
 			float Size = 10.f;
 			float NearClip = -1.f;
 			float FarClip = 1.f;
 		};
 
-		struct PerspectiveDescription
+		struct PerspectiveData
 		{
 			float VerticalFOV = Math::Radians(45.f);
 			float NearClip = 0.1f;
@@ -32,17 +32,21 @@ namespace Athena
 
 		void SetViewportSize(uint32 width, uint32 height);
 
+		virtual CameraInfo GetCameraInfo() const override;
+
 		float GetOrthographicSize() const { return m_OrthoData.Size; }
 		void SetOrthographicSize(float size) { m_OrthoData.Size = size; RecalculateProjection(); }
 
-		const OrthographicDescription& GetOrthographicData() const { return m_OrthoData; }
-		const PerspectiveDescription& GetPerspectiveData() const { return m_PerspectiveData; }
+		const OrthographicData& GetOrthographicData() const { return m_OrthoData; }
+		const PerspectiveData& GetPerspectiveData() const { return m_PerspectiveData; }
 
-		void SetOrthographicData(const OrthographicDescription& desc) { m_OrthoData = desc; RecalculateProjection(); }
-		void SetPerspectiveData(const PerspectiveDescription& desc) { m_PerspectiveData = desc; RecalculateProjection(); }
+		void SetOrthographicData(const OrthographicData& data) { m_OrthoData = data; RecalculateProjection(); }
+		void SetPerspectiveData(const PerspectiveData& data) { m_PerspectiveData = data; RecalculateProjection(); }
 
 		ProjectionType GetProjectionType() const { return m_ProjectionType; }
 		void SetProjectionType(ProjectionType type) { m_ProjectionType = type; RecalculateProjection(); }
+
+		const Matrix4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
 	private:
 		void RecalculateProjection();
@@ -50,9 +54,10 @@ namespace Athena
 	private:
 		ProjectionType m_ProjectionType = ProjectionType::Orthographic;
 
-		OrthographicDescription m_OrthoData;
-		PerspectiveDescription m_PerspectiveData;
+		OrthographicData m_OrthoData;
+		PerspectiveData m_PerspectiveData;
 
 		float m_AspecRatio = 1.f;
+		Matrix4 m_ProjectionMatrix;
 	};
 }

@@ -5,7 +5,7 @@
 #include "Athena/Core/UUID.h"
 
 #include "Athena/Renderer/EditorCamera.h"
-#include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -26,13 +26,13 @@ class b2World;
 
 namespace Athena
 {
-	class ATHENA_API Environment;
 	class ATHENA_API Entity;
 
 	class TransformComponent;
+	class WorldTransformComponent;
 
 
-	class ATHENA_API Scene
+	class ATHENA_API Scene : public RefCounted
 	{
 	public:
 		friend class ATHENA_API Entity;
@@ -44,37 +44,39 @@ namespace Athena
 
 		static Ref<Scene> Copy(Ref<Scene> scene);
 
-		Entity GetRootEntity();
-
-		Entity CreateEntity(const String& name, UUID id, Entity parent);
 		Entity CreateEntity(const String& name, UUID id);
+		Entity CreateEntity(const String& name, UUID id, Entity parent);
 		Entity CreateEntity(const String& name = "UnNamed");
 		void DestroyEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);
-		void MakeParent(Entity parent, Entity child);
+		void MakeRelationship(Entity parent, Entity child);
+		void MakeOrphan(Entity child);
 
-		void SetEntityUUID(Entity entity, UUID newID);
 		Entity GetEntityByUUID(UUID uuid);
 		Entity FindEntityByName(const String& name);
 
-		void OnUpdateEditor(Time frameTime, const EditorCamera& camera); 
+		void OnUpdateEditor(Time frameTime); 
 		void OnUpdateRuntime(Time frameTime);
-		void OnUpdateSimulation(Time frameTime, const EditorCamera& camera);
+		void OnUpdateSimulation(Time frameTime);
 
 		void OnRuntimeStart();
 		void OnSimulationStart();
 
+		void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
+		void OnRender(const Ref<SceneRenderer>& renderer);
+
+		void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
+
 		void LoadAllScripts();
 
 		void OnViewportResize(uint32 width, uint32 height);
+		Vector2u GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
 
 		void SetSceneName(const String& name) { m_Name = name; }
 		const String& GetSceneName() const { return m_Name; };
 
 		Entity GetPrimaryCameraEntity();
-
-		Ref<Environment> GetEnvironment() { return m_Environment; }
-		void SetEnvironment(const Ref<Environment>& env) { m_Environment = env; }
+		uint64 GetEntitiesCount() { return m_EntityMap.size(); }
 
 		template <typename... Components>
 		auto GetAllEntitiesWith()
@@ -83,14 +85,13 @@ namespace Athena
 		}
 
 	private:
+		void UpdateWorldTransforms();
+		void UpdateWorldTransform(Entity entity, const WorldTransformComponent& parentTransform);
+
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
 
-		void RenderEditorScene(const EditorCamera& camera);
-		void RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform);
-		void RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far);
-
-		TransformComponent GetWorldTransform(entt::entity entity);
+		void RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);
@@ -105,7 +106,6 @@ namespace Athena
 		std::unordered_map<UUID, entt::entity> m_EntityMap;
 
 		std::unique_ptr<b2World> m_PhysicsWorld;
-		Ref<Environment> m_Environment;
 
 		uint32 m_ViewportWidth = 0, m_ViewportHeight = 0;
 	};

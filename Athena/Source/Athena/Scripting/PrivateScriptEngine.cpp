@@ -117,13 +117,13 @@ namespace Athena
 		try
 		{
 			s_Data->PythonModules[name] = py::module_::import(name.c_str());
-			ATN_CORE_WARN("[SriptEngine] Successfully load python script '{}'!", name);
+			ATN_CORE_INFO_TAG("SriptEngine", "Successfully load python script '{}'!", name);
 			return true;
 		}
 		catch (std::exception& exception)
 		{
 			s_Data->PythonModules.erase(name);
-			ATN_CORE_ERROR("[ScriptEngine] Load module exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "Load module exception: \n{}!", exception.what());
 			return false;
 		}
 	}
@@ -137,7 +137,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] Reload module exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "Reload module exception: \n{}!", exception.what());
 			return false;
 		}
 	}
@@ -158,7 +158,7 @@ namespace Athena
 				{
 					return true;
 				}
-				ATN_CORE_WARN("Unknown field type: {0} ({1}), class - {2}", name, type, className);
+				ATN_CORE_WARN_TAG("SriptEngine", "Unknown field type: {0} ({1}), class - {2}", name, type, className);
 			}
 		}
 
@@ -176,7 +176,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] ScriptClass exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
 			return;
 		}
 
@@ -221,7 +221,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] ScriptClass exception: \n{}!", exception.what());
+			ATN_CORE_ERROR_TAG("SriptEngine", "ScriptClass exception: \n{}!", exception.what());
 		}
 
 		return py::object();
@@ -275,7 +275,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(config.ScriptsFolder))
 		{
-			ATN_CORE_FATAL("ScriptEngine:Scripts folder does not exists '{}'!", config.ScriptsFolder);
+			ATN_CORE_ERROR_TAG("SriptEngine", "Scripts folder does not exists {}!", config.ScriptsFolder);
 			return;
 		}
 
@@ -286,6 +286,8 @@ namespace Athena
 	
 	void PrivateScriptEngine::LoadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC();
+
 		if (s_Data->PythonModules.find(name) != s_Data->PythonModules.end())
 		{
 			ReloadScript(name, entity);
@@ -309,6 +311,8 @@ namespace Athena
 
 	void PrivateScriptEngine::ReloadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC();
+
 		bool exists = s_Data->EntityClasses.find(name) == s_Data->EntityClasses.end() ||
 			s_Data->EntityScriptFields.find(entity.GetID()) == s_Data->EntityScriptFields.end();
 
@@ -342,6 +346,8 @@ namespace Athena
 
 	void PrivateScriptEngine::UnloadScript(const String& name, Entity entity)
 	{
+		ATN_PROFILE_FUNC();
+
 		UUID entityID = entity.GetID();
 
 		s_Data->PythonModules.erase(name);
@@ -393,18 +399,20 @@ namespace Athena
 
 	ScriptInstance& PrivateScriptEngine::GetScriptInstance(UUID uuid)
 	{
-		ATN_CORE_ASSERT(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
+		ATN_CORE_VERIFY(s_Data->EntityInstances.find(uuid) != s_Data->EntityInstances.end());
 		return s_Data->EntityInstances.at(uuid);
 	}
 
 	const ScriptClass& PrivateScriptEngine::GetScriptClass(const String& name)
 	{
-		ATN_CORE_ASSERT(s_Data->EntityClasses.find(name) != s_Data->EntityClasses.end());
+		ATN_CORE_VERIFY(s_Data->EntityClasses.find(name) != s_Data->EntityClasses.end());
 		return s_Data->EntityClasses.at(name);
 	}
 
 	void PrivateScriptEngine::InstantiateEntity(Entity entity)
 	{
+		ATN_PROFILE_FUNC();
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try
@@ -418,12 +426,14 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] Instantiate Entity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "InstantiateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 
 	void PrivateScriptEngine::OnCreateEntity(Entity entity)
 	{
+		ATN_PROFILE_FUNC();
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try
@@ -433,12 +443,14 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] OnCreateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "OnCreateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 
 	void PrivateScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
+		ATN_PROFILE_FUNC();
+
 		auto& sc = entity.GetComponent<ScriptComponent>();
 
 		try
@@ -448,7 +460,7 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR("[ScriptEngine] OnUpdate Entity({}) exception: \n{}!", entity.GetName(), exception.what());
+			ATN_CORE_ERROR_TAG("ScriptEngine", "OnUpdateEntity({}) exception: \n{}!", entity.GetName(), exception.what());
 		}
 	}
 

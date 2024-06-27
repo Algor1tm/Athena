@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.24)
 
 project(SandBox)
 
@@ -15,11 +15,6 @@ EnableMultiProcessorCompilation(SandBox)
 set_property(TARGET SandBox PROPERTY CXX_STANDARD 20)
 set_property(TARGET SandBox PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  "${CMAKE_SOURCE_DIR}/SandBox")
 
-target_compile_definitions(SandBox PUBLIC
-	$<$<CONFIG:Debug>:ATN_DEBUG>
-	$<$<CONFIG:Release>:ATN_RELEASE>
-	ATN_SIMD
-)
 
 # Build folder
 set_target_properties(SandBox
@@ -36,6 +31,7 @@ target_include_directories(SandBox PUBLIC
 	${ENTT_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
 	${IMGUIZMO_INCLUDE_DIR}
+	${OPTICK_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
 )
 

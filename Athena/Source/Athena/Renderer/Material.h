@@ -3,155 +3,122 @@
 #include "Athena/Core/Core.h"
 
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/GPUBuffer.h"
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
 
 
 namespace Athena
 {
-	class ATHENA_API Texture2D;
-	class ATHENA_API Material;
-
-	enum class MaterialTexture
+	enum class MaterialFlag
 	{
-		ALBEDO_MAP,
-		NORMAL_MAP,
-		ROUGHNESS_MAP,
-		METALNESS_MAP,
-		AMBIENT_OCCLUSION_MAP
+		CAST_SHADOWS = 1
 	};
 
-	enum class MaterialUniform
-	{
-		ALBEDO,
-		ROUGHNESS,
-		METALNESS,
-		EMISSION
-	};
-
-	class ATHENA_API MaterialManager
+	class ATHENA_API Material : public RefCounted
 	{
 	public:
-		static Ref<Material> CreateMaterial(const String& name = "UnNamed");
+		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
+		static Ref<Material> CreatePBRStatic(const String& name);
+		static Ref<Material> CreatePBRAnim(const String& name);
+		virtual ~Material();
 
-		static bool Exists(const String& name);
-		static Ref<Material> Get(const String& name);
-		static void Delete(const String& name);
+		void Set(const String& name, const Matrix4& value);
+		void Set(const String& name, const Vector2& value);
+		void Set(const String& name, const Vector4& value);
+		void Set(const String& name, float value);
+		void Set(const String& name, uint32 value);
+		void Set(const String& name, int32 value);
 
-		static auto GetMaterialsMapIterator() { return m_Materials.cbegin(); };
-		static uint32 GetMaterialsCount() { return m_Materials.size(); };
-
-	private:
-		static std::unordered_map<String, Ref<Material>> m_Materials;
-	};
-
-
-	class ATHENA_API Material
-	{
-	public:
-		friend class ATHENA_API MaterialManager;
-
-	public:
-		struct ShaderData
-		{
-			LinearColor Albedo = LinearColor::White;
-			float Roughness = 0.7f;
-			float Metalness = 0.f;
-			float Emission = 0.f;
-
-			int EnableAlbedoMap;
-			int EnableNormalMap;
-			int EnableRoughnessMap;
-			int EnableMetalnessMap;
-			int EnableAmbientOcclusionMap;
-		};
-
-	public:
-		template <typename T>
-		inline void Set(MaterialUniform uniform, T value);
-		void Set(MaterialTexture textureType, const Ref<Texture2D>& texture);
+		virtual void Set(const String& name, const Ref<RenderResource>& resource, uint32 arrayIndex = 0) = 0;
 
 		template <typename T>
-		inline T Get(MaterialUniform uniform) const;
-		Ref<Texture2D> Get(MaterialTexture textureType);
+		T Get(const String& name);
 
-		bool IsEnabled(MaterialTexture textureType) const;
-		void Enable(MaterialTexture textureType, bool enable);
+		bool GetFlag(MaterialFlag flag) const { return m_Flags.at(flag); }
+		void SetFlag(MaterialFlag flag, bool value) { m_Flags.at(flag) = value; }
 
-		const ShaderData& Bind();
-		const String& GetName() const { return m_Name; };
+		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+		const byte* GetPushConstantData() const { return m_Buffer; }
 
-		bool operator==(const Material& other) const
-		{
-			return m_Name == other.m_Name;
-		}
+		Ref<Shader> GetShader() const { return m_Shader; }
+		const String& GetName() const { return m_Name; }
 
-		bool operator!=(const Material& other) const
-		{
-			return m_Name != other.m_Name;
-		}
+	protected:
+		Material(const Ref<Shader> shader, const String& name);
 
 	private:
-		void BindTexture(MaterialTexture textureType, TextureBinder binder, int* isEnabled);
+		virtual Ref<RenderResource> GetResourceInternal(const String& name) = 0;
 
-		struct TextureInfo
-		{
-			Ref<Texture2D> Texture;
-			bool IsEnabled = true;
-		};
+		bool GetMemberOffset(const String& name, ShaderDataType dataType, uint32* offset);
+		bool GetInternal(const String& name, ShaderDataType dataType, void** data);
 
 	private:
-		ShaderData m_ShaderData;
-		std::unordered_map<MaterialTexture, TextureInfo> m_TextureMap;
-
+		Ref<Shader> m_Shader;
 		String m_Name;
+		byte m_Buffer[128];
+		const std::unordered_map<String, StructMemberShaderMetaData>* m_BufferMembers;
+		std::unordered_map<MaterialFlag, bool> m_Flags;
 	};
 
-
 	template <>
-	inline void Material::Set<float>(MaterialUniform uniform, float value)
+	inline Matrix4 Material::Get<Matrix4>(const String& name)
 	{
-		switch (uniform)
-		{
-		case MaterialUniform::ROUGHNESS: m_ShaderData.Roughness = value; break;
-		case MaterialUniform::METALNESS: m_ShaderData.Metalness = value; break;
-		case MaterialUniform::EMISSION: m_ShaderData.Emission = value; break;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Set<float>");
-		}
+		void* data;
+		if (GetInternal(name, ShaderDataType::Mat4, &data))
+			return *(Matrix4*)data;
+
+		return Matrix4(0);
 	}
 
 	template <>
-	inline void Material::Set<Vector3>(MaterialUniform uniform, Vector3 value)
+	inline Vector4 Material::Get<Vector4>(const String& name)
 	{
-		switch (uniform)
-		{
-		case MaterialUniform::ALBEDO: m_ShaderData.Albedo = value; break;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Set<Vector3>");
-		}
+		void* data;
+		if (GetInternal(name, ShaderDataType::Float4, &data))
+			return *(Vector4*)data;
+
+		return Vector4(0);
 	}
 
 	template <>
-	inline float Material::Get<float>(MaterialUniform uniform) const
+	inline float Material::Get<float>(const String& name)
 	{
-		switch (uniform)
-		{
-		case MaterialUniform::ROUGHNESS: return m_ShaderData.Roughness;
-		case MaterialUniform::METALNESS: return m_ShaderData.Metalness;
-		case MaterialUniform::EMISSION:  return m_ShaderData.Emission;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Get<float>");
-		}
+		void* data;
+		if (GetInternal(name, ShaderDataType::Float, &data))
+			return *(float*)data;
 
-		return 0.f;
+		return float(0);
 	}
 
 	template <>
-	inline Vector3 Material::Get<Vector3>(MaterialUniform uniform) const
+	inline uint32 Material::Get<uint32>(const String& name)
 	{
-		switch (uniform)
-		{
-		case MaterialUniform::ALBEDO: return m_ShaderData.Albedo;
-		default: ATN_CORE_ERROR("Invalid uniform in Material::Get<Vector3>");
-		}
+		void* data;
+		if (GetInternal(name, ShaderDataType::UInt, &data))
+			return *(uint32*)data;
 
-		return Vector3(0.f);
+		return uint32(0);
 	}
+
+	template <>
+	inline Ref<Texture2D> Material::Get<Ref<Texture2D>>(const String& name)
+	{
+		return GetResourceInternal(name);
+	}
+
+
+	class ATHENA_API MaterialTable : public RefCounted
+	{
+	public:
+		Ref<Material> Get(const String& name) const;
+		void Add(const Ref<Material>& material);
+		void Remove(const Ref<Material>& material);
+
+		bool Exists(const String& name) const;
+
+	private:
+		std::unordered_map<String, Ref<Material>> m_Materials;
+	};
 }

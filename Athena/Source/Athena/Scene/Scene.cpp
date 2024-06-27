@@ -1,14 +1,13 @@
 #include "Scene.h"
 
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Environment.h"
+#include "Athena/Renderer/Light.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
-#include "Athena/Scene/NativeScript.h"
 
 #include "Athena/Scripting/PrivateScriptEngine.h"
 
@@ -87,6 +86,9 @@ namespace Athena
 		if (iter != children.end())
 		{
 			children.erase(iter);
+			if (children.size() == 0)
+				parent.RemoveComponent<ChildComponent>();
+
 		}
 		else
 		{
@@ -99,16 +101,7 @@ namespace Athena
 	Scene::Scene(const String& name)
 		: m_Name(name)
 	{
-		m_Environment = CreateRef<Environment>();
-
-		Entity rootEntity(m_Registry.create(), this);
-		rootEntity.AddComponent<IDComponent>();
-		rootEntity.AddComponent<TagComponent>("Scene Root");
-		rootEntity.AddComponent<RootComponent>().SceneRef = this;
-		rootEntity.AddComponent<TransformComponent>();
-		rootEntity.AddComponent<ParentComponent>();
-
-		m_EntityMap[rootEntity.GetID()] = rootEntity;
+		
 	}
 
 	Scene::~Scene()
@@ -118,32 +111,20 @@ namespace Athena
 
 	Ref<Scene> Scene::Copy(Ref<Scene> other)
 	{
-		Ref<Scene> newScene = CreateRef<Scene>();
+		Ref<Scene> newScene = Ref<Scene>::Create();
 
 		newScene->m_ViewportWidth = other->m_ViewportWidth;
 		newScene->m_ViewportHeight = other->m_ViewportHeight;
 
-		newScene->m_Environment = other->m_Environment;
-
 		auto& srcSceneRegistry = other->m_Registry;
 		auto& dstSceneRegistry = newScene->m_Registry;
 
-		entt::entity srcRoot = other->GetRootEntity();
 		auto idView = srcSceneRegistry.view<IDComponent>();
 		for (auto entity : idView)
 		{
 			UUID uuid = srcSceneRegistry.get<IDComponent>(entity).ID;
 			const auto& name = srcSceneRegistry.get<TagComponent>(entity).Tag;
-			if (entity == srcRoot)
-			{
-				Entity dstRoot = newScene->GetRootEntity();
-				dstRoot.GetComponent<TagComponent>().Tag = name;
-				newScene->SetEntityUUID(dstRoot, uuid);
-			}
-			else
-			{
-				Entity newEntity = newScene->CreateEntity(name, uuid);
-			}
+			Entity newEntity = newScene->CreateEntity(name, uuid);
 		}
 
 		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, newScene->m_EntityMap);
@@ -151,36 +132,25 @@ namespace Athena
 		return newScene;
 	}
 
-	Entity Scene::GetRootEntity()
-	{
-		auto rootComponentView = GetAllEntitiesWith<RootComponent>();
-		ATN_CORE_ASSERT(rootComponentView.size() == 1);
-
-		return { rootComponentView[0], this };
-	}
-
-	Entity Scene::CreateEntity(const String& name, UUID id, Entity parent)
+	Entity Scene::CreateEntity(const String& name, UUID id)
 	{
 		Entity entity(m_Registry.create(), this);
 		entity.AddComponent<IDComponent>(id);
 		entity.AddComponent<TagComponent>(name);
 		entity.AddComponent<TransformComponent>();
-		entity.AddComponent<ParentComponent>();
-
-		auto& parentChildren = parent.GetComponent<ParentComponent>().Children;
-		parentChildren.push_back(entity);
-
-		entity.AddComponent<ChildComponent>().Parent = parent;
+		entity.AddComponent<WorldTransformComponent>();
 
 		m_EntityMap[id] = entity;
 
 		return entity;
 	}
 
-	Entity Scene::CreateEntity(const String& name, UUID id)
+	Entity Scene::CreateEntity(const String& name, UUID id, Entity parent)
 	{
-		Entity root = GetRootEntity();
-		return CreateEntity(name, id, root);
+		Entity entity = CreateEntity(name, id);
+		MakeRelationship(parent, entity);
+
+		return entity;
 	}
 
 	Entity Scene::CreateEntity(const String& name)
@@ -190,17 +160,23 @@ namespace Athena
 
 	void Scene::DestroyEntity(Entity entity)
 	{
-		if (entity.HasChildren())
+		if (entity.HasComponent<ChildComponent>())
 		{
-			auto& children = entity.GetComponent<ParentComponent>().Children;
+			// Need to copy array here, because it will be modified in recursive calls
+			auto children = entity.GetComponent<ChildComponent>().Children;
 			for (Entity e : children)
+			{
 				DestroyEntity(e);
+			}
 		}
 
-		Entity parent = entity.GetComponent<ChildComponent>().Parent;
-		auto& children = parent.GetComponent<ParentComponent>().Children;
+		if (entity.HasComponent<ParentComponent>())
+		{
+			Entity parent = entity.GetComponent<ParentComponent>().Parent;
+			auto& parentChildren = parent.GetComponent<ChildComponent>().Children;
 
-		DeleteFromChildren(children, parent, entity);
+			DeleteFromChildren(parentChildren, parent, entity);
+		}
 
 		m_EntityMap.erase(entity.GetID());
 		m_Registry.destroy(entity);
@@ -208,65 +184,77 @@ namespace Athena
 
 	Entity Scene::DuplicateEntity(Entity entity)
 	{
-		if (entity == GetRootEntity())
+		String name = entity.GetName();
+		Entity newEntity;
+
+		if (entity.HasComponent<ParentComponent>())
 		{
-			ATN_CORE_WARN("Cannot duplicate Root Entity!");
-			return {};
+			Entity entityParent = entity.GetComponent<ParentComponent>().Parent;
+			newEntity = CreateEntity(name, UUID(), entityParent);
+		}
+		else
+		{
+			newEntity = CreateEntity(name, UUID());
 		}
 
-		// Copy name because we're going to modify component data structure
-		Entity entityParent = entity.GetComponent<ChildComponent>().Parent;
-
-		String name = entity.GetName();
-		Entity newEntity = CreateEntity(name, UUID(), entityParent);
 		CopyComponentIfExists(AllComponents{}, newEntity, entity);
 
-		if (entity.HasChildren())
+		if (entity.HasComponent<ChildComponent>())
 		{
 			// Copy because next calls of DuplicateEntity in for-loop can reallocate this array
-			std::vector<Entity> children = entity.GetComponent<ParentComponent>().Children;
+			std::vector<Entity> children = entity.GetComponent<ChildComponent>().Children;
 
 			// Clear new children because, ParentComponent copied in CopyComponentIfExists
-			std::vector<Entity>& newChildren = newEntity.GetComponent<ParentComponent>().Children;
+			std::vector<Entity>& newChildren = newEntity.GetComponent<ChildComponent>().Children;
 			newChildren.clear();
 
 			for (Entity child : children)
 			{
 				Entity newChild = DuplicateEntity(child);
-				MakeParent(newEntity, newChild);
+				MakeRelationship(newEntity, newChild);
 			}
 		}
 
 		return newEntity;
 	}
 
-	void Scene::MakeParent(Entity parent, Entity child)
+	void Scene::MakeRelationship(Entity parent, Entity child)
 	{
-		if (child == GetRootEntity())
+		if (child.HasComponent<ParentComponent>())
 		{
-			ATN_CORE_WARN("Attempt to set parent of scene root!");
-			return;
+			Entity& oldParent = child.GetComponent<ParentComponent>().Parent;
+			auto& oldParentChildren = oldParent.GetComponent<ChildComponent>().Children;
+
+			DeleteFromChildren(oldParentChildren, oldParent, child);
+			oldParent = parent;
+		}
+		else
+		{
+			child.AddComponent<ParentComponent>().Parent = parent;
 		}
 
-		Entity& oldParent = child.GetComponent<ChildComponent>().Parent;
-		auto& oldParentChildren = oldParent.GetComponent<ParentComponent>().Children;
+		if (!parent.HasComponent<ChildComponent>())
+			parent.AddComponent<ChildComponent>();
 
-		DeleteFromChildren(oldParentChildren, oldParent, child);
-		oldParent = parent;
-
-		auto& children = parent.GetComponent<ParentComponent>().Children;
+		auto& children = parent.GetComponent<ChildComponent>().Children;
 		children.push_back(child);
 	}
 
-	void Scene::SetEntityUUID(Entity entity, UUID newID)
+	void Scene::MakeOrphan(Entity child)
 	{
-		entity.GetComponent<IDComponent>().ID = newID;
-		m_EntityMap[newID] = entity;
+		if (child.HasComponent<ParentComponent>())
+		{
+			Entity parent = child.GetComponent<ParentComponent>().Parent;
+			auto& parentChildren = parent.GetComponent<ChildComponent>().Children;
+
+			DeleteFromChildren(parentChildren, parent, child);
+			child.RemoveComponent<ParentComponent>();
+		}
 	}
 
 	Entity Scene::GetEntityByUUID(UUID uuid)
 	{
-		ATN_CORE_ASSERT(m_EntityMap.find(uuid) != m_EntityMap.end());
+		ATN_CORE_VERIFY(m_EntityMap.find(uuid) != m_EntityMap.end());
 
 		return { m_EntityMap.at(uuid), this };
 	}
@@ -283,100 +271,97 @@ namespace Athena
 		return {};
 	}
 
-	void Scene::OnUpdateEditor(Time frameTime, const EditorCamera& camera)
+	void Scene::OnUpdateEditor(Time frameTime)
 	{
+		ATN_PROFILE_FUNC();
+
+		UpdateWorldTransforms();
+
 		// Update Animations
-		auto view = m_Registry.view<StaticMeshComponent>();
-		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<StaticMeshComponent>(entity);
-			if (meshComponent.Mesh->HasAnimations())
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
+			auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
 			{
-				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
+				{
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				}
 			}
 		}
-
-		RenderEditorScene(camera);
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
+		ATN_PROFILE_FUNC();
+
+		UpdateWorldTransforms();
+
 		// Update scripts
 		{
+			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate");
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
 				Entity entity = { id, this };
 				PrivateScriptEngine::OnUpdateEntity(entity, frameTime);
 			}
-
-			m_Registry.view<NativeScriptComponent>().each([=](auto entityID, auto& nsc)
-				{
-					if (!nsc.Script)
-					{
-						nsc.Script = nsc.InstantiateScript();
-						nsc.Script->m_Entity = Entity(entityID, this);
-
-						nsc.Script->Init();
-					}
-
-					nsc.Script->OnUpdate(frameTime);
-				});
 		}
 
 		// Update Animations
-		auto view = m_Registry.view<StaticMeshComponent>();
-		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<StaticMeshComponent>(entity);
-			if (meshComponent.Mesh->HasAnimations())
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
+			auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
 			{
-				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-			}
-		}
-
-		// Physics
-		UpdatePhysics(frameTime);
-
-		// Choose camera
-		SceneCamera* mainCamera = nullptr;
-		TransformComponent cameraTransform;
-		{
-			auto cameras = m_Registry.view<CameraComponent>();
-			for (auto entity : cameras)
-			{
-				auto& camera = cameras.get<CameraComponent>(entity);
-
-				if (camera.Primary)
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
 				{
-					mainCamera = &camera.Camera;
-					cameraTransform = GetWorldTransform(entity);
-					break;
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
 				}
 			}
 		}
 
-		// Render 
-		{
-			if (mainCamera)
-			{
-				RenderRuntimeScene(*mainCamera, cameraTransform.AsMatrix());
-			}
-		}
+
+		// Physics
+		UpdatePhysics(frameTime);
 	}
 
-	void Scene::OnUpdateSimulation(Time frameTime, const EditorCamera& camera)
+	void Scene::OnUpdateSimulation(Time frameTime)
 	{
+		ATN_PROFILE_FUNC();
+
+		UpdateWorldTransforms();
+
+		// Update Animations
+		{
+			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
+				auto view = m_Registry.view<StaticMeshComponent>();
+			for (auto entity : view)
+			{
+				auto& meshComponent = view.get<StaticMeshComponent>(entity);
+				if (meshComponent.Mesh->HasAnimations())
+				{
+					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				}
+			}
+		}
+
 		UpdatePhysics(frameTime);
-		RenderEditorScene(camera);
 	}
 
 	void Scene::OnRuntimeStart()
 	{
+		ATN_PROFILE_FUNC();
+
+		UpdateWorldTransforms();
 		OnPhysics2DStart();
 
 		// Scripting
 		{
+			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
+
 			PrivateScriptEngine::OnRuntimeStart(this);
 
 			// Instantiate all script entities
@@ -397,6 +382,7 @@ namespace Athena
 
 	void Scene::OnSimulationStart()
 	{
+		UpdateWorldTransforms();
 		OnPhysics2DStart();
 	}
 
@@ -440,70 +426,116 @@ namespace Athena
 		return Entity{};
 	}
 
+	void Scene::UpdateWorldTransforms()
+	{
+		ATN_PROFILE_FUNC();
+
+		auto baseEntities = m_Registry.view<WorldTransformComponent, TransformComponent>(entt::exclude<ParentComponent>);
+		for (auto entt : baseEntities)
+		{
+			const TransformComponent& transform = baseEntities.get<TransformComponent>(entt);
+			WorldTransformComponent& worldTransform = baseEntities.get<WorldTransformComponent>(entt);
+
+			worldTransform.Translation = transform.Translation;
+			worldTransform.Rotation = transform.Rotation;
+			worldTransform.Scale = transform.Scale;
+
+			Entity entity = { entt, this };
+			if (entity.HasComponent<ChildComponent>())
+			{
+				const std::vector<Entity>& children = entity.GetComponent<ChildComponent>().Children;
+
+				for(auto& child: children)
+					UpdateWorldTransform(child, worldTransform);
+			}
+		}
+	}
+
+	void Scene::UpdateWorldTransform(Entity entity, const WorldTransformComponent& parentTransform)
+	{
+		const TransformComponent& localTransform = entity.GetComponent<TransformComponent>();
+		WorldTransformComponent& worldTransform = entity.GetComponent<WorldTransformComponent>();
+
+		worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
+		worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
+		worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+
+		if (entity.HasComponent<ChildComponent>())
+		{
+			const std::vector<Entity>& children = entity.GetComponent<ChildComponent>().Children;
+
+			for (auto& child : children)
+				UpdateWorldTransform(child, worldTransform);
+		}
+	}
+
 	void Scene::OnPhysics2DStart()
 	{
+		ATN_PROFILE_FUNC();
+
 		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
+		{
+			Entity entity = Entity(entityID, this);
+			const WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+
+			b2BodyDef bodyDef;
+			bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
+			bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
+			bodyDef.angle = transform.Rotation.AsEulerAngles().z;
+
+			b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
+			body->SetFixedRotation(rb2d.FixedRotation);
+			rb2d.RuntimeBody = reinterpret_cast<void*>(body);
+
+			if (entity.HasComponent<BoxCollider2DComponent>())
 			{
-				Entity entity = Entity(entityID, this);
-				TransformComponent transform = entity.GetWorldTransform();
+				auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
 
-				b2BodyDef bodyDef;
-				bodyDef.type = AthenaRigidBody2DTypeToBox2D(rb2d.Type);
-				bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
-				bodyDef.angle = transform.Rotation.AsEulerAngles().z;
+				b2PolygonShape boxShape;
+				boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y, b2Vec2(bc2d.Offset.y, bc2d.Offset.x), 0.f);
 
-				b2Body* body = m_PhysicsWorld->CreateBody(&bodyDef);
-				body->SetFixedRotation(rb2d.FixedRotation);
-				rb2d.RuntimeBody = reinterpret_cast<void*>(body);
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &boxShape;
+				fixtureDef.density = bc2d.Density;
+				fixtureDef.friction = bc2d.Friction;
+				fixtureDef.restitution = bc2d.Restitution;
+				fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
+				body->CreateFixture(&fixtureDef);
+			}
 
-				if (entity.HasComponent<BoxCollider2DComponent>())
-				{
-					auto& bc2d = entity.GetComponent<BoxCollider2DComponent>();
+			if (entity.HasComponent<CircleCollider2DComponent>())
+			{
+				auto& cc2d = entity.GetComponent<CircleCollider2DComponent>();
 
-					b2PolygonShape boxShape;
-					boxShape.SetAsBox(bc2d.Size.x * transform.Scale.x, bc2d.Size.y * transform.Scale.y, b2Vec2(bc2d.Offset.y, bc2d.Offset.x), 0.f);
+				b2CircleShape circleShape;
+				circleShape.m_p.Set(cc2d.Offset.x, cc2d.Offset.y);
+				circleShape.m_radius = cc2d.Radius * transform.Scale.x;
 
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &boxShape;
-					fixtureDef.density = bc2d.Density;
-					fixtureDef.friction = bc2d.Friction;
-					fixtureDef.restitution = bc2d.Restitution;
-					fixtureDef.restitutionThreshold = bc2d.RestitutionThreshold;
-					body->CreateFixture(&fixtureDef);
-				}
-
-				if (entity.HasComponent<CircleCollider2DComponent>())
-				{
-					auto& cc2d = entity.GetComponent<CircleCollider2DComponent>();
-
-					b2CircleShape circleShape;
-					circleShape.m_p.Set(cc2d.Offset.x, cc2d.Offset.y);
-					circleShape.m_radius = cc2d.Radius * transform.Scale.x;
-
-					b2FixtureDef fixtureDef;
-					fixtureDef.shape = &circleShape;
-					fixtureDef.density = cc2d.Density;
-					fixtureDef.friction = cc2d.Friction;
-					fixtureDef.restitution = cc2d.Restitution;
-					fixtureDef.restitutionThreshold = cc2d.RestitutionThreshold;
-					body->CreateFixture(&fixtureDef);
-				}
-			});
+				b2FixtureDef fixtureDef;
+				fixtureDef.shape = &circleShape;
+				fixtureDef.density = cc2d.Density;
+				fixtureDef.friction = cc2d.Friction;
+				fixtureDef.restitution = cc2d.Restitution;
+				fixtureDef.restitutionThreshold = cc2d.RestitutionThreshold;
+				body->CreateFixture(&fixtureDef);
+			}
+		});
 	}
 
 	void Scene::UpdatePhysics(Time frameTime)
 	{
+		ATN_PROFILE_FUNC();
+
 		constexpr uint32 velocityIterations = 6;
 		constexpr uint32 positionIterations = 2;
 		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
-		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent>();
-		for (auto entityID : rigidBodies2D)
+		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent, WorldTransformComponent, TransformComponent>();
+		for (auto entity : rigidBodies2D)
 		{
-			Entity entity = { entityID, this };
-			TransformComponent oldWorldTransform = entity.GetWorldTransform();
-			TransformComponent newWorldTransform = oldWorldTransform;
+			WorldTransformComponent oldWorldTransform = rigidBodies2D.get<WorldTransformComponent>(entity);
+			WorldTransformComponent& newWorldTransform = rigidBodies2D.get<WorldTransformComponent>(entity);
 
 			const auto& rb2D = rigidBodies2D.get<Rigidbody2DComponent>(entity);
 
@@ -516,145 +548,174 @@ namespace Athena
 			eulerAngles.z = body->GetAngle();
 			newWorldTransform.Rotation = Quaternion(eulerAngles);
 
-			entity.GetComponent<TransformComponent>().UpdateFromWorldTransforms(newWorldTransform, oldWorldTransform);
+			rigidBodies2D.get<TransformComponent>(entity).UpdateLocalTransform(newWorldTransform, oldWorldTransform);
 		}
 	}
 
-	void Scene::RenderEditorScene(const EditorCamera& camera)
+	void Scene::OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera)
 	{
-		Matrix4 viewMatrix = camera.GetViewMatrix();
-		Matrix4 projectionMatrix = camera.GetProjectionMatrix();
-		float near = camera.GetNearClip();
-		float far = camera.GetFarClip();
-
-		RenderScene(viewMatrix, projectionMatrix, near, far);
-
-		// Render Entity IDs
-		RenderPass renderPass;
-		renderPass.TargetFramebuffer = SceneRenderer::GetEntityIDFramebuffer();
-		renderPass.ClearBit = CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT;
-		renderPass.Name = "EntityIDs";
-
-		Renderer::BeginRenderPass(renderPass);
-		{
-			SceneRenderer::GetEntityIDFramebuffer()->ClearAttachment(0, -1);
-
-			SceneRenderer::FlushEntityIDs();
-
-			SceneRenderer2D::EntityIDEnable(true);
-			SceneRenderer2D::BeginScene(viewMatrix, projectionMatrix);
-
-			auto quads = GetAllEntitiesWith<SpriteComponent>();
-			for (auto entity : quads)
-			{
-				auto transform = GetWorldTransform(entity);
-				const auto& sprite = quads.get<SpriteComponent>(entity);
-
-				SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor, (int32)entity);
-			}
-
-			auto circles = GetAllEntitiesWith<CircleComponent>();
-			for (auto entity : circles)
-			{
-				auto transform = GetWorldTransform(entity);
-				const auto& circle = circles.get<CircleComponent>(entity);
-
-				SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade, (int32)entity);
-			}
-
-			SceneRenderer2D::EndScene();
-			SceneRenderer2D::EntityIDEnable(false);
-
-		}
-		Renderer::EndRenderPass();
+		RenderScene(renderer, camera.GetCameraInfo());
 	}
 
-	void Scene::RenderRuntimeScene(const SceneCamera& camera, const Matrix4& transform)
+	void Scene::OnRender(const Ref<SceneRenderer>& renderer)
 	{
-		Matrix4 viewMatrix = Math::AffineInverse(transform);
-		Matrix4 projectionMatrix = camera.GetProjectionMatrix();
-		float near = camera.GetNearClip();
-		float far = camera.GetFarClip();
-
-		RenderScene(viewMatrix, projectionMatrix, near, far);
-	}
-
-	void Scene::RenderScene(const Matrix4& view, const Matrix4& proj, float near, float far)
-	{
-		SceneRenderer::BeginScene({ view, proj, near, far }, m_Environment);
-
-		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent>();
-		for (auto entity : staticMeshes)
+		// Choose camera
+		SceneCamera* mainCamera = nullptr;
+		WorldTransformComponent cameraTransform;
 		{
-			auto transform = GetWorldTransform(entity);
-			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
-
-			if (!meshComponent.Hide)
+			auto cameras = m_Registry.view<CameraComponent, WorldTransformComponent>();
+			for (auto entity : cameras)
 			{
-				const auto& subMeshes = meshComponent.Mesh->GetAllSubMeshes();
-				for (uint32 i = 0; i < subMeshes.size(); ++i)
+				auto& camera = cameras.get<CameraComponent>(entity);
+
+				if (camera.Primary)
 				{
-					Ref<Material> material = MaterialManager::Get(subMeshes[i].MaterialName);
-					Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
-
-					if(animator != nullptr && animator->IsPlaying())
-						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, animator, transform.AsMatrix(), (int32)entity);
-					else
-						SceneRenderer::Submit(subMeshes[i].VertexBuffer, material, nullptr, transform.AsMatrix(), (int32)entity);
+					mainCamera = &camera.Camera;
+					cameraTransform = cameras.get<WorldTransformComponent>(entity);
+					break;
 				}
 			}
 		}
 
-		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent>();
-		for (auto entity : dirLights)
+		// Render 
+		if (mainCamera)
 		{
-			auto transform = GetWorldTransform(entity);
-			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
+			CameraInfo info = mainCamera->GetCameraInfo();
+			info.ViewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
 
-			Vector3 direction = transform.Rotation * Vector3::Forward();
-			DirectionalLight dirLight = { light.Color, direction, light.Intensity };
-			SceneRenderer::SubmitLight(dirLight);
+			RenderScene(renderer, info);
 		}
-
-		auto pointLights = GetAllEntitiesWith<PointLightComponent>();
-		for (auto entity : pointLights)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& light = pointLights.get<PointLightComponent>(entity);
-
-			PointLight pointLight = { light.Color, transform.Translation, light.Intensity, light.Radius, light.FallOff };
-			SceneRenderer::SubmitLight(pointLight);
-		}
-
-		SceneRenderer::EndScene();
-
-
-		SceneRenderer2D::BeginScene(view, proj);
-
-		auto quads = GetAllEntitiesWith<SpriteComponent>();
-		for (auto entity : quads)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& sprite = quads.get<SpriteComponent>(entity);
-
-			SceneRenderer2D::DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Color, sprite.TilingFactor);
-		}
-
-		auto circles = GetAllEntitiesWith<CircleComponent>();
-		for (auto entity : circles)
-		{
-			auto transform = GetWorldTransform(entity);
-			const auto& circle = circles.get<CircleComponent>(entity);
-
-			SceneRenderer2D::DrawCircle(transform.AsMatrix(), circle.Color, circle.Thickness, circle.Fade);
-		}
-
-		SceneRenderer2D::EndScene();
 	}
 
-	TransformComponent Scene::GetWorldTransform(entt::entity enttentity)
+	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
-		Entity entity = { enttentity, this };
-		return entity.GetWorldTransform();
+		ATN_PROFILE_FUNC();
+
+		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
+		for (auto entity : quads)
+		{
+			const auto& transform = quads.get<WorldTransformComponent>(entity);
+			const auto& sprite = quads.get<SpriteComponent>(entity);
+
+			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Space, sprite.Color, sprite.TilingFactor);
+		}
+
+		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
+		for (auto entity : circles)
+		{
+			const auto& transform = circles.get<WorldTransformComponent>(entity);
+			const auto& circle = circles.get<CircleComponent>(entity);
+
+			renderer2D->DrawCircle(transform.AsMatrix(), circle.Space, circle.Color, circle.Thickness, circle.Fade);
+		}
+
+		auto textEntities = GetAllEntitiesWith<TextComponent, WorldTransformComponent>();
+		for (auto entity : textEntities)
+		{
+			const auto& transform = textEntities.get<WorldTransformComponent>(entity);
+			const auto& text = textEntities.get<TextComponent>(entity);
+
+			TextParams params;
+			params.Color = text.Color;
+			params.MaxWidth = text.MaxWidth;
+			params.Kerning = text.Kerning;
+			params.LineSpacing = text.LineSpacing;
+			params.Shadowing = text.Shadowing;
+			params.ShadowDistance = text.ShadowDistance;
+			params.ShadowColor = text.ShadowColor;
+
+			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), text.Space, params);
+		}
+	}
+
+	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
+	{
+		ATN_PROFILE_FUNC();
+
+		renderer->BeginScene(cameraInfo);
+
+		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
+		for (auto entity : staticMeshes)
+		{
+			const auto& transform = staticMeshes.get<WorldTransformComponent>(entity);
+			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
+
+			if (meshComponent.Visible)
+			{
+				renderer->Submit(meshComponent.Mesh, transform.AsMatrix());
+			}
+		}
+
+		LightEnvironment lightEnv;
+
+		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
+		for (auto entity : dirLights)
+		{
+			const auto& transform = dirLights.get<WorldTransformComponent>(entity);
+			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
+
+			DirectionalLight dirLight;
+			dirLight.Color = light.Color;
+			dirLight.Intensity = light.Intensity;
+			dirLight.Direction = transform.Rotation * Vector3::Forward();
+			dirLight.CastShadows = light.CastShadows;
+			dirLight.LightSize = light.LightSize;
+
+			lightEnv.DirectionalLights.push_back(dirLight);
+		}
+
+		auto pointLights = GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
+		for (auto entity : pointLights)
+		{
+			const auto& transform = pointLights.get<WorldTransformComponent>(entity);
+			const auto& light = pointLights.get<PointLightComponent>(entity);
+
+			PointLight pointLight;
+			pointLight.Color = light.Color;
+			pointLight.Position = transform.Translation;
+			pointLight.Intensity = light.Intensity;
+			pointLight.Radius = light.Radius;
+			pointLight.FallOff = light.FallOff;
+
+			lightEnv.PointLights.push_back(pointLight);
+		}
+
+		auto spotLights = GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
+		for (auto entity : spotLights)
+		{
+			const auto& transform = spotLights.get<WorldTransformComponent>(entity);
+			const auto& light = spotLights.get<SpotLightComponent>(entity);
+
+			SpotLight spotLight;
+			spotLight.Color = light.Color;
+			spotLight.Position = transform.Translation;
+			spotLight.SpotAngle = light.SpotAngle;
+			spotLight.Intensity = light.Intensity;
+			spotLight.Direction = transform.Rotation * Vector3::Forward();
+			spotLight.Range = light.Range;
+			spotLight.RangeFallOff = light.RangeFallOff;
+			spotLight.InnerFallOff = light.InnerFallOff;
+
+			lightEnv.SpotLights.push_back(spotLight);
+		}
+
+		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
+		if (skyLights.size() > 1)
+			ATN_CORE_WARN_TAG("Scene", "Attempt to submit more than 1 SkyLight in the scene!");
+
+		if (!skyLights.empty())
+		{
+			auto entity = skyLights[0];
+			const auto& light = skyLights.get<SkyLightComponent>(entity);
+
+			lightEnv.EnvironmentMap = light.EnvironmentMap;
+			lightEnv.EnvironmentMapLOD = light.LOD;
+			lightEnv.EnvironmentMapIntensity = light.Intensity;
+		}
+
+
+		renderer->SubmitLightEnvironment(lightEnv);
+
+		renderer->EndScene();
 	}
 }

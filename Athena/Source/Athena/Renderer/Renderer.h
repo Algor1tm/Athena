@@ -2,77 +2,83 @@
 
 #include "Athena/Core/Core.h"
 
-#include "Athena/Renderer/Framebuffer.h"
-#include "Athena/Renderer/GPUBuffers.h"
-#include "Athena/Renderer/RendererAPI.h"
+#include "Athena/Renderer/CommandQueue.h"
+#include "Athena/Renderer/GPUBuffer.h"
+#include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/RenderCommandBuffer.h"
+#include "Athena/Renderer/ComputePipeline.h"
+#include "Athena/Renderer/Pipeline.h"
 
 
 namespace Athena
 {
-	enum ShaderConstants
+	struct RenderCapabilities
 	{
-		MAX_DIRECTIONAL_LIGHT_COUNT = 32,
-		MAX_POINT_LIGHT_COUNT = 32,
+		String Name;
+		uint64 VRAM;
+
+		uint32 MaxImageDimension2D;
+		uint32 MaxImageDimensionCube;
+		uint32 MaxImageArrayLayers;
+
+		float  MaxSamplerLodBias;
+		float  MaxSamplerAnisotropy;
+
+		uint32 MaxFramebufferWidth;
+		uint32 MaxFramebufferHeight;
+		uint32 MaxFramebufferLayers;
+		uint32 MaxFramebufferColorAttachments;
+
+		uint32 MaxUniformBufferRange;
+		uint32 MaxStorageBufferRange;
+		uint32 MaxPushConstantRange;
+
+		uint32 MaxBoundDescriptorSets;
+		uint32 MaxDescriptorSetSamplers;
+		uint32 MaxDescriptorSetUnifromBuffers;
+		uint32 MaxDescriptorSetStorageBuffers;
+		uint32 MaxDescriptorSetSampledImages;
+		uint32 MaxDescriptorSetStorageImages;
+		uint32 MaxDescriptorSetInputAttachments;
+
+		uint32 MaxViewportDimensions[2];
+		uint32 MaxClipDistances;
+		uint32 MaxCullDistances;
+		float  LineWidthRange[2];
+
+		uint32 MaxVertexInputAttributes;
+		uint32 MaxVertexInputBindingStride;
+		uint32 MaxFragmentInputComponents;
+		uint32 MaxFragmentOutputAttachments;
+
+		uint32 MaxComputeWorkGroupSize[3];
+		uint32 MaxComputeSharedMemorySize;
+		uint32 MaxComputeWorkGroupInvocations;
+
+		bool TimestampComputeAndGraphics;
+		float TimestampPeriod;
+	};
+
+	enum ShaderDef
+	{
+		MAX_DIRECTIONAL_LIGHT_COUNT = 8,
+		MAX_POINT_LIGHT_COUNT = 512,
+		MAX_SPOT_LIGHT_COUNT = 32,
+		MAX_POINT_LIGHT_COUNT_PER_TILE = 31,
+		LIGHT_TILE_SIZE = 16,
 
 		SHADOW_CASCADES_COUNT = 4,
 
 		MAX_NUM_BONES_PER_VERTEX = 4,
-		MAX_NUM_BONES = 512,
-
 		MAX_SKYBOX_MAP_LOD = 8,
+
+		// start from 0
+		HIZ_MIP_LEVEL_COUNT = 11,
+		PRECONVOLUTION_MIP_LEVEL_COUNT = 6
 	};
 
-	enum TextureBinder
-	{
-		ALBEDO_MAP = 0,
-		NORMAL_MAP = 1,
-		ROUGHNESS_MAP = 2,
-		METALNESS_MAP = 3,
-		AMBIENT_OCCLUSION_MAP = 4,
-
-		ENVIRONMENT_MAP = 5,
-		IRRADIANCE_MAP = 6,
-		BRDF_LUT = 7,
-
-		SHADOW_MAP = 8,
-		PCF_SAMPLER = 9
-	};
-
-	enum BufferBinder
-	{
-		RENDERER2D_CAMERA_DATA = 0,
-		CAMERA_DATA = 1,
-		SCENE_DATA = 2,
-		ENVIRONMENT_MAP_DATA = 3,
-		ENTITY_DATA = 4,
-		MATERIAL_DATA = 5,
-		SHADOWS_DATA = 6,
-		LIGHT_DATA = 7,
-		BONES_DATA = 8,
-		BLOOM_DATA = 9
-	};
-
-	struct StaticVertex
-	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
-	};
-
-	struct AnimVertex
-	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
-		int BoneIDs[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
-		float Weights[ShaderConstants::MAX_NUM_BONES_PER_VERTEX];
-	};
-
-	class ATHENA_API ShaderLibrary;
+	class ATHENA_API ShaderPack;
 	struct RendererConfig;
 
 	class ATHENA_API Renderer
@@ -81,61 +87,67 @@ namespace Athena
 		enum API
 		{
 			None = 0,
-			OpenGL = 1
+			Vulkan = 1
 		};
 
 	public:
 		static void Init(const RendererConfig& config);
 		static void Shutdown();
 
+		static const RendererConfig& GetConfig();
 		static Renderer::API GetAPI();
 		
-		static void BindShader(std::string_view name);
-		static Ref<ShaderLibrary> GetShaderLibrary();
-		static const String& GetGlobalShaderMacroses();
+		static uint32 GetFramesInFlight();
+		static uint32 GetCurrentFrameIndex();
 
-		static void OnWindowResized(uint32 width, uint32 height);
-
-		static void BindPipeline(const Pipeline& pipeline);
-
-		static void BeginRenderPass(const RenderPass& pass) ;
-		static void EndRenderPass();
-
-		static void BeginComputePass(const ComputePass& pass);
-		static void EndComputePass();
-
-		static void DrawTriangles(const Ref<VertexBuffer>& vertexBuffer, uint32 indexCount = 0);
-		static void DrawLines(const Ref<VertexBuffer>& vertexBuffer, uint32 vertexCount = 0);
-
-		static void Dispatch(uint32 x, uint32 y, uint32 z = 1, Vector3i workGroupSize = { 8, 4, 1 });
-
-		static Ref<Texture2D> GetBRDF_LUT();
-		static Ref<Texture2D> GetWhiteTexture();
-		static Ref<Texture2D> GetBlackTexture();
-
-		static Ref<VertexBuffer> GetCubeVertexBuffer();
-		static Ref<VertexBuffer> GetQuadVertexBuffer();
-
-		static BufferLayout GetStaticVertexLayout();
-		static BufferLayout GetAnimVertexLayout();
-
-		struct Statistics
+		template <typename FuncT>
+		static void Defer(FuncT&& func)
 		{
-			uint32 DrawCalls = 0;
-			uint32 DispatchCalls = 0;
-			uint32 ShadersBinded = 0;
-			uint32 PipelinesBinded = 0;
-			uint32 RenderPasses = 0;
-			uint32 ComputePasses = 0;
-		};
+			GetResourceFreeQueue().Submit(std::forward<FuncT>(func));
+		}
 
-		static const Statistics& GetStatistics();
-		static void ResetStats();
+		template <typename FuncT>
+		static void SubmitResourceFree(FuncT&& func)
+		{
+			GetResourceFreeQueue().Submit(std::forward<FuncT>(func));
+		}
+
+		static void BeginFrame();
+		static void EndFrame();
+
+		static void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 offset = 0, uint32 count = 0);
+		static void FullscreenPass(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<RenderPass>& pass, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
+		static void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer);
+
+		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
+		static void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer);
+		static void InsertExecutionBarrier(const Ref<RenderCommandBuffer>& cmdBuffer);
+
+		static void BlitMipMap(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture>& texture);
+		static void BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture);
+
+		static void BeginDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);
+		static void EndDebugRegion(const Ref<RenderCommandBuffer>& cmdBuffer);
+		static void InsertDebugMarker(const Ref<RenderCommandBuffer>& cmdBuffer, std::string_view name, const Vector4& color);
+
+		static Ref<RenderCommandBuffer> GetRenderCommandBuffer();
+		static const RenderCapabilities& GetRenderCaps();
+		static uint64 GetMemoryUsage();
+
+		static const FilePath& GetShaderPackDirectory();
+		static const FilePath& GetShaderCacheDirectory();
+		static Ref<ShaderPack> GetShaderPack();
+		static const std::unordered_map<String, String>& GetGlobalShaderMacroses();
+		static void SetGlobalShaderMacros(const String& name, const String& value);
+
+	private:
+		static CommandQueue& GetResourceFreeQueue();
 	};
 
 	struct RendererConfig
 	{
-		Renderer::API API = Renderer::API::OpenGL;
-		FilePath ShaderPack;
+		Renderer::API API = Renderer::API::Vulkan;
+		uint32 MaxFramesInFlight = 3;
 	};
 }

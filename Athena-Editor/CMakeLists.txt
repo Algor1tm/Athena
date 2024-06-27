@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+cmake_minimum_required (VERSION 3.24)
 
 project(Athena-Editor)
 
@@ -16,11 +16,6 @@ set_property(TARGET Athena-Editor PROPERTY CXX_STANDARD 20)
 set_property(TARGET Athena-Editor PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  "${CMAKE_SOURCE_DIR}/Athena-Editor")
 set_property(TARGET Athena-Editor PROPERTY FOLDER Tools)
 
-target_compile_definitions(Athena-Editor PUBLIC
-  $<$<CONFIG:Debug>:ATN_DEBUG>
-  $<$<CONFIG:Release>:ATN_RELEASE>
-  ATN_SIMD
-)
 
 # Build folder
 set_target_properties(Athena-Editor
@@ -37,7 +32,10 @@ target_include_directories(Athena-Editor PRIVATE
 	${ENTT_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
 	${IMGUIZMO_INCLUDE_DIR}
+	${OPTICK_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
+	${MSDF_ATLAS_GEN_INCLUDE_DIR}
+	${MSDF_GEN_INCLUDE_DIR}
 )
 
 target_link_libraries(Athena-Editor PRIVATE Athena)

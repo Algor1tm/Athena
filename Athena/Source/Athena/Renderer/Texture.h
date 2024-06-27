@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-
+#include "Athena/Core/Buffer.h"
 #include "Athena/Math/Vector.h"
-
 #include "Athena/Renderer/Color.h"
+#include "Athena/Renderer/RenderResource.h"
 
 #include <array>
 
@@ -14,30 +14,50 @@ namespace Athena
 	enum class TextureFormat
 	{
 		NONE = 0,
-
 		// Color
+		R8,
+		R8_SRGB,
+		RG8,
+		RG8_SRGB,
 		RGB8,
+		RGB8_SRGB,
 		RGBA8,
+		RGBA8_SRGB,
 
+		R32F,
 		RG16F,
-		R11F_G11F_B10F,
 		RGB16F,
+		R11G11B10F,
 		RGB32F,
 		RGBA16F,
 		RGBA32F,
 
-		RED_INTEGER,
-
 		//Depth/Stencil
+		DEPTH16,
 		DEPTH24STENCIL8,
 		DEPTH32F
+	};
+
+	enum TextureUsage
+	{
+		NONE = BIT(0),
+		SAMPLED = BIT(1),
+		STORAGE = BIT(2),
+		ATTACHMENT = BIT(3),
+
+		DEFAULT = SAMPLED
+	};
+
+	enum class TextureType
+	{
+		TEXTURE_2D,
+		TEXTURE_CUBE
 	};
 
 	enum class TextureFilter
 	{
 		LINEAR = 1,
 		NEAREST = 2,
-		LINEAR_MIPMAP_LINEAR = 3
 	};
 
 	enum class TextureWrap
@@ -49,67 +69,178 @@ namespace Athena
 		MIRRORED_CLAMP_TO_EDGE = 5
 	};
 
-	enum class TextureCompareMode
+	enum class TextureCompareOperator
 	{
 		NONE = 0,
-		REF = 1
+		LESS_OR_EQUAL,
+		GREATER_OR_EQUAL
 	};
 
-	enum class TextureCompareFunc
+	struct TextureSamplerCreateInfo
 	{
-		NONE = 0,
-		LEQUAL = 1
-	};
+		bool operator==(const TextureSamplerCreateInfo& other) const = default;
 
-	struct TextureSamplerDescription
-	{
-		TextureFilter MinFilter = TextureFilter::LINEAR;
-		TextureFilter MagFilter = TextureFilter::LINEAR;
+		TextureFilter Filter = TextureFilter::LINEAR;
 		TextureWrap Wrap = TextureWrap::REPEAT;
-
-		LinearColor BorderColor = LinearColor::Black;
-
-		TextureCompareMode CompareMode = TextureCompareMode::NONE;
-		TextureCompareFunc CompareFunc = TextureCompareFunc::NONE;
+		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
 
+	struct TextureViewCreateInfo
+	{
+		bool operator==(const TextureViewCreateInfo& other) const = default;
 
-	class ATHENA_API Texture
+		String Name; // Optional (if empty, it will be generated)
+
+		uint32 BaseMipLevel = 0;
+		uint32 MipLevelCount = 1;
+		uint32 BaseLayer = 0;
+		uint32 LayerCount = 1;
+
+		bool EnableAlphaBlending = true;
+		bool GrayScale = false;
+
+		bool OverrideSampler = false;
+		TextureSamplerCreateInfo Sampler;
+	};
+}
+
+// Hash functions
+namespace std
+{
+	using namespace Athena;
+
+	template<>
+	struct hash<TextureSamplerCreateInfo>
+	{
+		size_t operator()(const TextureSamplerCreateInfo& value) const
+		{
+			string str = std::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
+			return hash<string>()(str);
+		}
+	};
+
+	template<>
+	struct hash<TextureViewCreateInfo>
+	{
+		size_t operator()(const TextureViewCreateInfo& value) const
+		{
+			size_t hash = value.BaseMipLevel ^ value.MipLevelCount + value.BaseLayer ^ value.LayerCount;
+			hash = (hash << 1) + value.EnableAlphaBlending;
+			hash = (hash << 1) + value.GrayScale;
+			hash = (hash << 1) + value.OverrideSampler;
+			return hash;
+		}
+	};
+}
+
+namespace Athena
+{
+	class Texture;
+
+	class ATHENA_API TextureView : public RenderResource
 	{
 	public:
-		virtual ~Texture() = default;
+		static Ref<TextureView> Create(const Ref<Texture>& texture, const TextureViewCreateInfo& info);
+		virtual ~TextureView() = default;
 
-		inline void* GetRendererID() const { return (void*)m_RendererID; };
+		virtual void Invalidate() = 0;
 
-		virtual void Bind(uint32 slot = 0) const = 0;
-		virtual void BindAsImage(uint32 slot = 0, uint32 level = 0) = 0;
+		virtual const String& GetName() const override { return m_Info.Name; }
 
-		virtual bool IsLoaded() const = 0;
+		Texture* GetTexture() const { return m_Texture; }
+		const TextureViewCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
-		uint64 m_RendererID = 0;
+		Texture* m_Texture;	// TODO: use WeakRef
+		TextureViewCreateInfo m_Info;
+	};
+
+	struct TextureCreateInfo
+	{
+		String Name;
+		TextureFormat Format = TextureFormat::RGBA8;
+		TextureUsage Usage = TextureUsage::DEFAULT;
+		uint32 Width = 1;
+		uint32 Height = 1;
+		uint32 Layers = 1;
+		bool GenerateMipMap = false;
+		TextureSamplerCreateInfo Sampler;
+	};
+
+	class ATHENA_API Texture : public RenderResource
+	{
+	public:
+		virtual ~Texture();
+
+		virtual TextureType GetType() const = 0;
+
+		virtual void Resize(uint32 width, uint32 height) = 0;
+		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
+
+		virtual void WriteContentToBuffer(Buffer* dstBuffer) = 0;
+		virtual uint32 GetImageLayerCount() const = 0;
+
+		Vector2u GetMipSize(uint32 mip) const;
+		uint32 GetMipLevelsCount() const;
+
+		Ref<TextureView> GetMipView(uint32 mip);
+		Ref<TextureView> GetLayerView(uint32 layer);
+		Ref<TextureView> GetView(const TextureViewCreateInfo& info);
+		void InvalidateViews();
+		void ClearViews();
+
+		uint32 GetWidth() const { return m_Info.Width; }
+		uint32 GetHeight() const { return m_Info.Height; }
+		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
+		TextureFormat GetFormat() const { return m_Info.Format; }
+
+		const TextureCreateInfo& GetInfo() const { return m_Info; };
+
+	public:
+		static bool IsDepthFormat(TextureFormat format);
+		static bool IsStencilFormat(TextureFormat format);
+		static bool IsColorFormat(TextureFormat format);
+		static bool IsHDRFormat(TextureFormat format);
+		static uint32 BytesPerPixel(TextureFormat format);
+		static uint32 ChannelsNum(TextureFormat format);
+
+	protected:
+		TextureCreateInfo m_Info;
+		std::unordered_map<TextureViewCreateInfo, Ref<TextureView>> m_TextureViews;
 	};
 
 
-	class ATHENA_API Texture2D: public Texture
+	class ATHENA_API Texture2D : public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(const FilePath& path, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer data = Buffer());
 
-		static Ref<Texture2D> Create(const void* Data, uint32 Width, uint32 Height, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
 
-		static Ref<Texture2D> Create(TextureFormat Format, uint32 Width, uint32 Height, 
-			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
+		virtual const String& GetName() const override { return m_Info.Name; }
 
-		virtual uint32 GetWidth() const = 0;
-		virtual uint32 GetHeight() const = 0;
+		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers; }
+		const FilePath& GetFilePath() const { return m_FilePath; }
 
-		virtual void SetData(const void* data, uint32 size) = 0;
-		virtual const FilePath& GetFilePath() const = 0;
+	private:
+		friend class TextureImporter;
 
-		bool operator==(const Texture2D& other) const { return GetRendererID() == other.GetRendererID(); }
+	private:
+		FilePath m_FilePath;
+	};
+
+	class ATHENA_API TextureCube: public Texture
+	{
+	public:
+		static Ref<TextureCube> Create(const TextureCreateInfo& info, Buffer data = Buffer());
+
+		virtual TextureType GetType() const override { return TextureType::TEXTURE_CUBE; }
+
+		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::TextureCube; }
+		virtual const String& GetName() const override { return m_Info.Name; }
+
+		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
 	};
 
 	class ATHENA_API Texture2DInstance
@@ -133,35 +264,109 @@ namespace Athena
 	};
 
 
-	enum class TextureCubeTarget
+	inline bool Texture::IsDepthFormat(TextureFormat format)
 	{
-		POSITIVE_X = 1,
-		NEGATIVE_X = 2,
-		POSITIVE_Y = 3,
-		NEGATIVE_Y = 4,
-		POSITIVE_Z = 5,
-		NEGATIVE_Z = 6,
-	};
+		switch (format)
+		{
+		case TextureFormat::DEPTH16:		 return true;
+		case TextureFormat::DEPTH24STENCIL8: return true;
+		case TextureFormat::DEPTH32F:		 return true;
+		}
 
-	class ATHENA_API TextureCube: public Texture
+		return false;
+	}
+
+	inline bool Texture::IsStencilFormat(TextureFormat format)
 	{
-	public:
-		static Ref<TextureCube> Create(const std::array<std::pair<TextureCubeTarget, FilePath>, 6>& faces, 
-			bool sRGB = false, const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+		switch (format)
+		{
+		case TextureFormat::DEPTH24STENCIL8: return true;
+		}
 
-		static Ref<TextureCube> Create(TextureFormat format, uint32 width, uint32 height, 
-			const TextureSamplerDescription& samplerDesc = TextureSamplerDescription());
+		return false;
+	}
 
-		virtual void GenerateMipMap(uint32 maxLevel) = 0;
-		virtual void SetFilters(TextureFilter min, TextureFilter mag) = 0;
-	};
-
-	class ATHENA_API TextureSampler
+	inline bool Texture::IsColorFormat(TextureFormat format)
 	{
-	public:
-		static Ref<TextureSampler> Create(const TextureSamplerDescription& desc);
-		
-		virtual void Bind(uint32 slot) const = 0;
-		virtual void UnBind(uint32 slot) const = 0;
-	};
+		return !IsDepthFormat(format) && !IsStencilFormat(format);
+	}
+
+	inline bool Texture::IsHDRFormat(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TextureFormat::R32F:		return true;
+		case TextureFormat::RG16F:		return true;
+		case TextureFormat::R11G11B10F: return true;
+		case TextureFormat::RGB16F:		return true;
+		case TextureFormat::RGB32F:		return true;
+		case TextureFormat::RGBA16F:	return true;
+		case TextureFormat::RGBA32F:	return true;
+		case TextureFormat::DEPTH32F:	return true;
+		}
+
+		return false;
+	}
+
+	inline uint32 Texture::BytesPerPixel(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TextureFormat::R8:			   return 1;
+		case TextureFormat::R8_SRGB:	   return 1;
+		case TextureFormat::RG8:		   return 2;
+		case TextureFormat::RG8_SRGB:	   return 2;
+		case TextureFormat::RGB8:		   return 3 * 1;
+		case TextureFormat::RGB8_SRGB:	   return 3 * 1;
+		case TextureFormat::RGBA8:		   return 4 * 1;
+		case TextureFormat::RGBA8_SRGB:	   return 4 * 1;
+
+		case TextureFormat::R32F:		   return 1 * 4;
+		case TextureFormat::RG16F:		   return 2 * 2;
+		case TextureFormat::R11G11B10F:	   return 4;
+		case TextureFormat::RGB16F:		   return 3 * 2;
+		case TextureFormat::RGB32F:		   return 3 * 4;
+		case TextureFormat::RGBA16F:	   return 4 * 2;
+		case TextureFormat::RGBA32F:	   return 4 * 4;
+
+		case TextureFormat::DEPTH16:    	 return 2;
+		case TextureFormat::DEPTH24STENCIL8: return 4;
+		case TextureFormat::DEPTH32F:		 return 4;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return false;
+	}
+
+	inline uint32 Texture::ChannelsNum(TextureFormat format)
+	{
+		switch (format)
+		{
+		case TextureFormat::R8:			   
+		case TextureFormat::R8_SRGB:
+		case TextureFormat::R32F:
+		case TextureFormat::DEPTH16:
+		case TextureFormat::DEPTH32F: 
+			return 1;
+		case TextureFormat::RG8:
+		case TextureFormat::RG8_SRGB:
+		case TextureFormat::RG16F:
+		case TextureFormat::DEPTH24STENCIL8: 
+			return 2;
+		case TextureFormat::RGB8:
+		case TextureFormat::RGB8_SRGB:	
+		case TextureFormat::R11G11B10F:	 
+		case TextureFormat::RGB16F:	
+		case TextureFormat::RGB32F:
+			return 3;
+		case TextureFormat::RGBA8:	
+		case TextureFormat::RGBA8_SRGB:
+		case TextureFormat::RGBA16F:
+		case TextureFormat::RGBA32F:
+			return 4;
+		}
+
+		ATN_CORE_ASSERT(false);
+		return false;
+	}
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Matrix.h"
-#include "Vector4.h"
+#include "Athena/Math/TypesImpl/Matrix.h"
+#include "Athena/Math/TypesImpl/Vector4.h"
 
 #include "Athena/Math/Trigonometric.h"
 
@@ -439,6 +439,26 @@ namespace Athena::Math
 		T OneOverDeterminant = static_cast<T>(1) / Dot1;
 
 		return Inverse * OneOverDeterminant;
+	}
+}
+
+namespace Athena
+{
+	template <>
+	inline String ToString<Math::Matrix<float, 4, 4>>(const Math::Matrix<float, 4, 4>& mat)
+	{
+		std::stringstream stream;
+		stream << "Matrix(";
+		for (uint32 i = 0; i < 4; ++i)
+		{
+			for (uint32 j = 0; j < 4; ++j)
+			{
+				stream << mat[i][j] << ", ";
+			}
+
+			stream << "\n                   ";
+		}
+		return stream.str();
 	}
 }
 

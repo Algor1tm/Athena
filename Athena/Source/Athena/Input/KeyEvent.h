@@ -11,7 +11,7 @@ namespace Athena
 	class ATHENA_API KeyEvent: public Event
 	{
 	public:
-		inline Keyboard::Key GetKeyCode() const { return m_KeyCode; }
+		Keyboard::Key GetKeyCode() const { return m_KeyCode; }
 
 		EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
 
@@ -26,15 +26,25 @@ namespace Athena
 	class ATHENA_API KeyPressedEvent: public KeyEvent
 	{
 	public:
-		KeyPressedEvent(Keyboard::Key keycode, bool isRepeat)
-			: KeyEvent(keycode), m_IsRepeat(isRepeat) {}
+		KeyPressedEvent(Keyboard::Key keycode, bool isRepeat, bool ctrl = false, bool alt = false, bool shift = false)
+			: KeyEvent(keycode), m_IsRepeat(isRepeat), 
+			m_Ctrl(ctrl), m_Alt(alt), m_Shift(shift) {}
 
-		inline bool IsRepeat() const { return m_IsRepeat; }
+		bool IsRepeat() const { return m_IsRepeat; }
+
+		bool IsCtrlPressed() const { return m_Ctrl; }
+		bool IsAltPressed() const { return m_Alt; }
+		bool IsShiftPressed() const { return m_Shift; }
 
 		virtual String ToString() const override
 		{
 			std::stringstream stream;
-			stream << "KeyPressedEvent: " << m_KeyCode << " (Is repeat - " << m_IsRepeat << ")";
+			stream << "KeyPressedEvent: " << m_KeyCode;
+			stream << " (repeat - " << std::boolalpha << m_IsRepeat;
+			stream << ", ctrl - " << std::boolalpha << m_Ctrl;
+			stream << ", alt - " << std::boolalpha << m_Alt;
+			stream << ", shift - " << std::boolalpha << m_Shift << ")";
+
 			return stream.str();
 		}
 
@@ -42,14 +52,20 @@ namespace Athena
 
 	private:
 		bool m_IsRepeat;
+		bool m_Ctrl, m_Alt, m_Shift;
 	};
 
 
 	class ATHENA_API KeyReleasedEvent : public KeyEvent
 	{
 	public:
-		KeyReleasedEvent(Keyboard::Key keycode)
-			: KeyEvent(keycode) {}
+		KeyReleasedEvent(Keyboard::Key keycode, bool ctrl = false, bool alt = false, bool shift = false)
+			: KeyEvent(keycode),
+			m_Ctrl(ctrl), m_Alt(alt), m_Shift(shift) {}
+
+		bool IsCtrlPressed() const { return m_Ctrl; }
+		bool IsAltPressed() const { return m_Alt; }
+		bool IsShiftPressed() const { return m_Shift; }
 
 		virtual String ToString() const override
 		{
@@ -59,6 +75,9 @@ namespace Athena
 		}
 
 		EVENT_CLASS_TYPE(KeyReleased)
+
+	private:
+		bool m_Ctrl, m_Alt, m_Shift;
 	};
 
 
@@ -67,7 +86,6 @@ namespace Athena
 	public:
 		KeyTypedEvent(Keyboard::Key keycode)
 			: KeyEvent(keycode) {}
-
 
 		virtual String ToString() const override
 		{

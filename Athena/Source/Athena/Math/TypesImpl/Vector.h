@@ -560,19 +560,3 @@ namespace Athena::Math
 		return (left - right).Length();
 	}
 }
-
-
-namespace Athena
-{
-	template <typename T, uint32 Size>
-	inline String ToString(const Math::Vector<T, Size>& vec)
-	{
-		std::stringstream stream;
-		stream << "Vector" << vec.Size() << "(";
-		for (uint32 i = 0; i < vec.Size() - 1; ++i)
-			stream << vec[i] << ", ";
-		stream << vec[vec.Size() - 1] << ")";
-		return stream.str();
-	}
-}
-

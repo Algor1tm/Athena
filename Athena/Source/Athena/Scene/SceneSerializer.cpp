@@ -1,7 +1,7 @@
 #include "Athena/Scene/SceneSerializer.h"
 
 #include "Athena/Core/FileSystem.h"
-
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
 
@@ -156,7 +156,6 @@ namespace YAML
 	}
 }
 
-#define SERIALIZE_MATERIALS 0	// TODO: Serialize materials
 
 namespace Athena
 {
@@ -168,13 +167,15 @@ namespace Athena
 
 	void SceneSerializer::SerializeToFile(const FilePath& path)
 	{
+		ATN_PROFILE_FUNC();
+
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->GetSceneName();
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
 			{
-				Entity entity = { entityID, m_Scene.get() };
+				Entity entity = { entityID, m_Scene.Raw() };
 				if (!entity)
 					return;
 
@@ -183,35 +184,22 @@ namespace Athena
 
 		out << YAML::EndSeq;
 
-		auto env = m_Scene->GetEnvironment();
-		out << YAML::Key << "Environment";
-		out << YAML::BeginMap;
-
-		if (env)
-		{
-			String filepath = env->EnvironmentMap ? env->EnvironmentMap->GetFilePath().string() : "";
-			out << YAML::Key << "EnvMap FilePath" << filepath;
-			out << YAML::Key << "Ambient Light Intensity" << YAML::Value << env->AmbientLightIntensity;
-			out << YAML::Key << "EnvMap LOD" << YAML::Value << env->EnvironmentMapLOD;
-			out << YAML::Key << "Exposure" << YAML::Value << env->Exposure;
-			out << YAML::Key << "Gamma" << YAML::Value << env->Gamma;
-		}
-
-		out << YAML::EndMap;
-
 		out << YAML::EndMap;
 
 		std::ofstream fout(path);
 		fout << out.c_str();
 	}
 
-	void SceneSerializer::SerializeRuntime(const FilePath& path)
-	{
-		ATN_CORE_ASSERT(false, "Not Implemented");
-	}
-
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
+		ATN_PROFILE_FUNC();
+
+		if (!FileSystem::Exists(path))
+		{
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Invalid scene filepath {}", path);
+			return false;
+		}
+
 		std::ifstream stream(path);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
@@ -220,39 +208,20 @@ namespace Athena
 		try
 		{
 			data = YAML::Load(strStream.str());
-		}
-		catch (const YAML::ParserException& ex)
-		{
-			ATN_CORE_ERROR("Failed to deserialize scene '{0}'\n {1}", path, ex.what());
-			return false;
-		}
 
-		if (!data["Scene"])
-			return false;
+			if (!data["Scene"])
+			{
+				ATN_CORE_ERROR_TAG("SceneSerializer", "Failed to deserialize scene {0}", path);
+				return false;
+			}
 
-		String sceneName = data["Scene"].as<String>();
-		m_Scene->SetSceneName(sceneName);
+			String sceneName = data["Scene"].as<String>();
+			m_Scene->SetSceneName(sceneName);
 
-		Ref<Environment> environment = CreateRef<Environment>();
-		const auto& envNode = data["Environment"];
-		if (envNode)
-		{
-			FilePath envPath = envNode["EnvMap FilePath"].as<String>();
-			if(!envPath.empty())
-				environment->EnvironmentMap = EnvironmentMap::Create(envPath);
+			const auto& entities = data["Entities"];
+			if (!entities)
+				return false;
 
-			environment->AmbientLightIntensity = envNode["Ambient Light Intensity"].as<float>();
-			environment->EnvironmentMapLOD = envNode["EnvMap LOD"].as<float>();
-			environment->Exposure = envNode["Exposure"].as<float>();
-			environment->Gamma = envNode["Gamma"].as<float>();
-		}
-
-		m_Scene->SetEnvironment(environment);
-
-
-		const auto& entities = data["Entities"];
-		if (entities)
-		{
 			for (const auto& entityNode : entities)
 			{
 				uint64 uuid = 0;
@@ -269,19 +238,7 @@ namespace Athena
 						name = tagComponentNode["Tag"].as<String>();
 				}
 
-				bool isRoot = false;
-				{
-					const auto& rootComponentNode = entityNode["RootComponent"];
-					if (rootComponentNode)
-					{
-						Entity root = m_Scene->GetRootEntity();
-						root.GetComponent<TagComponent>().Tag = name;
-						m_Scene->SetEntityUUID(root, uuid);
-						isRoot = true;
-					}
-				}
-
-				Entity deserializedEntity = isRoot ? m_Scene->GetRootEntity() : m_Scene->CreateEntity(name, uuid);
+				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
 
 				{
 					const auto& transformComponentNode = entityNode["TransformComponent"];
@@ -312,17 +269,17 @@ namespace Athena
 
 						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
 
-						SceneCamera::PerspectiveDescription perspectiveDesc;
-						perspectiveDesc.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
-						perspectiveDesc.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
-						perspectiveDesc.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
-						cc.Camera.SetPerspectiveData(perspectiveDesc);
+						SceneCamera::PerspectiveData perspectiveData;
+						perspectiveData.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
+						perspectiveData.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
+						perspectiveData.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
+						cc.Camera.SetPerspectiveData(perspectiveData);
 
-						SceneCamera::OrthographicDescription orthoDesc;
-						orthoDesc.Size = cameraPropsNode["OrthographicSize"].as<float>();
-						orthoDesc.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
-						orthoDesc.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
-						cc.Camera.SetOrthographicData(orthoDesc);
+						SceneCamera::OrthographicData orthoData;
+						orthoData.Size = cameraPropsNode["OrthographicSize"].as<float>();
+						orthoData.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
+						orthoData.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
+						cc.Camera.SetOrthographicData(orthoData);
 
 						cc.Primary = cameraComponentNode["Primary"].as<bool>();
 						cc.FixedAspectRatio = cameraComponentNode["FixedAspectRatio"].as<bool>();
@@ -335,6 +292,7 @@ namespace Athena
 					{
 						auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
 
+						sprite.Space = (Renderer2DSpace)spriteComponentNode["Space"].as<int>();
 						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
 
 						std::array<Vector2, 4> texCoords;
@@ -348,7 +306,7 @@ namespace Athena
 						const auto& path = FilePath(textureNode.as<String>());
 						if (!path.empty())
 						{
-							Ref<Texture2D> texture = Texture2D::Create(path);
+							Ref<Texture2D> texture = TextureImporter::Load(path, true);
 							sprite.Texture = Texture2DInstance(texture, texCoords);
 						}
 						else
@@ -366,9 +324,29 @@ namespace Athena
 					{
 						auto& circle = deserializedEntity.AddComponent<CircleComponent>();
 
+						circle.Space = (Renderer2DSpace)circleComponentNode["Space"].as<int>();
 						circle.Color = circleComponentNode["Color"].as<LinearColor>();
 						circle.Thickness = circleComponentNode["Thickness"].as<float>();
 						circle.Fade = circleComponentNode["Fade"].as<float>();
+					}
+				}
+
+				{
+					const auto& textComponentNode = entityNode["TextComponent"];
+					if (textComponentNode)
+					{
+						auto& text = deserializedEntity.AddComponent<TextComponent>();
+
+						text.Text = textComponentNode["Text"].as<String>();
+						text.Font = Font::Create(textComponentNode["Font"].as<String>());
+						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
+						text.Color = textComponentNode["Color"].as<LinearColor>();
+						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
+						text.Kerning = textComponentNode["Kerning"].as<float>();
+						text.LineSpacing = textComponentNode["LineSpacing"].as<float>();
+						text.Shadowing = textComponentNode["Shadowing"].as<bool>();
+						text.ShadowDistance = textComponentNode["ShadowDistance"].as<float>();
+						text.ShadowColor = textComponentNode["ShadowColor"].as<LinearColor>();
 					}
 				}
 
@@ -424,7 +402,7 @@ namespace Athena
 						FilePath path = staticMeshComponentNode["FilePath"].as<String>();
 
 						meshComp.Mesh = StaticMesh::Create(path);
-						meshComp.Hide = staticMeshComponentNode["Hide"].as<bool>();
+						meshComp.Visible = staticMeshComponentNode["Visible"].as<bool>();
 					}
 				}
 
@@ -436,6 +414,8 @@ namespace Athena
 
 						lightComp.Color = directionalLightComponent["Color"].as<LinearColor>();
 						lightComp.Intensity = directionalLightComponent["Intensity"].as<float>();
+						lightComp.CastShadows = directionalLightComponent["CastShadows"].as<bool>();
+						lightComp.LightSize = directionalLightComponent["LightSize"].as<float>();
 					}
 				}
 
@@ -450,8 +430,44 @@ namespace Athena
 						lightComp.FallOff = pointLightComponent["FallOff"].as<float>();
 					}
 				}
+
+				{
+					const auto pointLightComponent = entityNode["SpotLightComponent"];
+					if (pointLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<SpotLightComponent>();
+						lightComp.Color = pointLightComponent["Color"].as<LinearColor>();
+						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
+						lightComp.SpotAngle = pointLightComponent["SpotAngle"].as<float>();
+						lightComp.InnerFallOff = pointLightComponent["InnerFallOff"].as<float>();
+						lightComp.Range = pointLightComponent["Range"].as<float>();
+						lightComp.RangeFallOff = pointLightComponent["RangeFallOff"].as<float>();
+					}
+				}
+
+				{
+					const auto skyLightComponent = entityNode["SkyLightComponent"];
+					if (skyLightComponent)
+					{
+						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
+						const auto& envMap = lightComp.EnvironmentMap;
+
+						envMap->SetResolution(skyLightComponent["Resolution"].as<uint32>());
+						envMap->SetType((EnvironmentMapType)skyLightComponent["Type"].as<uint32>());
+						envMap->SetFilePath(skyLightComponent["FilePath"].as<String>());
+
+						float turbidity = skyLightComponent["Turbidity"].as<float>();
+						float azimuth = skyLightComponent["Azimuth"].as<float>();
+						float inclination = skyLightComponent["Inclination"].as<float>();
+						envMap->SetPreethamParams(turbidity, azimuth, inclination);
+
+						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
+						lightComp.LOD = skyLightComponent["LOD"].as<float>();
+					}
+				}
 			}
 
+			// Build Entity Hierarchy
 			for (const auto& entityNode : entities)
 			{
 				uint64 uuid = 0;
@@ -464,28 +480,27 @@ namespace Athena
 				Entity entity = m_Scene->GetEntityByUUID(uuid);
 				
 				{
-					const auto& childComponentNode = entityNode["ChildComponent"];
-					if (childComponentNode)
+					const auto& parentComponentNode = entityNode["ParentComponent"];
+					if (parentComponentNode)
 					{
-						UUID parentID = childComponentNode["Parent"].as<uint64>();
+						UUID parentID = parentComponentNode["Parent"].as<uint64>();
 						Entity parent = m_Scene->GetEntityByUUID(parentID);
 
 						if (parent)
-							m_Scene->MakeParent(parent, entity);
+							m_Scene->MakeRelationship(parent, entity);
 					}
 				}
 			}
+
+			m_Scene->LoadAllScripts();
+		}
+		catch (const YAML::Exception& ex)
+		{
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
+			return false;
 		}
 
-		m_Scene->LoadAllScripts();
-
 		return true;
-	}
-
-	bool SceneSerializer::DeserializeRuntime(const FilePath& path)
-	{
-		ATN_CORE_ASSERT(false, "Not Implemented");
-		return false;
 	}
 
 	template <typename Component, typename Func>
@@ -506,7 +521,7 @@ namespace Athena
 	{
 		if (!entity.HasComponent<IDComponent>() && !entity.HasComponent<TagComponent>())
 		{
-			ATN_CORE_ERROR("Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
+			ATN_CORE_ERROR_TAG("SceneSerializer", "Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
 			return;
 		}
 
@@ -531,16 +546,10 @@ namespace Athena
 				output << YAML::Key << "Scale" << YAML::Value << transform.Scale;
 			});
 
-		SerializeComponent<RootComponent>(out, "RootComponent", entity,
-			[](YAML::Emitter& output, const RootComponent& childCmp)
+		SerializeComponent<ParentComponent>(out, "ParentComponent", entity,
+			[](YAML::Emitter& output, const ParentComponent& parentCmp)
 			{
-
-			});
-
-		SerializeComponent<ChildComponent>(out, "ChildComponent", entity,
-			[](YAML::Emitter& output, const ChildComponent& childCmp)
-			{
-				uint64 parentID = (uint64)childCmp.Parent.GetComponent<IDComponent>().ID;
+				uint64 parentID = (uint64)parentCmp.Parent.GetComponent<IDComponent>().ID;
 				output << YAML::Key << "Parent" << YAML::Value << parentID;
 			});
 
@@ -576,6 +585,7 @@ namespace Athena
 		SerializeComponent<SpriteComponent>(out, "SpriteComponent", entity,
 			[](YAML::Emitter& output, const SpriteComponent& sprite)
 			{
+				output << YAML::Key << "Space" << YAML::Value << (int)sprite.Space;
 				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
 				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilePath().string();
 
@@ -593,9 +603,24 @@ namespace Athena
 
 		SerializeComponent<CircleComponent>(out, "CircleComponent", entity, [](YAML::Emitter& output, const CircleComponent& circle)
 			{
+				output << YAML::Key << "Space" << YAML::Value << (int)circle.Space;
 				output << YAML::Key << "Color" << YAML::Value << circle.Color;
 				output << YAML::Key << "Thickness" << YAML::Value << circle.Thickness;
 				output << YAML::Key << "Fade" << YAML::Value << circle.Fade;
+			});
+
+		SerializeComponent<TextComponent>(out, "TextComponent", entity, [](YAML::Emitter& output, const TextComponent& text)
+			{
+				output << YAML::Key << "Text" << YAML::Value << text.Text;
+				output << YAML::Key << "Font" << YAML::Value << text.Font->GetFilePath().string();
+				output << YAML::Key << "Space" << YAML::Value << (int)text.Space;
+				output << YAML::Key << "Color" << YAML::Value << text.Color;
+				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;
+				output << YAML::Key << "Kerning" << YAML::Value << text.Kerning;
+				output << YAML::Key << "LineSpacing" << YAML::Value << text.LineSpacing;
+				output << YAML::Key << "Shadowing" << YAML::Value << text.Shadowing;
+				output << YAML::Key << "ShadowDistance" << YAML::Value << text.ShadowDistance;
+				output << YAML::Key << "ShadowColor" << YAML::Value << text.ShadowColor;
 			});
 
 		SerializeComponent<Rigidbody2DComponent>(out, "Rigidbody2DComponent", entity,
@@ -634,15 +659,16 @@ namespace Athena
 			{
 				Ref<StaticMesh> mesh = meshComponent.Mesh;
 				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath().string();
-				output << YAML::Key << "Hide" << YAML::Value << meshComponent.Hide;
+				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
 			});
-
 
 		SerializeComponent<DirectionalLightComponent>(out, "DirectionalLightComponent", entity,
 			[](YAML::Emitter& output, const DirectionalLightComponent& lightComponent)
 			{
 				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "CastShadows" << YAML::Value << lightComponent.CastShadows;
+				output << YAML::Key << "LightSize" << YAML::Value << lightComponent.LightSize;
 			});
 
 		SerializeComponent<PointLightComponent>(out, "PointLightComponent", entity,
@@ -652,6 +678,32 @@ namespace Athena
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 				output << YAML::Key << "Radius" << YAML::Value << lightComponent.Radius;
 				output << YAML::Key << "FallOff" << YAML::Value << lightComponent.FallOff;
+			});
+
+		SerializeComponent<SpotLightComponent>(out, "SpotLightComponent", entity,
+			[](YAML::Emitter& output, const SpotLightComponent& lightComponent)
+			{
+				output << YAML::Key << "Color" << YAML::Value << lightComponent.Color;
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "SpotAngle" << YAML::Value << lightComponent.SpotAngle;
+				output << YAML::Key << "InnerFallOff" << YAML::Value << lightComponent.InnerFallOff;
+				output << YAML::Key << "Range" << YAML::Value << lightComponent.Range;
+				output << YAML::Key << "RangeFallOff" << YAML::Value << lightComponent.RangeFallOff;
+			});
+
+
+		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
+			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
+			{
+				const auto& envMap = lightComponent.EnvironmentMap;
+				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
+				output << YAML::Key << "LOD" << YAML::Value << lightComponent.LOD;
+				output << YAML::Key << "Resolution" << envMap->GetResolution();
+				output << YAML::Key << "Type" << (int)envMap->GetType();
+				output << YAML::Key << "FilePath" << envMap->GetFilePath().string();
+				output << YAML::Key << "Turbidity" << envMap->GetTurbidity();
+				output << YAML::Key << "Azimuth" << envMap->GetAzimuth();
+				output << YAML::Key << "Inclination" << envMap->GetInclination();
 			});
 
 		out << YAML::EndMap;

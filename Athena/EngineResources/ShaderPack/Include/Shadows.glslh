@@ -1,0 +1,359 @@
+//////////////////////// Athena Shadows ////////////////////////
+
+// References:
+// https://github.com/TheMasonX/UnityPCSS/blob/master/Assets/PCSS/Shaders/PCSS.shader
+// https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
+
+
+#define DEBUG_BLEND_CASCADES
+#define ROTATE_SAMPLE
+
+#define SHADOWS_PRESET 1
+
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 0)
+	#define BLOCKER_SEARCH_SAMPLES 16
+	#define PCF_SEARCH_SAMPLES	   16
+	#define BLEND_CASCADES		   0
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 1)
+	#define BLOCKER_SEARCH_SAMPLES 16
+	#define PCF_SEARCH_SAMPLES	   16
+	#define BLEND_CASCADES		   1
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 2)
+	#define BLOCKER_SEARCH_SAMPLES 16
+	#define PCF_SEARCH_SAMPLES	   32
+	#define BLEND_CASCADES		   1
+#endif
+/*--------------------------------------------------------------------------*/
+#if (SHADOWS_PRESET == 3)
+	#define BLOCKER_SEARCH_SAMPLES 32
+	#define PCF_SEARCH_SAMPLES	   64
+	#define BLEND_CASCADES		   1
+#endif
+/*--------------------------------------------------------------------------*/
+
+#include "PoissonDisk.glslh"
+
+layout(std140, set = 1, binding = 5) uniform u_ShadowsData
+{
+	mat4 u_DirLightViewProjection[SHADOW_CASCADES_COUNT];
+	vec4 u_CascadePlanes[SHADOW_CASCADES_COUNT];	// stores only x and y (near and far)
+	float u_ShadowMaxDistance;
+	float u_MaxDistanceFadeOut;
+    float u_CascadeBlendDistance;
+    float u_BiasGradient;
+	int u_SoftShadows;
+    vec3 _Pad0;
+};
+
+layout(set = 1, binding = 6) uniform sampler2DArray u_DirShadowMap;
+layout(set = 1, binding = 7) uniform sampler2DArrayShadow u_DirShadowMapShadow;
+layout(set = 1, binding = 8) uniform sampler2D u_PCSSNoise;
+
+/*
+=========================================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++    Helper Methods    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=========================================================================================================================================
+*/
+
+float SampleShadowMap_Hard(vec2 uv, int cascade)
+{
+    return texture(u_DirShadowMap, vec3(uv, cascade)).r;
+}
+
+float SampleShadowMap_Soft(vec3 shadowCoords, int cascade)
+{
+    return texture(u_DirShadowMapShadow, vec4(shadowCoords.xy, cascade, shadowCoords.z));
+}
+
+vec2 SamplePoissonPCF(int i)
+{
+    #if (PCF_SEARCH_SAMPLES == 16)
+        return PoissonDisk_16[i];
+    #elif (PCF_SEARCH_SAMPLES == 32)
+        return PoissonDisk_32[i];
+    #elif (PCF_SEARCH_SAMPLES == 64)
+        return PoissonDisk_64[i];
+    #endif
+}
+
+vec2 SamplePoissonBlocker(int i)
+{
+    #if (BLOCKER_SEARCH_SAMPLES == 16)
+        return PoissonDisk_16[i];
+    #elif (BLOCKER_SEARCH_SAMPLES == 32)
+        return PoissonDisk_32[i];
+    #elif (BLOCKER_SEARCH_SAMPLES == 64)
+        return PoissonDisk_64[i];
+    #endif
+}
+
+vec3 GetShadowCoords(vec3 worldPos, int cascade)
+{
+	 vec4 lightSpacePosition = u_DirLightViewProjection[cascade] * vec4(worldPos, 1.0);
+     vec2 uv = 0.5 * lightSpacePosition.xy / lightSpacePosition.w + 0.5;
+     return vec3(uv, lightSpacePosition.z);
+}
+
+float GetBias(vec3 normal, vec3 lightDir)
+{
+    float theta = dot(-normal, lightDir);
+    return -max(0.001 * sqrt(1 - theta * theta) / theta, 0.001); // tan(acos(theta)
+
+    //return -max(0.0012 * (1.0 - dot(-normal, lightDir)), 0.0012);
+}
+
+vec2 Rotate(vec2 pos, vec2 rotationTrig)
+{
+	return vec2(pos.x * rotationTrig.x - pos.y * rotationTrig.y, pos.y * rotationTrig.x + pos.x * rotationTrig.y);
+}
+
+/*
+=========================================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++   Cascades    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=========================================================================================================================================
+*/
+
+int GetShadowCascade(float depthViewSpace)
+{
+    int cascade = SHADOW_CASCADES_COUNT;
+    for(int i = 0; i < SHADOW_CASCADES_COUNT; ++i)
+    {
+        if(depthViewSpace < u_CascadePlanes[i].y)
+        {
+            cascade = i;
+            break;
+        }
+    }
+
+    return cascade;
+}
+
+float GetShadowMaxDistanceFade(float distanceFromCamera)
+{
+    float maxDistance = u_ShadowMaxDistance;
+    float fadeOut = u_MaxDistanceFadeOut;
+
+    return clamp(smoothstep(0.0, 1.0, (distanceFromCamera - (maxDistance - fadeOut)) / fadeOut), 0.0, 1.0);
+}
+
+float GetCascadeScale(int cascade)
+{
+    float scale = 1.0;
+    switch(cascade)
+    {
+    case 0: scale = 1.0; break;
+    case 1: scale = 1.5; break;
+    case 2: scale = 1.5; break;
+    case 3: scale = 1.5; break;
+    }
+    
+    return 1.0 / scale;
+}
+
+/*
+=========================================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++   PCSS    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=========================================================================================================================================
+*/
+
+float PenumbraSize(float zReceiver, float zBlocker)
+{
+    return (zReceiver - zBlocker) / zBlocker;
+}
+
+vec2 FindBlocker(vec2 uv, float depth, int cascade, float searchSize, float bias, float scale, vec2 rotationTrig)
+{
+	float numBlockers = 0.0;
+	float blockerSum = 0.0;
+    float depthBiased = depth + bias * u_BiasGradient;
+
+	for(int i = 0; i < BLOCKER_SEARCH_SAMPLES; ++i)
+	{
+		vec2 offset = SamplePoissonBlocker(i) * searchSize * scale;
+
+#if defined(ROTATE_SAMPLE)
+		offset = Rotate(offset, rotationTrig);
+#endif
+
+		float shadowMapDepth = SampleShadowMap_Hard(uv + offset, cascade);
+
+		if(shadowMapDepth < depthBiased)
+		{
+			blockerSum += shadowMapDepth;
+			numBlockers += 1.0;
+		}
+	}
+
+	float avgBlockerDepth = blockerSum / numBlockers;
+
+	return vec2(avgBlockerDepth, numBlockers);
+}
+
+float PCF_Filter(vec2 uv, float depth, int cascade, float filterRadiusUV, float bias, float scale, vec2 rotationTrig)
+{
+	float sum = 0.0;
+    float depthBiased = depth + bias * u_BiasGradient;
+
+	for(int i = 0; i < PCF_SEARCH_SAMPLES; ++i)
+	{
+		vec2 offset = SamplePoissonPCF(i) * filterRadiusUV * scale;
+
+#if defined(ROTATE_SAMPLE)
+		offset = Rotate(offset, rotationTrig);
+#endif
+
+		float value = SampleShadowMap_Soft(vec3(uv + offset, depthBiased), cascade);
+		sum += value;
+	}
+
+	sum /= PCF_SEARCH_SAMPLES;
+	return sum;
+}
+
+float ShadowPCSS(vec3 shadowCoords, int cascade, float bias, float lightSize, vec2 noiseUV)
+{
+    vec2 uv = shadowCoords.xy;
+    float depth = shadowCoords.z;
+    float scale = GetCascadeScale(cascade);
+
+	float random = texture(u_PCSSNoise, noiseUV / textureSize(u_PCSSNoise, 0).xy).r;
+	random = 2.0 * random - 1.0;
+
+	float rotationAngle = random * 3.1415926;
+	vec2 rotationTrig = vec2(cos(rotationAngle), sin(rotationAngle));
+
+    // STEP 1: blocker search
+    float searchSize = lightSize * clamp(depth - 0.02, 0.0, 1.0) / depth;
+    vec2 blockerInfo = FindBlocker(uv, depth, cascade, searchSize, bias, scale, rotationTrig);
+
+    int numBlockers = int(blockerInfo.y);
+    float avgBlockerDepth = blockerInfo.x;
+
+    // There are no occluders so early out
+    if(numBlockers == 0)
+        return 1.0;
+
+    // STEP 2: penumbra size
+    //float penumbra = depth * depth - avgBlockerDepth * avgBlockerDepth;
+	float penumbra = depth - avgBlockerDepth;
+
+	//float filterRadiusUV = penumbra * lightSize;
+    float filterRadiusUV = clamp(penumbra * lightSize, 0.0009, 0.1);
+
+    return PCF_Filter(uv, depth, cascade, filterRadiusUV, bias, scale, rotationTrig);
+}
+
+
+/*
+=========================================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++   MAIN    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=========================================================================================================================================
+*/
+
+float ShadowHard(vec3 shadowCoords, int cascade, float bias)
+{
+    shadowCoords.z += bias * u_BiasGradient;
+    return SampleShadowMap_Soft(shadowCoords, cascade);
+}
+
+float Shadow(vec3 shadowCoords, int cascade, float bias, float lightSize, vec2 noiseUV)
+{
+	if(bool(u_SoftShadows))
+	{
+		return 1.0 - ShadowPCSS(shadowCoords, cascade, bias, lightSize, noiseUV);
+	}
+	
+	return 1.0 - ShadowHard(shadowCoords, cascade, bias);
+}
+
+float ComputeDirectionalLightShadow(float lightSize, vec3 lightDir, vec3 normal, vec3 worldPos, float distanceFromCamera, mat4 cameraView, vec2 noiseUV)
+{
+    float fadeOut = GetShadowMaxDistanceFade(distanceFromCamera);
+    if(fadeOut >= 1.0)
+        return 0.0;
+
+    vec4 wposViewSpace = cameraView * vec4(worldPos, 1.0);
+    float depthViewSpace = abs(wposViewSpace.z);
+
+    int cascade = GetShadowCascade(depthViewSpace);
+    vec3 shadowCoords = GetShadowCoords(worldPos, cascade);
+
+	float bias = GetBias(normal, lightDir);
+
+    if(shadowCoords.z > 1.0) 
+		return 0.0;
+
+	float shadow = Shadow(shadowCoords, cascade, bias, lightSize, noiseUV);
+
+#if BLEND_CASCADES == 1
+
+    float near = u_CascadePlanes[cascade].x;
+    float far = u_CascadePlanes[cascade].y;
+
+    float alpha = (depthViewSpace - near) / (far - near);
+
+    if(u_CascadeBlendDistance != 0.0 && alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
+    {
+        // get alpha to 0..1 range over the blend distance
+        alpha = (alpha - (1.0 - u_CascadeBlendDistance)) / u_CascadeBlendDistance;
+
+        int nextCascade = cascade + 1;
+        shadowCoords = GetShadowCoords(worldPos, nextCascade);
+
+        float shadowNextCascade = Shadow(shadowCoords, nextCascade, bias, lightSize, noiseUV);
+
+        shadow = mix(shadow, shadowNextCascade, clamp(alpha, 0.0, 1.0));
+    }
+
+#endif
+
+    return (1.0 - fadeOut) * shadow;
+}
+
+/*
+=========================================================================================================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++    Debug    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+=========================================================================================================================================
+*/
+
+vec3 GetCascadeDebugColor(vec3 worldPos, mat4 cameraView)
+{
+    vec4 wposViewSpace = cameraView * vec4(worldPos, 1.0);
+    float depthViewSpace = abs(wposViewSpace.z);
+
+    int cascade = GetShadowCascade(depthViewSpace);
+
+    const vec3 debugColors[4] = vec3[](
+        vec3(1.0, 0.0, 0.0), 
+        vec3(0.0, 1.0, 0.0), 
+        vec3(0.0, 0.0, 1.0), 
+        vec3(1.0, 1.0, 0.0));
+
+    vec3 color = debugColors[cascade];
+
+#if defined(DEBUG_BLEND_CASCADES) && BLEND_CASCADES == 1
+
+    float near = u_CascadePlanes[cascade].x;
+    float far = u_CascadePlanes[cascade].y;
+
+    float alpha = (depthViewSpace - near) / (far - near);
+
+    if(alpha > 1.0 - u_CascadeBlendDistance && cascade != SHADOW_CASCADES_COUNT - 1)
+    {
+        // get alpha to 0..1 range over the blend distance
+        alpha = (alpha - (1.0 - u_CascadeBlendDistance)) / u_CascadeBlendDistance;
+
+        vec3 colorNextCascade = debugColors[cascade + 1];
+
+        color = mix(color, colorNextCascade, clamp(alpha, 0.0, 1.0));
+    }
+
+#endif
+
+   return color;
+}

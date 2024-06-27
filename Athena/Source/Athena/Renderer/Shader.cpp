@@ -1,159 +1,121 @@
 #include "Shader.h"
 
-#include "Athena/Platform/OpenGl/GLShader.h"
-#include "Renderer.h"
+#include "Athena/Renderer/Renderer.h"
+
+#include "Athena/Platform/Vulkan/VulkanShader.h"
 
 #include <format>
 
 
 namespace Athena
 {
-	static ShaderType ShaderTypeFromString(const String& type)
-	{
-		if (type == "VERTEX_SHADER") return ShaderType::VERTEX_SHADER;
-		if (type == "FRAGMENT_SHADER" || type == "PIXEL_SHADER") return ShaderType::FRAGMENT_SHADER;
-		if (type == "GEOMETRY_SHADER") return ShaderType::GEOMETRY_SHADER;
-		if (type == "COMPUTE_SHADER") return ShaderType::COMPUTE_SHADER;
-
-		ATN_CORE_ASSERT(false, "Unknown shader type!");
-		return ShaderType();
-	}
-
-
 	Ref<Shader> Shader::Create(const FilePath& path)
 	{
-		FilePath stem = path;
-
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return CreateRef<GLShader>(stem.concat(L".glsl")); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return Ref<VulkanShader>::Create(path);
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 	
 	Ref<Shader> Shader::Create(const FilePath& path, const String& name)
 	{
-		FilePath stem = path;
-
 		switch (Renderer::GetAPI())
 		{
-		case Renderer::API::OpenGL:
-			return CreateRef<GLShader>(stem.concat(L".glsl"), name); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
+		case Renderer::API::Vulkan: return Ref<VulkanShader>::Create(path, name);
+		case Renderer::API::None: return nullptr;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
 		return nullptr;
 	}
 
-	Ref<Shader> Shader::Create(const String& name, const String& vertexSrc, const String& fragmentSrc)
+	void Shader::AddOnReloadCallback(uint64 hash, const std::function<void()>& callback)
 	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::OpenGL:
-			return CreateRef<GLShader>(name, vertexSrc, fragmentSrc); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
-		return nullptr;
-	}
-	
-	std::unordered_map<ShaderType, String> Shader::PreProcess(const String& source)
-	{
-		std::unordered_map<ShaderType, String> shaderSources;
-
-		const char* typeToken = "#type";
-		uint64 typeTokenLength = strlen(typeToken);
-		uint64 pos = source.find(typeToken, 0);
-		while (pos != String::npos)
-		{
-			uint64 eol = source.find_first_of("\r\n", pos);
-			ATN_CORE_ASSERT(eol != String::npos, "Syntax Error");
-			uint64 begin = pos + typeTokenLength + 1;
-			String typeString = source.substr(begin, eol - begin);
-			ATN_CORE_ASSERT(typeString == "VERTEX_SHADER" || typeString == "FRAGMENT_SHADER" || 
-				typeString == "PIXEL_SHADER" || typeString == "GEOMETRY_SHADER" || typeString == "COMPUTE_SHADER",
-				"Invalid Shader Type specifier");
-			
-			ShaderType type = ShaderTypeFromString(typeString);
-
-			uint64 nextLinePos = source.find_first_not_of("\r,\n", eol);
-			pos = source.find(typeToken, nextLinePos);
-			shaderSources[type] = source.substr(nextLinePos, pos - (nextLinePos == String::npos ? source.size() - 1 : nextLinePos));
-		}
-
-		return shaderSources;
+		ATN_CORE_ASSERT(!m_OnReloadCallbacks.contains(hash));
+		m_OnReloadCallbacks[hash] = callback;
 	}
 
-	Ref<IncludeShader> IncludeShader::Create(const FilePath& path)
+	void Shader::RemoveOnReloadCallback(uint64 hash)
 	{
-		FilePath stem = path;
-
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::OpenGL:
-			return CreateRef<GLIncludeShader>(stem.concat(L".glsl")); break;
-		case Renderer::API::None:
-			ATN_CORE_ASSERT(false, "Renderer API None is not supported");
-		}
-
-		ATN_CORE_ASSERT(false, "Unknown RendererAPI!");
-		return nullptr;
+		ATN_CORE_ASSERT(m_OnReloadCallbacks.contains(hash));
+		m_OnReloadCallbacks.erase(hash);
 	}
 
 
-	void ShaderLibrary::Add(const String& name, const Ref<Shader>& shader)
+	Ref<ShaderPack> ShaderPack::Create(const FilePath& path)
+	{
+		Ref<ShaderPack> result = Ref<ShaderPack>::Create();
+		result->m_Directory = path;
+		result->LoadDirectory(path);
+		return result;
+	}
+
+	void ShaderPack::LoadDirectory(const FilePath& path)
+	{
+		for (const auto& dirEntry : std::filesystem::directory_iterator(path))
+		{
+			const FilePath& path = dirEntry.path();
+
+			if (dirEntry.is_directory())
+				LoadDirectory(path);
+
+			if (path.extension() == ".glsl" || path.extension() == ".hlsl")
+			{
+				String name = path.stem().string();
+				Ref<Shader> shader = Shader::Create(path, name);
+				Add(name, shader);
+			}
+		}
+	}
+
+	void ShaderPack::Add(const String& name, const Ref<Shader>& shader)
 	{
 		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
 		m_Shaders[name] = shader;
 	}
 
-	void ShaderLibrary::AddIncludeShader(const String& name, const Ref<IncludeShader>& shader)
+	Ref<Shader> ShaderPack::Load(const FilePath& path)
 	{
-		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
-		m_IncludeShaders[name] = shader;
-	}
-
-	Ref<IncludeShader> ShaderLibrary::LoadIncludeShader(const String& name, const FilePath& path)
-	{
-		auto shader = IncludeShader::Create(path);
-		Add(name, shader);
+		auto shader = Shader::Create(m_Directory / path);
+		Add(shader->GetName(), shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Load(const String& name, const FilePath& path)
+	Ref<Shader> ShaderPack::Load(const FilePath& path, const String& name)
 	{
-		auto shader = Shader::Create(path, name);
-		Add(name, shader);
+		auto shader = Shader::Create(m_Directory / path, name);
+		Add(shader->GetName(), shader);
 		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::Get(const String& name)
+	Ref<Shader> ShaderPack::Get(const String& name)
 	{
 		ATN_CORE_ASSERT(Exists(name), "Shader not found!");
 		return m_Shaders.at(name);
 	}
 
-	bool ShaderLibrary::Exists(const String& name)
+	bool ShaderPack::Exists(const String& name) const
 	{
-		return (m_Shaders.find(name) != m_Shaders.end()) || 
-			(m_IncludeShaders.find(name) != m_IncludeShaders.end());
+		return (m_Shaders.find(name) != m_Shaders.end());
 	}
 
-	void ShaderLibrary::Reload()
+	void ShaderPack::Reload()
 	{
-		for (const auto& [key, shader] : m_IncludeShaders)
-			shader->Reload();
-
 		for (const auto& [key, shader] : m_Shaders)
 			shader->Reload();
+	}
+
+	bool ShaderPack::IsCompiled() const
+	{
+		for (const auto& [key, shader] : m_Shaders)
+		{
+			bool isCompiled = shader->IsCompiled();
+			if (!isCompiled)
+				return false;
+		}
+
+		return true;
 	}
 }

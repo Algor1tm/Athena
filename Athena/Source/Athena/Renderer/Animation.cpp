@@ -9,84 +9,44 @@
 
 namespace Athena
 {
-	static void BoneCreateHelper(const BonesHierarchyInfo& info, Bone& bone, uint32& size)
+	Ref<Skeleton> Skeleton::Create(const std::vector<Bone>& bones)
 	{
-		bone.Name = info.Name;
-		bone.ID = size;
-
-		bone.Children.resize(info.Children.size());
-		for (uint32 i = 0; i < info.Children.size(); ++i)
-		{
-			size += 1;
-			BoneCreateHelper(info.Children[i], bone.Children[i], size);
-		}
-	}
-
-	Ref<Skeleton> Skeleton::Create(const BonesHierarchyInfo& boneHierarchy)
-	{
-		Ref<Skeleton> result = CreateRef<Skeleton>();
-
-		uint32 boneCount = 0;
-		BoneCreateHelper(boneHierarchy, result->m_RootBone, boneCount);
-		boneCount++;
-
-		result->m_BoneOffsetMatrices.reserve(boneCount);
-		Matrix4 identity = Matrix4::Identity();
-
-		for (uint32 i = 0; i < boneCount; ++i)
-		{
-			result->m_BoneOffsetMatrices[i] = identity;
-		}
-
+		Ref<Skeleton> result = Ref<Skeleton>::Create();
+		result->m_Bones = bones;
 		return result;
 	}
 
-	void Skeleton::SetBoneOffsetMatrix(const String& name, const Matrix4& transform)
+	void Skeleton::SetBoneOffsetMatrix(uint32 index, const Matrix4& transform)
 	{
-		uint32 id = GetBoneID(name);
-		m_BoneOffsetMatrices.at(id) = transform;
+		m_Bones[index].OffsetMatrix = transform;
 	}
 
-	void Skeleton::SetBoneOffsetMatrix(uint32 id, const Matrix4& transform)
+	uint32 Skeleton::GetBoneIndex(const String& name) const
 	{
-		m_BoneOffsetMatrices.at(id) = transform;
-	}
-
-	uint32 Skeleton::GetBoneID(const String& name) const
-	{
-		std::stack<const Bone*> boneStack;
-		boneStack.push(&m_RootBone);
-
-		while (!boneStack.empty())
+		for (const auto& bone : m_Bones)
 		{
-			const Bone* bone = boneStack.top();
-			boneStack.pop();
-
-			if (bone->Name == name)
-				return bone->ID;
-
-			for (uint32 i = 0; i < bone->Children.size(); ++i)
-				boneStack.push(&bone->Children[i]);
+			if (bone.Name == name)
+				return bone.Index;
 		}
 
-		ATN_CORE_ASSERT(false, "Invalid name for bone");
-		return -1;
+		ATN_CORE_ASSERT(false);
+		return 0;
 	}
 
-	Ref<Animation> Animation::Create(const AnimationDescription& desc)
+	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
 	{
-		ATN_CORE_ASSERT(desc.BoneNameToKeyFramesMap.size() == desc.Skeleton->GetBoneCount(), "Invalid AnimationDescription!");
+		ATN_CORE_VERIFY(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
 
-		Ref<Animation> result = CreateRef<Animation>();
+		Ref<Animation> result = Ref<Animation>::Create();
 
-		result->m_Name = desc.Name;
-		result->m_Duration = desc.Duration;
-		result->m_TicksPerSecond = desc.TicksPerSecond;
-		result->m_Skeleton = desc.Skeleton;
+		result->m_Name = info.Name;
+		result->m_Duration = info.Duration;
+		result->m_TicksPerSecond = info.TicksPerSecond;
+		result->m_Skeleton = info.Skeleton;
 
-		for (const auto& [name, keyframes] : desc.BoneNameToKeyFramesMap)
+		for (const auto& [name, keyframes] : info.BoneNameToKeyFramesMap)
 		{
-			result->m_BoneIDToKeyFramesMap[desc.Skeleton->GetBoneID(name)] = keyframes;
+			result->m_BoneIndexToKeyFramesMap[info.Skeleton->GetBoneIndex(name)] = keyframes;
 		}
 
 		return result;
@@ -100,22 +60,22 @@ namespace Athena
 
 	void Animation::ProcessBonesHierarchy(const Bone& bone, const Matrix4& parentTransform, float time, std::vector<Matrix4>& transforms)
 	{
-		Matrix4 boneTransform = GetInterpolatedLocalTransform(bone.ID, time);
+		Matrix4 boneTransform = GetInterpolatedLocalTransform(bone.Index, time);
 		Matrix4 globalTransform = boneTransform * parentTransform;
 
-		const Matrix4& boneOffset = m_Skeleton->GetBoneOffset(bone.ID);
+		const Matrix4& boneOffset = bone.OffsetMatrix;
 
-		transforms[bone.ID] = boneOffset * globalTransform;
+		transforms[bone.Index] = boneOffset * globalTransform;
 
 		for (uint32 i = 0; i < bone.Children.size(); ++i)
 		{
-			ProcessBonesHierarchy(bone.Children[i], globalTransform, time, transforms);
+			ProcessBonesHierarchy(m_Skeleton->GetBone(bone.Children[i]), globalTransform, time, transforms);
 		}
 	}
 
-	Matrix4 Animation::GetInterpolatedLocalTransform(uint32 boneID, float time)
+	Matrix4 Animation::GetInterpolatedLocalTransform(uint32 boneIndex, float time)
 	{
-		const KeyFramesList& keyFrames = m_BoneIDToKeyFramesMap[boneID];
+		const KeyFramesList& keyFrames = m_BoneIndexToKeyFramesMap[boneIndex];
 
 		Vector3 translation = GetInterpolatedTranslation(keyFrames.TranslationKeys, time);
 		Quaternion rotation = GetInterpolatedRotation(keyFrames.RotationKeys, time);
@@ -129,19 +89,17 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		TranslationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const TranslationKey& left, const TranslationKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		const TranslationKey& start = *iter;
 		const TranslationKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
@@ -151,31 +109,17 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		RotationKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const RotationKey& left, const RotationKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		RotationKey start = *iter;
 		RotationKey end = *(iter + 1);
 
-		//if (start.Value.w < 0)
-		//{
-		//	start.Value.w = -start.Value.w;
-		//	start.Value.Conjugate();
-		//}
-		//
-		//if (end.Value.w < 0)
-		//{
-		//	end.Value.w = -end.Value.w;
-		//	end.Value.Conjugate();
-		//}
-
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::SLerp(start.Value, end.Value, scaleFactor);
 	}
@@ -185,30 +129,32 @@ namespace Athena
 		if (keys.size() == 1)
 			return keys[0].Value;
 
+		// Binary search
 		ScaleKey target;
 		target.TimeStamp = time;
 		auto iter = std::lower_bound(keys.begin(), keys.end(), target,
 			[](const ScaleKey& left, const ScaleKey& right) { return left.TimeStamp <= right.TimeStamp; });
-
 		iter--;
-		ATN_CORE_ASSERT(iter >= keys.begin() && iter <= (keys.end() - 2));
 
 		const ScaleKey& start = *iter;
 		const ScaleKey& end = *(iter + 1);
 
 		float scaleFactor = (time - start.TimeStamp) / (end.TimeStamp - start.TimeStamp);
-		ATN_CORE_ASSERT(scaleFactor >= 0 && scaleFactor <= 1);
 
 		return Math::Lerp(start.Value, end.Value, scaleFactor);
 	}
 
 
-	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations)
+	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton)
 	{
-		Ref<Animator> result = CreateRef<Animator>();
+		Ref<Animator> result = Ref<Animator>::Create();
 
+		result->m_Skeleton = skeleton;
 		result->m_Animations = animations;
 		result->m_CurrentTime = 0.f;
+
+		result->m_BoneTransforms.resize(skeleton->GetBoneCount());
+		result->StopAnimation();
 
 		return result;
 	}
@@ -228,24 +174,24 @@ namespace Athena
 	{
 		m_CurrentTime = 0.f;
 		m_CurrentAnimation = nullptr;
+
+		Matrix4 identity = Matrix4::Identity();
+		for (uint32 i = 0; i < m_BoneTransforms.size(); ++i)
+			m_BoneTransforms[i] = identity;
 	}
 
 	void Animator::PlayAnimation(const Ref<Animation>& animation)
 	{
-		StopAnimation();
+		m_CurrentTime = 0.f;
+		m_CurrentAnimation = nullptr;
 
 		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
 		{
 			m_CurrentAnimation = animation;
-
-			m_BoneTransforms.resize(m_CurrentAnimation->GetSkeleton()->GetBoneCount());
-			Matrix4 identity = Matrix4::Identity();
-			for (uint32 i = 0; i < m_BoneTransforms.size(); ++i)
-				m_BoneTransforms[i] = identity;
 		}
 		else
 		{
-			ATN_CORE_WARN("Animator::PlayAnimation: Attempt to play Animation that does not belong to Animator!");
+			ATN_CORE_WARN_TAG("Animator", "Attempt to play Animation that does not belong to Animator!");
 		}
 	}
 }

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Vector.h"
 
+#include "Athena/Math/TypesImpl/Vector.h"
 #include "Athena/Math/Common.h"
 
 #include <sstream>
@@ -300,25 +300,3 @@ namespace Athena::Math
 	}
 }
 
-
-namespace Athena
-{
-	template <typename T, uint32 Column, uint32 Row>
-	inline String ToString(const Math::Matrix<T, Column, Row>& mat)
-	{
-		std::stringstream stream;
-		stream << "Matrix(";
-		for (uint32 i = 0; i < Column; ++i)
-		{
-			for (uint32 j = 0; j < Row; ++j)
-			{
-				stream << mat[i][j] << ", ";
-			}
-			if (i == Column - 1)
-				stream << "Column = " << Column << ", Row = " << Row << ")";
-			else
-				stream << "\n       ";
-		}
-		return stream.str();
-	}
-}

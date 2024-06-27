@@ -3,7 +3,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
-
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 
 #include "Athena/Input/Input.h"
@@ -11,110 +11,112 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/FontGeometry.h"
 
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
+#include "Athena/UI/Theme.h"
+
+#include "Panels/PanelManager.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/SettingsPanel.h"
-#include "Panels/MenuBarPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ViewportPanel.h"
 
+#include "EditorResources.h"
+
 #include <ImGui/imgui.h>
+#include <ImGui/imgui_internal.h>
 
 
 namespace Athena
 {
-    EditorLayer* EditorLayer::s_Instance = nullptr;
-
-
     EditorLayer::EditorLayer(const EditorConfig& config)
         : Layer("EditorLayer"), m_Config(config)
     {
-        ATN_CORE_ASSERT(s_Instance == nullptr, "EditorLayer already exists!");
-        s_Instance = this;
 
-        const FilePath& resources = m_Config.EditorResources;
-
-        m_PlayIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/PlayIcon.png");
-        m_SimulationIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/SimulationIcon.png");
-        m_StopIcon = Texture2D::Create(resources / "Icons/Editor/MenuBar/StopIcon.png");
-
-        m_EditorCamera = CreateRef<FirstPersonCamera>(Math::Radians(50.f), 16.f / 9.f, 0.1f, 1000.f);
-        m_ImGuizmoLayer.SetCamera(m_EditorCamera.get());
     }
 
     void EditorLayer::OnAttach()
     {
+        m_EditorCtx = Ref<EditorContext>::Create();
+        m_EditorCtx->ActiveScene = nullptr;
+        m_EditorCtx->SceneState = SceneState::Edit;
+        m_EditorCtx->SelectedEntity = {};
+
+        m_EditorScene = Ref<Scene>::Create();
+        m_EditorCtx->ActiveScene = m_EditorScene;
+
+        m_ViewportRenderer = SceneRenderer::Create();
+        m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
+
+        m_ViewportRenderer->SetOnRender2DCallback(
+            [this]() { OnRender2D(); });
+
+        m_ViewportRenderer->SetOnViewportResizeCallback(
+            [this](uint32 width, uint32 height) { m_Renderer2D->OnViewportResize(width, height); });
+        
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(45.f), 16.f / 9.f, 1.f, 200.f);
+
+        EditorResources::Init(m_Config.EditorResources);
+
         Application::Get().GetImGuiLayer()->BlockEvents(false);
+        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
 
-        const FilePath& resources = m_Config.EditorResources;
-        FilePath boldFont = resources / "Fonts/Open_Sans/OpenSans-Bold.ttf";
-        FilePath mediumFont = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
-
-        ImGuiIO& io = ImGui::GetIO();
-        if (FileSystem::Exists(boldFont))
-            io.Fonts->AddFontFromFileTTF(boldFont.string().c_str(), 16.f);
-        else
-            ATN_CORE_ERROR("EditorLayer: Failed to load bold UI font!");
-
-        if (FileSystem::Exists(mediumFont))
-            io.FontDefault = io.Fonts->AddFontFromFileTTF(mediumFont.string().c_str(), 16.f);
-        else
-            ATN_CORE_ERROR("EditorLayer: Failed to load medium UI font!");
-
-
-        InitializePanels();
-
-        m_EditorScene = CreateRef<Scene>();
-        m_ActiveScene = m_EditorScene;
-
+        m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
+        InitUI();
 #if 1
         OpenScene("Assets/Scenes/Default.atn");
 #endif
-
-        m_SceneHierarchy->SetContext(m_EditorScene);
     }
 
     void EditorLayer::OnDetach()
     {
-
+        m_ViewportRenderer.Release();
+        PanelManager::Shutdown();
+        EditorResources::Shutdown();
+        Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
-        const auto& framebuffer = SceneRenderer::GetFinalFramebuffer();
-        const auto& framebufferDesc = framebuffer->GetDescription();
+        ATN_PROFILE_FUNC();
+
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+
+        const auto& vpDesc = viewportPanel->GetDescription();
+        const auto& rendererSize = m_EditorCtx->ActiveScene->GetViewportSize();
 
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
-            (framebufferDesc.Width != vpDesc.Size.x || framebufferDesc.Height != vpDesc.Size.y))
+            (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
         {
-            SceneRenderer::OnWindowResized(vpDesc.Size.x, vpDesc.Size.y);
+            ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize");
+
+            m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
-                
-            m_ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
+            m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
-        Renderer::ResetStats();
+        if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+            m_EditorCamera->OnUpdate(frameTime);
 
-        SceneRenderer::BeginFrame();
-
-        switch (m_SceneState)
+        switch (m_EditorCtx->SceneState)
         {
         case SceneState::Edit:
         {
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateEditor(frameTime, *m_EditorCamera); 
+            m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
         }
         case SceneState::Play:
         {
-            m_ActiveScene->OnUpdateRuntime(frameTime); 
+            m_EditorCtx->ActiveScene->OnUpdateRuntime(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer);
             break;
         }
         case SceneState::Simulation:
@@ -122,136 +124,184 @@ namespace Athena
             if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
                 m_EditorCamera->OnUpdate(frameTime);
 
-            m_ActiveScene->OnUpdateSimulation(frameTime, *m_EditorCamera);
+            m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime);
+            m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
         }
         }
-
-        RenderOverlay();
-        SceneRenderer::EndFrame();
-
-        SelectEntity(m_SceneHierarchy->GetSelectedEntity());
     }
 
     void EditorLayer::OnImGuiRender()
     {
-        static bool dockSpaceOpen = true;
-        static constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        ATN_PROFILE_FUNC();
 
-        const ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
+        const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
+
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->Pos);
+        ImGui::SetNextWindowSize(viewport->Size);
         ImGui::SetNextWindowViewport(viewport->ID);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, isMaximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 
-        ImGui::Begin("DockSpace Demo", &dockSpaceOpen, window_flags);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, UI::GetTheme().Titlebar);
+        //ImGui::PushStyleColor(ImGuiCol_Border, UI::GetTheme().Accent);
+
+        ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
+
+        //ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
         ImGui::PopStyleVar(3);
 
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-        {
-            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-        }
+        m_Titlebar->OnImGuiRender();
+        ImGui::SetCursorPosY(m_Titlebar->GetHeight());
 
-        m_PanelManager.OnImGuiRender();
+        // Dockspace
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuiStyle& style = ImGui::GetStyle();
+        float minWinSizeX = style.WindowMinSize.x;
+        style.WindowMinSize.x = 300.0f;
+        ImGui::DockSpace(ImGui::GetID("MyDockspace"));
+        style.WindowMinSize.x = minWinSizeX;
+
+        PanelManager::OnImGuiRender();
+
+        if (m_AboutModalOpen)
+            DrawAboutModal();
+
+        if (m_ThemeEditorOpen)
+            DrawThemeEditor();
 
         ImGui::End();
 
-		m_EditorCamera->SetMoveSpeedLevel(m_SettingsPanel->GetEditorSettings().CameraSpeedLevel);
-        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
-    }
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        m_EditorCamera->SetMoveSpeedLevel(m_EditorCtx->EditorSettings.CameraSpeedLevel);
+        m_EditorCamera->SetNearClip(m_EditorCtx->EditorSettings.NearFarClips.x);
+        m_EditorCamera->SetFarClip(m_EditorCtx->EditorSettings.NearFarClips.y);
 
-    void EditorLayer::SelectEntity(Entity entity)
-    {
-        m_ImGuizmoLayer.SetActiveEntity(entity);
-        m_SceneHierarchy->SetSelectedEntity(entity);
-        m_SelectedEntity = entity;
+        if (m_EditorCtx->SelectedEntity)
+        {
+            Entity entity = m_EditorCtx->SelectedEntity;
+            if (entity.HasComponent<StaticMeshComponent>())
+            {
+                Ref<StaticMesh> mesh = entity.GetComponent<StaticMeshComponent>().Mesh;
+                WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+                m_ViewportRenderer->SubmitSelectionContext(mesh, transform.AsMatrix());
+            }
+        }
     }
 
     Entity EditorLayer::DuplicateEntity(Entity entity)
     {
-        if (entity)
+        if (entity && m_EditorCtx->SceneState == SceneState::Edit)
         {
 			Entity newEntity = m_EditorScene->DuplicateEntity(entity);
-			SelectEntity(newEntity);
+            m_EditorCtx->SelectedEntity = newEntity;
 			return newEntity;
         }
 
         return entity;
     }
 
-    void EditorLayer::InitializePanels()
+    void EditorLayer::InitUI()
     {
-        m_MainMenuBar = CreateRef<MenuBarPanel>("MainMenuBar");
-        m_MainMenuBar->SetLogoIcon(Texture2D::Create(m_Config.EditorResources / "Icons/Editor/MenuBar/Logo-no-background.png"));
-        m_MainMenuBar->AddMenuItem("File", [this]()
+        m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetConfig().Name, m_EditorCtx);
+
+        m_Titlebar->SetMenubarCallback([this]()
             {
-                if (ImGui::MenuItem("New", "Ctrl+N", false))
-                    NewScene();
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("New", "Ctrl+N", false))
+                        NewScene();
 
-                if (ImGui::MenuItem("Open...", "Ctrl+O", false))
-                    OpenScene();
+                    if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+                        OpenScene();
 
-                if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
-                    SaveSceneAs();
+                    if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+                        SaveSceneAs();
 
-                ImGui::Separator();
-                ImGui::Spacing();
+                    ImGui::Separator();
+                    ImGui::Spacing();
 
-                if (ImGui::MenuItem("Exit", NULL, false))
-                    Application::Get().Close();
+                    if (ImGui::MenuItem("Exit", NULL, false))
+                        Application::Get().Close();
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("View"))
+                {
+                    PanelManager::ImGuiRenderAsMenuItems();
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Edit"))
+                {
+                    if (ImGui::MenuItem("Theme Editor"))
+                    {
+                        m_ThemeEditorOpen = !m_ThemeEditorOpen;
+                    }
+
+                    if (ImGui::MenuItem("Take Screenshot"))
+                    {
+                        Ref<Texture2D> image = m_ViewportRenderer->GetFinalImage();
+
+                        std::ostringstream oss;
+                        auto t = std::time(nullptr);
+                        auto tm = *std::localtime(&t);
+                        oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+
+                        String dateTime = oss.str();
+
+                        if (!FileSystem::Exists("Screenshots"))
+                            FileSystem::CreateDirectory("Screenshots");
+
+                        FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
+                        TextureExporter::ExportPNG(path, image);
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Help"))
+                {
+                    if (ImGui::MenuItem("About", NULL, false))
+                    {
+                        m_AboutModalOpen = true;
+                    }
+
+                    if (ImGui::MenuItem("Github", NULL, false))
+                    {
+                        Platform::OpenInBrowser(TEXT("https://github.com/Algor1tm/Athena"));
+                    }
+                    
+                    ImGui::EndMenu();
+                }
             });
 
-        m_MainMenuBar->AddMenuItem("View", [this]()
-            {
-                m_PanelManager.ImGuiRenderAsMenuItems();
-            });
+        auto viewportPanel = Ref<ViewportPanel>::Create(VIEWPORT_PANEL_ID, m_EditorCtx);
 
-        m_MainMenuBar->AddMenuButton(m_PlayIcon, [this](Ref<Texture2D>& currentIcon)
-            {
-                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_PlayIcon;
-
-                if (m_SceneState == SceneState::Edit)
-                    OnScenePlay();
-                else if (m_SceneState == SceneState::Play)
-                    OnSceneStop();
-            });
-
-        m_MainMenuBar->AddMenuButton(m_SimulationIcon, [this](Ref<Texture2D>& currentIcon)
-            {
-                currentIcon = m_SceneState == SceneState::Edit ? m_StopIcon : m_SimulationIcon;
-
-                if (m_SceneState == SceneState::Edit)
-                    OnSceneSimulate();
-                else if (m_SceneState == SceneState::Simulation)
-                    OnSceneStop();
-            });
-
-        m_PanelManager.AddPanel(m_MainMenuBar, false);
-
-
-        m_MainViewport = CreateRef<ViewportPanel>("MainViewport");
-
-        m_MainViewport->SetImGuizmoLayer(&m_ImGuizmoLayer);
-        m_MainViewport->SetFramebuffer(SceneRenderer::GetFinalFramebuffer(), 0);
-        m_MainViewport->SetDragDropCallback([this]()
+        viewportPanel->SetImGuizmoLayer(m_ImGuizmoLayer);
+        viewportPanel->SetViewportRenderer(m_ViewportRenderer);
+        viewportPanel->SetDragDropCallback([this]()
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
                     std::string_view path = (const char*)payload->Data;
                     FilePath ext = FilePath(path).extension();
                     //Scene Drag/Drop
-                    if (m_SceneState == SceneState::Edit && ext == ".atn\0")
+                    if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".atn\0")
                     {
                         OpenScene(path.data());
                     }
                     //Texture Drag/Drop on Entity
-                    else if (m_SceneState == SceneState::Edit && ext == ".png\0")
+                    else if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".png\0")
                     {
                         Entity target = GetEntityByCurrentMousePosition();
                         if (target != Entity{})
@@ -259,87 +309,143 @@ namespace Athena
                             if (target.HasComponent<SpriteComponent>())
                             {
                                 auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = Texture2D::Create(FilePath(path));
+                                sprite.Texture = TextureImporter::Load(path, true);
                                 sprite.Color = LinearColor::White;
+                                m_EditorCtx->SelectedEntity = target;
                             }
                         }
                     }
                     // Mesh Drag/Drop
-                    else if (m_SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+                    else if (m_EditorCtx->SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
                     {
                         Ref<StaticMesh> mesh = StaticMesh::Create(path);
                         if (mesh)
                         {
-                            Entity entity = m_ActiveScene->CreateEntity();
+                            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
                             entity.GetComponent<TagComponent>().Tag = mesh->GetName();
                             entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-                            SelectEntity(entity);
+                            m_EditorCtx->SelectedEntity = entity;
                         }
                     }
                 }
             });
 
-        m_PanelManager.AddPanel(m_MainViewport, false);
+        viewportPanel->SetUIOverlayCallback([this]()
+            {
+                float windowPaddingY = 3.f;
 
-        m_SettingsPanel = CreateRef<SettingsPanel>("Settings");
-		m_PanelManager.AddPanel(m_SettingsPanel, Keyboard::I);
+                ImColor rectColor = IM_COL32(0, 0, 0, 70);
+                ImVec2 rectPadding = { -1.f, 0.f };
 
-        m_SceneHierarchy = CreateRef<SceneHierarchyPanel>("SceneHierarchy", m_EditorScene);
-        m_PanelManager.AddPanel(m_SceneHierarchy, Keyboard::J);
+                float buttonPaddingX = -1.f;
+                ImVec2 buttonSize = { 28.f, 26.f };
+                int32 buttonCount = 2;
 
-        auto contentBrowser = CreateRef<ContentBrowserPanel>("ContentBrowser");
-        m_PanelManager.AddPanel(contentBrowser, Keyboard::Space);
+                ImDrawList* drawList = ImGui::GetWindowDrawList();
+                float avail = ImGui::GetContentRegionAvail().x;
 
-        auto profiling = CreateRef<ProfilingPanel>("ProfilingPanel");
-        m_PanelManager.AddPanel(profiling, Keyboard::K);
+                float fullSize = 2 * rectPadding.x + buttonCount * buttonSize.x + (buttonCount - 1) * buttonPaddingX;
+                ImVec2 rectMin = { (avail - fullSize) * 0.5f, windowPaddingY };
+                rectMin.x = avail * 0.5f;
+                rectMin.x += ImGui::GetCursorScreenPos().x;
+                rectMin.y += ImGui::GetCursorScreenPos().y;
+
+                drawList->AddRectFilled(rectMin, { rectMin.x + fullSize, rectMin.y + 2 * rectPadding.y + buttonSize.y }, rectColor, 4.f);
+
+                ImColor tintNormal = IM_COL32(255, 255, 255, 255);
+
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { buttonPaddingX, 0.f });
+                ImGui::SetCursorScreenPos({ rectMin.x + rectPadding.x, rectMin.y + rectPadding.y });
+
+                Ref<Texture2D> playIcon = EditorResources::GetIcon("Viewport_Play");
+                Ref<Texture2D> simulateIcon = EditorResources::GetIcon("Viewport_Simulate");
+                Ref<Texture2D> stopIcon = EditorResources::GetIcon("Viewport_Stop");
+
+                {
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation ? playIcon : stopIcon;
+
+                    if (ImGui::InvisibleButton("Play", buttonSize))
+                    {
+                        if (m_EditorCtx->SceneState == SceneState::Edit)
+                            OnScenePlay();
+                        else if (m_EditorCtx->SceneState == SceneState::Play)
+                            OnSceneStop();
+                    }
+
+                    UI::ButtonImage(icon, tintNormal, tintNormal, tintNormal);
+                }
+
+                ImGui::SameLine();
+
+                {
+                    Ref<Texture2D> icon = m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Play ? simulateIcon : stopIcon;
+
+                    if (ImGui::InvisibleButton("Simulate", buttonSize))
+                    {
+                        if (m_EditorCtx->SceneState == SceneState::Edit)
+                            OnSceneSimulate();
+                        else if (m_EditorCtx->SceneState == SceneState::Simulation)
+                            OnSceneStop();
+                    }
+
+                    UI::ButtonImage(icon, tintNormal, tintNormal, tintNormal);
+                }
+
+                ImGui::PopStyleVar();
+            });
+
+        PanelManager::AddPanel(viewportPanel, false);
+
+        auto settingsPanel = Ref<SettingsPanel>::Create(SETTINGS_PANEL_ID, m_EditorCtx);
+        settingsPanel->SetContext(m_ViewportRenderer);
+        PanelManager::AddPanel(settingsPanel, Keyboard::I);
+
+        auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(SCENE_HIERARCHY_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(sceneHierarchyPanel, Keyboard::J);
+
+        auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(CONTENT_BORWSER_PANEL_ID, m_EditorCtx);
+        PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
+
+        auto profilingPanel = Ref<ProfilingPanel>::Create(PROFILING_PANEL_ID, m_EditorCtx);
+        profilingPanel->SetContext(m_ViewportRenderer);
+        PanelManager::AddPanel(profilingPanel, Keyboard::K);
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
-
-        auto [mx, my] = ImGui::GetMousePos();
-        mx -= vpDesc.Bounds[0].x;
-        my -= vpDesc.Bounds[0].y;
-        Vector2 viewportSize = vpDesc.Bounds[1] - vpDesc.Bounds[0];
-        my = viewportSize.y - my;
-
-        int mouseX = (int)mx;
-        int mouseY = (int)my;
-
-        if (mouseX >= 0 && mouseY >= 0 && mouseX < (int)viewportSize.x && mouseY < (int)viewportSize.y)
-        {
-            int pixelData = SceneRenderer::GetEntityIDFramebuffer()->ReadPixel(0, mouseX, mouseY);
-            if (pixelData != -1)
-                return { (entt::entity)pixelData, m_EditorScene.get() };
-        }
-
         return Entity{};
     }
 
-    void EditorLayer::RenderOverlay()
+    void EditorLayer::OnRender2D()
     {
-        if (m_SceneState == SceneState::Play)
+        Ref<SceneRenderer2D> renderer2D = m_Renderer2D;
+
+        renderer2D->SetLineWidth(3.f);
+
+        if (m_EditorCtx->SceneState == SceneState::Play)
         {
-            Entity camera = m_ActiveScene->GetPrimaryCameraEntity();
+            Entity camera = m_EditorCtx->ActiveScene->GetPrimaryCameraEntity();
             if (camera)
             {
 				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-				Matrix4 view = Math::AffineInverse(camera.GetComponent<TransformComponent>().AsMatrix());
-                SceneRenderer2D::BeginScene(view, runtimeCamera.GetProjectionMatrix());
+				Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
+                renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
             {
-                SceneRenderer2D::BeginScene(Matrix4::Identity(), m_EditorCamera->GetProjectionMatrix());
+                renderer2D->BeginScene(Matrix4::Identity(), m_EditorCamera->GetProjectionMatrix());
             }
         }
         else
         {
-            SceneRenderer2D::BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
+            renderer2D->BeginScene(m_EditorCamera->GetViewMatrix(), m_EditorCamera->GetProjectionMatrix());
         }
 
-        if (m_SettingsPanel->GetEditorSettings().ShowPhysicsColliders)
+        m_EditorCtx->ActiveScene->OnRender2D(renderer2D);
+
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        if (m_EditorCtx->EditorSettings.ShowPhysicsColliders)
         {
             {
                 auto view = m_EditorScene->GetAllEntitiesWith<TransformComponent, BoxCollider2DComponent>();
@@ -351,7 +457,7 @@ namespace Athena
                     Vector2 scale = tc.Scale * Vector3(bc2d.Size * 2.f, 1.f);
                     Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(bc2d.Offset.y, bc2d.Offset.x, 0.f)).Rotate(tc.Rotation.z, Vector3::Back()).Translate(Vector3(translation, 0.001f));
 
-                    SceneRenderer2D::DrawRect(transform, LinearColor::Green, 3.f);
+                    renderer2D->DrawRect(transform, LinearColor::Green);
                 }
             }
 
@@ -365,145 +471,332 @@ namespace Athena
                     Vector2 scale = Vector2(tc.Scale) * Vector2(cc2d.Radius * 2);
                     Matrix4 transform = Math::ScaleMatrix(Vector3(scale)).Translate(Vector3(translation, 0.001f));
 
-                    SceneRenderer2D::DrawCircle(transform, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
+                    renderer2D->DrawCircle(transform, Renderer2DSpace::WorldSpace, LinearColor::Green, 0.05f * 0.5f / cc2d.Radius);
                 }
             }
         }
         
-
-        if (m_SelectedEntity)
+        const Vector2 iconScale = Vector2( 0.075f, 0.075f ) * m_EditorCtx->EditorSettings.RendererIconsScale;
+        if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
-            LinearColor color = { 1.f, 0.5f, 0.f, 1.f };
-            TransformComponent worldTransform = m_SelectedEntity.GetWorldTransform();
-
-            if (m_SelectedEntity.HasComponent<CameraComponent>())
-            {
-                float distance = Math::Distance(m_EditorCamera->GetPosition(), worldTransform.Translation);
-                float scale = 0.1f * distance;
-                Matrix4 rectTransform = Math::ConstructTransform(worldTransform.Translation, {scale, scale, scale}, worldTransform.Rotation);
-                SceneRenderer2D::DrawRect(rectTransform, color, 1);
+            auto camerasView = m_EditorScene->GetAllEntitiesWith<CameraComponent, WorldTransformComponent>();
+            for (auto entity : camerasView)
+            { 
+                const auto& transform = camerasView.get<WorldTransformComponent>(entity);
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
             }
-            else if (m_SelectedEntity.HasComponent<StaticMeshComponent>())
+
+            auto dirLightsView = m_EditorScene->GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
+            for (auto entity : dirLightsView)
             {
-                const AABB& box = m_SelectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetBoundingBox();
-                
-                AABB transformedBox = box.Transform(worldTransform.AsMatrix());
-
-                Vector3 min = transformedBox.GetMinPoint();
-                Vector3 max = transformedBox.GetMaxPoint();
-
-                // front
-                SceneRenderer2D::DrawLine(max, { max.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, max.z }, { min.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, min.y, max.z }, { min.x, max.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, max.z }, max, color);
-                // back
-                SceneRenderer2D::DrawLine(min, { min.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, min.z }, { max.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, max.y, min.z }, { max.x, min.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, min.z }, min, color);
-
-                // left
-                SceneRenderer2D::DrawLine(min, { min.x, min.y, max.z }, color);
-                SceneRenderer2D::DrawLine({ min.x, max.y, min.z }, { min.x, max.y, max.z }, color);
-
-                // right
-                SceneRenderer2D::DrawLine(max, { max.x, max.y, min.z }, color);
-                SceneRenderer2D::DrawLine({ max.x, min.y, max.z }, { max.x, min.y, min.z }, color);
+                const auto& transform = dirLightsView.get<WorldTransformComponent>(entity);
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
             }
-            else if(m_SelectedEntity.HasComponent<SpriteComponent>() || m_SelectedEntity.HasComponent<CircleComponent>())
+
+            auto pointLightsView = m_EditorScene->GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
+            for (auto entity : pointLightsView)
             {
-                SceneRenderer2D::DrawRect(worldTransform.AsMatrix(), color, 8.f);
+                const auto& transform = pointLightsView.get<WorldTransformComponent>(entity);
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
             }
-            else if (m_SelectedEntity.HasComponent<PointLightComponent>())
+
+            auto spotLightsView = m_EditorScene->GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
+            for (auto entity : spotLightsView)
+            {
+                const auto& transform = spotLightsView.get<WorldTransformComponent>(entity);
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
+            }
+
+            auto skyLightsView = m_EditorScene->GetAllEntitiesWith<SkyLightComponent, WorldTransformComponent>();
+            for (auto entity : skyLightsView)
+            {
+                const auto& transform = skyLightsView.get<WorldTransformComponent>(entity);
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
+            }
+        }
+
+        Entity selectedEntity = m_EditorCtx->SelectedEntity;
+        if (selectedEntity)
+        {
+            LinearColor selectColor = { 1.f, 0.5f, 0.f, 1.f };
+            const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
+
+            // 2D Outline
+            if(selectedEntity.HasComponent<SpriteComponent>())
+            {
+                if(selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
+            }
+            else if (selectedEntity.HasComponent<CircleComponent>())
+            {
+                if (selectedEntity.GetComponent<CircleComponent>().Space == Renderer2DSpace::WorldSpace)
+                    renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
+            }
+            else if (selectedEntity.HasComponent<TextComponent>())
+            {
+                const TextComponent& textComponent = selectedEntity.GetComponent<TextComponent>();
+                if (textComponent.Space == Renderer2DSpace::WorldSpace)
+                {
+                    TextAlignmentOptions options;
+                    options.MaxWidth = textComponent.MaxWidth;
+                    options.Kerning = textComponent.Kerning;
+                    options.LineSpacing = textComponent.LineSpacing;
+                    options.InvertY = false;
+
+                    FontGeometry* fontGeometry = textComponent.Font->GetFontGeometry();
+                    float height = fontGeometry->InitText(textComponent.Text, options);
+
+                    Matrix4 transformMatrix = worldTransform.AsMatrix();
+
+                    Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
+                    Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
+                    Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
+                    Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
+
+                    renderer2D->DrawLine(p0, p1, selectColor);
+                    renderer2D->DrawLine(p1, p2, selectColor);
+                    renderer2D->DrawLine(p2, p3, selectColor);
+                    renderer2D->DrawLine(p3, p0, selectColor);
+                }
+            }
+
+
+            // Light Outline
+            else if (selectedEntity.HasComponent<PointLightComponent>())
             {
                 const Vector3& position = worldTransform.Translation;
-                float radius = m_SelectedEntity.GetComponent<PointLightComponent>().Radius;
+                const auto& comp = selectedEntity.GetComponent<PointLightComponent>();
+                float radius = comp.Radius;
+                selectColor = comp.Color;
 
-                constexpr float step = Math::Radians(10.f);
-                for (float angle = 0.f; angle < 2 * Math::PI<float>() - step; angle += step)
+                constexpr uint32 linesCount = 36;
+                constexpr float step = (2 * Math::PI<float>()) / linesCount;
+                for (uint32 i = 0; i < linesCount; ++i)
                 {
+                    float angle = i * step;
                     Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
                     Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
 
                     Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f );
                     Vector3 p1 = position + Vector3(offset1.x, offset1.y, 0.f);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
 
 					p0 = position + Vector3(offset0.x, 0.f, offset0.y);
 					p1 = position + Vector3(offset1.x, 0.f, offset1.y);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
 
 					p0 = position + Vector3(0.f, offset0.x, offset0.y);
 					p1 = position + Vector3(0.f, offset1.x, offset1.y);
 
-                    SceneRenderer2D::DrawLine(p0, p1, color);
+                    renderer2D->DrawLine(p0, p1, selectColor);
                 }
+            }
+            else if (selectedEntity.HasComponent<SpotLightComponent>())
+            {
+                auto& comp = selectedEntity.GetComponent<SpotLightComponent>();
+                selectColor = comp.Color;
+                float spotAngle = Math::Radians(comp.SpotAngle / 2.f);
+                if (spotAngle == 0.f)
+                    spotAngle = 0.001f;
+
+                Vector3 direction = worldTransform.Rotation * Vector3::Forward();
+                direction.Normalize();
+
+                Vector3 origin = worldTransform.Translation;
+
+                // Circle
+                Vector3 circleCenter = origin + direction * (Math::Cos(spotAngle) * comp.Range);
+                float radius = Math::Sin(spotAngle) * comp.Range;
+
+                uint32 linesCount = 24;
+                float step = (2 * Math::PI<float>()) / linesCount;
+
+                for (uint32 i = 0; i < linesCount; ++i)
+                {
+                    float angle = i * step;
+                    Vector3 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle), 0.f };
+                    Vector3 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step), 0.f };
+
+                    offset0 = worldTransform.Rotation * offset0;
+                    offset1 = worldTransform.Rotation * offset1;
+
+                    Vector3 p0 = circleCenter + offset0;
+                    Vector3 p1 = circleCenter + offset1;
+
+                    renderer2D->DrawLine(p0, p1, selectColor);
+                }
+
+                // Arcs horizontal and vertical
+                circleCenter = origin;
+                radius = comp.Range;
+                float begin = Math::PI<float>() / 2.f - spotAngle;
+                float end = Math::PI<float>() / 2.f + spotAngle;
+
+                linesCount = 12;
+                step = (end - begin) / linesCount;
+
+                for (uint32 i = 0; i < linesCount; ++i)
+                {
+                    float angle = begin + i * step;
+                    Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
+                    Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
+
+                    Vector3 horizonOff0 = { offset0.x, 0.f, offset0.y };
+                    Vector3 horizonOff1 = { offset1.x, 0.f, offset1.y };
+
+                    horizonOff0 = worldTransform.Rotation * horizonOff0;
+                    horizonOff1 = worldTransform.Rotation * horizonOff1;
+
+                    Vector3 h0 = circleCenter - horizonOff0;
+                    Vector3 h1 = circleCenter - horizonOff1;
+
+                    renderer2D->DrawLine(h0, h1, selectColor);
+
+                    Vector3 verticalOff0 = { 0.f, offset0.x, offset0.y };
+                    Vector3 verticalOff1 = { 0.f, offset1.x, offset1.y };
+
+                    verticalOff0 = worldTransform.Rotation * verticalOff0;
+                    verticalOff1 = worldTransform.Rotation * verticalOff1;
+
+                    Vector3 v0 = circleCenter - verticalOff0;
+                    Vector3 v1 = circleCenter - verticalOff1;
+
+                    renderer2D->DrawLine(v0, v1, selectColor);
+
+                    // Lines from origin on corners
+                    if (i == 0)
+                    {
+                        renderer2D->DrawLine(origin, h0, selectColor);
+                        renderer2D->DrawLine(origin, v0, selectColor);
+                    }
+                    else if (i == linesCount - 1)
+                    {
+                        renderer2D->DrawLine(origin, h1, selectColor);
+                        renderer2D->DrawLine(origin, v1, selectColor);
+                    }
+                }
+
             }
         }
 
-        SceneRenderer2D::EndScene();
+        renderer2D->EndScene();
+    }
+
+    void EditorLayer::DrawAboutModal()
+    {
+        ImGui::OpenPopup("About");
+        m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        if (m_AboutModalOpen)
+        {
+            auto logo = EditorResources::GetIcon("Logo");
+            UI::DrawImage(logo, { 48, 48 });
+
+            ImGui::SameLine();
+            UI::ShiftCursorX(20.0f);
+
+            ImGui::Text("Athena 3D Game Engine");
+
+            if (UI::ButtonCentered("Close"))
+            {
+                m_AboutModalOpen = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void EditorLayer::DrawThemeEditor()
+    {
+        ImGui::Begin("Theme Editor");
+
+        UI::Theme& theme = UI::GetTheme();
+
+        UI::ThemeEditor(theme);
+
+        if (ImGui::Button("Reset"))
+            theme = UI::Theme::DefaultDark();
+
+        Application::Get().GetImGuiLayer()->UpdateImGuiTheme();
+
+        ImGui::SameLine();
+        if (ImGui::Button("Close"))
+            m_ThemeEditorOpen = false;
+
+        ImGui::End();
     }
 
     void EditorLayer::OnScenePlay()
     {
-        if (m_SettingsPanel->GetEditorSettings().ReloadScriptsOnStart)
+        ATN_PROFILE_FUNC();
+
+        auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+
+        if (m_EditorCtx->EditorSettings.ReloadScriptsOnStart)
         {
-            m_ActiveScene->LoadAllScripts();
+            m_EditorCtx->ActiveScene->LoadAllScripts();
         }
 
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        const auto& vpDesc = viewportPanel->GetDescription();
 
-        if (m_SceneState == SceneState::Simulation)
+        if (m_EditorCtx->SceneState == SceneState::Simulation)
             OnSceneStop();
 
-        m_SceneState = SceneState::Play;
+        m_EditorCtx->SceneState = SceneState::Play;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnRuntimeStart();
-        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
-        m_ActiveScene = m_RuntimeScene;
+        m_EditorCtx->ActiveScene = m_RuntimeScene;
+        m_EditorCtx->SelectedEntity = {};
     }
 
     void EditorLayer::OnSceneStop()
     {
-        m_SceneState = SceneState::Edit;
+        ATN_PROFILE_FUNC();
 
-        m_ActiveScene = m_EditorScene;
-        m_SceneHierarchy->SetContext(m_EditorScene);
+        m_EditorCtx->SceneState = SceneState::Edit;
+
+        m_EditorCtx->ActiveScene = m_EditorScene;
         m_RuntimeScene = nullptr;
     }
 
     void EditorLayer::OnSceneSimulate()
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
+        ATN_PROFILE_FUNC();
 
-        m_SceneState = SceneState::Simulation;
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        const auto& vpDesc = viewportPanel->GetDescription();
+
+        m_EditorCtx->SceneState = SceneState::Simulation;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnSimulationStart();
-        m_SceneHierarchy->SetContext(m_RuntimeScene);
 
-        m_ActiveScene = m_RuntimeScene;
+        m_EditorCtx->ActiveScene = m_RuntimeScene;
     }
 
     void EditorLayer::OnEvent(Event& event)
     {
-        const auto& vpDesc = m_MainViewport->GetDescription();
-        if ((m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
+        ATN_PROFILE_FUNC();
+
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        const auto& vpDesc = viewportPanel->GetDescription();
+
+        if ((m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
         {
             bool rightMB = Input::IsMouseButtonPressed(Mouse::Right);
 
             if (vpDesc.IsHovered)
             {
-				m_ImGuizmoLayer.OnEvent(event);
+				m_ImGuizmoLayer->OnEvent(event);
 				m_EditorCamera->OnEvent(event);
-
+                
                 if(rightMB && !m_HideCursor)
 				{
 					m_HideCursor = true;
@@ -518,7 +811,7 @@ namespace Athena
             }
         }
 
-        m_PanelManager.OnEvent(event);
+        PanelManager::OnEvent(event);
 
         EventDispatcher dispatcher(event);
         dispatcher.Dispatch<KeyPressedEvent>(ATN_BIND_EVENT_FN(EditorLayer::OnKeyPressed));
@@ -530,7 +823,7 @@ namespace Athena
         if (event.IsRepeat())
             return false;
 
-        bool ctrl = Input::IsKeyPressed(Keyboard::LCtrl) || Input::IsKeyPressed(Keyboard::RCtrl);
+        bool ctrl = event.IsCtrlPressed();
 
         switch (event.GetKeyCode())
         {
@@ -549,19 +842,19 @@ namespace Athena
         case Keyboard::N: if (ctrl) NewScene(); break;
         case Keyboard::O: if (ctrl) OpenScene(); break;
             
-        case Keyboard::F4: if (m_SceneState == SceneState::Play || m_SceneState == SceneState::Simulation) OnSceneStop(); break;
-        case Keyboard::F5: if (m_SceneState == SceneState::Edit || m_SceneState == SceneState::Simulation) OnScenePlay(); break;
-        case Keyboard::F6: if (m_SceneState == SceneState::Edit) OnSceneSimulate(); break;
+        case Keyboard::F4: if (m_EditorCtx->SceneState == SceneState::Play || m_EditorCtx->SceneState == SceneState::Simulation) OnSceneStop(); break;
+        case Keyboard::F5: if (m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) OnScenePlay(); break;
+        case Keyboard::F6: if (m_EditorCtx->SceneState == SceneState::Edit) OnSceneSimulate(); break;
         
             //Entities
-		case Keyboard::D: if (ctrl) DuplicateEntity(m_SelectedEntity); break;
-        case Keyboard::Escape: if (m_SelectedEntity) SelectEntity({});; break;
+		case Keyboard::D: if (ctrl) DuplicateEntity(m_EditorCtx->SelectedEntity); break;
+        case Keyboard::Escape: m_EditorCtx->SelectedEntity = {}; break;
         case Keyboard::Delete:
         {
-            if (m_SelectedEntity && m_SceneState == SceneState::Edit)
+            if (m_EditorCtx->SelectedEntity && m_EditorCtx->SceneState == SceneState::Edit)
             {
-                m_EditorScene->DestroyEntity(m_SelectedEntity);
-                SelectEntity({});
+                m_EditorScene->DestroyEntity(m_EditorCtx->SelectedEntity);
+                m_EditorCtx->SelectedEntity = {};
             }
             break;
         }
@@ -572,12 +865,10 @@ namespace Athena
             if (currentMode == WindowMode::Fullscreen)
             {
                 window.SetWindowMode(WindowMode::Maximized);
-                m_MainMenuBar->UseWindowDefaultButtons(false);
             }
             else
             {
                 window.SetWindowMode(WindowMode::Fullscreen);
-                m_MainMenuBar->UseWindowDefaultButtons(true);
             }
             break;
         }
@@ -595,12 +886,12 @@ namespace Athena
         {
         case Mouse::Left:
         {
-            if (m_SceneState != SceneState::Play)
+            if (m_EditorCtx->SceneState != SceneState::Play)
             {
                 Entity selectedEntity = GetEntityByCurrentMousePosition();
                 if (selectedEntity)
                 {
-                    SelectEntity(selectedEntity);
+                    m_EditorCtx->SelectedEntity = selectedEntity;
                 }
             }
             break;
@@ -611,76 +902,67 @@ namespace Athena
 
     void EditorLayer::NewScene()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
         m_CurrentScenePath = FilePath();
 
         m_RuntimeScene = nullptr;
-        m_EditorScene = CreateRef<Scene>();
-        m_ActiveScene = m_EditorScene;
+        m_EditorScene = Ref<Scene>::Create();
+        m_EditorCtx->ActiveScene = m_EditorScene;
+        m_EditorCtx->SelectedEntity = {};
 
-        m_SceneHierarchy->SetContext(m_ActiveScene);
-        SelectEntity(Entity{});
-
-        ATN_CORE_TRACE("Successfully created new scene");
+        ATN_CORE_INFO_TAG("EditorLayer", "Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::SaveFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::SaveFile(TEXT("Athena Scene (*atn)\0*.atn\0"));
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to save Scene '{0}'", filepath.string());
+            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to save scene {}", filepath);
     }
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
-        SceneSerializer serializer(m_ActiveScene);
+        SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_TRACE("Successfully saved Scene into '{0}'", path.string());
+        ATN_CORE_INFO_TAG("EditorLayer", "Successfully saved scene into {}", path);
     }
 
     void EditorLayer::OpenScene()
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::OpenFile("Athena Scene (*atn)\0*.atn\0");
+        FilePath filepath = FileDialogs::OpenFile(TEXT("Athena Scene (*.atn)\0*.atn\0"));
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR("Invalid filepath to loaded Scene '{0}'", filepath.string());
+            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to loaded scene {}", filepath);
     }
 
     void EditorLayer::OpenScene(const FilePath& path)
     {
-        if (m_SceneState != SceneState::Edit)
+        if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        Ref<Scene> newScene = CreateRef<Scene>();
+        Ref<Scene> newScene = Ref<Scene>::Create();
 
         SceneSerializer serializer(newScene);
         if(serializer.DeserializeFromFile(path.string()))
         {
             m_CurrentScenePath = path;
-
-            m_RuntimeScene = nullptr;
-            m_EditorScene = newScene;
-            m_ActiveScene = newScene;
-
-            m_MainMenuBar->SetSceneRef(m_EditorScene);
-            m_SceneHierarchy->SetContext(m_ActiveScene);
-            SelectEntity({});
-            ATN_CORE_TRACE("Successfully load Scene from '{0}'", path.string().data());
+            ATN_CORE_INFO_TAG("EditorLayer", "Successfully load scene from {}", path);
         }
-        else
-        {
-            ATN_CORE_ERROR("Failed to load Scene from '{0}'", path.string().data());
-        }
+
+        m_RuntimeScene = nullptr;
+        m_EditorScene = newScene;
+        m_EditorCtx->ActiveScene = newScene;
+        m_EditorCtx->SelectedEntity = {};
     }
 }

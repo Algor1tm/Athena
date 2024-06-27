@@ -6,30 +6,24 @@
 #include "Athena/Input/MouseEvent.h"
 
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/Editorcamera.h"
+#include "Athena/Renderer/EditorCamera.h"
 
 #include "Athena/Scene/Entity.h"
 
-#include "PanelManager.h"
-
+#include "EditorContext.h"
 #include "ImGuizmoLayer.h"
+#include "Titlebar.h"
 
 
 namespace Athena
 {
 	class Scene;
-	class Texture2D;
 
-	class ViewportPanel;
-	class MenuBarPanel;
-	class SceneHierarchyPanel;
-	class SettingsPanel;
 
 	struct EditorConfig
 	{
 		FilePath EditorResources;
 	};
-
 
 	class EditorLayer : public Layer
 	{
@@ -43,17 +37,13 @@ namespace Athena
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
 
-		static EditorLayer& Get() { return *s_Instance; }
-		const EditorConfig& GetConfig() { return m_Config; }
-
-		Ref<Scene> GetActiveScene() { return m_ActiveScene; }
-
 	private:
-		void SelectEntity(Entity entity);
 		Entity DuplicateEntity(Entity entity);
 
-		void InitializePanels();
-		void RenderOverlay();
+		void InitUI();
+		void OnRender2D();
+		void DrawAboutModal();
+		void DrawThemeEditor();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -71,34 +61,21 @@ namespace Athena
 		void OpenScene(const FilePath& path);
 
 	private:
-		static EditorLayer* s_Instance;
-
-	private:
 		EditorConfig m_Config;
+
+		Ref<SceneRenderer> m_ViewportRenderer;
+		Ref<SceneRenderer2D> m_Renderer2D;
+		Ref<EditorContext> m_EditorCtx;
 		Ref<EditorCamera> m_EditorCamera;
+		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
+
+		Ref<Titlebar> m_Titlebar;
 		bool m_HideCursor = false;
-		Entity m_SelectedEntity = {};
 
-		ImGuizmoLayer m_ImGuizmoLayer;
-
-		PanelManager m_PanelManager;
-		Ref<ViewportPanel> m_MainViewport;
-		Ref<MenuBarPanel> m_MainMenuBar;
-		Ref<SceneHierarchyPanel> m_SceneHierarchy;
-		Ref<SettingsPanel> m_SettingsPanel;
-
-		enum class SceneState
-		{
-			Edit = 0, Play = 1, Simulation = 2
-		};
-
-		SceneState m_SceneState = SceneState::Edit;
-		Ref<Scene> m_ActiveScene;
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;
 
-		Ref<Texture2D> m_PlayIcon;
-		Ref<Texture2D> m_StopIcon;
-		Ref<Texture2D> m_SimulationIcon;
+		bool m_AboutModalOpen = false;
+		bool m_ThemeEditorOpen = false;
 	};
 }

@@ -5,13 +5,13 @@ Expect bugs and instability as it is still under development. The engine is free
 Feel free to contact me about any questions or issues you have!
 
 # Screenshots
-
-# MainFeatures
 ![Editor1](https://github.com/Algor1tm/Athena/assets/68811145/73d81214-1bfe-4be9-a4c1-ffbe234911fb)
 
 ![Sponza2](https://github.com/Algor1tm/Athena/assets/68811145/ed4898d1-e80e-42db-a7a3-c0f16adda1f0)
 
 ![GBuffer](https://github.com/Algor1tm/Athena/assets/68811145/08a3b7b3-1c85-412f-954a-1a9f4c4ca742)
+
+# MainFeatures
 
 ### Rendering
 

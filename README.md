@@ -1,8 +1,8 @@
 # Athena
 Athena is an early-stage Game Engine with a high emphasis on Rendering.     
-Currently supports only Windows platform and Visual C++. Vulkan API - the only way to go!    
-Expect bugs and instability as it is still under development. The engine is free and open source.    
-Feel free to contact me about any questions or issues you have!
+Currently supports only Windows platform and Visual C++ (does not tested on AMD card).    
+Vulkan API - the only way to go! Expect bugs and instability as it is still under development.    
+The engine is free and open source. Feel free to contact me about any questions or issues you have!
 
 # Screenshots
 ![Editor1](https://github.com/Algor1tm/Athena/assets/68811145/73d81214-1bfe-4be9-a4c1-ffbe234911fb)

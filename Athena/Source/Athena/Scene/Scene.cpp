@@ -9,7 +9,7 @@
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 
-#include "Athena/Scripting/PrivateScriptEngine.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -305,7 +305,7 @@ namespace Athena
 			for (auto id : view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::OnUpdateEntity(entity, frameTime);
+				ScriptEngine::OnUpdateEntity(entity, frameTime);
 			}
 		}
 
@@ -362,20 +362,20 @@ namespace Athena
 		{
 			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
 
-			PrivateScriptEngine::OnRuntimeStart(this);
+			ScriptEngine::OnRuntimeStart(this);
 
 			// Instantiate all script entities
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id: view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::InstantiateEntity(entity);
+				ScriptEngine::InstantiateEntity(entity);
 			}
 
 			for (auto id: view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::OnCreateEntity(entity);
+				ScriptEngine::OnCreateEntity(entity);
 			}
 		}
 	}
@@ -388,13 +388,13 @@ namespace Athena
 
 	void Scene::LoadAllScripts()
 	{
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto id : view)
-		{
-			Entity entity = { id, this };
-			auto& scriptComponent = view.get<ScriptComponent>(entity);
-			PrivateScriptEngine::LoadScript(scriptComponent.Name, entity);
-		}
+		//auto view = m_Registry.view<ScriptComponent>();
+		//for (auto id : view)
+		//{
+		//	Entity entity = { id, this };
+		//	auto& scriptComponent = view.get<ScriptComponent>(entity);
+		//	ScriptEngine::LoadScript(scriptComponent.Name, entity);
+		//}
 	}
 
 	void Scene::OnViewportResize(uint32 width, uint32 height)

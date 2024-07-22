@@ -480,56 +480,56 @@ namespace Athena
 
 		DrawComponent<ScriptComponent>(entity, "Script", [entity](ScriptComponent& script)
 		{
-			auto modules = ScriptEngine::GetAvailableModules();
+ 			//auto modules = ScriptEngine::GetAvailableModules();
 
-			UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
+			//UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
 
-			if (!ScriptEngine::ExistsScript(script.Name))
-				return true;
+			//if (!ScriptEngine::ExistsScript(script.Name))
+			//	return true;
 
-			const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
-			ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);
+			//const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
+			//ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);
 
-			for (const auto& [name, field] : fieldsDesc)
-			{
-				auto& fieldStorage = fieldMap.at(name);
-				if (field.Type == ScriptFieldType::Int)
-				{
-					int data = fieldStorage.GetValue<int>();
-					if (UI::PropertyDrag(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-				else if (field.Type == ScriptFieldType::Float)
-				{
-					float data = fieldStorage.GetValue<float>();
-					if (UI::PropertyDrag(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-				else if (field.Type == ScriptFieldType::Bool)
-				{
-					bool data = fieldStorage.GetValue<bool>();
-					if (UI::PropertyCheckbox(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-				else if (field.Type == ScriptFieldType::Vector2)
-				{
-					Vector2 data = fieldStorage.GetValue<Vector2>();
-					if (UI::PropertyDrag(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-				else if (field.Type == ScriptFieldType::Vector3)
-				{
-					Vector3 data = fieldStorage.GetValue<Vector3>();
-					if (UI::PropertyDrag(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-				else if (field.Type == ScriptFieldType::Vector4)
-				{
-					Vector4 data = fieldStorage.GetValue<Vector4>();
-					if (UI::PropertyDrag(name.c_str(), &data))
-						fieldStorage.SetValue(data);
-				}
-			}
+			//for (const auto& [name, field] : fieldsDesc)
+			//{
+			//	auto& fieldStorage = fieldMap.at(name);
+			//	if (field.Type == ScriptFieldType::Int)
+			//	{
+			//		int data = fieldStorage.GetValue<int>();
+			//		if (UI::PropertyDrag(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//	else if (field.Type == ScriptFieldType::Float)
+			//	{
+			//		float data = fieldStorage.GetValue<float>();
+			//		if (UI::PropertyDrag(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//	else if (field.Type == ScriptFieldType::Bool)
+			//	{
+			//		bool data = fieldStorage.GetValue<bool>();
+			//		if (UI::PropertyCheckbox(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//	else if (field.Type == ScriptFieldType::Vector2)
+			//	{
+			//		Vector2 data = fieldStorage.GetValue<Vector2>();
+			//		if (UI::PropertyDrag(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//	else if (field.Type == ScriptFieldType::Vector3)
+			//	{
+			//		Vector3 data = fieldStorage.GetValue<Vector3>();
+			//		if (UI::PropertyDrag(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//	else if (field.Type == ScriptFieldType::Vector4)
+			//	{
+			//		Vector4 data = fieldStorage.GetValue<Vector4>();
+			//		if (UI::PropertyDrag(name.c_str(), &data))
+			//			fieldStorage.SetValue(data);
+			//	}
+			//}
 
 			return true;
 		});

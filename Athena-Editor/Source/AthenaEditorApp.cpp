@@ -36,7 +36,9 @@ namespace Athena
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
-		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsPath = "Assets/Scripts";
+		appinfo.ScriptConfig.ModulePath = "Assets/Scripts";
+		appinfo.ScriptConfig.EnableDebug = true;
 
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;

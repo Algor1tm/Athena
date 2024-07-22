@@ -129,7 +129,7 @@ namespace Athena
 		Vector4 ProjInfo;
 	};
 
-	struct RendererData
+	struct SceneRendererData
 	{
 		Vector2 ViewportSize;
 		Vector2 InverseViewportSize;
@@ -387,7 +387,7 @@ namespace Athena
 
 		// CPU Data
 		CameraData m_CameraData;
-		RendererData m_RendererData;
+		SceneRendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
 		HBAOData m_HBAOData;

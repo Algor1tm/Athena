@@ -24,8 +24,6 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	Athena.def
 	"Source/*.h" 
 	"Source/*.cpp" 
-	"ThirdParty/pybind11/include/*.h"
-	"ThirdParty/pybind11/include/*.cpp"
 	"ThirdParty/stb_image/stb_image.h"
 	"ThirdParty/stb_image/stb_image_write.h"
 	"ThirdParty/stb_image/stb_image.cpp"
@@ -108,7 +106,6 @@ target_include_directories(Athena PRIVATE
 	${GLFW_INCLUDE_DIR}
 	${IMGUI_INCLUDE_DIR}
 	${OPTICK_INCLUDE_DIR}
-	${PYBIND11_INCLUDE_DIR}
 	${SPDLOG_INCLUDE_DIR}
 	${YAML_CPP_INCLUDE_DIR}
 	${MSDF_ATLAS_GEN_INCLUDE_DIR}
@@ -151,10 +148,6 @@ if (Vulkan_FOUND)
 		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
 
 endif(Vulkan_FOUND)
-
-add_subdirectory("${THIRD_PARTY_DIR}/pybind11")
-target_link_libraries(Athena PRIVATE pybind11::embed)
-
 
 # Windows specific code
 if(WIN32)

@@ -1,48 +1,36 @@
 #include "ScriptEngine.h"
-
-#include "Athena/Scripting/PrivateScriptEngine.h"
+#include "Athena/Scene/Entity.h"
 
 
 namespace Athena
 {
 	void ScriptEngine::Init(const ScriptConfig& config)
 	{
-		PrivateScriptEngine::Init(config);
+	
 	}
 
 	void ScriptEngine::Shutdown()
 	{
-		PrivateScriptEngine::Shutdown();
+	
 	}
 
-	const ScriptFieldsDescription& ScriptEngine::GetFieldsDescription(const String& className)
+	void ScriptEngine::OnRuntimeStart(Scene* scene)
 	{
-		const auto& scriptClass = PrivateScriptEngine::GetScriptClass(className);
-		return scriptClass.GetFieldsDescription();
+
 	}
 
-	ScriptFieldMap& ScriptEngine::GetScriptFieldMap(Entity entity)
+	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
-		return PrivateScriptEngine::GetScriptFieldMap(entity);
+
 	}
 
-	void ScriptEngine::LoadScript(const String& name, Entity entity)
+	void ScriptEngine::InstantiateEntity(Entity entity)
 	{
-		PrivateScriptEngine::LoadScript(name, entity);
+
 	}
 
-	void ScriptEngine::UnLoadScript(const String& name, Entity entity)
+	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		PrivateScriptEngine::UnloadScript(name, entity);
-	}
 
-	bool ScriptEngine::ExistsScript(const String& name)
-	{
-		return PrivateScriptEngine::ExistsScript(name);
-	}
-
-	std::vector<String> ScriptEngine::GetAvailableModules()
-	{
-		return PrivateScriptEngine::GetAvailableModules();
 	}
 }

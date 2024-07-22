@@ -31,7 +31,7 @@ namespace Athena
 		m_Profiler = GPUProfiler::Create(profilerInfo);
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
-		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
+		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(SceneRendererData));
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 		m_HBAO_UBO = UniformBuffer::Create("HBAO-UBO", sizeof(HBAOData));
 		m_SSR_UBO = UniformBuffer::Create("SSR-UBO", sizeof(SSRData));
@@ -1229,7 +1229,7 @@ namespace Athena
 			Renderer::BindInstanceRateBuffer(m_RenderCommandBuffer, m_TransformsStorage.Get());
 
 			m_CameraUBO->UploadData(&m_CameraData, sizeof(CameraData));
-			m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
+			m_RendererUBO->UploadData(&m_RendererData, sizeof(SceneRendererData));
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
 			m_HBAO_UBO->UploadData(&m_HBAOData, sizeof(HBAOData));

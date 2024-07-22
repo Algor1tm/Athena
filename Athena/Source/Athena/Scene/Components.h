@@ -311,10 +311,4 @@ namespace Athena
 	{
 		camera.Camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
 	}
-
-	template <>
-	inline void Scene::OnComponentRemove<ScriptComponent>(Entity entity, ScriptComponent& component)
-	{
-		ScriptEngine::UnLoadScript(component.Name, entity);
-	}
 }

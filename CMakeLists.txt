@@ -1,7 +1,6 @@
 cmake_minimum_required (VERSION 3.24)
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
-set(SCRIPTS_FOLDER "${CMAKE_SOURCE_DIR}/Athena-Editor/Assets/Scripts")
 set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena/EngineResources/ShaderPack")
 
 # Enable in cross-platform way multi-processor compilation
@@ -37,32 +36,6 @@ if(Vulkan_FOUND)
 else(Vulkan_FOUND)
 	message("-- Failed to find VulkanSDK(Install VulkanSDK from official website or check if it is added to path)")
 endif(Vulkan_FOUND)
-
-# Find Python 3.6+
-find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)
-
-get_target_property(Lib Python::Python IMPORTED_IMPLIB)
-message(STATUS "Python3 - ${Lib}")
-
-get_target_property(LibDebug Python::Python IMPORTED_IMPLIB_DEBUG)
-message(STATUS "Python3 (Debug) - ${LibDebug}")
-
-if(LibDebug)
-    set(ATN_PY_DEBUG 1)
-endif(LibDebug)
-
-get_target_property(LibRelease Python::Python IMPORTED_IMPLIB_RELEASE)
-message(STATUS "Python3 (Release) - ${LibRelease}")
-
-# Show python scripts in solution explorer
-file(GLOB_RECURSE PYTHON_FILES CONFIGURE_DEPENDS 
-	"${SCRIPTS_FOLDER}/*.py")
-
-add_library(PythonScripts ${PYTHON_FILES})
-
-source_group(TREE "${SCRIPTS_FOLDER}" FILES ${PYTHON_FILES} )
-set_property(TARGET PythonScripts PROPERTY LINKER_LANGUAGE CXX)
-set_property(TARGET PythonScripts PROPERTY FOLDER Core)
 
 # Show shaders in solution explorer
 file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 

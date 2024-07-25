@@ -4,6 +4,7 @@
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
+#include "Athena/Scripting/Script.h"
 
 
 namespace Athena
@@ -22,7 +23,6 @@ namespace Athena
 	};
 
 	static ScriptEngineData* s_Data;
-
 
 	template<typename FuncT, typename... Args>
 	static bool InvokeScriptFunc(const String& scriptName, FuncT func, Args&&... args)
@@ -51,12 +51,38 @@ namespace Athena
 		m_InstantiateMethod = (ScriptFunc_Instantiate)s_Data->ScriptsLibrary->LoadFunction(fmt::format("_{}_Instantiate", className));
 		m_OnCreateMethod = (ScriptFunc_OnCreate)s_Data->ScriptsLibrary->LoadFunction(fmt::format("_{}_OnCreate", className));
 		m_OnUpdateMethod = (ScriptFunc_OnUpdate)s_Data->ScriptsLibrary->LoadFunction(fmt::format("_{}_OnUpdate", className));
+		m_GetFieldsDescriptionMethod = (ScriptFunc_GetFieldsDescription)
+			s_Data->ScriptsLibrary->LoadFunction(fmt::format("_{}_GetFieldsDescription", className));
 
-		m_IsLoaded = m_InstantiateMethod && m_OnCreateMethod && m_OnUpdateMethod;
+		m_IsLoaded = m_InstantiateMethod && m_OnCreateMethod && m_OnUpdateMethod && m_GetFieldsDescriptionMethod;
 		m_Name = className;
 
 		if (!m_IsLoaded)
+		{
 			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to load script with name '{}'!", className);
+			return;
+		}
+
+		// Get Fields
+		Script* script = nullptr;
+		if (InvokeScriptFunc(m_Name, m_InstantiateMethod, &script))
+		{
+			if (InvokeScriptFunc(m_Name, m_GetFieldsDescriptionMethod, script, &m_FieldsDescription))
+			{
+				for (auto& [name, storage] : m_FieldsDescription)
+				{
+					// Force to get initial value
+					storage.GetValue<bool>();
+					storage.SetInternalRef(nullptr);
+				}
+
+				delete script;
+				return;
+			}
+		}
+
+		ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to get fields description of script with name '{}'", className);
+		delete script;
 	}
 
 	Script* ScriptClass::Instantiate(Entity entity) const
@@ -74,11 +100,31 @@ namespace Athena
 	{
 		m_ScriptClass = scriptClass;
 		m_Instance = m_ScriptClass->Instantiate(entity);
+
+		if (s_Data->EntityScriptFields.contains(entity.GetID()))
+		{
+			ScriptFieldMap& entityFieldMap = s_Data->EntityScriptFields.at(entity.GetID());
+			UpdateFieldMapRefs(entityFieldMap);
+		}
 	}
 
 	ScriptInstance::~ScriptInstance()
 	{
 		delete m_Instance;
+	}
+
+	void ScriptInstance::UpdateFieldMapRefs(ScriptFieldMap& fieldMap)
+	{
+		ScriptFieldMap fieldRefs;
+		InvokeScriptFunc(m_ScriptClass->GetName(), m_ScriptClass->GetGetFieldsDescriptionMethod(),
+			m_Instance, &fieldRefs);
+
+		ATN_CORE_ASSERT(fieldMap.size() == fieldRefs.size());
+
+		for (auto& [name, field] : fieldMap)
+		{
+			field.SetInternalRef(fieldRefs.at(name).GetInternalRef());
+		}
 	}
 
 	void ScriptInstance::InvokeOnCreate()
@@ -122,6 +168,8 @@ namespace Athena
 	{
 		s_Data->ScriptsLibrary.Release();
 		s_Data->ScriptClasses.clear();
+		s_Data->ScriptsNames.clear();
+		s_Data->EntityScriptFields.clear();
 
 		if (!FileSystem::Exists(s_Data->Config.ScriptsBinaryPath))
 		{
@@ -159,10 +207,6 @@ namespace Athena
 			}
 		}
 
-		s_Data->ScriptsLibrary = Scope<Library>::Create(activeLibPath);
-		if (!s_Data->ScriptsLibrary->IsLoaded())
-			return false;
-
 		FilePath sourceDir = s_Data->Config.ScriptsPath / "Source";
 
 		if (!FileSystem::Exists(sourceDir))
@@ -170,6 +214,10 @@ namespace Athena
 			ATN_CORE_ERROR_TAG("SriptEngine", "Source directory does not exists {}!", sourceDir);
 			return false;
 		}
+
+		s_Data->ScriptsLibrary = Scope<Library>::Create(activeLibPath);
+		if (!s_Data->ScriptsLibrary->IsLoaded())
+			return false;
 
 		// Iterate through .cpp files and check if corresponding script exists 
 		// in library and then load this script
@@ -194,9 +242,43 @@ namespace Athena
 		return std::find(s_Data->ScriptsNames.begin(), s_Data->ScriptsNames.end(), name) != s_Data->ScriptsNames.end();
 	}
 
-	std::vector<String> ScriptEngine::GetAvailableScripts()
+	const std::vector<String>& ScriptEngine::GetAvailableScripts()
 	{
 		return s_Data->ScriptsNames;
+	}
+
+	ScriptFieldMap* ScriptEngine::GetScriptFieldMap(Entity entity)
+	{
+		if (s_Data->EntityScriptFields.contains(entity.GetID()))
+			return &s_Data->EntityScriptFields.at(entity.GetID());
+
+		const auto& scriptName = entity.GetComponent<ScriptComponent>().Name;
+
+		if (s_Data->ScriptClasses.contains(scriptName))
+		{
+			ScriptClass scClass = s_Data->ScriptClasses.at(scriptName);
+			uint32 fieldsCount = scClass.GetFieldsDescription().size();
+			if (fieldsCount != 0)
+			{
+				ScriptFieldMap& fieldMap = s_Data->EntityScriptFields[entity.GetID()] = scClass.GetFieldsDescription();
+
+				// Update refs if initialize fieldMap at runtime
+				if (s_Data->EntityInstances.contains(entity.GetID()))
+				{
+					s_Data->EntityInstances.at(entity.GetID()).UpdateFieldMapRefs(fieldMap);
+				}
+
+				return &fieldMap;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void ScriptEngine::ClearEntityFieldMap(Entity entity)
+	{
+		if(s_Data->EntityScriptFields.contains(entity.GetID()))
+			s_Data->EntityScriptFields.erase(entity.GetID());
 	}
 
 	void ScriptEngine::OnRuntimeStart(Scene* scene)
@@ -206,6 +288,14 @@ namespace Athena
 
 	void ScriptEngine::OnRuntimeStop()
 	{
+		for (auto& [entity, fieldMap] : s_Data->EntityScriptFields)
+		{
+			for (auto& [name, field] : fieldMap)
+			{
+				field.SetInternalRef(nullptr);
+			}
+		}
+
 		s_Data->SceneContext = nullptr;
 		s_Data->EntityInstances.clear();
 	}

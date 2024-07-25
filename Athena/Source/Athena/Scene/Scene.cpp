@@ -178,6 +178,9 @@ namespace Athena
 			DeleteFromChildren(parentChildren, parent, entity);
 		}
 
+		if (entity.HasComponent<ScriptComponent>())
+			ScriptEngine::ClearEntityFieldMap(entity);
+
 		m_EntityMap.erase(entity.GetID());
 		m_Registry.destroy(entity);
 	}

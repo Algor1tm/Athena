@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Scene/Entity.h"
+#include "Athena/Scripting/ScriptFields.h"
 
 
 namespace Athena
@@ -51,8 +52,9 @@ namespace Athena
 		Scene* GetScene() const { return m_Scene; }
 
 	public:
-		virtual void OnCreate() = 0;
-		virtual void OnUpdate(Time frameTime) = 0;
+		virtual void OnCreate() {};
+		virtual void OnUpdate(Time frameTime) {};
+		virtual void GetFieldsDescription(ScriptFieldMap* outFieldsDesc) {};
 
 	private:
 		friend class ATHENA_API ScriptEngine;
@@ -73,12 +75,11 @@ namespace Athena
 	using ScriptFunc_Instantiate = void (*)(Script** outScript);
 	using ScriptFunc_OnCreate = void (*)(Script* _this);
 	using ScriptFunc_OnUpdate = void (*)(Script* _this, float frameTime);
-
+	using ScriptFunc_GetFieldsDescription = void (*)(Script* _this, ScriptFieldMap* outFields);
 
 #ifdef ATN_PLATFORM_WINDOWS
 	#define SCRIPT_API __declspec(dllexport)
 #else
 	#define SCRIPT_API
 #endif // End of linking detection
-
 }

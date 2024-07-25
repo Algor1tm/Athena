@@ -3,11 +3,12 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Scene/Scene.h"
 #include "Athena/Scripting/Script.h"
-#include "Athena/Scripting/ScriptFields.h"
 
 
 namespace Athena
 {
+	class Script;
+
 	class ScriptClass
 	{
 	public:
@@ -18,18 +19,20 @@ namespace Athena
 
 		ScriptFunc_OnCreate GetOnCreateMethod() { return m_OnCreateMethod; }
 		ScriptFunc_OnUpdate GetOnUpdateMethod() { return m_OnUpdateMethod; }
+		ScriptFunc_GetFieldsDescription GetGetFieldsDescriptionMethod() { return m_GetFieldsDescriptionMethod; }
 
 		bool IsLoaded() const { return m_IsLoaded; }
 		const String& GetName() const { return m_Name; }
 
-		const ScriptFieldsDescription& GetFieldsDescription() const { return m_FieldsDescription; }
+		const ScriptFieldMap& GetFieldsDescription() const { return m_FieldsDescription; }
 
 	private:
 		ScriptFunc_Instantiate m_InstantiateMethod;
 		ScriptFunc_OnCreate m_OnCreateMethod;
 		ScriptFunc_OnUpdate m_OnUpdateMethod;
+		ScriptFunc_GetFieldsDescription m_GetFieldsDescriptionMethod;
 
-		ScriptFieldsDescription m_FieldsDescription;
+		ScriptFieldMap m_FieldsDescription;
 		bool m_IsLoaded = false;
 		String m_Name;
 	};
@@ -46,6 +49,8 @@ namespace Athena
 
 		ScriptInstance(ScriptInstance&& other) = default;
 		ScriptInstance& operator=(ScriptInstance&& other) = default;
+
+		void UpdateFieldMapRefs(ScriptFieldMap& fieldMap);
 
 		void InvokeOnCreate();
 		void InvokeOnUpdate(Time frameTime);
@@ -72,9 +77,11 @@ namespace Athena
 		static void Shutdown();
 
 		static bool ReloadScripts();
-
 		static bool IsScriptExists(const String& name);
-		static std::vector<String> GetAvailableScripts();
+		static const std::vector<String>& GetAvailableScripts();
+
+		static ScriptFieldMap* GetScriptFieldMap(Entity entity);
+		static void ClearEntityFieldMap(Entity entity);
 
 		static void OnRuntimeStart(Scene* scene);
 		static void OnRuntimeStop();

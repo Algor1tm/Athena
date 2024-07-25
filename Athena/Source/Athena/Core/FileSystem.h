@@ -18,13 +18,12 @@ namespace Athena
 
 		static bool WriteFile(const FilePath& path, const char* bytes, uint64 size);
 		static bool Remove(const FilePath& path);
-
+		static void CreateDirectory(const FilePath& path);
 		static bool Copy(const FilePath& from, const FilePath& to);
 
 		static FilePath GetWorkingDirectory();
 		static void SetWorkingDirectory(const FilePath& path);
 
-		static void CreateDirectory(const FilePath& path);
 		static bool Exists(const FilePath& path);
 	};
 }

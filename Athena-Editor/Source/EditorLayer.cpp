@@ -763,6 +763,7 @@ namespace Athena
 
         m_EditorCtx->ActiveScene->OnRuntimeStop();
         m_EditorCtx->ActiveScene = m_EditorScene;
+        m_EditorCtx->SelectedEntity = {};
         m_RuntimeScene = nullptr;
     }
 
@@ -779,6 +780,7 @@ namespace Athena
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnSimulationStart();
 
+        m_EditorCtx->SelectedEntity = {};
         m_EditorCtx->ActiveScene = m_RuntimeScene;
     }
 

@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.24)
 
 function(SetBuildDirectory TARGET_NAME)
     set_target_properties(${TARGET_NAME}
@@ -81,8 +81,6 @@ add_custom_command(TARGET Athena POST_BUILD
      "$<TARGET_FILE:Athena>"
      "${BUILD_FOLDER}/SandBox/$<CONFIGURATION>/$<TARGET_FILE_NAME:Athena>" )
 
-# Delete shader cache on project compile
-#add_custom_command(TARGET Athena POST_BUILD COMMAND "${CMAKE_COMMAND}" -E remove_directory "${CMAKE_SOURCE_DIR}/Athena/EngineResources/Cache/ShaderPack/")
 
 # Precompile Header
 target_precompile_headers(Athena PRIVATE
@@ -151,6 +149,6 @@ endif(Vulkan_FOUND)
 
 # Windows specific code
 if(WIN32)
-	target_link_libraries(Athena PRIVATE "${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.lib")
+	target_link_libraries(Athena PRIVATE "${THIRD_PARTY_DIR}/assimp/libs/Windows/assimp-vc143-mt.lib")
 	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS UNICODE)
 endif(WIN32)

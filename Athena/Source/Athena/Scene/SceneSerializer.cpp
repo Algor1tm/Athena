@@ -491,8 +491,6 @@ namespace Athena
 					}
 				}
 			}
-
-			m_Scene->LoadAllScripts();
 		}
 		catch (const YAML::Exception& ex)
 		{

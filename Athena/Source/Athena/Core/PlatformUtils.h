@@ -36,4 +36,23 @@ namespace Athena
 
 		static void OpenInFileExplorer(const FilePath& path);
 	};
+
+
+	class ATHENA_API Library
+	{
+	public:
+		Library() = default;
+		Library(const FilePath& path);
+		~Library();
+
+		Library(const Library& other) = delete;
+		Library& operator=(const Library& other) = delete;
+
+		bool IsLoaded();
+		void* LoadFunction(const String& name);
+
+	private:
+		void* m_Handle = nullptr;
+		FilePath m_Path;
+	};
 }

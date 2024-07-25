@@ -2,9 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/UUID.h"
-
 #include "Athena/Math/Matrix.h"
-
 #include "Athena/Scene/Scene.h"
 
 #ifdef _MSC_VER

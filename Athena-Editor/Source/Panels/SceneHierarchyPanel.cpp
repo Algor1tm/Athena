@@ -480,12 +480,9 @@ namespace Athena
 
 		DrawComponent<ScriptComponent>(entity, "Script", [entity](ScriptComponent& script)
 		{
- 			//auto modules = ScriptEngine::GetAvailableModules();
+ 			auto scripts = ScriptEngine::GetAvailableScripts();
 
-			//UI::PropertyCombo("ScriptName", modules.data(), modules.size(), &script.Name);
-
-			//if (!ScriptEngine::ExistsScript(script.Name))
-			//	return true;
+			UI::PropertyCombo("Script Name", scripts.data(), scripts.size(), &script.Name);
 
 			//const ScriptFieldsDescription& fieldsDesc = ScriptEngine::GetFieldsDescription(script.Name);
 			//ScriptFieldMap& fieldMap = ScriptEngine::GetScriptFieldMap(entity);

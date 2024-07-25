@@ -737,7 +737,7 @@ namespace Athena
 
         if (m_EditorCtx->EditorSettings.ReloadScriptsOnStart)
         {
-            m_EditorCtx->ActiveScene->LoadAllScripts();
+            ScriptEngine::ReloadScripts();
         }
 
         const auto& vpDesc = viewportPanel->GetDescription();
@@ -761,6 +761,7 @@ namespace Athena
 
         m_EditorCtx->SceneState = SceneState::Edit;
 
+        m_EditorCtx->ActiveScene->OnRuntimeStop();
         m_EditorCtx->ActiveScene = m_EditorScene;
         m_RuntimeScene = nullptr;
     }

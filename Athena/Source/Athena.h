@@ -1,26 +1,16 @@
 #pragma once
 
-// For use by Athena applications
+// For use by Athena Scripting
 
 // --------Core--------------------
-#include "Athena/Core/Application.h"
+#include "Athena/Core/Core.h"
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Core/Layer.h"
 #include "Athena/Core/UUID.h"
 #include "Athena/Core/Log.h"
 #include "Athena/Core/Time.h"
 
 
-// --------ImGui--------------------
-#include "Athena/ImGui/ImGuiLayer.h"
-
-
 // --------Input--------------------
-#include "Athena/Input/WindowEvent.h"
-#include "Athena/Input/Event.h"
-#include "Athena/Input/KeyEvent.h"
-#include "Athena/Input/MouseEvent.h"
-
 #include "Athena/Input/Input.h"
 #include "Athena/Input/Keyboard.h"
 #include "Athena/Input/Mouse.h"
@@ -38,28 +28,33 @@
 
 
 // --------Renderer--------------------
-#include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Color.h"
-#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Mesh.h"
-#include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/EnvironmentMap.h"
-#include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/SceneRenderer.h"
-#include "Athena/Renderer/SceneRenderer2D.h"
-#include "Athena/Renderer/EditorCamera.h"
-
 
 // --------Scene--------------------
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Scene.h"
-#include "Athena/Scene/SceneCamera.h"
-#include "Athena/Scene/SceneSerializer.h"
 
 
 // --------Scripting--------------------
 #include "Athena/Scripting/ScriptEngine.h"
+#include "Athena/Scripting/Script.h"
+
+
+using Athena::byte;
+
+using Athena::int8;
+using Athena::int16;
+using Athena::int32;
+using Athena::int64;
+
+using Athena::uint8;
+using Athena::uint16;
+using Athena::uint32;
+using Athena::uint64;
+
+using Athena::String;
+using Athena::FilePath;

@@ -14,6 +14,7 @@
 
 #ifdef ATN_DEBUG
 	#define VULKAN_ENABLE_DEBUG_INFO
+	//#define VULKAN_ENABLE_MEMORY_DEBUG_INFO
 #else
 
 #endif

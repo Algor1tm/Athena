@@ -37,7 +37,7 @@ namespace Athena
 		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
 		appinfo.ScriptConfig.ScriptsPath = "Assets/Scripts";
-		appinfo.ScriptConfig.ModulePath = "Assets/Scripts";
+		appinfo.ScriptConfig.ScriptsBinaryPath = "Assets/Scripts/Build/Binaries/TestProject/TestProject.dll";
 		appinfo.ScriptConfig.EnableDebug = true;
 
 		appinfo.WindowInfo.Width = 1600;

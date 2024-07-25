@@ -386,15 +386,9 @@ namespace Athena
 		OnPhysics2DStart();
 	}
 
-	void Scene::LoadAllScripts()
+	void Scene::OnRuntimeStop()
 	{
-		//auto view = m_Registry.view<ScriptComponent>();
-		//for (auto id : view)
-		//{
-		//	Entity entity = { id, this };
-		//	auto& scriptComponent = view.get<ScriptComponent>(entity);
-		//	ScriptEngine::LoadScript(scriptComponent.Name, entity);
-		//}
+		ScriptEngine::OnRuntimeStop();
 	}
 
 	void Scene::OnViewportResize(uint32 width, uint32 height)

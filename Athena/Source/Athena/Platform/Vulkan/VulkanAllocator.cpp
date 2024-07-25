@@ -59,8 +59,11 @@ namespace Athena
 		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
 
 		VkDeviceSize size = allocation->GetSize();
+
+#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
 			ATN_CORE_TRACE_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		return VulkanBufferAllocation(buffer, allocation);
 	}
@@ -76,8 +79,10 @@ namespace Athena
 
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
+#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = allocation->GetSize();
 		ATN_CORE_TRACE_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		return VulkanImageAllocation(image, allocation);
 	}
@@ -85,16 +90,21 @@ namespace Athena
 	void VulkanAllocator::DestroyBuffer(VulkanBufferAllocation buffer, const String& name)
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
+
+#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
 			ATN_CORE_TRACE_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
 
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
+#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = image.GetAllocation()->GetSize();
 		ATN_CORE_TRACE_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}

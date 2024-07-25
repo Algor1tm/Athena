@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Core/Application.h"
 
@@ -55,10 +56,10 @@ namespace Athena
 
 #ifdef ATN_ENABLE_ASSERTS
 	#define WINAPI_CHECK_LASTERROR() ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
-	#define SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
+	#define WINAPI_SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
 #else
 	#define WINAPI_CHECK_LASTERROR()
-	#define SUPPRESS_LAST_ERROR()
+	#define WINAPI_SUPPRESS_LAST_ERROR()
 #endif
 
 
@@ -96,7 +97,7 @@ namespace Athena
 			s_Data.CPUCaps.Name = cpuString;
 		}
 
-		SUPPRESS_LAST_ERROR();
+		WINAPI_SUPPRESS_LAST_ERROR();
 
 		// Memory info
 		{
@@ -136,7 +137,7 @@ namespace Athena
 					free(buffer);
 
 					buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(bufferSize);
-					SUPPRESS_LAST_ERROR();
+					WINAPI_SUPPRESS_LAST_ERROR();
 				}
 				else
 				{
@@ -205,7 +206,7 @@ namespace Athena
 
 	uint64 Platform::GetMemoryUsage()
 	{
-		SUPPRESS_LAST_ERROR();	// Error from somewhere else
+		WINAPI_SUPPRESS_LAST_ERROR();	// Error from somewhere else
 
 		HANDLE hProcess;
 		PROCESS_MEMORY_COUNTERS pmc;
@@ -278,5 +279,32 @@ namespace Athena
 	void FileDialogs::OpenInFileExplorer(const FilePath& path)
 	{
 		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	}
+
+
+	Library::Library(const FilePath& path)
+		: m_Path(path)
+	{
+		WINAPI_SUPPRESS_LAST_ERROR();
+		m_Handle = LoadLibrary(m_Path.c_str());
+		WINAPI_CHECK_LASTERROR();
+
+		if (IsLoaded())
+			ATN_CORE_INFO_TAG("Platform", "Successfully loaded library from '{}'", m_Path);
+	}
+
+	Library::~Library()
+	{
+		FreeLibrary((HMODULE)m_Handle);
+	}
+
+	bool Library::IsLoaded()
+	{
+		return m_Handle != nullptr;
+	}
+
+	void* Library::LoadFunction(const String& name)
+	{
+		return GetProcAddress((HMODULE)m_Handle, name.c_str());
 	}
 }

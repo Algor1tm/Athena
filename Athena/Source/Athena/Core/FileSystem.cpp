@@ -74,6 +74,16 @@ namespace Athena
 		return std::filesystem::remove_all(path);
 	}
 
+	bool FileSystem::Copy(const FilePath& from, const FilePath& to)
+	{
+		std::error_code error;
+		std::filesystem::copy_options options = std::filesystem::copy_options::overwrite_existing;
+
+		std::filesystem::copy(from, to, options, error);
+
+		return error.value() == 0;
+	}
+
 	FilePath FileSystem::GetWorkingDirectory()
 	{
 		return std::filesystem::current_path();

@@ -62,12 +62,12 @@ namespace Athena
 		void OnRuntimeStart();
 		void OnSimulationStart();
 
+		void OnRuntimeStop();
+
 		void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
 		void OnRender(const Ref<SceneRenderer>& renderer);
 
 		void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
-
-		void LoadAllScripts();
 
 		void OnViewportResize(uint32 width, uint32 height);
 		Vector2u GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }

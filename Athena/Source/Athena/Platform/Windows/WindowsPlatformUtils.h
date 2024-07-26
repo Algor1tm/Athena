@@ -184,7 +184,16 @@ namespace Athena
 
 	void Platform::OpenInBrowser(const std::wstring& url)
 	{
+		WINAPI_SUPPRESS_LAST_ERROR();
 		ShellExecute(NULL, L"open", url.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+		WINAPI_CHECK_LASTERROR();
+	}
+
+	void Platform::RunFile(const FilePath& path, const FilePath& workingDir)
+	{
+		WINAPI_SUPPRESS_LAST_ERROR();
+		ShellExecute(NULL, L"open", path.c_str(), NULL, workingDir.c_str(), SW_SHOWDEFAULT);
+		WINAPI_CHECK_LASTERROR();
 	}
 
 	double Platform::GetHighPrecisionTime()

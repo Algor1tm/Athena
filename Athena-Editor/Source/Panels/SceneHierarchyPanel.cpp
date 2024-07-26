@@ -24,8 +24,8 @@ namespace Athena
 	{
 		switch (mode)
 		{
-		case Renderer2DSpace::WorldSpace: return "WorldSpace";
-		case Renderer2DSpace::ScreenSpace: return "ScreenSpace";
+		case Renderer2DSpace::WorldSpace: return "World Space";
+		case Renderer2DSpace::ScreenSpace: return "Screen Space";
 		case Renderer2DSpace::Billboard: return "Billboard";
 		}
 
@@ -35,9 +35,9 @@ namespace Athena
 
 	static Renderer2DSpace Renderer2DSpaceFromString(std::string_view str)
 	{
-		if (str == "WorldSpace")
+		if (str == "World Space")
 			return Renderer2DSpace::WorldSpace;
-		if (str == "ScreenSpace")
+		if (str == "Screen Space")
 			return Renderer2DSpace::ScreenSpace;
 		if (str == "Billboard")
 			return Renderer2DSpace::Billboard;
@@ -362,7 +362,7 @@ namespace Athena
 			Ref<Texture2D> displayTexture = texture;
 
 			if (!texture || texture == TextureGenerator::GetWhiteTexture())
-				displayTexture = EditorResources::GetIcon("EmptyTexture");
+				displayTexture = EditorResources::GetIcon("Empty Texture");
 
 			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
 			{
@@ -573,8 +573,8 @@ namespace Athena
 
 				float degreesFOV = Math::Degrees(perspectiveDesc.VerticalFOV);
 				used = UI::PropertySlider("FOV", &degreesFOV, 0.f, 360.f) || used;
-				used = UI::PropertySlider("NearClip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
-				used = UI::PropertySlider("FarClip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
+				used = UI::PropertySlider("Near Clip", &perspectiveDesc.NearClip, 0.f, 10.f) || used;
+				used = UI::PropertySlider("Far Clip", &perspectiveDesc.FarClip, 1000.f, 30000.f) || used;
 
 				if (used)
 				{
@@ -589,8 +589,8 @@ namespace Athena
 				bool used = false;
 
 				used = UI::PropertyDrag("Size", &orthoDesc.Size, 0.1f) || used;
-				used = UI::PropertySlider("NearClip", &orthoDesc.NearClip, -10.f, 0.f) || used;
-				used = UI::PropertySlider("FarClip", &orthoDesc.FarClip, 0.f, 10.f) || used;
+				used = UI::PropertySlider("Near Clip", &orthoDesc.NearClip, -10.f, 0.f) || used;
+				used = UI::PropertySlider("Far Clip", &orthoDesc.FarClip, 0.f, 10.f) || used;
 
 				if (used)
 				{
@@ -599,7 +599,7 @@ namespace Athena
 			}
 
 			UI::PropertyCheckbox("Primary", &cameraComponent.Primary);
-			UI::PropertyCheckbox("FixedAspectRatio", &cameraComponent.FixedAspectRatio);
+			UI::PropertyCheckbox("Fixed Aspect Ratio", &cameraComponent.FixedAspectRatio);
 
 			return true;
 		});
@@ -641,7 +641,7 @@ namespace Athena
 			if (ImGui::Button("Reset"))
 				sprite.Texture = TextureGenerator::GetWhiteTexture();
 
-			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard" };
+			std::string_view views[] = { "World Space", "Screen Space", "Billboard" };
 			std::string_view selected = Renderer2DSpaceToString(sprite.Space);
 
 			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
@@ -659,7 +659,7 @@ namespace Athena
 		{
 			UI::PropertyColor4("Color", circle.Color.Data());
 
-			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard" };
+			std::string_view views[] = { "World Space", "Screen Space", "Billboard" };
 			std::string_view selected = Renderer2DSpaceToString(circle.Space);
 
 			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
@@ -722,7 +722,7 @@ namespace Athena
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
-			std::string_view views[] = { "WorldSpace", "ScreenSpace", "Billboard"};
+			std::string_view views[] = { "World Space", "Screen Space", "Billboard"};
 			std::string_view selected = Renderer2DSpaceToString(text.Space);
 
 			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
@@ -796,7 +796,7 @@ namespace Athena
 			UI::PropertySlider("Density", &bc2d.Density, 0.f, 1.f);
 			UI::PropertySlider("Friction", &bc2d.Friction, 0.f, 1.f);
 			UI::PropertySlider("Restitution", &bc2d.Restitution, 0.f, 1.f);
-			UI::PropertySlider("RestitutionThreshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
+			UI::PropertySlider("Restitution Threshold", &bc2d.RestitutionThreshold, 0.f, 1.f);
 
 			return true;
 		});
@@ -808,7 +808,7 @@ namespace Athena
 			UI::PropertySlider("Density", &cc2d.Density, 0.f, 1.f);
 			UI::PropertySlider("Friction", &cc2d.Friction, 0.f, 1.f);
 			UI::PropertySlider("Restitution", &cc2d.Restitution, 0.f, 1.f);
-			UI::PropertySlider("RestitutionThreshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
+			UI::PropertySlider("Restitution Threshold", &cc2d.RestitutionThreshold, 0.f, 1.f);
 
 			return true;
 		});
@@ -905,7 +905,7 @@ namespace Athena
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 100.f);
 			UI::PropertyCheckbox("Cast Shadows", &lightComponent.CastShadows);
-			UI::PropertyDrag("LightSize", &lightComponent.LightSize, 0.025f, 0.f, 100.f);
+			UI::PropertyDrag("Light Size", &lightComponent.LightSize, 0.025f, 0.f, 100.f);
 
 			return true;
 		});
@@ -915,7 +915,7 @@ namespace Athena
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
 			UI::PropertyDrag("Radius", &lightComponent.Radius, 2.5f, 0.f, 10000.f);
-			UI::PropertyDrag("FallOff", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyDrag("Fall Off", &lightComponent.FallOff, 0.1f, 0.f, 100.f);
 
 			return true;
 		});
@@ -925,9 +925,9 @@ namespace Athena
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
 			UI::PropertySlider("Spot Angle", &lightComponent.SpotAngle, 0.f, 180.f);
-			UI::PropertyDrag("Inner FallOff", &lightComponent.InnerFallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyDrag("Inner Fall Off", &lightComponent.InnerFallOff, 0.1f, 0.f, 100.f);
 			UI::PropertyDrag("Range", &lightComponent.Range, 2.5f, 0.f, 10000.f);
-			UI::PropertyDrag("Range FallOff", &lightComponent.RangeFallOff, 0.1f, 0.f, 100.f);
+			UI::PropertyDrag("Range Fall Off", &lightComponent.RangeFallOff, 0.1f, 0.f, 100.f);
 
 			return true;
 		});

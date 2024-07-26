@@ -1,6 +1,6 @@
 
 # Main project name
-set(PROJECT_NAME "TestProject")
+set(PROJECT_NAME "Sandbox")
 
 # Filepath to Athena source directory
 set(ATHENA_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../../..")

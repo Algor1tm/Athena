@@ -87,4 +87,27 @@ namespace Athena::Utils
 
 		return result;
 	}
+
+	inline void ReplaceAll(String& src, const String& from, const String& to)
+	{
+		if (from.size() < to.size())
+		{
+			size_t occurences = 0;
+			size_t pos = 0;
+			while ((pos = src.find(from, pos)) != std::string::npos)
+			{
+				occurences++;
+				pos += to.size();
+			}
+
+			src.reserve(src.capacity() + occurences * (to.size() - from.size()));
+		}
+
+		size_t pos = 0;
+		while ((pos = src.find(from, pos)) != std::string::npos)
+		{
+			src.replace(pos, from.size(), to);
+			pos += to.size();
+		}
+	}
 }

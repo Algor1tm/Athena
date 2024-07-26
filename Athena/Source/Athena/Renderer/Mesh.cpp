@@ -508,7 +508,7 @@ namespace Athena
 		result->m_Name = path.stem().string();
 		result->m_MaterialTable = Ref<MaterialTable>::Create();
 
-		ATN_CORE_TRACE_TAG("StaticMesh", "Create static mesh from '{}'", path);
+		//ATN_CORE_TRACE_TAG("StaticMesh", "Create static mesh from '{}'", path);
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
 		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());

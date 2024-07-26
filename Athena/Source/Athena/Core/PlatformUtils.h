@@ -15,6 +15,7 @@ namespace Athena
 		uint64 RAM = 0;	// Kb
 	};
 
+
 	class ATHENA_API Platform
 	{
 	public:
@@ -22,6 +23,7 @@ namespace Athena
 		static const CPUCapabilities& GetCPUCapabilities();
 
 		static void OpenInBrowser(const std::wstring& url);
+		static void RunFile(const FilePath& path, const FilePath& workingDir);
 		// In milliseconds
 		static double GetHighPrecisionTime();
 		// In bytes

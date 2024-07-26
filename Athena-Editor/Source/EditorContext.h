@@ -20,7 +20,7 @@ namespace Athena
 		float RendererIconsScale = 1.f;
 		Vector2 NearFarClips = { 1.f, 200.f };
 		bool ShowPhysicsColliders = false;
-		bool ReloadScriptsOnStart = false;
+		bool ReloadScriptsOnStart = true;
 	};
 
 	struct EditorContext : public RefCounted

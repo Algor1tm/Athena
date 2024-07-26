@@ -72,8 +72,8 @@ namespace Athena
 		switch (view)
 		{
 		case DebugView::NONE: return "None";
-		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
-		case DebugView::LIGHT_COMPLEXITY: return "LightComplexity";
+		case DebugView::SHADOW_CASCADES: return "Shadow Cascades";
+		case DebugView::LIGHT_COMPLEXITY: return "Light Complexity";
 		case DebugView::GBUFFER: return "GBuffer";
 		}
 
@@ -86,10 +86,10 @@ namespace Athena
 		if (str == "None")
 			return DebugView::NONE;
 
-		if (str == "ShadowCascades")
+		if (str == "Shadow Cascades")
 			return DebugView::SHADOW_CASCADES;
 
-		if (str == "LightComplexity")
+		if (str == "Light Complexity")
 			return DebugView::LIGHT_COMPLEXITY;
 
 		if (str == "GBuffer")
@@ -113,23 +113,12 @@ namespace Athena
 			{
 				EditorSettings& settings = m_EditorCtx.EditorSettings;
 
-				UI::PropertyCheckbox("GizmosLocal", &settings.GizmosLocalTransform);
-				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
-				UI::PropertySlider("RendererIconsScale", &settings.RendererIconsScale, 0.4f, 3.f);
-				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyCheckbox("Gizmos Local", &settings.GizmosLocalTransform);
+				UI::PropertyCheckbox("Show Renderer Icons", &settings.ShowRendererIcons);
+				UI::PropertySlider("Renderer Icons Scale", &settings.RendererIconsScale, 0.4f, 3.f);
+				UI::PropertySlider("Camera Speed", &settings.CameraSpeedLevel, 0.f, 10.f);
 				UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
-				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
-				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);
-
-				UI::PropertyRow("Reload Scripts", ImGui::GetFrameHeight());
-				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-				if (ImGui::Button("Reload All Scripts"))
-				{
-					ScriptEngine::ReloadScripts();
-				}
-				ImGui::PopStyleVar();
-				ImGui::PopStyleColor();
+				UI::PropertyCheckbox("Show Physics Colliders", &settings.ShowPhysicsColliders);
 
 				UI::EndPropertyTable();
 			}
@@ -193,10 +182,10 @@ namespace Athena
 
 		if (UI::TreeNode("Debug", false))
 		{
-			ImGui::Text("DebugView");
+			ImGui::Text("Debug View");
 			ImGui::SameLine();
 
-			std::string_view views[] = { "None", "ShadowCascades", "LightComplexity", "GBuffer" };
+			std::string_view views[] = { "None", "Shadow Cascades", "Light Complexity", "GBuffer" };
 			std::string_view selected = DebugViewToString(settings.DebugView);
 			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
 			{
@@ -224,14 +213,14 @@ namespace Athena
 			{
 				UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
 				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
-				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
-				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
+				UI::PropertyDrag("Near Plane Offset", &shadowSettings.NearPlaneOffset);
+				UI::PropertyDrag("Far Plane Offset", &shadowSettings.FarPlaneOffset);
 
 				UI::EndPropertyTable();
 				UI::TreePop();
 			}
 
-			if (UI::TreeNode("ShadowMap", false, true))
+			if (UI::TreeNode("Shadow Map", false, true))
 			{
 				static int layer = 0;
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
@@ -257,7 +246,7 @@ namespace Athena
 			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
 			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
 			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
-			UI::PropertySlider("BlurSharpness", &ao.BlurSharpness, 0.f, 100.f);
+			UI::PropertySlider("Blur Sharpness", &ao.BlurSharpness, 0.f, 100.f);
 
 			UI::EndPropertyTable();
 			UI::TreePop();
@@ -271,16 +260,16 @@ namespace Athena
 			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
 				m_ViewportRenderer->ApplySettings();
 
-			UI::PropertyCheckbox("ConeTrace", &ssr.ConeTrace);
+			UI::PropertyCheckbox("Cone Trace", &ssr.ConeTrace);
 			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
-			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
+			UI::PropertySlider("Max Roughness", &ssr.MaxRoughness, 0.f, 1.f);
 
 			int maxSteps = ssr.MaxSteps;
-			if (UI::PropertyDrag("MaxSteps", &maxSteps, 1, 1024))
+			if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 1024))
 				ssr.MaxSteps = maxSteps;
 
-			UI::PropertySlider("ScreenEdgesFade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
-			UI::PropertyCheckbox("BackwardRays", &ssr.BackwardRays);
+			UI::PropertySlider("Screen Edges Fade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
+			UI::PropertyCheckbox("Backward Rays", &ssr.BackwardRays);
 
 			UI::EndPropertyTable();
 			UI::TreePop();
@@ -294,7 +283,7 @@ namespace Athena
 			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
 			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
-			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
+			UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
 			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
 			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
@@ -315,7 +304,7 @@ namespace Athena
 
 			UI::EndPropertyTable();
 
-			if (UI::TreeNode("BloomTexture", false, true))
+			if (UI::TreeNode("Bloom Texture", false, true))
 			{
 				Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
 
@@ -329,7 +318,7 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("PostProcessing", false) && UI::BeginPropertyTable())
+		if (UI::TreeNode("Post Processing", false) && UI::BeginPropertyTable())
 		{
 			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 

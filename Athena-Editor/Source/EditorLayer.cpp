@@ -178,6 +178,9 @@ namespace Athena
         if (m_ThemeEditorOpen)
             DrawThemeEditor();
 
+        if (m_CreateScriptModalOpen)
+            DrawCreateScriptModal();
+
         ImGui::End();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
@@ -264,6 +267,28 @@ namespace Athena
 
                         FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
                         TextureExporter::ExportPNG(path, image);
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Scripting"))
+                {
+                    EditorSettings& settings = m_EditorCtx->EditorSettings;
+
+                    if (ImGui::MenuItem("Reload Scripts"))
+                    {
+                        ScriptEngine::ReloadScripts();
+                    }
+
+                    if (ImGui::MenuItem("Reload On Play", NULL, settings.ReloadScriptsOnStart))
+                    {
+                        settings.ReloadScriptsOnStart = !settings.ReloadScriptsOnStart;
+                    }
+
+                    if (ImGui::MenuItem("Create Script ..."))
+                    {
+                        m_CreateScriptModalOpen = true;
                     }
 
                     ImGui::EndMenu();
@@ -726,6 +751,40 @@ namespace Athena
             m_ThemeEditorOpen = false;
 
         ImGui::End();
+    }
+
+    void EditorLayer::DrawCreateScriptModal()
+    {
+        ImGui::OpenPopup("Create New Script");
+        m_CreateScriptModalOpen = ImGui::BeginPopupModal("Create New Script", nullptr);
+        if (m_CreateScriptModalOpen)
+        {
+            UI::PushFont(UI::Fonts::Default22);
+            static String scriptName;
+            UI::TextInputWithHint("Script Name", scriptName);
+            UI::PopFont();
+
+            UI::ShiftCursorY(10);
+
+            if (ImGui::Button("Close"))
+            {
+                m_CreateScriptModalOpen = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Create") || Input::IsKeyPressed(Keyboard::Enter))
+            {
+                ScriptEngine::CreateNewScript(scriptName);
+                scriptName.clear();
+
+                m_CreateScriptModalOpen = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
     }
 
     void EditorLayer::OnScenePlay()

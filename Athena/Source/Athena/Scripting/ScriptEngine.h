@@ -90,6 +90,9 @@ namespace Athena
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, Time frameTime);
 
+		static void CreateNewScript(const String& name);
+
+
 	private:
 		static void FindScripts(const FilePath& dir, std::vector<String>& scriptsNames);
 	};

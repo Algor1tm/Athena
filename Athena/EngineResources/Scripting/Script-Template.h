@@ -5,12 +5,12 @@
 using namespace Athena;
 
 
-namespace TestProject
+namespace NamespaceName
 {
-	class Camera: public Script
+	class ClassName: public Script
 	{
 	public:
-		Camera();
+		ClassName();
 
 	private:
 		virtual void OnCreate() override;
@@ -18,7 +18,6 @@ namespace TestProject
 		virtual void GetFieldsDescription(ScriptFieldMap* outFields) override;
 
 	private:
-		float m_Speed = 1.f;
-		bool m_Checkbox = true;
+
 	};
 }

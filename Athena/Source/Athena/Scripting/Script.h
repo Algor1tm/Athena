@@ -50,6 +50,7 @@ namespace Athena
 		}
 
 		Scene* GetScene() const { return m_Scene; }
+		Entity GetEntity() const { return m_Entity; }
 
 	public:
 		virtual void OnCreate() {};
@@ -77,9 +78,35 @@ namespace Athena
 	using ScriptFunc_OnUpdate = void (*)(Script* _this, float frameTime);
 	using ScriptFunc_GetFieldsDescription = void (*)(Script* _this, ScriptFieldMap* outFields);
 
+
 #ifdef ATN_PLATFORM_WINDOWS
-	#define SCRIPT_API __declspec(dllexport)
+#define SCRIPT_API __declspec(dllexport)
 #else
-	#define SCRIPT_API
+#define SCRIPT_API
 #endif // End of linking detection
+
+
+#define EXPORT_SCRIPT(ClassName) 	extern "C"																\
+	{																										\
+		SCRIPT_API void _##ClassName##_Instantiate(::Athena::Script** outScript)							\
+		{																								    \
+			*outScript = new ClassName();																	\
+		}																									\
+		SCRIPT_API void _##ClassName##_OnCreate(::Athena::Script* _this)									\
+		{																								    \
+			_this->OnCreate();																				\
+		}																									\
+		SCRIPT_API void _##ClassName##_OnUpdate(::Athena::Script* _this, float frameTime)					\
+		{																									\
+			_this->OnUpdate(::Athena::Time::Milliseconds(frameTime));										\
+		}																									\
+		SCRIPT_API void _##ClassName##_GetFieldsDescription(::Athena::Script * _this,						\
+			::Athena::ScriptFieldMap * outFields)															\
+		{																									\
+			_this->GetFieldsDescription(outFields);															\
+		}																									\
+	}	
+
+
+#define ADD_FIELD(FieldName) outFields->insert({ ATN_STRINGIFY_MACRO(FieldName), ::Athena::ScriptFieldStorage(&(FieldName))});
 }

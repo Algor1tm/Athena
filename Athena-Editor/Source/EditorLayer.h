@@ -44,6 +44,7 @@ namespace Athena
 		void OnRender2D();
 		void DrawAboutModal();
 		void DrawThemeEditor();
+		void DrawCreateScriptModal();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -77,5 +78,6 @@ namespace Athena
 
 		bool m_AboutModalOpen = false;
 		bool m_ThemeEditorOpen = false;
+		bool m_CreateScriptModalOpen = false;
 	};
 }

@@ -1,10 +1,12 @@
 #include "ScriptEngine.h"
 
+#include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/Script.h"
+#include "Athena/Utils/StringUtils.h"
 
 
 namespace Athena
@@ -25,7 +27,7 @@ namespace Athena
 	static ScriptEngineData* s_Data;
 
 	template<typename FuncT, typename... Args>
-	static bool InvokeScriptFunc(const String& scriptName, FuncT func, Args&&... args)
+	static bool InvokeScriptFunc(const String& scriptName, Entity entity, FuncT func, Args&&... args)
 	{
 		if (!s_Data->Config.EnableDebug)
 		{
@@ -39,7 +41,18 @@ namespace Athena
 		}
 		catch (std::exception& exception)
 		{
-			ATN_CORE_ERROR_TAG("SriptEngine", "Script '{}' threw exception: \n{}!", scriptName, exception.what());
+			if (entity == Entity{})
+			{
+				ATN_CORE_ERROR_TAG("SriptEngine", "Script '{}' threw exception: \n{}!", scriptName, exception.what());
+			}
+			else
+			{
+				const String& entityName = entity.GetComponent<TagComponent>().Tag;
+				UUID id = entity.GetComponent<IDComponent>().ID;
+
+				ATN_CORE_ERROR_TAG("SriptEngine", "Script '{}' (Entity name - {}, id - {}) threw exception: \n{}!", 
+					scriptName, entityName, id, exception.what());
+			}
 			return false;
 		}
 
@@ -65,9 +78,9 @@ namespace Athena
 
 		// Get Fields
 		Script* script = nullptr;
-		if (InvokeScriptFunc(m_Name, m_InstantiateMethod, &script))
+		if (InvokeScriptFunc(m_Name, Entity{}, m_InstantiateMethod, &script))
 		{
-			if (InvokeScriptFunc(m_Name, m_GetFieldsDescriptionMethod, script, &m_FieldsDescription))
+			if (InvokeScriptFunc(m_Name, Entity{}, m_GetFieldsDescriptionMethod, script, &m_FieldsDescription))
 			{
 				for (auto& [name, storage] : m_FieldsDescription)
 				{
@@ -89,7 +102,7 @@ namespace Athena
 	{
 		Script* script = nullptr;
 
-		InvokeScriptFunc(m_Name, m_InstantiateMethod, &script);
+		InvokeScriptFunc(m_Name, entity, m_InstantiateMethod, &script);
 		script->Initialize(s_Data->SceneContext, entity);
 
 		return script;
@@ -116,7 +129,7 @@ namespace Athena
 	void ScriptInstance::UpdateFieldMapRefs(ScriptFieldMap& fieldMap)
 	{
 		ScriptFieldMap fieldRefs;
-		InvokeScriptFunc(m_ScriptClass->GetName(), m_ScriptClass->GetGetFieldsDescriptionMethod(),
+		InvokeScriptFunc(m_ScriptClass->GetName(), m_Instance->GetEntity(), m_ScriptClass->GetGetFieldsDescriptionMethod(),
 			m_Instance, &fieldRefs);
 
 		ATN_CORE_ASSERT(fieldMap.size() == fieldRefs.size());
@@ -129,13 +142,13 @@ namespace Athena
 
 	void ScriptInstance::InvokeOnCreate()
 	{
-		InvokeScriptFunc(m_ScriptClass->GetName(), m_ScriptClass->GetOnCreateMethod(), 
+		InvokeScriptFunc(m_ScriptClass->GetName(), m_Instance->GetEntity(), m_ScriptClass->GetOnCreateMethod(),
 			m_Instance);
 	}
 
 	void ScriptInstance::InvokeOnUpdate(Time frameTime)
 	{
-		InvokeScriptFunc(m_ScriptClass->GetName(), m_ScriptClass->GetOnUpdateMethod(), 
+		InvokeScriptFunc(m_ScriptClass->GetName(), m_Instance->GetEntity(), m_ScriptClass->GetOnUpdateMethod(),
 			m_Instance, (float)frameTime.AsMilliseconds());
 	}
 
@@ -194,7 +207,7 @@ namespace Athena
 
 		if (!FileSystem::Copy(libPath, activeLibPath))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create temporary library for reading!");
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to load scripting library!");
 			return false;
 		}
 
@@ -202,8 +215,7 @@ namespace Athena
 		{
 			if (!FileSystem::Copy(pdbPath, activePdbPath))
 			{
-				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create temporary pdb for reading!");
-				return false;
+				ATN_CORE_WARN_TAG("ScriptEngine", "Failed to load debug info!");
 			}
 		}
 
@@ -339,6 +351,51 @@ namespace Athena
 		{
 			s_Data->EntityInstances.at(entity.GetID()).InvokeOnUpdate(frameTime);
 		}
+	}
+
+	void ScriptEngine::CreateNewScript(const String& name)
+	{
+		bool invalidName = name.empty() ||
+			std::find_if(name.begin(), name.end(), [](char c) { return !std::isalpha(c); }) != name.end();
+
+		if (invalidName)
+		{
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Invalid name for script class - '{}'", name);
+			return;
+		}
+
+		FilePath scResources = Application::Get().GetConfig().EngineResourcesPath / "Scripting";
+
+		FilePath cppTemplate = scResources / "Script-Template.cpp";
+		FilePath headerTemplate = scResources / "Script-Template.h";
+
+		if (!FileSystem::Exists(cppTemplate) || !FileSystem::Exists(headerTemplate))
+		{
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to find script templates!");
+			return;
+		}
+
+		FilePath srcPath = s_Data->Config.ScriptsPath / "Source";
+
+		{
+			String headerSource = FileSystem::ReadFile(headerTemplate);
+			Utils::ReplaceAll(headerSource, "ClassName", name);
+			FilePath headerPath = srcPath / fmt::format("{}.h", name);
+
+			if (!FileSystem::WriteFile(headerPath, headerSource.c_str(), headerSource.size()))
+				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create new script file {}", headerPath);
+		}
+
+		{
+			String cppSource = FileSystem::ReadFile(cppTemplate);
+			Utils::ReplaceAll(cppSource, "ClassName", name);
+			FilePath cppPath = srcPath / fmt::format("{}.cpp", name);
+
+			if(!FileSystem::WriteFile(cppPath, cppSource.c_str(), cppSource.size()))
+				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create new script file {}", cppPath);
+		}
+
+		Platform::RunFile("VS2022-GenProjects.bat", s_Data->Config.ScriptsPath);
 	}
 
 	void ScriptEngine::FindScripts(const FilePath& dir, std::vector<String>& scriptsNames)

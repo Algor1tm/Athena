@@ -4,6 +4,30 @@
 
 namespace Athena::UI
 {
+	struct Popup
+	{
+		std::string_view Name;
+		bool IsModal = false;
+		bool IsActive = false;
+	};
+
+	struct EnumUI
+	{
+		std::string_view Name;
+		std::unordered_map<std::string_view, uint32> ElementsMap;
+		std::vector<std::string_view> ElementsList;
+	};
+
+	struct UIData
+	{
+		std::unordered_map<std::string_view, Popup> Popups;
+		Popup CurrentPopup;
+
+		std::unordered_map<std::string_view, EnumUI> Enums;
+	};
+
+	static UIData s_Data;
+
 	namespace Utils
 	{
 		int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
@@ -438,6 +462,109 @@ namespace Athena::UI
 		ImGui::ItemSize(size);
 		ImGui::ItemAdd(bb, id);
 	}
+
+
+	void RegisterPopup(std::string_view name, bool isModal)
+	{
+		s_Data.Popups[name] = { name, isModal, false };
+	}
+
+	void OpenPopup(std::string_view name)
+	{
+		ATN_CORE_ASSERT(s_Data.Popups.contains(name));
+		s_Data.Popups.at(name).IsActive = true;
+	}
+
+	void CloseCurrentPopup()
+	{
+		ATN_CORE_ASSERT(!s_Data.CurrentPopup.Name.empty());
+
+		Popup& popup = s_Data.Popups.at(s_Data.CurrentPopup.Name);
+
+		if (popup.IsModal)
+			ImGui::CloseCurrentPopup();
+
+		popup.IsActive = false;
+	}
+
+	bool BeginPopupModal(std::string_view name, ImGuiWindowFlags flags)
+	{
+		ATN_CORE_ASSERT(s_Data.Popups.contains(name));
+
+		Popup& popup = s_Data.Popups.at(name);
+
+		if (!popup.IsActive)
+			return false;
+
+		bool result;
+		if (popup.IsModal)
+		{
+			ImGui::OpenPopup("Create New Script");
+			result = ImGui::BeginPopupModal("Create New Script", nullptr, flags);
+		}
+		else
+		{
+			result = ImGui::Begin(name.data(), nullptr, flags);
+		}
+
+		s_Data.CurrentPopup = popup;
+		return result;
+	}
+
+	void EndPopup()
+	{
+		if (s_Data.CurrentPopup.IsModal)
+			ImGui::EndPopup();
+		else
+			ImGui::End();
+		
+		s_Data.CurrentPopup = {};
+	}
+
+
+	void RegisterEnum(std::string_view name)
+	{
+		EnumUI enumUI;
+		enumUI.Name = name;
+
+		s_Data.Enums[name] = enumUI;
+	}
+
+	void EnumAdd(std::string_view enumName, uint32 value, std::string_view label)
+	{
+		ATN_CORE_ASSERT(s_Data.Enums.contains(enumName));
+
+		EnumUI& enumUI = s_Data.Enums.at(enumName);
+
+		enumUI.ElementsMap[label] = value;
+		enumUI.ElementsList.push_back(label);
+	}
+
+	bool PropertyEnumCombo(std::string_view label, std::string_view enumName, void* value)
+	{
+		ATN_CORE_ASSERT(s_Data.Enums.contains(enumName));
+
+		EnumUI& enumUI = s_Data.Enums.at(enumName);
+		std::string_view selectedElem;
+		for (const auto& [name, enumValue] : enumUI.ElementsMap)
+		{
+			if (enumValue == *(uint32*)value)
+				selectedElem = name;
+		}
+
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = UI::ComboBox("##Property", enumUI.ElementsList.data(), enumUI.ElementsList.size(), &selectedElem);
+		ImGui::PopID();
+
+		if (active)
+			*(uint32*)value = enumUI.ElementsMap.at(selectedElem);
+
+		return active;
+	}
+
 
 	bool BeginMenubar(const ImRect& barRectangle)
 	{

@@ -172,13 +172,13 @@ namespace Athena
 
         PanelManager::OnImGuiRender();
 
-        if (m_AboutModalOpen)
+        if (UI::BeginPopupModal("About", ImGuiWindowFlags_AlwaysAutoResize))
             DrawAboutModal();
 
-        if (m_ThemeEditorOpen)
+        if (UI::BeginPopupModal("Theme Editor"))
             DrawThemeEditor();
 
-        if (m_CreateScriptModalOpen)
+        if (UI::BeginPopupModal("Create New Script"))
             DrawCreateScriptModal();
 
         ImGui::End();
@@ -214,6 +214,10 @@ namespace Athena
 
     void EditorLayer::InitUI()
     {
+        UI::RegisterPopup("About", true);
+        UI::RegisterPopup("Theme Editor");
+        UI::RegisterPopup("Create New Script", true);
+
         m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetConfig().Name, m_EditorCtx);
 
         m_Titlebar->SetMenubarCallback([this]()
@@ -248,7 +252,7 @@ namespace Athena
                 {
                     if (ImGui::MenuItem("Theme Editor"))
                     {
-                        m_ThemeEditorOpen = !m_ThemeEditorOpen;
+                        UI::OpenPopup("Theme Editor");
                     }
 
                     if (ImGui::MenuItem("Take Screenshot"))
@@ -288,7 +292,7 @@ namespace Athena
 
                     if (ImGui::MenuItem("Create Script ..."))
                     {
-                        m_CreateScriptModalOpen = true;
+                        UI::OpenPopup("Create New Script");
                     }
 
                     ImGui::EndMenu();
@@ -298,7 +302,7 @@ namespace Athena
                 {
                     if (ImGui::MenuItem("About", NULL, false))
                     {
-                        m_AboutModalOpen = true;
+                        UI::OpenPopup("About");
                     }
 
                     if (ImGui::MenuItem("Github", NULL, false))
@@ -711,32 +715,24 @@ namespace Athena
 
     void EditorLayer::DrawAboutModal()
     {
-        ImGui::OpenPopup("About");
-        m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        if (m_AboutModalOpen)
+        auto logo = EditorResources::GetIcon("Logo");
+        UI::DrawImage(logo, { 48, 48 });
+
+        ImGui::SameLine();
+        UI::ShiftCursorX(20.0f);
+
+        ImGui::Text("Athena 3D Game Engine");
+
+        if (UI::ButtonCentered("Close"))
         {
-            auto logo = EditorResources::GetIcon("Logo");
-            UI::DrawImage(logo, { 48, 48 });
-
-            ImGui::SameLine();
-            UI::ShiftCursorX(20.0f);
-
-            ImGui::Text("Athena 3D Game Engine");
-
-            if (UI::ButtonCentered("Close"))
-            {
-                m_AboutModalOpen = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
+            UI::CloseCurrentPopup();
         }
+
+        UI::EndPopup();
     }
 
     void EditorLayer::DrawThemeEditor()
     {
-        ImGui::Begin("Theme Editor");
-
         UI::Theme& theme = UI::GetTheme();
 
         UI::ThemeEditor(theme);
@@ -748,43 +744,36 @@ namespace Athena
 
         ImGui::SameLine();
         if (ImGui::Button("Close"))
-            m_ThemeEditorOpen = false;
+            UI::CloseCurrentPopup();
 
-        ImGui::End();
+        UI::EndPopup();
     }
 
     void EditorLayer::DrawCreateScriptModal()
     {
-        ImGui::OpenPopup("Create New Script");
-        m_CreateScriptModalOpen = ImGui::BeginPopupModal("Create New Script", nullptr);
-        if (m_CreateScriptModalOpen)
+        UI::PushFont(UI::Fonts::Default22);
+        static String scriptName;
+        UI::TextInputWithHint("Script Name", scriptName);
+        UI::PopFont();
+
+        UI::ShiftCursorY(10);
+
+        if (ImGui::Button("Close"))
         {
-            UI::PushFont(UI::Fonts::Default22);
-            static String scriptName;
-            UI::TextInputWithHint("Script Name", scriptName);
-            UI::PopFont();
-
-            UI::ShiftCursorY(10);
-
-            if (ImGui::Button("Close"))
-            {
-                m_CreateScriptModalOpen = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Create") || Input::IsKeyPressed(Keyboard::Enter))
-            {
-                ScriptEngine::CreateNewScript(scriptName);
-                scriptName.clear();
-
-                m_CreateScriptModalOpen = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
+            UI::CloseCurrentPopup();
         }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Create"))
+        {
+            ScriptEngine::CreateNewScript(scriptName);
+            scriptName.clear();
+
+            UI::CloseCurrentPopup();
+        }
+
+        UI::EndPopup();
     }
 
     void EditorLayer::OnScenePlay()

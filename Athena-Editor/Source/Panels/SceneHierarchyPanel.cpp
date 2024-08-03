@@ -20,32 +20,6 @@
 
 namespace Athena
 {
-	static std::string_view Renderer2DSpaceToString(Renderer2DSpace mode)
-	{
-		switch (mode)
-		{
-		case Renderer2DSpace::WorldSpace: return "World Space";
-		case Renderer2DSpace::ScreenSpace: return "Screen Space";
-		case Renderer2DSpace::Billboard: return "Billboard";
-		}
-
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
-
-	static Renderer2DSpace Renderer2DSpaceFromString(std::string_view str)
-	{
-		if (str == "World Space")
-			return Renderer2DSpace::WorldSpace;
-		if (str == "Screen Space")
-			return Renderer2DSpace::ScreenSpace;
-		if (str == "Billboard")
-			return Renderer2DSpace::Billboard;
-
-		ATN_CORE_ASSERT(false);
-		return (Renderer2DSpace)0;
-	}
-
 	void DrawVec3Property(std::string_view label, Vector3& values, float defaultValues)
 	{
 		UI::PropertyRow(label, ImGui::GetFrameHeight());
@@ -119,6 +93,10 @@ namespace Athena
 	SceneHierarchyPanel::SceneHierarchyPanel(std::string_view name, const Ref<EditorContext>& context)
 		: Panel(name, context)
 	{
+		UI::RegisterEnum("Renderer2DSpace");
+		UI::EnumAdd("Renderer2DSpace", 1, "World Space");
+		UI::EnumAdd("Renderer2DSpace", 2, "Screen Space");
+		UI::EnumAdd("Renderer2DSpace", 3, "Billboard");
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender()
@@ -253,8 +231,11 @@ namespace Athena
 
 		Entity selectedEntity = m_EditorCtx.SelectedEntity;
 		bool entityDeleted = false;
-		// If there are entities with the same tag in the scene, this won`t work correct
-		if (ImGui::BeginPopupContextItem(entity.GetComponent<TagComponent>().Tag.c_str(), ImGuiPopupFlags_MouseButtonRight))
+
+		static char idString[20];
+		sprintf(idString, "%llu", (uint64)entity.GetComponent<IDComponent>().ID);
+
+		if (ImGui::BeginPopupContextItem(idString, ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Delete Entity"))
 				entityDeleted = true;
@@ -641,14 +622,8 @@ namespace Athena
 			if (ImGui::Button("Reset"))
 				sprite.Texture = TextureGenerator::GetWhiteTexture();
 
-			std::string_view views[] = { "World Space", "Screen Space", "Billboard" };
-			std::string_view selected = Renderer2DSpaceToString(sprite.Space);
-
-			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
-			{
-				sprite.Space = Renderer2DSpaceFromString(selected);
+			if(UI::PropertyEnumCombo("Space", ATN_STRINGIFY_MACRO(Renderer2DSpace), (void*)&sprite.Space))
 				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
-			}
 
 			UI::PropertySlider("Tiling", &sprite.TilingFactor, 1.f, 20.f);
 
@@ -659,14 +634,8 @@ namespace Athena
 		{
 			UI::PropertyColor4("Color", circle.Color.Data());
 
-			std::string_view views[] = { "World Space", "Screen Space", "Billboard" };
-			std::string_view selected = Renderer2DSpaceToString(circle.Space);
-
-			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
-			{
-				circle.Space = Renderer2DSpaceFromString(selected);
+			if (UI::PropertyEnumCombo("Space", ATN_STRINGIFY_MACRO(Renderer2DSpace), (void*)&circle.Space))
 				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
-			}
 
 			UI::PropertySlider("Thickness", &circle.Thickness, 0.f, 1.f);
 			UI::PropertySlider("Fade", &circle.Fade, 0.f, 1.f);
@@ -722,14 +691,8 @@ namespace Athena
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
-			std::string_view views[] = { "World Space", "Screen Space", "Billboard"};
-			std::string_view selected = Renderer2DSpaceToString(text.Space);
-
-			if (UI::PropertyCombo("Space", views, std::size(views), &selected))
-			{
-				text.Space = Renderer2DSpaceFromString(selected);
+			if (UI::PropertyEnumCombo("Space", ATN_STRINGIFY_MACRO(Renderer2DSpace), (void*)&text.Space))
 				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
-			}
 
 			UI::PropertyColor4("Color", text.Color.Data());
 			UI::PropertyDrag("Max Width", &text.MaxWidth, 0.2f);

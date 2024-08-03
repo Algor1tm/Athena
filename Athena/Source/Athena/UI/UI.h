@@ -76,13 +76,22 @@ namespace Athena::UI
 		ImU32 tintNormal, ImU32 tintHovered, ImU32 tintPressed,
 		ImVec2 rectMin, ImVec2 rectMax);
 	ATHENA_API void ButtonImage(const Ref<Texture2D>& image, ImU32 tintNormal = IM_COL32_WHITE, ImU32 tintHovered = IM_COL32_WHITE, ImU32 tintPressed = IM_COL32_WHITE);
-
 	ATHENA_API void DrawImage(const Ref<Texture2D>& image, const ImVec2& size, const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
-
 	ATHENA_API bool ButtonCentered(std::string_view label, const ImVec2& size = ImVec2(0, 0));
 	ATHENA_API void TextCentered(std::string_view label);
-
 	ATHENA_API void InvisibleItem(std::string_view id, ImVec2 size);
+
+	// Popups
+	ATHENA_API void RegisterPopup(std::string_view name, bool isModal = false);
+	ATHENA_API void OpenPopup(std::string_view name);
+	ATHENA_API void CloseCurrentPopup();
+	ATHENA_API bool BeginPopupModal(std::string_view name, ImGuiWindowFlags flags = 0);
+	ATHENA_API void EndPopup();
+
+	// Enums
+	ATHENA_API void RegisterEnum(std::string_view name);
+	ATHENA_API void EnumAdd(std::string_view enumName, uint32 value, std::string_view label);
+	ATHENA_API bool PropertyEnumCombo(std::string_view label, std::string_view enumName, void* value);
 
 	// Menubar with custom rect
 	ATHENA_API bool BeginMenubar(const ImRect& barRectangle);

@@ -218,7 +218,7 @@ namespace Athena
 				ATN_CORE_WARN_TAG("ScriptEngine", "Failed to load debug info!");
 			}
 		}
-
+		
 		FilePath sourceDir = s_Data->Config.ScriptsPath / "Source";
 
 		if (!FileSystem::Exists(sourceDir))

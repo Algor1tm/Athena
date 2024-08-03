@@ -75,9 +75,5 @@ namespace Athena
 
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 		FilePath m_CurrentScenePath;
-
-		bool m_AboutModalOpen = false;
-		bool m_ThemeEditorOpen = false;
-		bool m_CreateScriptModalOpen = false;
 	};
 }

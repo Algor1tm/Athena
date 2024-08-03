@@ -15,94 +15,24 @@
 
 namespace Athena
 {
-	static std::string_view TonemapModeToString(TonemapMode mode)
-	{
-		switch (mode)
-		{
-		case TonemapMode::NONE: return "None";
-		case TonemapMode::ACES_FILMIC: return "ACES-Filmic";
-		case TonemapMode::ACES_TRUE: return "ACES-True";
-		}
-
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
-
-	static TonemapMode TonemapModeFromString(std::string_view str)
-	{
-		if (str == "None")
-			return TonemapMode::NONE;
-		if (str == "ACES-Filmic")
-			return TonemapMode::ACES_FILMIC;
-		if (str == "ACES-True")
-			return TonemapMode::ACES_TRUE;
-
-		ATN_CORE_ASSERT(false);
-		return TonemapMode::NONE;
-	}
-
-	static std::string_view AntialisingToString(Antialising antialiasing)
-	{
-		switch (antialiasing)
-		{
-		case Antialising::NONE: return "None";
-		case Antialising::FXAA: return "FXAA";
-		case Antialising::SMAA: return "SMAA";
-		}
-
-		ATN_ASSERT(false);
-		return "";
-	}
-
-	static Antialising AntialisingFromString(std::string_view str)
-	{
-		if(str == "None")
-			return Antialising::NONE;
-		else if (str == "FXAA")
-			return Antialising::FXAA;
-		else if (str == "SMAA")
-			return Antialising::SMAA;
-
-		ATN_ASSERT(false);
-		return (Antialising)0;
-	}
-
-	static std::string_view DebugViewToString(DebugView view)
-	{
-		switch (view)
-		{
-		case DebugView::NONE: return "None";
-		case DebugView::SHADOW_CASCADES: return "Shadow Cascades";
-		case DebugView::LIGHT_COMPLEXITY: return "Light Complexity";
-		case DebugView::GBUFFER: return "GBuffer";
-		}
-
-		ATN_ASSERT(false);
-		return "";
-	}
-
-	static DebugView DebugViewFromString(std::string_view str)
-	{
-		if (str == "None")
-			return DebugView::NONE;
-
-		if (str == "Shadow Cascades")
-			return DebugView::SHADOW_CASCADES;
-
-		if (str == "Light Complexity")
-			return DebugView::LIGHT_COMPLEXITY;
-
-		if (str == "GBuffer")
-			return DebugView::GBUFFER;
-
-		ATN_ASSERT(false);
-		return (DebugView)0;
-	}
-
 	SettingsPanel::SettingsPanel(std::string_view name, const Ref<EditorContext>& context)
 		: Panel(name, context)
 	{
+		UI::RegisterEnum("TonemapMode");
+		UI::EnumAdd("TonemapMode", 0, "None");
+		UI::EnumAdd("TonemapMode", 1, "ACES-Filmic");
+		UI::EnumAdd("TonemapMode", 2, "ACES-True");
 
+		UI::RegisterEnum("Antialising");
+		UI::EnumAdd("Antialising", 0, "None");
+		UI::EnumAdd("Antialising", 1, "FXAA");
+		UI::EnumAdd("Antialising", 2, "SMAA");
+
+		UI::RegisterEnum("DebugView");
+		UI::EnumAdd("DebugView", 0, "None");
+		UI::EnumAdd("DebugView", 1, "Shadow Cascades");
+		UI::EnumAdd("DebugView", 2, "Light Complexity");
+		UI::EnumAdd("DebugView", 3, "GBUFFER");
 	}
 
 	void SettingsPanel::OnImGuiRender()
@@ -180,21 +110,10 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Debug", false))
+		if (UI::TreeNode("Debug", false) && UI::BeginPropertyTable())
 		{
-			ImGui::Text("Debug View");
-			ImGui::SameLine();
-
-			std::string_view views[] = { "None", "Shadow Cascades", "Light Complexity", "GBuffer" };
-			std::string_view selected = DebugViewToString(settings.DebugView);
-			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
-			{
-				settings.DebugView = DebugViewFromString(selected);
-			}
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-
+			UI::PropertyEnumCombo("Debug View", ATN_STRINGIFY_MACRO(DebugView), (void*)&settings.DebugView);
+			UI::EndPropertyTable();
 			UI::TreePop();
 		}
 
@@ -322,23 +241,9 @@ namespace Athena
 		{
 			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
-			{
-				std::string_view views[] = { "None", "ACES-Filmic", "ACES-True" };
-				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
-
-				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
-					postProcess.TonemapMode = TonemapModeFromString(selected);
-
-				UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
-			}
-
-			{
-				std::string_view views[] = { "None", "FXAA", "SMAA"};
-				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
-
-				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
-					postProcess.AntialisingMethod = AntialisingFromString(selected);
-			}
+			UI::PropertyEnumCombo("Tonemap Mode", ATN_STRINGIFY_MACRO(TonemapMode), (void*)&postProcess.TonemapMode);
+			UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+			UI::PropertyEnumCombo("Antialiasing", ATN_STRINGIFY_MACRO(Antialiasing), (void*)&postProcess.AntialisingMethod);
 
 			UI::EndPropertyTable();
 			UI::TreePop();

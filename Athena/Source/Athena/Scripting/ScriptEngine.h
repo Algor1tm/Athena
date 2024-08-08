@@ -90,10 +90,12 @@ namespace Athena
 		static void OnCreateEntity(Entity entity);
 		static void OnUpdateEntity(Entity entity, Time frameTime);
 
+		static void GenerateCMakeConfig();
 		static void CreateNewScript(const String& name);
-
+		static void OpenInVisualStudio();
 
 	private:
+		static void GenCMakeProjects();
 		static void FindScripts(const FilePath& dir, std::vector<String>& scriptsNames);
 	};
 }

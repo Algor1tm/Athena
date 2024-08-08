@@ -21,9 +21,9 @@
 #elif ATN_RELEASE
 	#define ATN_ENABLE_VERIFIES
 	#define ATN_ENABLE_PROFILING
-#endif
+#elif ATN_DIST
 
-// TODO: Distribution build
+#endif
 
 
 #include "Memory.h"

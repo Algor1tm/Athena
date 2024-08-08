@@ -243,13 +243,7 @@ namespace Athena
 			if (hasParent && ImGui::MenuItem("Make Orphan"))
 				m_EditorCtx.ActiveScene->MakeOrphan(entity);
 
-			bool correctParent = selectedEntity;
-			if (selectedEntity && entity.HasComponent<ParentComponent>())
-			{
-				correctParent = entity.GetComponent<ParentComponent>().Parent != selectedEntity;
-			}
-
-			if (correctParent && ImGui::MenuItem("Add to children"))
+			if (selectedEntity && entity != selectedEntity && ImGui::MenuItem("Add to children"))
 			{
 				Entity newParent = entity;
 				Entity newChild = selectedEntity;
@@ -475,37 +469,37 @@ namespace Athena
 				if (field.GetType() == ScriptFieldType::Int32)
 				{
 					int32 data = field.GetValue<int32>();
-					if (UI::PropertyDrag(name.c_str(), &data))
+					if (UI::PropertyDrag(name.data(), &data))
 						field.SetValue(data);
 				}
 				if (field.GetType() == ScriptFieldType::Float)
 				{
 					float data = field.GetValue<float>();
-					if (UI::PropertyDrag(name.c_str(), &data))
+					if (UI::PropertyDrag(name.data(), &data))
 						field.SetValue(data);
 				}
 				if (field.GetType() == ScriptFieldType::Bool)
 				{
 					bool data = field.GetValue<bool>();
-					if (UI::PropertyCheckbox(name.c_str(), &data))
+					if (UI::PropertyCheckbox(name.data(), &data))
 						field.SetValue(data);
 				}
 				if (field.GetType() == ScriptFieldType::Vector2)
 				{
 					Vector2 data = field.GetValue<Vector2>();
-					if (UI::PropertyDrag(name.c_str(), &data))
+					if (UI::PropertyDrag(name.data(), &data))
 						field.SetValue(data);
 				}
 				if (field.GetType() == ScriptFieldType::Vector3)
 				{
 					Vector3 data = field.GetValue<Vector3>();
-					if (UI::PropertyDrag(name.c_str(), &data))
+					if (UI::PropertyDrag(name.data(), &data))
 						field.SetValue(data);
 				}
 				if (field.GetType() == ScriptFieldType::Vector4)
 				{
 					Vector4 data = field.GetValue<Vector4>();
-					if (UI::PropertyDrag(name.c_str(), &data))
+					if (UI::PropertyDrag(name.data(), &data))
 						field.SetValue(data);
 				}
 			}

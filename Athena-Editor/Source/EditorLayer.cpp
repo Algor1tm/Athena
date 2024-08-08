@@ -294,6 +294,12 @@ namespace Athena
                     {
                         UI::OpenPopup("Create New Script");
                     }
+#ifdef ATN_PLATFORM_WINDOWS
+                    if (ImGui::MenuItem("Open In Visual Studio"))
+                    {
+                        ScriptEngine::OpenInVisualStudio();
+                    }
+#endif
 
                     ImGui::EndMenu();
                 }

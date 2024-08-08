@@ -94,7 +94,7 @@ namespace Athena
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 				"VK_EXT_memory_budget" };
 
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 			deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
 

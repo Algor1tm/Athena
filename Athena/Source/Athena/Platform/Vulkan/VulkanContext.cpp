@@ -194,7 +194,7 @@ namespace Athena
 		
 			std::vector<const char*> layers;
 
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 			extensions.push_back("VK_EXT_debug_report");
 			layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
@@ -215,7 +215,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateInstance(&instanceCI, nullptr, &s_Data.Instance));
 
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 			// Setup the debug report callback
 			auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkCreateDebugReportCallbackEXT");
 			ATN_CORE_ASSERT(vkCreateDebugReportCallbackEXT != NULL);
@@ -284,7 +284,7 @@ namespace Athena
 			vkDestroyFence(VulkanContext::GetLogicalDevice(), s_Data.FrameSyncData[i].RenderCompleteFence, nullptr);
 		}
 
-#ifdef ATN_DEBUG
+#ifdef VULKAN_ENABLE_DEBUG_INFO
 		auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(s_Data.Instance, "vkDestroyDebugReportCallbackEXT");
 		vkDestroyDebugReportCallbackEXT(VulkanContext::GetInstance(), s_Data.DebugReport, nullptr);
 #endif

@@ -1,17 +1,20 @@
 cmake_minimum_required (VERSION 3.24)
 
+######################################
+##### CONFIG	
+######################################
+
 include(Config.cmake)
+
+set(THIRD_PARTY_DIR "${ATHENA_SOURCE_DIR}/Athena/ThirdParty")
+include("${ATHENA_SOURCE_DIR}/Dependencies.cmake")
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
 set(SHADERS_FOLDER "${ATHENA_SOURCE_DIR}/Athena/EngineResources/ShaderPack")
 
-# Enable in cross-platform way multi-processor compilation
-macro(EnableMultiProcessorCompilation TARGET_NAME)
-    if(MSVC)
-	    target_compile_options(${TARGET_NAME} PUBLIC /MP)
-    endif(MSVC)
-    #TODO: support other compilers
-endmacro()
+######################################
+##### GLOBAL
+######################################
 
 project (${PROJECT_NAME})
 
@@ -21,18 +24,38 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
 
+######################################
+##### MAIN PROJECT
+######################################
+
 file(GLOB_RECURSE SRC_SCRIPT_FILES CONFIGURE_DEPENDS 
 	"Source/*.h" 
 	"Source/*.cpp" 
 )
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_SCRIPT_FILES} )
 
 add_library(${PROJECT_NAME} SHARED ${SRC_SCRIPT_FILES})
+EnableMPCompilation(${PROJECT_NAME})
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_SCRIPT_FILES} )
-EnableMultiProcessorCompilation(${PROJECT_NAME})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "ScriptsLibrary")
+# Option to use MD or MDd 
+# TODO: support other compilers
+if(USE_DEBUG_RUNTIME_LIBS)
+	set(PROJECT_OUTPUT_NAME "ScriptsLibrary-d")
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE /MDd)
+	endif(MSVC)
+else(USE_DEBUG_RUNTIME_LIBS)
+	set(PROJECT_OUTPUT_NAME "ScriptsLibrary")
+	if(MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE /MD)
+	endif(MSVC)
+endif(USE_DEBUG_RUNTIME_LIBS)
 
+set_target_properties(${PROJECT_NAME}
+	PROPERTIES
+	CXX_STANDARD 20
+	OUTPUT_NAME ${PROJECT_OUTPUT_NAME}
+)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
 	$<$<CONFIG:Debug>:ATN_DEBUG>
@@ -53,31 +76,32 @@ set_target_properties(${PROJECT_NAME}
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${BUILD_FOLDER}/ScriptsLibrary"
 )
 
-set(THIRD_PARTY_DIR "${ATHENA_SOURCE_DIR}/Athena/ThirdParty")
+######################################
+##### SHADERS PROJECT
+######################################
 
-set(ASSIMP_INCLUDE_DIR "${THIRD_PARTY_DIR}/assimp/include")
-set(BOX2D_INCLUDE_DIR "${THIRD_PARTY_DIR}/Box2D/include")
-set(ENTT_INCLUDE_DIR "${THIRD_PARTY_DIR}/entt")
-set(GLFW_INCLUDE_DIR "${THIRD_PARTY_DIR}/GLFW/include")
-set(IMGUI_INCLUDE_DIR "${THIRD_PARTY_DIR}/ImGui")
-set(IMGUIZMO_INCLUDE_DIR "${THIRD_PARTY_DIR}/ImGuizmo")
-set(OPTICK_INCLUDE_DIR "${THIRD_PARTY_DIR}/Optick/OptickCore/src")
-set(SPDLOG_INCLUDE_DIR "${THIRD_PARTY_DIR}/spdlog/include")
-set(STBIMAGE_INCLUDE_DIR "${THIRD_PARTY_DIR}/stb_image/")
-set(YAML_CPP_INCLUDE_DIR "${THIRD_PARTY_DIR}/yaml-cpp/include")
-set(MSDF_ATLAS_GEN_INCLUDE_DIR "${THIRD_PARTY_DIR}/msdf-atlas-gen")
-set(MSDF_GEN_INCLUDE_DIR "${THIRD_PARTY_DIR}/msdf-atlas-gen/msdfgen")
+file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
+	"${SHADERS_FOLDER}/*.glsl"
+    "${SHADERS_FOLDER}/*.glslh"
+    "${SHADERS_FOLDER}/*.hlsl"
+    "${SHADERS_FOLDER}/*.hlsli")
+source_group(TREE "${SHADERS_FOLDER}" FILES ${SHADER_FILES} )
+
+add_library(Shaders ${SHADER_FILES})
+set_target_properties(Shaders
+	PROPERTIES
+	LINKER_LANGUAGE CXX
+	FOLDER Core
+)
+
+######################################
+##### DEPENDENCIES
+######################################
+
+IncludeDependenciesDirs(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
 	"${ATHENA_SOURCE_DIR}/Athena/Source" 
-	${THIRD_PARTY_DIR}
-	${ENTT_INCLUDE_DIR}
-	${IMGUI_INCLUDE_DIR}
-	${IMGUIZMO_INCLUDE_DIR}
-	${OPTICK_INCLUDE_DIR}
-	${SPDLOG_INCLUDE_DIR}
-	${MSDF_ATLAS_GEN_INCLUDE_DIR}
-	${MSDF_GEN_INCLUDE_DIR}
 )
 
 # Find Vulkan
@@ -88,20 +112,6 @@ if(Vulkan_FOUND)
 else(Vulkan_FOUND)
 	message("-- Failed to find VulkanSDK(Install VulkanSDK from official website or check if it is added to path)")
 endif(Vulkan_FOUND)
-
-# Show shaders in solution explorer
-file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
-	"${SHADERS_FOLDER}/*.glsl"
-    "${SHADERS_FOLDER}/*.glslh"
-    "${SHADERS_FOLDER}/*.hlsl"
-    "${SHADERS_FOLDER}/*.hlsli")
-
-add_library(Shaders ${SHADER_FILES})
-
-source_group(TREE "${SHADERS_FOLDER}" FILES ${SHADER_FILES} )
-set_property(TARGET Shaders PROPERTY LINKER_LANGUAGE CXX)
-set_property(TARGET Shaders PROPERTY FOLDER Core)
-
 
 macro(CopyDLLToBinaries DLL_PATH TARGET_NAME)
     configure_file("${DLL_PATH}" "${BUILD_FOLDER}/Athena/Debug/${TARGET_NAME}" COPYONLY)

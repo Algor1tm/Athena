@@ -12,11 +12,9 @@
 
 #define VULKAN_MAX_DEBUG_NAME_LENGTH 50
 
-#ifdef ATN_DEBUG
+#ifndef ATN_DIST
 	#define VULKAN_ENABLE_DEBUG_INFO
 	//#define VULKAN_ENABLE_MEMORY_DEBUG_INFO
-#else
-
 #endif
 
 

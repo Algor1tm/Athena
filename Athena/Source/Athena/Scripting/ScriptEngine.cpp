@@ -169,6 +169,13 @@ namespace Athena
 			return;
 		}
 
+#ifdef ATN_DEBUG // This will search for scripting binary with MDd
+		FilePath debugBinaryPath = s_Data->Config.ScriptsBinaryPath;
+		debugBinaryPath = debugBinaryPath.parent_path() / FilePath(debugBinaryPath.stem().string() + "-d" + debugBinaryPath.extension().string());
+		s_Data->Config.ScriptsBinaryPath = debugBinaryPath;
+#endif
+
+		GenerateCMakeConfig();
 		ReloadScripts();
 	}
 
@@ -231,8 +238,6 @@ namespace Athena
 		if (!s_Data->ScriptsLibrary->IsLoaded())
 			return false;
 
-		// Iterate through .cpp files and check if corresponding script exists 
-		// in library and then load this script
 		FindScripts(sourceDir, s_Data->ScriptsNames);
 
 		for (const auto& scriptName : s_Data->ScriptsNames)
@@ -353,6 +358,29 @@ namespace Athena
 		}
 	}
 
+	void ScriptEngine::GenerateCMakeConfig()
+	{
+		FilePath scResources = Application::Get().GetConfig().EngineResourcesPath / "Scripting";
+		FilePath configTemplate = scResources / "Config-Template.cmake";
+
+		if (!FileSystem::Exists(configTemplate))
+		{
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to find config template!");
+			return;
+		}
+
+		// TODO: Projects
+		String configSource = FileSystem::ReadFile(configTemplate);
+		Utils::ReplaceAll(configSource, "<REPLACE_PROJECT_NAME>", "Sandbox");
+		Utils::ReplaceAll(configSource, "<REPLACE_ATHENA_SOURCE_DIR>", "${CMAKE_SOURCE_DIR}/../../..");
+		Utils::ReplaceAll(configSource, "<REPLACE_ATHENA_BINARY_DIR>", "${CMAKE_SOURCE_DIR}/../../../Build/Binaries/Athena");
+		Utils::ReplaceAll(configSource, "<REPLACE_USE_DEBUG_RUNTIME_LIBS>", "ON");
+
+		FilePath configPath = s_Data->Config.ScriptsPath / "Config.cmake";
+		if (!FileSystem::WriteFile(configPath, configSource.c_str(), configSource.size()))
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to generate cmake config {}", configPath);
+	}
+
 	void ScriptEngine::CreateNewScript(const String& name)
 	{
 		bool invalidName = name.empty() ||
@@ -380,6 +408,7 @@ namespace Athena
 		{
 			String headerSource = FileSystem::ReadFile(headerTemplate);
 			Utils::ReplaceAll(headerSource, "ClassName", name);
+			Utils::ReplaceAll(headerSource, "NamespaceName", "Sandbox");	// TODO: Projects
 			FilePath headerPath = srcPath / fmt::format("{}.h", name);
 
 			if (!FileSystem::WriteFile(headerPath, headerSource.c_str(), headerSource.size()))
@@ -389,17 +418,43 @@ namespace Athena
 		{
 			String cppSource = FileSystem::ReadFile(cppTemplate);
 			Utils::ReplaceAll(cppSource, "ClassName", name);
+			Utils::ReplaceAll(cppSource, "NamespaceName", "Sandbox");	// TODO: Projects
 			FilePath cppPath = srcPath / fmt::format("{}.cpp", name);
 
 			if(!FileSystem::WriteFile(cppPath, cppSource.c_str(), cppSource.size()))
 				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create new script file {}", cppPath);
 		}
 
+		GenCMakeProjects();
+	}
+
+	void ScriptEngine::OpenInVisualStudio()
+	{
+		const String projectName = "Sandbox"; // Temporary
+
+		FilePath solutionName = fmt::format("{}.sln", projectName);
+		FilePath solutionPath = s_Data->Config.ScriptsPath / "Build/Projects" / solutionName;
+
+		if (!FileSystem::Exists(solutionPath))
+			GenCMakeProjects();
+
+		if (FileSystem::Exists(solutionPath))
+			Platform::RunFile(solutionName, s_Data->Config.ScriptsPath / "Build/Projects");
+		else
+			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to open solution file!");
+	}
+
+	void ScriptEngine::GenCMakeProjects()
+	{
 		Platform::RunFile("VS2022-GenProjects.bat", s_Data->Config.ScriptsPath);
 	}
 
 	void ScriptEngine::FindScripts(const FilePath& dir, std::vector<String>& scriptsNames)
 	{
+		// TODO: in the future at runtime we will be using AssetManager to find necessary scripts
+		// For now iterate through .cpp files and check if corresponding script exists 
+		// in library and then load this script
+
 		for (const auto& dirEntry : std::filesystem::directory_iterator(dir))
 		{
 			const FilePath& path = dirEntry.path();

@@ -22,40 +22,23 @@ namespace Athena
 	};
 
 	template <>
-	struct ScriptFieldTypeMapper<bool>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Bool;
-	};
+	struct ScriptFieldTypeMapper<bool>    { static constexpr ScriptFieldType Value = ScriptFieldType::Bool; };
 
 	template <>
-	struct ScriptFieldTypeMapper<int32>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Int32;
-	};
+	struct ScriptFieldTypeMapper<int32>   { static constexpr ScriptFieldType Value = ScriptFieldType::Int32; };
 
 	template <>
-	struct ScriptFieldTypeMapper<float>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Float;
-	};
+	struct ScriptFieldTypeMapper<float>   { static constexpr ScriptFieldType Value = ScriptFieldType::Float; };
 
 	template <>
-	struct ScriptFieldTypeMapper<Vector2>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Vector2;
-	};
+	struct ScriptFieldTypeMapper<Vector2> { static constexpr ScriptFieldType Value = ScriptFieldType::Vector2; };
 
 	template <>
-	struct ScriptFieldTypeMapper<Vector3>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Vector3;
-	};
+	struct ScriptFieldTypeMapper<Vector3> { static constexpr ScriptFieldType Value = ScriptFieldType::Vector3; };
 
 	template <>
-	struct ScriptFieldTypeMapper<Vector4>
-	{
-		static constexpr ScriptFieldType Value = ScriptFieldType::Vector4;
-	};
+	struct ScriptFieldTypeMapper<Vector4> { static constexpr ScriptFieldType Value = ScriptFieldType::Vector4; };
+
 
 	template <typename T>
 	inline constexpr ScriptFieldType ScriptFieldTypeMapper_V = ScriptFieldTypeMapper<T>::Value;
@@ -168,5 +151,5 @@ namespace Athena
 		byte m_Buffer[16];
 	};
 
-	using ScriptFieldMap = std::unordered_map<String, ScriptFieldStorage>;
+	using ScriptFieldMap = std::unordered_map<std::string_view, ScriptFieldStorage>;
 }

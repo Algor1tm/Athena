@@ -10,13 +10,16 @@ endfunction()
 
 function(AddLibrary TARGET_NAME TARGET_PATH)
     add_subdirectory("${TARGET_PATH}")
-    EnableMultiProcessorCompilation(${TARGET_NAME})
+    EnableMPCompilation(${TARGET_NAME})
     set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER Dependencies)
 	SetBuildDirectory(${TARGET_NAME})
 
     target_link_libraries(Athena PRIVATE ${TARGET_NAME})
 endfunction()
 
+######################################
+##### MAIN PROJECT
+######################################
 
 project(Athena)
 
@@ -31,19 +34,22 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"ThirdParty/ImGuizmo/ImGuizmo.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.cpp"
 )
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 
 add_library(Athena SHARED ${SRC_FILES})
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
-
-EnableMultiProcessorCompilation(Athena)
-set_property(TARGET Athena PROPERTY CXX_STANDARD 20)
-set_property(TARGET Athena PROPERTY FOLDER Core)
-set_property(TARGET Athena PROPERTY DEBUG_POSTFIX "")
+EnableMPCompilation(Athena)
+set_target_properties(Athena
+	PROPERTIES
+	CXX_STANDARD 20
+	FOLDER Core
+	DEBUG_POSTFIX ""
+)
 
 target_compile_definitions(Athena PUBLIC
 	$<$<CONFIG:Debug>:ATN_DEBUG>
 	$<$<CONFIG:Release>:ATN_RELEASE>
+	$<$<CONFIG:Dist>:ATN_DIST>
 	ATN_SIMD
 	STBIW_WINDOWS_UTF8
 	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
@@ -53,13 +59,6 @@ target_compile_definitions(Athena PRIVATE
 	ATN_BUILD_DLL
 )
 
-if(ATN_PY_DEBUG)
-	target_compile_definitions(Athena PRIVATE
-		$<$<CONFIG:Debug>:Py_DEBUG>
-	)
-endif(ATN_PY_DEBUG)
-
-# Build folder
 set_target_properties(Athena
 	PROPERTIES
 	ARCHIVE_OUTPUT_DIRECTORY "${BUILD_FOLDER}/Athena"
@@ -97,18 +96,13 @@ target_precompile_headers(Athena PRIVATE
 
 target_include_directories(Athena PRIVATE 
 	"Source" 
-	${ASSIMP_INCLUDE_DIR}
-	${THIRD_PARTY_DIR}
-	${BOX2D_INCLUDE_DIR}
-	${GLAD_INCLUDE_DIR}
-	${GLFW_INCLUDE_DIR}
-	${IMGUI_INCLUDE_DIR}
-	${OPTICK_INCLUDE_DIR}
-	${SPDLOG_INCLUDE_DIR}
-	${YAML_CPP_INCLUDE_DIR}
-	${MSDF_ATLAS_GEN_INCLUDE_DIR}
-	${MSDF_GEN_INCLUDE_DIR})
+)
 
+######################################
+##### DEPENDENCIES
+######################################
+
+IncludeDependenciesDirs(Athena)
 
 AddLibrary("Box2D" "${THIRD_PARTY_DIR}/Box2D")
 AddLibrary(GLFW "${THIRD_PARTY_DIR}/GLFW")
@@ -123,12 +117,12 @@ AddLibrary(OptickCore "${THIRD_PARTY_DIR}/Optick/OptickCore")
 AddLibrary(msdf-atlas-gen "${THIRD_PARTY_DIR}/msdf-atlas-gen")
 set_property(TARGET msdf-atlas-gen PROPERTY FOLDER "Dependencies/msdfgen")
 
-EnableMultiProcessorCompilation(msdfgen)
+EnableMPCompilation(msdfgen)
 set_property(TARGET msdfgen PROPERTY FOLDER "Dependencies/msdfgen")
 SetBuildDirectory(msdfgen)
 target_compile_definitions(Athena PUBLIC MSDFGEN_PUBLIC=)
 
-EnableMultiProcessorCompilation(freetype)
+EnableMPCompilation(freetype)
 set_property(TARGET freetype PROPERTY FOLDER "Dependencies/msdfgen")
 SetBuildDirectory(freetype)
 
@@ -139,11 +133,13 @@ if (Vulkan_FOUND)
 	# Vulkan::SPIRV-Tools does not link required libs, so do this instead
 	target_link_libraries(Athena PRIVATE
 		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-cored.lib>
-		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>)
+		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>
+		$<$<CONFIG:Dist>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>)
 
 	target_link_libraries(Athena PRIVATE
 		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/shaderc_utild.lib>
-		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
+		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>
+		$<$<CONFIG:Dist>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
 
 endif(Vulkan_FOUND)
 

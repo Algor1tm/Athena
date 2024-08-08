@@ -57,6 +57,8 @@ namespace Athena
 		void PushLayer(const Ref<Layer>& layer);
 		void PushOverlay(const Ref<Layer>& layer);
 
+		void SubmitToMainThread(const std::function<void()>& func);
+
 		const AppConfig GetConfig() const { return m_Config; }
 
 		const Ref<ImGuiLayer>& GetImGuiLayer() { return m_ImGuiLayer; }
@@ -69,6 +71,7 @@ namespace Athena
 
 	private:
 		void ProcessEvents();
+		void ExecuteMainThreadQueue();
 		void RenderImGui();
 
 		void QueueEvent(const Ref<Event>& event);
@@ -90,6 +93,8 @@ namespace Athena
 		LayerStack m_LayerStack;
 
 		std::queue<Ref<Event>> m_EventQueue;
+		std::queue<std::function<void()>> m_MainThreadQueue;
+		std::mutex m_MainThreadQueueMutex;
 
 		ApplicationStatistics m_Statistics;
 

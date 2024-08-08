@@ -76,7 +76,7 @@ namespace Athena
 		static void Init(const ScriptConfig& config);
 		static void Shutdown();
 
-		static bool ReloadScripts();
+		static void ReloadScripts();
 		static bool IsScriptExists(const String& name);
 		static const std::vector<String>& GetAvailableScripts();
 
@@ -95,6 +95,9 @@ namespace Athena
 		static void OpenInVisualStudio();
 
 	private:
+		static void LoadAssembly();
+		static void InitScriptClasses();
+
 		static void GenCMakeProjects();
 		static void FindScripts(const FilePath& dir, std::vector<String>& scriptsNames);
 	};

@@ -27,6 +27,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	Athena.def
 	"Source/*.h" 
 	"Source/*.cpp" 
+	"ThirdParty/filewatch/FileWatch.h"
 	"ThirdParty/stb_image/stb_image.h"
 	"ThirdParty/stb_image/stb_image_write.h"
 	"ThirdParty/stb_image/stb_image.cpp"

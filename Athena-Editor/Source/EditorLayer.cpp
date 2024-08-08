@@ -285,11 +285,6 @@ namespace Athena
                         ScriptEngine::ReloadScripts();
                     }
 
-                    if (ImGui::MenuItem("Reload On Play", NULL, settings.ReloadScriptsOnStart))
-                    {
-                        settings.ReloadScriptsOnStart = !settings.ReloadScriptsOnStart;
-                    }
-
                     if (ImGui::MenuItem("Create Script ..."))
                     {
                         UI::OpenPopup("Create New Script");
@@ -788,11 +783,6 @@ namespace Athena
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
-
-        if (m_EditorCtx->EditorSettings.ReloadScriptsOnStart)
-        {
-            ScriptEngine::ReloadScripts();
-        }
 
         const auto& vpDesc = viewportPanel->GetDescription();
 

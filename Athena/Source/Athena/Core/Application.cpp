@@ -55,13 +55,11 @@ namespace Athena
 		{
 			ATN_PROFILE_FRAME("MainThread");
 
-			//ResetStats();
-
 			Time start = timer.ElapsedTime();
 			m_Statistics.FrameTime = frameTime;
 
-			// Process Events
 			ProcessEvents();
+			ExecuteMainThreadQueue();
 
 			if (m_Minimized == false)
 			{
@@ -113,6 +111,20 @@ namespace Athena
 		}
 
 		m_Statistics.Application_ProcessEvents = timer.ElapsedTime();
+	}
+
+	void Application::ExecuteMainThreadQueue()
+	{
+		ATN_PROFILE_FUNC();
+
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+		while (!m_MainThreadQueue.empty())
+		{
+			const std::function<void()>& func = m_MainThreadQueue.front();
+			func();
+			m_MainThreadQueue.pop();
+		}
 	}
 
 	void Application::RenderImGui()
@@ -187,6 +199,13 @@ namespace Athena
 	{
 		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();
+	}
+
+	void Application::SubmitToMainThread(const std::function<void()>& func)
+	{
+		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+		m_MainThreadQueue.push(func);
 	}
 
 	void Application::CreateMainWindow(WindowCreateInfo info)

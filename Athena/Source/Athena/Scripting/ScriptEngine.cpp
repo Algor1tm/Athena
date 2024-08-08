@@ -1,12 +1,15 @@
 #include "ScriptEngine.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/Script.h"
 #include "Athena/Utils/StringUtils.h"
+
+// Name collision with WinApi CreateDirectory
+#include <filewatch/FileWatch.h>
+#include "Athena/Core/FileSystem.h"
 
 
 namespace Athena
@@ -21,10 +24,29 @@ namespace Athena
 		std::unordered_map<UUID, ScriptInstance> EntityInstances;
 		std::unordered_map<UUID, ScriptFieldMap> EntityScriptFields;
 
+		Scope<filewatch::FileWatch<String>> ScriptsAssemblyFileWatcher;
+		bool ReloadPending = false;
+
 		Scene* SceneContext = nullptr;
 	};
 
-	static ScriptEngineData* s_Data;
+	static ScriptEngineData* s_Data = nullptr;
+
+	static void OnScriptsAssemblyFileSystemEvent(const String& path, const filewatch::Event change_type)
+	{
+		if (!s_Data->ReloadPending && change_type == filewatch::Event::modified)
+		{
+			s_Data->ReloadPending = true;
+
+			Application::Get().SubmitToMainThread([]()
+			{
+				s_Data->ScriptsAssemblyFileWatcher.Release();
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));	// TODO: HACK
+				ScriptEngine::ReloadScripts();
+			});
+		}
+	}
 
 	template<typename FuncT, typename... Args>
 	static bool InvokeScriptFunc(const String& scriptName, Entity entity, FuncT func, Args&&... args)
@@ -84,7 +106,7 @@ namespace Athena
 			{
 				for (auto& [name, storage] : m_FieldsDescription)
 				{
-					// Force to get initial value
+					// Request for initial value
 					storage.GetValue<bool>();
 					storage.SetInternalRef(nullptr);
 				}
@@ -184,17 +206,12 @@ namespace Athena
 		delete s_Data;
 	}
 
-	bool ScriptEngine::ReloadScripts()
+	void ScriptEngine::LoadAssembly()
 	{
-		s_Data->ScriptsLibrary.Release();
-		s_Data->ScriptClasses.clear();
-		s_Data->ScriptsNames.clear();
-		s_Data->EntityScriptFields.clear();
-
 		if (!FileSystem::Exists(s_Data->Config.ScriptsBinaryPath))
 		{
 			ATN_CORE_ERROR_TAG("SriptEngine", "Scripts binary does not exists {}!", s_Data->Config.ScriptsBinaryPath);
-			return false;
+			return;
 		}
 
 		// Create copy of dll and pdb to read from it, another dll for writing
@@ -215,7 +232,7 @@ namespace Athena
 		if (!FileSystem::Copy(libPath, activeLibPath))
 		{
 			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to load scripting library!");
-			return false;
+			return;
 		}
 
 		if (FileSystem::Exists(pdbPath))
@@ -225,18 +242,24 @@ namespace Athena
 				ATN_CORE_WARN_TAG("ScriptEngine", "Failed to load debug info!");
 			}
 		}
-		
+
+		s_Data->ScriptsLibrary = Scope<Library>::Create(activeLibPath);
+		s_Data->ScriptsAssemblyFileWatcher = Scope<filewatch::FileWatch<String>>::Create(s_Data->Config.ScriptsBinaryPath.string(), OnScriptsAssemblyFileSystemEvent);
+		s_Data->ReloadPending = false;
+	}
+
+	void ScriptEngine::InitScriptClasses()
+	{
+		if (!s_Data->ScriptsLibrary || !s_Data->ScriptsLibrary->IsLoaded())
+			return;
+
 		FilePath sourceDir = s_Data->Config.ScriptsPath / "Source";
 
 		if (!FileSystem::Exists(sourceDir))
 		{
 			ATN_CORE_ERROR_TAG("SriptEngine", "Source directory does not exists {}!", sourceDir);
-			return false;
+			return;
 		}
-
-		s_Data->ScriptsLibrary = Scope<Library>::Create(activeLibPath);
-		if (!s_Data->ScriptsLibrary->IsLoaded())
-			return false;
 
 		FindScripts(sourceDir, s_Data->ScriptsNames);
 
@@ -250,8 +273,17 @@ namespace Athena
 
 		if (s_Data->ScriptsNames.empty())
 			ATN_CORE_WARN_TAG("ScriptEngine", "Failed to find any scripts in scripts binary!");
+	}
 
-		return true;
+	void ScriptEngine::ReloadScripts()
+	{
+		s_Data->ScriptsLibrary.Release();
+		s_Data->ScriptClasses.clear();
+		s_Data->ScriptsNames.clear();
+		s_Data->EntityScriptFields.clear();
+
+		LoadAssembly();
+		InitScriptClasses();
 	}
 
 	bool ScriptEngine::IsScriptExists(const String& name)
@@ -374,7 +406,12 @@ namespace Athena
 		Utils::ReplaceAll(configSource, "<REPLACE_PROJECT_NAME>", "Sandbox");
 		Utils::ReplaceAll(configSource, "<REPLACE_ATHENA_SOURCE_DIR>", "${CMAKE_SOURCE_DIR}/../../..");
 		Utils::ReplaceAll(configSource, "<REPLACE_ATHENA_BINARY_DIR>", "${CMAKE_SOURCE_DIR}/../../../Build/Binaries/Athena");
+
+#ifdef ATN_DEBUG
 		Utils::ReplaceAll(configSource, "<REPLACE_USE_DEBUG_RUNTIME_LIBS>", "ON");
+#else
+		Utils::ReplaceAll(configSource, "<REPLACE_USE_DEBUG_RUNTIME_LIBS>", "OFF");
+#endif
 
 		FilePath configPath = s_Data->Config.ScriptsPath / "Config.cmake";
 		if (!FileSystem::WriteFile(configPath, configSource.c_str(), configSource.size()))

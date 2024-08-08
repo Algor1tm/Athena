@@ -9,7 +9,7 @@ include(Config.cmake)
 set(THIRD_PARTY_DIR "${ATHENA_SOURCE_DIR}/Athena/ThirdParty")
 include("${ATHENA_SOURCE_DIR}/Dependencies.cmake")
 
-set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
+set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries") 
 set(SHADERS_FOLDER "${ATHENA_SOURCE_DIR}/Athena/EngineResources/ShaderPack")
 
 ######################################

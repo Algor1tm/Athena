@@ -109,7 +109,9 @@ IncludeDependenciesDirs(Athena)
 AddLibrary("Box2D" "${THIRD_PARTY_DIR}/Box2D")
 AddLibrary(GLFW "${THIRD_PARTY_DIR}/GLFW")
 AddLibrary(ImGui "${THIRD_PARTY_DIR}/ImGui")
+
 AddLibrary(spdlog "${THIRD_PARTY_DIR}/spdlog")
+target_compile_definitions(spdlog PUBLIC _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
 
 AddLibrary(yaml-cpp "${THIRD_PARTY_DIR}/yaml-cpp")
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile

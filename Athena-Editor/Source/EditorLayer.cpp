@@ -1,5 +1,6 @@
 #include "EditorLayer.h"
 
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/FileDialogs.h"
@@ -89,6 +90,7 @@ namespace Athena
         PanelManager::Shutdown();
         EditorResources::Shutdown();
         Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);
+        Project::Shutdown();
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
@@ -616,20 +618,24 @@ namespace Athena
                     options.LineSpacing = textComponent.LineSpacing;
                     options.InvertY = false;
 
-                    FontGeometry* fontGeometry = textComponent.Font->GetFontGeometry();
-                    float height = fontGeometry->InitText(textComponent.Text, options);
+                    Ref<Font> font = textComponent.FontHandle.Get();
+                    if (font)
+                    {
+                        FontGeometry* fontGeometry = font->GetFontGeometry();
+                        float height = fontGeometry->InitText(textComponent.Text, options);
 
-                    Matrix4 transformMatrix = worldTransform.AsMatrix();
+                        Matrix4 transformMatrix = worldTransform.AsMatrix();
 
-                    Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
-                    Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
-                    Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
-                    Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
+                        Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
+                        Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
+                        Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
+                        Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
 
-                    renderer2D->DrawLine(p0, p1, selectColor);
-                    renderer2D->DrawLine(p1, p2, selectColor);
-                    renderer2D->DrawLine(p2, p3, selectColor);
-                    renderer2D->DrawLine(p3, p0, selectColor);
+                        renderer2D->DrawLine(p0, p1, selectColor);
+                        renderer2D->DrawLine(p1, p2, selectColor);
+                        renderer2D->DrawLine(p2, p3, selectColor);
+                        renderer2D->DrawLine(p3, p0, selectColor);
+                    }
                 }
             }
             // Camera frustum view
@@ -1168,8 +1174,8 @@ namespace Athena
             const ProjectConfig& config = Project::GetActive()->GetConfig();
             const EditorState& editorState = config.EditorSavedState;
 
-            FilePath activeScenePath = Project::GetAssetFileSystemPath(editorState.ActiveScene);
-            FilePath startScenePath = Project::GetAssetFileSystemPath(config.StartScene);
+            FilePath activeScenePath = AssetManager::GetAssetAbsolutePath(editorState.ActiveScene);
+            FilePath startScenePath = AssetManager::GetAssetAbsolutePath(config.StartScene);
             if (!editorState.ActiveScene.empty() && FileSystem::Exists(activeScenePath))
             {
                 OpenScene(activeScenePath);
@@ -1210,7 +1216,7 @@ namespace Athena
             state.SelectedEntity = 0;
 
         if (m_EditorCtx->ActiveScene)
-            state.ActiveScene = Project::GetRelativeAssetPath(m_CurrentScenePath);
+            state.ActiveScene = AssetManager::GetAssetRelativePath(m_CurrentScenePath);
         else
             state.ActiveScene = "";
 

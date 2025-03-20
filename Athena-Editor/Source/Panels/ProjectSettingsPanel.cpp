@@ -1,5 +1,6 @@
 #include "ProjectSettingsPanel.h"
 
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
@@ -42,7 +43,7 @@ namespace Athena
 			{
 				FilePath path = FileDialogs::OpenFile("Select Start Scene", { "Scene files", "*.atn" }, Project::GetAssetDirectory());
 				if (!path.empty())
-					m_Config.StartScene = Project::GetRelativeAssetPath(path);
+					m_Config.StartScene = AssetManager::GetAssetRelativePath(path);
 			}
 
 			UI::EndPropertyTable();

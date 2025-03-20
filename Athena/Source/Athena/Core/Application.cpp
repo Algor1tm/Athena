@@ -35,6 +35,7 @@ namespace Athena
 	{
 		ATN_PROFILER_SHUTDOWN()
 
+		ScriptEngine::Shutdown();
 		m_LayerStack.Clear();
 		m_ImGuiLayer.Release();
 
@@ -42,7 +43,6 @@ namespace Athena
 		m_Window->DestroySwapChain();
 		Renderer::Shutdown();
 
-		ScriptEngine::Shutdown();
 		m_Window.Release();
 	}
 

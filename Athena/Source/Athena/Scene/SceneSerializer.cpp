@@ -254,7 +254,7 @@ namespace Athena
 						auto& text = deserializedEntity.AddComponent<TextComponent>();
 
 						text.Text = textComponentNode["Text"].as<String>();
-						text.Font = Font::Create(textComponentNode["Font"].as<FilePath>());
+						text.FontHandle = textComponentNode["FontHandle"].as<AssetHandle>();
 						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
 						text.Color = textComponentNode["Color"].as<LinearColor>();
 						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
@@ -564,7 +564,7 @@ namespace Athena
 		SerializeComponent<TextComponent>(out, "TextComponent", entity, [](YAML::Emitter& output, const TextComponent& text)
 			{
 				output << YAML::Key << "Text" << YAML::Value << text.Text;
-				output << YAML::Key << "Font" << YAML::Value << text.Font->GetFilePath();
+				output << YAML::Key << "FontHandle" << YAML::Value << text.FontHandle;
 				output << YAML::Key << "Space" << YAML::Value << (int)text.Space;
 				output << YAML::Key << "Color" << YAML::Value << text.Color;
 				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;

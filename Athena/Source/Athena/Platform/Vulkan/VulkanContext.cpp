@@ -237,7 +237,11 @@ namespace Athena
 		// Create Allocator
 		{
 			uint32 version = 0;
+#ifdef ATN_DEBUG
+			version = VULKAN_MIN_SUPPORTED_VERSION;
+#else
 			VK_CHECK(vkEnumerateInstanceVersion(&version));
+#endif
 
 			s_Data.Allocator = Ref<VulkanAllocator>::Create(version);
 			s_Data.DescriptorSetAllocator = Ref<DescriptorSetAllocator>::Create();

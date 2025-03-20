@@ -11,19 +11,19 @@ namespace Athena
 	class ATHENA_API AssetRegistry
 	{
 	public:
-		void AddAsset(const Ref<Asset>& asset);
-		void AddAssetMetadata(AssetHandle handle, const AssetMetadata& metadata);
+		AssetRegistry();
 
-		Ref<Asset> GetAsset(AssetHandle handle);
-		AssetMetadata& GetMetadata(AssetHandle handle);
+		void AddAsset(AssetHandle handle, const AssetMetadata& metadata);
+		const AssetMetadata& GetMetadata(AssetHandle handle) const;
+
+		bool IsAssetHandlePresent(AssetHandle handle) const;
+		bool IsFilePathPresent(const FilePath& path) const;
+		AssetHandle GetAssetHandleFromFilePath(const FilePath& path);
 
 		void Serialize();
-		void Deserialize();
+		bool Deserialize();
 
 	private:
 		std::unordered_map<AssetHandle, AssetMetadata> m_Registry;
-		std::unordered_map<AssetHandle, Ref<Asset>> m_LoadedAssets;
-
-		std::unordered_map<AssetHandle, Ref<Asset>> m_MemoryOnlyAssets;
 	};
 }

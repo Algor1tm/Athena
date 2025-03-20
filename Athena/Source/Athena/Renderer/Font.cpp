@@ -48,13 +48,12 @@ namespace Athena
     Ref<Font> Font::Create(const FilePath& path)
     {
         Ref<Font> result = Ref<Font>::Create();
-        result->m_FilePath = path;
 
         msdfgen::FontHandle* font = msdfgen::loadFont(s_Data.FTPHandle, path.string().c_str());
 
         if (font == nullptr)
         {
-            ATN_CORE_ERROR_TAG("Renderer", "Failed to load font from {}!", result->m_FilePath);
+            ATN_CORE_ERROR_TAG("Renderer", "Failed to load font from {}!", path);
             return Font::GetDefault();
         }
 
@@ -86,10 +85,10 @@ namespace Athena
         int width = 0, height = 0;
         packer.getDimensions(width, height);
 
-        Buffer buffer = result->GenerateAtlasOrReadFromCache(width, height);
+        Buffer buffer = result->GenerateAtlasOrReadFromCache(path, width, height);
 
         TextureCreateInfo atlasInfo;
-        atlasInfo.Name = fmt::format("{}_FontAtlas", result->m_FilePath.filename());
+        atlasInfo.Name = fmt::format("{}_FontAtlas", path.filename());
         atlasInfo.Format = TextureFormat::RGBA8;
         atlasInfo.Usage = TextureUsage::SAMPLED;
         atlasInfo.Width = width;
@@ -109,10 +108,10 @@ namespace Athena
         return result;
     }
 
-    Buffer Font::GenerateAtlasOrReadFromCache(uint32 width, uint32 height)
+    Buffer Font::GenerateAtlasOrReadFromCache(const FilePath& path, uint32 width, uint32 height)
     {
         FilePath cacheFolder = Application::Get().GetConfig().EngineResourcesPath / "Cache/FontAtlases";
-        FilePath name = m_FilePath.filename();
+        FilePath name = path.filename();
         name += ".msdf";
 
         if (!FileSystem::Exists(cacheFolder))

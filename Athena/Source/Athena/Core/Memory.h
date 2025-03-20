@@ -14,22 +14,22 @@ namespace Athena
 
         void Increment()
         {
-            Counter++;
+            ++Counter;
         }
 
         void Decrement()
         {
-            Counter--;
+            --Counter;
         }
 
         void IncrementWeak()
         {
-            WeakCounter++;
+            ++WeakCounter;
         }
 
         void DecrementWeak()
         {
-            WeakCounter--;
+            --WeakCounter;
         }
 
         uint32 GetCount() const
@@ -42,8 +42,8 @@ namespace Athena
             return WeakCounter;
         }
 
-        uint32 Counter = 1;
-        uint32 WeakCounter = 0;
+        std::atomic_uint32_t Counter = 1;
+        std::atomic_uint32_t WeakCounter = 0;
     };
 
     template<class T>
@@ -444,6 +444,17 @@ namespace Athena
         T* Raw() const
         {
             return m_Pointer;
+        }
+
+        Ref<T> Lock() const
+        {
+            Ref<T> ref;
+
+            if (Expired())
+                return ref;
+
+            ref.Acquire(m_ControlBlock, m_Pointer);
+            return ref;
         }
 
         void Release()

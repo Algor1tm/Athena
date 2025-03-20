@@ -103,4 +103,9 @@ namespace Athena
 	{
 		return std::filesystem::exists(path);
 	}
+
+	FilePath FileSystem::GenericFormat(const FilePath& path)
+	{
+		return FilePath(path.generic_string());
+	}
 }

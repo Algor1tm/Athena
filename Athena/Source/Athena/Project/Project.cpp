@@ -23,6 +23,8 @@ namespace Athena
 		{
 			project->m_ProjectDirectory = path.parent_path();
 			s_ActiveProject = project;
+			s_ActiveProject->m_AssetManager = Ref<EditorAssetManager>::Create();
+
 			return s_ActiveProject;
 		}
 
@@ -50,6 +52,11 @@ namespace Athena
 			return true;
 
 		return false;
+	}
+
+	void Project::Shutdown()
+	{
+		s_ActiveProject = nullptr;
 	}
 
 	FilePath Project::GetProjectPath() const 

@@ -687,20 +687,17 @@ namespace Athena
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
 
-			if (!FileSystem::Exists(text.Font->GetFilePath()))
-				text.Font = Font::GetDefault();
+			const FilePath& assetPath = AssetManager::GetAssetFilePath(text.FontHandle);
+			bool isDefault = !AssetManager::IsAssetHandleValid(text.FontHandle);
 
-			bool isDefault = std::filesystem::equivalent(Font::GetDefault()->GetFilePath(), text.Font->GetFilePath());
-			String fontName = isDefault ? "Default" : text.Font->GetFilePath().filename().string();
+			String fontName = isDefault ? "Default" : assetPath.filename().string();
 
 			UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if (ImGui::Button(fontName.c_str()))
 			{
 				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", "*.ttf *.TTF" }, Project::GetAssetDirectory());
-				String ext = filepath.extension().string();
-				if (ext == ".ttf" || ext == ".TTF")
-					text.Font = Font::Create(filepath);
+				text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 			}
 
 			ImGui::PopStyleVar();
@@ -710,9 +707,7 @@ namespace Athena
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
 					FilePath filepath = (const char*)payload->Data;
-					String ext = filepath.extension().string();
-					if (ext == ".ttf" || ext == ".TTF")
-						text.Font = Font::Create(filepath);
+					text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -726,7 +721,7 @@ namespace Athena
 				ImVec2 size = ImGui::CalcItemSize({ 0, 0 }, labelSize.x + style.FramePadding.x * 2.0f, labelSize.y + style.FramePadding.y * 0.5f);
 				UI::ShiftCursorY(style.FramePadding.y);
 				if (ImGui::InvisibleButton("ResetFont", size))
-					text.Font = Font::GetDefault();
+					text.FontHandle = AssetHandle();
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 

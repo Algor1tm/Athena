@@ -6,13 +6,15 @@
 
 namespace Athena
 {
-	class AssetManagerBase
+	class ATHENA_API AssetManagerBase
 	{
 	public:
-		virtual Ref<Asset> GetAsset(AssetHandle handle) = 0;
+		virtual WeakRef<Asset> GetAsset(AssetHandle handle) = 0;
 
 		virtual bool IsAssetHandleValid(AssetHandle handle) const = 0;
 		virtual bool IsAssetLoaded(AssetHandle handle) const = 0;
+		virtual const AssetMetadata& GetAssetMetadata(AssetHandle handle) const = 0;
+		virtual const FilePath& GetAssetFilePath(AssetHandle handle) const = 0;
 		virtual AssetType GetAssetType(AssetHandle handle) const = 0;
 	};
 }

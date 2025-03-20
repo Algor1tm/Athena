@@ -3,6 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Color.h"
 
 #if defined(_MSC_VER)
@@ -24,7 +25,7 @@ namespace YAML
 		static Node encode(const Athena::FilePath& path)
 		{
 			Node node;
-			node.push_back(path.string());
+			node.push_back(Athena::FileSystem::GenericFormat(path).string());
 			return node;
 		}
 
@@ -189,7 +190,7 @@ namespace YAML
 
 	inline Emitter& operator<<(Emitter& out, const Athena::FilePath& path)
 	{
-		out << path.string();
+		out << Athena::FileSystem::GenericFormat(path).string();
 		return out;
 	}
 

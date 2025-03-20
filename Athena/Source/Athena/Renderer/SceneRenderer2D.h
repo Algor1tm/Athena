@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Core.h"
-
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Font.h"
 #include "Athena/Renderer/Camera.h"

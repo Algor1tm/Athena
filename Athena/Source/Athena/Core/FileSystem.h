@@ -25,5 +25,7 @@ namespace Athena
 		static void SetWorkingDirectory(const FilePath& path);
 
 		static bool Exists(const FilePath& path);
+
+		static FilePath GenericFormat(const FilePath& path);
 	};
 }

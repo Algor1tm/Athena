@@ -4,6 +4,8 @@
 #include "Athena/Core/UUID.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
+#include "Athena/Asset/RuntimeAssetManager.h"
+#include "Athena/Asset/EditorAssetManager.h"
 
 
 namespace Athena
@@ -50,14 +52,9 @@ namespace Athena
 			return GetProjectDirectory() / "Assets";
 		}
 
-		static FilePath GetAssetFileSystemPath(const FilePath& path)
+		static FilePath GetAssetRegistryPath()
 		{
-			return GetAssetDirectory() / path;
-		}
-
-		static FilePath GetRelativeAssetPath(const FilePath& path)
-		{
-			return std::filesystem::relative(path, GetAssetDirectory());
+			return GetAssetDirectory() / "AssetRegistry.atreg";
 		}
 
 		static FilePath GetScriptsDirectory()
@@ -80,14 +77,20 @@ namespace Athena
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }
 
+		Ref<AssetManagerBase> GetAssetManager() { return m_AssetManager; }
+		Ref<RuntimeAssetManager> GetRuntimeAssetManager() { return m_AssetManager.As<RuntimeAssetManager>(); }
+		Ref<EditorAssetManager> GetEditorAssetManager() { return m_AssetManager.As<EditorAssetManager>(); }
+
 		static Ref<Project> New(const String& name, const FilePath& path);
 		static Ref<Project> Load(const FilePath& path);
 		static bool SaveActive(const FilePath& path);
 		static bool SaveActive();
+		static void Shutdown();
 
 	private:
 		ProjectConfig m_Config;
 		FilePath m_ProjectDirectory;
+		Ref<AssetManagerBase> m_AssetManager;
 
 		inline static Ref<Project> s_ActiveProject;
 	};

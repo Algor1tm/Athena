@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Asset/Asset.h"
 #include "Athena/Renderer/Texture.h"
 
 
@@ -8,7 +9,7 @@ namespace Athena
 {
 	class FontGeometry;
 
-	class ATHENA_API Font
+	class ATHENA_API Font : public Asset
 	{
 	public:
 		static bool Init();
@@ -19,15 +20,15 @@ namespace Athena
 
 		static Ref<Font> GetDefault();
 
+		virtual AssetType GetType() const override { return AssetType::Font; }
+
 		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
-		const FilePath& GetFilePath() const { return m_FilePath; }
 		FontGeometry* GetFontGeometry() { return m_FontGeometry; }
 
 	private:
-		Buffer GenerateAtlasOrReadFromCache(uint32 width, uint32 height);
+		Buffer GenerateAtlasOrReadFromCache(const FilePath& path, uint32 width, uint32 height);
 
 	private:
-		FilePath m_FilePath;
 		FontGeometry* m_FontGeometry = nullptr;
 		Ref<Texture2D> m_AtlasTexture;
 	};

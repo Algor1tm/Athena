@@ -622,7 +622,7 @@ namespace Athena
 			params.ShadowDistance = text.ShadowDistance;
 			params.ShadowColor = text.ShadowColor;
 
-			Ref<Font> font = text.FontHandle.Get();
+			Ref<Font> font = text.UseDefaultFont ? Font::GetDefault() : text.FontHandle.Get();
 			if (font)
 			{
 				renderer2D->DrawText(text.Text, font, transform.AsMatrix(), text.Space, params);

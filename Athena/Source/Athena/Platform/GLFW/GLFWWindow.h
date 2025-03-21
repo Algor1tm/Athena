@@ -315,6 +315,13 @@ namespace Athena
 		m_SwapChain->SetVSync(enabled);
 	}
 
+	float Window::GetDPIScaleFactor() const
+	{
+		float xscale, yscale;
+		glfwGetWindowContentScale((GLFWwindow*)m_WindowHandle, &xscale, &yscale);
+		return xscale;
+	}
+
 	void Window::SetIcon(const FilePath& path)
 	{
 		if (FileSystem::Exists(path))

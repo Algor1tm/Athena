@@ -97,6 +97,9 @@ namespace Athena
 	{
 		auto path = Project::GetAssetRegistryPath();
 
+		if (!FileSystem::Exists(path))
+			FileSystem::WriteFile(path, 0, 0);
+
 		YAML::Node data;
 		try
 		{

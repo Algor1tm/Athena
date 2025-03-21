@@ -1176,7 +1176,7 @@ namespace Athena
 
             FilePath activeScenePath = AssetManager::GetAssetAbsolutePath(editorState.ActiveScene);
             FilePath startScenePath = AssetManager::GetAssetAbsolutePath(config.StartScene);
-            if (!editorState.ActiveScene.empty() && FileSystem::Exists(activeScenePath))
+            if (!editorState.ActiveScene.empty())
             {
                 OpenScene(activeScenePath);
 
@@ -1184,7 +1184,7 @@ namespace Athena
                     m_EditorCtx->SelectedEntity = m_EditorCtx->ActiveScene->GetEntityByUUID(editorState.SelectedEntity);
                     
             }
-            else if(!config.StartScene.empty() && FileSystem::Exists(startScenePath))
+            else
             {
                 OpenScene(startScenePath);
             }

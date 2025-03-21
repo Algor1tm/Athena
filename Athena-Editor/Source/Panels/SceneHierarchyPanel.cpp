@@ -688,17 +688,28 @@ namespace Athena
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
 
 			const FilePath& assetPath = AssetManager::GetAssetFilePath(text.FontHandle);
-			bool isDefault = !AssetManager::IsAssetHandleValid(text.FontHandle);
+			bool isHandleValid = AssetManager::IsAssetHandleValid(text.FontHandle);
 
-			String fontName = isDefault ? "Default" : assetPath.filename().string();
+			String fontName = text.UseDefaultFont ? "Default" : assetPath.filename().string();
 
 			UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
+
+			if (!isHandleValid && !text.UseDefaultFont)
+			{
+				fontName = "<Invalid>";
+				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+			}
+
 			if (ImGui::Button(fontName.c_str()))
 			{
 				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", "*.ttf *.TTF" }, Project::GetAssetDirectory());
 				text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+				text.UseDefaultFont = false;
 			}
+
+			if (!isHandleValid && !text.UseDefaultFont)
+				ImGui::PopStyleColor();
 
 			ImGui::PopStyleVar();
 
@@ -708,11 +719,12 @@ namespace Athena
 				{
 					FilePath filepath = (const char*)payload->Data;
 					text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+					text.UseDefaultFont = false;
 				}
 				ImGui::EndDragDropTarget();
 			}
 
-			if (!isDefault)
+			if (!text.UseDefaultFont)
 			{
 				ImGui::SameLine();
 
@@ -721,7 +733,10 @@ namespace Athena
 				ImVec2 size = ImGui::CalcItemSize({ 0, 0 }, labelSize.x + style.FramePadding.x * 2.0f, labelSize.y + style.FramePadding.y * 0.5f);
 				UI::ShiftCursorY(style.FramePadding.y);
 				if (ImGui::InvisibleButton("ResetFont", size))
+				{
 					text.FontHandle = AssetHandle();
+					text.UseDefaultFont = true;
+				}
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 

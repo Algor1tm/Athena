@@ -20,7 +20,7 @@ namespace Athena
 
 		static Ref<Font> GetDefault();
 
-		virtual AssetType GetType() const override { return AssetType::Font; }
+		virtual AssetType GetAssetType() const override { return AssetType::Font; }
 
 		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		FontGeometry* GetFontGeometry() { return m_FontGeometry; }

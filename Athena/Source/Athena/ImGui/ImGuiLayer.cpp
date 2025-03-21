@@ -153,11 +153,15 @@ namespace Athena
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
-		
+
 		m_Theme = UI::Theme::DefaultDark();
 		UpdateImGuiTheme();
 
 		Application& app = Application::Get();
+		Window& window = app.GetWindow();
+		float scaleFactor = window.GetDPIScaleFactor();
+		io.FontGlobalScale = scaleFactor;
+		style.ScaleAllSizes(scaleFactor);
 
 		const FilePath& resources = app.GetConfig().EngineResourcesPath;
 		FilePath defaultFontPath = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
@@ -167,7 +171,7 @@ namespace Athena
 		TryLoadImGuiFont(boldFontPath, 16.f);
 		TryLoadImGuiFont(defaultFontPath, 22.f);
 
-		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
+		m_ImGuiImpl->Init(window.GetNativeWindow());
 
 		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
@@ -200,6 +204,9 @@ namespace Athena
 
 	bool ImGuiLayer::OnWindowResize(WindowResizeEvent& event)
 	{
+		Application& app = Application::Get();
+		Window& window = app.GetWindow();
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2((float)event.GetWidth(), (float)event.GetHeight());
 

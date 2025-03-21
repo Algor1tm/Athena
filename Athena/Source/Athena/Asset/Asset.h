@@ -21,7 +21,8 @@ namespace Athena
 		Texture2D,
 		EnvironmentMap,
 		Material,
-		Font
+		Font,
+		Scene
 	};
 
 	struct AssetMetadata
@@ -34,9 +35,9 @@ namespace Athena
 	class ATHENA_API Asset
 	{
 	public:
-		virtual AssetType GetType() const = 0;
+		virtual AssetType GetAssetType() const = 0;
 
-		AssetHandle Handle;
+		AssetHandle Handle = 0;
 	};
 
 
@@ -51,6 +52,7 @@ namespace Athena
 			case AssetType::EnvironmentMap: return "EnvironmentMap";
 			case AssetType::Material:		return "Material";
 			case AssetType::Font:			return "Font";
+			case AssetType::Scene:			return "Scene";
 			}
 
 			return "<Invalid>";
@@ -63,6 +65,7 @@ namespace Athena
 			if (assetType == "EnvironmentMap")	  return AssetType::EnvironmentMap;
 			if (assetType == "Material")		  return AssetType::Material;
 			if (assetType == "Font")			  return AssetType::Font;
+			if (assetType == "Scene")			  return AssetType::Scene;
 
 			return AssetType::None;
 		}

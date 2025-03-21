@@ -58,8 +58,6 @@ namespace Athena
 	{
 	public:
 		AssetHandleRef() = default;
-		//AssetHandleRef(const AssetHandleRef&) = default;
-		//AssetHandleRef(AssetHandleRef&&) noexcept = default;
 
 		AssetHandleRef(AssetHandle handle)
 			: m_Handle(handle)
@@ -82,12 +80,12 @@ namespace Athena
 			return m_Handle;
 		}
 			
-		AssetType GetType() const
+		AssetType GetAssetType() const
 		{
 			if (IsExpired())
 				return AssetType::None;
 
-			return m_Asset->GetType();
+			return m_Asset->GetAssetType();
 		}
 
 		bool IsExpired() const

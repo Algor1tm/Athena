@@ -116,6 +116,7 @@ namespace Athena
 	{
 		String Text;
 		AssetHandleRef<Font> FontHandle;
+		bool UseDefaultFont = true;
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color = LinearColor::White;
 		float MaxWidth = 10.f;

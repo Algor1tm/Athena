@@ -1,7 +1,7 @@
 Project:
   General:
     Name: SandBox
-    StartScene: Scenes/Default.atn
+    StartScene: Scenes/Default.athscene
   Scripting:
     AthenaSourceDirectory: ../../..
     AthenaBinaryDirectory: ../../../Build/Binaries/Athena
@@ -11,7 +11,7 @@ Project:
     Gravity: [0, -9.80000019]
   EditorState:
     SelectedEntity: 1454649843796548308
-    ActiveScene: Scenes/Default.atn
+    ActiveScene: Scenes/Default.athscene
     CameraPos: [13.8294582, 14.2374783, 8.96009541]
     CameraPitchYaw: [0.346500367, -0.745503187]
     CameraSpeed: 0.400000006

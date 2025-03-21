@@ -32,7 +32,7 @@ namespace Athena
 	class WorldTransformComponent;
 
 
-	class ATHENA_API Scene
+	class ATHENA_API Scene : public Asset
 	{
 	public:
 		friend class ATHENA_API Entity;
@@ -43,6 +43,8 @@ namespace Athena
 		~Scene();
 
 		static Ref<Scene> Copy(Ref<Scene> scene);
+
+		virtual AssetType GetAssetType() const override { return AssetType::Scene; }
 
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name, UUID id, Entity parent);

@@ -82,7 +82,9 @@ namespace Athena
 
 		Ref<Titlebar> m_Titlebar;
 
+		// Create scene assets or no?..
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
+
 		FilePath m_CurrentScenePath;
 		bool m_IsUIInitialized = false;
 	};

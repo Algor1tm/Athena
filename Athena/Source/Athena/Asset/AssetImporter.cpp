@@ -1,6 +1,7 @@
 #include "AssetImporter.h"
 #include "Athena/Asset/AssetManager.h"
 
+#include "Athena/Scene/SceneSerializer.h"
 #include "Athena/Renderer/Font.h"
 
 #include <queue>
@@ -13,6 +14,7 @@ namespace Athena
 		{ ".jpeg", AssetType::Texture2D },
 		{ ".hdr", AssetType::EnvironmentMap },
 		{ ".ttf", AssetType::Font },
+		{ ".athscene", AssetType::Scene },
 	};
 
 	AssetImporter::AssetImporter()
@@ -37,14 +39,30 @@ namespace Athena
 
 		if (assetType == AssetType::None)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (invalid asset type), handle - {}!", handle);
+			ATN_CORE_ERROR_TAG("AssetManager", "Asset invalid type - None, handle - {}!", handle);
 			return result;
 		}
 
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+
 		if (assetType == AssetType::Font)
 		{
-			result = Font::Create(AssetManager::GetAssetAbsolutePath(metadata.FilePath));
+			result = Font::Create(absolutePath);
 		}
+
+		if (assetType == AssetType::Scene)
+		{
+			result = Ref<Scene>::Create();
+
+			SceneSerializer serializer(result);
+			bool serializeResult = serializer.DeserializeFromFile(absolutePath);
+
+			if (!serializeResult)
+				result = nullptr;
+		}
+
+		if (result)
+			result->Handle = handle;
 
 		return result;
 	}

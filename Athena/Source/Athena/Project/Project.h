@@ -49,27 +49,27 @@ namespace Athena
 
 		static FilePath GetAssetDirectory()
 		{
-			return GetProjectDirectory() / "Assets";
+			return GetProjectDirectory() / s_AssetDirectory;
 		}
 
 		static FilePath GetAssetRegistryPath()
 		{
-			return GetAssetDirectory() / "AssetRegistry.atreg";
+			return GetAssetDirectory() / s_AssetRegistryPath;
 		}
 
 		static FilePath GetScriptsDirectory()
 		{
-			return GetProjectDirectory() / "Scripts";
+			return GetProjectDirectory() / s_ScriptsDirectory;
 		}
 
 		static FilePath GetLogsDirectory()
 		{
-			return GetProjectDirectory() / "Logs";
+			return GetProjectDirectory() / s_LogsDirectory;
 		}
 
 		static FilePath GetScriptsBinaryPath()
 		{
-			return GetScriptsDirectory() / "Build/Binaries/ScriptsLibrary/ScriptsLibrary.dll";
+			return GetScriptsDirectory() / s_ScriptsBinaryPath;
 		}
 
 		FilePath GetProjectPath() const;
@@ -86,6 +86,13 @@ namespace Athena
 		static bool SaveActive(const FilePath& path);
 		static bool SaveActive();
 		static void Shutdown();
+
+	private:
+		static const inline FilePath s_AssetDirectory = "Assets";
+		static const inline FilePath s_AssetRegistryPath = "AssetRegistry.athreg";
+		static const inline FilePath s_ScriptsDirectory = "Scripts";
+		static const inline FilePath s_LogsDirectory = "Logs";
+		static const inline FilePath s_ScriptsBinaryPath = "Build/Binaries/ScriptsLibrary/ScriptsLibrary.dll";
 
 	private:
 		ProjectConfig m_Config;

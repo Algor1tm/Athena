@@ -255,6 +255,7 @@ namespace Athena
 
 						text.Text = textComponentNode["Text"].as<String>();
 						text.FontHandle = textComponentNode["FontHandle"].as<AssetHandle>();
+						text.UseDefaultFont = textComponentNode["UseDefaultFont"].as<bool>();
 						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
 						text.Color = textComponentNode["Color"].as<LinearColor>();
 						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
@@ -565,6 +566,7 @@ namespace Athena
 			{
 				output << YAML::Key << "Text" << YAML::Value << text.Text;
 				output << YAML::Key << "FontHandle" << YAML::Value << text.FontHandle;
+				output << YAML::Key << "UseDefaultFont" << YAML::Value << text.UseDefaultFont;
 				output << YAML::Key << "Space" << YAML::Value << (int)text.Space;
 				output << YAML::Key << "Color" << YAML::Value << text.Color;
 				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;

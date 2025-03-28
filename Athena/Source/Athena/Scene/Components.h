@@ -222,51 +222,37 @@ namespace Athena
 
 	struct SkyLightComponent
 	{
-		Ref<EnvironmentMap> EnvironmentMap;
+		AssetHandleRef<StaticEnvironmentMap> StaticEnvMapHandle;
+		Ref<PreethamEnvironmentMap> PreethamEnvMap;
+
+		EnvironmentMapType Type = EnvironmentMapType::PREETHAM;
+		uint32 Resolution = 256;
 		float LOD = 0.f;
 		float Intensity = 1.f;
 
 		SkyLightComponent()
 		{
-			EnvironmentMap = EnvironmentMap::Create(256);
+			PreethamEnvMap = Ref<PreethamEnvironmentMap>::Create();
 		}
 
 		SkyLightComponent(const SkyLightComponent& other)
 		{
+			Resolution = other.Resolution;
 			LOD = other.LOD;
 			Intensity = other.Intensity;
 
-			const auto& otherEnv = other.EnvironmentMap;
+			const auto& otherEnv = other.PreethamEnvMap;
 
-			EnvironmentMap = EnvironmentMap::Create(otherEnv->GetResolution());
-			EnvironmentMap->SetType(otherEnv->GetType());
-			EnvironmentMap->SetFilePath(otherEnv->GetFilePath());
+			PreethamEnvMap = Ref<PreethamEnvironmentMap>::Create();
+
 			float turbidity = otherEnv->GetTurbidity();
 			float azimuth = otherEnv->GetAzimuth();
 			float inclination = otherEnv->GetInclination();
-			EnvironmentMap->SetPreethamParams(turbidity, azimuth, inclination);
+			PreethamEnvMap->SetPreethamParams(turbidity, azimuth, inclination);
 		}
 
-		SkyLightComponent(SkyLightComponent&& other) noexcept
-		{
-			EnvironmentMap = other.EnvironmentMap;
-			LOD = other.LOD;
-			Intensity = other.Intensity;
-			other.EnvironmentMap = nullptr;
-		}
-
-		SkyLightComponent& operator=(SkyLightComponent&& other) noexcept
-		{
-			if (&other != this)
-			{
-				EnvironmentMap = other.EnvironmentMap;
-				LOD = other.LOD;
-				Intensity = other.Intensity;
-				other.EnvironmentMap = nullptr;
-			}
-
-			return *this;
-		}
+		SkyLightComponent(SkyLightComponent&& other) noexcept = default;
+		SkyLightComponent& operator=(SkyLightComponent&& other) noexcept = default;
 	};
 
 

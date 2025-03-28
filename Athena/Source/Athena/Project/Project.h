@@ -77,9 +77,9 @@ namespace Athena
 
 		static Ref<Project> GetActive() { return s_ActiveProject; }
 
-		Ref<AssetManagerBase> GetAssetManager() { return m_AssetManager; }
-		Ref<RuntimeAssetManager> GetRuntimeAssetManager() { return m_AssetManager.As<RuntimeAssetManager>(); }
-		Ref<EditorAssetManager> GetEditorAssetManager() { return m_AssetManager.As<EditorAssetManager>(); }
+		static Ref<AssetManagerBase> GetAssetManager() { return GetActive()->m_AssetManager; }
+		static Ref<RuntimeAssetManager> GetRuntimeAssetManager() { return GetActive()->m_AssetManager.As<RuntimeAssetManager>(); }
+		static Ref<EditorAssetManager> GetEditorAssetManager() { return GetActive()->m_AssetManager.As<EditorAssetManager>(); }
 
 		static Ref<Project> New(const String& name, const FilePath& path);
 		static Ref<Project> Load(const FilePath& path);

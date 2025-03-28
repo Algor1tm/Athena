@@ -9,11 +9,11 @@
 namespace Athena
 {
 	static std::unordered_map<FilePath, AssetType> s_AssetExtensionMap = {
-		{ ".png", AssetType::Texture2D },
-		{ ".jpg", AssetType::Texture2D },
-		{ ".jpeg", AssetType::Texture2D },
-		{ ".hdr", AssetType::EnvironmentMap },
-		{ ".ttf", AssetType::Font },
+		{ ".png",	   AssetType::Texture2D },
+		{ ".jpg",	   AssetType::Texture2D },
+		{ ".jpeg",	   AssetType::Texture2D },
+		{ ".hdr",	   AssetType::StaticEnvironmentMap },
+		{ ".ttf",	   AssetType::Font },
 		{ ".athscene", AssetType::Scene },
 	};
 
@@ -59,6 +59,11 @@ namespace Athena
 
 			if (!serializeResult)
 				result = nullptr;
+		}
+
+		if (assetType == AssetType::StaticEnvironmentMap)
+		{
+			result = Ref<StaticEnvironmentMap>::Create(absolutePath);
 		}
 
 		if (result)

@@ -710,7 +710,20 @@ namespace Athena
 			auto entity = skyLights[0];
 			const auto& light = skyLights.get<SkyLightComponent>(entity);
 
-			lightEnv.EnvironmentMap = light.EnvironmentMap;
+			Ref<EnvironmentMap> envmap;
+			if (light.Type == EnvironmentMapType::STATIC)
+			{
+				envmap = light.StaticEnvMapHandle.Get();
+			}
+			else if (light.Type == EnvironmentMapType::PREETHAM)
+			{
+				envmap = light.PreethamEnvMap;
+			}
+
+			if (envmap)
+				envmap->SetResolution(light.Resolution);
+
+			lightEnv.EnvironmentMap = envmap;
 			lightEnv.EnvironmentMapLOD = light.LOD;
 			lightEnv.EnvironmentMapIntensity = light.Intensity;
 		}

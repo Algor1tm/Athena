@@ -40,6 +40,7 @@ namespace Athena
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->GetSceneName();
+		out << YAML::Key << "Handle" << YAML::Value << m_Scene->Handle;
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
 			{
@@ -85,6 +86,9 @@ namespace Athena
 
 			String sceneName = data["Scene"].as<String>();
 			m_Scene->SetSceneName(sceneName);
+
+			AssetHandle handle = data["Handle"].as<AssetHandle>();
+			m_Scene->Handle = handle;
 
 			const auto& entities = data["Entities"];
 			if (!entities)
@@ -367,19 +371,18 @@ namespace Athena
 					if (skyLightComponent)
 					{
 						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
-						const auto& envMap = lightComp.EnvironmentMap;
+						const auto& envMap = lightComp.PreethamEnvMap;
 
-						envMap->SetResolution(skyLightComponent["Resolution"].as<uint32>());
-						envMap->SetType((EnvironmentMapType)skyLightComponent["Type"].as<uint32>());
-						envMap->SetFilePath(skyLightComponent["FilePath"].as<FilePath>());
+						lightComp.StaticEnvMapHandle = skyLightComponent["StaticEnvMapHandle"].as<AssetHandle>();
+						lightComp.Type = (EnvironmentMapType)skyLightComponent["Type"].as<uint32>();
+						lightComp.Resolution = skyLightComponent["Resolution"].as<uint32>();
+						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
+						lightComp.LOD = skyLightComponent["LOD"].as<float>();
 
 						float turbidity = skyLightComponent["Turbidity"].as<float>();
 						float azimuth = skyLightComponent["Azimuth"].as<float>();
 						float inclination = skyLightComponent["Inclination"].as<float>();
 						envMap->SetPreethamParams(turbidity, azimuth, inclination);
-
-						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
-						lightComp.LOD = skyLightComponent["LOD"].as<float>();
 					}
 				}
 			}
@@ -648,12 +651,12 @@ namespace Athena
 		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
 			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
 			{
-				const auto& envMap = lightComponent.EnvironmentMap;
+				const auto& envMap = lightComponent.PreethamEnvMap;
+				output << YAML::Key << "StaticEnvMapHandle" << lightComponent.StaticEnvMapHandle.GetHandle();
+				output << YAML::Key << "Type" << (int)lightComponent.Type;
+				output << YAML::Key << "Resolution" << lightComponent.Resolution;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 				output << YAML::Key << "LOD" << YAML::Value << lightComponent.LOD;
-				output << YAML::Key << "Resolution" << envMap->GetResolution();
-				output << YAML::Key << "Type" << (int)envMap->GetType();
-				output << YAML::Key << "FilePath" << envMap->GetFilePath();
 				output << YAML::Key << "Turbidity" << envMap->GetTurbidity();
 				output << YAML::Key << "Azimuth" << envMap->GetAzimuth();
 				output << YAML::Key << "Inclination" << envMap->GetInclination();

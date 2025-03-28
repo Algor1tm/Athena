@@ -9,18 +9,10 @@
 
 namespace Athena
 {
-	Ref<EnvironmentMap> EnvironmentMap::Create(uint32 resolution)
-	{
-		Ref<EnvironmentMap> result = Ref<EnvironmentMap>::Create(resolution);
-
-		return result;
-	}
-
-	EnvironmentMap::EnvironmentMap(uint32 resolution)
+	EnvironmentMap::EnvironmentMap()
 	{
 		m_Dirty = true;
-		m_Type = EnvironmentMapType::PREETHAM;
-		m_Resolution = resolution;
+		m_Resolution = 1;
 
 		TextureCreateInfo cubemapInfo;
 		cubemapInfo.Name = "EnvironmentMap";
@@ -40,39 +32,6 @@ namespace Athena
 		cubemapInfo.GenerateMipMap = false;
 
 		m_IrradianceTexture = TextureCube::Create(cubemapInfo);
-
-		// Panorama To Cubemap
-		{
-			ComputePassCreateInfo passInfo;
-			passInfo.Name = "PanoramaToCubePass";
-			passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
-
-			m_PanoramaToCubePass = ComputePass::Create(passInfo);
-			m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture);
-			m_PanoramaToCubePass->Bake();
-
-			m_PanoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
-			m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", TextureGenerator::GetWhiteTexture());
-			m_PanoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
-			m_PanoramaToCubePipeline->Bake();
-		}
-
-		// Preetham
-		{
-			ComputePassCreateInfo passInfo;
-			passInfo.Name = "PreethamPass";
-			passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
-
-			m_PreethamPass = ComputePass::Create(passInfo);
-			m_PreethamPass->SetOutput(m_EnvironmentTexture);
-			m_PreethamPass->Bake();
-
-			m_PreethamPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PreethamSky"));
-			m_PreethamPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
-			m_PreethamPipeline->Bake();
-
-			m_PreethamMaterial = Material::Create(m_PreethamPipeline->GetShader(), m_PreethamPipeline->GetName());
-		}
 
 		// Irradiance Pipeline
 		{
@@ -117,11 +76,6 @@ namespace Athena
 		}
 	}
 
-	void EnvironmentMap::SetType(EnvironmentMapType type)
-	{
-		m_Type = type;
-		m_Dirty = true;
-	}
 
 	void EnvironmentMap::SetResolution(uint32 resolution)
 	{
@@ -133,31 +87,8 @@ namespace Athena
 		m_Dirty = true;
 	}
 
-	void EnvironmentMap::SetFilePath(const FilePath& path)
-	{
-		if (m_FilePath == path)
-			return;
-
-		m_FilePath = path;
-		m_Dirty = true;
-	}
-
-	void EnvironmentMap::SetPreethamParams(float turbidity, float azimuth, float inclination)
-	{
-		if (m_Turbidity == turbidity && m_Azimuth == azimuth && m_Inclination == inclination)
-			return;
-
-		m_Turbidity = turbidity;
-		m_Azimuth = azimuth;
-		m_Inclination = inclination;
-		m_Dirty = true;
-	}
-
 	Ref<TextureCube> EnvironmentMap::GetEnvironmentTexture()
 	{
-		if (IsEmpty())
-			return TextureGenerator::GetBlackTextureCube();
-
 		if (m_Dirty)
 			Load();
 
@@ -166,51 +97,17 @@ namespace Athena
 
 	Ref<TextureCube> EnvironmentMap::GetIrradianceTexture()
 	{
-		if (IsEmpty())
-			return TextureGenerator::GetBlackTextureCube();
-
 		if (m_Dirty)
 			Load();
 
 		return m_IrradianceTexture;
 	}
 
-	void EnvironmentMap::LoadFromFile(const Ref<RenderCommandBuffer>& commandBuffer)
-	{
-		Ref<Texture2D> panorama = TextureImporter::Load(m_FilePath, TextureImportOptions());
-		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
-
-		m_PanoramaToCubePass->Begin(commandBuffer);
-		{
-			m_PanoramaToCubePipeline->Bind(commandBuffer);
-			Renderer::Dispatch(commandBuffer, m_PanoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
-		}
-		m_PanoramaToCubePass->End(commandBuffer);
-	}
-
-	void EnvironmentMap::LoadPreetham(const Ref<RenderCommandBuffer>& commandBuffer)
-	{
-		m_PreethamPass->Begin(commandBuffer);
-		{
-			m_PreethamMaterial->Set("u_Turbidity", m_Turbidity);
-			m_PreethamMaterial->Set("u_Azimuth", m_Azimuth);
-			m_PreethamMaterial->Set("u_Inclination", m_Inclination);
-			m_PreethamMaterial->Bind(commandBuffer);
-			m_PreethamPipeline->Bind(commandBuffer);
-
-			Renderer::Dispatch(commandBuffer, m_PreethamPipeline, { m_Resolution, m_Resolution, 6 }, m_PreethamMaterial);
-		}
-		m_PreethamPass->End(commandBuffer);
-	}
-
 	void EnvironmentMap::Load()
 	{
 		Ref<RenderCommandBuffer> commandBuffer = Renderer::GetRenderCommandBuffer();
 
-		if (m_Type == EnvironmentMapType::STATIC)
-			LoadFromFile(commandBuffer);
-		else if (m_Type == EnvironmentMapType::PREETHAM)
-			LoadPreetham(commandBuffer);
+		LoadSourceTexture(commandBuffer);
 
 		Renderer::BeginDebugRegion(commandBuffer, "EnvironmentBlitMipMap", { 0.6f, 0.4f, 0.2f, 1.f });
 		{
@@ -244,11 +141,86 @@ namespace Athena
 		m_Dirty = false;
 	}
 
-	bool EnvironmentMap::IsEmpty()
+	StaticEnvironmentMap::StaticEnvironmentMap(const FilePath& path)
 	{
-		if (m_Type == EnvironmentMapType::STATIC && !FileSystem::Exists(m_FilePath))
-			return true;
+		m_FilePath = path;
 
-		return false;
+		// Panorama To Cubemap
+		ComputePassCreateInfo passInfo;
+		passInfo.Name = "PanoramaToCubePass";
+		passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
+
+		m_PanoramaToCubePass = ComputePass::Create(passInfo);
+		m_PanoramaToCubePass->SetOutput(m_EnvironmentTexture);
+		m_PanoramaToCubePass->Bake();
+
+		m_PanoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
+		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", TextureGenerator::GetWhiteTexture());
+		m_PanoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
+		m_PanoramaToCubePipeline->Bake();
+	}
+
+	void StaticEnvironmentMap::LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		if (!FileSystem::Exists(m_FilePath))
+		{
+			m_EnvironmentTexture = TextureGenerator::GetBlackTextureCube();
+			m_IrradianceTexture = TextureGenerator::GetBlackTextureCube();
+			return;
+		}
+
+		Ref<Texture2D> panorama = TextureImporter::Load(m_FilePath, TextureImportOptions());
+		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
+
+		m_PanoramaToCubePass->Begin(commandBuffer);
+		{
+			m_PanoramaToCubePipeline->Bind(commandBuffer);
+			Renderer::Dispatch(commandBuffer, m_PanoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
+		}
+		m_PanoramaToCubePass->End(commandBuffer);
+	}
+
+	PreethamEnvironmentMap::PreethamEnvironmentMap()
+	{
+		// Preetham
+		ComputePassCreateInfo passInfo;
+		passInfo.Name = "PreethamPass";
+		passInfo.DebugColor = { 0.6f, 0.4f, 0.2f, 1.f };
+
+		m_PreethamPass = ComputePass::Create(passInfo);
+		m_PreethamPass->SetOutput(m_EnvironmentTexture);
+		m_PreethamPass->Bake();
+
+		m_PreethamPipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PreethamSky"));
+		m_PreethamPipeline->SetInput("u_EnvironmentMap", m_EnvironmentTexture);
+		m_PreethamPipeline->Bake();
+
+		m_PreethamMaterial = Material::Create(m_PreethamPipeline->GetShader(), m_PreethamPipeline->GetName());
+	}
+
+	void PreethamEnvironmentMap::SetPreethamParams(float turbidity, float azimuth, float inclination)
+	{
+		if (m_Turbidity == turbidity && m_Azimuth == azimuth && m_Inclination == inclination)
+			return;
+
+		m_Turbidity = turbidity;
+		m_Azimuth = azimuth;
+		m_Inclination = inclination;
+		m_Dirty = true;
+	}
+
+	void PreethamEnvironmentMap::LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer)
+	{
+		m_PreethamPass->Begin(commandBuffer);
+		{
+			m_PreethamMaterial->Set("u_Turbidity", m_Turbidity);
+			m_PreethamMaterial->Set("u_Azimuth", m_Azimuth);
+			m_PreethamMaterial->Set("u_Inclination", m_Inclination);
+			m_PreethamMaterial->Bind(commandBuffer);
+			m_PreethamPipeline->Bind(commandBuffer);
+
+			Renderer::Dispatch(commandBuffer, m_PreethamPipeline, { m_Resolution, m_Resolution, 6 }, m_PreethamMaterial);
+		}
+		m_PreethamPass->End(commandBuffer);
 	}
 }

@@ -18,6 +18,7 @@ namespace Athena
 		case Keyboard::I: return "Ctrl+I";
 		case Keyboard::K: return "Ctrl+K";
 		case Keyboard::J: return "Ctrl+J";
+		case Keyboard::U: return "Ctrl+U";
 		}
 
 		return NULL;

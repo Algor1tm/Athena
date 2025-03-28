@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Asset/Asset.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
@@ -18,20 +19,56 @@ namespace Athena
 	class ATHENA_API EnvironmentMap
 	{
 	public:
-		static Ref<EnvironmentMap> Create(uint32 resolution);
-		EnvironmentMap(uint32 resolution);
-
-		EnvironmentMapType GetType() const { return m_Type; }
-		void SetType(EnvironmentMapType type);
-
-		void SetFilePath(const FilePath& path);
-		const FilePath& GetFilePath() { return m_FilePath; };
+		EnvironmentMap();
 
 		Ref<TextureCube> GetEnvironmentTexture();
 		Ref<TextureCube> GetIrradianceTexture();
 
-		uint32 GetResolution() const { return m_Resolution; }
 		void SetResolution(uint32 resolution);
+
+	private:
+		void Load();
+		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
+
+	protected:
+		Ref<TextureCube> m_EnvironmentTexture;
+		Ref<TextureCube> m_IrradianceTexture;
+
+		bool m_Dirty = true;
+
+		uint32 m_Resolution = 1024;
+		const uint32 m_IrradianceMapResolution = 128;
+
+		Ref<ComputePass> m_IrradiancePass;
+		Ref<ComputePipeline> m_IrradiancePipeline;
+
+		Ref<ComputePass> m_MipFilterPass;
+		Ref<ComputePipeline> m_MipFilterPipeline;
+		std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> m_MipFilterMaterials;
+	};
+
+	class ATHENA_API StaticEnvironmentMap : public EnvironmentMap, public Asset
+	{
+	public:
+		StaticEnvironmentMap(const FilePath& path);
+
+		const FilePath& GetFilePath() const { return m_FilePath; }
+		virtual AssetType GetAssetType() const override { return AssetType::StaticEnvironmentMap; }
+
+	private:
+		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;
+
+	private:
+		FilePath m_FilePath;
+
+		Ref<ComputePass> m_PanoramaToCubePass;
+		Ref<ComputePipeline> m_PanoramaToCubePipeline;
+	};
+
+	class ATHENA_API PreethamEnvironmentMap : public EnvironmentMap
+	{
+	public:
+		PreethamEnvironmentMap();
 
 		void SetPreethamParams(float turbidity, float azimuth, float inclination);
 
@@ -40,40 +77,15 @@ namespace Athena
 		float GetInclination() const { return m_Inclination; }
 
 	private:
-		void LoadFromFile(const Ref<RenderCommandBuffer>& commandBuffer);
-		void LoadPreetham(const Ref<RenderCommandBuffer>& commandBuffer);
-		void Load();
-
-		bool IsEmpty();
+		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;
 
 	private:
-		Ref<TextureCube> m_EnvironmentTexture;
-		Ref<TextureCube> m_IrradianceTexture;
-
-		EnvironmentMapType m_Type;
-		bool m_Dirty = true;
-
-		uint32 m_Resolution = 1024;
-		uint32 m_IrradianceMapResolution = 64;
-
 		float m_Turbidity = 2.f;
 		float m_Azimuth = 0.f;
 		float m_Inclination = 0.f;
 
-		FilePath m_FilePath;
-
 		Ref<ComputePass> m_PreethamPass;
 		Ref<ComputePipeline> m_PreethamPipeline;
 		Ref<Material> m_PreethamMaterial;
-
-		Ref<ComputePass> m_PanoramaToCubePass;
-		Ref<ComputePipeline> m_PanoramaToCubePipeline;
-
-		Ref<ComputePass> m_IrradiancePass;
-		Ref<ComputePipeline> m_IrradiancePipeline;
-
-		Ref<ComputePass> m_MipFilterPass;
-		Ref<ComputePipeline> m_MipFilterPipeline;
-		std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> m_MipFilterMaterials;
 	};
 }

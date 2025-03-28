@@ -110,4 +110,17 @@ namespace Athena::Utils
 			pos += to.size();
 		}
 	}
+
+	inline String ToLower(const String& str)
+	{
+		String result;
+		result.resize(str.size());
+
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			result[i] = std::tolower(str[i]);
+		}
+
+		return result;
+	}
 }

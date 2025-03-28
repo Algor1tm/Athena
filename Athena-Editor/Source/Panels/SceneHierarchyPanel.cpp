@@ -687,8 +687,8 @@ namespace Athena
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
 
-			const FilePath& assetPath = AssetManager::GetAssetFilePath(text.FontHandle);
-			bool isHandleValid = AssetManager::IsAssetHandleValid(text.FontHandle);
+			const FilePath& assetPath = Project::GetEditorAssetManager()->GetAssetFilePath(text.FontHandle);
+			bool isHandleValid = Project::GetEditorAssetManager()->IsAssetHandleValid(text.FontHandle);
 
 			String fontName = text.UseDefaultFont ? "Default" : assetPath.filename().string();
 
@@ -704,8 +704,13 @@ namespace Athena
 			if (ImGui::Button(fontName.c_str()))
 			{
 				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", "*.ttf *.TTF" }, Project::GetAssetDirectory());
-				text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
-				text.UseDefaultFont = false;
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+
+				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
+				{
+					text.FontHandle = handle;
+					text.UseDefaultFont = false;
+				}
 			}
 
 			if (!isHandleValid && !text.UseDefaultFont)
@@ -718,8 +723,14 @@ namespace Athena
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
 					FilePath filepath = (const char*)payload->Data;
-					text.FontHandle = Project::GetActive()->GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
-					text.UseDefaultFont = false;
+					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+
+					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle) &&
+						Project::GetEditorAssetManager()->GetAssetType(handle) == AssetType::Font)
+					{
+						text.FontHandle = handle;
+						text.UseDefaultFont = false;
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -972,54 +983,70 @@ namespace Athena
 			UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
 			UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
 
-			const auto& envMap = lightComponent.EnvironmentMap;
+			EnvironmentMapType type = lightComponent.Type;
 
 			const std::string_view resolutions[] = { "128", "256", "512", "1024", "2048", "4096" };
-			String selectedStr = std::to_string(envMap->GetResolution());
+			String selectedStr = std::to_string(lightComponent.Resolution);
 			std::string_view selected = selectedStr.data();
 
 			if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
 			{
 				uint32 resolution = std::atoi(selected.data());
-				envMap->SetResolution(resolution);
+				lightComponent.Resolution = resolution;
 			}
 
 			std::string_view typesStrings[] = { "Static", "Preetham"};
-			std::string_view type = typeToStr(envMap->GetType());
+			std::string_view typeStr = typeToStr(type);
 
-			if (UI::PropertyCombo("Type", typesStrings, std::size(typesStrings), &type))
+			if (UI::PropertyCombo("Type", typesStrings, std::size(typesStrings), &typeStr))
 			{
-				envMap->SetType(strToType(type));
+				lightComponent.Type = strToType(typeStr);
 			}
-			if (envMap->GetType() == EnvironmentMapType::STATIC)
+			if (type == EnvironmentMapType::STATIC)
 			{
-				UI::PropertyRow("FilePath", ImGui::GetFrameHeight());
+				bool isHandleValid = Project::GetEditorAssetManager()->IsAssetHandleValid(lightComponent.StaticEnvMapHandle);
+				const FilePath& envPath = Project::GetEditorAssetManager()->GetAssetFilePath(lightComponent.StaticEnvMapHandle);
+				String label = envPath.stem().string();
 
-				const FilePath& envPath = envMap->GetFilePath();
-				String label = envPath.empty() ? "Load Environment Map" : envPath.stem().string();
+				UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
+
+				if (!isHandleValid)
+				{
+					label = "<Invalid>";
+					ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+				}
 
 				if (ImGui::Button(label.data()))
 				{
 					FilePath filepath = FileDialogs::OpenFile("Select Environment map", { "HDR files", "*.hdr" }, Project::GetAssetDirectory());
-					if (!filepath.empty())
-						envMap->SetFilePath(filepath);
+					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+
+					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
+						lightComponent.StaticEnvMapHandle = handle;
 				}
+
+				if (!isHandleValid)
+					ImGui::PopStyleColor();
 
 				if (ImGui::BeginDragDropTarget())
 				{
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 					{
 						FilePath filepath = (const char*)payload->Data;
-						String ext = filepath.extension().string();
-						if (ext == ".hdr")
-							envMap->SetFilePath(filepath);
+						AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+
+						if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle) &&
+							Project::GetEditorAssetManager()->GetAssetType(handle) == AssetType::StaticEnvironmentMap)
+							lightComponent.StaticEnvMapHandle = handle;
 					}
 					ImGui::EndDragDropTarget();
 				}
 
 			}
-			else if (envMap->GetType() == EnvironmentMapType::PREETHAM)
+			else if (type == EnvironmentMapType::PREETHAM)
 			{
+				auto envMap = lightComponent.PreethamEnvMap;
+
 				float turbidity = envMap->GetTurbidity();
 				UI::PropertySlider("Turbidity", &turbidity, 1.8f, 10.f);
 

@@ -21,6 +21,7 @@
 #include "Athena/UI/Theme.h"
 
 #include "Panels/PanelManager.h"
+#include "Panels/AssetManagerPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
@@ -479,6 +480,9 @@ namespace Athena
         auto profilingPanel = Ref<ProfilingPanel>::Create(m_EditorCtx);
         profilingPanel->SetContext(m_ViewportRenderer);
         PanelManager::AddPanel(profilingPanel, Keyboard::K);
+
+        auto assetManagerPanel = Ref<AssetManagerPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(assetManagerPanel, Keyboard::U, false);
 
         auto projectSettingsPanel = Ref<ProjectSettingsPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(projectSettingsPanel, true, false);

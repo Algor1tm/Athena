@@ -62,7 +62,7 @@ namespace Athena
 	FilePath Project::GetProjectPath() const 
 	{
 		FilePath path = m_ProjectDirectory / m_Config.Name;
-		path.replace_extension(".atproj");
+		path.replace_extension(".athproj");
 		return path;
 	}
 }

@@ -18,6 +18,7 @@ namespace Athena
 		~EditorAssetManager();
 
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath);
+		const AssetRegistry& GetAssetRegistry() const { return m_AssetRegistry; };
 
 		virtual WeakRef<Asset> GetAsset(AssetHandle handle) override;
 

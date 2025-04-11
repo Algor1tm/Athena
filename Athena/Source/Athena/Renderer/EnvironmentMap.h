@@ -53,7 +53,7 @@ namespace Athena
 		StaticEnvironmentMap(const FilePath& path);
 
 		const FilePath& GetFilePath() const { return m_FilePath; }
-		virtual AssetType GetAssetType() const override { return AssetType::StaticEnvironmentMap; }
+		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
 
 	private:
 		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;

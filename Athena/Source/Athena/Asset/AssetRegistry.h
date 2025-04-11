@@ -18,7 +18,7 @@ namespace Athena
 
 		bool IsAssetHandlePresent(AssetHandle handle) const;
 		bool IsFilePathPresent(const FilePath& path) const;
-		AssetHandle GetAssetHandleFromFilePath(const FilePath& path);
+		AssetHandle GetAssetHandleFromFilePath(const FilePath& path) const;
 
 		void Serialize();
 		bool Deserialize();

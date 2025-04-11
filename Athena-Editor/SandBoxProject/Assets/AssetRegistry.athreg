@@ -1,19 +1,27 @@
 AssetRegistry:
   - Handle: 15576150414550830489
-    Type: StaticEnvironmentMap
+    Type: EnvironmentMap
     FilePath: EnvironmentMaps/birchwood_4k.hdr
-    IsMemoryOnly: false
-  - Handle: 1832602411151050300
-    Type: Font
-    FilePath: Fonts/arial.ttf
     IsMemoryOnly: false
   - Handle: 17726877325374782628
     Type: Texture2D
     FilePath: Textures/DirtTexture.png
     IsMemoryOnly: false
   - Handle: 11195812249869705572
-    Type: StaticEnvironmentMap
+    Type: EnvironmentMap
     FilePath: EnvironmentMaps/pink_sunrise_4k.hdr
+    IsMemoryOnly: false
+  - Handle: 8806412949272032316
+    Type: StaticMesh
+    FilePath: Meshes/Cube.obj
+    IsMemoryOnly: false
+  - Handle: 1832602411151050300
+    Type: Font
+    FilePath: Fonts/arial.ttf
+    IsMemoryOnly: false
+  - Handle: 16714268161155614434
+    Type: Scene
+    FilePath: Scenes/Physics2D.athscene
     IsMemoryOnly: false
   - Handle: 18122241922850534282
     Type: Texture2D
@@ -23,29 +31,25 @@ AssetRegistry:
     Type: Texture2D
     FilePath: Textures/BibleThump.png
     IsMemoryOnly: false
-  - Handle: 16714268161155614434
-    Type: Scene
-    FilePath: Scenes/Physics2D.athscene
+  - Handle: 3496522857383557778
+    Type: Font
+    FilePath: Fonts/comic.ttf
     IsMemoryOnly: false
   - Handle: 17741914071638562130
     Type: Texture2D
     FilePath: Textures/CheckerBoard.png
     IsMemoryOnly: false
-  - Handle: 3496522857383557778
-    Type: Font
-    FilePath: Fonts/comic.ttf
-    IsMemoryOnly: false
   - Handle: 14799949760782245623
     Type: Scene
     FilePath: Scenes/Default.athscene
     IsMemoryOnly: false
-  - Handle: 13694822270269225421
-    Type: Texture2D
-    FilePath: Materials/RustedIron/rustediron2_roughness.png
-    IsMemoryOnly: false
   - Handle: 18287617142231172365
     Type: Scene
     FilePath: Scenes/Sponza.athscene
+    IsMemoryOnly: false
+  - Handle: 13694822270269225421
+    Type: Texture2D
+    FilePath: Materials/RustedIron/rustediron2_roughness.png
     IsMemoryOnly: false
   - Handle: 13881825086358185248
     Type: Texture2D
@@ -59,13 +63,13 @@ AssetRegistry:
     Type: Texture2D
     FilePath: Materials/RoughBrick/rough-brick1_albedo.png
     IsMemoryOnly: false
-  - Handle: 3947822676258957667
-    Type: Texture2D
-    FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
-    IsMemoryOnly: false
   - Handle: 8922762867151933539
     Type: Texture2D
     FilePath: Materials/RoughBrick/rough-brick1_ao.png
+    IsMemoryOnly: false
+  - Handle: 3947822676258957667
+    Type: Texture2D
+    FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
     IsMemoryOnly: false
   - Handle: 1384635652266643005
     Type: Texture2D
@@ -102,4 +106,28 @@ AssetRegistry:
   - Handle: 13286898323625514244
     Type: Texture2D
     FilePath: Meshes/StormTrooper/Stormtrooper_D.png
+    IsMemoryOnly: false
+  - Handle: 16650313947944675186
+    Type: StaticMesh
+    FilePath: Meshes/BlenderScene.fbx
+    IsMemoryOnly: false
+  - Handle: 6228914572893638072
+    Type: StaticMesh
+    FilePath: Meshes/sphere.fbx
+    IsMemoryOnly: false
+  - Handle: 3951142393361296152
+    Type: StaticMesh
+    FilePath: Meshes/Sponza.fbx
+    IsMemoryOnly: false
+  - Handle: 12585831602288681047
+    Type: StaticMesh
+    FilePath: Meshes/Beretta Pistol/Beretta Pistol.fbx
+    IsMemoryOnly: false
+  - Handle: 17866121698637279183
+    Type: StaticMesh
+    FilePath: Meshes/Spiderman/Spiderman.fbx
+    IsMemoryOnly: false
+  - Handle: 240638674687819727
+    Type: StaticMesh
+    FilePath: Meshes/StormTrooper/silly_dancing.fbx
     IsMemoryOnly: false

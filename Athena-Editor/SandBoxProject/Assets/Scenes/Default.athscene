@@ -14,7 +14,6 @@ Entities:
     TextComponent:
       Text: "Athena \nИлья\x00\x00я Ішфіаарівто\x00"
       FontHandle: 3496522857383557778
-      UseDefaultFont: false
       Space: 1
       Color: [1, 1, 1, 1]
       MaxWidth: 10
@@ -206,3 +205,18 @@ Entities:
         OrthographicFarClip: 10
       Primary: true
       FixedAspectRatio: false
+  - IDComponent:
+      ID: 12966957165589040089
+    TagComponent:
+      Tag: Texture
+    TransformComponent:
+      Translation: [0.279601604, 6.63117933, -1.2667017]
+      Rotation: [0.980653644, 0.110550374, -0.085285306, 0.137198687]
+      Scale: [13.1676626, 13.1676645, 2.23559833]
+    ParentComponent:
+      Parent: 2151942939999983161
+    SpriteComponent:
+      Space: 1
+      Color: [1, 1, 0.541176498, 1]
+      TextureHandle: 13881825086358185248
+      TilingFactor: 1

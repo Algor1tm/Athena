@@ -364,32 +364,16 @@ namespace Athena
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
-                    std::string_view path = (const char*)payload->Data;
-                    FilePath ext = FilePath(path).extension();
+                    CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
                     //Scene Drag/Drop
-                    if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".atn\0")
+                    if (m_EditorCtx->SceneState == SceneState::Edit && cbPayload->AssetType == AssetType::Scene)
                     {
-                        OpenScene(path.data());
-                    }
-                    //Texture Drag/Drop on Entity
-                    else if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".png\0")
-                    {
-                        Entity target = GetEntityByCurrentMousePosition();
-                        if (target != Entity{})
-                        {
-                            if (target.HasComponent<SpriteComponent>())
-                            {
-                                auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = TextureImporter::Load(path, true);
-                                sprite.Color = LinearColor::White;
-                                m_EditorCtx->SelectedEntity = target;
-                            }
-                        }
+                        OpenScene(cbPayload->FilePath);
                     }
                     // Mesh Drag/Drop
-                    else if (m_EditorCtx->SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+                    else if (m_EditorCtx->SceneState == SceneState::Edit && cbPayload->AssetType == AssetType::StaticMesh)
                     {
-                        Ref<StaticMesh> mesh = StaticMesh::Create(path);
+                        Ref<StaticMesh> mesh = StaticMesh::Create(cbPayload->FilePath);
                         if (mesh)
                         {
                             Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
@@ -1102,7 +1086,8 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::SaveFile("Save Scene", { "Scene files", "*.atn" }, Project::GetAssetDirectory());
+        String sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        FilePath filepath = FileDialogs::SaveFile("Save Scene", { "Scene files", sceneExts }, Project::GetAssetDirectory());
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
@@ -1121,7 +1106,8 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::OpenFile("Open Scene", { "Scene files", "*.atn" }, Project::GetAssetDirectory());
+        String sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        FilePath filepath = FileDialogs::OpenFile("Open Scene", { "Scene files", sceneExts }, Project::GetAssetDirectory());
         if (!filepath.empty())
             OpenScene(filepath);
         else

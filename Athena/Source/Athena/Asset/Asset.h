@@ -19,10 +19,11 @@ namespace Athena
 	{
 		None = 0,
 		Texture2D,
-		StaticEnvironmentMap,
+		EnvironmentMap,
 		Material,
 		Font,
-		Scene
+		Scene,
+		StaticMesh
 	};
 
 	struct AssetMetadata
@@ -49,10 +50,11 @@ namespace Athena
 			{
 			case AssetType::None:				  return "None";
 			case AssetType::Texture2D:			  return "Texture2D";
-			case AssetType::StaticEnvironmentMap: return "StaticEnvironmentMap";
+			case AssetType::EnvironmentMap:		  return "EnvironmentMap";
 			case AssetType::Material:			  return "Material";
 			case AssetType::Font:				  return "Font";
 			case AssetType::Scene:				  return "Scene";
+			case AssetType::StaticMesh:			  return "StaticMesh";
 			}
 
 			return "<Invalid>";
@@ -62,10 +64,11 @@ namespace Athena
 		{
 			if (assetType == "None")					  return AssetType::None;
 			if (assetType == "Texture2D")				  return AssetType::Texture2D;
-			if (assetType == "StaticEnvironmentMap")	  return AssetType::StaticEnvironmentMap;
+			if (assetType == "EnvironmentMap")			  return AssetType::EnvironmentMap;
 			if (assetType == "Material")				  return AssetType::Material;
 			if (assetType == "Font")					  return AssetType::Font;
 			if (assetType == "Scene")					  return AssetType::Scene;
+			if (assetType == "StaticMesh")				  return AssetType::StaticMesh;
 
 			return AssetType::None;
 		}

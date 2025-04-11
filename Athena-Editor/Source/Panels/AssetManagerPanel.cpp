@@ -76,12 +76,10 @@ namespace Athena
 			return true;
 
 		String typeSearch = Utils::ToLower(String(Utils::AssetTypeToString(metadata.Type)));
-
 		if (typeSearch.find(m_SearchString) != std::string::npos)
 			return true;
 
 		String filePathSearch = Utils::ToLower(metadata.FilePath.string());
-
 		if (filePathSearch.find(m_SearchString) != std::string::npos)
 			return true;
 

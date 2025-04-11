@@ -90,15 +90,9 @@ namespace Athena
 	struct SpriteComponent
 	{
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
-		LinearColor Color;
-		Texture2DInstance Texture;
-		float TilingFactor;
-
-		SpriteComponent(const LinearColor& color = LinearColor::White)
-			: Color(color), Texture(TextureGenerator::GetWhiteTexture()), TilingFactor(1.f) {}
-
-		SpriteComponent(const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f)
-			: Color(tint), Texture(texture), TilingFactor(tilingFactor) {}
+		LinearColor Color = LinearColor::White;
+		AssetHandleRef<Texture2D> TextureHandle;
+		float TilingFactor = 1.f;
 	};
 
 	struct CircleComponent
@@ -116,7 +110,6 @@ namespace Athena
 	{
 		String Text;
 		AssetHandleRef<Font> FontHandle;
-		bool UseDefaultFont = true;
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color = LinearColor::White;
 		float MaxWidth = 10.f;

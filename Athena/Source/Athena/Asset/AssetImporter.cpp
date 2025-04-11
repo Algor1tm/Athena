@@ -1,6 +1,7 @@
 #include "AssetImporter.h"
 #include "Athena/Asset/AssetManager.h"
 
+#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Scene/SceneSerializer.h"
 #include "Athena/Renderer/Font.h"
 
@@ -9,12 +10,30 @@
 namespace Athena
 {
 	static std::unordered_map<FilePath, AssetType> s_AssetExtensionMap = {
-		{ ".png",	   AssetType::Texture2D },
-		{ ".jpg",	   AssetType::Texture2D },
-		{ ".jpeg",	   AssetType::Texture2D },
-		{ ".hdr",	   AssetType::StaticEnvironmentMap },
-		{ ".ttf",	   AssetType::Font },
+		// Textures
+		{ ".png",  AssetType::Texture2D },
+		{ ".jpg",  AssetType::Texture2D },
+		{ ".jpeg", AssetType::Texture2D },
+
+		// Meshes 
+		{ ".fbx",   AssetType::StaticMesh },
+		{ ".gltf",  AssetType::StaticMesh },
+		{ ".obj",   AssetType::StaticMesh },
+		{ ".blend", AssetType::StaticMesh },
+		{ ".x3d",   AssetType::StaticMesh },
+
+		// Environment maps
+		{ ".hdr", AssetType::EnvironmentMap },
+
+		// Fonts
+		{ ".ttf", AssetType::Font },
+		{ ".TTF", AssetType::Font },
+
+		// Scenes
 		{ ".athscene", AssetType::Scene },
+
+		// Materials
+		{ ".athmat", AssetType::Material}
 	};
 
 	AssetImporter::AssetImporter()
@@ -45,6 +64,7 @@ namespace Athena
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
+		// TODO: create assets in more generic way
 		if (assetType == AssetType::Font)
 		{
 			result = Font::Create(absolutePath);
@@ -56,14 +76,16 @@ namespace Athena
 
 			SceneSerializer serializer(result);
 			bool serializeResult = serializer.DeserializeFromFile(absolutePath);
-
-			if (!serializeResult)
-				result = nullptr;
 		}
 
-		if (assetType == AssetType::StaticEnvironmentMap)
+		if (assetType == AssetType::EnvironmentMap)
 		{
 			result = Ref<StaticEnvironmentMap>::Create(absolutePath);
+		}
+
+		if (assetType == AssetType::Texture2D)
+		{
+			result = TextureImporter::Load(absolutePath, true);
 		}
 
 		if (result)
@@ -120,5 +142,22 @@ namespace Athena
 		}
 
 		m_Registry->Serialize();
+	}
+
+	String AssetImporter::GetAssetExtensions(AssetType assetType) const
+	{
+		String result;
+
+		for (const auto& [ext, type] : s_AssetExtensionMap)
+		{
+			if (assetType == type)
+			{
+				result += fmt::format("*{} ", ext.string());
+			}
+		}
+
+		// remove last space
+		result.erase(result.end() - 1);
+		return result;
 	}
 }

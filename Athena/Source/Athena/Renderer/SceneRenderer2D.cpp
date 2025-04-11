@@ -196,9 +196,7 @@ namespace Athena
 		m_OrthoViewProjection = Math::Ortho(0.f, aspectRatio * size, 0.f, size, size, 0.f);	// z will be equal 1
 
 		for (auto& quadBatch : m_QuadBatches)
-		{
 			quadBatch.IndexCount = 0;
-		}
 
 		m_QuadBatchIndex = 0;
 		m_TextureSlotIndex = 1;
@@ -214,7 +212,6 @@ namespace Athena
 			textBatch.IndexCount = 0;
 
 		m_TextBatchIndex = 0;
-		m_CurrentFont = nullptr;
 	}
 
 	void SceneRenderer2D::EndScene()
@@ -300,6 +297,7 @@ namespace Athena
 		}
 
 		m_BeginScene = false;
+		m_CurrentFont = nullptr;
 	}
 
 	void SceneRenderer2D::FlushIndexBuffer()
@@ -456,12 +454,12 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
@@ -481,12 +479,12 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -516,14 +514,14 @@ namespace Athena
 		m_QuadBatches[m_QuadBatchIndex].IndexCount += 6;
 	}
 
-	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, const Texture2DInstance& texture, Renderer2DSpace space, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, const Ref<Texture2D>& texture, Renderer2DSpace space, const LinearColor& tint, float tilingFactor)
 	{
-		const auto& texCoords = texture.GetTexCoords();
+		const std::array<Vector2, 4>& s_TexCoords = { Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
 		int32 textureIndex = 0;
 
 		for (uint32 i = 1; i < m_TextureSlotIndex; ++i)
 		{
-			if (m_TextureSlots[i] == texture.GetNativeTexture())
+			if (m_TextureSlots[i] == texture)
 			{
 				textureIndex = i;
 				break;
@@ -539,7 +537,7 @@ namespace Athena
 			}
 			
 			textureIndex = m_TextureSlotIndex;
-			m_TextureSlots[m_TextureSlotIndex] = texture.GetNativeTexture();
+			m_TextureSlots[m_TextureSlotIndex] = texture;
 			m_TextureSlotIndex++;
 		}
 
@@ -551,7 +549,7 @@ namespace Athena
 		{
 			vertices[i].Position = m_QuadVertexPositions[i] * transform;
 			vertices[i].Color = tint;
-			vertices[i].TexCoords = texCoords[i] * tilingFactor;
+			vertices[i].TexCoords = s_TexCoords[i] * tilingFactor;
 			vertices[i].TexIndex = textureIndex;
 		}
 
@@ -567,7 +565,7 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;

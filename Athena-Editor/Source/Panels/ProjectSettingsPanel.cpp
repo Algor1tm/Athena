@@ -41,7 +41,8 @@ namespace Athena
 			ImGui::SameLine();
 			if (ImGui::Button(" ... "))
 			{
-				FilePath path = FileDialogs::OpenFile("Select Start Scene", { "Scene files", "*.atn" }, Project::GetAssetDirectory());
+				String sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+				FilePath path = FileDialogs::OpenFile("Select Start Scene", { "Scene files", sceneExts }, Project::GetAssetDirectory());
 				if (!path.empty())
 					m_Config.StartScene = AssetManager::GetAssetRelativePath(path);
 			}

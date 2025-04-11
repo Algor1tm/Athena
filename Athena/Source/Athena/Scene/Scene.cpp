@@ -595,7 +595,11 @@ namespace Athena
 			const auto& transform = quads.get<WorldTransformComponent>(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Space, sprite.Color, sprite.TilingFactor);
+			Ref<Texture2D> texture = sprite.TextureHandle == AssetHandle(0) ? TextureGenerator::GetWhiteTexture() : sprite.TextureHandle.Get();
+			if (texture)
+			{
+				renderer2D->DrawQuad(transform.AsMatrix(), texture, sprite.Space, sprite.Color, sprite.TilingFactor);
+			}
 		}
 
 		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
@@ -622,7 +626,7 @@ namespace Athena
 			params.ShadowDistance = text.ShadowDistance;
 			params.ShadowColor = text.ShadowColor;
 
-			Ref<Font> font = text.UseDefaultFont ? Font::GetDefault() : text.FontHandle.Get();
+			Ref<Font> font = text.FontHandle == AssetHandle(0) ? Font::GetDefault() : text.FontHandle.Get();
 			if (font)
 			{
 				renderer2D->DrawText(text.Text, font, transform.AsMatrix(), text.Space, params);

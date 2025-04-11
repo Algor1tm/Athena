@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Asset/Asset.h"
 #include "Athena/Core/Buffer.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
@@ -210,11 +211,12 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture2D : public Texture
+	class ATHENA_API Texture2D : public Texture, public Asset
 	{
 	public:
 		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer data = Buffer());
 
+		virtual AssetType GetAssetType() const override { return AssetType::Texture2D; }
 		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
 
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
@@ -242,27 +244,6 @@ namespace Athena
 
 		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
 	};
-
-	class ATHENA_API Texture2DInstance
-	{
-	public:
-		Texture2DInstance();
-		Texture2DInstance(const Ref<Texture2D>& texture);
-		Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
-		Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
-
-		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
-		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
-
-		inline void SetTexture(const Ref<Texture2D>& texture) { m_Texture = texture; }
-		inline void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
-		void SetTexCoords(const Vector2& min, const Vector2& max);
-
-	private:
-		Ref<Texture2D> m_Texture;
-		std::array<Vector2, 4> m_TexCoords;
-	};
-
 
 	inline bool Texture::IsDepthFormat(TextureFormat format)
 	{

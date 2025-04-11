@@ -115,38 +115,4 @@ namespace Athena
 
 		return nullptr;
 	}
-
-	Texture2DInstance::Texture2DInstance()
-	{
-		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
-	}
-
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture)
-	{
-		SetTexture(texture);
-		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
-	}
-
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
-	{
-		SetTexture(texture);
-		SetTexCoords(texCoords);
-	}
-
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
-	{
-		SetTexture(texture);
-		SetTexCoords(min, max);
-	}
-
-	void Texture2DInstance::SetTexCoords(const Vector2& min, const Vector2& max)
-	{
-		float width = (float)m_Texture->GetInfo().Width;
-		float height = (float)m_Texture->GetInfo().Height;
-
-		m_TexCoords[0] = { min.x / width, min.y / height };
-		m_TexCoords[1] = { max.x / width, min.y / height };
-		m_TexCoords[2] = { max.x / width, max.y / height };
-		m_TexCoords[3] = { min.x / width, max.y / height };
-	}
 }

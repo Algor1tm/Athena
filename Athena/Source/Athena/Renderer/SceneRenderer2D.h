@@ -116,19 +116,19 @@ namespace Athena
 
 		void DrawQuad(Vector2 position, Vector2 size, const LinearColor& color = LinearColor::White);
 		void DrawQuad(Vector3 position, Vector2 size, const LinearColor& color = LinearColor::White);
-		void DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawQuad(Vector3 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector2 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector3 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
 		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
-		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawQuad(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White);
-		void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(const Matrix4& transform, const Ref<Texture2D>& texture, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const LinearColor& color = LinearColor::White);
-		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawCircle(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f);
 

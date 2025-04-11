@@ -20,6 +20,7 @@ namespace Athena
 
 		m_Icons["Logo"] = TextureImporter::Load(m_Path / "Icons/Logo/LogoWhite.png", options);
 		m_Icons["EmptyTexture"] = TextureImporter::Load(m_Path / "Icons/Editor/Other/EmptyTexture.png", options);
+		m_Icons["Settings"] = TextureImporter::Load(m_Path / "Icons/Editor/Other/Settings.png", options);
 		m_Icons["Viewport_Stop"] = TextureImporter::Load(m_Path / "Icons/Editor/Viewport/Stop.png", options);
 
 		options.sRGB = true;

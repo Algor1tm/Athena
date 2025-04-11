@@ -14,6 +14,7 @@
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 #include "Panels/PanelManager.h"
+#include "Panels/ContentBrowserPanel.h"
 #include "EditorResources.h"
 
 #include <ImGui/imgui.h>
@@ -384,7 +385,8 @@ namespace Athena
 
 			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
 			{
-				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", "*.png *.jpg" }, Project::GetAssetDirectory());
+				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
 				if (!path.empty())
 				{
 					texture = TextureImporter::Load(path, texName == "u_Albedo" ? true : false);
@@ -628,18 +630,28 @@ namespace Athena
 		{
 			UI::PropertyColor4("Color", sprite.Color.Data());
 
+			bool isDefault = sprite.TextureHandle == AssetHandle(0);
+			Ref<Texture2D> textureAsset = sprite.TextureHandle.Get();
+			bool isValid = textureAsset != nullptr && !isDefault;
+
+			Ref<Texture2D> texture = textureAsset;
+			if (isDefault)
+				texture = TextureGenerator::GetWhiteTexture();
+			else if (!isValid)
+				texture = EditorResources::GetIcon("EmptyTexture");
+
 			float imageSize = 45.f;
-			UI::PropertyImage("Texture", sprite.Texture.GetNativeTexture(), { imageSize, imageSize });
+			UI::PropertyImage("Texture", texture, { imageSize, imageSize });
 
 			if (ImGui::BeginDragDropTarget())
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					FilePath path = (const char*)payload->Data;
-					if (path.extension() == ".png\0")
+					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+					if (cbPayload->AssetType == AssetType::Texture2D)
 					{
-						sprite.Texture = TextureImporter::Load(FilePath(path), true);
-						sprite.Color = LinearColor::White;
+						sprite.TextureHandle = cbPayload->AssetHandle;
 					}
 				}
 				ImGui::EndDragDropTarget();
@@ -649,17 +661,23 @@ namespace Athena
 			ImVec2 cursor = ImGui::GetCursorPos();
 			if (ImGui::Button("Browse"))
 			{
-				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", "*.png *.jpg" }, Project::GetAssetDirectory());
-				if (!path.empty())
+				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
+
+				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
 				{
-					sprite.Texture = TextureImporter::Load(path, true);
-					sprite.Color = LinearColor::White;
+					sprite.TextureHandle = handle;
 				}
 			}
 
-			ImGui::SetCursorPos({ cursor.x, cursor.y + imageSize / 1.8f });
-			if (ImGui::Button("Reset"))
-				sprite.Texture = TextureGenerator::GetWhiteTexture();
+			if (!isDefault)
+			{
+				ImGui::SetCursorPos({ cursor.x, cursor.y + imageSize / 1.8f });
+				if (ImGui::Button("Reset"))
+					sprite.TextureHandle = AssetHandle(0);
+			}
+
 
 			if(UI::PropertyEnumCombo("Space", ATN_STRINGIFY_MACRO(Renderer2DSpace), (void*)&sprite.Space))
 				entity.GetComponent<TransformComponent>().Translation = Vector3(0.0);
@@ -687,15 +705,16 @@ namespace Athena
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
 
+			bool isDefault = text.FontHandle == AssetHandle(0);
 			const FilePath& assetPath = Project::GetEditorAssetManager()->GetAssetFilePath(text.FontHandle);
-			bool isHandleValid = Project::GetEditorAssetManager()->IsAssetHandleValid(text.FontHandle);
+			bool isHandleValid = isDefault || Project::GetEditorAssetManager()->IsAssetHandleValid(text.FontHandle);
 
-			String fontName = text.UseDefaultFont ? "Default" : assetPath.filename().string();
+			String fontName = isDefault ? "Default" : assetPath.filename().string();
 
 			UI::PropertyRow("Font", ImGui::GetFrameHeight() + 2);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 
-			if (!isHandleValid && !text.UseDefaultFont)
+			if (!isHandleValid)
 			{
 				fontName = "<Invalid>";
 				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
@@ -703,17 +722,17 @@ namespace Athena
 
 			if (ImGui::Button(fontName.c_str()))
 			{
-				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", "*.ttf *.TTF" }, Project::GetAssetDirectory());
+				String fontExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Font);
+				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", fontExts }, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
 				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
 				{
 					text.FontHandle = handle;
-					text.UseDefaultFont = false;
 				}
 			}
 
-			if (!isHandleValid && !text.UseDefaultFont)
+			if (!isHandleValid)
 				ImGui::PopStyleColor();
 
 			ImGui::PopStyleVar();
@@ -722,20 +741,17 @@ namespace Athena
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					FilePath filepath = (const char*)payload->Data;
-					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle) &&
-						Project::GetEditorAssetManager()->GetAssetType(handle) == AssetType::Font)
+					if (cbPayload->AssetType == AssetType::Font)
 					{
-						text.FontHandle = handle;
-						text.UseDefaultFont = false;
+						text.FontHandle = cbPayload->AssetHandle;
 					}
 				}
 				ImGui::EndDragDropTarget();
 			}
 
-			if (!text.UseDefaultFont)
+			if (!isDefault)
 			{
 				ImGui::SameLine();
 
@@ -745,9 +761,9 @@ namespace Athena
 				UI::ShiftCursorY(style.FramePadding.y);
 				if (ImGui::InvisibleButton("ResetFont", size))
 				{
-					text.FontHandle = AssetHandle();
-					text.UseDefaultFont = true;
+					text.FontHandle = AssetHandle(0);
 				}
+
 				UI::ButtonImage((EditorResources::GetIcon("ContentBrowser_Refresh")));
 			}
 
@@ -846,7 +862,8 @@ namespace Athena
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if (ImGui::Button(name.c_str()))
 			{
-				FilePath filepath = FileDialogs::OpenFile("Select Mesh", { "Mesh files", "*.fbx *.gltf *.obj *.blend *.x3d" }, Project::GetAssetDirectory());
+				String meshExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh);
+				FilePath filepath = FileDialogs::OpenFile("Select Mesh", { "Mesh files", meshExts }, Project::GetAssetDirectory());
 				String ext = filepath.extension().string();
 				if (!filepath.empty())
 					meshComponent.Mesh = StaticMesh::Create(filepath);
@@ -858,10 +875,10 @@ namespace Athena
 			{
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 				{
-					FilePath filepath = (const char*)payload->Data;
-					String ext = filepath.extension().string();
-					if (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend")
-						meshComponent.Mesh = StaticMesh::Create(filepath);
+					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+					if (cbPayload->AssetType == AssetType::StaticMesh)
+						meshComponent.Mesh = StaticMesh::Create(cbPayload->FilePath);
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -1018,7 +1035,8 @@ namespace Athena
 
 				if (ImGui::Button(label.data()))
 				{
-					FilePath filepath = FileDialogs::OpenFile("Select Environment map", { "HDR files", "*.hdr" }, Project::GetAssetDirectory());
+					String envMapExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::EnvironmentMap);
+					FilePath filepath = FileDialogs::OpenFile("Select Environment map", { "HDR files", envMapExts }, Project::GetAssetDirectory());
 					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
 					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
@@ -1032,12 +1050,10 @@ namespace Athena
 				{
 					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 					{
-						FilePath filepath = (const char*)payload->Data;
-						AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+						CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-						if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle) &&
-							Project::GetEditorAssetManager()->GetAssetType(handle) == AssetType::StaticEnvironmentMap)
-							lightComponent.StaticEnvMapHandle = handle;
+						if (cbPayload->AssetType == AssetType::EnvironmentMap)
+							lightComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
 					}
 					ImGui::EndDragDropTarget();
 				}

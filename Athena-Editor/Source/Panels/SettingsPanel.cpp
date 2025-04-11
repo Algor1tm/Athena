@@ -213,7 +213,8 @@ namespace Athena
 
 			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
 			{
-				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", { "Texture files", "*.png *.jpg" }, Project::GetAssetDirectory());
+				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
 				if (!path.empty())
 				{
 					TextureImportOptions options;

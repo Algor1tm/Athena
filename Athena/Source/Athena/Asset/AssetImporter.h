@@ -22,6 +22,8 @@ namespace Athena
 		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata);
 		void MonitorAssets();
 
+		String GetAssetExtensions(AssetType type) const;
+
 	private:
 		AssetRegistry* m_Registry = nullptr;
 	};

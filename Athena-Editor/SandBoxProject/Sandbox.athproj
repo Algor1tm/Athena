@@ -12,6 +12,6 @@ Project:
   EditorState:
     SelectedEntity: 0
     ActiveScene: Scenes/Default.athscene
-    CameraPos: [30.4217262, 15.968565, 14.4413795]
-    CameraPitchYaw: [0.351000339, -1.05000365]
+    CameraPos: [9.66057682, 10.7212687, 10.9027567]
+    CameraPitchYaw: [0.325500041, -0.582003057]
     CameraSpeed: 0.400000006

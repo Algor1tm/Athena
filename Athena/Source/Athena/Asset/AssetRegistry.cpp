@@ -46,7 +46,7 @@ namespace Athena
 		return false;
 	}
 
-	AssetHandle AssetRegistry::GetAssetHandleFromFilePath(const FilePath& path)
+	AssetHandle AssetRegistry::GetAssetHandleFromFilePath(const FilePath& path) const
 	{
 		FilePath relPath = path;
 		if (path.is_absolute())

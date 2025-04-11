@@ -123,4 +123,17 @@ namespace Athena::Utils
 
 		return result;
 	}
+
+	inline String ToUpper(const String& str)
+	{
+		String result;
+		result.resize(str.size());
+
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			result[i] = std::toupper(str[i]);
+		}
+
+		return result;
+	}
 }

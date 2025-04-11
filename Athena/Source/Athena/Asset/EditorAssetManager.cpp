@@ -45,7 +45,12 @@ namespace Athena
 		return asset;
 	}
 
-	AssetHandle EditorAssetManager::GetAssetHandleFromFilePath(const FilePath& filepath)
+	String EditorAssetManager::GetAssetExtensions(AssetType type) const
+	{
+		return m_Importer.GetAssetExtensions(type);
+	}
+
+	AssetHandle EditorAssetManager::GetAssetHandleFromFilePath(const FilePath& filepath) const
 	{
 		return m_AssetRegistry.GetAssetHandleFromFilePath(filepath);
 	}

@@ -214,26 +214,7 @@ namespace Athena
 
 						sprite.Space = (Renderer2DSpace)spriteComponentNode["Space"].as<int>();
 						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
-
-						std::array<Vector2, 4> texCoords;
-						const auto& texCoordsNode = spriteComponentNode["TexCoords"];
-						texCoords[0] = texCoordsNode["0"].as<Vector2>();
-						texCoords[1] = texCoordsNode["1"].as<Vector2>();
-						texCoords[2] = texCoordsNode["2"].as<Vector2>();
-						texCoords[3] = texCoordsNode["3"].as<Vector2>();
-
-						const auto& textureNode = spriteComponentNode["Texture"];
-						const auto& path = textureNode.as<FilePath>();
-						if (!path.empty())
-						{
-							Ref<Texture2D> texture = TextureImporter::Load(path, true);
-							sprite.Texture = Texture2DInstance(texture, texCoords);
-						}
-						else
-						{
-							sprite.Texture.SetTexCoords(texCoords);
-						}
-
+						sprite.TextureHandle = spriteComponentNode["TextureHandle"].as<AssetHandle>();
 						sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
 					}
 				}
@@ -259,7 +240,6 @@ namespace Athena
 
 						text.Text = textComponentNode["Text"].as<String>();
 						text.FontHandle = textComponentNode["FontHandle"].as<AssetHandle>();
-						text.UseDefaultFont = textComponentNode["UseDefaultFont"].as<bool>();
 						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
 						text.Color = textComponentNode["Color"].as<LinearColor>();
 						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
@@ -543,17 +523,7 @@ namespace Athena
 			{
 				output << YAML::Key << "Space" << YAML::Value << (int)sprite.Space;
 				output << YAML::Key << "Color" << YAML::Value << sprite.Color;
-				output << YAML::Key << "Texture" << YAML::Value << sprite.Texture.GetNativeTexture()->GetFilePath();
-
-				const auto& texCoords = sprite.Texture.GetTexCoords();
-				output << YAML::Key << "TexCoords" << YAML::Value;
-				output << YAML::BeginMap;
-				output << YAML::Key << "0" << YAML::Value << texCoords[0];
-				output << YAML::Key << "1" << YAML::Value << texCoords[1];
-				output << YAML::Key << "2" << YAML::Value << texCoords[2];
-				output << YAML::Key << "3" << YAML::Value << texCoords[3];
-				output << YAML::EndMap;
-
+				output << YAML::Key << "TextureHandle" << YAML::Value << sprite.TextureHandle;
 				output << YAML::Key << "TilingFactor" << YAML::Value << sprite.TilingFactor;
 			});
 
@@ -569,7 +539,6 @@ namespace Athena
 			{
 				output << YAML::Key << "Text" << YAML::Value << text.Text;
 				output << YAML::Key << "FontHandle" << YAML::Value << text.FontHandle;
-				output << YAML::Key << "UseDefaultFont" << YAML::Value << text.UseDefaultFont;
 				output << YAML::Key << "Space" << YAML::Value << (int)text.Space;
 				output << YAML::Key << "Color" << YAML::Value << text.Color;
 				output << YAML::Key << "MaxWidth" << YAML::Value << text.MaxWidth;

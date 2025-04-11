@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Asset/Asset.h"
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
 
@@ -10,7 +11,107 @@
 
 namespace Athena
 {
-	class Texture2D;
+#define IMAGE_TO_ITEM_RATIO 0.63f
+
+	struct CBDragDropPayload
+	{
+		AssetHandle AssetHandle = 0;
+		AssetType AssetType = AssetType::None;
+		FilePath FilePath;
+	};
+
+	enum CBItemStateFlags
+	{
+		CBItemStateFlag_Default = BIT(0),
+		CBItemStateFlag_Hovered = BIT(1),
+		CBItemStateFlag_Selected = BIT(2),
+		CBItemStateFlag_Active = BIT(3),
+		CBItemStateFlag_ActivePopup = BIT(4),
+	};
+
+	struct CBItemState
+	{
+		void Set(CBItemStateFlags flag)
+		{
+			BitField = BitField | flag;
+		}
+
+		void Clear(CBItemStateFlags flag)
+		{
+			BitField = BitField & ~(flag);
+		}
+
+		void SetIf(bool condition, CBItemStateFlags flag)
+		{
+			if (condition)
+				Set(flag);
+			else
+				Clear(flag);
+		}
+
+		bool IsSet(CBItemStateFlags flag) const
+		{
+			return BitField & flag;
+		}
+
+		uint32 BitField = CBItemStateFlag_Default;
+	};
+
+
+	class CBItem
+	{
+	public:
+		CBItem(const FilePath& path);
+
+		virtual void OnImGuiRender(ImVec2 itemSize) = 0;
+		virtual bool IsFolder() const = 0;
+
+		void TrackMouseState(ImVec2 itemSize);
+
+		const String& GetFilePath() const { return m_FilePath; }
+		const String& GetFileName() const { return m_FileName; }
+
+		bool LexCompare(const Ref<CBItem>& item) const;
+
+	protected:
+		String m_FilePath;
+		String m_FileName;
+		CBItemState m_State;
+	};
+
+
+	class CBFolder: public CBItem
+	{
+	public:
+		CBFolder(const FilePath& path);
+
+		virtual void OnImGuiRender(ImVec2 itemSize) override;
+		virtual bool IsFolder() const override { return true; }
+
+		const std::vector<Ref<CBItem>>& GetChildren() const { return m_ChildrenItems; }
+		bool IsEntered() const { return m_IsEntered; }
+
+	private:
+		std::vector<Ref<CBItem>> m_ChildrenItems;
+		bool m_IsEntered = false;
+	};
+
+
+	class CBAssetItem: public CBItem
+	{
+	public:
+		CBAssetItem(const FilePath& path);
+
+		virtual void OnImGuiRender(ImVec2 itemSize) override;
+		virtual bool IsFolder() const override { return false; }
+
+		AssetHandle GetHandle() const { return m_Payload.AssetHandle; }
+		AssetType GetAssetType() const { return m_Payload.AssetType; }
+
+	private:
+		CBDragDropPayload m_Payload;
+	};
+
 
 	class ContentBrowserPanel : public Panel
 	{
@@ -21,32 +122,21 @@ namespace Athena
 		void Refresh();
 
 	private:
-		struct TreeNode
-		{
-			bool IsFolder;
-			String FilePath;
-			String FileName;
-			std::vector<TreeNode> Children;
-			TreeNode* ParentNode;
-		};
+		void RenderHeadBar();
+
+		Ref<CBFolder> FindItemParentFolder(const Ref<CBItem>& item);
+		Ref<CBItem> FindItemByFilePath(const Ref<CBFolder>& folder, const String& path);
+		void FilterSearch();
 
 	private:
-		void ReloadTreeHierarchy(const FilePath& srcDirectory);
-		TreeNode* FindTreeNode(TreeNode& root, const String& path);
-
-		void Search();
-
-	private:
-		TreeNode m_TreeRoot;
-		TreeNode* m_CurrentNode;
+		Ref<CBFolder> m_RootFolder;
+		Ref<CBFolder> m_CurrentFolder;
 
 		String m_SearchString;
-		std::vector<TreeNode*> m_SearchResult;
-
-		FilePath m_AssetDirectory;
+		std::vector<Ref<CBItem>> m_SearchResult;
 
 		const ImVec2 m_ButtonSize = { 16.f, 16.f };
-		const ImVec2 m_ItemSize = { 96.f, 96.f };
+		ImVec2 m_ItemSize = { 180.f * IMAGE_TO_ITEM_RATIO, 180.f };
 		const float m_Padding = 8.f;
 	};
 }

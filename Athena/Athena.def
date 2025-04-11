@@ -4,6 +4,7 @@ EXPORTS
 	?AddImage@ImDrawList@@QEAAXPEAXAEBUImVec2@@111I@Z
 	?AddRect@ImDrawList@@QEAAXAEBUImVec2@@0IMHM@Z
 	?AddRectFilled@ImDrawList@@QEAAXAEBUImVec2@@0IMH@Z
+	?AddRectFilledMultiColor@ImDrawList@@QEAAXAEBUImVec2@@0IIII@Z
 	?Begin@ImGui@@YA_NPEBDPEA_NH@Z
 	?BeginCombo@ImGui@@YA_NPEBD0H@Z
 	?BeginDragDropSource@ImGui@@YA_NH@Z
@@ -53,6 +54,7 @@ EXPORTS
 	?IsItemDeactivatedAfterEdit@ImGui@@YA_NXZ
 	?IsItemHovered@ImGui@@YA_NH@Z
 	?IsMouseClicked@ImGui@@YA_NH_N@Z
+	?IsMouseDoubleClicked@ImGui@@YA_NH@Z
 	?IsMouseDown@ImGui@@YA_NH@Z
 	?BeginPopupContextWindow@ImGui@@YA_NPEBDH@Z
 	?InputTextWithHint@ImGui@@YA_NPEBD0PEAD_KHP6AHPEAUImGuiInputTextCallbackData@@@ZPEAX@Z
@@ -116,6 +118,7 @@ EXPORTS
 	?PopItemWidth@ImGui@@YAXXZ
 	?PopStyleColor@ImGui@@YAXH@Z	
 	?PopStyleVar@ImGui@@YAXH@Z
+	?PopTextWrapPos@ImGui@@YAXXZ
 	?PushClipRect@ImGui@@YAXAEBUImVec2@@0_N@Z
 	?PushFont@ImGui@@YAXPEAUImFont@@@Z
 	?PushID@ImGui@@YAXPEBD@Z
@@ -124,6 +127,7 @@ EXPORTS
 	?PushStyleColor@ImGui@@YAXHAEBUImVec4@@@Z
 	?PushStyleVar@ImGui@@YAXHM@Z
 	?PushStyleVar@ImGui@@YAXHAEBUImVec2@@@Z
+	?PushTextWrapPos@ImGui@@YAXM@Z
 	?SameLine@ImGui@@YAXMM@Z
 	?Separator@ImGui@@YAXXZ
 	?SetCursorPos@ImGui@@YAXAEBUImVec2@@@Z
@@ -140,6 +144,7 @@ EXPORTS
 	?Spacing@ImGui@@YAXXZ
 	?Spring@ImGui@@YAXMM@Z
 	?SuspendLayout@ImGui@@YAXXZ
+	?TableNextColumn@ImGui@@YA_NXZ
 	?TableNextRow@ImGui@@YAXHM@Z
 	?Text@ImGui@@YAXPEBDZZ
 	?TextWrapped@ImGui@@YAXPEBDZZ

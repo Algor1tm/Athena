@@ -1,4 +1,5 @@
 Scene: PhysicsExample
+Handle: 0
 Entities:
   - IDComponent:
       ID: 13109570281517897720
@@ -11,12 +12,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 0.313725501]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -39,12 +35,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 0.313725501]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -67,12 +58,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 0.313725501]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -95,12 +81,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 0.371308029, 0.371308029, 1]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 1
@@ -123,12 +104,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 1]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -170,12 +146,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 1]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -198,12 +169,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 1, 1]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 0
@@ -226,12 +192,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 0.608716488, 0.0632911325, 1]
-      Texture: ""
-      TexCoords:
-        0: [0, 0]
-        1: [1, 0]
-        2: [1, 1]
-        3: [0, 1]
+      TextureHandle: 0
       TilingFactor: 1
     Rigidbody2DComponent:
       BodyType: 1

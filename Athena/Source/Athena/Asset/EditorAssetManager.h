@@ -32,7 +32,7 @@ namespace Athena
 
 	private:
 		AssetRegistry m_AssetRegistry;
-		AssetImporter m_Importer;
+		AssetImporter m_AssetImporter;
 
 		std::unordered_map<AssetHandle, Ref<Asset>> m_LoadedAssets;
 		std::unordered_map<AssetHandle, Ref<Asset>> m_MemoryOnlyAssets;

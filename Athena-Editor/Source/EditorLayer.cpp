@@ -81,7 +81,7 @@ namespace Athena
 
         m_ViewportRenderer->SetOnViewportResizeCallback(
             [this](uint32 width, uint32 height) { m_Renderer2D->OnViewportResize(width, height); });
-        
+
         InitUI();
     }
 

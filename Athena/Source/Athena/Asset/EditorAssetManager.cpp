@@ -7,10 +7,7 @@ namespace Athena
 	EditorAssetManager::EditorAssetManager()
 	{
 		m_AssetRegistry.Deserialize();
-		m_Importer.Initialize(&m_AssetRegistry);
-
-		// For now monitor assets only on initializaiton
-		m_Importer.MonitorAssets();
+		m_AssetImporter.Initialize(&m_AssetRegistry);
 	}
 
 	EditorAssetManager::~EditorAssetManager()
@@ -20,6 +17,8 @@ namespace Athena
 
 	WeakRef<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 	{
+		ATN_PROFILE_FUNC();
+
 		if (!IsAssetHandleValid(handle))
 			return nullptr;
 
@@ -30,7 +29,7 @@ namespace Athena
 		}
 		else
 		{
-			Ref<Asset> loadedAsset = m_Importer.LoadAsset(handle, GetAssetMetadata(handle));
+			Ref<Asset> loadedAsset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
 			if (loadedAsset)
 			{
 				m_LoadedAssets[handle] = loadedAsset;
@@ -47,7 +46,7 @@ namespace Athena
 
 	String EditorAssetManager::GetAssetExtensions(AssetType type) const
 	{
-		return m_Importer.GetAssetExtensions(type);
+		return m_AssetImporter.GetAssetExtensions(type);
 	}
 
 	AssetHandle EditorAssetManager::GetAssetHandleFromFilePath(const FilePath& filepath) const

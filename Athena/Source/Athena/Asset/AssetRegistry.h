@@ -4,6 +4,7 @@
 #include "Athena/Asset/Asset.h"
 
 #include <unordered_map>
+#include <mutex>
 
 
 namespace Athena
@@ -14,6 +15,8 @@ namespace Athena
 		AssetRegistry();
 
 		void AddAsset(AssetHandle handle, const AssetMetadata& metadata);
+		void RemoveAsset(AssetHandle handle);
+
 		const AssetMetadata& GetMetadata(AssetHandle handle) const;
 
 		bool IsAssetHandlePresent(AssetHandle handle) const;
@@ -24,8 +27,11 @@ namespace Athena
 		bool Deserialize();
 
 		const std::unordered_map<AssetHandle, AssetMetadata>& GetRegistry() const { return m_Registry; }
+		std::unordered_map<AssetHandle, AssetMetadata> GetRegistryCopy() const;
+
 
 	private:
 		std::unordered_map<AssetHandle, AssetMetadata> m_Registry;
+		mutable std::mutex m_Mutex;
 	};
 }

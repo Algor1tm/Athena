@@ -1,6 +1,6 @@
 #include "AssetImporter.h"
 #include "Athena/Asset/AssetManager.h"
-
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Asset/TextureImporter.h"
 #include "Athena/Scene/SceneSerializer.h"
 #include "Athena/Renderer/Font.h"
@@ -37,22 +37,27 @@ namespace Athena
 	};
 
 	AssetImporter::AssetImporter()
+		: m_AssetThread("AssetThread", [this]() { MonitorAssetsWrapper(); })
 	{
 
 	}
 
 	AssetImporter::~AssetImporter()
 	{
-
+		m_JoinAssetThread = true;
+		m_AssetThread.Join();
 	}
 
 	void AssetImporter::Initialize(AssetRegistry* registry)
 	{
 		m_Registry = registry;
+		m_AssetThread.Start();
 	}
 
 	Ref<Asset> AssetImporter::LoadAsset(AssetHandle handle, const AssetMetadata& metadata)
 	{
+		ATN_PROFILE_FUNC();
+
 		Ref<Asset> result;
 		AssetType assetType = metadata.Type;
 
@@ -94,14 +99,36 @@ namespace Athena
 		return result;
 	}
 
-	// TODO:
-	// 1. Run this function on different thread
-	// 2. Check file timestamps to know if file is updated
-	// 3. Delete outdated assets from registry
+	void AssetImporter::MonitorAssetsWrapper()
+	{
+		while (!m_JoinAssetThread)
+		{
+			MonitorAssets();
+			Thread::CurrentThreadSleep(Time::Seconds(2.f));
+		}
+	}
+
+	// TODO: Check file timestamps to know if file is updated
 	void AssetImporter::MonitorAssets()
 	{
+		ATN_PROFILE_FUNC();
+
 		FilePath assetDirectory = Project::GetAssetDirectory();
 
+		// 1. Remove outdated or invalid assets
+		auto registry = m_Registry->GetRegistryCopy();
+
+		for (const auto& [handle, meta] : registry)
+		{
+			if (!meta.IsMemoryOnly && !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(meta.FilePath)))
+				m_Registry->RemoveAsset(handle);
+
+			if (meta.Type == AssetType::None)
+				m_Registry->RemoveAsset(handle);
+		}
+
+
+		// 2. Find new assets and import them
 		std::queue<FilePath> queue;
 		queue.push(assetDirectory);
 

@@ -16,12 +16,24 @@ namespace Athena
 
 	void AssetRegistry::AddAsset(AssetHandle handle, const AssetMetadata& metadata)
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		m_Registry[handle] = metadata;
+	}
+
+	void AssetRegistry::RemoveAsset(AssetHandle handle)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
+		if (m_Registry.contains(handle))
+			m_Registry.erase(handle);
 	}
 
 	const AssetMetadata& AssetRegistry::GetMetadata(AssetHandle handle) const
 	{
 		static const AssetMetadata s_NullMetadata;
+
+		std::lock_guard<std::mutex> lock(m_Mutex);
 
 		auto it = m_Registry.find(handle);
 		if (it == m_Registry.end())
@@ -32,11 +44,15 @@ namespace Athena
 
 	bool AssetRegistry::IsAssetHandlePresent(AssetHandle handle) const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		return m_Registry.contains(handle);
 	}
 
 	bool AssetRegistry::IsFilePathPresent(const FilePath& path) const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		for (const auto& [handle, metadata] : m_Registry)
 		{
 			if (metadata.FilePath == path)
@@ -48,6 +64,8 @@ namespace Athena
 
 	AssetHandle AssetRegistry::GetAssetHandleFromFilePath(const FilePath& path) const
 	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		FilePath relPath = path;
 		if (path.is_absolute())
 			relPath = AssetManager::GetAssetRelativePath(path);
@@ -66,6 +84,14 @@ namespace Athena
 		return 0;
 	}
 
+	std::unordered_map<AssetHandle, AssetMetadata> AssetRegistry::GetRegistryCopy() const
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+		std::unordered_map<AssetHandle, AssetMetadata> copy = m_Registry;
+
+		return copy;
+	}
+
 	void AssetRegistry::Serialize()
 	{
 		auto path = Project::GetAssetRegistryPath();
@@ -76,13 +102,16 @@ namespace Athena
 			out << YAML::Key << "AssetRegistry" << YAML::Value;
 
 			out << YAML::BeginSeq;
+
+			std::lock_guard<std::mutex> lock(m_Mutex);
+
 			for (const auto& [handle, metadata] : m_Registry)
 			{
 				out << YAML::BeginMap;
 				out << YAML::Key << "Handle" << YAML::Value << handle;
 				out << YAML::Key << "Type" << YAML::Value << Utils::AssetTypeToString(metadata.Type);
 				out << YAML::Key << "FilePath" << YAML::Value << metadata.FilePath;
-				out << YAML::Key << "IsMemoryOnly" << YAML::Value << metadata.IsMemoryOnly;
+				//out << YAML::Key << "IsMemoryOnly" << YAML::Value << metadata.IsMemoryOnly;
 				out << YAML::EndMap;
 			}
 			out << YAML::EndSeq;
@@ -121,7 +150,7 @@ namespace Athena
 			auto& metadata = m_Registry[handle];
 			metadata.Type = Utils::AssetTypeFromString(node["Type"].as<String>());
 			metadata.FilePath = node["FilePath"].as<String>();
-			metadata.IsMemoryOnly = node["IsMemoryOnly"].as<bool>();
+			metadata.IsMemoryOnly = false;//node["IsMemoryOnly"].as<bool>();
 		}
 
 		return true;

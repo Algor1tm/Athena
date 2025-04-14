@@ -1,16 +1,12 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Thread.h"
 #include "Athena/Asset/AssetRegistry.h"
 
 
 namespace Athena
 {
-	// TODO: multithreading
-	// 
-	// Editor only
-	// Responsible for automatically adding assets to asset registry 
-	// and creating assets using EditorAssetLoader
 	class AssetImporter
 	{
 	public:
@@ -20,11 +16,15 @@ namespace Athena
 		void Initialize(AssetRegistry* registry);
 
 		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata);
-		void MonitorAssets();
-
 		String GetAssetExtensions(AssetType type) const;
 
 	private:
+		void MonitorAssetsWrapper();
+		void MonitorAssets();
+
+	private:
 		AssetRegistry* m_Registry = nullptr;
+		Thread m_AssetThread;
+		bool m_JoinAssetThread = false;
 	};
 }

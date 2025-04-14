@@ -1,6 +1,7 @@
 #include "ContentBrowserPanel.h"
 
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/PlatformUtils.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/TextureGenerator.h"
@@ -20,10 +21,11 @@
 
 namespace Athena
 {
-	CBItem::CBItem(const FilePath& path)
+	CBItem::CBItem(ContentBrowserPanel* panel, const FilePath& path)
 	{
 		m_FilePath = path.string();
 		m_FileName = path.filename().string();
+		m_ContentBrowserPanel = panel;
 	}
 
 	void CBItem::TrackMouseState(ImVec2 itemSize)
@@ -32,26 +34,27 @@ namespace Athena
 
 		ImGui::InvisibleButton("ContentItem", itemSize);
 
-		//bool isMouseLeftClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-		//bool isMouseRightClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+		bool isItemHovered = ImGui::IsItemHovered();
+		bool isItemClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Left) && isItemHovered;
+		bool isItemDoubleClicked = ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && isItemHovered;
+		bool isItemRightClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right) && isItemHovered;
 
-		//bool isItemHovered = ImGui::IsItemHovered();
-		//bool isItemClicked = isMouseLeftClicked && isItemHovered;
-		//bool isItemDoubleClicked = isMouseRightClicked && isItemHovered;
-		//bool isItemRightClicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right) && isItemHovered;
+		m_State.SetIf(isItemHovered, CBItemStateFlag_Hovered);
+		m_State.SetIf(isItemDoubleClicked, CBItemStateFlag_Active);
 
-		//m_State.SetIf(isItemHovered, CBItemStateFlag_Hovered);
-		//m_State.SetIf(isItemDoubleClicked, CBItemStateFlag_Active);
+		if (isItemClicked || isItemRightClicked)
+		{
+			m_ContentBrowserPanel->DeselectItem();
+			m_State.Set(CBItemStateFlag_Selected);
+		}
 
-		//if (isMouseLeftClicked && !isItemClicked)
-		//	m_State.Clear(CBItemStateFlag_Selected);
+		if (isItemRightClicked)
+		{
+			m_State.Set(CBItemStateFlag_ActivePopup);
 
-		//if (isMouseRightClicked && !isItemRightClicked)
-		//	m_State.Clear(CBItemStateFlag_Selected);
-
-
-		//m_State.SetIf(isItemClicked, CBItemStateFlag_Selected);
-		//m_State.SetIf(isItemRightClicked, CBItemStateFlag_ActivePopup);
+			ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Always, ImVec2(0.f, 1.0f));
+			ImGui::OpenPopup("CBItemPopup");
+		}
 
 		ImGui::SetCursorScreenPos(cursorPos);
 	}
@@ -74,8 +77,8 @@ namespace Athena
 	}
 
 
-	CBFolder::CBFolder(const FilePath& path)
-		: CBItem(path)
+	CBFolder::CBFolder(ContentBrowserPanel* panel, const FilePath& path)
+		: CBItem(panel, path)
 	{
 		for (const auto& dirEntry : std::filesystem::directory_iterator(GetFilePath()))
 		{
@@ -85,14 +88,14 @@ namespace Athena
 			Ref<CBItem> item;
 			if (isFolder)
 			{
-				item = Ref<CBFolder>::Create(dirPath);
+				item = Ref<CBFolder>::Create(panel, dirPath);
 			}
 			else
 			{
 				FilePath relativePath = AssetManager::GetAssetRelativePath(dirPath);
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(relativePath);
 				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
-					item = Ref<CBAssetItem>::Create(dirPath);
+					item = Ref<CBAssetItem>::Create(panel, dirPath);
 			}
 
 			if (item)
@@ -109,27 +112,75 @@ namespace Athena
 	{
 		const String& fileName = GetFileName();
 
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 0, 0, 0 });
+		TrackMouseState(itemSize);
+		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
-		Ref<Texture2D> icon = EditorResources::GetIcon("ContentBrowser_Folder");
-		ImVec2 iconSize = { itemSize.x, itemSize.y * 0.6f };
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-		ImGui::ImageButton(UI::GetTextureID(icon), iconSize);
-
-		m_IsEntered = false;
-		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		// Borders
 		{
-			m_IsEntered = true;
+			bool isSelected = m_State.IsSet(CBItemStateFlag_Selected);
+			bool isHovered = m_State.IsSet(CBItemStateFlag_Hovered);
+
+			const ImU32 borderColor = isSelected ? UI::GetTheme().Accent : UI::GetTheme().TabActive;
+
+			if (isSelected || isHovered)
+			{
+				drawList->AddRect(ImVec2(cursorPos.x, cursorPos.y),
+					ImVec2(cursorPos.x + itemSize.x, cursorPos.y + itemSize.y),
+					borderColor, 3.0f);
+			}
 		}
 
-		ImGui::PopStyleColor();
+		// Image
+		{
+			ImVec2 iconSize = { itemSize.x, itemSize.y * IMAGE_TO_ITEM_RATIO };
+			ImVec2 contentPos = cursorPos;
 
-		ImGui::TextWrapped(fileName.data());
+			drawList->AddImage(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Folder")),
+				contentPos,
+				ImVec2(contentPos.x + iconSize.x, contentPos.y + iconSize.y));
+
+			contentPos.y += iconSize.y;
+			ImGui::SetCursorScreenPos(contentPos);
+		}
+
+		// Text
+		{
+			Vector2 framePadding = UI::GetTheme().Style.FramePadding;
+
+			UI::ShiftCursorX(framePadding.x);
+
+			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
+
+			float actualSize = ImGui::CalcTextSize(fileName.data()).x + framePadding.x * 2.0f;
+			float avail = ImGui::GetContentRegionAvail().x;
+
+			float off = (avail - actualSize) * 0.5f;
+			if (off > 0.0f)
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+
+			ImGui::TextWrapped(fileName.data());
+			ImGui::PopTextWrapPos();
+		}
+
+		ImGui::SetCursorScreenPos(ImVec2(cursorPos.x, cursorPos.y + itemSize.y));
+
+		if (ImGui::BeginPopup("CBItemPopup"))
+		{
+			if (ImGui::MenuItem("Open In Explorer"))
+			{
+				Platform::OpenInFileExplorer(GetFilePath());
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
 	}
 
 
-	CBAssetItem::CBAssetItem(const FilePath& path)
-		: CBItem(path)
+	CBAssetItem::CBAssetItem(ContentBrowserPanel* panel, const FilePath& path)
+		: CBItem(panel, path)
 	{
 		FilePath relativePath = AssetManager::GetAssetRelativePath(path);
 		AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(relativePath);
@@ -157,9 +208,6 @@ namespace Athena
 
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-		const ImU32 selectionColor = UI::GetTheme().Accent;
-		bool isSelected = false;
-
 		// Shadow
 		{
 			const ImVec2 shadowOffset = ImVec2(1.5f, 1.5f); 
@@ -172,6 +220,11 @@ namespace Athena
 
 		// Background
 		{
+			const ImU32 selectionColor = UI::GetTheme().Accent;
+			bool isSelected = m_State.IsSet(CBItemStateFlag_Selected);
+			bool isHovered = m_State.IsSet(CBItemStateFlag_Hovered);
+
+			const ImU32 borderColor = isSelected ? selectionColor : UI::GetTheme().TabActive;
 			const ImU32 bgColor = isSelected ? selectionColor : UI::GetTheme().HeaderActive;
 			const ImU32 imageBgColor = UI::GetTheme().BackgroundDark;
 
@@ -183,11 +236,11 @@ namespace Athena
 				ImVec2(cursorPos.x + itemSize.x, cursorPos.y + itemSize.y * IMAGE_TO_ITEM_RATIO),
 				imageBgColor, 3.0f);
 
-			if (isSelected)
+			if (isSelected || isHovered)
 			{
 				drawList->AddRect(ImVec2(cursorPos.x, cursorPos.y),
 					ImVec2(cursorPos.x + itemSize.x, cursorPos.y + itemSize.y),
-					selectionColor, 3.0f);
+					borderColor, 3.0f);
 			}
 		}
 
@@ -201,8 +254,8 @@ namespace Athena
 			contentPos.y += imagePadding;
 
 			// TODO: Thumbnails / icons per asset type
-			// 
-			//drawList->AddImage(UI::GetTextureID(TextureGenerator::GetBlackTexture()),
+			 
+			//drawList->AddImage(UI::GetTextureID(TextureGenerator::GetWhiteTexture()),
 			//	contentPos,
 			//	ImVec2(contentPos.x + iconSize.x, contentPos.y + iconSize.y));
 
@@ -235,6 +288,22 @@ namespace Athena
 		}
 
 		ImGui::SetCursorScreenPos(ImVec2(cursorPos.x, cursorPos.y + itemSize.y));
+
+		if (ImGui::BeginPopup("CBItemPopup"))
+		{
+			if (ImGui::MenuItem("Open Externally"))
+			{
+				Platform::OpenFileExternally(GetFilePath());
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (m_State.IsSet(CBItemStateFlag_Active))
+		{
+			// On double click
+		}
 	}
 
 
@@ -251,6 +320,8 @@ namespace Athena
 		RenderHeadBar();
 
 		ImGui::Separator();
+
+		m_IsAnyItemHovered = false;
 
 		const std::vector<Ref<CBItem>>& itemList = !m_SearchString.empty() ? m_SearchResult : m_CurrentFolder->GetChildren();
 
@@ -273,15 +344,21 @@ namespace Athena
 
 			ImGui::PopID();
 
+			bool isHovered = item->GetState().IsSet(CBItemStateFlag_Hovered);
+			if (isHovered)
+				m_IsAnyItemHovered = true;
+
+			bool isSelected = item->GetState().IsSet(CBItemStateFlag_Selected);
+			if (isSelected)
+				m_SelectedItem = item;
+
 			if (item->IsFolder())
 			{
-				Ref<CBFolder> folder = item.As<CBFolder>();
-
-				if (folder->IsEntered())
+				if (item->GetState().IsSet(CBItemStateFlag_Active))
 				{
 					m_SearchResult.clear();
 					m_SearchString.clear();
-					m_CurrentFolder = folder;
+					m_CurrentFolder = item.As<CBFolder>();
 					break;
 				}
 			}
@@ -290,7 +367,46 @@ namespace Athena
 		ImGui::EndTable();
 		ImGui::PopStyleVar();
 
+		if (ImGui::IsWindowHovered() && !m_IsAnyItemHovered)
+		{
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+			{
+				DeselectItem();
+
+				for (const auto& item : itemList)
+				{
+					item->GetState().Clear(CBItemStateFlag_Selected);
+				}
+			}
+
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Always, ImVec2(0.f, 1.0f));
+				ImGui::OpenPopup("CBPopup");
+			}
+		}
+
+		if (ImGui::BeginPopup("CBPopup"))
+		{
+			if (ImGui::MenuItem("Open In Explorer"))
+			{
+				Platform::OpenInFileExplorer(m_CurrentFolder->GetFilePath());
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::End();
+	}
+
+	void ContentBrowserPanel::DeselectItem()
+	{
+		if (m_SelectedItem)
+		{
+			m_SelectedItem->GetState().Clear(CBItemStateFlag_Selected);
+			m_SelectedItem = nullptr;
+		}
 	}
 
 	void ContentBrowserPanel::RenderHeadBar()
@@ -370,7 +486,7 @@ namespace Athena
 		FilePath assetDir = Project::GetAssetDirectory();
 		String currentFilePath = m_CurrentFolder != nullptr ? m_CurrentFolder->GetFilePath() : String();
 
-		m_RootFolder = Ref<CBFolder>::Create(assetDir);
+		m_RootFolder = Ref<CBFolder>::Create(this, assetDir);
 
 		if(!currentFilePath.empty())
 			m_CurrentFolder = FindItemByFilePath(m_RootFolder, currentFilePath);

@@ -11,7 +11,7 @@
 
 namespace Athena
 {
-#define IMAGE_TO_ITEM_RATIO 0.63f
+#define IMAGE_TO_ITEM_RATIO 0.66f
 
 	struct CBDragDropPayload
 	{
@@ -57,16 +57,19 @@ namespace Athena
 		uint32 BitField = CBItemStateFlag_Default;
 	};
 
+	class ContentBrowserPanel;
 
 	class CBItem
 	{
 	public:
-		CBItem(const FilePath& path);
+		CBItem(ContentBrowserPanel* panel, const FilePath& path);
 
 		virtual void OnImGuiRender(ImVec2 itemSize) = 0;
 		virtual bool IsFolder() const = 0;
 
 		void TrackMouseState(ImVec2 itemSize);
+
+		CBItemState& GetState() { return m_State; }
 
 		const String& GetFilePath() const { return m_FilePath; }
 		const String& GetFileName() const { return m_FileName; }
@@ -77,30 +80,29 @@ namespace Athena
 		String m_FilePath;
 		String m_FileName;
 		CBItemState m_State;
+		ContentBrowserPanel* m_ContentBrowserPanel = nullptr;
 	};
 
 
 	class CBFolder: public CBItem
 	{
 	public:
-		CBFolder(const FilePath& path);
+		CBFolder(ContentBrowserPanel* panel, const FilePath& path);
 
 		virtual void OnImGuiRender(ImVec2 itemSize) override;
 		virtual bool IsFolder() const override { return true; }
 
 		const std::vector<Ref<CBItem>>& GetChildren() const { return m_ChildrenItems; }
-		bool IsEntered() const { return m_IsEntered; }
 
 	private:
 		std::vector<Ref<CBItem>> m_ChildrenItems;
-		bool m_IsEntered = false;
 	};
 
 
 	class CBAssetItem: public CBItem
 	{
 	public:
-		CBAssetItem(const FilePath& path);
+		CBAssetItem(ContentBrowserPanel* panel, const FilePath& path);
 
 		virtual void OnImGuiRender(ImVec2 itemSize) override;
 		virtual bool IsFolder() const override { return false; }
@@ -119,6 +121,7 @@ namespace Athena
 		ContentBrowserPanel(const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
+		void DeselectItem();
 		void Refresh();
 
 	private:
@@ -131,6 +134,9 @@ namespace Athena
 	private:
 		Ref<CBFolder> m_RootFolder;
 		Ref<CBFolder> m_CurrentFolder;
+		Ref<CBItem> m_SelectedItem;
+
+		bool m_IsAnyItemHovered = false;
 
 		String m_SearchString;
 		std::vector<Ref<CBItem>> m_SearchResult;

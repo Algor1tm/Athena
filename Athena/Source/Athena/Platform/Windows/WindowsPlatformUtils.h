@@ -209,6 +209,39 @@ namespace Athena
 		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
 	}
 
+	void Platform::OpenFileExternally(const FilePath& path)
+	{
+		std::wstring command = L"code " + std::filesystem::absolute(path).wstring();
+		std::wstring commandLine = L"cmd.exe /c \"" + command + L"\"";
+
+		STARTUPINFO si = { sizeof(si) };
+		PROCESS_INFORMATION pi;
+
+		BOOL result = CreateProcess(
+			NULL,                       
+			&commandLine[0],            
+			NULL,                       
+			NULL,                       
+			FALSE,                      
+			CREATE_NO_WINDOW,           
+			NULL,                       
+			NULL,                       
+			&si,                        
+			&pi                         
+		);
+
+		if (result) 
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+		else 
+		{
+			WINAPI_CHECK_LASTERROR();
+			MessageBox(NULL, L"Failed to launch VS Code.", L"Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
 	void Platform::RunFile(const FilePath& path, const FilePath& workingDir)
 	{
 		WINAPI_SUPPRESS_LAST_ERROR();

@@ -24,6 +24,7 @@ namespace Athena
 
 		static void OpenInBrowser(const std::wstring& url);
 		static void OpenInFileExplorer(const FilePath& path);
+		static void OpenFileExternally(const FilePath& path);
 
 		static void RunFile(const FilePath& path, const FilePath& workingDir);
 

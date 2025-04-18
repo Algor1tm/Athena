@@ -11,7 +11,7 @@ namespace Athena
 	enum class MaterialTextureType
 	{
 		Albedo = 1,
-		Normal,
+		Normals,
 		Roughness,
 		Metalness
 	};

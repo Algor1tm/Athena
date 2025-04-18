@@ -92,12 +92,12 @@ namespace Athena
 
 		if (assetType == AssetType::Texture2D)
 		{
-			result = TextureImporter::Load(absolutePath, true);
+			result = TextureImporter::Load(absolutePath, false);
 		}
 
 		if (assetType == AssetType::Material)
 		{
-			//result = MaterialAsset::Create(Material::CreatePBR());
+			result = MaterialAsset::Create();
 		}
 
 		if (result)
@@ -111,6 +111,14 @@ namespace Athena
 
 
 		return result;
+	}
+
+	void AssetImporter::SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const
+	{
+		if (m_Serializers.contains(metadata.Type))
+		{
+			m_Serializers.at(metadata.Type)->Serialize(asset, metadata);
+		}
 	}
 
 	void AssetImporter::AssetThreadFunction()

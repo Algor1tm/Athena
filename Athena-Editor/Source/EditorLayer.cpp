@@ -23,6 +23,7 @@
 #include "Panels/PanelManager.h"
 #include "Panels/AssetManagerPanel.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "Panels/MaterialEditorPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/ProjectSettingsPanel.h"
@@ -449,6 +450,7 @@ namespace Athena
                 ImGui::PopStyleVar();
             });
 
+
         PanelManager::AddPanel(viewportPanel, false);
 
         auto settingsPanel = Ref<SettingsPanel>::Create(m_EditorCtx);
@@ -457,6 +459,9 @@ namespace Athena
 
         auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(sceneHierarchyPanel, Keyboard::J);
+
+        auto materialEditorPanel = Ref<MaterialEditorPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(materialEditorPanel, Keyboard::L);
 
         auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
@@ -1172,7 +1177,6 @@ namespace Athena
 
                 if (m_EditorCtx->ActiveScene)
                     m_EditorCtx->SelectedEntity = m_EditorCtx->ActiveScene->GetEntityByUUID(editorState.SelectedEntity);
-                    
             }
             else
             {
@@ -1220,6 +1224,7 @@ namespace Athena
     void EditorLayer::SaveAll()
     {
         SaveProject();
+        Project::GetEditorAssetManager()->SaveAllAssets();
 
         if (m_CurrentScenePath == FilePath())
             SaveSceneAs();

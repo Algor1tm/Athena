@@ -10,6 +10,7 @@
 #include "Athena/Utils/StringUtils.h"
 
 #include "Panels/PanelManager.h"
+#include "Panels/MaterialEditorPanel.h"
 #include "EditorResources.h"
 
 #include <ImGui/imgui.h>
@@ -174,6 +175,12 @@ namespace Athena
 				ImGui::CloseCurrentPopup();
 			}
 
+			if (ImGui::MenuItem("Delete"))
+			{
+				FileSystem::Remove(GetFilePath());
+				m_ContentBrowserPanel->QueueRefresh();
+			}
+
 			ImGui::EndPopup();
 		}
 	}
@@ -291,6 +298,35 @@ namespace Athena
 
 		if (ImGui::BeginPopup("CBItemPopup"))
 		{
+			if (GetAssetType() == AssetType::Material)
+			{
+				if (ImGui::MenuItem("Open in Editor"))
+				{
+					Ref<MaterialEditorPanel> panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+					panel->SetActiveMaterial(GetAssetHandle());
+				}
+			}
+
+			if (ImGui::MenuItem("Reload"))
+			{
+				// TODO
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Rename"))
+			{
+				// TODO
+			}
+
+			if (ImGui::MenuItem("Delete"))
+			{
+				FileSystem::Remove(GetFilePath());
+				m_ContentBrowserPanel->QueueRefresh();
+			}
+
+			ImGui::Separator();
+
 			if (ImGui::MenuItem("Open Externally"))
 			{
 				Platform::OpenFileExternally(GetFilePath());
@@ -302,7 +338,11 @@ namespace Athena
 
 		if (m_State.IsSet(CBItemStateFlag_Active))
 		{
-			// On double click
+			if (GetAssetType() == AssetType::Material)
+			{
+				Ref<MaterialEditorPanel> panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+				panel->SetActiveMaterial(GetAssetHandle());
+			}
 		}
 	}
 
@@ -395,6 +435,12 @@ namespace Athena
 			}
 
 			ImGui::EndPopup();
+		}
+
+		if (m_QueueRefresh)
+		{
+			Refresh();
+			m_QueueRefresh = false;
 		}
 
 		ImGui::End();

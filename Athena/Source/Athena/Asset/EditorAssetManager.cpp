@@ -44,6 +44,30 @@ namespace Athena
 		return asset;
 	}
 
+	AssetHandle EditorAssetManager::AddMemoryOnlyAsset(const Ref<Asset>& asset)
+	{
+		if (!asset)
+			return AssetHandle(0);
+
+		AssetHandle handle = AssetHandle();
+		AssetMetadata metadata;
+		metadata.IsMemoryOnly = true;
+		metadata.Type = asset->GetAssetType();
+
+		m_AssetRegistry.AddAsset(handle, metadata);
+		m_LoadedAssets[handle] = asset;
+
+		return handle;
+	}
+
+	void EditorAssetManager::SaveAllAssets() const
+	{
+		for (const auto& [handle, asset]: m_LoadedAssets)
+		{
+			m_AssetImporter.SerializeAsset(asset, GetAssetMetadata(handle));
+		}
+	}
+
 	String EditorAssetManager::GetAssetExtensions(AssetType type) const
 	{
 		return m_AssetImporter.GetAssetExtensions(type);

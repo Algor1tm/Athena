@@ -105,6 +105,11 @@ namespace Athena
 			return m_Handle != other.m_Handle;
 		}
 
+		explicit operator bool() const
+		{
+			return m_Handle != 0;
+		}
+
 	private:
 		mutable WeakRef<T> m_Asset = nullptr;
 		AssetHandle m_Handle = 0;

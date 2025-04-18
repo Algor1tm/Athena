@@ -8,12 +8,12 @@ AssetRegistry:
   - Handle: 11195812249869705572
     Type: EnvironmentMap
     FilePath: EnvironmentMaps/pink_sunrise_4k.hdr
-  - Handle: 8806412949272032316
-    Type: StaticMesh
-    FilePath: Meshes/Cube.obj
   - Handle: 1832602411151050300
     Type: Font
     FilePath: Fonts/arial.ttf
+  - Handle: 8806412949272032316
+    Type: StaticMesh
+    FilePath: Meshes/Cube.obj
   - Handle: 16714268161155614434
     Type: Scene
     FilePath: Scenes/Physics2D.athscene
@@ -35,51 +35,30 @@ AssetRegistry:
   - Handle: 18287617142231172365
     Type: Scene
     FilePath: Scenes/Sponza.athscene
-  - Handle: 13694822270269225421
-    Type: Texture2D
-    FilePath: Materials/RustedIron/rustediron2_roughness.png
   - Handle: 13881825086358185248
     Type: Texture2D
     FilePath: Textures/KomodoHype.png
   - Handle: 10490699717208911407
     Type: Texture2D
     FilePath: Textures/SpriteSheet.png
-  - Handle: 1710951757236360464
-    Type: Texture2D
-    FilePath: Materials/RoughBrick/rough-brick1_albedo.png
-  - Handle: 8922762867151933539
-    Type: Texture2D
-    FilePath: Materials/RoughBrick/rough-brick1_ao.png
   - Handle: 3947822676258957667
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
-  - Handle: 1384635652266643005
-    Type: Texture2D
-    FilePath: Materials/RoughBrick/rough-brick1_normal-ogl.png
-  - Handle: 17251169728676628650
-    Type: Texture2D
-    FilePath: Materials/RustedIron/rustediron2_basecolor.png
-  - Handle: 2350003158057289542
-    Type: Texture2D
-    FilePath: Materials/RustedIron/rustediron2_metallic.png
-  - Handle: 9675975941201062241
-    Type: Texture2D
-    FilePath: Materials/RustedIron/rustediron2_normal.png
   - Handle: 8216695749484101594
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_BaseColor.png
   - Handle: 17634017155270222198
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Normal.png
+  - Handle: 14459016900599856038
+    Type: Material
+    FilePath: Materials/GreenEmission.athmat
   - Handle: 4555267381428395558
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Roughness.png
   - Handle: 8033078475187363714
     Type: Texture2D
     FilePath: Meshes/Spiderman/spiderman.png
-  - Handle: 13286898323625514244
-    Type: Texture2D
-    FilePath: Meshes/StormTrooper/Stormtrooper_D.png
   - Handle: 16650313947944675186
     Type: StaticMesh
     FilePath: Meshes/BlenderScene.fbx
@@ -92,9 +71,15 @@ AssetRegistry:
   - Handle: 12585831602288681047
     Type: StaticMesh
     FilePath: Meshes/Beretta Pistol/Beretta Pistol.fbx
-  - Handle: 17866121698637279183
-    Type: StaticMesh
-    FilePath: Meshes/Spiderman/Spiderman.fbx
   - Handle: 240638674687819727
     Type: StaticMesh
     FilePath: Meshes/StormTrooper/silly_dancing.fbx
+  - Handle: 17866121698637279183
+    Type: StaticMesh
+    FilePath: Meshes/Spiderman/Spiderman.fbx
+  - Handle: 14869525611425217875
+    Type: Texture2D
+    FilePath: Meshes/StormTrooper/Stormtrooper_D.png
+  - Handle: 17284130889024643077
+    Type: Material
+    FilePath: Materials/BlueMetal.athmat

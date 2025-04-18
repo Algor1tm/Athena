@@ -13777,7 +13777,8 @@ const ImGuiPayload* ImGui::AcceptDragDropPayload(const char* type, ImGuiDragDrop
     //IMGUI_DEBUG_LOG("AcceptDragDropPayload(): %08X: accept\n", g.DragDropTargetId);
     
     // NOTE: added by Athena
-    ImVec2 offset = { -0.5f, -0.5f };
+    //ImVec2 offset = { -0.5f, -0.5f };
+    ImVec2 offset = { 0.f, 0.f };
 
     // Render default drop visuals
     payload.Preview = was_accepted_previously;

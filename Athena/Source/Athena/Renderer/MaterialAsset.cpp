@@ -12,12 +12,12 @@ namespace Athena
 		result->m_Material = Material::CreatePBR();
 
 		result->m_TexturesMap[MaterialTextureType::Albedo] = AssetHandle(0);
-		result->m_TexturesMap[MaterialTextureType::Normal] = AssetHandle(0);
+		result->m_TexturesMap[MaterialTextureType::Normals] = AssetHandle(0);
 		result->m_TexturesMap[MaterialTextureType::Roughness] = AssetHandle(0);
 		result->m_TexturesMap[MaterialTextureType::Metalness] = AssetHandle(0);
 
 		result->m_TexturesFlags[MaterialTextureType::Albedo] = false;
-		result->m_TexturesFlags[MaterialTextureType::Normal] = false;
+		result->m_TexturesFlags[MaterialTextureType::Normals] = false;
 		result->m_TexturesFlags[MaterialTextureType::Roughness] = false;
 		result->m_TexturesFlags[MaterialTextureType::Metalness] = false;
 
@@ -110,10 +110,10 @@ namespace Athena
 
 		switch (type)
 		{
-		case MaterialTextureType::Albedo:    m_Material->Set("u_UseAlbedoMap", (uint32)flag); break;
-		case MaterialTextureType::Normal:    m_Material->Set("u_UseNormalMap", (uint32)flag); break;
-		case MaterialTextureType::Roughness: m_Material->Set("u_UseRoughnessMap", (uint32)flag); break;
-		case MaterialTextureType::Metalness: m_Material->Set("u_UseMetalnessMap", (uint32)flag); break;
+		case MaterialTextureType::Albedo:     m_Material->Set("u_UseAlbedoMap", (uint32)flag); break;
+		case MaterialTextureType::Normals:    m_Material->Set("u_UseNormalMap", (uint32)flag); break;
+		case MaterialTextureType::Roughness:  m_Material->Set("u_UseRoughnessMap", (uint32)flag); break;
+		case MaterialTextureType::Metalness:  m_Material->Set("u_UseMetalnessMap", (uint32)flag); break;
 		}
 	}
 
@@ -132,7 +132,7 @@ namespace Athena
 		Ref<Texture2D> texture = m_TexturesMap.at(MaterialTextureType::Albedo).Get();
 		m_Material->Set("u_AlbedoMap", texture ? texture : TextureGenerator::GetWhiteTexture());
 
-		texture = m_TexturesMap.at(MaterialTextureType::Normal).Get();
+		texture = m_TexturesMap.at(MaterialTextureType::Normals).Get();
 		m_Material->Set("u_NormalMap", texture ? texture : TextureGenerator::GetWhiteTexture());
 
 		texture = m_TexturesMap.at(MaterialTextureType::Roughness).Get();

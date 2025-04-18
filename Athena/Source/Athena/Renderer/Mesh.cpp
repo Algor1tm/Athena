@@ -1,7 +1,9 @@
 #include "Mesh.h"
 
-#include "Athena/Core/FileSystem.h"
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/TextureImporter.h"
+#include "Athena/Core/FileSystem.h"
+#include "Athena/Project/Project.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <assimp/cimport.h>
@@ -50,9 +52,9 @@ namespace Athena
 		return aiName.C_Str();
 	}
 
-	static Ref<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
+	static AssetHandleRef<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
 	{
-		Ref<Texture2D> result = nullptr;
+		AssetHandleRef<Texture2D> handle;
 
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
@@ -69,83 +71,82 @@ namespace Athena
 				uint32 height = embeddedTex->mHeight;
 
 				options.Name = String(texFilepath.C_Str(), texFilepath.length);
-				result = TextureImporter::Load(data, width, height, options);
+				Ref<Texture2D> texture = TextureImporter::Load(data, width, height, options);
+
+				handle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(texture);
 			}
 			else
 			{
 				FilePath path = path;
 				path.replace_filename(texFilepath.C_Str());
-				if (FileSystem::Exists(path))
-				{
-					result = TextureImporter::Load(path, options);
-				}
-				else
+
+				handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
+				if (!handle)
 				{
 					ATN_CORE_WARN_TAG("StaticMesh", "Invalid texture filepath '{}'", path);
 				}
 			}
 		}
 
-		return result;
+		return handle;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
+	static AssetHandleRef<MaterialAsset> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
 	{
-		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 
-		result = Material::CreatePBR();
+		Ref<MaterialAsset> material = MaterialAsset::Create();
+		AssetHandleRef<MaterialAsset> materialHandle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(material);
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
-			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
+			material->SetAlbedo(LinearColor(color.r, color.g, color.b, color.a));
 		else if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-			result->Set("u_Albedo", Vector4(color.r, color.g, color.b, color.a));
+			material->SetAlbedo(LinearColor(color.r, color.g, color.b, color.a));
 
 		float roughness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness))
-			result->Set("u_Roughness", roughness);
+			material->SetRoughness(roughness);
 
 		float metalness;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_METALLIC_FACTOR, metalness))
-			result->Set("u_Metalness", metalness);
+			material->SetMetalness(metalness);
 
 		float emission;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
-			result->Set("u_Emission", emission);
+			material->SetEmission(emission);
 		
-		result->Set("u_UseAlbedoMap", (uint32)true);
-		result->Set("u_UseNormalMap", (uint32)false);
-		result->Set("u_UseRoughnessMap", (uint32)false);
-		result->Set("u_UseMetalnessMap", (uint32)false);
+		AssetHandleRef<Texture2D> texture;
 
-		Ref<Texture2D> texture;
-
+		// Albedo 
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, true, path))
-			result->Set("u_AlbedoMap", texture);
+			material->SetTexture(MaterialTextureType::Albedo, texture);
 		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, true, path))
-			result->Set("u_AlbedoMap", texture);
+			material->SetTexture(MaterialTextureType::Albedo, texture);
 
-		result->Set("u_UseAlbedoMap", uint32(texture != nullptr));
+		material->EnableTexture(MaterialTextureType::Albedo, (texture != AssetHandle(0)));
 
+		// Normal
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, false, path))
-			result->Set("u_NormalMap", texture);
+			material->SetTexture(MaterialTextureType::Normals, texture);
 
-		result->Set("u_UseNormalMap", uint32(texture != nullptr));
+		material->EnableTexture(MaterialTextureType::Normals, (texture != AssetHandle(0)));
 
+		// Roughness
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, false, path))
-			result->Set("u_RoughnessMap", texture);
+			material->SetTexture(MaterialTextureType::Roughness, texture);
 		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, false, path))
-			result->Set("u_RoughnessMap", texture);
+			material->SetTexture(MaterialTextureType::Roughness, texture);
 
-		result->Set("u_UseRoughnessMap", uint32(texture != nullptr));
+		material->EnableTexture(MaterialTextureType::Roughness, (texture != AssetHandle(0)));
 
+		// Metalness
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, false, path))
-			result->Set("u_MetalnessMap", texture);
+			material->SetTexture(MaterialTextureType::Metalness, texture);
 
-		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
+		material->EnableTexture(MaterialTextureType::Metalness, (texture != AssetHandle(0)));
 
-		return result;
+		return materialHandle;
 	}
 
 	static Ref<VertexBuffer> LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& localTransform)
@@ -352,8 +353,7 @@ namespace Athena
 
 		if (!table.contains(materialName))
 		{
-			Ref<Material> material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path);
-			table[materialName] = material;
+			table[materialName] = LoadMaterial(aiscene, aimesh->mMaterialIndex, path);
 		}
 
 		return subMesh;
@@ -488,7 +488,6 @@ namespace Athena
 			aiProcess_OptimizeMeshes |
 
 			aiProcess_Triangulate |
-			aiProcess_EmbedTextures |
 			aiProcess_FlipUVs;
 
 		const aiScene* aiscene = aiImportFile(path.string().c_str(), flags);

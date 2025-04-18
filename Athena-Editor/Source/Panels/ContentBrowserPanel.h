@@ -107,7 +107,7 @@ namespace Athena
 		virtual void OnImGuiRender(ImVec2 itemSize) override;
 		virtual bool IsFolder() const override { return false; }
 
-		AssetHandle GetHandle() const { return m_Payload.AssetHandle; }
+		AssetHandle GetAssetHandle() const { return m_Payload.AssetHandle; }
 		AssetType GetAssetType() const { return m_Payload.AssetType; }
 
 	private:
@@ -123,6 +123,7 @@ namespace Athena
 		virtual void OnImGuiRender() override;
 		void DeselectItem();
 		void Refresh();
+		void QueueRefresh() { m_QueueRefresh = true; }
 
 	private:
 		void RenderHeadBar();
@@ -137,6 +138,7 @@ namespace Athena
 		Ref<CBItem> m_SelectedItem;
 
 		bool m_IsAnyItemHovered = false;
+		bool m_QueueRefresh = false;
 
 		String m_SearchString;
 		std::vector<Ref<CBItem>> m_SearchResult;

@@ -1,11 +1,11 @@
 #pragma once
 
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Core.h"
-
 #include "Athena/Renderer/AABB.h"
 #include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/MaterialAsset.h"
 #include "Athena/Renderer/Renderer.h"
 
 #include <vector>
@@ -66,7 +66,7 @@ namespace Athena
 		Ref<VertexBuffer> VertexBuffer;
 	};
 
-	using MaterialTable = std::unordered_map<String, Ref<Material>>;
+	using MaterialTable = std::unordered_map<String, AssetHandleRef<MaterialAsset>>;
 
 	class ATHENA_API StaticMesh
 	{
@@ -78,7 +78,7 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
-		const MaterialTable& GetMaterialTable() const { return m_MaterialTable; }
+		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
 		
 		const Ref<Animator>& GetAnimator() { return m_Animator; }
 

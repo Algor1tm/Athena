@@ -107,11 +107,13 @@ namespace Athena
 
 			for (const auto& [handle, metadata] : m_Registry)
 			{
+				if (metadata.IsMemoryOnly)
+					continue;
+
 				out << YAML::BeginMap;
 				out << YAML::Key << "Handle" << YAML::Value << handle;
 				out << YAML::Key << "Type" << YAML::Value << Utils::AssetTypeToString(metadata.Type);
 				out << YAML::Key << "FilePath" << YAML::Value << metadata.FilePath;
-				//out << YAML::Key << "IsMemoryOnly" << YAML::Value << metadata.IsMemoryOnly;
 				out << YAML::EndMap;
 			}
 			out << YAML::EndSeq;
@@ -152,7 +154,7 @@ namespace Athena
 			auto& metadata = m_Registry[handle];
 			metadata.Type = Utils::AssetTypeFromString(node["Type"].as<String>());
 			metadata.FilePath = node["FilePath"].as<String>();
-			metadata.IsMemoryOnly = false;//node["IsMemoryOnly"].as<bool>();
+			metadata.IsMemoryOnly = false;
 		}
 
 		return true;

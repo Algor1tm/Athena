@@ -18,7 +18,7 @@ namespace Athena
 	{
 		ImGui::Begin("AssetManager");
 
-		const std::unordered_map<AssetHandle, AssetMetadata>& registry = Project::GetEditorAssetManager()->GetAssetRegistry().GetRegistry();
+		std::unordered_map<AssetHandle, AssetMetadata> registry = Project::GetEditorAssetManager()->GetAssetRegistry().GetRegistryCopy();
 
 		if (UI::TreeNode("AssetRegistry", true))
 		{

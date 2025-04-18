@@ -17,6 +17,8 @@ namespace Athena
 		void Initialize(AssetRegistry* registry);
 
 		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata);
+		void SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const;
+
 		String GetAssetExtensions(AssetType type) const;
 
 	private:

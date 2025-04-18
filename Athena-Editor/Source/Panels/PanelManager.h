@@ -8,7 +8,7 @@
 
 #include <unordered_map>
 
-
+#define MATERIAL_EDITOR_PANEL_ID  "MaterialEditor"
 #define ASSET_MANAGER_PANEL_ID    "AssetManager"
 #define SCENE_HIERARCHY_PANEL_ID  "SceneHierarchy"
 #define CONTENT_BROWSER_PANEL_ID  "ContentBrowser"

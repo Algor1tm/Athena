@@ -1029,12 +1029,14 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = materialTable.at(subMeshes[i].MaterialName);
+			AssetHandleRef<MaterialAsset> materialHandle = materialTable.at(subMeshes[i].MaterialName);
+			Ref<MaterialAsset> materialAsset = materialHandle ? materialHandle.Get() : MaterialAsset::GetDefault();
+			materialAsset->UpdateTextureAssets();
 
 			StaticDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
 			drawCall.Transform = transform;
-			drawCall.Material = material;
+			drawCall.Material = materialAsset->GetMaterial();
 
 			list.Push(drawCall);
 		}
@@ -1047,12 +1049,14 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = materialTable.at(subMeshes[i].MaterialName);
+			AssetHandleRef<MaterialAsset> materialHandle = materialTable.at(subMeshes[i].MaterialName);
+			Ref<MaterialAsset> materialAsset = materialHandle ? materialHandle.Get() : MaterialAsset::GetDefault();
+			materialAsset->UpdateTextureAssets();
 
 			AnimDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
 			drawCall.Transform = transform;
-			drawCall.Material = material;
+			drawCall.Material = materialAsset->GetMaterial();
 			drawCall.BonesOffset = m_BonesDataOffset;
 
 			const auto& bones = animator->GetBoneTransforms();

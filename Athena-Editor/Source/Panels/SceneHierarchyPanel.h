@@ -31,9 +31,6 @@ namespace Athena
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
 
-		void DrawMaterialsEditor();
-		void DrawMaterialProperty(Ref<Material> mat, const String& texName, const String& useTexName, const String& uniformName);
-
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
 
@@ -41,7 +38,6 @@ namespace Athena
 		void DrawAddComponentEntry(Entity entity, std::string_view name);
 
 	private:
-		String m_ActiveMaterial;
 		bool m_EditTagComponent = false;
 	};
 

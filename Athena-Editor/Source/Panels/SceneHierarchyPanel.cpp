@@ -13,8 +13,11 @@
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
+
+
 #include "Panels/PanelManager.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "Panels/MaterialEditorPanel.h"
 #include "EditorResources.h"
 
 #include <ImGui/imgui.h>
@@ -128,15 +131,6 @@ namespace Athena
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
-		ImGui::Begin("Materials Editor");
-		if (m_EditorCtx.SelectedEntity)
-		{
-			DrawMaterialsEditor();
-		}
-		ImGui::PopStyleVar();
-		ImGui::End();
-
 		DrawEntitiesHierarchy();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.f, 5.f });
@@ -315,114 +309,6 @@ namespace Athena
 			if (selectedEntity == entity)
 				m_EditorCtx.SelectedEntity = {};
 		}
-	}
-
-	void SceneHierarchyPanel::DrawMaterialsEditor()
-	{
-		Entity selectedEntity = m_EditorCtx.SelectedEntity;
-		std::vector<String> materials;
-		if(selectedEntity.HasComponent<StaticMeshComponent>())
-		{
-			Ref<StaticMesh> mesh = selectedEntity.GetComponent<StaticMeshComponent>().Mesh;
-			const auto& subMeshes = mesh->GetAllSubMeshes();
-			materials.reserve(subMeshes.size());
-			for (uint32 i = 0; i < subMeshes.size(); ++i)
-			{
-				const String& material = subMeshes[i].MaterialName;
-				if (std::find(materials.begin(), materials.end(), material) == materials.end())
-				{
-					materials.push_back(material);
-				}
-			}
-
-			if (!materials.empty() && std::find(materials.begin(), materials.end(), m_ActiveMaterial) == materials.end())
-				m_ActiveMaterial = materials[0];
-		}
-
-		if (!materials.empty())
-		{
-			if (m_ActiveMaterial.empty())
-				m_ActiveMaterial = materials[0];
-
-			if (UI::BeginPropertyTable())
-			{
-				UI::PropertyCombo("Material List", materials.data(), materials.size(), &m_ActiveMaterial);
-
-				UI::EndPropertyTable();
-			}
-			
-			const MaterialTable& materialTable = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetMaterialTable();
-			Ref<Material> material = materialTable.at(m_ActiveMaterial);
-
-			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
-			{
-				DrawMaterialProperty(material, "u_AlbedoMap", "u_UseAlbedoMap", "u_Albedo");
-				DrawMaterialProperty(material, "u_NormalMap", "u_UseNormalMap", "");
-				DrawMaterialProperty(material, "u_RoughnessMap", "u_UseRoughnessMap", "u_Roughness");
-				DrawMaterialProperty(material, "u_MetalnessMap", "u_UseMetalnessMap", "u_Metalness");
-
-				bool castShadows = material->IsFlagSet(MaterialFlag::CastShadows);
-				if(UI::PropertyCheckbox("Cast Shadows", &castShadows))
-					material->SetFlag(MaterialFlag::CastShadows, castShadows);
-
-				UI::EndPropertyTable();
-				UI::TreePop();
-				ImGui::Spacing();
-			}
-		}
-	}
-
-	void SceneHierarchyPanel::DrawMaterialProperty(Ref<Material> mat, const String& texName, const String& useTexName, const String& uniformName)
-	{
-		ImGui::PushID(texName.data());
-		{
-			float imageSize = 45.f;
-			Ref<Texture2D> texture = mat->Get<Ref<Texture2D>>(texName);
-			Ref<Texture2D> displayTexture = texture;
-
-			if (!texture || texture == TextureGenerator::GetWhiteTexture())
-				displayTexture = EditorResources::GetIcon("Empty Texture");
-
-			if (UI::PropertyImage(texName.data(), displayTexture, { imageSize, imageSize, }))
-			{
-				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
-				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
-				if (!path.empty())
-				{
-					texture = TextureImporter::Load(path, texName == "u_Albedo" ? true : false);
-					mat->Set(texName, texture);
-					mat->Set(useTexName, (uint32)true);
-				}
-			}
-			ImGui::SameLine();
-			                                                                          
-			bool useTexture = mat->Get<uint32>(useTexName);
-			if(ImGui::Checkbox("Use", &useTexture))
-				mat->Set(useTexName, (uint32)useTexture);
-			
-			if (!uniformName.empty())
-			{
-				ImGui::SameLine();
-				if (uniformName == "u_Albedo")
-				{
-					Vector4 albedo = mat->Get<Vector4>(uniformName);
-					if(ImGui::ColorEdit4(uniformName.data(), albedo.Data(), ImGuiColorEditFlags_NoInputs))
-						mat->Set(uniformName, albedo);
-
-					float emission = mat->Get<float>("u_Emission");
-					if(ImGui::DragFloat("u_Emission", &emission, 1.f, 0.f, 500.f))
-						mat->Set("u_Emission", emission);
-				}
-				else
-				{
-					float uniform = mat->Get<float>(uniformName);
-					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-					if(ImGui::SliderFloat(uniformName.data(), &uniform, 0.f, 1.f))
-						mat->Set(uniformName, uniform);
-				}
-			}
-		}
-		ImGui::PopID();
 	}
 
 	void SceneHierarchyPanel::DrawAllComponents(Entity entity)
@@ -854,8 +740,6 @@ namespace Athena
 
 		DrawComponent<StaticMeshComponent>(entity, "StaticMesh", [this, entity](StaticMeshComponent& meshComponent)
 		{
-			String meshFilename = meshComponent.Mesh->GetFilePath().filename().string();
-
 			String name = meshComponent.Mesh->GetFilePath().filename().string();
 
 			UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
@@ -885,6 +769,50 @@ namespace Athena
 
 			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 			UI::EndPropertyTable();
+
+			if (UI::TreeNode("Materials", true, true) && UI::BeginPropertyTable())
+			{
+				MaterialTable& table = meshComponent.Mesh->GetMaterialTable();
+
+				for (auto& [name, materialHandle] : table)
+				{
+					UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
+
+					Ref<MaterialAsset> material = materialHandle.Get();
+					bool isInvalid = material == nullptr;
+					const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
+
+					if (isInvalid)
+						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+					if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
+					{
+						auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+						panel->SetActiveMaterial(materialHandle);
+					}
+
+					if (isInvalid)
+						ImGui::PopStyleColor();
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+						{
+							CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+							if (cbPayload->AssetType == AssetType::Material)
+							{
+								table.at(name) = cbPayload->AssetHandle;
+							}
+						}
+
+						ImGui::EndDragDropTarget();
+					}
+				}
+
+				UI::EndPropertyTable();
+				UI::TreePop();
+			}
 
 			Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 			if (animator)
@@ -931,7 +859,6 @@ namespace Athena
 					}
 
 					UI::EndPropertyTable();
-
 					UI::TreePop();
 					ImGui::Spacing();
 				}

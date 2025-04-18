@@ -22,14 +22,16 @@ namespace Athena
 		out << YAML::Key << "Metalness" << YAML::Value << material->GetMetalness();
 
 		out << YAML::Key << "AlbedoMap" << YAML::Value << material->GetTexture(MaterialTextureType::Albedo);
-		out << YAML::Key << "NormalMap" << YAML::Value << material->GetTexture(MaterialTextureType::Normal);
+		out << YAML::Key << "NormalMap" << YAML::Value << material->GetTexture(MaterialTextureType::Normals);
 		out << YAML::Key << "RoughnessMap" << YAML::Value << material->GetTexture(MaterialTextureType::Roughness);
 		out << YAML::Key << "MetalnessMap" << YAML::Value << material->GetTexture(MaterialTextureType::Metalness);
 
 		out << YAML::Key << "UseAlbedoMap" << YAML::Value << material->IsEnabledTexture(MaterialTextureType::Albedo);
-		out << YAML::Key << "UseNormalMap" << YAML::Value << material->IsEnabledTexture(MaterialTextureType::Normal);
+		out << YAML::Key << "UseNormalMap" << YAML::Value << material->IsEnabledTexture(MaterialTextureType::Normals);
 		out << YAML::Key << "UseRoughnessMap" << YAML::Value << material->IsEnabledTexture(MaterialTextureType::Roughness);
 		out << YAML::Key << "UseMetalnessMap" << YAML::Value << material->IsEnabledTexture(MaterialTextureType::Metalness);
+
+		out << YAML::Key << "CastShadows" << YAML::Value << material->IsFlagSet(MaterialFlag::CastShadows);
 
 		out << YAML::EndMap;
 		out << YAML::EndMap;
@@ -69,18 +71,19 @@ namespace Athena
 		material->SetMetalness(materialNode["Metalness"].as<float>());
 
 		material->SetTexture(MaterialTextureType::Albedo, materialNode["AlbedoMap"].as<AssetHandle>());
-		material->SetTexture(MaterialTextureType::Normal, materialNode["NormalMap"].as<AssetHandle>());
+		material->SetTexture(MaterialTextureType::Normals, materialNode["NormalMap"].as<AssetHandle>());
 		material->SetTexture(MaterialTextureType::Roughness, materialNode["RoughnessMap"].as<AssetHandle>());
 		material->SetTexture(MaterialTextureType::Metalness, materialNode["MetalnessMap"].as<AssetHandle>());
 
 		material->EnableTexture(MaterialTextureType::Albedo, materialNode["UseAlbedoMap"].as<bool>());
-		material->EnableTexture(MaterialTextureType::Normal, materialNode["UseNormalMap"].as<bool>());
+		material->EnableTexture(MaterialTextureType::Normals, materialNode["UseNormalMap"].as<bool>());
 		material->EnableTexture(MaterialTextureType::Roughness, materialNode["UseRoughnessMap"].as<bool>());
 		material->EnableTexture(MaterialTextureType::Metalness, materialNode["UseMetalnessMap"].as<bool>());
 
+		material->SetFlag(MaterialFlag::CastShadows, materialNode["CastShadows"].as<bool>());
+
 		return true;
 	}
-
 
 	void SceneAssetSerializer::Serialize(const Ref<Asset>& asset, const AssetMetadata& metadata)
 	{

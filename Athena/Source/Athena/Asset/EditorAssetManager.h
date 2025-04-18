@@ -30,11 +30,13 @@ namespace Athena
 		virtual const FilePath& GetAssetFilePath(AssetHandle handle) const override;
 		virtual AssetType GetAssetType(AssetHandle handle) const override;
 
+		AssetHandle AddMemoryOnlyAsset(const Ref<Asset>& asset);
+		void SaveAllAssets() const;
+
 	private:
 		AssetRegistry m_AssetRegistry;
 		AssetImporter m_AssetImporter;
 
 		std::unordered_map<AssetHandle, Ref<Asset>> m_LoadedAssets;
-		std::unordered_map<AssetHandle, Ref<Asset>> m_MemoryOnlyAssets;
 	};
 }

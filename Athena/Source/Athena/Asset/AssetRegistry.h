@@ -26,9 +26,7 @@ namespace Athena
 		void Serialize();
 		bool Deserialize();
 
-		const std::unordered_map<AssetHandle, AssetMetadata>& GetRegistry() const { return m_Registry; }
 		std::unordered_map<AssetHandle, AssetMetadata> GetRegistryCopy() const;
-
 
 	private:
 		std::unordered_map<AssetHandle, AssetMetadata> m_Registry;

@@ -213,11 +213,12 @@ namespace Athena
 	{
 		m_PreethamPass->Begin(commandBuffer);
 		{
+			m_PreethamPipeline->Bind(commandBuffer);
+
 			m_PreethamMaterial->Set("u_Turbidity", m_Turbidity);
 			m_PreethamMaterial->Set("u_Azimuth", m_Azimuth);
 			m_PreethamMaterial->Set("u_Inclination", m_Inclination);
 			m_PreethamMaterial->Bind(commandBuffer);
-			m_PreethamPipeline->Bind(commandBuffer);
 
 			Renderer::Dispatch(commandBuffer, m_PreethamPipeline, { m_Resolution, m_Resolution, 6 }, m_PreethamMaterial);
 		}

@@ -89,19 +89,12 @@ namespace Athena
 		return result;
 	}
 
-	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path, Ref<MaterialTable> table, bool animated)
+	static Ref<Material> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
 	{
 		Ref<Material> result;
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
-		String materialName = aimaterial->GetName().C_Str();
 
-		if (table->Exists(materialName))
-			return table->Get(materialName);
-
-		if (animated)
-			result = Material::CreatePBRAnim(materialName);
-		else
-			result = Material::CreatePBRStatic(materialName);
+		result = Material::CreatePBR();
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
@@ -151,8 +144,7 @@ namespace Athena
 			result->Set("u_MetalnessMap", texture);
 
 		result->Set("u_UseMetalnessMap", uint32(texture != nullptr));
-		
-		table->Add(result);
+
 		return result;
 	}
 
@@ -340,7 +332,7 @@ namespace Athena
 		return VertexBuffer::Create(vertexBufferInfo);
 	}
 
-	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, Ref<MaterialTable> table, Ref<Skeleton> skeleton, AABB& aabb)
+	static SubMesh LoadSubMesh(const aiScene* aiscene, uint32 aiMeshIndex, const FilePath& path, const Matrix4& localTransform, MaterialTable& table, Ref<Skeleton> skeleton, AABB& aabb)
 	{
 		aiMesh* aimesh = aiscene->mMeshes[aiMeshIndex];
 		SubMesh subMesh;
@@ -356,7 +348,13 @@ namespace Athena
 		const aiMaterial* aimaterial = aiscene->mMaterials[aimesh->mMaterialIndex];
 		String materialName = aimaterial->GetName().C_Str();
 
-		subMesh.MaterialName = LoadMaterial(aiscene, aimesh->mMaterialIndex, path, table, skeleton != nullptr)->GetName();
+		subMesh.MaterialName = materialName;
+
+		if (!table.contains(materialName))
+		{
+			Ref<Material> material = LoadMaterial(aiscene, aimesh->mMaterialIndex, path);
+			table[materialName] = material;
+		}
 
 		return subMesh;
 	}
@@ -452,7 +450,7 @@ namespace Athena
 		return Animation::Create(info);
 	}
 
-	void StaticMesh::ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform)
+	void StaticMesh::TraverseNodes(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform)
 	{
 		Matrix4 localTransform = parentTransform * ConvertaiMatrix4x4(ainode->mTransformation);
 
@@ -465,7 +463,7 @@ namespace Athena
 
 		for (uint32 i = 0; i < ainode->mNumChildren; ++i)
 		{
-			ProcessNode(aiscene, ainode->mChildren[i], localTransform);
+			TraverseNodes(aiscene, ainode->mChildren[i], localTransform);
 		}
 	}
 
@@ -506,12 +504,11 @@ namespace Athena
 		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
 		result->m_FilePath = path;
 		result->m_Name = path.stem().string();
-		result->m_MaterialTable = Ref<MaterialTable>::Create();
 
 		//ATN_CORE_TRACE_TAG("StaticMesh", "Create static mesh from '{}'", path);
 
 		result->m_Skeleton = LoadSkeleton(aiscene);
-		result->ProcessNode(aiscene, aiscene->mRootNode, Matrix4::Identity());
+		result->TraverseNodes(aiscene, aiscene->mRootNode, Matrix4::Identity());
 
 		if (result->m_Skeleton)
 		{

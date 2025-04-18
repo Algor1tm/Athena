@@ -351,8 +351,8 @@ namespace Athena
 				UI::EndPropertyTable();
 			}
 			
-			Ref<MaterialTable> materialTable = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetMaterialTable();
-			Ref<Material> material = materialTable->Get(m_ActiveMaterial);
+			const MaterialTable& materialTable = selectedEntity.GetComponent<StaticMeshComponent>().Mesh->GetMaterialTable();
+			Ref<Material> material = materialTable.at(m_ActiveMaterial);
 
 			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
 			{
@@ -361,9 +361,9 @@ namespace Athena
 				DrawMaterialProperty(material, "u_RoughnessMap", "u_UseRoughnessMap", "u_Roughness");
 				DrawMaterialProperty(material, "u_MetalnessMap", "u_UseMetalnessMap", "u_Metalness");
 
-				bool castShadows = material->GetFlag(MaterialFlag::CAST_SHADOWS);
+				bool castShadows = material->IsFlagSet(MaterialFlag::CastShadows);
 				if(UI::PropertyCheckbox("Cast Shadows", &castShadows))
-					material->SetFlag(MaterialFlag::CAST_SHADOWS, castShadows);
+					material->SetFlag(MaterialFlag::CastShadows, castShadows);
 
 				UI::EndPropertyTable();
 				UI::TreePop();

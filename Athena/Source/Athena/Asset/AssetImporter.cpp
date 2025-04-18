@@ -1,9 +1,10 @@
 #include "AssetImporter.h"
 #include "Athena/Asset/AssetManager.h"
-#include "Athena/Core/FileSystem.h"
 #include "Athena/Asset/TextureImporter.h"
-#include "Athena/Scene/SceneSerializer.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Font.h"
+#include "Athena/Renderer/MaterialAsset.h"
+#include "Athena/Scene/SceneSerializer.h"
 
 #include <queue>
 
@@ -37,9 +38,10 @@ namespace Athena
 	};
 
 	AssetImporter::AssetImporter()
-		: m_AssetThread("AssetThread", [this]() { MonitorAssetsWrapper(); })
+		: m_AssetThread("AssetThread", [this]() { AssetThreadFunction(); })
 	{
-
+		m_Serializers[AssetType::Material] = Scope<MaterialSerializer>::Create();
+		m_Serializers[AssetType::Scene] = Scope<SceneAssetSerializer>::Create();
 	}
 
 	AssetImporter::~AssetImporter()
@@ -93,13 +95,25 @@ namespace Athena
 			result = TextureImporter::Load(absolutePath, true);
 		}
 
+		if (assetType == AssetType::Material)
+		{
+			//result = MaterialAsset::Create(Material::CreatePBR());
+		}
+
 		if (result)
+		{
 			result->Handle = handle;
+
+			// Deserialize from file 
+			if (m_Serializers.contains(assetType))
+				m_Serializers.at(assetType)->TryLoadData(result, metadata);
+		}
+
 
 		return result;
 	}
 
-	void AssetImporter::MonitorAssetsWrapper()
+	void AssetImporter::AssetThreadFunction()
 	{
 		while (!m_JoinAssetThread)
 		{
@@ -108,7 +122,7 @@ namespace Athena
 		}
 	}
 
-	// TODO: Check file timestamps to know if file is updated
+	// TODO: Check file timestamps for asset hot reloading
 	void AssetImporter::MonitorAssets()
 	{
 		ATN_PROFILE_FUNC();

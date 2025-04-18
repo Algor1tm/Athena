@@ -36,6 +36,7 @@ namespace Athena
 		Ref<VulkanDevice> Device;
 		std::vector<FrameSyncData> FrameSyncData;
 		VkCommandPool CommandPool;
+		VkPipelineLayout BindedPipelineLayout;
 	};
 
 
@@ -55,6 +56,9 @@ namespace Athena
 		static VkPhysicalDevice GetPhysicalDevice() { return s_Data.Device->GetPhysicalDevice(); }
 
 		static const FrameSyncData& GetFrameSyncData(uint32 frameIndex) { return s_Data.FrameSyncData[frameIndex]; }
+
+		static void BindPipelineLayout(VkPipelineLayout layout) { s_Data.BindedPipelineLayout = layout; }
+		static VkPipelineLayout GetBindedPipelineLayout() { return s_Data.BindedPipelineLayout; }
 
 	private:
 		static VulkanContextData s_Data;

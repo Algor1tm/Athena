@@ -444,7 +444,7 @@ namespace Athena
 			vkCmdBindDescriptorSets(
 				vkcommandBuffer,
 				bindPoint,
-				m_Info.Shader.As<VulkanShader>()->GetPipelineLayout(),
+				VulkanContext::GetBindedPipelineLayout(),
 				m_Info.FirstSet, descriptorSets.size(),
 				&descriptorSets[0],
 				0, 0);

@@ -66,6 +66,8 @@ namespace Athena
 		Ref<VertexBuffer> VertexBuffer;
 	};
 
+	using MaterialTable = std::unordered_map<String, Ref<Material>>;
+
 	class ATHENA_API StaticMesh
 	{
 	public:
@@ -76,21 +78,21 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 		const FilePath& GetFilePath() const { return m_FilePath; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
-		const Ref<MaterialTable>& GetMaterialTable() const { return m_MaterialTable; }
+		const MaterialTable& GetMaterialTable() const { return m_MaterialTable; }
 		
 		const Ref<Animator>& GetAnimator() { return m_Animator; }
 
 		bool HasAnimations() const { return m_Animator != nullptr; }
 
 	private:
-		void ProcessNode(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform);
+		void TraverseNodes(const aiScene* aiscene, const aiNode* ainode, const Matrix4& parentTransform);
 
 	private:
 		FilePath m_FilePath;
 		String m_Name;
 		AABB m_AABB;
 		std::vector<SubMesh> m_SubMeshes;
-		Ref<MaterialTable> m_MaterialTable;
+		MaterialTable m_MaterialTable;
 
 		Ref<Skeleton> m_Skeleton;
 		Ref<Animator> m_Animator;

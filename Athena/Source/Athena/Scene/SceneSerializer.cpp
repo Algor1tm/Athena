@@ -69,14 +69,10 @@ namespace Athena
 			return false;
 		}
 
-		std::ifstream stream(path);
-		std::stringstream strStream;
-		strStream << stream.rdbuf();
-
 		YAML::Node data;
 		try
 		{
-			data = YAML::Load(strStream.str());
+			data = YAML::LoadFile(path.string());
 
 			if (!data["Scene"])
 			{

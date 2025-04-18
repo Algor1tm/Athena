@@ -64,14 +64,17 @@ layout(location = 2) out vec2 o_RoughnessMetalness;
 
 layout(push_constant) uniform u_MaterialData
 {
+    uint u_BonesOffset;
+
+    uint u_UseAlbedoMap;
+    uint u_UseNormalMap;
+    uint u_UseRoughnessMap;
+
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;
     float u_Emission;
 
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
     uint u_UseMetalnessMap;
 };
 

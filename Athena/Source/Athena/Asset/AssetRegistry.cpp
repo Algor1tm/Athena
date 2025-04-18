@@ -144,6 +144,8 @@ namespace Athena
 		if (!rootNode)
 			return false;
 
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
 		for (const auto& node : rootNode)
 		{
 			AssetHandle handle = node["Handle"].as<UUID>();

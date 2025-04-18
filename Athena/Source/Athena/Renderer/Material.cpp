@@ -20,13 +20,18 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<Material> Material::CreatePBRStatic(const String& name)
+	Ref<Material> Material::CreatePBR(const String& name)
 	{
-		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Static"), name);
+		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Anim"), name);
 	}
 
-	Ref<Material> Material::CreatePBRAnim(const String& name)
+	Ref<Material> Material::CreatePBR()
 	{
+		static uint32 counter = 0;
+
+		String name = fmt::format("MaterialPBR.{:03}", counter++);
+
+		// Shader for animated and static meshes has same layout, so we can use same shader for both
 		return Material::Create(Renderer::GetShaderPack()->Get("GBuffer_Anim"), name);
 	}
 
@@ -34,8 +39,7 @@ namespace Athena
 		: m_Shader(shader), m_Name(name), m_BufferMembers(&shader->GetMetaData().PushConstant.Members)
 	{
 		memset(m_Buffer, 0, sizeof(m_Buffer));
-
-		m_Flags[MaterialFlag::CAST_SHADOWS] = true;
+		SetFlag(MaterialFlag::CastShadows);
 	}
 
 	Material::~Material()
@@ -129,23 +133,16 @@ namespace Athena
 		return false;
 	}
 
-	Ref<Material> MaterialTable::Get(const String& name) const
+	bool Material::IsFlagSet(MaterialFlag flag) const
 	{
-		return m_Materials.at(name);
+		return m_BitField & uint32(flag);
 	}
 
-	void MaterialTable::Add(const Ref<Material>& material)
+	void Material::SetFlag(MaterialFlag flag, bool value)
 	{
-		m_Materials[material->GetName()] = material;
-	}
-
-	void MaterialTable::Remove(const Ref<Material>& material)
-	{
-		m_Materials.erase(material->GetName());
-	}
-
-	bool MaterialTable::Exists(const String& name) const
-	{
-		return m_Materials.contains(name);
+		if (value)
+			m_BitField = m_BitField | uint32(flag);
+		else
+			m_BitField = m_BitField & ~(uint32(flag));
 	}
 }

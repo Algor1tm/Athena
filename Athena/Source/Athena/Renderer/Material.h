@@ -13,15 +13,16 @@ namespace Athena
 {
 	enum class MaterialFlag
 	{
-		CAST_SHADOWS = 1
+		None = 0,
+		CastShadows = BIT(1)
 	};
 
 	class ATHENA_API Material
 	{
 	public:
 		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);
-		static Ref<Material> CreatePBRStatic(const String& name);
-		static Ref<Material> CreatePBRAnim(const String& name);
+		static Ref<Material> CreatePBR(const String& name);
+		static Ref<Material> CreatePBR();
 		virtual ~Material();
 
 		void Set(const String& name, const Matrix4& value);
@@ -36,8 +37,8 @@ namespace Athena
 		template <typename T>
 		T Get(const String& name);
 
-		bool GetFlag(MaterialFlag flag) const { return m_Flags.at(flag); }
-		void SetFlag(MaterialFlag flag, bool value) { m_Flags.at(flag) = value; }
+		bool IsFlagSet(MaterialFlag flag) const;
+		void SetFlag(MaterialFlag flag, bool value = true);
 
 		virtual void Bind(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
 		const byte* GetPushConstantData() const { return m_Buffer; }
@@ -59,7 +60,7 @@ namespace Athena
 		String m_Name;
 		byte m_Buffer[128];
 		const std::unordered_map<String, StructMemberShaderMetaData>* m_BufferMembers;
-		std::unordered_map<MaterialFlag, bool> m_Flags;
+		uint32 m_BitField = 0;
 	};
 
 	template <>
@@ -107,18 +108,4 @@ namespace Athena
 	{
 		return GetResourceInternal(name);
 	}
-
-
-	class ATHENA_API MaterialTable
-	{
-	public:
-		Ref<Material> Get(const String& name) const;
-		void Add(const Ref<Material>& material);
-		void Remove(const Ref<Material>& material);
-
-		bool Exists(const String& name) const;
-
-	private:
-		std::unordered_map<String, Ref<Material>> m_Materials;
-	};
 }

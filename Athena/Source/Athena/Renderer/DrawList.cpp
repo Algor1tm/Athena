@@ -88,7 +88,7 @@ namespace Athena
 			if (instanceCount == 0)
 				instanceVertexBuffer = drawCall.VertexBuffer;
 
-			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+			if (shadowPass && !drawCall.Material->IsFlagSet(MaterialFlag::CastShadows))
 			{
 				if(instanceCount != 0)
 					Renderer::RenderGeometryInstanced(commandBuffer, pipeline, instanceVertexBuffer, nullptr, instanceCount, instanceOffset);
@@ -114,7 +114,7 @@ namespace Athena
 
 		if (!m_Array.empty())
 		{
-			if((*(m_Array.end() - 1)).Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+			if((*(m_Array.end() - 1)).Material->IsFlagSet(MaterialFlag::CastShadows))
 				Renderer::RenderGeometryInstanced(commandBuffer, pipeline, instanceVertexBuffer, nullptr, instanceCount, instanceOffset);
 		}
 	}
@@ -203,7 +203,7 @@ namespace Athena
 
 		for (const auto& drawCall : m_Array)
 		{
-			if (shadowPass && !drawCall.Material->GetFlag(MaterialFlag::CAST_SHADOWS))
+			if (shadowPass && !drawCall.Material->IsFlagSet(MaterialFlag::CastShadows))
 				continue;
 
 			drawCall.Material->Set("u_BonesOffset", drawCall.BonesOffset);

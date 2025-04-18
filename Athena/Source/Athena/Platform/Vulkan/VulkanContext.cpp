@@ -274,6 +274,8 @@ namespace Athena
 			commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 			VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, &s_Data.CommandPool));
 		}
+
+		s_Data.BindedPipelineLayout = VK_NULL_HANDLE;
 	}
 
 	void VulkanContext::Shutdown()

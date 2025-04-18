@@ -90,6 +90,8 @@ namespace Athena
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
 
+		VulkanContext::BindPipelineLayout(GetInfo().Shader.As<VulkanShader>()->GetPipelineLayout());
+
 		m_DescriptorSetManager.InvalidateAndUpdate();
 		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 	}
@@ -134,7 +136,7 @@ namespace Athena
 		m_DescriptorSetManager.Bake();
 	}
 
-	void VulkanPipeline::RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
+	void VulkanPipeline::SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
 	{
 		if (m_PushConstantStageFlags != 0)
 		{

@@ -1029,7 +1029,7 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
+			Ref<Material> material = materialTable.at(subMeshes[i].MaterialName);
 
 			StaticDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
@@ -1047,7 +1047,7 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
+			Ref<Material> material = materialTable.at(subMeshes[i].MaterialName);
 
 			AnimDrawCall drawCall;
 			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;

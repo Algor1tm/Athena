@@ -2,6 +2,7 @@
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
+#include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Texture.h"
 #include "Athena/Renderer/TextureGenerator.h"
@@ -27,6 +28,33 @@ namespace Athena
 		m_FilePath = path.string();
 		m_FileName = path.filename().string();
 		m_ContentBrowserPanel = panel;
+	}
+
+	void CBItem::OnRename()
+	{
+		ImGui::SetKeyboardFocusHere();
+		UI::TextInput("##ItemRename", m_RenameBuffer, ImGuiInputTextFlags_AutoSelectAll);
+
+		if (Input::IsKeyPressed(Keyboard::Enter))
+		{
+			m_State.Clear(CBItemStateFlag_Rename);
+
+			if (m_RenameBuffer.find('/') != std::string::npos || m_RenameBuffer.find('\\') != std::string::npos)
+				return;
+
+			FilePath newPath = m_FilePath;
+			if(IsFolder())
+				newPath = newPath.parent_path() / m_RenameBuffer;
+			else
+				newPath = newPath.parent_path() / (m_RenameBuffer + newPath.extension().string());
+
+			Move(newPath);
+		}
+
+		if (Input::IsKeyPressed(Keyboard::Escape))
+		{
+			m_State.Clear(CBItemStateFlag_Rename);
+		}
 	}
 
 	void CBItem::TrackMouseState(ImVec2 itemSize)
@@ -93,8 +121,7 @@ namespace Athena
 			}
 			else
 			{
-				FilePath relativePath = AssetManager::GetAssetRelativePath(dirPath);
-				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(relativePath);
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(dirPath);
 				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
 					item = Ref<CBAssetItem>::Create(panel, dirPath);
 			}
@@ -112,10 +139,29 @@ namespace Athena
 	void CBFolder::OnImGuiRender(ImVec2 itemSize)
 	{
 		const String& fileName = GetFileName();
+		bool renaming = m_State.IsSet(CBItemStateFlag_Rename);
 
-		TrackMouseState(itemSize);
+		if(!renaming)
+			TrackMouseState(itemSize);
+
+		if (!renaming && ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+			{
+				CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+				CBAssetItem* item = cbPayload->Item;
+
+				FilePath currentPath = GetFilePath();
+				FilePath newPath = currentPath / item->GetFileName();
+
+				item->Move(newPath);
+				m_ContentBrowserPanel->SetMoveItem(nullptr);
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
 		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 
 		// Borders
@@ -152,17 +198,25 @@ namespace Athena
 
 			UI::ShiftCursorX(framePadding.x);
 
-			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
+			if (renaming)
+			{
+				ImGui::SetNextItemWidth(itemSize.x - framePadding.x);
+				OnRename();
+			}
+			else
+			{
+				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
 
-			float actualSize = ImGui::CalcTextSize(fileName.data()).x + framePadding.x * 2.0f;
-			float avail = ImGui::GetContentRegionAvail().x;
+				float actualSize = ImGui::CalcTextSize(fileName.data()).x + framePadding.x * 2.0f;
+				float avail = ImGui::GetContentRegionAvail().x;
 
-			float off = (avail - actualSize) * 0.5f;
-			if (off > 0.0f)
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
+				float off = (avail - actualSize) * 0.5f;
+				if (off > 0.0f)
+					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
-			ImGui::TextWrapped(fileName.data());
-			ImGui::PopTextWrapPos();
+				ImGui::TextWrapped(fileName.data());
+				ImGui::PopTextWrapPos();
+			}
 		}
 
 		ImGui::SetCursorScreenPos(ImVec2(cursorPos.x, cursorPos.y + itemSize.y));
@@ -172,7 +226,19 @@ namespace Athena
 			if (ImGui::MenuItem("Open In Explorer"))
 			{
 				Platform::OpenInFileExplorer(GetFilePath());
-				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Rename"))
+			{
+				m_State.Set(CBItemStateFlag_Rename);
+				m_RenameBuffer = fileName;
+			}
+
+			if (ImGui::MenuItem("Move"))
+			{
+				m_ContentBrowserPanel->SetMoveItem(this);
 			}
 
 			if (ImGui::MenuItem("Delete"))
@@ -185,28 +251,47 @@ namespace Athena
 		}
 	}
 
+	void CBFolder::Move(const FilePath& path)
+	{
+		if (FileSystem::Exists(path))
+			return;
+
+		FileSystem::CreateDirectory(path);
+
+		for (const auto& item : GetChildren())
+		{
+			FilePath newPath = path / item->GetFileName();
+			item->Move(newPath);
+		}
+
+		FileSystem::Remove(GetFilePath());
+		m_ContentBrowserPanel->QueueRefresh();
+	}
 
 	CBAssetItem::CBAssetItem(ContentBrowserPanel* panel, const FilePath& path)
 		: CBItem(panel, path)
 	{
-		FilePath relativePath = AssetManager::GetAssetRelativePath(path);
-		AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(relativePath);
+		AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 		AssetType type = Project::GetEditorAssetManager()->GetAssetType(handle);
 
 		m_Payload.AssetHandle = handle;
 		m_Payload.AssetType = type;
 		m_Payload.FilePath = GetFilePath();
+		m_Payload.Item = this;
 	}
 
 	void CBAssetItem::OnImGuiRender(ImVec2 itemSize)
 	{
 		const String& fileName = GetFileName();
 		String stem = FilePath(fileName).stem().string();
+		bool renaming = m_State.IsSet(CBItemStateFlag_Rename);
 
-		TrackMouseState(itemSize);
+		if(!renaming)
+			TrackMouseState(itemSize);
+
 		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
-		if (ImGui::BeginDragDropSource())
+		if (!renaming && ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", &m_Payload, sizeof(m_Payload), ImGuiCond_Once);
 			ImGui::Text(stem.c_str());
@@ -277,9 +362,17 @@ namespace Athena
 
 			UI::ShiftCursorX(framePadding.x);
 
-			ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
-			ImGui::TextWrapped(stem.c_str());
-			ImGui::PopTextWrapPos();
+			if (renaming)
+			{
+				ImGui::SetNextItemWidth(itemSize.x - framePadding.x);
+				OnRename();
+			}
+			else
+			{
+				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
+				ImGui::TextWrapped(stem.c_str());
+				ImGui::PopTextWrapPos();
+			}
 
 			String assetType = Utils::ToUpper((String)Utils::AssetTypeToString(m_Payload.AssetType));
 			if (m_Payload.AssetType == AssetType::EnvironmentMap)
@@ -312,25 +405,28 @@ namespace Athena
 				// TODO
 			}
 
+			if (ImGui::MenuItem("Open Externally"))
+			{
+				Platform::OpenFileExternally(GetFilePath());
+			}
+
 			ImGui::Separator();
 
 			if (ImGui::MenuItem("Rename"))
 			{
-				// TODO
+				m_State.Set(CBItemStateFlag_Rename);
+				m_RenameBuffer = stem;
+			}
+
+			if (ImGui::MenuItem("Move"))
+			{
+				m_ContentBrowserPanel->SetMoveItem(this);
 			}
 
 			if (ImGui::MenuItem("Delete"))
 			{
 				FileSystem::Remove(GetFilePath());
 				m_ContentBrowserPanel->QueueRefresh();
-			}
-
-			ImGui::Separator();
-
-			if (ImGui::MenuItem("Open Externally"))
-			{
-				Platform::OpenFileExternally(GetFilePath());
-				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
@@ -346,10 +442,26 @@ namespace Athena
 		}
 	}
 
+	void CBAssetItem::Move(const FilePath& path)
+	{
+		if (FileSystem::Exists(path))
+			return;
+
+		Project::GetEditorAssetManager()->GetAssetRegistry().MoveAsset(GetAssetHandle(), path);
+		m_ContentBrowserPanel->QueueRefresh();
+	}
 
 	ContentBrowserPanel::ContentBrowserPanel(const Ref<EditorContext>& context)
 		: Panel(CONTENT_BROWSER_PANEL_ID, context)
 	{
+		float scale = ImGui::GetIO().FontGlobalScale;
+		m_ItemSize.x = m_ItemSize.x * scale;
+		m_ItemSize.y = m_ItemSize.y * scale;
+
+		m_ButtonSize.x = m_ButtonSize.x * scale;
+		m_ButtonSize.y = m_ButtonSize.y * scale;
+		m_Padding = m_Padding * scale;
+
 		Refresh();
 	}
 
@@ -399,6 +511,7 @@ namespace Athena
 					m_SearchResult.clear();
 					m_SearchString.clear();
 					m_CurrentFolder = item.As<CBFolder>();
+					DeselectItem();
 					break;
 				}
 			}
@@ -409,17 +522,14 @@ namespace Athena
 
 		if (ImGui::IsWindowHovered() && !m_IsAnyItemHovered)
 		{
+			bool renaming = m_SelectedItem ? m_SelectedItem->GetState().IsSet(CBItemStateFlag_Rename) : false;
+
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 			{
 				DeselectItem();
-
-				for (const auto& item : itemList)
-				{
-					item->GetState().Clear(CBItemStateFlag_Selected);
-				}
 			}
 
-			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_SearchString.empty() && !renaming)
 			{
 				ImGui::SetNextWindowPos(ImGui::GetMousePos(), ImGuiCond_Always, ImVec2(0.f, 1.0f));
 				ImGui::OpenPopup("CBPopup");
@@ -428,10 +538,51 @@ namespace Athena
 
 		if (ImGui::BeginPopup("CBPopup"))
 		{
+			if (ImGui::BeginMenu("Create Asset"))
+			{
+				if (ImGui::MenuItem("Material"))
+				{
+					FilePath path = CreateUniqueFile("NewMaterial", ".athmat");
+
+					Ref<MaterialAsset> asset = MaterialAsset::Create();
+					Project::GetEditorAssetManager()->AddAsset(asset, path);
+					m_QueueRefresh = true;
+				}
+
+				if (ImGui::MenuItem("Scene"))
+				{
+					FilePath path = CreateUniqueFile("NewScene", ".athscene");
+
+					Ref<Scene> asset = Ref<Scene>::Create();
+					Project::GetEditorAssetManager()->AddAsset(asset, path);
+					m_QueueRefresh = true;
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::MenuItem("Create Folder"))
+			{
+				FilePath path = CreateUniqueFile("NewFolder", "");
+
+				FileSystem::CreateDirectory(path);
+				m_QueueRefresh = true;
+			}
+
+			ImGui::Separator();
+
+			if (m_MoveItem != nullptr && ImGui::MenuItem("Paste"))
+			{
+				FilePath currentPath = m_CurrentFolder->GetFilePath();
+				FilePath newPath = currentPath / m_MoveItem->GetFileName();
+
+				m_MoveItem->Move(newPath);
+				m_MoveItem = nullptr;
+			}
+
 			if (ImGui::MenuItem("Open In Explorer"))
 			{
 				Platform::OpenInFileExplorer(m_CurrentFolder->GetFilePath());
-				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
@@ -450,6 +601,7 @@ namespace Athena
 	{
 		if (m_SelectedItem)
 		{
+			m_SelectedItem->GetState().Clear(CBItemStateFlag_Rename);
 			m_SelectedItem->GetState().Clear(CBItemStateFlag_Selected);
 			m_SelectedItem = nullptr;
 		}
@@ -526,11 +678,28 @@ namespace Athena
 		ImGui::PopStyleColor();
 	}
 
+	FilePath ContentBrowserPanel::CreateUniqueFile(const String& name, const String& ext)
+	{
+		FilePath currentPath = m_CurrentFolder->GetFilePath();
+		FilePath result = currentPath / (name + ext);
+		uint32 counter = 1;
+
+		while (FileSystem::Exists(result))
+		{
+			result.replace_filename(name + std::to_string(counter++) + ext);
+		}
+
+		return result;
+	}
 
 	void ContentBrowserPanel::Refresh()
 	{
 		FilePath assetDir = Project::GetAssetDirectory();
 		String currentFilePath = m_CurrentFolder != nullptr ? m_CurrentFolder->GetFilePath() : String();
+
+		DeselectItem();
+		m_MoveItem = nullptr;
+		m_SearchResult.clear();
 
 		m_RootFolder = Ref<CBFolder>::Create(this, assetDir);
 

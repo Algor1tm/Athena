@@ -672,4 +672,9 @@ namespace Athena::UI
 		window->DC.NavLayerCurrent = ImGuiNavLayer_Main;
 		window->DC.MenuBarAppending = false;
 	}
+
+	ImGuiWindow* GetCurrentWindow()
+	{
+		return ImGui::GetCurrentWindow();
+	}
 }

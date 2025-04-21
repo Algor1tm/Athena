@@ -135,22 +135,35 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC();
 
-		FilePath assetDirectory = Project::GetAssetDirectory();
-
 		// 1. Remove outdated or invalid assets
 		auto registry = m_Registry->GetRegistryCopy();
+		bool changed = false;
 
 		for (const auto& [handle, meta] : registry)
 		{
 			if (!meta.IsMemoryOnly && !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(meta.FilePath)))
+			{
 				m_Registry->RemoveAsset(handle);
 
+				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})", 
+					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
+				changed = true;
+			}
+
 			if (meta.Type == AssetType::None)
+			{
 				m_Registry->RemoveAsset(handle);
+
+				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
+					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
+				changed = true;
+			}
 		}
 
 
 		// 2. Find new assets and import them
+		FilePath assetDirectory = Project::GetAssetDirectory();
+
 		std::queue<FilePath> queue;
 		queue.push(assetDirectory);
 
@@ -159,7 +172,7 @@ namespace Athena
 			FilePath folderPath = queue.front();
 			queue.pop();
 
-			for (const auto& dirEntry : std::filesystem::directory_iterator(folderPath))
+			for (const auto& dirEntry : std::filesystem::directory_iterator(folderPath, std::filesystem::directory_options::skip_permission_denied))
 			{
 				bool isFolder = dirEntry.is_directory();
 				FilePath path = dirEntry.path();
@@ -173,24 +186,27 @@ namespace Athena
 
 				if (s_AssetExtensionMap.contains(ext))
 				{
-					path = AssetManager::GetAssetRelativePath(path);
-
 					if (!m_Registry->IsFilePathPresent(path))
 					{
 						// Generate handle
 						AssetHandle handle = AssetHandle();
 						AssetMetadata metadata;
-						metadata.FilePath = path;
+						metadata.FilePath = AssetManager::GetAssetRelativePath(path);
 						metadata.Type = s_AssetExtensionMap.at(ext);
 						metadata.IsMemoryOnly = false;
 
 						m_Registry->AddAsset(handle, metadata);
+
+						ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
+							metadata.FilePath, Utils::AssetTypeToString(metadata.Type), handle);
+						changed = true;
 					}
 				}
 			}
 		}
 
-		m_Registry->Serialize();
+		if(changed)
+			m_Registry->Serialize();
 	}
 
 	String AssetImporter::GetAssetExtensions(AssetType assetType) const

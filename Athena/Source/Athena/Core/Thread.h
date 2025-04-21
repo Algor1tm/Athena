@@ -17,6 +17,9 @@ namespace Athena
 		void Start();
 		void Join();
 
+		void Pause();
+		void Resume();
+
 		uint64 GetID() const { return m_ID; }
 		const String& GetName() const { return m_Name; }
 

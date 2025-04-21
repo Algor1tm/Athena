@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Thread.h"
 #include "Athena/Asset/Asset.h"
 #include "Athena/Asset/AssetRegistry.h"
 #include "Athena/Asset/AssetImporter.h"
@@ -18,7 +19,7 @@ namespace Athena
 		~EditorAssetManager();
 
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
-		const AssetRegistry& GetAssetRegistry() const { return m_AssetRegistry; };
+		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
 		String GetAssetExtensions(AssetType type) const;
 
 		virtual WeakRef<Asset> GetAsset(AssetHandle handle) override;
@@ -31,7 +32,10 @@ namespace Athena
 		virtual AssetType GetAssetType(AssetHandle handle) const override;
 
 		AssetHandle AddMemoryOnlyAsset(const Ref<Asset>& asset);
+		AssetHandle AddAsset(const Ref<Asset>& asset, const FilePath& path);
+
 		void SaveAllAssets() const;
+		Thread& GetAssetThread();
 
 	private:
 		AssetRegistry m_AssetRegistry;

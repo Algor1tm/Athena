@@ -1,5 +1,6 @@
 #include "EditorAssetManager.h"
-#include "AssetImporter.h"
+#include "Athena/Asset/AssetManager.h"
+#include "Athena/Core/FileSystem.h"
 
 
 namespace Athena
@@ -54,7 +55,33 @@ namespace Athena
 		metadata.IsMemoryOnly = true;
 		metadata.Type = asset->GetAssetType();
 
+		asset->Handle = handle;
+
 		m_AssetRegistry.AddAsset(handle, metadata);
+		m_LoadedAssets[handle] = asset;
+
+		return handle;
+	}
+
+	AssetHandle EditorAssetManager::AddAsset(const Ref<Asset>& asset, const FilePath& path)
+	{
+		if (!asset)
+			return AssetHandle(0);
+
+		if (FileSystem::Exists(path))
+			return AssetHandle(0);
+
+		AssetHandle handle = AssetHandle();
+		AssetMetadata metadata;
+		metadata.IsMemoryOnly = false;
+		metadata.Type = asset->GetAssetType();
+		metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+
+		asset->Handle = handle;
+
+		m_AssetRegistry.AddAsset(handle, metadata);
+		m_AssetRegistry.Serialize();
+		m_AssetImporter.SerializeAsset(asset, metadata);
 		m_LoadedAssets[handle] = asset;
 
 		return handle;
@@ -62,10 +89,15 @@ namespace Athena
 
 	void EditorAssetManager::SaveAllAssets() const
 	{
-		for (const auto& [handle, asset]: m_LoadedAssets)
+		for (const auto& [handle, asset] : m_LoadedAssets)
 		{
 			m_AssetImporter.SerializeAsset(asset, GetAssetMetadata(handle));
 		}
+	}
+
+	Thread& EditorAssetManager::GetAssetThread()
+	{
+		return m_AssetImporter.GetAssetThread();
 	}
 
 	String EditorAssetManager::GetAssetExtensions(AssetType type) const

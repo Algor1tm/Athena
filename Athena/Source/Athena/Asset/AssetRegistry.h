@@ -16,6 +16,7 @@ namespace Athena
 
 		void AddAsset(AssetHandle handle, const AssetMetadata& metadata);
 		void RemoveAsset(AssetHandle handle);
+		void MoveAsset(AssetHandle handle, const FilePath& newPath);
 
 		const AssetMetadata& GetMetadata(AssetHandle handle) const;
 

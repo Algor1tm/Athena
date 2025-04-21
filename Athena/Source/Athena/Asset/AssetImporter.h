@@ -20,6 +20,7 @@ namespace Athena
 		void SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const;
 
 		String GetAssetExtensions(AssetType type) const;
+		Thread& GetAssetThread() { return m_AssetThread; }
 
 	private:
 		void AssetThreadFunction();

@@ -318,18 +318,22 @@ namespace Athena
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 5.f, 5.f });
 		UI::ShiftCursorX(5.f);
 		if (ImGui::Button("Edit"))
+		{
+			if(!m_EditTagComponent)
+				ImGui::SetKeyboardFocusHere();
+
 			m_EditTagComponent = !m_EditTagComponent;
+		}
 
 		ImGui::SameLine();
 
 		auto& tag = entity.GetComponent<TagComponent>().Tag;
 		if (m_EditTagComponent)
 		{
-			if (!ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
-				ImGui::SetKeyboardFocusHere(0);
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
 			UI::TextInput("TagInputText", tag);
-			if (ImGui::IsItemDeactivatedAfterEdit())
+
+			if (Input::IsKeyPressed(Keyboard::Enter) || Input::IsKeyPressed(Keyboard::Escape))
 				m_EditTagComponent = false;
 		}
 		else 
@@ -526,7 +530,7 @@ namespace Athena
 			else if (!isValid)
 				texture = EditorResources::GetIcon("EmptyTexture");
 
-			float imageSize = 45.f;
+			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			UI::PropertyImage("Texture", texture, { imageSize, imageSize });
 
 			if (ImGui::BeginDragDropTarget())

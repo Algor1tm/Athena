@@ -13,11 +13,14 @@ namespace Athena
 {
 #define IMAGE_TO_ITEM_RATIO 0.66f
 
+	class CBAssetItem;
+
 	struct CBDragDropPayload
 	{
 		AssetHandle AssetHandle = 0;
 		AssetType AssetType = AssetType::None;
 		FilePath FilePath;
+		CBAssetItem* Item = nullptr;
 	};
 
 	enum CBItemStateFlags
@@ -27,6 +30,7 @@ namespace Athena
 		CBItemStateFlag_Selected = BIT(2),
 		CBItemStateFlag_Active = BIT(3),
 		CBItemStateFlag_ActivePopup = BIT(4),
+		CBItemStateFlag_Rename = BIT(6),
 	};
 
 	struct CBItemState
@@ -66,7 +70,9 @@ namespace Athena
 
 		virtual void OnImGuiRender(ImVec2 itemSize) = 0;
 		virtual bool IsFolder() const = 0;
+		virtual void Move(const FilePath& path) = 0;
 
+		void OnRename();
 		void TrackMouseState(ImVec2 itemSize);
 
 		CBItemState& GetState() { return m_State; }
@@ -79,6 +85,7 @@ namespace Athena
 	protected:
 		String m_FilePath;
 		String m_FileName;
+		String m_RenameBuffer;
 		CBItemState m_State;
 		ContentBrowserPanel* m_ContentBrowserPanel = nullptr;
 	};
@@ -91,6 +98,7 @@ namespace Athena
 
 		virtual void OnImGuiRender(ImVec2 itemSize) override;
 		virtual bool IsFolder() const override { return true; }
+		virtual void Move(const FilePath& path) override;
 
 		const std::vector<Ref<CBItem>>& GetChildren() const { return m_ChildrenItems; }
 
@@ -106,6 +114,7 @@ namespace Athena
 
 		virtual void OnImGuiRender(ImVec2 itemSize) override;
 		virtual bool IsFolder() const override { return false; }
+		virtual void Move(const FilePath& path) override;
 
 		AssetHandle GetAssetHandle() const { return m_Payload.AssetHandle; }
 		AssetType GetAssetType() const { return m_Payload.AssetType; }
@@ -125,7 +134,13 @@ namespace Athena
 		void Refresh();
 		void QueueRefresh() { m_QueueRefresh = true; }
 
+		void SetMoveItem(CBItem* moveItem) { m_MoveItem = moveItem; }
+		CBItem* GetMoveItem() { return m_MoveItem; }
+
+		Ref<CBFolder> GetCurrentFolder() const { return m_CurrentFolder; }
+
 	private:
+		FilePath CreateUniqueFile(const String& name, const String& ext);
 		void RenderHeadBar();
 
 		Ref<CBFolder> FindItemParentFolder(const Ref<CBItem>& item);
@@ -136,6 +151,7 @@ namespace Athena
 		Ref<CBFolder> m_RootFolder;
 		Ref<CBFolder> m_CurrentFolder;
 		Ref<CBItem> m_SelectedItem;
+		CBItem* m_MoveItem = nullptr;
 
 		bool m_IsAnyItemHovered = false;
 		bool m_QueueRefresh = false;
@@ -143,8 +159,8 @@ namespace Athena
 		String m_SearchString;
 		std::vector<Ref<CBItem>> m_SearchResult;
 
-		const ImVec2 m_ButtonSize = { 16.f, 16.f };
+		ImVec2 m_ButtonSize = { 16.f, 16.f };
 		ImVec2 m_ItemSize = { 180.f * IMAGE_TO_ITEM_RATIO, 180.f };
-		const float m_Padding = 8.f;
+		float m_Padding = 8.f;
 	};
 }

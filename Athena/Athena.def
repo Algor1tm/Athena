@@ -52,6 +52,7 @@ EXPORTS
 	?InputScalar@ImGui@@YA_NPEBDHPEAXPEBX20H@Z
 	?InvisibleButton@ImGui@@YA_NPEBDAEBUImVec2@@H@Z
 	?IsAnyItemActive@ImGui@@YA_NXZ
+	?IsItemActivated@ImGui@@YA_NXZ
 	?IsItemClicked@ImGui@@YA_NH@Z
 	?IsItemDeactivatedAfterEdit@ImGui@@YA_NXZ
 	?IsItemHovered@ImGui@@YA_NH@Z
@@ -134,6 +135,7 @@ EXPORTS
 	?PushTextWrapPos@ImGui@@YAXM@Z
 	?SameLine@ImGui@@YAXMM@Z
 	?Separator@ImGui@@YAXXZ
+	?SetActiveID@ImGui@@YAXIPEAUImGuiWindow@@@Z
 	?SetCursorPos@ImGui@@YAXAEBUImVec2@@@Z
 	?SetCursorPosX@ImGui@@YAXM@Z
 	?SetCursorPosY@ImGui@@YAXM@Z

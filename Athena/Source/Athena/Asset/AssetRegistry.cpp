@@ -1,4 +1,5 @@
 #include "AssetRegistry.h"
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Core/YAMLTypes.h"
 #include "Athena/Core/FileSystem.h"
@@ -29,6 +30,27 @@ namespace Athena
 			m_Registry.erase(handle);
 	}
 
+	void AssetRegistry::MoveAsset(AssetHandle handle, const FilePath& path)
+	{
+		std::lock_guard<std::mutex> lock(m_Mutex);
+
+		if (!m_Registry.contains(handle) || FileSystem::Exists(path))
+			return;
+
+		AssetMetadata& metadata = m_Registry.at(handle);
+
+		if (metadata.IsMemoryOnly)
+			return;
+
+		FilePath current = FileSystem::GetWorkingDirectory();
+		FilePath oldPath = current / AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+		FilePath newPath = path.is_absolute() ? path : current / path;
+
+		std::filesystem::rename(oldPath, newPath);
+
+		metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+	}
+
 	const AssetMetadata& AssetRegistry::GetMetadata(AssetHandle handle) const
 	{
 		static const AssetMetadata s_NullMetadata;
@@ -51,11 +73,12 @@ namespace Athena
 
 	bool AssetRegistry::IsFilePathPresent(const FilePath& path) const
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
+		FilePath relPath = AssetManager::GetAssetRelativePath(path);
 
+		std::lock_guard<std::mutex> lock(m_Mutex);
 		for (const auto& [handle, metadata] : m_Registry)
 		{
-			if (metadata.FilePath == path)
+			if (metadata.FilePath == relPath)
 				return true;
 		}
 
@@ -64,17 +87,13 @@ namespace Athena
 
 	AssetHandle AssetRegistry::GetAssetHandleFromFilePath(const FilePath& path) const
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
-		FilePath relPath = path;
-		if (path.is_absolute())
-			relPath = AssetManager::GetAssetRelativePath(path);
+		FilePath relPath = AssetManager::GetAssetRelativePath(path);
+		relPath = FileSystem::GenericFormat(relPath);
 
 		if (relPath.empty())
 			return 0;
 
-		relPath = FileSystem::GenericFormat(relPath);
-
+		std::lock_guard<std::mutex> lock(m_Mutex);
 		for (const auto& [handle, metadata] : m_Registry)
 		{
 			if (metadata.FilePath == relPath && !metadata.IsMemoryOnly)

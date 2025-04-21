@@ -211,7 +211,8 @@ namespace Athena
 			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
 				displayTex = EditorResources::GetIcon("EmptyTexture");
 
-			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
+			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
+			if (UI::PropertyImage("Dirt Texture", displayTex, { imageSize, imageSize }))
 			{
 				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
 				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());

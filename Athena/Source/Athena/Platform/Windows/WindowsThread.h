@@ -51,12 +51,32 @@ namespace Athena
 
 	void Thread::Start()
 	{
+		Resume();
+	}
+
+	void Thread::Pause()
+	{
+		if (!m_Handle)
+			return;
+
+		DWORD result = SuspendThread(m_Handle);
+		ATN_CORE_ASSERT(result != (DWORD)-1);
+	}
+
+	void Thread::Resume()
+	{
+		if (!m_Handle)
+			return;
+
 		DWORD result = ResumeThread(m_Handle);
 		ATN_CORE_ASSERT(result != (DWORD)-1);
 	}
 
 	void Thread::Join()
 	{
+		if (!m_Handle)
+			return;
+
 		DWORD result = WaitForSingleObject(m_Handle, INFINITE);
 		ATN_CORE_ASSERT(result == WAIT_OBJECT_0);
 	}

@@ -97,4 +97,6 @@ namespace Athena::UI
 	// Menubar with custom rect
 	ATHENA_API bool BeginMenubar(const ImRect& barRectangle);
 	ATHENA_API void EndMenubar();
+
+	ATHENA_API ImGuiWindow* GetCurrentWindow();
 }

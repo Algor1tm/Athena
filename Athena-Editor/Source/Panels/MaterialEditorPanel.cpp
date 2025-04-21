@@ -120,7 +120,7 @@ namespace Athena
 
 	void MaterialEditorPanel::RenderTexture(const Ref<MaterialAsset>& material, MaterialTextureType type) const
 	{
-		float imageSize = 45.f;
+		float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 
 		Ref<Texture2D> texture = material->GetTexture(type).Get();
 		Ref<Texture2D> displayTexture = texture ? texture : EditorResources::GetIcon("Empty Texture");

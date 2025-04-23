@@ -40,8 +40,8 @@ namespace Athena
 	AssetImporter::AssetImporter()
 		: m_AssetThread("AssetThread", [this]() { AssetThreadFunction(); })
 	{
-		m_Serializers[AssetType::Material] = Scope<MaterialSerializer>::Create();
-		m_Serializers[AssetType::Scene] = Scope<SceneAssetSerializer>::Create();
+		m_Serializers[AssetType::Material] = Ref<MaterialSerializer>::Create();
+		m_Serializers[AssetType::Scene] = Ref<SceneAssetSerializer>::Create();
 	}
 
 	AssetImporter::~AssetImporter()
@@ -56,7 +56,7 @@ namespace Athena
 		m_AssetThread.Start();
 	}
 
-	Ref<Asset> AssetImporter::LoadAsset(AssetHandle handle, const AssetMetadata& metadata)
+	Ref<Asset> AssetImporter::LoadAsset(AssetHandle handle, const AssetMetadata& metadata) const
 	{
 		ATN_PROFILE_FUNC();
 
@@ -103,21 +103,30 @@ namespace Athena
 		if (result)
 		{
 			result->Handle = handle;
-
-			// Deserialize from file 
-			if (m_Serializers.contains(assetType))
-				m_Serializers.at(assetType)->TryLoadData(result, metadata);
+			DeserializeAsset(result, metadata);
 		}
-
 
 		return result;
 	}
 
-	void AssetImporter::SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const
+	void AssetImporter::SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata)
 	{
-		if (m_Serializers.contains(metadata.Type))
+		if (m_Serializers.contains(metadata.Type) && !metadata.IsMemoryOnly)
 		{
 			m_Serializers.at(metadata.Type)->Serialize(asset, metadata);
+
+			m_AssetsLastWriteTimeMap.modify_if(asset->Handle, [&metadata](std::pair<const AssetHandle, uint64>& element) 
+			{
+				element.second = FileSystem::GetLastWriteTimestamp(AssetManager::GetAssetAbsolutePath(metadata.FilePath));
+			});
+		}
+	}
+
+	void AssetImporter::DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const
+	{
+		if (m_Serializers.contains(metadata.Type) && !metadata.IsMemoryOnly)
+		{
+			m_Serializers.at(metadata.Type)->TryLoadData(asset, metadata);
 		}
 	}
 
@@ -130,36 +139,75 @@ namespace Athena
 		}
 	}
 
-	// TODO: Check file timestamps for asset hot reloading
 	void AssetImporter::MonitorAssets()
 	{
 		ATN_PROFILE_FUNC();
 
-		// 1. Remove outdated or invalid assets
-		auto registry = m_Registry->GetRegistryCopy();
-		bool changed = false;
+		// 1. Remove outdated or invalid assets and hot reload assets by last write time
+		const auto& registry = m_Registry->GetRegistry();
+		std::vector<AssetHandle> assetsToRemove;
+		std::vector<AssetHandle> assetsToReload;
 
-		for (const auto& [handle, meta] : registry)
+		registry.for_each([&assetsToRemove, &assetsToReload, this](const std::pair<AssetHandle, AssetMetadata>& element)
 		{
-			if (!meta.IsMemoryOnly && !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(meta.FilePath)))
+			const auto& [handle, meta] = element;
+			FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
+
+			if (!meta.IsMemoryOnly && !FileSystem::Exists(absolutePath))
 			{
-				m_Registry->RemoveAsset(handle);
-
-				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})", 
-					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
-				changed = true;
+				assetsToRemove.push_back(handle);
 			}
-
-			if (meta.Type == AssetType::None)
+			else if (meta.Type == AssetType::None)
 			{
-				m_Registry->RemoveAsset(handle);
-
-				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
-					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
-				changed = true;
+				assetsToRemove.push_back(handle);
 			}
+			else if (!meta.IsMemoryOnly)
+			{
+				uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
+
+				if (!m_AssetsLastWriteTimeMap.contains(handle))
+				{
+					m_AssetsLastWriteTimeMap.insert({ handle, timestamp });
+				}
+				else
+				{
+					uint64 oldTimestamp = m_AssetsLastWriteTimeMap.at(handle);
+					if (oldTimestamp != timestamp)
+					{
+						assetsToReload.push_back(handle);
+						m_AssetsLastWriteTimeMap.modify_if(handle, [timestamp](std::pair<const AssetHandle, uint64>& element) 
+						{
+							element.second = timestamp;
+						});
+					}
+				}
+			}
+		});
+
+		bool serialize = !assetsToRemove.empty();
+
+		for (AssetHandle handle : assetsToRemove)
+		{
+			AssetMetadata meta = m_Registry->GetMetadata(handle);
+			m_Registry->RemoveAsset(handle);
+
+			m_AssetsLastWriteTimeMap.erase_if(handle, [](auto&) { return true; });
+
+			ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
+				meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
 		}
 
+		for (AssetHandle handle : assetsToReload)
+		{
+			if (Project::GetEditorAssetManager()->IsAssetLoaded(handle))
+			{
+				Project::GetEditorAssetManager()->ReloadAsset(handle);
+
+				const AssetMetadata& meta = AssetManager::GetAssetMetadata(handle);
+				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Reloading asset (path - {}, type - {}, handle - {})",
+					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
+			}
+		}
 
 		// 2. Find new assets and import them
 		FilePath assetDirectory = Project::GetAssetDirectory();
@@ -184,29 +232,57 @@ namespace Athena
 					continue;
 				}
 
-				if (s_AssetExtensionMap.contains(ext))
+				if (!s_AssetExtensionMap.contains(ext))
 				{
-					if (!m_Registry->IsFilePathPresent(path))
-					{
-						// Generate handle
-						AssetHandle handle = AssetHandle();
-						AssetMetadata metadata;
-						metadata.FilePath = AssetManager::GetAssetRelativePath(path);
-						metadata.Type = s_AssetExtensionMap.at(ext);
-						metadata.IsMemoryOnly = false;
+					continue;
+				}
 
-						m_Registry->AddAsset(handle, metadata);
+				if (!m_Registry->IsFilePathPresent(path))
+				{
+					// Generate handle
+					AssetHandle handle = AssetHandle();
+					AssetMetadata metadata;
+					metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+					metadata.Type = s_AssetExtensionMap.at(ext);
+					metadata.IsMemoryOnly = false;
 
-						ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
-							metadata.FilePath, Utils::AssetTypeToString(metadata.Type), handle);
-						changed = true;
-					}
+					m_Registry->AddAsset(handle, metadata);
+					m_AssetsLastWriteTimeMap.insert({ handle, FileSystem::GetLastWriteTimestamp(path) });
+
+					ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
+						metadata.FilePath, Utils::AssetTypeToString(metadata.Type), handle);
+					serialize = true;
 				}
 			}
 		}
 
-		if(changed)
+		if(serialize)
 			m_Registry->Serialize();
+	}
+
+	void AssetImporter::UpdateOrAddTimestamp(AssetHandle handle, const FilePath& path)
+	{
+		uint64 timestamp = FileSystem::GetLastWriteTimestamp(path);
+
+		// Update timestamp and reload asset if handle exists otherwise emplace timestamp
+		m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp](std::pair<const AssetHandle, uint64>& element)
+		{
+			const auto& [handle, oldTimeStamp] = element;
+
+			if (oldTimeStamp != timestamp)
+			{
+				if (Project::GetEditorAssetManager()->IsAssetLoaded(handle))
+				{
+					Project::GetEditorAssetManager()->ReloadAsset(handle);
+
+					const AssetMetadata& meta = AssetManager::GetAssetMetadata(handle);
+					ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Reloading asset (path - {}, type - {}, handle - {})",
+						meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
+				}
+
+				element.second = timestamp;
+			}
+		}, timestamp);
 	}
 
 	String AssetImporter::GetAssetExtensions(AssetType assetType) const

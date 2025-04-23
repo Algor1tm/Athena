@@ -922,6 +922,8 @@ namespace Athena
         if (m_EditorCtx->SceneState == SceneState::Simulation)
             OnSceneStop();
 
+        Project::GetEditorAssetManager()->SerializeAllAssets();
+
         m_EditorCtx->SceneState = SceneState::Play;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
@@ -939,6 +941,8 @@ namespace Athena
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();
+
+        Project::GetEditorAssetManager()->SerializeAllAssets();
 
         m_EditorCtx->SceneState = SceneState::Simulation;
 
@@ -964,6 +968,8 @@ namespace Athena
             m_EditorCtx->SelectedEntity = m_EditorScene->GetEntityByUUID(m_EditorCtx->SelectedEntity.GetID());
 
         m_RuntimeScene.Release();
+
+        Project::GetEditorAssetManager()->DeserializeAllAssets();
     }
 
     void EditorLayer::OnEvent(Event& event)
@@ -1224,7 +1230,7 @@ namespace Athena
     void EditorLayer::SaveAll()
     {
         SaveProject();
-        Project::GetEditorAssetManager()->SaveAllAssets();
+        Project::GetEditorAssetManager()->SerializeAllAssets();
 
         if (m_CurrentScenePath == FilePath())
             SaveSceneAs();

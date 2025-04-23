@@ -18,21 +18,21 @@ namespace Athena
 	{
 		ImGui::Begin("AssetManager");
 
-		std::unordered_map<AssetHandle, AssetMetadata> registry = Project::GetEditorAssetManager()->GetAssetRegistry().GetRegistryCopy();
+		const auto& registry = Project::GetEditorAssetManager()->GetAssetRegistry().GetRegistry();
 
 		if (UI::TreeNode("AssetRegistry", true))
 		{
 			UI::TextInput("AssetRegistrySearch", m_SearchString);
-			m_SearchString = Utils::ToLower(m_SearchString);
 
-			String buffer;
-			for (const auto& [handle, metadata] : registry)
+			registry.for_each([this](const std::pair<AssetHandle, AssetMetadata>& element) 
 			{
+				const auto& [handle, metadata] = element;
+
 				if (Filter(handle, metadata))
 				{
 					UI::BeginPropertyTable();
 
-					buffer = std::to_string(handle);
+					String buffer = std::to_string(handle);
 					UI::PropertyRow("AssetHandle", ImGui::GetFrameHeight());
 
 					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
@@ -58,7 +58,7 @@ namespace Athena
 					UI::EndPropertyTable();
 					UI::ShiftCursorY(5.f);
 				}
-			}
+			});
 
 			UI::TreePop();
 		}
@@ -71,16 +71,18 @@ namespace Athena
 		if (m_SearchString.empty())
 			return true;
 
-		AssetHandle handleSearch = std::atoll(m_SearchString.c_str());
+		String searchString = Utils::ToLower(m_SearchString);
+
+		AssetHandle handleSearch = std::atoll(searchString.c_str());
 		if (handleSearch == handle)
 			return true;
 
 		String typeSearch = Utils::ToLower(String(Utils::AssetTypeToString(metadata.Type)));
-		if (typeSearch.find(m_SearchString) != std::string::npos)
+		if (typeSearch.find(searchString) != std::string::npos)
 			return true;
 
 		String filePathSearch = Utils::ToLower(metadata.FilePath.string());
-		if (filePathSearch.find(m_SearchString) != std::string::npos)
+		if (filePathSearch.find(searchString) != std::string::npos)
 			return true;
 
 		return false;

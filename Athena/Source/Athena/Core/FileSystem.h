@@ -26,6 +26,7 @@ namespace Athena
 
 		static bool Exists(const FilePath& path);
 
+		static uint64 GetLastWriteTimestamp(const FilePath& path);
 		static FilePath GenericFormat(const FilePath& path);
 	};
 }

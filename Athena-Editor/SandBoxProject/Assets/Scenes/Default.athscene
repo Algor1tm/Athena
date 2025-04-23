@@ -14,7 +14,7 @@ Entities:
     SpriteComponent:
       Space: 1
       Color: [1, 1, 0.541176498, 1]
-      TextureHandle: 13881825086358185248
+      TextureHandle: 3431491884888911668
       TilingFactor: 1
   - IDComponent:
       ID: 17196797334220725082

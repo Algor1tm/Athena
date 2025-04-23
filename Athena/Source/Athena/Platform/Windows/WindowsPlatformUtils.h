@@ -211,31 +211,31 @@ namespace Athena
 
 	void Platform::OpenFileExternally(const FilePath& path)
 	{
-		std::wstring command = L"code " + std::filesystem::absolute(path).wstring();
+		std::wstring command = L"start " + std::filesystem::absolute(path).wstring();
 		std::wstring commandLine = L"cmd.exe /c \"" + command + L"\"";
 
 		STARTUPINFO si = { sizeof(si) };
 		PROCESS_INFORMATION pi;
 
 		BOOL result = CreateProcess(
-			NULL,                       
-			&commandLine[0],            
-			NULL,                       
-			NULL,                       
-			FALSE,                      
-			CREATE_NO_WINDOW,           
-			NULL,                       
-			NULL,                       
-			&si,                        
-			&pi                         
+			NULL,
+			&commandLine[0],
+			NULL,
+			NULL,
+			FALSE,
+			CREATE_NO_WINDOW,
+			NULL,
+			NULL,
+			&si,
+			&pi
 		);
 
-		if (result) 
+		if (result)
 		{
 			CloseHandle(pi.hProcess);
 			CloseHandle(pi.hThread);
 		}
-		else 
+		else
 		{
 			WINAPI_CHECK_LASTERROR();
 			MessageBox(NULL, L"Failed to launch VS Code.", L"Error", MB_OK | MB_ICONERROR);

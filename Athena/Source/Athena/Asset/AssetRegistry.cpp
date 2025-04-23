@@ -17,72 +17,75 @@ namespace Athena
 
 	void AssetRegistry::AddAsset(AssetHandle handle, const AssetMetadata& metadata)
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
-		m_Registry[handle] = metadata;
+		m_Registry.insert({ handle, metadata });
 	}
 
 	void AssetRegistry::RemoveAsset(AssetHandle handle)
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
-		if (m_Registry.contains(handle))
-			m_Registry.erase(handle);
+		m_Registry.erase_if(handle, [](auto& element) { return true; });
 	}
 
 	void AssetRegistry::MoveAsset(AssetHandle handle, const FilePath& path)
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
 		if (!m_Registry.contains(handle) || FileSystem::Exists(path))
 			return;
 
-		AssetMetadata& metadata = m_Registry.at(handle);
+		m_Registry.modify_if(handle, [&path](std::pair<const AssetHandle, AssetMetadata>& element) 
+		{
+			AssetMetadata& metadata = element.second;
 
-		if (metadata.IsMemoryOnly)
-			return;
+			if (metadata.IsMemoryOnly)
+				return;
 
-		FilePath current = FileSystem::GetWorkingDirectory();
-		FilePath oldPath = current / AssetManager::GetAssetAbsolutePath(metadata.FilePath);
-		FilePath newPath = path.is_absolute() ? path : current / path;
+			FilePath current = FileSystem::GetWorkingDirectory();
+			FilePath oldPath = current / AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+			FilePath newPath = path.is_absolute() ? path : current / path;
 
-		std::filesystem::rename(oldPath, newPath);
+			std::filesystem::rename(oldPath, newPath);
 
-		metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+			metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+		});
 	}
 
 	const AssetMetadata& AssetRegistry::GetMetadata(AssetHandle handle) const
 	{
 		static const AssetMetadata s_NullMetadata;
 
-		std::lock_guard<std::mutex> lock(m_Mutex);
+#if 1
+		if(m_Registry.contains(handle));
+			return m_Registry.at(handle);
 
-		auto it = m_Registry.find(handle);
-		if (it == m_Registry.end())
-			return s_NullMetadata;
+		return s_NullMetadata;
+#else
+		const AssetMetadata* result = &s_NullMetadata;
+		m_Registry.if_contains(handle, [&result](const std::pair<AssetHandle, AssetMetadata>& element)
+		{
+			result = &element.second;
+		});
 
-		return it->second;
+		return *result;
+#endif
 	}
 
 	bool AssetRegistry::IsAssetHandlePresent(AssetHandle handle) const
 	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
 		return m_Registry.contains(handle);
 	}
 
 	bool AssetRegistry::IsFilePathPresent(const FilePath& path) const
 	{
 		FilePath relPath = AssetManager::GetAssetRelativePath(path);
+		bool result = false;
 
-		std::lock_guard<std::mutex> lock(m_Mutex);
-		for (const auto& [handle, metadata] : m_Registry)
+		m_Registry.for_each([&relPath, &result](const std::pair<AssetHandle, AssetMetadata>& element)
 		{
-			if (metadata.FilePath == relPath)
-				return true;
-		}
+			const auto& [handle, metadata] = element;
 
-		return false;
+			if (metadata.FilePath == relPath)
+				result = true;
+		});
+
+		return result;
 	}
 
 	AssetHandle AssetRegistry::GetAssetHandleFromFilePath(const FilePath& path) const
@@ -93,22 +96,16 @@ namespace Athena
 		if (relPath.empty())
 			return 0;
 
-		std::lock_guard<std::mutex> lock(m_Mutex);
-		for (const auto& [handle, metadata] : m_Registry)
+		AssetHandle result = 0;
+		m_Registry.for_each([&relPath, &result](const std::pair<AssetHandle, AssetMetadata>& element)
 		{
-			if (metadata.FilePath == relPath && !metadata.IsMemoryOnly)
-				return handle;
-		}
+			const auto& [handle, metadata] = element;
 
-		return 0;
-	}
+			if (!metadata.IsMemoryOnly && metadata.FilePath == relPath)
+				result = handle;
+		});
 
-	std::unordered_map<AssetHandle, AssetMetadata> AssetRegistry::GetRegistryCopy() const
-	{
-		std::lock_guard<std::mutex> lock(m_Mutex);
-		std::unordered_map<AssetHandle, AssetMetadata> copy = m_Registry;
-
-		return copy;
+		return result;
 	}
 
 	void AssetRegistry::Serialize()
@@ -122,19 +119,20 @@ namespace Athena
 
 			out << YAML::BeginSeq;
 
-			std::lock_guard<std::mutex> lock(m_Mutex);
-
-			for (const auto& [handle, metadata] : m_Registry)
+			m_Registry.for_each([&out](const std::pair<AssetHandle, AssetMetadata>& element)
 			{
+				const auto& [handle, metadata] = element;
+
 				if (metadata.IsMemoryOnly)
-					continue;
+					return;
 
 				out << YAML::BeginMap;
 				out << YAML::Key << "Handle" << YAML::Value << handle;
 				out << YAML::Key << "Type" << YAML::Value << Utils::AssetTypeToString(metadata.Type);
 				out << YAML::Key << "FilePath" << YAML::Value << metadata.FilePath;
 				out << YAML::EndMap;
-			}
+			});
+
 			out << YAML::EndSeq;
 			out << YAML::EndMap;
 		}
@@ -165,15 +163,16 @@ namespace Athena
 		if (!rootNode)
 			return false;
 
-		std::lock_guard<std::mutex> lock(m_Mutex);
-
 		for (const auto& node : rootNode)
 		{
 			AssetHandle handle = node["Handle"].as<UUID>();
-			auto& metadata = m_Registry[handle];
+
+			AssetMetadata metadata;
 			metadata.Type = Utils::AssetTypeFromString(node["Type"].as<String>());
 			metadata.FilePath = node["FilePath"].as<String>();
 			metadata.IsMemoryOnly = false;
+
+			AddAsset(handle, metadata);
 		}
 
 		return true;

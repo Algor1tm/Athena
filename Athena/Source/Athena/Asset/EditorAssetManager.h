@@ -33,14 +33,17 @@ namespace Athena
 
 		AssetHandle AddMemoryOnlyAsset(const Ref<Asset>& asset);
 		AssetHandle AddAsset(const Ref<Asset>& asset, const FilePath& path);
+		void ReloadAsset(AssetHandle handle);
 
-		void SaveAllAssets() const;
+		void SerializeAllAssets();
+		void DeserializeAllAssets() const;
+
 		Thread& GetAssetThread();
 
 	private:
 		AssetRegistry m_AssetRegistry;
 		AssetImporter m_AssetImporter;
 
-		std::unordered_map<AssetHandle, Ref<Asset>> m_LoadedAssets;
+		ParallelFlatHashMap<AssetHandle, Ref<Asset>> m_LoadedAssets;
 	};
 }

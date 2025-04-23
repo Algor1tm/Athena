@@ -33,7 +33,7 @@ namespace Athena
 			Ref<Asset> loadedAsset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
 			if (loadedAsset)
 			{
-				m_LoadedAssets[handle] = loadedAsset;
+				m_LoadedAssets.insert({ handle, loadedAsset });
 				asset = loadedAsset;
 			}
 			else
@@ -58,7 +58,7 @@ namespace Athena
 		asset->Handle = handle;
 
 		m_AssetRegistry.AddAsset(handle, metadata);
-		m_LoadedAssets[handle] = asset;
+		m_LoadedAssets.insert({ handle, asset });
 
 		return handle;
 	}
@@ -82,17 +82,41 @@ namespace Athena
 		m_AssetRegistry.AddAsset(handle, metadata);
 		m_AssetRegistry.Serialize();
 		m_AssetImporter.SerializeAsset(asset, metadata);
-		m_LoadedAssets[handle] = asset;
+		m_LoadedAssets.insert({ handle, asset });
 
 		return handle;
 	}
 
-	void EditorAssetManager::SaveAllAssets() const
+	void EditorAssetManager::ReloadAsset(AssetHandle handle)
 	{
-		for (const auto& [handle, asset] : m_LoadedAssets)
+		if (!IsAssetHandleValid(handle) || !IsAssetLoaded(handle))
+			return;
+
+		m_LoadedAssets.erase(handle);
+
+		Ref<Asset> asset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
+		if (asset)
+			m_LoadedAssets.insert({ handle, asset });
+		else
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to reload asset, handle - {}!", handle);
+	}
+
+	void EditorAssetManager::SerializeAllAssets()
+	{
+		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element) 
 		{
+			const auto& [handle, asset] = element;
 			m_AssetImporter.SerializeAsset(asset, GetAssetMetadata(handle));
-		}
+		});
+	}
+
+	void EditorAssetManager::DeserializeAllAssets() const
+	{
+		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
+		{
+			const auto& [handle, asset] = element;
+			m_AssetImporter.DeserializeAsset(asset, GetAssetMetadata(handle));
+		});
 	}
 
 	Thread& EditorAssetManager::GetAssetThread()
@@ -117,7 +141,7 @@ namespace Athena
 
 	bool EditorAssetManager::IsAssetLoaded(AssetHandle handle) const
 	{
-		return m_LoadedAssets.find(handle) != m_LoadedAssets.end();
+		return m_LoadedAssets.contains(handle);
 	}
 
 	const AssetMetadata& EditorAssetManager::GetAssetMetadata(AssetHandle handle) const

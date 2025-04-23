@@ -31,6 +31,8 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"ThirdParty/entt/entt.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.cpp"
+	"ThirdParty/parallel_hashmap/*.h"
+	"ThirdParty/parallel_hashmap/phmap.natvis"
 	"ThirdParty/portable-file-dialogs/portable-file-dialogs.h"
 	"ThirdParty/stb_image/stb_image.h"
 	"ThirdParty/stb_image/stb_image_write.h"

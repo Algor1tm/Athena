@@ -3,8 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Asset/Asset.h"
 
-#include <unordered_map>
-#include <mutex>
+#include <parallel_hashmap/phmap.h>
 
 
 namespace Athena
@@ -27,10 +26,9 @@ namespace Athena
 		void Serialize();
 		bool Deserialize();
 
-		std::unordered_map<AssetHandle, AssetMetadata> GetRegistryCopy() const;
+		const auto& GetRegistry() const { return m_Registry; }
 
 	private:
-		std::unordered_map<AssetHandle, AssetMetadata> m_Registry;
-		mutable std::mutex m_Mutex;
+		phmap::parallel_node_hash_map_m<AssetHandle, AssetMetadata> m_Registry;
 	};
 }

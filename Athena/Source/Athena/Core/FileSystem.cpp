@@ -104,6 +104,13 @@ namespace Athena
 		return std::filesystem::exists(path);
 	}
 
+	uint64 FileSystem::GetLastWriteTimestamp(const FilePath& path)
+	{
+		std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(path);
+		uint64_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+		return timestamp;
+	}
+
 	FilePath FileSystem::GenericFormat(const FilePath& path)
 	{
 		return FilePath(path.generic_string());

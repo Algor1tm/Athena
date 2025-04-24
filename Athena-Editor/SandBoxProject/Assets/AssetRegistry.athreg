@@ -71,12 +71,12 @@ AssetRegistry:
   - Handle: 4389979150323559025
     Type: StaticMesh
     FilePath: Meshes/StormTrooper/silly_dancing.fbx
-  - Handle: 11714994014629288087
-    Type: Font
-    FilePath: Fonts/comic.ttf
   - Handle: 5724705814926487573
     Type: StaticMesh
     FilePath: Meshes/Sponza.fbx
+  - Handle: 11714994014629288087
+    Type: Font
+    FilePath: Fonts/comic.ttf
   - Handle: 364595162873737190
     Type: Texture2D
     FilePath: Textures/BibleThump.png

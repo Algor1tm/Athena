@@ -13,12 +13,12 @@ namespace Athena
 	public:
 		MaterialEditorPanel(const Ref<EditorContext>& context);
 		virtual void OnImGuiRender() override;
-		void SetActiveMaterial(const AssetHandleRef<MaterialAsset>& material);
+		void SetActiveMaterial(AssetHandle material);
 
 	private:
 		void RenderTexture(const Ref<MaterialAsset>& material, MaterialTextureType type) const;
 
 	private:
-		AssetHandleRef<MaterialAsset> m_ActiveMaterial;
+		AssetHandle m_ActiveMaterial;
 	};
 }

@@ -521,7 +521,7 @@ namespace Athena
 			UI::PropertyColor4("Color", sprite.Color.Data());
 
 			bool isDefault = sprite.TextureHandle == AssetHandle(0);
-			Ref<Texture2D> textureAsset = sprite.TextureHandle.Get();
+			Ref<Texture2D> textureAsset = AssetManager::GetAsset<Texture2D>(sprite.TextureHandle);
 			bool isValid = textureAsset != nullptr && !isDefault;
 
 			Ref<Texture2D> texture = textureAsset;
@@ -782,7 +782,7 @@ namespace Athena
 				{
 					UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
 
-					Ref<MaterialAsset> material = materialHandle.Get();
+					Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
 					bool isInvalid = material == nullptr;
 					const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
 

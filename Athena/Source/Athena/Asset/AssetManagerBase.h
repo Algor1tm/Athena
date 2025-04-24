@@ -9,7 +9,9 @@ namespace Athena
 	class ATHENA_API AssetManagerBase
 	{
 	public:
-		virtual WeakRef<Asset> GetAsset(AssetHandle handle) = 0;
+		virtual ~AssetManagerBase() = default;
+
+		virtual Ref<Asset> GetAsset(AssetHandle handle) = 0;
 
 		virtual bool IsAssetHandleValid(AssetHandle handle) const = 0;
 		virtual bool IsAssetLoaded(AssetHandle handle) const = 0;

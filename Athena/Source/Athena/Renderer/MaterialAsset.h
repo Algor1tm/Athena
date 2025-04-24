@@ -39,8 +39,8 @@ namespace Athena
 		float GetMetalness() const;
 		void SetMetalness(float metalness);
 
-		AssetHandleRef<Texture2D> GetTexture(MaterialTextureType type) const;
-		void SetTexture(MaterialTextureType type, const AssetHandleRef<Texture2D>& texture);
+		AssetHandle GetTexture(MaterialTextureType type) const;
+		void SetTexture(MaterialTextureType type, AssetHandle texture);
 		void RemoveTexture(MaterialTextureType type);
 
 		bool IsEnabledTexture(MaterialTextureType type) const;
@@ -54,12 +54,12 @@ namespace Athena
 	private:
 		Ref<Material> m_Material;
 
-		LinearColor m_Albedo = LinearColor::White;
+		LinearColor m_Albedo = LinearColor(0.7f, 0.7f, 0.7f, 1.f);
 		float m_Emission = 0.f;
-		float m_Roughness = 0.5f;
+		float m_Roughness = 0.8f;
 		float m_Metalness = 0.f;
 	
-		std::unordered_map<MaterialTextureType, AssetHandleRef<Texture2D>> m_TexturesMap;
+		std::unordered_map<MaterialTextureType, AssetHandle> m_TexturesMap;
 		std::unordered_map<MaterialTextureType, bool> m_TexturesFlags;
 	};
 }

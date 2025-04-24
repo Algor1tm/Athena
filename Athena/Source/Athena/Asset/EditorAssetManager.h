@@ -16,13 +16,9 @@ namespace Athena
 	{
 	public:
 		EditorAssetManager();
-		~EditorAssetManager();
+		virtual ~EditorAssetManager();
 
-		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
-		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
-		String GetAssetExtensions(AssetType type) const;
-
-		virtual WeakRef<Asset> GetAsset(AssetHandle handle) override;
+		virtual Ref<Asset> GetAsset(AssetHandle handle) override;
 
 		virtual bool IsAssetHandleValid(AssetHandle handle) const override;
 		virtual bool IsAssetLoaded(AssetHandle handle) const override;
@@ -34,9 +30,14 @@ namespace Athena
 		AssetHandle AddMemoryOnlyAsset(const Ref<Asset>& asset);
 		AssetHandle AddAsset(const Ref<Asset>& asset, const FilePath& path);
 		void ReloadAsset(AssetHandle handle);
+		void UnloadAsset(AssetHandle handle);
 
 		void SerializeAllAssets();
 		void DeserializeAllAssets() const;
+
+		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
+		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
+		String GetAssetExtensions(AssetType type) const;
 
 		Thread& GetAssetThread();
 
@@ -44,6 +45,6 @@ namespace Athena
 		AssetRegistry m_AssetRegistry;
 		AssetImporter m_AssetImporter;
 
-		ParallelFlatHashMap<AssetHandle, Ref<Asset>> m_LoadedAssets;
+		ParallelFlatHashMap<AssetHandle, Ref<Asset>, 2> m_LoadedAssets;
 	};
 }

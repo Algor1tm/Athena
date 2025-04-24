@@ -53,34 +53,35 @@ namespace Athena
 		try
 		{
 			data = YAML::LoadFile(absolutePath.string());
+
+			auto materialNode = data["Material"];
+			if (!materialNode)
+				return false;
+
+			Ref<MaterialAsset> material = asset.As<MaterialAsset>();
+
+			material->SetAlbedo(materialNode["Albedo"].as<LinearColor>());
+			material->SetEmission(materialNode["Emission"].as<float>());
+			material->SetRoughness(materialNode["Roughness"].as<float>());
+			material->SetMetalness(materialNode["Metalness"].as<float>());
+
+			material->SetTexture(MaterialTextureType::Albedo, materialNode["AlbedoMap"].as<AssetHandle>());
+			material->SetTexture(MaterialTextureType::Normals, materialNode["NormalMap"].as<AssetHandle>());
+			material->SetTexture(MaterialTextureType::Roughness, materialNode["RoughnessMap"].as<AssetHandle>());
+			material->SetTexture(MaterialTextureType::Metalness, materialNode["MetalnessMap"].as<AssetHandle>());
+
+			material->EnableTexture(MaterialTextureType::Albedo, materialNode["UseAlbedoMap"].as<bool>());
+			material->EnableTexture(MaterialTextureType::Normals, materialNode["UseNormalMap"].as<bool>());
+			material->EnableTexture(MaterialTextureType::Roughness, materialNode["UseRoughnessMap"].as<bool>());
+			material->EnableTexture(MaterialTextureType::Metalness, materialNode["UseMetalnessMap"].as<bool>());
+
+			material->SetFlag(MaterialFlag::CastShadows, materialNode["CastShadows"].as<bool>());
 		}
-		catch (YAML::ParserException e)
+		catch (YAML::Exception& e)
 		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}. Error message:\n {}", absolutePath, e.what());
 			return false;
 		}
-
-		auto materialNode = data["Material"];
-		if (!materialNode)
-			return false;
-
-		Ref<MaterialAsset> material = asset.As<MaterialAsset>();
-
-		material->SetAlbedo(materialNode["Albedo"].as<LinearColor>());
-		material->SetEmission(materialNode["Emission"].as<float>());
-		material->SetRoughness(materialNode["Roughness"].as<float>());
-		material->SetMetalness(materialNode["Metalness"].as<float>());
-
-		material->SetTexture(MaterialTextureType::Albedo, materialNode["AlbedoMap"].as<AssetHandle>());
-		material->SetTexture(MaterialTextureType::Normals, materialNode["NormalMap"].as<AssetHandle>());
-		material->SetTexture(MaterialTextureType::Roughness, materialNode["RoughnessMap"].as<AssetHandle>());
-		material->SetTexture(MaterialTextureType::Metalness, materialNode["MetalnessMap"].as<AssetHandle>());
-
-		material->EnableTexture(MaterialTextureType::Albedo, materialNode["UseAlbedoMap"].as<bool>());
-		material->EnableTexture(MaterialTextureType::Normals, materialNode["UseNormalMap"].as<bool>());
-		material->EnableTexture(MaterialTextureType::Roughness, materialNode["UseRoughnessMap"].as<bool>());
-		material->EnableTexture(MaterialTextureType::Metalness, materialNode["UseMetalnessMap"].as<bool>());
-
-		material->SetFlag(MaterialFlag::CastShadows, materialNode["CastShadows"].as<bool>());
 
 		return true;
 	}

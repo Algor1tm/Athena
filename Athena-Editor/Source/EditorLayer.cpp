@@ -611,7 +611,7 @@ namespace Athena
                     options.LineSpacing = textComponent.LineSpacing;
                     options.InvertY = false;
 
-                    Ref<Font> font = textComponent.FontHandle.Get();
+                    Ref<Font> font = AssetManager::GetAsset<Font>(textComponent.FontHandle);
                     if (font)
                     {
                         FontGeometry* fontGeometry = font->GetFontGeometry();

@@ -52,9 +52,9 @@ namespace Athena
 		return aiName.C_Str();
 	}
 
-	static AssetHandleRef<Texture2D> LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
+	static AssetHandle LoadTexture(const aiScene* aiscene, const aiMaterial* aimaterial, uint32 type, bool srgb, const FilePath& path)
 	{
-		AssetHandleRef<Texture2D> handle;
+		AssetHandle handle = 0;
 
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
@@ -91,12 +91,12 @@ namespace Athena
 		return handle;
 	}
 
-	static AssetHandleRef<MaterialAsset> LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
+	static AssetHandle LoadMaterial(const aiScene* aiscene, uint32 aiMaterialIndex, const FilePath& path)
 	{
 		const aiMaterial* aimaterial = aiscene->mMaterials[aiMaterialIndex];
 
 		Ref<MaterialAsset> material = MaterialAsset::Create();
-		AssetHandleRef<MaterialAsset> materialHandle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(material);
+		AssetHandle materialHandle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(material);
 
 		aiColor4D color;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_BASE_COLOR, color))
@@ -116,7 +116,7 @@ namespace Athena
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_EMISSIVE_INTENSITY, emission))
 			material->SetEmission(emission);
 		
-		AssetHandleRef<Texture2D> texture;
+		AssetHandle texture = 0;
 
 		// Albedo 
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_BASE_COLOR, true, path))
@@ -124,13 +124,13 @@ namespace Athena
 		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE, true, path))
 			material->SetTexture(MaterialTextureType::Albedo, texture);
 
-		material->EnableTexture(MaterialTextureType::Albedo, (texture != AssetHandle(0)));
+		material->EnableTexture(MaterialTextureType::Albedo, (texture != 0));
 
 		// Normal
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_NORMALS, false, path))
 			material->SetTexture(MaterialTextureType::Normals, texture);
 
-		material->EnableTexture(MaterialTextureType::Normals, (texture != AssetHandle(0)));
+		material->EnableTexture(MaterialTextureType::Normals, (texture != 0));
 
 		// Roughness
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_DIFFUSE_ROUGHNESS, false, path))
@@ -138,13 +138,13 @@ namespace Athena
 		else if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_SHININESS, false, path))
 			material->SetTexture(MaterialTextureType::Roughness, texture);
 
-		material->EnableTexture(MaterialTextureType::Roughness, (texture != AssetHandle(0)));
+		material->EnableTexture(MaterialTextureType::Roughness, (texture != 0));
 
 		// Metalness
 		if (texture = LoadTexture(aiscene, aimaterial, aiTextureType_METALNESS, false, path))
 			material->SetTexture(MaterialTextureType::Metalness, texture);
 
-		material->EnableTexture(MaterialTextureType::Metalness, (texture != AssetHandle(0)));
+		material->EnableTexture(MaterialTextureType::Metalness, (texture != 0));
 
 		return materialHandle;
 	}

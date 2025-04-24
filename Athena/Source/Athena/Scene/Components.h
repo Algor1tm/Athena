@@ -91,7 +91,7 @@ namespace Athena
 	{
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color = LinearColor::White;
-		AssetHandleRef<Texture2D> TextureHandle;
+		AssetHandle TextureHandle = 0;
 		float TilingFactor = 1.f;
 	};
 
@@ -109,7 +109,7 @@ namespace Athena
 	struct TextComponent
 	{
 		String Text;
-		AssetHandleRef<Font> FontHandle;
+		AssetHandle FontHandle = 0;
 		Renderer2DSpace Space = Renderer2DSpace::WorldSpace;
 		LinearColor Color = LinearColor::White;
 		float MaxWidth = 10.f;
@@ -215,7 +215,7 @@ namespace Athena
 
 	struct SkyLightComponent
 	{
-		AssetHandleRef<StaticEnvironmentMap> StaticEnvMapHandle;
+		AssetHandle StaticEnvMapHandle = 0;
 		Ref<PreethamEnvironmentMap> PreethamEnvMap;
 
 		EnvironmentMapType Type = EnvironmentMapType::PREETHAM;

@@ -390,7 +390,7 @@ namespace Athena
 		}
 		catch (const YAML::Exception& ex)
 		{
-			ATN_CORE_ERROR_TAG("Serializer", "Failed to deserialize scene '{0}'\n {1}", path, ex.what());
+			ATN_CORE_ERROR_TAG("Serializer", "Failed to deserialize scene {0}. Error message:\n {1}", path, ex.what());
 			return false;
 		}
 
@@ -617,7 +617,7 @@ namespace Athena
 			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
 			{
 				const auto& envMap = lightComponent.PreethamEnvMap;
-				output << YAML::Key << "StaticEnvMapHandle" << lightComponent.StaticEnvMapHandle.GetHandle();
+				output << YAML::Key << "StaticEnvMapHandle" << lightComponent.StaticEnvMapHandle;
 				output << YAML::Key << "Type" << (int)lightComponent.Type;
 				output << YAML::Key << "Resolution" << lightComponent.Resolution;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;

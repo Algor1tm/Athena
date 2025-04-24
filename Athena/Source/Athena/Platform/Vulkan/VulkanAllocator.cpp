@@ -194,18 +194,15 @@ namespace Athena
 
 	DescriptorSetAllocator::~DescriptorSetAllocator()
 	{
-		Renderer::SubmitResourceFree([freePools = m_FreePools, usedPools = m_UsedPools]()
+		for (auto pool : m_FreePools)
 		{
-			for (auto pool : freePools)
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-			}
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+		}
 
-			for (auto pool : usedPools)
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-			}
-		});
+		for (auto pool : m_UsedPools)
+		{
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+		}
 	}
 
 	void DescriptorSetAllocator::ResetPools()

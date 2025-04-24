@@ -36,7 +36,7 @@ namespace Athena
 
 		ImVec2 size = ImGui::GetContentRegionAvail();
 
-		Ref<MaterialAsset> material = m_ActiveMaterial.Get();
+		Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(m_ActiveMaterial);
 
 		if (material)
 		{
@@ -122,7 +122,7 @@ namespace Athena
 	{
 		float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 
-		Ref<Texture2D> texture = material->GetTexture(type).Get();
+		Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(material->GetTexture(type));
 		Ref<Texture2D> displayTexture = texture ? texture : EditorResources::GetIcon("Empty Texture");
 
 		if (UI::PropertyImage(TextureTypeToString(type), displayTexture, {imageSize, imageSize,}))
@@ -161,7 +161,7 @@ namespace Athena
 			material->EnableTexture(type, useTexture);
 	}
 
-	void MaterialEditorPanel::SetActiveMaterial(const AssetHandleRef<MaterialAsset>& material)
+	void MaterialEditorPanel::SetActiveMaterial(AssetHandle material)
 	{
 		m_ActiveMaterial = material;
 		ImGui::SetWindowFocus("Material Editor");

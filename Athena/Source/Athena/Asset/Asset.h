@@ -36,6 +36,7 @@ namespace Athena
 	class ATHENA_API Asset
 	{
 	public:
+		virtual ~Asset() = default;
 		virtual AssetType GetAssetType() const = 0;
 
 		AssetHandle Handle = 0;

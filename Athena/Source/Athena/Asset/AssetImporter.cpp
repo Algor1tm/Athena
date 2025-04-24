@@ -161,26 +161,22 @@ namespace Athena
 			{
 				assetsToRemove.push_back(handle);
 			}
+
 			else if (!meta.IsMemoryOnly)
 			{
 				uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
 
-				if (!m_AssetsLastWriteTimeMap.contains(handle))
+				// Check old timestamp or emplace new if does not contain handle
+				m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp, &assetsToReload](std::pair<const AssetHandle, uint64>& element)
 				{
-					m_AssetsLastWriteTimeMap.insert({ handle, timestamp });
-				}
-				else
-				{
-					uint64 oldTimestamp = m_AssetsLastWriteTimeMap.at(handle);
+					auto& [handle, oldTimestamp] = element;
+
 					if (oldTimestamp != timestamp)
 					{
 						assetsToReload.push_back(handle);
-						m_AssetsLastWriteTimeMap.modify_if(handle, [timestamp](std::pair<const AssetHandle, uint64>& element) 
-						{
-							element.second = timestamp;
-						});
+						oldTimestamp = timestamp;
 					}
-				}
+				}, timestamp);
 			}
 		});
 
@@ -189,8 +185,11 @@ namespace Athena
 		for (AssetHandle handle : assetsToRemove)
 		{
 			AssetMetadata meta = m_Registry->GetMetadata(handle);
-			m_Registry->RemoveAsset(handle);
 
+			if (Project::GetEditorAssetManager()->IsAssetLoaded(handle))
+				Project::GetEditorAssetManager()->UnloadAsset(handle);
+
+			m_Registry->RemoveAsset(handle);
 			m_AssetsLastWriteTimeMap.erase_if(handle, [](auto&) { return true; });
 
 			ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
@@ -251,6 +250,7 @@ namespace Athena
 
 					ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
 						metadata.FilePath, Utils::AssetTypeToString(metadata.Type), handle);
+
 					serialize = true;
 				}
 			}
@@ -258,31 +258,6 @@ namespace Athena
 
 		if(serialize)
 			m_Registry->Serialize();
-	}
-
-	void AssetImporter::UpdateOrAddTimestamp(AssetHandle handle, const FilePath& path)
-	{
-		uint64 timestamp = FileSystem::GetLastWriteTimestamp(path);
-
-		// Update timestamp and reload asset if handle exists otherwise emplace timestamp
-		m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp](std::pair<const AssetHandle, uint64>& element)
-		{
-			const auto& [handle, oldTimeStamp] = element;
-
-			if (oldTimeStamp != timestamp)
-			{
-				if (Project::GetEditorAssetManager()->IsAssetLoaded(handle))
-				{
-					Project::GetEditorAssetManager()->ReloadAsset(handle);
-
-					const AssetMetadata& meta = AssetManager::GetAssetMetadata(handle);
-					ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Reloading asset (path - {}, type - {}, handle - {})",
-						meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
-				}
-
-				element.second = timestamp;
-			}
-		}, timestamp);
 	}
 
 	String AssetImporter::GetAssetExtensions(AssetType assetType) const

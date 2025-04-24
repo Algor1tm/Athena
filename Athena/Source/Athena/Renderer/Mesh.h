@@ -66,7 +66,7 @@ namespace Athena
 		Ref<VertexBuffer> VertexBuffer;
 	};
 
-	using MaterialTable = std::unordered_map<String, AssetHandleRef<MaterialAsset>>;
+	using MaterialTable = std::unordered_map<String, AssetHandle>;
 
 	class ATHENA_API StaticMesh
 	{

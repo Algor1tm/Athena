@@ -8,12 +8,12 @@
 
 namespace Athena
 {
-	template <class K, class V>
+	template <class K, class V, size_t N>
 	using ParallelFlatHashMap = phmap::parallel_flat_hash_map<K, V, 
 		phmap::priv::hash_default_hash<K>, 
 		phmap::priv::hash_default_eq<K>, 
 		phmap::priv::Allocator<phmap::priv::Pair<const K, V>>, 
-		2, std::mutex>;
+		N, std::mutex>;
 
 	class AssetRegistry;
 
@@ -35,13 +35,12 @@ namespace Athena
 	private:
 		void AssetThreadFunction();
 		void MonitorAssets();
-		void UpdateOrAddTimestamp(AssetHandle handle, const FilePath& path);
 
 	private:
 		AssetRegistry* m_Registry = nullptr;
 		std::unordered_map<AssetType, Ref<AssetSerializer>> m_Serializers;
 
-		ParallelFlatHashMap<AssetHandle, uint64> m_AssetsLastWriteTimeMap;
+		ParallelFlatHashMap<AssetHandle, uint64, 2> m_AssetsLastWriteTimeMap;
 
 		Thread m_AssetThread;
 		bool m_JoinAssetThread = false;

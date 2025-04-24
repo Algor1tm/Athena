@@ -402,7 +402,7 @@ namespace Athena
 
 			if (ImGui::MenuItem("Reload"))
 			{
-				// TODO
+				Project::GetEditorAssetManager()->ReloadAsset(GetAssetHandle());
 			}
 
 			if (ImGui::MenuItem("Open Externally"))

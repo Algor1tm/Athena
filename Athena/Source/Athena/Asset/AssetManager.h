@@ -10,9 +10,9 @@ namespace Athena
 	{
 	public:
 		template<typename T>
-		static WeakRef<T> GetAsset(AssetHandle handle)
+		static Ref<T> GetAsset(AssetHandle handle)
 		{
-			WeakRef<Asset> asset = Project::GetActive()->GetAssetManager()->GetAsset(handle);
+			Ref<Asset> asset = Project::GetActive()->GetAssetManager()->GetAsset(handle);
 			return asset.As<T>();
 		}
 
@@ -50,68 +50,5 @@ namespace Athena
 		{
 			return Project::GetAssetDirectory() / path;
 		}
-	};
-
-
-	template <typename T>
-	class AssetHandleRef
-	{
-	public:
-		AssetHandleRef() = default;
-
-		AssetHandleRef(AssetHandle handle)
-			: m_Handle(handle)
-		{
-			
-		}
-
-		Ref<T> Get() const
-		{
-			if(IsExpired())
-			{
-				m_Asset = AssetManager::GetAsset<T>(m_Handle);
-			}
-
-			return m_Asset.Lock();
-		}
-
-		AssetHandle GetHandle() const
-		{
-			return m_Handle;
-		}
-			
-		AssetType GetAssetType() const
-		{
-			if (IsExpired())
-				return AssetType::None;
-
-			return m_Asset->GetAssetType();
-		}
-
-		bool IsExpired() const
-		{
-			return m_Asset == nullptr || m_Asset.Expired();
-		}
-
-		operator AssetHandle() const { return m_Handle; }
-
-		bool operator==(const AssetHandleRef& other) const
-		{
-			return m_Handle == other.m_Handle;
-		}
-
-		bool operator!=(const AssetHandleRef& other) const
-		{
-			return m_Handle != other.m_Handle;
-		}
-
-		explicit operator bool() const
-		{
-			return m_Handle != 0;
-		}
-
-	private:
-		mutable WeakRef<T> m_Asset = nullptr;
-		AssetHandle m_Handle = 0;
 	};
 }

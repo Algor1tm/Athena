@@ -16,19 +16,18 @@ namespace Athena
 
 	}
 
-	WeakRef<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
+	Ref<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 	{
 		ATN_PROFILE_FUNC();
 
-		if (!IsAssetHandleValid(handle))
-			return nullptr;
+		Ref<Asset> asset;
 
-		WeakRef<Asset> asset;
-		if (IsAssetLoaded(handle))
+		bool isAssetLoaded = m_LoadedAssets.if_contains(handle, [&asset](const std::pair<AssetHandle, Ref<Asset>>& element) 
 		{
-			asset = m_LoadedAssets.at(handle);
-		}
-		else
+			asset = element.second;
+		});
+
+		if(!isAssetLoaded && IsAssetHandleValid(handle))
 		{
 			Ref<Asset> loadedAsset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
 			if (loadedAsset)
@@ -99,6 +98,14 @@ namespace Athena
 			m_LoadedAssets.insert({ handle, asset });
 		else
 			ATN_CORE_ERROR_TAG("AssetManager", "Failed to reload asset, handle - {}!", handle);
+	}
+
+	void EditorAssetManager::UnloadAsset(AssetHandle handle)
+	{
+		if (!IsAssetHandleValid(handle) || !IsAssetLoaded(handle))
+			return;
+
+		m_LoadedAssets.erase(handle);
 	}
 
 	void EditorAssetManager::SerializeAllAssets()

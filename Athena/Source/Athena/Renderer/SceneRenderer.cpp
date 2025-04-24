@@ -1029,8 +1029,9 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			AssetHandleRef<MaterialAsset> materialHandle = materialTable.at(subMeshes[i].MaterialName);
-			Ref<MaterialAsset> materialAsset = materialHandle ? materialHandle.Get() : MaterialAsset::GetDefault();
+			AssetHandle materialHandle = materialTable.at(subMeshes[i].MaterialName);
+			Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+			materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
 			materialAsset->UpdateTextureAssets();
 
 			StaticDrawCall drawCall;
@@ -1049,8 +1050,9 @@ namespace Athena
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
-			AssetHandleRef<MaterialAsset> materialHandle = materialTable.at(subMeshes[i].MaterialName);
-			Ref<MaterialAsset> materialAsset = materialHandle ? materialHandle.Get() : MaterialAsset::GetDefault();
+			AssetHandle materialHandle = materialTable.at(subMeshes[i].MaterialName);
+			Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+			materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
 			materialAsset->UpdateTextureAssets();
 
 			AnimDrawCall drawCall;

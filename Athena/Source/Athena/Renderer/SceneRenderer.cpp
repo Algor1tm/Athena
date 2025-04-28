@@ -42,11 +42,6 @@ namespace Athena
 
 		m_BonesDataOffset = 0;
 
-		// For now instance rendering does not fully used, because we do not
-		// reuse vertex buffers, (every vertex buffer has only 1 instance).
-		// To fix that, we need some sort of Asset Manager to store 'MeshSource', to which
-		// StaticMeshes would refer to.
-
 		VertexMemoryLayout instanceLayout = {
 				{ ShaderDataType::Float3, "a_TRow0" },
 				{ ShaderDataType::Float3, "a_TRow1" },
@@ -1000,6 +995,9 @@ namespace Athena
 
 	void SceneRenderer::Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform)
 	{
+		SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
+
+#if ANIMATIONS
 		if (mesh->HasAnimations())
 		{
 			SubmitAnimMesh(m_AnimGeometryList, mesh, mesh->GetAnimator(), transform);
@@ -1008,10 +1006,14 @@ namespace Athena
 		{
 			SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
 		}
+#endif
 	}
 
 	void SceneRenderer::SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform)
 	{
+		SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
+
+#if ANIMATIONS
 		if (mesh->HasAnimations())
 		{
 			SubmitAnimMesh(m_SelectAnimGeometryList, mesh, mesh->GetAnimator(), transform);
@@ -1020,15 +1022,29 @@ namespace Athena
 		{
 			SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
 		}
+#endif
 	}
 
-	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& staticMesh, const Matrix4& transform)
 	{
-		const auto& subMeshes = mesh->GetAllSubMeshes();
-		const auto& materialTable = mesh->GetMaterialTable();
+		AssetHandle meshSourceHandle = staticMesh->GetMeshSource();
+		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+
+		if (!meshSource)
+			return;
+
+		const auto& subMeshes = meshSource->GetSubMeshes();
+		const auto& materialTable = staticMesh->GetMaterialTable();
+		const auto& subMeshIndices = staticMesh->GetSubMeshIndices();
 
 		for (uint32 i = 0; i < subMeshes.size(); ++i)
 		{
+			if (!subMeshIndices.empty())
+			{
+				if (std::find(subMeshIndices.begin(), subMeshIndices.end(), i) == subMeshIndices.end())
+					continue;
+			}
+
 			AssetHandle materialHandle = materialTable.at(subMeshes[i].MaterialName);
 			Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
 			materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
@@ -1045,6 +1061,7 @@ namespace Athena
 
 	void SceneRenderer::SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform)
 	{
+#if ANIMATIONS
 		const auto& subMeshes = mesh->GetAllSubMeshes();
 		const auto& materialTable = mesh->GetMaterialTable();
 
@@ -1068,6 +1085,7 @@ namespace Athena
 
 			list.Push(drawCall);
 		}
+#endif
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)

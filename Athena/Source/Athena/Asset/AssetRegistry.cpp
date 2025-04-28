@@ -47,24 +47,15 @@ namespace Athena
 		});
 	}
 
-	const AssetMetadata& AssetRegistry::GetMetadata(AssetHandle handle) const
+	AssetMetadata AssetRegistry::GetMetadata(AssetHandle handle) const
 	{
-		static const AssetMetadata s_NullMetadata;
-
-#if 1
-		if(m_Registry.contains(handle));
-			return m_Registry.at(handle);
-
-		return s_NullMetadata;
-#else
-		const AssetMetadata* result = &s_NullMetadata;
-		m_Registry.if_contains(handle, [&result](const std::pair<AssetHandle, AssetMetadata>& element)
+		AssetMetadata result;
+		m_Registry.if_contains(handle, [&result] (const std::pair<AssetHandle, AssetMetadata>& element)
 		{
-			result = &element.second;
+			result = element.second;
 		});
 
-		return *result;
-#endif
+		return result;
 	}
 
 	bool AssetRegistry::IsAssetHandlePresent(AssetHandle handle) const

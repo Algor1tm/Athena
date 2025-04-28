@@ -72,6 +72,11 @@ namespace Athena
 			return GetScriptsDirectory() / s_ScriptsBinaryPath;
 		}
 
+		static const FilePath& GetProjectFileExtension()
+		{
+			return s_ProjectFileExtension;
+		}
+
 		FilePath GetProjectPath() const;
 		ProjectConfig& GetConfig() { return m_Config; }
 
@@ -88,6 +93,7 @@ namespace Athena
 		static void Shutdown();
 
 	private:
+		static const inline FilePath s_ProjectFileExtension = ".athproj";
 		static const inline FilePath s_AssetDirectory = "Assets";
 		static const inline FilePath s_AssetRegistryPath = "AssetRegistry.athreg";
 		static const inline FilePath s_ScriptsDirectory = "Scripts";

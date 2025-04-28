@@ -279,20 +279,7 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
-
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-			auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
+		UpdateAnimations(frameTime);
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)
@@ -312,21 +299,7 @@ namespace Athena
 			}
 		}
 
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-			auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
-
-		// Physics
+		UpdateAnimations(frameTime);
 		UpdatePhysics(frameTime);
 	}
 
@@ -335,21 +308,7 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
-
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-				auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
-
+		UpdateAnimations(frameTime);
 		UpdatePhysics(frameTime);
 	}
 
@@ -463,6 +422,23 @@ namespace Athena
 			for (auto& child : children)
 				UpdateWorldTransform(child, worldTransform);
 		}
+	}
+
+	void Scene::UpdateAnimations(Time frameTime)
+	{
+#if ANIMATIONS
+		ATN_PROFILE_FUNC();
+
+		auto view = m_Registry.view<StaticMeshComponent>();
+		for (auto entity : view)
+		{
+			auto& meshComponent = view.get<StaticMeshComponent>(entity);
+			if (meshComponent.Mesh->HasAnimations())
+			{
+				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+			}
+		}
+#endif
 	}
 
 	void Scene::OnPhysics2DStart()
@@ -650,7 +626,10 @@ namespace Athena
 
 			if (meshComponent.Visible)
 			{
-				renderer->Submit(meshComponent.Mesh, transform.AsMatrix());
+				Ref<StaticMesh> staticMesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+
+				if(staticMesh)
+					renderer->Submit(staticMesh, transform.AsMatrix());
 			}
 		}
 

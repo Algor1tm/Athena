@@ -59,6 +59,7 @@ namespace Athena
 		}
 	};
 
+#if 0
 	struct SubMesh
 	{
 		String Name;
@@ -97,4 +98,62 @@ namespace Athena
 		Ref<Skeleton> m_Skeleton;
 		Ref<Animator> m_Animator;
 	};
+#else
+
+	struct SubMesh
+	{
+		String Name;
+		String MaterialName;
+		Ref<VertexBuffer> VertexBuffer;
+		std::vector<uint32> Children;
+		AABB AABB;
+	};
+
+	using MaterialTable = std::unordered_map<String, AssetHandle>;
+
+	class ATHENA_API MeshSource: public Asset
+	{
+	public:
+		static Ref<MeshSource> Create();
+
+		virtual AssetType GetAssetType() const override { return AssetType::MeshSource; }
+
+		bool HasSubMeshes() const { return !m_SubMeshes.empty(); }
+		const std::vector<SubMesh>& GetSubMeshes() const { return m_SubMeshes; }
+		const SubMesh& GetSubMesh(uint32 index) const { return m_SubMeshes[index]; }
+		const SubMesh& GetRootSubMesh() const { return GetSubMesh(0); }
+
+		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
+		const AABB& GetBoundingBox() const { return m_AABB; }
+
+	private:
+		std::vector<SubMesh> m_SubMeshes;
+		MaterialTable m_MaterialTable;
+		AABB m_AABB;
+
+		friend class AssimpImporter;
+	};
+
+
+	class ATHENA_API StaticMesh : public Asset
+	{
+	public:
+		static Ref<StaticMesh> Create();
+		static Ref<StaticMesh> Create(AssetHandle meshSourceHandle);
+
+		virtual AssetType GetAssetType() const override { return AssetType::StaticMesh; }
+
+		AssetHandle GetMeshSource() const { return m_MeshSource; }
+		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
+		const std::vector<uint32>& GetSubMeshIndices() const { return m_SubMeshIndices; }
+
+	private:
+		AssetHandle m_MeshSource;
+		MaterialTable m_MaterialTable;
+		std::vector<uint32> m_SubMeshIndices;
+
+		friend class StaticMeshSerializer;
+	};
+
+#endif
 }

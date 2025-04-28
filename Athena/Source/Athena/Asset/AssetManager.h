@@ -26,12 +26,12 @@ namespace Athena
 			return Project::GetActive()->GetAssetManager()->IsAssetLoaded(handle);
 		}
 
-		static const AssetMetadata& GetAssetMetadata(AssetHandle handle)
+		static AssetMetadata GetAssetMetadata(AssetHandle handle)
 		{
 			return Project::GetActive()->GetAssetManager()->GetAssetMetadata(handle);
 		}
 
-		static const FilePath& GetAssetFilePath(AssetHandle handle)
+		static FilePath GetAssetFilePath(AssetHandle handle)
 		{
 			return Project::GetActive()->GetAssetManager()->GetAssetFilePath(handle);
 		}

@@ -551,8 +551,8 @@ namespace Athena
 			ImVec2 cursor = ImGui::GetCursorPos();
 			if (ImGui::Button("Browse"))
 			{
-				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
-				FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
+				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
 				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
@@ -612,8 +612,8 @@ namespace Athena
 
 			if (ImGui::Button(fontName.c_str()))
 			{
-				String fontExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Font);
-				FilePath filepath = FileDialogs::OpenFile("Select Font", { "Font files", fontExts }, Project::GetAssetDirectory());
+				std::vector<String> fontExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Font);
+				FilePath filepath = FileDialogs::OpenFile("Select Font", "Font files", fontExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
 				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
@@ -744,19 +744,30 @@ namespace Athena
 
 		DrawComponent<StaticMeshComponent>(entity, "StaticMesh", [this, entity](StaticMeshComponent& meshComponent)
 		{
-			String name = meshComponent.Mesh->GetFilePath().filename().string();
+			Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+			bool isMeshValid = mesh != nullptr;
 
-			UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
+			String name = isMeshValid ? AssetManager::GetAssetFilePath(meshComponent.MeshHandle).stem().string() : "<Invalid>";
+
+			UI::PropertyRow("StaticMesh", ImGui::GetFrameHeight() + 2);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
+			if(!isMeshValid)
+				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
 			if (ImGui::Button(name.c_str()))
 			{
-				String meshExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh);
-				FilePath filepath = FileDialogs::OpenFile("Select Mesh", { "Mesh files", meshExts }, Project::GetAssetDirectory());
-				String ext = filepath.extension().string();
-				if (!filepath.empty())
-					meshComponent.Mesh = StaticMesh::Create(filepath);
+				std::vector<String> meshExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh);
+				FilePath filepath = FileDialogs::OpenFile("Select Mesh", "Mesh files", meshExts, Project::GetAssetDirectory());
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
+
+				if (AssetManager::IsAssetHandleValid(handle))
+				{
+					meshComponent.MeshHandle = handle;
+				}
 			}
 
+			if (!isMeshValid)
+				ImGui::PopStyleColor();
 			ImGui::PopStyleVar();
 
 			if (ImGui::BeginDragDropTarget())
@@ -766,7 +777,9 @@ namespace Athena
 					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
 					if (cbPayload->AssetType == AssetType::StaticMesh)
-						meshComponent.Mesh = StaticMesh::Create(cbPayload->FilePath);
+					{
+						meshComponent.MeshHandle = cbPayload->AssetHandle;
+					}
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -774,9 +787,9 @@ namespace Athena
 			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 			UI::EndPropertyTable();
 
-			if (UI::TreeNode("Materials", true, true) && UI::BeginPropertyTable())
+			if (isMeshValid && UI::TreeNode("Materials", true, true) && UI::BeginPropertyTable())
 			{
-				MaterialTable& table = meshComponent.Mesh->GetMaterialTable();
+				MaterialTable& table = mesh->GetMaterialTable();
 
 				for (auto& [name, materialHandle] : table)
 				{
@@ -815,9 +828,24 @@ namespace Athena
 				}
 
 				UI::EndPropertyTable();
+
+				if (!table.empty())
+				{
+					if (ImGui::Button("Reset"))
+					{
+						AssetHandle meshSourceHandle = mesh->GetMeshSource();
+						Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+						if (meshSource)
+						{
+							mesh->GetMaterialTable() = meshSource->GetMaterialTable();
+						}
+					}
+				}
+
 				UI::TreePop();
 			}
 
+#if ANIMATIONS
 			Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
 			if (animator)
 			{
@@ -867,6 +895,7 @@ namespace Athena
 					ImGui::Spacing();
 				}
 			}
+#endif
 
 			return false;
 		});
@@ -966,8 +995,8 @@ namespace Athena
 
 				if (ImGui::Button(label.data()))
 				{
-					String envMapExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::EnvironmentMap);
-					FilePath filepath = FileDialogs::OpenFile("Select Environment map", { "HDR files", envMapExts }, Project::GetAssetDirectory());
+					std::vector<String> envMapExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::EnvironmentMap);
+					FilePath filepath = FileDialogs::OpenFile("Select Environment map", "EnvMap files", envMapExts, Project::GetAssetDirectory());
 					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
 					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))

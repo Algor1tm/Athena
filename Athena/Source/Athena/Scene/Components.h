@@ -173,18 +173,8 @@ namespace Athena
 
 	struct StaticMeshComponent
 	{
-		Ref<StaticMesh> Mesh;
+		AssetHandle MeshHandle = 0;
 		bool Visible = true;
-
-		StaticMeshComponent() = default;
-		StaticMeshComponent(StaticMeshComponent&& other) = default;
-		StaticMeshComponent& operator=(StaticMeshComponent&& other) noexcept = default;
-
-		StaticMeshComponent(const StaticMeshComponent& other)
-		{
-			Mesh = StaticMesh::Create(other.Mesh->GetFilePath());
-			Visible = other.Visible;
-		}
 	};
 
 	struct DirectionalLightComponent

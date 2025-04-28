@@ -14,6 +14,8 @@
 
 namespace Athena
 {
+
+#if 0
 	static Matrix4 ConvertaiMatrix4x4(const aiMatrix4x4& input)
 	{
 		Matrix4 output;
@@ -71,7 +73,7 @@ namespace Athena
 				uint32 height = embeddedTex->mHeight;
 
 				options.Name = String(texFilepath.C_Str(), texFilepath.length);
-				Ref<Texture2D> texture = TextureImporter::Load(data, width, height, options);
+				Ref<Texture2D> texture = TextureImporter::LoadFromMemory(data, width, height, options);
 
 				handle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(texture);
 			}
@@ -525,4 +527,32 @@ namespace Athena
 
 		return result;
 	}
+
+#else
+
+	Ref<MeshSource> MeshSource::Create()
+	{
+		Ref<MeshSource> result = Ref<MeshSource>::Create();
+		return result;
+	}
+
+	Ref<StaticMesh> StaticMesh::Create()
+	{
+		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
+		return result;
+	}
+
+	Ref<StaticMesh> StaticMesh::Create(AssetHandle meshSourceHandle)
+	{
+		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
+		result->m_MeshSource = meshSourceHandle;
+
+		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+		if (meshSource)
+			result->m_MaterialTable = meshSource->GetMaterialTable();
+
+		return result;
+	}
+
+#endif
 }

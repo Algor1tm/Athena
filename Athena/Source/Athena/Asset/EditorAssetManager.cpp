@@ -131,7 +131,7 @@ namespace Athena
 		return m_AssetImporter.GetAssetThread();
 	}
 
-	String EditorAssetManager::GetAssetExtensions(AssetType type) const
+	std::vector<String> EditorAssetManager::GetAssetExtensions(AssetType type) const
 	{
 		return m_AssetImporter.GetAssetExtensions(type);
 	}
@@ -151,12 +151,12 @@ namespace Athena
 		return m_LoadedAssets.contains(handle);
 	}
 
-	const AssetMetadata& EditorAssetManager::GetAssetMetadata(AssetHandle handle) const
+	AssetMetadata EditorAssetManager::GetAssetMetadata(AssetHandle handle) const
 	{
 		return m_AssetRegistry.GetMetadata(handle);
 	}
 
-	const FilePath& EditorAssetManager::GetAssetFilePath(AssetHandle handle) const
+	FilePath EditorAssetManager::GetAssetFilePath(AssetHandle handle) const
 	{
 		return GetAssetMetadata(handle).FilePath;
 	}

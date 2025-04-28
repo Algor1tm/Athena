@@ -14,35 +14,53 @@ AssetRegistry:
   - Handle: 11174151153480264062
     Type: EnvironmentMap
     FilePath: EnvironmentMaps/birchwood_4k.hdr
-  - Handle: 17065555099454351424
+  - Handle: 13409615286462765522
     Type: StaticMesh
+    FilePath: Meshes/StormTrooper/silly_dancing.athsmesh
+  - Handle: 17065555099454351424
+    Type: MeshSource
     FilePath: Meshes/Beretta Pistol/Beretta Pistol.fbx
   - Handle: 13247449540892487772
     Type: Scene
     FilePath: Scenes/Default.athscene
+  - Handle: 16170110841370161099
+    Type: StaticMesh
+    FilePath: Meshes/sphere.athsmesh
   - Handle: 860916470846244261
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_AO.png
+  - Handle: 9727380278907355584
+    Type: StaticMesh
+    FilePath: ""
   - Handle: 15430728820339138913
     Type: Texture2D
     FilePath: Meshes/StormTrooper/Stormtrooper_D.png
-  - Handle: 11289512594653657306
+  - Handle: 18444694305681452675
     Type: StaticMesh
+    FilePath: ""
+  - Handle: 12083617822915060991
+    Type: StaticMesh
+    FilePath: Meshes/BlenderScene.athsmesh
+  - Handle: 11289512594653657306
+    Type: MeshSource
     FilePath: Meshes/sphere.fbx
   - Handle: 3174591702803177663
     Type: Texture2D
     FilePath: Textures/CheckerBoard.png
+  - Handle: 663441017678479312
+    Type: Material
+    FilePath: Materials/PinkEmission.athmat
   - Handle: 9141393116795559148
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Roughness.png
   - Handle: 2140758976035799956
-    Type: StaticMesh
+    Type: MeshSource
     FilePath: Meshes/BlenderScene.fbx
   - Handle: 3431491884888911668
     Type: Texture2D
     FilePath: Textures/KomodoHype.png
   - Handle: 6186599421826963148
-    Type: StaticMesh
+    Type: MeshSource
     FilePath: Meshes/Spiderman/Spiderman.fbx
   - Handle: 4500562739613717932
     Type: Material
@@ -63,16 +81,16 @@ AssetRegistry:
     Type: EnvironmentMap
     FilePath: EnvironmentMaps/pink_sunrise_4k.hdr
   - Handle: 5920663317082161775
-    Type: StaticMesh
+    Type: MeshSource
     FilePath: Meshes/Cube.obj
   - Handle: 7143697624017245163
     Type: Texture2D
     FilePath: Textures/SpriteSheet.png
   - Handle: 4389979150323559025
-    Type: StaticMesh
+    Type: MeshSource
     FilePath: Meshes/StormTrooper/silly_dancing.fbx
   - Handle: 5724705814926487573
-    Type: StaticMesh
+    Type: MeshSource
     FilePath: Meshes/Sponza.fbx
   - Handle: 11714994014629288087
     Type: Font
@@ -83,3 +101,6 @@ AssetRegistry:
   - Handle: 15642514531261812338
     Type: Texture2D
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Normal.png
+  - Handle: 13751067430993163149
+    Type: StaticMesh
+    FilePath: Meshes/Cube.athsmesh

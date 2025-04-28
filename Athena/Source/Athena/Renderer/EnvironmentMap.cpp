@@ -169,7 +169,7 @@ namespace Athena
 			return;
 		}
 
-		Ref<Texture2D> panorama = TextureImporter::Load(m_FilePath, TextureImportOptions());
+		Ref<Texture2D> panorama = TextureImporter::Import(m_FilePath, TextureImportOptions());
 		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
 
 		m_PanoramaToCubePass->Begin(commandBuffer);

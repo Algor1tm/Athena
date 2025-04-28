@@ -133,6 +133,7 @@ EXPORTS
 	?PushStyleVar@ImGui@@YAXHM@Z
 	?PushStyleVar@ImGui@@YAXHAEBUImVec2@@@Z
 	?PushTextWrapPos@ImGui@@YAXM@Z
+	?RadioButton@ImGui@@YA_NPEBD_N@Z
 	?SameLine@ImGui@@YAXMM@Z
 	?Separator@ImGui@@YAXXZ
 	?SetActiveID@ImGui@@YAXIPEAUImGuiWindow@@@Z

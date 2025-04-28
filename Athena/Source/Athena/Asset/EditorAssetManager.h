@@ -23,8 +23,8 @@ namespace Athena
 		virtual bool IsAssetHandleValid(AssetHandle handle) const override;
 		virtual bool IsAssetLoaded(AssetHandle handle) const override;
 
-		virtual const AssetMetadata& GetAssetMetadata(AssetHandle handle) const override;
-		virtual const FilePath& GetAssetFilePath(AssetHandle handle) const override;
+		virtual AssetMetadata GetAssetMetadata(AssetHandle handle) const override;
+		virtual FilePath GetAssetFilePath(AssetHandle handle) const override;
 		virtual AssetType GetAssetType(AssetHandle handle) const override;
 
 		AssetHandle AddMemoryOnlyAsset(const Ref<Asset>& asset);
@@ -37,7 +37,7 @@ namespace Athena
 
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
 		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
-		String GetAssetExtensions(AssetType type) const;
+		std::vector<String> GetAssetExtensions(AssetType type) const;
 
 		Thread& GetAssetThread();
 

@@ -296,9 +296,7 @@ namespace Athena
 					{
 						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
 
-						FilePath path = staticMeshComponentNode["FilePath"].as<FilePath>();
-
-						meshComp.Mesh = StaticMesh::Create(path);
+						meshComp.MeshHandle = staticMeshComponentNode["MeshHandle"].as<AssetHandle>();
 						meshComp.Visible = staticMeshComponentNode["Visible"].as<bool>();
 					}
 				}
@@ -579,8 +577,7 @@ namespace Athena
 		SerializeComponent<StaticMeshComponent>(out, "StaticMeshComponent", entity,
 			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
 			{
-				Ref<StaticMesh> mesh = meshComponent.Mesh;
-				output << YAML::Key << "FilePath" << YAML::Value << mesh->GetFilePath();
+				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
 				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
 			});
 

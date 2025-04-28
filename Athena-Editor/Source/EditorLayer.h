@@ -31,6 +31,7 @@ namespace Athena
 	{
 	public:
 		EditorLayer(const EditorConfig& config);
+		~EditorLayer();
 
 		void OnAttach() override;
 		void OnDetach() override;
@@ -44,10 +45,12 @@ namespace Athena
 
 		void InitUI();
 		void OnRender2D();
+
 		void DrawAboutModal();
 		void DrawThemeEditor();
 		void DrawNewProjectModal();
 		void DrawNewScriptModal();
+		void DrawCreateNewMeshModal();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -82,10 +85,10 @@ namespace Athena
 
 		Ref<Titlebar> m_Titlebar;
 
-		// Create scene assets or no?..
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
 
 		FilePath m_CurrentScenePath;
 		bool m_IsUIInitialized = false;
+		AssetHandle m_MeshSourceHandle = 0;
 	};
 }

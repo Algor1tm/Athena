@@ -15,8 +15,8 @@ namespace Athena
 
 		virtual bool IsAssetHandleValid(AssetHandle handle) const = 0;
 		virtual bool IsAssetLoaded(AssetHandle handle) const = 0;
-		virtual const AssetMetadata& GetAssetMetadata(AssetHandle handle) const = 0;
-		virtual const FilePath& GetAssetFilePath(AssetHandle handle) const = 0;
+		virtual AssetMetadata GetAssetMetadata(AssetHandle handle) const = 0;
+		virtual FilePath GetAssetFilePath(AssetHandle handle) const = 0;
 		virtual AssetType GetAssetType(AssetHandle handle) const = 0;
 	};
 }

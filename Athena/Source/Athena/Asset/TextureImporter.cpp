@@ -22,15 +22,15 @@ namespace Athena
 	}
 
 
-	Ref<Texture2D> TextureImporter::Load(const FilePath& filepath, bool sRGB)
+	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath, bool sRGB)
 	{
 		TextureImportOptions options;
 		options.sRGB = sRGB;
 
-		return Load(filepath, options);
+		return Import(filepath, options);
 	}
 
-	Ref<Texture2D> TextureImporter::Load(const FilePath& filepath, const TextureImportOptions& options)
+	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath, const TextureImportOptions& options)
 	{
 		ATN_CORE_VERIFY(FileSystem::Exists(filepath));
 		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
@@ -59,8 +59,7 @@ namespace Athena
 
 		if (data == nullptr || format == TextureFormat::NONE)
 		{
-			ATN_CORE_ERROR("Failed to load image from {}, width = {}, height = {}, channels = {}", filepath, width, height, channels);
-			ATN_CORE_VERIFY(false);
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from{}, (width = {}, height = {}, channels = {})", filepath, width, height, channels);
 			return nullptr;
 		}
 
@@ -96,7 +95,7 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Texture2D> TextureImporter::Load(const void* inputData, uint32 inputWidth, uint32 inputHeight, const TextureImportOptions& options)
+	Ref<Texture2D> TextureImporter::LoadFromMemory(const void* inputData, uint32 inputWidth, uint32 inputHeight, const TextureImportOptions& options)
 	{
 		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
 
@@ -114,8 +113,7 @@ namespace Athena
 
 		if (data == nullptr || format == TextureFormat::NONE)
 		{
-			ATN_CORE_ERROR("Failed to load image from memory '{}', width = {}, height = {}, channels = {}", options.Name, width, height, channels);
-			ATN_CORE_ASSERT(false);
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture from memory, (name = {}, width = {}, height = {}, channels = {})", options.Name, width, height, channels);
 			return nullptr;
 		}
 
@@ -213,7 +211,7 @@ namespace Athena
 		return newData;
 	}
 
-	void TextureExporter::ExportPNG(const FilePath& path, const Ref<Texture2D>& texture)
+	void TextureExporter::ExportAsPNG(const FilePath& path, const Ref<Texture2D>& texture)
 	{
 		Buffer buffer;
 

@@ -127,8 +127,8 @@ namespace Athena
 
 		if (UI::PropertyImage(TextureTypeToString(type), displayTexture, {imageSize, imageSize,}))
 		{
-			String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
-			FilePath path = FileDialogs::OpenFile("Select Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
+			std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+			FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 			AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
 			if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))

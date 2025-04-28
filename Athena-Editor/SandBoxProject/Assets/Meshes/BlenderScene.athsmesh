@@ -1,0 +1,6 @@
+StaticMesh:
+  MeshSource: 2140758976035799956
+  SubMeshIndices:
+    []
+  Materials:
+    CubeMaterial: 17185742767388132301

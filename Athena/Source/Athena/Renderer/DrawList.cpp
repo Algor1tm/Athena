@@ -150,7 +150,12 @@ namespace Athena
 		for (const auto& drawCall : m_Array)
 		{
 			if (drawCall.Material != instanceMaterial || drawCall.VertexBuffer != instanceVertexBuffer)
+			{
 				instances++;
+			}
+
+			instanceVertexBuffer = drawCall.VertexBuffer;
+			instanceMaterial = drawCall.Material;
 		}
 
 		return instances;

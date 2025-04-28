@@ -10,8 +10,8 @@ Project:
     PositionIterations: 2
     Gravity: [0, -9.80000019]
   EditorState:
-    SelectedEntity: 0
+    SelectedEntity: 5879826436174598342
     ActiveScene: Scenes/Default.athscene
-    CameraPos: [14.2776241, 10.0475054, 13.8743486]
-    CameraPitchYaw: [0.355502874, -1.47600842]
+    CameraPos: [22.8806458, 11.3823967, 9.94893646]
+    CameraPitchYaw: [0.310503036, -1.11151242]
     CameraSpeed: 0.400000006

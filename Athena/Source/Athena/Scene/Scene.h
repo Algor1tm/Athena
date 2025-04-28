@@ -89,6 +89,7 @@ namespace Athena
 	private:
 		void UpdateWorldTransforms();
 		void UpdateWorldTransform(Entity entity, const WorldTransformComponent& parentTransform);
+		void UpdateAnimations(Time frameTime);
 
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);

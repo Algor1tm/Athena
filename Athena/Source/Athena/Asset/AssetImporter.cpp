@@ -1,5 +1,6 @@
 #include "AssetImporter.h"
 #include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/AssimpImporter.h"
 #include "Athena/Asset/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Font.h"
@@ -13,21 +14,31 @@ namespace Athena
 	static std::unordered_map<FilePath, AssetType> s_AssetExtensionMap = {
 		// Textures
 		{ ".png",  AssetType::Texture2D },
-		{ ".jpg",  AssetType::Texture2D },
 		{ ".jpeg", AssetType::Texture2D },
+		{ ".PIC",  AssetType::Texture2D },
+		{ ".gif",  AssetType::Texture2D },
+		{ ".tga",  AssetType::Texture2D },
+		{ ".bmp",  AssetType::Texture2D },
+		{ ".ppm",  AssetType::Texture2D },
+		{ ".pgm",  AssetType::Texture2D },
 
 		// Meshes 
-		{ ".fbx",   AssetType::StaticMesh },
-		{ ".gltf",  AssetType::StaticMesh },
-		{ ".obj",   AssetType::StaticMesh },
-		{ ".blend", AssetType::StaticMesh },
-		{ ".x3d",   AssetType::StaticMesh },
+		{ ".fbx",   AssetType::MeshSource },
+		{ ".gltf",  AssetType::MeshSource },
+		{ ".obj",   AssetType::MeshSource },
+		{ ".blend", AssetType::MeshSource },
+		{ ".x3d",   AssetType::MeshSource },
+		{ ".stl",   AssetType::MeshSource },
+
+		{ ".athsmesh",      AssetType::StaticMesh },
+		{ ".athskelmesh",   AssetType::SkeletalMesh },
 
 		// Environment maps
 		{ ".hdr", AssetType::EnvironmentMap },
 
 		// Fonts
 		{ ".ttf", AssetType::Font },
+		{ ".otf", AssetType::Font },
 		{ ".TTF", AssetType::Font },
 
 		// Scenes
@@ -42,6 +53,7 @@ namespace Athena
 	{
 		m_Serializers[AssetType::Material] = Ref<MaterialSerializer>::Create();
 		m_Serializers[AssetType::Scene] = Ref<SceneAssetSerializer>::Create();
+		m_Serializers[AssetType::StaticMesh] = Ref<StaticMeshSerializer>::Create();
 	}
 
 	AssetImporter::~AssetImporter()
@@ -92,12 +104,23 @@ namespace Athena
 
 		if (assetType == AssetType::Texture2D)
 		{
-			result = TextureImporter::Load(absolutePath, false);
+			result = TextureImporter::Import(absolutePath, false);
 		}
 
 		if (assetType == AssetType::Material)
 		{
 			result = MaterialAsset::Create();
+		}
+
+		if (assetType == AssetType::MeshSource)
+		{
+			AssimpImporter importer(absolutePath);
+			result = importer.ImportToMeshSource();
+		}
+
+		if (assetType == AssetType::StaticMesh)
+		{
+			result = StaticMesh::Create();
 		}
 
 		if (result)
@@ -202,7 +225,7 @@ namespace Athena
 			{
 				Project::GetEditorAssetManager()->ReloadAsset(handle);
 
-				const AssetMetadata& meta = AssetManager::GetAssetMetadata(handle);
+				AssetMetadata meta = AssetManager::GetAssetMetadata(handle);
 				ATN_CORE_INFO_TAG("AssetManager", "(AssetThread) Reloading asset (path - {}, type - {}, handle - {})",
 					meta.FilePath, Utils::AssetTypeToString(meta.Type), handle);
 			}
@@ -260,20 +283,18 @@ namespace Athena
 			m_Registry->Serialize();
 	}
 
-	String AssetImporter::GetAssetExtensions(AssetType assetType) const
+	std::vector<String> AssetImporter::GetAssetExtensions(AssetType assetType) const
 	{
-		String result;
+		std::vector<String> result;
 
 		for (const auto& [ext, type] : s_AssetExtensionMap)
 		{
 			if (assetType == type)
 			{
-				result += fmt::format("*{} ", ext.string());
+				result.push_back(ext.string());
 			}
 		}
-
-		// remove last space
-		result.erase(result.end() - 1);
+		
 		return result;
 	}
 }

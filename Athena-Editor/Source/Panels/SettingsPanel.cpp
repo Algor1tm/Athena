@@ -214,15 +214,15 @@ namespace Athena
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			if (UI::PropertyImage("Dirt Texture", displayTex, { imageSize, imageSize }))
 			{
-				String textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
-				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", { "Texture files", textureExts }, Project::GetAssetDirectory());
+				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				if (!path.empty())
 				{
 					TextureImportOptions options;
 					options.sRGB = false;
 					options.GenerateMipMaps = false;
 
-					bloomSettings.DirtTexture = TextureImporter::Load(path, options);
+					bloomSettings.DirtTexture = TextureImporter::Import(path, options);
 				}
 			}
 

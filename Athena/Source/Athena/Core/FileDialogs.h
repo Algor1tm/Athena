@@ -9,10 +9,12 @@ namespace Athena
 	class ATHENA_API FileDialogs
 	{
 	public:
-		static FilePath OpenFile(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir = "");
-		static std::vector<FilePath> OpenFiles(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir = "");
+		static FilePath OpenFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir = "");
+		static std::vector<FilePath> OpenFiles(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir = "");
 		static FilePath OpenDirectory(const String& dialogName, const FilePath& startDir = "");
+		static FilePath SaveFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir = "");
 
-		static FilePath SaveFile(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir = "");
+	private:
+		static std::vector<String> GetFilters(const String& extlabel, const std::vector<String>& exts);
 	};
 }

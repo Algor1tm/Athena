@@ -467,7 +467,7 @@ namespace Athena
 
 	void ContentBrowserPanel::OnImGuiRender()
 	{
-		ImGui::Begin("ContentBrowser");
+		ImGui::Begin("ContentBrowser", nullptr, ImGuiWindowFlags_NoScrollbar);
 		
 		RenderHeadBar();
 
@@ -542,7 +542,8 @@ namespace Athena
 			{
 				if (ImGui::MenuItem("Material"))
 				{
-					FilePath path = CreateUniqueFile("NewMaterial", ".athmat");
+					String ext = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Material)[0];
+					FilePath path = CreateUniqueFile("NewMaterial", ext);
 
 					Ref<MaterialAsset> asset = MaterialAsset::Create();
 					Project::GetEditorAssetManager()->AddAsset(asset, path);
@@ -551,7 +552,8 @@ namespace Athena
 
 				if (ImGui::MenuItem("Scene"))
 				{
-					FilePath path = CreateUniqueFile("NewScene", ".athscene");
+					String ext = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene)[0];
+					FilePath path = CreateUniqueFile("NewScene", ext);
 
 					Ref<Scene> asset = Ref<Scene>::Create();
 					Project::GetEditorAssetManager()->AddAsset(asset, path);

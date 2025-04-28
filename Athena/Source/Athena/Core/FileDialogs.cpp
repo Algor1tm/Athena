@@ -6,10 +6,10 @@
 
 namespace Athena
 {
-	FilePath FileDialogs::OpenFile(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir)
+	FilePath FileDialogs::OpenFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
 		Project::GetEditorAssetManager()->GetAssetThread().Pause();
-		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), filters, false).result();
+		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), false).result();
 		Project::GetEditorAssetManager()->GetAssetThread().Resume();
 
 		if (!selection.empty())
@@ -18,10 +18,10 @@ namespace Athena
 		return "";
 	}
 
-	std::vector<FilePath> FileDialogs::OpenFiles(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir)
+	std::vector<FilePath> FileDialogs::OpenFiles(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
 		Project::GetEditorAssetManager()->GetAssetThread().Pause();
-		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), filters, true).result();
+		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
 		Project::GetEditorAssetManager()->GetAssetThread().Resume();
 
 		if (!selection.empty())
@@ -47,12 +47,27 @@ namespace Athena
 		return selection;
 	}
 
-	FilePath FileDialogs::SaveFile(const String& dialogName, const std::vector<String>& filters, const FilePath& defaultDir)
+	FilePath FileDialogs::SaveFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
 		Project::GetEditorAssetManager()->GetAssetThread().Pause();
-		String selection = pfd::save_file(dialogName, defaultDir.string(), filters, true).result();
+		String selection = pfd::save_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
 		Project::GetEditorAssetManager()->GetAssetThread().Resume();
 
 		return selection;
+	}
+
+	std::vector<String> FileDialogs::GetFilters(const String& label, const std::vector<String>& exts)
+	{
+		String extsString;
+
+		for (const auto& ext: exts)
+		{
+			extsString += fmt::format("*{} ", ext);
+		}
+
+		// remove last space
+		extsString.erase(extsString.end() - 1);
+
+		return { label, extsString };
 	}
 }

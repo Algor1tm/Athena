@@ -74,7 +74,7 @@ namespace Athena
 			options.GenerateMipMaps = false;
 			options.MaxChannelsNum = 1;
 
-			s_Data.BlueNoise = TextureImporter::Load(path, options);
+			s_Data.BlueNoise = TextureImporter::Import(path, options);
 		}
 
 		// SMAA Area texture
@@ -86,7 +86,7 @@ namespace Athena
 			options.sRGB = false;
 			options.GenerateMipMaps = false;
 
-			s_Data.SMAA_AreaLUT = TextureImporter::Load(path, options);
+			s_Data.SMAA_AreaLUT = TextureImporter::Import(path, options);
 		}
 
 		// SMAA Search texture
@@ -98,7 +98,7 @@ namespace Athena
 			options.sRGB = false;
 			options.GenerateMipMaps = false;
 
-			s_Data.SMAA_SearchLUT = TextureImporter::Load(path, options);
+			s_Data.SMAA_SearchLUT = TextureImporter::Import(path, options);
 		}
 
 		// BRDF_LUT

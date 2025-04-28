@@ -44,6 +44,11 @@ namespace Athena
 
     }
 
+    EditorLayer::~EditorLayer()
+    {
+
+    }
+
     void EditorLayer::OnAttach()
     {
         m_EditorCtx = Ref<EditorContext>::Create();
@@ -193,6 +198,9 @@ namespace Athena
         if (UI::BeginPopupModal("New Script"))
             DrawNewScriptModal();
 
+        if (UI::BeginPopupModal("Create New Mesh"))
+            DrawCreateNewMeshModal();
+
         ImGui::End();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
@@ -205,9 +213,14 @@ namespace Athena
             Entity entity = m_EditorCtx->SelectedEntity;
             if (entity.HasComponent<StaticMeshComponent>())
             {
-                Ref<StaticMesh> mesh = entity.GetComponent<StaticMeshComponent>().Mesh;
-                WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
-                m_ViewportRenderer->SubmitSelectionContext(mesh, transform.AsMatrix());
+                AssetHandle meshHandle = entity.GetComponent<StaticMeshComponent>().MeshHandle;
+                Ref<StaticMesh> staticMesh = AssetManager::GetAsset<StaticMesh>(meshHandle);
+
+                if (staticMesh)
+                {
+                    WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
+                    m_ViewportRenderer->SubmitSelectionContext(staticMesh, transform.AsMatrix());
+                }
             }
         }
     }
@@ -216,9 +229,9 @@ namespace Athena
     {
         if (entity && m_EditorCtx->SceneState == SceneState::Edit)
         {
-			Entity newEntity = m_EditorScene->DuplicateEntity(entity);
+            Entity newEntity = m_EditorScene->DuplicateEntity(entity);
             m_EditorCtx->SelectedEntity = newEntity;
-			return newEntity;
+            return newEntity;
         }
 
         return entity;
@@ -238,9 +251,10 @@ namespace Athena
         m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
 
         UI::RegisterPopup("About", true);
-        UI::RegisterPopup("Theme Editor");
+        UI::RegisterPopup("Theme Editor", false);
         UI::RegisterPopup("New Project", true);
         UI::RegisterPopup("New Script", true);
+        UI::RegisterPopup("Create New Mesh", true);
 
         m_Titlebar = Ref<Titlebar>::Create(m_EditorCtx);
 
@@ -311,7 +325,7 @@ namespace Athena
                             FileSystem::CreateDirectory("Screenshots");
 
                         FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
-                        TextureExporter::ExportPNG(path, image);
+                        TextureExporter::ExportAsPNG(path, image);
                     }
 
                     ImGui::EndMenu();
@@ -352,7 +366,7 @@ namespace Athena
                     {
                         Platform::OpenInBrowser(TEXT("https://github.com/Algor1tm/Athena"));
                     }
-                    
+
                     ImGui::EndMenu();
                 }
             });
@@ -365,23 +379,25 @@ namespace Athena
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
+                    if (m_EditorCtx->SceneState != SceneState::Edit)
+                        return;
+
                     CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
-                    //Scene Drag/Drop
-                    if (m_EditorCtx->SceneState == SceneState::Edit && cbPayload->AssetType == AssetType::Scene)
+                    if (cbPayload->AssetType == AssetType::Scene)
                     {
                         OpenScene(cbPayload->FilePath);
                     }
-                    // Mesh Drag/Drop
-                    else if (m_EditorCtx->SceneState == SceneState::Edit && cbPayload->AssetType == AssetType::StaticMesh)
+                    else if (cbPayload->AssetType == AssetType::MeshSource)
                     {
-                        Ref<StaticMesh> mesh = StaticMesh::Create(cbPayload->FilePath);
-                        if (mesh)
-                        {
-                            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
-                            entity.GetComponent<TagComponent>().Tag = mesh->GetName();
-                            entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-                            m_EditorCtx->SelectedEntity = entity;
-                        }
+                        UI::OpenPopup("Create New Mesh");
+                        m_MeshSourceHandle = cbPayload->AssetHandle;
+                    }
+                    else if (cbPayload->AssetType == AssetType::StaticMesh)
+                    {
+                        Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
+                        entity.AddComponent<StaticMeshComponent>().MeshHandle = cbPayload->AssetHandle;
+                        entity.GetComponent<TagComponent>().Tag = cbPayload->FilePath.stem().string();
+                        m_EditorCtx->SelectedEntity = entity;
                     }
                 }
             });
@@ -495,9 +511,9 @@ namespace Athena
             Entity camera = m_EditorCtx->ActiveScene->GetPrimaryCameraEntity();
             if (camera)
             {
-				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
+                auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-				Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
+                Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
                 renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
@@ -543,13 +559,13 @@ namespace Athena
                 }
             }
         }
-        
-        const Vector2 iconScale = Vector2( 0.075f, 0.075f ) * m_EditorCtx->EditorSettings.RendererIconsScale;
+
+        const Vector2 iconScale = Vector2(0.075f, 0.075f) * m_EditorCtx->EditorSettings.RendererIconsScale;
         if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
             auto camerasView = m_EditorScene->GetAllEntitiesWith<CameraComponent, WorldTransformComponent>();
             for (auto entity : camerasView)
-            { 
+            {
                 const auto& transform = camerasView.get<WorldTransformComponent>(entity);
                 renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
             }
@@ -590,9 +606,9 @@ namespace Athena
             const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
 
             // 2D Outline
-            if(selectedEntity.HasComponent<SpriteComponent>())
+            if (selectedEntity.HasComponent<SpriteComponent>())
             {
-                if(selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
+                if (selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
                     renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
             }
             else if (selectedEntity.HasComponent<CircleComponent>())
@@ -647,8 +663,8 @@ namespace Athena
 
                 float planeHorHalf = Math::Tan(fov) * nearClip;
                 float planeVertHalf = planeHorHalf / aspectRatio;
-                nearPlane[0] = Vector3::Left() * planeHorHalf  + Vector3::Down() * planeVertHalf;
-                nearPlane[1] = Vector3::Left() * planeHorHalf  + Vector3::Up() * planeVertHalf;
+                nearPlane[0] = Vector3::Left() * planeHorHalf + Vector3::Down() * planeVertHalf;
+                nearPlane[1] = Vector3::Left() * planeHorHalf + Vector3::Up() * planeVertHalf;
                 nearPlane[2] = Vector3::Right() * planeHorHalf + Vector3::Up() * planeVertHalf;
                 nearPlane[3] = Vector3::Right() * planeHorHalf + Vector3::Down() * planeVertHalf;
 
@@ -685,7 +701,7 @@ namespace Athena
                 renderer2D->DrawLine(nearPlane[1], farPlane[1], selectColor);
                 renderer2D->DrawLine(nearPlane[2], farPlane[2], selectColor);
                 renderer2D->DrawLine(nearPlane[3], farPlane[3], selectColor);
-            } 
+            }
             // Light Outline
             else if (selectedEntity.HasComponent<PointLightComponent>())
             {
@@ -702,18 +718,18 @@ namespace Athena
                     Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
                     Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
 
-                    Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f );
+                    Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f);
                     Vector3 p1 = position + Vector3(offset1.x, offset1.y, 0.f);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
 
-					p0 = position + Vector3(offset0.x, 0.f, offset0.y);
-					p1 = position + Vector3(offset1.x, 0.f, offset1.y);
+                    p0 = position + Vector3(offset0.x, 0.f, offset0.y);
+                    p1 = position + Vector3(offset1.x, 0.f, offset1.y);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
 
-					p0 = position + Vector3(0.f, offset0.x, offset0.y);
-					p1 = position + Vector3(0.f, offset1.x, offset1.y);
+                    p0 = position + Vector3(0.f, offset0.x, offset0.y);
+                    p1 = position + Vector3(0.f, offset1.x, offset1.y);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
                 }
@@ -864,19 +880,19 @@ namespace Athena
 
         UI::ShiftCursorY(10);
 
-        if (ImGui::Button("Close"))
-        {
-            UI::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-
         if (ImGui::Button("Create"))
         {
             NewProject(projectName, projectDir);
             projectName.clear();
             projectDir.clear();
 
+            UI::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Close"))
+        {
             UI::CloseCurrentPopup();
         }
 
@@ -892,18 +908,104 @@ namespace Athena
 
         UI::ShiftCursorY(10);
 
-        if (ImGui::Button("Close"))
-        {
-            UI::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-
         if (ImGui::Button("Create"))
         {
             ScriptEngine::CreateNewScript(scriptName);
             scriptName.clear();
 
+            UI::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Close"))
+        {
+            UI::CloseCurrentPopup();
+        }
+
+        UI::EndPopup();
+    }
+
+    void EditorLayer::DrawCreateNewMeshModal()
+    {
+        static bool isStaticMesh = true;
+        static FilePath filepath;
+
+        String staticMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh)[0];
+        String skeletalMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::SkeletalMesh)[0];
+
+        if (filepath.empty())
+        {
+            filepath = AssetManager::GetAssetFilePath(m_MeshSourceHandle);
+            filepath.replace_extension(staticMeshExt);
+            isStaticMesh = true;
+        }
+
+        if (UI::TreeNode("IMPORT:") && UI::BeginPropertyTable())
+        {
+            UI::PropertyRow("Import as", 2 * ImGui::GetFrameHeightWithSpacing());
+
+            if (ImGui::RadioButton("Static Mesh", isStaticMesh))
+            {
+                filepath.replace_extension(staticMeshExt);
+                isStaticMesh = true;
+            }
+
+            if (ImGui::RadioButton("Skeletal Mesh", !isStaticMesh))
+            {
+                filepath.replace_extension(skeletalMeshExt);
+                isStaticMesh = false;
+            }
+
+            UI::PropertyRow("FilePath", ImGui::GetFrameHeight());
+
+            String filepathString = filepath.string();
+
+            if (UI::TextInput("FilePathInput", filepathString))
+                filepath = filepathString;
+
+            UI::EndPropertyTable();
+            UI::TreePop();
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+        bool isValidExt = isStaticMesh ? filepath.extension() == staticMeshExt : filepath.extension() == skeletalMeshExt;
+        if (!isValidExt)
+            ImGui::Text("Invalid extension!");
+
+        bool isExists = FileSystem::Exists(AssetManager::GetAssetAbsolutePath(filepath));
+        if(isExists)
+            ImGui::Text("Current file path already exists!");
+        ImGui::PopStyleColor();
+
+        bool isValid = isValidExt && !isExists;
+
+        if (ImGui::Button("Create") && isValid)
+        {
+            if (isStaticMesh)
+            {
+                Ref<StaticMesh> staticMesh = StaticMesh::Create(m_MeshSourceHandle);
+                AssetHandle handle = Project::GetEditorAssetManager()->AddAsset(staticMesh, AssetManager::GetAssetAbsolutePath(filepath));
+
+                Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
+                entity.AddComponent<StaticMeshComponent>().MeshHandle = handle;
+                entity.GetComponent<TagComponent>().Tag = filepath.stem().string();
+                m_EditorCtx->SelectedEntity = entity;
+            }
+
+            m_MeshSourceHandle = 0;
+            isStaticMesh = true;
+            filepath.clear();
+            UI::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Close"))
+        {
+            m_MeshSourceHandle = 0;
+            isStaticMesh = true;
+            filepath.clear();
             UI::CloseCurrentPopup();
         }
 
@@ -1097,8 +1199,8 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        String sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
-        FilePath filepath = FileDialogs::SaveFile("Save Scene", { "Scene files", sceneExts }, Project::GetAssetDirectory());
+        std::vector<String> sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        FilePath filepath = FileDialogs::SaveFile("Save Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
@@ -1117,8 +1219,8 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        String sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
-        FilePath filepath = FileDialogs::OpenFile("Open Scene", { "Scene files", sceneExts }, Project::GetAssetDirectory());
+        std::vector<String> sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        FilePath filepath = FileDialogs::OpenFile("Open Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             OpenScene(filepath);
         else
@@ -1158,7 +1260,7 @@ namespace Athena
 
     bool EditorLayer::OpenProject()
     {
-        FilePath filepath = FileDialogs::OpenFile("Open Project", { "Project files", "*.atproj" });
+        FilePath filepath = FileDialogs::OpenFile("Open Project", "Project files", { Project::GetProjectFileExtension().string()});
         if (filepath.empty())
             return false;
 

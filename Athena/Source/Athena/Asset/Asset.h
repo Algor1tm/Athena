@@ -23,7 +23,9 @@ namespace Athena
 		Material,
 		Font,
 		Scene,
-		StaticMesh
+		MeshSource,
+		StaticMesh,
+		SkeletalMesh
 	};
 
 	struct AssetMetadata
@@ -55,7 +57,9 @@ namespace Athena
 			case AssetType::Material:			  return "Material";
 			case AssetType::Font:				  return "Font";
 			case AssetType::Scene:				  return "Scene";
+			case AssetType::MeshSource:			  return "MeshSource";
 			case AssetType::StaticMesh:			  return "StaticMesh";
+			case AssetType::SkeletalMesh:		  return "SkeletalMesh";
 			}
 
 			return "<Invalid>";
@@ -69,7 +73,9 @@ namespace Athena
 			if (assetType == "Material")				  return AssetType::Material;
 			if (assetType == "Font")					  return AssetType::Font;
 			if (assetType == "Scene")					  return AssetType::Scene;
+			if (assetType == "MeshSource")				  return AssetType::MeshSource;
 			if (assetType == "StaticMesh")				  return AssetType::StaticMesh;
+			if (assetType == "SkeletalMesh")			  return AssetType::SkeletalMesh;
 
 			return AssetType::None;
 		}

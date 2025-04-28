@@ -29,7 +29,7 @@ namespace Athena
 		void SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata);
 		void DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const;
 
-		String GetAssetExtensions(AssetType type) const;
+		std::vector<String> GetAssetExtensions(AssetType type) const;
 		Thread& GetAssetThread() { return m_AssetThread; }
 
 	private:
@@ -39,7 +39,6 @@ namespace Athena
 	private:
 		AssetRegistry* m_Registry = nullptr;
 		std::unordered_map<AssetType, Ref<AssetSerializer>> m_Serializers;
-
 		ParallelFlatHashMap<AssetHandle, uint64, 2> m_AssetsLastWriteTimeMap;
 
 		Thread m_AssetThread;

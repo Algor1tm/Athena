@@ -15,7 +15,7 @@ namespace Athena
 		StorageBuffer,
 	};
 
-	class ATHENA_API RenderResource
+	class ATHENA_API RenderResource: public RefCounted
 	{
 	public:
 		virtual ~RenderResource() = default;

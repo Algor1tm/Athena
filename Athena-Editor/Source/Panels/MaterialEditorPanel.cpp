@@ -122,12 +122,12 @@ namespace Athena
 	{
 		float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 
-		Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(material->GetTexture(type));
-		Ref<Texture2D> displayTexture = texture ? texture : EditorResources::GetIcon("Empty Texture");
+		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(material->GetTexture(type));
+		Ref<Texture2D> displayTexture = texture ? texture->GetRenderTexture() : EditorResources::GetIcon("Empty Texture");
 
 		if (UI::PropertyImage(TextureTypeToString(type), displayTexture, {imageSize, imageSize,}))
 		{
-			std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+			std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
 			FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 			AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
@@ -144,7 +144,7 @@ namespace Athena
 			{
 				CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-				if (cbPayload->AssetType == AssetType::Texture2D)
+				if (cbPayload->AssetType == AssetType::Texture)
 				{
 					material->SetTexture(type, cbPayload->AssetHandle);
 					material->EnableTexture(type, true);

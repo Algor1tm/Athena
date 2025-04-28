@@ -63,7 +63,7 @@ namespace Athena
 
 	class ContentBrowserPanel;
 
-	class CBItem
+	class CBItem: public RefCounted
 	{
 	public:
 		CBItem(ContentBrowserPanel* panel, const FilePath& path);

@@ -211,12 +211,11 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Texture2D : public Texture, public Asset
+	class ATHENA_API Texture2D : public Texture
 	{
 	public:
 		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer data = Buffer());
 
-		virtual AssetType GetAssetType() const override { return AssetType::Texture2D; }
 		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
 
 		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
@@ -256,6 +255,30 @@ namespace Athena
 
 		return false;
 	}
+
+
+	class ATHENA_API TextureAsset : public Asset
+	{
+	public:
+		TextureAsset(const Ref<Texture2D>& texture);
+		TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
+		TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
+
+		static Ref<TextureAsset> GetDefault();
+
+		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
+
+		const Ref<Texture2D>& GetRenderTexture() const { return m_Texture; }
+		const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
+
+		void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
+		void SetTexCoords(const Vector2& min, const Vector2& max);
+
+	private:
+		Ref<Texture2D> m_Texture;
+		std::array<Vector2, 4> m_TexCoords;
+	};
+
 
 	inline bool Texture::IsStencilFormat(TextureFormat format)
 	{

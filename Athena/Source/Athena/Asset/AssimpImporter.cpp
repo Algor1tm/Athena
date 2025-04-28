@@ -300,12 +300,13 @@ namespace Athena
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
 
-				if(type == aiTextureType_SHININESS)
-
 				options.Name = String(texFilepath.C_Str(), texFilepath.length);
 				Ref<Texture2D> texture = TextureImporter::LoadFromMemory(data, width, height, options);
-
-				handle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(texture);
+				if (texture)
+				{
+					Ref<TextureAsset> textureAsset = Ref<TextureAsset>::Create(texture);
+					handle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(textureAsset);
+				}
 			}
 			else
 			{

@@ -521,14 +521,16 @@ namespace Athena
 			UI::PropertyColor4("Color", sprite.Color.Data());
 
 			bool isDefault = sprite.TextureHandle == AssetHandle(0);
-			Ref<Texture2D> textureAsset = AssetManager::GetAsset<Texture2D>(sprite.TextureHandle);
+			Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(sprite.TextureHandle);
 			bool isValid = textureAsset != nullptr && !isDefault;
 
-			Ref<Texture2D> texture = textureAsset;
+			Ref<Texture2D> texture;
 			if (isDefault)
 				texture = TextureGenerator::GetWhiteTexture();
 			else if (!isValid)
 				texture = EditorResources::GetIcon("EmptyTexture");
+			else
+				texture = textureAsset->GetRenderTexture();
 
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			UI::PropertyImage("Texture", texture, { imageSize, imageSize });
@@ -539,7 +541,7 @@ namespace Athena
 				{
 					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-					if (cbPayload->AssetType == AssetType::Texture2D)
+					if (cbPayload->AssetType == AssetType::Texture)
 					{
 						sprite.TextureHandle = cbPayload->AssetHandle;
 					}
@@ -551,7 +553,7 @@ namespace Athena
 			ImVec2 cursor = ImGui::GetCursorPos();
 			if (ImGui::Button("Browse"))
 			{
-				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
 				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 

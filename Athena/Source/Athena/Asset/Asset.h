@@ -18,7 +18,7 @@ namespace Athena
 	enum class AssetType
 	{
 		None = 0,
-		Texture2D,
+		Texture,
 		EnvironmentMap,
 		Material,
 		Font,
@@ -35,7 +35,7 @@ namespace Athena
 		bool IsMemoryOnly = false;
 	};
 
-	class ATHENA_API Asset
+	class ATHENA_API Asset: public RefCounted
 	{
 	public:
 		virtual ~Asset() = default;
@@ -52,7 +52,7 @@ namespace Athena
 			switch (type)
 			{
 			case AssetType::None:				  return "None";
-			case AssetType::Texture2D:			  return "Texture2D";
+			case AssetType::Texture:			  return "Texture";
 			case AssetType::EnvironmentMap:		  return "EnvironmentMap";
 			case AssetType::Material:			  return "Material";
 			case AssetType::Font:				  return "Font";
@@ -68,7 +68,7 @@ namespace Athena
 		inline AssetType AssetTypeFromString(std::string_view assetType)
 		{
 			if (assetType == "None")					  return AssetType::None;
-			if (assetType == "Texture2D")				  return AssetType::Texture2D;
+			if (assetType == "Texture")					  return AssetType::Texture;
 			if (assetType == "EnvironmentMap")			  return AssetType::EnvironmentMap;
 			if (assetType == "Material")				  return AssetType::Material;
 			if (assetType == "Font")					  return AssetType::Font;

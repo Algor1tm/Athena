@@ -214,7 +214,7 @@ namespace Athena
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			if (UI::PropertyImage("Dirt Texture", displayTex, { imageSize, imageSize }))
 			{
-				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture2D);
+				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
 				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				if (!path.empty())
 				{

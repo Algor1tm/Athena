@@ -454,12 +454,12 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector2 position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawQuad({ position.x, position.y, 0.f }, size, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(Vector3 position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform = ScaleMatrix(Vector3(size.x, size.y, 1.f)).Translate(position);
 
@@ -479,12 +479,12 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Ref<TextureAsset>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		DrawRotatedQuad({ position.x, position.y, 0.f }, size, rotation, texture, tint, tilingFactor);
 	}
 
-	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Ref<TextureAsset>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		Matrix4 transform =
 			Math::ScaleMatrix(Vector3(size.x, size.y, 1.f)).Rotate(rotation, Vector3(0.f, 0.f, 1.f)).Translate(position);
@@ -514,14 +514,16 @@ namespace Athena
 		m_QuadBatches[m_QuadBatchIndex].IndexCount += 6;
 	}
 
-	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, const Ref<Texture2D>& texture, Renderer2DSpace space, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawQuad(const Matrix4& worldTransform, const Ref<TextureAsset>& texture, Renderer2DSpace space, const LinearColor& tint, float tilingFactor)
 	{
-		const std::array<Vector2, 4>& s_TexCoords = { Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} };
+		if (!texture || !texture->GetRenderTexture())
+			return;
+
 		int32 textureIndex = 0;
 
 		for (uint32 i = 1; i < m_TextureSlotIndex; ++i)
 		{
-			if (m_TextureSlots[i] == texture)
+			if (m_TextureSlots[i] == texture->GetRenderTexture())
 			{
 				textureIndex = i;
 				break;
@@ -537,19 +539,20 @@ namespace Athena
 			}
 			
 			textureIndex = m_TextureSlotIndex;
-			m_TextureSlots[m_TextureSlotIndex] = texture;
+			m_TextureSlots[m_TextureSlotIndex] = texture->GetRenderTexture();
 			m_TextureSlotIndex++;
 		}
 
 		Matrix4 transform = GetSpaceTransform(worldTransform, space);
 
 		QuadVertex vertices[4];
+		const std::array<Vector2, 4>& texCoords = texture->GetTexCoords();
 
 		for (uint32 i = 0; i < 4; ++i)
 		{
 			vertices[i].Position = m_QuadVertexPositions[i] * transform;
 			vertices[i].Color = tint;
-			vertices[i].TexCoords = s_TexCoords[i] * tilingFactor;
+			vertices[i].TexCoords = texCoords[i] * tilingFactor;
 			vertices[i].TexIndex = textureIndex;
 		}
 
@@ -565,7 +568,7 @@ namespace Athena
 		DrawQuad(transform, Renderer2DSpace::WorldSpace, color);
 	}
 
-	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Ref<Texture2D>& texture, const LinearColor& tint, float tilingFactor)
+	void SceneRenderer2D::DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint, float tilingFactor)
 	{
 		float distance = Math::Distance(m_CameraPos, position);
 		size *= distance;

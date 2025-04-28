@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class ATHENA_API AssetManagerBase
+	class ATHENA_API AssetManagerBase: public RefCounted
 	{
 	public:
 		virtual ~AssetManagerBase() = default;

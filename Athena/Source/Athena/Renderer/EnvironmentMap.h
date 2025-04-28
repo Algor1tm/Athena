@@ -16,7 +16,7 @@ namespace Athena
 		PREETHAM,
 	};
 
-	class ATHENA_API EnvironmentMap
+	class ATHENA_API EnvironmentMap: public Asset
 	{
 	public:
 		EnvironmentMap();
@@ -47,7 +47,7 @@ namespace Athena
 		std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> m_MipFilterMaterials;
 	};
 
-	class ATHENA_API StaticEnvironmentMap : public EnvironmentMap, public Asset
+	class ATHENA_API StaticEnvironmentMap : public EnvironmentMap
 	{
 	public:
 		StaticEnvironmentMap(const FilePath& path);
@@ -69,6 +69,9 @@ namespace Athena
 	{
 	public:
 		PreethamEnvironmentMap();
+
+		// TODO: Not technically asset, but for convenience keep this
+		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
 
 		void SetPreethamParams(float turbidity, float azimuth, float inclination);
 

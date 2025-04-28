@@ -1,6 +1,8 @@
 #include "Texture.h"
 
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/TextureGenerator.h"
+
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 #include "Athena/Platform/Vulkan/VulkanTextureView.h"
@@ -114,5 +116,47 @@ namespace Athena
 		}
 
 		return nullptr;
+	}
+
+
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture)
+	{
+		m_Texture = texture;
+		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
+	}
+
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
+	{
+		m_Texture = texture;
+		SetTexCoords(texCoords);
+	}
+
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
+	{
+		m_Texture = texture;
+		SetTexCoords(min, max);
+	}
+
+	Ref<TextureAsset> TextureAsset::GetDefault()
+	{
+		static Ref<TextureAsset> s_DefaultTextureAsset;
+
+		if (!s_DefaultTextureAsset)
+		{
+			s_DefaultTextureAsset = Ref<TextureAsset>::Create(TextureGenerator::GetWhiteTexture());
+		}
+		
+		return s_DefaultTextureAsset;
+	}
+
+	void TextureAsset::SetTexCoords(const Vector2& min, const Vector2& max)
+	{
+		float width = (float)m_Texture->GetInfo().Width;
+		float height = (float)m_Texture->GetInfo().Height;
+
+		m_TexCoords[0] = { min.x / width, min.y / height };
+		m_TexCoords[1] = { max.x / width, min.y / height };
+		m_TexCoords[2] = { max.x / width, max.y / height };
+		m_TexCoords[3] = { min.x / width, max.y / height };
 	}
 }

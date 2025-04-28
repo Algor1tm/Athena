@@ -42,17 +42,19 @@ namespace Athena
 		out << YAML::Key << "Scene" << YAML::Value << m_Scene->GetSceneName();
 		out << YAML::Key << "Handle" << YAML::Value << m_Scene->Handle;
 		out << YAML::Key << "Entities" << YAML::Value << YAML::BeginSeq;
-		m_Scene->m_Registry.each([&](auto entityID)
-			{
-				Entity entity = { entityID, m_Scene.Raw() };
-				if (!entity)
-					return;
 
-				SerializeEntity(out, entity);
-			});
+		// Need to iterate in revers order to keep entities order when deserializing
+		const auto& view = m_Scene->GetAllEntitiesWith<IDComponent>();
+		for (auto it = view.rbegin(); it != view.rend(); ++it)
+		{
+			Entity entity = { *it, m_Scene.Raw() };
+			if (!entity)
+				return;
+
+			SerializeEntity(out, entity);
+		}
 
 		out << YAML::EndSeq;
-
 		out << YAML::EndMap;
 
 		std::ofstream fout(path);

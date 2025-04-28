@@ -38,7 +38,7 @@ namespace Athena
 		EditorState EditorSavedState;
 	};
 
-	class ATHENA_API Project
+	class ATHENA_API Project: public RefCounted
 	{
 	public:
 		static const FilePath& GetProjectDirectory()

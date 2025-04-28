@@ -567,35 +567,35 @@ namespace Athena
             for (auto entity : camerasView)
             {
                 const auto& transform = camerasView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_Camera")));
             }
 
             auto dirLightsView = m_EditorScene->GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
             for (auto entity : dirLightsView)
             {
                 const auto& transform = dirLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_DirLight")));
             }
 
             auto pointLightsView = m_EditorScene->GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
             for (auto entity : pointLightsView)
             {
                 const auto& transform = pointLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_PointLight")));
             }
 
             auto spotLightsView = m_EditorScene->GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
             for (auto entity : spotLightsView)
             {
                 const auto& transform = spotLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_SpotLight")));
             }
 
             auto skyLightsView = m_EditorScene->GetAllEntitiesWith<SkyLightComponent, WorldTransformComponent>();
             for (auto entity : skyLightsView)
             {
                 const auto& transform = skyLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_SkyLight")));
             }
         }
 

@@ -9,7 +9,7 @@ namespace Athena
 {
 	class FontGeometry;
 
-	class ATHENA_API Font : public Asset
+	class ATHENA_API Font: public Asset
 	{
 	public:
 		static bool Init();

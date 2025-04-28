@@ -9,7 +9,7 @@
 
 namespace Athena
 {
-	class VulkanImage
+	class VulkanImage: public RefCounted
 	{
 	public:
 		VulkanImage(const TextureCreateInfo& info, TextureType type, Buffer data);

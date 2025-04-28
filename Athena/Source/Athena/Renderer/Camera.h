@@ -14,7 +14,7 @@ namespace Athena
 		float FOV;
 	};
 
-	class ATHENA_API Camera 
+	class ATHENA_API Camera: public RefCounted
 	{
 	public:
 		Camera() = default;

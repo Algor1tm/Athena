@@ -47,7 +47,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Pipeline
+	class ATHENA_API Pipeline: public RefCounted
 	{
 	public:
 		static Ref<Pipeline> Create(const PipelineCreateInfo& info);

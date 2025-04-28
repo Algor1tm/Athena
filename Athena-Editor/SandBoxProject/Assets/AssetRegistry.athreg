@@ -1,12 +1,12 @@
 AssetRegistry:
   - Handle: 8738723801999403678
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Spiderman/spiderman.png
   - Handle: 6427709987578550854
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_BaseColor.png
   - Handle: 16932076061486539755
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
   - Handle: 15571557422020450888
     Type: Scene
@@ -27,13 +27,13 @@ AssetRegistry:
     Type: StaticMesh
     FilePath: Meshes/sphere.athsmesh
   - Handle: 860916470846244261
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_AO.png
   - Handle: 9727380278907355584
     Type: StaticMesh
     FilePath: ""
   - Handle: 15430728820339138913
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/StormTrooper/Stormtrooper_D.png
   - Handle: 18444694305681452675
     Type: StaticMesh
@@ -45,19 +45,19 @@ AssetRegistry:
     Type: MeshSource
     FilePath: Meshes/sphere.fbx
   - Handle: 3174591702803177663
-    Type: Texture2D
+    Type: Texture
     FilePath: Textures/CheckerBoard.png
   - Handle: 663441017678479312
     Type: Material
     FilePath: Materials/PinkEmission.athmat
   - Handle: 9141393116795559148
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Roughness.png
   - Handle: 2140758976035799956
     Type: MeshSource
     FilePath: Meshes/BlenderScene.fbx
   - Handle: 3431491884888911668
-    Type: Texture2D
+    Type: Texture
     FilePath: Textures/KomodoHype.png
   - Handle: 6186599421826963148
     Type: MeshSource
@@ -69,7 +69,7 @@ AssetRegistry:
     Type: Material
     FilePath: Materials/GreenEmission.athmat
   - Handle: 17544828861198233396
-    Type: Texture2D
+    Type: Texture
     FilePath: Textures/DirtTexture.png
   - Handle: 8628810681001209031
     Type: Font
@@ -84,7 +84,7 @@ AssetRegistry:
     Type: MeshSource
     FilePath: Meshes/Cube.obj
   - Handle: 7143697624017245163
-    Type: Texture2D
+    Type: Texture
     FilePath: Textures/SpriteSheet.png
   - Handle: 4389979150323559025
     Type: MeshSource
@@ -96,10 +96,10 @@ AssetRegistry:
     Type: Font
     FilePath: Fonts/comic.ttf
   - Handle: 364595162873737190
-    Type: Texture2D
+    Type: Texture
     FilePath: Textures/BibleThump.png
   - Handle: 15642514531261812338
-    Type: Texture2D
+    Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Normal.png
   - Handle: 13751067430993163149
     Type: StaticMesh

@@ -13,14 +13,14 @@ namespace Athena
 {
 	static std::unordered_map<FilePath, AssetType> s_AssetExtensionMap = {
 		// Textures
-		{ ".png",  AssetType::Texture2D },
-		{ ".jpeg", AssetType::Texture2D },
-		{ ".PIC",  AssetType::Texture2D },
-		{ ".gif",  AssetType::Texture2D },
-		{ ".tga",  AssetType::Texture2D },
-		{ ".bmp",  AssetType::Texture2D },
-		{ ".ppm",  AssetType::Texture2D },
-		{ ".pgm",  AssetType::Texture2D },
+		{ ".png",  AssetType::Texture },
+		{ ".jpeg", AssetType::Texture },
+		{ ".PIC",  AssetType::Texture },
+		{ ".gif",  AssetType::Texture },
+		{ ".tga",  AssetType::Texture },
+		{ ".bmp",  AssetType::Texture },
+		{ ".ppm",  AssetType::Texture },
+		{ ".pgm",  AssetType::Texture },
 
 		// Meshes 
 		{ ".fbx",   AssetType::MeshSource },
@@ -83,7 +83,6 @@ namespace Athena
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
-		// TODO: create assets in more generic way
 		if (assetType == AssetType::Font)
 		{
 			result = Font::Create(absolutePath);
@@ -102,9 +101,11 @@ namespace Athena
 			result = Ref<StaticEnvironmentMap>::Create(absolutePath);
 		}
 
-		if (assetType == AssetType::Texture2D)
+		if (assetType == AssetType::Texture)
 		{
-			result = TextureImporter::Import(absolutePath, false);
+			Ref<Texture2D> renderTexture = TextureImporter::Import(absolutePath, false);
+			if(renderTexture)
+				result = Ref<TextureAsset>::Create(renderTexture);
 		}
 
 		if (assetType == AssetType::Material)

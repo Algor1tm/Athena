@@ -22,7 +22,7 @@ namespace Athena
 		bool ShowPhysicsColliders = false;
 	};
 
-	struct EditorContext
+	struct EditorContext: public RefCounted
 	{
 		Entity SelectedEntity;
 		EditorSettings EditorSettings;

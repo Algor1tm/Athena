@@ -442,7 +442,7 @@ namespace Athena
 
 		if (s_Data->ScriptClasses.contains(scriptName))
 		{
-			// Initialize entity script at runtime
+			// Initialize entity script at runtime if new entities were created
 			if (!s_Data->EntityInstances.contains(entity.GetID()))
 			{
 				InstantiateEntity(entity);
@@ -565,10 +565,6 @@ namespace Athena
 
 	void ScriptEngine::FindScripts(const FilePath& dir, std::vector<String>& scriptsNames)
 	{
-		// TODO: in the future at runtime we will be using AssetManager to find necessary scripts
-		// For now iterate through .cpp files and check if corresponding script exists 
-		// in library and then load this script
-
 		for (const auto& dirEntry : std::filesystem::directory_iterator(dir))
 		{
 			const FilePath& path = dirEntry.path();

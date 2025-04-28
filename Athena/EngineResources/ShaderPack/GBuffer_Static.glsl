@@ -38,7 +38,7 @@ void main()
 
     vec3 T = normalize(viewTransform * vec4(a_Tangent, 0)).xyz;
     vec3 B = normalize(viewTransform * vec4(a_Bitangent, 0)).xyz;
-    vec3 N =  Interpolators.Normal;
+    vec3 N = Interpolators.Normal;
     T = normalize(T - dot(T, N) * N);
     
     Interpolators.TBN = mat3(T, B, N);

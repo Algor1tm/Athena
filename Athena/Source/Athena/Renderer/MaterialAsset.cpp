@@ -134,16 +134,16 @@ namespace Athena
 
 	void MaterialAsset::UpdateTextureAssets()
 	{
-		Ref<Texture2D> texture = AssetManager::GetAsset<Texture2D>(m_TexturesMap.at(MaterialTextureType::Albedo));
-		m_Material->Set("u_AlbedoMap", texture ? texture : TextureGenerator::GetWhiteTexture());
+		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Albedo));
+		m_Material->Set("u_AlbedoMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
 
-		texture = AssetManager::GetAsset<Texture2D>(m_TexturesMap.at(MaterialTextureType::Normals));
-		m_Material->Set("u_NormalMap", texture ? texture : TextureGenerator::GetWhiteTexture());
+		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Normals));
+		m_Material->Set("u_NormalMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
 
-		texture = AssetManager::GetAsset<Texture2D>(m_TexturesMap.at(MaterialTextureType::Roughness));
-		m_Material->Set("u_RoughnessMap", texture ? texture : TextureGenerator::GetWhiteTexture());
+		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Roughness));
+		m_Material->Set("u_RoughnessMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
 
-		texture = AssetManager::GetAsset<Texture2D>(m_TexturesMap.at(MaterialTextureType::Metalness));
-		m_Material->Set("u_MetalnessMap", texture ? texture : TextureGenerator::GetWhiteTexture());
+		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Metalness));
+		m_Material->Set("u_MetalnessMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
 	}
 }

@@ -571,12 +571,12 @@ namespace Athena
 			const auto& transform = quads.get<WorldTransformComponent>(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			Ref<Texture2D> texture = sprite.TextureHandle == AssetHandle(0) ? TextureGenerator::GetWhiteTexture() : 
-				AssetManager::GetAsset<Texture2D>(sprite.TextureHandle);
+			Ref<TextureAsset> textureAsset = sprite.TextureHandle == AssetHandle(0) ? TextureAsset::GetDefault() :
+				AssetManager::GetAsset<TextureAsset>(sprite.TextureHandle);
 
-			if (texture)
+			if (textureAsset)
 			{
-				renderer2D->DrawQuad(transform.AsMatrix(), texture, sprite.Space, sprite.Color, sprite.TilingFactor);
+				renderer2D->DrawQuad(transform.AsMatrix(), textureAsset, sprite.Space, sprite.Color, sprite.TilingFactor);
 			}
 		}
 

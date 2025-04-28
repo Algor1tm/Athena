@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class AssetSerializer
+	class AssetSerializer: public RefCounted
 	{
 	public:
 		virtual void Serialize(const Ref<Asset>& asset, const AssetMetadata& metadata) = 0;

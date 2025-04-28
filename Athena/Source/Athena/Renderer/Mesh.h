@@ -135,7 +135,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API StaticMesh : public Asset
+	class ATHENA_API StaticMesh: public Asset
 	{
 	public:
 		static Ref<StaticMesh> Create();

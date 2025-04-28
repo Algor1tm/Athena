@@ -17,7 +17,7 @@ namespace Athena
 		CastShadows = BIT(1)
 	};
 
-	class ATHENA_API Material
+	class ATHENA_API Material: public RefCounted
 	{
 	public:
 		static Ref<Material> Create(const Ref<Shader>& shader, const String& name);

@@ -46,56 +46,67 @@ namespace Athena
 			ImGui::Text("Shader: "); ImGui::SameLine();
 			ImGui::Text(material->GetMaterial()->GetShader()->GetName().data());
 
-			if (UI::TreeNode("Material") && UI::BeginPropertyTable())
+			if (UI::TreeNode("Albedo"))
 			{
-				// Albedo
-				{
-					RenderTexture(material, MaterialTextureType::Albedo);
-					ImGui::SameLine();
+				RenderTexture(material, MaterialTextureType::Albedo);
+				ImGui::SameLine();
 
-					LinearColor albedo = material->GetAlbedo();
-					if (ImGui::ColorEdit4("Albedo", albedo.Data(), ImGuiColorEditFlags_NoInputs))
-						material->SetAlbedo(albedo);
+				LinearColor albedo = material->GetAlbedo();
+				if (ImGui::ColorEdit4("Color", albedo.Data(), ImGuiColorEditFlags_NoInputs))
+					material->SetAlbedo(albedo);
 
-					float emission = material->GetEmission();
-					if (ImGui::DragFloat("Emission", &emission, 1.f, 0.f, 500.f))
-						material->SetEmission(emission);
-				}
+				float emission = material->GetEmission();
+				if (ImGui::DragFloat("Emission", &emission, 1.f, 0.f, 500.f))
+					material->SetEmission(emission);
 
-				// Normals
-				{
-					RenderTexture(material, MaterialTextureType::Normals);
-				}
-
-				// Roughness
-				{
-					RenderTexture(material, MaterialTextureType::Roughness);
-					ImGui::SameLine();
-
-					float roughness = material->GetRoughness();
-
-					if (ImGui::SliderFloat("Roughness", &roughness, 0.f, 1.f))
-						material->SetRoughness(roughness);
-				}
-
-				// Metalness
-				{
-					RenderTexture(material, MaterialTextureType::Metalness);
-					ImGui::SameLine();
-
-					float metalness = material->GetMetalness();
-					if (ImGui::SliderFloat("Metalness", &metalness, 0.f, 1.f))
-						material->SetMetalness(metalness);
-				}
-
-				bool castShadows = material->IsFlagSet(MaterialFlag::CastShadows);
-				if (UI::PropertyCheckbox("Cast Shadows", &castShadows))
-					material->SetFlag(MaterialFlag::CastShadows, castShadows);
-
-				UI::EndPropertyTable();
 				UI::TreePop();
-				ImGui::Spacing();
 			}
+
+			if (UI::TreeNode("Normals"))
+			{
+				RenderTexture(material, MaterialTextureType::Normals);
+				UI::TreePop();
+			}
+
+			if (UI::TreeNode("Roughness"))
+			{
+				RenderTexture(material, MaterialTextureType::Roughness);
+				ImGui::SameLine();
+
+				float itemWidth = ImGui::GetContentRegionMax().x - ImGui::GetCursorPosX();
+				float textSize = ImGui::CalcTextSize("Value").x;
+				ImGui::PushItemWidth(itemWidth - textSize - ImGui::GetStyle().ItemInnerSpacing.x);
+
+				float roughness = material->GetRoughness();
+				if (ImGui::SliderFloat("Value", &roughness, 0.f, 1.f))
+					material->SetRoughness(roughness);
+
+				ImGui::PopItemWidth();
+
+				UI::TreePop();
+			}
+
+			if (UI::TreeNode("Metalness"))
+			{
+				RenderTexture(material, MaterialTextureType::Metalness);
+				ImGui::SameLine();
+
+				float itemWidth = ImGui::GetContentRegionMax().x - ImGui::GetCursorPosX();
+				float textSize = ImGui::CalcTextSize("Value").x;
+				ImGui::PushItemWidth(itemWidth - textSize - ImGui::GetStyle().ItemInnerSpacing.x);
+
+				float metalness = material->GetMetalness();
+				if (ImGui::SliderFloat("Value", &metalness, 0.f, 1.f))
+					material->SetMetalness(metalness);
+
+				ImGui::PopItemWidth();
+
+				UI::TreePop();
+			}
+
+			bool castShadows = material->IsFlagSet(MaterialFlag::CastShadows);
+			if (ImGui::Checkbox("Cast Shadows", &castShadows))
+				material->SetFlag(MaterialFlag::CastShadows, castShadows);
 		}
 
 		ImGui::SetCursorPos(ImVec2(1, ImGui::GetFrameHeight() + 1));
@@ -120,12 +131,13 @@ namespace Athena
 
 	void MaterialEditorPanel::RenderTexture(const Ref<MaterialAsset>& material, MaterialTextureType type) const
 	{
-		float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
+		UI::ShiftCursorY(2.f);
+		float imageSize = 64.f * ImGui::GetIO().FontGlobalScale;
 
 		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(material->GetTexture(type));
-		Ref<Texture2D> displayTexture = texture ? texture->GetRenderTexture() : EditorResources::GetIcon("Empty Texture");
+		Ref<Texture2D> displayTexture = texture ? texture->GetRenderTexture() : EditorResources::GetIcon("EmptyTexture");
 
-		if (UI::PropertyImage(TextureTypeToString(type), displayTexture, {imageSize, imageSize,}))
+		if (ImGui::ImageButton(TextureTypeToString(type), UI::GetTextureID(displayTexture), { imageSize, imageSize }))
 		{
 			std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
 			FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());

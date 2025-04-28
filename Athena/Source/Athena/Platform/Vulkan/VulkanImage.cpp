@@ -187,7 +187,8 @@ namespace Athena
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
 
-		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
 		{
 			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -258,7 +259,7 @@ namespace Athena
 			}
 
 		}
-		Vulkan::EndSingleTimeCommands(commandBuffer);
+		Vulkan::EndSingleTimeCommands(commandBuffer, commandPool);
 		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
 
 		m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -268,7 +269,8 @@ namespace Athena
 	{
 		ATN_CORE_ASSERT(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
 
-		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
 		uint32 width = m_Info.Width;
 		uint32 height = m_Info.Height;
 		uint32 size = m_Info.Width * m_Info.Height * Texture::BytesPerPixel(m_Info.Format);
@@ -347,7 +349,7 @@ namespace Athena
 			);
 		}
 
-		Vulkan::EndSingleTimeCommands(commandBuffer);
+		Vulkan::EndSingleTimeCommands(commandBuffer, commandPool);
 
 		buffer->Allocate(size);
 

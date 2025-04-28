@@ -91,7 +91,7 @@ namespace Athena
 			ATN_PROFILE_SCOPE("vkQueueSubmit");
 			Timer timer = Timer();
 
-			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, frameData.RenderCompleteFence);
 			Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
 		}
 	}
@@ -112,7 +112,7 @@ namespace Athena
 		VkFence fence;
 		VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
 
-		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
+		VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
 
 		VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);

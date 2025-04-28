@@ -412,11 +412,19 @@ namespace Athena::Vulkan
         return nullptr;
     }
 
-    inline VkCommandBuffer BeginSingleTimeCommands()
+    inline VkCommandBuffer BeginSingleTimeCommands(VkCommandPool* commandPool)
     {
+        // This function might be called from another thread so we need to create another command pool
+
+        VkCommandPoolCreateInfo commandPoolCI = {};
+        commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCI.queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
+        commandPoolCI.flags = 0;
+        VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, commandPool));
+
         VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
         cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
+        cmdBufAllocInfo.commandPool = *commandPool;
         cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cmdBufAllocInfo.commandBufferCount = 1;
 
@@ -432,7 +440,7 @@ namespace Athena::Vulkan
         return vkCommandBuffer;
     }
 
-    inline void EndSingleTimeCommands(VkCommandBuffer vkCommandBuffer)
+    inline void EndSingleTimeCommands(VkCommandBuffer vkCommandBuffer, VkCommandPool commandPool)
     {
         vkEndCommandBuffer(vkCommandBuffer);
 
@@ -447,18 +455,17 @@ namespace Athena::Vulkan
 
         VkFence fence;
         VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
-
-        VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
-
+        VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
         VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
         vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
-        vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), 1, &vkCommandBuffer);
+        vkDestroyCommandPool(VulkanContext::GetLogicalDevice(), commandPool, nullptr);
     }
 
     inline void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
+        VkCommandPool commandPool;
+        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands(&commandPool);
         {
             VkBufferCopy copyRegion{};
             copyRegion.srcOffset = 0;
@@ -467,7 +474,7 @@ namespace Athena::Vulkan
 
             vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
         }
-        EndSingleTimeCommands(vkCommandBuffer);
+        EndSingleTimeCommands(vkCommandBuffer, commandPool);
     }
 
     inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, TextureFormat format, uint32 mipLevels)

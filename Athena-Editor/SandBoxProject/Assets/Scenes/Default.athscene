@@ -211,7 +211,7 @@ Entities:
       Parent: 15204102483634061799
     TextComponent:
       Text: "Athena \nИлья\x00\x00я Ішфіаарівто\x00"
-      FontHandle: 3496522857383557778
+      FontHandle: 11714994014629288087
       Space: 1
       Color: [1, 1, 1, 1]
       MaxWidth: 10

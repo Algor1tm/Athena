@@ -105,11 +105,12 @@ namespace Athena
 
 		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 
-		VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands();
+		VkCommandPool commandPool;
+		VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
 		{
 			ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
 		}
-		Vulkan::EndSingleTimeCommands(vkCommandBuffer);
+		Vulkan::EndSingleTimeCommands(vkCommandBuffer, commandPool);
 
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}

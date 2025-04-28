@@ -194,6 +194,12 @@ namespace Athena
 		deviceCaps.TimestampPeriod = limits.timestampPeriod;
 	}
 
+	void VulkanDevice::QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence)
+	{
+		std::lock_guard<std::mutex> lock(m_QueueMutex);
+		VK_CHECK(vkQueueSubmit(m_Queue, 1, submitInfo, fence));
+	}
+
 	bool VulkanDevice::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
 	{
 		uint32 supportedExtensionCount = 0;

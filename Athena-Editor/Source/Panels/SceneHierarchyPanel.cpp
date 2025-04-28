@@ -375,7 +375,7 @@ namespace Athena
 
 		ImGui::Spacing();
 
-		DrawComponent<TransformComponent>(entity, "Transform", [](TransformComponent& transform)
+		DrawComponent<TransformComponent>(entity, "TRANSFORM", [](TransformComponent& transform)
 		{
 			DrawVec3Property("Translation", transform.Translation, 0.0f);
 
@@ -388,7 +388,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<ScriptComponent>(entity, "Script", [entity](ScriptComponent& script)
+		DrawComponent<ScriptComponent>(entity, "SCRIPT", [entity](ScriptComponent& script)
 		{
  			const std::vector<String>& scripts = ScriptEngine::GetAvailableScripts();
 			UI::PropertyCombo("Script Name", scripts.data(), scripts.size(), &script.Name);
@@ -444,7 +444,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<CameraComponent>(entity, "Camera", [](CameraComponent& cameraComponent)
+		DrawComponent<CameraComponent>(entity, "CAMERA", [](CameraComponent& cameraComponent)
 		{
 			auto& camera = cameraComponent.Camera;
 
@@ -516,7 +516,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<SpriteComponent>(entity, "Sprite", [&entity](SpriteComponent& sprite)
+		DrawComponent<SpriteComponent>(entity, "SPRITE", [&entity](SpriteComponent& sprite)
 		{
 			UI::PropertyColor4("Color", sprite.Color.Data());
 
@@ -579,7 +579,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<CircleComponent>(entity, "Circle", [&entity](CircleComponent& circle)
+		DrawComponent<CircleComponent>(entity, "CIRCLE", [&entity](CircleComponent& circle)
 		{
 			UI::PropertyColor4("Color", circle.Color.Data());
 
@@ -677,7 +677,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<Rigidbody2DComponent>(entity, "Rigidbody2D", [](Rigidbody2DComponent& rb2d)
+		DrawComponent<Rigidbody2DComponent>(entity, "RIGID BODY 2D", [](Rigidbody2DComponent& rb2d)
 		{
 			static auto typeToStr = [](Rigidbody2DComponent::BodyType type) -> std::string_view
 			{
@@ -720,7 +720,7 @@ namespace Athena
 		});
 
 
-		DrawComponent<BoxCollider2DComponent>(entity, "BoxCollider2D", [](BoxCollider2DComponent& bc2d)
+		DrawComponent<BoxCollider2DComponent>(entity, "BOX COLLIDER 2D", [](BoxCollider2DComponent& bc2d)
 		{
 			UI::PropertyDrag("Offset", bc2d.Offset.Data(), 0.1f);
 			UI::PropertyDrag("Size", bc2d.Size.Data(), 0.1f);
@@ -732,7 +732,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<CircleCollider2DComponent>(entity, "CircleCollider2D", [](CircleCollider2DComponent& cc2d)
+		DrawComponent<CircleCollider2DComponent>(entity, "CIRCLE COLLIDER 2D", [](CircleCollider2DComponent& cc2d)
 		{
 			UI::PropertyDrag("Offset", &cc2d.Offset, 0.1f);
 			UI::PropertyDrag("Radius", &cc2d.Radius, 0.1f);
@@ -744,7 +744,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<StaticMeshComponent>(entity, "StaticMesh", [this, entity](StaticMeshComponent& meshComponent)
+		DrawComponent<StaticMeshComponent>(entity, "STATIC MESH", [this, entity](StaticMeshComponent& meshComponent)
 		{
 			Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
 			bool isMeshValid = mesh != nullptr;
@@ -789,7 +789,7 @@ namespace Athena
 			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 			UI::EndPropertyTable();
 
-			if (isMeshValid && UI::TreeNode("Materials", true, true) && UI::BeginPropertyTable())
+			if (isMeshValid && UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
 			{
 				MaterialTable& table = mesh->GetMaterialTable();
 
@@ -902,7 +902,7 @@ namespace Athena
 			return false;
 		});
 
-		DrawComponent<DirectionalLightComponent>(entity, "DirectionalLight", [](DirectionalLightComponent& lightComponent)
+		DrawComponent<DirectionalLightComponent>(entity, "DIRECTIONAL LIGHT", [](DirectionalLightComponent& lightComponent)
 		{
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 100.f);
@@ -912,7 +912,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<PointLightComponent>(entity, "PointLight", [](PointLightComponent& lightComponent)
+		DrawComponent<PointLightComponent>(entity, "POINT LIGHT", [](PointLightComponent& lightComponent)
 		{
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
@@ -922,7 +922,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<SpotLightComponent>(entity, "SpotLight", [](SpotLightComponent& lightComponent)
+		DrawComponent<SpotLightComponent>(entity, "SPOT LIGHT", [](SpotLightComponent& lightComponent)
 		{
 			UI::PropertyColor3("Color", lightComponent.Color.Data());
 			UI::PropertyDrag("Intensity", &lightComponent.Intensity, 0.1f, 0.f, 10000.f);
@@ -934,7 +934,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<SkyLightComponent>(entity, "SkyLight", [](SkyLightComponent& lightComponent)
+		DrawComponent<SkyLightComponent>(entity, "SKY LIGHT", [](SkyLightComponent& lightComponent)
 		{
 			static auto typeToStr = [](EnvironmentMapType type) -> std::string_view
 				{

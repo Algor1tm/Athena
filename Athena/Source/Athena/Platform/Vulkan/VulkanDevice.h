@@ -21,6 +21,8 @@ namespace Athena
 
 		void GetDeviceCapabilities(RenderCapabilities& deviceCaps) const;
 
+		void QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence);
+
 	private:
 		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);
 
@@ -28,6 +30,8 @@ namespace Athena
 		VkPhysicalDevice m_PhysicalDevice;
 		VkDevice m_LogicalDevice;
 		uint32 m_QueueFamily;
+
 		VkQueue m_Queue;
+		std::mutex m_QueueMutex;
 	};
 }

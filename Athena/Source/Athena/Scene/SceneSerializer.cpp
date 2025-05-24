@@ -304,6 +304,18 @@ namespace Athena
 				}
 
 				{
+					const auto& skeletalMeshNode = entityNode["SkeletalMeshComponent"];
+					if (skeletalMeshNode)
+					{
+						auto& meshComp = deserializedEntity.AddComponent<SkeletalMeshComponent>();
+
+						meshComp.MeshHandle = skeletalMeshNode["MeshHandle"].as<AssetHandle>();
+						meshComp.MeshNodeIndex = skeletalMeshNode["MeshNodeIndex"].as<AssetHandle>();
+						meshComp.Visible = skeletalMeshNode["Visible"].as<bool>();
+					}
+				}
+
+				{
 					const auto directionalLightComponent = entityNode["DirectionalLightComponent"];
 					if (directionalLightComponent)
 					{
@@ -580,6 +592,14 @@ namespace Athena
 			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
 			{
 				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
+				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
+			});
+
+		SerializeComponent<SkeletalMeshComponent>(out, "SkeletalMeshComponent", entity,
+			[](YAML::Emitter& output, const SkeletalMeshComponent& meshComponent)
+			{
+				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
+				output << YAML::Key << "MeshNodeIndex" << YAML::Value << meshComponent.MeshNodeIndex;
 				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
 			});
 

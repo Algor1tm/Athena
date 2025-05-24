@@ -54,6 +54,7 @@ namespace Athena
 		m_Serializers[AssetType::Material] = Ref<MaterialSerializer>::Create();
 		m_Serializers[AssetType::Scene] = Ref<SceneAssetSerializer>::Create();
 		m_Serializers[AssetType::StaticMesh] = Ref<StaticMeshSerializer>::Create();
+		m_Serializers[AssetType::SkeletalMesh] = Ref<SkeletalMeshSerializer>::Create();
 	}
 
 	AssetImporter::~AssetImporter()
@@ -122,6 +123,11 @@ namespace Athena
 		if (assetType == AssetType::StaticMesh)
 		{
 			result = StaticMesh::Create();
+		}
+
+		if (assetType == AssetType::SkeletalMesh)
+		{
+			result = SkeletalMesh::Create();
 		}
 
 		if (result)

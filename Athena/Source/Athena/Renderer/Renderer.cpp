@@ -86,7 +86,6 @@ namespace Athena
 		vertexBufInfo.Name = "Renderer_FullscreenVB";
 		vertexBufInfo.Data = fullscreenVertices;
 		vertexBufInfo.Size = sizeof(fullscreenVertices);
-		vertexBufInfo.IndexBuffer = nullptr;
 		vertexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
@@ -101,9 +100,7 @@ namespace Athena
 		TextureGenerator::Shutdown();
 
 		s_Data.FullscreenVertexBuffer.Release();
-
 		s_Data.ShaderPack.Release();
-
 		s_Data.RendererAPI->WaitDeviceIdle();
 
 		for (auto& queue : s_Data.ResourceFreeQueues)
@@ -142,14 +139,24 @@ namespace Athena
 		s_Data.RenderCommandBuffer->Submit();
 	}
 
-	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	void Renderer::BindGeometryBuffers(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& vertexBuffer, const Ref<IndexBuffer>& indexBuffer, const Ref<VertexBuffer>& bonesInfluenceBuffer)
 	{
-		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, vertexBuffer, material, instanceCount, firstInstance);
+		s_Data.RendererAPI->BindGeometryBuffers(cmdBuffer, vertexBuffer, indexBuffer, bonesInfluenceBuffer);
 	}
 
-	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset, uint32 count)
+	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> instanceBuffer)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, offset, count);
+		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, instanceBuffer);
+	}
+
+	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount, uint32 baseInstance, uint32 instanceCount)
+	{
+		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, material, baseIndex, indexCount, baseVertex, vertexCount, instanceCount, baseInstance);
+	}
+
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount)
+	{
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, material, baseIndex, indexCount, baseVertex, vertexCount);
 	}
 
 	void Renderer::FullscreenPass(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<RenderPass>& pass, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
@@ -157,14 +164,10 @@ namespace Athena
 		pass->Begin(cmdBuffer);
 		{
 			pipeline->Bind(cmdBuffer);
-			s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.FullscreenVertexBuffer, material);
+			BindGeometryBuffers(cmdBuffer, s_Data.FullscreenVertexBuffer, nullptr);
+			s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, material, 0, 0, 0, 3);
 		}
 		pass->End(cmdBuffer);
-	}
-
-	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer)
-	{
-		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, vertexBuffer);
 	}
 
 	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

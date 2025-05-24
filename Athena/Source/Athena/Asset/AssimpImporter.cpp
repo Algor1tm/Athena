@@ -11,6 +11,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/matrix4x4.h>
 
+#include <set>
 
 namespace Athena
 {
@@ -53,31 +54,47 @@ namespace Athena
 
 			return aiName.C_Str();
 		}
+
+		static void PrintNodes(const aiNode* ainode, uint32 level = 0)
+		{
+			String msg = ainode->mName.C_Str();
+
+			if (level > 0)
+				msg = String(level, ' ') + msg;
+
+			ATN_CORE_TRACE(msg);
+
+			for (uint32 i = 0; i < ainode->mNumChildren; ++i)
+			{
+				PrintNodes(ainode->mChildren[i], level + 1);
+			}
+		}
 	}
 
-	static const unsigned int flags =
+	static const unsigned int s_ImportFlags =
 		aiProcess_GenUVCoords |
 		aiProcess_CalcTangentSpace |
-		aiProcess_GenSmoothNormals |
+		aiProcess_GenNormals |
 		aiProcess_FixInfacingNormals |
 		aiProcess_GenBoundingBoxes |
 		aiProcess_FindInvalidData |
+		aiProcess_PopulateArmatureData |
 
 		aiProcess_SortByPType |
-		aiProcess_FindDegenerates |
 		aiProcess_ImproveCacheLocality |
 		aiProcess_JoinIdenticalVertices |
+		aiProcess_ValidateDataStructure |
 		aiProcess_LimitBoneWeights |
 
 		aiProcess_RemoveRedundantMaterials |
-		aiProcess_OptimizeGraph |
+		//aiProcess_OptimizeGraph |
 		aiProcess_OptimizeMeshes |
 
 		aiProcess_Triangulate |
 		aiProcess_FlipUVs;
 
 	AssimpImporter::AssimpImporter(const FilePath& path)
-		: m_aiScene(aiImportFile(path.string().c_str(), flags))
+		: m_aiScene(aiImportFile(path.string().c_str(), s_ImportFlags))
 	{
 		m_Path = path;
 
@@ -101,127 +118,378 @@ namespace Athena
 			return nullptr;
 
 		Ref<MeshSource> meshSource = MeshSource::Create();
+
+		if (HasSkeleton())
+		{
+			Ref<Skeleton> skeleton = ImportSkeleton();
+
+			if (skeleton)
+			{
+				meshSource->m_IsRigged = true;
+				meshSource->m_Skeleton = skeleton;
+
+				meshSource->m_Animations.reserve(m_aiScene->mNumAnimations);
+				for (uint32 i = 0; i < m_aiScene->mNumAnimations; ++i)
+				{
+					Ref<Animation> animation = ImportAnimation(i, skeleton);
+					meshSource->m_Animations.push_back(animation);
+				}
+			}
+		}
+
+		MaterialTable& matTable = meshSource->m_MaterialTable;
+		for (uint32 i = 0; i < m_aiScene->mNumMaterials; ++i)
+		{
+			aiMaterial* aimaterial = m_aiScene->mMaterials[i];
+			String name = aimaterial->GetName().C_Str();
+
+			matTable[name] = LoadMaterial(aimaterial);
+		}
+
+		LoadGeometry(meshSource);
+
+		meshSource->m_Nodes.emplace_back();
 		TraverseNodes(meshSource, m_aiScene->mRootNode);
+
+		meshSource->m_Nodes[0].Name = m_Path.stem().string();
+
+#if 0
+		ATN_CORE_WARN("Node hierarchy for mesh {}", m_Path);
+		Utils::PrintNodes(m_aiScene->mRootNode);
+#endif
 
 		return meshSource;
 	}
 
+	Ref<Animation> AssimpImporter::ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const 
+	{
+		if (!m_aiScene || m_aiScene->mNumAnimations < animationIndex + 1)
+			return nullptr;
+
+		aiAnimation* aianimation = m_aiScene->mAnimations[animationIndex];
+
+		AnimationCreateInfo info;
+		info.Name = aianimation->mName.C_Str();
+		info.Duration = aianimation->mDuration;
+		info.TicksPerSecond = aianimation->mTicksPerSecond;
+		info.Skeleton = skeleton;
+
+		info.BoneNameToKeyFramesMap.reserve(aianimation->mNumChannels);
+		for (uint32 i = 0; i < aianimation->mNumChannels; ++i)
+		{
+			aiNodeAnim* channel = aianimation->mChannels[i];
+			KeyFramesList keyFrames;
+
+			keyFrames.TranslationKeys.resize(channel->mNumPositionKeys);
+			for (uint32 j = 0; j < channel->mNumPositionKeys; ++j)
+			{
+				keyFrames.TranslationKeys[j].TimeStamp = channel->mPositionKeys[j].mTime;
+				keyFrames.TranslationKeys[j].Value = Utils::ConvertaiVector3D(channel->mPositionKeys[j].mValue);
+			}
+
+			keyFrames.RotationKeys.resize(channel->mNumRotationKeys);
+			for (uint32 j = 0; j < channel->mNumRotationKeys; ++j)
+			{
+				keyFrames.RotationKeys[j].TimeStamp = channel->mRotationKeys[j].mTime;
+				keyFrames.RotationKeys[j].Value = Utils::ConvertaiQuaternion(channel->mRotationKeys[j].mValue);
+			}
+
+			keyFrames.ScaleKeys.resize(channel->mNumScalingKeys);
+			for (uint32 j = 0; j < channel->mNumScalingKeys; ++j)
+			{
+				keyFrames.ScaleKeys[j].TimeStamp = channel->mScalingKeys[j].mTime;
+				keyFrames.ScaleKeys[j].Value = Utils::ConvertaiVector3D(channel->mScalingKeys[j].mValue);
+			}
+
+			info.BoneNameToKeyFramesMap[channel->mNodeName.C_Str()] = keyFrames;
+		}
+
+		return Animation::Create(info);
+	}
+
+	Ref<Skeleton> AssimpImporter::ImportSkeleton() const
+	{
+		if (!m_aiScene)
+			return nullptr;
+
+		std::unordered_map<String, Matrix4> bonesMap;
+
+		for (uint32 i = 0; i < m_aiScene->mNumMeshes; ++i)
+		{
+			aiMesh* aimesh = m_aiScene->mMeshes[i];
+
+			for (uint32 j = 0; j < aimesh->mNumBones; ++j)
+			{
+				aiBone* aibone = aimesh->mBones[j];
+				bonesMap[aibone->mName.C_Str()] = Utils::ConvertaiMatrix4x4(aibone->mOffsetMatrix);
+			}
+		}
+
+		aiNode* rootNode = m_aiScene->mRootNode;
+		aiNode* skeletonRootNode = nullptr;
+		for (uint32 i = 0; i < rootNode->mNumChildren; ++i)
+		{
+			aiNode* node = rootNode->mChildren[i];
+			if (bonesMap.contains(node->mName.C_Str()))
+			{
+				skeletonRootNode = node;
+				break;
+			}
+		}
+
+		if (skeletonRootNode == nullptr)
+		{
+			ATN_CORE_WARN_TAG("AssetManager", "Failed to import skeleton from {}", m_Path);
+			return nullptr;
+		}
+
+		std::vector<Bone> bones;
+		bones.emplace_back();
+		BuildBonesHierarchy(skeletonRootNode, bonesMap, Matrix4::Identity(), bones);
+
+		return Skeleton::Create(bones);
+	}
+
+	bool AssimpImporter::HasSkeleton() const
+	{
+		if (!m_aiScene)
+			return false;
+
+		for (uint32 i = 0; i < m_aiScene->mNumMeshes; ++i)
+		{
+			aiMesh* aimesh = m_aiScene->mMeshes[i];
+
+			if (aimesh->HasBones())
+				return true;
+		}
+
+		return false;
+	}
+
+	void AssimpImporter::BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const
+	{
+		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
+		Matrix4 transform = parentTransform * localTransform;
+
+		String nodeName = ainode->mName.C_Str();
+		uint32 nodeIndex = bones.size() - 1;
+
+		if (!bonesMap.contains(nodeName))
+		{
+			if (ainode->mNumChildren != 0)
+			{
+				ATN_CORE_ASSERT(ainode->mNumChildren == 1);
+				BuildBonesHierarchy(ainode->mChildren[0], bonesMap, transform, bones);
+			}
+			else
+			{
+				bones.pop_back();
+			}
+			return;
+		}
+
+		Bone& bone = bones.back();
+
+		if (!bone.IsRoot())
+			bones[bone.Parent].Children.push_back(nodeIndex);
+
+		bone.Name = nodeName;
+		bone.Index = nodeIndex;
+		bone.OffsetMatrix = bonesMap.at(nodeName);
+		bone.Children.reserve(ainode->mNumChildren);
+
+		for (uint32 i = 0; i < ainode->mNumChildren; ++i)
+		{
+			Bone& child = bones.emplace_back();
+			child.Parent = nodeIndex;
+			child.Index = bones.size() - 1;
+
+			BuildBonesHierarchy(ainode->mChildren[i], bonesMap, transform, bones);
+		}
+	}
+
 	void AssimpImporter::TraverseNodes(const Ref<MeshSource>& meshSource, const aiNode* ainode, const Matrix4& parentTransform) const
 	{
-		Matrix4 transform = parentTransform * Utils::ConvertaiMatrix4x4(ainode->mTransformation);
+		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
+		Matrix4 transform = parentTransform * localTransform;
+
+		MeshNode& meshNode = meshSource->m_Nodes.back();
+		uint32 nodeIndex = meshSource->m_Nodes.size() - 1;
+		
+		if(!meshNode.IsRoot())
+			meshSource->m_Nodes[meshNode.Parent].Children.push_back(nodeIndex);
+
+		meshNode.Index = nodeIndex;
+		meshNode.Name = ainode->mName.C_Str();
+		meshNode.LocalTransform = localTransform;
+		meshNode.Children.reserve(ainode->mNumChildren);
+		meshNode.SubMeshes.reserve(ainode->mNumMeshes);
 
 		for (uint32 i = 0; i < ainode->mNumMeshes; ++i)
 		{
-			uint32 aiMeshIndex = ainode->mMeshes[i];
-			SubMesh subMesh = LoadSubMesh(meshSource, m_aiScene->mMeshes[aiMeshIndex], transform);
-			meshSource->m_SubMeshes.push_back(subMesh);
+			uint32 meshIndex = ainode->mMeshes[i];
+			SubMesh& subMesh = meshSource->m_SubMeshes[meshIndex];
+
+			subMesh.NodeName = meshNode.Name;
+			subMesh.LocalTransform = localTransform;
+			subMesh.Transform = transform;
+			
+			meshNode.SubMeshes.push_back(meshIndex);
 		}
 
 		for (uint32 i = 0; i < ainode->mNumChildren; ++i)
 		{
-			TraverseNodes(meshSource, ainode->mChildren[i], transform);
-		}
-	}
-
-	SubMesh AssimpImporter::LoadSubMesh(const Ref<MeshSource>& meshSource, const aiMesh* aimesh, const Matrix4& transform) const
-	{
-		SubMesh subMesh;
-		// AABB
-		subMesh.AABB = AABB(Utils::ConvertaiVector3D(aimesh->mAABB.mMin) * transform, Utils::ConvertaiVector3D(aimesh->mAABB.mMax) * transform);
-		meshSource->m_AABB.Extend(subMesh.AABB);
-
-		// VertexBuffer
-		subMesh.Name = aimesh->mName.C_Str();
-		subMesh.VertexBuffer = LoadStaticVertexBuffer(aimesh, transform);
-
-		// Matertial
-		const aiMaterial* aimaterial = m_aiScene->mMaterials[aimesh->mMaterialIndex];
-		subMesh.MaterialName = aimaterial->GetName().C_Str();
-		MaterialTable& matTable = meshSource->m_MaterialTable;
-
-		if (!matTable.contains(subMesh.MaterialName))
-		{
-			matTable[subMesh.MaterialName] = LoadMaterial(aimaterial);
-		}
-
-		return subMesh;
-	}
-
-	Ref<VertexBuffer> AssimpImporter::LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& transform) const
-	{
-		uint32 numVertices = aimesh->mNumVertices;
-		std::vector<StaticVertex> vertices(numVertices);
-
-		for (uint32 i = 0; i < numVertices; ++i)
-		{
-			// Position
-			if (aimesh->HasPositions())
+			if (ainode->mChildren[i]->mNumMeshes != 0)
 			{
-				vertices[i].Position = Utils::ConvertaiVector3D(aimesh->mVertices[i]) * transform;
+				MeshNode& child = meshSource->m_Nodes.emplace_back();
+				child.Parent = nodeIndex;
+
+				TraverseNodes(meshSource, ainode->mChildren[i], transform);
+			}
+		}
+	}
+
+	void AssimpImporter::LoadGeometry(const Ref<MeshSource>& meshSource) const
+	{
+		std::vector<MeshVertex> vertices;
+		std::vector<BoneInfluenceVertex> boneInfluenceVertices;
+		std::vector<uint32> indices;
+
+		Ref<Skeleton> skeleton = meshSource->m_Skeleton;
+		meshSource->m_SubMeshes.reserve(m_aiScene->mNumMeshes);
+
+		for (uint32 i = 0; i < m_aiScene->mNumMeshes; ++i)
+		{
+			aiMesh* aimesh = m_aiScene->mMeshes[i];
+			aiMaterial* aimaterial = m_aiScene->mMaterials[aimesh->mMaterialIndex];
+
+			bool isRigged = meshSource->IsRigged();
+			ATN_CORE_ASSERT(isRigged == aimesh->HasBones());
+
+			SubMesh& subMesh = meshSource->m_SubMeshes.emplace_back();
+			subMesh.AABB = AABB(Utils::ConvertaiVector3D(aimesh->mAABB.mMin), Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
+			subMesh.Name = aimesh->mName.C_Str();
+			subMesh.MaterialName = aimaterial->GetName().C_Str();
+
+			uint32 numVertices = aimesh->mNumVertices;
+			uint32 numIndices = aimesh->mNumFaces * 3;
+
+			subMesh.BaseVertex = vertices.size();
+			subMesh.VertexCount = numVertices;
+			subMesh.BaseIndex = indices.size();
+			subMesh.IndexCount = numIndices;
+
+			boneInfluenceVertices.reserve(numVertices);
+			vertices.reserve(numVertices);
+			for (uint32 i = 0; i < numVertices; ++i)
+			{
+				MeshVertex& vertex = vertices.emplace_back();
+
+				if (aimesh->HasPositions())
+				{
+					vertex.Position = Utils::ConvertaiVector3D(aimesh->mVertices[i]);
+				}
+
+				for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
+				{
+					if (aimesh->HasTextureCoords(j))
+					{
+						vertex.TexCoords.x = aimesh->mTextureCoords[j][i].x;
+						vertex.TexCoords.y = aimesh->mTextureCoords[j][i].y;
+						break;
+					}
+				}
+
+				if (aimesh->HasNormals())
+				{
+					vertex.Normal = Utils::ConvertaiVector3D(aimesh->mNormals[i]);
+				}
+
+				if (aimesh->HasTangentsAndBitangents())
+				{
+					vertex.Tangent = Utils::ConvertaiVector3D(aimesh->mTangents[i]);
+					vertex.Bitangent = Utils::ConvertaiVector3D(aimesh->mBitangents[i]);
+				}
+
+				if (isRigged)
+					boneInfluenceVertices.emplace_back();
 			}
 
-			// TexCoord
-			for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
+			uint32 numFaces = aimesh->mNumFaces;
+			aiFace* faces = aimesh->mFaces;
+
+			indices.reserve(numIndices);
+			for (uint32 i = 0; i < numFaces; i++)
 			{
-				if (aimesh->HasTextureCoords(j))
+				indices.push_back(faces[i].mIndices[0]);
+				indices.push_back(faces[i].mIndices[1]);
+				indices.push_back(faces[i].mIndices[2]);
+			}
+
+			if (!aimesh->HasBones())
+			{
+				ATN_CORE_ASSERT(!meshSource->IsRigged());
+				continue;
+			}
+
+			boneInfluenceVertices.resize(vertices.size());
+			for (uint32 i = 0; i < aimesh->mNumBones; ++i)
+			{
+				aiBone* aibone = aimesh->mBones[i];
+				uint32 boneID = skeleton->GetBoneIndex(aibone->mName.C_Str());
+
+				for (uint32 j = 0; j < aibone->mNumWeights; ++j)
 				{
-					vertices[i].TexCoords.x = aimesh->mTextureCoords[j][i].x;
-					vertices[i].TexCoords.y = aimesh->mTextureCoords[j][i].y;
-					break;
+					uint32 vertexID = subMesh.BaseVertex + aibone->mWeights[j].mVertexId;
+					float weight = aibone->mWeights[j].mWeight;
+
+					for (uint32 k = 0; k < ShaderDef::MAX_NUM_BONES_PER_VERTEX; ++k)
+					{
+						if (boneInfluenceVertices[vertexID].Weights[k] == 0.f)
+						{
+							boneInfluenceVertices[vertexID].BoneIDs[k] = boneID;
+							boneInfluenceVertices[vertexID].Weights[k] = weight;
+							break;
+						}
+						else if (k == ShaderDef::MAX_NUM_BONES_PER_VERTEX - 1)
+						{
+							ATN_CORE_WARN_TAG("StaticMesh", "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+								boneID, weight);
+						}
+					}
 				}
 			}
-
-			// Normal
-			if (aimesh->HasNormals())
-			{
-				vertices[i].Normal = Vector4(Utils::ConvertaiVector3D(aimesh->mNormals[i]), 0) * transform;
-			}
-
-			if (aimesh->HasTangentsAndBitangents())
-			{
-				// Tangent
-				vertices[i].Tangent = Vector4(Utils::ConvertaiVector3D(aimesh->mTangents[i]), 0) * transform;
-				// Bitangent
-				vertices[i].Bitangent = Vector4(Utils::ConvertaiVector3D(aimesh->mBitangents[i]), 0) * transform;
-			}
 		}
 
-		uint32 numFaces = aimesh->mNumFaces;
-		aiFace* faces = aimesh->mFaces;
+		VertexBufferCreateInfo vertexBufferInfo;
+		vertexBufferInfo.Name = fmt::format("{}_VertexBuffer", m_Path.filename());
+		vertexBufferInfo.Data = vertices.data();
+		vertexBufferInfo.Size = vertices.size() * sizeof(MeshVertex);
+		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-		std::vector<uint32> indices(numFaces * 3);
+		meshSource->m_VertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
-		uint32 index = 0;
-		for (uint32 i = 0; i < numFaces; i++)
-		{
-			if (faces[i].mNumIndices != 3)
-				break;
-
-			indices[index++] = faces[i].mIndices[0];
-			indices[index++] = faces[i].mIndices[1];
-			indices[index++] = faces[i].mIndices[2];
-		}
-
-		Ref<IndexBuffer> indexBuffer = nullptr;
 		if (!indices.empty())
 		{
 			IndexBufferCreateInfo indexBufferInfo;
-			indexBufferInfo.Name = std::format("{}_IndexBuffer", Utils::ConvertaiStringName(aimesh->mName));
+			indexBufferInfo.Name = fmt::format("{}_IndexBuffer", m_Path.filename());
 			indexBufferInfo.Data = indices.data();
 			indexBufferInfo.Count = indices.size();
 			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-			indexBuffer = IndexBuffer::Create(indexBufferInfo);
+			meshSource->m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
 		}
 
-		VertexBufferCreateInfo vertexBufferInfo;
-		vertexBufferInfo.Name = std::format("{}_VertexBuffer", Utils::ConvertaiStringName(aimesh->mName));
-		vertexBufferInfo.Data = vertices.data();
-		vertexBufferInfo.Size = vertices.size() * sizeof(StaticVertex);
-		vertexBufferInfo.IndexBuffer = indexBuffer;
-		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+		if (meshSource->IsRigged())
+		{
+			VertexBufferCreateInfo vertexBufferInfo;
+			vertexBufferInfo.Name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
+			vertexBufferInfo.Data = boneInfluenceVertices.data();
+			vertexBufferInfo.Size = boneInfluenceVertices.size() * sizeof(BoneInfluenceVertex);
+			vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-		return VertexBuffer::Create(vertexBufferInfo);
+			meshSource->m_BonesInfluenceBuffer = VertexBuffer::Create(vertexBufferInfo);
+		}
 	}
 
 	AssetHandle AssimpImporter::LoadMaterial(const aiMaterial* aimaterial) const

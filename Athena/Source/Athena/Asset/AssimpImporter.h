@@ -21,12 +21,15 @@ namespace Athena
 		~AssimpImporter();
 
 		Ref<MeshSource> ImportToMeshSource() const;
+		Ref<Animation> ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const;
+		Ref<Skeleton> ImportSkeleton() const;
+		bool HasSkeleton() const;
 
 	private:
 		void TraverseNodes(const Ref<MeshSource>& meshSource, const aiNode* ainode, const Matrix4& parentTransform = Matrix4::Identity()) const;
+		void BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const;
 
-		SubMesh LoadSubMesh(const Ref<MeshSource>& meshSource, const aiMesh* aimesh, const Matrix4& transform) const;
-		Ref<VertexBuffer> LoadStaticVertexBuffer(const aiMesh* aimesh, const Matrix4& transform) const;
+		void LoadGeometry(const Ref<MeshSource>& meshSource) const;
 		AssetHandle LoadMaterial(const aiMaterial* aimaterial) const;
 		AssetHandle LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const;
 

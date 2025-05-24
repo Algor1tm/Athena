@@ -37,7 +37,7 @@ namespace Athena
 
 	struct QuadBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 IndexCount;
 		Ref<Material> Material;
 	};
@@ -63,7 +63,7 @@ namespace Athena
 
 	struct LineBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 VertexCount;
 		float LineWidth;
 	};
@@ -79,7 +79,7 @@ namespace Athena
 
 	struct TextBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 IndexCount;
 		Ref<Material> Material; // contains only 1 atlas texture
 	};

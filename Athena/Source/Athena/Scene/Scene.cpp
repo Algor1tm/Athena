@@ -411,9 +411,18 @@ namespace Athena
 		const TransformComponent& localTransform = entity.GetComponent<TransformComponent>();
 		WorldTransformComponent& worldTransform = entity.GetComponent<WorldTransformComponent>();
 
-		worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
-		worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
-		worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+		//worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
+		//worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
+		//worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+
+		Matrix4 worldTransformMatrix = localTransform.AsMatrix() * parentTransform.AsMatrix();
+		Vector3 translation, rotation, scale;
+		Math::DecomposeTransform(worldTransformMatrix, translation, rotation, scale);
+
+		worldTransform.Translation = translation;
+		worldTransform.Rotation = rotation;
+		worldTransform.Scale = scale;
+
 
 		if (entity.HasComponent<ChildComponent>())
 		{
@@ -426,19 +435,22 @@ namespace Athena
 
 	void Scene::UpdateAnimations(Time frameTime)
 	{
-#if ANIMATIONS
 		ATN_PROFILE_FUNC();
 
-		auto view = m_Registry.view<StaticMeshComponent>();
+		auto view = m_Registry.view<SkeletalMeshComponent>();
 		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<StaticMeshComponent>(entity);
-			if (meshComponent.Mesh->HasAnimations())
+			auto& meshComponent = view.get<SkeletalMeshComponent>(entity);
+			if (!meshComponent.IsRootMeshNode())
+				continue;
+
+			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
+
+			if (mesh && mesh->IsAnimated())
 			{
-				meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
+				mesh->GetAnimator()->OnUpdate(frameTime);
 			}
 		}
-#endif
 	}
 
 	void Scene::OnPhysics2DStart()
@@ -621,16 +633,90 @@ namespace Athena
 		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
 		for (auto entity : staticMeshes)
 		{
-			const auto& transform = staticMeshes.get<WorldTransformComponent>(entity);
+			const auto& transformComponent = staticMeshes.get<WorldTransformComponent>(entity);
 			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
 
-			if (meshComponent.Visible)
-			{
-				Ref<StaticMesh> staticMesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+			if (!meshComponent.Visible)
+				continue;
 
-				if(staticMesh)
-					renderer->Submit(staticMesh, transform.AsMatrix());
+			Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+
+			if (!mesh)
+				continue;
+
+			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
+
+			if (!meshSource)
+				continue;
+
+			MaterialTable& materialTable = mesh->GetMaterialTable();
+			const std::vector<uint32>& subMeshIndices = mesh->GetSubMeshIndices();
+
+			for (uint32 index : subMeshIndices)
+			{
+				if (!meshSource->HasSubMesh(index))
+					continue;
+
+				const SubMesh& subMesh = meshSource->GetSubMesh(index);
+
+				AssetHandle materialHandle = 0;
+				if (materialTable.contains(subMesh.MaterialName))
+					materialHandle = materialTable.at(subMesh.MaterialName);
+
+				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
+				materialAsset->UpdateTextureAssets();
+
+				Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
+
+				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), false, transform);
 			}
+		}
+
+		auto skeletalMeshes = GetAllEntitiesWith<SkeletalMeshComponent, WorldTransformComponent>();
+		for (auto entity : skeletalMeshes)
+		{
+			const auto& transformComponent = skeletalMeshes.get<WorldTransformComponent>(entity);
+			const auto& meshComponent = skeletalMeshes.get<SkeletalMeshComponent>(entity);
+
+			if (!meshComponent.Visible)
+				continue;
+
+			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
+
+			if (!mesh)
+				continue;
+
+			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
+
+			if (!meshSource)
+				continue;
+
+			MaterialTable& materialTable = mesh->GetMaterialTable();
+			const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
+
+			for (uint32 index : meshNode.SubMeshes)
+			{
+				if (!meshSource->HasSubMesh(index))
+					continue;
+
+				const SubMesh& subMesh = meshSource->GetSubMesh(index);
+
+				AssetHandle materialHandle = 0;
+				if (materialTable.contains(subMesh.MaterialName))
+					materialHandle = materialTable.at(subMesh.MaterialName);
+
+				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
+				materialAsset->UpdateTextureAssets();
+
+				Matrix4 transform = transformComponent.AsMatrix();
+
+				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), mesh->IsAnimated(), transform);
+			}
+
+			if(mesh->IsAnimated())
+				renderer->SubmitAnimationState(mesh->GetAnimator());
 		}
 
 		LightEnvironment lightEnv;

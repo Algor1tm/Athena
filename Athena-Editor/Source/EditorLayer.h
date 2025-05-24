@@ -45,12 +45,12 @@ namespace Athena
 
 		void InitUI();
 		void OnRender2D();
+		void OnRenderOutline();
 
 		void DrawAboutModal();
 		void DrawThemeEditor();
 		void DrawNewProjectModal();
 		void DrawNewScriptModal();
-		void DrawCreateNewMeshModal();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -89,6 +89,5 @@ namespace Athena
 
 		FilePath m_CurrentScenePath;
 		bool m_IsUIInitialized = false;
-		AssetHandle m_MeshSourceHandle = 0;
 	};
 }

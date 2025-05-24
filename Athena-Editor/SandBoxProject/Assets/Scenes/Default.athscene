@@ -6,11 +6,11 @@ Entities:
     TagComponent:
       Tag: Texture
     TransformComponent:
-      Translation: [0.279601604, 6.63117933, -1.2667017]
-      Rotation: [0.980653644, 0.110550374, -0.085285306, 0.137198687]
-      Scale: [13.1676626, 13.1676645, 2.23559833]
+      Translation: [3.34407973, 45.5232773, -7.93147612]
+      Rotation: [0.980653644, 0.110550374, -0.0852853134, 0.137198687]
+      Scale: [13.1676636, 13.1676645, 2.23559833]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     SpriteComponent:
       Space: 1
       Color: [1, 1, 0.541176498, 1]
@@ -49,50 +49,54 @@ Entities:
     TagComponent:
       Tag: PinkLight
     TransformComponent:
-      Translation: [0.386712313, 4.60944796, -8.20694351]
+      Translation: [39.6329155, 20.8729763, -59.1618271]
       Rotation: [1, 0, 0, 0]
       Scale: [0.75999999, 0.75999999, 0.75999999]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     PointLightComponent:
       Color: [0.93670845, 0, 1, 1]
       Intensity: 5
       Radius: 7
       FallOff: 1
   - IDComponent:
-      ID: 9434107904280492893
+      ID: 16412662367081589512
     TagComponent:
-      Tag: StarWarsTrouper
-    TransformComponent:
-      Translation: [-6.50545168, 0.288609385, 4.93492746]
-      Rotation: [0.502464473, -0.000320172985, 0.864593506, 0.00272599282]
-      Scale: [8.59379864, 8.59389496, 8.59405422]
-    ParentComponent:
-      Parent: 2151942939999983161
-    StaticMeshComponent:
-      MeshHandle: 13409615286462765522
-      Visible: true
-  - IDComponent:
-      ID: 2151942939999983161
-    TagComponent:
-      Tag: Primitives
+      Tag: Floor
     TransformComponent:
       Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [0.147900015, 0.147900015, 0.147900015]
-    StaticMeshComponent:
-      MeshHandle: 12083617822915060991
+      Rotation: [0.707106709, -0.707106829, -0, 0]
+      Scale: [72.2833786, 79.8597488, 2.34753227]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 4
+      Visible: true
+  - IDComponent:
+      ID: 8122819110779904449
+    TagComponent:
+      Tag: Floor.001
+    TransformComponent:
+      Translation: [41.2052765, 4.04131317, -46.1973839]
+      Rotation: [0.655618429, -0.65561831, 0.264885932, 0.264885873]
+      Scale: [35.3562775, 35.3562775, 1.16871905]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 5
       Visible: true
   - IDComponent:
       ID: 6684149830295041235
     TagComponent:
       Tag: GreenSpotLight
     TransformComponent:
-      Translation: [4.63184881, 6.35351419, 15.9331255]
+      Translation: [34.7353058, 50.9820137, 115.295952]
       Rotation: [0.935840547, -0.352423757, 0, 0]
       Scale: [1, 0.999996781, 0.416792005]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     SpotLightComponent:
       Color: [0.173303723, 0.91452992, 0.128766462, 1]
       Intensity: 12.6000004
@@ -105,11 +109,11 @@ Entities:
     TagComponent:
       Tag: BlueLight
     TransformComponent:
-      Translation: [-5.80263138, 4.26446819, -8.69014168]
+      Translation: [2.89061117, 19.6360302, -58.6456299]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     PointLightComponent:
       Color: [0, 0.0323889256, 1, 1]
       Intensity: 5
@@ -120,14 +124,14 @@ Entities:
     TagComponent:
       Tag: RedLight
     TransformComponent:
-      Translation: [6.87751675, 4.60593796, -8.87488174]
+      Translation: [-36.0056839, 22.5686226, -52.2417374]
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     PointLightComponent:
       Color: [1, 0, 0, 1]
-      Intensity: 10.3999996
+      Intensity: 6.5
       Radius: 7
       FallOff: 1
   - IDComponent:
@@ -204,11 +208,11 @@ Entities:
     TagComponent:
       Tag: Text
     TransformComponent:
-      Translation: [-10.467454, 8.2166605, 0.643565178]
+      Translation: [-68.7449493, 71.2506714, -77.7666016]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.141000018, 0.141000018, 0.141000018]
+      Scale: [5.66868448, 5.60397863, 5.66868448]
     ParentComponent:
-      Parent: 15204102483634061799
+      Parent: 731800701376929777
     TextComponent:
       Text: "Athena \nИлья\x00\x00я Ішфіаарівто\x00"
       FontHandle: 11714994014629288087
@@ -225,11 +229,93 @@ Entities:
     TagComponent:
       Tag: sphere
     TransformComponent:
-      Translation: [-3.30714107, 1.41109097, -3.56681728]
+      Translation: [-22.575819, 9.09172249, -26.9679222]
       Rotation: [1, 0, 0, 0]
       Scale: [0.0780503079, 0.0780503079, 0.0780503079]
     ParentComponent:
-      Parent: 2151942939999983161
+      Parent: 731800701376929777
     StaticMeshComponent:
       MeshHandle: 16170110841370161099
+      Visible: true
+  - IDComponent:
+      ID: 731800701376929777
+    TagComponent:
+      Tag: BlenderScene
+    TransformComponent:
+      Translation: [-0.121937275, -0.157507062, 0.0944473743]
+      Rotation: [1, 0, 0, 0]
+      Scale: [0.150000036, 0.150000036, 0.150000036]
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 0
+      Visible: true
+  - IDComponent:
+      ID: 16402252427761055659
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Translation: [-22.3626175, 9.9780159, -5.80683565]
+      Rotation: [0.707106709, -0.707106829, -0, 0]
+      Scale: [6.71918392, 6.71918392, 6.71918392]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 1
+      Visible: true
+  - IDComponent:
+      ID: 9886498162082017401
+    TagComponent:
+      Tag: Cone
+    TransformComponent:
+      Translation: [33.4640312, 9.76286125, 43.2755966]
+      Rotation: [0.707106709, -0.707106829, -0, 0]
+      Scale: [6.21314764, 6.21314764, 6.21314764]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 2
+      Visible: true
+  - IDComponent:
+      ID: 16550787592363628556
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Translation: [36.8483543, 11.5762558, -35.836441]
+      Rotation: [5.33850866e-08, 5.33850724e-08, -0.707106769, -0.707106829]
+      Scale: [5.56286144, 5.56286144, 5.56286144]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 12888972181454613376
+      MeshNodeIndex: 3
+      Visible: true
+  - IDComponent:
+      ID: 11372643884560915662
+    TagComponent:
+      Tag: silly_dancing
+    TransformComponent:
+      Translation: [-43.8027306, 1.95141554, 36.7918892]
+      Rotation: [0.463421524, -3.19142046e-08, 0.886137962, -3.19142046e-08]
+      Scale: [8.76070499, 8.76070118, 8.76070499]
+    ParentComponent:
+      Parent: 731800701376929777
+    SkeletalMeshComponent:
+      MeshHandle: 18292723363576882544
+      MeshNodeIndex: 0
+      Visible: true
+  - IDComponent:
+      ID: 6695484009778155809
+    TagComponent:
+      Tag: Stormtrooper
+    TransformComponent:
+      Translation: [0, 0, 0]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    ParentComponent:
+      Parent: 11372643884560915662
+    SkeletalMeshComponent:
+      MeshHandle: 18292723363576882544
+      MeshNodeIndex: 1
       Visible: true

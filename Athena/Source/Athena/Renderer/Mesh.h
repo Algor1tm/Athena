@@ -17,7 +17,7 @@ class aiNode;
 
 namespace Athena
 {
-	struct StaticVertex
+	struct MeshVertex
 	{
 		Vector3 Position;
 		Vector2 TexCoords;
@@ -36,28 +36,19 @@ namespace Athena
 		}
 	};
 
-	struct AnimVertex
+	struct BoneInfluenceVertex
 	{
-		Vector3 Position;
-		Vector2 TexCoords;
-		Vector3 Normal;
-		Vector3 Tangent;
-		Vector3 Bitangent;
 		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
 
 		static VertexMemoryLayout GetLayout()
 		{
 			return {
-				{ ShaderDataType::Float3, "a_Position"  },
-				{ ShaderDataType::Float2, "a_TexCoords" },
-				{ ShaderDataType::Float3, "a_Normal"    },
-				{ ShaderDataType::Float3, "a_Tangent"   },
-				{ ShaderDataType::Float3, "a_Bitangent" },
-				{ ShaderDataType::Int4,   "a_Tangent"   },
-				{ ShaderDataType::Float4, "a_Bitangent" } };
+				{ ShaderDataType::Int4,   "a_BoneIDs"   },
+				{ ShaderDataType::Float4, "a_Weights"   } };
 		}
 	};
+
 
 #if 0
 	struct SubMesh
@@ -100,14 +91,37 @@ namespace Athena
 	};
 #else
 
+
 	struct SubMesh
 	{
+		uint32 BaseVertex;
+		uint32 VertexCount;
+		uint32 BaseIndex;
+		uint32 IndexCount;
+
 		String Name;
+		String NodeName;
 		String MaterialName;
-		Ref<VertexBuffer> VertexBuffer;
-		std::vector<uint32> Children;
 		AABB AABB;
+
+		Matrix4 Transform = Matrix4::Identity();
+		Matrix4 LocalTransform = Matrix4::Identity();
 	};
+
+
+	struct MeshNode
+	{
+		String Name;
+		uint32 Index = 0xffffffff;
+		uint32 Parent = 0xffffffff;
+		std::vector<uint32> Children;
+		std::vector<uint32> SubMeshes;
+
+		Matrix4 LocalTransform = Matrix4::Identity();
+
+		bool IsRoot() const { return Parent == 0xffffffff; }
+	};
+
 
 	using MaterialTable = std::unordered_map<String, AssetHandle>;
 
@@ -118,17 +132,39 @@ namespace Athena
 
 		virtual AssetType GetAssetType() const override { return AssetType::MeshSource; }
 
+		Ref<VertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
+		Ref<IndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
+		Ref<VertexBuffer> GetBonesInfluenceBuffer() const { return m_BonesInfluenceBuffer; }
+
+		const std::vector<MeshNode>& GetMeshNodes() const { return m_Nodes; }
+		const MeshNode& GetMeshNode(uint32 index) const { return m_Nodes[index]; }
+		const MeshNode& GetRootNode() const { return GetMeshNode(0); }
+
 		bool HasSubMeshes() const { return !m_SubMeshes.empty(); }
 		const std::vector<SubMesh>& GetSubMeshes() const { return m_SubMeshes; }
+		bool HasSubMesh(uint32 index) const { return index < m_SubMeshes.size(); }
 		const SubMesh& GetSubMesh(uint32 index) const { return m_SubMeshes[index]; }
-		const SubMesh& GetRootSubMesh() const { return GetSubMesh(0); }
 
 		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
 
+		Ref<Skeleton> GetSkeleton() const { return m_Skeleton; }
+		const std::vector<Ref<Animation>> GetAnimations() const { return m_Animations; }
+		bool IsRigged() const { return m_IsRigged; }
+
 	private:
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
+		Ref<VertexBuffer> m_BonesInfluenceBuffer;
+
+		std::vector<MeshNode> m_Nodes;
 		std::vector<SubMesh> m_SubMeshes;
 		MaterialTable m_MaterialTable;
+		
+		Ref<Skeleton> m_Skeleton;
+		std::vector<Ref<Animation>> m_Animations;
+		bool m_IsRigged = false;
+
 		AABB m_AABB;
 
 		friend class AssimpImporter;
@@ -153,6 +189,28 @@ namespace Athena
 		std::vector<uint32> m_SubMeshIndices;
 
 		friend class StaticMeshSerializer;
+	};
+
+
+	class ATHENA_API SkeletalMesh : public Asset
+	{
+	public:
+		static Ref<SkeletalMesh> Create();
+		static Ref<SkeletalMesh> Create(AssetHandle meshSourceHandle, bool useAnimations);
+		
+		virtual AssetType GetAssetType() const override { return AssetType::SkeletalMesh; }
+
+		AssetHandle GetMeshSource() const { return m_MeshSource; }
+		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
+		Ref<Animator> GetAnimator() const { return m_Animator; }
+		bool IsAnimated() const { return m_Animator != nullptr; }
+
+	private:
+		AssetHandle m_MeshSource;
+		MaterialTable m_MaterialTable;
+		Ref<Animator> m_Animator;
+
+		friend class SkeletalMeshSerializer;
 	};
 
 #endif

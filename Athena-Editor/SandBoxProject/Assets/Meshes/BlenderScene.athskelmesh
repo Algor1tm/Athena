@@ -1,10 +1,5 @@
-StaticMesh:
+SkeletalMesh:
   MeshSource: 2140758976035799956
-  SubMeshIndices:
-    - 0
-    - 1
-    - 2
-    - 3
-    - 4
+  UseAnimations: false
   OverrideMaterials:
     CubeMaterial: 17185742767388132301

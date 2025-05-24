@@ -99,7 +99,7 @@ namespace Athena
 			pipelineInfo.Name = "DirShadowMapStatic";
 			pipelineInfo.RenderPass = m_DirShadowMapPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Static");
-			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+			pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
@@ -112,7 +112,7 @@ namespace Athena
 
 			pipelineInfo.Name = "DirShadowMapAnim";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Anim");
-			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+			pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 			m_DirShadowMapAnimPipeline = Pipeline::Create(pipelineInfo);
 			m_DirShadowMapAnimPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
@@ -151,7 +151,7 @@ namespace Athena
 			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GBufferPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Static");
-			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+			pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
@@ -164,7 +164,7 @@ namespace Athena
 
 			pipelineInfo.Name = "AnimGeometryPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Anim");
-			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+			pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 			m_AnimGeometryPipeline = Pipeline::Create(pipelineInfo);
 			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -621,7 +621,7 @@ namespace Athena
 				pipelineInfo.Name = "JFSilhouetteStaticPipeline";
 				pipelineInfo.RenderPass = m_JumpFloodSilhouettePass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Static");
-				pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+				pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 				pipelineInfo.InstanceLayout = instanceLayout;
 				pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 				pipelineInfo.CullMode = CullMode::BACK;
@@ -635,7 +635,7 @@ namespace Athena
 
 				pipelineInfo.Name = "JFSilhouetteAnimPipeline";
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Anim");
-				pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+				pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 				m_JFSilhouetteAnimPipeline = Pipeline::Create(pipelineInfo);
 				m_JFSilhouetteAnimPipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -993,99 +993,71 @@ namespace Athena
 		m_ViewportResizeCallback = callback;
 	}
 
-	void SceneRenderer::Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::Submit(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
-		SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
-
-#if ANIMATIONS
-		if (mesh->HasAnimations())
+		if (isRigged)
 		{
-			SubmitAnimMesh(m_AnimGeometryList, mesh, mesh->GetAnimator(), transform);
+			SubmitAnimDrawCall(m_AnimGeometryList, meshSource, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
+			SubmitStaticDrawCall(m_StaticGeometryList, meshSource, submesh, material, transform);
 		}
-#endif
 	}
 
-	void SceneRenderer::SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::SubmitSelectionContext(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
-		SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
-
-#if ANIMATIONS
-		if (mesh->HasAnimations())
+		if (isRigged)
 		{
-			SubmitAnimMesh(m_SelectAnimGeometryList, mesh, mesh->GetAnimator(), transform);
+			SubmitAnimDrawCall(m_SelectAnimGeometryList, meshSource, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
-		}
-#endif
-	}
-
-	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& staticMesh, const Matrix4& transform)
-	{
-		AssetHandle meshSourceHandle = staticMesh->GetMeshSource();
-		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
-
-		if (!meshSource)
-			return;
-
-		const auto& subMeshes = meshSource->GetSubMeshes();
-		const auto& materialTable = staticMesh->GetMaterialTable();
-		const auto& subMeshIndices = staticMesh->GetSubMeshIndices();
-
-		for (uint32 i = 0; i < subMeshes.size(); ++i)
-		{
-			if (!subMeshIndices.empty())
-			{
-				if (std::find(subMeshIndices.begin(), subMeshIndices.end(), i) == subMeshIndices.end())
-					continue;
-			}
-
-			AssetHandle materialHandle = materialTable.at(subMeshes[i].MaterialName);
-			Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-			materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-			materialAsset->UpdateTextureAssets();
-
-			StaticDrawCall drawCall;
-			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-			drawCall.Transform = transform;
-			drawCall.Material = materialAsset->GetMaterial();
-
-			list.Push(drawCall);
+			SubmitStaticDrawCall(m_SelectStaticGeometryList, meshSource, submesh, material, transform);
 		}
 	}
 
-	void SceneRenderer::SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform)
+	void SceneRenderer::SubmitAnimationState(const Ref<Animator>& animator)
 	{
-#if ANIMATIONS
-		const auto& subMeshes = mesh->GetAllSubMeshes();
-		const auto& materialTable = mesh->GetMaterialTable();
+		const auto& bones = animator->GetBoneTransforms();
+		m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
 
-		for (uint32 i = 0; i < subMeshes.size(); ++i)
-		{
-			AssetHandle materialHandle = materialTable.at(subMeshes[i].MaterialName);
-			Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-			materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-			materialAsset->UpdateTextureAssets();
+		m_BonesDataOffset += bones.size();
+	}
 
-			AnimDrawCall drawCall;
-			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-			drawCall.Transform = transform;
-			drawCall.Material = materialAsset->GetMaterial();
-			drawCall.BonesOffset = m_BonesDataOffset;
+	void SceneRenderer::SubmitStaticDrawCall(DrawListStatic& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
+	{
+		StaticDrawCall drawCall;
+		drawCall.MeshVertexBuffer = meshSource->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = meshSource->GetIndexBuffer();
+		drawCall.BaseIndex = submesh.BaseIndex;
+		drawCall.IndexCount = submesh.IndexCount;
+		drawCall.BaseVertex = submesh.BaseVertex;
+		drawCall.VertexCount = submesh.VertexCount;
 
-			const auto& bones = animator->GetBoneTransforms();
-			m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
+		drawCall.Transform = transform;
+		drawCall.Material = material;
 
-			m_BonesDataOffset += bones.size();
+		list.Push(drawCall);
+	}
 
-			list.Push(drawCall);
-		}
-#endif
+	void SceneRenderer::SubmitAnimDrawCall(DrawListAnim& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
+	{
+		AnimDrawCall drawCall;
+		drawCall.MeshVertexBuffer = meshSource->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = meshSource->GetIndexBuffer();
+		drawCall.BonesInfluenceBuffer = meshSource->GetBonesInfluenceBuffer();
+
+		drawCall.BaseIndex = submesh.BaseIndex;
+		drawCall.IndexCount = submesh.IndexCount;
+		drawCall.BaseVertex = submesh.BaseVertex;
+		drawCall.VertexCount = submesh.VertexCount;
+		drawCall.BonesOffset = m_BonesDataOffset;
+
+		drawCall.Transform = transform;
+		drawCall.Material = material;
+
+		list.Push(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)

@@ -176,7 +176,6 @@ namespace Athena
 		String Name;
 		const void* Data = nullptr;
 		uint64 Size = 0;
-		Ref<IndexBuffer> IndexBuffer;
 		BufferMemoryFlags Flags = BufferMemoryFlags::GPU_ONLY;
 	};
 
@@ -190,7 +189,6 @@ namespace Athena
 		virtual void Resize(uint64 size) = 0;
 
 		uint64 GetSize() const { return m_Info.Size; }
-		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
 		const String& GetName() const { return m_Info.Name; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
 

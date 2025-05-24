@@ -24,6 +24,7 @@
 #include "Panels/AssetManagerPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/MaterialEditorPanel.h"
+#include "Panels/MeshImportPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/ProjectSettingsPanel.h"
@@ -198,9 +199,6 @@ namespace Athena
         if (UI::BeginPopupModal("New Script"))
             DrawNewScriptModal();
 
-        if (UI::BeginPopupModal("Create New Mesh"))
-            DrawCreateNewMeshModal();
-
         ImGui::End();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
@@ -210,18 +208,7 @@ namespace Athena
 
         if (m_EditorCtx->SelectedEntity)
         {
-            Entity entity = m_EditorCtx->SelectedEntity;
-            if (entity.HasComponent<StaticMeshComponent>())
-            {
-                AssetHandle meshHandle = entity.GetComponent<StaticMeshComponent>().MeshHandle;
-                Ref<StaticMesh> staticMesh = AssetManager::GetAsset<StaticMesh>(meshHandle);
-
-                if (staticMesh)
-                {
-                    WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
-                    m_ViewportRenderer->SubmitSelectionContext(staticMesh, transform.AsMatrix());
-                }
-            }
+            OnRenderOutline();
         }
     }
 
@@ -254,7 +241,6 @@ namespace Athena
         UI::RegisterPopup("Theme Editor", false);
         UI::RegisterPopup("New Project", true);
         UI::RegisterPopup("New Script", true);
-        UI::RegisterPopup("Create New Mesh", true);
 
         m_Titlebar = Ref<Titlebar>::Create(m_EditorCtx);
 
@@ -389,15 +375,36 @@ namespace Athena
                     }
                     else if (cbPayload->AssetType == AssetType::MeshSource)
                     {
-                        UI::OpenPopup("Create New Mesh");
-                        m_MeshSourceHandle = cbPayload->AssetHandle;
+                        PanelManager::OpenPanel(MESH_IMPORT_PANEL_ID);
+                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->OnImport(cbPayload->AssetHandle);
                     }
                     else if (cbPayload->AssetType == AssetType::StaticMesh)
                     {
-                        Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
-                        entity.AddComponent<StaticMeshComponent>().MeshHandle = cbPayload->AssetHandle;
-                        entity.GetComponent<TagComponent>().Tag = cbPayload->FilePath.stem().string();
-                        m_EditorCtx->SelectedEntity = entity;
+                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->CreateStaticMesh(cbPayload->AssetHandle);
+                    }
+                    else if (cbPayload->AssetType == AssetType::SkeletalMesh)
+                    {
+                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->CreateSkeletalMesh(cbPayload->AssetHandle);
+                    }
+                    else if (cbPayload->AssetType == AssetType::EnvironmentMap)
+                    {
+                        auto view = m_EditorCtx->ActiveScene->GetAllEntitiesWith<SkyLightComponent>();
+                        if (view.empty())
+                        {
+                            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
+                            entity.GetComponent<TagComponent>().Tag = cbPayload->FilePath.stem().string();
+                            auto& skyComponent = entity.AddComponent<SkyLightComponent>();
+                            skyComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
+                            skyComponent.Resolution = 1024;
+                            skyComponent.Type = EnvironmentMapType::STATIC;
+                        }
+                        else
+                        {
+                            Entity entity = { view.back(), m_EditorCtx->ActiveScene.Raw() };
+                            auto& skyComponent = entity.GetComponent<SkyLightComponent>();
+                            skyComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
+                            skyComponent.Type = EnvironmentMapType::STATIC;
+                        }
                     }
                 }
             });
@@ -478,6 +485,9 @@ namespace Athena
 
         auto materialEditorPanel = Ref<MaterialEditorPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(materialEditorPanel, Keyboard::L);
+
+        auto meshImportPanel = Ref<MeshImportPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(meshImportPanel, true, false);
 
         auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
@@ -825,6 +835,89 @@ namespace Athena
         renderer2D->EndScene();
     }
 
+    void EditorLayer::OnRenderOutline()
+    {
+        Entity entity = m_EditorCtx->SelectedEntity;
+        if (entity.HasComponent<StaticMeshComponent>())
+        {
+            const auto& transformComponent = entity.GetComponent<WorldTransformComponent>();
+            const auto& meshComponent = entity.GetComponent<StaticMeshComponent>();
+            Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+
+            if (!mesh)
+                return;
+
+            Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
+
+            if (!meshSource)
+                return;
+
+            MaterialTable& materialTable = mesh->GetMaterialTable();
+            const std::vector<uint32>& subMeshIndices = mesh->GetSubMeshIndices();
+
+            for (uint32 index : subMeshIndices)
+            {
+                if (!meshSource->HasSubMesh(index))
+                    continue;
+
+                const SubMesh& subMesh = meshSource->GetSubMesh(index);
+
+                AssetHandle materialHandle = 0;
+                if (materialTable.contains(subMesh.MaterialName))
+                    materialHandle = materialTable.at(subMesh.MaterialName);
+
+                Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+                materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
+                materialAsset->UpdateTextureAssets();
+
+                Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
+
+                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), false, transform);
+            }
+        }
+        else if (entity.HasComponent<SkeletalMeshComponent>())
+        {
+            const auto& transformComponent = entity.GetComponent<WorldTransformComponent>();
+            const auto& meshComponent = entity.GetComponent<SkeletalMeshComponent>();
+
+            Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
+
+            if (!mesh)
+                return;
+
+            Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
+
+            if (!meshSource)
+                return;
+
+            MaterialTable& materialTable = mesh->GetMaterialTable();
+            const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
+
+            for (uint32 index : meshNode.SubMeshes)
+            {
+                if (!meshSource->HasSubMesh(index))
+                    return;
+
+                const SubMesh& subMesh = meshSource->GetSubMesh(index);
+
+                AssetHandle materialHandle = 0;
+                if (materialTable.contains(subMesh.MaterialName))
+                    materialHandle = materialTable.at(subMesh.MaterialName);
+
+                Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+                materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
+                materialAsset->UpdateTextureAssets();
+
+                Matrix4 transform = transformComponent.AsMatrix();
+
+                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), mesh->IsAnimated(), transform);
+            }
+
+            if (mesh->IsAnimated())
+                m_ViewportRenderer->SubmitAnimationState(mesh->GetAnimator());
+        }
+    }
+
     void EditorLayer::DrawAboutModal()
     {
         auto logo = EditorResources::GetIcon("Logo");
@@ -920,92 +1013,6 @@ namespace Athena
 
         if (ImGui::Button("Close"))
         {
-            UI::CloseCurrentPopup();
-        }
-
-        UI::EndPopup();
-    }
-
-    void EditorLayer::DrawCreateNewMeshModal()
-    {
-        static bool isStaticMesh = true;
-        static FilePath filepath;
-
-        String staticMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh)[0];
-        String skeletalMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::SkeletalMesh)[0];
-
-        if (filepath.empty())
-        {
-            filepath = AssetManager::GetAssetFilePath(m_MeshSourceHandle);
-            filepath.replace_extension(staticMeshExt);
-            isStaticMesh = true;
-        }
-
-        if (UI::TreeNode("IMPORT:") && UI::BeginPropertyTable())
-        {
-            UI::PropertyRow("Import as", 2 * ImGui::GetFrameHeightWithSpacing());
-
-            if (ImGui::RadioButton("Static Mesh", isStaticMesh))
-            {
-                filepath.replace_extension(staticMeshExt);
-                isStaticMesh = true;
-            }
-
-            if (ImGui::RadioButton("Skeletal Mesh", !isStaticMesh))
-            {
-                filepath.replace_extension(skeletalMeshExt);
-                isStaticMesh = false;
-            }
-
-            UI::PropertyRow("FilePath", ImGui::GetFrameHeight());
-
-            String filepathString = filepath.string();
-
-            if (UI::TextInput("FilePathInput", filepathString))
-                filepath = filepathString;
-
-            UI::EndPropertyTable();
-            UI::TreePop();
-        }
-
-        ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
-        bool isValidExt = isStaticMesh ? filepath.extension() == staticMeshExt : filepath.extension() == skeletalMeshExt;
-        if (!isValidExt)
-            ImGui::Text("Invalid extension!");
-
-        bool isExists = FileSystem::Exists(AssetManager::GetAssetAbsolutePath(filepath));
-        if(isExists)
-            ImGui::Text("Current file path already exists!");
-        ImGui::PopStyleColor();
-
-        bool isValid = isValidExt && !isExists;
-
-        if (ImGui::Button("Create") && isValid)
-        {
-            if (isStaticMesh)
-            {
-                Ref<StaticMesh> staticMesh = StaticMesh::Create(m_MeshSourceHandle);
-                AssetHandle handle = Project::GetEditorAssetManager()->AddAsset(staticMesh, AssetManager::GetAssetAbsolutePath(filepath));
-
-                Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
-                entity.AddComponent<StaticMeshComponent>().MeshHandle = handle;
-                entity.GetComponent<TagComponent>().Tag = filepath.stem().string();
-                m_EditorCtx->SelectedEntity = entity;
-            }
-
-            m_MeshSourceHandle = 0;
-            isStaticMesh = true;
-            filepath.clear();
-            UI::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Close"))
-        {
-            m_MeshSourceHandle = 0;
-            isStaticMesh = true;
-            filepath.clear();
             UI::CloseCurrentPopup();
         }
 

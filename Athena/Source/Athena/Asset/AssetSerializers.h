@@ -36,4 +36,12 @@ namespace Athena
 		virtual void Serialize(const Ref<Asset>& asset, const AssetMetadata& metadata) override;
 		virtual bool TryLoadData(const Ref<Asset>& asset, const AssetMetadata& metadata) override;
 	};
+
+
+	class SkeletalMeshSerializer : public AssetSerializer
+	{
+	public:
+		virtual void Serialize(const Ref<Asset>& asset, const AssetMetadata& metadata) override;
+		virtual bool TryLoadData(const Ref<Asset>& asset, const AssetMetadata& metadata) override;
+	};
 }

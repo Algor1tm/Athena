@@ -1,6 +1,6 @@
 StaticMesh:
   MeshSource: 11289512594653657306
   SubMeshIndices:
-    []
-  Materials:
+    - 0
+  OverrideMaterials:
     Gradient: 663441017678479312

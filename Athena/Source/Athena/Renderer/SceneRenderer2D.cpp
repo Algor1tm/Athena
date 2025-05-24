@@ -27,7 +27,6 @@ namespace Athena
 
 	void SceneRenderer2D::Init(const Ref<RenderPass>& renderPass)
 	{
-		
 		m_IndicesCount.resize(Renderer::GetFramesInFlight());
 
 		IndexBufferCreateInfo indexBufferInfo;
@@ -43,7 +42,6 @@ namespace Athena
 		vertexBufferInfo.Name = "Renderer2D_LineVB";
 		vertexBufferInfo.Data = nullptr;
 		vertexBufferInfo.Size = 1 * sizeof(LineVertex);
-		vertexBufferInfo.IndexBuffer = nullptr;
 		vertexBufferInfo.Flags = BufferMemoryFlags::CPU_WRITEABLE;
 
 		m_LineVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
@@ -51,21 +49,18 @@ namespace Athena
 
 		vertexBufferInfo.Name = "Renderer2D_CircleVB";
 		vertexBufferInfo.Size = 1 * sizeof(CircleVertex);
-		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
 
 		m_CircleVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 
 		vertexBufferInfo.Name = "Renderer2D_QuadVB";
 		vertexBufferInfo.Size = 1 * sizeof(QuadVertex);
-		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
 
 		m_QuadVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 
 		vertexBufferInfo.Name = "Renderer2D_TextVB";
 		vertexBufferInfo.Size = 1 * sizeof(TextVertex);
-		vertexBufferInfo.IndexBuffer = m_IndexBuffer.Get();
 
 		m_TextVertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
@@ -102,7 +97,7 @@ namespace Athena
 		m_QuadBatchIndex = 0;
 		QuadBatch quadBatch;
 		quadBatch.IndexCount = 0;
-		quadBatch.VertexOffset = 0;
+		quadBatch.BaseVertex = 0;
 		quadBatch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
 
 		m_QuadBatches.push_back(quadBatch);
@@ -138,7 +133,7 @@ namespace Athena
 		m_LineBatchIndex = 0;
 		LineBatch lineBatch;
 		lineBatch.VertexCount = 0;
-		lineBatch.VertexOffset = 0;
+		lineBatch.BaseVertex = 0;
 		lineBatch.LineWidth = m_LineWidth;
 
 		m_LineBatches.push_back(lineBatch);
@@ -159,7 +154,7 @@ namespace Athena
 		m_TextBatchIndex = 0;
 		TextBatch textBatch;
 		textBatch.IndexCount = 0;
-		textBatch.VertexOffset = 0;
+		textBatch.BaseVertex = 0;
 		textBatch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
 
 		m_TextBatches.push_back(textBatch);
@@ -240,8 +235,8 @@ namespace Athena
 				{
 					quadBatch.Material->Bind(commandBuffer);
 
-					Renderer::RenderGeometry(commandBuffer, m_QuadPipeline, m_QuadVertexBuffer.Get(),
-						quadBatch.Material, quadBatch.VertexOffset, quadBatch.IndexCount);
+					Renderer::BindGeometryBuffers(commandBuffer, m_QuadVertexBuffer.Get(), m_IndexBuffer.Get());
+					Renderer::RenderGeometry(commandBuffer, m_QuadPipeline, quadBatch.Material, 0, quadBatch.IndexCount, quadBatch.BaseVertex);
 				}
 			}
 		}
@@ -252,8 +247,8 @@ namespace Athena
 			m_CircleVertexBuffer.Flush();
 			m_CirclePipeline->Bind(commandBuffer);
 
-			Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, m_CircleVertexBuffer.Get(), 
-				nullptr, 0, m_CircleIndexCount);
+			Renderer::BindGeometryBuffers(commandBuffer, m_CircleVertexBuffer.Get(), m_IndexBuffer.Get());
+			Renderer::RenderGeometry(commandBuffer, m_CirclePipeline, nullptr, 0, m_CircleIndexCount, 0);
 		}
 
 		// LINES
@@ -270,8 +265,8 @@ namespace Athena
 				{
 					m_LinePipeline->SetLineWidth(commandBuffer, lineBatch.LineWidth);
 
-					Renderer::RenderGeometry(commandBuffer, m_LinePipeline, m_LineVertexBuffer.Get(),
-						nullptr, lineBatch.VertexOffset, lineBatch.VertexCount);
+					Renderer::BindGeometryBuffers(commandBuffer, m_LineVertexBuffer.Get(), nullptr);
+					Renderer::RenderGeometry(commandBuffer, m_LinePipeline, nullptr, 0, 0, lineBatch.BaseVertex, lineBatch.VertexCount);
 				}
 			}
 		}
@@ -290,8 +285,8 @@ namespace Athena
 				{
 					textBatch.Material->Bind(commandBuffer);
 
-					Renderer::RenderGeometry(commandBuffer, m_TextPipeline, m_TextVertexBuffer.Get(),
-						textBatch.Material, textBatch.VertexOffset, textBatch.IndexCount);
+					Renderer::BindGeometryBuffers(commandBuffer, m_TextVertexBuffer.Get(), m_IndexBuffer.Get());
+					Renderer::RenderGeometry(commandBuffer, m_TextPipeline, textBatch.Material, 0, textBatch.IndexCount, textBatch.BaseVertex);
 				}
 			}
 		}
@@ -356,7 +351,7 @@ namespace Athena
 
 		// Offset for next batch
 		const QuadBatch& prevBatch = m_QuadBatches[m_QuadBatchIndex - 1];
-		uint32 vertexOffset = prevBatch.VertexOffset + 4 * prevBatch.IndexCount / 6;
+		uint32 vertexOffset = prevBatch.BaseVertex + 4 * prevBatch.IndexCount / 6;
 
 		// If batch already exists update it offset
 		// If not - create new batch
@@ -364,7 +359,7 @@ namespace Athena
 		{
 			QuadBatch batch;
 			batch.IndexCount = 0;
-			batch.VertexOffset = vertexOffset;
+			batch.BaseVertex = vertexOffset;
 
 			batch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
 			batch.Material->Set("u_ViewProjection", m_ViewProjection);
@@ -373,7 +368,7 @@ namespace Athena
 		}
 		else
 		{
-			m_QuadBatches[m_QuadBatchIndex].VertexOffset = vertexOffset;
+			m_QuadBatches[m_QuadBatchIndex].BaseVertex = vertexOffset;
 		}
 	}
 
@@ -389,7 +384,7 @@ namespace Athena
 
 		// Offset for next batch
 		const LineBatch& prevBatch = m_LineBatches[m_LineBatchIndex - 1];
-		uint32 vertexOffset = prevBatch.VertexOffset + prevBatch.VertexCount;
+		uint32 vertexOffset = prevBatch.BaseVertex + prevBatch.VertexCount;
 
 		// If batch already exists update it offset
 		// If not - create new batch
@@ -397,13 +392,13 @@ namespace Athena
 		{
 			LineBatch batch;
 			batch.VertexCount = 0;
-			batch.VertexOffset = vertexOffset;
+			batch.BaseVertex = vertexOffset;
 
 			m_LineBatches.push_back(batch);
 		}
 		else
 		{
-			m_LineBatches[m_LineBatchIndex].VertexOffset = vertexOffset;
+			m_LineBatches[m_LineBatchIndex].BaseVertex = vertexOffset;
 		}
 	}
 
@@ -422,7 +417,7 @@ namespace Athena
 
 		// Offset for next batch
 		const TextBatch& prevBatch = m_TextBatches[m_TextBatchIndex - 1];
-		uint32 vertexOffset = prevBatch.VertexOffset + 4 * prevBatch.IndexCount / 6;
+		uint32 vertexOffset = prevBatch.BaseVertex + 4 * prevBatch.IndexCount / 6;
 
 		// If batch already exists update it offset
 		// If not - create new batch
@@ -430,7 +425,7 @@ namespace Athena
 		{
 			TextBatch batch;
 			batch.IndexCount = 0;
-			batch.VertexOffset = vertexOffset;
+			batch.BaseVertex = vertexOffset;
 
 			batch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
 
@@ -438,7 +433,7 @@ namespace Athena
 		}
 		else
 		{
-			m_TextBatches[m_TextBatchIndex].VertexOffset = vertexOffset;
+			m_TextBatches[m_TextBatchIndex].BaseVertex = vertexOffset;
 		}
 	}
 

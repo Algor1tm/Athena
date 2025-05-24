@@ -209,6 +209,16 @@ namespace Athena
 			return Raw();
 		}
 
+		bool operator<(const Ref& other) const
+		{
+			return Raw() < other.Raw();
+		}
+
+		bool operator>(const Ref& other) const
+		{
+			return Raw() > other.Raw();
+		}
+
 		bool operator==(const Ref& other) const
 		{
 			return m_Object == other.Raw();
@@ -351,6 +361,16 @@ namespace Athena
 		T* operator->() const
 		{
 			return Raw();
+		}
+
+		bool operator<(const Scope& other) const
+		{
+			return Raw() < other.Raw();
+		}
+
+		bool operator>(const Scope& other) const
+		{
+			return Raw() > other.Raw();
 		}
 
 		bool operator==(const Scope& other) const

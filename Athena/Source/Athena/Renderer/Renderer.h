@@ -115,10 +115,12 @@ namespace Athena
 		static void BeginFrame();
 		static void EndFrame();
 
-		static void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 instanceCount = 1, uint32 firstInstance = 0);
-		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material = nullptr, uint32 offset = 0, uint32 count = 0);
+		static void BindGeometryBuffers(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& vertexBuffer, const Ref<IndexBuffer>& indexBuffer, const Ref<VertexBuffer>& bonesInfluenceBuffer = nullptr);
+		static void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> instanceBuffer);
+		static void RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount, uint32 baseInstance, uint32 instanceCount);
+		static void RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount = 0);
+
 		static void FullscreenPass(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<RenderPass>& pass, const Ref<Pipeline>& pipeline, const Ref<Material>& material = nullptr);
-		static void BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer);
 
 		static void Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material = nullptr);
 		static void InsertMemoryBarrier(const Ref<RenderCommandBuffer>& cmdBuffer);

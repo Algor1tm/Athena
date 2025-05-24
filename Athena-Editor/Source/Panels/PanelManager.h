@@ -8,14 +8,15 @@
 
 #include <unordered_map>
 
-#define MATERIAL_EDITOR_PANEL_ID  "MaterialEditor"
 #define ASSET_MANAGER_PANEL_ID    "AssetManager"
-#define SCENE_HIERARCHY_PANEL_ID  "SceneHierarchy"
 #define CONTENT_BROWSER_PANEL_ID  "ContentBrowser"
+#define MATERIAL_EDITOR_PANEL_ID  "MaterialEditor"
+#define MESH_IMPORT_PANEL_ID	  "MeshImport"
 #define PROFILING_PANEL_ID		  "Profiling"
-#define MAIN_VIEWPORT_PANEL_ID	  "MainViewport"
-#define SETTINGS_PANEL_ID		  "Settings"
 #define PROJECT_SETTINGS_PANEL_ID "ProjectSettings"
+#define SCENE_HIERARCHY_PANEL_ID  "SceneHierarchy"
+#define SETTINGS_PANEL_ID		  "Settings"
+#define MAIN_VIEWPORT_PANEL_ID	  "MainViewport"
 
 
 namespace Athena

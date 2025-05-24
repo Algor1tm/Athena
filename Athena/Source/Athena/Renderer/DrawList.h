@@ -22,7 +22,14 @@ namespace Athena
 
 	struct StaticDrawCall
 	{
-		Ref<VertexBuffer> VertexBuffer;
+		Ref<VertexBuffer> MeshVertexBuffer;
+		Ref<IndexBuffer> MeshIndexBuffer;
+
+		uint32 BaseIndex;
+		uint32 IndexCount;
+		uint32 BaseVertex;
+		uint32 VertexCount;
+
 		Ref<Material> Material;
 		Matrix4 Transform;
 	};
@@ -51,10 +58,18 @@ namespace Athena
 
 	struct AnimDrawCall
 	{
-		Ref<VertexBuffer> VertexBuffer;
+		Ref<VertexBuffer> MeshVertexBuffer;
+		Ref<IndexBuffer> MeshIndexBuffer;
+		Ref<VertexBuffer> BonesInfluenceBuffer;
+		uint32 BonesOffset;
+
+		uint32 BaseIndex;
+		uint32 IndexCount;
+		uint32 BaseVertex;
+		uint32 VertexCount;
+
 		Ref<Material> Material;
 		Matrix4 Transform;
-		uint32 BonesOffset = 0;
 	};
 
 	class ATHENA_API DrawListAnim

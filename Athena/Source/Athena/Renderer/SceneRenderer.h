@@ -247,10 +247,10 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
-		void Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
+		void SubmitAnimationState(const Ref<Animator>& animator);
+		void Submit(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
+		void SubmitSelectionContext(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
-
-		void SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
 
 		void SetOnRender2DCallback(const Render2DCallback& callback);
 		void SetOnViewportResizeCallback(const OnViewportResizeCallback& callback);
@@ -289,8 +289,8 @@ namespace Athena
 
 		void ResetStats();
 
-		void SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform);
-		void SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform);
+		void SubmitStaticDrawCall(DrawListStatic& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform);
+		void SubmitAnimDrawCall(DrawListAnim& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform);
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;

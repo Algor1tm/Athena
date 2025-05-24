@@ -37,6 +37,7 @@ namespace Athena
 		Ref<RenderPass> RenderPass;
 		Ref<Shader> Shader;
 		VertexMemoryLayout VertexLayout;
+		VertexMemoryLayout BonesInfluenceLayout;
 		VertexMemoryLayout InstanceLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		CullMode CullMode = CullMode::BACK;

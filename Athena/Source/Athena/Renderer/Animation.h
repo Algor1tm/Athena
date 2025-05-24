@@ -14,10 +14,12 @@ namespace Athena
 	{
 		String Name;
 		Matrix4 OffsetMatrix;
-		uint32 Index;
+		uint32 Index = 0xffffffff;
+		uint32 Parent = 0xffffffff;
 
-		// Children bones indices
 		std::vector<uint32> Children;
+
+		bool IsRoot() const { return Parent == 0xffffffff; }
 	};
 
 	class ATHENA_API Skeleton: public RefCounted
@@ -112,7 +114,7 @@ namespace Athena
 		void OnUpdate(Time frameTime);
 		bool IsPlaying() const { return m_CurrentAnimation != nullptr; }
 
-		void StopAnimation();
+		void ClearAnimation();
 		void PlayAnimation(const Ref<Animation>& animation);
 
 		const std::vector<Ref<Animation>>& GetAllAnimations() const { return m_Animations; }

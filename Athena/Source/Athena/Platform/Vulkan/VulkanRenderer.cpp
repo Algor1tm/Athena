@@ -37,7 +37,36 @@ namespace Athena
 		VulkanContext::GetAllocator()->OnUpdate();
 	}
 
-	void VulkanRenderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	void VulkanRenderer::BindGeometryBuffers(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<VertexBuffer>& vertexBuffer, const Ref<IndexBuffer>& indexBuffer, const Ref<VertexBuffer>& bonesInfluenceBuffer)
+	{
+		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
+
+		Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
+		VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
+
+		if (bonesInfluenceBuffer)
+		{
+			Ref<VulkanVertexBuffer> vkBonesVertexBuffer = bonesInfluenceBuffer.As<VulkanVertexBuffer>();
+			VkBuffer vulkanBonesVertexBuffer = vkBonesVertexBuffer->GetVulkanVertexBuffer();
+
+			VkDeviceSize offsets[] = { 0, 0 };
+			VkBuffer buffers[] = { vulkanVertexBuffer, vulkanBonesVertexBuffer };
+			vkCmdBindVertexBuffers(vkcmdBuffer, 0, 2, buffers, offsets);
+		}
+		else
+		{
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vulkanVertexBuffer, offsets);
+		}
+		
+		if (indexBuffer)
+		{
+			Ref<VulkanIndexBuffer> vkindexBuffer = indexBuffer.As<VulkanIndexBuffer>();
+			vkCmdBindIndexBuffer(vkcmdBuffer, vkindexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		}
+	}
+
+	void VulkanRenderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount, uint32 baseInstance, uint32 instanceCount)
 	{
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
@@ -47,20 +76,17 @@ namespace Athena
 		if (material)
 			pipeline.As<VulkanPipeline>()->SetPushConstants(vkcmdBuffer, material);
 
-		Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
-		VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
-
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vulkanVertexBuffer, offsets);
-
-		Ref<VulkanIndexBuffer> indexBuffer = vkVertexBuffer->GetIndexBuffer().As<VulkanIndexBuffer>();
-		uint32 count =indexBuffer->GetCount();
-
-		vkCmdBindIndexBuffer(vkcmdBuffer, indexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(vkcmdBuffer, count, instanceCount, 0, 0, firstInstance);
+		if (indexCount == 0)
+		{
+			vkCmdDraw(vkcmdBuffer, vertexCount, instanceCount, baseVertex, baseInstance);
+		}
+		else
+		{
+			vkCmdDrawIndexed(vkcmdBuffer, indexCount, instanceCount, baseIndex, baseVertex, baseInstance);
+		}
 	}
 
-	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset, uint32 count)
+	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount)
 	{
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
@@ -70,27 +96,13 @@ namespace Athena
 		if (material)
 			pipeline.As<VulkanPipeline>()->SetPushConstants(vkcmdBuffer, material);
 			
-		Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
-		VkBuffer vulkanVertexBuffer = vkVertexBuffer->GetVulkanVertexBuffer();
-
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(vkcmdBuffer, 0, 1, &vulkanVertexBuffer, offsets);
-
-		if (vkVertexBuffer->GetIndexBuffer())
+		if (indexCount == 0)
 		{
-			Ref<VulkanIndexBuffer> indexBuffer = vkVertexBuffer->GetIndexBuffer().As<VulkanIndexBuffer>();
-			uint32 indexCount = count == 0 ? indexBuffer->GetCount() : count;
-
-			vkCmdBindIndexBuffer(vkcmdBuffer, indexBuffer->GetVulkanIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-			vkCmdDrawIndexed(vkcmdBuffer, indexCount, 1, 0, offset, 0);
+			vkCmdDraw(vkcmdBuffer, vertexCount, 1, baseVertex, 0);
 		}
 		else
 		{
-			uint32 stride = pipeline->GetInfo().VertexLayout.GetStride();
-			uint32 vbSize = vertexBuffer->GetSize();
-			uint32 vertexCount = count == 0 ? vbSize / stride : count;
-
-			vkCmdDraw(vkcmdBuffer, vertexCount, 1, offset, 0);
+			vkCmdDrawIndexed(vkcmdBuffer, indexCount, 1, baseIndex, baseVertex, 0);
 		}
 	}
 
@@ -100,7 +112,7 @@ namespace Athena
 		VkBuffer vkBuffer = vertexBuffer.As<VulkanVertexBuffer>()->GetVulkanVertexBuffer();
 
 		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(vkcmdBuffer, 1, 1, &vkBuffer, offsets);
+		vkCmdBindVertexBuffers(vkcmdBuffer, 2, 1, &vkBuffer, offsets);
 	}
 
 	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

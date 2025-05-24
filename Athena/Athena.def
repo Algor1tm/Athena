@@ -8,6 +8,7 @@ EXPORTS
 	?Begin@ImGui@@YA_NPEBDPEA_NH@Z
 	?BeginChild@ImGui@@YA_NPEBDAEBUImVec2@@_NH@Z
 	?BeginCombo@ImGui@@YA_NPEBD0H@Z
+	?BeginDisabled@ImGui@@YAX_N@Z
 	?BeginDragDropSource@ImGui@@YA_NH@Z
 	?BeginDragDropTarget@ImGui@@YA_NXZ
 	?BeginGroup@ImGui@@YAXXZ
@@ -109,6 +110,7 @@ EXPORTS
 	?EndChild@ImGui@@YAXXZ
 	?EndColumns@ImGui@@YAXXZ
 	?EndCombo@ImGui@@YAXXZ
+	?EndDisabled@ImGui@@YAXXZ
 	?EndDragDropSource@ImGui@@YAXXZ
 	?EndDragDropTarget@ImGui@@YAXXZ
 	?EndPopup@ImGui@@YAXXZ

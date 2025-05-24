@@ -176,18 +176,29 @@ namespace Athena
 			bindingDescriptions.push_back(bindingDescription);
 		}
 
+		uint32 bonesInfluenceElemsNum = m_Info.BonesInfluenceLayout.GetElementsNum();
+		if (bonesInfluenceElemsNum != 0)
+		{
+			VkVertexInputBindingDescription bindingDescription = {};
+			bindingDescription.binding = 1;
+			bindingDescription.stride = m_Info.BonesInfluenceLayout.GetStride();
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+			bindingDescriptions.push_back(bindingDescription);
+		}
+
 		uint32 instanceElemsNum = m_Info.InstanceLayout.GetElementsNum();
 		if (instanceElemsNum != 0)
 		{
 			VkVertexInputBindingDescription bindingDescription = {};
-			bindingDescription.binding = 1;
+			bindingDescription.binding = 2;
 			bindingDescription.stride = m_Info.InstanceLayout.GetStride();
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
 			bindingDescriptions.push_back(bindingDescription);
 		}
 
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexElemsNum + instanceElemsNum);
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexElemsNum + bonesInfluenceElemsNum + instanceElemsNum);
 		for (uint32 i = 0; i < vertexElemsNum; ++i)
 		{
 			const auto& elem = m_Info.VertexLayout.GetElements()[i];
@@ -198,12 +209,23 @@ namespace Athena
 			attributeDescriptions[i].offset = elem.Offset;
 		}
 
-		for (uint32 i = 0; i < instanceElemsNum; ++i)
+		for (uint32 i = 0; i < bonesInfluenceElemsNum; ++i)
 		{
-			const auto& elem = m_Info.InstanceLayout.GetElements()[i];
+			const auto& elem = m_Info.BonesInfluenceLayout.GetElements()[i];
 			uint32 location = vertexElemsNum + i;
 
 			attributeDescriptions[location].binding = 1;
+			attributeDescriptions[location].location = location;
+			attributeDescriptions[location].format = Vulkan::GetFormat(elem.Type);
+			attributeDescriptions[location].offset = elem.Offset;
+		}
+
+		for (uint32 i = 0; i < instanceElemsNum; ++i)
+		{
+			const auto& elem = m_Info.InstanceLayout.GetElements()[i];
+			uint32 location = vertexElemsNum + bonesInfluenceElemsNum + i;
+
+			attributeDescriptions[location].binding = 2;
 			attributeDescriptions[location].location = location;
 			attributeDescriptions[location].format = Vulkan::GetFormat(elem.Type);
 			attributeDescriptions[location].offset = elem.Offset;

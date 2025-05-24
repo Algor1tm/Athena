@@ -177,6 +177,15 @@ namespace Athena
 		bool Visible = true;
 	};
 
+	struct SkeletalMeshComponent
+	{
+		AssetHandle MeshHandle = 0;
+		uint32 MeshNodeIndex = 0;
+		bool Visible = true;
+
+		bool IsRootMeshNode() const { return MeshNodeIndex == 0; }
+	};
+
 	struct DirectionalLightComponent
 	{
 		LinearColor Color = LinearColor::White;
@@ -249,7 +258,7 @@ namespace Athena
 		SpriteComponent, CircleComponent, TextComponent, 
 		ScriptComponent, CameraComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
-		StaticMeshComponent, 
+		StaticMeshComponent, SkeletalMeshComponent,
 		DirectionalLightComponent, PointLightComponent, SpotLightComponent, SkyLightComponent>;
 
 

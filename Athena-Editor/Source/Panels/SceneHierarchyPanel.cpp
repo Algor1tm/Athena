@@ -246,7 +246,11 @@ namespace Athena
 			m_EditorCtx.SelectedEntity = entity;
 		}
 
-		if (ImGui::BeginDragDropSource())
+		bool isMeshNode = entity.HasComponent<SkeletalMeshComponent>();
+		if (isMeshNode)
+			isMeshNode = !entity.GetComponent<SkeletalMeshComponent>().IsRootMeshNode();
+
+		if (!isMeshNode && ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("SCENE_HIERARCHY_ENTITY", &entity, sizeof(entity));
 			ImGui::Text(tag.c_str());
@@ -273,7 +277,7 @@ namespace Athena
 		static char idString[20];
 		sprintf(idString, "%llu", (uint64)entity.GetComponent<IDComponent>().ID);
 
-		if (ImGui::BeginPopupContextItem(idString, ImGuiPopupFlags_MouseButtonRight))
+		if (!isMeshNode && ImGui::BeginPopupContextItem(idString, ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Delete Entity"))
 				entityDeleted = true;
@@ -592,7 +596,7 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<TextComponent>(entity, "Text", [&entity](TextComponent& text)
+		DrawComponent<TextComponent>(entity, "TEXT", [&entity](TextComponent& text)
 		{
 			UI::PropertyRow("Text", ImGui::GetFrameHeight());
 			UI::InputTextMultiline("##TextInput", text.Text, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 6), ImGuiInputTextFlags_AllowTabInput);
@@ -831,15 +835,104 @@ namespace Athena
 
 				UI::EndPropertyTable();
 
-				if (!table.empty())
+				if (!table.empty() && ImGui::Button("Reset"))
 				{
-					if (ImGui::Button("Reset"))
+					AssetHandle meshSourceHandle = mesh->GetMeshSource();
+					Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+					if (meshSource)
 					{
-						AssetHandle meshSourceHandle = mesh->GetMeshSource();
-						Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
-						if (meshSource)
+						mesh->GetMaterialTable() = meshSource->GetMaterialTable();
+					}
+				}
+
+				UI::TreePop();
+			}
+			return false;
+		});
+
+
+		DrawComponent<SkeletalMeshComponent>(entity, "SKELETAL MESH", [this, entity](SkeletalMeshComponent& meshComponent)
+		{
+			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
+			bool isMeshValid = mesh != nullptr;
+
+			String name = isMeshValid ? AssetManager::GetAssetFilePath(meshComponent.MeshHandle).stem().string() : "<Invalid>";
+			UI::PropertyRow("SkeletalMesh", ImGui::GetFrameHeight());
+			if (!isMeshValid)
+				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+			ImGui::Text(name.c_str());
+
+			if (!isMeshValid)
+				ImGui::PopStyleColor();
+
+			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
+			UI::EndPropertyTable();
+
+			AssetHandle meshSourceHandle = mesh->GetMeshSource();
+			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+			isMeshValid = isMeshValid && meshSource;
+
+			if (isMeshValid && UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
+			{
+				MaterialTable& table = mesh->GetMaterialTable();
+				std::unordered_map<String, AssetHandle*> nodeTable;
+				const MeshNode& node = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
+				for (uint32 i: node.SubMeshes)
+				{
+					const SubMesh& subMesh = meshSource->GetSubMesh(i);
+
+					if (table.contains(subMesh.MaterialName))
+						nodeTable[subMesh.MaterialName] = &table.at(subMesh.MaterialName);
+				}
+
+				for (auto& [name, materialHandle] : nodeTable)
+				{
+					UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
+
+					Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(*materialHandle);
+					bool isInvalid = material == nullptr;
+					const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
+
+					if (isInvalid)
+						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+					if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
+					{
+						auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+						panel->SetActiveMaterial(*materialHandle);
+					}
+
+					if (isInvalid)
+						ImGui::PopStyleColor();
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
 						{
-							mesh->GetMaterialTable() = meshSource->GetMaterialTable();
+							CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+							if (cbPayload->AssetType == AssetType::Material)
+							{
+								table.at(name) = cbPayload->AssetHandle;
+							}
+						}
+
+						ImGui::EndDragDropTarget();
+					}
+				}
+
+				UI::EndPropertyTable();
+
+				if (!nodeTable.empty() && ImGui::Button("Reset"))
+				{
+					if (meshSource)
+					{
+						const MaterialTable& meshSourceTable = meshSource->GetMaterialTable();
+						for (const auto& [name, handle] : nodeTable)
+						{
+							if (meshSourceTable.contains(name))
+								*handle = meshSourceTable.at(name);
 						}
 					}
 				}
@@ -847,8 +940,10 @@ namespace Athena
 				UI::TreePop();
 			}
 
-#if ANIMATIONS
-			Ref<Animator> animator = meshComponent.Mesh->GetAnimator();
+			if (!isMeshValid)
+				return false;
+
+			Ref<Animator> animator = mesh->GetAnimator();
 			if (animator)
 			{
 				if (UI::TreeNode("Animations", true, true) && UI::BeginPropertyTable())
@@ -870,7 +965,7 @@ namespace Athena
 						animator->PlayAnimation(anim);
 					}
 
-					{ 
+					{
 						bool playNow = active == animator->GetCurrentAnimation();
 						bool check = playNow;
 						UI::PropertyCheckbox("Play", &check);
@@ -878,7 +973,7 @@ namespace Athena
 						if (check && !playNow)
 							animator->PlayAnimation(active);
 						else if (!check && playNow)
-							animator->StopAnimation();
+							animator->ClearAnimation();
 
 						if (check)
 						{
@@ -897,7 +992,6 @@ namespace Athena
 					ImGui::Spacing();
 				}
 			}
-#endif
 
 			return false;
 		});

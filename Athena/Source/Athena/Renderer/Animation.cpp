@@ -154,7 +154,7 @@ namespace Athena
 		result->m_CurrentTime = 0.f;
 
 		result->m_BoneTransforms.resize(skeleton->GetBoneCount());
-		result->StopAnimation();
+		result->ClearAnimation();
 
 		return result;
 	}
@@ -170,7 +170,7 @@ namespace Athena
 		}
 	}
 
-	void Animator::StopAnimation()
+	void Animator::ClearAnimation()
 	{
 		m_CurrentTime = 0.f;
 		m_CurrentAnimation = nullptr;

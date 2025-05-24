@@ -549,7 +549,38 @@ namespace Athena
 
 		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
 		if (meshSource)
+		{
 			result->m_MaterialTable = meshSource->GetMaterialTable();
+			result->m_SubMeshIndices = std::vector<uint32>(meshSource->GetSubMeshes().size());
+			for (uint32 i = 0; i < result->m_SubMeshIndices.size(); ++i)
+				result->m_SubMeshIndices[i] = i;
+		}
+
+		return result;
+	}
+
+
+	Ref<SkeletalMesh> SkeletalMesh::Create()
+	{
+		Ref<SkeletalMesh> result = Ref<SkeletalMesh>::Create();
+		return result;
+	}
+
+	Ref<SkeletalMesh> SkeletalMesh::Create(AssetHandle meshSourceHandle, bool useAnimations)
+	{
+		Ref<SkeletalMesh> result = Ref<SkeletalMesh>::Create();
+		result->m_MeshSource = meshSourceHandle;
+
+		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+		if (meshSource)
+		{
+			result->m_MaterialTable = meshSource->GetMaterialTable();
+
+			if (useAnimations && meshSource->IsRigged())
+			{
+				result->m_Animator = Animator::Create(meshSource->GetAnimations(), meshSource->GetSkeleton());
+			}
+		}
 
 		return result;
 	}

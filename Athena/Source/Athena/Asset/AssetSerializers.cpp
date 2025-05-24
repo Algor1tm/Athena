@@ -115,7 +115,7 @@ namespace Athena
 		out << YAML::Key << "MeshSource" << YAML::Value << staticMesh->m_MeshSource;
 		out << YAML::Key << "SubMeshIndices" << YAML::Value << staticMesh->m_SubMeshIndices;
 
-		out << YAML::Key << "Materials" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
 		for (const auto& [name, handle] : staticMesh->m_MaterialTable)
 		{
 			if(AssetManager::IsAssetHandleValid(handle) && !AssetManager::GetAssetMetadata(handle).IsMemoryOnly)
@@ -152,7 +152,7 @@ namespace Athena
 			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(staticMesh->m_MeshSource);
 			if (meshSource)
 			{
-				YAML::Node materialsNode = staticMeshNode["Materials"];
+				YAML::Node materialsNode = staticMeshNode["OverrideMaterials"];
 				staticMesh->m_MaterialTable = meshSource->GetMaterialTable();
 				for (auto& [name, handle] : staticMesh->m_MaterialTable)
 				{
@@ -170,6 +170,83 @@ namespace Athena
 		catch (YAML::Exception& e)
 		{
 			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load static mesh asset data from {}. Error message:\n {}", absolutePath, e.what());
+			return false;
+		}
+
+		return true;
+	}
+
+	void SkeletalMeshSerializer::Serialize(const Ref<Asset>& asset, const AssetMetadata& metadata)
+	{
+		Ref<SkeletalMesh> skeletalMesh = asset.As<SkeletalMesh>();
+
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "SkeletalMesh" << YAML::Value << YAML::BeginMap;
+		out << YAML::Key << "MeshSource" << YAML::Value << skeletalMesh->m_MeshSource;
+		out << YAML::Key << "UseAnimations" << YAML::Value << bool(skeletalMesh->m_Animator != nullptr);
+
+		out << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
+		for (const auto& [name, handle] : skeletalMesh->m_MaterialTable)
+		{
+			if (AssetManager::IsAssetHandleValid(handle) && !AssetManager::GetAssetMetadata(handle).IsMemoryOnly)
+				out << YAML::Key << name << YAML::Value << handle;
+		}
+		out << YAML::EndMap;
+
+		out << YAML::EndMap;
+		out << YAML::EndMap;
+
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+
+		std::ofstream fout(absolutePath);
+		fout << out.c_str();
+	}
+
+	bool SkeletalMeshSerializer::TryLoadData(const Ref<Asset>& asset, const AssetMetadata& metadata)
+	{
+		Ref<SkeletalMesh> skeletalMesh = asset.As<SkeletalMesh>();
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(absolutePath.string());
+
+			auto skeletalMeshNode = data["SkeletalMesh"];
+			if (!skeletalMeshNode)
+				return false;
+
+			skeletalMesh->m_MeshSource = skeletalMeshNode["MeshSource"].as<AssetHandle>();
+
+			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(skeletalMesh->m_MeshSource);
+			if (meshSource)
+			{
+				bool useAnimations = skeletalMeshNode["UseAnimations"].as<bool>();
+
+				if (useAnimations && meshSource->IsRigged())
+				{
+					skeletalMesh->m_Animator = Animator::Create(meshSource->GetAnimations(), meshSource->GetSkeleton());
+				}
+
+				YAML::Node materialsNode = skeletalMeshNode["OverrideMaterials"];
+				skeletalMesh->m_MaterialTable = meshSource->GetMaterialTable();
+				for (auto& [name, handle] : skeletalMesh->m_MaterialTable)
+				{
+					YAML::Node materialNode = materialsNode[name];
+
+					if (materialNode)
+					{
+						AssetHandle storedHandle = materialNode.as<AssetHandle>();
+						if (AssetManager::IsAssetHandleValid(storedHandle))
+							handle = storedHandle;
+					}
+				}
+			}
+		}
+		catch (YAML::Exception& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load skeletal mesh asset data from {}. Error message:\n {}", absolutePath, e.what());
 			return false;
 		}
 

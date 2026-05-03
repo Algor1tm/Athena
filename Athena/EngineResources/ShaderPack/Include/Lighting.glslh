@@ -52,7 +52,7 @@ struct TileVisibleLights
 	uint LightIndices[MAX_POINT_LIGHT_COUNT_PER_TILE];
 };
 
-layout(std430, set = 1, binding = 3) buffer u_VisibleLightsData
+layout(std430, set = 1, binding = 3) readonly buffer u_VisibleLightsData
 {
     TileVisibleLights u_VisibleLights[];
 };

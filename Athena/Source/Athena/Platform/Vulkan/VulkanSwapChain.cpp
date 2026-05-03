@@ -284,7 +284,7 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 		Timer timer = Timer();
 
-		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(m_ImageIndex);
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

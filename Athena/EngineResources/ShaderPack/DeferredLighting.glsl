@@ -19,7 +19,6 @@ void main()
 #include "Include/Common.glslh"
 #include "Include/Lighting.glslh"
 
-
 layout(location = 0) in vec2 v_TexCoords;
 layout(location = 0) out vec4 o_Color;
 

@@ -247,7 +247,7 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
-		void SubmitAnimationState(const Ref<Animator>& animator);
+		void SubmitAnimationState(const std::vector<Matrix4>& bonesTransforms);
 		void Submit(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
 		void SubmitSelectionContext(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);

@@ -2,7 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
-
+#include "Athena/Asset/Asset.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Matrix.h"
 #include "Athena/Math/Quaternion.h"
@@ -104,10 +104,10 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Animator: public RefCounted
+	class ATHENA_API AnimationController: public RefCounted
 	{
 	public:
-		static Ref<Animator> Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton);
+		static Ref<AnimationController> Create(AssetHandle meshSource);
 
 		const std::vector<Matrix4>& GetBoneTransforms() const { return m_BoneTransforms; }
 
@@ -117,16 +117,16 @@ namespace Athena
 		void ClearAnimation();
 		void PlayAnimation(const Ref<Animation>& animation);
 
-		const std::vector<Ref<Animation>>& GetAllAnimations() const { return m_Animations; }
+		AssetHandle GetMeshSourceHandle() const { return m_MeshSourceHandle; }
+
 		const Ref<Animation>& GetCurrentAnimation() const { return m_CurrentAnimation; }
 
 		float GetAnimationTime() const { return m_CurrentTime; }
 		void SetAnimationTime(float time) { m_CurrentTime = time; }
 
 	private:
+		AssetHandle m_MeshSourceHandle;
 		std::vector<Matrix4> m_BoneTransforms;
-		std::vector<Ref<Animation>> m_Animations;
-		Ref<Skeleton> m_Skeleton;
 		Ref<Animation> m_CurrentAnimation;
 		float m_CurrentTime;
 	};

@@ -1,5 +1,4 @@
 SkeletalMesh:
   MeshSource: 4389979150323559025
-  UseAnimations: true
   OverrideMaterials:
     {}

@@ -188,7 +188,7 @@ namespace Athena::Vulkan
             break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-            ATN_CORE_ERROR_TAG("Vulkan", message);
+            ATN_CORE_ERROR_TAG("Vulkan", pMessage);
             ATN_CORE_ASSERT(false);
             break;
         }

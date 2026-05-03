@@ -36,9 +36,9 @@ namespace Athena
 		m_HBAO_UBO = UniformBuffer::Create("HBAO-UBO", sizeof(HBAOData));
 		m_SSR_UBO = UniformBuffer::Create("SSR-UBO", sizeof(SSRData));
 
-		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
+		m_BonesSBO = StorageBuffer::Create("BonesSBO", sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
-		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights) * 1, BufferMemoryFlags::GPU_ONLY);
+		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights), BufferMemoryFlags::GPU_ONLY);
 
 		m_BonesDataOffset = 0;
 
@@ -1017,12 +1017,10 @@ namespace Athena
 		}
 	}
 
-	void SceneRenderer::SubmitAnimationState(const Ref<Animator>& animator)
+	void SceneRenderer::SubmitAnimationState(const std::vector<Matrix4>& bonesTransforms)
 	{
-		const auto& bones = animator->GetBoneTransforms();
-		m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
-
-		m_BonesDataOffset += bones.size();
+		m_BonesSBO.Push(bonesTransforms.data(), bonesTransforms.size() * sizeof(Matrix4));
+		m_BonesDataOffset += bonesTransforms.size();
 	}
 
 	void SceneRenderer::SubmitStaticDrawCall(DrawListStatic& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)

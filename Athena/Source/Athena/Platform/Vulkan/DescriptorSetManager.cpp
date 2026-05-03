@@ -87,7 +87,7 @@ namespace Athena
 		m_Info = info;
 		m_ResourcesDescriptionTable = &m_Info.Shader->GetResourcesDescription();
 
-		// Fill in resources description table usaing shader meta data
+		// Fill in resources description table using shader meta data
 		// And create write descriptor tables
 		m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
 

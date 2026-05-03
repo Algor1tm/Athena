@@ -27,6 +27,7 @@ namespace Athena
 
 		bool m_IsStaticMesh = true;
 		bool m_ImportAnimations = false;
+		bool m_IsRigged = false;
 		FilePath m_FilePath;
 	};
 }

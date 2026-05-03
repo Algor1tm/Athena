@@ -316,6 +316,15 @@ namespace Athena
 				}
 
 				{
+					const auto& controllerNode = entityNode["AnimationControllerComponent"];
+					if (controllerNode)
+					{
+						auto& controllerComp = deserializedEntity.AddComponent<AnimationControllerComponent>();
+						controllerComp.AnimationController = AnimationController::Create(controllerNode["MeshHandle"].as<AssetHandle>());
+					}
+				}
+
+				{
 					const auto directionalLightComponent = entityNode["DirectionalLightComponent"];
 					if (directionalLightComponent)
 					{
@@ -601,6 +610,12 @@ namespace Athena
 				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
 				output << YAML::Key << "MeshNodeIndex" << YAML::Value << meshComponent.MeshNodeIndex;
 				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
+			});
+
+		SerializeComponent<AnimationControllerComponent>(out, "AnimationControllerComponent", entity,
+			[](YAML::Emitter& output, const AnimationControllerComponent& controllerComponent)
+			{
+				output << YAML::Key << "MeshHandle" << YAML::Value << controllerComponent.AnimationController->GetMeshSourceHandle();
 			});
 
 		SerializeComponent<DirectionalLightComponent>(out, "DirectionalLightComponent", entity,

@@ -2,13 +2,12 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Log.h"
-
 #include "Athena/Scene/Entity.h"
-
+#include "Athena/Scene/Components.h"
+#include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Material.h"
 
 #include "Panels/Panel.h"
-
 #include "Athena/UI/UI.h"
 
 #include <string_view>
@@ -98,6 +97,30 @@ namespace Athena
 		if (!entity.HasComponent<Component>() && ImGui::MenuItem(name.data()))
 		{
 			entity.AddComponent<Component>();
+			ImGui::CloseCurrentPopup();
+		}
+	}
+
+	template <>
+	inline void SceneHierarchyPanel::DrawAddComponentEntry<AnimationControllerComponent>(Entity entity, std::string_view name)
+	{
+		if (!entity.HasComponent<SkeletalMeshComponent>())
+			return;
+
+		SkeletalMeshComponent& meshComponent = entity.GetComponent<SkeletalMeshComponent>();
+
+		if (!meshComponent.IsRootMeshNode())
+			return;
+
+		if (!entity.HasComponent<AnimationControllerComponent>() && entity.HasComponent<SkeletalMeshComponent>() && ImGui::MenuItem(name.data()))
+		{
+			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
+			if (mesh)
+			{
+				AnimationControllerComponent& component = entity.AddComponent<AnimationControllerComponent>();
+				component.AnimationController = AnimationController::Create(mesh->GetMeshSource());
+			}
+			
 			ImGui::CloseCurrentPopup();
 		}
 	}

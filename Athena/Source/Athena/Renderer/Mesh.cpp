@@ -536,6 +536,11 @@ namespace Athena
 		return result;
 	}
 
+	bool MeshSource::HasAnimation(const Ref<Animation>& animation) const
+	{
+		return std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end();
+	}
+
 	Ref<StaticMesh> StaticMesh::Create()
 	{
 		Ref<StaticMesh> result = Ref<StaticMesh>::Create();
@@ -566,7 +571,7 @@ namespace Athena
 		return result;
 	}
 
-	Ref<SkeletalMesh> SkeletalMesh::Create(AssetHandle meshSourceHandle, bool useAnimations)
+	Ref<SkeletalMesh> SkeletalMesh::Create(AssetHandle meshSourceHandle)
 	{
 		Ref<SkeletalMesh> result = Ref<SkeletalMesh>::Create();
 		result->m_MeshSource = meshSourceHandle;
@@ -575,11 +580,6 @@ namespace Athena
 		if (meshSource)
 		{
 			result->m_MaterialTable = meshSource->GetMaterialTable();
-
-			if (useAnimations && meshSource->IsRigged())
-			{
-				result->m_Animator = Animator::Create(meshSource->GetAnimations(), meshSource->GetSkeleton());
-			}
 		}
 
 		return result;

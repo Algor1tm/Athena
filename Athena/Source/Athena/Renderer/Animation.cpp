@@ -1,7 +1,6 @@
 #include "Animation.h"
 
 #include "Athena/Math/Transforms.h"
-
 #include "Athena/Renderer/Mesh.h"
 
 #include <stack>
@@ -145,21 +144,28 @@ namespace Athena
 	}
 
 
-	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton)
+	Ref<AnimationController> AnimationController::Create(AssetHandle meshSourceHandle)
 	{
-		Ref<Animator> result = Ref<Animator>::Create();
+		Ref<AnimationController> result = Ref<AnimationController>::Create();
 
-		result->m_Skeleton = skeleton;
-		result->m_Animations = animations;
+		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+
+
+		result->m_MeshSourceHandle = meshSourceHandle;
 		result->m_CurrentTime = 0.f;
 
-		result->m_BoneTransforms.resize(skeleton->GetBoneCount());
+		if (meshSource && meshSource->IsRigged())
+		{
+			Ref<Skeleton> skeleton = meshSource->GetSkeleton();
+			result->m_BoneTransforms.resize(skeleton->GetBoneCount());
+		}
+
 		result->ClearAnimation();
 
 		return result;
 	}
 
-	void Animator::OnUpdate(Time frameTime)
+	void AnimationController::OnUpdate(Time frameTime)
 	{
 		if (IsPlaying())
 		{
@@ -170,7 +176,7 @@ namespace Athena
 		}
 	}
 
-	void Animator::ClearAnimation()
+	void AnimationController::ClearAnimation()
 	{
 		m_CurrentTime = 0.f;
 		m_CurrentAnimation = nullptr;
@@ -180,18 +186,25 @@ namespace Athena
 			m_BoneTransforms[i] = identity;
 	}
 
-	void Animator::PlayAnimation(const Ref<Animation>& animation)
+	void AnimationController::PlayAnimation(const Ref<Animation>& animation)
 	{
-		m_CurrentTime = 0.f;
-		m_CurrentAnimation = nullptr;
+		ClearAnimation();
 
-		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
+		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(m_MeshSourceHandle);
+
+		if (!meshSource)
+		{
+			ATN_CORE_WARN_TAG("AssetManager", "Failed to play animation - invalid MeshSourceHandle in AnimationController - {}!", m_MeshSourceHandle);
+			return;
+		}
+
+		if (meshSource->HasAnimation(animation))
 		{
 			m_CurrentAnimation = animation;
 		}
 		else
 		{
-			ATN_CORE_WARN_TAG("Animator", "Attempt to play Animation that does not belong to Animator!");
+			ATN_CORE_WARN_TAG("AssetManager", "Attempt to play Animation that does not belong to AnimationController!");
 		}
 	}
 }

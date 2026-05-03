@@ -54,13 +54,17 @@ namespace Athena
             if (UI::TextInput("FilePathInput", filepathString))
                 m_FilePath = filepathString;
             
-            if (m_IsStaticMesh)
+            if (m_IsRigged)
+            {
+                UI::PropertyCheckbox("Import Animations", &m_ImportAnimations);
+            }
+            else
+            {
                 ImGui::BeginDisabled();
-
-            UI::PropertyCheckbox("Import Animations", &m_ImportAnimations);
-
-            if (m_IsStaticMesh)
+                bool falseValue = false;
+                UI::PropertyCheckbox("Import Animations", &falseValue);
                 ImGui::EndDisabled();
+            }
 
             UI::EndPropertyTable();
             UI::TreePop();
@@ -130,7 +134,7 @@ namespace Athena
             }
             else
             {
-                Ref<SkeletalMesh> skeletalMesh = SkeletalMesh::Create(m_MeshSourceHandle, m_ImportAnimations);
+                Ref<SkeletalMesh> skeletalMesh = SkeletalMesh::Create(m_MeshSourceHandle);
                 AssetHandle handle = Project::GetEditorAssetManager()->AddAsset(skeletalMesh, AssetManager::GetAssetAbsolutePath(m_FilePath));
 
                 CreateSkeletalMesh(handle);
@@ -156,6 +160,10 @@ namespace Athena
 
         m_MeshSourceHandle = meshSourceHandle;
 
+        Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+        m_ImportAnimations = m_IsRigged = meshSource->IsRigged();
+        m_IsStaticMesh = !m_IsRigged;
+
         m_FilePath = AssetManager::GetAssetFilePath(m_MeshSourceHandle);
         m_FilePath.replace_extension(m_StaticMeshExt);
     }
@@ -165,6 +173,7 @@ namespace Athena
         m_MeshSourceHandle = 0;
         m_IsStaticMesh = true;
         m_ImportAnimations = false;
+        m_IsRigged = false;
         m_FilePath.clear();
 
         PanelManager::ClosePanel(MESH_IMPORT_PANEL_ID);
@@ -201,6 +210,12 @@ namespace Athena
 
         CreateEntityHierarchy(meshSource, rootNode, rootEntity, meshHandle);
         m_EditorCtx.SelectedEntity = rootEntity;
+
+        if (m_ImportAnimations)
+        {
+            AnimationControllerComponent& controller = rootEntity.AddComponent<AnimationControllerComponent>();
+            controller.AnimationController = AnimationController::Create(m_MeshSourceHandle);
+        }
     }
 
     void MeshImportPanel::CreateEntityHierarchy(const Ref<MeshSource>& meshSource, const MeshNode& meshNode, Entity entity, AssetHandle meshHandle)

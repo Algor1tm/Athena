@@ -150,6 +150,7 @@ namespace Athena
 
 		Ref<Skeleton> GetSkeleton() const { return m_Skeleton; }
 		const std::vector<Ref<Animation>> GetAnimations() const { return m_Animations; }
+		bool HasAnimation(const Ref<Animation>& animation) const;
 		bool IsRigged() const { return m_IsRigged; }
 
 	private:
@@ -196,19 +197,16 @@ namespace Athena
 	{
 	public:
 		static Ref<SkeletalMesh> Create();
-		static Ref<SkeletalMesh> Create(AssetHandle meshSourceHandle, bool useAnimations);
+		static Ref<SkeletalMesh> Create(AssetHandle meshSourceHandle);
 		
 		virtual AssetType GetAssetType() const override { return AssetType::SkeletalMesh; }
 
 		AssetHandle GetMeshSource() const { return m_MeshSource; }
 		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
-		Ref<Animator> GetAnimator() const { return m_Animator; }
-		bool IsAnimated() const { return m_Animator != nullptr; }
 
 	private:
 		AssetHandle m_MeshSource;
 		MaterialTable m_MaterialTable;
-		Ref<Animator> m_Animator;
 
 		friend class SkeletalMeshSerializer;
 	};

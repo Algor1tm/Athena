@@ -184,7 +184,6 @@ namespace Athena
 		out << YAML::BeginMap;
 		out << YAML::Key << "SkeletalMesh" << YAML::Value << YAML::BeginMap;
 		out << YAML::Key << "MeshSource" << YAML::Value << skeletalMesh->m_MeshSource;
-		out << YAML::Key << "UseAnimations" << YAML::Value << bool(skeletalMesh->m_Animator != nullptr);
 
 		out << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
 		for (const auto& [name, handle] : skeletalMesh->m_MaterialTable)
@@ -222,13 +221,6 @@ namespace Athena
 			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(skeletalMesh->m_MeshSource);
 			if (meshSource)
 			{
-				bool useAnimations = skeletalMeshNode["UseAnimations"].as<bool>();
-
-				if (useAnimations && meshSource->IsRigged())
-				{
-					skeletalMesh->m_Animator = Animator::Create(meshSource->GetAnimations(), meshSource->GetSkeleton());
-				}
-
 				YAML::Node materialsNode = skeletalMeshNode["OverrideMaterials"];
 				skeletalMesh->m_MaterialTable = meshSource->GetMaterialTable();
 				for (auto& [name, handle] : skeletalMesh->m_MaterialTable)

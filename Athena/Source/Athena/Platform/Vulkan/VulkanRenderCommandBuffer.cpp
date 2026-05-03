@@ -72,6 +72,7 @@ namespace Athena
 		ATN_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+		const FrameSyncData& frameImageData = VulkanContext::GetFrameSyncData(Application::Get().GetWindow().GetSwapChain()->GetCurrentImageIndex());
 		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
 		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -85,7 +86,7 @@ namespace Athena
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
+		submitInfo.pSignalSemaphores = &frameImageData.RenderCompleteSemaphore;
 
 		{
 			ATN_PROFILE_SCOPE("vkQueueSubmit");

@@ -305,6 +305,8 @@ Entities:
       MeshHandle: 18292723363576882544
       MeshNodeIndex: 0
       Visible: true
+    AnimationControllerComponent:
+      MeshHandle: 4389979150323559025
   - IDComponent:
       ID: 6695484009778155809
     TagComponent:

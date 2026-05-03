@@ -367,6 +367,21 @@ namespace Athena
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
 			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
+
+			if (entity.HasComponent<SkeletalMeshComponent>())
+			{
+				Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(entity.GetComponent<SkeletalMeshComponent>().MeshHandle);
+				if (mesh)
+				{
+					Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
+					if (meshSource)
+					{
+						if (meshSource->IsRigged())
+							DrawAddComponentEntry<AnimationControllerComponent>(entity, "AnimationController");
+					}
+				}
+			}
+
 			DrawAddComponentEntry<DirectionalLightComponent>(entity, "DirectionalLight");
 			DrawAddComponentEntry<PointLightComponent>(entity, "PointLight");
 			DrawAddComponentEntry<SpotLightComponent>(entity, "SpotLight");
@@ -940,60 +955,62 @@ namespace Athena
 				UI::TreePop();
 			}
 
-			if (!isMeshValid)
-				return false;
+			return false;
+		});
 
-			Ref<Animator> animator = mesh->GetAnimator();
-			if (animator)
+		DrawComponent<AnimationControllerComponent>(entity, "ANIMATION CONTROLLER", [](AnimationControllerComponent& controllerComponent) 
+		{
+			Ref<AnimationController> controller = controllerComponent.AnimationController;
+
+			if (!controller)
+				return true;
+
+			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(controller->GetMeshSourceHandle());
+
+			if (!meshSource)
+				return true;
+
+			const auto& animations = meshSource->GetAnimations();
+
+			Ref<Animation> active = controller->GetCurrentAnimation();
+			active = active ? active : (animations.size() > 0 ? animations[0] : nullptr);
+
+			std::string_view selectedAnim = active ? active->GetName().c_str() : "";
+
+			std::vector<std::string_view> animNames(animations.size());
+			for (uint32 i = 0; i < animations.size(); ++i)
+				animNames[i] = animations[i]->GetName();
+
+			if (UI::PropertyCombo("Animation List", animNames.data(), animNames.size(), &selectedAnim))
 			{
-				if (UI::TreeNode("Animations", true, true) && UI::BeginPropertyTable())
+				uint32 index = std::distance(animNames.begin(), std::find(animNames.begin(), animNames.end(), selectedAnim));
+				Ref<Animation> anim = animations[index];
+				controller->PlayAnimation(anim);
+			}
+
+			{
+				bool playNow = active == controller->GetCurrentAnimation();
+				bool check = playNow;
+				UI::PropertyCheckbox("Play", &check);
+
+				if (check && !playNow)
+					controller->PlayAnimation(active);
+				else if (!check && playNow)
+					controller->ClearAnimation();
+
+				if (check)
 				{
-					Ref<Animation> active = animator->GetCurrentAnimation();
-					active = active ? active : (animator->GetAllAnimations().size() > 0 ? animator->GetAllAnimations()[0] : nullptr);
-
-					std::string_view selectedAnim = active ? active->GetName().c_str() : "";
-
-					const auto& animations = animator->GetAllAnimations();
-					std::vector<std::string_view> animNames(animations.size());
-					for (uint32 i = 0; i < animations.size(); ++i)
-						animNames[i] = animations[i]->GetName();
-
-					if (UI::PropertyCombo("Animation List", animNames.data(), animNames.size(), &selectedAnim))
-					{
-						uint32 index = std::distance(animNames.begin(), std::find(animNames.begin(), animNames.end(), selectedAnim));
-						Ref<Animation> anim = animations[index];
-						animator->PlayAnimation(anim);
-					}
-
-					{
-						bool playNow = active == animator->GetCurrentAnimation();
-						bool check = playNow;
-						UI::PropertyCheckbox("Play", &check);
-
-						if (check && !playNow)
-							animator->PlayAnimation(active);
-						else if (!check && playNow)
-							animator->ClearAnimation();
-
-						if (check)
-						{
-							Ref<Animation> anim = animator->GetCurrentAnimation();
-							uint32 ticks = anim->GetTicksPerSecond();
-							float animTime = animator->GetAnimationTime() / (float)ticks;
-							ImGui::SameLine();
-							ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-							ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
-							animator->SetAnimationTime(animTime * (float)ticks);
-						}
-					}
-
-					UI::EndPropertyTable();
-					UI::TreePop();
-					ImGui::Spacing();
+					Ref<Animation> anim = controller->GetCurrentAnimation();
+					uint32 ticks = anim->GetTicksPerSecond();
+					float animTime = controller->GetAnimationTime() / (float)ticks;
+					ImGui::SameLine();
+					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::SliderFloat("##Duration", &animTime, 0, (anim->GetDuration() - 1) / (float)ticks, nullptr, ImGuiSliderFlags_NoInput);
+					controller->SetAnimationTime(animTime * (float)ticks);
 				}
 			}
 
-			return false;
+			return true;
 		});
 
 		DrawComponent<DirectionalLightComponent>(entity, "DIRECTIONAL LIGHT", [](DirectionalLightComponent& lightComponent)

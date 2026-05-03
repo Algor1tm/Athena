@@ -892,6 +892,7 @@ namespace Athena
 
             MaterialTable& materialTable = mesh->GetMaterialTable();
             const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
+            bool hasAnimationController = entity.HasComponent<AnimationController>();
 
             for (uint32 index : meshNode.SubMeshes)
             {
@@ -910,11 +911,14 @@ namespace Athena
 
                 Matrix4 transform = transformComponent.AsMatrix();
 
-                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), mesh->IsAnimated(), transform);
+                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), hasAnimationController, transform);
             }
 
-            if (mesh->IsAnimated())
-                m_ViewportRenderer->SubmitAnimationState(mesh->GetAnimator());
+            if (hasAnimationController)
+            {
+                Ref<AnimationController> controller = entity.GetComponent<AnimationControllerComponent>().AnimationController;
+                m_ViewportRenderer->SubmitAnimationState(controller->GetBoneTransforms());
+            }
         }
     }
 

@@ -186,6 +186,11 @@ namespace Athena
 		bool IsRootMeshNode() const { return MeshNodeIndex == 0; }
 	};
 
+	struct AnimationControllerComponent
+	{
+		Ref<AnimationController> AnimationController;
+	};
+
 	struct DirectionalLightComponent
 	{
 		LinearColor Color = LinearColor::White;
@@ -258,7 +263,7 @@ namespace Athena
 		SpriteComponent, CircleComponent, TextComponent, 
 		ScriptComponent, CameraComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
-		StaticMeshComponent, SkeletalMeshComponent,
+		StaticMeshComponent, SkeletalMeshComponent, AnimationController,
 		DirectionalLightComponent, PointLightComponent, SpotLightComponent, SkyLightComponent>;
 
 

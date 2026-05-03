@@ -437,19 +437,11 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC();
 
-		auto view = m_Registry.view<SkeletalMeshComponent>();
+		auto view = m_Registry.view<AnimationControllerComponent>();
 		for (auto entity : view)
 		{
-			auto& meshComponent = view.get<SkeletalMeshComponent>(entity);
-			if (!meshComponent.IsRootMeshNode())
-				continue;
-
-			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
-
-			if (mesh && mesh->IsAnimated())
-			{
-				mesh->GetAnimator()->OnUpdate(frameTime);
-			}
+			auto& controllerComponent = view.get<AnimationControllerComponent>(entity);
+			controllerComponent.AnimationController->OnUpdate(frameTime);
 		}
 	}
 
@@ -679,7 +671,7 @@ namespace Athena
 			const auto& transformComponent = skeletalMeshes.get<WorldTransformComponent>(entity);
 			const auto& meshComponent = skeletalMeshes.get<SkeletalMeshComponent>(entity);
 
-			if (!meshComponent.Visible)
+			if (!meshComponent.Visible && !meshComponent.IsRootMeshNode())
 				continue;
 
 			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
@@ -692,8 +684,11 @@ namespace Athena
 			if (!meshSource)
 				continue;
 
+			Entity sceneEntity = { entity, this };
+
 			MaterialTable& materialTable = mesh->GetMaterialTable();
 			const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
+			bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
 
 			for (uint32 index : meshNode.SubMeshes)
 			{
@@ -712,11 +707,14 @@ namespace Athena
 
 				Matrix4 transform = transformComponent.AsMatrix();
 
-				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), mesh->IsAnimated(), transform);
+				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), hasAnimationController, transform);
 			}
 
-			if(mesh->IsAnimated())
-				renderer->SubmitAnimationState(mesh->GetAnimator());
+			if (hasAnimationController)
+			{
+				Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
+				renderer->SubmitAnimationState(controller->GetBoneTransforms());
+			}
 		}
 
 		LightEnvironment lightEnv;

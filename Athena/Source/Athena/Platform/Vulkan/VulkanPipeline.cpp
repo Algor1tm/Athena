@@ -302,7 +302,6 @@ namespace Athena
 		depthStencil.back.reference = 1;
 		depthStencil.front = depthStencil.back;
 
-
 		std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(m_Info.RenderPass->GetColorTargetsCount());
 		for (auto& blendAttachment : colorBlendAttachments)
 		{

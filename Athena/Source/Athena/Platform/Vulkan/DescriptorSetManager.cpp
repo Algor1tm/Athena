@@ -7,7 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -126,12 +126,12 @@ namespace Athena
 				if (resource.Type == ShaderResourceType::Texture2D || resource.Type == ShaderResourceType::StorageTexture2D)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = TextureGenerator::GetWhiteTexture();
+						resource.Storage[i] = EngineTextures::GetWhiteTexture();
 				}
 				else if(resource.Type == ShaderResourceType::TextureCube || resource.Type == ShaderResourceType::StorageTextureCube)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = TextureGenerator::GetBlackTextureCube();
+						resource.Storage[i] = EngineTextures::GetBlackTextureCube();
 				}
 			}
 		}

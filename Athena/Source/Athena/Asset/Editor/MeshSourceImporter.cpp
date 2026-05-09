@@ -1,7 +1,7 @@
-#include "AssimpImporter.h"
+#include "MeshSourceImporter.h"
 
 #include "Athena/Asset/AssetManager.h"
-#include "Athena/Asset/TextureImporter.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Renderer.h"
@@ -93,7 +93,7 @@ namespace Athena
 		aiProcess_Triangulate |
 		aiProcess_FlipUVs;
 
-	AssimpImporter::AssimpImporter(const FilePath& path)
+	MeshSourceImporter::MeshSourceImporter(const FilePath& path)
 		: m_aiScene(aiImportFile(path.string().c_str(), s_ImportFlags))
 	{
 		m_Path = path;
@@ -106,18 +106,16 @@ namespace Athena
 		}
 	}
 
-	AssimpImporter::~AssimpImporter()
+	MeshSourceImporter::~MeshSourceImporter()
 	{
 		if(m_aiScene)
 			aiReleaseImport(m_aiScene);
 	}
 
-	Ref<MeshSource> AssimpImporter::ImportToMeshSource() const
+	bool MeshSourceImporter::ImportToMeshSource(WeakRef<MeshSource> meshSource) const
 	{
 		if (!m_aiScene)
-			return nullptr;
-
-		Ref<MeshSource> meshSource = MeshSource::Create();
+			return false;
 
 		if (HasSkeleton())
 		{
@@ -158,10 +156,10 @@ namespace Athena
 		Utils::PrintNodes(m_aiScene->mRootNode);
 #endif
 
-		return meshSource;
+		return true;
 	}
 
-	Ref<Animation> AssimpImporter::ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const 
+	Ref<Animation> MeshSourceImporter::ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const
 	{
 		if (!m_aiScene || m_aiScene->mNumAnimations < animationIndex + 1)
 			return nullptr;
@@ -207,7 +205,7 @@ namespace Athena
 		return Animation::Create(info);
 	}
 
-	Ref<Skeleton> AssimpImporter::ImportSkeleton() const
+	Ref<Skeleton> MeshSourceImporter::ImportSkeleton() const
 	{
 		if (!m_aiScene)
 			return nullptr;
@@ -250,7 +248,7 @@ namespace Athena
 		return Skeleton::Create(bones);
 	}
 
-	bool AssimpImporter::HasSkeleton() const
+	bool MeshSourceImporter::HasSkeleton() const
 	{
 		if (!m_aiScene)
 			return false;
@@ -266,7 +264,7 @@ namespace Athena
 		return false;
 	}
 
-	void AssimpImporter::BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const
+	void MeshSourceImporter::BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const
 	{
 		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
 		Matrix4 transform = parentTransform * localTransform;
@@ -308,7 +306,7 @@ namespace Athena
 		}
 	}
 
-	void AssimpImporter::TraverseNodes(const Ref<MeshSource>& meshSource, const aiNode* ainode, const Matrix4& parentTransform) const
+	void MeshSourceImporter::TraverseNodes(const Ref<MeshSource>& meshSource, const aiNode* ainode, const Matrix4& parentTransform) const
 	{
 		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
 		Matrix4 transform = parentTransform * localTransform;
@@ -349,7 +347,7 @@ namespace Athena
 		}
 	}
 
-	void AssimpImporter::LoadGeometry(const Ref<MeshSource>& meshSource) const
+	void MeshSourceImporter::LoadGeometry(const Ref<MeshSource>& meshSource) const
 	{
 		std::vector<MeshVertex> vertices;
 		std::vector<BoneInfluenceVertex> boneInfluenceVertices;
@@ -492,9 +490,9 @@ namespace Athena
 		}
 	}
 
-	AssetHandle AssimpImporter::LoadMaterial(const aiMaterial* aimaterial) const
+	AssetHandle MeshSourceImporter::LoadMaterial(const aiMaterial* aimaterial) const
 	{
-		Ref<MaterialAsset> material = MaterialAsset::Create();
+		Ref<MaterialAsset> material = Ref<MaterialAsset>::Create();
 		AssetHandle materialHandle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(material);
 
 		aiColor4D color;
@@ -550,17 +548,13 @@ namespace Athena
 		return materialHandle;
 	}
 
-	AssetHandle AssimpImporter::LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const
+	AssetHandle MeshSourceImporter::LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const
 	{
 		AssetHandle handle = 0;
 
 		aiString texFilepath;
 		if (AI_SUCCESS == aimaterial->Get(AI_MATKEY_TEXTURE(type, 0), texFilepath))
 		{
-			TextureImportOptions options;
-			options.sRGB = srgb;
-			options.GenerateMipMaps = true;
-
 			const aiTexture* embeddedTex = m_aiScene->GetEmbeddedTexture(texFilepath.C_Str());
 			if (embeddedTex)
 			{
@@ -568,8 +562,12 @@ namespace Athena
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
 
-				options.Name = String(texFilepath.C_Str(), texFilepath.length);
-				Ref<Texture2D> texture = TextureImporter::LoadFromMemory(data, width, height, options);
+				TextureImporter importer;
+				importer.SetIsSRGB(srgb);
+				importer.SetGenererateMipMaps(true);
+				importer.SetName(String(texFilepath.C_Str(), texFilepath.length));
+
+				Ref<Texture2D> texture = importer.ImportFromMemory(data, width, height);
 				if (texture)
 				{
 					Ref<TextureAsset> textureAsset = Ref<TextureAsset>::Create(texture);

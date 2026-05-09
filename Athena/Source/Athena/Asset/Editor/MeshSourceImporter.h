@@ -14,13 +14,14 @@ class aiMaterial;
 
 namespace Athena
 {
-	class AssimpImporter
+	class MeshSourceImporter
 	{
 	public:
-		AssimpImporter(const FilePath& path);
-		~AssimpImporter();
+		MeshSourceImporter(const FilePath& path);
+		~MeshSourceImporter();
 
-		Ref<MeshSource> ImportToMeshSource() const;
+		bool ImportToMeshSource(WeakRef<MeshSource> meshSource) const;
+
 		Ref<Animation> ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const;
 		Ref<Skeleton> ImportSkeleton() const;
 		bool HasSkeleton() const;

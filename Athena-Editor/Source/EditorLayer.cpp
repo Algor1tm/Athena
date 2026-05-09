@@ -1,11 +1,12 @@
 #include "EditorLayer.h"
 
 #include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/PlatformUtils.h"
-#include "Athena/Asset/TextureImporter.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
@@ -1210,7 +1211,7 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        std::vector<String> sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        std::vector<String> sceneExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene);
         FilePath filepath = FileDialogs::SaveFile("Save Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             SaveSceneAs(filepath);
@@ -1230,7 +1231,7 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        std::vector<String> sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+        std::vector<String> sceneExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene);
         FilePath filepath = FileDialogs::OpenFile("Open Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             OpenScene(filepath);

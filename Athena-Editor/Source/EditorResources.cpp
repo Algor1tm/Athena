@@ -1,7 +1,7 @@
 #include "EditorResources.h"
 
-#include "Athena/Asset/TextureImporter.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -14,35 +14,35 @@ namespace Athena
 	{
 		m_Path = path;
 
-		TextureImportOptions options;
-		options.sRGB = false;
-		options.GenerateMipMaps = false;
+		TextureImporter importer;
+		importer.SetIsSRGB(false);
+		importer.SetGenererateMipMaps(false);
 
-		m_Icons["Logo"] = TextureImporter::Import(m_Path / "Icons/Logo/LogoWhite.png", options);
-		m_Icons["EmptyTexture"] = TextureImporter::Import(m_Path / "Icons/Editor/Other/EmptyTexture.png", options);
-		m_Icons["Settings"] = TextureImporter::Import(m_Path / "Icons/Editor/Other/Settings.png", options);
-		m_Icons["Viewport_Stop"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/Stop.png", options);
+		m_Icons["Logo"] = importer.Import(m_Path / "Icons/Logo/LogoWhite.png");
+		m_Icons["EmptyTexture"] = importer.Import(m_Path / "Icons/Editor/Other/EmptyTexture.png");
+		m_Icons["Settings"] = importer.Import(m_Path / "Icons/Editor/Other/Settings.png");
+		m_Icons["Viewport_Stop"] = importer.Import(m_Path / "Icons/Editor/Viewport/Stop.png");
 
-		options.sRGB = true;
+		importer.SetIsSRGB(true);
 
-		m_Icons["Titlebar_CloseWindow"] = TextureImporter::Import(m_Path / "Icons/Editor/Titlebar/CloseWindow.png", options);
-		m_Icons["Titlebar_MinimizeWindow"] = TextureImporter::Import(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png", options);
-		m_Icons["Titlebar_RestoreWindow"] = TextureImporter::Import(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png", options);
-		m_Icons["Titlebar_MaximizeWindow"] = TextureImporter::Import(m_Path / "Icons/Editor/Titlebar/MaximizeWindow.png", options);
+		m_Icons["Titlebar_CloseWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/CloseWindow.png");
+		m_Icons["Titlebar_MinimizeWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png");
+		m_Icons["Titlebar_RestoreWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/RestoreWindow.png");
+		m_Icons["Titlebar_MaximizeWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/MaximizeWindow.png");
 
-		m_Icons["Viewport_Play"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/Play.png", options);
-		m_Icons["Viewport_Simulate"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/Simulate.png", options);
-		m_Icons["Viewport_Camera"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/Camera.png", options);
-		m_Icons["Viewport_PointLight"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/PointLight.png", options);
-		m_Icons["Viewport_SpotLight"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/SpotLight.png", options);
+		m_Icons["Viewport_Play"] = importer.Import(m_Path / "Icons/Editor/Viewport/Play.png");
+		m_Icons["Viewport_Simulate"] = importer.Import(m_Path / "Icons/Editor/Viewport/Simulate.png");
+		m_Icons["Viewport_Camera"] = importer.Import(m_Path / "Icons/Editor/Viewport/Camera.png");
+		m_Icons["Viewport_PointLight"] = importer.Import(m_Path / "Icons/Editor/Viewport/PointLight.png");
+		m_Icons["Viewport_SpotLight"] = importer.Import(m_Path / "Icons/Editor/Viewport/SpotLight.png");
 		m_Icons["Viewport_DirLight"] = m_Icons["Viewport_SpotLight"];
-		m_Icons["Viewport_SkyLight"] = TextureImporter::Import(m_Path / "Icons/Editor/Viewport/SkyLight.png", options);
+		m_Icons["Viewport_SkyLight"] = importer.Import(m_Path / "Icons/Editor/Viewport/SkyLight.png");
 
-		m_Icons["ContentBrowser_Folder"] = TextureImporter::Import(m_Path / "Icons/Editor/ContentBrowser/Folder.png", options);
-		m_Icons["ContentBrowser_File"] = TextureImporter::Import(m_Path / "Icons/Editor/ContentBrowser/File.png", options);
-		m_Icons["ContentBrowser_Undo"] = TextureImporter::Import(m_Path / "Icons/Editor/ContentBrowser/Undo.png", options);
-		m_Icons["ContentBrowser_Redo"] = TextureImporter::Import(m_Path / "Icons/Editor/ContentBrowser/Redo.png", options);
-		m_Icons["ContentBrowser_Refresh"] = TextureImporter::Import(m_Path / "Icons/Editor/ContentBrowser/Refresh.png", options);
+		m_Icons["ContentBrowser_Folder"] = importer.Import(m_Path / "Icons/Editor/ContentBrowser/Folder.png");
+		m_Icons["ContentBrowser_File"] = importer.Import(m_Path / "Icons/Editor/ContentBrowser/File.png");
+		m_Icons["ContentBrowser_Undo"] = importer.Import(m_Path / "Icons/Editor/ContentBrowser/Undo.png");
+		m_Icons["ContentBrowser_Redo"] = importer.Import(m_Path / "Icons/Editor/ContentBrowser/Redo.png");
+		m_Icons["ContentBrowser_Refresh"] = importer.Import(m_Path / "Icons/Editor/ContentBrowser/Refresh.png");
 	}
 
 	void EditorResources::Shutdown()
@@ -58,7 +58,7 @@ namespace Athena
 	Ref<Texture2D> EditorResources::GetIcon(std::string_view name)
 	{
 		if (!m_Icons.contains(name) || m_Icons.at(name) == nullptr)
-			return TextureGenerator::GetWhiteTexture();
+			return EngineTextures::GetWhiteTexture();
 
 		return m_Icons.at(name);
 	}

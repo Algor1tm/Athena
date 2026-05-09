@@ -1,6 +1,7 @@
 #include "MaterialEditorPanel.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileDialogs.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/UI/UI.h"
 
 #include "Panels/PanelManager.h"
@@ -139,7 +140,7 @@ namespace Athena
 
 		if (ImGui::ImageButton(TextureTypeToString(type), UI::GetTextureID(displayTexture), { imageSize, imageSize }))
 		{
-			std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
+			std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
 			FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 			AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 

@@ -260,6 +260,7 @@ namespace Athena
 	class ATHENA_API TextureAsset : public Asset
 	{
 	public:
+		TextureAsset();
 		TextureAsset(const Ref<Texture2D>& texture);
 		TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
 		TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
@@ -267,6 +268,9 @@ namespace Athena
 		static Ref<TextureAsset> GetDefault();
 
 		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		const Ref<Texture2D>& GetRenderTexture() const { return m_Texture; }
 		const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };

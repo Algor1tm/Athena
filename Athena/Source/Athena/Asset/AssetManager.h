@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class AssetManager
+	class ATHENA_API AssetManager
 	{
 	public:
 		template<typename T>
@@ -50,5 +50,11 @@ namespace Athena
 		{
 			return Project::GetAssetDirectory() / path;
 		}
+
+		static Ref<Asset> CreateEmptyAsset(AssetType assetType);
+
+		static std::string_view AssetTypeToString(AssetType type);
+
+		static AssetType AssetTypeFromString(std::string_view assetType);
 	};
 }

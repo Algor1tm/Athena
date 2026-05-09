@@ -17,7 +17,7 @@ namespace Athena
 		void Start();
 		void Join();
 
-		void Pause();
+		void Suspend();
 		void Resume();
 
 		uint64 GetID() const { return m_ID; }

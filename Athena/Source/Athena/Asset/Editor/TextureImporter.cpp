@@ -22,20 +22,9 @@ namespace Athena
 	}
 
 
-	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath, bool sRGB)
+	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath)
 	{
-		TextureImportOptions options;
-		options.sRGB = sRGB;
-
-		return Import(filepath, options);
-	}
-
-	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath, const TextureImportOptions& options)
-	{
-		ATN_CORE_VERIFY(FileSystem::Exists(filepath));
-		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
-
-		uint32 maxChannels = options.MaxChannelsNum;
+		uint32 maxChannels = m_MaxChannels;
 		if (maxChannels == 3) // image tiling optimal
 			maxChannels = 4;
 
@@ -54,7 +43,7 @@ namespace Athena
 		else
 		{
 			data = stbi_load(utf8Path.data(), &width, &height, &channels, 0);
-			format = GetFormat(channels, options.sRGB);
+			format = GetFormat(channels, m_SRGB);
 		}
 
 		if (data == nullptr || format == TextureFormat::NONE)
@@ -67,7 +56,7 @@ namespace Athena
 		if (HDR == false && extract)
 		{
 			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, options.sRGB);
+			format = GetFormat(maxChannels, m_SRGB);
 		}
 		else if (extract)
 		{
@@ -79,14 +68,14 @@ namespace Athena
 		Buffer buffer = Buffer::Move(data, size);
 
 		TextureCreateInfo info;
-		info.Name = options.Name.empty() ? filepath.filename().string() : options.Name;
+		info.Name = m_Name.empty() ? filepath.filename().string() : m_Name;
 		info.Format = format;
-		info.Usage = options.Usage;
+		info.Usage = m_TextureUsage;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipMap = options.GenerateMipMaps;
-		info.Sampler = options.Sampler;
+		info.GenerateMipMap = m_GenerateMipMaps;
+		info.Sampler = m_SamplerInfo;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);
 		result->m_FilePath = filepath;
@@ -95,11 +84,9 @@ namespace Athena
 		return result;
 	}
 
-	Ref<Texture2D> TextureImporter::LoadFromMemory(const void* inputData, uint32 inputWidth, uint32 inputHeight, const TextureImportOptions& options)
+	Ref<Texture2D> TextureImporter::ImportFromMemory(const void* inputData, uint32 inputWidth, uint32 inputHeight)
 	{
-		ATN_CORE_VERIFY(options.MaxChannelsNum != 0 && options.MaxChannelsNum <= 4);
-
-		uint32 maxChannels = options.MaxChannelsNum;
+		uint32 maxChannels = m_MaxChannels;
 		if (maxChannels == 3) // image tiling optimal
 			maxChannels = 4;
 
@@ -109,35 +96,36 @@ namespace Athena
 		const uint32 size = inputHeight == 0 ? inputWidth : inputWidth * inputHeight;
 		data = stbi_load_from_memory((const stbi_uc*)inputData, size, &width, &height, &channels, 0);
 
-		TextureFormat format = GetFormat(channels, options.sRGB);
+		TextureFormat format = GetFormat(channels, m_SRGB);
 
 		if (data == nullptr || format == TextureFormat::NONE)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture from memory, (name = {}, width = {}, height = {}, channels = {})", options.Name, width, height, channels);
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Name, width, height, channels);
 			return nullptr;
 		}
 
 		if (channels == 3 || maxChannels < channels)
 		{
 			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, options.sRGB);
+			format = GetFormat(maxChannels, m_SRGB);
 		}
 
 		uint64 dataSize = width * height * Texture::BytesPerPixel(format);
 		Buffer buffer = Buffer::Move(data, dataSize);
 
 		TextureCreateInfo info;
-		info.Name = options.Name;
+		info.Name = m_Name;
 		info.Format = format;
-		info.Usage = options.Usage;
+		info.Usage = m_TextureUsage;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipMap = options.GenerateMipMaps;
-		info.Sampler = options.Sampler;
+		info.GenerateMipMap = m_GenerateMipMaps;
+		info.Sampler = m_SamplerInfo;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);
 		buffer.Release();
+
 		return result;
 	}
 

@@ -6,7 +6,7 @@
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ComputePass.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -90,14 +90,14 @@ namespace Athena
 
 		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-		TextureGenerator::Init();
+		EngineTextures::Init();
 		Font::Init();
 	}
 
 	void Renderer::Shutdown()
 	{
 		Font::Shutdown();
-		TextureGenerator::Shutdown();
+		EngineTextures::Shutdown();
 
 		s_Data.FullscreenVertexBuffer.Release();
 		s_Data.ShaderPack.Release();

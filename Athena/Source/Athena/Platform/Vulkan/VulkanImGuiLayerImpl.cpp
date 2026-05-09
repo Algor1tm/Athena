@@ -7,7 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanTextureView.h"
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -213,7 +213,7 @@ namespace Athena
 	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<TextureView>& view)
 	{
 		if (view == nullptr)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		if (m_TextureViewsMap.contains(view))
 			return m_TextureViewsMap.at(view).Set;
@@ -223,7 +223,7 @@ namespace Athena
 		info.VulkanSampler = view.As<VulkanTextureView>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -234,7 +234,7 @@ namespace Athena
 	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<Texture2D>& texture)
 	{
 		if (texture == nullptr)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		if (m_TexturesMap.contains(texture))
 			return m_TexturesMap.at(texture).Set;
@@ -244,7 +244,7 @@ namespace Athena
 		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 

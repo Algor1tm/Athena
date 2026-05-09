@@ -1,5 +1,5 @@
 #include "ProjectSettingsPanel.h"
-
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/UI/UI.h"
@@ -41,7 +41,7 @@ namespace Athena
 			ImGui::SameLine();
 			if (ImGui::Button(" ... "))
 			{
-				std::vector<String> sceneExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene);
+				std::vector<String> sceneExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene);
 				FilePath path = FileDialogs::OpenFile("Select Start Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
 				if (!path.empty())
 					m_Config.StartScene = AssetManager::GetAssetRelativePath(path);

@@ -73,6 +73,7 @@ set_target_properties(Athena
 # Disable some warnings
 # 4099 - require debug info
 target_link_options(Athena PRIVATE /ignore:4099)
+target_compile_options(Athena PUBLIC /wd26495)
 
 add_custom_command(TARGET Athena POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 

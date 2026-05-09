@@ -1,7 +1,7 @@
-#include "TextureGenerator.h"
+#include "EngineTextures.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/Asset/TextureImporter.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Math/Random.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
@@ -25,7 +25,7 @@ namespace Athena
 	static TextureGeneratorData s_Data;
 
 
-	void TextureGenerator::Init()
+	void EngineTextures::Init()
 	{
 		uint32 whiteTextureData = 0xffffffff;
 		Buffer texData = Buffer::Move(&whiteTextureData, sizeof(uint32));
@@ -64,41 +64,42 @@ namespace Athena
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 
+		TextureImporter importer;
+
 		// BLUE NOISE
 		{
 			FilePath path = resourcesPath / "Textures/BlueNoise16x16.png";
 
-			TextureImportOptions options;
-			options.Name = "Renderer_BlueNoise";
-			options.sRGB = false;
-			options.GenerateMipMaps = false;
-			options.MaxChannelsNum = 1;
+			importer.SetName("Renderer_BlueNoise");
+			importer.SetIsSRGB(false);
+			importer.SetGenererateMipMaps(false);
+			importer.SetMaxChannels(1);
 
-			s_Data.BlueNoise = TextureImporter::Import(path, options);
+			s_Data.BlueNoise = importer.Import(path);
 		}
 
 		// SMAA Area texture
 		{
 			FilePath path = resourcesPath / "Textures/SMAA-AreaTex.png";
 
-			TextureImportOptions options;
-			options.Name = "Renderer_SMAA-AreaTex";
-			options.sRGB = false;
-			options.GenerateMipMaps = false;
+			importer.SetName("Renderer_SMAA-AreaTex");
+			importer.SetIsSRGB(false);
+			importer.SetGenererateMipMaps(false);
+			importer.SetMaxChannels(4);
 
-			s_Data.SMAA_AreaLUT = TextureImporter::Import(path, options);
+			s_Data.SMAA_AreaLUT = importer.Import(path);
 		}
 
 		// SMAA Search texture
 		{
 			FilePath path = resourcesPath / "Textures/SMAA-SearchTex.png";
 
-			TextureImportOptions options;
-			options.Name = "Renderer_SMAA-SearchTex";
-			options.sRGB = false;
-			options.GenerateMipMaps = false;
+			importer.SetName("Renderer_SMAA-SearchTex");
+			importer.SetIsSRGB(false);
+			importer.SetGenererateMipMaps(false);
+			importer.SetMaxChannels(4);
 
-			s_Data.SMAA_SearchLUT = TextureImporter::Import(path, options);
+			s_Data.SMAA_SearchLUT = importer.Import(path);
 		}
 
 		// BRDF_LUT
@@ -144,7 +145,7 @@ namespace Athena
 		}
 	}
 
-	void TextureGenerator::Shutdown()
+	void EngineTextures::Shutdown()
 	{
 		s_Data.WhiteTexture.Release();
 		s_Data.BlackTexture.Release();
@@ -155,37 +156,37 @@ namespace Athena
 		s_Data.BlackTextureCube.Release();
 	}
 
-	Ref<Texture2D> TextureGenerator::GetBRDF_LUT()
+	Ref<Texture2D> EngineTextures::GetBRDF_LUT()
 	{
 		return s_Data.BRDF_LUT;
 	}
 
-	Ref<Texture2D> TextureGenerator::GetSMAA_AreaLUT()
+	Ref<Texture2D> EngineTextures::GetSMAA_AreaLUT()
 	{
 		return s_Data.SMAA_AreaLUT;
 	}
 
-	Ref<Texture2D> TextureGenerator::GetSMAA_SearchLUT()
+	Ref<Texture2D> EngineTextures::GetSMAA_SearchLUT()
 	{
 		return s_Data.SMAA_SearchLUT;
 	}
 
-	Ref<Texture2D> TextureGenerator::GetWhiteTexture()
+	Ref<Texture2D> EngineTextures::GetWhiteTexture()
 	{
 		return s_Data.WhiteTexture;
 	}
 
-	Ref<Texture2D> TextureGenerator::GetBlackTexture()
+	Ref<Texture2D> EngineTextures::GetBlackTexture()
 	{
 		return s_Data.BlackTexture;
 	}
 
-	Ref<TextureCube> TextureGenerator::GetBlackTextureCube()
+	Ref<TextureCube> EngineTextures::GetBlackTextureCube()
 	{
 		return s_Data.BlackTextureCube;
 	}
 
-	Ref<Texture2D> TextureGenerator::GetBlueNoise()
+	Ref<Texture2D> EngineTextures::GetBlueNoise()
 	{
 		return s_Data.BlueNoise;
 	}

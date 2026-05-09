@@ -115,15 +115,15 @@ namespace Athena
 			return *this;
 		}
 
-		template <typename U>
-		Ref<T>& operator=(const Ref<U>& other)
-		{
-			if (m_Object == other.Raw())
-				return *this;
+		//template <typename U>
+		//Ref<T>& operator=(const Ref<U>& other)
+		//{
+		//	if (m_Object == other.Raw())
+		//		return *this;
 
-			Reset(static_cast<T*>(other.Raw()));
-			return *this;
-		}
+		//	Reset(static_cast<T*>(other.Raw()));
+		//	return *this;
+		//}
 
 		Ref& operator=(Ref&& other) noexcept
 		{
@@ -137,18 +137,18 @@ namespace Athena
 			return *this;
 		}
 
-		template <typename U>
-		Ref<T>& operator=(Ref<U>&& other) noexcept
-		{
-			if (m_Object == other.Raw())
-				return *this;
+		//template <typename U>
+		//Ref<T>& operator=(Ref<U>&& other) noexcept
+		//{
+		//	if (m_Object == other.Raw())
+		//		return *this;
 
-			Release();
-			m_Object = static_cast<T*>(other.Raw());
-			other.m_Object = nullptr;
+		//	Release();
+		//	m_Object = static_cast<T*>(other.Raw());
+		//	other.m_Object = nullptr;
 
-			return *this;
-		}
+		//	return *this;
+		//}
 
 		Ref& operator=(std::nullptr_t)
 		{
@@ -253,6 +253,140 @@ namespace Athena
 	private:
 		template <typename U>
 		friend class Ref;
+
+		template <typename U>
+		friend class WeakRef;
+
+	private:
+		T* m_Object;
+	};
+
+
+	template <typename T>
+	class WeakRef
+	{
+	public:
+		WeakRef()
+			: m_Object(nullptr)
+		{
+
+		}
+
+		WeakRef(std::nullptr_t)
+			: m_Object(nullptr)
+		{
+
+		}
+
+		WeakRef(T* ptr)
+			: m_Object(ptr)
+		{
+
+		}
+
+		WeakRef(const Ref<T>& ref)
+			: m_Object(ref.m_Object)
+		{
+
+		}
+
+		WeakRef(const WeakRef& other) = default;
+		WeakRef(WeakRef&& other) noexcept = default;
+
+		WeakRef& operator=(const WeakRef& other) = default;
+		WeakRef& operator=(WeakRef&& other) noexcept = default;
+
+		template <typename U>
+		WeakRef(const WeakRef<U>& other)
+			: m_Object(static_cast<T*>(other.Raw()))
+		{
+		}
+
+		template <typename U>
+		WeakRef(WeakRef<U>&& other) noexcept
+			: m_Object(static_cast<T*>(other.Raw()))
+		{
+			other.m_Object = nullptr;
+		}
+
+		WeakRef& operator=(std::nullptr_t)
+		{
+			m_Object = nullptr;
+			return *this;
+		}
+
+		~WeakRef()
+		{
+
+		}
+
+		T* Raw() const
+		{
+			return m_Object;
+		}
+
+		template <typename U>
+		WeakRef<U> As() const
+		{
+			return WeakRef<U>(static_cast<U*>(m_Object));
+		}
+
+		operator Ref<T>() const
+		{
+			return Ref<T>(m_Object);
+		}
+
+		explicit operator bool() const
+		{
+			return (bool)m_Object;
+		}
+
+		T& operator*() const
+		{
+			return *m_Object;
+		}
+
+		T* operator->() const
+		{
+			return Raw();
+		}
+
+		bool operator<(const WeakRef& other) const
+		{
+			return Raw() < other.Raw();
+		}
+
+		bool operator>(const WeakRef& other) const
+		{
+			return Raw() > other.Raw();
+		}
+
+		bool operator==(const WeakRef& other) const
+		{
+			return m_Object == other.Raw();
+		}
+
+		bool operator!=(const WeakRef& other) const
+		{
+			return m_Object != other.Raw();
+		}
+
+		bool operator==(std::nullptr_t) const
+		{
+			return m_Object == nullptr;
+		}
+
+		bool operator!=(std::nullptr_t) const
+		{
+			return m_Object != nullptr;
+		}
+
+	private:
+		template <typename U>
+		friend class Ref;
+
+		template <typename U>
+		friend class WeakRef;
 
 	private:
 		T* m_Object;

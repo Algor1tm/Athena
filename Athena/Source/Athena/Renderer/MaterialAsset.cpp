@@ -1,32 +1,31 @@
 #include "Material.h"
 
 #include "Athena/Renderer/MaterialAsset.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
+
+#include "Athena/Core/YAMLTypes.h"
 
 
 namespace Athena
 {
-	Ref<MaterialAsset> MaterialAsset::Create()
+	MaterialAsset::MaterialAsset()
 	{
-		Ref<MaterialAsset> result = Ref<MaterialAsset>::Create();
-		result->m_Material = Material::CreatePBR();
+		m_Material = Material::CreatePBR();
 
-		result->SetAlbedo(result->GetAlbedo());
-		result->SetEmission(result->GetEmission());
-		result->SetRoughness(result->GetRoughness());
-		result->SetMetalness(result->GetMetalness());
+		SetAlbedo(GetAlbedo());
+		SetEmission(GetEmission());
+		SetRoughness(GetRoughness());
+		SetMetalness(GetMetalness());
 
-		result->m_TexturesMap[MaterialTextureType::Albedo] = AssetHandle(0);
-		result->m_TexturesMap[MaterialTextureType::Normals] = AssetHandle(0);
-		result->m_TexturesMap[MaterialTextureType::Roughness] = AssetHandle(0);
-		result->m_TexturesMap[MaterialTextureType::Metalness] = AssetHandle(0);
+		m_TexturesMap[MaterialTextureType::Albedo] = AssetHandle(0);
+		m_TexturesMap[MaterialTextureType::Normals] = AssetHandle(0);
+		m_TexturesMap[MaterialTextureType::Roughness] = AssetHandle(0);
+		m_TexturesMap[MaterialTextureType::Metalness] = AssetHandle(0);
 
-		result->m_TexturesFlags[MaterialTextureType::Albedo] = false;
-		result->m_TexturesFlags[MaterialTextureType::Normals] = false;
-		result->m_TexturesFlags[MaterialTextureType::Roughness] = false;
-		result->m_TexturesFlags[MaterialTextureType::Metalness] = false;
-
-		return result;
+		m_TexturesFlags[MaterialTextureType::Albedo] = false;
+		m_TexturesFlags[MaterialTextureType::Normals] = false;
+		m_TexturesFlags[MaterialTextureType::Roughness] = false;
+		m_TexturesFlags[MaterialTextureType::Metalness] = false;
 	}
 
 	Ref<MaterialAsset> MaterialAsset::GetDefault()
@@ -35,10 +34,77 @@ namespace Athena
 
 		if (s_DefaultMaterial == nullptr)
 		{
-			s_DefaultMaterial = MaterialAsset::Create();
+			s_DefaultMaterial = Ref<MaterialAsset>::Create();
 		}
 
 		return s_DefaultMaterial;
+	}
+
+	bool MaterialAsset::Serialize(const FilePath& absolutePath) const
+	{
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "Material" << YAML::Value << YAML::BeginMap;
+
+		out << YAML::Key << "Albedo" << YAML::Value << GetAlbedo();
+		out << YAML::Key << "Emission" << YAML::Value << GetEmission();
+		out << YAML::Key << "Roughness" << YAML::Value << GetRoughness();
+		out << YAML::Key << "Metalness" << YAML::Value << GetMetalness();
+
+		out << YAML::Key << "AlbedoMap" << YAML::Value << GetTexture(MaterialTextureType::Albedo);
+		out << YAML::Key << "NormalMap" << YAML::Value << GetTexture(MaterialTextureType::Normals);
+		out << YAML::Key << "RoughnessMap" << YAML::Value << GetTexture(MaterialTextureType::Roughness);
+		out << YAML::Key << "MetalnessMap" << YAML::Value << GetTexture(MaterialTextureType::Metalness);
+
+		out << YAML::Key << "UseAlbedoMap" << YAML::Value << IsEnabledTexture(MaterialTextureType::Albedo);
+		out << YAML::Key << "UseNormalMap" << YAML::Value << IsEnabledTexture(MaterialTextureType::Normals);
+		out << YAML::Key << "UseRoughnessMap" << YAML::Value << IsEnabledTexture(MaterialTextureType::Roughness);
+		out << YAML::Key << "UseMetalnessMap" << YAML::Value << IsEnabledTexture(MaterialTextureType::Metalness);
+
+		out << YAML::Key << "CastShadows" << YAML::Value << IsFlagSet(MaterialFlag::CastShadows);
+
+		out << YAML::EndMap;
+		out << YAML::EndMap;
+
+		std::ofstream fout(absolutePath);
+		fout << out.c_str();
+
+		return true;
+	}
+
+	bool MaterialAsset::Deserialize(const FilePath& absolutePath)
+	{
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(absolutePath.string());
+
+			auto materialNode = data["Material"];
+
+			SetAlbedo(materialNode["Albedo"].as<LinearColor>());
+			SetEmission(materialNode["Emission"].as<float>());
+			SetRoughness(materialNode["Roughness"].as<float>());
+			SetMetalness(materialNode["Metalness"].as<float>());
+
+			SetTexture(MaterialTextureType::Albedo, materialNode["AlbedoMap"].as<AssetHandle>());
+			SetTexture(MaterialTextureType::Normals, materialNode["NormalMap"].as<AssetHandle>());
+			SetTexture(MaterialTextureType::Roughness, materialNode["RoughnessMap"].as<AssetHandle>());
+			SetTexture(MaterialTextureType::Metalness, materialNode["MetalnessMap"].as<AssetHandle>());
+
+			EnableTexture(MaterialTextureType::Albedo, materialNode["UseAlbedoMap"].as<bool>());
+			EnableTexture(MaterialTextureType::Normals, materialNode["UseNormalMap"].as<bool>());
+			EnableTexture(MaterialTextureType::Roughness, materialNode["UseRoughnessMap"].as<bool>());
+			EnableTexture(MaterialTextureType::Metalness, materialNode["UseMetalnessMap"].as<bool>());
+
+			SetFlag(MaterialFlag::CastShadows, materialNode["CastShadows"].as<bool>());
+		}
+		catch (YAML::Exception& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}. Error message:\n {}", absolutePath, e.what());
+			return false;
+		}
+
+		return true;
 	}
 
 	const LinearColor& MaterialAsset::GetAlbedo() const
@@ -135,15 +201,15 @@ namespace Athena
 	void MaterialAsset::UpdateTextureAssets()
 	{
 		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Albedo));
-		m_Material->Set("u_AlbedoMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
+		m_Material->Set("u_AlbedoMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 
 		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Normals));
-		m_Material->Set("u_NormalMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
+		m_Material->Set("u_NormalMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 
 		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Roughness));
-		m_Material->Set("u_RoughnessMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
+		m_Material->Set("u_RoughnessMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 
 		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Metalness));
-		m_Material->Set("u_MetalnessMap", texture ? texture->GetRenderTexture() : TextureGenerator::GetWhiteTexture());
+		m_Material->Set("u_MetalnessMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 	}
 }

@@ -1,10 +1,10 @@
 #include "EnvironmentMap.h"
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Asset/TextureImporter.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -141,10 +141,8 @@ namespace Athena
 		m_Dirty = false;
 	}
 
-	StaticEnvironmentMap::StaticEnvironmentMap(const FilePath& path)
+	StaticEnvironmentMap::StaticEnvironmentMap()
 	{
-		m_FilePath = path;
-
 		// Panorama To Cubemap
 		ComputePassCreateInfo passInfo;
 		passInfo.Name = "PanoramaToCubePass";
@@ -155,21 +153,37 @@ namespace Athena
 		m_PanoramaToCubePass->Bake();
 
 		m_PanoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
-		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", TextureGenerator::GetWhiteTexture());
+		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", EngineTextures::GetWhiteTexture());
 		m_PanoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
 		m_PanoramaToCubePipeline->Bake();
+	}
+
+	bool StaticEnvironmentMap::Serialize(const FilePath& absolutePath) const
+	{
+		// Do nothing
+		return true;
+	}
+
+	bool StaticEnvironmentMap::Deserialize(const FilePath& absolutePath)
+	{
+		m_FilePath = absolutePath;
+		m_Dirty = true;
+
+		return true;
 	}
 
 	void StaticEnvironmentMap::LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer)
 	{
 		if (!FileSystem::Exists(m_FilePath))
 		{
-			m_EnvironmentTexture = TextureGenerator::GetBlackTextureCube();
-			m_IrradianceTexture = TextureGenerator::GetBlackTextureCube();
+			m_EnvironmentTexture = EngineTextures::GetBlackTextureCube();
+			m_IrradianceTexture = EngineTextures::GetBlackTextureCube();
 			return;
 		}
 
-		Ref<Texture2D> panorama = TextureImporter::Import(m_FilePath, TextureImportOptions());
+		TextureImporter importer;
+		Ref<Texture2D> panorama = importer.Import(m_FilePath);
+
 		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
 
 		m_PanoramaToCubePass->Begin(commandBuffer);

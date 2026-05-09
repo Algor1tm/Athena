@@ -50,10 +50,13 @@ namespace Athena
 	class ATHENA_API StaticEnvironmentMap : public EnvironmentMap
 	{
 	public:
-		StaticEnvironmentMap(const FilePath& path);
+		StaticEnvironmentMap();
 
 		const FilePath& GetFilePath() const { return m_FilePath; }
 		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 	private:
 		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;

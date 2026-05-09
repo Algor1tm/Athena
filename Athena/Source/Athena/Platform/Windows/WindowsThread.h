@@ -54,7 +54,7 @@ namespace Athena
 		Resume();
 	}
 
-	void Thread::Pause()
+	void Thread::Suspend()
 	{
 		if (!m_Handle)
 			return;

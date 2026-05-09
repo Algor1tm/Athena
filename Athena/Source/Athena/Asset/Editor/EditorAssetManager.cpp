@@ -1,5 +1,6 @@
 #include "EditorAssetManager.h"
 #include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileSystem.h"
 
 
@@ -7,8 +8,10 @@ namespace Athena
 {
 	EditorAssetManager::EditorAssetManager()
 	{
+		AssetFileExtensions::Init();
+
 		m_AssetRegistry.Deserialize();
-		m_AssetImporter.Initialize(&m_AssetRegistry);
+		m_AssetWatcherThread.Initialize(&m_AssetRegistry);
 	}
 
 	EditorAssetManager::~EditorAssetManager()
@@ -29,7 +32,7 @@ namespace Athena
 
 		if(!isAssetLoaded && IsAssetHandleValid(handle))
 		{
-			Ref<Asset> loadedAsset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
+			Ref<Asset> loadedAsset = LoadAsset(handle, GetAssetMetadata(handle));
 			if (loadedAsset)
 			{
 				m_LoadedAssets.insert({ handle, loadedAsset });
@@ -76,11 +79,17 @@ namespace Athena
 		metadata.Type = asset->GetAssetType();
 		metadata.FilePath = AssetManager::GetAssetRelativePath(path);
 
+		if (FileSystem::Exists(metadata.FilePath))
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Asset path should be in child directory of asset registry directory!");
+			return AssetHandle(0);
+		}
+
 		asset->Handle = handle;
 
 		m_AssetRegistry.AddAsset(handle, metadata);
 		m_AssetRegistry.Serialize();
-		m_AssetImporter.SerializeAsset(asset, metadata);
+		SerializeAsset(asset, metadata);
 		m_LoadedAssets.insert({ handle, asset });
 
 		return handle;
@@ -93,7 +102,7 @@ namespace Athena
 
 		m_LoadedAssets.erase(handle);
 
-		Ref<Asset> asset = m_AssetImporter.LoadAsset(handle, GetAssetMetadata(handle));
+		Ref<Asset> asset = LoadAsset(handle, GetAssetMetadata(handle));
 		if (asset)
 			m_LoadedAssets.insert({ handle, asset });
 		else
@@ -108,12 +117,74 @@ namespace Athena
 		m_LoadedAssets.erase(handle);
 	}
 
+	Ref<Asset> EditorAssetManager::LoadAsset(AssetHandle handle, const AssetMetadata& metadata) const
+	{
+		ATN_PROFILE_FUNC();
+
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+		Ref<Asset> asset = AssetManager::CreateEmptyAsset(metadata.Type);
+
+		if (!asset)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {})!", handle, metadata.Type, metadata.FilePath);
+			return nullptr;
+		}
+
+		asset->Handle = handle;
+		bool result = asset->Deserialize(absolutePath);
+
+		if (!result)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
+			return nullptr;
+		}
+
+		return asset;
+	}
+
+	bool EditorAssetManager::SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata)
+	{
+		if (metadata.IsMemoryOnly)
+			return true;
+
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+
+		if (FileSystem::Exists(absolutePath))
+		{
+			bool result = asset->Serialize(absolutePath);
+
+			// TODO: in theory asset watcher can reload asset before this is called because file timestamp updated here
+			m_AssetWatcherThread.OnAssetSerialize(asset->Handle, absolutePath);
+
+			return result;
+		}
+
+		ATN_CORE_ERROR_TAG("AssetManager", "Failed to serialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
+		return false;
+	}
+
+	bool EditorAssetManager::DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const
+	{
+		if (metadata.IsMemoryOnly)
+			return true;
+
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
+
+		if (FileSystem::Exists(absolutePath))
+		{
+			return asset->Deserialize(absolutePath);
+		}
+
+		ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
+		return false;
+	}
+
 	void EditorAssetManager::SerializeAllAssets()
 	{
-		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element) 
+		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
 		{
 			const auto& [handle, asset] = element;
-			m_AssetImporter.SerializeAsset(asset, GetAssetMetadata(handle));
+			SerializeAsset(asset, GetAssetMetadata(handle));
 		});
 	}
 
@@ -122,18 +193,13 @@ namespace Athena
 		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
 		{
 			const auto& [handle, asset] = element;
-			m_AssetImporter.DeserializeAsset(asset, GetAssetMetadata(handle));
+			DeserializeAsset(asset, GetAssetMetadata(handle));
 		});
 	}
 
-	Thread& EditorAssetManager::GetAssetThread()
+	Thread& EditorAssetManager::GetAssetWatcherThread()
 	{
-		return m_AssetImporter.GetAssetThread();
-	}
-
-	std::vector<String> EditorAssetManager::GetAssetExtensions(AssetType type) const
-	{
-		return m_AssetImporter.GetAssetExtensions(type);
+		return m_AssetWatcherThread.GetThread();
 	}
 
 	AssetHandle EditorAssetManager::GetAssetHandleFromFilePath(const FilePath& filepath) const

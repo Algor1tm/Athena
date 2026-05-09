@@ -3,7 +3,7 @@
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -390,10 +390,10 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
-			m_DeferredLightingPipeline->SetInput("u_PCSSNoise", TextureGenerator::GetBlueNoise());
-			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", TextureGenerator::GetBRDF_LUT());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_PCSSNoise", EngineTextures::GetBlueNoise());
+			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", EngineTextures::GetBRDF_LUT());
+			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", EngineTextures::GetBlackTextureCube());
 
 			m_DeferredLightingPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
@@ -429,7 +429,7 @@ namespace Athena
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
 			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_SkyboxPipeline->SetInput("u_RendererData", m_RendererUBO);
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
 			m_SkyboxPipeline->Bake();
 		}
 
@@ -570,7 +570,7 @@ namespace Athena
 
 			m_BloomUpsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomUpsample"));
 			m_BloomUpsample->SetInput("u_BloomTexture", m_HiColorBuffer);
-			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
+			m_BloomUpsample->SetInput("u_DirtTexture", EngineTextures::GetBlackTexture());
 			m_BloomUpsample->Bake();
 		}
 
@@ -819,8 +819,8 @@ namespace Athena
 
 				m_SMAAWeightsPipeline = Pipeline::Create(pipelineInfo);
 				m_SMAAWeightsPipeline->SetInput("u_Edges", m_SMAAEdgesPass->GetOutput(0));
-				m_SMAAWeightsPipeline->SetInput("u_AreaTex", TextureGenerator::GetSMAA_AreaLUT());
-				m_SMAAWeightsPipeline->SetInput("u_SearchTex", TextureGenerator::GetSMAA_SearchLUT());
+				m_SMAAWeightsPipeline->SetInput("u_AreaTex", EngineTextures::GetSMAA_AreaLUT());
+				m_SMAAWeightsPipeline->SetInput("u_SearchTex", EngineTextures::GetSMAA_SearchLUT());
 				m_SMAAWeightsPipeline->SetInput("u_RendererData", m_RendererUBO);
 				m_SMAAWeightsPipeline->Bake();
 			}
@@ -1129,9 +1129,9 @@ namespace Athena
 		}
 		else
 		{
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", EngineTextures::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
 		}
 	}
 
@@ -1163,7 +1163,7 @@ namespace Athena
 		if (m_Settings.BloomSettings.DirtTexture)
 			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
 		else
-			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
+			m_BloomUpsample->SetInput("u_DirtTexture", EngineTextures::GetBlackTexture());
 
 		m_SceneCompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
 		m_SceneCompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);

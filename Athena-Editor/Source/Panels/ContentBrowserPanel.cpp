@@ -1,11 +1,12 @@
 #include "ContentBrowserPanel.h"
 
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 #include "Athena/Utils/StringUtils.h"
@@ -347,7 +348,7 @@ namespace Athena
 
 			// TODO: Thumbnails / icons per asset type
 			 
-			//drawList->AddImage(UI::GetTextureID(TextureGenerator::GetWhiteTexture()),
+			//drawList->AddImage(UI::GetTextureID(EngineTextures::GetWhiteTexture()),
 			//	contentPos,
 			//	ImVec2(contentPos.x + iconSize.x, contentPos.y + iconSize.y));
 
@@ -374,7 +375,7 @@ namespace Athena
 				ImGui::PopTextWrapPos();
 			}
 
-			String assetType = Utils::ToUpper((String)Utils::AssetTypeToString(m_Payload.AssetType));
+			String assetType = Utils::ToUpper((String)AssetManager::AssetTypeToString(m_Payload.AssetType));
 			if (m_Payload.AssetType == AssetType::EnvironmentMap)
 				assetType = "ENVMAP";
 
@@ -542,17 +543,17 @@ namespace Athena
 			{
 				if (ImGui::MenuItem("Material"))
 				{
-					String ext = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Material)[0];
+					String ext = AssetFileExtensions::GetAssetExtensionsList(AssetType::Material)[0];
 					FilePath path = CreateUniqueFile("NewMaterial", ext);
 
-					Ref<MaterialAsset> asset = MaterialAsset::Create();
+					Ref<MaterialAsset> asset = Ref<MaterialAsset>::Create();
 					Project::GetEditorAssetManager()->AddAsset(asset, path);
 					m_QueueRefresh = true;
 				}
 
 				if (ImGui::MenuItem("Scene"))
 				{
-					String ext = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Scene)[0];
+					String ext = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene)[0];
 					FilePath path = CreateUniqueFile("NewScene", ext);
 
 					Ref<Scene> asset = Ref<Scene>::Create();
@@ -777,7 +778,7 @@ namespace Athena
 			else if (!item->IsFolder())
 			{
 				Ref<CBAssetItem> assetItem = item.As<CBAssetItem>();
-				String assetType = Utils::ToLower((String)Utils::AssetTypeToString(assetItem->GetAssetType()));
+				String assetType = Utils::ToLower((String)AssetManager::AssetTypeToString(assetItem->GetAssetType()));
 
 				if (assetType.find(searchString) != std::string::npos)
 					m_SearchResult.push_back(item);

@@ -4,8 +4,8 @@
 #include "Athena/Core/UUID.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
-#include "Athena/Asset/RuntimeAssetManager.h"
-#include "Athena/Asset/EditorAssetManager.h"
+#include "Athena/Asset/Runtime/RuntimeAssetManager.h"
+#include "Athena/Asset/Editor/EditorAssetManager.h"
 
 
 namespace Athena

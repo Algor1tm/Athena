@@ -1,14 +1,14 @@
 #include "SceneHierarchyPanel.h"
 
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
@@ -545,7 +545,7 @@ namespace Athena
 
 			Ref<Texture2D> texture;
 			if (isDefault)
-				texture = TextureGenerator::GetWhiteTexture();
+				texture = EngineTextures::GetWhiteTexture();
 			else if (!isValid)
 				texture = EditorResources::GetIcon("EmptyTexture");
 			else
@@ -572,7 +572,7 @@ namespace Athena
 			ImVec2 cursor = ImGui::GetCursorPos();
 			if (ImGui::Button("Browse"))
 			{
-				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
+				std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
 				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
@@ -633,7 +633,7 @@ namespace Athena
 
 			if (ImGui::Button(fontName.c_str()))
 			{
-				std::vector<String> fontExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Font);
+				std::vector<String> fontExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Font);
 				FilePath filepath = FileDialogs::OpenFile("Select Font", "Font files", fontExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
@@ -777,7 +777,7 @@ namespace Athena
 
 			if (ImGui::Button(name.c_str()))
 			{
-				std::vector<String> meshExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh);
+				std::vector<String> meshExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::StaticMesh);
 				FilePath filepath = FileDialogs::OpenFile("Select Mesh", "Mesh files", meshExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
@@ -1108,7 +1108,7 @@ namespace Athena
 
 				if (ImGui::Button(label.data()))
 				{
-					std::vector<String> envMapExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::EnvironmentMap);
+					std::vector<String> envMapExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::EnvironmentMap);
 					FilePath filepath = FileDialogs::OpenFile("Select Environment map", "EnvMap files", envMapExts, Project::GetAssetDirectory());
 					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 

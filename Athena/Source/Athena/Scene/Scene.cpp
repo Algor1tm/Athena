@@ -7,6 +7,7 @@
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
+#include "Athena/Scene/SceneSerializer.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Scripting/ScriptEngine.h"
 
@@ -129,6 +130,18 @@ namespace Athena
 		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, newScene->m_EntityMap);
 
 		return newScene;
+	}
+
+	bool Scene::Serialize(const FilePath& absolutePath) const
+	{
+		SceneSerializer serializer(const_cast<Scene*>(this));
+		return serializer.SerializeToFile(absolutePath);
+	}
+
+	bool Scene::Deserialize(const FilePath& absolutePath)
+	{
+		SceneSerializer serializer(this);
+		return serializer.DeserializeFromFile(absolutePath);
 	}
 
 	Entity Scene::CreateEntity(const String& name, UUID id)

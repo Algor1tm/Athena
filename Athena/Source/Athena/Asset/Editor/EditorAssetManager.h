@@ -3,8 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Thread.h"
 #include "Athena/Asset/Asset.h"
-#include "Athena/Asset/AssetRegistry.h"
-#include "Athena/Asset/AssetImporter.h"
+#include "Athena/Asset/Editor/AssetRegistry.h"
+#include "Athena/Asset/Editor/AssetWatcherThread.h"
 #include "Athena/Asset/AssetManagerBase.h"
 
 #include <unordered_map>
@@ -37,13 +37,17 @@ namespace Athena
 
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
 		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
-		std::vector<String> GetAssetExtensions(AssetType type) const;
 
-		Thread& GetAssetThread();
+		Thread& GetAssetWatcherThread();
+
+	private:
+		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata) const;
+		bool SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata);
+		bool DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const;
 
 	private:
 		AssetRegistry m_AssetRegistry;
-		AssetImporter m_AssetImporter;
+		AssetWatcherThread m_AssetWatcherThread;
 
 		ParallelFlatHashMap<AssetHandle, Ref<Asset>, 2> m_LoadedAssets;
 	};

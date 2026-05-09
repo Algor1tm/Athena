@@ -48,7 +48,7 @@ namespace Athena
 					ImGui::PopStyleColor();
 
 
-					buffer = Utils::AssetTypeToString(metadata.Type);
+					buffer = AssetManager::AssetTypeToString(metadata.Type);
 					UI::PropertyRow("Type", ImGui::GetFrameHeight());
 
 					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(150, 150, 150, 255));
@@ -77,7 +77,7 @@ namespace Athena
 		if (handleSearch == handle)
 			return true;
 
-		String typeSearch = Utils::ToLower(String(Utils::AssetTypeToString(metadata.Type)));
+		String typeSearch = Utils::ToLower(String(AssetManager::AssetTypeToString(metadata.Type)));
 		if (typeSearch.find(searchString) != std::string::npos)
 			return true;
 

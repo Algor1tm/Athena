@@ -20,10 +20,14 @@ namespace Athena
 	class ATHENA_API MaterialAsset: public Asset
 	{
 	public:
-		static Ref<MaterialAsset> Create();
+		MaterialAsset();
+
 		static Ref<MaterialAsset> GetDefault();
 
 		virtual AssetType GetAssetType() const override { return AssetType::Material; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		Ref<Material> GetMaterial() const { return m_Material; }
 

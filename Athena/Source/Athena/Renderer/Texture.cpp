@@ -1,8 +1,8 @@
 #include "Texture.h"
 
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/TextureGenerator.h"
-
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 #include "Athena/Platform/Vulkan/VulkanTextureView.h"
@@ -119,6 +119,12 @@ namespace Athena
 	}
 
 
+	TextureAsset::TextureAsset()
+		: TextureAsset(EngineTextures::GetWhiteTexture())
+	{
+
+	}
+
 	TextureAsset::TextureAsset(const Ref<Texture2D>& texture)
 	{
 		m_Texture = texture;
@@ -143,7 +149,7 @@ namespace Athena
 
 		if (!s_DefaultTextureAsset)
 		{
-			s_DefaultTextureAsset = Ref<TextureAsset>::Create(TextureGenerator::GetWhiteTexture());
+			s_DefaultTextureAsset = Ref<TextureAsset>::Create(EngineTextures::GetWhiteTexture());
 		}
 		
 		return s_DefaultTextureAsset;
@@ -158,5 +164,25 @@ namespace Athena
 		m_TexCoords[1] = { max.x / width, min.y / height };
 		m_TexCoords[2] = { max.x / width, max.y / height };
 		m_TexCoords[3] = { min.x / width, max.y / height };
+	}
+
+	bool TextureAsset::Serialize(const FilePath& absolutePath) const
+	{
+		// TODO
+		return true;
+	}
+
+	bool TextureAsset::Deserialize(const FilePath& absolutePath)
+	{
+		TextureImporter importer;
+		m_Texture = importer.Import(absolutePath);
+
+		if (!m_Texture)
+		{
+			m_Texture = EngineTextures::GetWhiteTexture();
+			return false;
+		}
+
+		return true;
 	}
 }

@@ -3,7 +3,6 @@
 #include "Athena/Project/Project.h"
 #include "Athena/Core/YAMLTypes.h"
 #include "Athena/Core/FileSystem.h"
-#include "AssetManager.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -119,7 +118,7 @@ namespace Athena
 
 				out << YAML::BeginMap;
 				out << YAML::Key << "Handle" << YAML::Value << handle;
-				out << YAML::Key << "Type" << YAML::Value << Utils::AssetTypeToString(metadata.Type);
+				out << YAML::Key << "Type" << YAML::Value << AssetManager::AssetTypeToString(metadata.Type);
 				out << YAML::Key << "FilePath" << YAML::Value << metadata.FilePath;
 				out << YAML::EndMap;
 			});
@@ -159,7 +158,7 @@ namespace Athena
 			AssetHandle handle = node["Handle"].as<UUID>();
 
 			AssetMetadata metadata;
-			metadata.Type = Utils::AssetTypeFromString(node["Type"].as<String>());
+			metadata.Type = AssetManager::AssetTypeFromString(node["Type"].as<String>());
 			metadata.FilePath = node["FilePath"].as<String>();
 			metadata.IsMemoryOnly = false;
 

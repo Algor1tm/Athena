@@ -128,9 +128,10 @@ namespace Athena
 	class ATHENA_API MeshSource: public Asset
 	{
 	public:
-		static Ref<MeshSource> Create();
-
 		virtual AssetType GetAssetType() const override { return AssetType::MeshSource; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		Ref<VertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
@@ -168,24 +169,27 @@ namespace Athena
 
 		AABB m_AABB;
 
-		friend class AssimpImporter;
+		friend class MeshSourceImporter;
 	};
 
 
 	class ATHENA_API StaticMesh: public Asset
 	{
 	public:
-		static Ref<StaticMesh> Create();
-		static Ref<StaticMesh> Create(AssetHandle meshSourceHandle);
+		StaticMesh() = default;
+		StaticMesh(AssetHandle meshSourceHandle);
 
 		virtual AssetType GetAssetType() const override { return AssetType::StaticMesh; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		AssetHandle GetMeshSource() const { return m_MeshSource; }
 		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
 		const std::vector<uint32>& GetSubMeshIndices() const { return m_SubMeshIndices; }
 
 	private:
-		AssetHandle m_MeshSource;
+		AssetHandle m_MeshSource = 0;
 		MaterialTable m_MaterialTable;
 		std::vector<uint32> m_SubMeshIndices;
 
@@ -196,16 +200,19 @@ namespace Athena
 	class ATHENA_API SkeletalMesh : public Asset
 	{
 	public:
-		static Ref<SkeletalMesh> Create();
-		static Ref<SkeletalMesh> Create(AssetHandle meshSourceHandle);
+		SkeletalMesh() = default;
+		SkeletalMesh(AssetHandle meshSourceHandle);
 		
 		virtual AssetType GetAssetType() const override { return AssetType::SkeletalMesh; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		AssetHandle GetMeshSource() const { return m_MeshSource; }
 		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
 
 	private:
-		AssetHandle m_MeshSource;
+		AssetHandle m_MeshSource = 0;
 		MaterialTable m_MaterialTable;
 
 		friend class SkeletalMeshSerializer;

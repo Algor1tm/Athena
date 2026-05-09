@@ -1,11 +1,12 @@
 #include "SettingsPanel.h"
 
-#include "Athena/Asset/TextureImporter.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
@@ -208,21 +209,21 @@ namespace Athena
 			UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
 			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
-			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
+			if (!displayTex || displayTex == EngineTextures::GetBlackTexture())
 				displayTex = EditorResources::GetIcon("EmptyTexture");
 
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			if (UI::PropertyImage("Dirt Texture", displayTex, { imageSize, imageSize }))
 			{
-				std::vector<String> textureExts = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::Texture);
+				std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
 				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", "Texture files", textureExts, Project::GetAssetDirectory());
 				if (!path.empty())
 				{
-					TextureImportOptions options;
-					options.sRGB = false;
-					options.GenerateMipMaps = false;
+					TextureImporter importer;
+					importer.SetIsSRGB(false);
+					importer.SetGenererateMipMaps(false);
 
-					bloomSettings.DirtTexture = TextureImporter::Import(path, options);
+					bloomSettings.DirtTexture = importer.Import(path);
 				}
 			}
 

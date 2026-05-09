@@ -1,5 +1,6 @@
 #include "MeshImportPanel.h"
 #include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/UI/UI.h"
@@ -16,8 +17,8 @@ namespace Athena
 	MeshImportPanel::MeshImportPanel(const Ref<EditorContext>& context)
 		: Panel(MESH_IMPORT_PANEL_ID, context)
 	{
-        m_StaticMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::StaticMesh)[0];
-        m_SkeletalMeshExt = Project::GetEditorAssetManager()->GetAssetExtensions(AssetType::SkeletalMesh)[0];
+        m_StaticMeshExt = AssetFileExtensions::GetAssetExtensionsList(AssetType::StaticMesh)[0];
+        m_SkeletalMeshExt = AssetFileExtensions::GetAssetExtensionsList(AssetType::SkeletalMesh)[0];
 	}
 
 	void MeshImportPanel::OnImGuiRender()
@@ -128,13 +129,13 @@ namespace Athena
         {
             if (m_IsStaticMesh)
             {
-                Ref<StaticMesh> staticMesh = StaticMesh::Create(m_MeshSourceHandle);
+                Ref<StaticMesh> staticMesh = Ref<StaticMesh>::Create(m_MeshSourceHandle);
                 AssetHandle handle = Project::GetEditorAssetManager()->AddAsset(staticMesh, AssetManager::GetAssetAbsolutePath(m_FilePath));
                 CreateStaticMesh(handle);
             }
             else
             {
-                Ref<SkeletalMesh> skeletalMesh = SkeletalMesh::Create(m_MeshSourceHandle);
+                Ref<SkeletalMesh> skeletalMesh = Ref<SkeletalMesh>::Create(m_MeshSourceHandle);
                 AssetHandle handle = Project::GetEditorAssetManager()->AddAsset(skeletalMesh, AssetManager::GetAssetAbsolutePath(m_FilePath));
 
                 CreateSkeletalMesh(handle);

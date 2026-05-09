@@ -12,24 +12,36 @@ namespace Athena
 	class ATHENA_API Font: public Asset
 	{
 	public:
-		static bool Init();
-		static void Shutdown();
-
-		static Ref<Font> Create(const FilePath& path);
+		Font();
 		~Font();
 
-		static Ref<Font> GetDefault();
-
 		virtual AssetType GetAssetType() const override { return AssetType::Font; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
 
 		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
 		FontGeometry* GetFontGeometry() { return m_FontGeometry; }
 
-	private:
-		Buffer GenerateAtlasOrReadFromCache(const FilePath& path, uint32 width, uint32 height);
+		friend class FontImporter;
+
+	public:
+		static bool Init();
+		static void Shutdown();
+
+		static Ref<Font> GetDefault();
+		static void* GetFTPHandle();
 
 	private:
-		FontGeometry* m_FontGeometry = nullptr;
+		struct FontStaticData
+		{
+			void* FTPHandle;
+			Ref<Font> DefaultFont;
+		};
+
+		static FontStaticData s_Data;
+
+		FontGeometry* m_FontGeometry;
 		Ref<Texture2D> m_AtlasTexture;
 	};
 }

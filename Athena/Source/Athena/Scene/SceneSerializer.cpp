@@ -2,7 +2,6 @@
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/YAMLTypes.h"
-#include "Athena/Asset/TextureImporter.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
 
@@ -27,13 +26,13 @@
 
 namespace Athena
 {
-	SceneSerializer::SceneSerializer(const Ref<Scene>& scene)
+	SceneSerializer::SceneSerializer(WeakRef<Scene> scene)
 		: m_Scene(scene)
 	{
 
 	}
 
-	void SceneSerializer::SerializeToFile(const FilePath& path)
+	bool SceneSerializer::SerializeToFile(const FilePath& path)
 	{
 		ATN_PROFILE_FUNC();
 
@@ -49,7 +48,7 @@ namespace Athena
 		{
 			Entity entity = { *it, m_Scene.Raw() };
 			if (!entity)
-				return;
+				return false;
 
 			SerializeEntity(out, entity);
 		}
@@ -59,6 +58,8 @@ namespace Athena
 
 		std::ofstream fout(path);
 		fout << out.c_str();
+
+		return true;
 	}
 
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)

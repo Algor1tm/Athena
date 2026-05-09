@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class ATHENA_API TextureGenerator
+	class ATHENA_API EngineTextures
 	{
 	public:
 		static void Init();

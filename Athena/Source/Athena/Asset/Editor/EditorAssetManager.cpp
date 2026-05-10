@@ -16,7 +16,7 @@ namespace Athena
 
 	EditorAssetManager::~EditorAssetManager()
 	{
-
+		m_AssetWatcherThread.Shutdown();
 	}
 
 	Ref<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
@@ -59,7 +59,7 @@ namespace Athena
 
 		asset->Handle = handle;
 
-		m_AssetRegistry.AddAsset(handle, metadata);
+		m_MemoryOnlyAssetsMetadata.insert({ handle, metadata });
 		m_LoadedAssets.insert({ handle, asset });
 
 		return handle;
@@ -97,7 +97,7 @@ namespace Athena
 
 	void EditorAssetManager::ReloadAsset(AssetHandle handle)
 	{
-		if (!IsAssetHandleValid(handle) || !IsAssetLoaded(handle))
+		if (!IsAssetHandleValid(handle) || !IsAssetLoaded(handle) || IsAssetMemoryOnly(handle))
 			return;
 
 		m_LoadedAssets.erase(handle);
@@ -121,12 +121,18 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC();
 
+		if (IsAssetMemoryOnly(handle))
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Cant load memory only asset (handle - {}, type - {})!", handle, metadata.Type);
+			return nullptr;
+		}
+
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 		Ref<Asset> asset = AssetManager::CreateEmptyAsset(metadata.Type);
 
 		if (!asset)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {})!", handle, metadata.Type, metadata.FilePath);
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
 			return nullptr;
 		}
 
@@ -209,7 +215,7 @@ namespace Athena
 
 	bool EditorAssetManager::IsAssetHandleValid(AssetHandle handle) const
 	{
-		return handle != 0 && m_AssetRegistry.IsAssetHandlePresent(handle);
+		return handle != 0 && (m_AssetRegistry.IsAssetHandlePresent(handle) || m_MemoryOnlyAssetsMetadata.contains(handle));
 	}
 
 	bool EditorAssetManager::IsAssetLoaded(AssetHandle handle) const
@@ -217,8 +223,16 @@ namespace Athena
 		return m_LoadedAssets.contains(handle);
 	}
 
+	bool EditorAssetManager::IsAssetMemoryOnly(AssetHandle handle) const
+	{
+		return m_MemoryOnlyAssetsMetadata.contains(handle);
+	}
+
 	AssetMetadata EditorAssetManager::GetAssetMetadata(AssetHandle handle) const
 	{
+		if (IsAssetMemoryOnly(handle))
+			return m_MemoryOnlyAssetsMetadata.at(handle);
+
 		return m_AssetRegistry.GetMetadata(handle);
 	}
 

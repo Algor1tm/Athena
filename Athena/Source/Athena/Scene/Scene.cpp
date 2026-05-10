@@ -670,7 +670,6 @@ namespace Athena
 
 				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
 				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-				materialAsset->UpdateTextureAssets();
 
 				Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
 
@@ -716,7 +715,6 @@ namespace Athena
 
 				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
 				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-				materialAsset->UpdateTextureAssets();
 
 				Matrix4 transform = transformComponent.AsMatrix();
 

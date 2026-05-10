@@ -25,13 +25,14 @@ namespace Athena
 		~AssetWatcherThread();
 
 		void Initialize(AssetRegistry* registry);
+		void Shutdown();
 
 		void OnAssetSerialize(AssetHandle handle, const FilePath& absolutePath);
 
 		Thread& GetThread() { return m_AssetWatcherThread; }
 
 	private:
-		void AssetThreadFunction();
+		void AssetWatcherThreadFunction();
 		void MonitorAssets();
 
 	private:
@@ -39,7 +40,7 @@ namespace Athena
 		ParallelFlatHashMap<AssetHandle, uint64, 2> m_AssetsLastWriteTimeMap;
 
 		Thread m_AssetWatcherThread;
-		bool m_JoinThread = false;
+		std::atomic<bool> m_JoinThread;
 
 		const float MONITOR_SECONDS_INTERVAL = 2.0f;
 	};

@@ -43,11 +43,17 @@ namespace Athena
 
 		static FilePath GetAssetRelativePath(const FilePath& path)
 		{
+			if (path.empty())
+				return "";
+
 			return std::filesystem::relative(path, Project::GetAssetDirectory());
 		}
 
 		static FilePath GetAssetAbsolutePath(const FilePath& path)
 		{
+			if (path.empty())
+				return "";
+
 			return Project::GetAssetDirectory() / path;
 		}
 

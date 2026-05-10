@@ -159,15 +159,20 @@ namespace Athena
 		return m_TexturesMap.at(type);
 	}
 
-	void MaterialAsset::SetTexture(MaterialTextureType type, AssetHandle texture)
+	void MaterialAsset::SetTexture(MaterialTextureType type, AssetHandle textureHandle)
 	{
-		m_TexturesMap.at(type) = texture;
+		m_TexturesMap.at(type) = textureHandle;
+
+		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(textureHandle);
+		m_Material->Set(TextureTypeToShaderString(type), texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 	}
 
 	void MaterialAsset::RemoveTexture(MaterialTextureType type)
 	{
 		m_TexturesMap.at(type) = 0;
 		EnableTexture(type, false);
+
+		m_Material->Set(TextureTypeToShaderString(type), EngineTextures::GetWhiteTexture());
 	}
 
 	bool MaterialAsset::IsEnabledTexture(MaterialTextureType type) const
@@ -178,14 +183,7 @@ namespace Athena
 	void MaterialAsset::EnableTexture(MaterialTextureType type, bool flag)
 	{
 		m_TexturesFlags.at(type) = flag;
-
-		switch (type)
-		{
-		case MaterialTextureType::Albedo:     m_Material->Set("u_UseAlbedoMap", (uint32)flag); break;
-		case MaterialTextureType::Normals:    m_Material->Set("u_UseNormalMap", (uint32)flag); break;
-		case MaterialTextureType::Roughness:  m_Material->Set("u_UseRoughnessMap", (uint32)flag); break;
-		case MaterialTextureType::Metalness:  m_Material->Set("u_UseMetalnessMap", (uint32)flag); break;
-		}
+		m_Material->Set(TextureTypeEnableToShaderString(type), (uint32)flag);
 	}
 
 	bool MaterialAsset::IsFlagSet(MaterialFlag flag) const
@@ -198,18 +196,31 @@ namespace Athena
 		m_Material->SetFlag(flag, value);
 	}
 
-	void MaterialAsset::UpdateTextureAssets()
+	String MaterialAsset::TextureTypeToShaderString(MaterialTextureType type) const
 	{
-		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Albedo));
-		m_Material->Set("u_AlbedoMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
+		switch (type)
+		{
+		case MaterialTextureType::Albedo:     return "u_AlbedoMap";
+		case MaterialTextureType::Normals:    return "u_NormalMap";
+		case MaterialTextureType::Roughness:  return "u_RoughnessMap";
+		case MaterialTextureType::Metalness:  return "u_MetalnessMap";
+		}
 
-		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Normals));
-		m_Material->Set("u_NormalMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
+		ATN_CORE_ASSERT(false);
+		return "";
+	}
 
-		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Roughness));
-		m_Material->Set("u_RoughnessMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
+	String MaterialAsset::TextureTypeEnableToShaderString(MaterialTextureType type) const
+	{
+		switch (type)
+		{
+		case MaterialTextureType::Albedo:     return "u_UseAlbedoMap";
+		case MaterialTextureType::Normals:    return "u_UseNormalMap";
+		case MaterialTextureType::Roughness:  return "u_UseRoughnessMap";
+		case MaterialTextureType::Metalness:  return "u_UseMetalnessMap";
+		}
 
-		texture = AssetManager::GetAsset<TextureAsset>(m_TexturesMap.at(MaterialTextureType::Metalness));
-		m_Material->Set("u_MetalnessMap", texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
+		ATN_CORE_ASSERT(false);
+		return "";
 	}
 }

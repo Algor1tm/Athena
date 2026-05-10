@@ -2,6 +2,9 @@ AssetRegistry:
   - Handle: 8738723801999403678
     Type: Texture
     FilePath: Meshes/Spiderman/spiderman.png
+  - Handle: 15571557422020450888
+    Type: Scene
+    FilePath: Scenes/Sponza.athscene
   - Handle: 18292723363576882544
     Type: SkeletalMesh
     FilePath: Meshes/StormTrooper/silly_dancing.athskelmesh
@@ -11,9 +14,6 @@ AssetRegistry:
   - Handle: 16932076061486539755
     Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
-  - Handle: 15571557422020450888
-    Type: Scene
-    FilePath: Scenes/Sponza.athscene
   - Handle: 13409615286462765522
     Type: StaticMesh
     FilePath: Meshes/StormTrooper/silly_dancing.athsmesh
@@ -32,12 +32,6 @@ AssetRegistry:
   - Handle: 860916470846244261
     Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_AO.png
-  - Handle: 9727380278907355584
-    Type: StaticMesh
-    FilePath: ""
-  - Handle: 18444694305681452675
-    Type: StaticMesh
-    FilePath: ""
   - Handle: 15430728820339138913
     Type: Texture
     FilePath: Meshes/StormTrooper/Stormtrooper_D.png

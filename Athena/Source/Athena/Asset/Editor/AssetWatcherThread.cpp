@@ -10,21 +10,27 @@
 namespace Athena
 {
 	AssetWatcherThread::AssetWatcherThread()
-		: m_AssetWatcherThread("AssetWatcherThread", [this]() { AssetThreadFunction(); })
+		: m_AssetWatcherThread("AssetWatcherThread", [this]() { AssetWatcherThreadFunction(); })
 	{
 
 	}
 
 	AssetWatcherThread::~AssetWatcherThread()
 	{
-		m_JoinThread = true;
-		m_AssetWatcherThread.Join();
+
 	}
 
 	void AssetWatcherThread::Initialize(AssetRegistry* registry)
 	{
 		m_Registry = registry;
+		m_JoinThread.store(false, std::memory_order_relaxed);
 		m_AssetWatcherThread.Start();
+	}
+
+	void AssetWatcherThread::Shutdown()
+	{
+		m_JoinThread.store(true, std::memory_order_relaxed);
+		m_AssetWatcherThread.Join();
 	}
 
 	void AssetWatcherThread::OnAssetSerialize(AssetHandle handle, const FilePath& absolutePath)
@@ -36,9 +42,9 @@ namespace Athena
 			});
 	}
 
-	void AssetWatcherThread::AssetThreadFunction()
+	void AssetWatcherThread::AssetWatcherThreadFunction()
 	{
-		while (!m_JoinThread)
+		while (m_JoinThread.load(std::memory_order_relaxed) == false)
 		{
 			MonitorAssets();
 			Thread::CurrentThreadSleep(Time::Seconds(MONITOR_SECONDS_INTERVAL));
@@ -59,7 +65,7 @@ namespace Athena
 			const auto& [handle, meta] = element;
 			FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
 
-			if (!meta.IsMemoryOnly && !FileSystem::Exists(absolutePath))
+			if (!FileSystem::Exists(absolutePath))
 			{
 				assetsToRemove.push_back(handle);
 			}
@@ -67,8 +73,7 @@ namespace Athena
 			{
 				assetsToRemove.push_back(handle);
 			}
-
-			else if (!meta.IsMemoryOnly)
+			else
 			{
 				uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
 
@@ -98,7 +103,7 @@ namespace Athena
 			m_Registry->RemoveAsset(handle);
 			m_AssetsLastWriteTimeMap.erase_if(handle, [](auto&) { return true; });
 
-			ATN_CORE_INFO_TAG("AssetManager", "(AssetObserverThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
+			ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
 				meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 		}
 
@@ -109,7 +114,7 @@ namespace Athena
 				Project::GetEditorAssetManager()->ReloadAsset(handle);
 
 				AssetMetadata meta = AssetManager::GetAssetMetadata(handle);
-				ATN_CORE_INFO_TAG("AssetManager", "(AssetObserverThread) Reloading asset (path - {}, type - {}, handle - {})",
+				ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Reloading asset (path - {}, type - {}, handle - {})",
 					meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		}
@@ -154,7 +159,7 @@ namespace Athena
 					m_Registry->AddAsset(handle, metadata);
 					m_AssetsLastWriteTimeMap.insert({ handle, FileSystem::GetLastWriteTimestamp(path) });
 
-					ATN_CORE_INFO_TAG("AssetManager", "(AssetObserverThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
+					ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
 						metadata.FilePath, AssetManager::AssetTypeToString(metadata.Type), handle);
 
 					serialize = true;

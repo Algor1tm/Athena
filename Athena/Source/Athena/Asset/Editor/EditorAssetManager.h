@@ -22,6 +22,7 @@ namespace Athena
 
 		virtual bool IsAssetHandleValid(AssetHandle handle) const override;
 		virtual bool IsAssetLoaded(AssetHandle handle) const override;
+		bool IsAssetMemoryOnly(AssetHandle handle) const;
 
 		virtual AssetMetadata GetAssetMetadata(AssetHandle handle) const override;
 		virtual FilePath GetAssetFilePath(AssetHandle handle) const override;
@@ -49,6 +50,7 @@ namespace Athena
 		AssetRegistry m_AssetRegistry;
 		AssetWatcherThread m_AssetWatcherThread;
 
-		ParallelFlatHashMap<AssetHandle, Ref<Asset>, 2> m_LoadedAssets;
+		ParallelFlatHashMap<AssetHandle, Ref<Asset>, 4> m_LoadedAssets;
+		ParallelFlatHashMap<AssetHandle, AssetMetadata, 4> m_MemoryOnlyAssetsMetadata;
 	};
 }

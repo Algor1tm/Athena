@@ -53,7 +53,8 @@ namespace Athena
 		bool IsFlagSet(MaterialFlag flag) const;
 		void SetFlag(MaterialFlag flag, bool value = true);
 
-		void UpdateTextureAssets();
+		String TextureTypeToShaderString(MaterialTextureType type) const;
+		String TextureTypeEnableToShaderString(MaterialTextureType type) const;
 
 	private:
 		Ref<Material> m_Material;

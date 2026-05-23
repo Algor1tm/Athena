@@ -25,7 +25,7 @@
 #include "Panels/AssetManagerPanel.h"
 #include "Panels/ContentBrowserPanel.h"
 #include "Panels/MaterialEditorPanel.h"
-#include "Panels/MeshImportPanel.h"
+#include "Panels/AssetImportSettingsPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
 #include "Panels/ProjectSettingsPanel.h"
@@ -225,6 +225,64 @@ namespace Athena
         return entity;
     }
 
+    void EditorLayer::PlaceMesh(AssetHandle meshHandle)
+    {
+        Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshHandle);
+        if (!mesh)
+            return;
+
+        if (mesh->IsCollapsedGraph())
+        {
+            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
+            entity.GetComponent<TagComponent>().Tag = AssetManager::GetAssetFilePath(meshHandle).stem().string();
+            entity.AddComponent<MeshComponent>().MeshHandle = meshHandle;
+
+            if (mesh->IsRigged())
+            {
+                AnimationControllerComponent& controller = entity.AddComponent<AnimationControllerComponent>();
+                controller.AnimationController = AnimationController::Create(meshHandle);
+            }
+
+            m_EditorCtx->SelectedEntity = entity;
+        }
+        else
+        {
+            Entity rootEntity = m_EditorCtx->ActiveScene->CreateEntity();
+            CreateMeshHierarchy(mesh, mesh->GetMeshNode(0), rootEntity);
+
+            m_EditorCtx->SelectedEntity = rootEntity;
+        }
+    }
+
+    void EditorLayer::CreateMeshHierarchy(const Ref<Mesh>& mesh, const MeshNode& meshNode, Entity entity)
+    {
+        entity.GetComponent<TagComponent>().Tag = meshNode.Name;
+
+        Vector3 translation, rotation, scale;
+        Math::DecomposeTransform(meshNode.LocalTransform, translation, rotation, scale);
+        auto& transformComponent = entity.GetComponent<TransformComponent>();
+        transformComponent.Translation = translation;
+        transformComponent.Rotation = rotation;
+        transformComponent.Scale = scale;
+
+        auto& meshComponent = entity.AddComponent<MeshComponent>();
+        meshComponent.MeshHandle = mesh->Handle;
+        meshComponent.MeshNodeIndex = meshNode.Index;
+
+        if (!meshNode.Children.empty())
+            entity.AddComponent<ChildComponent>().Children.reserve(meshNode.Children.size());
+
+        for (uint32 childIndex : meshNode.Children)
+        {
+            Entity child = m_EditorCtx->ActiveScene->CreateEntity();
+
+            child.AddComponent<ParentComponent>().Parent = entity;
+            entity.GetComponent<ChildComponent>().Children.push_back(child);
+
+            CreateMeshHierarchy(mesh, mesh->GetMeshNode(childIndex), child);
+        }
+    }
+
     void EditorLayer::InitUI()
     {
         EditorResources::Init(m_Config.EditorResources);
@@ -370,22 +428,14 @@ namespace Athena
                         return;
 
                     CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
                     if (cbPayload->AssetType == AssetType::Scene)
                     {
                         OpenScene(cbPayload->FilePath);
                     }
-                    else if (cbPayload->AssetType == AssetType::MeshSource)
+                    else if (cbPayload->AssetType == AssetType::Mesh)
                     {
-                        PanelManager::OpenPanel(MESH_IMPORT_PANEL_ID);
-                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->OnImport(cbPayload->AssetHandle);
-                    }
-                    else if (cbPayload->AssetType == AssetType::StaticMesh)
-                    {
-                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->CreateStaticMesh(cbPayload->AssetHandle);
-                    }
-                    else if (cbPayload->AssetType == AssetType::SkeletalMesh)
-                    {
-                        PanelManager::GetPanel<MeshImportPanel>(MESH_IMPORT_PANEL_ID)->CreateSkeletalMesh(cbPayload->AssetHandle);
+                        PlaceMesh(cbPayload->AssetHandle);
                     }
                     else if (cbPayload->AssetType == AssetType::EnvironmentMap)
                     {
@@ -487,7 +537,7 @@ namespace Athena
         auto materialEditorPanel = Ref<MaterialEditorPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(materialEditorPanel, Keyboard::L);
 
-        auto meshImportPanel = Ref<MeshImportPanel>::Create(m_EditorCtx);
+        auto meshImportPanel = Ref<MeshImportSettingsPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(meshImportPanel, true, false);
 
         auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(m_EditorCtx);
@@ -839,84 +889,50 @@ namespace Athena
     void EditorLayer::OnRenderOutline()
     {
         Entity entity = m_EditorCtx->SelectedEntity;
-        if (entity.HasComponent<StaticMeshComponent>())
+        if (entity.HasComponent<MeshComponent>())
         {
             const auto& transformComponent = entity.GetComponent<WorldTransformComponent>();
-            const auto& meshComponent = entity.GetComponent<StaticMeshComponent>();
-            Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+            const auto& meshComponent = entity.GetComponent<MeshComponent>();
+
+            if (!meshComponent.Visible)
+                return;
+
+            Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
 
             if (!mesh)
                 return;
 
-            Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
-
-            if (!meshSource)
-                return;
-
-            MaterialTable& materialTable = mesh->GetMaterialTable();
-            const std::vector<uint32>& subMeshIndices = mesh->GetSubMeshIndices();
-
-            for (uint32 index : subMeshIndices)
+            if (mesh->IsCollapsedGraph())
             {
-                if (!meshSource->HasSubMesh(index))
-                    continue;
+                bool hasAnimationController = entity.HasComponent<AnimationControllerComponent>();
 
-                const SubMesh& subMesh = meshSource->GetSubMesh(index);
+                for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
+                {
+                    const SubMesh& subMesh = mesh->GetSubMesh(i);
+                    Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
 
-                AssetHandle materialHandle = 0;
-                if (materialTable.contains(subMesh.MaterialName))
-                    materialHandle = materialTable.at(subMesh.MaterialName);
+                    Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); //?
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material->GetMaterial(), hasAnimationController, transform);
+                }
 
-                Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-                materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-
-                Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
-
-                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), false, transform);
+                if (hasAnimationController)
+                {
+                    Ref<AnimationController> controller = entity.GetComponent<AnimationControllerComponent>().AnimationController;
+                    m_ViewportRenderer->SubmitAnimationState(controller->GetBoneTransforms());
+                }
             }
-        }
-        else if (entity.HasComponent<SkeletalMeshComponent>())
-        {
-            const auto& transformComponent = entity.GetComponent<WorldTransformComponent>();
-            const auto& meshComponent = entity.GetComponent<SkeletalMeshComponent>();
-
-            Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
-
-            if (!mesh)
-                return;
-
-            Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
-
-            if (!meshSource)
-                return;
-
-            MaterialTable& materialTable = mesh->GetMaterialTable();
-            const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
-            bool hasAnimationController = entity.HasComponent<AnimationController>();
-
-            for (uint32 index : meshNode.SubMeshes)
+            else if (mesh->HasMeshNode(meshComponent.MeshNodeIndex))
             {
-                if (!meshSource->HasSubMesh(index))
-                    return;
+                const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
 
-                const SubMesh& subMesh = meshSource->GetSubMesh(index);
+                for (uint32 submeshIndex : node.SubMeshes)
+                {
+                    const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
+                    Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
 
-                AssetHandle materialHandle = 0;
-                if (materialTable.contains(subMesh.MaterialName))
-                    materialHandle = materialTable.at(subMesh.MaterialName);
-
-                Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-                materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-
-                Matrix4 transform = transformComponent.AsMatrix();
-
-                m_ViewportRenderer->SubmitSelectionContext(meshSource, subMesh, materialAsset->GetMaterial(), hasAnimationController, transform);
-            }
-
-            if (hasAnimationController)
-            {
-                Ref<AnimationController> controller = entity.GetComponent<AnimationControllerComponent>().AnimationController;
-                m_ViewportRenderer->SubmitAnimationState(controller->GetBoneTransforms());
+                    Matrix4 transform = transformComponent.AsMatrix();
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material->GetMaterial(), false, transform);
+                }
             }
         }
     }

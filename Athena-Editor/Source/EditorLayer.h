@@ -43,6 +43,9 @@ namespace Athena
 	private:
 		Entity DuplicateEntity(Entity entity);
 
+		void PlaceMesh(AssetHandle meshHandle);
+		void CreateMeshHierarchy(const Ref<Mesh>& mesh, const MeshNode& meshNode, Entity entity);
+
 		void InitUI();
 		void OnRender2D();
 		void OnRenderOutline();

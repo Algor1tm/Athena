@@ -168,11 +168,10 @@ namespace Athena
 
 	bool TextureAsset::Serialize(const FilePath& absolutePath) const
 	{
-		// TODO
 		return true;
 	}
 
-	bool TextureAsset::Deserialize(const FilePath& absolutePath)
+	bool TextureAsset::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
 		TextureImporter importer;
 		m_Texture = importer.Import(absolutePath);

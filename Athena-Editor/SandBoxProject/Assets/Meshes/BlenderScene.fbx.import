@@ -1,0 +1,7 @@
+MeshImportSettings:
+  ImportAnimations: false
+  CollapseGraph: false
+  SubMeshIndices:
+    []
+  OverrideMaterials:
+    {}

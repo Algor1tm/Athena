@@ -3,9 +3,10 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Thread.h"
 #include "Athena/Asset/Asset.h"
+#include "Athena/Asset/AssetManagerBase.h"
+#include "Athena/Asset/Editor/AssetImportSettings.h"
 #include "Athena/Asset/Editor/AssetRegistry.h"
 #include "Athena/Asset/Editor/AssetWatcherThread.h"
-#include "Athena/Asset/AssetManagerBase.h"
 
 #include <unordered_map>
 
@@ -34,7 +35,14 @@ namespace Athena
 		void UnloadAsset(AssetHandle handle);
 
 		void SerializeAllAssets();
-		void DeserializeAllAssets() const;
+		void DeserializeAllAssets();
+
+		Ref<AssetImportSettings> GetAssetImportSettings(AssetHandle handle);
+		void SetAssetImportSettings(AssetHandle handle, const Ref<AssetImportSettings>& settings);
+		void SerializeAssetImportSettings(AssetHandle handle);
+
+		bool HasImportSettings(AssetType type);
+		Ref<AssetImportSettings> GetDefaultImportSettings(AssetType type);
 
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
 		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
@@ -42,9 +50,9 @@ namespace Athena
 		Thread& GetAssetWatcherThread();
 
 	private:
-		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata) const;
+		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata);
 		bool SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata);
-		bool DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const;
+		bool DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata);
 
 	private:
 		AssetRegistry m_AssetRegistry;
@@ -52,5 +60,8 @@ namespace Athena
 
 		ParallelFlatHashMap<AssetHandle, Ref<Asset>, 4> m_LoadedAssets;
 		ParallelFlatHashMap<AssetHandle, AssetMetadata, 4> m_MemoryOnlyAssetsMetadata;
+
+		ParallelFlatHashMap<AssetHandle, Ref<AssetImportSettings>, 4> m_LoadedAssetImportSettings;
+		std::unordered_map<AssetType, Ref<AssetImportSettings>> m_DefaultSettingsMap;
 	};
 }

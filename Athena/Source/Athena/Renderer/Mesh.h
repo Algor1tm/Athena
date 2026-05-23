@@ -82,19 +82,23 @@ namespace Athena
 
 	using MaterialTable = std::unordered_map<String, AssetHandle>;
 
-	class ATHENA_API MeshSource: public Asset
+
+	class ATHENA_API Mesh : public Asset
 	{
 	public:
-		virtual AssetType GetAssetType() const override { return AssetType::MeshSource; }
+		Mesh();
+
+		virtual AssetType GetAssetType() const override { return AssetType::Mesh; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
 		Ref<VertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
 		Ref<IndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
 		Ref<VertexBuffer> GetBonesInfluenceBuffer() const { return m_BonesInfluenceBuffer; }
 
 		const std::vector<MeshNode>& GetMeshNodes() const { return m_Nodes; }
+		bool HasMeshNode(uint32 index) const { return index < m_Nodes.size(); }
 		const MeshNode& GetMeshNode(uint32 index) const { return m_Nodes[index]; }
 		const MeshNode& GetRootNode() const { return GetMeshNode(0); }
 
@@ -103,13 +107,17 @@ namespace Athena
 		bool HasSubMesh(uint32 index) const { return index < m_SubMeshes.size(); }
 		const SubMesh& GetSubMesh(uint32 index) const { return m_SubMeshes[index]; }
 
-		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
 		const AABB& GetBoundingBox() const { return m_AABB; }
 
 		Ref<Skeleton> GetSkeleton() const { return m_Skeleton; }
 		const std::vector<Ref<Animation>> GetAnimations() const { return m_Animations; }
 		bool HasAnimation(const Ref<Animation>& animation) const;
 		bool IsRigged() const { return m_IsRigged; }
+
+		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
+		Ref<MaterialAsset> GetMaterial(const String& materialName) const;
+
+		bool IsCollapsedGraph() const { return m_CollapsedGraph; }
 
 	private:
 		Ref<VertexBuffer> m_VertexBuffer;
@@ -124,54 +132,9 @@ namespace Athena
 		std::vector<Ref<Animation>> m_Animations;
 		bool m_IsRigged = false;
 
+		bool m_CollapsedGraph = true;
 		AABB m_AABB;
 
-		friend class MeshSourceImporter;
-	};
-
-
-	class ATHENA_API StaticMesh: public Asset
-	{
-	public:
-		StaticMesh() = default;
-		StaticMesh(AssetHandle meshSourceHandle);
-
-		virtual AssetType GetAssetType() const override { return AssetType::StaticMesh; }
-
-		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
-
-		AssetHandle GetMeshSource() const { return m_MeshSource; }
-		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
-		const std::vector<uint32>& GetSubMeshIndices() const { return m_SubMeshIndices; }
-
-	private:
-		AssetHandle m_MeshSource = 0;
-		MaterialTable m_MaterialTable;
-		std::vector<uint32> m_SubMeshIndices;
-
-		friend class StaticMeshSerializer;
-	};
-
-
-	class ATHENA_API SkeletalMesh : public Asset
-	{
-	public:
-		SkeletalMesh() = default;
-		SkeletalMesh(AssetHandle meshSourceHandle);
-		
-		virtual AssetType GetAssetType() const override { return AssetType::SkeletalMesh; }
-
-		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
-
-		AssetHandle GetMeshSource() const { return m_MeshSource; }
-		MaterialTable& GetMaterialTable() { return m_MaterialTable; }
-
-	private:
-		AssetHandle m_MeshSource = 0;
-		MaterialTable m_MaterialTable;
-
-		friend class SkeletalMeshSerializer;
+		friend class MeshImporter;
 	};
 }

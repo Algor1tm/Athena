@@ -27,7 +27,10 @@ namespace Athena
 		void Initialize(AssetRegistry* registry);
 		void Shutdown();
 
-		void OnAssetSerialize(AssetHandle handle, const FilePath& absolutePath);
+		void DisableTimestampsWatching();
+		void EnableWatchingTimestamps();
+
+		void UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath);
 
 		Thread& GetThread() { return m_AssetWatcherThread; }
 
@@ -41,7 +44,8 @@ namespace Athena
 
 		Thread m_AssetWatcherThread;
 		std::atomic<bool> m_JoinThread;
+		std::atomic<bool> m_WatchTimestamps;
 
-		const float MONITOR_SECONDS_INTERVAL = 2.0f;
+		const float MONITOR_INTERVAL_SECONDS = 2.0f;
 	};
 }

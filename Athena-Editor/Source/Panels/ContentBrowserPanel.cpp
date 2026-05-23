@@ -13,6 +13,7 @@
 
 #include "Panels/PanelManager.h"
 #include "Panels/MaterialEditorPanel.h"
+#include "Panels/AssetImportSettingsPanel.h"
 #include "EditorResources.h"
 
 #include <ImGui/imgui.h>
@@ -439,6 +440,12 @@ namespace Athena
 			{
 				Ref<MaterialEditorPanel> panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
 				panel->SetActiveMaterial(GetAssetHandle());
+			}
+
+			if (GetAssetType() == AssetType::Mesh)
+			{
+				PanelManager::OpenPanel(MESH_IMPORT_SETTINGS_PANEL_ID);
+				PanelManager::GetPanel<MeshImportSettingsPanel>(MESH_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());
 			}
 		}
 	}

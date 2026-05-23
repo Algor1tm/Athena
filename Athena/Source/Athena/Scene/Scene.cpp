@@ -138,7 +138,7 @@ namespace Athena
 		return serializer.SerializeToFile(absolutePath);
 	}
 
-	bool Scene::Deserialize(const FilePath& absolutePath)
+	bool Scene::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
 		SceneSerializer serializer(this);
 		return serializer.DeserializeFromFile(absolutePath);
@@ -635,96 +635,52 @@ namespace Athena
 
 		renderer->BeginScene(cameraInfo);
 
-		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
-		for (auto entity : staticMeshes)
+		auto meshes = GetAllEntitiesWith<MeshComponent, WorldTransformComponent>();
+		for (auto entity : meshes)
 		{
-			const auto& transformComponent = staticMeshes.get<WorldTransformComponent>(entity);
-			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
+			const auto& transformComponent = meshes.get<WorldTransformComponent>(entity);
+			const auto& meshComponent = meshes.get<MeshComponent>(entity);
 
 			if (!meshComponent.Visible)
 				continue;
 
-			Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+			Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
 
 			if (!mesh)
 				continue;
 
-			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
-
-			if (!meshSource)
-				continue;
-
-			MaterialTable& materialTable = mesh->GetMaterialTable();
-			const std::vector<uint32>& subMeshIndices = mesh->GetSubMeshIndices();
-
-			for (uint32 index : subMeshIndices)
+			if (mesh->IsCollapsedGraph())
 			{
-				if (!meshSource->HasSubMesh(index))
-					continue;
+				Entity sceneEntity = { entity, this };
+				bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
 
-				const SubMesh& subMesh = meshSource->GetSubMesh(index);
+				for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
+				{
+					const SubMesh& subMesh = mesh->GetSubMesh(i);
+					Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
 
-				AssetHandle materialHandle = 0;
-				if (materialTable.contains(subMesh.MaterialName))
-					materialHandle = materialTable.at(subMesh.MaterialName);
+					Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); //?
+					renderer->Submit(mesh, subMesh, material->GetMaterial(), hasAnimationController, transform);
+				}
 
-				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-
-				Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
-
-				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), false, transform);
+				if (hasAnimationController)
+				{
+					Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
+					renderer->SubmitAnimationState(controller->GetBoneTransforms());
+				}
 			}
-		}
-
-		auto skeletalMeshes = GetAllEntitiesWith<SkeletalMeshComponent, WorldTransformComponent>();
-		for (auto entity : skeletalMeshes)
-		{
-			const auto& transformComponent = skeletalMeshes.get<WorldTransformComponent>(entity);
-			const auto& meshComponent = skeletalMeshes.get<SkeletalMeshComponent>(entity);
-
-			if (!meshComponent.Visible && !meshComponent.IsRootMeshNode())
-				continue;
-
-			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
-
-			if (!mesh)
-				continue;
-
-			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
-
-			if (!meshSource)
-				continue;
-
-			Entity sceneEntity = { entity, this };
-
-			MaterialTable& materialTable = mesh->GetMaterialTable();
-			const MeshNode& meshNode = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
-			bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
-
-			for (uint32 index : meshNode.SubMeshes)
+			else if(mesh->HasMeshNode(meshComponent.MeshNodeIndex))
 			{
-				if (!meshSource->HasSubMesh(index))
-					continue;
+				const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
 
-				const SubMesh& subMesh = meshSource->GetSubMesh(index);
+				for (uint32 submeshIndex: node.SubMeshes)
+				{
+					const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
+					Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
 
-				AssetHandle materialHandle = 0;
-				if (materialTable.contains(subMesh.MaterialName))
-					materialHandle = materialTable.at(subMesh.MaterialName);
-
-				Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-				materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
-
-				Matrix4 transform = transformComponent.AsMatrix();
-
-				renderer->Submit(meshSource, subMesh, materialAsset->GetMaterial(), hasAnimationController, transform);
-			}
-
-			if (hasAnimationController)
-			{
-				Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
-				renderer->SubmitAnimationState(controller->GetBoneTransforms());
+					Matrix4 transform = transformComponent.AsMatrix();
+					renderer->Submit(mesh, subMesh, material->GetMaterial(), false, transform);
+				}
 			}
 		}
 

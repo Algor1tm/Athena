@@ -162,6 +162,9 @@ namespace Athena
 			metadata.FilePath = node["FilePath"].as<String>();
 			metadata.IsMemoryOnly = false;
 
+			if (metadata.Type == AssetType::None || !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(metadata.FilePath)))
+				continue;
+
 			AddAsset(handle, metadata);
 		}
 

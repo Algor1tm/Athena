@@ -71,7 +71,7 @@ namespace Athena
         return true;
     }
 
-    bool Font::Deserialize(const FilePath& absolutePath)
+    bool Font::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
     {
         FontImporter fontImporter;
         bool result = fontImporter.Import(this, absolutePath);

@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/UUID.h"
+#include "Athena/Asset/Editor/AssetImportSettings.h"
 
 
 namespace Athena
@@ -16,9 +17,7 @@ namespace Athena
 		Material,
 		Font,
 		Scene,
-		MeshSource,
-		StaticMesh,
-		SkeletalMesh
+		Mesh,
 	};
 
 	struct AssetMetadata
@@ -35,10 +34,7 @@ namespace Athena
 		virtual AssetType GetAssetType() const = 0;
 
 		virtual bool Serialize(const FilePath& absolutePath) const { return true; }
-		virtual bool Deserialize(const FilePath& absolutePath) { return true;  }
-
-		virtual bool SerializeRuntime() const { return true; }
-		virtual bool DeserializeRuntime() { return true; }
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) { return true;  }
 
 		AssetHandle Handle = 0;
 	};

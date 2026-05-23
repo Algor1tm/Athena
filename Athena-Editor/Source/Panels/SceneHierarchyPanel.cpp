@@ -1,6 +1,7 @@
 #include "SceneHierarchyPanel.h"
 
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
+#include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Input/Input.h"
@@ -246,11 +247,7 @@ namespace Athena
 			m_EditorCtx.SelectedEntity = entity;
 		}
 
-		bool isMeshNode = entity.HasComponent<SkeletalMeshComponent>();
-		if (isMeshNode)
-			isMeshNode = !entity.GetComponent<SkeletalMeshComponent>().IsRootMeshNode();
-
-		if (!isMeshNode && ImGui::BeginDragDropSource())
+		if (ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("SCENE_HIERARCHY_ENTITY", &entity, sizeof(entity));
 			ImGui::Text(tag.c_str());
@@ -277,7 +274,7 @@ namespace Athena
 		static char idString[20];
 		sprintf(idString, "%llu", (uint64)entity.GetComponent<IDComponent>().ID);
 
-		if (!isMeshNode && ImGui::BeginPopupContextItem(idString, ImGuiPopupFlags_MouseButtonRight))
+		if (ImGui::BeginPopupContextItem(idString, ImGuiPopupFlags_MouseButtonRight))
 		{
 			if (ImGui::MenuItem("Delete Entity"))
 				entityDeleted = true;
@@ -366,22 +363,8 @@ namespace Athena
 			DrawAddComponentEntry<Rigidbody2DComponent>(entity, "Rigidbody2D");
 			DrawAddComponentEntry<BoxCollider2DComponent>(entity, "BoxCollider2D");
 			DrawAddComponentEntry<CircleCollider2DComponent>(entity, "CircleCollider2D");
-			DrawAddComponentEntry<StaticMeshComponent>(entity, "StaticMesh");
-
-			if (entity.HasComponent<SkeletalMeshComponent>())
-			{
-				Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(entity.GetComponent<SkeletalMeshComponent>().MeshHandle);
-				if (mesh)
-				{
-					Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(mesh->GetMeshSource());
-					if (meshSource)
-					{
-						if (meshSource->IsRigged())
-							DrawAddComponentEntry<AnimationControllerComponent>(entity, "AnimationController");
-					}
-				}
-			}
-
+			DrawAddComponentEntry<MeshComponent>(entity, "Mesh");
+			DrawAddComponentEntry<AnimationControllerComponent>(entity, "AnimationController");
 			DrawAddComponentEntry<DirectionalLightComponent>(entity, "DirectionalLight");
 			DrawAddComponentEntry<PointLightComponent>(entity, "PointLight");
 			DrawAddComponentEntry<SpotLightComponent>(entity, "SpotLight");
@@ -763,21 +746,21 @@ namespace Athena
 			return true;
 		});
 
-		DrawComponent<StaticMeshComponent>(entity, "STATIC MESH", [this, entity](StaticMeshComponent& meshComponent)
+		DrawComponent<MeshComponent>(entity, "MESH", [this, entity](MeshComponent& meshComponent)
 		{
-			Ref<StaticMesh> mesh = AssetManager::GetAsset<StaticMesh>(meshComponent.MeshHandle);
+			Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
 			bool isMeshValid = mesh != nullptr;
 
 			String name = isMeshValid ? AssetManager::GetAssetFilePath(meshComponent.MeshHandle).stem().string() : "<Invalid>";
 
-			UI::PropertyRow("StaticMesh", ImGui::GetFrameHeight() + 2);
+			UI::PropertyRow("Mesh", ImGui::GetFrameHeight() + 2);
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 4 });
 			if(!isMeshValid)
 				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
 
 			if (ImGui::Button(name.c_str()))
 			{
-				std::vector<String> meshExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::StaticMesh);
+				std::vector<String> meshExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Mesh);
 				FilePath filepath = FileDialogs::OpenFile("Select Mesh", "Mesh files", meshExts, Project::GetAssetDirectory());
 				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
@@ -797,7 +780,7 @@ namespace Athena
 				{
 					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-					if (cbPayload->AssetType == AssetType::StaticMesh)
+					if (cbPayload->AssetType == AssetType::Mesh)
 					{
 						meshComponent.MeshHandle = cbPayload->AssetHandle;
 					}
@@ -810,7 +793,10 @@ namespace Athena
 
 			if (isMeshValid && UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
 			{
+				Ref<MeshImportSettings> importSettings = Project::GetEditorAssetManager()->GetAssetImportSettings(meshComponent.MeshHandle).As<MeshImportSettings>();
+
 				MaterialTable& table = mesh->GetMaterialTable();
+				MaterialTable& overrideTable = importSettings->OverrideMaterials;
 
 				for (auto& [name, materialHandle] : table)
 				{
@@ -841,6 +827,7 @@ namespace Athena
 							if (cbPayload->AssetType == AssetType::Material)
 							{
 								table.at(name) = cbPayload->AssetHandle;
+								overrideTable[name] = cbPayload->AssetHandle;
 							}
 						}
 
@@ -849,112 +836,8 @@ namespace Athena
 				}
 
 				UI::EndPropertyTable();
-
-				if (!table.empty() && ImGui::Button("Reset"))
-				{
-					AssetHandle meshSourceHandle = mesh->GetMeshSource();
-					Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
-					if (meshSource)
-					{
-						mesh->GetMaterialTable() = meshSource->GetMaterialTable();
-					}
-				}
-
 				UI::TreePop();
 			}
-			return false;
-		});
-
-
-		DrawComponent<SkeletalMeshComponent>(entity, "SKELETAL MESH", [this, entity](SkeletalMeshComponent& meshComponent)
-		{
-			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
-			bool isMeshValid = mesh != nullptr;
-
-			String name = isMeshValid ? AssetManager::GetAssetFilePath(meshComponent.MeshHandle).stem().string() : "<Invalid>";
-			UI::PropertyRow("SkeletalMesh", ImGui::GetFrameHeight());
-			if (!isMeshValid)
-				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
-
-			ImGui::Text(name.c_str());
-
-			if (!isMeshValid)
-				ImGui::PopStyleColor();
-
-			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
-			UI::EndPropertyTable();
-
-			AssetHandle meshSourceHandle = mesh->GetMeshSource();
-			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
-			isMeshValid = isMeshValid && meshSource;
-
-			if (isMeshValid && UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
-			{
-				MaterialTable& table = mesh->GetMaterialTable();
-				std::unordered_map<String, AssetHandle*> nodeTable;
-				const MeshNode& node = meshSource->GetMeshNode(meshComponent.MeshNodeIndex);
-				for (uint32 i: node.SubMeshes)
-				{
-					const SubMesh& subMesh = meshSource->GetSubMesh(i);
-
-					if (table.contains(subMesh.MaterialName))
-						nodeTable[subMesh.MaterialName] = &table.at(subMesh.MaterialName);
-				}
-
-				for (auto& [name, materialHandle] : nodeTable)
-				{
-					UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
-
-					Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(*materialHandle);
-					bool isInvalid = material == nullptr;
-					const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
-
-					if (isInvalid)
-						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
-
-					if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
-					{
-						auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
-						panel->SetActiveMaterial(*materialHandle);
-					}
-
-					if (isInvalid)
-						ImGui::PopStyleColor();
-
-					if (ImGui::BeginDragDropTarget())
-					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-						{
-							CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
-
-							if (cbPayload->AssetType == AssetType::Material)
-							{
-								table.at(name) = cbPayload->AssetHandle;
-							}
-						}
-
-						ImGui::EndDragDropTarget();
-					}
-				}
-
-				UI::EndPropertyTable();
-
-				if (!nodeTable.empty() && ImGui::Button("Reset"))
-				{
-					if (meshSource)
-					{
-						const MaterialTable& meshSourceTable = meshSource->GetMaterialTable();
-						for (const auto& [name, handle] : nodeTable)
-						{
-							if (meshSourceTable.contains(name))
-								*handle = meshSourceTable.at(name);
-						}
-					}
-				}
-
-				UI::TreePop();
-			}
-
 			return false;
 		});
 
@@ -965,12 +848,12 @@ namespace Athena
 			if (!controller)
 				return true;
 
-			Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(controller->GetMeshSourceHandle());
+			Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(controller->GetMeshHandle());
 
-			if (!meshSource)
+			if (!mesh)
 				return true;
 
-			const auto& animations = meshSource->GetAnimations();
+			const auto& animations = mesh->GetAnimations();
 
 			Ref<Animation> active = controller->GetCurrentAnimation();
 			active = active ? active : (animations.size() > 0 ? animations[0] : nullptr);

@@ -17,9 +17,7 @@ namespace Athena
 		case AssetType::Material:			  return Ref<MaterialAsset>::Create();
 		case AssetType::Font:				  return Ref<Font>::Create();
 		case AssetType::Scene:				  return Ref<Scene>::Create();
-		case AssetType::MeshSource:			  return Ref<MeshSource>::Create();
-		case AssetType::StaticMesh:			  return Ref<StaticMesh>::Create();
-		case AssetType::SkeletalMesh:		  return Ref<SkeletalMesh>::Create();
+		case AssetType::Mesh:				  return Ref<Mesh>::Create();
 		}
 
 		ATN_CORE_ASSERT(false, "Invalid asset type!");
@@ -36,12 +34,9 @@ namespace Athena
 		case AssetType::Material:			  return "Material";
 		case AssetType::Font:				  return "Font";
 		case AssetType::Scene:				  return "Scene";
-		case AssetType::MeshSource:			  return "MeshSource";
-		case AssetType::StaticMesh:			  return "StaticMesh";
-		case AssetType::SkeletalMesh:		  return "SkeletalMesh";
+		case AssetType::Mesh:				  return "Mesh";
 		}
 
-		ATN_CORE_ASSERT(false, "Invalid asset type!");
 		return "<Invalid>";
 	}
 
@@ -53,11 +48,8 @@ namespace Athena
 		if (assetType == "Material")		  return AssetType::Material;
 		if (assetType == "Font")			  return AssetType::Font;
 		if (assetType == "Scene")			  return AssetType::Scene;
-		if (assetType == "MeshSource")		  return AssetType::MeshSource;
-		if (assetType == "StaticMesh")		  return AssetType::StaticMesh;
-		if (assetType == "SkeletalMesh")	  return AssetType::SkeletalMesh;
+		if (assetType == "Mesh")			  return AssetType::Mesh;
 
-		ATN_CORE_ASSERT(false, "Invalid asset type string!");
 		return AssetType::None;
 	}
 }

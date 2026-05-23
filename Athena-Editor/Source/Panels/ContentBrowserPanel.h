@@ -160,7 +160,7 @@ namespace Athena
 		std::vector<Ref<CBItem>> m_SearchResult;
 
 		ImVec2 m_ButtonSize = { 16.f, 16.f };
-		ImVec2 m_ItemSize = { 180.f * IMAGE_TO_ITEM_RATIO, 180.f };
+		ImVec2 m_ItemSize = { 170.f * IMAGE_TO_ITEM_RATIO, 170.f };
 		float m_Padding = 8.f;
 	};
 }

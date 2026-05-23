@@ -164,7 +164,7 @@ namespace Athena
 		return true;
 	}
 
-	bool StaticEnvironmentMap::Deserialize(const FilePath& absolutePath)
+	bool StaticEnvironmentMap::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
 		m_FilePath = absolutePath;
 		m_Dirty = true;

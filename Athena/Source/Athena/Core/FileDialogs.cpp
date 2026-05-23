@@ -8,9 +8,15 @@ namespace Athena
 {
 	FilePath FileDialogs::OpenFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Suspend();
+		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Suspend();
+
 		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), false).result();
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Resume();
+
+		if(assetManager)
+			assetManager->GetAssetWatcherThread().Resume();
 
 		if (!selection.empty())
 			return selection[0];
@@ -20,9 +26,15 @@ namespace Athena
 
 	std::vector<FilePath> FileDialogs::OpenFiles(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Suspend();
+		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Suspend();
+
 		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Resume();
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Resume();
 
 		if (!selection.empty())
 		{
@@ -40,18 +52,30 @@ namespace Athena
 
 	FilePath FileDialogs::OpenDirectory(const String& dialogName, const FilePath& startDir)
 	{
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Suspend();
+		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Suspend();
+
 		String selection = pfd::select_folder(dialogName, startDir.string(), pfd::opt::none).result();
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Resume();
+  
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Resume();
 
 		return selection;
 	}
 
 	FilePath FileDialogs::SaveFile(const String& dialogName, const String& extlabel, const std::vector<String>& exts, const FilePath& defaultDir)
 	{
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Suspend();
+		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Suspend();
+
 		String selection = pfd::save_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
-		Project::GetEditorAssetManager()->GetAssetWatcherThread().Resume();
+
+		if (assetManager)
+			assetManager->GetAssetWatcherThread().Resume();
 
 		return selection;
 	}

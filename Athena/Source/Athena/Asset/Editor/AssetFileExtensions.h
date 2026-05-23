@@ -13,8 +13,10 @@ namespace Athena
 
 		static std::vector<String> GetAssetExtensionsList(AssetType assetType);
 		static AssetType ExtensionToAssetType(const FilePath& ext);
+		static FilePath GetImportSettingsPath(const FilePath& assetPath);
 
 	private:
 		static std::unordered_map<FilePath, AssetType> m_AssetFileExtensionMap;
+		static String m_ImportSettingsExt;
 	};
 }

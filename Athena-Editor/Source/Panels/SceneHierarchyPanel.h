@@ -100,28 +100,4 @@ namespace Athena
 			ImGui::CloseCurrentPopup();
 		}
 	}
-
-	template <>
-	inline void SceneHierarchyPanel::DrawAddComponentEntry<AnimationControllerComponent>(Entity entity, std::string_view name)
-	{
-		if (!entity.HasComponent<SkeletalMeshComponent>())
-			return;
-
-		SkeletalMeshComponent& meshComponent = entity.GetComponent<SkeletalMeshComponent>();
-
-		if (!meshComponent.IsRootMeshNode())
-			return;
-
-		if (!entity.HasComponent<AnimationControllerComponent>() && entity.HasComponent<SkeletalMeshComponent>() && ImGui::MenuItem(name.data()))
-		{
-			Ref<SkeletalMesh> mesh = AssetManager::GetAsset<SkeletalMesh>(meshComponent.MeshHandle);
-			if (mesh)
-			{
-				AnimationControllerComponent& component = entity.AddComponent<AnimationControllerComponent>();
-				component.AnimationController = AnimationController::Create(mesh->GetMeshSource());
-			}
-			
-			ImGui::CloseCurrentPopup();
-		}
-	}
 }

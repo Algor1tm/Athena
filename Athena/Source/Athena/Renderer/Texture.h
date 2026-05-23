@@ -270,7 +270,7 @@ namespace Athena
 		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
 		const Ref<Texture2D>& GetRenderTexture() const { return m_Texture; }
 		const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };

@@ -294,25 +294,14 @@ namespace Athena
 				}
 
 				{
-					const auto& staticMeshComponentNode = entityNode["StaticMeshComponent"];
-					if (staticMeshComponentNode)
+					const auto& meshComponentNode = entityNode["MeshComponent"];
+					if (meshComponentNode)
 					{
-						auto& meshComp = deserializedEntity.AddComponent<StaticMeshComponent>();
+						auto& meshComp = deserializedEntity.AddComponent<MeshComponent>();
 
-						meshComp.MeshHandle = staticMeshComponentNode["MeshHandle"].as<AssetHandle>();
-						meshComp.Visible = staticMeshComponentNode["Visible"].as<bool>();
-					}
-				}
-
-				{
-					const auto& skeletalMeshNode = entityNode["SkeletalMeshComponent"];
-					if (skeletalMeshNode)
-					{
-						auto& meshComp = deserializedEntity.AddComponent<SkeletalMeshComponent>();
-
-						meshComp.MeshHandle = skeletalMeshNode["MeshHandle"].as<AssetHandle>();
-						meshComp.MeshNodeIndex = skeletalMeshNode["MeshNodeIndex"].as<AssetHandle>();
-						meshComp.Visible = skeletalMeshNode["Visible"].as<bool>();
+						meshComp.MeshHandle = meshComponentNode["MeshHandle"].as<AssetHandle>();
+						meshComp.MeshNodeIndex = meshComponentNode["MeshNodeIndex"].as<uint32>();
+						meshComp.Visible = meshComponentNode["Visible"].as<bool>();
 					}
 				}
 
@@ -598,15 +587,8 @@ namespace Athena
 				output << YAML::Key << "RestitutionThreshold" << YAML::Value << cc2d.RestitutionThreshold;
 			});
 
-		SerializeComponent<StaticMeshComponent>(out, "StaticMeshComponent", entity,
-			[](YAML::Emitter& output, const StaticMeshComponent& meshComponent)
-			{
-				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
-				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
-			});
-
-		SerializeComponent<SkeletalMeshComponent>(out, "SkeletalMeshComponent", entity,
-			[](YAML::Emitter& output, const SkeletalMeshComponent& meshComponent)
+		SerializeComponent<MeshComponent>(out, "MeshComponent", entity,
+			[](YAML::Emitter& output, const MeshComponent& meshComponent)
 			{
 				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
 				output << YAML::Key << "MeshNodeIndex" << YAML::Value << meshComponent.MeshNodeIndex;
@@ -616,7 +598,7 @@ namespace Athena
 		SerializeComponent<AnimationControllerComponent>(out, "AnimationControllerComponent", entity,
 			[](YAML::Emitter& output, const AnimationControllerComponent& controllerComponent)
 			{
-				output << YAML::Key << "MeshHandle" << YAML::Value << controllerComponent.AnimationController->GetMeshSourceHandle();
+				output << YAML::Key << "MeshHandle" << YAML::Value << controllerComponent.AnimationController->GetMeshHandle();
 			});
 
 		SerializeComponent<DirectionalLightComponent>(out, "DirectionalLightComponent", entity,

@@ -27,7 +27,7 @@ namespace Athena
 		virtual AssetType GetAssetType() const override { return AssetType::Material; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> settings) override;
 
 		Ref<Material> GetMaterial() const { return m_Material; }
 

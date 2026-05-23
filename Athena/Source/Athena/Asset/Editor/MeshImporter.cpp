@@ -1,8 +1,9 @@
-#include "MeshSourceImporter.h"
+#include "MeshImporter.h"
 
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/YAMLTypes.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Renderer.h"
 
@@ -87,79 +88,99 @@ namespace Athena
 		aiProcess_LimitBoneWeights |
 
 		aiProcess_RemoveRedundantMaterials |
-		//aiProcess_OptimizeGraph |
 		aiProcess_OptimizeMeshes |
 
 		aiProcess_Triangulate |
 		aiProcess_FlipUVs;
 
-	MeshSourceImporter::MeshSourceImporter(const FilePath& path)
-		: m_aiScene(aiImportFile(path.string().c_str(), s_ImportFlags))
+	MeshImporter::MeshImporter(const FilePath& path)
 	{
 		m_Path = path;
+	}
+
+	MeshImporter::~MeshImporter()
+	{
+
+	}
+
+	bool MeshImporter::ImportToMesh(WeakRef<Mesh> mesh, const Ref<MeshImportSettings>& settings)
+	{
+		unsigned int importFlags = s_ImportFlags;
+
+		if (settings->CollapseGraph)
+			importFlags |= aiProcess_OptimizeGraph;
+
+		m_aiScene = aiImportFile(m_Path.string().c_str(), importFlags);
 
 		if (m_aiScene == nullptr)
 		{
 			const char* error = aiGetErrorString();
 			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import mesh from {}.", m_Path);
 			ATN_CORE_ERROR("	Assimp Error: {}", error);
-		}
-	}
-
-	MeshSourceImporter::~MeshSourceImporter()
-	{
-		if(m_aiScene)
-			aiReleaseImport(m_aiScene);
-	}
-
-	bool MeshSourceImporter::ImportToMeshSource(WeakRef<MeshSource> meshSource) const
-	{
-		if (!m_aiScene)
 			return false;
+		}
 
-		if (HasSkeleton())
+		if (HasSkeleton() && settings->ImportAnimations)
 		{
 			Ref<Skeleton> skeleton = ImportSkeleton();
 
 			if (skeleton)
 			{
-				meshSource->m_IsRigged = true;
-				meshSource->m_Skeleton = skeleton;
+				mesh->m_IsRigged = true;
+				mesh->m_Skeleton = skeleton;
 
-				meshSource->m_Animations.reserve(m_aiScene->mNumAnimations);
+				mesh->m_Animations.reserve(m_aiScene->mNumAnimations);
 				for (uint32 i = 0; i < m_aiScene->mNumAnimations; ++i)
 				{
 					Ref<Animation> animation = ImportAnimation(i, skeleton);
-					meshSource->m_Animations.push_back(animation);
+					mesh->m_Animations.push_back(animation);
 				}
 			}
 		}
+		else
+		{
+			mesh->m_IsRigged = false;
+			mesh->m_Skeleton = nullptr;
+			mesh->m_Animations.clear();
+		}
 
-		MaterialTable& matTable = meshSource->m_MaterialTable;
+		mesh->m_MaterialTable.clear();
+		MaterialTable& matTable = mesh->m_MaterialTable;
 		for (uint32 i = 0; i < m_aiScene->mNumMaterials; ++i)
 		{
 			aiMaterial* aimaterial = m_aiScene->mMaterials[i];
 			String name = aimaterial->GetName().C_Str();
-
-			matTable[name] = LoadMaterial(aimaterial);
+			
+			if (settings->OverrideMaterials.contains(name))
+			{
+				matTable[name] = settings->OverrideMaterials.at(name);
+			}
+			else
+			{
+				matTable[name] = LoadMaterial(aimaterial);
+			}
 		}
 
-		LoadGeometry(meshSource);
+		mesh->m_SubMeshes.clear();
+		LoadGeometry(mesh, settings->SubMeshIndices);
 
-		meshSource->m_Nodes.emplace_back();
-		TraverseNodes(meshSource, m_aiScene->mRootNode);
+		mesh->m_Nodes.clear();
+		mesh->m_Nodes.emplace_back();
+		TraverseNodes(mesh, FindRootNode(m_aiScene->mRootNode));
 
-		meshSource->m_Nodes[0].Name = m_Path.stem().string();
+		//mesh->m_Nodes[0].Name = m_Path.stem().string();
 
 #if 0
 		ATN_CORE_WARN("Node hierarchy for mesh {}", m_Path);
 		Utils::PrintNodes(m_aiScene->mRootNode);
 #endif
 
+		aiReleaseImport(m_aiScene);
+
 		return true;
 	}
 
-	Ref<Animation> MeshSourceImporter::ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const
+	Ref<Animation> MeshImporter::ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const
 	{
 		if (!m_aiScene || m_aiScene->mNumAnimations < animationIndex + 1)
 			return nullptr;
@@ -205,7 +226,7 @@ namespace Athena
 		return Animation::Create(info);
 	}
 
-	Ref<Skeleton> MeshSourceImporter::ImportSkeleton() const
+	Ref<Skeleton> MeshImporter::ImportSkeleton() const
 	{
 		if (!m_aiScene)
 			return nullptr;
@@ -248,7 +269,7 @@ namespace Athena
 		return Skeleton::Create(bones);
 	}
 
-	bool MeshSourceImporter::HasSkeleton() const
+	bool MeshImporter::HasSkeleton() const
 	{
 		if (!m_aiScene)
 			return false;
@@ -264,7 +285,7 @@ namespace Athena
 		return false;
 	}
 
-	void MeshSourceImporter::BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const
+	void MeshImporter::BuildBonesHierarchy(const aiNode* ainode, const std::unordered_map<String, Matrix4>& bonesMap, const Matrix4& parentTransform, std::vector<Bone>& bones) const
 	{
 		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
 		Matrix4 transform = parentTransform * localTransform;
@@ -306,16 +327,32 @@ namespace Athena
 		}
 	}
 
-	void MeshSourceImporter::TraverseNodes(const Ref<MeshSource>& meshSource, const aiNode* ainode, const Matrix4& parentTransform) const
+	const aiNode* MeshImporter::FindRootNode(const aiNode* root)
+	{
+		while (root)
+		{
+			if (root->mNumMeshes > 0)
+				return root;
+
+			if (root->mNumChildren != 1)
+				return root;
+
+			root = root->mChildren[0];
+		}
+
+		return root;
+	}
+
+	void MeshImporter::TraverseNodes(const Ref<Mesh>& mesh, const aiNode* ainode, const Matrix4& parentTransform) const
 	{
 		Matrix4 localTransform = Utils::ConvertaiMatrix4x4(ainode->mTransformation);
 		Matrix4 transform = parentTransform * localTransform;
 
-		MeshNode& meshNode = meshSource->m_Nodes.back();
-		uint32 nodeIndex = meshSource->m_Nodes.size() - 1;
+		MeshNode& meshNode = mesh->m_Nodes.back();
+		uint32 nodeIndex = mesh->m_Nodes.size() - 1;
 		
 		if(!meshNode.IsRoot())
-			meshSource->m_Nodes[meshNode.Parent].Children.push_back(nodeIndex);
+			mesh->m_Nodes[meshNode.Parent].Children.push_back(nodeIndex);
 
 		meshNode.Index = nodeIndex;
 		meshNode.Name = ainode->mName.C_Str();
@@ -326,7 +363,7 @@ namespace Athena
 		for (uint32 i = 0; i < ainode->mNumMeshes; ++i)
 		{
 			uint32 meshIndex = ainode->mMeshes[i];
-			SubMesh& subMesh = meshSource->m_SubMeshes[meshIndex];
+			SubMesh& subMesh = mesh->m_SubMeshes[meshIndex];
 
 			subMesh.NodeName = meshNode.Name;
 			subMesh.LocalTransform = localTransform;
@@ -339,32 +376,39 @@ namespace Athena
 		{
 			if (ainode->mChildren[i]->mNumMeshes != 0)
 			{
-				MeshNode& child = meshSource->m_Nodes.emplace_back();
+				MeshNode& child = mesh->m_Nodes.emplace_back();
 				child.Parent = nodeIndex;
 
-				TraverseNodes(meshSource, ainode->mChildren[i], transform);
+				TraverseNodes(mesh, ainode->mChildren[i], transform);
 			}
 		}
 	}
 
-	void MeshSourceImporter::LoadGeometry(const Ref<MeshSource>& meshSource) const
+	void MeshImporter::LoadGeometry(const Ref<Mesh>& mesh, const std::vector<uint32>& subMeshIndices) const
 	{
 		std::vector<MeshVertex> vertices;
 		std::vector<BoneInfluenceVertex> boneInfluenceVertices;
 		std::vector<uint32> indices;
 
-		Ref<Skeleton> skeleton = meshSource->m_Skeleton;
-		meshSource->m_SubMeshes.reserve(m_aiScene->mNumMeshes);
+		Ref<Skeleton> skeleton = mesh->m_Skeleton;
+		mesh->m_SubMeshes.reserve(m_aiScene->mNumMeshes);
 
 		for (uint32 i = 0; i < m_aiScene->mNumMeshes; ++i)
 		{
+			if (!subMeshIndices.empty())
+			{
+				auto it = std::find(subMeshIndices.begin(), subMeshIndices.end(), i);
+				if (it == subMeshIndices.end())
+					continue;
+			}
+			
 			aiMesh* aimesh = m_aiScene->mMeshes[i];
 			aiMaterial* aimaterial = m_aiScene->mMaterials[aimesh->mMaterialIndex];
 
-			bool isRigged = meshSource->IsRigged();
+			bool isRigged = mesh->IsRigged();
 			ATN_CORE_ASSERT(isRigged == aimesh->HasBones());
 
-			SubMesh& subMesh = meshSource->m_SubMeshes.emplace_back();
+			SubMesh& subMesh = mesh->m_SubMeshes.emplace_back();
 			subMesh.AABB = AABB(Utils::ConvertaiVector3D(aimesh->mAABB.mMin), Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
 			subMesh.Name = aimesh->mName.C_Str();
 			subMesh.MaterialName = aimaterial->GetName().C_Str();
@@ -426,7 +470,7 @@ namespace Athena
 
 			if (!aimesh->HasBones())
 			{
-				ATN_CORE_ASSERT(!meshSource->IsRigged());
+				ATN_CORE_ASSERT(!mesh->IsRigged());
 				continue;
 			}
 
@@ -465,7 +509,7 @@ namespace Athena
 		vertexBufferInfo.Size = vertices.size() * sizeof(MeshVertex);
 		vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-		meshSource->m_VertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		mesh->m_VertexBuffer = VertexBuffer::Create(vertexBufferInfo);
 
 		if (!indices.empty())
 		{
@@ -475,10 +519,10 @@ namespace Athena
 			indexBufferInfo.Count = indices.size();
 			indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-			meshSource->m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
+			mesh->m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
 		}
 
-		if (meshSource->IsRigged())
+		if (mesh->IsRigged())
 		{
 			VertexBufferCreateInfo vertexBufferInfo;
 			vertexBufferInfo.Name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
@@ -486,11 +530,11 @@ namespace Athena
 			vertexBufferInfo.Size = boneInfluenceVertices.size() * sizeof(BoneInfluenceVertex);
 			vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
-			meshSource->m_BonesInfluenceBuffer = VertexBuffer::Create(vertexBufferInfo);
+			mesh->m_BonesInfluenceBuffer = VertexBuffer::Create(vertexBufferInfo);
 		}
 	}
 
-	AssetHandle MeshSourceImporter::LoadMaterial(const aiMaterial* aimaterial) const
+	AssetHandle MeshImporter::LoadMaterial(const aiMaterial* aimaterial) const
 	{
 		Ref<MaterialAsset> material = Ref<MaterialAsset>::Create();
 		AssetHandle materialHandle = Project::GetEditorAssetManager()->AddMemoryOnlyAsset(material);
@@ -548,7 +592,7 @@ namespace Athena
 		return materialHandle;
 	}
 
-	AssetHandle MeshSourceImporter::LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const
+	AssetHandle MeshImporter::LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const
 	{
 		AssetHandle handle = 0;
 
@@ -588,5 +632,69 @@ namespace Athena
 		}
 
 		return handle;
+	}
+
+
+	bool MeshImportSettings::Serialize(const FilePath& absolutePath) const
+	{
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "MeshImportSettings" << YAML::Value << YAML::BeginMap;
+
+		out << YAML::Key << "ImportAnimations" << YAML::Value << ImportAnimations;
+		out << YAML::Key << "CollapseGraph" << YAML::Value << CollapseGraph;
+		out << YAML::Key << "SubMeshIndices" << YAML::Value << SubMeshIndices;
+		out << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
+		for (const auto& [name, handle] : OverrideMaterials)
+		{
+			if (AssetManager::IsAssetHandleValid(handle) && !AssetManager::GetAssetMetadata(handle).IsMemoryOnly)
+				out << YAML::Key << name << YAML::Value << handle;
+		}
+		out << YAML::EndMap;
+
+		out << YAML::EndMap;
+		out << YAML::EndMap;
+
+		std::ofstream fout(absolutePath);
+		fout << out.c_str();
+
+		return true;
+	}
+
+	bool MeshImportSettings::Deserialize(const FilePath& absolutePath)
+	{
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(absolutePath.string());
+
+			auto root = data["MeshImportSettings"];
+
+			ImportAnimations = root["ImportAnimations"].as<bool>();
+			CollapseGraph = root["CollapseGraph"].as<bool>();
+
+			if (ImportAnimations == true)
+			{
+				ATN_CORE_WARN_TAG("AssetManager", "Forcing CollapseGraph to true in MeshImportSettings");
+				CollapseGraph = true;
+			}
+
+			SubMeshIndices = root["SubMeshIndices"].as<std::vector<uint32>>();
+
+			OverrideMaterials.clear();
+			YAML::Node materialsNode = root["OverrideMaterials"];
+			for (const auto& it : materialsNode)
+			{
+				OverrideMaterials.insert({ it.first.as<String>(), it.second.as<AssetHandle>() });
+			}
+
+		}
+		catch (YAML::Exception& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load static mesh asset data from {}. Error message:\n {}", absolutePath, e.what());
+			return false;
+		}
+
+		return true;
 	}
 }

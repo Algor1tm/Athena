@@ -72,7 +72,7 @@ namespace Athena
 		return true;
 	}
 
-	bool MaterialAsset::Deserialize(const FilePath& absolutePath)
+	bool MaterialAsset::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> settings)
 	{
 		YAML::Node data;
 		try

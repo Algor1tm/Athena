@@ -93,9 +93,9 @@ namespace Athena
 		static void Shutdown();
 
 	private:
-		static const inline FilePath s_ProjectFileExtension = ".athproj";
+		static const inline FilePath s_ProjectFileExtension = ".atproj";
 		static const inline FilePath s_AssetDirectory = "Assets";
-		static const inline FilePath s_AssetRegistryPath = "AssetRegistry.athreg";
+		static const inline FilePath s_AssetRegistryPath = "AssetRegistry.atreg";
 		static const inline FilePath s_ScriptsDirectory = "Scripts";
 		static const inline FilePath s_LogsDirectory = "Logs";
 		static const inline FilePath s_ScriptsBinaryPath = "Build/Binaries/ScriptsLibrary/ScriptsLibrary.dll";

@@ -144,19 +144,18 @@ namespace Athena
 	}
 
 
-	Ref<AnimationController> AnimationController::Create(AssetHandle meshSourceHandle)
+	Ref<AnimationController> AnimationController::Create(AssetHandle meshHandle)
 	{
 		Ref<AnimationController> result = Ref<AnimationController>::Create();
 
-		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(meshSourceHandle);
+		Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshHandle);
 
-
-		result->m_MeshSourceHandle = meshSourceHandle;
+		result->m_MeshHandle = meshHandle;
 		result->m_CurrentTime = 0.f;
 
-		if (meshSource && meshSource->IsRigged())
+		if (mesh && mesh->IsRigged())
 		{
-			Ref<Skeleton> skeleton = meshSource->GetSkeleton();
+			Ref<Skeleton> skeleton = mesh->GetSkeleton();
 			result->m_BoneTransforms.resize(skeleton->GetBoneCount());
 		}
 
@@ -190,11 +189,11 @@ namespace Athena
 	{
 		ClearAnimation();
 
-		Ref<MeshSource> meshSource = AssetManager::GetAsset<MeshSource>(m_MeshSourceHandle);
+		Ref<Mesh> meshSource = AssetManager::GetAsset<Mesh>(m_MeshHandle);
 
 		if (!meshSource)
 		{
-			ATN_CORE_WARN_TAG("AssetManager", "Failed to play animation - invalid MeshSourceHandle in AnimationController - {}!", m_MeshSourceHandle);
+			ATN_CORE_WARN_TAG("AssetManager", "Failed to play animation - invalid MeshHandle in AnimationController - {}!", m_MeshHandle);
 			return;
 		}
 

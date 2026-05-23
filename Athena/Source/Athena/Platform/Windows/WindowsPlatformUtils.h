@@ -257,7 +257,6 @@ namespace Athena
 		FILE* fp;
 
 		AllocConsole();
-
 		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
 
 		coninfo.dwSize.Y = consoleLines;

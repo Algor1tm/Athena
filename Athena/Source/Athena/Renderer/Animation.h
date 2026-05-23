@@ -107,7 +107,7 @@ namespace Athena
 	class ATHENA_API AnimationController: public RefCounted
 	{
 	public:
-		static Ref<AnimationController> Create(AssetHandle meshSource);
+		static Ref<AnimationController> Create(AssetHandle meshHandle);
 
 		const std::vector<Matrix4>& GetBoneTransforms() const { return m_BoneTransforms; }
 
@@ -117,7 +117,7 @@ namespace Athena
 		void ClearAnimation();
 		void PlayAnimation(const Ref<Animation>& animation);
 
-		AssetHandle GetMeshSourceHandle() const { return m_MeshSourceHandle; }
+		AssetHandle GetMeshHandle() const { return m_MeshHandle; }
 
 		const Ref<Animation>& GetCurrentAnimation() const { return m_CurrentAnimation; }
 
@@ -125,7 +125,7 @@ namespace Athena
 		void SetAnimationTime(float time) { m_CurrentTime = time; }
 
 	private:
-		AssetHandle m_MeshSourceHandle;
+		AssetHandle m_MeshHandle;
 		std::vector<Matrix4> m_BoneTransforms;
 		Ref<Animation> m_CurrentAnimation;
 		float m_CurrentTime;

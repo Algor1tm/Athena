@@ -171,13 +171,7 @@ namespace Athena
 		void* RuntimeFixture = nullptr;
 	};
 
-	struct StaticMeshComponent
-	{
-		AssetHandle MeshHandle = 0;
-		bool Visible = true;
-	};
-
-	struct SkeletalMeshComponent
+	struct MeshComponent
 	{
 		AssetHandle MeshHandle = 0;
 		uint32 MeshNodeIndex = 0;
@@ -263,7 +257,7 @@ namespace Athena
 		SpriteComponent, CircleComponent, TextComponent, 
 		ScriptComponent, CameraComponent,
 		Rigidbody2DComponent, BoxCollider2DComponent, CircleCollider2DComponent, 
-		StaticMeshComponent, SkeletalMeshComponent, AnimationController,
+		MeshComponent, AnimationController,
 		DirectionalLightComponent, PointLightComponent, SpotLightComponent, SkyLightComponent>;
 
 

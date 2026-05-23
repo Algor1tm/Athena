@@ -47,7 +47,7 @@ namespace Athena
 		virtual AssetType GetAssetType() const override { return AssetType::Scene; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name, UUID id, Entity parent);

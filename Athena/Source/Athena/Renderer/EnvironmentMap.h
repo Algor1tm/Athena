@@ -56,7 +56,7 @@ namespace Athena
 		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
-		virtual bool Deserialize(const FilePath& absolutePath) override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
 	private:
 		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;

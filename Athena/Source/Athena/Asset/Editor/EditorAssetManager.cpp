@@ -1,6 +1,7 @@
 #include "EditorAssetManager.h"
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
+#include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Core/FileSystem.h"
 
 
@@ -9,6 +10,8 @@ namespace Athena
 	EditorAssetManager::EditorAssetManager()
 	{
 		AssetFileExtensions::Init();
+
+		m_DefaultSettingsMap[AssetType::Mesh] = Ref<MeshImportSettings>::Create();
 
 		m_AssetRegistry.Deserialize();
 		m_AssetWatcherThread.Initialize(&m_AssetRegistry);
@@ -117,7 +120,7 @@ namespace Athena
 		m_LoadedAssets.erase(handle);
 	}
 
-	Ref<Asset> EditorAssetManager::LoadAsset(AssetHandle handle, const AssetMetadata& metadata) const
+	Ref<Asset> EditorAssetManager::LoadAsset(AssetHandle handle, const AssetMetadata& metadata)
 	{
 		ATN_PROFILE_FUNC();
 
@@ -127,7 +130,6 @@ namespace Athena
 			return nullptr;
 		}
 
-		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 		Ref<Asset> asset = AssetManager::CreateEmptyAsset(metadata.Type);
 
 		if (!asset)
@@ -137,7 +139,7 @@ namespace Athena
 		}
 
 		asset->Handle = handle;
-		bool result = asset->Deserialize(absolutePath);
+		bool result = DeserializeAsset(asset, metadata);
 
 		if (!result)
 		{
@@ -155,21 +157,18 @@ namespace Athena
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
-		if (FileSystem::Exists(absolutePath))
-		{
-			bool result = asset->Serialize(absolutePath);
+		m_AssetWatcherThread.DisableTimestampsWatching();
 
-			// TODO: in theory asset watcher can reload asset before this is called because file timestamp updated here
-			m_AssetWatcherThread.OnAssetSerialize(asset->Handle, absolutePath);
+		SerializeAssetImportSettings(asset->Handle);
+		bool result = asset->Serialize(absolutePath);
 
-			return result;
-		}
+		m_AssetWatcherThread.UpdateAssetTimestamp(asset->Handle, absolutePath);
+		m_AssetWatcherThread.EnableWatchingTimestamps();
 
-		ATN_CORE_ERROR_TAG("AssetManager", "Failed to serialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
-		return false;
+		return result;
 	}
 
-	bool EditorAssetManager::DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata) const
+	bool EditorAssetManager::DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata)
 	{
 		if (metadata.IsMemoryOnly)
 			return true;
@@ -178,7 +177,11 @@ namespace Athena
 
 		if (FileSystem::Exists(absolutePath))
 		{
-			return asset->Deserialize(absolutePath);
+			if (m_LoadedAssetImportSettings.contains(asset->Handle))
+				m_LoadedAssetImportSettings.erase(asset->Handle);
+
+			Ref<AssetImportSettings> importSettings = GetAssetImportSettings(asset->Handle);
+			return asset->Deserialize(absolutePath, importSettings);
 		}
 
 		ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
@@ -194,7 +197,7 @@ namespace Athena
 		});
 	}
 
-	void EditorAssetManager::DeserializeAllAssets() const
+	void EditorAssetManager::DeserializeAllAssets()
 	{
 		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
 		{
@@ -203,14 +206,83 @@ namespace Athena
 		});
 	}
 
-	Thread& EditorAssetManager::GetAssetWatcherThread()
+	Ref<AssetImportSettings> EditorAssetManager::GetAssetImportSettings(AssetHandle handle)
 	{
-		return m_AssetWatcherThread.GetThread();
+		const AssetMetadata& meta = GetAssetMetadata(handle);
+
+		// 1. Check that this type has import settings
+		if (!HasImportSettings(meta.Type) || !IsAssetHandleValid(handle))
+			return nullptr;
+
+		// 2. Look up if it is already loaded
+		Ref<AssetImportSettings> settings;
+		bool isAssetLoaded = m_LoadedAssetImportSettings.if_contains(handle, [&settings](const std::pair<AssetHandle, Ref<AssetImportSettings>>& element)
+		{
+			settings = element.second;
+		});
+
+		if (settings)
+			return settings;
+
+		// 3. Try to deserialize or return default (AssetWatcherThread should create and serialize default import settings)
+		settings = GetDefaultImportSettings(meta.Type);
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
+		FilePath settingsFilePath = AssetFileExtensions::GetImportSettingsPath(absolutePath);
+
+		if (FileSystem::Exists(settingsFilePath))
+		{
+			settings->Deserialize(settingsFilePath);
+		}
+
+		m_LoadedAssetImportSettings.insert({ handle, settings });
+		return settings;
+	}
+
+	void EditorAssetManager::SetAssetImportSettings(AssetHandle handle, const Ref<AssetImportSettings>& settings)
+	{
+		const AssetMetadata& meta = GetAssetMetadata(handle);
+
+		if (!HasImportSettings(meta.Type) || !IsAssetHandleValid(handle))
+			return;
+
+		m_LoadedAssetImportSettings.modify_if(handle, [settings](std::pair<const AssetHandle, Ref<AssetImportSettings>>& element)
+		{
+			element.second = settings;
+		});
+	}
+
+	void EditorAssetManager::SerializeAssetImportSettings(AssetHandle handle)
+	{
+		if (m_LoadedAssetImportSettings.contains(handle))
+		{
+			Ref<AssetImportSettings> importSettings = GetAssetImportSettings(handle);
+
+			FilePath path = AssetFileExtensions::GetImportSettingsPath(GetAssetFilePath(handle));
+			importSettings->Serialize(path);
+		}
+	}
+
+	bool EditorAssetManager::HasImportSettings(AssetType type)
+	{
+		return GetDefaultImportSettings(type) != nullptr;
+	}
+
+	Ref<AssetImportSettings> EditorAssetManager::GetDefaultImportSettings(AssetType type)
+	{
+		if (m_DefaultSettingsMap.contains(type))
+			return m_DefaultSettingsMap.at(type);
+
+		return nullptr;
 	}
 
 	AssetHandle EditorAssetManager::GetAssetHandleFromFilePath(const FilePath& filepath) const
 	{
 		return m_AssetRegistry.GetAssetHandleFromFilePath(filepath);
+	}
+
+	Thread& EditorAssetManager::GetAssetWatcherThread()
+	{
+		return m_AssetWatcherThread.GetThread();
 	}
 
 	bool EditorAssetManager::IsAssetHandleValid(AssetHandle handle) const

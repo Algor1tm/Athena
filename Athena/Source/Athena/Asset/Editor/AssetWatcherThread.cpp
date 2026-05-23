@@ -12,7 +12,7 @@ namespace Athena
 	AssetWatcherThread::AssetWatcherThread()
 		: m_AssetWatcherThread("AssetWatcherThread", [this]() { AssetWatcherThreadFunction(); })
 	{
-
+		
 	}
 
 	AssetWatcherThread::~AssetWatcherThread()
@@ -23,7 +23,10 @@ namespace Athena
 	void AssetWatcherThread::Initialize(AssetRegistry* registry)
 	{
 		m_Registry = registry;
+
 		m_JoinThread.store(false, std::memory_order_relaxed);
+		m_WatchTimestamps.store(true);
+
 		m_AssetWatcherThread.Start();
 	}
 
@@ -33,13 +36,23 @@ namespace Athena
 		m_AssetWatcherThread.Join();
 	}
 
-	void AssetWatcherThread::OnAssetSerialize(AssetHandle handle, const FilePath& absolutePath)
+	void AssetWatcherThread::DisableTimestampsWatching()
+	{
+		m_WatchTimestamps.store(false);
+	}
+
+	void AssetWatcherThread::EnableWatchingTimestamps()
+	{
+		m_WatchTimestamps.store(true);
+	}
+
+	void AssetWatcherThread::UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath)
 	{
 		FilePath absolutePathCopy = absolutePath;
 		m_AssetsLastWriteTimeMap.modify_if(handle, [absolutePathCopy](std::pair<const AssetHandle, uint64>& element)
-			{
-				element.second = FileSystem::GetLastWriteTimestamp(absolutePathCopy);
-			});
+		{
+			element.second = FileSystem::GetLastWriteTimestamp(absolutePathCopy);
+		});
 	}
 
 	void AssetWatcherThread::AssetWatcherThreadFunction()
@@ -47,7 +60,7 @@ namespace Athena
 		while (m_JoinThread.load(std::memory_order_relaxed) == false)
 		{
 			MonitorAssets();
-			Thread::CurrentThreadSleep(Time::Seconds(MONITOR_SECONDS_INTERVAL));
+			Thread::CurrentThreadSleep(Time::Seconds(MONITOR_INTERVAL_SECONDS));
 		}
 	}
 
@@ -65,17 +78,35 @@ namespace Athena
 			const auto& [handle, meta] = element;
 			FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
 
+			bool hasImportSettings = Project::GetEditorAssetManager()->HasImportSettings(meta.Type);
+			FilePath importSettingsPath = AssetFileExtensions::GetImportSettingsPath(absolutePath);
+
 			if (!FileSystem::Exists(absolutePath))
 			{
 				assetsToRemove.push_back(handle);
+				return;
 			}
 			else if (meta.Type == AssetType::None)
 			{
 				assetsToRemove.push_back(handle);
+				return;
 			}
-			else
+			else if (meta.IsMemoryOnly == true)
+			{
+				assetsToRemove.push_back(handle);
+				return;
+			}
+
+			if (m_WatchTimestamps.load())
 			{
 				uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
+
+				// Get Max timestamp from asset timestamp and importsettings timestamp
+				if (hasImportSettings && FileSystem::Exists(importSettingsPath))
+				{
+					uint64 settingsTimestamp = FileSystem::GetLastWriteTimestamp(importSettingsPath);
+					timestamp = Math::Max(timestamp, settingsTimestamp); 
+				}
 
 				// Check old timestamp or emplace new if does not contain handle
 				m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp, &assetsToReload](std::pair<const AssetHandle, uint64>& element)
@@ -89,6 +120,15 @@ namespace Athena
 						}
 					}, timestamp);
 			}
+
+			if (hasImportSettings && !FileSystem::Exists(importSettingsPath))
+			{
+				Ref<AssetImportSettings> defaultSettings = Project::GetEditorAssetManager()->GetDefaultImportSettings(meta.Type);
+				defaultSettings->Serialize(importSettingsPath);
+				UpdateAssetTimestamp(handle, importSettingsPath);
+
+				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", importSettingsPath, meta.Type, handle);
+			}
 		});
 
 		bool serialize = !assetsToRemove.empty();
@@ -98,12 +138,27 @@ namespace Athena
 			AssetMetadata meta = m_Registry->GetMetadata(handle);
 
 			if (Project::GetEditorAssetManager()->IsAssetLoaded(handle))
+			{
 				Project::GetEditorAssetManager()->UnloadAsset(handle);
+			}
+
+			if (Project::GetEditorAssetManager()->HasImportSettings(meta.Type))
+			{
+				FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
+				FilePath importSettingsPath = AssetFileExtensions::GetImportSettingsPath(absolutePath);
+
+				if (FileSystem::Exists(importSettingsPath))
+				{
+					FileSystem::Remove(importSettingsPath);
+
+					ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Deleted import settings file for asset (path - {}, type - {}, handle - {})", importSettingsPath, meta.Type, handle);
+				}
+			}
 
 			m_Registry->RemoveAsset(handle);
 			m_AssetsLastWriteTimeMap.erase_if(handle, [](auto&) { return true; });
 
-			ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Deleting asset from asset registry (path - {}, type - {}, handle - {})",
+			ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Deleted asset from asset registry (path - {}, type - {}, handle - {})",
 				meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 		}
 
@@ -114,7 +169,7 @@ namespace Athena
 				Project::GetEditorAssetManager()->ReloadAsset(handle);
 
 				AssetMetadata meta = AssetManager::GetAssetMetadata(handle);
-				ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Reloading asset (path - {}, type - {}, handle - {})",
+				ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Reloaded asset (path - {}, type - {}, handle - {})",
 					meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		}
@@ -159,7 +214,7 @@ namespace Athena
 					m_Registry->AddAsset(handle, metadata);
 					m_AssetsLastWriteTimeMap.insert({ handle, FileSystem::GetLastWriteTimestamp(path) });
 
-					ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Adding new asset to asset registry (path - {}, type - {}, handle - {})",
+					ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Added new asset to asset registry (path - {}, type - {}, handle - {})",
 						metadata.FilePath, AssetManager::AssetTypeToString(metadata.Type), handle);
 
 					serialize = true;
@@ -170,6 +225,4 @@ namespace Athena
 		if (serialize)
 			m_Registry->Serialize();
 	}
-
-
 }

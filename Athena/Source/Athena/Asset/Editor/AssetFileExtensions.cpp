@@ -3,6 +3,7 @@
 namespace Athena
 {
 	std::unordered_map<FilePath, AssetType> AssetFileExtensions::m_AssetFileExtensionMap;
+	String AssetFileExtensions::m_ImportSettingsExt;
 
 	void AssetFileExtensions::Init()
 	{
@@ -20,15 +21,12 @@ namespace Athena
 			{ ".pgm",  AssetType::Texture },
 
 			// Meshes 
-			{ ".fbx",   AssetType::MeshSource },
-			{ ".gltf",  AssetType::MeshSource },
-			{ ".obj",   AssetType::MeshSource },
-			{ ".blend", AssetType::MeshSource },
-			{ ".x3d",   AssetType::MeshSource },
-			{ ".stl",   AssetType::MeshSource },
-
-			{ ".athsmesh",      AssetType::StaticMesh },
-			{ ".athskelmesh",   AssetType::SkeletalMesh },
+			{ ".fbx",   AssetType::Mesh },
+			{ ".gltf",  AssetType::Mesh },
+			{ ".obj",   AssetType::Mesh },
+			{ ".blend", AssetType::Mesh },
+			{ ".x3d",   AssetType::Mesh },
+			{ ".stl",   AssetType::Mesh },
 
 			// Environment maps
 			{ ".hdr", AssetType::EnvironmentMap },
@@ -39,11 +37,13 @@ namespace Athena
 			{ ".TTF", AssetType::Font },
 
 			// Scenes
-			{ ".athscene", AssetType::Scene },
+			{ ".atscene", AssetType::Scene },
 
 			// Materials
-			{ ".athmat", AssetType::Material}
+			{ ".atmat", AssetType::Material}
 		};
+
+		m_ImportSettingsExt = ".import";
 	}
 
 	std::vector<String> AssetFileExtensions::GetAssetExtensionsList(AssetType assetType)
@@ -69,5 +69,10 @@ namespace Athena
 		}
 
 		return AssetType::None;
+	}
+
+	FilePath AssetFileExtensions::GetImportSettingsPath(const FilePath& assetPath)
+	{
+		return FilePath(assetPath.string() + m_ImportSettingsExt);
 	}
 }

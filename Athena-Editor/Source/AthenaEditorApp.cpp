@@ -54,7 +54,7 @@ namespace Athena
 		EditorConfig editorConfig;
 		editorConfig.EditorResources = "EditorResources";
 		editorConfig.SelectProjectManually = false;
-		editorConfig.StartProject = "SandBoxProject/SandBox.athproj";
+		editorConfig.StartProject = "SandBoxProject/SandBox.atproj";
 
 		application->PushLayer(Ref<EditorLayer>::Create(editorConfig));
 

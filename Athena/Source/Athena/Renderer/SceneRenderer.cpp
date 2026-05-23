@@ -993,27 +993,27 @@ namespace Athena
 		m_ViewportResizeCallback = callback;
 	}
 
-	void SceneRenderer::Submit(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
+	void SceneRenderer::Submit(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
 		if (isRigged)
 		{
-			SubmitAnimDrawCall(m_AnimGeometryList, meshSource, submesh, material, transform);
+			SubmitAnimDrawCall(m_AnimGeometryList, mesh, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticDrawCall(m_StaticGeometryList, meshSource, submesh, material, transform);
+			SubmitStaticDrawCall(m_StaticGeometryList, mesh, submesh, material, transform);
 		}
 	}
 
-	void SceneRenderer::SubmitSelectionContext(const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
+	void SceneRenderer::SubmitSelectionContext(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
 		if (isRigged)
 		{
-			SubmitAnimDrawCall(m_SelectAnimGeometryList, meshSource, submesh, material, transform);
+			SubmitAnimDrawCall(m_SelectAnimGeometryList, mesh, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticDrawCall(m_SelectStaticGeometryList, meshSource, submesh, material, transform);
+			SubmitStaticDrawCall(m_SelectStaticGeometryList, mesh, submesh, material, transform);
 		}
 	}
 
@@ -1023,11 +1023,11 @@ namespace Athena
 		m_BonesDataOffset += bonesTransforms.size();
 	}
 
-	void SceneRenderer::SubmitStaticDrawCall(DrawListStatic& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
+	void SceneRenderer::SubmitStaticDrawCall(DrawListStatic& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
 	{
 		StaticDrawCall drawCall;
-		drawCall.MeshVertexBuffer = meshSource->GetVertexBuffer();
-		drawCall.MeshIndexBuffer = meshSource->GetIndexBuffer();
+		drawCall.MeshVertexBuffer = mesh->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = mesh->GetIndexBuffer();
 		drawCall.BaseIndex = submesh.BaseIndex;
 		drawCall.IndexCount = submesh.IndexCount;
 		drawCall.BaseVertex = submesh.BaseVertex;
@@ -1039,12 +1039,12 @@ namespace Athena
 		list.Push(drawCall);
 	}
 
-	void SceneRenderer::SubmitAnimDrawCall(DrawListAnim& list, const Ref<MeshSource>& meshSource, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
+	void SceneRenderer::SubmitAnimDrawCall(DrawListAnim& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
 	{
 		AnimDrawCall drawCall;
-		drawCall.MeshVertexBuffer = meshSource->GetVertexBuffer();
-		drawCall.MeshIndexBuffer = meshSource->GetIndexBuffer();
-		drawCall.BonesInfluenceBuffer = meshSource->GetBonesInfluenceBuffer();
+		drawCall.MeshVertexBuffer = mesh->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = mesh->GetIndexBuffer();
+		drawCall.BonesInfluenceBuffer = mesh->GetBonesInfluenceBuffer();
 
 		drawCall.BaseIndex = submesh.BaseIndex;
 		drawCall.IndexCount = submesh.IndexCount;

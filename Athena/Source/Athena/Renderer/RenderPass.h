@@ -17,13 +17,13 @@ namespace Athena
 	struct RenderTarget
 	{
 		RenderTarget() = default;
-		RenderTarget(const String& name, TextureFormat format, TextureFilter filter = TextureFilter::LINEAR)
+		RenderTarget(const String& name, Format format, TextureFilter filter = TextureFilter::LINEAR)
 		{
 			uint32 usage = TextureUsage::ATTACHMENT | TextureUsage::SAMPLED;
 
 			TextureCreateInfo texInfo;
 			texInfo.Name = name;
-			texInfo.Format = format;
+			texInfo.TextureFormat = format;
 			texInfo.Usage = (TextureUsage)usage;
 			texInfo.Width = 1;
 			texInfo.Height = 1;

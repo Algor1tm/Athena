@@ -72,7 +72,7 @@ namespace Athena
 		float Threshold = 1.5f;
 		float Knee = 0.1f;
 		float DirtIntensity = 2.f;
-		Ref<Texture2D> DirtTexture;
+		AssetHandle DirtTexture;
 	};
 
 	struct AmbientOcclusionSettings

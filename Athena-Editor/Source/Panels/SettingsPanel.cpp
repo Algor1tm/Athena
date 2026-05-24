@@ -3,6 +3,7 @@
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileDialogs.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
@@ -11,6 +12,7 @@
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 #include "Panels/PanelManager.h"
+#include "Panels/ContentBrowserPanel.h"
 #include "EditorResources.h"
 #include "EditorLayer.h"
 
@@ -208,23 +210,43 @@ namespace Athena
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
 			UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
-			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
-			if (!displayTex || displayTex == EngineTextures::GetBlackTexture())
-				displayTex = EditorResources::GetIcon("EmptyTexture");
+			bool isDefault = bloomSettings.DirtTexture == AssetHandle(0);
+			Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(bloomSettings.DirtTexture);
+			bool isValid = textureAsset != nullptr && !isDefault;
+
+			Ref<Texture2D> texture;
+			if (isDefault)
+				texture = EngineTextures::GetWhiteTexture();
+			else if (!isValid)
+				texture = EditorResources::GetIcon("EmptyTexture");
+			else
+				texture = textureAsset->GetRenderTexture();
 
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
-			if (UI::PropertyImage("Dirt Texture", displayTex, { imageSize, imageSize }))
+			if (UI::PropertyImage("Dirt Texture", texture, { imageSize, imageSize }))
 			{
 				std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
-				FilePath path = FileDialogs::OpenFile("Select Dirt Texture", "Texture files", textureExts, Project::GetAssetDirectory());
-				if (!path.empty())
-				{
-					TextureImporter importer;
-					importer.SetIsSRGB(false);
-					importer.SetGenererateMipMaps(false);
+				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
-					bloomSettings.DirtTexture = importer.Import(path);
+				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
+				{
+					bloomSettings.DirtTexture = handle;
 				}
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+					if (cbPayload->AssetType == AssetType::Texture)
+					{
+						bloomSettings.DirtTexture = cbPayload->AssetHandle;
+					}
+				}
+				ImGui::EndDragDropTarget();
 			}
 
 			UI::EndPropertyTable();

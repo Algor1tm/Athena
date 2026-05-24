@@ -127,7 +127,7 @@ namespace Athena
 				defaultSettings->Serialize(importSettingsPath);
 				UpdateAssetTimestamp(handle, importSettingsPath);
 
-				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", importSettingsPath, meta.Type, handle);
+				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", absolutePath, meta.Type, handle);
 			}
 		});
 
@@ -151,7 +151,8 @@ namespace Athena
 				{
 					FileSystem::Remove(importSettingsPath);
 
-					ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Deleted import settings file for asset (path - {}, type - {}, handle - {})", importSettingsPath, meta.Type, handle);
+					ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Deleted import settings file for asset (path - {}, type - {}, handle - {})", 
+						importSettingsPath, AssetManager::AssetTypeToString(meta.Type), handle);
 				}
 			}
 

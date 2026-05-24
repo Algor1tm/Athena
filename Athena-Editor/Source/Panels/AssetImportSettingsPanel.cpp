@@ -2,6 +2,7 @@
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Asset/Editor/MeshImporter.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/UI/UI.h"
@@ -10,56 +11,62 @@
 #include "Panels/PanelManager.h"
 
 #include <ImGui/imgui.h>
-#include <queue>
 
 
 namespace Athena
 {
-    MeshImportSettingsPanel::MeshImportSettingsPanel(const Ref<EditorContext>& context)
-		: Panel(MESH_IMPORT_SETTINGS_PANEL_ID, context)
-	{
+    AssetImportSettingsPanel::AssetImportSettingsPanel(const Ref<EditorContext>& context)
+        : Panel(ASSET_IMPORT_SETTINGS_PANEL_ID, context)
+    {
+        UI::RegisterEnum(ATN_STRINGIFY_MACRO(TextureFilter));
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureFilter), 1, "Nearest");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureFilter), 2, "Linear");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureFilter), 3, "Trilinear");
 
-	}
+        UI::RegisterEnum(ATN_STRINGIFY_MACRO(TextureWrap));
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), 1, "Repeat");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), 2, "Clamp to edge");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), 3, "Clamp to border");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), 4, "Mirrored repeat");
+        UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), 5, "Mirrored clamp to edge");
+    }
 
-	void MeshImportSettingsPanel::OnImGuiRender()
-	{
-        Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(m_MeshSourceHandle);
-
-        if (!mesh || m_EditorCtx.SceneState != SceneState::Edit)
+    void AssetImportSettingsPanel::OnImGuiRender()
+    {
+        if (!AssetManager::IsAssetHandleValid(m_AssetHandle) || m_EditorCtx.SceneState != SceneState::Edit || !m_ImportSettingsCopy)
         {
             OnClose();
             return;
         }
 
-        ImGui::Begin("Mesh Import Settings");
+        ImGui::Begin("Asset Import Settings");
 
-        if (UI::BeginPropertyTable())
+        AssetType type = AssetManager::GetAssetType(m_AssetHandle);
+
+        if (type == AssetType::Mesh)
         {
-            UI::PropertyCheckbox("Import Animations", &m_ImportSettingsCopy->ImportAnimations);
-
-            if (m_ImportSettingsCopy->ImportAnimations)
-            {
-                m_ImportSettingsCopy->CollapseGraph = true;
-
-                ImGui::BeginDisabled();
-                UI::PropertyCheckbox("Collapse Graph", &m_ImportSettingsCopy->CollapseGraph);
-                ImGui::EndDisabled();
-            }
-            else
-            {
-                UI::PropertyCheckbox("Collapse Graph", &m_ImportSettingsCopy->CollapseGraph);
-            }
-
-            ImGui::BeginDisabled();
-            UI::PropertyText("FilePath", AssetManager::GetAssetFilePath(m_MeshSourceHandle).string());
-            ImGui::EndDisabled();
-
-            UI::EndPropertyTable();
+            DrawMeshImportSettings();
         }
+        else if (type == AssetType::Texture)
+        {
+            DrawTextureImportSettings();
+        }
+
+        UI::PushFont(UI::Fonts::Bold);
+        ImGui::Text(AssetManager::GetAssetFilePath(m_AssetHandle).string().data());
+        UI::PopFont();
 
         if (ImGui::Button("Save"))
         {
             OnSave();
+            OnClose();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Reset"))
+        {
+            OnReset();
             OnClose();
         }
 
@@ -71,45 +78,100 @@ namespace Athena
         }
 
         ImGui::End();
-	}
+    }
 
-    void MeshImportSettingsPanel::OnOpen(AssetHandle meshSourceHandle)
+    bool AssetImportSettingsPanel::SupportsAssetType(AssetType type)
     {
-        if (!AssetManager::IsAssetHandleValid(meshSourceHandle))
+        if (type == AssetType::Mesh || type == AssetType::Texture)
+            return true;
+
+        return false;
+    }
+
+    void AssetImportSettingsPanel::OnOpen(AssetHandle assetHandle)
+    {
+        if (!AssetManager::IsAssetHandleValid(assetHandle) || !SupportsAssetType(AssetManager::GetAssetType(assetHandle)))
         {
-            PanelManager::ClosePanel(MESH_IMPORT_SETTINGS_PANEL_ID);
+            PanelManager::ClosePanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
             return;
         }
 
-        m_MeshSourceHandle = meshSourceHandle;
+        m_AssetHandle = assetHandle;
 
-        Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshSourceHandle);
-        m_ImportSettingsCopy = Ref<MeshImportSettings>::Create();
-
-        Ref<MeshImportSettings> importSettings = Project::GetEditorAssetManager()->GetAssetImportSettings(meshSourceHandle).As<MeshImportSettings>();
-
-        m_ImportSettingsCopy->ImportAnimations = importSettings->ImportAnimations;
-        m_ImportSettingsCopy->CollapseGraph = importSettings->CollapseGraph;
-        m_ImportSettingsCopy->SubMeshIndices = importSettings->SubMeshIndices;
-        m_ImportSettingsCopy->OverrideMaterials = importSettings->OverrideMaterials;
+        Ref<AssetImportSettings> importSettings = Project::GetEditorAssetManager()->GetAssetImportSettings(m_AssetHandle);
+        if(importSettings)
+            m_ImportSettingsCopy = importSettings->Clone();
     }
 
-    void MeshImportSettingsPanel::OnSave()
+    void AssetImportSettingsPanel::OnSave()
     {
-        Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(m_MeshSourceHandle);
-
-        if (mesh)
+        if (AssetManager::IsAssetHandleValid(m_AssetHandle))
         {
-            Project::GetEditorAssetManager()->SetAssetImportSettings(m_MeshSourceHandle, m_ImportSettingsCopy);
-            Project::GetEditorAssetManager()->SerializeAssetImportSettings(m_MeshSourceHandle); // Asset watcher thread will reload this asset
+            Project::GetEditorAssetManager()->SetAssetImportSettings(m_AssetHandle, m_ImportSettingsCopy);
+            Project::GetEditorAssetManager()->SerializeAssetImportSettings(m_AssetHandle); // Asset watcher thread will reload this asset
         }
     }
 
-    void MeshImportSettingsPanel::OnClose()
+    void AssetImportSettingsPanel::OnClose()
     {
-        m_MeshSourceHandle = 0;
+        m_AssetHandle = 0;
         m_ImportSettingsCopy.Release();
 
-        PanelManager::ClosePanel(MESH_IMPORT_SETTINGS_PANEL_ID);
+        PanelManager::ClosePanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
+    }
+
+    void AssetImportSettingsPanel::OnReset()
+    {
+        if (AssetManager::IsAssetHandleValid(m_AssetHandle))
+        {
+            Ref<AssetImportSettings> importSettings = Project::GetEditorAssetManager()->GetDefaultImportSettings(AssetManager::GetAssetType(m_AssetHandle));
+            m_ImportSettingsCopy = importSettings->Clone();
+        }
+    }
+
+    void AssetImportSettingsPanel::DrawMeshImportSettings()
+    {
+        Ref<MeshImportSettings> settings = m_ImportSettingsCopy.As<MeshImportSettings>();
+
+        UI::TextCentered("MESH IMPORT SETTINGS");
+
+        if (UI::BeginPropertyTable())
+        {
+            UI::PropertyCheckbox("Import Animations", &settings->ImportAnimations);
+
+            if (settings->ImportAnimations)
+            {
+                settings->CollapseGraph = true;
+
+                ImGui::BeginDisabled();
+                UI::PropertyCheckbox("Collapse Graph", &settings->CollapseGraph);
+                ImGui::EndDisabled();
+            }
+            else
+            {
+                UI::PropertyCheckbox("Collapse Graph", &settings->CollapseGraph);
+            }
+
+            UI::EndPropertyTable();
+        }
+    }
+
+    void AssetImportSettingsPanel::DrawTextureImportSettings()
+    {
+        Ref<TextureImportSettings> settings = m_ImportSettingsCopy.As<TextureImportSettings>();
+
+        UI::TextCentered("TEXTURE IMPORT SETTINGS");
+
+        if (UI::BeginPropertyTable())
+        {
+            UI::PropertyCheckbox("sRGB", &settings->sRGB);
+            UI::PropertyCheckbox("GenerateMipMaps", &settings->GenerateMipMaps);
+            UI::PropertyEnumCombo("WrapMode", ATN_STRINGIFY_MACRO(TextureWrap), (void*)&settings->WrapMode);
+            UI::PropertyEnumCombo("FilterMode", ATN_STRINGIFY_MACRO(TextureFilter), (void*)&settings->FilterMode);
+            UI::PropertySlider("Anisotropy Level", &settings->AnisotropyLevel, 0.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
+            UI::PropertyCheckbox("ComputeUsage", &settings->ComputeUsage);
+
+            UI::EndPropertyTable();
+        }
     }
 }

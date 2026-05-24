@@ -93,21 +93,18 @@ namespace Athena
 		aiProcess_Triangulate |
 		aiProcess_FlipUVs;
 
-	MeshImporter::MeshImporter(const FilePath& path)
+	MeshImporter::MeshImporter(const Ref<MeshImportSettings>& settings)
+	{
+		m_Settings = settings;
+	}
+
+	bool MeshImporter::ImportToMesh(const FilePath& path, WeakRef<Mesh> mesh)
 	{
 		m_Path = path;
-	}
 
-	MeshImporter::~MeshImporter()
-	{
-
-	}
-
-	bool MeshImporter::ImportToMesh(WeakRef<Mesh> mesh, const Ref<MeshImportSettings>& settings)
-	{
 		unsigned int importFlags = s_ImportFlags;
 
-		if (settings->CollapseGraph)
+		if (m_Settings->CollapseGraph)
 			importFlags |= aiProcess_OptimizeGraph;
 
 		m_aiScene = aiImportFile(m_Path.string().c_str(), importFlags);
@@ -120,7 +117,7 @@ namespace Athena
 			return false;
 		}
 
-		if (HasSkeleton() && settings->ImportAnimations)
+		if (HasSkeleton() && m_Settings->ImportAnimations)
 		{
 			Ref<Skeleton> skeleton = ImportSkeleton();
 
@@ -151,9 +148,9 @@ namespace Athena
 			aiMaterial* aimaterial = m_aiScene->mMaterials[i];
 			String name = aimaterial->GetName().C_Str();
 			
-			if (settings->OverrideMaterials.contains(name))
+			if (m_Settings->OverrideMaterials.contains(name))
 			{
-				matTable[name] = settings->OverrideMaterials.at(name);
+				matTable[name] = m_Settings->OverrideMaterials.at(name);
 			}
 			else
 			{
@@ -162,7 +159,7 @@ namespace Athena
 		}
 
 		mesh->m_SubMeshes.clear();
-		LoadGeometry(mesh, settings->SubMeshIndices);
+		LoadGeometry(mesh, m_Settings->SubMeshIndices);
 
 		mesh->m_Nodes.clear();
 		mesh->m_Nodes.emplace_back();
@@ -606,10 +603,15 @@ namespace Athena
 				uint32 width = embeddedTex->mWidth;
 				uint32 height = embeddedTex->mHeight;
 
-				TextureImporter importer;
-				importer.SetIsSRGB(srgb);
-				importer.SetGenererateMipMaps(true);
-				importer.SetName(String(texFilepath.C_Str(), texFilepath.length));
+				Ref<TextureImportSettings> importSettings = Ref<TextureImportSettings>::Create();
+				importSettings->Name = String(texFilepath.C_Str(), texFilepath.length);
+				importSettings->sRGB = srgb;
+				importSettings->GenerateMipMaps = true;
+				importSettings->FilterMode = TextureFilter::TRILINEAR;
+				importSettings->WrapMode = TextureWrap::REPEAT;
+				importSettings->AnisotropyLevel = 8.f;
+
+				TextureImporter importer(importSettings);
 
 				Ref<Texture2D> texture = importer.ImportFromMemory(data, width, height);
 				if (texture)
@@ -634,6 +636,18 @@ namespace Athena
 		return handle;
 	}
 
+
+	Ref<AssetImportSettings> MeshImportSettings::Clone() const
+	{
+		Ref<MeshImportSettings> cloneSettings = Ref<MeshImportSettings>::Create();
+
+		cloneSettings->ImportAnimations = ImportAnimations;
+		cloneSettings->CollapseGraph = CollapseGraph;
+		cloneSettings->SubMeshIndices = SubMeshIndices;
+		cloneSettings->OverrideMaterials = OverrideMaterials;
+
+		return cloneSettings;
+	}
 
 	bool MeshImportSettings::Serialize(const FilePath& absolutePath) const
 	{
@@ -691,7 +705,7 @@ namespace Athena
 		}
 		catch (YAML::Exception& e)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load static mesh asset data from {}. Error message:\n {}", absolutePath, e.what());
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}. Error message:\n {}", absolutePath, e.what());
 			return false;
 		}
 

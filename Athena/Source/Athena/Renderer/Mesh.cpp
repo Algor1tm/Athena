@@ -29,8 +29,8 @@ namespace Athena
 	{
 		m_CollapsedGraph = importSettings.As<MeshImportSettings>()->CollapseGraph;
 
-		MeshImporter importer(absolutePath);
-		return importer.ImportToMesh(this, importSettings.As<MeshImportSettings>());
+		MeshImporter importer(importSettings);
+		return importer.ImportToMesh(absolutePath, this);
 	}
 
 	Ref<MaterialAsset> Mesh::GetMaterial(const String& materialName) const

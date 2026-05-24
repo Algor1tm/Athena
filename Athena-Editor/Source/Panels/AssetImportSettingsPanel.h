@@ -3,24 +3,31 @@
 #include "Athena/Core/Core.h"
 #include "Panels/Panel.h"
 #include "Athena/Asset/Editor/MeshImporter.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
 
 
 namespace Athena
 {
-	class MeshImportSettingsPanel : public Panel
+	class AssetImportSettingsPanel : public Panel
 	{
 	public:
-		MeshImportSettingsPanel(const Ref<EditorContext>& context);
+		AssetImportSettingsPanel(const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
-		void OnOpen(AssetHandle meshSourceHandle);
+		void OnOpen(AssetHandle assetHandle);
+
+		bool SupportsAssetType(AssetType type);
 
 	private:
 		void OnSave();
 		void OnClose();
+		void OnReset();
+
+		void DrawMeshImportSettings();
+		void DrawTextureImportSettings();
 
 	private:
-		AssetHandle m_MeshSourceHandle = 0;
-		Ref<MeshImportSettings> m_ImportSettingsCopy;
+		AssetHandle m_AssetHandle = 0;
+		Ref<AssetImportSettings> m_ImportSettingsCopy;
 	};
 }

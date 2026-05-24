@@ -70,7 +70,7 @@ namespace Athena
 
 			TextureCreateInfo shadowMapInfo;
 			shadowMapInfo.Name = "DirShadowMap";
-			shadowMapInfo.Format = TextureFormat::DEPTH32F;
+			shadowMapInfo.TextureFormat = Format::DEPTH32F;
 			shadowMapInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED);
 			shadowMapInfo.Width = m_ShadowMapResolution;
 			shadowMapInfo.Height = m_ShadowMapResolution;
@@ -139,12 +139,12 @@ namespace Athena
 
 			m_GBufferPass = RenderPass::Create(passInfo);
 			// RGBA -> RGB - albedo, A - empty
-			m_GBufferPass->SetOutput({ "SceneAlbedo", TextureFormat::RGBA8, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneAlbedo", Format::RGBA8, TextureFilter::NEAREST });
 			// RGBA -> RGB - normal, A - emission
-			m_GBufferPass->SetOutput({ "SceneNormalsEmission", TextureFormat::RGBA16F, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneNormalsEmission", Format::RGBA16F, TextureFilter::NEAREST });
 			// RG -> R - roughness, G - metalness
-			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", TextureFormat::RG8, TextureFilter::NEAREST });
-			m_GBufferPass->SetOutput({ "SceneDepth", TextureFormat::DEPTH32F, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", Format::RG8, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneDepth", Format::DEPTH32F, TextureFilter::NEAREST });
 			m_GBufferPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
@@ -176,7 +176,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "HiZBuffer";
-			texInfo.Format = TextureFormat::R32F;
+			texInfo.TextureFormat = Format::R32F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -241,7 +241,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "HBAO-DepthLayers";
-				texInfo.Format = TextureFormat::R32F;
+				texInfo.TextureFormat = Format::R32F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 				texInfo.Layers = 16;
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
@@ -270,7 +270,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "HBAO-Output";
-				texInfo.Format = TextureFormat::RG16F;
+				texInfo.TextureFormat = Format::RG16F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 				texInfo.Sampler.Filter = TextureFilter::LINEAR;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -308,7 +308,7 @@ namespace Athena
 				passInfo.Name = "HBAO-BlurX";
 				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
-				RenderTarget blurTarget = { "HBAO-BlurredX", TextureFormat::RG16F, TextureFilter::LINEAR };
+				RenderTarget blurTarget = { "HBAO-BlurredX", Format::RG16F, TextureFilter::LINEAR };
 				blurTarget.ClearColor = Vector4(1.0);
 
 				m_HBAOBlurXPass = RenderPass::Create(passInfo);
@@ -333,7 +333,7 @@ namespace Athena
 				passInfo.InputPass = m_HBAOBlurXPass;
 				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
-				RenderTarget blurTarget = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
+				RenderTarget blurTarget = { "SceneAO", Format::R8, TextureFilter::NEAREST };
 				blurTarget.ClearColor = Vector4(1.0);
 
 				m_HBAOBlurYPass = RenderPass::Create(passInfo);
@@ -356,7 +356,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "SceneHDRColor";
-			texInfo.Format = TextureFormat::RGBA16F;
+			texInfo.TextureFormat = Format::RGBA16F;
 			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -437,7 +437,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "HiColorBuffer";
-			texInfo.Format = TextureFormat::R11G11B10F;
+			texInfo.TextureFormat = Format::R11G11B10F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
@@ -501,7 +501,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "SSR-Output";
-				texInfo.Format = TextureFormat::RGBA16F;
+				texInfo.TextureFormat = Format::RGBA16F;
 				texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -583,7 +583,7 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.8f, 0.7f, 0.1f, 1.f };
 
-			RenderTarget target = RenderTarget("SceneColor", TextureFormat::RGBA8);
+			RenderTarget target = RenderTarget("SceneColor", Format::RGBA8);
 			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
 
 			m_SceneCompositePass = RenderPass::Create(passInfo);
@@ -614,7 +614,7 @@ namespace Athena
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
 				m_JumpFloodSilhouettePass = RenderPass::Create(passInfo);
-				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8, TextureFilter::NEAREST });
+				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", Format::R8, TextureFilter::NEAREST });
 				m_JumpFloodSilhouettePass->Bake();
 
 				PipelineCreateInfo pipelineInfo;
@@ -649,7 +649,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = std::format("JumpFloodPingPong_{}", i);
-				texInfo.Format = TextureFormat::RG16F;
+				texInfo.TextureFormat = Format::RG16F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::ATTACHMENT);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -758,7 +758,7 @@ namespace Athena
 		// Reusable post-process textures (ping - pong)
 		{
 			TextureCreateInfo texInfo;
-			texInfo.Format = TextureFormat::RGBA8;
+			texInfo.TextureFormat = Format::RGBA8;
 			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED | TextureUsage::STORAGE);
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -1160,10 +1160,15 @@ namespace Athena
 		m_ShadowsData.BiasGradient = m_Settings.ShadowSettings.BiasGradient;
 		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
-		if (m_Settings.BloomSettings.DirtTexture)
-			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
+		Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(m_Settings.BloomSettings.DirtTexture);
+		if (textureAsset && textureAsset->GetRenderTexture())
+		{
+			m_BloomUpsample->SetInput("u_DirtTexture", textureAsset->GetRenderTexture());
+		}
 		else
+		{
 			m_BloomUpsample->SetInput("u_DirtTexture", EngineTextures::GetBlackTexture());
+		}
 
 		m_SceneCompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
 		m_SceneCompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);

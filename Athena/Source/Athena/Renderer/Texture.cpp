@@ -173,7 +173,7 @@ namespace Athena
 
 	bool TextureAsset::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
-		TextureImporter importer;
+		TextureImporter importer(importSettings);
 		m_Texture = importer.Import(absolutePath);
 
 		if (!m_Texture)

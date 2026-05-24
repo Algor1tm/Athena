@@ -407,6 +407,13 @@ namespace Athena
 				Project::GetEditorAssetManager()->ReloadAsset(GetAssetHandle());
 			}
 
+			bool supportsImportSettingsUI = PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->SupportsAssetType(GetAssetType());
+			if (supportsImportSettingsUI && ImGui::MenuItem("Edit Import Settings") )
+			{
+				PanelManager::OpenPanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
+				PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());
+			}
+
 			if (ImGui::MenuItem("Open Externally"))
 			{
 				Platform::OpenFileExternally(GetFilePath());
@@ -436,16 +443,17 @@ namespace Athena
 
 		if (m_State.IsSet(CBItemStateFlag_Active))
 		{
+			bool supportsImportSettingsUI = PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->SupportsAssetType(GetAssetType());
+
 			if (GetAssetType() == AssetType::Material)
 			{
 				Ref<MaterialEditorPanel> panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
 				panel->SetActiveMaterial(GetAssetHandle());
 			}
-
-			if (GetAssetType() == AssetType::Mesh)
+			else if (supportsImportSettingsUI)
 			{
-				PanelManager::OpenPanel(MESH_IMPORT_SETTINGS_PANEL_ID);
-				PanelManager::GetPanel<MeshImportSettingsPanel>(MESH_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());
+				PanelManager::OpenPanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
+				PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());
 			}
 		}
 	}

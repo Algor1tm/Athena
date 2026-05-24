@@ -58,7 +58,7 @@ namespace Athena
 			return;
 		}
 
-		TextureFormat format = m_Texture->GetFormat();
+		Format format = m_Texture->GetFormat();
 
 		VkComponentMapping swizzling = {};
 		swizzling.r = VK_COMPONENT_SWIZZLE_IDENTITY;

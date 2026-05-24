@@ -221,7 +221,7 @@ namespace Athena
 		const auto& info = texture->GetInfo();
 		uint32 layers = texture->GetImageLayerCount();
 
-		Vulkan::BlitMipMap(vkcmdBuffer, image->GetVulkanImage(), info.Width, info.Height, layers, info.Format, image->GetMipLevelsCount());
+		Vulkan::BlitMipMap(vkcmdBuffer, image->GetVulkanImage(), info.Width, info.Height, layers, info.TextureFormat, image->GetMipLevelsCount());
 
 		// HACK
 		image->RenderPassUpdateLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

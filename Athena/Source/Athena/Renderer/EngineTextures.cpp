@@ -32,7 +32,7 @@ namespace Athena
 
 		TextureCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
-		texInfo.Format = TextureFormat::RGBA8;
+		texInfo.TextureFormat = Format::RGBA8;
 		texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 		texInfo.Width = 1;
 		texInfo.Height = 1;
@@ -52,7 +52,7 @@ namespace Athena
 
 		TextureCreateInfo texCubeInfo;
 		texCubeInfo.Name = "Renderer_BlackTextureCube";
-		texCubeInfo.Format = TextureFormat::RGBA8;
+		texCubeInfo.TextureFormat = Format::RGBA8;
 		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
@@ -64,16 +64,21 @@ namespace Athena
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 
-		TextureImporter importer;
+		Ref<TextureImportSettings> importSettings = Ref<TextureImportSettings>::Create();
+		importSettings->GenerateMipMaps = false;
+		importSettings->sRGB = false;
+		importSettings->FilterMode = TextureFilter::LINEAR;
+		importSettings->WrapMode = TextureWrap::REPEAT;
+		importSettings->AnisotropyLevel = 0.f;
+
+		TextureImporter importer(importSettings);
 
 		// BLUE NOISE
 		{
 			FilePath path = resourcesPath / "Textures/BlueNoise16x16.png";
 
-			importer.SetName("Renderer_BlueNoise");
-			importer.SetIsSRGB(false);
-			importer.SetGenererateMipMaps(false);
-			importer.SetMaxChannels(1);
+			importSettings->Name = "Renderer_BlueNoise";
+			importSettings->ExtractChannelsNum = 1;
 
 			s_Data.BlueNoise = importer.Import(path);
 		}
@@ -82,10 +87,8 @@ namespace Athena
 		{
 			FilePath path = resourcesPath / "Textures/SMAA-AreaTex.png";
 
-			importer.SetName("Renderer_SMAA-AreaTex");
-			importer.SetIsSRGB(false);
-			importer.SetGenererateMipMaps(false);
-			importer.SetMaxChannels(4);
+			importSettings->Name = "Renderer_SMAA-AreaTex";
+			importSettings->ExtractChannelsNum = 4;
 
 			s_Data.SMAA_AreaLUT = importer.Import(path);
 		}
@@ -94,10 +97,8 @@ namespace Athena
 		{
 			FilePath path = resourcesPath / "Textures/SMAA-SearchTex.png";
 
-			importer.SetName("Renderer_SMAA-SearchTex");
-			importer.SetIsSRGB(false);
-			importer.SetGenererateMipMaps(false);
-			importer.SetMaxChannels(4);
+			importSettings->Name = "Renderer_SMAA-SearchTex";
+			importSettings->ExtractChannelsNum = 4;
 
 			s_Data.SMAA_SearchLUT = importer.Import(path);
 		}
@@ -105,7 +106,7 @@ namespace Athena
 		// BRDF_LUT
 		{
 			texInfo.Name = "Renderer_BRDF_LUT";
-			texInfo.Format = TextureFormat::RG16F;
+			texInfo.TextureFormat = Format::RG16F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.Width = 512;
 			texInfo.Height = 512;

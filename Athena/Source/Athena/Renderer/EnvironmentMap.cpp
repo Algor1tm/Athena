@@ -16,7 +16,7 @@ namespace Athena
 
 		TextureCreateInfo cubemapInfo;
 		cubemapInfo.Name = "EnvironmentMap";
-		cubemapInfo.Format = TextureFormat::R11G11B10F;
+		cubemapInfo.TextureFormat = Format::R11G11B10F;
 		cubemapInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 		cubemapInfo.Width = m_Resolution;
 		cubemapInfo.Height = m_Resolution;
@@ -181,7 +181,12 @@ namespace Athena
 			return;
 		}
 
-		TextureImporter importer;
+		Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
+		settings->sRGB = false;
+		settings->GenerateMipMaps = false;
+		settings->FilterMode = TextureFilter::LINEAR;
+
+		TextureImporter importer(settings);
 		Ref<Texture2D> panorama = importer.Import(m_FilePath);
 
 		m_PanoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);

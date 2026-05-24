@@ -370,7 +370,8 @@ namespace Athena
                             FileSystem::CreateDirectory("Screenshots");
 
                         FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
-                        TextureExporter::ExportAsPNG(path, image);
+                        TextureExporter exporter;
+                        exporter.ExportAsPNG(path, image);
                     }
 
                     ImGui::EndMenu();
@@ -537,8 +538,8 @@ namespace Athena
         auto materialEditorPanel = Ref<MaterialEditorPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(materialEditorPanel, Keyboard::L);
 
-        auto meshImportPanel = Ref<MeshImportSettingsPanel>::Create(m_EditorCtx);
-        PanelManager::AddPanel(meshImportPanel, true, false);
+        auto assetImportPanel = Ref<AssetImportSettingsPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(assetImportPanel, true, false);
 
         auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);

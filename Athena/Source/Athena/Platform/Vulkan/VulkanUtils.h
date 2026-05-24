@@ -210,30 +210,30 @@ namespace Athena::Vulkan
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(TextureFormat format)
+    inline VkFormat GetFormat(Format format)
     {
         switch (format)
         {
-        case TextureFormat::R8:              return VK_FORMAT_R8_UNORM;
-        case TextureFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
-        case TextureFormat::RG8:             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormat::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
-        case TextureFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
-        case TextureFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
+        case Format::R8:              return VK_FORMAT_R8_UNORM;
+        case Format::R8_SRGB:         return VK_FORMAT_R8_SRGB;
+        case Format::RG8:             return VK_FORMAT_R8G8_UNORM;
+        case Format::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
+        case Format::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
+        case Format::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
+        case Format::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
+        case Format::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
 
-        case TextureFormat::R32F:            return VK_FORMAT_R32_SFLOAT;
-        case TextureFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
-        case TextureFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
-        case TextureFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
-        case TextureFormat::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
-        case TextureFormat::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case TextureFormat::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case Format::R32F:            return VK_FORMAT_R32_SFLOAT;
+        case Format::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
+        case Format::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case Format::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
+        case Format::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
+        case Format::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case Format::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        case TextureFormat::DEPTH16:         return VK_FORMAT_D16_UNORM;
-        case TextureFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case TextureFormat::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
+        case Format::DEPTH16:         return VK_FORMAT_D16_UNORM;
+        case Format::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case Format::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
         }
 
         ATN_CORE_ASSERT(false);
@@ -261,10 +261,10 @@ namespace Athena::Vulkan
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetImageAspectMask(TextureFormat format)
+    inline VkImageAspectFlagBits GetImageAspectMask(Format format)
     {
-        uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
-        uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 depthBit = FormatUtils::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = FormatUtils::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
 
         if (!depthBit && !stencilBit)
             return VK_IMAGE_ASPECT_COLOR_BIT;
@@ -317,6 +317,7 @@ namespace Athena::Vulkan
         {
         case TextureFilter::NEAREST:return VK_FILTER_NEAREST;
         case TextureFilter::LINEAR: return VK_FILTER_LINEAR;
+        case TextureFilter::TRILINEAR: return VK_FILTER_LINEAR;
         }
 
         ATN_CORE_ASSERT(false);
@@ -328,7 +329,8 @@ namespace Athena::Vulkan
         switch (filter)
         {
         case TextureFilter::NEAREST:return VK_SAMPLER_MIPMAP_MODE_NEAREST;
-        case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        case TextureFilter::TRILINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
         }
 
         ATN_CORE_ASSERT(false);
@@ -477,7 +479,7 @@ namespace Athena::Vulkan
         EndSingleTimeCommands(vkCommandBuffer, commandPool);
     }
 
-    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, TextureFormat format, uint32 mipLevels)
+    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, Format format, uint32 mipLevels)
     {
         int32 mipWidth = width;
         int32 mipHeight = height;

@@ -5,6 +5,7 @@
 #include "Athena/Core/Buffer.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
+#include "Athena/Renderer/Format.h"
 #include "Athena/Renderer/RenderResource.h"
 
 #include <array>
@@ -12,33 +13,6 @@
 
 namespace Athena
 {
-	enum class TextureFormat
-	{
-		NONE = 0,
-		// Color
-		R8,
-		R8_SRGB,
-		RG8,
-		RG8_SRGB,
-		RGB8,
-		RGB8_SRGB,
-		RGBA8,
-		RGBA8_SRGB,
-
-		R32F,
-		RG16F,
-		RGB16F,
-		R11G11B10F,
-		RGB32F,
-		RGBA16F,
-		RGBA32F,
-
-		//Depth/Stencil
-		DEPTH16,
-		DEPTH24STENCIL8,
-		DEPTH32F
-	};
-
 	enum TextureUsage
 	{
 		NONE = BIT(0),
@@ -57,8 +31,9 @@ namespace Athena
 
 	enum class TextureFilter
 	{
-		LINEAR = 1,
-		NEAREST = 2,
+		NEAREST = 1,
+		LINEAR = 2,
+		TRILINEAR = 3
 	};
 
 	enum class TextureWrap
@@ -83,6 +58,7 @@ namespace Athena
 
 		TextureFilter Filter = TextureFilter::LINEAR;
 		TextureWrap Wrap = TextureWrap::REPEAT;
+		float AnisotropyLevel = 0.f;
 		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
 
@@ -159,7 +135,7 @@ namespace Athena
 	struct TextureCreateInfo
 	{
 		String Name;
-		TextureFormat Format = TextureFormat::RGBA8;
+		Format TextureFormat = Format::RGBA8;
 		TextureUsage Usage = TextureUsage::DEFAULT;
 		uint32 Width = 1;
 		uint32 Height = 1;
@@ -193,17 +169,9 @@ namespace Athena
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
-		TextureFormat GetFormat() const { return m_Info.Format; }
+		Format GetFormat() const { return m_Info.TextureFormat; }
 
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
-
-	public:
-		static bool IsDepthFormat(TextureFormat format);
-		static bool IsStencilFormat(TextureFormat format);
-		static bool IsColorFormat(TextureFormat format);
-		static bool IsHDRFormat(TextureFormat format);
-		static uint32 BytesPerPixel(TextureFormat format);
-		static uint32 ChannelsNum(TextureFormat format);
 
 	protected:
 		TextureCreateInfo m_Info;
@@ -244,18 +212,6 @@ namespace Athena
 		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
 	};
 
-	inline bool Texture::IsDepthFormat(TextureFormat format)
-	{
-		switch (format)
-		{
-		case TextureFormat::DEPTH16:		 return true;
-		case TextureFormat::DEPTH24STENCIL8: return true;
-		case TextureFormat::DEPTH32F:		 return true;
-		}
-
-		return false;
-	}
-
 
 	class ATHENA_API TextureAsset : public Asset
 	{
@@ -283,98 +239,64 @@ namespace Athena
 		std::array<Vector2, 4> m_TexCoords;
 	};
 
-
-	inline bool Texture::IsStencilFormat(TextureFormat format)
+	namespace EnumUtils
 	{
-		switch (format)
+		inline std::string_view TextureFilterToString(TextureFilter filter)
 		{
-		case TextureFormat::DEPTH24STENCIL8: return true;
+			switch (filter)
+			{
+				case TextureFilter::NEAREST:   return "NEAREST";
+				case TextureFilter::LINEAR:    return "LINEAR";
+				case TextureFilter::TRILINEAR: return "TRILINEAR";
+			}
+
+			ATN_CORE_ASSERT(false);
+			return "";
 		}
 
-		return false;
-	}
-
-	inline bool Texture::IsColorFormat(TextureFormat format)
-	{
-		return !IsDepthFormat(format) && !IsStencilFormat(format);
-	}
-
-	inline bool Texture::IsHDRFormat(TextureFormat format)
-	{
-		switch (format)
+		inline TextureFilter TextureFilterFromString(const String& filterString)
 		{
-		case TextureFormat::R32F:		return true;
-		case TextureFormat::RG16F:		return true;
-		case TextureFormat::R11G11B10F: return true;
-		case TextureFormat::RGB16F:		return true;
-		case TextureFormat::RGB32F:		return true;
-		case TextureFormat::RGBA16F:	return true;
-		case TextureFormat::RGBA32F:	return true;
-		case TextureFormat::DEPTH32F:	return true;
+			if (filterString == "NEAREST")
+				return TextureFilter::NEAREST;
+			else if (filterString == "LINEAR")
+				return TextureFilter::LINEAR;
+			else if (filterString == "TRILINEAR")
+				return TextureFilter::TRILINEAR;
+
+			ATN_CORE_ASSERT(false);
+			return TextureFilter::NEAREST;
 		}
 
-		return false;
-	}
-
-	inline uint32 Texture::BytesPerPixel(TextureFormat format)
-	{
-		switch (format)
+		inline std::string_view TextureWrapToString(TextureWrap wrap)
 		{
-		case TextureFormat::R8:			   return 1;
-		case TextureFormat::R8_SRGB:	   return 1;
-		case TextureFormat::RG8:		   return 2;
-		case TextureFormat::RG8_SRGB:	   return 2;
-		case TextureFormat::RGB8:		   return 3 * 1;
-		case TextureFormat::RGB8_SRGB:	   return 3 * 1;
-		case TextureFormat::RGBA8:		   return 4 * 1;
-		case TextureFormat::RGBA8_SRGB:	   return 4 * 1;
+			switch (wrap)
+			{
+			case TextureWrap::REPEAT:				  return "REPEAT";
+			case TextureWrap::CLAMP_TO_EDGE:		  return "CLAMP_TO_EDGE";
+			case TextureWrap::CLAMP_TO_BORDER:		  return "CLAMP_TO_BORDER";
+			case TextureWrap::MIRRORED_REPEAT:		  return "MIRRORED_REPEAT";
+			case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return "MIRRORED_CLAMP_TO_EDGE";
+			}
 
-		case TextureFormat::R32F:		   return 1 * 4;
-		case TextureFormat::RG16F:		   return 2 * 2;
-		case TextureFormat::R11G11B10F:	   return 4;
-		case TextureFormat::RGB16F:		   return 3 * 2;
-		case TextureFormat::RGB32F:		   return 3 * 4;
-		case TextureFormat::RGBA16F:	   return 4 * 2;
-		case TextureFormat::RGBA32F:	   return 4 * 4;
-
-		case TextureFormat::DEPTH16:    	 return 2;
-		case TextureFormat::DEPTH24STENCIL8: return 4;
-		case TextureFormat::DEPTH32F:		 return 4;
+			ATN_CORE_ASSERT(false);
+			return "";
 		}
 
-		ATN_CORE_ASSERT(false);
-		return false;
-	}
-
-	inline uint32 Texture::ChannelsNum(TextureFormat format)
-	{
-		switch (format)
+		inline TextureWrap TextureWrapFromString(const String& wrapString)
 		{
-		case TextureFormat::R8:			   
-		case TextureFormat::R8_SRGB:
-		case TextureFormat::R32F:
-		case TextureFormat::DEPTH16:
-		case TextureFormat::DEPTH32F: 
-			return 1;
-		case TextureFormat::RG8:
-		case TextureFormat::RG8_SRGB:
-		case TextureFormat::RG16F:
-		case TextureFormat::DEPTH24STENCIL8: 
-			return 2;
-		case TextureFormat::RGB8:
-		case TextureFormat::RGB8_SRGB:	
-		case TextureFormat::R11G11B10F:	 
-		case TextureFormat::RGB16F:	
-		case TextureFormat::RGB32F:
-			return 3;
-		case TextureFormat::RGBA8:	
-		case TextureFormat::RGBA8_SRGB:
-		case TextureFormat::RGBA16F:
-		case TextureFormat::RGBA32F:
-			return 4;
-		}
+			if (wrapString == "REPEAT")
+				return TextureWrap::REPEAT;
+			else if (wrapString == "CLAMP_TO_EDGE")
+				return TextureWrap::CLAMP_TO_EDGE;
+			else if (wrapString == "CLAMP_TO_BORDER")
+				return TextureWrap::CLAMP_TO_BORDER;
+			else if (wrapString == "MIRRORED_REPEAT")
+				return TextureWrap::MIRRORED_REPEAT;
+			else if (wrapString == "MIRRORED_CLAMP_TO_EDGE")
+				return TextureWrap::MIRRORED_CLAMP_TO_EDGE;
 
-		ATN_CORE_ASSERT(false);
-		return false;
+			ATN_CORE_ASSERT(false);
+			return TextureWrap::REPEAT;
+		}
 	}
 }

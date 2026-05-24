@@ -55,7 +55,7 @@ namespace Athena
 
         TextureCreateInfo atlasInfo;
         atlasInfo.Name = fmt::format("{}_FontAtlas", path.filename());
-        atlasInfo.Format = TextureFormat::RGBA8;
+        atlasInfo.TextureFormat = Format::RGBA8;
         atlasInfo.Usage = TextureUsage::SAMPLED;
         atlasInfo.Width = width;
         atlasInfo.Height = height;

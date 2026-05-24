@@ -17,6 +17,8 @@ namespace Athena
 	class ATHENA_API MeshImportSettings : public AssetImportSettings
 	{
 	public:
+		virtual Ref<AssetImportSettings> Clone() const override;
+
 		virtual bool Serialize(const FilePath& absolutePath) const override;
 		virtual bool Deserialize(const FilePath& absolutePath) override;
 
@@ -30,10 +32,9 @@ namespace Athena
 	class MeshImporter
 	{
 	public:
-		MeshImporter(const FilePath& path);
-		~MeshImporter();
+		MeshImporter(const Ref<MeshImportSettings>& settings);
 
-		bool ImportToMesh(WeakRef<Mesh> mesh, const Ref<MeshImportSettings>& settings);
+		bool ImportToMesh(const FilePath& path, WeakRef<Mesh> mesh);
 
 		Ref<Animation> ImportAnimation(uint32 animationIndex, const Ref<Skeleton>& skeleton) const;
 		Ref<Skeleton> ImportSkeleton() const;
@@ -49,6 +50,7 @@ namespace Athena
 		AssetHandle LoadMaterialTexture(const aiMaterial* aimaterial, uint32 type, bool srgb) const;
 
 	private:
+		Ref<MeshImportSettings> m_Settings;
 		FilePath m_Path;
 		const aiScene* m_aiScene;
 	};

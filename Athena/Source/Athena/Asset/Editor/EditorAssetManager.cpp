@@ -1,8 +1,11 @@
 #include "EditorAssetManager.h"
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
-#include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Core/FileSystem.h"
+
+#include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Asset/Editor/MeshImporter.h"
+
 
 
 namespace Athena
@@ -12,6 +15,7 @@ namespace Athena
 		AssetFileExtensions::Init();
 
 		m_DefaultSettingsMap[AssetType::Mesh] = Ref<MeshImportSettings>::Create();
+		m_DefaultSettingsMap[AssetType::Texture] = Ref<TextureImportSettings>::Create();
 
 		m_AssetRegistry.Deserialize();
 		m_AssetWatcherThread.Initialize(&m_AssetRegistry);
@@ -264,13 +268,13 @@ namespace Athena
 
 	bool EditorAssetManager::HasImportSettings(AssetType type)
 	{
-		return GetDefaultImportSettings(type) != nullptr;
+		return m_DefaultSettingsMap.contains(type);
 	}
 
 	Ref<AssetImportSettings> EditorAssetManager::GetDefaultImportSettings(AssetType type)
 	{
 		if (m_DefaultSettingsMap.contains(type))
-			return m_DefaultSettingsMap.at(type);
+			return m_DefaultSettingsMap.at(type)->Clone();
 
 		return nullptr;
 	}

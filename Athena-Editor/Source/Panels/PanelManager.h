@@ -11,7 +11,7 @@
 #define ASSET_MANAGER_PANEL_ID			  "AssetManager"
 #define CONTENT_BROWSER_PANEL_ID		  "ContentBrowser"
 #define MATERIAL_EDITOR_PANEL_ID		  "MaterialEditor"
-#define MESH_IMPORT_SETTINGS_PANEL_ID	  "MeshImportSettings"
+#define ASSET_IMPORT_SETTINGS_PANEL_ID	  "AssetImportSettings"
 #define PROFILING_PANEL_ID				  "Profiling"
 #define PROJECT_SETTINGS_PANEL_ID		  "ProjectSettings"
 #define SCENE_HIERARCHY_PANEL_ID		  "SceneHierarchy"

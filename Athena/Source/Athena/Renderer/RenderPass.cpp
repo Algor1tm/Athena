@@ -50,7 +50,7 @@ namespace Athena
 	{
 		for (const auto& target : m_Outputs)
 		{
-			if (Texture::IsDepthFormat(target.Texture->GetFormat()))
+			if (FormatUtils::IsDepthFormat(target.Texture->GetFormat()))
 			{
 				return target.Texture;
 			}
@@ -65,7 +65,7 @@ namespace Athena
 		uint32 count = 0;
 		for (const auto& target : m_Outputs)
 		{
-			if (Texture::IsColorFormat(target.Texture->GetFormat()))
+			if (FormatUtils::IsColorFormat(target.Texture->GetFormat()))
 			{
 				count++;
 			}
@@ -78,7 +78,7 @@ namespace Athena
 	{
 		for (const auto& target : m_Outputs)
 		{
-			if (Texture::IsDepthFormat(target.Texture->GetFormat()))
+			if (FormatUtils::IsDepthFormat(target.Texture->GetFormat()))
 			{
 				return true;
 			}

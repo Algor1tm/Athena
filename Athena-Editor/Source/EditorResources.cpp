@@ -14,16 +14,19 @@ namespace Athena
 	{
 		m_Path = path;
 
-		TextureImporter importer;
-		importer.SetIsSRGB(false);
-		importer.SetGenererateMipMaps(false);
+
+		Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
+		settings->AnisotropyLevel = 0.f;
+		settings->FilterMode = TextureFilter::LINEAR;
+
+		TextureImporter importer(settings);
 
 		m_Icons["Logo"] = importer.Import(m_Path / "Icons/Logo/LogoWhite.png");
 		m_Icons["EmptyTexture"] = importer.Import(m_Path / "Icons/Editor/Other/EmptyTexture.png");
 		m_Icons["Settings"] = importer.Import(m_Path / "Icons/Editor/Other/Settings.png");
 		m_Icons["Viewport_Stop"] = importer.Import(m_Path / "Icons/Editor/Viewport/Stop.png");
 
-		importer.SetIsSRGB(true);
+		settings->sRGB = true;
 
 		m_Icons["Titlebar_CloseWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/CloseWindow.png");
 		m_Icons["Titlebar_MinimizeWindow"] = importer.Import(m_Path / "Icons/Editor/Titlebar/MinimizeWindow.png");

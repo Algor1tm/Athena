@@ -160,7 +160,7 @@ namespace Athena
 							sharedTarget = true;
 					}
 
-					bool colorFormat = Texture::IsColorFormat(outputTarget->GetFormat());
+					bool colorFormat = FormatUtils::IsColorFormat(outputTarget->GetFormat());
 					BarrierInfo barrier;
 					if (sharedTarget)
 					{

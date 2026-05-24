@@ -2,6 +2,7 @@
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Log.h"
+#include "Athena/Core/YAMLTypes.h"
 #include "Athena/Math/Common.h"
 
 #include <stb_image/stb_image.h>
@@ -21,15 +22,90 @@ namespace Athena
 		}
 	}
 
+	Ref<AssetImportSettings> TextureImportSettings::Clone() const
+	{
+		Ref<TextureImportSettings> cloneSettings = Ref<TextureImportSettings>::Create();
+
+		cloneSettings->Name = Name;
+		cloneSettings->sRGB = sRGB;
+		cloneSettings->GenerateMipMaps = GenerateMipMaps;
+		cloneSettings->WrapMode = WrapMode;
+		cloneSettings->FilterMode = FilterMode;
+		cloneSettings->AnisotropyLevel = AnisotropyLevel;
+		cloneSettings->ComputeUsage = ComputeUsage;
+		cloneSettings->ExtractChannelsNum = ExtractChannelsNum;
+
+		return cloneSettings;
+	}
+
+	bool TextureImportSettings::Serialize(const FilePath& absolutePath) const
+	{
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "TextureImportSettings" << YAML::Value << YAML::BeginMap;
+
+		out << YAML::Key << "sRGB" << YAML::Value << sRGB;
+		out << YAML::Key << "GenerateMipMaps" << YAML::Value << GenerateMipMaps;
+		out << YAML::Key << "WrapMode" << YAML::Value << EnumUtils::TextureWrapToString(WrapMode);
+		out << YAML::Key << "FilterMode" << YAML::Value << EnumUtils::TextureFilterToString(FilterMode);
+		out << YAML::Key << "AnisotropyLevel" << YAML::Value << AnisotropyLevel;
+		out << YAML::Key << "ComputeUsage" << YAML::Value << ComputeUsage;
+		out << YAML::Key << "ExtractChannelsNum" << YAML::Value << ExtractChannelsNum;
+
+		out << YAML::EndMap;
+		out << YAML::EndMap;
+
+		std::ofstream fout(absolutePath);
+		fout << out.c_str();
+
+		return true;
+	}
+
+	bool TextureImportSettings::Deserialize(const FilePath& absolutePath)
+	{
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(absolutePath.string());
+
+			auto root = data["TextureImportSettings"];
+
+			sRGB = root["sRGB"].as<bool>();
+			GenerateMipMaps = root["GenerateMipMaps"].as<bool>();
+			WrapMode = EnumUtils::TextureWrapFromString(root["WrapMode"].as<String>());
+			FilterMode = EnumUtils::TextureFilterFromString(root["FilterMode"].as<String>());
+			AnisotropyLevel = root["AnisotropyLevel"].as<float>();
+			ComputeUsage = root["ComputeUsage"].as<bool>();
+			ExtractChannelsNum = root["ExtractChannelsNum"].as<uint32>();
+
+			AnisotropyLevel = Math::Clamp(AnisotropyLevel, 0.f, 16.f);
+			ExtractChannelsNum = Math::Clamp(ExtractChannelsNum, 1, 4);
+
+			if (ExtractChannelsNum == 3)
+				ExtractChannelsNum = 4;
+		}
+		catch (YAML::Exception& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}. Error message:\n {}", absolutePath, e.what());
+			return false;
+		}
+
+		return true;
+	}
+
+	TextureImporter::TextureImporter(const Ref<TextureImportSettings>& settings)
+	{
+		m_Settings = settings;
+	}
 
 	Ref<Texture2D> TextureImporter::Import(const FilePath& filepath)
 	{
-		uint32 maxChannels = m_MaxChannels;
+		uint32 maxChannels = m_Settings->ExtractChannelsNum;
 		if (maxChannels == 3) // image tiling optimal
 			maxChannels = 4;
 
 		int width, height, channels;
-		TextureFormat format = TextureFormat::NONE;
+		Format format = Format::NONE;
 		void* data = nullptr;
 		bool HDR = false;
 
@@ -43,10 +119,10 @@ namespace Athena
 		else
 		{
 			data = stbi_load(utf8Path.data(), &width, &height, &channels, 0);
-			format = GetFormat(channels, m_SRGB);
+			format = GetFormat(channels, m_Settings->sRGB);
 		}
 
-		if (data == nullptr || format == TextureFormat::NONE)
+		if (data == nullptr || format == Format::NONE)
 		{
 			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from{}, (width = {}, height = {}, channels = {})", filepath, width, height, channels);
 			return nullptr;
@@ -56,7 +132,7 @@ namespace Athena
 		if (HDR == false && extract)
 		{
 			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, m_SRGB);
+			format = GetFormat(maxChannels, m_Settings->sRGB);
 		}
 		else if (extract)
 		{
@@ -64,18 +140,28 @@ namespace Athena
 			format = GetHDRFormat(maxChannels);
 		}
 
-		uint64 size = width * height * Texture::BytesPerPixel(format);
+		uint64 size = width * height * FormatUtils::BytesPerPixel(format);
 		Buffer buffer = Buffer::Move(data, size);
 
+		TextureUsage usage = TextureUsage::SAMPLED;
+		if (m_Settings->ComputeUsage)
+			usage = TextureUsage(usage | TextureUsage::STORAGE);
+
+		TextureSamplerCreateInfo samplerInfo;
+		samplerInfo.Filter = m_Settings->FilterMode;
+		samplerInfo.Wrap = m_Settings->WrapMode;
+		samplerInfo.AnisotropyLevel = m_Settings->AnisotropyLevel;
+		samplerInfo.Compare = TextureCompareOperator::NONE;
+
 		TextureCreateInfo info;
-		info.Name = m_Name.empty() ? filepath.filename().string() : m_Name;
-		info.Format = format;
-		info.Usage = m_TextureUsage;
+		info.Name = m_Settings->Name.empty() ? filepath.filename().string() : m_Settings->Name;
+		info.TextureFormat = format;
+		info.Usage = usage;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipMap = m_GenerateMipMaps;
-		info.Sampler = m_SamplerInfo;
+		info.GenerateMipMap = m_Settings->GenerateMipMaps;
+		info.Sampler = samplerInfo;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);
 		result->m_FilePath = filepath;
@@ -86,7 +172,7 @@ namespace Athena
 
 	Ref<Texture2D> TextureImporter::ImportFromMemory(const void* inputData, uint32 inputWidth, uint32 inputHeight)
 	{
-		uint32 maxChannels = m_MaxChannels;
+		uint32 maxChannels = m_Settings->ExtractChannelsNum;
 		if (maxChannels == 3) // image tiling optimal
 			maxChannels = 4;
 
@@ -96,32 +182,42 @@ namespace Athena
 		const uint32 size = inputHeight == 0 ? inputWidth : inputWidth * inputHeight;
 		data = stbi_load_from_memory((const stbi_uc*)inputData, size, &width, &height, &channels, 0);
 
-		TextureFormat format = GetFormat(channels, m_SRGB);
+		Format format = GetFormat(channels, m_Settings->sRGB);
 
-		if (data == nullptr || format == TextureFormat::NONE)
+		if (data == nullptr || format == Format::NONE)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Name, width, height, channels);
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Settings->Name, width, height, channels);
 			return nullptr;
 		}
 
 		if (channels == 3 || maxChannels < channels)
 		{
 			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, m_SRGB);
+			format = GetFormat(maxChannels, m_Settings->sRGB);
 		}
 
-		uint64 dataSize = width * height * Texture::BytesPerPixel(format);
+		uint64 dataSize = width * height * FormatUtils::BytesPerPixel(format);
 		Buffer buffer = Buffer::Move(data, dataSize);
 
+		TextureUsage usage = TextureUsage::SAMPLED;
+		if (m_Settings->ComputeUsage)
+			usage = TextureUsage(usage | TextureUsage::STORAGE);
+
+		TextureSamplerCreateInfo samplerInfo;
+		samplerInfo.Filter = m_Settings->FilterMode;
+		samplerInfo.Wrap = m_Settings->WrapMode;
+		samplerInfo.AnisotropyLevel = m_Settings->AnisotropyLevel;
+		samplerInfo.Compare = TextureCompareOperator::NONE;
+
 		TextureCreateInfo info;
-		info.Name = m_Name;
-		info.Format = format;
-		info.Usage = m_TextureUsage;
+		info.Name = m_Settings->Name;
+		info.TextureFormat = format;
+		info.Usage = usage;
 		info.Width = width;
 		info.Height = height;
 		info.Layers = 1;
-		info.GenerateMipMap = m_GenerateMipMaps;
-		info.Sampler = m_SamplerInfo;
+		info.GenerateMipMap = m_Settings->GenerateMipMaps;
+		info.Sampler = samplerInfo;
 
 		Ref<Texture2D> result = Texture2D::Create(info, buffer);
 		buffer.Release();
@@ -129,30 +225,30 @@ namespace Athena
 		return result;
 	}
 
-	TextureFormat TextureImporter::GetFormat(uint32 channels, bool sRGB)
+	Format TextureImporter::GetFormat(uint32 channels, bool sRGB)
 	{
 		switch (channels)
 		{
-		case 1: return sRGB ? TextureFormat::R8_SRGB    : TextureFormat::R8;
-		case 2: return sRGB ? TextureFormat::RG8_SRGB   : TextureFormat::RG8;
-		case 3: return sRGB ? TextureFormat::RGB8_SRGB  : TextureFormat::RGB8;
-		case 4: return sRGB ? TextureFormat::RGBA8_SRGB : TextureFormat::RGBA8;
+		case 1: return sRGB ? Format::R8_SRGB    : Format::R8;
+		case 2: return sRGB ? Format::RG8_SRGB   : Format::RG8;
+		case 3: return sRGB ? Format::RGB8_SRGB  : Format::RGB8;
+		case 4: return sRGB ? Format::RGBA8_SRGB : Format::RGBA8;
 		}
 
 		ATN_CORE_ASSERT(false);
-		return TextureFormat::NONE;
+		return Format::NONE;
 	}
 
-	TextureFormat TextureImporter::GetHDRFormat(uint32 channels)
+	Format TextureImporter::GetHDRFormat(uint32 channels)
 	{
 		switch (channels)
 		{
-		case 3: return TextureFormat::RGB32F;
-		case 4: return TextureFormat::RGBA32F;
+		case 3: return Format::RGB32F;
+		case 4: return Format::RGBA32F;
 		}
 
 		ATN_CORE_ASSERT(false);
-		return TextureFormat::NONE;
+		return Format::NONE;
 	}
 
 	void* TextureImporter::ExtractChannels(byte* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels)
@@ -216,8 +312,8 @@ namespace Athena
 		uint32 height = texture->GetHeight();
 
 		auto utf8Path = Utils::ConvertPathToUTF8(path);
-		uint32 channels = Texture::ChannelsNum(texture->GetFormat());
-		uint32 bpp = Texture::BytesPerPixel(texture->GetFormat());
+		uint32 channels = FormatUtils::ChannelsNum(texture->GetFormat());
+		uint32 bpp = FormatUtils::BytesPerPixel(texture->GetFormat());
 
 		bool result = stbi_write_png(utf8Path.data(), width, height, channels, buffer.Data(), bpp * width);
 

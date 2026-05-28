@@ -142,7 +142,7 @@ namespace Athena
 				pass->End(commandBuffer);
 			}
 			commandBuffer->End();
-			commandBuffer->Submit();
+			commandBuffer->Submit(false);
 		}
 	}
 

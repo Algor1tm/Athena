@@ -16,8 +16,6 @@ namespace Athena
 		virtual void OnImGuiRender() override;
 		void OnOpen(AssetHandle assetHandle);
 
-		bool SupportsAssetType(AssetType type);
-
 	private:
 		void OnSave();
 		void OnClose();
@@ -25,6 +23,7 @@ namespace Athena
 
 		void DrawMeshImportSettings();
 		void DrawTextureImportSettings();
+		void DrawEnvMapImportSettings();
 
 	private:
 		AssetHandle m_AssetHandle = 0;

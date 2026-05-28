@@ -16,6 +16,7 @@ namespace Athena
 
 		m_DefaultSettingsMap[AssetType::Mesh] = Ref<MeshImportSettings>::Create();
 		m_DefaultSettingsMap[AssetType::Texture] = Ref<TextureImportSettings>::Create();
+		m_DefaultSettingsMap[AssetType::EnvironmentMap] = Ref<EnvironmentMapImportSettings>::Create();
 
 		m_AssetRegistry.Deserialize();
 		m_AssetWatcherThread.Initialize(&m_AssetRegistry);

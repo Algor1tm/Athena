@@ -22,6 +22,68 @@ namespace Athena
 		}
 	}
 
+	Ref<AssetImportSettings> EnvironmentMapImportSettings::Clone() const
+	{
+		Ref<EnvironmentMapImportSettings> cloneSettings = Ref<EnvironmentMapImportSettings>::Create();
+
+		cloneSettings->Resolution = Resolution;
+		cloneSettings->FloatFormat = FloatFormat;
+
+		return cloneSettings;
+	}
+
+	bool EnvironmentMapImportSettings::Serialize(const FilePath& absolutePath) const
+	{
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "EnvironmentMapImportSettings" << YAML::Value << YAML::BeginMap;
+
+		out << YAML::Key << "Resolution" << YAML::Value << Resolution;
+		out << YAML::Key << "FloatFormat" << YAML::Value << (uint32)FloatFormat;
+
+		out << YAML::EndMap;
+		out << YAML::EndMap;
+
+		std::ofstream fout(absolutePath);
+		fout << out.c_str();
+
+		return true;
+	}
+
+	bool EnvironmentMapImportSettings::Deserialize(const FilePath& absolutePath)
+	{
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(absolutePath.string());
+
+			auto root = data["EnvironmentMapImportSettings"];
+
+			Resolution = root["Resolution"].as<uint32>();
+			FloatFormat = (Format)root["FloatFormat"].as<uint32>();
+
+			if (!IsValidFormat())
+			{
+				FloatFormat = Format::R11G11B10F;
+				ATN_CORE_WARN_TAG("AssetManager", "Forcing format of environment map to R11G11B10F!");
+			}
+		}
+		catch (YAML::Exception& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}. Error message:\n {}", absolutePath, e.what());
+			return false;
+		}
+
+		return true;
+	}
+
+	bool EnvironmentMapImportSettings::IsValidFormat()
+	{
+		return FloatFormat == Format::R11G11B10F ||
+			FloatFormat == Format::RGB16F ||
+			FloatFormat == Format::RGB32F;
+	}
+
 	Ref<AssetImportSettings> TextureImportSettings::Clone() const
 	{
 		Ref<TextureImportSettings> cloneSettings = Ref<TextureImportSettings>::Create();

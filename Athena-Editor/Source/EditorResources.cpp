@@ -17,6 +17,7 @@ namespace Athena
 
 		Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
 		settings->AnisotropyLevel = 0.f;
+		settings->GenerateMipMaps = false;
 		settings->FilterMode = TextureFilter::LINEAR;
 
 		TextureImporter importer(settings);

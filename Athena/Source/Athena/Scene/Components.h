@@ -213,37 +213,12 @@ namespace Athena
 
 	struct SkyLightComponent
 	{
-		AssetHandle StaticEnvMapHandle = 0;
-		Ref<PreethamEnvironmentMap> PreethamEnvMap;
-
 		EnvironmentMapType Type = EnvironmentMapType::PREETHAM;
-		uint32 Resolution = 256;
+		AssetHandle EnvMapHandle = 0;
+		PreethamParams Preetham;
+
 		float LOD = 0.f;
 		float Intensity = 1.f;
-
-		SkyLightComponent()
-		{
-			PreethamEnvMap = Ref<PreethamEnvironmentMap>::Create();
-		}
-
-		SkyLightComponent(const SkyLightComponent& other)
-		{
-			Resolution = other.Resolution;
-			LOD = other.LOD;
-			Intensity = other.Intensity;
-
-			const auto& otherEnv = other.PreethamEnvMap;
-
-			PreethamEnvMap = Ref<PreethamEnvironmentMap>::Create();
-
-			float turbidity = otherEnv->GetTurbidity();
-			float azimuth = otherEnv->GetAzimuth();
-			float inclination = otherEnv->GetInclination();
-			PreethamEnvMap->SetPreethamParams(turbidity, azimuth, inclination);
-		}
-
-		SkyLightComponent(SkyLightComponent&& other) noexcept = default;
-		SkyLightComponent& operator=(SkyLightComponent&& other) noexcept = default;
 	};
 
 

@@ -407,8 +407,7 @@ namespace Athena
 				Project::GetEditorAssetManager()->ReloadAsset(GetAssetHandle());
 			}
 
-			bool supportsImportSettingsUI = PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->SupportsAssetType(GetAssetType());
-			if (supportsImportSettingsUI && ImGui::MenuItem("Edit Import Settings") )
+			if (Project::GetEditorAssetManager()->HasImportSettings(GetAssetType()) && ImGui::MenuItem("Edit Import Settings") )
 			{
 				PanelManager::OpenPanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
 				PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());
@@ -443,14 +442,12 @@ namespace Athena
 
 		if (m_State.IsSet(CBItemStateFlag_Active))
 		{
-			bool supportsImportSettingsUI = PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->SupportsAssetType(GetAssetType());
-
 			if (GetAssetType() == AssetType::Material)
 			{
 				Ref<MaterialEditorPanel> panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
 				panel->SetActiveMaterial(GetAssetHandle());
 			}
-			else if (supportsImportSettingsUI)
+			else if (Project::GetEditorAssetManager()->HasImportSettings(GetAssetType()))
 			{
 				PanelManager::OpenPanel(ASSET_IMPORT_SETTINGS_PANEL_ID);
 				PanelManager::GetPanel<AssetImportSettingsPanel>(ASSET_IMPORT_SETTINGS_PANEL_ID)->OnOpen(GetAssetHandle());

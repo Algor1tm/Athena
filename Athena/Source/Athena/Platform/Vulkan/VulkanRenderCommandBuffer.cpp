@@ -58,12 +58,12 @@ namespace Athena
 		VK_CHECK(vkEndCommandBuffer(GetActiveCommandBuffer()));
 	}
 
-	void VulkanRenderCommandBuffer::Submit()
+	void VulkanRenderCommandBuffer::Submit(bool wait)
 	{
 		switch (m_Info.Usage)
 		{
 		case RenderCommandBufferUsage::PRESENT: SubmitForPresent(); break;
-		case RenderCommandBufferUsage::IMMEDIATE: SubmitImmediate(); break;
+		case RenderCommandBufferUsage::IMMEDIATE: SubmitImmediate(wait); break;
 		}
 	}
 
@@ -97,7 +97,7 @@ namespace Athena
 		}
 	}
 
-	void VulkanRenderCommandBuffer::SubmitImmediate()
+	void VulkanRenderCommandBuffer::SubmitImmediate(bool wait)
 	{
 		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
@@ -106,17 +106,24 @@ namespace Athena
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 
-		VkFenceCreateInfo fenceInfo = {};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = 0;
+		if (wait)
+		{
+			VkFenceCreateInfo fenceInfo = {};
+			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			fenceInfo.flags = 0;
 
-		VkFence fence;
-		VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
+			VkFence fence;
+			VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
 
-		VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
 
-		VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
+			VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+			vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
+		}
+		else
+		{
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, VK_NULL_HANDLE);
+		}
 	}
 
 	VkCommandBuffer VulkanRenderCommandBuffer::GetActiveCommandBuffer()

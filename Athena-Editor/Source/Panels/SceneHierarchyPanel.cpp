@@ -958,16 +958,6 @@ namespace Athena
 
 			EnvironmentMapType type = lightComponent.Type;
 
-			const std::string_view resolutions[] = { "128", "256", "512", "1024", "2048", "4096" };
-			String selectedStr = std::to_string(lightComponent.Resolution);
-			std::string_view selected = selectedStr.data();
-
-			if (UI::PropertyCombo("Resolution", resolutions, std::size(resolutions), &selected))
-			{
-				uint32 resolution = std::atoi(selected.data());
-				lightComponent.Resolution = resolution;
-			}
-
 			std::string_view typesStrings[] = { "Static", "Preetham"};
 			std::string_view typeStr = typeToStr(type);
 
@@ -977,8 +967,8 @@ namespace Athena
 			}
 			if (type == EnvironmentMapType::STATIC)
 			{
-				bool isHandleValid = Project::GetEditorAssetManager()->IsAssetHandleValid(lightComponent.StaticEnvMapHandle);
-				const FilePath& envPath = Project::GetEditorAssetManager()->GetAssetFilePath(lightComponent.StaticEnvMapHandle);
+				bool isHandleValid = Project::GetEditorAssetManager()->IsAssetHandleValid(lightComponent.EnvMapHandle);
+				const FilePath& envPath = Project::GetEditorAssetManager()->GetAssetFilePath(lightComponent.EnvMapHandle);
 				String label = envPath.stem().string();
 
 				UI::PropertyRow("EnvironmentMap", ImGui::GetFrameHeight());
@@ -996,7 +986,7 @@ namespace Athena
 					AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(filepath);
 
 					if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
-						lightComponent.StaticEnvMapHandle = handle;
+						lightComponent.EnvMapHandle = handle;
 				}
 
 				if (!isHandleValid)
@@ -1009,7 +999,7 @@ namespace Athena
 						CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
 						if (cbPayload->AssetType == AssetType::EnvironmentMap)
-							lightComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
+							lightComponent.EnvMapHandle = cbPayload->AssetHandle;
 					}
 					ImGui::EndDragDropTarget();
 				}
@@ -1017,18 +1007,12 @@ namespace Athena
 			}
 			else if (type == EnvironmentMapType::PREETHAM)
 			{
-				auto envMap = lightComponent.PreethamEnvMap;
 
-				float turbidity = envMap->GetTurbidity();
-				UI::PropertySlider("Turbidity", &turbidity, 1.8f, 10.f);
 
-				float azimuth = envMap->GetAzimuth();
-				UI::PropertySlider("Azimuth", &azimuth, 0, 2 * Math::PI<float>());
-
-				float inclination = envMap->GetInclination();
-				UI::PropertySlider("Inclination", &inclination, 0, 2 * Math::PI<float>());
-
-				envMap->SetPreethamParams(turbidity, azimuth, inclination);
+				UI::PropertySlider("Resolution", &lightComponent.Preetham.Resolution, 1.8f, 10.f);
+				UI::PropertySlider("Turbidity", &lightComponent.Preetham.Turbidity, 1.8f, 10.f);
+				UI::PropertySlider("Azimuth", &lightComponent.Preetham.Azimuth, 0, 2 * Math::PI<float>());
+				UI::PropertySlider("Inclination", &lightComponent.Preetham.Inclination, 0, 2 * Math::PI<float>());
 			}
 
 			return true;

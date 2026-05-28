@@ -166,6 +166,8 @@ namespace Athena
 		void InvalidateViews();
 		void ClearViews();
 
+		uint32 GetTotalGPUMemory();
+
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }

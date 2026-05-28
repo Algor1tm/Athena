@@ -44,7 +44,8 @@ namespace Athena
 		std::vector<PointLight> PointLights;
 		std::vector<SpotLight> SpotLights;
 
-		Ref<EnvironmentMap> EnvironmentMap;
+		Ref<TextureCube> EnvironmentMapTexture;
+		Ref<TextureCube> IrradianceTexture;
 		float EnvironmentMapIntensity = 1.f;
 		float EnvironmentMapLOD = 0;
 	};

@@ -127,7 +127,8 @@ namespace Athena
 				defaultSettings->Serialize(importSettingsPath);
 				UpdateAssetTimestamp(handle, importSettingsPath);
 
-				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", absolutePath, meta.Type, handle);
+				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", 
+					absolutePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		});
 

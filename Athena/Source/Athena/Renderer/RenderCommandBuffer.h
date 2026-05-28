@@ -26,7 +26,7 @@ namespace Athena
 		virtual void Begin() = 0;
 		virtual void End() = 0;
 
-		virtual void Submit() = 0;
+		virtual void Submit(bool wait = false) = 0;
 
 	protected:
 		RenderCommandBufferCreateInfo m_Info;

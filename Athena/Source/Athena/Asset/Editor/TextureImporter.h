@@ -6,6 +6,20 @@
 
 namespace Athena
 {
+	class ATHENA_API EnvironmentMapImportSettings : public AssetImportSettings
+	{
+	public:
+		virtual Ref<AssetImportSettings> Clone() const override;
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath) override;
+
+		bool IsValidFormat();
+
+		float Resolution = 1024;
+		Format FloatFormat = Format::R11G11B10F;
+	};
+
 	class ATHENA_API TextureImportSettings : public AssetImportSettings
 	{
 	public:
@@ -25,7 +39,6 @@ namespace Athena
 		bool ComputeUsage = false;
 		uint32 ExtractChannelsNum = 4;	 // 3 is not supported
 	};
-
 
 	class ATHENA_API TextureImporter
 	{

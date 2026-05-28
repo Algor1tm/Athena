@@ -13,7 +13,7 @@ namespace Athena
 		switch (assetType)
 		{
 		case AssetType::Texture:			  return Ref<TextureAsset>::Create();
-		case AssetType::EnvironmentMap:		  return Ref<StaticEnvironmentMap>::Create();
+		case AssetType::EnvironmentMap:		  return Ref<EnvironmentMap>::Create();
 		case AssetType::Material:			  return Ref<MaterialAsset>::Create();
 		case AssetType::Font:				  return Ref<Font>::Create();
 		case AssetType::Scene:				  return Ref<Scene>::Create();

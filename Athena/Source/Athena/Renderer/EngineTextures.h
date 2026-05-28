@@ -20,6 +20,7 @@ namespace Athena
 		static Ref<Texture2D> GetSMAA_AreaLUT();
 		static Ref<Texture2D> GetSMAA_SearchLUT();
 		static Ref<Texture2D> GetBlueNoise();
+
 	};
 
 	class ATHENA_API Noise

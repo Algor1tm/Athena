@@ -69,7 +69,7 @@ Entities:
       Scale: [72.2833786, 79.8597488, 2.34753227]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 4
       Visible: true
@@ -83,7 +83,7 @@ Entities:
       Scale: [35.3562775, 35.3562775, 1.16871905]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 5
       Visible: true
@@ -156,14 +156,14 @@ Entities:
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
-      StaticEnvMapHandle: 11195812249869705572
+      EnvMapHandle: 11195812249869705572
       Type: 2
-      Resolution: 256
       Intensity: 0.800000012
       LOD: 0
       Turbidity: 2.6329999
       Azimuth: 4.91800022
       Inclination: 1.32000005
+      Resolution: 256
   - IDComponent:
       ID: 15204102483634061799
     TagComponent:
@@ -172,8 +172,9 @@ Entities:
       Translation: [0, 2.52208328, -12.2381773]
       Rotation: [1, 0, 0, 0]
       Scale: [10.8226433, 8.20835114, 0.62229377]
-    StaticMeshComponent:
+    MeshComponent:
       MeshHandle: 13751067430993163149
+      MeshNodeIndex: 0
       Visible: true
   - IDComponent:
       ID: 4442543154444817618
@@ -189,8 +190,9 @@ Entities:
         - Name: m_Speed
           Type: Float
           Data: 0.200000003
-    StaticMeshComponent:
+    MeshComponent:
       MeshHandle: 13751067430993163149
+      MeshNodeIndex: 0
       Visible: true
   - IDComponent:
       ID: 16471898377765283841
@@ -200,8 +202,9 @@ Entities:
       Translation: [0.438165843, 6.87918901, -2.26552606]
       Rotation: [0.978859007, 0.108237937, -0.0959274396, 0.144629061]
       Scale: [1, 0.99999994, 1]
-    StaticMeshComponent:
+    MeshComponent:
       MeshHandle: 13751067430993163149
+      MeshNodeIndex: 0
       Visible: true
   - IDComponent:
       ID: 1454649843796548308
@@ -234,8 +237,9 @@ Entities:
       Scale: [0.0780503079, 0.0780503079, 0.0780503079]
     ParentComponent:
       Parent: 731800701376929777
-    StaticMeshComponent:
+    MeshComponent:
       MeshHandle: 16170110841370161099
+      MeshNodeIndex: 0
       Visible: true
   - IDComponent:
       ID: 731800701376929777
@@ -245,7 +249,7 @@ Entities:
       Translation: [-0.121937275, -0.157507062, 0.0944473743]
       Rotation: [1, 0, 0, 0]
       Scale: [0.150000036, 0.150000036, 0.150000036]
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 0
       Visible: true
@@ -259,7 +263,7 @@ Entities:
       Scale: [6.71918392, 6.71918392, 6.71918392]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 1
       Visible: true
@@ -273,7 +277,7 @@ Entities:
       Scale: [6.21314764, 6.21314764, 6.21314764]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 2
       Visible: true
@@ -287,7 +291,7 @@ Entities:
       Scale: [5.56286144, 5.56286144, 5.56286144]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 12888972181454613376
       MeshNodeIndex: 3
       Visible: true
@@ -301,7 +305,7 @@ Entities:
       Scale: [8.76070499, 8.76070118, 8.76070499]
     ParentComponent:
       Parent: 731800701376929777
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 18292723363576882544
       MeshNodeIndex: 0
       Visible: true
@@ -317,7 +321,7 @@ Entities:
       Scale: [1, 1, 1]
     ParentComponent:
       Parent: 11372643884560915662
-    SkeletalMeshComponent:
+    MeshComponent:
       MeshHandle: 18292723363576882544
       MeshNodeIndex: 1
       Visible: true

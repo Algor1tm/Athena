@@ -358,18 +358,15 @@ namespace Athena
 					if (skyLightComponent)
 					{
 						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
-						const auto& envMap = lightComp.PreethamEnvMap;
 
-						lightComp.StaticEnvMapHandle = skyLightComponent["StaticEnvMapHandle"].as<AssetHandle>();
+						lightComp.EnvMapHandle = skyLightComponent["EnvMapHandle"].as<AssetHandle>();
 						lightComp.Type = (EnvironmentMapType)skyLightComponent["Type"].as<uint32>();
-						lightComp.Resolution = skyLightComponent["Resolution"].as<uint32>();
 						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
 						lightComp.LOD = skyLightComponent["LOD"].as<float>();
-
-						float turbidity = skyLightComponent["Turbidity"].as<float>();
-						float azimuth = skyLightComponent["Azimuth"].as<float>();
-						float inclination = skyLightComponent["Inclination"].as<float>();
-						envMap->SetPreethamParams(turbidity, azimuth, inclination);
+						lightComp.Preetham.Turbidity = skyLightComponent["Turbidity"].as<float>();
+						lightComp.Preetham.Azimuth = skyLightComponent["Azimuth"].as<float>();
+						lightComp.Preetham.Inclination = skyLightComponent["Inclination"].as<float>();
+						lightComp.Preetham.Resolution = skyLightComponent["Resolution"].as<uint32>();
 					}
 				}
 			}
@@ -633,15 +630,14 @@ namespace Athena
 		SerializeComponent<SkyLightComponent>(out, "SkyLightComponent", entity,
 			[](YAML::Emitter& output, const SkyLightComponent& lightComponent)
 			{
-				const auto& envMap = lightComponent.PreethamEnvMap;
-				output << YAML::Key << "StaticEnvMapHandle" << lightComponent.StaticEnvMapHandle;
+				output << YAML::Key << "EnvMapHandle" << lightComponent.EnvMapHandle;
 				output << YAML::Key << "Type" << (int)lightComponent.Type;
-				output << YAML::Key << "Resolution" << lightComponent.Resolution;
 				output << YAML::Key << "Intensity" << YAML::Value << lightComponent.Intensity;
 				output << YAML::Key << "LOD" << YAML::Value << lightComponent.LOD;
-				output << YAML::Key << "Turbidity" << envMap->GetTurbidity();
-				output << YAML::Key << "Azimuth" << envMap->GetAzimuth();
-				output << YAML::Key << "Inclination" << envMap->GetInclination();
+				output << YAML::Key << "Turbidity" << lightComponent.Preetham.Turbidity;
+				output << YAML::Key << "Azimuth" << lightComponent.Preetham.Azimuth;
+				output << YAML::Key << "Inclination" << lightComponent.Preetham.Inclination;
+				output << YAML::Key << "Resolution" << lightComponent.Preetham.Resolution;
 			});
 
 		out << YAML::EndMap;

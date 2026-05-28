@@ -1118,21 +1118,9 @@ namespace Athena
 		m_RendererData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_RendererData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
 
-		if (lightEnv.EnvironmentMap)
-		{
-			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceTexture();
-			auto environmentMap = lightEnv.EnvironmentMap->GetEnvironmentTexture();
-
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", irradianceMap);
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", environmentMap);
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", environmentMap);
-		}
-		else
-		{
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", EngineTextures::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
-		}
+		m_DeferredLightingPipeline->SetInput("u_IrradianceMap", lightEnv.IrradianceTexture ? lightEnv.IrradianceTexture : EngineTextures::GetBlackTextureCube());
+		m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMapTexture ? lightEnv.EnvironmentMapTexture : EngineTextures::GetBlackTextureCube());
+		m_SkyboxPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMapTexture ? lightEnv.EnvironmentMapTexture : EngineTextures::GetBlackTextureCube());
 	}
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)

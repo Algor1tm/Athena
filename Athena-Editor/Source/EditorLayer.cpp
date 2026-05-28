@@ -446,15 +446,14 @@ namespace Athena
                             Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
                             entity.GetComponent<TagComponent>().Tag = cbPayload->FilePath.stem().string();
                             auto& skyComponent = entity.AddComponent<SkyLightComponent>();
-                            skyComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
-                            skyComponent.Resolution = 1024;
+                            skyComponent.EnvMapHandle = cbPayload->AssetHandle;
                             skyComponent.Type = EnvironmentMapType::STATIC;
                         }
                         else
                         {
                             Entity entity = { view.back(), m_EditorCtx->ActiveScene.Raw() };
                             auto& skyComponent = entity.GetComponent<SkyLightComponent>();
-                            skyComponent.StaticEnvMapHandle = cbPayload->AssetHandle;
+                            skyComponent.EnvMapHandle = cbPayload->AssetHandle;
                             skyComponent.Type = EnvironmentMapType::STATIC;
                         }
                     }

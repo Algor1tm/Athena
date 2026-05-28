@@ -95,6 +95,21 @@ namespace Athena
 		m_TextureViews.clear();
 	}
 
+	uint32 Texture::GetTotalGPUMemory()
+	{
+		uint32 totalGPUMemory = 0;
+
+		for (uint32 mip = 0; mip < GetMipLevelsCount(); mip++)
+		{
+			Vector2u mipSize = GetMipSize(mip);
+			uint32 sizeOfMip = mipSize.x * mipSize.y * FormatUtils::BytesPerPixel(GetFormat());
+
+			totalGPUMemory += sizeOfMip;
+		}
+
+		totalGPUMemory *= GetInfo().Layers;
+		return totalGPUMemory;
+	}
 
 	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info, Buffer data)
 	{

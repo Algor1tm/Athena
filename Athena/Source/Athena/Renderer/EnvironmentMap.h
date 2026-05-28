@@ -16,6 +16,17 @@ namespace Athena
 		PREETHAM,
 	};
 
+	struct PreethamParams
+	{
+		bool operator==(const PreethamParams& other) const = default;
+
+		float Resolution = 128.f;
+
+		float Turbidity = 2.f;
+		float Azimuth = 0.f;
+		float Inclination = 0.f;
+	};
+
 	class ATHENA_API EnvironmentMap: public Asset
 	{
 	public:
@@ -24,74 +35,27 @@ namespace Athena
 		Ref<TextureCube> GetEnvironmentTexture();
 		Ref<TextureCube> GetIrradianceTexture();
 
-		void SetResolution(uint32 resolution);
-
-	private:
-		void Load();
-		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) = 0;
-
-	protected:
-		Ref<TextureCube> m_EnvironmentTexture;
-		Ref<TextureCube> m_IrradianceTexture;
-
-		bool m_Dirty = true;
-
-		uint32 m_Resolution = 1024;
-		const uint32 m_IrradianceMapResolution = 128;
-
-		Ref<ComputePass> m_IrradiancePass;
-		Ref<ComputePipeline> m_IrradiancePipeline;
-
-		Ref<ComputePass> m_MipFilterPass;
-		Ref<ComputePipeline> m_MipFilterPipeline;
-		std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> m_MipFilterMaterials;
-	};
-
-	class ATHENA_API StaticEnvironmentMap : public EnvironmentMap
-	{
-	public:
-		StaticEnvironmentMap();
-
-		const FilePath& GetFilePath() const { return m_FilePath; }
 		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
 		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
-	private:
-		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		static void CreatePreethamMap(const PreethamParams& params, Ref<TextureCube>& outEnvTex, Ref<TextureCube>& outIrradianceTex);
+		static void ClearCache();
 
 	private:
-		FilePath m_FilePath;
-
-		Ref<ComputePass> m_PanoramaToCubePass;
-		Ref<ComputePipeline> m_PanoramaToCubePipeline;
-	};
-
-	class ATHENA_API PreethamEnvironmentMap : public EnvironmentMap
-	{
-	public:
-		PreethamEnvironmentMap();
-
-		// TODO: Not technically asset, but for convenience keep this
-		virtual AssetType GetAssetType() const override { return AssetType::EnvironmentMap; }
-
-		void SetPreethamParams(float turbidity, float azimuth, float inclination);
-
-		float GetTurbidity() const { return m_Turbidity; }
-		float GetAzimuth() const { return m_Azimuth; }
-		float GetInclination() const { return m_Inclination; }
+		static void CreateTextures(float resolution, Format floatFormat, Ref<TextureCube>& outEnvTex, Ref<TextureCube>& outIrradianceTex);
+		static void FilterEnvironmentMap(const Ref<RenderCommandBuffer>& commandBuffer, Ref<TextureCube> envTex, Ref<TextureCube> irradianceTex);
 
 	private:
-		virtual void LoadSourceTexture(const Ref<RenderCommandBuffer>& commandBuffer) override;
+		Ref<TextureCube> m_EnvironmentTexture;
+		Ref<TextureCube> m_IrradianceTexture;
+		uint32 m_Resolution = 1024;
 
-	private:
-		float m_Turbidity = 2.f;
-		float m_Azimuth = 0.f;
-		float m_Inclination = 0.f;
+		static const uint32 s_IrradianceMapResolution = 128;
 
-		Ref<ComputePass> m_PreethamPass;
-		Ref<ComputePipeline> m_PreethamPipeline;
-		Ref<Material> m_PreethamMaterial;
+		static Ref<TextureCube> s_CachedEnvMap;
+		static Ref<TextureCube> s_CachedIrradiance;
+		static PreethamParams s_CachedPreethamParams;
 	};
 }

@@ -20,18 +20,18 @@ void main()
 {
     ivec3 unnormalizedTexCoords = ivec3(gl_GlobalInvocationID.xyz);
     vec3 direction = GetWorldDirectionFromCubeCoords(unnormalizedTexCoords, vec2(gl_NumWorkGroups * gl_WorkGroupSize));
-    
+    direction.y *= -1.0; // TODO: irradiance map appears to have inverted y axis, need to investigate
+
     // the sample direction equals the hemisphere's orientation 
     vec3 normal = direction;
-
-    vec3 irradiance = vec3(0.0);
-
     vec3 up = vec3(0.0, 1.0, 0.0);
-    if(normal.y == 1 || normal.y == -1)
+    if(abs(normal.y) > 0.999)
         up = vec3(1.0, 0.0, 0.0);
 
     vec3 right = normalize(cross(up, normal));
     up = normalize(cross(normal, right));
+
+    vec3 irradiance = vec3(0.0);
 
     float nrSamples = 0.0; 
     for(float phi = 0.0; phi < 2.0 * PI; phi += SAMPLE_DELTA)

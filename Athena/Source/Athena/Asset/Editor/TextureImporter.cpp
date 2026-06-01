@@ -52,26 +52,27 @@ namespace Athena
 
 	bool EnvironmentMapImportSettings::Deserialize(const FilePath& absolutePath)
 	{
-		YAML::Node data;
-		try
+		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
+		if (!data)
 		{
-			data = YAML::LoadFile(absolutePath.string());
-
-			auto root = data["EnvironmentMapImportSettings"];
-
-			Resolution = root["Resolution"].as<uint32>();
-			FloatFormat = (Format)root["FloatFormat"].as<uint32>();
-
-			if (!IsValidFormat())
-			{
-				FloatFormat = Format::R11G11B10F;
-				ATN_CORE_WARN_TAG("AssetManager", "Forcing format of environment map to R11G11B10F!");
-			}
-		}
-		catch (YAML::Exception& e)
-		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}. Error message:\n {}", absolutePath, e.what());
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load environment map import settings from {}!", absolutePath);
 			return false;
+		}
+
+		YAML::Node root = data["EnvironmentMapImportSettings"];
+		if (!root)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load environment map import settings from {}!", absolutePath);
+			return false;
+		}
+
+		Resolution = TryReadYAMLValue<uint32>(root, "Resolution", 1024);
+		FloatFormat = (Format)TryReadYAMLValue<uint32>(root, "FloatFormat", (uint32)Format::R11G11B10F);
+		
+		if (!IsValidFormat())
+		{
+			FloatFormat = Format::R11G11B10F;
+			ATN_CORE_WARN_TAG("AssetManager", "Forcing format of environment map to R11G11B10F!");
 		}
 
 		return true;
@@ -80,8 +81,8 @@ namespace Athena
 	bool EnvironmentMapImportSettings::IsValidFormat()
 	{
 		return FloatFormat == Format::R11G11B10F ||
-			FloatFormat == Format::RGB16F ||
-			FloatFormat == Format::RGB32F;
+			FloatFormat == Format::RGBA16F ||
+			FloatFormat == Format::RGBA32F;
 	}
 
 	Ref<AssetImportSettings> TextureImportSettings::Clone() const
@@ -125,32 +126,33 @@ namespace Athena
 
 	bool TextureImportSettings::Deserialize(const FilePath& absolutePath)
 	{
-		YAML::Node data;
-		try
+		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
+		if (!data)
 		{
-			data = YAML::LoadFile(absolutePath.string());
-
-			auto root = data["TextureImportSettings"];
-
-			sRGB = root["sRGB"].as<bool>();
-			GenerateMipMaps = root["GenerateMipMaps"].as<bool>();
-			WrapMode = EnumUtils::TextureWrapFromString(root["WrapMode"].as<String>());
-			FilterMode = EnumUtils::TextureFilterFromString(root["FilterMode"].as<String>());
-			AnisotropyLevel = root["AnisotropyLevel"].as<float>();
-			ComputeUsage = root["ComputeUsage"].as<bool>();
-			ExtractChannelsNum = root["ExtractChannelsNum"].as<uint32>();
-
-			AnisotropyLevel = Math::Clamp(AnisotropyLevel, 0.f, 16.f);
-			ExtractChannelsNum = Math::Clamp(ExtractChannelsNum, 1, 4);
-
-			if (ExtractChannelsNum == 3)
-				ExtractChannelsNum = 4;
-		}
-		catch (YAML::Exception& e)
-		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}. Error message:\n {}", absolutePath, e.what());
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}!", absolutePath);
 			return false;
 		}
+
+		auto root = data["TextureImportSettings"];
+		if (!root)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}!", absolutePath);
+			return false;
+		}
+
+		sRGB = TryReadYAMLValue<bool>(root, "sRGB", false);
+		GenerateMipMaps = TryReadYAMLValue<bool>(root, "GenerateMipMaps", true);
+		WrapMode = EnumUtils::TextureWrapFromString(TryReadYAMLValue<String>(root, "WrapMode", "REPEAT"));
+		FilterMode = EnumUtils::TextureFilterFromString(TryReadYAMLValue<String>(root, "FilterMode", "TRILINEAR"));
+		AnisotropyLevel = TryReadYAMLValue<float>(root, "AnisotropyLevel", 8.f);
+		ComputeUsage = TryReadYAMLValue<bool>(root, "ComputeUsage", false);
+		ExtractChannelsNum = TryReadYAMLValue<uint32>(root, "ExtractChannelsNum", 4);
+
+		AnisotropyLevel = Math::Clamp(AnisotropyLevel, 0.f, 16.f);
+
+		ExtractChannelsNum = Math::Clamp(ExtractChannelsNum, 1, 4);
+		if (ExtractChannelsNum == 3)
+			ExtractChannelsNum = 4;
 
 		return true;
 	}

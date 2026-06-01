@@ -16,12 +16,12 @@
 			output << field.GetValue<nativeType>(); \
 			break								  
 	
-#define READ_SCRIPT_FIELD(nativeType, fieldType)						 \
-		case ScriptFieldType::fieldType:								 \
-		{																 \
-			nativeType data = scriptFieldNode["Data"].as<nativeType>();  \
-			field.SetValue(data);										 \
-			break;														 \
+#define READ_SCRIPT_FIELD(nativeType, fieldType, defaultValue)									   \
+		case ScriptFieldType::fieldType:														   \
+		{																						   \
+			nativeType data = TryReadYAMLValue<nativeType>(scriptFieldNode, "Data", defaultValue); \
+			field.SetValue(data);																   \
+			break;																				   \
 		}
 
 namespace Athena
@@ -68,338 +68,337 @@ namespace Athena
 
 		if (!FileSystem::Exists(path))
 		{
-			ATN_CORE_ERROR_TAG("SceneSerializer", "Invalid scene filepath {}", path);
+			ATN_CORE_ERROR_TAG("AssetManager", "Invalid scene filepath {}", path);
 			return false;
 		}
 
-		YAML::Node data;
-		try
-		{
-			data = YAML::LoadFile(path.string());
+		YAML::Node data = YAML::TryLoadYAMLFile(path);
 
-			if (!data["Scene"])
+		if (!data["Scene"])
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize scene {0}", path);
+			return false;
+		}
+
+		String sceneName = TryReadYAMLValue<String>(data, "Scene", "Unnamed");
+		m_Scene->SetSceneName(sceneName);
+
+		AssetHandle handle = TryReadYAMLValue<AssetHandle>(data, "Handle", 0);
+		m_Scene->Handle = handle;
+
+		const auto& entities = data["Entities"];
+		if (!entities)
+			return false;
+
+		for (const auto& entityNode : entities)
+		{
+			UUID uuid = 0;
 			{
-				ATN_CORE_ERROR_TAG("SceneSerializer", "Failed to deserialize scene {0}", path);
-				return false;
+				const auto& uuidComponentNode = entityNode["IDComponent"];
+				if (uuidComponentNode)
+					uuid = TryReadYAMLValue<UUID>(uuidComponentNode, "ID", 0);
 			}
 
-			String sceneName = data["Scene"].as<String>();
-			m_Scene->SetSceneName(sceneName);
-
-			AssetHandle handle = data["Handle"].as<AssetHandle>();
-			m_Scene->Handle = handle;
-
-			const auto& entities = data["Entities"];
-			if (!entities)
-				return false;
-
-			for (const auto& entityNode : entities)
+			String name;
 			{
-				UUID uuid = 0;
+				const auto& tagComponentNode = entityNode["TagComponent"];
+				if (tagComponentNode)
+					name = TryReadYAMLValue<String>(tagComponentNode, "Tag", "Unnamed");
+			}
+
+			Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
+
+			{
+				const auto& transformComponentNode = entityNode["TransformComponent"];
+				if (transformComponentNode)
 				{
-					const auto& uuidComponentNode = entityNode["IDComponent"];
-					if (uuidComponentNode)
-						uuid = uuidComponentNode["ID"].as<UUID>();
+					auto& transform = deserializedEntity.GetComponent<TransformComponent>();
+					transform.Translation = TryReadYAMLValue<Vector3>(transformComponentNode, "Translation", Vector3(0, 0, 0));
+					transform.Rotation = TryReadYAMLValue<Quaternion>(transformComponentNode, "Rotation", Quaternion::Identity());
+					transform.Scale = TryReadYAMLValue<Vector3>(transformComponentNode, "Scale", Vector3(1, 1, 1));
 				}
+			}
 
-				String name;
+			{
+				const auto& scriptComponentNode = entityNode["ScriptComponent"];
+				if (scriptComponentNode)
 				{
-					const auto& tagComponentNode = entityNode["TagComponent"];
-					if (tagComponentNode)
-						name = tagComponentNode["Tag"].as<String>();
-				}
+					auto& script = deserializedEntity.AddComponent<ScriptComponent>();
+					script.Name = TryReadYAMLValue<String>(scriptComponentNode, "ScriptName", "Invalid");
 
-				Entity deserializedEntity = m_Scene->CreateEntity(name, uuid);
-
-				{
-					const auto& transformComponentNode = entityNode["TransformComponent"];
-					if (transformComponentNode)
+					const YAML::Node& scriptFieldsNode = scriptComponentNode["ScriptFields"];
+					if (scriptFieldsNode && ScriptEngine::IsScriptExists(script.Name))
 					{
-						auto& transform = deserializedEntity.GetComponent<TransformComponent>();
-						transform.Translation = transformComponentNode["Translation"].as<Vector3>();
-						transform.Rotation = transformComponentNode["Rotation"].as<Quaternion>();
-						transform.Scale = transformComponentNode["Scale"].as<Vector3>();
-					}
-				}
+						ScriptFieldMap* fieldMap = ScriptEngine::GetScriptFieldMap(deserializedEntity);
 
-				{
-					const auto& scriptComponentNode = entityNode["ScriptComponent"];
-					if (scriptComponentNode)
-					{
-						auto& script = deserializedEntity.AddComponent<ScriptComponent>();
-						script.Name = scriptComponentNode["ScriptName"].as<String>();
-
-						const YAML::Node& scriptFieldsNode = scriptComponentNode["ScriptFields"];
-						if (scriptFieldsNode && ScriptEngine::IsScriptExists(script.Name))
+						for (const YAML::Node& scriptFieldNode : scriptFieldsNode)
 						{
-							ScriptFieldMap* fieldMap = ScriptEngine::GetScriptFieldMap(deserializedEntity);
+							String name = TryReadYAMLValue<String>(scriptFieldNode, "Name", "Invalid");
+							std::string typeString = TryReadYAMLValue<String>(scriptFieldNode, "Type", "Invalid");
+							ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
 
-							for (const YAML::Node& scriptFieldNode : scriptFieldsNode)
+							if (!fieldMap || !fieldMap->contains(name))
 							{
-								String name = scriptFieldNode["Name"].as<std::string>();
-								std::string typeString = scriptFieldNode["Type"].as<std::string>();
-								ScriptFieldType type = Utils::ScriptFieldTypeFromString(typeString);
+								ATN_CORE_WARN_TAG("AssetManager", "Uknown script field name '{}' (field will be discarded, script name - {}, entity name - {})!", 
+									name, script.Name, deserializedEntity.GetName());
+								continue;
+							}
 
-								if (!fieldMap || !fieldMap->contains(name))
-								{
-									ATN_CORE_WARN_TAG("Deserializer", "Uknown script field name '{}' (field will be discarded, script name - {}, entity name - {})!", 
-										name, script.Name, deserializedEntity.GetName());
-									continue;
-								}
+							ScriptFieldStorage& field = fieldMap->at(name);
 
-								ScriptFieldStorage& field = fieldMap->at(name);
+							if (type != field.GetType())
+							{
+								ATN_CORE_WARN_TAG("AssetManager", "Script field type '{}' does not match with original type '{}' (field will be discarded, script name - {}, entity name - {})!", 
+									Utils::ScriptFieldTypeToString(type), Utils::ScriptFieldTypeToString(field.GetType()), script.Name, deserializedEntity.GetName());
+								continue;
+							}
 
-								if (type != field.GetType())
-								{
-									ATN_CORE_WARN_TAG("Deserializer", "Script field type '{}' does not match with original type '{}' (field will be discarded, script name - {}, entity name - {})!", 
-										Utils::ScriptFieldTypeToString(type), Utils::ScriptFieldTypeToString(field.GetType()), script.Name, deserializedEntity.GetName());
-									continue;
-								}
-
-								switch (type)
-								{
-								READ_SCRIPT_FIELD(bool,   Bool);
-								READ_SCRIPT_FIELD(char,   Char);
-								READ_SCRIPT_FIELD(byte,   Byte);
-								READ_SCRIPT_FIELD(int16,  Int16);
-								READ_SCRIPT_FIELD(int32,  Int32);
-								READ_SCRIPT_FIELD(int64,  Int64);
-								READ_SCRIPT_FIELD(uint16, UInt16);
-								READ_SCRIPT_FIELD(uint32, UInt32);
-								READ_SCRIPT_FIELD(uint64, UInt64);
-								READ_SCRIPT_FIELD(float,  Float);
-								READ_SCRIPT_FIELD(double, Double);
-								}
+							switch (type)
+							{
+							READ_SCRIPT_FIELD(bool,   Bool,   false);
+							READ_SCRIPT_FIELD(char,   Char,   '0');
+							READ_SCRIPT_FIELD(byte,   Byte,   0);
+							READ_SCRIPT_FIELD(int16,  Int16,  0);
+							READ_SCRIPT_FIELD(int32,  Int32,  0);
+							READ_SCRIPT_FIELD(int64,  Int64,  0);
+							READ_SCRIPT_FIELD(uint16, UInt16, 0);
+							READ_SCRIPT_FIELD(uint32, UInt32, 0);
+							READ_SCRIPT_FIELD(uint64, UInt64, 0);
+							READ_SCRIPT_FIELD(float,  Float,  0.f);
+							READ_SCRIPT_FIELD(double, Double, 0.0);
 							}
 						}
-						else if (!ScriptEngine::IsScriptExists(script.Name))
-						{
-							ATN_CORE_WARN_TAG("Deserializer", "Uknown script '{}' (script and all fields will be discarded)", script.Name);
-						}
+					}
+					else if (!ScriptEngine::IsScriptExists(script.Name))
+					{
+						ATN_CORE_WARN_TAG("AssetManager", "Uknown script '{}' (script and all fields will be discarded)", script.Name);
 					}
 				}
+			}
 
+			{
+				const auto& cameraComponentNode = entityNode["CameraComponent"];
+				if (cameraComponentNode)
 				{
-					const auto& cameraComponentNode = entityNode["CameraComponent"];
-					if (cameraComponentNode)
-					{
-						auto& cc = deserializedEntity.AddComponent<CameraComponent>();
-						const auto& cameraPropsNode = cameraComponentNode["Camera"];
+					auto& cc = deserializedEntity.AddComponent<CameraComponent>();
+					const auto& cameraPropsNode = cameraComponentNode["Camera"];
 
-						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)cameraPropsNode["ProjectionType"].as<int>());
+					if (cameraPropsNode)
+					{
+						int projectionType = TryReadYAMLValue<int>(cameraPropsNode, "ProjectionType", (int)SceneCamera::ProjectionType::Perspective);
+						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)projectionType);
 
 						SceneCamera::PerspectiveData perspectiveData;
-						perspectiveData.VerticalFOV = cameraPropsNode["PerspectiveFOV"].as<float>();
-						perspectiveData.NearClip = cameraPropsNode["PerspectiveNearClip"].as<float>();
-						perspectiveData.FarClip = cameraPropsNode["PerspectiveFarClip"].as<float>();
+						perspectiveData.VerticalFOV = TryReadYAMLValue<float>(cameraPropsNode, "PerspectiveFOV", Math::Radians(45.f));
+						perspectiveData.NearClip = TryReadYAMLValue<float>(cameraPropsNode, "PerspectiveNearClip", 0.1f);
+						perspectiveData.FarClip = TryReadYAMLValue<float>(cameraPropsNode, "PerspectiveFarClip", 1000.f);
 						cc.Camera.SetPerspectiveData(perspectiveData);
 
 						SceneCamera::OrthographicData orthoData;
-						orthoData.Size = cameraPropsNode["OrthographicSize"].as<float>();
-						orthoData.NearClip = cameraPropsNode["OrthographicNearClip"].as<float>();
-						orthoData.FarClip = cameraPropsNode["OrthographicFarClip"].as<float>();
+						orthoData.Size = TryReadYAMLValue<float>(cameraPropsNode, "OrthographicSize", 10.f);
+						orthoData.NearClip = TryReadYAMLValue<float>(cameraPropsNode, "OrthographicNearClip", -1.f);
+						orthoData.FarClip = TryReadYAMLValue<float>(cameraPropsNode, "OrthographicFarClip", 1.f);
 						cc.Camera.SetOrthographicData(orthoData);
-
-						cc.Primary = cameraComponentNode["Primary"].as<bool>();
-						cc.FixedAspectRatio = cameraComponentNode["FixedAspectRatio"].as<bool>();
 					}
-				}
 
-				{
-					const auto& spriteComponentNode = entityNode["SpriteComponent"];
-					if (spriteComponentNode)
-					{
-						auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
-
-						sprite.Space = (Renderer2DSpace)spriteComponentNode["Space"].as<int>();
-						sprite.Color = spriteComponentNode["Color"].as<LinearColor>();
-						sprite.TextureHandle = spriteComponentNode["TextureHandle"].as<AssetHandle>();
-						sprite.TilingFactor = spriteComponentNode["TilingFactor"].as<float>();
-					}
-				}
-
-				{
-					const auto& circleComponentNode = entityNode["CircleComponent"];
-					if (circleComponentNode)
-					{
-						auto& circle = deserializedEntity.AddComponent<CircleComponent>();
-
-						circle.Space = (Renderer2DSpace)circleComponentNode["Space"].as<int>();
-						circle.Color = circleComponentNode["Color"].as<LinearColor>();
-						circle.Thickness = circleComponentNode["Thickness"].as<float>();
-						circle.Fade = circleComponentNode["Fade"].as<float>();
-					}
-				}
-
-				{
-					const auto& textComponentNode = entityNode["TextComponent"];
-					if (textComponentNode)
-					{
-						auto& text = deserializedEntity.AddComponent<TextComponent>();
-
-						text.Text = textComponentNode["Text"].as<String>();
-						text.FontHandle = textComponentNode["FontHandle"].as<AssetHandle>();
-						text.Space = (Renderer2DSpace)textComponentNode["Space"].as<int>();
-						text.Color = textComponentNode["Color"].as<LinearColor>();
-						text.MaxWidth = textComponentNode["MaxWidth"].as<float>();
-						text.Kerning = textComponentNode["Kerning"].as<float>();
-						text.LineSpacing = textComponentNode["LineSpacing"].as<float>();
-						text.Shadowing = textComponentNode["Shadowing"].as<bool>();
-						text.ShadowDistance = textComponentNode["ShadowDistance"].as<float>();
-						text.ShadowColor = textComponentNode["ShadowColor"].as<LinearColor>();
-					}
-				}
-
-				{
-					const auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
-					if (rigidbody2DComponentNode)
-					{
-						auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
-
-						rb2d.Type = (Rigidbody2DComponent::BodyType)rigidbody2DComponentNode["BodyType"].as<int>();
-						rb2d.FixedRotation = rigidbody2DComponentNode["FixedRotation"].as<bool>();
-					}
-				}
-
-				{
-					const auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
-					if (boxCollider2DComponentNode)
-					{
-						auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
-
-						bc2d.Offset = boxCollider2DComponentNode["Offset"].as<Vector2>();
-						bc2d.Size = boxCollider2DComponentNode["Size"].as<Vector2>();
-
-						bc2d.Density = boxCollider2DComponentNode["Density"].as<float>();
-						bc2d.Friction = boxCollider2DComponentNode["Friction"].as<float>();
-						bc2d.Restitution = boxCollider2DComponentNode["Restitution"].as<float>();
-						bc2d.RestitutionThreshold = boxCollider2DComponentNode["RestitutionThreshold"].as<float>();
-					}
-				}
-
-				{
-					const auto& circleCollider2DComponentNode = entityNode["CircleCollider2DComponent"];
-					if (circleCollider2DComponentNode)
-					{
-						auto& cc2d = deserializedEntity.AddComponent<CircleCollider2DComponent>();
-
-						cc2d.Offset = circleCollider2DComponentNode["Offset"].as<Vector2>();
-						cc2d.Radius = circleCollider2DComponentNode["Radius"].as<float>();
-
-						cc2d.Density = circleCollider2DComponentNode["Density"].as<float>();
-						cc2d.Friction = circleCollider2DComponentNode["Friction"].as<float>();
-						cc2d.Restitution = circleCollider2DComponentNode["Restitution"].as<float>();
-						cc2d.RestitutionThreshold = circleCollider2DComponentNode["RestitutionThreshold"].as<float>();
-					}
-				}
-
-				{
-					const auto& meshComponentNode = entityNode["MeshComponent"];
-					if (meshComponentNode)
-					{
-						auto& meshComp = deserializedEntity.AddComponent<MeshComponent>();
-
-						meshComp.MeshHandle = meshComponentNode["MeshHandle"].as<AssetHandle>();
-						meshComp.MeshNodeIndex = meshComponentNode["MeshNodeIndex"].as<uint32>();
-						meshComp.Visible = meshComponentNode["Visible"].as<bool>();
-					}
-				}
-
-				{
-					const auto& controllerNode = entityNode["AnimationControllerComponent"];
-					if (controllerNode)
-					{
-						auto& controllerComp = deserializedEntity.AddComponent<AnimationControllerComponent>();
-						controllerComp.AnimationController = AnimationController::Create(controllerNode["MeshHandle"].as<AssetHandle>());
-					}
-				}
-
-				{
-					const auto directionalLightComponent = entityNode["DirectionalLightComponent"];
-					if (directionalLightComponent)
-					{
-						auto& lightComp = deserializedEntity.AddComponent<DirectionalLightComponent>();
-
-						lightComp.Color = directionalLightComponent["Color"].as<LinearColor>();
-						lightComp.Intensity = directionalLightComponent["Intensity"].as<float>();
-						lightComp.CastShadows = directionalLightComponent["CastShadows"].as<bool>();
-						lightComp.LightSize = directionalLightComponent["LightSize"].as<float>();
-					}
-				}
-
-				{
-					const auto pointLightComponent = entityNode["PointLightComponent"];
-					if (pointLightComponent)
-					{
-						auto& lightComp = deserializedEntity.AddComponent<PointLightComponent>();
-						lightComp.Color = pointLightComponent["Color"].as<LinearColor>();
-						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
-						lightComp.Radius = pointLightComponent["Radius"].as<float>();
-						lightComp.FallOff = pointLightComponent["FallOff"].as<float>();
-					}
-				}
-
-				{
-					const auto pointLightComponent = entityNode["SpotLightComponent"];
-					if (pointLightComponent)
-					{
-						auto& lightComp = deserializedEntity.AddComponent<SpotLightComponent>();
-						lightComp.Color = pointLightComponent["Color"].as<LinearColor>();
-						lightComp.Intensity = pointLightComponent["Intensity"].as<float>();
-						lightComp.SpotAngle = pointLightComponent["SpotAngle"].as<float>();
-						lightComp.InnerFallOff = pointLightComponent["InnerFallOff"].as<float>();
-						lightComp.Range = pointLightComponent["Range"].as<float>();
-						lightComp.RangeFallOff = pointLightComponent["RangeFallOff"].as<float>();
-					}
-				}
-
-				{
-					const auto skyLightComponent = entityNode["SkyLightComponent"];
-					if (skyLightComponent)
-					{
-						auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
-
-						lightComp.EnvMapHandle = skyLightComponent["EnvMapHandle"].as<AssetHandle>();
-						lightComp.Type = (EnvironmentMapType)skyLightComponent["Type"].as<uint32>();
-						lightComp.Intensity = skyLightComponent["Intensity"].as<float>();
-						lightComp.LOD = skyLightComponent["LOD"].as<float>();
-						lightComp.Preetham.Turbidity = skyLightComponent["Turbidity"].as<float>();
-						lightComp.Preetham.Azimuth = skyLightComponent["Azimuth"].as<float>();
-						lightComp.Preetham.Inclination = skyLightComponent["Inclination"].as<float>();
-						lightComp.Preetham.Resolution = skyLightComponent["Resolution"].as<uint32>();
-					}
+					cc.Primary = TryReadYAMLValue<bool>(cameraComponentNode, "Primary", true);
+					cc.FixedAspectRatio = TryReadYAMLValue<bool>(cameraComponentNode, "FixedAspectRatio", false);
 				}
 			}
 
-			// Build Entity Hierarchy
-			for (const auto& entityNode : entities)
 			{
-				uint64 uuid = 0;
+				const auto& spriteComponentNode = entityNode["SpriteComponent"];
+				if (spriteComponentNode)
 				{
-					const auto& uuidComponentNode = entityNode["IDComponent"];
-					if (uuidComponentNode)
-						uuid = uuidComponentNode["ID"].as<uint64>();
+					auto& sprite = deserializedEntity.AddComponent<SpriteComponent>();
+
+					sprite.Space = (Renderer2DSpace)TryReadYAMLValue<int>(spriteComponentNode, "Space", (int)Renderer2DSpace::WorldSpace);
+					sprite.Color = TryReadYAMLValue<LinearColor>(spriteComponentNode, "Color", LinearColor::Black);
+					sprite.TextureHandle = TryReadYAMLValue<AssetHandle>(spriteComponentNode, "TextureHandle", 0);
+					sprite.TilingFactor = TryReadYAMLValue<float>(spriteComponentNode, "TilingFactor", 1.f);
 				}
+			}
 
-				Entity entity = m_Scene->GetEntityByUUID(uuid);
-				
+			{
+				const auto& circleComponentNode = entityNode["CircleComponent"];
+				if (circleComponentNode)
 				{
-					const auto& parentComponentNode = entityNode["ParentComponent"];
-					if (parentComponentNode)
-					{
-						UUID parentID = parentComponentNode["Parent"].as<UUID>();
-						Entity parent = m_Scene->GetEntityByUUID(parentID);
+					auto& circle = deserializedEntity.AddComponent<CircleComponent>();
 
-						if (parent)
-							m_Scene->MakeRelationship(parent, entity);
-					}
+					circle.Space = (Renderer2DSpace)TryReadYAMLValue<int>(circleComponentNode, "Space", (int)Renderer2DSpace::WorldSpace);
+					circle.Color = TryReadYAMLValue<LinearColor>(circleComponentNode, "Color", LinearColor::Black);
+					circle.Thickness = TryReadYAMLValue<float>(circleComponentNode, "Thickness", 1.f);
+					circle.Fade = TryReadYAMLValue<float>(circleComponentNode, "Fade", 0.005f);
+				}
+			}
+
+			{
+				const auto& textComponentNode = entityNode["TextComponent"];
+				if (textComponentNode)
+				{
+					auto& text = deserializedEntity.AddComponent<TextComponent>();
+
+					text.Text = TryReadYAMLValue<String>(textComponentNode, "Text", "");
+					text.FontHandle = TryReadYAMLValue<AssetHandle>(textComponentNode, "FontHandle", 0);
+					text.Space = (Renderer2DSpace)TryReadYAMLValue<int>(textComponentNode, "Space", (int)Renderer2DSpace::WorldSpace);
+					text.Color = TryReadYAMLValue<LinearColor>(textComponentNode, "Color", LinearColor::Black);
+					text.MaxWidth = TryReadYAMLValue<float>(textComponentNode, "MaxWidth", 10.f);
+					text.Kerning = TryReadYAMLValue<float>(textComponentNode, "Kerning", 0.f);
+					text.LineSpacing = TryReadYAMLValue<float>(textComponentNode, "LineSpacing", 0.f);
+					text.Shadowing = TryReadYAMLValue<bool>(textComponentNode, "Shadowing", false);
+					text.ShadowDistance = TryReadYAMLValue<float>(textComponentNode, "ShadowDistance", 1.f);
+					text.ShadowColor = TryReadYAMLValue<LinearColor>(textComponentNode, "ShadowColor", LinearColor::Black);
+				}
+			}
+
+			{
+				const auto& rigidbody2DComponentNode = entityNode["Rigidbody2DComponent"];
+				if (rigidbody2DComponentNode)
+				{
+					auto& rb2d = deserializedEntity.AddComponent<Rigidbody2DComponent>();
+
+					rb2d.Type = (Rigidbody2DComponent::BodyType)TryReadYAMLValue<int>(rigidbody2DComponentNode, "BodyType", (int)Rigidbody2DComponent::BodyType::STATIC);
+					rb2d.FixedRotation = TryReadYAMLValue<bool>(rigidbody2DComponentNode, "FixedRotation", false);
+				}
+			}
+
+			{
+				const auto& boxCollider2DComponentNode = entityNode["BoxCollider2DComponent"];
+				if (boxCollider2DComponentNode)
+				{
+					auto& bc2d = deserializedEntity.AddComponent<BoxCollider2DComponent>();
+
+					bc2d.Offset = TryReadYAMLValue<Vector2>(boxCollider2DComponentNode, "Offset", { 0.f, 0.f });
+					bc2d.Size = TryReadYAMLValue<Vector2>(boxCollider2DComponentNode, "Size", { 0.5f, 0.5f });
+					bc2d.Density = TryReadYAMLValue<float>(boxCollider2DComponentNode, "Density", 1.f);
+					bc2d.Friction = TryReadYAMLValue<float>(boxCollider2DComponentNode, "Friction", 0.5f);
+					bc2d.Restitution = TryReadYAMLValue<float>(boxCollider2DComponentNode, "Restitution", 0.f);
+					bc2d.RestitutionThreshold = TryReadYAMLValue<float>(boxCollider2DComponentNode, "RestitutionThreshold", 0.5f);
+				}
+			}
+
+			{
+				const auto& circleCollider2DComponentNode = entityNode["CircleCollider2DComponent"];
+				if (circleCollider2DComponentNode)
+				{
+					auto& cc2d = deserializedEntity.AddComponent<CircleCollider2DComponent>();
+
+					cc2d.Offset = TryReadYAMLValue<Vector2>(circleCollider2DComponentNode, "Offset", { 0.f, 0.f });
+					cc2d.Radius = TryReadYAMLValue<float>(circleCollider2DComponentNode, "Radius", 0.5f);
+					cc2d.Density = TryReadYAMLValue<float>(circleCollider2DComponentNode, "Density", 1.f);
+					cc2d.Friction = TryReadYAMLValue<float>(circleCollider2DComponentNode, "Friction", 0.5f);
+					cc2d.Restitution = TryReadYAMLValue<float>(circleCollider2DComponentNode, "Restitution", 0.f);
+					cc2d.RestitutionThreshold = TryReadYAMLValue<float>(circleCollider2DComponentNode, "RestitutionThreshold", 0.5f);
+				}
+			}
+
+			{
+				const auto& meshComponentNode = entityNode["MeshComponent"];
+				if (meshComponentNode)
+				{
+					auto& meshComp = deserializedEntity.AddComponent<MeshComponent>();
+
+					meshComp.MeshHandle = TryReadYAMLValue<AssetHandle>(meshComponentNode, "MeshHandle", 0);
+					meshComp.MeshNodeIndex = TryReadYAMLValue<uint32>(meshComponentNode, "MeshNodeIndex", 0);
+					meshComp.Visible = TryReadYAMLValue<bool>(meshComponentNode, "Visible", true);
+
+					meshComp.ResetMaterials();
+				}
+			}
+
+			{
+				const auto& controllerNode = entityNode["AnimationControllerComponent"];
+				if (controllerNode)
+				{
+					auto& controllerComp = deserializedEntity.AddComponent<AnimationControllerComponent>();
+
+					AssetHandle meshHandle = TryReadYAMLValue<AssetHandle>(controllerNode, "MeshHandle", 0);
+					controllerComp.AnimationController = AnimationController::Create(meshHandle);
+				}
+			}
+
+			{
+				const auto directionalLightComponent = entityNode["DirectionalLightComponent"];
+				if (directionalLightComponent)
+				{
+					auto& lightComp = deserializedEntity.AddComponent<DirectionalLightComponent>();
+
+					lightComp.Color = TryReadYAMLValue<LinearColor>(directionalLightComponent, "Color", LinearColor::Black);
+					lightComp.Intensity = TryReadYAMLValue<float>(directionalLightComponent, "Intensity", 1.f);
+					lightComp.CastShadows = TryReadYAMLValue<bool>(directionalLightComponent, "CastShadows", false);
+					lightComp.LightSize = TryReadYAMLValue<float>(directionalLightComponent, "LightSize", 0.4f);
+				}
+			}
+
+			{
+				const auto pointLightComponent = entityNode["PointLightComponent"];
+				if (pointLightComponent)
+				{
+					auto& lightComp = deserializedEntity.AddComponent<PointLightComponent>();
+
+					lightComp.Color = TryReadYAMLValue<LinearColor>(pointLightComponent, "Color", LinearColor::Black);
+					lightComp.Intensity = TryReadYAMLValue<float>(pointLightComponent, "Intensity", 1.f);
+					lightComp.Radius = TryReadYAMLValue<float>(pointLightComponent, "Radius", 10.f);
+					lightComp.FallOff = TryReadYAMLValue<float>(pointLightComponent, "FallOff", 1.f);
+				}
+			}
+
+			{
+				const auto pointLightComponent = entityNode["SpotLightComponent"];
+				if (pointLightComponent)
+				{
+					auto& lightComp = deserializedEntity.AddComponent<SpotLightComponent>();
+
+					lightComp.Color = TryReadYAMLValue<LinearColor>(pointLightComponent, "Color", LinearColor::Black);
+					lightComp.Intensity = TryReadYAMLValue<float>(pointLightComponent, "Intensity", 1.f);
+					lightComp.SpotAngle = TryReadYAMLValue<float>(pointLightComponent, "SpotAngle", 30.f);
+					lightComp.InnerFallOff = TryReadYAMLValue<float>(pointLightComponent, "InnerFallOff", 1.f);
+					lightComp.Range = TryReadYAMLValue<float>(pointLightComponent, "Range", 10.f);
+					lightComp.RangeFallOff = TryReadYAMLValue<float>(pointLightComponent, "RangeFallOff", 1.f);
+				}
+			}
+
+			{
+				const auto skyLightComponent = entityNode["SkyLightComponent"];
+				if (skyLightComponent)
+				{
+					auto& lightComp = deserializedEntity.AddComponent<SkyLightComponent>();
+
+					lightComp.EnvMapHandle = TryReadYAMLValue<AssetHandle>(skyLightComponent, "EnvMapHandle", 0);
+					lightComp.Type = (EnvironmentMapType)TryReadYAMLValue<uint32>(skyLightComponent, "Type", (uint32)EnvironmentMapType::PREETHAM);
+					lightComp.Intensity = TryReadYAMLValue<float>(skyLightComponent, "Intensity", 1.f);
+					lightComp.LOD = TryReadYAMLValue<float>(skyLightComponent, "LOD", 0.f);
+					lightComp.Preetham.Turbidity = TryReadYAMLValue<float>(skyLightComponent, "Turbidity", 2.f);
+					lightComp.Preetham.Azimuth = TryReadYAMLValue<float>(skyLightComponent, "Azimuth", 0.f);
+					lightComp.Preetham.Inclination = TryReadYAMLValue<float>(skyLightComponent, "Inclination", 0.f);
+					lightComp.Preetham.Resolution = TryReadYAMLValue<uint32>(skyLightComponent, "Resolution", 128);
 				}
 			}
 		}
-		catch (const YAML::Exception& ex)
+
+		// Build Entity Hierarchy
+		for (const auto& entityNode : entities)
 		{
-			ATN_CORE_ERROR_TAG("Serializer", "Failed to deserialize scene {0}. Error message:\n {1}", path, ex.what());
-			return false;
+			uint64 uuid = 0;
+			{
+				const auto& uuidComponentNode = entityNode["IDComponent"];
+				if (uuidComponentNode)
+					uuid = TryReadYAMLValue<UUID>(uuidComponentNode, "ID", 0);
+			}
+
+			Entity entity = m_Scene->GetEntityByUUID(uuid);
+				
+			{
+				const auto& parentComponentNode = entityNode["ParentComponent"];
+				if (parentComponentNode)
+				{
+					UUID parentID = TryReadYAMLValue<UUID>(parentComponentNode, "Parent", 0);
+					Entity parent = m_Scene->GetEntityByUUID(parentID);
+
+					if (parent)
+						m_Scene->MakeRelationship(parent, entity);
+				}
+			}
 		}
 
 		return true;

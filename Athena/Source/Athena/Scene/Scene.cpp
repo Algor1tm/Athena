@@ -657,10 +657,10 @@ namespace Athena
 				for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
 				{
 					const SubMesh& subMesh = mesh->GetSubMesh(i);
-					Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
+					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+					Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); // TODO: can we bake this transform?
 
-					Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); //?
-					renderer->Submit(mesh, subMesh, material->GetMaterial(), hasAnimationController, transform);
+					renderer->Submit(mesh, subMesh, material, hasAnimationController, transform);
 				}
 
 				if (hasAnimationController)
@@ -676,10 +676,10 @@ namespace Athena
 				for (uint32 submeshIndex: node.SubMeshes)
 				{
 					const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
-					Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
-
+					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
 					Matrix4 transform = transformComponent.AsMatrix();
-					renderer->Submit(mesh, subMesh, material->GetMaterial(), false, transform);
+
+					renderer->Submit(mesh, subMesh, material, false, transform);
 				}
 			}
 		}

@@ -791,12 +791,9 @@ namespace Athena
 			UI::PropertyCheckbox("Visible", &meshComponent.Visible);
 			UI::EndPropertyTable();
 
-			if (isMeshValid && UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
+			if (UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
 			{
-				Ref<MeshImportSettings> importSettings = Project::GetEditorAssetManager()->GetAssetImportSettings(meshComponent.MeshHandle).As<MeshImportSettings>();
-
-				MaterialTable& table = mesh->GetMaterialTable();
-				MaterialTable& overrideTable = importSettings->OverrideMaterials;
+				MaterialTable& table = meshComponent.OverrideMaterials;
 
 				for (auto& [name, materialHandle] : table)
 				{
@@ -827,7 +824,6 @@ namespace Athena
 							if (cbPayload->AssetType == AssetType::Material)
 							{
 								table.at(name) = cbPayload->AssetHandle;
-								overrideTable[name] = cbPayload->AssetHandle;
 							}
 						}
 
@@ -836,6 +832,12 @@ namespace Athena
 				}
 
 				UI::EndPropertyTable();
+
+				if (ImGui::Button("Reset"))
+				{
+					table = mesh->GetMaterialTable();
+				}
+
 				UI::TreePop();
 			}
 			return false;

@@ -237,6 +237,8 @@ namespace Athena
             entity.GetComponent<TagComponent>().Tag = AssetManager::GetAssetFilePath(meshHandle).stem().string();
             entity.AddComponent<MeshComponent>().MeshHandle = meshHandle;
 
+            entity.GetComponent<MeshComponent>().ResetMaterials();
+
             if (mesh->IsRigged())
             {
                 AnimationControllerComponent& controller = entity.AddComponent<AnimationControllerComponent>();
@@ -268,6 +270,8 @@ namespace Athena
         auto& meshComponent = entity.AddComponent<MeshComponent>();
         meshComponent.MeshHandle = mesh->Handle;
         meshComponent.MeshNodeIndex = meshNode.Index;
+
+        meshComponent.ResetMaterials();
 
         if (!meshNode.Children.empty())
             entity.AddComponent<ChildComponent>().Children.reserve(meshNode.Children.size());
@@ -909,10 +913,10 @@ namespace Athena
                 for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
                 {
                     const SubMesh& subMesh = mesh->GetSubMesh(i);
-                    Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
+                    Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+                    Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
 
-                    Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); //?
-                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material->GetMaterial(), hasAnimationController, transform);
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material, hasAnimationController, transform);
                 }
 
                 if (hasAnimationController)
@@ -928,10 +932,10 @@ namespace Athena
                 for (uint32 submeshIndex : node.SubMeshes)
                 {
                     const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
-                    Ref<MaterialAsset> material = mesh->GetMaterial(subMesh.MaterialName);
-
+                    Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
                     Matrix4 transform = transformComponent.AsMatrix();
-                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material->GetMaterial(), false, transform);
+
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material, false, transform);
                 }
             }
         }

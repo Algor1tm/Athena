@@ -171,11 +171,15 @@ namespace Athena
 		void* RuntimeFixture = nullptr;
 	};
 
-	struct MeshComponent
+	struct ATHENA_API MeshComponent
 	{
 		AssetHandle MeshHandle = 0;
+		MaterialTable OverrideMaterials;
 		uint32 MeshNodeIndex = 0;
 		bool Visible = true;
+
+		void ResetMaterials();
+		Ref<Material> GetMaterial(const Ref<Mesh>& mesh, const String& materialName) const;
 
 		bool IsRootMeshNode() const { return MeshNodeIndex == 0; }
 	};

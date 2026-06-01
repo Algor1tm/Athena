@@ -138,14 +138,10 @@ namespace Athena
 		if (!FileSystem::Exists(path))
 			FileSystem::WriteFile(path, 0, 0);
 
-		YAML::Node data;
-		try
+		YAML::Node data = YAML::TryLoadYAMLFile(path);
+
+		if (!data)
 		{
-			data = YAML::LoadFile(path.string());
-		}
-		catch (YAML::ParserException e)
-		{
-			ATN_CORE_ERROR("Failed to load asset registry file '{0}'\n     {1}", path, e.what());
 			return false;
 		}
 
@@ -155,14 +151,14 @@ namespace Athena
 
 		for (const auto& node : rootNode)
 		{
-			AssetHandle handle = node["Handle"].as<UUID>();
+			AssetHandle handle = YAML::TryReadYAMLValue<AssetHandle>(node, "Handle", 0);
 
 			AssetMetadata metadata;
-			metadata.Type = AssetManager::AssetTypeFromString(node["Type"].as<String>());
-			metadata.FilePath = node["FilePath"].as<String>();
+			metadata.Type = AssetManager::AssetTypeFromString(YAML::TryReadYAMLValue<String>(node, "Type", "Invalid"));
+			metadata.FilePath = YAML::TryReadYAMLValue<String>(node, "FilePath", "Invalid");
 			metadata.IsMemoryOnly = false;
 
-			if (metadata.Type == AssetType::None || !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(metadata.FilePath)))
+			if (handle == 0 || metadata.Type == AssetType::None || !FileSystem::Exists(AssetManager::GetAssetAbsolutePath(metadata.FilePath)))
 				continue;
 
 			AddAsset(handle, metadata);

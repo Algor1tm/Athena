@@ -163,6 +163,7 @@ namespace Athena
 
 		mesh->m_Nodes.clear();
 		mesh->m_Nodes.emplace_back();
+
 		TraverseNodes(mesh, FindRootNode(m_aiScene->mRootNode));
 
 		//mesh->m_Nodes[0].Name = m_Path.stem().string();
@@ -387,6 +388,8 @@ namespace Athena
 		std::vector<BoneInfluenceVertex> boneInfluenceVertices;
 		std::vector<uint32> indices;
 
+		float scale = m_Settings->Scale;
+
 		Ref<Skeleton> skeleton = mesh->m_Skeleton;
 		mesh->m_SubMeshes.reserve(m_aiScene->mNumMeshes);
 
@@ -406,7 +409,7 @@ namespace Athena
 			ATN_CORE_ASSERT(isRigged == aimesh->HasBones());
 
 			SubMesh& subMesh = mesh->m_SubMeshes.emplace_back();
-			subMesh.AABB = AABB(Utils::ConvertaiVector3D(aimesh->mAABB.mMin), Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
+			subMesh.AABB = AABB(scale * Utils::ConvertaiVector3D(aimesh->mAABB.mMin), scale * Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
 			subMesh.Name = aimesh->mName.C_Str();
 			subMesh.MaterialName = aimaterial->GetName().C_Str();
 
@@ -426,7 +429,7 @@ namespace Athena
 
 				if (aimesh->HasPositions())
 				{
-					vertex.Position = Utils::ConvertaiVector3D(aimesh->mVertices[i]);
+					vertex.Position = scale * Utils::ConvertaiVector3D(aimesh->mVertices[i]);
 				}
 
 				for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
@@ -643,6 +646,7 @@ namespace Athena
 
 		cloneSettings->ImportAnimations = ImportAnimations;
 		cloneSettings->CollapseGraph = CollapseGraph;
+		cloneSettings->Scale = Scale;
 		cloneSettings->SubMeshIndices = SubMeshIndices;
 		cloneSettings->OverrideMaterials = OverrideMaterials;
 
@@ -657,6 +661,7 @@ namespace Athena
 
 		out << YAML::Key << "ImportAnimations" << YAML::Value << ImportAnimations;
 		out << YAML::Key << "CollapseGraph" << YAML::Value << CollapseGraph;
+		out << YAML::Key << "Scale" << YAML::Value << Scale;
 		out << YAML::Key << "SubMeshIndices" << YAML::Value << SubMeshIndices;
 		out << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
 		for (const auto& [name, handle] : OverrideMaterials)
@@ -677,38 +682,41 @@ namespace Athena
 
 	bool MeshImportSettings::Deserialize(const FilePath& absolutePath)
 	{
-		YAML::Node data;
-		try
+		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
+		if (!data)
 		{
-			data = YAML::LoadFile(absolutePath.string());
-
-			auto root = data["MeshImportSettings"];
-
-			ImportAnimations = root["ImportAnimations"].as<bool>();
-			CollapseGraph = root["CollapseGraph"].as<bool>();
-
-			if (ImportAnimations == true)
-			{
-				ATN_CORE_WARN_TAG("AssetManager", "Forcing CollapseGraph to true in MeshImportSettings");
-				CollapseGraph = true;
-			}
-
-			SubMeshIndices = root["SubMeshIndices"].as<std::vector<uint32>>();
-
-			OverrideMaterials.clear();
-			YAML::Node materialsNode = root["OverrideMaterials"];
-			for (const auto& it : materialsNode)
-			{
-				OverrideMaterials.insert({ it.first.as<String>(), it.second.as<AssetHandle>() });
-			}
-
-		}
-		catch (YAML::Exception& e)
-		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}. Error message:\n {}", absolutePath, e.what());
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}!", absolutePath);
 			return false;
 		}
 
+		YAML::Node root = data["MeshImportSettings"];
+		if (!root)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}!", absolutePath);
+			return false;
+		}
+
+		ImportAnimations = TryReadYAMLValue<bool>(root, "ImportAnimations", true);
+		CollapseGraph = TryReadYAMLValue<bool>(root, "CollapseGraph", true);
+		Scale = TryReadYAMLValue<float>(root, "Scale", 1.f);
+		SubMeshIndices = TryReadYAMLValue<std::vector<uint32>>(root, "SubMeshIndices", std::vector<uint32>());
+
+		OverrideMaterials.clear();
+		YAML::Node materialsNode = root["OverrideMaterials"];
+		for (const auto& it : materialsNode)
+		{
+			OverrideMaterials.insert({ it.first.as<String>(), it.second.as<AssetHandle>() });
+		}
+
+		if (ImportAnimations == true && CollapseGraph == false)
+		{
+			ATN_CORE_WARN_TAG("AssetManager", "Forcing CollapseGraph to true in MeshImportSettings");
+			CollapseGraph = true;
+		}
+		
+		if (Scale <= 0.f)
+			Scale = 1.f;
+	
 		return true;
 	}
 }

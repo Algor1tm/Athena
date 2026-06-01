@@ -224,6 +224,7 @@ namespace Athena
 		TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
 
 		static Ref<TextureAsset> GetDefault();
+		static void Clear();
 
 		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
 
@@ -239,6 +240,8 @@ namespace Athena
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
+
+		static Ref<TextureAsset> s_DefaultTexture;
 	};
 
 	namespace EnumUtils

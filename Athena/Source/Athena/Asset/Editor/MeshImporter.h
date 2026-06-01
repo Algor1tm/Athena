@@ -24,6 +24,7 @@ namespace Athena
 
 		bool ImportAnimations = true; // Cannot import animations when not collapsing graph
 		bool CollapseGraph = true;
+		float Scale = 1.f;
 		std::vector<uint32> SubMeshIndices;
 		std::unordered_map<String, AssetHandle> OverrideMaterials;
 	};

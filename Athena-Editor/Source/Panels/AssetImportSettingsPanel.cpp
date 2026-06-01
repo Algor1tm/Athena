@@ -9,6 +9,8 @@
 #include "Athena/UI/Theme.h"
 
 #include "Panels/PanelManager.h"
+#include "Panels/MaterialEditorPanel.h"
+#include "Panels/ContentBrowserPanel.h"
 
 #include <ImGui/imgui.h>
 
@@ -167,6 +169,8 @@ namespace Athena
                 UI::PropertyCheckbox("Collapse Graph", &settings->CollapseGraph);
             }
 
+            UI::PropertyDrag("Scale", &settings->Scale, 1.f, 0.001f, 1000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
+
             FilePath assetFilePath = AssetManager::GetAssetFilePath(m_AssetHandle);
             UI::PropertyText("FilePath", assetFilePath.string().data());
             ImGui::SameLine();
@@ -176,6 +180,60 @@ namespace Athena
             }
 
             UI::EndPropertyTable();
+
+            if (UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
+            {
+                MaterialTable& table = settings->OverrideMaterials;
+
+                if (table.empty())
+                    table = mesh->GetMaterialTable();
+
+                for (auto& [name, materialHandle] : table)
+                {
+                    UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
+
+                    Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+                    bool isInvalid = material == nullptr;
+                    const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
+
+                    if (isInvalid)
+                        ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+
+                    if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
+                    {
+                        auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+                        panel->SetActiveMaterial(materialHandle);
+                    }
+
+                    if (isInvalid)
+                        ImGui::PopStyleColor();
+
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+                        {
+                            CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+                            if (cbPayload->AssetType == AssetType::Material)
+                            {
+                                table.at(name) = cbPayload->AssetHandle;
+                            }
+                        }
+
+                        ImGui::EndDragDropTarget();
+                    }
+                }
+
+                UI::EndPropertyTable();
+
+                if (ImGui::Button("Reset"))
+                {
+                    table = mesh->GetMaterialTable();
+                }
+
+                UI::TreePop();
+            }
+
             UI::TreePop();
         }
     }

@@ -134,6 +134,8 @@ namespace Athena
 	}
 
 
+	Ref<TextureAsset> TextureAsset::s_DefaultTexture;
+
 	TextureAsset::TextureAsset()
 		: TextureAsset(EngineTextures::GetWhiteTexture())
 	{
@@ -160,14 +162,17 @@ namespace Athena
 
 	Ref<TextureAsset> TextureAsset::GetDefault()
 	{
-		static Ref<TextureAsset> s_DefaultTextureAsset;
-
-		if (!s_DefaultTextureAsset)
+		if (!s_DefaultTexture)
 		{
-			s_DefaultTextureAsset = Ref<TextureAsset>::Create(EngineTextures::GetWhiteTexture());
+			s_DefaultTexture = Ref<TextureAsset>::Create(EngineTextures::GetWhiteTexture());
 		}
 		
-		return s_DefaultTextureAsset;
+		return s_DefaultTexture;
+	}
+
+	void TextureAsset::Clear()
+	{
+		s_DefaultTexture.Release();
 	}
 
 	void TextureAsset::SetTexCoords(const Vector2& min, const Vector2& max)

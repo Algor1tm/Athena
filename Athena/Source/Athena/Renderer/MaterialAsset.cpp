@@ -74,35 +74,36 @@ namespace Athena
 
 	bool MaterialAsset::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> settings)
 	{
-		YAML::Node data;
-		try
+		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
+		if (!data)
 		{
-			data = YAML::LoadFile(absolutePath.string());
-
-			auto materialNode = data["Material"];
-
-			SetAlbedo(materialNode["Albedo"].as<LinearColor>());
-			SetEmission(materialNode["Emission"].as<float>());
-			SetRoughness(materialNode["Roughness"].as<float>());
-			SetMetalness(materialNode["Metalness"].as<float>());
-
-			SetTexture(MaterialTextureType::Albedo, materialNode["AlbedoMap"].as<AssetHandle>());
-			SetTexture(MaterialTextureType::Normals, materialNode["NormalMap"].as<AssetHandle>());
-			SetTexture(MaterialTextureType::Roughness, materialNode["RoughnessMap"].as<AssetHandle>());
-			SetTexture(MaterialTextureType::Metalness, materialNode["MetalnessMap"].as<AssetHandle>());
-
-			EnableTexture(MaterialTextureType::Albedo, materialNode["UseAlbedoMap"].as<bool>());
-			EnableTexture(MaterialTextureType::Normals, materialNode["UseNormalMap"].as<bool>());
-			EnableTexture(MaterialTextureType::Roughness, materialNode["UseRoughnessMap"].as<bool>());
-			EnableTexture(MaterialTextureType::Metalness, materialNode["UseMetalnessMap"].as<bool>());
-
-			SetFlag(MaterialFlag::CastShadows, materialNode["CastShadows"].as<bool>());
-		}
-		catch (YAML::Exception& e)
-		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}. Error message:\n {}", absolutePath, e.what());
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}!", absolutePath);
 			return false;
 		}
+
+		YAML::Node root = data["Material"];
+		if (!root)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}!", absolutePath);
+			return false;
+		}
+
+		SetAlbedo(TryReadYAMLValue<LinearColor>(root, "Albedo", LinearColor::Black));
+		SetEmission(TryReadYAMLValue<float>(root, "Emission", 0.f));
+		SetRoughness(TryReadYAMLValue<float>(root, "Roughness", 0.f));
+		SetMetalness(TryReadYAMLValue<float>(root, "Metalness", 0.f));
+
+		SetTexture(MaterialTextureType::Albedo, TryReadYAMLValue<AssetHandle>(root, "AlbedoMap", 0));
+		SetTexture(MaterialTextureType::Normals, TryReadYAMLValue<AssetHandle>(root, "NormalMap", 0));
+		SetTexture(MaterialTextureType::Roughness, TryReadYAMLValue<AssetHandle>(root, "RoughnessMap", 0));
+		SetTexture(MaterialTextureType::Metalness, TryReadYAMLValue<AssetHandle>(root, "MetalnessMap", 0));
+
+		EnableTexture(MaterialTextureType::Albedo, TryReadYAMLValue<bool>(root, "UseAlbedoMap", false));
+		EnableTexture(MaterialTextureType::Normals, TryReadYAMLValue<bool>(root, "UseNormalMap", false));
+		EnableTexture(MaterialTextureType::Roughness, TryReadYAMLValue<bool>(root, "UseRoughnessMap", false));
+		EnableTexture(MaterialTextureType::Metalness, TryReadYAMLValue<bool>(root, "UseMetalnessMap", false));
+
+		SetFlag(MaterialFlag::CastShadows, TryReadYAMLValue<bool>(root, "CastShadows", true));
 
 		return true;
 	}

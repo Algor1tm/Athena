@@ -99,6 +99,7 @@ namespace Athena
 		Font::Shutdown();
 		EngineTextures::Shutdown();
 		EnvironmentMap::ClearCache();
+		TextureAsset::Clear();
 
 		s_Data.FullscreenVertexBuffer.Release();
 		s_Data.ShaderPack.Release();

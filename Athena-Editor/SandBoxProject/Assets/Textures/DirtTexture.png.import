@@ -1,8 +1,8 @@
 TextureImportSettings:
   sRGB: false
-  GenerateMipMaps: true
+  GenerateMipMaps: false
   WrapMode: REPEAT
-  FilterMode: TRILINEAR
+  FilterMode: LINEAR
   AnisotropyLevel: 8
   ComputeUsage: false
   ExtractChannelsNum: 4

@@ -122,6 +122,7 @@ namespace Athena::Vulkan
     inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
         uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
     {
+#if 0
         String message = String(pMessage);
 
         std::vector<String> objects;
@@ -172,19 +173,20 @@ namespace Athena::Vulkan
         for (const auto& objectInfo : objects)
             message += std::format("\n            {}{}", i++, objectInfo);
         message += "\n\n";
+#endif
 
         switch (flags)
         {
         case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
-            ATN_CORE_INFO_TAG("Vulkan", message); 
+            ATN_CORE_INFO_TAG("Vulkan", pMessage);
             break;
 
         case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", message); 
+            ATN_CORE_WARN_TAG("Vulkan", pMessage);
             break;
 
         case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", message); 
+            ATN_CORE_WARN_TAG("Vulkan", pMessage);
             break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:

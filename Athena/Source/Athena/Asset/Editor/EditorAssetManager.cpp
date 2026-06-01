@@ -108,13 +108,18 @@ namespace Athena
 		if (!IsAssetHandleValid(handle) || !IsAssetLoaded(handle) || IsAssetMemoryOnly(handle))
 			return;
 
-		m_LoadedAssets.erase(handle);
-
 		Ref<Asset> asset = LoadAsset(handle, GetAssetMetadata(handle));
 		if (asset)
-			m_LoadedAssets.insert({ handle, asset });
+		{
+			m_LoadedAssets.modify_if(handle, [asset](std::pair<const AssetHandle, Ref<Asset>>& element)
+			{
+				element.second = asset;
+			});
+		}
 		else
+		{
 			ATN_CORE_ERROR_TAG("AssetManager", "Failed to reload asset, handle - {}!", handle);
+		}
 	}
 
 	void EditorAssetManager::UnloadAsset(AssetHandle handle)
@@ -250,10 +255,17 @@ namespace Athena
 		if (!HasImportSettings(meta.Type) || !IsAssetHandleValid(handle))
 			return;
 
-		m_LoadedAssetImportSettings.modify_if(handle, [settings](std::pair<const AssetHandle, Ref<AssetImportSettings>>& element)
+		if (m_LoadedAssetImportSettings.contains(handle))
 		{
-			element.second = settings;
-		});
+			m_LoadedAssetImportSettings.modify_if(handle, [settings](std::pair<const AssetHandle, Ref<AssetImportSettings>>& element)
+				{
+					element.second = settings;
+				});
+		}
+		else
+		{
+			m_LoadedAssetImportSettings.insert({ handle, settings });
+		}
 	}
 
 	void EditorAssetManager::SerializeAssetImportSettings(AssetHandle handle)
@@ -262,7 +274,8 @@ namespace Athena
 		{
 			Ref<AssetImportSettings> importSettings = GetAssetImportSettings(handle);
 
-			FilePath path = AssetFileExtensions::GetImportSettingsPath(GetAssetFilePath(handle));
+			FilePath absoluteAssetPath = AssetManager::GetAssetAbsolutePath(GetAssetFilePath(handle));
+			FilePath path = AssetFileExtensions::GetImportSettingsPath(absoluteAssetPath);
 			importSettings->Serialize(path);
 		}
 	}

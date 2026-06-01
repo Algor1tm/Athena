@@ -1,5 +1,6 @@
 #include "EnvironmentMap.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/Application.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Renderer/ComputePass.h"
 #include "Athena/Renderer/ComputePipeline.h"
@@ -35,53 +36,57 @@ namespace Athena
 
 	bool EnvironmentMap::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
-		// Load hdr texture
-		Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
-		settings->sRGB = false;
-		settings->GenerateMipMaps = false;
-		settings->FilterMode = TextureFilter::LINEAR;
-
-		TextureImporter importer(settings);
-		Ref<Texture2D> panorama = importer.Import(absolutePath);
-		
-		Ref<EnvironmentMapImportSettings> envImportSettings = importSettings.As<EnvironmentMapImportSettings>();
-		CreateTextures(envImportSettings->Resolution, envImportSettings->FloatFormat, m_EnvironmentTexture, m_IrradianceTexture);
-
-		// Create cube map from this texture
-		ComputePassCreateInfo passInfo;
-		passInfo.Name = "PanoramaToCubePass";
-		passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
-
-		Ref<ComputePass> panoramaToCubePass = ComputePass::Create(passInfo);
-		panoramaToCubePass->SetOutput(m_EnvironmentTexture);
-		panoramaToCubePass->Bake();
-
-		Ref<ComputePipeline> panoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
-		panoramaToCubePipeline->SetInput("u_PanoramaTex", EngineTextures::GetWhiteTexture());
-		panoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
-		panoramaToCubePipeline->Bake();
-
-		panoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
-
-
-		RenderCommandBufferCreateInfo info;
-		info.Name = "EnvironmentMap";
-		info.Usage = RenderCommandBufferUsage::IMMEDIATE;
-		Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(info);
-		commandBuffer->Begin();
-
-		panoramaToCubePass->Begin(commandBuffer);
+		// Cannnot execute rendering pipeline in multiple threads(main thread and asset watcher thread)
+		Application::Get().SubmitToMainThread([this, absolutePath, importSettings]() 
 		{
-			panoramaToCubePipeline->Bind(commandBuffer);
-			Renderer::Dispatch(commandBuffer, panoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
-		}
-		panoramaToCubePass->End(commandBuffer);
+			// Load hdr texture
+			Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
+			settings->sRGB = false;
+			settings->GenerateMipMaps = false;
+			settings->FilterMode = TextureFilter::LINEAR;
 
-		// Filter
-		FilterEnvironmentMap(commandBuffer, m_EnvironmentTexture, m_IrradianceTexture);
+			TextureImporter importer(settings);
+			Ref<Texture2D> panorama = importer.Import(absolutePath);
 
-		commandBuffer->End();
-		commandBuffer->Submit(false);
+			Ref<EnvironmentMapImportSettings> envImportSettings = importSettings.As<EnvironmentMapImportSettings>();
+			CreateTextures(envImportSettings->Resolution, envImportSettings->FloatFormat, m_EnvironmentTexture, m_IrradianceTexture);
+
+			// Create cube map from this texture
+			ComputePassCreateInfo passInfo;
+			passInfo.Name = "PanoramaToCubePass";
+			passInfo.DebugColor = { 0.2f, 0.4f, 0.6f };
+
+			Ref<ComputePass> panoramaToCubePass = ComputePass::Create(passInfo);
+			panoramaToCubePass->SetOutput(m_EnvironmentTexture);
+			panoramaToCubePass->Bake();
+
+			Ref<ComputePipeline> panoramaToCubePipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("PanoramaToCubemap"));
+			panoramaToCubePipeline->SetInput("u_PanoramaTex", EngineTextures::GetWhiteTexture());
+			panoramaToCubePipeline->SetInput("u_Cubemap", m_EnvironmentTexture);
+			panoramaToCubePipeline->Bake();
+
+			panoramaToCubePipeline->SetInput("u_PanoramaTex", panorama);
+
+
+			RenderCommandBufferCreateInfo info;
+			info.Name = "EnvironmentMap";
+			info.Usage = RenderCommandBufferUsage::IMMEDIATE;
+			Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(info);
+			commandBuffer->Begin();
+
+			panoramaToCubePass->Begin(commandBuffer);
+			{
+				panoramaToCubePipeline->Bind(commandBuffer);
+				Renderer::Dispatch(commandBuffer, panoramaToCubePipeline, { m_Resolution, m_Resolution, 6 });
+			}
+			panoramaToCubePass->End(commandBuffer);
+
+			// Filter
+			FilterEnvironmentMap(commandBuffer, m_EnvironmentTexture, m_IrradianceTexture);
+
+			commandBuffer->End();
+			commandBuffer->Submit(false);
+		});
 
 		return true;
 	}

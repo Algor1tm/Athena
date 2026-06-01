@@ -233,4 +233,37 @@ namespace YAML
 
 		return out;
 	}
+
+	template <typename T>
+	inline T TryReadYAMLValue(const YAML::Node& node, const char* name, const T& fallbackValue)
+	{
+		T result;
+
+		try
+		{
+			result = node[name].as<T>();
+		}
+		catch (const YAML::Exception& exception)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize YAML field {0}. Error message:\n {1}", name, exception.what());
+			result = fallbackValue;
+		}
+		
+		return result;
+	}
+
+	inline YAML::Node TryLoadYAMLFile(const Athena::FilePath& path)
+	{
+		YAML::Node data;
+		try
+		{
+			data = YAML::LoadFile(path.string());
+		}
+		catch (const YAML::ParserException& e)
+		{
+			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load YAML file '{0}'. Error message:\n {1}", path, e.what());
+		}
+
+		return data;
+	}
 }

@@ -303,6 +303,13 @@ namespace Athena
 					meshComp.Visible = TryReadYAMLValue<bool>(meshComponentNode, "Visible", true);
 
 					meshComp.ResetMaterials();
+
+					YAML::Node materialsNode = meshComponentNode["OverrideMaterials"];
+					for (const auto& it : materialsNode)
+					{
+						if(meshComp.OverrideMaterials.contains(it.first.as<String>()))
+							meshComp.OverrideMaterials[it.first.as<String>()] = it.second.as<AssetHandle>();
+					}
 				}
 			}
 
@@ -589,6 +596,14 @@ namespace Athena
 				output << YAML::Key << "MeshHandle" << YAML::Value << meshComponent.MeshHandle;
 				output << YAML::Key << "MeshNodeIndex" << YAML::Value << meshComponent.MeshNodeIndex;
 				output << YAML::Key << "Visible" << YAML::Value << meshComponent.Visible;
+
+				output << YAML::Key << "OverrideMaterials" << YAML::Value << YAML::BeginMap;
+				for (const auto& [name, handle] : meshComponent.OverrideMaterials)
+				{
+					if (AssetManager::IsAssetHandleValid(handle) && !AssetManager::GetAssetMetadata(handle).IsMemoryOnly)
+						output << YAML::Key << name << YAML::Value << handle;
+				}
+				output << YAML::EndMap;
 			});
 
 		SerializeComponent<AnimationControllerComponent>(out, "AnimationControllerComponent", entity,

@@ -21,6 +21,7 @@ namespace Athena
 
 		void GetDeviceCapabilities(RenderCapabilities& deviceCaps) const;
 
+		std::mutex& GetQueueMutex() { return m_QueueMutex; }
 		void QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence);
 
 	private:

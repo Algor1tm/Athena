@@ -1,4 +1,5 @@
 Scene: UnNamed
+Handle: 0
 Entities:
   - IDComponent:
       ID: 31052898998760552
@@ -360,14 +361,14 @@ Entities:
       Rotation: [1, 0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
+      EnvMapHandle: 4392130567173545877
+      Type: 1
       Intensity: 0.202999994
       LOD: 1.06500006
-      Resolution: 256
-      Type: 1
-      FilePath: SandBoxProject\Assets\EnvironmentMaps\pink_sunrise_4k.hdr
       Turbidity: 2.29299998
       Azimuth: 0.224000007
       Inclination: 1.39100003
+      Resolution: 256
   - IDComponent:
       ID: 95899466008981868
     TagComponent:
@@ -378,6 +379,13 @@ Entities:
       Scale: [1, 1, 1]
     ScriptComponent:
       ScriptName: FreeCamera
+      ScriptFields:
+        - Name: m_MoveSpeed
+          Type: Float
+          Data: 5
+        - Name: m_RotationSpeed
+          Type: Float
+          Data: 2
     CameraComponent:
       Camera:
         ProjectionType: 0
@@ -396,10 +404,13 @@ Entities:
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.057190001, 0.0571899563, 0.0571899563]
-    StaticMeshComponent:
-      FilePath: SandBoxProject\Assets\Meshes\Sponza.fbx
+      Scale: [5.59305, 5.59304619, 5.59304619]
+    MeshComponent:
+      MeshHandle: 3277335110632083642
+      MeshNodeIndex: 0
       Visible: true
+      OverrideMaterials:
+        {}
   - IDComponent:
       ID: 18100746580937150330
     TagComponent:

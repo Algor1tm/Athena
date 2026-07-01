@@ -264,7 +264,7 @@ namespace Athena
 			Timer timer = Timer();
 
 			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
-
+			
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 			{
 				Recreate();
@@ -294,6 +294,7 @@ namespace Athena
 		presentInfo.pSwapchains = &m_VkSwapChain;
 		presentInfo.pImageIndices = &m_ImageIndex;
 
+		std::lock_guard<std::mutex> lock(VulkanContext::GetDevice()->GetQueueMutex());
 		VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)

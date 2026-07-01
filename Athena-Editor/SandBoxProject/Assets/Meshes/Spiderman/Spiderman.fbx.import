@@ -1,7 +1,8 @@
 MeshImportSettings:
   ImportAnimations: true
   CollapseGraph: true
+  Scale: 200
   SubMeshIndices:
     []
   OverrideMaterials:
-    {}
+    DefaultMaterial: 1413532533453042617

@@ -80,6 +80,7 @@ namespace Athena
 		aiProcess_GenBoundingBoxes |
 		aiProcess_FindInvalidData |
 		aiProcess_PopulateArmatureData |
+		aiProcess_GlobalScale |
 
 		aiProcess_SortByPType |
 		aiProcess_ImproveCacheLocality |
@@ -107,7 +108,15 @@ namespace Athena
 		if (m_Settings->CollapseGraph)
 			importFlags |= aiProcess_OptimizeGraph;
 
-		m_aiScene = aiImportFile(m_Path.string().c_str(), importFlags);
+		aiPropertyStore* properties = aiCreatePropertyStore();
+
+		aiSetImportPropertyFloat(properties, AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, m_Settings->Scale);
+		//aiSetImportPropertyInteger(properties, AI_CONFIG_FBX_CONVERT_TO_M, 1);
+		//aiSetImportPropertyInteger(properties, AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, 0);
+
+		m_aiScene = aiImportFileExWithProperties(m_Path.string().c_str(), importFlags, NULL, properties);
+
+		aiReleasePropertyStore(properties);
 
 		if (m_aiScene == nullptr)
 		{
@@ -229,7 +238,9 @@ namespace Athena
 		if (!m_aiScene)
 			return nullptr;
 
+		// Collect all bones and one bone node 
 		std::unordered_map<String, Matrix4> bonesMap;
+		aiNode* boneNode = nullptr;
 
 		for (uint32 i = 0; i < m_aiScene->mNumMeshes; ++i)
 		{
@@ -239,25 +250,39 @@ namespace Athena
 			{
 				aiBone* aibone = aimesh->mBones[j];
 				bonesMap[aibone->mName.C_Str()] = Utils::ConvertaiMatrix4x4(aibone->mOffsetMatrix);
+
+				boneNode = aibone->mNode;
 			}
 		}
 
-		aiNode* rootNode = m_aiScene->mRootNode;
-		aiNode* skeletonRootNode = nullptr;
-		for (uint32 i = 0; i < rootNode->mNumChildren; ++i)
-		{
-			aiNode* node = rootNode->mChildren[i];
-			if (bonesMap.contains(node->mName.C_Str()))
-			{
-				skeletonRootNode = node;
-				break;
-			}
-		}
-
-		if (skeletonRootNode == nullptr)
+		if (bonesMap.empty())
 		{
 			ATN_CORE_WARN_TAG("AssetManager", "Failed to import skeleton from {}", m_Path);
 			return nullptr;
+		}
+
+		// Find skeleton root from random bone node
+		aiNode* skeletonRootNode = nullptr;
+		while (skeletonRootNode == nullptr)
+		{
+			if (boneNode == m_aiScene->mRootNode)
+			{
+				skeletonRootNode = m_aiScene->mRootNode;
+				break;
+			}
+
+			String parentName = boneNode->mParent->mName.C_Str();
+			bool exists = bonesMap.contains(parentName);
+
+			if (bonesMap.contains(parentName) || (parentName.find("$AssimpFbx$") != String::npos))
+			{
+				boneNode = boneNode->mParent;
+			}
+			else
+			{
+				skeletonRootNode = boneNode->mParent;
+				ATN_CORE_ASSERT(skeletonRootNode->mNumChildren == 1, "Unknown skeleton format!");
+			}
 		}
 
 		std::vector<Bone> bones;
@@ -388,8 +413,6 @@ namespace Athena
 		std::vector<BoneInfluenceVertex> boneInfluenceVertices;
 		std::vector<uint32> indices;
 
-		float scale = m_Settings->Scale;
-
 		Ref<Skeleton> skeleton = mesh->m_Skeleton;
 		mesh->m_SubMeshes.reserve(m_aiScene->mNumMeshes);
 
@@ -406,10 +429,9 @@ namespace Athena
 			aiMaterial* aimaterial = m_aiScene->mMaterials[aimesh->mMaterialIndex];
 
 			bool isRigged = mesh->IsRigged();
-			ATN_CORE_ASSERT(isRigged == aimesh->HasBones());
 
 			SubMesh& subMesh = mesh->m_SubMeshes.emplace_back();
-			subMesh.AABB = AABB(scale * Utils::ConvertaiVector3D(aimesh->mAABB.mMin), scale * Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
+			subMesh.AABB = AABB(Utils::ConvertaiVector3D(aimesh->mAABB.mMin), Utils::ConvertaiVector3D(aimesh->mAABB.mMax));
 			subMesh.Name = aimesh->mName.C_Str();
 			subMesh.MaterialName = aimaterial->GetName().C_Str();
 
@@ -429,7 +451,7 @@ namespace Athena
 
 				if (aimesh->HasPositions())
 				{
-					vertex.Position = scale * Utils::ConvertaiVector3D(aimesh->mVertices[i]);
+					vertex.Position = Utils::ConvertaiVector3D(aimesh->mVertices[i]);
 				}
 
 				for (uint32 j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j)
@@ -468,9 +490,8 @@ namespace Athena
 				indices.push_back(faces[i].mIndices[2]);
 			}
 
-			if (!aimesh->HasBones())
+			if (!isRigged)
 			{
-				ATN_CORE_ASSERT(!mesh->IsRigged());
 				continue;
 			}
 

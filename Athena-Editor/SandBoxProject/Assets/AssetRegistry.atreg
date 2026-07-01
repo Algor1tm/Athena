@@ -8,6 +8,9 @@ AssetRegistry:
   - Handle: 16932076061486539755
     Type: Texture
     FilePath: Meshes/Beretta Pistol/Berreta M9_Material_Metallic.png
+  - Handle: 17893173823196395797
+    Type: Material
+    FilePath: Materials/NewMaterial.atmat
   - Handle: 11174151153480264062
     Type: EnvironmentMap
     FilePath: EnvironmentMaps/birchwood_4k.hdr
@@ -53,6 +56,9 @@ AssetRegistry:
   - Handle: 8628810681001209031
     Type: Font
     FilePath: Fonts/arial.ttf
+  - Handle: 1413532533453042617
+    Type: Material
+    FilePath: Meshes/Spiderman/SpidermanMaterial.atmat
   - Handle: 4392130567173545877
     Type: EnvironmentMap
     FilePath: EnvironmentMaps/pink_sunrise_4k.hdr
@@ -65,6 +71,9 @@ AssetRegistry:
   - Handle: 12670899305430855617
     Type: Scene
     FilePath: Scenes/Sponza.atscene
+  - Handle: 286036345484275532
+    Type: Material
+    FilePath: Materials/RedEmission.atmat
   - Handle: 11714994014629288087
     Type: Font
     FilePath: Fonts/comic.ttf

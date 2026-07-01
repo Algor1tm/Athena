@@ -2,28 +2,29 @@ Scene: Default
 Handle: 0
 Entities:
   - IDComponent:
-      ID: 12966957165589040089
+      ID: 17027777278662730478
     TagComponent:
-      Tag: Texture
+      Tag: Floor.001
     TransformComponent:
-      Translation: [3.34407973, 45.5232773, -7.93147612]
-      Rotation: [0.980653644, 0.110550374, -0.0852853134, 0.137198687]
-      Scale: [13.1676636, 13.1676645, 2.23559833]
+      Translation: [4.12052917, 0.26754117, -4.61973763]
+      Rotation: [0.65561837, -0.65561837, 0.264885962, 0.264885902]
+      Scale: [35.3562775, 35.3562775, 1.16871893]
     ParentComponent:
-      Parent: 731800701376929777
-    SpriteComponent:
-      Space: 1
-      Color: [1, 1, 0.541176498, 1]
-      TextureHandle: 3431491884888911668
-      TilingFactor: 1
+      Parent: 7377330037056093876
+    MeshComponent:
+      MeshHandle: 10089096507862767288
+      MeshNodeIndex: 5
+      Visible: true
+      OverrideMaterials:
+        {}
   - IDComponent:
       ID: 17196797334220725082
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Translation: [22.7587872, 8.80202866, -0.201162726]
-      Rotation: [0.707215667, -0.0916094109, 0.695225716, 0.0900827795]
-      Scale: [0.999998689, 0.999999881, 0.999998093]
+      Translation: [42.8651123, 14.1211128, 4.52751446]
+      Rotation: [0.707094133, -0.0916155279, 0.695343792, 0.0901192501]
+      Scale: [1.00000048, 0.999999046, 0.999998391]
     ScriptComponent:
       ScriptName: FreeCamera
       ScriptFields:
@@ -38,115 +39,42 @@ Entities:
         ProjectionType: 0
         PerspectiveFOV: 0.52359879
         PerspectiveNearClip: 1
-        PerspectiveFarClip: 100
+        PerspectiveFarClip: 1000
         OrthographicSize: 10
         OrthographicNearClip: -1
         OrthographicFarClip: 10
       Primary: true
       FixedAspectRatio: false
   - IDComponent:
-      ID: 3148190026798035267
-    TagComponent:
-      Tag: PinkLight
-    TransformComponent:
-      Translation: [39.6329155, 20.8729763, -59.1618271]
-      Rotation: [1, 0, 0, 0]
-      Scale: [0.75999999, 0.75999999, 0.75999999]
-    ParentComponent:
-      Parent: 731800701376929777
-    PointLightComponent:
-      Color: [0.93670845, 0, 1, 1]
-      Intensity: 5
-      Radius: 7
-      FallOff: 1
-  - IDComponent:
-      ID: 16412662367081589512
+      ID: 7843680629468046521
     TagComponent:
       Tag: Floor
     TransformComponent:
       Translation: [0, 0, 0]
       Rotation: [0.707106709, -0.707106829, -0, 0]
-      Scale: [72.2833786, 79.8597488, 2.34753227]
+      Scale: [72.2833786, 79.8597412, 2.34753203]
     ParentComponent:
-      Parent: 731800701376929777
+      Parent: 7377330037056093876
     MeshComponent:
-      MeshHandle: 12888972181454613376
+      MeshHandle: 10089096507862767288
       MeshNodeIndex: 4
       Visible: true
+      OverrideMaterials:
+        {}
   - IDComponent:
-      ID: 8122819110779904449
+      ID: 7377330037056093876
     TagComponent:
-      Tag: Floor.001
+      Tag: RootNode
     TransformComponent:
-      Translation: [41.2052765, 4.04131317, -46.1973839]
-      Rotation: [0.655618429, -0.65561831, 0.264885932, 0.264885873]
-      Scale: [35.3562775, 35.3562775, 1.16871905]
-    ParentComponent:
-      Parent: 731800701376929777
+      Translation: [-18.8026924, 0.298483342, -18.695837]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1.26968801, 1.26968801, 1.26968801]
     MeshComponent:
-      MeshHandle: 12888972181454613376
-      MeshNodeIndex: 5
+      MeshHandle: 10089096507862767288
+      MeshNodeIndex: 0
       Visible: true
-  - IDComponent:
-      ID: 6684149830295041235
-    TagComponent:
-      Tag: GreenSpotLight
-    TransformComponent:
-      Translation: [34.7353058, 50.9820137, 115.295952]
-      Rotation: [0.935840547, -0.352423757, 0, 0]
-      Scale: [1, 0.999996781, 0.416792005]
-    ParentComponent:
-      Parent: 731800701376929777
-    SpotLightComponent:
-      Color: [0.173303723, 0.91452992, 0.128766462, 1]
-      Intensity: 12.6000004
-      SpotAngle: 48.0859985
-      InnerFallOff: 1
-      Range: 30
-      RangeFallOff: 1
-  - IDComponent:
-      ID: 15405863294050703898
-    TagComponent:
-      Tag: BlueLight
-    TransformComponent:
-      Translation: [2.89061117, 19.6360302, -58.6456299]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 731800701376929777
-    PointLightComponent:
-      Color: [0, 0.0323889256, 1, 1]
-      Intensity: 5
-      Radius: 7
-      FallOff: 1
-  - IDComponent:
-      ID: 2835139583361043602
-    TagComponent:
-      Tag: RedLight
-    TransformComponent:
-      Translation: [-36.0056839, 22.5686226, -52.2417374]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 731800701376929777
-    PointLightComponent:
-      Color: [1, 0, 0, 1]
-      Intensity: 6.5
-      Radius: 7
-      FallOff: 1
-  - IDComponent:
-      ID: 14844919457741134000
-    TagComponent:
-      Tag: DirectionalLight
-    TransformComponent:
-      Translation: [-4.76235437, 10.0545406, 0.705213785]
-      Rotation: [0.331707746, -0.932052374, -0.055727344, -0.134695753]
-      Scale: [1, 1.00003445, 1.00003266]
-    DirectionalLightComponent:
-      Color: [1, 1, 1, 1]
-      Intensity: 1
-      CastShadows: true
-      LightSize: 0.150000006
+      OverrideMaterials:
+        {}
   - IDComponent:
       ID: 9453339502114578766
     TagComponent:
@@ -165,163 +93,228 @@ Entities:
       Inclination: 1.32000005
       Resolution: 256
   - IDComponent:
-      ID: 15204102483634061799
+      ID: 10645790554330241890
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Translation: [0, 2.52208328, -12.2381773]
+      Translation: [3.68483543, 0.982069612, -3.58364296]
+      Rotation: [5.33850866e-08, 5.33850724e-08, -0.707106769, -0.707106829]
+      Scale: [5.56286144, 5.56286097, 5.56286097]
+    ParentComponent:
+      Parent: 7377330037056093876
+    MeshComponent:
+      MeshHandle: 10089096507862767288
+      MeshNodeIndex: 3
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 6173291457117915889
+    TagComponent:
+      Tag: Cone
+    TransformComponent:
+      Translation: [3.34640312, 0.892166257, 4.32756042]
+      Rotation: [0.707106709, -0.707106829, 0, 0]
+      Scale: [6.21314764, 6.21314716, 6.21314716]
+    ParentComponent:
+      Parent: 7377330037056093876
+    MeshComponent:
+      MeshHandle: 10089096507862767288
+      MeshNodeIndex: 2
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 10577178109345881660
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Translation: [-2.23626137, 0.852714658, -0.580682755]
+      Rotation: [0.707106709, -0.707106829, 0, 0]
+      Scale: [6.71918297, 6.71917963, 6.71917963]
+    ParentComponent:
+      Parent: 7377330037056093876
+    MeshComponent:
+      MeshHandle: 10089096507862767288
+      MeshNodeIndex: 1
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 14844919457741134000
+    TagComponent:
+      Tag: DirectionalLight
+    TransformComponent:
+      Translation: [-4.76235437, 10.0545406, 0.705213785]
+      Rotation: [0.331707746, -0.932052374, -0.055727344, -0.134695753]
+      Scale: [1, 1.00003445, 1.00003266]
+    DirectionalLightComponent:
+      Color: [1, 1, 1, 1]
+      Intensity: 1
+      CastShadows: true
+      LightSize: 0.150000006
+  - IDComponent:
+      ID: 12596155264964209628
+    TagComponent:
+      Tag: silly_dancing
+    TransformComponent:
+      Translation: [-4.13035107, 0.198965192, -4.97030163]
+      Rotation: [0.672768116, -5.06479836e-09, 0.739853382, -5.06479836e-09]
+      Scale: [1.89949965, 1.89949965, 1.89949965]
+    ParentComponent:
+      Parent: 7377330037056093876
+    MeshComponent:
+      MeshHandle: 13603484801375399319
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        {}
+    AnimationControllerComponent:
+      MeshHandle: 13603484801375399319
+  - IDComponent:
+      ID: 1929705987207421875
+    TagComponent:
+      Tag: Ceiling
+    TransformComponent:
+      Translation: [-26.6033306, 22.2988987, -0.863396227]
+      Rotation: [0.707250893, -0.706958711, -0.00167401729, 0.00167323463]
+      Scale: [15.1703358, 36.1875687, 0.369293422]
+    MeshComponent:
+      MeshHandle: 4988150457874150482
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 14749145990590197103
+    TagComponent:
+      Tag: Front
+    TransformComponent:
+      Translation: [-41.7774925, 11.2922249, 0.116511226]
+      Rotation: [0.707279444, 0, -0.706934094, 0]
+      Scale: [36.2544937, 11.4835911, 0.369291961]
+    MeshComponent:
+      MeshHandle: 4988150457874150482
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 1285316140131017191
+    TagComponent:
+      Tag: Floor
+    TransformComponent:
+      Translation: [-10.9045019, -0.257062197, 0]
       Rotation: [1, 0, 0, 0]
-      Scale: [10.8226433, 8.20835114, 0.62229377]
+      Scale: [31.2217484, 0.205175325, 35.8946266]
     MeshComponent:
-      MeshHandle: 13751067430993163149
+      MeshHandle: 4988150457874150482
       MeshNodeIndex: 0
       Visible: true
+      OverrideMaterials:
+        {}
   - IDComponent:
-      ID: 4442543154444817618
+      ID: 2313108771890113548
     TagComponent:
-      Tag: Cube
+      Tag: Left
     TransformComponent:
-      Translation: [-1.31703436, 2.98000145, 3.50187826]
+      Translation: [-10.0618343, 11.2922249, 35.6050224]
+      Rotation: [0.999993563, 0, 0.00359549141, 0]
+      Scale: [30.8439293, 11.4835911, 0.369293034]
+    MeshComponent:
+      MeshHandle: 4988150457874150482
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 18156287466797013470
+    TagComponent:
+      Tag: Beretta Pistol
+    TransformComponent:
+      Translation: [-11.5373268, 4.77281046, 3.75363851]
+      Rotation: [0.292991072, -5.00644788e-08, 0.956115186, -5.00644788e-08]
+      Scale: [1.98966038, 1.9894799, 1.98966038]
+    MeshComponent:
+      MeshHandle: 10000604836111738337
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        {}
+  - IDComponent:
+      ID: 669893380541110134
+    TagComponent:
+      Tag: Spiderman
+    TransformComponent:
+      Translation: [-13.8319664, 1.91577169e-06, 19.5373192]
+      Rotation: [0.686724782, 3.03446868e-09, 0.726917505, 3.03446868e-09]
+      Scale: [3.04001141, 3.03999996, 3.04001141]
+    MeshComponent:
+      MeshHandle: 13274636765931191038
+      MeshNodeIndex: 0
+      Visible: true
+      OverrideMaterials:
+        DefaultMaterial: 1413532533453042617
+    AnimationControllerComponent:
+      MeshHandle: 13274636765931191038
+  - IDComponent:
+      ID: 7381272247252399871
+    TagComponent:
+      Tag: LightSaber
+    TransformComponent:
+      Translation: [-23.7464275, 7.50037384, -27.1871414]
       Rotation: [1, 0, 0, 0]
-      Scale: [1, 2.77572393, 1]
-    ScriptComponent:
-      ScriptName: TestScript
-      ScriptFields:
-        - Name: m_Speed
-          Type: Float
-          Data: 0.200000003
+      Scale: [0.0301937014, 3.64966154, 0.161930874]
     MeshComponent:
-      MeshHandle: 13751067430993163149
+      MeshHandle: 12005653148531277759
       MeshNodeIndex: 0
       Visible: true
+      OverrideMaterials:
+        Gradient: 286036345484275532
   - IDComponent:
-      ID: 16471898377765283841
-    TagComponent:
-      Tag: Cube
-    TransformComponent:
-      Translation: [0.438165843, 6.87918901, -2.26552606]
-      Rotation: [0.978859007, 0.108237937, -0.0959274396, 0.144629061]
-      Scale: [1, 0.99999994, 1]
-    MeshComponent:
-      MeshHandle: 13751067430993163149
-      MeshNodeIndex: 0
-      Visible: true
-  - IDComponent:
-      ID: 1454649843796548308
+      ID: 16843692294700299099
     TagComponent:
       Tag: Text
     TransformComponent:
-      Translation: [-68.7449493, 71.2506714, -77.7666016]
-      Rotation: [1, 0, 0, 0]
-      Scale: [5.66868448, 5.60397863, 5.66868448]
-    ParentComponent:
-      Parent: 731800701376929777
+      Translation: [18.2632084, 14.817338, 34.4545059]
+      Rotation: [-0.00033071771, 7.55228626e-08, 0.99999994, 7.55228626e-08]
+      Scale: [3.82983804, 3.82979965, 3.82983804]
     TextComponent:
-      Text: "Athena \nИлья\x00\x00я Ішфіаарівто\x00"
-      FontHandle: 11714994014629288087
+      Text: "Welcome to Athena Demo Scene!\nby Илья\x00"
+      FontHandle: 0
       Space: 1
       Color: [1, 1, 1, 1]
-      MaxWidth: 10
+      MaxWidth: 7.80000019
       Kerning: 0
-      LineSpacing: -0.100000001
+      LineSpacing: 0
       Shadowing: false
       ShadowDistance: 1
       ShadowColor: [0, 0, 0, 1]
   - IDComponent:
-      ID: 5879826436174598342
+      ID: 8344253105935977537
     TagComponent:
       Tag: sphere
     TransformComponent:
-      Translation: [-22.575819, 9.09172249, -26.9679222]
+      Translation: [-11.1187897, 3.23301005, -5.17373323]
       Rotation: [1, 0, 0, 0]
-      Scale: [0.0780503079, 0.0780503079, 0.0780503079]
-    ParentComponent:
-      Parent: 731800701376929777
+      Scale: [2.79999995, 2.79999995, 2.79999995]
     MeshComponent:
-      MeshHandle: 16170110841370161099
+      MeshHandle: 12005653148531277759
       MeshNodeIndex: 0
       Visible: true
+      OverrideMaterials:
+        Gradient: 11461953652785562280
   - IDComponent:
-      ID: 731800701376929777
-    TagComponent:
-      Tag: BlenderScene
-    TransformComponent:
-      Translation: [-0.121937275, -0.157507062, 0.0944473743]
-      Rotation: [1, 0, 0, 0]
-      Scale: [0.150000036, 0.150000036, 0.150000036]
-    MeshComponent:
-      MeshHandle: 12888972181454613376
-      MeshNodeIndex: 0
-      Visible: true
-  - IDComponent:
-      ID: 16402252427761055659
-    TagComponent:
-      Tag: Sphere
-    TransformComponent:
-      Translation: [-22.3626175, 9.9780159, -5.80683565]
-      Rotation: [0.707106709, -0.707106829, -0, 0]
-      Scale: [6.71918392, 6.71918392, 6.71918392]
-    ParentComponent:
-      Parent: 731800701376929777
-    MeshComponent:
-      MeshHandle: 12888972181454613376
-      MeshNodeIndex: 1
-      Visible: true
-  - IDComponent:
-      ID: 9886498162082017401
-    TagComponent:
-      Tag: Cone
-    TransformComponent:
-      Translation: [33.4640312, 9.76286125, 43.2755966]
-      Rotation: [0.707106709, -0.707106829, -0, 0]
-      Scale: [6.21314764, 6.21314764, 6.21314764]
-    ParentComponent:
-      Parent: 731800701376929777
-    MeshComponent:
-      MeshHandle: 12888972181454613376
-      MeshNodeIndex: 2
-      Visible: true
-  - IDComponent:
-      ID: 16550787592363628556
+      ID: 13237360245482415476
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Translation: [36.8483543, 11.5762558, -35.836441]
-      Rotation: [5.33850866e-08, 5.33850724e-08, -0.707106769, -0.707106829]
-      Scale: [5.56286144, 5.56286144, 5.56286144]
-    ParentComponent:
-      Parent: 731800701376929777
+      Translation: [-12.7305336, 2.49987936, 28.6661758]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1.8599999, 1.8599999, 1.8599999]
     MeshComponent:
-      MeshHandle: 12888972181454613376
-      MeshNodeIndex: 3
-      Visible: true
-  - IDComponent:
-      ID: 11372643884560915662
-    TagComponent:
-      Tag: silly_dancing
-    TransformComponent:
-      Translation: [-43.8027306, 1.95141554, 36.7918892]
-      Rotation: [0.463421524, -3.19142046e-08, 0.886137962, -3.19142046e-08]
-      Scale: [8.76070499, 8.76070118, 8.76070499]
-    ParentComponent:
-      Parent: 731800701376929777
-    MeshComponent:
-      MeshHandle: 18292723363576882544
+      MeshHandle: 4988150457874150482
       MeshNodeIndex: 0
       Visible: true
-    AnimationControllerComponent:
-      MeshHandle: 4389979150323559025
-  - IDComponent:
-      ID: 6695484009778155809
-    TagComponent:
-      Tag: Stormtrooper
-    TransformComponent:
-      Translation: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
-      Scale: [1, 1, 1]
-    ParentComponent:
-      Parent: 11372643884560915662
-    MeshComponent:
-      MeshHandle: 18292723363576882544
-      MeshNodeIndex: 1
-      Visible: true
+      OverrideMaterials:
+        Material: 17893173823196395797

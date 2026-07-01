@@ -172,6 +172,13 @@ namespace Athena
 		Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
 	}
 
+	void VulkanImGuiLayerImpl::RenderViewports()
+	{
+		std::lock_guard<std::mutex> lock(VulkanContext::GetDevice()->GetQueueMutex());
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
+
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()
 	{
 		ATN_PROFILE_FUNC();

@@ -235,8 +235,7 @@ namespace Athena
 		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+			m_ImGuiImpl->RenderViewports();
 		}
 	}
 

@@ -163,7 +163,10 @@ namespace Athena
 	bool EditorAssetManager::SerializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata)
 	{
 		if (metadata.IsMemoryOnly)
-			return true;
+		{
+			ATN_CORE_ASSERT(false);
+			return false;
+		}
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
@@ -181,7 +184,10 @@ namespace Athena
 	bool EditorAssetManager::DeserializeAsset(const Ref<Asset>& asset, const AssetMetadata& metadata)
 	{
 		if (metadata.IsMemoryOnly)
-			return true;
+		{
+			ATN_CORE_ASSERT(false);
+			return false;
+		}
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
@@ -200,20 +206,39 @@ namespace Athena
 
 	void EditorAssetManager::SerializeAllAssets()
 	{
-		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
+		std::unordered_map<AssetHandle, Ref<Asset>> assets;
+		assets.reserve(m_LoadedAssets.size());
+
+		m_LoadedAssets.for_each([this, &assets](const std::pair<AssetHandle, Ref<Asset>>& element)
 		{
 			const auto& [handle, asset] = element;
-			SerializeAsset(asset, GetAssetMetadata(handle));
+			assets.insert({ handle, asset });
 		});
+
+		for (const auto& [handle, asset] : assets)
+		{
+			SerializeAsset(asset, GetAssetMetadata(handle));
+		}
 	}
 
 	void EditorAssetManager::DeserializeAllAssets()
 	{
-		m_LoadedAssets.for_each([this](const std::pair<AssetHandle, Ref<Asset>>& element)
+		std::unordered_map<AssetHandle, Ref<Asset>> assets;
+		assets.reserve(m_LoadedAssets.size());
+
+		m_LoadedAssets.for_each([this, &assets](const std::pair<AssetHandle, Ref<Asset>>& element)
 		{
 			const auto& [handle, asset] = element;
-			DeserializeAsset(asset, GetAssetMetadata(handle));
+			assets.insert({ handle, asset });
 		});
+
+		// We iterate over a copy of the loaded assets to avoid locking the main concurrent hashmap m_LoadedAssets
+		// TODO	There is also another problem for assets like MaterialAsset that have dependencies on other assets (like texture), because texture can be reloaded after material 
+		// for that we need a dependency graph system
+		for (const auto& [handle, asset] : assets)
+		{
+			DeserializeAsset(asset, GetAssetMetadata(handle));
+		}
 	}
 
 	Ref<AssetImportSettings> EditorAssetManager::GetAssetImportSettings(AssetHandle handle)

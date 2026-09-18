@@ -68,7 +68,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(path))
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Invalid scene filepath {}", path);
+			ATN_LOG_ERROR(AssetManager, "Invalid scene filepath {}", path);
 			return false;
 		}
 
@@ -76,7 +76,7 @@ namespace Athena
 
 		if (!data["Scene"])
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize scene {0}", path);
+			ATN_LOG_ERROR(AssetManager, "Failed to deserialize scene {0}", path);
 			return false;
 		}
 
@@ -139,7 +139,7 @@ namespace Athena
 
 							if (!fieldMap || !fieldMap->contains(name))
 							{
-								ATN_CORE_WARN_TAG("AssetManager", "Uknown script field name '{}' (field will be discarded, script name - {}, entity name - {})!", 
+								ATN_LOG_WARN(AssetManager, "Uknown script field name '{}' (field will be discarded, script name - {}, entity name - {})!",
 									name, script.Name, deserializedEntity.GetName());
 								continue;
 							}
@@ -148,7 +148,7 @@ namespace Athena
 
 							if (type != field.GetType())
 							{
-								ATN_CORE_WARN_TAG("AssetManager", "Script field type '{}' does not match with original type '{}' (field will be discarded, script name - {}, entity name - {})!", 
+								ATN_LOG_WARN(AssetManager, "Script field type '{}' does not match with original type '{}' (field will be discarded, script name - {}, entity name - {})!",
 									Utils::ScriptFieldTypeToString(type), Utils::ScriptFieldTypeToString(field.GetType()), script.Name, deserializedEntity.GetName());
 								continue;
 							}
@@ -171,7 +171,7 @@ namespace Athena
 					}
 					else if (!ScriptEngine::IsScriptExists(script.Name))
 					{
-						ATN_CORE_WARN_TAG("AssetManager", "Uknown script '{}' (script and all fields will be discarded)", script.Name);
+						ATN_LOG_WARN(AssetManager, "Uknown script '{}' (script and all fields will be discarded)", script.Name);
 					}
 				}
 			}
@@ -429,7 +429,7 @@ namespace Athena
 	{
 		if (!entity.HasComponent<IDComponent>() && !entity.HasComponent<TagComponent>())
 		{
-			ATN_CORE_ERROR_TAG("Serializer", "Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
+			ATN_LOG_ERROR(AssetManager, "Entity cannot been serialized(does not have UUIDComponent and TagComponent)");
 			return;
 		}
 

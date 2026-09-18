@@ -6,7 +6,7 @@
 #include "Athena/Renderer/Texture.h"
 
 #include <map>
-
+#include <functional>
 
 namespace Athena
 {

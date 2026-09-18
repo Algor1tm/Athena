@@ -127,7 +127,7 @@ namespace Athena
 				defaultSettings->Serialize(importSettingsPath);
 				UpdateAssetTimestamp(handle, importSettingsPath);
 
-				ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", 
+				ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", 
 					absolutePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		});
@@ -152,7 +152,7 @@ namespace Athena
 				{
 					FileSystem::Remove(importSettingsPath);
 
-					ATN_CORE_TRACE_TAG("AssetManager", "(AssetWatcherThread) Deleted import settings file for asset (path - {}, type - {}, handle - {})", 
+					ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Deleted import settings file for asset (path - {}, type - {}, handle - {})",
 						importSettingsPath, AssetManager::AssetTypeToString(meta.Type), handle);
 				}
 			}
@@ -160,7 +160,7 @@ namespace Athena
 			m_Registry->RemoveAsset(handle);
 			m_AssetsLastWriteTimeMap.erase_if(handle, [](auto&) { return true; });
 
-			ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Deleted asset from asset registry (path - {}, type - {}, handle - {})",
+			ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Deleted asset from asset registry (path - {}, type - {}, handle - {})",
 				meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 		}
 
@@ -171,7 +171,7 @@ namespace Athena
 				Project::GetEditorAssetManager()->ReloadAsset(handle);
 
 				AssetMetadata meta = AssetManager::GetAssetMetadata(handle);
-				ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Reloaded asset (path - {}, type - {}, handle - {})",
+				ATN_LOG_INFO(AssetManager, "(AssetWatcherThread) Reloaded asset (path - {}, type - {}, handle - {})",
 					meta.FilePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		}
@@ -216,7 +216,7 @@ namespace Athena
 					m_Registry->AddAsset(handle, metadata);
 					m_AssetsLastWriteTimeMap.insert({ handle, FileSystem::GetLastWriteTimestamp(path) });
 
-					ATN_CORE_INFO_TAG("AssetManager", "(AssetWatcherThread) Added new asset to asset registry (path - {}, type - {}, handle - {})",
+					ATN_LOG_INFO(AssetManager, "(AssetWatcherThread) Added new asset to asset registry (path - {}, type - {}, handle - {})",
 						metadata.FilePath, AssetManager::AssetTypeToString(metadata.Type), handle);
 
 					serialize = true;

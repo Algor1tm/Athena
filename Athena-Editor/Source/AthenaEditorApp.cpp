@@ -33,7 +33,7 @@ namespace Athena
 		appinfo.AppConfig.CleanCacheOnLoad = false;
 
 		appinfo.LogConfig.EnableConsole = true;
-		appinfo.LogConfig.FileLocation = "Sandbox.log";
+		appinfo.LogConfig.OutputPath = "Sandbox.log";
 
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 		appinfo.RendererConfig.MaxFramesInFlight = 3;

@@ -94,7 +94,7 @@ namespace Athena
 		{
 			const String& childTag = child.GetComponent<TagComponent>().Tag;
 			const String& parentTag = parent.GetComponent<TagComponent>().Tag;
-			ATN_CORE_WARN("Attempt to delete entity '{}' from children of entity '{}'", childTag, parentTag);
+			ATN_LOG_WARN(Scene, "Attempt to delete entity '{}' from children of entity '{}'", childTag, parentTag);
 		}
 	}
 
@@ -739,7 +739,7 @@ namespace Athena
 
 		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
 		if (skyLights.size() > 1)
-			ATN_CORE_WARN_TAG("Scene", "Attempt to submit more than 1 SkyLight in the scene!");
+			ATN_LOG_WARN(Scene, "Attempt to submit more than 1 SkyLight in the scene!");
 
 		if (!skyLights.empty())
 		{

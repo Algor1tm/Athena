@@ -48,7 +48,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset, handle - {}!", handle);
+				ATN_LOG_ERROR(AssetManager, "Failed to load asset, handle - {}!", handle);
 			}
 		}
 
@@ -89,7 +89,7 @@ namespace Athena
 
 		if (FileSystem::Exists(metadata.FilePath))
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Asset path should be in child directory of asset registry directory!");
+			ATN_LOG_ERROR(AssetManager, "Asset path should be in child directory of asset registry directory!");
 			return AssetHandle(0);
 		}
 
@@ -118,7 +118,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to reload asset, handle - {}!", handle);
+			ATN_LOG_ERROR(AssetManager, "Failed to reload asset, handle - {}!", handle);
 		}
 	}
 
@@ -136,7 +136,7 @@ namespace Athena
 
 		if (IsAssetMemoryOnly(handle))
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Cant load memory only asset (handle - {}, type - {})!", handle, metadata.Type);
+			ATN_LOG_ERROR(AssetManager, "Cant load memory only asset (handle - {}, type - {})!", handle, metadata.Type);
 			return nullptr;
 		}
 
@@ -144,7 +144,7 @@ namespace Athena
 
 		if (!asset)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
 			return nullptr;
 		}
 
@@ -153,7 +153,7 @@ namespace Athena
 
 		if (!result)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
 			return nullptr;
 		}
 
@@ -200,7 +200,7 @@ namespace Athena
 			return asset->Deserialize(absolutePath, importSettings);
 		}
 
-		ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
+		ATN_LOG_ERROR(AssetManager, "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
 		return false;
 	}
 

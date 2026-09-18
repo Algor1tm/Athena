@@ -1064,21 +1064,21 @@ namespace Athena
 
 		if (m_LightData.DirectionalLightCount > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
 			m_LightData.DirectionalLightCount = ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT;
 		}
 
 		m_LightData.PointLightCount = lightEnv.PointLights.size();
 		if (m_LightData.PointLightCount > ShaderDef::MAX_POINT_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
 		m_LightData.SpotLightCount = lightEnv.SpotLights.size();
 		if (m_LightData.SpotLightCount > ShaderDef::MAX_SPOT_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} SpotLights!", ShaderDef::MAX_SPOT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} SpotLights!", ShaderDef::MAX_SPOT_LIGHT_COUNT);
 			m_LightData.SpotLightCount = ShaderDef::MAX_SPOT_LIGHT_COUNT;
 		}
 
@@ -1092,7 +1092,7 @@ namespace Athena
 
 			if (castsShadows && light.CastShadows)
 			{
-				ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than 1 DirectionalLight, that casts shadows!");
+				ATN_LOG_WARN(Renderer, "Attempt to submit more than 1 DirectionalLight, that casts shadows!");
 				light.CastShadows = false;
 			}
 

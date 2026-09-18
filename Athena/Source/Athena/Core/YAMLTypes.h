@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Log.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
 #include "Athena/Core/FileSystem.h"
@@ -245,7 +246,7 @@ namespace YAML
 		}
 		catch (const YAML::Exception& exception)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to deserialize YAML field {0}. Error message:\n {1}", name, exception.what());
+			ATN_LOG_ERROR(AssetManager, "Failed to deserialize YAML field {0}. Error message:\n {1}", name, exception.what());
 			result = fallbackValue;
 		}
 		
@@ -261,7 +262,7 @@ namespace YAML
 		}
 		catch (const YAML::ParserException& e)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load YAML file '{0}'. Error message:\n {1}", path, e.what());
+			ATN_LOG_ERROR(AssetManager, "Failed to load YAML file '{0}'. Error message:\n {1}", path, e.what());
 		}
 
 		return data;

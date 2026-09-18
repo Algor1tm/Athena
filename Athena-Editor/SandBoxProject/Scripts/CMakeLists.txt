@@ -51,6 +51,8 @@ else(USE_DEBUG_RUNTIME_LIBS)
 	endif(MSVC)
 endif(USE_DEBUG_RUNTIME_LIBS)
 
+target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor)
+
 set_target_properties(${PROJECT_NAME}
 	PROPERTIES
 	CXX_STANDARD 20

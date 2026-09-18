@@ -272,7 +272,7 @@ namespace Athena
 			{
 				uint64 newSize = m_DataOffset * 2.f;
 
-				ATN_CORE_WARN_TAG("Renderer", "{} allocating from {} to {}", m_GPUBuffer->GetName(), 
+				ATN_LOG_WARN(Renderer, "{} allocating from {} to {}", m_GPUBuffer->GetName(),
 					Utils::MemoryBytesToString(m_GPUBuffer->GetSize()), Utils::MemoryBytesToString(newSize));
 
 				m_GPUBuffer->Resize(newSize);

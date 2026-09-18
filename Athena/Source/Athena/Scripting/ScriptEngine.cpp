@@ -68,14 +68,14 @@ namespace Athena
 		{
 			if (entity == Entity{})
 			{
-				ATN_CORE_ERROR_TAG("SriptEngine", "Script '{}' threw exception: \n{}!", scriptName, exception.what());
+				ATN_LOG_ERROR(ScriptEngine, "Script '{}' threw exception: \n{}!", scriptName, exception.what());
 			}
 			else
 			{
 				const String& entityName = entity.GetComponent<TagComponent>().Tag;
 				UUID id = entity.GetComponent<IDComponent>().ID;
 
-				ATN_CORE_ERROR_TAG("SriptEngine", "Script '{}' (Entity name - {}, id - {}) threw exception: \n{}!", 
+				ATN_LOG_ERROR(ScriptEngine, "Script '{}' (Entity name - {}, id - {}) threw exception: \n{}!",
 					scriptName, entityName, id, exception.what());
 			}
 			return false;
@@ -97,7 +97,7 @@ namespace Athena
 
 		if (!m_IsLoaded)
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to load script with name '{}'!", className);
+			ATN_LOG_ERROR(ScriptEngine, "Failed to load script with name '{}'!", className);
 			return;
 		}
 
@@ -118,7 +118,7 @@ namespace Athena
 			}
 		}
 
-		ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to get fields description of script with name '{}'", className);
+		ATN_LOG_ERROR(ScriptEngine, "Failed to get fields description of script with name '{}'", className);
 		delete script;
 	}
 
@@ -212,7 +212,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(libPath))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Scripts binary does not exists {}!", libPath);
+			ATN_LOG_ERROR(ScriptEngine, "Scripts binary does not exists {}!", libPath);
 			return;
 		}
 
@@ -232,7 +232,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(libPath))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Scripts binary does not exists {}!", libPath);
+			ATN_LOG_ERROR(ScriptEngine, "Scripts binary does not exists {}!", libPath);
 			return;
 		}
 		
@@ -240,7 +240,7 @@ namespace Athena
 
 		if (!FileSystem::Copy(libPath, activeLibPath))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to load scripting library!");
+			ATN_LOG_ERROR(ScriptEngine, "Failed to load scripting library!");
 			return;
 		}
 
@@ -250,7 +250,7 @@ namespace Athena
 		{
 			if (!FileSystem::Copy(pdbPath, activePdbPath))
 			{
-				ATN_CORE_WARN_TAG("ScriptEngine", "Failed to load debug info!");
+				ATN_LOG_WARN(ScriptEngine, "Failed to load debug info!");
 			}
 		}
 
@@ -274,7 +274,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(sourceDir))
 		{
-			ATN_CORE_ERROR_TAG("SriptEngine", "Source directory does not exists {}!", sourceDir);
+			ATN_LOG_ERROR(ScriptEngine, "Source directory does not exists {}!", sourceDir);
 			return;
 		}
 
@@ -289,7 +289,7 @@ namespace Athena
 		}
 
 		if (s_Data->ScriptNames.empty())
-			ATN_CORE_WARN_TAG("ScriptEngine", "Failed to find any scripts in scripts binary!");
+			ATN_LOG_WARN(ScriptEngine, "Failed to find any scripts in scripts binary!");
 
 		// Restore old edited field values
 		std::vector<UUID> entitiesToRemove;
@@ -460,7 +460,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(configTemplatePath))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to find config template!");
+			ATN_LOG_ERROR(ScriptEngine, "Failed to find config template!");
 			return;
 		}
 
@@ -493,7 +493,7 @@ namespace Athena
 		if (generate)
 		{
 			if (!FileSystem::WriteFile(configPath, configSource.c_str(), configSource.size()))
-				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to generate cmake config {}", configPath);
+				ATN_LOG_ERROR(ScriptEngine, "Failed to generate cmake config {}", configPath);
 		}
 	}
 
@@ -504,7 +504,7 @@ namespace Athena
 
 		if (invalidName)
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Invalid name for script class - '{}'", name);
+			ATN_LOG_ERROR(ScriptEngine, "Invalid name for script class - '{}'", name);
 			return;
 		}
 
@@ -515,7 +515,7 @@ namespace Athena
 
 		if (!FileSystem::Exists(cppTemplate) || !FileSystem::Exists(headerTemplate))
 		{
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to find script templates!");
+			ATN_LOG_ERROR(ScriptEngine, "Failed to find script templates!");
 			return;
 		}
 
@@ -528,7 +528,7 @@ namespace Athena
 			FilePath headerPath = srcPath / fmt::format("{}.h", name);
 
 			if (!FileSystem::WriteFile(headerPath, headerSource.c_str(), headerSource.size()))
-				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create new script file {}", headerPath);
+				ATN_LOG_ERROR(ScriptEngine, "Failed to create new script file {}", headerPath);
 		}
 
 		{
@@ -538,7 +538,7 @@ namespace Athena
 			FilePath cppPath = srcPath / fmt::format("{}.cpp", name);
 
 			if(!FileSystem::WriteFile(cppPath, cppSource.c_str(), cppSource.size()))
-				ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to create new script file {}", cppPath);
+				ATN_LOG_ERROR(ScriptEngine, "Failed to create new script file {}", cppPath);
 		}
 
 		GenCMakeProjects();
@@ -555,7 +555,7 @@ namespace Athena
 		if (FileSystem::Exists(solutionPath))
 			Platform::RunFile(solutionName, Project::GetScriptsDirectory() / "Build/Projects");
 		else
-			ATN_CORE_ERROR_TAG("ScriptEngine", "Failed to open solution file!");
+			ATN_LOG_ERROR(ScriptEngine, "Failed to open solution file!");
 	}
 
 	void ScriptEngine::GenCMakeProjects()

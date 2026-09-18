@@ -6,7 +6,7 @@
 
 extern Athena::Application* Athena::CreateApplication();
 
-#ifndef ATN_PLATFORM_WINDOWS
+#if !ATN_PLATFORM_WINDOWS
 
 int main(int argc, char** argv)
 {

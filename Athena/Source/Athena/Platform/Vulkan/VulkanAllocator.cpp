@@ -62,7 +62,7 @@ namespace Athena
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
-			ATN_CORE_TRACE_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			ATN_LOG_TRACE(Renderer, "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
 
 		return VulkanBufferAllocation(buffer, allocation);
@@ -81,7 +81,7 @@ namespace Athena
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = allocation->GetSize();
-		ATN_CORE_TRACE_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+		ATN_LOG_TRACE(Renderer, "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
 
 		return VulkanImageAllocation(image, allocation);
@@ -93,7 +93,7 @@ namespace Athena
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
-			ATN_CORE_TRACE_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			ATN_LOG_TRACE(Renderer, "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
@@ -103,7 +103,7 @@ namespace Athena
 	{
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_CORE_TRACE_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+		ATN_LOG_TRACE(Renderer, "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
@@ -206,7 +206,7 @@ namespace Athena
 		for (auto p : m_UsedPools) 
 		{
 			vkResetDescriptorPool(VulkanContext::GetLogicalDevice(), p, 0);
-			ATN_CORE_WARN_TAG("Vulkan", "Reseting Descriptor Pool");
+			ATN_LOG_WARN(Vulkan, "Reseting Descriptor Pool");
 
 			m_FreePools.push_back(p);
 		}
@@ -280,7 +280,7 @@ namespace Athena
 		VkDescriptorPool descriptorPool;
 		vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &descriptorPool);
 
-		ATN_CORE_WARN_TAG("Vulkan", "Allocating Descriptor Pool");
+		ATN_LOG_WARN(Vulkan, "Allocating Descriptor Pool");
 
 		return descriptorPool;
 	}

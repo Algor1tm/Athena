@@ -164,7 +164,7 @@ namespace Athena
 
 			if (!m_Resources.contains(resDesc.Set))
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
 				return false;
 			}
 
@@ -172,7 +172,7 @@ namespace Athena
 
 			if (!setResources.contains(resDesc.Binding))
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
@@ -182,7 +182,7 @@ namespace Athena
 			{
 				if (resource.Storage[i] == nullptr)
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {}, arrayIndex {})!",
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {}, arrayIndex {})!",
 						m_Info.Name, name, resDesc.Set, resDesc.Binding, i);
 					return false;
 				}
@@ -192,7 +192,7 @@ namespace Athena
 			{
 				if (!IsCompatible(resource.Storage[i]->GetResourceType(), resDesc.Type))
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}', set {}, binding {}, arrayIndex {})", 
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}', set {}, binding {}, arrayIndex {})",
 						m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource.Storage[i]->GetResourceType()), resDesc.Set, resDesc.Binding, i);
 					return false;
 				}
@@ -478,18 +478,18 @@ namespace Athena
 				}
 				else
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (arrayIndex is too big, given - '{}', max - '{}')",
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (arrayIndex is too big, given - '{}', max - '{}')",
 						m_Info.Name, name, arrayIndex, storage.Storage.size());
 				}
 			}
 			else
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
 			}
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+			ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
 		}
 
 		return nullptr;

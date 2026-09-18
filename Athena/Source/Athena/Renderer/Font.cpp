@@ -22,7 +22,7 @@ namespace Athena
 
         if (!s_Data.FTPHandle)
         {
-            ATN_CORE_ERROR_TAG("Renderer", "Failed to initialize freetype!");
+            ATN_LOG_FATAL(Renderer, "Failed to initialize freetype!");
             return false;
         }
 

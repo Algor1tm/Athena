@@ -19,7 +19,7 @@ namespace Athena
 
         if (font == nullptr)
         {
-            ATN_CORE_ERROR_TAG("AssetManager", "Failed to load font from {}!", path);
+            ATN_LOG_ERROR(AssetManager, "Failed to load font from {}!", path);
             return false;
         }
 
@@ -135,7 +135,7 @@ namespace Athena
 
         // Save to cache
         FileSystem::WriteFile(cacheDirectory / name, (const char*)buffer.Data(), buffer.Size());
-        ATN_CORE_WARN_TAG("AssetManager", "Cached MSDF Font Atlas {}, ({}, {})", name, width, height);
+        ATN_LOG_WARN(AssetManager, "Cached MSDF Font Atlas {}, ({}, {})", name, width, height);
 
         return buffer;
 	}

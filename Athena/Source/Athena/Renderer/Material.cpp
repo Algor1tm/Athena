@@ -105,14 +105,14 @@ namespace Athena
 	{
 		if (!m_BufferMembers->contains(name))
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
+			ATN_LOG_WARN(Renderer, "Failed to get or set shader push constant member with name '{}' (invalid name)", name);
 			return false;
 		}
 
 		const auto& data = m_BufferMembers->at(name);
 		if (data.Type != dataType)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Failed to get or set shader push constant member with name '{}' \
+			ATN_LOG_WARN(Renderer, "Failed to get or set shader push constant member with name '{}' \
 					(type is not matching: given - '{}', expected - '{}')", name, ShaderDataTypeToString(dataType), ShaderDataTypeToString(data.Type));
 			return false;
 		}

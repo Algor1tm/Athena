@@ -33,8 +33,8 @@ namespace Athena
 				message += std::format("{}\n\t", properties.deviceName);
 			}
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_INFO_TAG("Vulkan", "Selected GPU: {}\n", selectedGPUName);
+			ATN_LOG_INFO(Vulkan, message);
+			ATN_LOG_INFO(Vulkan, "Selected GPU: {}\n", selectedGPUName);
 
 			m_PhysicalDevice = gpus[useGpu];
 		};
@@ -71,7 +71,7 @@ namespace Athena
 				message += std::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
 			}
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			ATN_LOG_INFO(Vulkan, message);
 			ensure(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
 		};
 
@@ -88,7 +88,7 @@ namespace Athena
 			queueCIs[0].pQueuePriorities = queuePriority;
 
 			message += std::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			ATN_LOG_INFO(Vulkan, message);
 
 			std::vector<const char*> deviceExtensions = { 
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -239,17 +239,17 @@ namespace Athena
 		for (auto ext : requiredExtensions)
 			message += std::format("'{}'\n\t", ext);
 		
-		ATN_CORE_INFO_TAG("Vulkan", message);
+		ATN_LOG_INFO(Vulkan, message);
 
 		if (!missingExtensions.empty())
 		{
-			ATN_CORE_FATAL_TAG("Vulkan", "Current Physical Device does not support required device extensions!");
+			ATN_LOG_FATAL(Vulkan, "Current Physical Device does not support required device extensions!");
 
 			message = "Missing extensions: \n\t";
 			for (auto ext : missingExtensions)
 				message += std::format("'{}'\n\t", ext);
 
-			ATN_CORE_ERROR_TAG("Vulkan", message);
+			ATN_LOG_ERROR(Vulkan, message);
 			ensuref(false);
 		}
 

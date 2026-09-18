@@ -77,14 +77,14 @@ namespace Athena
 		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
 		if (!data)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load material asset data from {}!", absolutePath);
 			return false;
 		}
 
 		YAML::Node root = data["Material"];
 		if (!root)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load material asset data from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load material asset data from {}!", absolutePath);
 			return false;
 		}
 

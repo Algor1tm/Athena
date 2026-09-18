@@ -24,7 +24,7 @@ namespace Athena
 		{
 			m_Surface = VK_NULL_HANDLE;
 			VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, nullptr, &m_Surface));
-			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
+			ATN_LOG_INFO(Vulkan, "Create Window Surface");
 
 			VkBool32 supportWSI;
 			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);

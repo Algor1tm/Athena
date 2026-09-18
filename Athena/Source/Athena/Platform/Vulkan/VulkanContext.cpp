@@ -17,7 +17,7 @@ namespace Athena
 			const uint32 minMinor = VK_API_VERSION_MINOR(VULKAN_VERSION);
 			const uint32 minPatch = VK_API_VERSION_PATCH(VULKAN_VERSION);
 
-			ATN_CORE_INFO_TAG("Vulkan", "Min supported version: {}.{}.{}.{}", minVariant, minMajor, minMinor, minPatch);
+			ATN_LOG_INFO(Vulkan, "Min supported version: {}.{}.{}.{}", minVariant, minMajor, minMinor, minPatch);
 
 			if (variant > minVariant)
 				return true;
@@ -74,23 +74,23 @@ namespace Athena
 			for (auto ext : supportedExtensions)
 				message += std::format("'{}'\n\t", ext.extensionName);
 
-			ATN_CORE_TRACE_TAG("Vulkan", message);
+			ATN_LOG_TRACE(Vulkan, message);
 
 			message = "Vulkan required extensions: \n\t";
 			for (auto ext : requiredExtensions)
 				message += std::format("'{}'\n\t", ext);
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			ATN_LOG_INFO(Vulkan, message);
 
 			if (!missingExtensions.empty())
 			{
-				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version does not support required instance extensions!");
+				ATN_LOG_FATAL(Vulkan, "Current Vulkan version does not support required instance extensions!");
 
 				message = "Missing extensions: \n\t";
 				for (auto ext : missingExtensions)
 					message += std::format("'{}'\n\t", ext);
 
-				ATN_CORE_ERROR_TAG("Vulkan", message);
+				ATN_LOG_ERROR(Vulkan, message);
 				ensuref(false);
 			}
 
@@ -128,23 +128,23 @@ namespace Athena
 			for (auto layer : supportedLayers)
 				message += std::format("'{}'\n\t", layer.layerName);
 
-			ATN_CORE_TRACE_TAG("Vulkan", message);
+			ATN_LOG_TRACE(Vulkan, message);
 
 			message = "Vulkan required layers: \n\t";
 			for (auto layer : requiredLayers)
 				message += std::format("'{}'\n\t", layer);
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			ATN_LOG_INFO(Vulkan, message);
 
 			if (!missingLayers.empty())
 			{
-				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version does not support required instance layers!");
+				ATN_LOG_FATAL(Vulkan, "Current Vulkan version does not support required instance layers!");
 
 				message = "Missing layers: \n\t";
 				for (auto layer : missingLayers)
 					message += std::format("'{}'\n\t", layer);
 
-				ATN_CORE_ERROR_TAG("Vulkan", message);
+				ATN_LOG_ERROR(Vulkan, message);
 				ensuref(false);
 			}
 
@@ -166,11 +166,11 @@ namespace Athena
 			uint32 minor = VK_API_VERSION_MINOR(supportedVersion);
 			uint32 patch = VK_API_VERSION_PATCH(supportedVersion);
 
-			ATN_CORE_INFO_TAG("Vulkan", "Version: {}.{}.{}.{}", variant, major, minor, patch);
+			ATN_LOG_INFO(Vulkan, "Version: {}.{}.{}.{}", variant, major, minor, patch);
 
 			if (!Utils::CheckVulkanVersion(variant, major, minor, patch))
 			{
-				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version is unsupported!");
+				ATN_LOG_FATAL(Vulkan, "Current Vulkan version is unsupported!");
 				ensuref(false);
 			}
 

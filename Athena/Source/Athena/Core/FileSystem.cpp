@@ -19,7 +19,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to read file {}", path);
 		}
 
 		return result;
@@ -41,7 +41,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read binary file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to read binary file {}", path);
 		}
 		
 		return result;
@@ -63,7 +63,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to write to file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to write to file {}", path);
 		}
 
 		return false;

@@ -191,7 +191,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
 			const auto& setStats = stats[set];
-			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} storage textures, {} separate samplers, {} ubos, {} sbos", 
+			ATN_LOG_INFO(Vulkan, "Create descriptor set layout {} with {} textures, {} storage textures, {} separate samplers, {} ubos, {} sbos", 
 				set, setStats.SampledTextures, setStats.StorageTextures, setStats.Samplers, setStats.UBOs, setStats.SBOs);
 		}
 

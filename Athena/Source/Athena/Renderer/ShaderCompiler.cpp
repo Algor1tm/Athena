@@ -13,10 +13,10 @@
 namespace Athena
 {
 #define COMPILATION_FAILED_LOG(name, errorMsg) \
-	ATN_CORE_ERROR_TAG("Renderer", "Shader '{}' compilation failed, error message:\n{}\n", name, errorMsg)
+	ATN_LOG_ERROR(Renderer, "Shader '{}' compilation failed, error message:\n{}\n", name, errorMsg)
 
 #define COMPILATION_STAGE_FAILED_LOG(name, stage, errorMsg) \
-	ATN_CORE_ERROR_TAG("Renderer", "Shader '{}'({}) compilation failed, error message:\n{}\n", name, Utils::ShaderStageToString(stage), errorMsg)
+	ATN_LOG_ERROR(Renderer, "Shader '{}'({}) compilation failed, error message:\n{}\n", name, Utils::ShaderStageToString(stage), errorMsg)
 
 
 	namespace Utils
@@ -295,7 +295,7 @@ namespace Athena
 		}
 
 		if (result.NeedRecompile)
-			ATN_CORE_INFO_TAG("Renderer", "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
+			ATN_LOG_INFO(Renderer, "Shader '{}' compilation took {}", m_Name, compilationTimer.ElapsedTime());
 
 		return compiled;
 	}
@@ -553,7 +553,7 @@ namespace Athena
 		result.WorkGroupSize = { 0, 0, 0 };
 		result.PushConstant.StageFlags = ShaderStage::UNDEFINED;
 
-		ATN_CORE_INFO_TAG("Renderer", "Reflecting Shader '{}'", m_Name);
+		ATN_LOG_INFO(Renderer, "Reflecting Shader '{}'", m_Name);
 
 		for (const auto& [stage, src] : m_SPIRVBinaries)
 		{
@@ -729,25 +729,25 @@ namespace Athena
 
 		result.PushConstant.Enabled = result.PushConstant.Size != 0;
 
-		ATN_CORE_TRACE("push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
+		ATN_LOG_TRACE(Renderer, "push constant: {} members, {} bytes", result.PushConstant.Members.size(), result.PushConstant.Size);
 		for (const auto& [name, member] : result.PushConstant.Members)
-			ATN_CORE_TRACE("\t{}: {} bytes, {} offset", name, member.Size, member.Offset);
+			ATN_LOG_TRACE(Renderer, "\t{}: {} bytes, {} offset", name, member.Size, member.Offset);
 
-		ATN_CORE_TRACE("sampled textures: {}", result.SampledTextures.size());
+		ATN_LOG_TRACE(Renderer, "sampled textures: {}", result.SampledTextures.size());
 		for (const auto& [name, texture] : result.SampledTextures)
-			ATN_CORE_TRACE("\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
+			ATN_LOG_TRACE(Renderer, "\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
 
-		ATN_CORE_TRACE("storage textures: {}", result.StorageTextures.size());
+		ATN_LOG_TRACE(Renderer, "storage textures: {}", result.StorageTextures.size());
 		for (const auto& [name, texture] : result.StorageTextures)
-			ATN_CORE_TRACE("\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
+			ATN_LOG_TRACE(Renderer, "\t{}: binding {}, set {}, arraySize {}", name, texture.Binding, texture.Set, texture.ArraySize);
 
-		ATN_CORE_TRACE("uniform buffers: {}", result.UniformBuffers.size());
+		ATN_LOG_TRACE(Renderer, "uniform buffers: {}", result.UniformBuffers.size());
 		for (const auto& [name, buffer] : result.UniformBuffers)
-			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
+			ATN_LOG_TRACE(Renderer, "\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
 
-		ATN_CORE_TRACE("storage buffers : {}", result.StorageBuffers.size());
+		ATN_LOG_TRACE(Renderer, "storage buffers : {}", result.StorageBuffers.size());
 		for (const auto& [name, buffer] : result.StorageBuffers)
-			ATN_CORE_TRACE("\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
+			ATN_LOG_TRACE(Renderer, "\t{}: {} bytes, binding {}, set {}, arraySize {}", name, buffer.Size, buffer.Binding, buffer.Set, buffer.ArraySize);
 
 		return result;
 	}

@@ -34,7 +34,7 @@ namespace Athena
 				NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
 			String message(messageBuffer, size);
-			ATN_CORE_ERROR_TAG("Platform", "WinAPI Error: {}", message);
+			ATN_LOG_ERROR(Windows, "WinAPI Error: {}", message);
 
 			LocalFree(messageBuffer);
 			return false;
@@ -45,7 +45,7 @@ namespace Athena
 			if (uMsg == BFFM_INITIALIZED)
 			{
 				std::string tmp = (const char*)lpData;
-				ATN_CORE_INFO_TAG("Platform", "WinAPI browse directory message: {}", tmp);
+				ATN_LOG_ERROR(Windows, "WinAPI browse directory message: {}", tmp);
 				SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
 			}
 
@@ -189,7 +189,7 @@ namespace Athena
 			s_Data.ProcessID = processID;
 		}
 
-		ATN_CORE_INFO_TAG("Platform", "Initalize Windows platform");
+		ATN_LOG_INFO(Windows, "Initalize Windows platform");
 	}
 
 	const CPUCapabilities& Platform::GetCPUCapabilities()
@@ -325,6 +325,11 @@ namespace Athena
 		return memUsage;
 	}
 
+	void Platform::LogNative(const String& message)
+	{
+		OutputDebugStringA(message.c_str());
+	}
+
 
 	Library::Library(const FilePath& path)
 		: m_Path(path)
@@ -334,7 +339,7 @@ namespace Athena
 		WINAPI_CHECK_LASTERROR();
 
 		if (IsLoaded())
-			ATN_CORE_INFO_TAG("Platform", "Successfully loaded library from {}", m_Path);
+			ATN_LOG_INFO(Windows, "Successfully loaded library from {}", m_Path);
 	}
 
 	Library::~Library()

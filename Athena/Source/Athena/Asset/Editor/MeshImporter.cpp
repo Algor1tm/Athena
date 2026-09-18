@@ -63,7 +63,7 @@ namespace Athena
 			if (level > 0)
 				msg = String(level, ' ') + msg;
 
-			ATN_CORE_TRACE(msg);
+			ATN_LOG_TRACE(Debug, msg);
 
 			for (uint32 i = 0; i < ainode->mNumChildren; ++i)
 			{
@@ -121,8 +121,8 @@ namespace Athena
 		if (m_aiScene == nullptr)
 		{
 			const char* error = aiGetErrorString();
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import mesh from {}.", m_Path);
-			ATN_CORE_ERROR("	Assimp Error: {}", error);
+			ATN_LOG_ERROR(AssetManager, "Failed to import mesh from {}.", m_Path);
+			ATN_LOG_ERROR(AssetManager, "	Assimp Error: {}", error);
 			return false;
 		}
 
@@ -257,7 +257,7 @@ namespace Athena
 
 		if (bonesMap.empty())
 		{
-			ATN_CORE_WARN_TAG("AssetManager", "Failed to import skeleton from {}", m_Path);
+			ATN_LOG_WARN(AssetManager, "Failed to import skeleton from {}", m_Path);
 			return nullptr;
 		}
 
@@ -516,7 +516,7 @@ namespace Athena
 						}
 						else if (k == ShaderDef::MAX_NUM_BONES_PER_VERTEX - 1)
 						{
-							ATN_CORE_WARN_TAG("StaticMesh", "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+							ATN_LOG_WARN(AssetManager, "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
 								boneID, weight);
 						}
 					}
@@ -652,7 +652,7 @@ namespace Athena
 				handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 				if (!handle)
 				{
-					ATN_CORE_WARN_TAG("AssetManager", "Failed to find texture with filepath {} while importing MeshSource", path);
+					ATN_LOG_WARN(AssetManager, "Failed to find texture with filepath {} while importing MeshSource", path);
 				}
 			}
 		}
@@ -706,14 +706,14 @@ namespace Athena
 		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
 		if (!data)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to mesh import settings from {}!", absolutePath);
 			return false;
 		}
 
 		YAML::Node root = data["MeshImportSettings"];
 		if (!root)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to mesh import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to mesh import settings from {}!", absolutePath);
 			return false;
 		}
 
@@ -731,7 +731,7 @@ namespace Athena
 
 		if (ImportAnimations == true && CollapseGraph == false)
 		{
-			ATN_CORE_WARN_TAG("AssetManager", "Forcing CollapseGraph to true in MeshImportSettings");
+			ATN_LOG_WARN(AssetManager, "Forcing CollapseGraph to true in MeshImportSettings");
 			CollapseGraph = true;
 		}
 		

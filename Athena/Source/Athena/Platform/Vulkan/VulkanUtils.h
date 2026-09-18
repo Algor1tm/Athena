@@ -77,10 +77,10 @@ namespace Athena::Vulkan
         const char* errorString = GetResultString(error);
 
         if (error > 0)
-            ATN_CORE_ERROR_TAG("Vulkan", "VkResult = {}, Error: {}", (int)error, errorString);
+            ATN_LOG_ERROR(Vulkan, "VkResult = {}, Error: {}", (int)error, errorString);
 
         if (error < 0)
-            ATN_CORE_FATAL_TAG("Vulkan", "VkResult = {}, Fatal Error: {}", (int)error, errorString);
+            ATN_LOG_FATAL(Vulkan, "VkResult = {}, Fatal Error: {}", (int)error, errorString);
 
         return false;
     }
@@ -178,19 +178,19 @@ namespace Athena::Vulkan
         switch (flags)
         {
         case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
-            ATN_CORE_INFO_TAG("Vulkan", pMessage);
+            ATN_LOG_INFO(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", pMessage);
+            ATN_LOG_WARN(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", pMessage);
+            ATN_LOG_WARN(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-            ATN_CORE_ERROR_TAG("Vulkan", pMessage);
+            ATN_LOG_ERROR(Vulkan, pMessage);
             checkf(false);
             break;
         }

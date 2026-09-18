@@ -55,14 +55,14 @@ namespace Athena
 		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
 		if (!data)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load environment map import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load environment map import settings from {}!", absolutePath);
 			return false;
 		}
 
 		YAML::Node root = data["EnvironmentMapImportSettings"];
 		if (!root)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load environment map import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load environment map import settings from {}!", absolutePath);
 			return false;
 		}
 
@@ -72,7 +72,7 @@ namespace Athena
 		if (!IsValidFormat())
 		{
 			FloatFormat = Format::R11G11B10F;
-			ATN_CORE_WARN_TAG("AssetManager", "Forcing format of environment map to R11G11B10F!");
+			ATN_LOG_ERROR(AssetManager, "Forcing format of environment map to R11G11B10F!");
 		}
 
 		return true;
@@ -129,14 +129,14 @@ namespace Athena
 		YAML::Node data = YAML::TryLoadYAMLFile(absolutePath);
 		if (!data)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load texture import settings from {}!", absolutePath);
 			return false;
 		}
 
 		auto root = data["TextureImportSettings"];
 		if (!root)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to load texture import settings from {}!", absolutePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load texture import settings from {}!", absolutePath);
 			return false;
 		}
 
@@ -188,7 +188,7 @@ namespace Athena
 
 		if (data == nullptr || format == Format::NONE)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from{}, (width = {}, height = {}, channels = {})", filepath, width, height, channels);
+			ATN_LOG_ERROR(AssetManager, "Failed to import texture from{}, (width = {}, height = {}, channels = {})", filepath, width, height, channels);
 			return nullptr;
 		}
 
@@ -250,7 +250,7 @@ namespace Athena
 
 		if (data == nullptr || format == Format::NONE)
 		{
-			ATN_CORE_ERROR_TAG("AssetManager", "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Settings->Name, width, height, channels);
+			ATN_LOG_ERROR(AssetManager, "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Settings->Name, width, height, channels);
 			return nullptr;
 		}
 
@@ -383,6 +383,6 @@ namespace Athena
 		buffer.Release();
 
 		if (!result)
-			ATN_CORE_ERROR_TAG("Asset", "Failed to save texture in file '{}'", path);
+			ATN_LOG_ERROR(AssetManager, "Failed to save texture in file '{}'", path);
 	}
 }

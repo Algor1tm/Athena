@@ -193,7 +193,7 @@ namespace Athena
 
 		if (!meshSource)
 		{
-			ATN_CORE_WARN_TAG("AssetManager", "Failed to play animation - invalid MeshHandle in AnimationController - {}!", m_MeshHandle);
+			ATN_LOG_ERROR(AssetManager, "Failed to play animation - invalid MeshHandle in AnimationController - {}!", m_MeshHandle);
 			return;
 		}
 
@@ -203,7 +203,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_WARN_TAG("AssetManager", "Attempt to play Animation that does not belong to AnimationController!");
+			ATN_LOG_ERROR(AssetManager, "Attempt to play Animation that does not belong to AnimationController!");
 		}
 	}
 }

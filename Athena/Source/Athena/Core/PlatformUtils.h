@@ -34,6 +34,8 @@ namespace Athena
 		static double GetHighPrecisionTime();
 		// In bytes
 		static uint64 GetMemoryUsage();
+
+		static void LogNative(const String& Message);
 	};
 
 	class ATHENA_API Library

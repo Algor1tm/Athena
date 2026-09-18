@@ -2,11 +2,12 @@
 
 #include "Athena/Core/Core.h"
 
+#include <string_view>
+
 #if defined(_MSC_VER)
 	#pragma warning(push, 0)
 #endif
 
-#include <spdlog/spdlog.h>
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
 
@@ -17,79 +18,78 @@
 
 namespace Athena
 {
+	enum class LogLevel
+	{
+		Trace = 1, Info, Warn, Error, Fatal
+	};
+
 	struct LogConfig
 	{
 		bool EnableConsole = true;
-		FilePath FileLocation;	// Relative to working dir
+		FilePath OutputPath;	// Relative to working dir
 	};
 
-	class Log
+
+	struct LogCategory
+	{
+		LogCategory(::std::string_view CategoryName)
+			: Name(CategoryName)
+		{}
+
+		::std::string_view Name;
+		bool Enabled = true;
+	};
+
+
+	class ATHENA_API Logger
 	{
 	public:
-		enum class Type
+		static Logger& Get()
 		{
-			Core = 1, Client
-		};
+			return s_Instance;
+		}
 
-		enum class Level
-		{
-			Trace = 1, Info, Warn, Error, Fatal
-		};
-
-	public:
-		static void Init(const LogConfig& config);
+		void Init(const LogConfig& config);
+		void Shutdown();
 
 		template <typename... Args>
-		static void Message(Type type, Level level, std::string_view tag, Args&&... args);
+		void Message(const LogCategory& category, LogLevel level, Args&&... args);
 
 	private:
-		static inline String FormatMessage(const String& msg);
+		inline String FormatMessage(const String& msg);
 
 		template <typename... Args>
-		static inline String FormatMessage(const String& msg, Args&&... args);
+		inline String FormatMessage(const String& msg, Args&&... args);
+
+		void MessageInternal(const String& message, LogLevel level);
 
 	private:
-		ATHENA_API static std::shared_ptr<spdlog::logger> s_CoreLogger;
-		ATHENA_API static std::shared_ptr<spdlog::logger> s_ClientLogger;
+		static Logger s_Instance;
 	};
+
 
 
 	template <typename... Args>
-	void Log::Message(Log::Type type, Log::Level level, std::string_view tag, Args&&... args)
+	void Logger::Message(const LogCategory& category, LogLevel level, Args&&... args)
 	{
-		auto logger = type == Log::Type::Core ? s_CoreLogger : s_ClientLogger;
-		std::string_view logTemplate = tag.empty() ? "{0}{1}" : "[{0}] {1}";
+		if (!category.Enabled)
+			return;
+
+		std::string_view logTemplate = "[{0}] {1}";
 
 		String msg = FormatMessage(args...);
-		auto finalMsg = fmt::vformat(logTemplate, fmt::make_format_args(tag, msg));
+		String finalMsg = fmt::vformat(logTemplate, fmt::make_format_args(category.Name, msg));
 
-		switch (level)
-		{
-		case Log::Level::Trace:
-			logger->trace(finalMsg);
-			break;
-		case Log::Level::Info:
-			logger->info(finalMsg);
-			break;
-		case Log::Level::Warn:
-			logger->warn(finalMsg);
-			break;
-		case Log::Level::Error:
-			logger->error(finalMsg);
-			break;
-		case Log::Level::Fatal:
-			logger->critical(finalMsg);
-			break;
-		}
+		MessageInternal(finalMsg, level);
 	}
 
-	inline String Log::FormatMessage(const String& msg)
+	inline String Logger::FormatMessage(const String& msg)
 	{
 		return msg;
 	}
 
 	template <typename... Args>
-	inline String Log::FormatMessage(const String& msg, Args&&... args)
+	inline String Logger::FormatMessage(const String& msg, Args&&... args)
 	{
 		String formattedMsg = fmt::vformat(msg, fmt::make_format_args(args...));
 		return formattedMsg;
@@ -126,37 +126,40 @@ namespace fmt
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Tagged logs (prefer using these)
-// Example with tag: ATN_TRACE_TAG("Editor", "Fatal error") "[Editor] Fatal error"
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Core logging
-#define ATN_CORE_TRACE_TAG(tag, ...)	::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Trace, tag, __VA_ARGS__)
-#define ATN_CORE_INFO_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Info, tag, __VA_ARGS__)
-#define ATN_CORE_WARN_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Warn, tag, __VA_ARGS__)
-#define ATN_CORE_ERROR_TAG(tag, ...)	::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Error, tag, __VA_ARGS__)
-#define ATN_CORE_FATAL_TAG(tag, ...)	::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Fatal, tag, __VA_ARGS__)
+#if ATN_ENABLE_LOGGING
+	#define LOG_CAT_SYMBOL_NAME(CategoryName) g_LogCategory_##CategoryName
 
-// Client logging
-#define ATN_TRACE_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Trace, tag, __VA_ARGS__)
-#define ATN_INFO_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Info, tag, __VA_ARGS__)
-#define ATN_WARN_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Warn, tag, __VA_ARGS__)
-#define ATN_ERROR_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Error, tag, __VA_ARGS__)
-#define ATN_FATAL_TAG(tag, ...)		::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Fatal, tag, __VA_ARGS__)
+	#define EXPORT_LOG_CATEGORY(CategoryName) extern ATHENA_API LogCategory LOG_CAT_SYMBOL_NAME(CategoryName)
+	#define DEFINE_LOG_CATEGORY(CategoryName) ATHENA_API LogCategory LOG_CAT_SYMBOL_NAME(CategoryName) = LogCategory(ATN_STRINGIFY_MACRO(CategoryName))
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	#define ATN_LOG_TRACE(CategoryName, ...) ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Trace, __VA_ARGS__)
+	#define ATN_LOG_INFO(CategoryName, ...)  ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Info, __VA_ARGS__)
+	#define ATN_LOG_WARN(CategoryName, ...)  ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Warn, __VA_ARGS__)
+	#define ATN_LOG_ERROR(CategoryName, ...) ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Error, __VA_ARGS__);
+	#define ATN_LOG_FATAL(CategoryName, ...) ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Fatal, __VA_ARGS__); ATN_DEBUGBREAK()
+#else
+	#define EXPORT_LOG_CATEGORY(CategoryName)
+	#define DEFINE_LOG_CATEGORY(CategoryName)
 
-// Core logging
-#define ATN_CORE_TRACE(...)		::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Trace, "", __VA_ARGS__)
-#define ATN_CORE_INFO(...)	    ::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Info, "", __VA_ARGS__)
-#define ATN_CORE_WARN(...)      ::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Warn, "", __VA_ARGS__)
-#define ATN_CORE_ERROR(...)     ::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Error, "", __VA_ARGS__)
-#define ATN_CORE_FATAL(...)     ::Athena::Log::Message(::Athena::Log::Type::Core, ::Athena::Log::Level::Fatal, "", __VA_ARGS__)
+	#define ATN_LOG_TRACE(CategoryName, ...)
+	#define ATN_LOG_INFO(CategoryName, ...)
+	#define ATN_LOG_WARN(CategoryName, ...)
+	#define ATN_LOG_ERROR(CategoryName, ...)
+	#define ATN_LOG_FATAL(CategoryName, ...)
+#endif
 
-// Client logging
-#define ATN_TRACE(...)		  ::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Trace, "", __VA_ARGS__)
-#define ATN_INFO(...)	      ::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Info, "", __VA_ARGS__)
-#define ATN_WARN(...)         ::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Warn, "", __VA_ARGS__)
-#define ATN_ERROR(...)        ::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Error, "", __VA_ARGS__)
-#define ATN_FATAL(...)        ::Athena::Log::Message(::Athena::Log::Type::Client, ::Athena::Log::Level::Fatal, "", __VA_ARGS__)
+namespace Athena
+{
+	EXPORT_LOG_CATEGORY(LogTemp);
+	EXPORT_LOG_CATEGORY(Debug);
+	EXPORT_LOG_CATEGORY(General);
+	EXPORT_LOG_CATEGORY(Windows);
+	EXPORT_LOG_CATEGORY(Renderer);
+	EXPORT_LOG_CATEGORY(Vulkan);
+	EXPORT_LOG_CATEGORY(AssetManager);
+	EXPORT_LOG_CATEGORY(FileSystem);
+	EXPORT_LOG_CATEGORY(Scene);
+	EXPORT_LOG_CATEGORY(ScriptEngine);
+	EXPORT_LOG_CATEGORY(Editor);
+}

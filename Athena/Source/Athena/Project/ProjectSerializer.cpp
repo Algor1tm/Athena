@@ -74,7 +74,7 @@ namespace Athena
 		}
 		catch (YAML::ParserException e)
 		{
-			ATN_CORE_ERROR("Failed to load project file '{0}'\n     {1}", path, e.what());
+			ATN_LOG_ERROR(AssetManager, "Failed to load project file '{0}'\n     {1}", path, e.what());
 			return false;
 		}
 

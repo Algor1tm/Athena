@@ -23,7 +23,7 @@ namespace Athena
 		if (m_Config.CleanCacheOnLoad)
 			FileSystem::Remove(m_Config.EngineResourcesPath / "Cache");
 
-		Log::Init(appinfo.LogConfig);
+		Logger::Get().Init(appinfo.LogConfig);
 		Renderer::Init(appinfo.RendererConfig);
 		CreateMainWindow(appinfo.WindowInfo);
 		Platform::Init();
@@ -42,8 +42,9 @@ namespace Athena
 		// Window cant be destroyed before Renderer::Shutdown, because of ImGui and GLFW
 		m_Window->DestroySwapChain();
 		Renderer::Shutdown();
-
 		m_Window.Release();
+
+		Logger::Get().Shutdown();
 	}
 
 	void Application::Run()

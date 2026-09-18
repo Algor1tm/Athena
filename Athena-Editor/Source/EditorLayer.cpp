@@ -414,7 +414,7 @@ namespace Athena
 
                     if (ImGui::MenuItem("Github", NULL, false))
                     {
-                        Platform::OpenInBrowser(TEXT("https://github.com/Algor1tm/Athena"));
+                        Platform::OpenInBrowser(L"https://github.com/Algor1tm/Athena");
                     }
 
                     ImGui::EndMenu();
@@ -1221,7 +1221,7 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
         m_EditorCtx->SelectedEntity = {};
 
-        ATN_CORE_INFO_TAG("EditorLayer", "Successfully created new scene");
+        ATN_LOG_INFO(Editor, "Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
@@ -1234,14 +1234,14 @@ namespace Athena
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to save scene {}", filepath);
+            ATN_LOG_ERROR(Editor, "Invalid filepath to save scene {}", filepath);
     }
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
         SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_INFO_TAG("EditorLayer", "Successfully saved scene into {}", path);
+        ATN_LOG_INFO(Editor, "Successfully saved scene into {}", path);
     }
 
     void EditorLayer::OpenScene()
@@ -1254,7 +1254,7 @@ namespace Athena
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to loaded scene {}", filepath);
+            ATN_LOG_ERROR(Editor, "Invalid filepath to loaded scene {}", filepath);
     }
 
     void EditorLayer::OpenScene(const FilePath& path)
@@ -1268,7 +1268,7 @@ namespace Athena
         if(serializer.DeserializeFromFile(path.string()))
         {
             m_CurrentScenePath = path;
-            ATN_CORE_INFO_TAG("EditorLayer", "Successfully load scene from {}", path);
+            ATN_LOG_INFO(Editor, "Successfully load scene from {}", path);
         }
 
         m_RuntimeScene = nullptr;

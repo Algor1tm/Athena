@@ -25,7 +25,7 @@ namespace Athena
 		}
 		
 		if(!loaded)
-			ATN_CORE_ERROR_TAG("ImGuiLayer", "Failed to load UI font '{}'!", path);
+			ATN_LOG_ERROR(Renderer, "Failed to load ImGUI UI font '{}'!", path);
 
 		return font;
 	}
@@ -173,7 +173,7 @@ namespace Athena
 
 		m_ImGuiImpl->Init(window.GetNativeWindow());
 
-		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
+		ATN_LOG_INFO(Renderer, "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
 	}
 
@@ -186,7 +186,7 @@ namespace Athena
 			ImGui::DestroyContext();
 		});
 
-		ATN_CORE_INFO_TAG("ImGuiLayer", "Shutdown ImGui");
+		ATN_LOG_INFO(Renderer, "Shutdown ImGui");
 	}
 
 	void ImGuiLayer::OnEvent(Event& event)

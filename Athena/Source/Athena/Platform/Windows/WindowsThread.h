@@ -34,7 +34,7 @@ namespace Athena
 			&threadID
 		);
 
-		ATN_CORE_ASSERT(m_Handle);
+		ensuref(m_Handle);
 
 		if (m_Handle)
 		{
@@ -60,7 +60,7 @@ namespace Athena
 			return;
 
 		DWORD result = SuspendThread(m_Handle);
-		ATN_CORE_ASSERT(result != (DWORD)-1);
+		checkf(result != (DWORD)-1);
 	}
 
 	void Thread::Resume()
@@ -69,7 +69,7 @@ namespace Athena
 			return;
 
 		DWORD result = ResumeThread(m_Handle);
-		ATN_CORE_ASSERT(result != (DWORD)-1);
+		checkf(result != (DWORD)-1);
 	}
 
 	void Thread::Join()
@@ -78,7 +78,7 @@ namespace Athena
 			return;
 
 		DWORD result = WaitForSingleObject(m_Handle, INFINITE);
-		ATN_CORE_ASSERT(result == WAIT_OBJECT_0);
+		checkf(result == WAIT_OBJECT_0);
 	}
 
 	uint64 Thread::GetCurrentThreadID()

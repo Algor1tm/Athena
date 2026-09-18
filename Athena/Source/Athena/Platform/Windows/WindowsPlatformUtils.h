@@ -69,8 +69,8 @@ namespace Athena
 		}
 	}
 
-#ifdef ATN_ENABLE_ASSERTS
-	#define WINAPI_CHECK_LASTERROR() ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
+#if ATN_ENABLE_CHECKS
+	#define WINAPI_CHECK_LASTERROR() checkf(WindowsUtils::CheckLastError())
 	#define WINAPI_SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
 #else
 	#define WINAPI_CHECK_LASTERROR()

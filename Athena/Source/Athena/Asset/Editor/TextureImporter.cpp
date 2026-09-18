@@ -299,7 +299,7 @@ namespace Athena
 		case 4: return sRGB ? Format::RGBA8_SRGB : Format::RGBA8;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return Format::NONE;
 	}
 
@@ -311,7 +311,7 @@ namespace Athena
 		case 4: return Format::RGBA32F;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return Format::NONE;
 	}
 
@@ -367,8 +367,7 @@ namespace Athena
 
 		if (buffer.Size() == 0)
 		{
-			ATN_CORE_ERROR_TAG("Asset", "Failed to save texture in file '{}' (failed to read texture memory)", path);
-			ATN_CORE_ASSERT(false);
+			ensure(false, "Failed to save texture in file '{}' (failed to read texture memory)", path);
 			return;
 		}
 

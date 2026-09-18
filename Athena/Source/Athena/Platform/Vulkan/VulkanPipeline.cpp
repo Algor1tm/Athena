@@ -19,7 +19,7 @@ namespace Athena
 			case Topology::LINE_LIST:     return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkPrimitiveTopology)0;
 		}
 
@@ -32,7 +32,7 @@ namespace Athena
 			case CullMode::FRONT: return VK_CULL_MODE_FRONT_BIT;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkCullModeFlags)0;
 		}
 
@@ -47,7 +47,7 @@ namespace Athena
 			case DepthCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkCompareOp)0;
 		}
 	}

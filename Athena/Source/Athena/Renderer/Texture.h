@@ -255,7 +255,7 @@ namespace Athena
 				case TextureFilter::TRILINEAR: return "TRILINEAR";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -268,7 +268,7 @@ namespace Athena
 			else if (filterString == "TRILINEAR")
 				return TextureFilter::TRILINEAR;
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return TextureFilter::NEAREST;
 		}
 
@@ -283,7 +283,7 @@ namespace Athena
 			case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return "MIRRORED_CLAMP_TO_EDGE";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -300,7 +300,7 @@ namespace Athena
 			else if (wrapString == "MIRRORED_CLAMP_TO_EDGE")
 				return TextureWrap::MIRRORED_CLAMP_TO_EDGE;
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return TextureWrap::REPEAT;
 		}
 	}

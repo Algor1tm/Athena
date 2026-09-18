@@ -54,7 +54,7 @@ namespace Athena
 
 		if (m_Texture == nullptr)
 		{
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return;
 		}
 

@@ -128,7 +128,7 @@ namespace Athena
 
 	VkCommandBuffer VulkanRenderCommandBuffer::GetActiveCommandBuffer()
 	{
-		ATN_CORE_ASSERT(!m_CommandBuffers.empty());
+		checkf(!m_CommandBuffers.empty());
 
 		switch (m_Info.Usage)
 		{

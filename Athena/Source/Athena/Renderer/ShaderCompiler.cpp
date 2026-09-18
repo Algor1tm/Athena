@@ -31,7 +31,7 @@ namespace Athena
 			case ShaderStage::COMPUTE_STAGE:   return shaderc_glsl_compute_shader;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (shaderc_shader_kind)0;
 		}
 
@@ -46,7 +46,7 @@ namespace Athena
 			case ShaderStage::COMPUTE_STAGE: return "Compute Stage";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -75,7 +75,7 @@ namespace Athena
 			case spv::DimCube: return TextureType::TEXTURE_CUBE;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return TextureType::TEXTURE_2D;
 		}
 
@@ -507,7 +507,7 @@ namespace Athena
 		case ShaderStage::FRAGMENT_STAGE:  cachedPath += L".frag_"; break;
 		case ShaderStage::GEOMETRY_STAGE:  cachedPath += L".geom_"; break;
 		case ShaderStage::COMPUTE_STAGE:   cachedPath += L".compute_"; break;
-		default: ATN_CORE_ASSERT(false); return "";
+		default: checkf(false); return "";
 		}
 
 		size_t hash = std::hash<std::string>()(source);
@@ -589,7 +589,7 @@ namespace Athena
 				uint32 bufferSize = compiler.get_declared_struct_size(bufferType);
 				int memberCount = bufferType.member_types.size();
 
-				ATN_CORE_ASSERT(bufferSize <= 128, "Push constant block is bigger than 128 bytes!");
+				check(bufferSize <= 128, "Push constant block is bigger than 128 bytes!");
 
 				result.PushConstant.Size = bufferSize;
 				result.PushConstant.Members.reserve(memberCount);

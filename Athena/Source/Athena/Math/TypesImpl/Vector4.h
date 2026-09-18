@@ -217,13 +217,13 @@ namespace Athena::Math
 	public:
 		constexpr const T& operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
+			check(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
 		constexpr T& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
+			check(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
@@ -371,7 +371,7 @@ namespace Athena::Math
 	}
 }
 
-#ifdef ATN_SIMD
+#if ATN_SIMD
 #include "Vector3.h"
 #include "Athena/Math/SIMD/TypesImpl/Vector4float_simd.h"
 #include "Athena/Math/SIMD/TypesImpl/VectorRelational_simd.h"

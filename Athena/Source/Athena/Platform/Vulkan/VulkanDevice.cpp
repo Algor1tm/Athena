@@ -72,7 +72,7 @@ namespace Athena
 			}
 
 			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
+			ensure(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
 		};
 
 		// Create Logical Device
@@ -94,7 +94,7 @@ namespace Athena
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 				"VK_EXT_memory_budget" };
 
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
 			deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
 
@@ -250,7 +250,7 @@ namespace Athena
 				message += std::format("'{}'\n\t", ext);
 
 			ATN_CORE_ERROR_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(false);
+			ensuref(false);
 		}
 
 		return missingExtensions.empty();

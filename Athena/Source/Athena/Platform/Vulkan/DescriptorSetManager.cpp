@@ -26,7 +26,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:	 return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkDescriptorType)0;
 		}
 	}
@@ -45,7 +45,7 @@ namespace Athena
 			case RenderResourceType::StorageBuffer:	   return "StorageBuffer";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -61,7 +61,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:		  return "StorageBuffer";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -77,7 +77,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:	  return false;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return false;
 		}
 	}
@@ -206,8 +206,7 @@ namespace Athena
 	{
 		if (!Validate())
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
-			ATN_CORE_ASSERT(false);
+			ensure(false, "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
 			return;
 		}
 
@@ -506,7 +505,7 @@ namespace Athena
 		case RenderResourceType::TextureViewCube:  return resource.As<VulkanTextureView>()->GetVulkanDescriptorInfo();
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return resource.As<VulkanTexture2D>()->GetVulkanDescriptorInfo();
 	}
 
@@ -518,7 +517,7 @@ namespace Athena
 		case RenderResourceType::StorageBuffer:  return resource.As<VulkanStorageBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return resource.As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 	}
 

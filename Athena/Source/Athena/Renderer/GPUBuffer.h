@@ -30,7 +30,7 @@ namespace Athena
 			case ShaderDataType::Mat4:   return 4 * 16;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		check(false, "Unknown ShaderDataType!");
 		return 0;
 	}
 
@@ -51,7 +51,7 @@ namespace Athena
 		case ShaderDataType::Mat4:   return "mat4";
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		check(false, "Unknown ShaderDataType!");
 		return "";
 	}
 
@@ -84,7 +84,7 @@ namespace Athena
 				case ShaderDataType::UInt: return 4;
 			}
 
-			ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+			check(false, "Unknown ShaderDataType!");
 			return 0;
 		}
 	};

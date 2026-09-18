@@ -101,7 +101,7 @@ namespace Athena
 		init_info.ImageCount = Renderer::GetFramesInFlight();
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = nullptr;
-		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ensuref(result == VK_SUCCESS) };
 
 		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
 

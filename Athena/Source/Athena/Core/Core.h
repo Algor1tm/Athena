@@ -1,8 +1,8 @@
 #pragma once
 
 // Type of linking detection
-#ifdef ATN_PLATFORM_WINDOWS
-	#ifdef ATN_BUILD_DLL
+#if ATN_PLATFORM_WINDOWS
+	#if ATN_BUILD_DLL
 		#define ATHENA_API __declspec(dllexport)
 	#else
 		#define  ATHENA_API __declspec(dllimport)
@@ -12,17 +12,25 @@
 #endif // End of linking detection
 
 
-#ifdef ATN_DEBUG
-	#define ATN_ENABLE_DEBUGBREAK
-	#define ATN_ENABLE_ASSERTS
-	#define ATN_ENABLE_VERIFIES
-	#define ATN_ENABLE_PROFILING
-	#define ATN_LOG_LEVEL_DEBUG
+// Configuration
+#if ATN_DEBUG
+	#define ATN_ENABLE_DEBUGBREAK 1
+	#define ATN_ENABLE_CHECKS 1
+	#define ATN_ENABLE_ENSURES 1
+	#define ATN_ENABLE_PROFILING 1
+	#define ATN_LOG_LEVEL_DEBUG 1
 #elif ATN_RELEASE
-	#define ATN_ENABLE_VERIFIES
-	#define ATN_ENABLE_PROFILING
+	#define ATN_ENABLE_DEBUGBREAK 1
+	#define ATN_ENABLE_CHECKS 0
+	#define ATN_ENABLE_ENSURES 1
+	#define ATN_ENABLE_PROFILING 1
+	#define ATN_LOG_LEVEL_DEBUG 0 
 #elif ATN_DIST
-
+	#define ATN_ENABLE_DEBUGBREAK 0
+	#define ATN_ENABLE_CHECKS 0
+	#define ATN_ENABLE_ENSURES 0
+	#define ATN_ENABLE_PROFILING 0
+	#define ATN_LOG_LEVEL_DEBUG 0 
 #endif
 
 
@@ -30,7 +38,6 @@
 #include <filesystem>
 
 
-// Utilities
 #define BIT(x) (1 << x)
 #define ATN_EXPAND_MACRO(x) x
 #define ATN_STRINGIFY_MACRO(x) #x
@@ -39,11 +46,10 @@
 	#define TEXT(quote) L##quote
 #endif
 
-// Debug break macro
-#ifdef ATN_ENABLE_DEBUGBREAK
-	#if defined(ATN_PLATFORM_WINDOWS)
+#if ATN_ENABLE_DEBUGBREAK
+	#if ATN_PLATFORM_WINDOWS
 		#define ATN_DEBUGBREAK() __debugbreak()
-	#elif defined(ATN_PLATFORM_LINUX)
+	#elif ATN_PLATFORM_LINUX
 		#include <signal.h>
 		#define ATN_DEBUGBREAK() raise(SIGTRAP)
 	#else
@@ -54,36 +60,26 @@
 #endif
 
 
-// Asserts Implementation
-#if defined(ATN_ENABLE_ASSERTS) || defined(ATN_ENABLE_VERIFIES)
-	#define ATN_INTERNAL_ASSERT_IMPL(type, check, msg, ...) { if(!(check)) { ATN##type##ERROR(msg, __VA_ARGS__); ATN_DEBUGBREAK(); } }
-	#define ATN_INTERNAL_ASSERT_WITH_MSG(type, name, check, ...) ATN_INTERNAL_ASSERT_IMPL(type, check, name " failed: {0}", __VA_ARGS__)
-	#define ATN_INTERNAL_ASSERT_NO_MSG(type, name, check) ATN_INTERNAL_ASSERT_IMPL(type, check, name " '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(check), std::filesystem::path(__FILE__).filename().string(), __LINE__)
-
-	#define ATN_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro
-	#define ATN_INTERNAL_ASSERT_GET_MACRO(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO_NAME(__VA_ARGS__, ATN_INTERNAL_ASSERT_WITH_MSG, ATN_INTERNAL_ASSERT_NO_MSG) )
+#if ATN_ENABLE_CHECKS || ATN_ENABLE_ENSURES
+	#define ATN_INTERNAL_ASSERT_IMPL(cond, msg, ...) { if(!(cond)) { ATN_CORE_ERROR(msg __VA_OPT__(,) __VA_ARGS__); ATN_DEBUGBREAK(); } }
+	#define ATN_INTERNAL_FATAL_ASSERT_IMPL(cond, name) ATN_INTERNAL_ASSERT_IMPL(cond, name " '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(cond), std::filesystem::path(__FILE__).filename().string(), __LINE__)
 #endif
 
-
-// Asserts
-#ifdef ATN_ENABLE_ASSERTS
-	// Currently accepts at least the condition and one additional parameter (the message) being optional
-	#define ATN_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, "Assertion", __VA_ARGS__) )
-	#define ATN_CORE_ASSERT(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, "Assertion", __VA_ARGS__) )
+#if ATN_ENABLE_CHECKS
+	#define check(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
+	#define checkf(cond) ATN_INTERNAL_FATAL_ASSERT_IMPL(cond, "Assertion")
 #else
-	#define ATN_ASSERT(...) 
-	#define ATN_CORE_ASSERT(...)
+	#define check(cond, msg, ...)
+	#define checkf(cond)
 #endif
 
-// Verifies (More strong Asserts, works in release mode)
-#ifdef ATN_ENABLE_VERIFIES
-	#define ATN_VERIFY(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_, "Verify", __VA_ARGS__) )
-	#define ATN_CORE_VERIFY(...) ATN_EXPAND_MACRO( ATN_INTERNAL_ASSERT_GET_MACRO(__VA_ARGS__)(_CORE_, "Verify", __VA_ARGS__) )
+#if ATN_ENABLE_ENSURES
+	#define ensure(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
+	#define ensuref(cond) ATN_INTERNAL_FATAL_ASSERT_IMPL(cond, "Ensure")
 #else
-	#define ATN_VERIFY(...)
-	#define ATN_CORE_VERIFY(...)
+	#define ensure(cond, msg, ...)
+	#define ensuref(cond)
 #endif
-
 
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
 

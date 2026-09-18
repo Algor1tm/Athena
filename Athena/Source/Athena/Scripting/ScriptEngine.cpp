@@ -155,7 +155,7 @@ namespace Athena
 		InvokeScriptFunc(m_ScriptClass->GetName(), m_Instance->GetEntity(), m_ScriptClass->GetGetFieldsDescriptionMethod(),
 			m_Instance, &fieldRefs);
 
-		ATN_CORE_ASSERT(m_FieldMap.size() == fieldRefs.size());
+		checkf(m_FieldMap.size() == fieldRefs.size());
 		for (auto& [name, field] : m_FieldMap)
 		{
 			field.SetFieldReference(fieldRefs.at(name).GetFieldReference(), write);
@@ -193,7 +193,7 @@ namespace Athena
 
 	void ScriptEngine::InitProject()
 	{
-#ifdef ATN_DEBUG // This will search for scripting binary with MDd
+#if ATN_DEBUG // This will search for scripting binary with MDd
 		FilePath debugBinaryPath = Project::GetScriptsBinaryPath();
 		debugBinaryPath = debugBinaryPath.parent_path() / FilePath(debugBinaryPath.stem().string() + "-d" + debugBinaryPath.extension().string());
 		s_Data->ScriptsBinaryPath = debugBinaryPath;
@@ -207,7 +207,7 @@ namespace Athena
 
 	void ScriptEngine::LoadAssembly()
 	{
-#ifdef ATN_DIST
+#if ATN_DIST
 		const FilePath& libPath = s_Data->Config.ScriptsBinaryPath;
 
 		if (!FileSystem::Exists(libPath))
@@ -475,7 +475,7 @@ namespace Athena
 		athenaBinaryDir.insert(0, "${CMAKE_SOURCE_DIR}/");
 		Utils::ReplaceAll(configSource, "<REPLACE_ATHENA_BINARY_DIR>", athenaBinaryDir);
 
-#ifdef ATN_DEBUG
+#if ATN_DEBUG
 		Utils::ReplaceAll(configSource, "<REPLACE_USE_DEBUG_RUNTIME_LIBS>", "ON");
 #else
 		Utils::ReplaceAll(configSource, "<REPLACE_USE_DEBUG_RUNTIME_LIBS>", "OFF");

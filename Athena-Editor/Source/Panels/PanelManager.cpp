@@ -84,13 +84,13 @@ namespace Athena
 
 	void PanelManager::ClosePanel(std::string_view name)
 	{
-		ATN_CORE_ASSERT(m_Panels.contains(name));
+		checkf(m_Panels.contains(name));
 		m_Panels.at(name).IsOpen = false;
 	}
 
 	void PanelManager::OpenPanel(std::string_view name)
 	{
-		ATN_CORE_ASSERT(m_Panels.contains(name));
+		checkf(m_Panels.contains(name));
 		m_Panels.at(name).IsOpen = true;
 	}
 

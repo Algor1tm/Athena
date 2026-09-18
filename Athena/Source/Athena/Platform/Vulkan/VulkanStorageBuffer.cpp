@@ -35,7 +35,7 @@ namespace Athena
 
 	void VulkanStorageBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_CORE_ASSERT(m_Flags == BufferMemoryFlags::CPU_WRITEABLE);
+		ensuref(m_Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
 		if (size == 0)
 			return;

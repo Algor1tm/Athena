@@ -155,7 +155,7 @@ namespace Athena
 
 	void VulkanImage::UploadData(Buffer data, uint32 width, uint32 height)
 	{
-		ATN_CORE_ASSERT(data.Size() >= m_Info.Width * m_Info.Height * FormatUtils::BytesPerPixel(m_Info.TextureFormat), "Buffer is too small");
+		check(data.Size() >= m_Info.Width * m_Info.Height * FormatUtils::BytesPerPixel(m_Info.TextureFormat), "Buffer is too small");
 
 		VkDeviceSize imageSize = width * height * (uint64)FormatUtils::BytesPerPixel(m_Info.TextureFormat);
 
@@ -267,7 +267,7 @@ namespace Athena
 
 	void VulkanImage::WriteContentToBuffer(Buffer* buffer)
 	{
-		ATN_CORE_ASSERT(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
+		check(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
 
 		VkCommandPool commandPool;
 		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);

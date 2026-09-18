@@ -86,7 +86,7 @@ namespace Athena
 
 		void GetInitialValue()
 		{
-			ATN_CORE_ASSERT(m_FieldReference);
+			checkf(m_FieldReference);
 			memcpy(m_Buffer, m_FieldReference, m_Size);
 		}
 
@@ -173,7 +173,7 @@ namespace Athena
 			case ScriptFieldType::Vector4: return 16;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return 0;
 		}
 
@@ -210,7 +210,7 @@ namespace Athena
 			case ScriptFieldType::Vector4: return "Vector4";
 			}
 
-			ATN_CORE_ASSERT(false, "Unknown ScriptFieldType");
+			check(false, "Unknown ScriptFieldType");
 			return "None";
 		}
 
@@ -232,7 +232,7 @@ namespace Athena
 			if (fieldType == "Vector3") return ScriptFieldType::Vector3;
 			if (fieldType == "Vector4") return ScriptFieldType::Vector4;
 
-			ATN_CORE_ASSERT(false, "Unknown ScriptFieldType");
+			check(false, "Unknown ScriptFieldType");
 			return ScriptFieldType::None;
 		}
 	}

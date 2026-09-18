@@ -40,7 +40,7 @@ namespace Athena
 
 		appinfo.ScriptConfig.ScriptsPath = "Assets/Scripts";
 		appinfo.ScriptConfig.ModulePath = "Assets/Scripts";
-#ifdef ATN_DEBUG
+#if ATN_DEBUG
 		appinfo.ScriptConfig.EnableDebug = true;
 #else
 		appinfo.ScriptConfig.EnableDebug = false;

@@ -35,7 +35,7 @@ namespace Athena::UI
 			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
 			{
 				String* str = (String*)data->UserData;
-				ATN_CORE_ASSERT(&(*str->begin()) == data->Buf);
+				checkf(&(*str->begin()) == data->Buf);
 				str->resize(data->BufSize); 
 				data->Buf = &(*str->begin());
 			}
@@ -497,13 +497,13 @@ namespace Athena::UI
 
 	void OpenPopup(std::string_view name)
 	{
-		ATN_CORE_ASSERT(s_Data.Popups.contains(name));
+		checkf(s_Data.Popups.contains(name));
 		s_Data.Popups.at(name).IsActive = true;
 	}
 
 	void CloseCurrentPopup()
 	{
-		ATN_CORE_ASSERT(!s_Data.CurrentPopup.Name.empty());
+		checkf(!s_Data.CurrentPopup.Name.empty());
 
 		Popup& popup = s_Data.Popups.at(s_Data.CurrentPopup.Name);
 
@@ -515,7 +515,7 @@ namespace Athena::UI
 
 	bool BeginPopupModal(std::string_view name, ImGuiWindowFlags flags)
 	{
-		ATN_CORE_ASSERT(s_Data.Popups.contains(name));
+		checkf(s_Data.Popups.contains(name));
 
 		Popup& popup = s_Data.Popups.at(name);
 
@@ -558,7 +558,7 @@ namespace Athena::UI
 
 	void EnumAdd(std::string_view enumName, uint32 value, std::string_view label)
 	{
-		ATN_CORE_ASSERT(s_Data.Enums.contains(enumName));
+		checkf(s_Data.Enums.contains(enumName));
 
 		EnumUI& enumUI = s_Data.Enums.at(enumName);
 
@@ -568,7 +568,7 @@ namespace Athena::UI
 
 	bool PropertyEnumCombo(std::string_view label, std::string_view enumName, void* value)
 	{
-		ATN_CORE_ASSERT(s_Data.Enums.contains(enumName));
+		checkf(s_Data.Enums.contains(enumName));
 
 		EnumUI& enumUI = s_Data.Enums.at(enumName);
 		std::string_view selectedElem;

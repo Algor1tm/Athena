@@ -48,7 +48,7 @@ namespace Athena::Math
 
 		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
-			ATN_CORE_ASSERT(values.size() == Size4, "Invalid initializer list");
+			check(values.size() == Size4, "Invalid initializer list");
 			uint32 idx = 0;
 			for (auto& row : values)
 			{
@@ -94,7 +94,7 @@ namespace Athena::Math
 
 		constexpr ColumnType GetColumn(uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < 4, "Matrix subscript out of range");
+			check(idx < 4, "Matrix subscript out of range");
 			ColumnType out(m_Array[0][idx], m_Array[1][idx], m_Array[2][idx], m_Array[3][idx]);
 
 			return out;
@@ -222,13 +222,13 @@ namespace Athena::Math
 	public:
 		constexpr const RowType& operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Matrix subscript out of range");
+			check(idx < Size4, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
 		constexpr RowType& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Matrix subscript out of range");
+			check(idx < Size4, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
@@ -463,6 +463,6 @@ namespace Athena
 }
 
 
-#ifdef ATN_SIMD
+#if ATN_SIMD
 #include "Athena/Math/SIMD/TypesImpl/MatrixRelational_simd.h"
 #endif

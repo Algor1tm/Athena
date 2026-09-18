@@ -1,7 +1,7 @@
 #pragma once
 
 
-#ifdef ATN_ENABLE_PROFILING
+#if ATN_ENABLE_PROFILING
 	#include <optick.h>
 
 	#define ATN_PROFILE_FRAME(frameName) OPTICK_FRAME(frameName)

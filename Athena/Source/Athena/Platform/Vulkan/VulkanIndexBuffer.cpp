@@ -99,7 +99,7 @@ namespace Athena
 
 	void VulkanIndexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_CORE_VERIFY(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
+		ensuref(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
 			
 		auto buffer = m_IndexBufferSet[Renderer::GetCurrentFrameIndex()];
 

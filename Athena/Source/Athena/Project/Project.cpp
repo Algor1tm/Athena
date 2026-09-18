@@ -45,7 +45,7 @@ namespace Athena
 
 	bool Project::SaveActive()
 	{
-		ATN_CORE_ASSERT(!s_ActiveProject->m_ProjectDirectory.empty());
+		checkf(!s_ActiveProject->m_ProjectDirectory.empty());
 
 		ProjectSerializer serializer(s_ActiveProject);
 		if (serializer.Serialize(s_ActiveProject->GetProjectPath()))

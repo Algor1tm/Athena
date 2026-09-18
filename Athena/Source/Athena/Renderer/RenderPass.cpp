@@ -19,7 +19,7 @@ namespace Athena
 
 	void RenderPass::SetOutput(const RenderTarget& target)
 	{
-		ATN_CORE_ASSERT(target.Texture);
+		checkf(target.Texture);
 		m_Outputs.push_back(target);
 	}
 
@@ -33,7 +33,7 @@ namespace Athena
 			}
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return nullptr;
 	}
 
@@ -42,7 +42,7 @@ namespace Athena
 		if (index < m_Outputs.size())
 			return m_Outputs[index].Texture;
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return nullptr;
 	}
 
@@ -56,7 +56,7 @@ namespace Athena
 			}
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return nullptr;
 	}
 

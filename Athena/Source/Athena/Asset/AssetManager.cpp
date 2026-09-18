@@ -20,7 +20,7 @@ namespace Athena
 		case AssetType::Mesh:				  return Ref<Mesh>::Create();
 		}
 
-		ATN_CORE_ASSERT(false, "Invalid asset type!");
+		check(false, "Invalid asset type!");
 		return nullptr;
 	}
 

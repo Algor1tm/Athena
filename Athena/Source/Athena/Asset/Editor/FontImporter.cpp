@@ -46,7 +46,7 @@ namespace Athena
         packer.setScale(40.f);
 
         uint32 remaining = packer.pack(glyphs.data(), glyphs.size());
-        ATN_CORE_ASSERT(remaining == 0);
+        checkf(remaining == 0);
 
         int width = 0, height = 0;
         packer.getDimensions(width, height);

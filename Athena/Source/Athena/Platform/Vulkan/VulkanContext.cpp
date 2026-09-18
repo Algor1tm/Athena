@@ -10,12 +10,12 @@ namespace Athena
 
 	namespace Utils
 	{
-		static bool CheckMinSupportedVersion(uint32 variant, uint32 major, uint32 minor, uint32 patch)
+		static bool CheckVulkanVersion(uint32 variant, uint32 major, uint32 minor, uint32 patch)
 		{
-			const uint32 minVariant = VK_API_VERSION_VARIANT(VULKAN_MIN_SUPPORTED_VERSION);
-			const uint32 minMajor = VK_API_VERSION_MAJOR(VULKAN_MIN_SUPPORTED_VERSION);
-			const uint32 minMinor = VK_API_VERSION_MINOR(VULKAN_MIN_SUPPORTED_VERSION);
-			const uint32 minPatch = VK_API_VERSION_PATCH(VULKAN_MIN_SUPPORTED_VERSION);
+			const uint32 minVariant = VK_API_VERSION_VARIANT(VULKAN_VERSION);
+			const uint32 minMajor = VK_API_VERSION_MAJOR(VULKAN_VERSION);
+			const uint32 minMinor = VK_API_VERSION_MINOR(VULKAN_VERSION);
+			const uint32 minPatch = VK_API_VERSION_PATCH(VULKAN_VERSION);
 
 			ATN_CORE_INFO_TAG("Vulkan", "Min supported version: {}.{}.{}.{}", minVariant, minMajor, minMinor, minPatch);
 
@@ -91,7 +91,7 @@ namespace Athena
 					message += std::format("'{}'\n\t", ext);
 
 				ATN_CORE_ERROR_TAG("Vulkan", message);
-				ATN_CORE_VERIFY(false);
+				ensuref(false);
 			}
 
 			return missingExtensions.empty();
@@ -145,7 +145,7 @@ namespace Athena
 					message += std::format("'{}'\n\t", layer);
 
 				ATN_CORE_ERROR_TAG("Vulkan", message);
-				ATN_CORE_VERIFY(false);
+				ensuref(false);
 			}
 
 			return missingLayers.empty();
@@ -158,20 +158,20 @@ namespace Athena
 		// Create Vulkan Instance
 		{
 			// Select Vulkan Version
-			uint32 currentVersion = 0;
-			VK_CHECK(vkEnumerateInstanceVersion(&currentVersion));
+			uint32 supportedVersion = 0;
+			VK_CHECK(vkEnumerateInstanceVersion(&supportedVersion));
 
-			uint32 variant = VK_API_VERSION_VARIANT(currentVersion);
-			uint32 major = VK_API_VERSION_MAJOR(currentVersion);
-			uint32 minor = VK_API_VERSION_MINOR(currentVersion);
-			uint32 patch = VK_API_VERSION_PATCH(currentVersion);
+			uint32 variant = VK_API_VERSION_VARIANT(supportedVersion);
+			uint32 major = VK_API_VERSION_MAJOR(supportedVersion);
+			uint32 minor = VK_API_VERSION_MINOR(supportedVersion);
+			uint32 patch = VK_API_VERSION_PATCH(supportedVersion);
 
 			ATN_CORE_INFO_TAG("Vulkan", "Version: {}.{}.{}.{}", variant, major, minor, patch);
 
-			if (!Utils::CheckMinSupportedVersion(variant, major, minor, patch))
+			if (!Utils::CheckVulkanVersion(variant, major, minor, patch))
 			{
 				ATN_CORE_FATAL_TAG("Vulkan", "Current Vulkan version is unsupported!");
-				ATN_CORE_VERIFY(false);
+				ensuref(false);
 			}
 
 			VkApplicationInfo appInfo = {};
@@ -179,11 +179,8 @@ namespace Athena
 			appInfo.pNext = nullptr;
 			appInfo.pApplicationName = Application::Get().GetConfig().Name.c_str();
 			appInfo.pEngineName = "Athena";
-#ifdef ATN_DEBUG
-			appInfo.apiVersion = VULKAN_MIN_SUPPORTED_VERSION;
-#else
-			appInfo.apiVersion = currentVersion;
-#endif
+			appInfo.apiVersion = VULKAN_VERSION;
+
 			// Select Extensions
 			// NOTE: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
 			std::vector<const char*> extensions = {
@@ -194,7 +191,7 @@ namespace Athena
 		
 			std::vector<const char*> layers;
 
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
 			extensions.push_back("VK_EXT_debug_report");
 			layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
@@ -215,10 +212,10 @@ namespace Athena
 
 			VK_CHECK(vkCreateInstance(&instanceCI, nullptr, &s_Data.Instance));
 
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
 			// Setup the debug report callback
 			auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(VulkanContext::GetInstance(), "vkCreateDebugReportCallbackEXT");
-			ATN_CORE_ASSERT(vkCreateDebugReportCallbackEXT != NULL);
+			checkf(vkCreateDebugReportCallbackEXT != NULL);
 
 			VkDebugReportCallbackCreateInfoEXT reportCI = {};
 			reportCI.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -236,12 +233,8 @@ namespace Athena
 
 		// Create Allocator
 		{
-			uint32 version = 0;
-#ifdef ATN_DEBUG
-			version = VULKAN_MIN_SUPPORTED_VERSION;
-#else
-			VK_CHECK(vkEnumerateInstanceVersion(&version));
-#endif
+			uint32 version = VULKAN_VERSION;
+			// vkEnumerateInstanceVersion(&version);
 
 			s_Data.Allocator = Ref<VulkanAllocator>::Create(version);
 			s_Data.DescriptorSetAllocator = Ref<DescriptorSetAllocator>::Create();
@@ -290,7 +283,7 @@ namespace Athena
 			vkDestroyFence(VulkanContext::GetLogicalDevice(), s_Data.FrameSyncData[i].RenderCompleteFence, nullptr);
 		}
 
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
 		auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(s_Data.Instance, "vkDestroyDebugReportCallbackEXT");
 		vkDestroyDebugReportCallbackEXT(VulkanContext::GetInstance(), s_Data.DebugReport, nullptr);
 #endif

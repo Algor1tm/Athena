@@ -85,7 +85,7 @@ namespace Athena
 	using ScriptFunc_GetFieldsDescription = void (*)(Script* _this, ScriptFieldMap* outFields);
 
 
-#ifdef ATN_PLATFORM_WINDOWS
+#if ATN_PLATFORM_WINDOWS
 #define SCRIPT_API __declspec(dllexport)
 #else
 #define SCRIPT_API

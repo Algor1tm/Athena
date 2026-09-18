@@ -28,7 +28,7 @@ namespace Athena
 
 			VkBool32 supportWSI;
 			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
-			ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
+			ensure(supportWSI, "Selected Queue Family does not support WSI!");
 		}
 
 		// Query device properties and create SwapChain
@@ -41,7 +41,7 @@ namespace Athena
 
 			// Surface Capabilites
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
-			ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
+			ensuref(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
 
 			// Format
 			{
@@ -187,7 +187,7 @@ namespace Athena
 
 		uint32 imagesCount;
 		vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, nullptr);
-		ATN_CORE_VERIFY(imagesCount == framesInFlight);
+		ensuref(imagesCount == framesInFlight);
 
 		m_SwapChainImages.resize(framesInFlight);
 		VK_CHECK(vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, m_SwapChainImages.data()));

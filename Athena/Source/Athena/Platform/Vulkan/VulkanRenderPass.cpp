@@ -19,7 +19,7 @@ namespace Athena
 			case RenderTargetLoadOp::LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkAttachmentLoadOp)0;
 		}
 
@@ -31,7 +31,7 @@ namespace Athena
 			if (FormatUtils::IsDepthFormat(format) || FormatUtils::IsStencilFormat(format))
 				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkImageLayout)0;
 		}
 
@@ -153,7 +153,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ASSERT(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
+				check(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
 
 				depthStencilAttachmentRef.attachment = attachments.size() - 1;
 				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentOptimalLayout(format);

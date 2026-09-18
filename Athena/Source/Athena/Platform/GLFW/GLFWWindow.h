@@ -230,7 +230,7 @@ namespace Athena
 		if (m_WindowCount == 0)
 		{
 			int success = glfwInit();
-			ATN_CORE_VERIFY(success, "Could not intialize GLFW");
+			ensure(success, "Could not intialize GLFW");
 			ATN_CORE_INFO_TAG("GLFW", "Init GLFW");
 
 			glfwSetErrorCallback(GLFWErrorCallback);

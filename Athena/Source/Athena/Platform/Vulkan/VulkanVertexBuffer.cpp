@@ -35,7 +35,7 @@ namespace Athena
 
 	void VulkanVertexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_CORE_ASSERT(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
+		ensuref(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
 		if (size == 0)
 			return;

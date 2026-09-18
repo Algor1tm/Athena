@@ -60,7 +60,7 @@ namespace Athena
 
 		VkDeviceSize size = allocation->GetSize();
 
-#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
 			ATN_CORE_TRACE_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
@@ -79,7 +79,7 @@ namespace Athena
 
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
-#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = allocation->GetSize();
 		ATN_CORE_TRACE_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
@@ -91,7 +91,7 @@ namespace Athena
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
 
-#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
 			ATN_CORE_TRACE_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
@@ -101,7 +101,7 @@ namespace Athena
 
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
-#ifdef VULKAN_ENABLE_MEMORY_DEBUG_INFO
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = image.GetAllocation()->GetSize();
 		ATN_CORE_TRACE_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
 #endif
@@ -148,10 +148,10 @@ namespace Athena
 
 	void VulkanAllocator::DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler)
 	{
-		ATN_CORE_ASSERT(m_SamplersMap.contains(info));
+		checkf(m_SamplersMap.contains(info));
 
 		auto& samplerInfo = m_SamplersMap.at(info);
-		ATN_CORE_ASSERT(samplerInfo.Sampler == sampler);
+		checkf(samplerInfo.Sampler == sampler);
 
 		samplerInfo.RefCount--;
 
@@ -237,7 +237,7 @@ namespace Athena
 			needReallocate = true;
 			break;
 		default:
-			ATN_CORE_ASSERT(false);
+			ensure(false, "Failed to allocate descriptor set!");
 			return false;
 		}
 
@@ -254,8 +254,7 @@ namespace Athena
 				return true;
 		}
 		
-		ATN_CORE_ERROR_TAG("Vulkan", "Failed to allocate descriptor set!");
-		ATN_CORE_ASSERT(false);
+		ensure(false, "Failed to allocate descriptor set!");
 
 		return false;
 	}

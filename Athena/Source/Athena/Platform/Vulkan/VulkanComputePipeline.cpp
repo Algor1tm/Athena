@@ -10,7 +10,7 @@ namespace Athena
 {
 	VulkanComputePipeline::VulkanComputePipeline(const Ref<Shader>& shader)
 	{
-		ATN_CORE_ASSERT(shader, "Compute pipeline require compute shader!");
+		check(shader->IsCompute(), "Compute pipeline require compute shader!");
 
 		m_Shader = shader;
 		m_Name = std::format("{}Pipeline", shader->GetName());

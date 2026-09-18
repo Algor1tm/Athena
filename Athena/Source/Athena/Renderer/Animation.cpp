@@ -28,13 +28,13 @@ namespace Athena
 				return bone.Index;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return 0;
 	}
 
 	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
 	{
-		ATN_CORE_VERIFY(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
+		ensuref(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
 
 		Ref<Animation> result = Ref<Animation>::Create();
 

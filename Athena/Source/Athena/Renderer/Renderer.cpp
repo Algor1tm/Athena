@@ -34,7 +34,7 @@ namespace Athena
 
 	void Renderer::Init(const RendererConfig& config)
 	{
-		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
+		ensure(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
 		s_Data.Config = config;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;

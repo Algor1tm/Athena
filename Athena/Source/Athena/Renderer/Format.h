@@ -104,7 +104,7 @@ namespace Athena
 			case Format::DEPTH32F:		  return 4;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return false;
 		}
 
@@ -136,7 +136,7 @@ namespace Athena
 				return 4;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return false;
 		}
 	}

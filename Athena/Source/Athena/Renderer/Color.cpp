@@ -219,13 +219,13 @@ namespace Athena
 
 	float LinearColor::operator[](uint32 idx) const
 	{
-		ATN_CORE_ASSERT(idx < 4, "LinearColor subscript out of range");
+		check(idx < 4, "LinearColor subscript out of range");
 		return *(&r + idx);
 	}
 
 	float& LinearColor::operator[](uint32 idx)
 	{
-		ATN_CORE_ASSERT(idx < 4, "LinearColor subscript out of range");
+		check(idx < 4, "LinearColor subscript out of range");
 		return *(&r + idx);
 	}
 
@@ -430,13 +430,13 @@ namespace Athena
 
 	uint8 IntegerColor::operator[](uint32 idx) const
 	{
-		ATN_CORE_ASSERT(idx < 4, "IntegerColor subscript out of range");
+		check(idx < 4, "IntegerColor subscript out of range");
 		return *(&r + idx);
 	}
 
 	uint8& IntegerColor::operator[](uint32 idx)
 	{
-		ATN_CORE_ASSERT(idx < 4, "IntegerColor subscript out of range");
+		check(idx < 4, "IntegerColor subscript out of range");
 		return *(&r + idx);
 	}
 

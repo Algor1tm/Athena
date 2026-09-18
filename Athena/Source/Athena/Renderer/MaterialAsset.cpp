@@ -207,7 +207,7 @@ namespace Athena
 		case MaterialTextureType::Metalness:  return "u_MetalnessMap";
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return "";
 	}
 
@@ -221,7 +221,7 @@ namespace Athena
 		case MaterialTextureType::Metalness:  return "u_UseMetalnessMap";
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return "";
 	}
 }

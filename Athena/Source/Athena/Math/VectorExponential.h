@@ -88,6 +88,6 @@ namespace Athena::Math
 	}
 }
 
-#ifdef ATN_SIMD
+#if ATN_SIMD
 #include "Athena/Math/SIMD/VectorExponential_simd.h"
 #endif

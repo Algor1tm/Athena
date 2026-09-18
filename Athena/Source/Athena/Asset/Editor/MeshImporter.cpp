@@ -281,7 +281,7 @@ namespace Athena
 			else
 			{
 				skeletonRootNode = boneNode->mParent;
-				ATN_CORE_ASSERT(skeletonRootNode->mNumChildren == 1, "Unknown skeleton format!");
+				ensure(skeletonRootNode->mNumChildren == 1, "Unknown skeleton format!");
 			}
 		}
 
@@ -320,7 +320,7 @@ namespace Athena
 		{
 			if (ainode->mNumChildren != 0)
 			{
-				ATN_CORE_ASSERT(ainode->mNumChildren == 1);
+				ensuref(ainode->mNumChildren == 1);
 				BuildBonesHierarchy(ainode->mChildren[0], bonesMap, transform, bones);
 			}
 			else

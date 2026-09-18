@@ -12,7 +12,7 @@ namespace Athena
 	Application::Application(const ApplicationCreateInfo& appinfo)
 		: m_Running(true), m_Minimized(false)
 	{
-		ATN_CORE_VERIFY(s_Instance == nullptr, "Application already exists!");
+		ensure(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
 
 		m_Config = appinfo.AppConfig;

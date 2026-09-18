@@ -149,7 +149,7 @@ namespace Athena
 
 	void EnvironmentMap::CreateTextures(float resolution, Format floatFormat, Ref<TextureCube>& outEnvTex, Ref<TextureCube>& outIrradianceTex)
 	{
-		ATN_CORE_ASSERT(FormatUtils::IsHDRFormat(floatFormat) && (FormatUtils::BytesPerPixel(floatFormat) % 3 != 0), "Invalid environment map format!");
+		check(FormatUtils::IsHDRFormat(floatFormat) && (FormatUtils::BytesPerPixel(floatFormat) % 3 != 0), "Invalid environment map format!");
 
 		TextureCreateInfo cubemapInfo;
 		cubemapInfo.Name = "EnvironmentMap";

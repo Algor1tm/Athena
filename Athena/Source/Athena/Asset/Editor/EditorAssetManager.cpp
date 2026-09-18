@@ -164,7 +164,7 @@ namespace Athena
 	{
 		if (metadata.IsMemoryOnly)
 		{
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return false;
 		}
 
@@ -185,7 +185,7 @@ namespace Athena
 	{
 		if (metadata.IsMemoryOnly)
 		{
-			ATN_CORE_ASSERT(false);
+			check(false, "Hello {} {}", metadata.Type, metadata.FilePath);
 			return false;
 		}
 

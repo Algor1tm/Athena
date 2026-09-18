@@ -42,15 +42,15 @@ namespace Athena
 
 		constexpr pointer operator->() const
 		{
-			ATN_CORE_ASSERT(m_Ptr, "Cannot dereference value-initialized vector iterator");
-			ATN_CORE_ASSERT(m_Idx < Size, "Cannot dereference out of range vector iterator");
+			check(m_Ptr, "Cannot dereference value-initialized vector iterator");
+			check(m_Idx < Size, "Cannot dereference out of range vector iterator");
 			return m_Ptr + m_Idx;
 		}
 
 		constexpr VectorConstIterator& operator++()
 		{
-			ATN_CORE_ASSERT(m_Ptr, "Cannot increment value-initialized vector iterator");
-			ATN_CORE_ASSERT(m_Idx < Size, "Cannot increment vector iterator past end");
+			check(m_Ptr, "Cannot increment value-initialized vector iterator");
+			check(m_Idx < Size, "Cannot increment vector iterator past end");
 			++m_Idx;
 			return *this;
 		}
@@ -64,8 +64,8 @@ namespace Athena
 
 		constexpr VectorConstIterator& operator--()
 		{
-			ATN_CORE_ASSERT(m_Ptr, "Cannot decrement value-initialized array iterator");
-			ATN_CORE_ASSERT(m_Idx != 0, "Cannot decrement vector iterator before begin");
+			check(m_Ptr, "Cannot decrement value-initialized array iterator");
+			check(m_Idx != 0, "Cannot decrement vector iterator before begin");
 			--m_Idx;
 			return *this;
 		}
@@ -147,19 +147,19 @@ namespace Athena
 	private:
 		constexpr void Compat(const VectorConstIterator& other) const
 		{
-			ATN_CORE_ASSERT(m_Ptr == other.m_Ptr, "Vector iterators incompatible");
+			check(m_Ptr == other.m_Ptr, "Vector iterators incompatible");
 		}
 
 		constexpr void VerifyOffset(const ptrdiff_t Off) const
 		{
 			if (Off != 0)
-				ATN_CORE_ASSERT(m_Ptr, "Cannot seek value-initialized vector iterator");
+				check(m_Ptr, "Cannot seek value-initialized vector iterator");
 
 			if (Off < 0)
-				ATN_CORE_ASSERT(m_Idx >= uint32{ 0 } - static_cast<uint32>(Off), "Cannot seek vector iterator before begin");
+				check(m_Idx >= uint32{ 0 } - static_cast<uint32>(Off), "Cannot seek vector iterator before begin");
 
 			if (Off > 0)
-				ATN_CORE_ASSERT(Size - m_Idx >= static_cast<uint32>(Off), "Cannot seek vector iterator after end");
+				check(Size - m_Idx >= static_cast<uint32>(Off), "Cannot seek vector iterator after end");
 		}
 
 	private:
@@ -289,7 +289,7 @@ namespace Athena::Math
 
 		constexpr Vector(const std::initializer_list<T>& values)
 		{
-			ATN_CORE_ASSERT(values.size() == _Size,
+			check(values.size() == _Size,
 				"Cannot initialize vector with initializer list");
 
 			uint32 iter = 0;
@@ -398,13 +398,13 @@ namespace Athena::Math
 	public:
 		constexpr T operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
+			check(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 
 		constexpr T& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < _Size, "Vector subscript out of range");
+			check(idx < _Size, "Vector subscript out of range");
 			return m_Array[idx];
 		}
 

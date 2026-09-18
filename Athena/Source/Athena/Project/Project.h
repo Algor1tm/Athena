@@ -43,7 +43,7 @@ namespace Athena
 	public:
 		static const FilePath& GetProjectDirectory()
 		{
-			ATN_CORE_ASSERT(s_ActiveProject);
+			checkf(s_ActiveProject);
 			return s_ActiveProject->m_ProjectDirectory;
 		}
 

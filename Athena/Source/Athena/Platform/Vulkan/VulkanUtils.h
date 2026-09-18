@@ -85,8 +85,8 @@ namespace Athena::Vulkan
         return false;
     }
 
-#ifdef ATN_DEBUG
-    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::Vulkan::CheckResult(expr))
+#if ATN_ENABLE_ENSURES
+    #define VK_CHECK(expr) ensuref(::Athena::Vulkan::CheckResult(expr))
 #else
     #define VK_CHECK(expr) expr
 #endif
@@ -94,7 +94,7 @@ namespace Athena::Vulkan
 
     inline void SetObjectDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
     {
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
         static PFN_vkDebugMarkerSetObjectNameEXT PFN_DebugMarkerSetObjectName = nullptr;
 
         if (PFN_DebugMarkerSetObjectName == nullptr)
@@ -191,7 +191,7 @@ namespace Athena::Vulkan
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
             ATN_CORE_ERROR_TAG("Vulkan", pMessage);
-            ATN_CORE_ASSERT(false);
+            checkf(false);
             break;
         }
 
@@ -208,7 +208,7 @@ namespace Athena::Vulkan
 		case ShaderStage::COMPUTE_STAGE:  return VK_SHADER_STAGE_COMPUTE_BIT;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return (VkShaderStageFlagBits)0;
 	}
 
@@ -238,7 +238,7 @@ namespace Athena::Vulkan
         case Format::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFormat)0;
     }
 
@@ -259,7 +259,7 @@ namespace Athena::Vulkan
         case ShaderDataType::UInt:  return VK_FORMAT_R32_UINT;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFormat)0;
     }
 
@@ -283,7 +283,7 @@ namespace Athena::Vulkan
         case TextureType::TEXTURE_CUBE: return VK_IMAGE_TYPE_2D;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkImageType)0;
     }
 
@@ -309,7 +309,7 @@ namespace Athena::Vulkan
                 return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkImageViewType)0;
     }
 
@@ -322,7 +322,7 @@ namespace Athena::Vulkan
         case TextureFilter::TRILINEAR: return VK_FILTER_LINEAR;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFilter)0;
     }
 
@@ -335,7 +335,7 @@ namespace Athena::Vulkan
         case TextureFilter::TRILINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkSamplerMipmapMode)0;
     }
 
@@ -350,7 +350,7 @@ namespace Athena::Vulkan
         case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkSamplerAddressMode)0;
     }
 
@@ -363,7 +363,7 @@ namespace Athena::Vulkan
         case TextureCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkCompareOp)0;
     }
 
@@ -397,7 +397,7 @@ namespace Athena::Vulkan
             return texture.As<VulkanTextureCube>()->GetImage();
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return nullptr;
     }
 
@@ -412,7 +412,7 @@ namespace Athena::Vulkan
             return reinterpret_cast<VulkanTextureCube*>(texture)->GetImage();
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return nullptr;
     }
 

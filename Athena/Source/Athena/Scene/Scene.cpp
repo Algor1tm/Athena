@@ -76,7 +76,7 @@ namespace Athena
 		case Rigidbody2DComponent::BodyType::DYNAMIC: return b2BodyType::b2_dynamicBody;
 		case Rigidbody2DComponent::BodyType::KINEMATIC: return b2BodyType::b2_kinematicBody;
 		}
-		ATN_CORE_ASSERT(false, "Undefined Rigidbody2DComponent BodyType!");
+		check(false, "Undefined Rigidbody2DComponent BodyType!");
 		return (b2BodyType)0;
 	}
 

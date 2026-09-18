@@ -146,7 +146,7 @@ namespace Athena
 
 	void VulkanProfiler::EndTimeQuery(Time* time)
 	{
-		ATN_CORE_ASSERT(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
+		ensure(m_TimestampsCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxTimestampsCount, "Too much time queries per frame");
 
 		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxTimestampsCount * Renderer::GetCurrentFrameIndex();
@@ -174,7 +174,7 @@ namespace Athena
 
 	const PipelineStatistics& VulkanProfiler::EndPipelineStatsQuery()
 	{
-		ATN_CORE_ASSERT(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
+		ensure(m_PipelineQueriesCount[Renderer::GetCurrentFrameIndex()] < m_Info.MaxPipelineQueriesCount, "Too much pipeline queries per frame");
 
 		VkCommandBuffer commandBuffer = m_Info.RenderCommandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		uint32 start = m_Info.MaxPipelineQueriesCount * Renderer::GetCurrentFrameIndex();

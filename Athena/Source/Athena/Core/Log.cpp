@@ -41,7 +41,7 @@ namespace Athena
 
 		spdlog::level::level_enum loglevel;
 
-#ifdef ATN_LOG_LEVEL_DEBUG
+#if ATN_LOG_LEVEL_DEBUG
 		loglevel = spdlog::level::trace;
 #else
 		loglevel = spdlog::level::info;

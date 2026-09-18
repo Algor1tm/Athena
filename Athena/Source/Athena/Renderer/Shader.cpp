@@ -33,13 +33,13 @@ namespace Athena
 
 	void Shader::AddOnReloadCallback(uint64 hash, const std::function<void()>& callback)
 	{
-		ATN_CORE_ASSERT(!m_OnReloadCallbacks.contains(hash));
+		checkf(!m_OnReloadCallbacks.contains(hash));
 		m_OnReloadCallbacks[hash] = callback;
 	}
 
 	void Shader::RemoveOnReloadCallback(uint64 hash)
 	{
-		ATN_CORE_ASSERT(m_OnReloadCallbacks.contains(hash));
+		checkf(m_OnReloadCallbacks.contains(hash));
 		m_OnReloadCallbacks.erase(hash);
 	}
 
@@ -72,7 +72,7 @@ namespace Athena
 
 	void ShaderPack::Add(const String& name, const Ref<Shader>& shader)
 	{
-		ATN_CORE_ASSERT(!Exists(name), "Shader already exists!");
+		check(!Exists(name), "Shader already exists!");
 		m_Shaders[name] = shader;
 	}
 
@@ -92,7 +92,7 @@ namespace Athena
 
 	Ref<Shader> ShaderPack::Get(const String& name)
 	{
-		ATN_CORE_ASSERT(Exists(name), "Shader not found!");
+		check(Exists(name), "Shader not found!");
 		return m_Shaders.at(name);
 	}
 

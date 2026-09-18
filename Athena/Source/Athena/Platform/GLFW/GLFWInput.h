@@ -52,7 +52,7 @@ namespace Athena
 		if (value == GLFW_CURSOR_DISABLED)
 			return CursorMode::Disabled;
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return (CursorMode)0;
 	}
 

@@ -51,16 +51,22 @@ set_target_properties(Athena
 )
 
 target_compile_definitions(Athena PUBLIC
-	$<$<CONFIG:Debug>:ATN_DEBUG>
-	$<$<CONFIG:Release>:ATN_RELEASE>
-	$<$<CONFIG:Dist>:ATN_DIST>
-	ATN_SIMD
-	STBIW_WINDOWS_UTF8
-	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
+	$<$<CONFIG:Debug>:ATN_DEBUG=1>
+	$<$<CONFIG:Debug>:ATN_RELEASE=0>
+	$<$<CONFIG:Debug>:ATN_DIST=0>
+	$<$<CONFIG:Release>:ATN_DEBUG=0>
+	$<$<CONFIG:Release>:ATN_RELEASE=1>
+	$<$<CONFIG:Release>:ATN_DIST=0>
+	$<$<CONFIG:Dist>:ATN_DEBUG=0>
+	$<$<CONFIG:Dist>:ATN_RELEASE=0>
+	$<$<CONFIG:Dist>:ATN_DIST=1>
+	ATN_SIMD=1
+	STBIW_WINDOWS_UTF8=1
+	_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1
 )
 
 target_compile_definitions(Athena PRIVATE
-	ATN_BUILD_DLL
+	ATN_BUILD_DLL=1
 )
 
 set_target_properties(Athena
@@ -73,7 +79,7 @@ set_target_properties(Athena
 # Disable some warnings
 # 4099 - require debug info
 target_link_options(Athena PRIVATE /ignore:4099)
-target_compile_options(Athena PUBLIC /wd26495)
+target_compile_options(Athena PUBLIC /wd26495 /Zc:preprocessor)
 
 add_custom_command(TARGET Athena POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 
@@ -153,5 +159,5 @@ endif(Vulkan_FOUND)
 # Windows specific code
 if(WIN32)
 	target_link_libraries(Athena PRIVATE "${THIRD_PARTY_DIR}/assimp/libs/Windows/assimp-vc143-mt.lib")
-	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS UNICODE)
+	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS=1 UNICODE)
 endif(WIN32)

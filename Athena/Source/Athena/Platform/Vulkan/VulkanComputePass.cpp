@@ -132,7 +132,7 @@ namespace Athena
 
 	void VulkanComputePass::Bake()
 	{
-		ATN_CORE_ASSERT(!(m_Info.InputRenderPass && m_Info.InputComputePass));
+		ensuref(!(m_Info.InputRenderPass && m_Info.InputComputePass));
 
 		for (const auto& output : m_Outputs)
 		{

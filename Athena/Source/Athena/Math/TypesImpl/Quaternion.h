@@ -237,13 +237,13 @@ namespace Athena::Math
 	public:
 		constexpr const T& operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < 4, "Quaternion subscript out of range");
+			check(idx < 4, "Quaternion subscript out of range");
 			return *(&w + idx);
 		}
 
 		constexpr T& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < 4, "Quaternion subscript out of range");
+			check(idx < 4, "Quaternion subscript out of range");
 			return *(&w + idx);
 		}
 

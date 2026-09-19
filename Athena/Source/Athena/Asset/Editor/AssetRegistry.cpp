@@ -1,5 +1,6 @@
 #include "AssetRegistry.h"
 #include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Core/YAMLTypes.h"
 #include "Athena/Core/FileSystem.h"
@@ -29,7 +30,7 @@ namespace Athena
 		if (!m_Registry.contains(handle) || FileSystem::Exists(path))
 			return;
 
-		m_Registry.modify_if(handle, [&path](std::pair<const AssetHandle, AssetMetadata>& element) 
+		m_Registry.modify_if(handle, [&path, handle](std::pair<const AssetHandle, AssetMetadata>& element) 
 		{
 			AssetMetadata& metadata = element.second;
 
@@ -40,9 +41,21 @@ namespace Athena
 			FilePath oldPath = current / AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 			FilePath newPath = path.is_absolute() ? path : current / path;
 
-			std::filesystem::rename(oldPath, newPath);
+			Project::GetEditorAssetManager()->GetAssetWatcherThread().AddToBlacklist(handle);
 
+			FilePath oldPathImportSettings = AssetFileExtensions::GetImportSettingsPath(oldPath);
+
+			if (FileSystem::Exists(oldPathImportSettings))
+			{
+				FilePath newPathImportSettings = AssetFileExtensions::GetImportSettingsPath(newPath);
+				std::filesystem::rename(oldPathImportSettings, newPathImportSettings);
+			}
+
+			std::filesystem::rename(oldPath, newPath);
 			metadata.FilePath = AssetManager::GetAssetRelativePath(path);
+
+			Project::GetEditorAssetManager()->GetAssetWatcherThread().UpdateAssetTimestamp(handle, newPath);
+			Project::GetEditorAssetManager()->GetAssetWatcherThread().RemoveFromBlacklist(handle);
 		});
 	}
 

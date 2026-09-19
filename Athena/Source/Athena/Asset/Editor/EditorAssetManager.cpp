@@ -170,13 +170,13 @@ namespace Athena
 
 		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(metadata.FilePath);
 
-		m_AssetWatcherThread.DisableTimestampsWatching();
+		m_AssetWatcherThread.AddToBlacklist(asset->Handle);
 
 		SerializeAssetImportSettings(asset->Handle);
 		bool result = asset->Serialize(absolutePath);
 
 		m_AssetWatcherThread.UpdateAssetTimestamp(asset->Handle, absolutePath);
-		m_AssetWatcherThread.EnableWatchingTimestamps();
+		m_AssetWatcherThread.RemoveFromBlacklist(asset->Handle);
 
 		return result;
 	}
@@ -323,9 +323,9 @@ namespace Athena
 		return m_AssetRegistry.GetAssetHandleFromFilePath(filepath);
 	}
 
-	Thread& EditorAssetManager::GetAssetWatcherThread()
+	AssetWatcherThread& EditorAssetManager::GetAssetWatcherThread()
 	{
-		return m_AssetWatcherThread.GetThread();
+		return m_AssetWatcherThread;
 	}
 
 	bool EditorAssetManager::IsAssetHandleValid(AssetHandle handle) const

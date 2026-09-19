@@ -25,7 +25,6 @@ namespace Athena
 		m_Registry = registry;
 
 		m_JoinThread.store(false, std::memory_order_relaxed);
-		m_WatchTimestamps.store(true);
 
 		m_AssetWatcherThread.Start();
 	}
@@ -36,14 +35,19 @@ namespace Athena
 		m_AssetWatcherThread.Join();
 	}
 
-	void AssetWatcherThread::DisableTimestampsWatching()
+	void AssetWatcherThread::AddToBlacklist(AssetHandle handle)
 	{
-		m_WatchTimestamps.store(false);
+		m_BlacklistedAssets.insert({ handle, true });
 	}
 
-	void AssetWatcherThread::EnableWatchingTimestamps()
+	void AssetWatcherThread::RemoveFromBlacklist(AssetHandle handle)
 	{
-		m_WatchTimestamps.store(true);
+		m_BlacklistedAssets.erase(handle);
+	}
+
+	bool AssetWatcherThread::IsAssetBlacklisted(AssetHandle handle)
+	{
+		return m_BlacklistedAssets.contains(handle);
 	}
 
 	void AssetWatcherThread::UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath)
@@ -76,6 +80,10 @@ namespace Athena
 		registry.for_each([&assetsToRemove, &assetsToReload, this](const std::pair<AssetHandle, AssetMetadata>& element)
 		{
 			const auto& [handle, meta] = element;
+
+			if (IsAssetBlacklisted(handle))
+				return;
+
 			FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
 
 			bool hasImportSettings = Project::GetEditorAssetManager()->HasImportSettings(meta.Type);
@@ -97,29 +105,26 @@ namespace Athena
 				return;
 			}
 
-			if (m_WatchTimestamps.load())
+			uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
+
+			// Get Max timestamp from asset timestamp and importsettings timestamp
+			if (hasImportSettings && FileSystem::Exists(importSettingsPath))
 			{
-				uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
-
-				// Get Max timestamp from asset timestamp and importsettings timestamp
-				if (hasImportSettings && FileSystem::Exists(importSettingsPath))
-				{
-					uint64 settingsTimestamp = FileSystem::GetLastWriteTimestamp(importSettingsPath);
-					timestamp = Math::Max(timestamp, settingsTimestamp); 
-				}
-
-				// Check old timestamp or emplace new if does not contain handle
-				m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp, &assetsToReload](std::pair<const AssetHandle, uint64>& element)
-					{
-						auto& [handle, oldTimestamp] = element;
-
-						if (oldTimestamp != timestamp)
-						{
-							assetsToReload.push_back(handle);
-							oldTimestamp = timestamp;
-						}
-					}, timestamp);
+				uint64 settingsTimestamp = FileSystem::GetLastWriteTimestamp(importSettingsPath);
+				timestamp = Math::Max(timestamp, settingsTimestamp); 
 			}
+
+			// Check old timestamp or emplace new if does not contain handle
+			m_AssetsLastWriteTimeMap.try_emplace_l(handle, [timestamp, &assetsToReload](std::pair<const AssetHandle, uint64>& element)
+			{
+				auto& [handle, oldTimestamp] = element;
+
+				if (oldTimestamp != timestamp)
+				{
+					assetsToReload.push_back(handle);
+					oldTimestamp = timestamp;
+				}
+			}, timestamp);
 
 			if (hasImportSettings && !FileSystem::Exists(importSettingsPath))
 			{
@@ -127,7 +132,7 @@ namespace Athena
 				defaultSettings->Serialize(importSettingsPath);
 				UpdateAssetTimestamp(handle, importSettingsPath);
 
-				ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})", 
+				ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})",
 					absolutePath, AssetManager::AssetTypeToString(meta.Type), handle);
 			}
 		});

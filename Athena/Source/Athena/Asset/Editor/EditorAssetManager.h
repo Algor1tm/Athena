@@ -47,7 +47,7 @@ namespace Athena
 		AssetHandle GetAssetHandleFromFilePath(const FilePath& filepath) const;
 		AssetRegistry& GetAssetRegistry() { return m_AssetRegistry; };
 
-		Thread& GetAssetWatcherThread();
+		AssetWatcherThread& GetAssetWatcherThread();
 
 	private:
 		Ref<Asset> LoadAsset(AssetHandle handle, const AssetMetadata& metadata);

@@ -27,8 +27,9 @@ namespace Athena
 		void Initialize(AssetRegistry* registry);
 		void Shutdown();
 
-		void DisableTimestampsWatching();
-		void EnableWatchingTimestamps();
+		void AddToBlacklist(AssetHandle handle);
+		void RemoveFromBlacklist(AssetHandle handle);
+		bool IsAssetBlacklisted(AssetHandle handle);
 
 		void UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath);
 
@@ -41,10 +42,10 @@ namespace Athena
 	private:
 		AssetRegistry* m_Registry = nullptr;
 		ParallelFlatHashMap<AssetHandle, uint64, 2> m_AssetsLastWriteTimeMap;
+		ParallelFlatHashMap<AssetHandle, bool, 2> m_BlacklistedAssets;
 
 		Thread m_AssetWatcherThread;
 		std::atomic<bool> m_JoinThread;
-		std::atomic<bool> m_WatchTimestamps;
 
 		const float MONITOR_INTERVAL_SECONDS = 2.0f;
 	};

@@ -11,12 +11,12 @@ namespace Athena
 		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Suspend();
+			assetManager->GetAssetWatcherThread().GetThread().Suspend();
 
 		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), false).result();
 
 		if(assetManager)
-			assetManager->GetAssetWatcherThread().Resume();
+			assetManager->GetAssetWatcherThread().GetThread().Resume();
 
 		if (!selection.empty())
 			return selection[0];
@@ -29,12 +29,12 @@ namespace Athena
 		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Suspend();
+			assetManager->GetAssetWatcherThread().GetThread().Suspend();
 
 		std::vector<String> selection = pfd::open_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Resume();
+			assetManager->GetAssetWatcherThread().GetThread().Resume();
 
 		if (!selection.empty())
 		{
@@ -55,12 +55,12 @@ namespace Athena
 		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Suspend();
+			assetManager->GetAssetWatcherThread().GetThread().Suspend();
 
 		String selection = pfd::select_folder(dialogName, startDir.string(), pfd::opt::none).result();
   
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Resume();
+			assetManager->GetAssetWatcherThread().GetThread().Resume();
 
 		return selection;
 	}
@@ -70,12 +70,12 @@ namespace Athena
 		Ref<EditorAssetManager> assetManager = Project::GetActive() ? Project::GetEditorAssetManager() : nullptr;
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Suspend();
+			assetManager->GetAssetWatcherThread().GetThread().Suspend();
 
 		String selection = pfd::save_file(dialogName, defaultDir.string(), GetFilters(extlabel, exts), true).result();
 
 		if (assetManager)
-			assetManager->GetAssetWatcherThread().Resume();
+			assetManager->GetAssetWatcherThread().GetThread().Resume();
 
 		return selection;
 	}

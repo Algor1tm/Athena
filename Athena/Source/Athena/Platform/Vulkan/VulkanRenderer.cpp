@@ -1,7 +1,7 @@
 #include "VulkanRenderer.h"
 
 #include "Athena/Core/Application.h"
-
+#include "Athena/Core/Stats.h"
 #include "Athena/Platform/Vulkan/VulkanDevice.h"
 #include "Athena/Platform/Vulkan/VulkanSwapChain.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
@@ -15,6 +15,9 @@
 
 namespace Athena
 {
+	EXTERN_CYCLE_STAT(STAT_DrawCalls);
+
+
 	void VulkanRenderer::Init()
 	{
 		VulkanContext::Init();
@@ -39,6 +42,8 @@ namespace Athena
 
 	void VulkanRenderer::BindGeometryBuffers(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<VertexBuffer>& vertexBuffer, const Ref<IndexBuffer>& indexBuffer, const Ref<VertexBuffer>& bonesInfluenceBuffer)
 	{
+		SCOPE_CYCLE_STAT(STAT_DrawCalls);
+
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 
 		Ref<VulkanVertexBuffer> vkVertexBuffer = vertexBuffer.As<VulkanVertexBuffer>();
@@ -68,6 +73,8 @@ namespace Athena
 
 	void VulkanRenderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount, uint32 baseInstance, uint32 instanceCount)
 	{
+		SCOPE_CYCLE_STAT(STAT_DrawCalls);
+
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
 
@@ -88,6 +95,8 @@ namespace Athena
 
 	void VulkanRenderer::RenderGeometry(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount)
 	{
+		SCOPE_CYCLE_STAT(STAT_DrawCalls);
+
 		if (!pipeline->GetInfo().Shader->IsCompiled())
 			return;
 
@@ -117,6 +126,8 @@ namespace Athena
 
 	void VulkanRenderer::Dispatch(const Ref<RenderCommandBuffer>& commandBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)
 	{
+		SCOPE_CYCLE_STAT(STAT_DrawCalls);
+
 		if (!pipeline->GetShader()->IsCompiled())
 			return;
 

@@ -1,15 +1,23 @@
 #include "Application.h"
 
 #include "Athena/Core/Time.h"
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
 
 
 namespace Athena
 {
+	DEFINE_STATS_GROUP("Application Stats", STATGROUP_ApplicationStats, StatsThread::GameThread);
+
+	DEFINE_CYCLE_STAT("Process Events", STAT_ProcessEvents, STATGROUP_ApplicationStats);
+	DEFINE_CYCLE_STAT("On Update", STAT_OnUpdate, STATGROUP_ApplicationStats);
+	DEFINE_CYCLE_STAT("Render ImGui", STAT_RenderImGui, STATGROUP_ApplicationStats);
+
+
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application(const ApplicationCreateInfo& appinfo)
-		: m_Running(true), m_Minimized(false)
+		: m_Running(true), m_Minimized(false), m_FrameTime(0.f)
 	{
 		ensure(s_Instance == nullptr, "Application already exists!");
 		s_Instance = this;
@@ -49,14 +57,14 @@ namespace Athena
 	void Application::Run()
 	{
 		Timer timer;
-		Time frameTime = 0;
 
 		while (m_Running)
 		{
 			ATN_PROFILE_FRAME("MainThread");
+			STATS_THREAD_HEARTBEAT(StatsThread::GameThread);
+			STATS_THREAD_HEARTBEAT(StatsThread::RenderThread);
 
 			Time start = timer.ElapsedTime();
-			m_Statistics.FrameTime = frameTime;
 
 			ProcessEvents();
 			ExecuteMainThreadQueue();
@@ -68,12 +76,10 @@ namespace Athena
 
 				// Update
 				{
-					Timer timer = Timer();
+					SCOPE_CYCLE_STAT(STAT_OnUpdate);
 
 					for (Ref<Layer> layer : m_LayerStack)
-						layer->OnUpdate(frameTime);
-
-					m_Statistics.Application_OnUpdate = timer.ElapsedTime();
+						layer->OnUpdate(m_FrameTime);
 				}
 
 				// Render UI
@@ -92,14 +98,14 @@ namespace Athena
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 
-			frameTime = timer.ElapsedTime() - start;
+			m_FrameTime = timer.ElapsedTime() - start;
 		}
 	}
 
 	void Application::ProcessEvents()
 	{
 		ATN_PROFILE_FUNC();
-		Timer timer = Timer();
+		SCOPE_CYCLE_STAT(STAT_ProcessEvents);
 
 		m_Window->PollEvents();
 
@@ -109,8 +115,6 @@ namespace Athena
 			OnEvent(event);
 			m_EventQueue.pop();
 		}
-
-		m_Statistics.Application_ProcessEvents = timer.ElapsedTime();
 	}
 
 	void Application::ExecuteMainThreadQueue()
@@ -130,7 +134,7 @@ namespace Athena
 	void Application::RenderImGui()
 	{
 		ATN_PROFILE_FUNC();
-		Timer timer = Timer();
+		SCOPE_CYCLE_STAT(STAT_RenderImGui);
 
 		if (!m_Config.EnableImGui)
 			return;
@@ -141,8 +145,6 @@ namespace Athena
 				layer->OnImGuiRender();
 		}
 		m_ImGuiLayer->End(m_Minimized);
-
-		m_Statistics.Application_RenderImGui = timer.ElapsedTime();
 	}
 
 	void Application::QueueEvent(const Ref<Event>& event)
@@ -227,18 +229,5 @@ namespace Athena
 		{
 			m_ImGuiLayer = nullptr;
 		}
-	}
-
-	void Application::ResetStats()
-	{
-		m_Statistics.FrameTime = 0;
-		m_Statistics.CPUWait = 0;
-		m_Statistics.GPUWait = 0;
-		m_Statistics.Application_ProcessEvents = 0;
-		m_Statistics.Application_OnUpdate = 0;
-		m_Statistics.Application_RenderImGui = 0;
-		m_Statistics.SwapChain_Present = 0;
-		m_Statistics.SwapChain_AcquireImage = 0;
-		m_Statistics.Renderer_QueueSubmit = 0;
 	}
 }

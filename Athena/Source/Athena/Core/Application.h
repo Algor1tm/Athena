@@ -33,18 +33,18 @@ namespace Athena
 		WindowCreateInfo WindowInfo;
 	};
 
-	struct ApplicationStatistics
-	{
-		Time FrameTime;
-		Time CPUWait;
-		Time GPUWait;
-		Time Application_ProcessEvents;
-		Time Application_OnUpdate;
-		Time Application_RenderImGui;
-		Time SwapChain_Present;
-		Time SwapChain_AcquireImage;
-		Time Renderer_QueueSubmit;
-	};
+	//struct ApplicationStatistics
+	//{
+	//	Time FrameTime;
+	//	Time CPUWait;
+	//	Time GPUWait;
+	//	Time Application_ProcessEvents;
+	//	Time Application_OnUpdate;
+	//	Time Application_RenderImGui;
+	//	Time SwapChain_Present;
+	//	Time SwapChain_AcquireImage;
+	//	Time Renderer_QueueSubmit;
+	//};
 
 	class ATHENA_API Application
 	{
@@ -63,11 +63,12 @@ namespace Athena
 
 		const Ref<ImGuiLayer>& GetImGuiLayer() { return m_ImGuiLayer; }
 		Window& GetWindow() { return *m_Window; }
-		ApplicationStatistics& GetStats() { return m_Statistics; }
 
 		void Close();
 
 		inline static Application& Get() { return *s_Instance; }
+
+		Time GetFrameTime() const { return m_FrameTime; }
 
 	private:
 		void ProcessEvents();
@@ -96,8 +97,7 @@ namespace Athena
 		std::queue<std::function<void()>> m_MainThreadQueue;
 		std::mutex m_MainThreadQueueMutex;
 
-		ApplicationStatistics m_Statistics;
-
+		Time m_FrameTime;
 	private:
 		static Application* s_Instance;
 	};

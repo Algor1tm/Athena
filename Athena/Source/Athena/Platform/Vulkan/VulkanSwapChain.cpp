@@ -1,5 +1,6 @@
 #include "VulkanSwapChain.h"
 
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/Application.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 
@@ -10,6 +11,8 @@
 
 namespace Athena
 {
+	EXTERN_CYCLE_STAT(STAT_CPUWait);
+
 	VulkanSwapChain::VulkanSwapChain(void* windowHandle, bool vsync)
 	{
 		m_VSync = vsync;
@@ -240,8 +243,6 @@ namespace Athena
 	{
 		ATN_PROFILE_FUNC();
 
-		auto& appStats = Application::Get().GetStats();
-
 		if (m_Dirty)
 			Recreate();
 
@@ -250,19 +251,14 @@ namespace Athena
 
 		{
 			ATN_PROFILE_SCOPE("vkWaitForFences");
-
-			Timer timer = Timer();
+			SCOPE_CYCLE_STAT(STAT_CPUWait);
 
 			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
 			vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
-
-			appStats.CPUWait = timer.ElapsedTime();
 		}
 
 		{
 			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR");
-			Timer timer = Timer();
-
 			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
 			
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -274,15 +270,12 @@ namespace Athena
 			{
 				VK_CHECK(result);
 			}
-
-			appStats.SwapChain_AcquireImage = timer.ElapsedTime();
 		}
 	}
 
 	void VulkanSwapChain::Present()
 	{
 		ATN_PROFILE_FUNC();
-		Timer timer = Timer();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(m_ImageIndex);
 
@@ -305,8 +298,6 @@ namespace Athena
 		{
 			VK_CHECK(result);
 		}
-
-		Application::Get().GetStats().SwapChain_Present = timer.ElapsedTime();
 	}
 
 	VkImage VulkanSwapChain::GetCurrentVulkanImage()

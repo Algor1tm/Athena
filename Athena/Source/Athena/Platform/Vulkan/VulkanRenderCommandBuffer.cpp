@@ -1,7 +1,7 @@
 #include "VulkanRenderCommandBuffer.h"
 
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Core/Application.h"
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 
@@ -90,10 +90,7 @@ namespace Athena
 
 		{
 			ATN_PROFILE_SCOPE("vkQueueSubmit");
-			Timer timer = Timer();
-
 			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, frameData.RenderCompleteFence);
-			Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
 		}
 	}
 

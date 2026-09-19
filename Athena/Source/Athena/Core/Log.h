@@ -130,8 +130,8 @@ namespace fmt
 #if ATN_ENABLE_LOGGING
 	#define LOG_CAT_SYMBOL_NAME(CategoryName) g_LogCategory_##CategoryName
 
-	#define EXPORT_LOG_CATEGORY(CategoryName) extern ATHENA_API LogCategory LOG_CAT_SYMBOL_NAME(CategoryName)
 	#define DEFINE_LOG_CATEGORY(CategoryName) ATHENA_API LogCategory LOG_CAT_SYMBOL_NAME(CategoryName) = LogCategory(ATN_STRINGIFY_MACRO(CategoryName))
+	#define EXPORT_LOG_CATEGORY(CategoryName) extern ATHENA_API LogCategory LOG_CAT_SYMBOL_NAME(CategoryName)
 
 	#define ATN_LOG_TRACE(CategoryName, ...) ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Trace, __VA_ARGS__)
 	#define ATN_LOG_INFO(CategoryName, ...)  ::Athena::Logger::Get().Message( ::Athena::LOG_CAT_SYMBOL_NAME(CategoryName), ::Athena::LogLevel::Info, __VA_ARGS__)

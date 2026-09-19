@@ -1,5 +1,7 @@
 #include "SceneRenderer.h"
 
+#include "Athena/Core/Core.h"
+#include "Athena/Core/Stats.h"
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
@@ -8,6 +10,8 @@
 
 namespace Athena
 {
+	EXTERN_CYCLE_STAT(STAT_SceneRendererEndScene);
+
 	Ref<SceneRenderer> SceneRenderer::Create()
 	{
 		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create();
@@ -1187,6 +1191,7 @@ namespace Athena
 	void SceneRenderer::EndScene()
 	{
 		ATN_PROFILE_FUNC();
+		SCOPE_CYCLE_STAT(STAT_SceneRendererEndScene);
 
 		ResetStats();
 

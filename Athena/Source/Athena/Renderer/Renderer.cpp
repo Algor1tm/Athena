@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Font.h"
 #include "Athena/Renderer/RendererAPI.h"
@@ -11,6 +12,13 @@
 
 namespace Athena
 {
+	DEFINE_STATS_GROUP("Renderer Stats", STATGROUP_RendererStats, StatsThread::RenderThread);
+
+	DEFINE_CYCLE_STAT("CPU Wait", STAT_CPUWait, STATGROUP_RendererStats);
+	DEFINE_CYCLE_STAT("SceneRenderer::EndScene", STAT_SceneRendererEndScene, STATGROUP_RendererStats);
+	DEFINE_CYCLE_STAT("DrawCalls", STAT_DrawCalls, STATGROUP_RendererStats);
+
+
 	struct RendererData
 	{
 		RendererConfig Config;

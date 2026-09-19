@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Athena/Core/BuildConfiguration.h"
 
 #if ATN_ENABLE_PROFILING
 	#include <optick.h>

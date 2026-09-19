@@ -1,5 +1,6 @@
 #include "ProfilingPanel.h"
 
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/Application.h"
 #include "Athena/UI/UI.h"
 #include "Athena/Utils/StringUtils.h"
@@ -27,10 +28,10 @@ namespace Athena
             if (newVsync != vsync)
                 Application::Get().GetWindow().SetVSync(newVsync);
 
-            const auto& appstats = Application::Get().GetStats();
+            Time frameTime = Application::Get().GetFrameTime();
 
-            ImGui::Text("FPS: %d", (int)(1.f / appstats.FrameTime.AsSeconds()));
-            ImGui::Text("FrameTime: %.3f ms", appstats.FrameTime.AsMilliseconds());
+            ImGui::Text("FPS: %d", (int)(1.f / frameTime.AsSeconds()));
+            ImGui::Text("FrameTime: %.3f ms", frameTime.AsMilliseconds());
             
             Vector2u size;
             size.x = Application::Get().GetWindow().GetWidth();
@@ -48,16 +49,26 @@ namespace Athena
                     ImGui::Text("VRAM: %s", Utils::MemoryBytesToString(Renderer::GetMemoryUsage()).data());
                     ImGui::Spacing();
 
-                    ImGui::Text("CPUWait: %.3f ms", appstats.CPUWait.AsMilliseconds());
-                    ImGui::Text("GPUWait: %.3f ms", appstats.GPUWait.AsMilliseconds());
-                    ImGui::Text("Application::ProcessEvents: %.3f ms", appstats.Application_ProcessEvents.AsMilliseconds());
-                    ImGui::Text("Application::OnUpdate: %.3f ms", appstats.Application_OnUpdate.AsMilliseconds());
-                    ImGui::Text("Application::RenderImGui: %.3f ms", appstats.Application_RenderImGui.AsMilliseconds());
-                    ImGui::Spacing();
+                    const std::unordered_map<std::string_view, StatsGroup*>& statsGroups = StatsSystem::Get().GetAllStatsGroups();
 
-                    ImGui::Text("SwapChain::Present: %.3f ms", appstats.SwapChain_Present.AsMilliseconds());
-                    ImGui::Text("SwapChain::AcquireImage: %.3f ms", appstats.SwapChain_AcquireImage.AsMilliseconds());
-                    ImGui::Text("Renderer::QueueSubmit: %.3f ms", appstats.Renderer_QueueSubmit.AsMilliseconds());
+                    for (const auto& [name, group] : statsGroups)
+                    {
+                        ImGui::Text(name.data());
+                        ImGui::Separator();
+
+                        StatsGroup::Snapshot snapshot = group->GetSnapshot();
+                        for (const auto& cycleStat : snapshot.CycleStats)
+                        {
+                            ImGui::Text("%s: %.3f ms", cycleStat.Name.data(), cycleStat.Value.AsMilliseconds());
+                        }
+
+                        for (const auto& counterStat : snapshot.CounterStats)
+                        {
+                            ImGui::Text("%s: %d", counterStat.Name.data(), counterStat.Value);
+                        }
+
+                        ImGui::Spacing();
+                    }
 
                     ImGui::EndTabItem();
                 }

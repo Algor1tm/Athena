@@ -87,7 +87,6 @@ namespace Athena
 			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
 		}
 
-
 		spdlog::level::level_enum loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
 
 		s_SPDLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));

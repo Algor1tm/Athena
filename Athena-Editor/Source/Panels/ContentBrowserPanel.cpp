@@ -434,6 +434,13 @@ namespace Athena
 			if (ImGui::MenuItem("Delete"))
 			{
 				FileSystem::Remove(GetFilePath());
+
+				FilePath importSettingsPath = AssetFileExtensions::GetImportSettingsPath(GetFilePath());
+				if (FileSystem::Exists(importSettingsPath))
+				{
+					FileSystem::Remove(importSettingsPath);
+				}
+
 				m_ContentBrowserPanel->QueueRefresh();
 			}
 

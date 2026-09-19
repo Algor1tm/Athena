@@ -1,7 +1,6 @@
 #include "Application.h"
 
 #include "Athena/Core/Time.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Core/FileSystem.h"
 
 

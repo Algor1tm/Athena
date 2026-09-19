@@ -6,7 +6,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/UUID.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Core/Time.h"
 
 

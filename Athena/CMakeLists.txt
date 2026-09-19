@@ -100,9 +100,6 @@ target_precompile_headers(Athena PRIVATE
 	<fstream> <array> <vector> <string> <unordered_map> <unordered_set>
 
 	Source/Athena/Core/Core.h
-	Source/Athena/Core/Log.h
-	Source/Athena/Core/Memory.h
-	Source/Athena/Core/Profile.h
 )
 
 target_include_directories(Athena PRIVATE 

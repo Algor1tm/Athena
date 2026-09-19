@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Utils/StringUtils.h"
 #include "Athena/Renderer/RenderResource.h"
 

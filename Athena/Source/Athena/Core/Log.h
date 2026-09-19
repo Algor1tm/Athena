@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Athena/Core/Core.h"
+#include "Athena/Core/BuildConfiguration.h"
 
 #include <string_view>
 
@@ -20,7 +20,7 @@ namespace Athena
 {
 	enum class LogLevel
 	{
-		Trace = 1, Info, Warn, Error, Fatal
+		Trace = 0, Info, Warn, Error, Fatal
 	};
 
 	struct LogConfig

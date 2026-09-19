@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Renderer/Mesh.h"

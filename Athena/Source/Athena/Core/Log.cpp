@@ -1,4 +1,5 @@
 #include "Log.h"
+#include "Athena/Core/ConsoleManager.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Core/PlatformUtils.h"
 
@@ -18,6 +19,13 @@
 
 namespace Athena
 {
+	static AutoCVar<int32> CVarLogVerbosity(
+		"Log.Verbosity",
+		0,
+		"Set log verbosity, matches LogLevel enum value (0 - trace, 4 - fatal)"
+	);
+
+
 	DEFINE_LOG_CATEGORY(LogTemp);
 	DEFINE_LOG_CATEGORY(Debug);
 	DEFINE_LOG_CATEGORY(General);
@@ -47,6 +55,20 @@ namespace Athena
 		return "";
 	}
 
+	static spdlog::level::level_enum LogLevelToSpdlogLevel(LogLevel level)
+	{
+		switch (level)
+		{
+		case LogLevel::Trace: return spdlog::level::trace;
+		case LogLevel::Info:  return spdlog::level::info;
+		case LogLevel::Warn:  return spdlog::level::warn;
+		case LogLevel::Error: return spdlog::level::err;
+		case LogLevel::Fatal: return spdlog::level::critical;
+		}
+
+		return spdlog::level::trace;
+	}
+
 	void Logger::Init(const LogConfig& config)
 	{
 		if(config.EnableConsole)
@@ -65,18 +87,19 @@ namespace Athena
 			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
 		}
 
-		spdlog::level::level_enum loglevel;
 
-#if ATN_DEBUG
-		loglevel = spdlog::level::trace;
-#else
-		loglevel = spdlog::level::info;
-#endif
+		spdlog::level::level_enum loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
 
 		s_SPDLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
 		spdlog::register_logger(s_SPDLogger);
 		s_SPDLogger->set_level(loglevel);
 		s_SPDLogger->flush_on(loglevel);
+
+		CVarLogVerbosity.SetOnChangedCallback([](CVarBase* cVar) 
+		{
+			s_SPDLogger->set_level(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
+			s_SPDLogger->flush_on(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
+		});
 	}
 
 	void Logger::Shutdown()

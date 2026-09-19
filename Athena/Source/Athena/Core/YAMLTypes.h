@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
 #include "Athena/Core/FileSystem.h"

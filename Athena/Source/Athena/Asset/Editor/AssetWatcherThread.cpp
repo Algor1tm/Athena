@@ -70,7 +70,7 @@ namespace Athena
 
 	void AssetWatcherThread::MonitorAssets()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		// 1. Remove outdated or invalid assets and hot reload assets by last write time
 		const auto& registry = m_Registry->GetRegistry();

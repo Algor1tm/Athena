@@ -19,7 +19,7 @@ namespace Athena
 
 	void DrawListStatic::Sort()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		std::sort(m_Array.begin(), m_Array.end(), [](const StaticDrawCall& left, const StaticDrawCall& right)
 		{
@@ -30,7 +30,7 @@ namespace Athena
 
 	void DrawListStatic::Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		if (m_Array.empty())
 			return;
@@ -115,7 +115,7 @@ namespace Athena
 
 	void DrawListStatic::FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		if (m_Array.empty())
 			return;
@@ -259,7 +259,7 @@ namespace Athena
 
 	void DrawListAnim::Sort()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		std::sort(m_Array.begin(), m_Array.end(), [](const AnimDrawCall& left, const AnimDrawCall& right)
 		{
@@ -270,7 +270,7 @@ namespace Athena
 
 	void DrawListAnim::Flush(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		uint32 instanceOffset = m_InstanceOffset;
 
@@ -301,7 +301,7 @@ namespace Athena
 
 	void DrawListAnim::FlushNoMaterials(const Ref<RenderCommandBuffer> commandBuffer, const Ref<Pipeline>& pipeline, bool shadowPass)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		uint32 instanceOffset = m_InstanceOffset;
 		Ref<VertexBuffer> instanceBuffer;

@@ -240,7 +240,7 @@ namespace Athena
 
 	void VulkanRenderer::BlitToScreen(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Texture2D>& texture)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		VkCommandBuffer commandBuffer = cmdBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 

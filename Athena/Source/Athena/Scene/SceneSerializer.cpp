@@ -34,7 +34,7 @@ namespace Athena
 
 	bool SceneSerializer::SerializeToFile(const FilePath& path)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		YAML::Emitter out;
 		out << YAML::BeginMap;
@@ -64,7 +64,7 @@ namespace Athena
 
 	bool SceneSerializer::DeserializeFromFile(const FilePath& path)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		if (!FileSystem::Exists(path))
 		{

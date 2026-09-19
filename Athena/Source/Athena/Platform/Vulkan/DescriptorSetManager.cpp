@@ -326,7 +326,7 @@ namespace Athena
 		if (m_DescriptorSets.empty())
 			return;
 
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
 

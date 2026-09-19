@@ -282,7 +282,7 @@ namespace Athena
 		statsGroup->RegisterStat(this);
 	}
 
-#if ATN_ENABLE_PROFILING
+#if ATN_ENABLE_STATS
 	#define DEFINE_STATS_GROUP(Label, StatsGroupName, StatsThreadID) ATHENA_API StatsGroup StatsGroupName(Label, StatsThreadID)
 	#define EXTERN_STATS_GROUP(StatsGroupName) extern ATHENA_API StatsGroup StatsGroupName
 

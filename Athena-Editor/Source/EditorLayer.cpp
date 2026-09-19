@@ -104,7 +104,7 @@ namespace Athena
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
 
@@ -114,7 +114,7 @@ namespace Athena
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
         {
-            ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize");
+            TRACY_PROFILE_SCOPE("EditorLayer::OnViewportResize");
 
             m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
@@ -149,7 +149,7 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
 
@@ -1044,7 +1044,7 @@ namespace Athena
 
     void EditorLayer::OnScenePlay()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
@@ -1069,7 +1069,7 @@ namespace Athena
 
     void EditorLayer::OnSceneSimulate()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();
@@ -1089,7 +1089,7 @@ namespace Athena
 
     void EditorLayer::OnSceneStop()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         m_EditorCtx->SceneState = SceneState::Edit;
 
@@ -1106,7 +1106,7 @@ namespace Athena
 
     void EditorLayer::OnEvent(Event& event)
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();

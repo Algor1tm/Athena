@@ -1190,7 +1190,7 @@ namespace Athena
 
 	void SceneRenderer::EndScene()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		SCOPE_CYCLE_STAT(STAT_SceneRendererEndScene);
 
 		ResetStats();
@@ -1202,7 +1202,7 @@ namespace Athena
 		m_Profiler->BeginPipelineStatsQuery();
 
 		{
-			ATN_PROFILE_SCOPE("SceneRenderer::PreProcessMeshes");
+			TRACY_PROFILE_SCOPE("SceneRenderer::PreProcessMeshes");
 
 			m_StaticGeometryList.Sort();
 			m_AnimGeometryList.Sort();
@@ -1214,7 +1214,7 @@ namespace Athena
 		}
 
 		{
-			ATN_PROFILE_SCOPE("SceneRenderer::UploadData");
+			TRACY_PROFILE_SCOPE("SceneRenderer::UploadData");
 
 			m_BonesSBO.Flush();
 			m_TransformsStorage.Flush();

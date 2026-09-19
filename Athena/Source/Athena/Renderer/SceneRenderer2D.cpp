@@ -211,7 +211,7 @@ namespace Athena
 
 	void SceneRenderer2D::EndScene()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		FlushQuads();
 		FlushLines();

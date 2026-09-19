@@ -40,8 +40,6 @@ namespace Athena
 
 	Application::~Application()
 	{
-		ATN_PROFILER_SHUTDOWN()
-
 		ScriptEngine::Shutdown();
 		m_LayerStack.Clear();
 		m_ImGuiLayer.Release();
@@ -60,7 +58,7 @@ namespace Athena
 
 		while (m_Running)
 		{
-			ATN_PROFILE_FRAME("MainThread");
+			TRACY_FRAME_MARK();
 			STATS_THREAD_HEARTBEAT(StatsThread::GameThread);
 			STATS_THREAD_HEARTBEAT(StatsThread::RenderThread);
 
@@ -104,7 +102,7 @@ namespace Athena
 
 	void Application::ProcessEvents()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		SCOPE_CYCLE_STAT(STAT_ProcessEvents);
 
 		m_Window->PollEvents();
@@ -119,7 +117,7 @@ namespace Athena
 
 	void Application::ExecuteMainThreadQueue()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
 
@@ -133,7 +131,7 @@ namespace Athena
 
 	void Application::RenderImGui()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		SCOPE_CYCLE_STAT(STAT_RenderImGui);
 
 		if (!m_Config.EnableImGui)

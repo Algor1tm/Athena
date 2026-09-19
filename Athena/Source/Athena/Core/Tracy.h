@@ -2,19 +2,18 @@
 
 #include "Athena/Core/BuildConfiguration.h"
 
-#if ATN_ENABLE_PROFILING
-	#include <optick.h>
+#if ATN_ENABLE_TRACY
+	#ifndef TRACY_ENABLE
+		#define TRACY_ENABLE 1
+	#endif
 
-	#define ATN_PROFILE_FRAME(frameName) OPTICK_FRAME(frameName)
-	#define ATN_PROFILER_SHUTDOWN() OPTICK_SHUTDOWN()
+	#include <tracy/Tracy.hpp>
 
-	#define ATN_PROFILE_THREAD(frameName) OPTICK_THREAD(frameName)
-	#define ATN_PROFILE_FUNC() OPTICK_EVENT()
-	#define ATN_PROFILE_SCOPE(name) OPTICK_EVENT(name)
+	#define TRACY_FRAME_MARK() FrameMark
+	#define TRACY_PROFILE_FUNC() ZoneScoped
+	#define TRACY_PROFILE_SCOPE(name) ZoneScopedN(name)
 #else
-	#define ATN_PROFILE_FRAME(frameName)
-	#define ATN_PROFILER_SHUTDOWN()
-
-	#define ATN_PROFILE_FUNC()
-	#define ATN_PROFILE_SCOPE(name)
+	#define TRACY_FRAME_MARK()
+	#define TRACY_PROFILE_FUNC()
+	#define TRACY_PROFILE_SCOPE(name)
 #endif

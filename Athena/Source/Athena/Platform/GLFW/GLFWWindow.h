@@ -301,7 +301,7 @@ namespace Athena
 
 	void Window::PollEvents()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		glfwPollEvents();
 	}
 

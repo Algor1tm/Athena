@@ -41,7 +41,7 @@ void SandBoxLayer::OnDetach()
 
 void SandBoxLayer::OnUpdate(Time frameTime)
 {
-	ATN_PROFILE_FUNC()
+	TRACY_PROFILE_FUNC()
 
 	m_Scene->OnUpdateRuntime(frameTime);
 	m_Scene->OnRender(m_SceneRenderer);
@@ -64,7 +64,7 @@ void SandBoxLayer::OnUpdate(Time frameTime)
 
 void SandBoxLayer::OnEvent(Event& event)
 {
-	ATN_PROFILE_FUNC()
+	TRACY_PROFILE_FUNC()
 
 	EventDispatcher dispatcher(event);
 	dispatcher.Dispatch<WindowResizeEvent>(ATN_BIND_EVENT_FN(OnWindowResize));

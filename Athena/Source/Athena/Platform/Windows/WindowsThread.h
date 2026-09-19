@@ -12,7 +12,6 @@ namespace Athena
 	{
 		Thread* thread = static_cast<Thread*>(args);
 
-		ATN_PROFILE_THREAD(thread->GetName().data());
 		thread->m_Function();
 
 		return 0;

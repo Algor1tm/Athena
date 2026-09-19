@@ -69,7 +69,7 @@ namespace Athena
 
 	void VulkanRenderCommandBuffer::SubmitForPresent()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 		const FrameSyncData& frameImageData = VulkanContext::GetFrameSyncData(Application::Get().GetWindow().GetSwapChain()->GetCurrentImageIndex());
@@ -89,7 +89,7 @@ namespace Athena
 		submitInfo.pSignalSemaphores = &frameImageData.RenderCompleteSemaphore;
 
 		{
-			ATN_PROFILE_SCOPE("vkQueueSubmit");
+			TRACY_PROFILE_SCOPE("vkQueueSubmit");
 			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, frameData.RenderCompleteFence);
 		}
 	}

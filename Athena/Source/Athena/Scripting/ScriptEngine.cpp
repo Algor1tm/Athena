@@ -407,7 +407,7 @@ namespace Athena
 
 	void ScriptEngine::InstantiateEntity(Entity entity)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const String& scriptName = entity.GetComponent<ScriptComponent>().Name;
 
@@ -424,7 +424,7 @@ namespace Athena
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const String& scriptName = entity.GetComponent<ScriptComponent>().Name;
 
@@ -436,7 +436,7 @@ namespace Athena
 
 	void ScriptEngine::OnUpdateEntity(Entity entity, Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const String& scriptName = entity.GetComponent<ScriptComponent>().Name;
 

@@ -29,7 +29,7 @@ namespace Athena
 
 	Ref<Asset> EditorAssetManager::GetAsset(AssetHandle handle)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		Ref<Asset> asset;
 
@@ -132,7 +132,7 @@ namespace Athena
 
 	Ref<Asset> EditorAssetManager::LoadAsset(AssetHandle handle, const AssetMetadata& metadata)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		if (IsAssetMemoryOnly(handle))
 		{

@@ -134,7 +134,7 @@ namespace Athena
 
 	bool VulkanSwapChain::Recreate()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		vkDeviceWaitIdle(VulkanContext::GetLogicalDevice());
 
@@ -241,7 +241,7 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		if (m_Dirty)
 			Recreate();
@@ -250,7 +250,7 @@ namespace Athena
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 		{
-			ATN_PROFILE_SCOPE("vkWaitForFences");
+			TRACY_PROFILE_SCOPE("vkWaitForFences");
 			SCOPE_CYCLE_STAT(STAT_CPUWait);
 
 			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
@@ -258,7 +258,7 @@ namespace Athena
 		}
 
 		{
-			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR");
+			TRACY_PROFILE_SCOPE("vkAcquireNextImageKHR");
 			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
 			
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -275,7 +275,7 @@ namespace Athena
 
 	void VulkanSwapChain::Present()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(m_ImageIndex);
 

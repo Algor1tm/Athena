@@ -136,7 +136,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::NewFrame()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		InvalidateDescriptorSets();
 
@@ -146,7 +146,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::RenderDrawData(uint32 width, uint32 height)
 	{
-		ATN_PROFILE_FUNC()
+		TRACY_PROFILE_FUNC()
 
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
 		VkCommandBuffer commandBuffer = Renderer::GetRenderCommandBuffer().As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
@@ -181,7 +181,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		RecreateFramebuffers();
 	}
 

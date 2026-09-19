@@ -122,7 +122,6 @@ target_compile_definitions(spdlog PUBLIC _SILENCE_ALL_MS_EXT_DEPRECATION_WARNING
 AddLibrary(yaml-cpp "${THIRD_PARTY_DIR}/yaml-cpp")
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
 
-AddLibrary(OptickCore "${THIRD_PARTY_DIR}/Optick/OptickCore")
 
 AddLibrary(msdf-atlas-gen "${THIRD_PARTY_DIR}/msdf-atlas-gen")
 set_property(TARGET msdf-atlas-gen PROPERTY FOLDER "Dependencies/msdfgen")
@@ -135,6 +134,17 @@ target_compile_definitions(Athena PUBLIC MSDFGEN_PUBLIC=)
 EnableMPCompilation(freetype)
 set_property(TARGET freetype PROPERTY FOLDER "Dependencies/msdfgen")
 SetBuildDirectory(freetype)
+
+# Need to link tracy based on configuration and make it public, so we cant use AddLibrary in this case
+option(TRACY_ENABLE "" ON)
+option(TRACY_ON_DEMAND "" ON)
+
+add_subdirectory("${THIRD_PARTY_DIR}/Tracy")
+EnableMPCompilation(TracyClient)
+set_property(TARGET TracyClient PROPERTY FOLDER Dependencies)
+SetBuildDirectory(TracyClient)
+
+target_link_libraries(Athena PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>:TracyClient>)
 
 
 if (Vulkan_FOUND)

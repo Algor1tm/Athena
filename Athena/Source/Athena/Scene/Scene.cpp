@@ -289,7 +289,7 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 		UpdateAnimations(frameTime);
@@ -297,13 +297,13 @@ namespace Athena
 
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 
 		// Update scripts
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate");
+			TRACY_PROFILE_SCOPE("ScriptEngine::OnUpdate");
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
@@ -318,7 +318,7 @@ namespace Athena
 
 	void Scene::OnUpdateSimulation(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 		UpdateAnimations(frameTime);
@@ -327,14 +327,14 @@ namespace Athena
 
 	void Scene::OnRuntimeStart()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 		OnPhysics2DStart();
 
 		// Scripting
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
+			TRACY_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
 
 			ScriptEngine::OnRuntimeStart(this);
 
@@ -396,7 +396,7 @@ namespace Athena
 
 	void Scene::UpdateWorldTransforms()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		auto baseEntities = m_Registry.view<WorldTransformComponent, TransformComponent>(entt::exclude<ParentComponent>);
 		for (auto entt : baseEntities)
@@ -448,7 +448,7 @@ namespace Athena
 
 	void Scene::UpdateAnimations(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		auto view = m_Registry.view<AnimationControllerComponent>();
 		for (auto entity : view)
@@ -460,7 +460,7 @@ namespace Athena
 
 	void Scene::OnPhysics2DStart()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const Vector2 gravity = Project::GetActive()->GetConfig().Gravity;
 
@@ -516,7 +516,7 @@ namespace Athena
 
 	void Scene::UpdatePhysics(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const uint32 velocityIterations = Project::GetActive()->GetConfig().VelocityIterations;
 		const uint32 positionIterations = Project::GetActive()->GetConfig().PositionIterations;
@@ -580,7 +580,7 @@ namespace Athena
 
 	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
 		for (auto entity : quads)
@@ -631,7 +631,7 @@ namespace Athena
 
 	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		renderer->BeginScene(cameraInfo);
 

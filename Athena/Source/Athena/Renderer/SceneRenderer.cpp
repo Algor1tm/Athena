@@ -652,7 +652,7 @@ namespace Athena
 			for (uint32 i = 0; i < 2; ++i)
 			{
 				TextureCreateInfo texInfo;
-				texInfo.Name = std::format("JumpFloodPingPong_{}", i);
+				texInfo.Name = fmt::format("JumpFloodPingPong_{}", i);
 				texInfo.TextureFormat = Format::RG16F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::ATTACHMENT);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
@@ -692,7 +692,7 @@ namespace Athena
 					std::string_view label = even ? "Even" : "Odd";
 
 					RenderPassCreateInfo passInfo;
-					passInfo.Name = std::format("JumpFloodPass{}", label);
+					passInfo.Name = fmt::format("JumpFloodPass{}", label);
 					passInfo.InputPass = even ? m_JumpFloodPasses[1] : m_JumpFloodInitPass;
 					passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
@@ -701,7 +701,7 @@ namespace Athena
 					m_JumpFloodPasses[index]->Bake();
 
 					PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-					pipelineInfo.Name = std::format("JumpFloodPipeline", label);
+					pipelineInfo.Name = fmt::format("JumpFloodPipeline", label);
 					pipelineInfo.RenderPass = m_JumpFloodPasses[index];
 					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Pass");
 
@@ -734,7 +734,7 @@ namespace Athena
 				pipelineInfo.BlendEnable = true;
 
 				m_JumpFloodCompositePipeline = Pipeline::Create(pipelineInfo);
-				m_JumpFloodCompositePipeline->SetInput("u_Texture", m_JumpFloodPasses[index]->GetOutput(std::format("JumpFloodPingPong_{}", index)));
+				m_JumpFloodCompositePipeline->SetInput("u_Texture", m_JumpFloodPasses[index]->GetOutput(fmt::format("JumpFloodPingPong_{}", index)));
 				m_JumpFloodCompositePipeline->Bake();
 
 				m_JumpFloodCompositeMaterial = Material::Create(pipelineInfo.Shader, "JumpFloodCompositeMaterial");
@@ -770,7 +770,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < 2; ++i)
 			{
-				texInfo.Name = std::format("PostProcessTex_{}", i);
+				texInfo.Name = fmt::format("PostProcessTex_{}", i);
 				m_PostProcessTextures[i] = Texture2D::Create(texInfo);
 			}
 		}
@@ -1068,21 +1068,21 @@ namespace Athena
 
 		if (m_LightData.DirectionalLightCount > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
 		{
-			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} DirectionalLights!", (int)ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
 			m_LightData.DirectionalLightCount = ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT;
 		}
 
 		m_LightData.PointLightCount = lightEnv.PointLights.size();
 		if (m_LightData.PointLightCount > ShaderDef::MAX_POINT_LIGHT_COUNT)
 		{
-			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} PointLights!", (int)ShaderDef::MAX_POINT_LIGHT_COUNT);
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
 		m_LightData.SpotLightCount = lightEnv.SpotLights.size();
 		if (m_LightData.SpotLightCount > ShaderDef::MAX_SPOT_LIGHT_COUNT)
 		{
-			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} SpotLights!", ShaderDef::MAX_SPOT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} SpotLights!", (int)ShaderDef::MAX_SPOT_LIGHT_COUNT);
 			m_LightData.SpotLightCount = ShaderDef::MAX_SPOT_LIGHT_COUNT;
 		}
 
@@ -1508,7 +1508,7 @@ namespace Athena
 			// Recreate (on window resized)
 			if (material == nullptr)
 			{
-				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), std::format("BloomMaterial_{}", mip));
+				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), fmt::format("BloomMaterial_{}", mip));
 				material->Set("u_BloomTextureMip", m_HiColorBuffer->GetMipView(mip));
 			}
 

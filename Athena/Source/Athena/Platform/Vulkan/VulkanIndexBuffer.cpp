@@ -27,7 +27,7 @@ namespace Athena
 				VulkanContext::GetAllocator()->DestroyBuffer(indexBuffer, name);
 
 			for (uint32 i = 0; i < indexBufferSet.size(); ++i)
-				VulkanContext::GetAllocator()->DestroyBuffer(indexBufferSet[i], std::format("{}_{}", name, i));
+				VulkanContext::GetAllocator()->DestroyBuffer(indexBufferSet[i], fmt::format("{}_{}", name, i));
 		});
 
 		m_IndexBufferSet.clear();
@@ -74,7 +74,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < m_IndexBufferSet.size(); ++i)
 			{
-				String bufferName = std::format("{}_{}", m_Info.Name, i);
+				String bufferName = fmt::format("{}_{}", m_Info.Name, i);
 				VkDeviceSize bufferSize = m_Info.Count * sizeof(uint32);
 
 				VkBufferCreateInfo bufferInfo = {};

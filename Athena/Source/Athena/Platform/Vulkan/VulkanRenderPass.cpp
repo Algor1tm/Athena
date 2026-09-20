@@ -238,7 +238,7 @@ namespace Athena
 		framebufferInfo.pAttachments = attachmentViews.data();
 
 		VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
-		Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_FB", m_Info.Name));
+		Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, fmt::format("{}_FB", m_Info.Name));
 	}
 
 	void VulkanRenderPass::BuildDependencies(std::vector<VkSubpassDependency>& dependencies)

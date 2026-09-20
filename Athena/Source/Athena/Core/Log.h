@@ -4,16 +4,25 @@
 
 #include <string_view>
 
-#if defined(_MSC_VER)
-	#pragma warning(push, 0)
+//#if defined(_MSC_VER)
+//	#pragma warning(push, 0)
+//#endif
+
+#undef check
+
+#include <fmt/format.h>
+#include <fmt/std.h>
+
+#if ATN_ENABLE_CHECKS
+	#define check(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
+#else
+	#define check(cond, msg, ...)
 #endif
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/fmt/ostr.h>
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+//#if defined(_MSC_VER)
+//	#pragma warning(pop)
+//#endif
 
 
 namespace Athena
@@ -98,8 +107,7 @@ namespace Athena
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// If defined template specialization of custom type 'Type' ToString<Type>, 
-// objects of class 'Type' can be formatted
+// To add format specialization define ToString<T>() function for your type and add DECLARE_FMT_FORMATTER
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Athena
@@ -117,14 +125,18 @@ namespace Athena
 	}
 }
 
-namespace fmt
-{
-	template <typename OStream, typename T>
-	inline OStream& operator<<(OStream& os, const T& x)
-	{
-		return os << ::Athena::ToString(x);
-	}
-}
+#define DECLARE_FMT_FORMATTER(Type) \
+    template <> \
+    struct fmt::formatter<::Athena::Type> : fmt::formatter<::Athena::String> \
+    { \
+        auto format(const ::Athena::Type& value, fmt::format_context& ctx) const \
+        { \
+            return fmt::formatter<::Athena::String>::format( \
+                ::Athena::ToString(value), \
+                ctx \
+            ); \
+        } \
+    }
 
 
 #if ATN_ENABLE_LOGGING

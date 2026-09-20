@@ -12,13 +12,13 @@ namespace Athena::Utils
 	{
 		// MBs
 		if (bytes > 1024 * 1024)
-			return std::format("{:.2f} MBs", (float)bytes / (1024.f * 1024.f));
+			return fmt::format("{:.2f} MBs", (float)bytes / (1024.f * 1024.f));
 
 		// KBs
 		if (bytes > 1024)
-			return std::format("{:.2f} KBs", (float)bytes / 1024.f);
+			return fmt::format("{:.2f} KBs", (float)bytes / 1024.f);
 
-		return std::format("{} bytes", bytes);
+		return fmt::format("{} bytes", bytes);
 	}
 
 	// From imgui.cpp

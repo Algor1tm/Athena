@@ -91,7 +91,7 @@ namespace std
 	{
 		size_t operator()(const TextureSamplerCreateInfo& value) const
 		{
-			string str = std::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
+			string str = fmt::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
 			return hash<string>()(str);
 		}
 	};

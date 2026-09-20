@@ -98,7 +98,7 @@ namespace Athena
 		QuadBatch quadBatch;
 		quadBatch.IndexCount = 0;
 		quadBatch.BaseVertex = 0;
-		quadBatch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
+		quadBatch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, fmt::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
 
 		m_QuadBatches.push_back(quadBatch);
 
@@ -155,7 +155,7 @@ namespace Athena
 		TextBatch textBatch;
 		textBatch.IndexCount = 0;
 		textBatch.BaseVertex = 0;
-		textBatch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
+		textBatch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, fmt::format("Renderer2D_Text_{}", m_TextBatchIndex));
 
 		m_TextBatches.push_back(textBatch);
 	}
@@ -361,7 +361,7 @@ namespace Athena
 			batch.IndexCount = 0;
 			batch.BaseVertex = vertexOffset;
 
-			batch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, std::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
+			batch.Material = Material::Create(m_QuadPipeline->GetInfo().Shader, fmt::format("Renderer2D_Quad_{}", m_QuadBatchIndex));
 			batch.Material->Set("u_ViewProjection", m_ViewProjection);
 
 			m_QuadBatches.push_back(batch);
@@ -427,7 +427,7 @@ namespace Athena
 			batch.IndexCount = 0;
 			batch.BaseVertex = vertexOffset;
 
-			batch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, std::format("Renderer2D_Text_{}", m_TextBatchIndex));
+			batch.Material = Material::Create(m_TextPipeline->GetInfo().Shader, fmt::format("Renderer2D_Text_{}", m_TextBatchIndex));
 
 			m_TextBatches.push_back(batch);
 		}

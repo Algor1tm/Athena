@@ -32,6 +32,7 @@ set_target_properties(Athena-Editor
 target_include_directories(Athena-Editor PRIVATE 
 	"Source" 
 	"${CMAKE_SOURCE_DIR}/Athena/Source" 
+	"${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
 ######################################

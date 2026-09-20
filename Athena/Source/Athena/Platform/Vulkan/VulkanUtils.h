@@ -171,7 +171,7 @@ namespace Athena::Vulkan
         message += "\n      Objects:";
         uint32 i = 0;
         for (const auto& objectInfo : objects)
-            message += std::format("\n            {}{}", i++, objectInfo);
+            message += fmt::format("\n            {}{}", i++, objectInfo);
         message += "\n\n";
 #endif
 

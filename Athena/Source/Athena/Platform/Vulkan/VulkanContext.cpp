@@ -72,13 +72,13 @@ namespace Athena
 
 			String message = "Vulkan supported extensions: \n\t";
 			for (auto ext : supportedExtensions)
-				message += std::format("'{}'\n\t", ext.extensionName);
+				message += fmt::format("'{}'\n\t", ext.extensionName);
 
 			ATN_LOG_TRACE(Vulkan, message);
 
 			message = "Vulkan required extensions: \n\t";
 			for (auto ext : requiredExtensions)
-				message += std::format("'{}'\n\t", ext);
+				message += fmt::format("'{}'\n\t", ext);
 
 			ATN_LOG_INFO(Vulkan, message);
 
@@ -88,7 +88,7 @@ namespace Athena
 
 				message = "Missing extensions: \n\t";
 				for (auto ext : missingExtensions)
-					message += std::format("'{}'\n\t", ext);
+					message += fmt::format("'{}'\n\t", ext);
 
 				ATN_LOG_ERROR(Vulkan, message);
 				ensuref(false);
@@ -126,13 +126,13 @@ namespace Athena
 			}
 			String message = "Vulkan supported layers: \n\t";
 			for (auto layer : supportedLayers)
-				message += std::format("'{}'\n\t", layer.layerName);
+				message += fmt::format("'{}'\n\t", layer.layerName);
 
 			ATN_LOG_TRACE(Vulkan, message);
 
 			message = "Vulkan required layers: \n\t";
 			for (auto layer : requiredLayers)
-				message += std::format("'{}'\n\t", layer);
+				message += fmt::format("'{}'\n\t", layer);
 
 			ATN_LOG_INFO(Vulkan, message);
 
@@ -142,7 +142,7 @@ namespace Athena
 
 				message = "Missing layers: \n\t";
 				for (auto layer : missingLayers)
-					message += std::format("'{}'\n\t", layer);
+					message += fmt::format("'{}'\n\t", layer);
 
 				ATN_LOG_ERROR(Vulkan, message);
 				ensuref(false);

@@ -160,3 +160,8 @@ EXPORTS
 	?SetDrawlist@ImGuizmo@@YAXPEAUImDrawList@@@Z
 	?SetOrthographic@ImGuizmo@@YAX_N@Z
 	?SetRect@ImGuizmo@@YAXMMMM@Z
+
+	?assert_fail@v12@fmt@@YAXPEBDH0@Z
+	?report_error@v12@fmt@@YAXPEBD@Z
+	?is_printable@detail@v12@fmt@@YA_NI@Z
+	?vformat@v12@fmt@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$basic_string_view@D@12@V?$basic_format_args@Vcontext@v12@fmt@@@12@@Z

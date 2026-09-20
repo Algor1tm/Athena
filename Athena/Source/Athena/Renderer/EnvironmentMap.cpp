@@ -223,7 +223,7 @@ namespace Athena
 			std::array<Ref<Material>, ShaderDef::MAX_SKYBOX_MAP_LOD> mipFilterMaterials;
 			for (uint32 mip = 1; mip < ShaderDef::MAX_SKYBOX_MAP_LOD; ++mip)
 			{
-				Ref<Material> mipMaterial = Material::Create(shader, std::format("{}_{}", shader->GetName(), mip - 1));
+				Ref<Material> mipMaterial = Material::Create(shader, fmt::format("{}_{}", shader->GetName(), mip - 1));
 				mipMaterial->Set("u_EnvironmentMipImage", envTex->GetMipView(mip));
 				mipMaterial->Set("u_MipLevel", mip);
 

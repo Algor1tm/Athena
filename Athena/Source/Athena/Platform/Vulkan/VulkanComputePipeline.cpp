@@ -13,7 +13,7 @@ namespace Athena
 		check(shader->IsCompute(), "Compute pipeline require compute shader!");
 
 		m_Shader = shader;
-		m_Name = std::format("{}Pipeline", shader->GetName());
+		m_Name = fmt::format("{}Pipeline", shader->GetName());
 		m_Hash = Math::Random::UInt64(); 	// TODO: maybe try to hash more clever way
 		m_VulkanPipeline = VK_NULL_HANDLE;
 		m_WorkGroupSize = m_Shader->GetMetaData().WorkGroupSize;

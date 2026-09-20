@@ -3,18 +3,17 @@
 #include "Athena/Project/Project.h"
 #include "Athena/Core/PlatformUtils.h"
 
-#if defined(_MSC_VER)
-	#pragma warning(push, 0)
-#endif
+#undef check
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
+#if ATN_ENABLE_CHECKS
+	#define check(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
+#else
+	#define check(cond, msg, ...)
 #endif
-
 
 
 namespace Athena
@@ -55,7 +54,7 @@ namespace Athena
 		return "";
 	}
 
-	static spdlog::level::level_enum LogLevelToSpdlogLevel(LogLevel level)
+	static spdlog::level LogLevelToSpdlogLevel(LogLevel level)
 	{
 		switch (level)
 		{
@@ -87,10 +86,10 @@ namespace Athena
 			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
 		}
 
-		spdlog::level::level_enum loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
+		spdlog::level loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
 
 		s_SPDLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
-		spdlog::register_logger(s_SPDLogger);
+		//spdlog::register_logger(s_SPDLogger);
 		s_SPDLogger->set_level(loglevel);
 		s_SPDLogger->flush_on(loglevel);
 

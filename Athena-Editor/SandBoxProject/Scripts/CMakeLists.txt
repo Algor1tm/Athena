@@ -51,7 +51,7 @@ else(USE_DEBUG_RUNTIME_LIBS)
 	endif(MSVC)
 endif(USE_DEBUG_RUNTIME_LIBS)
 
-target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor)
+target_compile_options(${PROJECT_NAME} PRIVATE /utf-8 /Zc:preprocessor)
 
 set_target_properties(${PROJECT_NAME}
 	PROPERTIES
@@ -104,6 +104,7 @@ IncludeDependenciesDirs(${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
 	"${ATHENA_SOURCE_DIR}/Athena/Source" 
+	"${CMAKE_BINARY_DIR}/_deps/fmt-src/include"
 )
 
 # Find Vulkan

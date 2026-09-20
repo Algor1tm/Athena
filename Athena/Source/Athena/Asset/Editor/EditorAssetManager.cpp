@@ -136,7 +136,7 @@ namespace Athena
 
 		if (IsAssetMemoryOnly(handle))
 		{
-			ATN_LOG_ERROR(AssetManager, "Cant load memory only asset (handle - {}, type - {})!", handle, metadata.Type);
+			ATN_LOG_ERROR(AssetManager, "Cant load memory only asset (handle - {}, type - {})!", handle, AssetManager::AssetTypeToString(metadata.Type));
 			return nullptr;
 		}
 
@@ -144,7 +144,7 @@ namespace Athena
 
 		if (!asset)
 		{
-			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, AssetManager::AssetTypeToString(metadata.Type), metadata.FilePath);
 			return nullptr;
 		}
 
@@ -153,7 +153,7 @@ namespace Athena
 
 		if (!result)
 		{
-			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, metadata.Type, metadata.FilePath);
+			ATN_LOG_ERROR(AssetManager, "Failed to load asset (handle - {}, type - {}, filepath - {})!", handle, AssetManager::AssetTypeToString(metadata.Type), metadata.FilePath);
 			return nullptr;
 		}
 
@@ -185,7 +185,7 @@ namespace Athena
 	{
 		if (metadata.IsMemoryOnly)
 		{
-			check(false, "Hello {} {}", metadata.Type, metadata.FilePath);
+			check(false, "Hello {} {}", AssetManager::AssetTypeToString(metadata.Type), metadata.FilePath);
 			return false;
 		}
 
@@ -200,7 +200,7 @@ namespace Athena
 			return asset->Deserialize(absolutePath, importSettings);
 		}
 
-		ATN_LOG_ERROR(AssetManager, "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, metadata.Type, metadata.FilePath);
+		ATN_LOG_ERROR(AssetManager, "Failed to deserialize asset : invalid filepath (handle - {}, type - {}, filepath - {})", asset->Handle, AssetManager::AssetTypeToString(metadata.Type), metadata.FilePath);
 		return false;
 	}
 

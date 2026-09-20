@@ -79,7 +79,10 @@ set_target_properties(Athena
 # Disable some warnings
 # 4099 - require debug info
 target_link_options(Athena PRIVATE /ignore:4099)
-target_compile_options(Athena PUBLIC /wd26495 /Zc:preprocessor)
+
+# utf-8 - requried by fmt
+# /Zc:preprocessor 0 required by Tracy
+target_compile_options(Athena PUBLIC /utf-8 /wd26495 /Zc:preprocessor)
 
 add_custom_command(TARGET Athena POST_BUILD 
   COMMAND "${CMAKE_COMMAND}" -E copy 
@@ -121,7 +124,6 @@ target_compile_definitions(spdlog PUBLIC _SILENCE_ALL_MS_EXT_DEPRECATION_WARNING
 
 AddLibrary(yaml-cpp "${THIRD_PARTY_DIR}/yaml-cpp")
 target_compile_definitions(yaml-cpp PUBLIC YAML_CPP_STATIC_DEFINE) # Static compile
-
 
 AddLibrary(msdf-atlas-gen "${THIRD_PARTY_DIR}/msdf-atlas-gen")
 set_property(TARGET msdf-atlas-gen PROPERTY FOLDER "Dependencies/msdfgen")

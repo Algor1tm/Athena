@@ -373,7 +373,7 @@ namespace Athena
                         if (!FileSystem::Exists("Screenshots"))
                             FileSystem::CreateDirectory("Screenshots");
 
-                        FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
+                        FilePath path = fmt::format("Screenshots/Viewport_{}.png", dateTime);
                         TextureExporter exporter;
                         exporter.ExportAsPNG(path, image);
                     }
@@ -1283,9 +1283,11 @@ namespace Athena
 
         FilePath cmakePath = m_Config.EditorResources / "Scripting/CMakeLists.txt";
         FilePath genProjectsPath = m_Config.EditorResources / "Scripting/VS2022-GenProjects.bat";
+        FilePath genProjectsPath1 = m_Config.EditorResources / "Scripting/VS2026-GenProjects.bat";
 
         FileSystem::Copy(cmakePath, Project::GetScriptsDirectory() / "CMakeLists.txt");
         FileSystem::Copy(genProjectsPath, Project::GetScriptsDirectory() / "VS2022-GenProjects.bat");
+        FileSystem::Copy(genProjectsPath, Project::GetScriptsDirectory() / "VS2026-GenProjects.bat");
     }
 
     bool EditorLayer::OpenProject()

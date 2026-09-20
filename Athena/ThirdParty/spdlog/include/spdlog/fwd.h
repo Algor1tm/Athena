@@ -3,16 +3,15 @@
 
 #pragma once
 
-namespace spdlog {
+#include "./namespace.h"
+
+SPDLOG_NAMESPACE_BEGIN
 class logger;
 class formatter;
+enum class level;
 
 namespace sinks {
 class sink;
 }
 
-namespace level {
-enum level_enum : int;
-}
-
-} // namespace spdlog
+SPDLOG_NAMESPACE_END

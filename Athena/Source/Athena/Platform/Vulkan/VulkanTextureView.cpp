@@ -15,7 +15,7 @@ namespace Athena
 
 		if (m_Info.Name.empty())
 		{
-			m_Info.Name = std::format("{}_Mip[{},{}]_Layer[{},{}]", texture->GetName(),
+			m_Info.Name = fmt::format("{}_Mip[{},{}]_Layer[{},{}]", texture->GetName(),
 				info.BaseMipLevel, info.BaseMipLevel + info.MipLevelCount - 1, 
 				info.BaseLayer, info.BaseLayer + info.LayerCount - 1);
 		}

@@ -65,6 +65,7 @@
 	#define ATN_INTERNAL_FATAL_ASSERT_IMPL(cond, name) ATN_INTERNAL_ASSERT_IMPL(cond, name " '{0}' failed at {1}:{2}", ATN_STRINGIFY_MACRO(cond), std::filesystem::path(__FILE__).filename().string(), __LINE__)
 #endif
 
+// When making changes here update Log.h and Log.cpp (spdlog compile issue)
 #if ATN_ENABLE_CHECKS
 	#define check(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
 	#define checkf(cond) ATN_INTERNAL_FATAL_ASSERT_IMPL(cond, "Assertion")

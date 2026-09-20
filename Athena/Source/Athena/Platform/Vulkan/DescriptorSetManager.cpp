@@ -237,7 +237,7 @@ namespace Athena
 				for (uint32 i = 0; i < setsCount; ++i)
 				{
 					Vulkan::SetObjectDebugName(m_DescriptorSets[frameIndex][i], VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT,
-						std::format("{}_{}_f{}", m_Info.Name, i, frameIndex));
+						fmt::format("{}_{}_f{}", m_Info.Name, i, frameIndex));
 				}
 			}
 

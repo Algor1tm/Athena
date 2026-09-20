@@ -30,7 +30,7 @@ namespace Athena
 					selectedGPUName = properties.deviceName;
 				}
 
-				message += std::format("{}\n\t", properties.deviceName);
+				message += fmt::format("{}\n\t", properties.deviceName);
 			}
 
 			ATN_LOG_INFO(Vulkan, message);
@@ -68,7 +68,7 @@ namespace Athena
 				flags += queues[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
 				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
-				message += std::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
+				message += fmt::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
 			}
 
 			ATN_LOG_INFO(Vulkan, message);
@@ -87,7 +87,7 @@ namespace Athena
 			queueCIs[0].queueCount = 1;
 			queueCIs[0].pQueuePriorities = queuePriority;
 
-			message += std::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
+			message += fmt::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
 			ATN_LOG_INFO(Vulkan, message);
 
 			std::vector<const char*> deviceExtensions = { 
@@ -231,13 +231,13 @@ namespace Athena
 
 		//String message = "Device supported extensions: \n\t";
 		//for (auto ext : supportedExtensions)
-		//	message += std::format("'{}'\n\t", ext.extensionName);
+		//	message += fmt::format("'{}'\n\t", ext.extensionName);
 		//
 		//ATN_CORE_TRACE_TAG("Vulkan", message);
 
 		String message = "Device required extensions: \n\t";
 		for (auto ext : requiredExtensions)
-			message += std::format("'{}'\n\t", ext);
+			message += fmt::format("'{}'\n\t", ext);
 		
 		ATN_LOG_INFO(Vulkan, message);
 
@@ -247,7 +247,7 @@ namespace Athena
 
 			message = "Missing extensions: \n\t";
 			for (auto ext : missingExtensions)
-				message += std::format("'{}'\n\t", ext);
+				message += fmt::format("'{}'\n\t", ext);
 
 			ATN_LOG_ERROR(Vulkan, message);
 			ensuref(false);

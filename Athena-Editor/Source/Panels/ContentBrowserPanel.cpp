@@ -197,9 +197,9 @@ namespace Athena
 		// Text
 		{
 			Vector2 framePadding = UI::GetTheme().Style.FramePadding;
-
+		
 			UI::ShiftCursorX(framePadding.x);
-
+		
 			if (renaming)
 			{
 				ImGui::SetNextItemWidth(itemSize.x - framePadding.x);
@@ -208,20 +208,18 @@ namespace Athena
 			else
 			{
 				ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + itemSize.x - framePadding.x);
-
+		
 				float actualSize = ImGui::CalcTextSize(fileName.data()).x + framePadding.x * 2.0f;
 				float avail = ImGui::GetContentRegionAvail().x;
-
+		
 				float off = (avail - actualSize) * 0.5f;
 				if (off > 0.0f)
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
+		
 				ImGui::TextWrapped(fileName.data());
 				ImGui::PopTextWrapPos();
 			}
 		}
-
-		ImGui::SetCursorScreenPos(ImVec2(cursorPos.x, cursorPos.y + itemSize.y));
 
 		if (ImGui::BeginPopup("CBItemPopup"))
 		{
@@ -376,10 +374,11 @@ namespace Athena
 				ImGui::PopTextWrapPos();
 			}
 
+			// Asset type text
 			String assetType = Utils::ToUpper((String)AssetManager::AssetTypeToString(m_Payload.AssetType));
 			if (m_Payload.AssetType == AssetType::EnvironmentMap)
 				assetType = "ENVMAP";
-
+			
 			ImVec2 textSize = ImGui::CalcTextSize(assetType.data());
 			ImVec2 localCursorPos = { itemSize.x - textSize.x - framePadding.x, itemSize.y - textSize.y - framePadding.y };
 			ImGui::SetCursorScreenPos({ cursorPos.x + localCursorPos.x, cursorPos.y + localCursorPos.y });
@@ -388,8 +387,6 @@ namespace Athena
 			ImGui::Text(assetType.data());
 			ImGui::PopStyleColor();
 		}
-
-		ImGui::SetCursorScreenPos(ImVec2(cursorPos.x, cursorPos.y + itemSize.y));
 
 		if (ImGui::BeginPopup("CBItemPopup"))
 		{
@@ -636,7 +633,7 @@ namespace Athena
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 5.f, 10.f });
 		ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
 
-		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Undo")), m_ButtonSize))
+		if (ImGui::ImageButton("UndoButtonImage", UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Undo")), m_ButtonSize))
 		{
 			if (m_CurrentFolder != m_RootFolder)
 			{
@@ -645,7 +642,7 @@ namespace Athena
 		}
 
 		ImGui::SameLine();
-		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Redo")), m_ButtonSize))
+		if (ImGui::ImageButton("RedoButtonImage", UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Redo")), m_ButtonSize))
 		{
 			// TODO
 		}
@@ -653,7 +650,7 @@ namespace Athena
 		ImGui::SameLine();
 		UI::ShiftCursorX(2.f);
 
-		if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Refresh")), m_ButtonSize))
+		if (ImGui::ImageButton("RefreshButtonImage", UI::GetTextureID(EditorResources::GetIcon("ContentBrowser_Refresh")), m_ButtonSize))
 		{
 			Refresh();
 		}
@@ -680,7 +677,7 @@ namespace Athena
 
 			ImGui::PushStyleColor(ImGuiCol_Button, { 0, 0, 0, 0 });
 			ImGui::PushStyleColor(ImGuiCol_Border, { 0, 0, 0, 0 });
-			if (ImGui::ImageButton(UI::GetTextureID(EditorResources::GetIcon("Settings")), m_ButtonSize))
+			if (ImGui::ImageButton("SettingsButtonImage", UI::GetTextureID(EditorResources::GetIcon("Settings")), m_ButtonSize))
 				ImGui::OpenPopup("ContentBrowserSettings");
 			ImGui::PopStyleColor();
 			ImGui::PopStyleColor();

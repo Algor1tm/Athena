@@ -191,7 +191,7 @@ namespace Athena::Vulkan
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
             ATN_LOG_ERROR(Vulkan, pMessage);
-            checkf(false);
+            ensuref(false);
             break;
         }
 

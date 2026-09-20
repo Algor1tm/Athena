@@ -23,10 +23,8 @@ namespace Athena
         if (ImGui::Begin("Profiling"))
         {
             bool vsync = Application::Get().GetWindow().IsVSync();
-            bool newVsync = vsync;
-            ImGui::Checkbox("VSync", &newVsync);
-            if (newVsync != vsync)
-                Application::Get().GetWindow().SetVSync(newVsync);
+            if (ImGui::Checkbox("VSync", &vsync))
+                Application::Get().GetWindow().SetVSync(vsync);
 
             Time frameTime = Application::Get().GetFrameTime();
 

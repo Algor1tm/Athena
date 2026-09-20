@@ -51,8 +51,6 @@ namespace Athena
             fgDrawList->AddImage(UI::GetTextureID(EditorResources::GetIcon("Logo")), logoRectStart, logoRectMax);
         }
 
-        ImGui::BeginHorizontal("Titlebar", { ImGui::GetWindowWidth() - windowPadding.y * 2.0f, ImGui::GetFrameHeightWithSpacing() });
-
         ImGui::SetCursorPos(ImVec2(windowPadding.x, windowPadding.y + titlebarVerticalOffset)); // Reset cursor pos
         // DEBUG DRAG BOUNDS
         //fgDrawList->AddRect(ImGui::GetCursorScreenPos(), ImVec2(ImGui::GetCursorScreenPos().x + w - buttonsAreaWidth, ImGui::GetCursorScreenPos().y + m_Height), IM_COL32(222, 43, 43, 255));
@@ -71,29 +69,23 @@ namespace Athena
         // Draw Menubar
         if (m_MenubarCallback)
         {
-            ImGui::SuspendLayout();
+            const float logoHorizontalOffset = 14.0f * 2.0f + 48.0f + windowPadding.x;
+            ImGui::SetCursorPos(ImVec2(logoHorizontalOffset, 4.0f ));
+
+            const ImRect menuBarRect = { ImGui::GetCursorPos(), { ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x, ImGui::GetFrameHeightWithSpacing() } };
+
+            ImGui::BeginGroup();
+            if (UI::BeginMenubar(menuBarRect))
             {
-                ImGui::SetItemAllowOverlap();
-                const float logoHorizontalOffset = 14.0f * 2.0f + 48.0f + windowPadding.x;
-                ImGui::SetCursorPos(ImVec2(logoHorizontalOffset, 4.0f ));
-
-                const ImRect menuBarRect = { ImGui::GetCursorPos(), { ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x, ImGui::GetFrameHeightWithSpacing() } };
-
-                ImGui::BeginGroup();
-                if (UI::BeginMenubar(menuBarRect))
-                {
-                    m_MenubarCallback();
-                }
-
-                menubarOffsetX = ImGui::GetCursorPos().x;
-                UI::EndMenubar();
-                ImGui::EndGroup();
-
-                if (ImGui::IsItemHovered())
-                    m_Hovered = false;
+                m_MenubarCallback();
             }
 
-            ImGui::ResumeLayout();
+            menubarOffsetX = ImGui::GetCursorPos().x;
+            UI::EndMenubar();
+            ImGui::EndGroup();
+
+            if (ImGui::IsItemHovered())
+                m_Hovered = false;
         }
 
         // Scene name
@@ -143,9 +135,13 @@ namespace Athena
 
         auto& window = Application::Get().GetWindow();
 
+        const float windowWidth = ImGui::GetWindowWidth();
+        const float closeButtonX = windowWidth - 18.0f - buttonWidth;
+        const float maximizeButtonX = closeButtonX - 15.0f - buttonWidth;
+        const float minimizeButtonX = maximizeButtonX - 17.0f - buttonWidth;
+
         // Minimize Button
-        ImGui::Spring();
-        UI::ShiftCursorY(paddingY);
+        ImGui::SetCursorPos(ImVec2(minimizeButtonX, paddingY));
         {
             if (ImGui::InvisibleButton("Minimize", ImVec2(buttonWidth, buttonHeight)))
             {
@@ -157,8 +153,7 @@ namespace Athena
 
 
         // Maximize Button
-        ImGui::Spring(-1.0f, 17.0f);
-        UI::ShiftCursorY(paddingY);
+        ImGui::SetCursorPos(ImVec2(maximizeButtonX, paddingY));
         {
             if (ImGui::InvisibleButton("Maximize", ImVec2(buttonWidth, buttonHeight)))
             {
@@ -172,8 +167,7 @@ namespace Athena
         }
 
         // Close Button
-        ImGui::Spring(-1.0f, 15.0f);
-        UI::ShiftCursorY(paddingY);
+        ImGui::SetCursorPos(ImVec2(closeButtonX, paddingY));
         {
             if (ImGui::InvisibleButton("Close", ImVec2(buttonWidth, buttonHeight)))
             {
@@ -182,9 +176,5 @@ namespace Athena
 
             UI::ButtonImage(EditorResources::GetIcon("Titlebar_CloseWindow"), buttonColN, buttonColH, buttonColP);
         }
-
-        ImGui::Spring(-1.0f, 18.0f);
-
-        ImGui::EndHorizontal();
 	}
 }

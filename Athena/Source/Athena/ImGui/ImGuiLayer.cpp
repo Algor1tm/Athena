@@ -74,6 +74,7 @@ namespace Athena
 
 		// Frame BG
 		colors[ImGuiCol_FrameBg] = ImColor(m_Theme.FrameBg);
+		colors[ImGuiCol_CheckboxSelectedBg] = ImColor(m_Theme.FrameBg);
 		colors[ImGuiCol_FrameBgHovered] = ImColor(m_Theme.FrameBgActive);
 		colors[ImGuiCol_FrameBgActive] = ImColor(m_Theme.FrameBgActive);
 

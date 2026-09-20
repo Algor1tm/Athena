@@ -65,7 +65,7 @@ namespace Athena::UI
 	ATHENA_API bool PropertyCheckbox(std::string_view label, bool* value);
 	ATHENA_API bool PropertyCombo(std::string_view label, const std::string_view* elems, uint32 elemsNum, std::string_view* selectedElem);
 	ATHENA_API bool PropertyCombo(std::string_view label, const String* elems, uint32 elemsNum, String* selectedElem);
-	ATHENA_API bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, float frame_padding = -1, const ImVec4& bg_col = { 0, 0, 0, 0 }, const ImVec4& tint_col = { 1, 1, 1, 1 });
+	ATHENA_API bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, const ImVec4& bg_col = { 0, 0, 0, 0 }, const ImVec4& tint_col = { 1, 1, 1, 1 });
 	ATHENA_API void PropertyText(std::string_view label, std::string_view value);
 
 	// Widgets

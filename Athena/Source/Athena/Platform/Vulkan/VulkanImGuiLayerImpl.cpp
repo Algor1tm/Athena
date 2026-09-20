@@ -96,23 +96,24 @@ namespace Athena
 		init_info.Queue = VulkanContext::GetDevice()->GetQueue();
 		init_info.PipelineCache = VK_NULL_HANDLE;
 		init_info.DescriptorPool = m_ImGuiDescriptorPool;
-		init_info.Subpass = 0;
 		init_info.MinImageCount = Renderer::GetFramesInFlight();
 		init_info.ImageCount = Renderer::GetFramesInFlight();
-		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info.PipelineInfoMain.Subpass = 0;
+		init_info.PipelineInfoMain.RenderPass = m_ImGuiRenderPass;
+		init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = nullptr;
 		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ensuref(result == VK_SUCCESS) };
 
-		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
+		ImGui_ImplVulkan_Init(&init_info);
 
-		VkCommandPool commandPool;
-		VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
-		{
-			ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
-		}
-		Vulkan::EndSingleTimeCommands(vkCommandBuffer, commandPool);
-
-		ImGui_ImplVulkan_DestroyFontUploadObjects();
+		//VkCommandPool commandPool;
+		//VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
+		//{
+		//	ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
+		//}
+		//Vulkan::EndSingleTimeCommands(vkCommandBuffer, commandPool);
+		//
+		//ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()
@@ -123,14 +124,14 @@ namespace Athena
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, 
 			framebuffers = m_SwapChainFramebuffers]()
 		{
+			ImGui_ImplVulkan_Shutdown();
+			ImGui_ImplGlfw_Shutdown();
+
 			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, nullptr);
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
 
 			for (auto framebuffer : framebuffers)
 				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
-
-			ImGui_ImplVulkan_Shutdown();
-			ImGui_ImplGlfw_Shutdown();
 		});
 	}
 

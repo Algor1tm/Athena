@@ -199,7 +199,10 @@ namespace Athena
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::IsMouseDown(ImGuiPopupFlags_MouseButtonLeft) && ImGui::IsWindowHovered())
+		if (ImGui::IsWindowHovered())
+			int x = 1;
+
+		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsWindowHovered())
 			m_EditorCtx.SelectedEntity = {};
 
 		if (ImGui::BeginPopupContextItem("Entity Hierarchy Settings", ImGuiPopupFlags_MouseButtonRight))
@@ -242,7 +245,7 @@ namespace Athena
 		if (selected)
 			ImGui::PopStyleColor();
 
-		if (ImGui::IsItemClicked())
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			m_EditorCtx.SelectedEntity = entity;
 		}

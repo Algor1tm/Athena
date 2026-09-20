@@ -151,7 +151,7 @@ namespace Athena::UI
 	bool TreeNode(std::string_view label, bool defaultOpen, bool nested)
 	{
 		ImGuiTreeNodeFlags flags =
-			ImGuiTreeNodeFlags_AllowItemOverlap |
+			ImGuiTreeNodeFlags_AllowOverlap |
 			ImGuiTreeNodeFlags_SpanAvailWidth |
 			ImGuiTreeNodeFlags_Framed |
 			ImGuiTreeNodeFlags_FramePadding;
@@ -357,11 +357,11 @@ namespace Athena::UI
 		return active;
 	}
 
-	bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, float frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
+	bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, const ImVec4& bg_col, const ImVec4& tint_col)
 	{
 		PropertyRow(label, size.y + 5.f);
 
-		bool pressed = ImGui::ImageButton(UI::GetTextureID(tex), size, { 0, 0 }, { 1, 1 }, frame_padding, bg_col, tint_col);
+		bool pressed = ImGui::ImageButton(label.data(), UI::GetTextureID(tex), size, {0, 0}, {1, 1}, bg_col, tint_col);
 		return pressed;
 	}
 
@@ -654,8 +654,8 @@ namespace Athena::UI
 				IM_ASSERT(window->DC.NavLayersActiveMaskNext & (1 << layer)); // Sanity check
 				ImGui::FocusWindow(window);
 				ImGui::SetNavID(window->NavLastIds[layer], layer, 0, window->NavRectRel[layer]);
-				g.NavDisableHighlight = true; // Hide highlight for the current frame so we don't see the intermediary selection.
-				g.NavDisableMouseHover = g.NavMousePosDirty = true;
+				g.NavCursorVisible = false; // Hide highlight for the current frame so we don't see the intermediary selection.
+				g.NavHighlightItemUnderNav = g.NavMousePosDirty = true;
 				ImGui::NavMoveRequestForward(g.NavMoveDir, g.NavMoveClipDir, g.NavMoveFlags, g.NavMoveScrollFlags); // Repeat
 			}
 		}

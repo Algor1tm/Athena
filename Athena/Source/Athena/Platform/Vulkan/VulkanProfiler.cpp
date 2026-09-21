@@ -6,6 +6,30 @@
 
 namespace Athena
 {
+	static void ResetQueryPool(VkQueryPool pool, uint32 firstQuery, uint32 queryCount)
+	{
+		static PFN_vkResetQueryPoolEXT vkResetQueryPoolEXT = nullptr;
+
+		if (VK_VERSION_MINOR(VulkanContext::GetInstanceVersion()) < 2)
+		{
+			if (vkResetQueryPoolEXT == nullptr)
+			{
+				vkResetQueryPoolEXT = (PFN_vkResetQueryPoolEXT)vkGetDeviceProcAddr(
+					VulkanContext::GetLogicalDevice(),
+					"vkResetQueryPoolEXT"
+				);
+
+				ensuref(vkResetQueryPoolEXT);
+			}
+
+			vkResetQueryPoolEXT(VulkanContext::GetLogicalDevice(), pool, firstQuery, queryCount);
+		}
+		else
+		{
+			vkResetQueryPool(VulkanContext::GetLogicalDevice(), pool, firstQuery, queryCount);
+		}
+	}
+
 	VulkanProfiler::VulkanProfiler(const GPUProfilerCreateInfo& info)
 	{
 		m_Info = info;
@@ -20,7 +44,7 @@ namespace Athena
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_TimeQueryPool));
 			Vulkan::SetObjectDebugName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, fmt::format("{}_TimestampsPool", m_Info.Name));
 				
-			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_TimeQueryPool, 0, queryPoolInfo.queryCount);
+			ResetQueryPool(m_TimeQueryPool, 0, queryPoolInfo.queryCount);
 				
 			m_TimestampsCount.resize(Renderer::GetFramesInFlight());
 
@@ -55,7 +79,7 @@ namespace Athena
 			VK_CHECK(vkCreateQueryPool(VulkanContext::GetLogicalDevice(), &queryPoolInfo, nullptr, &m_PipelineStatsQueryPool));
 			Vulkan::SetObjectDebugName(m_TimeQueryPool, VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT, fmt::format("{}_PipelineStatsPool", m_Info.Name));
 
-			vkResetQueryPool(VulkanContext::GetLogicalDevice(), m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
+			ResetQueryPool(m_PipelineStatsQueryPool, 0, queryPoolInfo.queryCount);
 
 			m_PipelineQueriesCount.resize(Renderer::GetFramesInFlight());
 			m_ResolvedPipelineStats.resize(Renderer::GetFramesInFlight());

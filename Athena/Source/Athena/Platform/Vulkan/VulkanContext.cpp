@@ -1,45 +1,84 @@
 #include "VulkanContext.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/ConsoleManager.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-
 
 namespace Athena
 {
+	static AutoCVar<bool> CVarVulkanUseLatestVersion(
+		"Vulkan.UseLatestVersion",
+		false,
+		"If set to false - Vulkan.RequestedMajorVersion, Vulkan.RequestedMinorVersion and Vulkan.RequestedPatchVersion will be used to initiliaze vulkan" \
+		"otherwise latest version will be used."
+	);
+
+	static AutoCVar<int32> CVarVulkanRequestedMajorVersion(
+		"Vulkan.RequestedMajorVersion",
+		1,
+		"Requests this version for major, if it is not supported latest version will be used."
+	);
+
+	static AutoCVar<int32> CVarVulkanRequestedMinorVersion(
+		"Vulkan.RequestedMinorVersion",
+		3,
+		"Requests this version for minor, if it is not supported latest version will be used."
+	);
+
+	static AutoCVar<int32> CVarVulkanRequestedPatchVersion(
+		"Vulkan.RequestedPatchVersion",
+		0,
+		"Requests this version for patch, if it is not supported latest version will be used."
+	);
+
 	VulkanContextData VulkanContext::s_Data;
 
 	namespace Utils
 	{
-		static bool CheckVulkanVersion(uint32 variant, uint32 major, uint32 minor, uint32 patch)
+		static uint32 QueryVulkanVersion()
 		{
-			const uint32 minVariant = VK_API_VERSION_VARIANT(VULKAN_VERSION);
-			const uint32 minMajor = VK_API_VERSION_MAJOR(VULKAN_VERSION);
-			const uint32 minMinor = VK_API_VERSION_MINOR(VULKAN_VERSION);
-			const uint32 minPatch = VK_API_VERSION_PATCH(VULKAN_VERSION);
+			uint32 latestVersion = 0;
+			VK_CHECK(vkEnumerateInstanceVersion(&latestVersion));
 
-			ATN_LOG_INFO(Vulkan, "Min supported version: {}.{}.{}.{}", minVariant, minMajor, minMinor, minPatch);
+			if (CVarVulkanUseLatestVersion.GetBool())
+			{
+				return latestVersion;
+			}
 
-			if (variant > minVariant)
-				return true;
-			else if (variant < minVariant)
-				return false;
+			const uint32 supportedVariant = VK_API_VERSION_VARIANT(latestVersion);
+			const uint32 supportedMajor = VK_API_VERSION_MAJOR(latestVersion);
+			const uint32 supportedMinor = VK_API_VERSION_MINOR(latestVersion);
+			const uint32 supportedPatch = VK_API_VERSION_PATCH(latestVersion);
 
-			if (major > minMajor)
-				return true;
-			else if (major < minMajor)
-				return false;
+			const int32 requestedVariant = 0;
+			const int32 requestedMajor = CVarVulkanRequestedMajorVersion.GetInt();
+			const int32 requestedMinor = CVarVulkanRequestedMinorVersion.GetInt();
+			const int32 requestedPatch = CVarVulkanRequestedPatchVersion.GetInt();
 
-			if (minor > minMinor)
-				return true;
-			else if (minor < minMinor)
-				return false;
+			bool requestedVersionValid = false;
+			if (requestedVariant <= supportedVariant)
+			{
+				if (requestedMajor <= supportedMajor)
+				{
+					if (requestedMinor <= supportedMinor)
+					{
+						if (requestedPatch <= supportedPatch)
+						{
+							requestedVersionValid = true;
+						}
+					}
+				}
+			}
 
-			if (patch > minPatch)
-				return true;
-			else if (patch < minPatch)
-				return false;
+			if (!requestedVersionValid)
+			{
+				ATN_LOG_WARN(Vulkan, "Requested Vulkan version ({}.{}.{}.{}) is not supported falling back to latest version.", 
+					requestedVariant, requestedMajor, requestedMinor, requestedPatch);
 
-			return true;
+				return latestVersion;
+			}
+
+			return VK_MAKE_API_VERSION(requestedVariant, requestedMajor, requestedMinor, requestedPatch);
 		}
 
 		static bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
@@ -157,29 +196,21 @@ namespace Athena
 	{
 		// Create Vulkan Instance
 		{
-			// Select Vulkan Version
-			uint32 supportedVersion = 0;
-			VK_CHECK(vkEnumerateInstanceVersion(&supportedVersion));
+			s_Data.InstanceVersion = Utils::QueryVulkanVersion();
 
-			uint32 variant = VK_API_VERSION_VARIANT(supportedVersion);
-			uint32 major = VK_API_VERSION_MAJOR(supportedVersion);
-			uint32 minor = VK_API_VERSION_MINOR(supportedVersion);
-			uint32 patch = VK_API_VERSION_PATCH(supportedVersion);
+			const uint32 variant = VK_API_VERSION_VARIANT(s_Data.InstanceVersion);
+			const uint32 major = VK_API_VERSION_MAJOR(s_Data.InstanceVersion);
+			const uint32 minor = VK_API_VERSION_MINOR(s_Data.InstanceVersion);
+			const uint32 patch = VK_API_VERSION_PATCH(s_Data.InstanceVersion);
 
-			ATN_LOG_INFO(Vulkan, "Version: {}.{}.{}.{}", variant, major, minor, patch);
-
-			if (!Utils::CheckVulkanVersion(variant, major, minor, patch))
-			{
-				ATN_LOG_FATAL(Vulkan, "Current Vulkan version is unsupported!");
-				ensuref(false);
-			}
+			ATN_LOG_INFO(Vulkan, "Selected Vulkan API version: {}.{}.{}.{}", variant, major, minor, patch);
 
 			VkApplicationInfo appInfo = {};
 			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 			appInfo.pNext = nullptr;
 			appInfo.pApplicationName = Application::Get().GetConfig().Name.c_str();
 			appInfo.pEngineName = "Athena";
-			appInfo.apiVersion = VULKAN_VERSION;
+			appInfo.apiVersion = s_Data.InstanceVersion;
 
 			// Select Extensions
 			// NOTE: Vulkan initializes before GLFW, cant call glfwGetRequiredInstanceExtensions
@@ -233,10 +264,7 @@ namespace Athena
 
 		// Create Allocator
 		{
-			uint32 version = VULKAN_VERSION;
-			// vkEnumerateInstanceVersion(&version);
-
-			s_Data.Allocator = Ref<VulkanAllocator>::Create(version);
+			s_Data.Allocator = Ref<VulkanAllocator>::Create(s_Data.InstanceVersion);
 			s_Data.DescriptorSetAllocator = Ref<DescriptorSetAllocator>::Create();
 		}
 

@@ -8,8 +8,6 @@
 #include <vulkan/vulkan.h>
 
 
-#define VULKAN_VERSION VK_MAKE_API_VERSION(0, 1, 3, 0)
-
 #define VULKAN_MAX_DEBUG_NAME_LENGTH 50
 
 #if ATN_DIST
@@ -33,6 +31,7 @@ namespace Athena
 	struct VulkanContextData
 	{
 		VkInstance Instance;
+		uint32 InstanceVersion;
 		VkDebugReportCallbackEXT DebugReport;
 		Ref<VulkanAllocator> Allocator;
 		Ref<DescriptorSetAllocator> DescriptorSetAllocator;
@@ -50,6 +49,7 @@ namespace Athena
 		static void Shutdown();
 
 		static VkInstance GetInstance() { return s_Data.Instance; }
+		static uint32 GetInstanceVersion() { return s_Data.InstanceVersion; }
 		static Ref<VulkanAllocator> GetAllocator() { return s_Data.Allocator; }
 		static VkCommandPool GetCommandPool() { return s_Data.CommandPool; }
 		static Ref<DescriptorSetAllocator> GetDescriptorSetAllocator() { return s_Data.DescriptorSetAllocator; }

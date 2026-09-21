@@ -1,8 +1,9 @@
-#include "ShaderCompiler.h"
+#include "VulkanShaderCompiler.h"
 
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Time.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Platform/Vulkan/VulkanContext.h"
 
 #include <xhash>
 
@@ -136,6 +137,44 @@ namespace Athena
 
 			return ShaderDataType::Unknown;
 		}
+
+		static shaderc_env_version GetShaderCEnvVersion()
+		{
+			uint32 instanceVersion = VulkanContext::GetInstanceVersion();
+			uint32 versionMinor = VK_VERSION_MINOR(instanceVersion);
+
+			switch (versionMinor)
+			{
+			case 0: return shaderc_env_version_vulkan_1_0;
+			case 1: return shaderc_env_version_vulkan_1_1;
+			case 2: return shaderc_env_version_vulkan_1_2;
+			case 3: return shaderc_env_version_vulkan_1_3;
+			case 4: return shaderc_env_version_vulkan_1_4;
+			}
+
+			ensuref(false);
+			ATN_LOG_ERROR(Vulkan, "Invalid vulkan version!");
+			return shaderc_env_version_vulkan_1_0;
+		}
+
+		static shaderc_spirv_version GetShaderCSpirvVersion()
+		{
+			uint32 instanceVersion = VulkanContext::GetInstanceVersion();
+			uint32 versionMinor = VK_VERSION_MINOR(instanceVersion);
+
+			switch (versionMinor)
+			{
+			case 0: return shaderc_spirv_version_1_0;
+			case 1: return shaderc_spirv_version_1_3;
+			case 2: return shaderc_spirv_version_1_5;
+			case 3: return shaderc_spirv_version_1_6;
+			case 4: return shaderc_spirv_version_1_6;
+			}
+
+			ensuref(false);
+			ATN_LOG_ERROR(Vulkan, "Invalid vulkan version!");
+			return shaderc_spirv_version_1_0;
+		}
 	}
 
 	GlslIncluder::GlslIncluder(const FilePath& filepath, const String& name)
@@ -254,7 +293,7 @@ namespace Athena
 	}
 
 
-	ShaderCompiler::ShaderCompiler(const FilePath& filepath, const String& name)
+	VulkanShaderCompiler::VulkanShaderCompiler(const FilePath& filepath, const String& name)
 		: m_Includer(filepath, name)
 	{
 		m_FilePath = filepath;
@@ -265,12 +304,12 @@ namespace Athena
 		GetLanguageAndEntryPoints();
 	}
 
-	std::string_view ShaderCompiler::GetEntryPoint(ShaderStage stage) const
+	std::string_view VulkanShaderCompiler::GetEntryPoint(ShaderStage stage) const
 	{
 		return m_StageToEntryPointMap.at(stage);
 	}
 
-	bool ShaderCompiler::CompileOrGetFromCache(bool forceCompile)
+	bool VulkanShaderCompiler::CompileOrGetFromCache(bool forceCompile)
 	{
 		if (m_Language == ShaderLanguage::NONE)
 			return false;
@@ -300,15 +339,18 @@ namespace Athena
 		return compiled;
 	}
 
-	bool ShaderCompiler::CompileAndWriteToCache(const PreProcessResult& result)
+	bool VulkanShaderCompiler::CompileAndWriteToCache(const PreProcessResult& result)
 	{
 		bool compiled = true;
 
+		shaderc_env_version vulkanEnvVersion = Utils::GetShaderCEnvVersion();
+		shaderc_spirv_version spirvVersion = Utils::GetShaderCSpirvVersion();
+
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
-		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+		options.SetTargetEnvironment(shaderc_target_env_vulkan, vulkanEnvVersion);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
-		options.SetTargetSpirv(shaderc_spirv_version_1_6);
+		options.SetTargetSpirv(spirvVersion);
 		options.SetGenerateDebugInfo();
 
 		if (m_Language == ShaderLanguage::GLSL)
@@ -363,7 +405,7 @@ namespace Athena
 		return compiled;
 	}
 
-	void ShaderCompiler::ReadFromCache(const PreProcessResult& result)
+	void VulkanShaderCompiler::ReadFromCache(const PreProcessResult& result)
 	{
 		for (const auto& [stage, cachePath, source] : result.StageDescriptions)
 		{
@@ -374,7 +416,7 @@ namespace Athena
 		}
 	}
 
-	ShaderCompiler::PreProcessResult ShaderCompiler::PreProcess()
+	VulkanShaderCompiler::PreProcessResult VulkanShaderCompiler::PreProcess()
 	{
 		PreProcessResult result;
 		result.ParseResult = true;
@@ -421,7 +463,7 @@ namespace Athena
 		return result;
 	}
 
-	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::ParseShaderStages()
+	std::vector<VulkanShaderCompiler::StageDescription> VulkanShaderCompiler::ParseShaderStages()
 	{
 		if (m_Language == ShaderLanguage::GLSL)
 			return GetGLSLStageDescriptions();
@@ -432,7 +474,7 @@ namespace Athena
 		return {};
 	}
 
-	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::GetHLSLStageDescriptions()
+	std::vector<VulkanShaderCompiler::StageDescription> VulkanShaderCompiler::GetHLSLStageDescriptions()
 	{
 		std::vector<StageDescription> result;
 
@@ -456,7 +498,7 @@ namespace Athena
 		return result;
 	}
 
-	std::vector<ShaderCompiler::StageDescription> ShaderCompiler::GetGLSLStageDescriptions()
+	std::vector<VulkanShaderCompiler::StageDescription> VulkanShaderCompiler::GetGLSLStageDescriptions()
 	{
 		std::vector<StageDescription> result;
 
@@ -496,7 +538,7 @@ namespace Athena
 		return result;
 	}
 
-	FilePath ShaderCompiler::GetCacheFilePath(const FilePath& path, ShaderStage stage, const String& source)
+	FilePath VulkanShaderCompiler::GetCacheFilePath(const FilePath& path, ShaderStage stage, const String& source)
 	{
 		FilePath relativeToShaderPack = std::filesystem::relative(path, Renderer::GetShaderPackDirectory());
 		FilePath cachedPath = Renderer::GetShaderCacheDirectory() / relativeToShaderPack;
@@ -518,7 +560,7 @@ namespace Athena
 		return cachedPath;
 	}
 
-	void ShaderCompiler::GetLanguageAndEntryPoints()
+	void VulkanShaderCompiler::GetLanguageAndEntryPoints()
 	{
 		String extension = m_FilePath.extension().string();
 
@@ -546,7 +588,7 @@ namespace Athena
 		}
 	}
 
-	ShaderMetaData ShaderCompiler::Reflect()
+	ShaderMetaData VulkanShaderCompiler::Reflect()
 	{
 		ShaderMetaData result;
 		result.PushConstant.Size = 0;
@@ -581,7 +623,7 @@ namespace Athena
 			{
 				result.PushConstant.StageFlags = ShaderStage(result.PushConstant.StageFlags | stage);
 			}
-			else if(resources.push_constant_buffers.size() > 0)
+			else if (resources.push_constant_buffers.size() > 0)
 			{
 				spirv_cross::Resource resource = resources.push_constant_buffers[0];
 

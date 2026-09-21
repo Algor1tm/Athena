@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	class ATHENA_API GlslIncluder
+	class GlslIncluder
 	{
 	public:
 		GlslIncluder(const FilePath& filepath, const String& name);
@@ -38,10 +38,10 @@ namespace Athena
 		HLSL
 	};
 
-	class ATHENA_API ShaderCompiler
+	class VulkanShaderCompiler
 	{
 	public:
-		ShaderCompiler(const FilePath& filepath, const String& name);
+		VulkanShaderCompiler(const FilePath& filepath, const String& name);
 
 		bool CompileOrGetFromCache(bool forceCompile = false);
 

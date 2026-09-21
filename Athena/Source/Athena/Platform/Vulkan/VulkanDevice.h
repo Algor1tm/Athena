@@ -27,6 +27,7 @@ namespace Athena
 
 	private:
 		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);
+		bool CheckSupportedFeatures();
 
 	private:
 		VkPhysicalDevice m_PhysicalDevice;

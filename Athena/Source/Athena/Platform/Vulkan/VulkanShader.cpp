@@ -73,7 +73,7 @@ namespace Athena
 		}
 
 
-		ShaderCompiler compiler(m_FilePath, m_Name);
+		VulkanShaderCompiler compiler(m_FilePath, m_Name);
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
 
 		if (!m_IsCompiled)
@@ -222,7 +222,7 @@ namespace Athena
 		Vulkan::SetObjectDebugName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, fmt::format("{}Layout", m_Name));
 	}
 
-	void VulkanShader::CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler)
+	void VulkanShader::CreateVulkanShaderModulesAndStages(const VulkanShaderCompiler& compiler)
 	{
 		const ShaderBinaries& binaries = compiler.GetBinaries();
 

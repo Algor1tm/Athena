@@ -92,7 +92,13 @@ namespace Athena
 
 			std::vector<const char*> deviceExtensions = { 
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard/clip
 				"VK_EXT_memory_budget" };
+
+			if (VK_VERSION_MINOR(VulkanContext::GetInstanceVersion()) < 2)
+			{
+				deviceExtensions.push_back(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
+			}
 
 #if VULKAN_ENABLE_DEBUG_INFO
 			deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -101,19 +107,30 @@ namespace Athena
 			CheckEnabledExtensions(deviceExtensions);
 
 			// GPU profiling
-			VkPhysicalDeviceHostQueryResetFeatures resetFeatures = {};
-			resetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-			resetFeatures.pNext = nullptr;
-			resetFeatures.hostQueryReset = VK_TRUE;
+			VkPhysicalDeviceHostQueryResetFeaturesEXT hostQueryResetFeatures = {};
+			hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT;
+			hostQueryResetFeatures.hostQueryReset = VK_TRUE;
+			hostQueryResetFeatures.pNext = nullptr;
+
+			// discard/clip features
+			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteToHelperInvocationFeatures = {};
+			demoteToHelperInvocationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
+			demoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = true;
+			demoteToHelperInvocationFeatures.pNext = &hostQueryResetFeatures;
+
+			void* deviceFeaturesChain = &demoteToHelperInvocationFeatures;
 
 			VkPhysicalDeviceFeatures deviceFeatures = {};
 			deviceFeatures.geometryShader = VK_TRUE;
 			deviceFeatures.wideLines = VK_TRUE;
 			deviceFeatures.pipelineStatisticsQuery = VK_TRUE;
 			deviceFeatures.samplerAnisotropy = VK_TRUE;
+			deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+
+			CheckSupportedFeatures();
 
 			VkDeviceCreateInfo deviceCI = {};
-			deviceCI.pNext = &resetFeatures;
+			deviceCI.pNext = deviceFeaturesChain;
 			deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			deviceCI.queueCreateInfoCount = std::size(queueCIs);
 			deviceCI.pQueueCreateInfos = queueCIs;
@@ -229,13 +246,13 @@ namespace Athena
 			}
 		}
 
-		//String message = "Device supported extensions: \n\t";
-		//for (auto ext : supportedExtensions)
-		//	message += fmt::format("'{}'\n\t", ext.extensionName);
-		//
-		//ATN_CORE_TRACE_TAG("Vulkan", message);
+		String message = "Device supported extensions: \n\t";
+		for (auto ext : supportedExtensions)
+			message += fmt::format("'{}'\n\t", ext.extensionName);
+		
+		ATN_LOG_TRACE(Vulkan, message);
 
-		String message = "Device required extensions: \n\t";
+		message = "Device required extensions: \n\t";
 		for (auto ext : requiredExtensions)
 			message += fmt::format("'{}'\n\t", ext);
 		
@@ -254,5 +271,37 @@ namespace Athena
 		}
 
 		return missingExtensions.empty();
+	}
+
+	bool VulkanDevice::CheckSupportedFeatures()
+	{
+		VkPhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
+		hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+
+		VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteFeatures = {};
+		demoteFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
+		demoteFeatures.pNext = &hostQueryResetFeatures;
+
+		VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+		deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		deviceFeatures2.pNext = &demoteFeatures;
+
+		vkGetPhysicalDeviceFeatures2(m_PhysicalDevice, &deviceFeatures2);
+
+		bool featuresSupported =
+			deviceFeatures2.features.geometryShader &&
+			deviceFeatures2.features.wideLines &&
+			deviceFeatures2.features.pipelineStatisticsQuery &&
+			deviceFeatures2.features.samplerAnisotropy &&
+			deviceFeatures2.features.shaderStorageImageWriteWithoutFormat &&
+			demoteFeatures.shaderDemoteToHelperInvocation &&
+			hostQueryResetFeatures.hostQueryReset;
+
+		if (!featuresSupported)
+		{
+			ATN_LOG_FATAL(Vulkan, "Physical device required features are not supported on this gpu (try to update drivers).");
+		}
+
+		return featuresSupported;
 	}
 }

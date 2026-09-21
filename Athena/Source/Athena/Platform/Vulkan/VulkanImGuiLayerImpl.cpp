@@ -105,15 +105,6 @@ namespace Athena
 		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ensuref(result == VK_SUCCESS) };
 
 		ImGui_ImplVulkan_Init(&init_info);
-
-		//VkCommandPool commandPool;
-		//VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
-		//{
-		//	ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
-		//}
-		//Vulkan::EndSingleTimeCommands(vkCommandBuffer, commandPool);
-		//
-		//ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()

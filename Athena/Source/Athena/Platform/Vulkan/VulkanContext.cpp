@@ -6,29 +6,22 @@
 
 namespace Athena
 {
-	static AutoCVar<bool> CVarVulkanUseLatestVersion(
-		"Vulkan.UseLatestVersion",
-		false,
-		"If set to false - Vulkan.RequestedMajorVersion, Vulkan.RequestedMinorVersion and Vulkan.RequestedPatchVersion will be used to initiliaze vulkan" \
-		"otherwise latest version will be used."
-	);
-
 	static AutoCVar<int32> CVarVulkanRequestedMajorVersion(
 		"Vulkan.RequestedMajorVersion",
 		1,
-		"Requests this version for major, if it is not supported latest version will be used."
+		"Requests this version for major, set -1 to use latest."
 	);
 
 	static AutoCVar<int32> CVarVulkanRequestedMinorVersion(
 		"Vulkan.RequestedMinorVersion",
-		3,
-		"Requests this version for minor, if it is not supported latest version will be used."
+		2,
+		"Requests this version for minor, set -1 to use latest."
 	);
 
 	static AutoCVar<int32> CVarVulkanRequestedPatchVersion(
 		"Vulkan.RequestedPatchVersion",
-		0,
-		"Requests this version for patch, if it is not supported latest version will be used."
+		-1,
+		"Requests this version for patch, set -1 to use latest."
 	);
 
 	VulkanContextData VulkanContext::s_Data;
@@ -40,43 +33,27 @@ namespace Athena
 			uint32 latestVersion = 0;
 			VK_CHECK(vkEnumerateInstanceVersion(&latestVersion));
 
-			if (CVarVulkanUseLatestVersion.GetBool())
-			{
-				return latestVersion;
-			}
-
 			const uint32 supportedVariant = VK_API_VERSION_VARIANT(latestVersion);
 			const uint32 supportedMajor = VK_API_VERSION_MAJOR(latestVersion);
 			const uint32 supportedMinor = VK_API_VERSION_MINOR(latestVersion);
 			const uint32 supportedPatch = VK_API_VERSION_PATCH(latestVersion);
 
-			const int32 requestedVariant = 0;
-			const int32 requestedMajor = CVarVulkanRequestedMajorVersion.GetInt();
-			const int32 requestedMinor = CVarVulkanRequestedMinorVersion.GetInt();
-			const int32 requestedPatch = CVarVulkanRequestedPatchVersion.GetInt();
+			int32 requestedVariant = 0;
+			int32 requestedMajor = CVarVulkanRequestedMajorVersion.GetInt();
+			int32 requestedMinor = CVarVulkanRequestedMinorVersion.GetInt();
+			int32 requestedPatch = CVarVulkanRequestedPatchVersion.GetInt();
 
-			bool requestedVersionValid = false;
-			if (requestedVariant <= supportedVariant)
-			{
-				if (requestedMajor <= supportedMajor)
-				{
-					if (requestedMinor <= supportedMinor)
-					{
-						if (requestedPatch <= supportedPatch)
-						{
-							requestedVersionValid = true;
-						}
-					}
-				}
-			}
+			if (requestedVariant > supportedVariant || requestedVariant < 0)
+				requestedVariant = supportedVariant;
 
-			if (!requestedVersionValid)
-			{
-				ATN_LOG_WARN(Vulkan, "Requested Vulkan version ({}.{}.{}.{}) is not supported falling back to latest version.", 
-					requestedVariant, requestedMajor, requestedMinor, requestedPatch);
+			if (requestedMajor > supportedMajor || requestedMajor < 0)
+				requestedMajor = supportedMajor;
 
-				return latestVersion;
-			}
+			if (requestedMinor > supportedMinor || requestedMinor < 0)
+				requestedMinor = supportedMinor;
+
+			if (requestedPatch > supportedPatch || requestedPatch < 0)
+				requestedPatch = supportedPatch;
 
 			return VK_MAKE_API_VERSION(requestedVariant, requestedMajor, requestedMinor, requestedPatch);
 		}

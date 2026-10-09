@@ -16,7 +16,16 @@ namespace Athena
 	private:
 		uint64 m_UUID;
 	};
+
+
+	template<>
+	inline String ToString<UUID>(const UUID& uuid)
+	{
+		return std::to_string((uint64)uuid);
+	}
 }
+
+DECLARE_FMT_FORMATTER(UUID);
 
 namespace std 
 {

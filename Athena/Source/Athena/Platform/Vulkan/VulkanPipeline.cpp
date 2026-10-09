@@ -19,7 +19,7 @@ namespace Athena
 			case Topology::LINE_LIST:     return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkPrimitiveTopology)0;
 		}
 
@@ -32,7 +32,7 @@ namespace Athena
 			case CullMode::FRONT: return VK_CULL_MODE_FRONT_BIT;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkCullModeFlags)0;
 		}
 
@@ -47,7 +47,7 @@ namespace Athena
 			case DepthCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkCompareOp)0;
 		}
 	}
@@ -89,6 +89,8 @@ namespace Athena
 
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VulkanPipeline);
+
+		VulkanContext::BindPipelineLayout(GetInfo().Shader.As<VulkanShader>()->GetPipelineLayout());
 
 		m_DescriptorSetManager.InvalidateAndUpdate();
 		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
@@ -134,7 +136,7 @@ namespace Athena
 		m_DescriptorSetManager.Bake();
 	}
 
-	void VulkanPipeline::RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
+	void VulkanPipeline::SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
 	{
 		if (m_PushConstantStageFlags != 0)
 		{
@@ -174,18 +176,29 @@ namespace Athena
 			bindingDescriptions.push_back(bindingDescription);
 		}
 
+		uint32 bonesInfluenceElemsNum = m_Info.BonesInfluenceLayout.GetElementsNum();
+		if (bonesInfluenceElemsNum != 0)
+		{
+			VkVertexInputBindingDescription bindingDescription = {};
+			bindingDescription.binding = 1;
+			bindingDescription.stride = m_Info.BonesInfluenceLayout.GetStride();
+			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+			bindingDescriptions.push_back(bindingDescription);
+		}
+
 		uint32 instanceElemsNum = m_Info.InstanceLayout.GetElementsNum();
 		if (instanceElemsNum != 0)
 		{
 			VkVertexInputBindingDescription bindingDescription = {};
-			bindingDescription.binding = 1;
+			bindingDescription.binding = 2;
 			bindingDescription.stride = m_Info.InstanceLayout.GetStride();
 			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
 			bindingDescriptions.push_back(bindingDescription);
 		}
 
-		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexElemsNum + instanceElemsNum);
+		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(vertexElemsNum + bonesInfluenceElemsNum + instanceElemsNum);
 		for (uint32 i = 0; i < vertexElemsNum; ++i)
 		{
 			const auto& elem = m_Info.VertexLayout.GetElements()[i];
@@ -196,12 +209,23 @@ namespace Athena
 			attributeDescriptions[i].offset = elem.Offset;
 		}
 
-		for (uint32 i = 0; i < instanceElemsNum; ++i)
+		for (uint32 i = 0; i < bonesInfluenceElemsNum; ++i)
 		{
-			const auto& elem = m_Info.InstanceLayout.GetElements()[i];
+			const auto& elem = m_Info.BonesInfluenceLayout.GetElements()[i];
 			uint32 location = vertexElemsNum + i;
 
 			attributeDescriptions[location].binding = 1;
+			attributeDescriptions[location].location = location;
+			attributeDescriptions[location].format = Vulkan::GetFormat(elem.Type);
+			attributeDescriptions[location].offset = elem.Offset;
+		}
+
+		for (uint32 i = 0; i < instanceElemsNum; ++i)
+		{
+			const auto& elem = m_Info.InstanceLayout.GetElements()[i];
+			uint32 location = vertexElemsNum + bonesInfluenceElemsNum + i;
+
+			attributeDescriptions[location].binding = 2;
 			attributeDescriptions[location].location = location;
 			attributeDescriptions[location].format = Vulkan::GetFormat(elem.Type);
 			attributeDescriptions[location].offset = elem.Offset;
@@ -277,7 +301,6 @@ namespace Athena
 		depthStencil.back.writeMask = 0xff;
 		depthStencil.back.reference = 1;
 		depthStencil.front = depthStencil.back;
-
 
 		std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(m_Info.RenderPass->GetColorTargetsCount());
 		for (auto& blendAttachment : colorBlendAttachments)

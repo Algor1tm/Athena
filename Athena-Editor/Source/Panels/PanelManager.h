@@ -1,21 +1,22 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-
 #include "Athena/Input/Event.h"
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/Keyboard.h"
-
 #include "Panels/Panel.h"
 
 #include <unordered_map>
 
-
-#define SCENE_HIERARCHY_PANEL_ID "SceneHierarchy"
-#define CONTENT_BORWSER_PANEL_ID "ContentBrowser"
-#define PROFILING_PANEL_ID		 "Profiling"
-#define VIEWPORT_PANEL_ID		 "Viewport"
-#define SETTINGS_PANEL_ID		 "Settings"
+#define ASSET_MANAGER_PANEL_ID			  "AssetManager"
+#define CONTENT_BROWSER_PANEL_ID		  "ContentBrowser"
+#define MATERIAL_EDITOR_PANEL_ID		  "MaterialEditor"
+#define ASSET_IMPORT_SETTINGS_PANEL_ID	  "AssetImportSettings"
+#define PROFILING_PANEL_ID				  "Profiling"
+#define PROJECT_SETTINGS_PANEL_ID		  "ProjectSettings"
+#define SCENE_HIERARCHY_PANEL_ID		  "SceneHierarchy"
+#define SETTINGS_PANEL_ID				  "Settings"
+#define MAIN_VIEWPORT_PANEL_ID			  "MainViewport"
 
 
 namespace Athena
@@ -38,8 +39,11 @@ namespace Athena
 
 		static void ImGuiRenderAsMenuItems();
 
-		static void AddPanel(const Ref<Panel>& panel, bool isHideable = true);
-		static void AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey);
+		static void AddPanel(const Ref<Panel>& panel, bool isHideable = true, bool defaultOpen = true);
+		static void AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey, bool defaultOpen = true);
+
+		static void ClosePanel(std::string_view name);
+		static void OpenPanel(std::string_view name);
 
 		template<typename T>
 		static Ref<T> GetPanel(std::string_view name)

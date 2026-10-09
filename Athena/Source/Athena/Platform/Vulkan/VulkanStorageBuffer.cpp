@@ -26,7 +26,7 @@ namespace Athena
 		{
 			for (uint32 i = 0; i < vulkanSBSet.size(); ++i)
 			{
-				VulkanContext::GetAllocator()->DestroyBuffer(vulkanSBSet[i], std::format("{}_{}", name, i));
+				VulkanContext::GetAllocator()->DestroyBuffer(vulkanSBSet[i], fmt::format("{}_{}", name, i));
 			}
 		});
 
@@ -35,7 +35,7 @@ namespace Athena
 
 	void VulkanStorageBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_CORE_ASSERT(m_Flags == BufferMemoryFlags::CPU_WRITEABLE);
+		ensuref(m_Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
 		if (size == 0)
 			return;
@@ -81,7 +81,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < m_VulkanSBSet.size(); ++i)
 			{
-				String bufferName = std::format("{}_{}", m_Name, i);
+				String bufferName = fmt::format("{}_{}", m_Name, i);
 
 				VkBufferCreateInfo bufferInfo = {};
 				bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

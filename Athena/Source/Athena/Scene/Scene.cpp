@@ -5,11 +5,11 @@
 #include "Athena/Renderer/Material.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
 #include "Athena/Renderer/SceneRenderer.h"
-
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
-
-#include "Athena/Scripting/PrivateScriptEngine.h"
+#include "Athena/Scene/SceneSerializer.h"
+#include "Athena/Project/Project.h"
+#include "Athena/Scripting/ScriptEngine.h"
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -76,7 +76,7 @@ namespace Athena
 		case Rigidbody2DComponent::BodyType::DYNAMIC: return b2BodyType::b2_dynamicBody;
 		case Rigidbody2DComponent::BodyType::KINEMATIC: return b2BodyType::b2_kinematicBody;
 		}
-		ATN_CORE_ASSERT(false, "Undefined Rigidbody2DComponent BodyType!");
+		check(false, "Undefined Rigidbody2DComponent BodyType!");
 		return (b2BodyType)0;
 	}
 
@@ -94,7 +94,7 @@ namespace Athena
 		{
 			const String& childTag = child.GetComponent<TagComponent>().Tag;
 			const String& parentTag = parent.GetComponent<TagComponent>().Tag;
-			ATN_CORE_WARN("Attempt to delete entity '{}' from children of entity '{}'", childTag, parentTag);
+			ATN_LOG_WARN(Scene, "Attempt to delete entity '{}' from children of entity '{}'", childTag, parentTag);
 		}
 	}
 
@@ -130,6 +130,18 @@ namespace Athena
 		CopyComponent(AllComponents{}, dstSceneRegistry, srcSceneRegistry, newScene->m_EntityMap);
 
 		return newScene;
+	}
+
+	bool Scene::Serialize(const FilePath& absolutePath) const
+	{
+		SceneSerializer serializer(const_cast<Scene*>(this));
+		return serializer.SerializeToFile(absolutePath);
+	}
+
+	bool Scene::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
+	{
+		SceneSerializer serializer(this);
+		return serializer.DeserializeFromFile(absolutePath);
 	}
 
 	Entity Scene::CreateEntity(const String& name, UUID id)
@@ -177,6 +189,9 @@ namespace Athena
 
 			DeleteFromChildren(parentChildren, parent, entity);
 		}
+
+		if (entity.HasComponent<ScriptComponent>())
+			ScriptEngine::OnEntityScriptRemove(entity);
 
 		m_EntityMap.erase(entity.GetID());
 		m_Registry.destroy(entity);
@@ -254,9 +269,10 @@ namespace Athena
 
 	Entity Scene::GetEntityByUUID(UUID uuid)
 	{
-		ATN_CORE_VERIFY(m_EntityMap.find(uuid) != m_EntityMap.end());
+		if(m_EntityMap.contains(uuid))
+			return { m_EntityMap.at(uuid), this };
 
-		return { m_EntityMap.at(uuid), this };
+		return Entity{};
 	}
 
 	Entity Scene::FindEntityByName(const String& name)
@@ -273,109 +289,67 @@ namespace Athena
 
 	void Scene::OnUpdateEditor(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
-
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-			auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
+		UpdateAnimations(frameTime);
 	}
 
 	void Scene::OnUpdateRuntime(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 
 		// Update scripts
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnUpdate");
+			TRACY_PROFILE_SCOPE("ScriptEngine::OnUpdate");
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id : view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::OnUpdateEntity(entity, frameTime);
+				ScriptEngine::OnUpdateEntity(entity, frameTime);
 			}
 		}
 
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-			auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
-
-
-		// Physics
+		UpdateAnimations(frameTime);
 		UpdatePhysics(frameTime);
 	}
 
 	void Scene::OnUpdateSimulation(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
-
-		// Update Animations
-		{
-			ATN_PROFILE_SCOPE("Scene::UpdateAnimations");
-				auto view = m_Registry.view<StaticMeshComponent>();
-			for (auto entity : view)
-			{
-				auto& meshComponent = view.get<StaticMeshComponent>(entity);
-				if (meshComponent.Mesh->HasAnimations())
-				{
-					meshComponent.Mesh->GetAnimator()->OnUpdate(frameTime);
-				}
-			}
-		}
-
+		UpdateAnimations(frameTime);
 		UpdatePhysics(frameTime);
 	}
 
 	void Scene::OnRuntimeStart()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		UpdateWorldTransforms();
 		OnPhysics2DStart();
 
 		// Scripting
 		{
-			ATN_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
+			TRACY_PROFILE_SCOPE("ScriptEngine::OnRuntimeStart");
 
-			PrivateScriptEngine::OnRuntimeStart(this);
+			ScriptEngine::OnRuntimeStart(this);
 
 			// Instantiate all script entities
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto id: view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::InstantiateEntity(entity);
+				ScriptEngine::InstantiateEntity(entity);
 			}
 
 			for (auto id: view)
 			{
 				Entity entity = { id, this };
-				PrivateScriptEngine::OnCreateEntity(entity);
+				ScriptEngine::OnCreateEntity(entity);
 			}
 		}
 	}
@@ -386,15 +360,9 @@ namespace Athena
 		OnPhysics2DStart();
 	}
 
-	void Scene::LoadAllScripts()
+	void Scene::OnRuntimeStop()
 	{
-		auto view = m_Registry.view<ScriptComponent>();
-		for (auto id : view)
-		{
-			Entity entity = { id, this };
-			auto& scriptComponent = view.get<ScriptComponent>(entity);
-			PrivateScriptEngine::LoadScript(scriptComponent.Name, entity);
-		}
+		ScriptEngine::OnRuntimeStop();
 	}
 
 	void Scene::OnViewportResize(uint32 width, uint32 height)
@@ -428,7 +396,7 @@ namespace Athena
 
 	void Scene::UpdateWorldTransforms()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		auto baseEntities = m_Registry.view<WorldTransformComponent, TransformComponent>(entt::exclude<ParentComponent>);
 		for (auto entt : baseEntities)
@@ -456,9 +424,18 @@ namespace Athena
 		const TransformComponent& localTransform = entity.GetComponent<TransformComponent>();
 		WorldTransformComponent& worldTransform = entity.GetComponent<WorldTransformComponent>();
 
-		worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
-		worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
-		worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+		//worldTransform.Translation = parentTransform.Translation + parentTransform.Rotation * localTransform.Translation;
+		//worldTransform.Rotation = parentTransform.Rotation * localTransform.Rotation;
+		//worldTransform.Scale = parentTransform.Scale * localTransform.Scale;
+
+		Matrix4 worldTransformMatrix = localTransform.AsMatrix() * parentTransform.AsMatrix();
+		Vector3 translation, rotation, scale;
+		Math::DecomposeTransform(worldTransformMatrix, translation, rotation, scale);
+
+		worldTransform.Translation = translation;
+		worldTransform.Rotation = rotation;
+		worldTransform.Scale = scale;
+
 
 		if (entity.HasComponent<ChildComponent>())
 		{
@@ -469,11 +446,25 @@ namespace Athena
 		}
 	}
 
+	void Scene::UpdateAnimations(Time frameTime)
+	{
+		TRACY_PROFILE_FUNC();
+
+		auto view = m_Registry.view<AnimationControllerComponent>();
+		for (auto entity : view)
+		{
+			auto& controllerComponent = view.get<AnimationControllerComponent>(entity);
+			controllerComponent.AnimationController->OnUpdate(frameTime);
+		}
+	}
+
 	void Scene::OnPhysics2DStart()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
-		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(0, -9.8f));
+		const Vector2 gravity = Project::GetActive()->GetConfig().Gravity;
+
+		m_PhysicsWorld = std::make_unique<b2World>(b2Vec2(gravity.x, gravity.y));
 		m_Registry.view<Rigidbody2DComponent>().each([this](auto entityID, auto& rb2d)
 		{
 			Entity entity = Entity(entityID, this);
@@ -525,10 +516,10 @@ namespace Athena
 
 	void Scene::UpdatePhysics(Time frameTime)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
-		constexpr uint32 velocityIterations = 6;
-		constexpr uint32 positionIterations = 2;
+		const uint32 velocityIterations = Project::GetActive()->GetConfig().VelocityIterations;
+		const uint32 positionIterations = Project::GetActive()->GetConfig().PositionIterations;
 		m_PhysicsWorld->Step(frameTime.AsSeconds(), velocityIterations, positionIterations);
 
 		auto rigidBodies2D = GetAllEntitiesWith<Rigidbody2DComponent, WorldTransformComponent, TransformComponent>();
@@ -589,7 +580,7 @@ namespace Athena
 
 	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
 		for (auto entity : quads)
@@ -597,7 +588,13 @@ namespace Athena
 			const auto& transform = quads.get<WorldTransformComponent>(entity);
 			const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			renderer2D->DrawQuad(transform.AsMatrix(), sprite.Texture, sprite.Space, sprite.Color, sprite.TilingFactor);
+			Ref<TextureAsset> textureAsset = sprite.TextureHandle == AssetHandle(0) ? TextureAsset::GetDefault() :
+				AssetManager::GetAsset<TextureAsset>(sprite.TextureHandle);
+
+			if (textureAsset)
+			{
+				renderer2D->DrawQuad(transform.AsMatrix(), textureAsset, sprite.Space, sprite.Color, sprite.TilingFactor);
+			}
 		}
 
 		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
@@ -624,25 +621,66 @@ namespace Athena
 			params.ShadowDistance = text.ShadowDistance;
 			params.ShadowColor = text.ShadowColor;
 
-			renderer2D->DrawText(text.Text, text.Font, transform.AsMatrix(), text.Space, params);
+			Ref<Font> font = text.FontHandle == AssetHandle(0) ? Font::GetDefault() : AssetManager::GetAsset<Font>(text.FontHandle);
+			if (font)
+			{
+				renderer2D->DrawText(text.Text, font, transform.AsMatrix(), text.Space, params);
+			}
 		}
 	}
 
 	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		renderer->BeginScene(cameraInfo);
 
-		auto staticMeshes = GetAllEntitiesWith<StaticMeshComponent, WorldTransformComponent>();
-		for (auto entity : staticMeshes)
+		auto meshes = GetAllEntitiesWith<MeshComponent, WorldTransformComponent>();
+		for (auto entity : meshes)
 		{
-			const auto& transform = staticMeshes.get<WorldTransformComponent>(entity);
-			const auto& meshComponent = staticMeshes.get<StaticMeshComponent>(entity);
+			const auto& transformComponent = meshes.get<WorldTransformComponent>(entity);
+			const auto& meshComponent = meshes.get<MeshComponent>(entity);
 
-			if (meshComponent.Visible)
+			if (!meshComponent.Visible)
+				continue;
+
+			Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
+
+			if (!mesh)
+				continue;
+
+			if (mesh->IsCollapsedGraph())
 			{
-				renderer->Submit(meshComponent.Mesh, transform.AsMatrix());
+				Entity sceneEntity = { entity, this };
+				bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
+
+				for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
+				{
+					const SubMesh& subMesh = mesh->GetSubMesh(i);
+					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+					Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); // TODO: can we bake this transform?
+
+					renderer->Submit(mesh, subMesh, material, hasAnimationController, transform);
+				}
+
+				if (hasAnimationController)
+				{
+					Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
+					renderer->SubmitAnimationState(controller->GetBoneTransforms());
+				}
+			}
+			else if(mesh->HasMeshNode(meshComponent.MeshNodeIndex))
+			{
+				const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
+
+				for (uint32 submeshIndex: node.SubMeshes)
+				{
+					const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
+					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+					Matrix4 transform = transformComponent.AsMatrix();
+
+					renderer->Submit(mesh, subMesh, material, false, transform);
+				}
 			}
 		}
 
@@ -701,14 +739,28 @@ namespace Athena
 
 		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
 		if (skyLights.size() > 1)
-			ATN_CORE_WARN_TAG("Scene", "Attempt to submit more than 1 SkyLight in the scene!");
+			ATN_LOG_WARN(Scene, "Attempt to submit more than 1 SkyLight in the scene!");
 
 		if (!skyLights.empty())
 		{
 			auto entity = skyLights[0];
 			const auto& light = skyLights.get<SkyLightComponent>(entity);
 
-			lightEnv.EnvironmentMap = light.EnvironmentMap;
+			if (light.Type == EnvironmentMapType::STATIC)
+			{
+				Ref<EnvironmentMap> map = AssetManager::GetAsset<EnvironmentMap>(light.EnvMapHandle);
+
+				if (map)
+				{
+					lightEnv.EnvironmentMapTexture = map->GetEnvironmentTexture();
+					lightEnv.IrradianceTexture = map->GetIrradianceTexture();
+				}
+			}
+			else if (light.Type == EnvironmentMapType::PREETHAM)
+			{
+				EnvironmentMap::CreatePreethamMap(light.Preetham, lightEnv.EnvironmentMapTexture, lightEnv.IrradianceTexture);
+			}
+
 			lightEnv.EnvironmentMapLOD = light.LOD;
 			lightEnv.EnvironmentMapIntensity = light.Intensity;
 		}

@@ -18,8 +18,8 @@ namespace Athena
 
 	void ComputePass::SetOutput(const Ref<RenderResource>& resource)
 	{
-		ATN_CORE_ASSERT(resource);
-		ATN_CORE_ASSERT(resource->GetResourceType() != RenderResourceType::UniformBuffer);
+		checkf(resource);
+		checkf(resource->GetResourceType() != RenderResourceType::UniformBuffer);
 		m_Outputs.push_back(resource);
 	}
 
@@ -33,7 +33,7 @@ namespace Athena
 			}
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return nullptr;
 	}
 
@@ -42,7 +42,7 @@ namespace Athena
 		if (index < m_Outputs.size())
 			return m_Outputs[index];
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return nullptr;
 	}
 }

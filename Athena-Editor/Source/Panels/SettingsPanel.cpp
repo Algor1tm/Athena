@@ -1,12 +1,18 @@
 #include "SettingsPanel.h"
 
-#include "Athena/Asset/TextureImporter.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Core/FileDialogs.h"
+#include "Athena/Core/FileSystem.h"
+#include "Athena/Project/Project.h"
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
+#include "Panels/PanelManager.h"
+#include "Panels/ContentBrowserPanel.h"
 #include "EditorResources.h"
 #include "EditorLayer.h"
 
@@ -15,94 +21,24 @@
 
 namespace Athena
 {
-	static std::string_view TonemapModeToString(TonemapMode mode)
+	SettingsPanel::SettingsPanel(const Ref<EditorContext>& context)
+		: Panel(SETTINGS_PANEL_ID, context)
 	{
-		switch (mode)
-		{
-		case TonemapMode::NONE: return "None";
-		case TonemapMode::ACES_FILMIC: return "ACES-Filmic";
-		case TonemapMode::ACES_TRUE: return "ACES-True";
-		}
+		UI::RegisterEnum("TonemapMode");
+		UI::EnumAdd("TonemapMode", 0, "None");
+		UI::EnumAdd("TonemapMode", 1, "ACES-Filmic");
+		UI::EnumAdd("TonemapMode", 2, "ACES-True");
 
-		ATN_CORE_ASSERT(false);
-		return "";
-	}
+		UI::RegisterEnum("Antialiasing");
+		UI::EnumAdd("Antialiasing", 0, "None");
+		UI::EnumAdd("Antialiasing", 1, "FXAA");
+		UI::EnumAdd("Antialiasing", 2, "SMAA");
 
-	static TonemapMode TonemapModeFromString(std::string_view str)
-	{
-		if (str == "None")
-			return TonemapMode::NONE;
-		if (str == "ACES-Filmic")
-			return TonemapMode::ACES_FILMIC;
-		if (str == "ACES-True")
-			return TonemapMode::ACES_TRUE;
-
-		ATN_CORE_ASSERT(false);
-		return TonemapMode::NONE;
-	}
-
-	static std::string_view AntialisingToString(Antialising antialiasing)
-	{
-		switch (antialiasing)
-		{
-		case Antialising::NONE: return "None";
-		case Antialising::FXAA: return "FXAA";
-		case Antialising::SMAA: return "SMAA";
-		}
-
-		ATN_ASSERT(false);
-		return "";
-	}
-
-	static Antialising AntialisingFromString(std::string_view str)
-	{
-		if(str == "None")
-			return Antialising::NONE;
-		else if (str == "FXAA")
-			return Antialising::FXAA;
-		else if (str == "SMAA")
-			return Antialising::SMAA;
-
-		ATN_ASSERT(false);
-		return (Antialising)0;
-	}
-
-	static std::string_view DebugViewToString(DebugView view)
-	{
-		switch (view)
-		{
-		case DebugView::NONE: return "None";
-		case DebugView::SHADOW_CASCADES: return "ShadowCascades";
-		case DebugView::LIGHT_COMPLEXITY: return "LightComplexity";
-		case DebugView::GBUFFER: return "GBuffer";
-		}
-
-		ATN_ASSERT(false);
-		return "";
-	}
-
-	static DebugView DebugViewFromString(std::string_view str)
-	{
-		if (str == "None")
-			return DebugView::NONE;
-
-		if (str == "ShadowCascades")
-			return DebugView::SHADOW_CASCADES;
-
-		if (str == "LightComplexity")
-			return DebugView::LIGHT_COMPLEXITY;
-
-		if (str == "GBuffer")
-			return DebugView::GBUFFER;
-
-		ATN_ASSERT(false);
-		return (DebugView)0;
-	}
-
-	SettingsPanel::SettingsPanel(std::string_view name, const Ref<EditorContext>& context)
-		: Panel(name, context)
-	{
-
+		UI::RegisterEnum("DebugView");
+		UI::EnumAdd("DebugView", 0, "None");
+		UI::EnumAdd("DebugView", 1, "Shadow Cascades");
+		UI::EnumAdd("DebugView", 2, "Light Complexity");
+		UI::EnumAdd("DebugView", 3, "GBuffer");
 	}
 
 	void SettingsPanel::OnImGuiRender()
@@ -113,23 +49,12 @@ namespace Athena
 			{
 				EditorSettings& settings = m_EditorCtx.EditorSettings;
 
-				UI::PropertyCheckbox("GizmosLocal", &settings.GizmosLocalTransform);
-				UI::PropertyCheckbox("ShowRendererIcons", &settings.ShowRendererIcons);
-				UI::PropertySlider("RendererIconsScale", &settings.RendererIconsScale, 0.4f, 3.f);
-				UI::PropertySlider("CameraSpeed", &settings.CameraSpeedLevel, 0.f, 10.f);
+				UI::PropertyCheckbox("Gizmos Local", &settings.GizmosLocalTransform);
+				UI::PropertyCheckbox("Show Renderer Icons", &settings.ShowRendererIcons);
+				UI::PropertySlider("Renderer Icons Scale", &settings.RendererIconsScale, 0.4f, 3.f);
+				UI::PropertySlider("Camera Speed", &settings.CameraSpeedLevel, 0.f, 10.f);
 				UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
-				UI::PropertyCheckbox("ShowPhysicsColliders", &settings.ShowPhysicsColliders);
-				UI::PropertyCheckbox("ReloadScriptsOnStart", &settings.ReloadScriptsOnStart);
-
-				UI::PropertyRow("Reload Scripts", ImGui::GetFrameHeight());
-				ImGui::PushStyleColor(ImGuiCol_Button, UI::GetTheme().BackgroundDark);
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 10, 3 });
-				if (ImGui::Button("Reload All Scripts"))
-				{
-					m_EditorCtx.ActiveScene->LoadAllScripts();
-				}
-				ImGui::PopStyleVar();
-				ImGui::PopStyleColor();
+				UI::PropertyCheckbox("Show Physics Colliders", &settings.ShowPhysicsColliders);
 
 				UI::EndPropertyTable();
 			}
@@ -191,21 +116,10 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("Debug", false))
+		if (UI::TreeNode("Debug", false) && UI::BeginPropertyTable())
 		{
-			ImGui::Text("DebugView");
-			ImGui::SameLine();
-
-			std::string_view views[] = { "None", "ShadowCascades", "LightComplexity", "GBuffer" };
-			std::string_view selected = DebugViewToString(settings.DebugView);
-			if (UI::ComboBox("##DebugView", views, std::size(views), &selected))
-			{
-				settings.DebugView = DebugViewFromString(selected);
-			}
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-
+			UI::PropertyEnumCombo("Debug View", ATN_STRINGIFY_MACRO(DebugView), (void*)&settings.DebugView);
+			UI::EndPropertyTable();
 			UI::TreePop();
 		}
 
@@ -224,14 +138,14 @@ namespace Athena
 			{
 				UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
 				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
-				UI::PropertyDrag("NearPlaneOffset", &shadowSettings.NearPlaneOffset);
-				UI::PropertyDrag("FarPlaneOffset", &shadowSettings.FarPlaneOffset);
+				UI::PropertyDrag("Near Plane Offset", &shadowSettings.NearPlaneOffset);
+				UI::PropertyDrag("Far Plane Offset", &shadowSettings.FarPlaneOffset);
 
 				UI::EndPropertyTable();
 				UI::TreePop();
 			}
 
-			if (UI::TreeNode("ShadowMap", false, true))
+			if (UI::TreeNode("Shadow Map", false, true))
 			{
 				static int layer = 0;
 				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
@@ -257,7 +171,7 @@ namespace Athena
 			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
 			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
 			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
-			UI::PropertySlider("BlurSharpness", &ao.BlurSharpness, 0.f, 100.f);
+			UI::PropertySlider("Blur Sharpness", &ao.BlurSharpness, 0.f, 100.f);
 
 			UI::EndPropertyTable();
 			UI::TreePop();
@@ -271,16 +185,16 @@ namespace Athena
 			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
 				m_ViewportRenderer->ApplySettings();
 
-			UI::PropertyCheckbox("ConeTrace", &ssr.ConeTrace);
+			UI::PropertyCheckbox("Cone Trace", &ssr.ConeTrace);
 			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
-			UI::PropertySlider("MaxRoughness", &ssr.MaxRoughness, 0.f, 1.f);
+			UI::PropertySlider("Max Roughness", &ssr.MaxRoughness, 0.f, 1.f);
 
 			int maxSteps = ssr.MaxSteps;
-			if (UI::PropertyDrag("MaxSteps", &maxSteps, 1, 1024))
+			if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 1024))
 				ssr.MaxSteps = maxSteps;
 
-			UI::PropertySlider("ScreenEdgesFade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
-			UI::PropertyCheckbox("BackwardRays", &ssr.BackwardRays);
+			UI::PropertySlider("Screen Edges Fade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
+			UI::PropertyCheckbox("Backward Rays", &ssr.BackwardRays);
 
 			UI::EndPropertyTable();
 			UI::TreePop();
@@ -294,28 +208,50 @@ namespace Athena
 			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
 			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
 			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
-			UI::PropertyDrag("DirtIntensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
+			UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
-			Ref<Texture2D> displayTex = bloomSettings.DirtTexture;
-			if (!displayTex || displayTex == TextureGenerator::GetBlackTexture())
-				displayTex = EditorResources::GetIcon("EmptyTexture");
+			bool isDefault = bloomSettings.DirtTexture == AssetHandle(0);
+			Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(bloomSettings.DirtTexture);
+			bool isValid = textureAsset != nullptr && !isDefault;
 
-			if (UI::PropertyImage("Dirt Texture", displayTex, { 45.f, 45.f }))
+			Ref<Texture2D> texture;
+			if (isDefault)
+				texture = EngineTextures::GetWhiteTexture();
+			else if (!isValid)
+				texture = EditorResources::GetIcon("EmptyTexture");
+			else
+				texture = textureAsset->GetRenderTexture();
+
+			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
+			if (UI::PropertyImage("Dirt Texture", texture, { imageSize, imageSize }))
 			{
-				FilePath path = FileDialogs::OpenFile(TEXT("Texture\0*.png;*.jpg\0"));
-				if (!path.empty())
-				{
-					TextureImportOptions options;
-					options.sRGB = false;
-					options.GenerateMipMaps = false;
+				std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
+				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
+				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
-					bloomSettings.DirtTexture = TextureImporter::Load(path, options);
+				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
+				{
+					bloomSettings.DirtTexture = handle;
 				}
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				{
+					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+					if (cbPayload->AssetType == AssetType::Texture)
+					{
+						bloomSettings.DirtTexture = cbPayload->AssetHandle;
+					}
+				}
+				ImGui::EndDragDropTarget();
 			}
 
 			UI::EndPropertyTable();
 
-			if (UI::TreeNode("BloomTexture", false, true))
+			if (UI::TreeNode("Bloom Texture", false, true))
 			{
 				Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
 
@@ -329,27 +265,13 @@ namespace Athena
 			UI::TreePop();
 		}
 
-		if (UI::TreeNode("PostProcessing", false) && UI::BeginPropertyTable())
+		if (UI::TreeNode("Post Processing", false) && UI::BeginPropertyTable())
 		{
 			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
-			{
-				std::string_view views[] = { "None", "ACES-Filmic", "ACES-True" };
-				std::string_view selected = TonemapModeToString(postProcess.TonemapMode);
-
-				if (UI::PropertyCombo("Tonemap Mode", views, std::size(views), &selected))
-					postProcess.TonemapMode = TonemapModeFromString(selected);
-
-				UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
-			}
-
-			{
-				std::string_view views[] = { "None", "FXAA", "SMAA"};
-				std::string_view selected = AntialisingToString(postProcess.AntialisingMethod);
-
-				if (UI::PropertyCombo("Antialiasing", views, std::size(views), &selected))
-					postProcess.AntialisingMethod = AntialisingFromString(selected);
-			}
+			UI::PropertyEnumCombo("Tonemap Mode", ATN_STRINGIFY_MACRO(TonemapMode), (void*)&postProcess.TonemapMode);
+			UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+			UI::PropertyEnumCombo("Antialiasing", ATN_STRINGIFY_MACRO(Antialiasing), (void*)&postProcess.AntialisingMethod);
 
 			UI::EndPropertyTable();
 			UI::TreePop();

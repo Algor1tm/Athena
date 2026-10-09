@@ -28,15 +28,17 @@ namespace Athena
 
 		appinfo.AppConfig.Name = "Athena Editor";
 		appinfo.AppConfig.EnableImGui = true;
-		appinfo.AppConfig.EnableConsole = true;
 		appinfo.AppConfig.WorkingDirectory = "";
 		appinfo.AppConfig.EngineResourcesPath = "../Athena/EngineResources";
 		appinfo.AppConfig.CleanCacheOnLoad = false;
 
+		appinfo.LogConfig.EnableConsole = true;
+		appinfo.LogConfig.OutputPath = "Sandbox.log";
+
 		appinfo.RendererConfig.API = Renderer::API::Vulkan;
 		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
-		appinfo.ScriptConfig.ScriptsFolder = "Assets/Scripts";
+		appinfo.ScriptConfig.EnableDebug = true;
 
 		appinfo.WindowInfo.Width = 1600;
 		appinfo.WindowInfo.Height = 900;
@@ -50,7 +52,9 @@ namespace Athena
 		Application* application = new AthenaEditor(appinfo);
 		
 		EditorConfig editorConfig;
-		editorConfig.EditorResources = "EditorResources/";
+		editorConfig.EditorResources = "EditorResources";
+		editorConfig.SelectProjectManually = false;
+		editorConfig.StartProject = "SandBoxProject/SandBox.atproj";
 
 		application->PushLayer(Ref<EditorLayer>::Create(editorConfig));
 

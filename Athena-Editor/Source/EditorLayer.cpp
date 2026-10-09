@@ -1,12 +1,15 @@
 #include "EditorLayer.h"
 
+#include "Athena/Asset/AssetManager.h"
+#include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/PlatformUtils.h"
-#include "Athena/Asset/TextureImporter.h"
 #include "Athena/ImGui/ImGuiLayer.h"
-
 #include "Athena/Input/Input.h"
+#include "Athena/Project/Project.h"
 
 #include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Renderer/SceneRenderer2D.h"
@@ -19,9 +22,13 @@
 #include "Athena/UI/Theme.h"
 
 #include "Panels/PanelManager.h"
+#include "Panels/AssetManagerPanel.h"
 #include "Panels/ContentBrowserPanel.h"
+#include "Panels/MaterialEditorPanel.h"
+#include "Panels/AssetImportSettingsPanel.h"
 #include "Panels/SettingsPanel.h"
 #include "Panels/ProfilingPanel.h"
+#include "Panels/ProjectSettingsPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ViewportPanel.h"
 
@@ -39,6 +46,11 @@ namespace Athena
 
     }
 
+    EditorLayer::~EditorLayer()
+    {
+
+    }
+
     void EditorLayer::OnAttach()
     {
         m_EditorCtx = Ref<EditorContext>::Create();
@@ -46,8 +58,28 @@ namespace Athena
         m_EditorCtx->SceneState = SceneState::Edit;
         m_EditorCtx->SelectedEntity = {};
 
-        m_EditorScene = Ref<Scene>::Create();
-        m_EditorCtx->ActiveScene = m_EditorScene;
+        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(45.f), 16.f / 9.f, 1.f, 200.f);
+
+        if (m_Config.SelectProjectManually)
+        {
+            if (!OpenProject())
+            {
+                // TODO: Editor Launcher
+#if 1
+                NewProject("SandBox", "SandBoxProject/");
+#else
+                Application::Get().Close();
+                return;
+#endif
+            }
+        }
+        else
+        {
+            OpenProject(m_Config.StartProject);
+        }
+
+        if (m_EditorCtx->ActiveScene == nullptr)
+            NewScene();
 
         m_ViewportRenderer = SceneRenderer::Create();
         m_Renderer2D = SceneRenderer2D::Create(m_ViewportRenderer->GetRender2DPass());
@@ -57,19 +89,8 @@ namespace Athena
 
         m_ViewportRenderer->SetOnViewportResizeCallback(
             [this](uint32 width, uint32 height) { m_Renderer2D->OnViewportResize(width, height); });
-        
-        m_EditorCamera = Ref<FirstPersonCamera>::Create(Math::Radians(45.f), 16.f / 9.f, 1.f, 200.f);
 
-        EditorResources::Init(m_Config.EditorResources);
-
-        Application::Get().GetImGuiLayer()->BlockEvents(false);
-        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
-
-        m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
         InitUI();
-#if 1
-        OpenScene("Assets/Scenes/Default.atn");
-#endif
     }
 
     void EditorLayer::OnDetach()
@@ -78,13 +99,14 @@ namespace Athena
         PanelManager::Shutdown();
         EditorResources::Shutdown();
         Application::Get().GetWindow().SetTitlebarHitTestCallback(nullptr);
+        Project::Shutdown();
     }
 
     void EditorLayer::OnUpdate(Time frameTime)
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
-        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
 
         const auto& vpDesc = viewportPanel->GetDescription();
         const auto& rendererSize = m_EditorCtx->ActiveScene->GetViewportSize();
@@ -92,23 +114,20 @@ namespace Athena
         if (vpDesc.Size.x > 0 && vpDesc.Size.y > 0 &&
             (rendererSize.x != vpDesc.Size.x || rendererSize.y != vpDesc.Size.y))
         {
-            ATN_PROFILE_SCOPE("EditorLayer::OnViewportResize");
+            TRACY_PROFILE_SCOPE("EditorLayer::OnViewportResize");
 
             m_ViewportRenderer->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCamera->SetViewportSize(vpDesc.Size.x, vpDesc.Size.y);
             m_EditorCtx->ActiveScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         }
 
-        if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
+        if ((Input::GetCursorMode() == CursorMode::Disabled || vpDesc.IsHovered) && !ImGuizmo::IsUsing() && (m_EditorCtx->SceneState != SceneState::Play))
             m_EditorCamera->OnUpdate(frameTime);
 
         switch (m_EditorCtx->SceneState)
         {
         case SceneState::Edit:
         {
-            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-                m_EditorCamera->OnUpdate(frameTime);
-
             m_EditorCtx->ActiveScene->OnUpdateEditor(frameTime);
             m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
@@ -121,9 +140,6 @@ namespace Athena
         }
         case SceneState::Simulation:
         {
-            if ((m_HideCursor || vpDesc.IsHovered) && !ImGuizmo::IsUsing())
-                m_EditorCamera->OnUpdate(frameTime);
-
             m_EditorCtx->ActiveScene->OnUpdateSimulation(frameTime);
             m_EditorCtx->ActiveScene->OnRender(m_ViewportRenderer, *m_EditorCamera);
             break;
@@ -133,7 +149,7 @@ namespace Athena
 
     void EditorLayer::OnImGuiRender()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         const bool isMaximized = Application::Get().GetWindow().GetWindowMode() == WindowMode::Maximized;
 
@@ -172,11 +188,17 @@ namespace Athena
 
         PanelManager::OnImGuiRender();
 
-        if (m_AboutModalOpen)
+        if (UI::BeginPopupModal("About", ImGuiWindowFlags_AlwaysAutoResize))
             DrawAboutModal();
 
-        if (m_ThemeEditorOpen)
+        if (UI::BeginPopupModal("Theme Editor"))
             DrawThemeEditor();
+
+        if (UI::BeginPopupModal("New Project"))
+            DrawNewProjectModal();
+
+        if (UI::BeginPopupModal("New Script"))
+            DrawNewScriptModal();
 
         ImGui::End();
 
@@ -187,13 +209,7 @@ namespace Athena
 
         if (m_EditorCtx->SelectedEntity)
         {
-            Entity entity = m_EditorCtx->SelectedEntity;
-            if (entity.HasComponent<StaticMeshComponent>())
-            {
-                Ref<StaticMesh> mesh = entity.GetComponent<StaticMeshComponent>().Mesh;
-                WorldTransformComponent& transform = entity.GetComponent<WorldTransformComponent>();
-                m_ViewportRenderer->SubmitSelectionContext(mesh, transform.AsMatrix());
-            }
+            OnRenderOutline();
         }
     }
 
@@ -201,33 +217,128 @@ namespace Athena
     {
         if (entity && m_EditorCtx->SceneState == SceneState::Edit)
         {
-			Entity newEntity = m_EditorScene->DuplicateEntity(entity);
+            Entity newEntity = m_EditorScene->DuplicateEntity(entity);
             m_EditorCtx->SelectedEntity = newEntity;
-			return newEntity;
+            return newEntity;
         }
 
         return entity;
     }
 
+    void EditorLayer::PlaceMesh(AssetHandle meshHandle)
+    {
+        Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshHandle);
+        if (!mesh)
+            return;
+
+        if (mesh->IsCollapsedGraph())
+        {
+            Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
+            entity.GetComponent<TagComponent>().Tag = AssetManager::GetAssetFilePath(meshHandle).stem().string();
+            entity.AddComponent<MeshComponent>().MeshHandle = meshHandle;
+
+            entity.GetComponent<MeshComponent>().ResetMaterials();
+
+            if (mesh->IsRigged())
+            {
+                AnimationControllerComponent& controller = entity.AddComponent<AnimationControllerComponent>();
+                controller.AnimationController = AnimationController::Create(meshHandle);
+            }
+
+            m_EditorCtx->SelectedEntity = entity;
+        }
+        else
+        {
+            Entity rootEntity = m_EditorCtx->ActiveScene->CreateEntity();
+            CreateMeshHierarchy(mesh, mesh->GetMeshNode(0), rootEntity);
+
+            m_EditorCtx->SelectedEntity = rootEntity;
+        }
+    }
+
+    void EditorLayer::CreateMeshHierarchy(const Ref<Mesh>& mesh, const MeshNode& meshNode, Entity entity)
+    {
+        entity.GetComponent<TagComponent>().Tag = meshNode.Name;
+
+        Vector3 translation, rotation, scale;
+        Math::DecomposeTransform(meshNode.LocalTransform, translation, rotation, scale);
+        auto& transformComponent = entity.GetComponent<TransformComponent>();
+        transformComponent.Translation = translation;
+        transformComponent.Rotation = rotation;
+        transformComponent.Scale = scale;
+
+        auto& meshComponent = entity.AddComponent<MeshComponent>();
+        meshComponent.MeshHandle = mesh->Handle;
+        meshComponent.MeshNodeIndex = meshNode.Index;
+
+        meshComponent.ResetMaterials();
+
+        if (!meshNode.Children.empty())
+            entity.AddComponent<ChildComponent>().Children.reserve(meshNode.Children.size());
+
+        for (uint32 childIndex : meshNode.Children)
+        {
+            Entity child = m_EditorCtx->ActiveScene->CreateEntity();
+
+            child.AddComponent<ParentComponent>().Parent = entity;
+            entity.GetComponent<ChildComponent>().Children.push_back(child);
+
+            CreateMeshHierarchy(mesh, mesh->GetMeshNode(childIndex), child);
+        }
+    }
+
     void EditorLayer::InitUI()
     {
-        m_Titlebar = Ref<Titlebar>::Create(Application::Get().GetConfig().Name, m_EditorCtx);
+        EditorResources::Init(m_Config.EditorResources);
+
+        Application::Get().GetImGuiLayer()->BlockEvents(false);
+        Application::Get().GetWindow().SetTitlebarHitTestCallback([this]() { return m_Titlebar->IsHovered(); });
+
+        FilePath fimguiIni = Project::GetProjectDirectory() / "imgui.ini";
+        static String imguiIni = fimguiIni.string();
+        ImGui::GetIO().IniFilename = imguiIni.c_str();
+
+        m_ImGuizmoLayer = Ref<ImGuizmoLayer>::Create(m_EditorCtx, m_EditorCamera);
+
+        UI::RegisterPopup("About", true);
+        UI::RegisterPopup("Theme Editor", false);
+        UI::RegisterPopup("New Project", true);
+        UI::RegisterPopup("New Script", true);
+
+        m_Titlebar = Ref<Titlebar>::Create(m_EditorCtx);
 
         m_Titlebar->SetMenubarCallback([this]()
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if (ImGui::MenuItem("New", "Ctrl+N", false))
+                    bool isEdit = m_EditorCtx->SceneState == SceneState::Edit;
+
+                    if (ImGui::MenuItem("New Project", NULL, false))
+                        UI::OpenPopup("New Project");
+
+                    if (ImGui::MenuItem("Open Project...", NULL, false))
+                        OpenProject();
+
+                    if (ImGui::MenuItem("Save Project", NULL, false))
+                        SaveProject();
+
+                    ImGui::Separator();
+                    ImGui::Spacing();
+
+                    if (ImGui::MenuItem("New Scene", NULL, false, isEdit))
                         NewScene();
 
-                    if (ImGui::MenuItem("Open...", "Ctrl+O", false))
+                    if (ImGui::MenuItem("Open Scene...", NULL, false, isEdit))
                         OpenScene();
 
-                    if (ImGui::MenuItem("Save As...", "Ctrl+S", false))
+                    if (ImGui::MenuItem("Save Scene As...", NULL, false, isEdit))
                         SaveSceneAs();
 
                     ImGui::Separator();
                     ImGui::Spacing();
+
+                    if (ImGui::MenuItem("Save All", "Ctrl+S", false, isEdit))
+                        SaveAll();
 
                     if (ImGui::MenuItem("Exit", NULL, false))
                         Application::Get().Close();
@@ -245,7 +356,7 @@ namespace Athena
                 {
                     if (ImGui::MenuItem("Theme Editor"))
                     {
-                        m_ThemeEditorOpen = !m_ThemeEditorOpen;
+                        UI::OpenPopup("Theme Editor");
                     }
 
                     if (ImGui::MenuItem("Take Screenshot"))
@@ -262,9 +373,34 @@ namespace Athena
                         if (!FileSystem::Exists("Screenshots"))
                             FileSystem::CreateDirectory("Screenshots");
 
-                        FilePath path = std::format("Screenshots/Viewport_{}.png", dateTime);
-                        TextureExporter::ExportPNG(path, image);
+                        FilePath path = fmt::format("Screenshots/Viewport_{}.png", dateTime);
+                        TextureExporter exporter;
+                        exporter.ExportAsPNG(path, image);
                     }
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Scripting"))
+                {
+                    EditorSettings& settings = m_EditorCtx->EditorSettings;
+                    bool isRuntime = m_EditorCtx->SceneState == SceneState::Play;
+
+                    if (ImGui::MenuItem("Reload Scripts", NULL, false, !isRuntime))
+                    {
+                        ScriptEngine::ReloadScripts();
+                    }
+
+                    if (ImGui::MenuItem("New Script"))
+                    {
+                        UI::OpenPopup("New Script");
+                    }
+#if ATN_PLATFORM_WINDOWS
+                    if (ImGui::MenuItem("Open In Visual Studio"))
+                    {
+                        ScriptEngine::OpenInVisualStudio();
+                    }
+#endif
 
                     ImGui::EndMenu();
                 }
@@ -273,19 +409,19 @@ namespace Athena
                 {
                     if (ImGui::MenuItem("About", NULL, false))
                     {
-                        m_AboutModalOpen = true;
+                        UI::OpenPopup("About");
                     }
 
                     if (ImGui::MenuItem("Github", NULL, false))
                     {
-                        Platform::OpenInBrowser(TEXT("https://github.com/Algor1tm/Athena"));
+                        Platform::OpenInBrowser(L"https://github.com/Algor1tm/Athena");
                     }
-                    
+
                     ImGui::EndMenu();
                 }
             });
 
-        auto viewportPanel = Ref<ViewportPanel>::Create(VIEWPORT_PANEL_ID, m_EditorCtx);
+        auto viewportPanel = Ref<ViewportPanel>::Create(MAIN_VIEWPORT_PANEL_ID, m_EditorCtx);
 
         viewportPanel->SetImGuizmoLayer(m_ImGuizmoLayer);
         viewportPanel->SetViewportRenderer(m_ViewportRenderer);
@@ -293,38 +429,36 @@ namespace Athena
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
                 {
-                    std::string_view path = (const char*)payload->Data;
-                    FilePath ext = FilePath(path).extension();
-                    //Scene Drag/Drop
-                    if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".atn\0")
+                    if (m_EditorCtx->SceneState != SceneState::Edit)
+                        return;
+
+                    CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+
+                    if (cbPayload->AssetType == AssetType::Scene)
                     {
-                        OpenScene(path.data());
+                        OpenScene(cbPayload->FilePath);
                     }
-                    //Texture Drag/Drop on Entity
-                    else if (m_EditorCtx->SceneState == SceneState::Edit && ext == ".png\0")
+                    else if (cbPayload->AssetType == AssetType::Mesh)
                     {
-                        Entity target = GetEntityByCurrentMousePosition();
-                        if (target != Entity{})
-                        {
-                            if (target.HasComponent<SpriteComponent>())
-                            {
-                                auto& sprite = target.GetComponent<SpriteComponent>();
-                                sprite.Texture = TextureImporter::Load(path, true);
-                                sprite.Color = LinearColor::White;
-                                m_EditorCtx->SelectedEntity = target;
-                            }
-                        }
+                        PlaceMesh(cbPayload->AssetHandle);
                     }
-                    // Mesh Drag/Drop
-                    else if (m_EditorCtx->SceneState == SceneState::Edit && (ext == ".obj\0" || ext == ".fbx" || ext == ".x3d" || ext == ".gltf" || ext == ".blend"))
+                    else if (cbPayload->AssetType == AssetType::EnvironmentMap)
                     {
-                        Ref<StaticMesh> mesh = StaticMesh::Create(path);
-                        if (mesh)
+                        auto view = m_EditorCtx->ActiveScene->GetAllEntitiesWith<SkyLightComponent>();
+                        if (view.empty())
                         {
                             Entity entity = m_EditorCtx->ActiveScene->CreateEntity();
-                            entity.GetComponent<TagComponent>().Tag = mesh->GetName();
-                            entity.AddComponent<StaticMeshComponent>().Mesh = mesh;
-                            m_EditorCtx->SelectedEntity = entity;
+                            entity.GetComponent<TagComponent>().Tag = cbPayload->FilePath.stem().string();
+                            auto& skyComponent = entity.AddComponent<SkyLightComponent>();
+                            skyComponent.EnvMapHandle = cbPayload->AssetHandle;
+                            skyComponent.Type = EnvironmentMapType::STATIC;
+                        }
+                        else
+                        {
+                            Entity entity = { view.back(), m_EditorCtx->ActiveScene.Raw() };
+                            auto& skyComponent = entity.GetComponent<SkyLightComponent>();
+                            skyComponent.EnvMapHandle = cbPayload->AssetHandle;
+                            skyComponent.Type = EnvironmentMapType::STATIC;
                         }
                     }
                 }
@@ -394,26 +528,41 @@ namespace Athena
                 ImGui::PopStyleVar();
             });
 
+
         PanelManager::AddPanel(viewportPanel, false);
 
-        auto settingsPanel = Ref<SettingsPanel>::Create(SETTINGS_PANEL_ID, m_EditorCtx);
+        auto settingsPanel = Ref<SettingsPanel>::Create(m_EditorCtx);
         settingsPanel->SetContext(m_ViewportRenderer);
         PanelManager::AddPanel(settingsPanel, Keyboard::I);
 
-        auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(SCENE_HIERARCHY_PANEL_ID, m_EditorCtx);
+        auto sceneHierarchyPanel = Ref<SceneHierarchyPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(sceneHierarchyPanel, Keyboard::J);
 
-        auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(CONTENT_BORWSER_PANEL_ID, m_EditorCtx);
+        auto materialEditorPanel = Ref<MaterialEditorPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(materialEditorPanel, Keyboard::L);
+
+        auto assetImportPanel = Ref<AssetImportSettingsPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(assetImportPanel, true, false);
+
+        auto contentBrowserPanel = Ref<ContentBrowserPanel>::Create(m_EditorCtx);
         PanelManager::AddPanel(contentBrowserPanel, Keyboard::Space);
 
-        auto profilingPanel = Ref<ProfilingPanel>::Create(PROFILING_PANEL_ID, m_EditorCtx);
+        auto profilingPanel = Ref<ProfilingPanel>::Create(m_EditorCtx);
         profilingPanel->SetContext(m_ViewportRenderer);
         PanelManager::AddPanel(profilingPanel, Keyboard::K);
+
+        auto assetManagerPanel = Ref<AssetManagerPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(assetManagerPanel, Keyboard::U, false);
+
+        auto projectSettingsPanel = Ref<ProjectSettingsPanel>::Create(m_EditorCtx);
+        PanelManager::AddPanel(projectSettingsPanel, true, false);
+
+        m_IsUIInitialized = true;
     }
 
     Entity EditorLayer::GetEntityByCurrentMousePosition()
     {
-        return Entity{};
+        return Entity{};    // TODO: Not implemented
     }
 
     void EditorLayer::OnRender2D()
@@ -427,9 +576,9 @@ namespace Athena
             Entity camera = m_EditorCtx->ActiveScene->GetPrimaryCameraEntity();
             if (camera)
             {
-				auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
+                auto& runtimeCamera = camera.GetComponent<CameraComponent>().Camera;
 
-				Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
+                Matrix4 view = Math::AffineInverse(camera.GetComponent<WorldTransformComponent>().AsMatrix());
                 renderer2D->BeginScene(view, runtimeCamera.GetProjectionMatrix());
             }
             else
@@ -475,43 +624,43 @@ namespace Athena
                 }
             }
         }
-        
-        const Vector2 iconScale = Vector2( 0.075f, 0.075f ) * m_EditorCtx->EditorSettings.RendererIconsScale;
+
+        const Vector2 iconScale = Vector2(0.075f, 0.075f) * m_EditorCtx->EditorSettings.RendererIconsScale;
         if (m_EditorCtx->EditorSettings.ShowRendererIcons && m_EditorCtx->SceneState == SceneState::Edit)
         {
             auto camerasView = m_EditorScene->GetAllEntitiesWith<CameraComponent, WorldTransformComponent>();
             for (auto entity : camerasView)
-            { 
+            {
                 const auto& transform = camerasView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, EditorResources::GetIcon("Viewport_Camera"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 4.f / 3.f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_Camera")));
             }
 
             auto dirLightsView = m_EditorScene->GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
             for (auto entity : dirLightsView)
             {
                 const auto& transform = dirLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_DirLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_DirLight")));
             }
 
             auto pointLightsView = m_EditorScene->GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
             for (auto entity : pointLightsView)
             {
                 const auto& transform = pointLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_PointLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_PointLight")));
             }
 
             auto spotLightsView = m_EditorScene->GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
             for (auto entity : spotLightsView)
             {
                 const auto& transform = spotLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, EditorResources::GetIcon("Viewport_SpotLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale * 1.6f, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_SpotLight")));
             }
 
             auto skyLightsView = m_EditorScene->GetAllEntitiesWith<SkyLightComponent, WorldTransformComponent>();
             for (auto entity : skyLightsView)
             {
                 const auto& transform = skyLightsView.get<WorldTransformComponent>(entity);
-                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, EditorResources::GetIcon("Viewport_SkyLight"));
+                renderer2D->DrawBillboardFixedSize(transform.Translation, iconScale, Ref<TextureAsset>::Create(EditorResources::GetIcon("Viewport_SkyLight")));
             }
         }
 
@@ -522,9 +671,9 @@ namespace Athena
             const WorldTransformComponent& worldTransform = selectedEntity.GetComponent<WorldTransformComponent>();
 
             // 2D Outline
-            if(selectedEntity.HasComponent<SpriteComponent>())
+            if (selectedEntity.HasComponent<SpriteComponent>())
             {
-                if(selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
+                if (selectedEntity.GetComponent<SpriteComponent>().Space == Renderer2DSpace::WorldSpace)
                     renderer2D->DrawRect(worldTransform.AsMatrix(), selectColor);
             }
             else if (selectedEntity.HasComponent<CircleComponent>())
@@ -543,24 +692,81 @@ namespace Athena
                     options.LineSpacing = textComponent.LineSpacing;
                     options.InvertY = false;
 
-                    FontGeometry* fontGeometry = textComponent.Font->GetFontGeometry();
-                    float height = fontGeometry->InitText(textComponent.Text, options);
+                    Ref<Font> font = AssetManager::GetAsset<Font>(textComponent.FontHandle);
+                    if (font)
+                    {
+                        FontGeometry* fontGeometry = font->GetFontGeometry();
+                        float height = fontGeometry->InitText(textComponent.Text, options);
 
-                    Matrix4 transformMatrix = worldTransform.AsMatrix();
+                        Matrix4 transformMatrix = worldTransform.AsMatrix();
 
-                    Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
-                    Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
-                    Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
-                    Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
+                        Vector4 p0 = Vector4(0, 0, 0, 1) * transformMatrix;
+                        Vector4 p1 = Vector4(textComponent.MaxWidth, 0, 0, 1) * transformMatrix;
+                        Vector4 p2 = Vector4(textComponent.MaxWidth, height, 0, 1) * transformMatrix;
+                        Vector4 p3 = Vector4(0, height, 0, 1) * transformMatrix;
 
-                    renderer2D->DrawLine(p0, p1, selectColor);
-                    renderer2D->DrawLine(p1, p2, selectColor);
-                    renderer2D->DrawLine(p2, p3, selectColor);
-                    renderer2D->DrawLine(p3, p0, selectColor);
+                        renderer2D->DrawLine(p0, p1, selectColor);
+                        renderer2D->DrawLine(p1, p2, selectColor);
+                        renderer2D->DrawLine(p2, p3, selectColor);
+                        renderer2D->DrawLine(p3, p0, selectColor);
+                    }
                 }
             }
+            // Camera frustum view
+            else if (selectedEntity.HasComponent<CameraComponent>())
+            {
+                const SceneCamera& camera = selectedEntity.GetComponent<CameraComponent>().Camera;
+                const CameraInfo& cInfo = camera.GetCameraInfo();
 
+                float nearClip = cInfo.NearClip;
+                float farClip = cInfo.FarClip;
+                float fov = cInfo.FOV;
+                float aspectRatio = camera.GetAspectRatio();
 
+                std::array<Vector3, 4> nearPlane;
+                std::array<Vector3, 4> farPlane;
+
+                float planeHorHalf = Math::Tan(fov) * nearClip;
+                float planeVertHalf = planeHorHalf / aspectRatio;
+                nearPlane[0] = Vector3::Left() * planeHorHalf + Vector3::Down() * planeVertHalf;
+                nearPlane[1] = Vector3::Left() * planeHorHalf + Vector3::Up() * planeVertHalf;
+                nearPlane[2] = Vector3::Right() * planeHorHalf + Vector3::Up() * planeVertHalf;
+                nearPlane[3] = Vector3::Right() * planeHorHalf + Vector3::Down() * planeVertHalf;
+
+                planeHorHalf = Math::Tan(fov) * farClip;
+                planeVertHalf = planeHorHalf / aspectRatio;
+                farPlane[0] = Vector3::Left() * planeHorHalf + Vector3::Down() * planeVertHalf;
+                farPlane[1] = Vector3::Left() * planeHorHalf + Vector3::Up() * planeVertHalf;
+                farPlane[2] = Vector3::Right() * planeHorHalf + Vector3::Up() * planeVertHalf;
+                farPlane[3] = Vector3::Right() * planeHorHalf + Vector3::Down() * planeVertHalf;
+
+                for (uint32 i = 0; i < 4; ++i)
+                {
+                    nearPlane[i] += Vector3::Forward() * nearClip;
+                    farPlane[i] += Vector3::Forward() * farClip;
+
+                    nearPlane[i] = worldTransform.Rotation * nearPlane[i];
+                    farPlane[i] = worldTransform.Rotation * farPlane[i];
+
+                    nearPlane[i] += worldTransform.Translation;
+                    farPlane[i] += worldTransform.Translation;
+                }
+
+                renderer2D->DrawLine(nearPlane[0], nearPlane[1], selectColor);
+                renderer2D->DrawLine(nearPlane[1], nearPlane[2], selectColor);
+                renderer2D->DrawLine(nearPlane[2], nearPlane[3], selectColor);
+                renderer2D->DrawLine(nearPlane[3], nearPlane[0], selectColor);
+
+                renderer2D->DrawLine(farPlane[0], farPlane[1], selectColor);
+                renderer2D->DrawLine(farPlane[1], farPlane[2], selectColor);
+                renderer2D->DrawLine(farPlane[2], farPlane[3], selectColor);
+                renderer2D->DrawLine(farPlane[3], farPlane[0], selectColor);
+
+                renderer2D->DrawLine(nearPlane[0], farPlane[0], selectColor);
+                renderer2D->DrawLine(nearPlane[1], farPlane[1], selectColor);
+                renderer2D->DrawLine(nearPlane[2], farPlane[2], selectColor);
+                renderer2D->DrawLine(nearPlane[3], farPlane[3], selectColor);
+            }
             // Light Outline
             else if (selectedEntity.HasComponent<PointLightComponent>())
             {
@@ -577,18 +783,18 @@ namespace Athena
                     Vector2 offset0 = { radius * Math::Cos(angle), radius * Math::Sin(angle) };
                     Vector2 offset1 = { radius * Math::Cos(angle + step), radius * Math::Sin(angle + step) };
 
-                    Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f );
+                    Vector3 p0 = position + Vector3(offset0.x, offset0.y, 0.f);
                     Vector3 p1 = position + Vector3(offset1.x, offset1.y, 0.f);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
 
-					p0 = position + Vector3(offset0.x, 0.f, offset0.y);
-					p1 = position + Vector3(offset1.x, 0.f, offset1.y);
+                    p0 = position + Vector3(offset0.x, 0.f, offset0.y);
+                    p1 = position + Vector3(offset1.x, 0.f, offset1.y);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
 
-					p0 = position + Vector3(0.f, offset0.x, offset0.y);
-					p1 = position + Vector3(0.f, offset1.x, offset1.y);
+                    p0 = position + Vector3(0.f, offset0.x, offset0.y);
+                    p1 = position + Vector3(0.f, offset1.x, offset1.y);
 
                     renderer2D->DrawLine(p0, p1, selectColor);
                 }
@@ -684,34 +890,77 @@ namespace Athena
         renderer2D->EndScene();
     }
 
+    void EditorLayer::OnRenderOutline()
+    {
+        Entity entity = m_EditorCtx->SelectedEntity;
+        if (entity.HasComponent<MeshComponent>())
+        {
+            const auto& transformComponent = entity.GetComponent<WorldTransformComponent>();
+            const auto& meshComponent = entity.GetComponent<MeshComponent>();
+
+            if (!meshComponent.Visible)
+                return;
+
+            Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
+
+            if (!mesh)
+                return;
+
+            if (mesh->IsCollapsedGraph())
+            {
+                bool hasAnimationController = entity.HasComponent<AnimationControllerComponent>();
+
+                for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
+                {
+                    const SubMesh& subMesh = mesh->GetSubMesh(i);
+                    Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+                    Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix();
+
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material, hasAnimationController, transform);
+                }
+
+                if (hasAnimationController)
+                {
+                    Ref<AnimationController> controller = entity.GetComponent<AnimationControllerComponent>().AnimationController;
+                    m_ViewportRenderer->SubmitAnimationState(controller->GetBoneTransforms());
+                }
+            }
+            else if (mesh->HasMeshNode(meshComponent.MeshNodeIndex))
+            {
+                const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
+
+                for (uint32 submeshIndex : node.SubMeshes)
+                {
+                    const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
+                    Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+                    Matrix4 transform = transformComponent.AsMatrix();
+
+                    m_ViewportRenderer->SubmitSelectionContext(mesh, subMesh, material, false, transform);
+                }
+            }
+        }
+    }
+
     void EditorLayer::DrawAboutModal()
     {
-        ImGui::OpenPopup("About");
-        m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        if (m_AboutModalOpen)
+        auto logo = EditorResources::GetIcon("Logo");
+        UI::DrawImage(logo, { 48, 48 });
+
+        ImGui::SameLine();
+        UI::ShiftCursorX(20.0f);
+
+        ImGui::Text("Athena 3D Game Engine");
+
+        if (UI::ButtonCentered("Close"))
         {
-            auto logo = EditorResources::GetIcon("Logo");
-            UI::DrawImage(logo, { 48, 48 });
-
-            ImGui::SameLine();
-            UI::ShiftCursorX(20.0f);
-
-            ImGui::Text("Athena 3D Game Engine");
-
-            if (UI::ButtonCentered("Close"))
-            {
-                m_AboutModalOpen = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
+            UI::CloseCurrentPopup();
         }
+
+        UI::EndPopup();
     }
 
     void EditorLayer::DrawThemeEditor()
     {
-        ImGui::Begin("Theme Editor");
-
         UI::Theme& theme = UI::GetTheme();
 
         UI::ThemeEditor(theme);
@@ -723,94 +972,161 @@ namespace Athena
 
         ImGui::SameLine();
         if (ImGui::Button("Close"))
-            m_ThemeEditorOpen = false;
+            UI::CloseCurrentPopup();
 
-        ImGui::End();
+        UI::EndPopup();
+    }
+
+    void EditorLayer::DrawNewProjectModal()
+    {
+        static String projectName;
+        UI::TextInputWithHint("ProjectNameTextInput", "Project Name", projectName);
+
+        static String projectDir;
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(" ... ").x - 2 * ImGui::GetStyle().FramePadding.x - ImGui::GetStyle().ItemSpacing.x);
+        UI::TextInputWithHint("ProjectDirTextInput", "Project Directory", projectDir);
+
+        ImGui::SameLine();
+        if (ImGui::Button(" ... "))
+        {
+            FilePath path = FileDialogs::OpenDirectory("Select Project Directory", Project::GetProjectDirectory());
+            if (!path.empty())
+                projectDir = path.string();
+        }
+
+        UI::ShiftCursorY(10);
+
+        if (ImGui::Button("Create"))
+        {
+            NewProject(projectName, projectDir);
+            projectName.clear();
+            projectDir.clear();
+
+            UI::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Close"))
+        {
+            UI::CloseCurrentPopup();
+        }
+
+        UI::EndPopup();
+    }
+
+    void EditorLayer::DrawNewScriptModal()
+    {
+        UI::PushFont(UI::Fonts::Default22);
+        static String scriptName;
+        UI::TextInputWithHint("ScriptNameTextInput", "Script Name", scriptName);
+        UI::PopFont();
+
+        UI::ShiftCursorY(10);
+
+        if (ImGui::Button("Create"))
+        {
+            ScriptEngine::CreateNewScript(scriptName);
+            scriptName.clear();
+
+            UI::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Close"))
+        {
+            UI::CloseCurrentPopup();
+        }
+
+        UI::EndPopup();
     }
 
     void EditorLayer::OnScenePlay()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
         auto settingsPanel = PanelManager::GetPanel<SettingsPanel>(SETTINGS_PANEL_ID);
-        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
-
-        if (m_EditorCtx->EditorSettings.ReloadScriptsOnStart)
-        {
-            m_EditorCtx->ActiveScene->LoadAllScripts();
-        }
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
 
         const auto& vpDesc = viewportPanel->GetDescription();
 
         if (m_EditorCtx->SceneState == SceneState::Simulation)
             OnSceneStop();
 
+        Project::GetEditorAssetManager()->SerializeAllAssets();
+
         m_EditorCtx->SceneState = SceneState::Play;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnRuntimeStart();
-
         m_EditorCtx->ActiveScene = m_RuntimeScene;
-        m_EditorCtx->SelectedEntity = {};
-    }
 
-    void EditorLayer::OnSceneStop()
-    {
-        ATN_PROFILE_FUNC();
-
-        m_EditorCtx->SceneState = SceneState::Edit;
-
-        m_EditorCtx->ActiveScene = m_EditorScene;
-        m_RuntimeScene = nullptr;
+        if (m_EditorCtx->SelectedEntity)
+            m_EditorCtx->SelectedEntity = m_RuntimeScene->GetEntityByUUID(m_EditorCtx->SelectedEntity.GetID());
     }
 
     void EditorLayer::OnSceneSimulate()
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
-        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();
+
+        Project::GetEditorAssetManager()->SerializeAllAssets();
 
         m_EditorCtx->SceneState = SceneState::Simulation;
 
         m_RuntimeScene = Scene::Copy(m_EditorScene);
         m_RuntimeScene->OnViewportResize(vpDesc.Size.x, vpDesc.Size.y);
         m_RuntimeScene->OnSimulationStart();
-
         m_EditorCtx->ActiveScene = m_RuntimeScene;
+
+        if (m_EditorCtx->SelectedEntity)
+            m_EditorCtx->SelectedEntity = m_RuntimeScene->GetEntityByUUID(m_EditorCtx->SelectedEntity.GetID());
+    }
+
+    void EditorLayer::OnSceneStop()
+    {
+        TRACY_PROFILE_FUNC();
+
+        m_EditorCtx->SceneState = SceneState::Edit;
+
+        m_EditorCtx->ActiveScene->OnRuntimeStop();
+        m_EditorCtx->ActiveScene = m_EditorScene;
+
+        if (m_EditorCtx->SelectedEntity)
+            m_EditorCtx->SelectedEntity = m_EditorScene->GetEntityByUUID(m_EditorCtx->SelectedEntity.GetID());
+
+        m_RuntimeScene.Release();
+
+        Project::GetEditorAssetManager()->DeserializeAllAssets();
     }
 
     void EditorLayer::OnEvent(Event& event)
     {
-        ATN_PROFILE_FUNC();
+        TRACY_PROFILE_FUNC();
 
-        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(VIEWPORT_PANEL_ID);
+        auto viewportPanel = PanelManager::GetPanel<ViewportPanel>(MAIN_VIEWPORT_PANEL_ID);
         const auto& vpDesc = viewportPanel->GetDescription();
 
-        if ((m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) && !ImGuizmo::IsUsing())
+        if (m_EditorCtx->SceneState != SceneState::Play && !ImGuizmo::IsUsing())
         {
             bool rightMB = Input::IsMouseButtonPressed(Mouse::Right);
+            CursorMode currentMode = Input::GetCursorMode();
 
-            if (vpDesc.IsHovered)
-            {
-				m_ImGuizmoLayer->OnEvent(event);
+            if (rightMB && currentMode != CursorMode::Normal)
 				m_EditorCamera->OnEvent(event);
-                
-                if(rightMB && !m_HideCursor)
-				{
-					m_HideCursor = true;
-					Application::Get().GetWindow().HideCursor(m_HideCursor);
-				}
-            }
 
-            if (!rightMB && m_HideCursor)
-            {
-				m_HideCursor = false;
-				Application::Get().GetWindow().HideCursor(m_HideCursor);
-            }
+            else if (rightMB && currentMode == CursorMode::Normal && vpDesc.IsHovered)
+                Input::SetCursorMode(CursorMode::Disabled);
+
+            else if (!rightMB && currentMode != CursorMode::Normal)
+                Input::SetCursorMode(CursorMode::Normal);
         }
 
+        m_ImGuizmoLayer->OnEvent(event);
         PanelManager::OnEvent(event);
 
         EventDispatcher dispatcher(event);
@@ -824,24 +1140,17 @@ namespace Athena
             return false;
 
         bool ctrl = event.IsCtrlPressed();
+        bool isEdit = m_EditorCtx->SceneState == SceneState::Edit;
 
         switch (event.GetKeyCode())
         {
-            // Scenes Management
         case Keyboard::S:
         {
-            if (ctrl)
-            {
-                if (m_CurrentScenePath == FilePath())
-                    SaveSceneAs();
-                else
-                    SaveSceneAs(m_CurrentScenePath);
-            }
+            if (ctrl && isEdit)
+                SaveAll();
             break;
         }
-        case Keyboard::N: if (ctrl) NewScene(); break;
-        case Keyboard::O: if (ctrl) OpenScene(); break;
-            
+
         case Keyboard::F4: if (m_EditorCtx->SceneState == SceneState::Play || m_EditorCtx->SceneState == SceneState::Simulation) OnSceneStop(); break;
         case Keyboard::F5: if (m_EditorCtx->SceneState == SceneState::Edit || m_EditorCtx->SceneState == SceneState::Simulation) OnScenePlay(); break;
         case Keyboard::F6: if (m_EditorCtx->SceneState == SceneState::Edit) OnSceneSimulate(); break;
@@ -912,7 +1221,7 @@ namespace Athena
         m_EditorCtx->ActiveScene = m_EditorScene;
         m_EditorCtx->SelectedEntity = {};
 
-        ATN_CORE_INFO_TAG("EditorLayer", "Successfully created new scene");
+        ATN_LOG_INFO(Editor, "Successfully created new scene");
     }
 
     void EditorLayer::SaveSceneAs()
@@ -920,18 +1229,19 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::SaveFile(TEXT("Athena Scene (*atn)\0*.atn\0"));
+        std::vector<String> sceneExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene);
+        FilePath filepath = FileDialogs::SaveFile("Save Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             SaveSceneAs(filepath);
         else
-            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to save scene {}", filepath);
+            ATN_LOG_ERROR(Editor, "Invalid filepath to save scene {}", filepath);
     }
 
     void EditorLayer::SaveSceneAs(const FilePath& path)
     {
         SceneSerializer serializer(m_EditorCtx->ActiveScene);
         serializer.SerializeToFile(path.string());
-        ATN_CORE_INFO_TAG("EditorLayer", "Successfully saved scene into {}", path);
+        ATN_LOG_INFO(Editor, "Successfully saved scene into {}", path);
     }
 
     void EditorLayer::OpenScene()
@@ -939,11 +1249,12 @@ namespace Athena
         if (m_EditorCtx->SceneState != SceneState::Edit)
             OnSceneStop();
 
-        FilePath filepath = FileDialogs::OpenFile(TEXT("Athena Scene (*.atn)\0*.atn\0"));
+        std::vector<String> sceneExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Scene);
+        FilePath filepath = FileDialogs::OpenFile("Open Scene", "Scene files", sceneExts, Project::GetAssetDirectory());
         if (!filepath.empty())
             OpenScene(filepath);
         else
-            ATN_CORE_ERROR_TAG("EditorLayer", "Invalid filepath to loaded scene {}", filepath);
+            ATN_LOG_ERROR(Editor, "Invalid filepath to loaded scene {}", filepath);
     }
 
     void EditorLayer::OpenScene(const FilePath& path)
@@ -957,12 +1268,107 @@ namespace Athena
         if(serializer.DeserializeFromFile(path.string()))
         {
             m_CurrentScenePath = path;
-            ATN_CORE_INFO_TAG("EditorLayer", "Successfully load scene from {}", path);
+            ATN_LOG_INFO(Editor, "Successfully load scene from {}", path);
         }
 
         m_RuntimeScene = nullptr;
         m_EditorScene = newScene;
         m_EditorCtx->ActiveScene = newScene;
         m_EditorCtx->SelectedEntity = {};
+    }
+
+    void EditorLayer::NewProject(const String& name, const FilePath& path)
+    {
+        Project::New(name, path);
+
+        FilePath cmakePath = m_Config.EditorResources / "Scripting/CMakeLists.txt";
+        FilePath genProjectsPath = m_Config.EditorResources / "Scripting/VS2022-GenProjects.bat";
+        FilePath genProjectsPath1 = m_Config.EditorResources / "Scripting/VS2026-GenProjects.bat";
+
+        FileSystem::Copy(cmakePath, Project::GetScriptsDirectory() / "CMakeLists.txt");
+        FileSystem::Copy(genProjectsPath, Project::GetScriptsDirectory() / "VS2022-GenProjects.bat");
+        FileSystem::Copy(genProjectsPath, Project::GetScriptsDirectory() / "VS2026-GenProjects.bat");
+    }
+
+    bool EditorLayer::OpenProject()
+    {
+        FilePath filepath = FileDialogs::OpenFile("Open Project", "Project files", { Project::GetProjectFileExtension().string()});
+        if (filepath.empty())
+            return false;
+
+        OpenProject(filepath);
+        return true;
+    }
+
+    void EditorLayer::OpenProject(const FilePath& path)
+    {
+        if (Project::Load(path))
+        {
+            ScriptEngine::InitProject();
+
+            const ProjectConfig& config = Project::GetActive()->GetConfig();
+            const EditorState& editorState = config.EditorSavedState;
+
+            FilePath activeScenePath = AssetManager::GetAssetAbsolutePath(editorState.ActiveScene);
+            FilePath startScenePath = AssetManager::GetAssetAbsolutePath(config.StartScene);
+            if (!editorState.ActiveScene.empty())
+            {
+                OpenScene(activeScenePath);
+
+                if (m_EditorCtx->ActiveScene)
+                    m_EditorCtx->SelectedEntity = m_EditorCtx->ActiveScene->GetEntityByUUID(editorState.SelectedEntity);
+            }
+            else
+            {
+                OpenScene(startScenePath);
+            }
+            
+            m_EditorCtx->EditorSettings.CameraSpeedLevel = editorState.CameraSpeed;
+            m_EditorCamera->SetPosition(editorState.CameraPos);
+            m_EditorCamera->SetPitch(editorState.CameraPitchYaw.x);
+            m_EditorCamera->SetYaw(editorState.CameraPitchYaw.y);
+            m_EditorCamera->RecalculateView();
+
+            if (m_IsUIInitialized)
+            {
+                Ref<ContentBrowserPanel> contentBrowser = PanelManager::GetPanel<ContentBrowserPanel>(CONTENT_BROWSER_PANEL_ID);
+                contentBrowser->Refresh();
+
+                Ref<ProjectSettingsPanel> projectSettings = PanelManager::GetPanel<ProjectSettingsPanel>(PROJECT_SETTINGS_PANEL_ID);
+                projectSettings->OnProjectUpdate();
+            }
+        }
+    }
+
+    void EditorLayer::SaveProject()
+    {
+        EditorState& state = Project::GetActive()->GetConfig().EditorSavedState;
+
+        if (m_EditorCtx->SelectedEntity)
+            state.SelectedEntity = m_EditorCtx->SelectedEntity.GetID();
+        else
+            state.SelectedEntity = 0;
+
+        if (m_EditorCtx->ActiveScene)
+            state.ActiveScene = AssetManager::GetAssetRelativePath(m_CurrentScenePath);
+        else
+            state.ActiveScene = "";
+
+        state.CameraSpeed = m_EditorCtx->EditorSettings.CameraSpeedLevel;
+        state.CameraPos = m_EditorCamera->GetPosition();
+        state.CameraPitchYaw = { m_EditorCamera->GetPitch(), m_EditorCamera->GetYaw() };
+
+        Project::SaveActive();
+    }
+
+    void EditorLayer::SaveAll()
+    {
+        SaveProject();
+        Project::GetEditorAssetManager()->SerializeAllAssets();
+
+        if (m_CurrentScenePath == FilePath())
+            SaveSceneAs();
+        else
+            SaveSceneAs(m_CurrentScenePath);
     }
 }

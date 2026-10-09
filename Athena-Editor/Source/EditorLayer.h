@@ -23,12 +23,15 @@ namespace Athena
 	struct EditorConfig
 	{
 		FilePath EditorResources;
+		bool SelectProjectManually = false;
+		FilePath StartProject;
 	};
 
 	class EditorLayer : public Layer
 	{
 	public:
 		EditorLayer(const EditorConfig& config);
+		~EditorLayer();
 
 		void OnAttach() override;
 		void OnDetach() override;
@@ -40,10 +43,17 @@ namespace Athena
 	private:
 		Entity DuplicateEntity(Entity entity);
 
+		void PlaceMesh(AssetHandle meshHandle);
+		void CreateMeshHierarchy(const Ref<Mesh>& mesh, const MeshNode& meshNode, Entity entity);
+
 		void InitUI();
 		void OnRender2D();
+		void OnRenderOutline();
+
 		void DrawAboutModal();
 		void DrawThemeEditor();
+		void DrawNewProjectModal();
+		void DrawNewScriptModal();
 
 		Entity GetEntityByCurrentMousePosition();
 
@@ -60,22 +70,27 @@ namespace Athena
 		void OpenScene();
 		void OpenScene(const FilePath& path);
 
+		void NewProject(const String& name, const FilePath& path);
+		bool OpenProject();
+		void OpenProject(const FilePath& path);
+		void SaveProject();
+
+		void SaveAll();
+
 	private:
 		EditorConfig m_Config;
 
 		Ref<SceneRenderer> m_ViewportRenderer;
 		Ref<SceneRenderer2D> m_Renderer2D;
 		Ref<EditorContext> m_EditorCtx;
-		Ref<EditorCamera> m_EditorCamera;
+		Ref<FirstPersonCamera> m_EditorCamera;
 		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
 
 		Ref<Titlebar> m_Titlebar;
-		bool m_HideCursor = false;
 
 		Ref<Scene> m_EditorScene, m_RuntimeScene;
-		FilePath m_CurrentScenePath;
 
-		bool m_AboutModalOpen = false;
-		bool m_ThemeEditorOpen = false;
+		FilePath m_CurrentScenePath;
+		bool m_IsUIInitialized = false;
 	};
 }

@@ -3,24 +3,24 @@
 
 #pragma once
 
-#include <spdlog/details/console_globals.h>
-#include <spdlog/details/synchronous_factory.h>
-#include <spdlog/sinks/sink.h>
 #include <cstdio>
+#include <mutex>
+
+#include "../details/null_mutex.h"
+#include "./base_sink.h"
+#include "./sink.h"
 
 #ifdef _WIN32
-#    include <spdlog/details/windows_include.h>
+    #include "../details/windows_include.h"
 #endif
 
-namespace spdlog {
+SPDLOG_NAMESPACE_BEGIN
 
 namespace sinks {
 
-template<typename ConsoleMutex>
-class stdout_sink_base : public sink
-{
+template <typename Mutex>
+class stdout_sink_base : public base_sink<Mutex> {
 public:
-    using mutex_t = typename ConsoleMutex::mutex_t;
     explicit stdout_sink_base(FILE *file);
     ~stdout_sink_base() override = default;
 
@@ -30,58 +30,32 @@ public:
     stdout_sink_base &operator=(const stdout_sink_base &other) = delete;
     stdout_sink_base &operator=(stdout_sink_base &&other) = delete;
 
-    void log(const details::log_msg &msg) override;
-    void flush() override;
-    void set_pattern(const std::string &pattern) override;
-
-    void set_formatter(std::unique_ptr<spdlog::formatter> sink_formatter) override;
-
-protected:
-    mutex_t &mutex_;
+private:
     FILE *file_;
-    std::unique_ptr<spdlog::formatter> formatter_;
+    void sink_it_(const details::log_msg &msg) override;
+    void flush_() override;
 #ifdef _WIN32
     HANDLE handle_;
-#endif // WIN32
+#endif  // _WIN32
 };
 
-template<typename ConsoleMutex>
-class stdout_sink : public stdout_sink_base<ConsoleMutex>
-{
+template <typename Mutex>
+class stdout_sink final : public stdout_sink_base<Mutex> {
 public:
     stdout_sink();
 };
 
-template<typename ConsoleMutex>
-class stderr_sink : public stdout_sink_base<ConsoleMutex>
-{
+template <typename Mutex>
+class stderr_sink final : public stdout_sink_base<Mutex> {
 public:
     stderr_sink();
 };
 
-using stdout_sink_mt = stdout_sink<details::console_mutex>;
-using stdout_sink_st = stdout_sink<details::console_nullmutex>;
+using stdout_sink_mt = stdout_sink<std::mutex>;
+using stdout_sink_st = stdout_sink<details::null_mutex>;
 
-using stderr_sink_mt = stderr_sink<details::console_mutex>;
-using stderr_sink_st = stderr_sink<details::console_nullmutex>;
+using stderr_sink_mt = stderr_sink<std::mutex>;
+using stderr_sink_st = stderr_sink<details::null_mutex>;
 
-} // namespace sinks
-
-// factory methods
-template<typename Factory = spdlog::synchronous_factory>
-std::shared_ptr<logger> stdout_logger_mt(const std::string &logger_name);
-
-template<typename Factory = spdlog::synchronous_factory>
-std::shared_ptr<logger> stdout_logger_st(const std::string &logger_name);
-
-template<typename Factory = spdlog::synchronous_factory>
-std::shared_ptr<logger> stderr_logger_mt(const std::string &logger_name);
-
-template<typename Factory = spdlog::synchronous_factory>
-std::shared_ptr<logger> stderr_logger_st(const std::string &logger_name);
-
-} // namespace spdlog
-
-#ifdef SPDLOG_HEADER_ONLY
-#    include "stdout_sinks-inl.h"
-#endif
+}  // namespace sinks
+SPDLOG_NAMESPACE_END

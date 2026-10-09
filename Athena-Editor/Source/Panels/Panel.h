@@ -6,7 +6,7 @@
 
 namespace Athena
 {
-	class Panel : public RefCounted
+	class Panel: public RefCounted
 	{
 	public:
 		Panel(std::string_view name, Ref<EditorContext> context)
@@ -16,9 +16,7 @@ namespace Athena
 		}
 
 		virtual ~Panel() = default;
-
 		virtual void OnImGuiRender() = 0;
-
 		std::string_view GetName() { return m_Name; }
 
 	protected:

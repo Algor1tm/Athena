@@ -30,11 +30,11 @@ namespace Athena
 					selectedGPUName = properties.deviceName;
 				}
 
-				message += std::format("{}\n\t", properties.deviceName);
+				message += fmt::format("{}\n\t", properties.deviceName);
 			}
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_INFO_TAG("Vulkan", "Selected GPU: {}\n", selectedGPUName);
+			ATN_LOG_INFO(Vulkan, message);
+			ATN_LOG_INFO(Vulkan, "Selected GPU: {}\n", selectedGPUName);
 
 			m_PhysicalDevice = gpus[useGpu];
 		};
@@ -68,11 +68,11 @@ namespace Athena
 				flags += queues[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
 				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
-				message += std::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
+				message += fmt::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
 			}
 
-			ATN_CORE_INFO_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
+			ATN_LOG_INFO(Vulkan, message);
+			ensure(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
 		};
 
 		// Create Logical Device
@@ -87,33 +87,50 @@ namespace Athena
 			queueCIs[0].queueCount = 1;
 			queueCIs[0].pQueuePriorities = queuePriority;
 
-			message += std::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
-			ATN_CORE_INFO_TAG("Vulkan", message);
+			message += fmt::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
+			ATN_LOG_INFO(Vulkan, message);
 
 			std::vector<const char*> deviceExtensions = { 
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard/clip
 				"VK_EXT_memory_budget" };
 
-#ifdef ATN_DEBUG
+			if (VK_VERSION_MINOR(VulkanContext::GetInstanceVersion()) < 2)
+			{
+				deviceExtensions.push_back(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
+			}
+
+#if VULKAN_ENABLE_DEBUG_INFO
 			deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
 
 			CheckEnabledExtensions(deviceExtensions);
 
 			// GPU profiling
-			VkPhysicalDeviceHostQueryResetFeatures resetFeatures = {};
-			resetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-			resetFeatures.pNext = nullptr;
-			resetFeatures.hostQueryReset = VK_TRUE;
+			VkPhysicalDeviceHostQueryResetFeaturesEXT hostQueryResetFeatures = {};
+			hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT;
+			hostQueryResetFeatures.hostQueryReset = VK_TRUE;
+			hostQueryResetFeatures.pNext = nullptr;
+
+			// discard/clip features
+			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteToHelperInvocationFeatures = {};
+			demoteToHelperInvocationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
+			demoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = true;
+			demoteToHelperInvocationFeatures.pNext = &hostQueryResetFeatures;
+
+			void* deviceFeaturesChain = &demoteToHelperInvocationFeatures;
 
 			VkPhysicalDeviceFeatures deviceFeatures = {};
 			deviceFeatures.geometryShader = VK_TRUE;
 			deviceFeatures.wideLines = VK_TRUE;
 			deviceFeatures.pipelineStatisticsQuery = VK_TRUE;
 			deviceFeatures.samplerAnisotropy = VK_TRUE;
+			deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+
+			CheckSupportedFeatures();
 
 			VkDeviceCreateInfo deviceCI = {};
-			deviceCI.pNext = &resetFeatures;
+			deviceCI.pNext = deviceFeaturesChain;
 			deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			deviceCI.queueCreateInfoCount = std::size(queueCIs);
 			deviceCI.pQueueCreateInfos = queueCIs;
@@ -194,6 +211,12 @@ namespace Athena
 		deviceCaps.TimestampPeriod = limits.timestampPeriod;
 	}
 
+	void VulkanDevice::QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence)
+	{
+		std::lock_guard<std::mutex> lock(m_QueueMutex);
+		VK_CHECK(vkQueueSubmit(m_Queue, 1, submitInfo, fence));
+	}
+
 	bool VulkanDevice::CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions)
 	{
 		uint32 supportedExtensionCount = 0;
@@ -223,30 +246,62 @@ namespace Athena
 			}
 		}
 
-		//String message = "Device supported extensions: \n\t";
-		//for (auto ext : supportedExtensions)
-		//	message += std::format("'{}'\n\t", ext.extensionName);
-		//
-		//ATN_CORE_TRACE_TAG("Vulkan", message);
-
-		String message = "Device required extensions: \n\t";
-		for (auto ext : requiredExtensions)
-			message += std::format("'{}'\n\t", ext);
+		String message = "Device supported extensions: \n\t";
+		for (auto ext : supportedExtensions)
+			message += fmt::format("'{}'\n\t", ext.extensionName);
 		
-		ATN_CORE_INFO_TAG("Vulkan", message);
+		ATN_LOG_TRACE(Vulkan, message);
+
+		message = "Device required extensions: \n\t";
+		for (auto ext : requiredExtensions)
+			message += fmt::format("'{}'\n\t", ext);
+		
+		ATN_LOG_INFO(Vulkan, message);
 
 		if (!missingExtensions.empty())
 		{
-			ATN_CORE_FATAL_TAG("Vulkan", "Current Physical Device does not support required device extensions!");
+			ATN_LOG_FATAL(Vulkan, "Current Physical Device does not support required device extensions!");
 
 			message = "Missing extensions: \n\t";
 			for (auto ext : missingExtensions)
-				message += std::format("'{}'\n\t", ext);
+				message += fmt::format("'{}'\n\t", ext);
 
-			ATN_CORE_ERROR_TAG("Vulkan", message);
-			ATN_CORE_VERIFY(false);
+			ATN_LOG_ERROR(Vulkan, message);
+			ensuref(false);
 		}
 
 		return missingExtensions.empty();
+	}
+
+	bool VulkanDevice::CheckSupportedFeatures()
+	{
+		VkPhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
+		hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+
+		VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteFeatures = {};
+		demoteFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
+		demoteFeatures.pNext = &hostQueryResetFeatures;
+
+		VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+		deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		deviceFeatures2.pNext = &demoteFeatures;
+
+		vkGetPhysicalDeviceFeatures2(m_PhysicalDevice, &deviceFeatures2);
+
+		bool featuresSupported =
+			deviceFeatures2.features.geometryShader &&
+			deviceFeatures2.features.wideLines &&
+			deviceFeatures2.features.pipelineStatisticsQuery &&
+			deviceFeatures2.features.samplerAnisotropy &&
+			deviceFeatures2.features.shaderStorageImageWriteWithoutFormat &&
+			demoteFeatures.shaderDemoteToHelperInvocation &&
+			hostQueryResetFeatures.hostQueryReset;
+
+		if (!featuresSupported)
+		{
+			ATN_LOG_FATAL(Vulkan, "Physical device required features are not supported on this gpu (try to update drivers).");
+		}
+
+		return featuresSupported;
 	}
 }

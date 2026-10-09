@@ -73,7 +73,7 @@ namespace Athena
 		}
 
 
-		ShaderCompiler compiler(m_FilePath, m_Name);
+		VulkanShaderCompiler compiler(m_FilePath, m_Name);
 		m_IsCompiled = compiler.CompileOrGetFromCache(forceCompile);
 
 		if (!m_IsCompiled)
@@ -191,7 +191,7 @@ namespace Athena
 
 			VK_CHECK(vkCreateDescriptorSetLayout(VulkanContext::GetLogicalDevice(), &layoutInfo, nullptr, &m_DescriptorSetLayouts[set]));
 			const auto& setStats = stats[set];
-			ATN_CORE_INFO_TAG("Renderer", "Create descriptor set layout {} with {} textures, {} storage textures, {} separate samplers, {} ubos, {} sbos", 
+			ATN_LOG_INFO(Vulkan, "Create descriptor set layout {} with {} textures, {} storage textures, {} separate samplers, {} ubos, {} sbos", 
 				set, setStats.SampledTextures, setStats.StorageTextures, setStats.Samplers, setStats.UBOs, setStats.SBOs);
 		}
 
@@ -219,10 +219,10 @@ namespace Athena
 		}
 
 		VK_CHECK(vkCreatePipelineLayout(VulkanContext::GetLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
-		Vulkan::SetObjectDebugName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, std::format("{}Layout", m_Name));
+		Vulkan::SetObjectDebugName(m_PipelineLayout, VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT, fmt::format("{}Layout", m_Name));
 	}
 
-	void VulkanShader::CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler)
+	void VulkanShader::CreateVulkanShaderModulesAndStages(const VulkanShaderCompiler& compiler)
 	{
 		const ShaderBinaries& binaries = compiler.GetBinaries();
 
@@ -239,7 +239,7 @@ namespace Athena
 			moduleCreateInfo.pCode = src.data();
 
 			VK_CHECK(vkCreateShaderModule(VulkanContext::GetLogicalDevice(), &moduleCreateInfo, nullptr, &m_VulkanShaderModules[stage]));
-			Vulkan::SetObjectDebugName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, std::format("{}_{}", m_Name, debugNames[stage]));
+			Vulkan::SetObjectDebugName(m_VulkanShaderModules[stage], VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT, fmt::format("{}_{}", m_Name, debugNames[stage]));
 
 			VkPipelineShaderStageCreateInfo shaderStageInfo = {};
 			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

@@ -16,13 +16,13 @@ namespace Athena
 
 		virtual void Begin() override;
 		virtual void End() override;
-		virtual void Submit() override;
+		virtual void Submit(bool wait) override;
 
 		VkCommandBuffer GetActiveCommandBuffer();
 
 	private:
 		void SubmitForPresent();
-		void SubmitImmediate();
+		void SubmitImmediate(bool wait);
 
 	private:
 		std::vector<VkCommandBuffer> m_CommandBuffers;

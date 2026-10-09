@@ -1,6 +1,8 @@
 #include "Texture.h"
 
+#include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Platform/Vulkan/VulkanTexture2D.h"
 #include "Athena/Platform/Vulkan/VulkanTextureCube.h"
 #include "Athena/Platform/Vulkan/VulkanTextureView.h"
@@ -25,7 +27,7 @@ namespace Athena
 		return Math::Floor(Math::Log2(Math::Max<float>(GetWidth(), GetHeight()))) + 1;
 	}
 
-	Ref<TextureView> TextureView::Create(const Ref<Texture>& texture, const TextureViewCreateInfo& info)
+	Ref<TextureView> TextureView::Create(Texture* texture, const TextureViewCreateInfo& info)
 	{
 		switch (Renderer::GetAPI())
 		{
@@ -76,7 +78,7 @@ namespace Athena
 		if (m_TextureViews.contains(info))
 			return m_TextureViews.at(info);
 
-		m_TextureViews[info] = TextureView::Create(Ref(this), info);
+		m_TextureViews[info] = TextureView::Create(this, info);
 		return m_TextureViews.at(info);
 	}
 
@@ -93,6 +95,21 @@ namespace Athena
 		m_TextureViews.clear();
 	}
 
+	uint32 Texture::GetTotalGPUMemory()
+	{
+		uint32 totalGPUMemory = 0;
+
+		for (uint32 mip = 0; mip < GetMipLevelsCount(); mip++)
+		{
+			Vector2u mipSize = GetMipSize(mip);
+			uint32 sizeOfMip = mipSize.x * mipSize.y * FormatUtils::BytesPerPixel(GetFormat());
+
+			totalGPUMemory += sizeOfMip;
+		}
+
+		totalGPUMemory *= GetInfo().Layers;
+		return totalGPUMemory;
+	}
 
 	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info, Buffer data)
 	{
@@ -116,30 +133,49 @@ namespace Athena
 		return nullptr;
 	}
 
-	Texture2DInstance::Texture2DInstance()
+
+	Ref<TextureAsset> TextureAsset::s_DefaultTexture;
+
+	TextureAsset::TextureAsset()
+		: TextureAsset(EngineTextures::GetWhiteTexture())
 	{
+
+	}
+
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture)
+	{
+		m_Texture = texture;
 		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
 	}
 
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture)
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
 	{
-		SetTexture(texture);
-		SetTexCoords({ Vector2{0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f} });
-	}
-
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords)
-	{
-		SetTexture(texture);
+		m_Texture = texture;
 		SetTexCoords(texCoords);
 	}
 
-	Texture2DInstance::Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
+	TextureAsset::TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max)
 	{
-		SetTexture(texture);
+		m_Texture = texture;
 		SetTexCoords(min, max);
 	}
 
-	void Texture2DInstance::SetTexCoords(const Vector2& min, const Vector2& max)
+	Ref<TextureAsset> TextureAsset::GetDefault()
+	{
+		if (!s_DefaultTexture)
+		{
+			s_DefaultTexture = Ref<TextureAsset>::Create(EngineTextures::GetWhiteTexture());
+		}
+		
+		return s_DefaultTexture;
+	}
+
+	void TextureAsset::Clear()
+	{
+		s_DefaultTexture.Release();
+	}
+
+	void TextureAsset::SetTexCoords(const Vector2& min, const Vector2& max)
 	{
 		float width = (float)m_Texture->GetInfo().Width;
 		float height = (float)m_Texture->GetInfo().Height;
@@ -148,5 +184,24 @@ namespace Athena
 		m_TexCoords[1] = { max.x / width, min.y / height };
 		m_TexCoords[2] = { max.x / width, max.y / height };
 		m_TexCoords[3] = { min.x / width, max.y / height };
+	}
+
+	bool TextureAsset::Serialize(const FilePath& absolutePath) const
+	{
+		return true;
+	}
+
+	bool TextureAsset::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
+	{
+		TextureImporter importer(importSettings);
+		m_Texture = importer.Import(absolutePath);
+
+		if (!m_Texture)
+		{
+			m_Texture = EngineTextures::GetWhiteTexture();
+			return false;
+		}
+
+		return true;
 	}
 }

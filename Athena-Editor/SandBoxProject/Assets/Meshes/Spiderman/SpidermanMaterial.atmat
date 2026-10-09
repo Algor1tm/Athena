@@ -1,0 +1,14 @@
+Material:
+  Albedo: [0.699999988, 0.699999988, 0.699999988, 1]
+  Emission: 0
+  Roughness: 0.800000012
+  Metalness: 0
+  AlbedoMap: 8738723801999403678
+  NormalMap: 0
+  RoughnessMap: 0
+  MetalnessMap: 0
+  UseAlbedoMap: true
+  UseNormalMap: false
+  UseRoughnessMap: false
+  UseMetalnessMap: false
+  CastShadows: true

@@ -8,9 +8,9 @@ namespace Athena
 {
 	namespace Vulkan
 	{
-		static VkImageUsageFlags GetImageUsage(TextureUsage usage, TextureFormat format)
+		static VkImageUsageFlags GetImageUsage(TextureUsage usage, Format format)
 		{
-			bool depthStencil = Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format);
+			bool depthStencil = FormatUtils::IsDepthFormat(format) || FormatUtils::IsStencilFormat(format);
 
 			VkImageUsageFlags flags = 0;
 
@@ -66,7 +66,7 @@ namespace Athena
 
 		CleanUp();
 
-		VkImageUsageFlags imageUsage = Vulkan::GetImageUsage(m_Info.Usage, m_Info.Format);
+		VkImageUsageFlags imageUsage = Vulkan::GetImageUsage(m_Info.Usage, m_Info.TextureFormat);
 
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -80,7 +80,7 @@ namespace Athena
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = m_MipLevels;
 		imageInfo.arrayLayers = m_Info.Layers;
-		imageInfo.format = Vulkan::GetFormat(m_Info.Format);
+		imageInfo.format = Vulkan::GetFormat(m_Info.TextureFormat);
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = imageUsage;
@@ -88,21 +88,21 @@ namespace Athena
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
 		m_Image = VulkanContext::GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlagBits(0), m_Info.Name);
-		Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, std::format("Image_{}", m_Info.Name));
+		Vulkan::SetObjectDebugName(m_Image.GetImage(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, fmt::format("Image_{}", m_Info.Name));
 
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = m_Image.GetImage();
 		viewInfo.viewType = Vulkan::GetImageViewType(m_Type, m_Info.Layers);
-		viewInfo.format = Vulkan::GetFormat(m_Info.Format);
-		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		viewInfo.format = Vulkan::GetFormat(m_Info.TextureFormat);
+		viewInfo.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = m_MipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = m_Info.Layers;
 
 		VK_CHECK(vkCreateImageView(VulkanContext::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
-		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, std::format("ImageView_{}", m_Info.Name));
+		Vulkan::SetObjectDebugName(m_ImageView, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, fmt::format("ImageView_{}", m_Info.Name));
 
 		m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
@@ -130,7 +130,7 @@ namespace Athena
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = m_Image.GetImage();
-		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = m_MipLevels;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -155,9 +155,9 @@ namespace Athena
 
 	void VulkanImage::UploadData(Buffer data, uint32 width, uint32 height)
 	{
-		ATN_CORE_ASSERT(data.Size() >= m_Info.Width * m_Info.Height * Texture::BytesPerPixel(m_Info.Format), "Buffer is too small");
+		check(data.Size() >= m_Info.Width * m_Info.Height * FormatUtils::BytesPerPixel(m_Info.TextureFormat), "Buffer is too small");
 
-		VkDeviceSize imageSize = width * height * (uint64)Texture::BytesPerPixel(m_Info.Format);
+		VkDeviceSize imageSize = width * height * (uint64)FormatUtils::BytesPerPixel(m_Info.TextureFormat);
 
 		VkBufferCreateInfo bufferInfo = {};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -178,7 +178,7 @@ namespace Athena
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = m_Image.GetImage();
-		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -187,7 +187,8 @@ namespace Athena
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
 
-		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
 		{
 			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -211,7 +212,7 @@ namespace Athena
 			region.bufferRowLength = 0;
 			region.bufferImageHeight = 0;
 
-			region.imageSubresource.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+			region.imageSubresource.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 			region.imageSubresource.mipLevel = 0;
 			region.imageSubresource.baseArrayLayer = 0;
 			region.imageSubresource.layerCount = m_Info.Layers;
@@ -235,7 +236,7 @@ namespace Athena
 					0, nullptr
 				);
 
-				Vulkan::BlitMipMap(commandBuffer, m_Image.GetImage(), m_Info.Width, m_Info.Height, m_Info.Layers, m_Info.Format, GetMipLevelsCount());
+				Vulkan::BlitMipMap(commandBuffer, m_Image.GetImage(), m_Info.Width, m_Info.Height, m_Info.Layers, m_Info.TextureFormat, GetMipLevelsCount());
 			}
 			else
 			{
@@ -258,7 +259,7 @@ namespace Athena
 			}
 
 		}
-		Vulkan::EndSingleTimeCommands(commandBuffer);
+		Vulkan::EndSingleTimeCommands(commandBuffer, commandPool);
 		VulkanContext::GetAllocator()->DestroyBuffer(stagingBuffer);
 
 		m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -266,12 +267,13 @@ namespace Athena
 
 	void VulkanImage::WriteContentToBuffer(Buffer* buffer)
 	{
-		ATN_CORE_ASSERT(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
+		check(m_Type != TextureType::TEXTURE_CUBE, "Not implemented!");
 
-		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands();
+		VkCommandPool commandPool;
+		VkCommandBuffer commandBuffer = Vulkan::BeginSingleTimeCommands(&commandPool);
 		uint32 width = m_Info.Width;
 		uint32 height = m_Info.Height;
-		uint32 size = m_Info.Width * m_Info.Height * Texture::BytesPerPixel(m_Info.Format);
+		uint32 size = m_Info.Width * m_Info.Height * FormatUtils::BytesPerPixel(m_Info.TextureFormat);
 
 		VkImage srcImage = GetVulkanImage();
 
@@ -288,7 +290,7 @@ namespace Athena
 		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = srcImage;
-		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		barrier.subresourceRange.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = m_Info.Layers;
@@ -297,7 +299,7 @@ namespace Athena
 			barrier.oldLayout = m_Layout;
 			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 			barrier.srcAccessMask = VK_ACCESS_NONE;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
 			VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -316,7 +318,7 @@ namespace Athena
 		copy.bufferOffset = 0;
 		copy.bufferRowLength = width;
 		copy.bufferImageHeight = height;
-		copy.imageSubresource.aspectMask = Vulkan::GetImageAspectMask(m_Info.Format);
+		copy.imageSubresource.aspectMask = Vulkan::GetImageAspectMask(m_Info.TextureFormat);
 		copy.imageSubresource.mipLevel = 0;
 		copy.imageSubresource.baseArrayLayer = 0;
 		copy.imageSubresource.layerCount = 1;
@@ -329,7 +331,7 @@ namespace Athena
 			1, &copy);
 
 		{
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			barrier.dstAccessMask = VK_ACCESS_NONE;
@@ -347,7 +349,7 @@ namespace Athena
 			);
 		}
 
-		Vulkan::EndSingleTimeCommands(commandBuffer);
+		Vulkan::EndSingleTimeCommands(commandBuffer, commandPool);
 
 		buffer->Allocate(size);
 

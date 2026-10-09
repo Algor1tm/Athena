@@ -7,15 +7,15 @@
 
 namespace Athena
 {
-	VulkanTextureView::VulkanTextureView(const Ref<Texture>& texture, const TextureViewCreateInfo& info)
+	VulkanTextureView::VulkanTextureView(Texture* texture, const TextureViewCreateInfo& info)
 	{
 		m_Info = info;
-		m_Texture = texture.Raw();
+		m_Texture = texture;
 		m_Image = Vulkan::GetImage(texture);
 
 		if (m_Info.Name.empty())
 		{
-			m_Info.Name = std::format("{}_Mip[{},{}]_Layer[{},{}]", texture->GetName(),
+			m_Info.Name = fmt::format("{}_Mip[{},{}]_Layer[{},{}]", texture->GetName(),
 				info.BaseMipLevel, info.BaseMipLevel + info.MipLevelCount - 1, 
 				info.BaseLayer, info.BaseLayer + info.LayerCount - 1);
 		}
@@ -54,11 +54,11 @@ namespace Athena
 
 		if (m_Texture == nullptr)
 		{
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return;
 		}
 
-		TextureFormat format = m_Texture->GetFormat();
+		Format format = m_Texture->GetFormat();
 
 		VkComponentMapping swizzling = {};
 		swizzling.r = VK_COMPONENT_SWIZZLE_IDENTITY;

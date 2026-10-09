@@ -22,6 +22,7 @@ namespace Athena
 
 		virtual void NewFrame() = 0;
 		virtual void RenderDrawData(uint32 width, uint32 height) = 0;
+		virtual void RenderViewports() = 0;
 
 		virtual void* GetTextureID(const Ref<Texture2D>& texture) = 0;
 		virtual void* GetTextureID(const Ref<TextureView>& texture) = 0;

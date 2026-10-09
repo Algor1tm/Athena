@@ -1,7 +1,6 @@
 #include "Animation.h"
 
 #include "Athena/Math/Transforms.h"
-
 #include "Athena/Renderer/Mesh.h"
 
 #include <stack>
@@ -29,13 +28,13 @@ namespace Athena
 				return bone.Index;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return 0;
 	}
 
 	Ref<Animation> Animation::Create(const AnimationCreateInfo& info)
 	{
-		ATN_CORE_VERIFY(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
+		ensuref(info.BoneNameToKeyFramesMap.size() == info.Skeleton->GetBoneCount());
 
 		Ref<Animation> result = Ref<Animation>::Create();
 
@@ -145,21 +144,27 @@ namespace Athena
 	}
 
 
-	Ref<Animator> Animator::Create(const std::vector<Ref<Animation>>& animations, const Ref<Skeleton>& skeleton)
+	Ref<AnimationController> AnimationController::Create(AssetHandle meshHandle)
 	{
-		Ref<Animator> result = Ref<Animator>::Create();
+		Ref<AnimationController> result = Ref<AnimationController>::Create();
 
-		result->m_Skeleton = skeleton;
-		result->m_Animations = animations;
+		Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshHandle);
+
+		result->m_MeshHandle = meshHandle;
 		result->m_CurrentTime = 0.f;
 
-		result->m_BoneTransforms.resize(skeleton->GetBoneCount());
-		result->StopAnimation();
+		if (mesh && mesh->IsRigged())
+		{
+			Ref<Skeleton> skeleton = mesh->GetSkeleton();
+			result->m_BoneTransforms.resize(skeleton->GetBoneCount());
+		}
+
+		result->ClearAnimation();
 
 		return result;
 	}
 
-	void Animator::OnUpdate(Time frameTime)
+	void AnimationController::OnUpdate(Time frameTime)
 	{
 		if (IsPlaying())
 		{
@@ -170,7 +175,7 @@ namespace Athena
 		}
 	}
 
-	void Animator::StopAnimation()
+	void AnimationController::ClearAnimation()
 	{
 		m_CurrentTime = 0.f;
 		m_CurrentAnimation = nullptr;
@@ -180,18 +185,25 @@ namespace Athena
 			m_BoneTransforms[i] = identity;
 	}
 
-	void Animator::PlayAnimation(const Ref<Animation>& animation)
+	void AnimationController::PlayAnimation(const Ref<Animation>& animation)
 	{
-		m_CurrentTime = 0.f;
-		m_CurrentAnimation = nullptr;
+		ClearAnimation();
 
-		if (std::find(m_Animations.begin(), m_Animations.end(), animation) != m_Animations.end())
+		Ref<Mesh> meshSource = AssetManager::GetAsset<Mesh>(m_MeshHandle);
+
+		if (!meshSource)
+		{
+			ATN_LOG_ERROR(AssetManager, "Failed to play animation - invalid MeshHandle in AnimationController - {}!", m_MeshHandle);
+			return;
+		}
+
+		if (meshSource->HasAnimation(animation))
 		{
 			m_CurrentAnimation = animation;
 		}
 		else
 		{
-			ATN_CORE_WARN_TAG("Animator", "Attempt to play Animation that does not belong to Animator!");
+			ATN_LOG_ERROR(AssetManager, "Attempt to play Animation that does not belong to AnimationController!");
 		}
 	}
 }

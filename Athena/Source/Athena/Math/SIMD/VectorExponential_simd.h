@@ -3,7 +3,7 @@
 #include "Athena/Math/SIMD/Platform.h"
 
 
-#ifdef ATN_SSE_2
+#if ATN_SSE_2
 
 namespace Athena::Math
 {

@@ -10,10 +10,10 @@ namespace Athena
 {
 	VulkanComputePipeline::VulkanComputePipeline(const Ref<Shader>& shader)
 	{
-		ATN_CORE_ASSERT(shader, "Compute pipeline require compute shader!");
+		check(shader->IsCompute(), "Compute pipeline require compute shader!");
 
 		m_Shader = shader;
-		m_Name = std::format("{}Pipeline", shader->GetName());
+		m_Name = fmt::format("{}Pipeline", shader->GetName());
 		m_Hash = Math::Random::UInt64(); 	// TODO: maybe try to hash more clever way
 		m_VulkanPipeline = VK_NULL_HANDLE;
 		m_WorkGroupSize = m_Shader->GetMetaData().WorkGroupSize;
@@ -48,6 +48,8 @@ namespace Athena
 		VkCommandBuffer vkcmdBuffer = commandBuffer.As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
 		vkCmdBindPipeline(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_VulkanPipeline);
 
+		VulkanContext::BindPipelineLayout(m_Shader.As<VulkanShader>()->GetPipelineLayout());
+
 		m_DescriptorSetManager.InvalidateAndUpdate();
 		m_DescriptorSetManager.BindDescriptorSets(vkcmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
 
@@ -80,7 +82,7 @@ namespace Athena
 		}
 	}
 
-	void VulkanComputePipeline::RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
+	void VulkanComputePipeline::SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material)
 	{
 		if (m_PushConstantStageFlags != 0)
 		{

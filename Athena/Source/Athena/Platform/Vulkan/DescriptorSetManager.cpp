@@ -7,7 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanStorageBuffer.h"
 #include "Athena/Platform/Vulkan/VulkanShader.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
@@ -26,7 +26,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:	 return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkDescriptorType)0;
 		}
 	}
@@ -45,7 +45,7 @@ namespace Athena
 			case RenderResourceType::StorageBuffer:	   return "StorageBuffer";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -61,7 +61,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:		  return "StorageBuffer";
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return "";
 		}
 
@@ -77,7 +77,7 @@ namespace Athena
 			case ShaderResourceType::StorageBuffer:	  return false;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return false;
 		}
 	}
@@ -87,7 +87,7 @@ namespace Athena
 		m_Info = info;
 		m_ResourcesDescriptionTable = &m_Info.Shader->GetResourcesDescription();
 
-		// Fill in resources description table usaing shader meta data
+		// Fill in resources description table using shader meta data
 		// And create write descriptor tables
 		m_WriteDescriptorSetTable.resize(Renderer::GetFramesInFlight());
 
@@ -126,12 +126,12 @@ namespace Athena
 				if (resource.Type == ShaderResourceType::Texture2D || resource.Type == ShaderResourceType::StorageTexture2D)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = TextureGenerator::GetWhiteTexture();
+						resource.Storage[i] = EngineTextures::GetWhiteTexture();
 				}
 				else if(resource.Type == ShaderResourceType::TextureCube || resource.Type == ShaderResourceType::StorageTextureCube)
 				{
 					for (uint32 i = 0; i < resource.Storage.size(); ++i)
-						resource.Storage[i] = TextureGenerator::GetBlackTextureCube();
+						resource.Storage[i] = EngineTextures::GetBlackTextureCube();
 				}
 			}
 		}
@@ -164,7 +164,7 @@ namespace Athena
 
 			if (!m_Resources.contains(resDesc.Set))
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - No input resources for set {}", m_Info.Name, resDesc.Set);
 				return false;
 			}
 
@@ -172,7 +172,7 @@ namespace Athena
 
 			if (!setResources.contains(resDesc.Binding))
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - No input resource '{}' for set {}, binding {}", m_Info.Name, name, resDesc.Set, resDesc.Binding);
 				return false;
 			}
 
@@ -182,7 +182,7 @@ namespace Athena
 			{
 				if (resource.Storage[i] == nullptr)
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {}, arrayIndex {})!",
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Resource '{}' is NULL (set {}, binding {}, arrayIndex {})!",
 						m_Info.Name, name, resDesc.Set, resDesc.Binding, i);
 					return false;
 				}
@@ -192,7 +192,7 @@ namespace Athena
 			{
 				if (!IsCompatible(resource.Storage[i]->GetResourceType(), resDesc.Type))
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}', set {}, binding {}, arrayIndex {})", 
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Required resource '{}' is wrong type (expected - '{}', given - '{}', set {}, binding {}, arrayIndex {})",
 						m_Info.Name, name, Utils::ResourceTypeToString(resDesc.Type), Utils::ResourceTypeToString(resource.Storage[i]->GetResourceType()), resDesc.Set, resDesc.Binding, i);
 					return false;
 				}
@@ -206,8 +206,7 @@ namespace Athena
 	{
 		if (!Validate())
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
-			ATN_CORE_ASSERT(false);
+			ensure(false, "DescriptorSetManager '{}' - Validation has failed!", m_Info.Name);
 			return;
 		}
 
@@ -238,7 +237,7 @@ namespace Athena
 				for (uint32 i = 0; i < setsCount; ++i)
 				{
 					Vulkan::SetObjectDebugName(m_DescriptorSets[frameIndex][i], VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT,
-						std::format("{}_{}_f{}", m_Info.Name, i, frameIndex));
+						fmt::format("{}_{}_f{}", m_Info.Name, i, frameIndex));
 				}
 			}
 
@@ -327,7 +326,7 @@ namespace Athena
 		if (m_DescriptorSets.empty())
 			return;
 
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		uint32 frameIndex = Renderer::GetCurrentFrameIndex();
 
@@ -444,7 +443,7 @@ namespace Athena
 			vkCmdBindDescriptorSets(
 				vkcommandBuffer,
 				bindPoint,
-				m_Info.Shader.As<VulkanShader>()->GetPipelineLayout(),
+				VulkanContext::GetBindedPipelineLayout(),
 				m_Info.FirstSet, descriptorSets.size(),
 				&descriptorSets[0],
 				0, 0);
@@ -479,18 +478,18 @@ namespace Athena
 				}
 				else
 				{
-					ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (arrayIndex is too big, given - '{}', max - '{}')",
+					ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (arrayIndex is too big, given - '{}', max - '{}')",
 						m_Info.Name, name, arrayIndex, storage.Storage.size());
 				}
 			}
 			else
 			{
-				ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+				ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
 			}
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("Renderer", "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
+			ATN_LOG_ERROR(Renderer, "DescriptorSetManager '{}' - Failed to get or set resource with name '{}' (invalid name)", m_Info.Name, name);
 		}
 
 		return nullptr;
@@ -506,7 +505,7 @@ namespace Athena
 		case RenderResourceType::TextureViewCube:  return resource.As<VulkanTextureView>()->GetVulkanDescriptorInfo();
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return resource.As<VulkanTexture2D>()->GetVulkanDescriptorInfo();
 	}
 
@@ -518,7 +517,7 @@ namespace Athena
 		case RenderResourceType::StorageBuffer:  return resource.As<VulkanStorageBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return resource.As<VulkanUniformBuffer>()->GetVulkanDescriptorInfo(frameIndex);
 	}
 

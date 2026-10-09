@@ -25,7 +25,7 @@ namespace Athena
 		}
 		
 		if(!loaded)
-			ATN_CORE_ERROR_TAG("ImGuiLayer", "Failed to load UI font '{}'!", path);
+			ATN_LOG_ERROR(Renderer, "Failed to load ImGUI UI font '{}'!", path);
 
 		return font;
 	}
@@ -74,6 +74,7 @@ namespace Athena
 
 		// Frame BG
 		colors[ImGuiCol_FrameBg] = ImColor(m_Theme.FrameBg);
+		colors[ImGuiCol_CheckboxSelectedBg] = ImColor(m_Theme.FrameBg);
 		colors[ImGuiCol_FrameBgHovered] = ImColor(m_Theme.FrameBgActive);
 		colors[ImGuiCol_FrameBgActive] = ImColor(m_Theme.FrameBgActive);
 
@@ -153,11 +154,15 @@ namespace Athena
 			style.WindowRounding = 0.0f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
-		
+
 		m_Theme = UI::Theme::DefaultDark();
 		UpdateImGuiTheme();
 
 		Application& app = Application::Get();
+		Window& window = app.GetWindow();
+		float scaleFactor = window.GetDPIScaleFactor();
+		io.FontGlobalScale = scaleFactor;
+		style.ScaleAllSizes(scaleFactor);
 
 		const FilePath& resources = app.GetConfig().EngineResourcesPath;
 		FilePath defaultFontPath = resources / "Fonts/Open_Sans/OpenSans-Medium.ttf";
@@ -167,9 +172,9 @@ namespace Athena
 		TryLoadImGuiFont(boldFontPath, 16.f);
 		TryLoadImGuiFont(defaultFontPath, 22.f);
 
-		m_ImGuiImpl->Init(app.GetWindow().GetNativeWindow());
+		m_ImGuiImpl->Init(window.GetNativeWindow());
 
-		ATN_CORE_INFO_TAG("ImGuiLayer", "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
+		ATN_LOG_INFO(Renderer, "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
 	}
 
@@ -182,7 +187,7 @@ namespace Athena
 			ImGui::DestroyContext();
 		});
 
-		ATN_CORE_INFO_TAG("ImGuiLayer", "Shutdown ImGui");
+		ATN_LOG_INFO(Renderer, "Shutdown ImGui");
 	}
 
 	void ImGuiLayer::OnEvent(Event& event)
@@ -200,6 +205,9 @@ namespace Athena
 
 	bool ImGuiLayer::OnWindowResize(WindowResizeEvent& event)
 	{
+		Application& app = Application::Get();
+		Window& window = app.GetWindow();
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2((float)event.GetWidth(), (float)event.GetHeight());
 
@@ -208,7 +216,7 @@ namespace Athena
 
 	void ImGuiLayer::Begin()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		m_ImGuiImpl->NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
@@ -216,7 +224,7 @@ namespace Athena
 
 	void ImGuiLayer::End(bool minimized)
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		ImGuiIO& io = ImGui::GetIO();
 
 		ImGui::Render();
@@ -228,14 +236,13 @@ namespace Athena
 		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+			m_ImGuiImpl->RenderViewports();
 		}
 	}
 
 	void ImGuiLayer::OnSwapChainRecreate()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		m_ImGuiImpl->OnSwapChainRecreate();
 	}
 }

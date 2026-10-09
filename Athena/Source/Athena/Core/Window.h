@@ -45,6 +45,8 @@ namespace Athena
 		uint32 GetWidth() const { return m_Data.Width; }
 		uint32 GetHeight() const { return m_Data.Height; }
 
+		float GetDPIScaleFactor() const;
+
 		void DestroySwapChain() { m_SwapChain.Release(); }
 		Ref<SwapChain> GetSwapChain() const { return m_SwapChain; }
 
@@ -67,9 +69,6 @@ namespace Athena
 
 		void SetWindowMode(WindowMode mode);
 		WindowMode GetWindowMode() const { return m_Data.Mode; }
-
-		void HideCursor(bool hide);
-		void SetCursorPosition(Vector2 position);
 
 	public:
 		struct WindowData

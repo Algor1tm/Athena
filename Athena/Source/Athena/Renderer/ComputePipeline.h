@@ -9,7 +9,7 @@
 
 namespace Athena
 {
-	class ATHENA_API ComputePipeline : public RefCounted
+	class ATHENA_API ComputePipeline: public RefCounted
 	{
 	public:
 		static Ref<ComputePipeline> Create(const Ref<Shader>& shader);

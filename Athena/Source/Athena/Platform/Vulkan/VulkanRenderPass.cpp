@@ -19,19 +19,19 @@ namespace Athena
 			case RenderTargetLoadOp::LOAD: return VK_ATTACHMENT_LOAD_OP_LOAD;
 			}
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkAttachmentLoadOp)0;
 		}
 
-		static VkImageLayout GetAttachmentOptimalLayout(TextureFormat format)
+		static VkImageLayout GetAttachmentOptimalLayout(Format format)
 		{
-			if (Texture::IsColorFormat(format))
+			if (FormatUtils::IsColorFormat(format))
 				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-			if (Texture::IsDepthFormat(format) || Texture::IsStencilFormat(format))
+			if (FormatUtils::IsDepthFormat(format) || FormatUtils::IsStencilFormat(format))
 				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-			ATN_CORE_ASSERT(false);
+			checkf(false);
 			return (VkImageLayout)0;
 		}
 
@@ -39,7 +39,7 @@ namespace Athena
 		{
 			VkClearValue result = {};
 
-			if (Texture::IsColorFormat(info.Texture->GetFormat()))
+			if (FormatUtils::IsColorFormat(info.Texture->GetFormat()))
 			{
 				result.color = { info.ClearColor[0], info.ClearColor[1], info.ClearColor[2], info.ClearColor[3] };
 			}
@@ -122,7 +122,7 @@ namespace Athena
 
 		for (const auto& attachment : m_Outputs)
 		{
-			TextureFormat format = attachment.Texture->GetFormat();
+			Format format = attachment.Texture->GetFormat();
 
 			VkAttachmentDescription attachmentDesc = {};
 			attachmentDesc.format = Vulkan::GetFormat(format);
@@ -143,7 +143,7 @@ namespace Athena
 
 			m_InitalLayouts.push_back(attachmentDesc.initialLayout);
 
-			if (Texture::IsColorFormat(format))
+			if (FormatUtils::IsColorFormat(format))
 			{
 				VkAttachmentReference colorAttachmentRef;
 				colorAttachmentRef.attachment = attachments.size() - 1;
@@ -153,7 +153,7 @@ namespace Athena
 			}
 			else
 			{
-				ATN_CORE_ASSERT(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
+				check(!hasDepthStencil, "Max 1 depth attachment in framebuffer!");
 
 				depthStencilAttachmentRef.attachment = attachments.size() - 1;
 				depthStencilAttachmentRef.layout = Vulkan::GetAttachmentOptimalLayout(format);
@@ -238,7 +238,7 @@ namespace Athena
 		framebufferInfo.pAttachments = attachmentViews.data();
 
 		VK_CHECK(vkCreateFramebuffer(VulkanContext::GetLogicalDevice(), &framebufferInfo, nullptr, &m_VulkanFramebuffer));
-		Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, std::format("{}_FB", m_Info.Name));
+		Vulkan::SetObjectDebugName(m_VulkanFramebuffer, VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, fmt::format("{}_FB", m_Info.Name));
 	}
 
 	void VulkanRenderPass::BuildDependencies(std::vector<VkSubpassDependency>& dependencies)
@@ -256,7 +256,7 @@ namespace Athena
 			{
 				if (outputTarget.Texture == inputTarget.Texture)
 				{
-					if (Texture::IsColorFormat(outputTarget.Texture->GetFormat()))
+					if (FormatUtils::IsColorFormat(outputTarget.Texture->GetFormat()))
 						hasSharedColorTarget = true;
 					else
 						hasSharedDepthTarget = true;

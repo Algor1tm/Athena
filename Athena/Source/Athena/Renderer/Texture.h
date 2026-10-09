@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Asset/Asset.h"
 #include "Athena/Core/Buffer.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
+#include "Athena/Renderer/Format.h"
 #include "Athena/Renderer/RenderResource.h"
 
 #include <array>
@@ -11,33 +13,6 @@
 
 namespace Athena
 {
-	enum class TextureFormat
-	{
-		NONE = 0,
-		// Color
-		R8,
-		R8_SRGB,
-		RG8,
-		RG8_SRGB,
-		RGB8,
-		RGB8_SRGB,
-		RGBA8,
-		RGBA8_SRGB,
-
-		R32F,
-		RG16F,
-		RGB16F,
-		R11G11B10F,
-		RGB32F,
-		RGBA16F,
-		RGBA32F,
-
-		//Depth/Stencil
-		DEPTH16,
-		DEPTH24STENCIL8,
-		DEPTH32F
-	};
-
 	enum TextureUsage
 	{
 		NONE = BIT(0),
@@ -56,8 +31,9 @@ namespace Athena
 
 	enum class TextureFilter
 	{
-		LINEAR = 1,
-		NEAREST = 2,
+		NEAREST = 1,
+		LINEAR = 2,
+		TRILINEAR = 3
 	};
 
 	enum class TextureWrap
@@ -82,6 +58,7 @@ namespace Athena
 
 		TextureFilter Filter = TextureFilter::LINEAR;
 		TextureWrap Wrap = TextureWrap::REPEAT;
+		float AnisotropyLevel = 0.f;
 		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
 
@@ -114,7 +91,7 @@ namespace std
 	{
 		size_t operator()(const TextureSamplerCreateInfo& value) const
 		{
-			string str = std::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
+			string str = fmt::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
 			return hash<string>()(str);
 		}
 	};
@@ -140,7 +117,7 @@ namespace Athena
 	class ATHENA_API TextureView : public RenderResource
 	{
 	public:
-		static Ref<TextureView> Create(const Ref<Texture>& texture, const TextureViewCreateInfo& info);
+		static Ref<TextureView> Create(Texture* texture, const TextureViewCreateInfo& info);
 		virtual ~TextureView() = default;
 
 		virtual void Invalidate() = 0;
@@ -151,14 +128,14 @@ namespace Athena
 		const TextureViewCreateInfo& GetInfo() const { return m_Info; }
 
 	protected:
-		Texture* m_Texture;	// TODO: use WeakRef
+		Texture* m_Texture;
 		TextureViewCreateInfo m_Info;
 	};
 
 	struct TextureCreateInfo
 	{
 		String Name;
-		TextureFormat Format = TextureFormat::RGBA8;
+		Format TextureFormat = Format::RGBA8;
 		TextureUsage Usage = TextureUsage::DEFAULT;
 		uint32 Width = 1;
 		uint32 Height = 1;
@@ -189,20 +166,14 @@ namespace Athena
 		void InvalidateViews();
 		void ClearViews();
 
+		uint32 GetTotalGPUMemory();
+
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
-		TextureFormat GetFormat() const { return m_Info.Format; }
+		Format GetFormat() const { return m_Info.TextureFormat; }
 
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
-
-	public:
-		static bool IsDepthFormat(TextureFormat format);
-		static bool IsStencilFormat(TextureFormat format);
-		static bool IsColorFormat(TextureFormat format);
-		static bool IsHDRFormat(TextureFormat format);
-		static uint32 BytesPerPixel(TextureFormat format);
-		static uint32 ChannelsNum(TextureFormat format);
 
 	protected:
 		TextureCreateInfo m_Info;
@@ -243,130 +214,94 @@ namespace Athena
 		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
 	};
 
-	class ATHENA_API Texture2DInstance
+
+	class ATHENA_API TextureAsset : public Asset
 	{
 	public:
-		Texture2DInstance();
-		Texture2DInstance(const Ref<Texture2D>& texture);
-		Texture2DInstance(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
-		Texture2DInstance(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
+		TextureAsset();
+		TextureAsset(const Ref<Texture2D>& texture);
+		TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
+		TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
 
-		inline const Ref<Texture2D>& GetNativeTexture() const { return m_Texture; }
-		inline const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
+		static Ref<TextureAsset> GetDefault();
+		static void Clear();
 
-		inline void SetTexture(const Ref<Texture2D>& texture) { m_Texture = texture; }
-		inline void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
+		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
+
+		const Ref<Texture2D>& GetRenderTexture() const { return m_Texture; }
+		const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
+
+		void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
 		void SetTexCoords(const Vector2& min, const Vector2& max);
 
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
+
+		static Ref<TextureAsset> s_DefaultTexture;
 	};
 
-
-	inline bool Texture::IsDepthFormat(TextureFormat format)
+	namespace EnumUtils
 	{
-		switch (format)
+		inline std::string_view TextureFilterToString(TextureFilter filter)
 		{
-		case TextureFormat::DEPTH16:		 return true;
-		case TextureFormat::DEPTH24STENCIL8: return true;
-		case TextureFormat::DEPTH32F:		 return true;
+			switch (filter)
+			{
+				case TextureFilter::NEAREST:   return "NEAREST";
+				case TextureFilter::LINEAR:    return "LINEAR";
+				case TextureFilter::TRILINEAR: return "TRILINEAR";
+			}
+
+			checkf(false);
+			return "";
 		}
 
-		return false;
-	}
-
-	inline bool Texture::IsStencilFormat(TextureFormat format)
-	{
-		switch (format)
+		inline TextureFilter TextureFilterFromString(const String& filterString)
 		{
-		case TextureFormat::DEPTH24STENCIL8: return true;
+			if (filterString == "NEAREST")
+				return TextureFilter::NEAREST;
+			else if (filterString == "LINEAR")
+				return TextureFilter::LINEAR;
+			else if (filterString == "TRILINEAR")
+				return TextureFilter::TRILINEAR;
+
+			checkf(false);
+			return TextureFilter::NEAREST;
 		}
 
-		return false;
-	}
-
-	inline bool Texture::IsColorFormat(TextureFormat format)
-	{
-		return !IsDepthFormat(format) && !IsStencilFormat(format);
-	}
-
-	inline bool Texture::IsHDRFormat(TextureFormat format)
-	{
-		switch (format)
+		inline std::string_view TextureWrapToString(TextureWrap wrap)
 		{
-		case TextureFormat::R32F:		return true;
-		case TextureFormat::RG16F:		return true;
-		case TextureFormat::R11G11B10F: return true;
-		case TextureFormat::RGB16F:		return true;
-		case TextureFormat::RGB32F:		return true;
-		case TextureFormat::RGBA16F:	return true;
-		case TextureFormat::RGBA32F:	return true;
-		case TextureFormat::DEPTH32F:	return true;
+			switch (wrap)
+			{
+			case TextureWrap::REPEAT:				  return "REPEAT";
+			case TextureWrap::CLAMP_TO_EDGE:		  return "CLAMP_TO_EDGE";
+			case TextureWrap::CLAMP_TO_BORDER:		  return "CLAMP_TO_BORDER";
+			case TextureWrap::MIRRORED_REPEAT:		  return "MIRRORED_REPEAT";
+			case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return "MIRRORED_CLAMP_TO_EDGE";
+			}
+
+			checkf(false);
+			return "";
 		}
 
-		return false;
-	}
-
-	inline uint32 Texture::BytesPerPixel(TextureFormat format)
-	{
-		switch (format)
+		inline TextureWrap TextureWrapFromString(const String& wrapString)
 		{
-		case TextureFormat::R8:			   return 1;
-		case TextureFormat::R8_SRGB:	   return 1;
-		case TextureFormat::RG8:		   return 2;
-		case TextureFormat::RG8_SRGB:	   return 2;
-		case TextureFormat::RGB8:		   return 3 * 1;
-		case TextureFormat::RGB8_SRGB:	   return 3 * 1;
-		case TextureFormat::RGBA8:		   return 4 * 1;
-		case TextureFormat::RGBA8_SRGB:	   return 4 * 1;
+			if (wrapString == "REPEAT")
+				return TextureWrap::REPEAT;
+			else if (wrapString == "CLAMP_TO_EDGE")
+				return TextureWrap::CLAMP_TO_EDGE;
+			else if (wrapString == "CLAMP_TO_BORDER")
+				return TextureWrap::CLAMP_TO_BORDER;
+			else if (wrapString == "MIRRORED_REPEAT")
+				return TextureWrap::MIRRORED_REPEAT;
+			else if (wrapString == "MIRRORED_CLAMP_TO_EDGE")
+				return TextureWrap::MIRRORED_CLAMP_TO_EDGE;
 
-		case TextureFormat::R32F:		   return 1 * 4;
-		case TextureFormat::RG16F:		   return 2 * 2;
-		case TextureFormat::R11G11B10F:	   return 4;
-		case TextureFormat::RGB16F:		   return 3 * 2;
-		case TextureFormat::RGB32F:		   return 3 * 4;
-		case TextureFormat::RGBA16F:	   return 4 * 2;
-		case TextureFormat::RGBA32F:	   return 4 * 4;
-
-		case TextureFormat::DEPTH16:    	 return 2;
-		case TextureFormat::DEPTH24STENCIL8: return 4;
-		case TextureFormat::DEPTH32F:		 return 4;
+			checkf(false);
+			return TextureWrap::REPEAT;
 		}
-
-		ATN_CORE_ASSERT(false);
-		return false;
-	}
-
-	inline uint32 Texture::ChannelsNum(TextureFormat format)
-	{
-		switch (format)
-		{
-		case TextureFormat::R8:			   
-		case TextureFormat::R8_SRGB:
-		case TextureFormat::R32F:
-		case TextureFormat::DEPTH16:
-		case TextureFormat::DEPTH32F: 
-			return 1;
-		case TextureFormat::RG8:
-		case TextureFormat::RG8_SRGB:
-		case TextureFormat::RG16F:
-		case TextureFormat::DEPTH24STENCIL8: 
-			return 2;
-		case TextureFormat::RGB8:
-		case TextureFormat::RGB8_SRGB:	
-		case TextureFormat::R11G11B10F:	 
-		case TextureFormat::RGB16F:	
-		case TextureFormat::RGB32F:
-			return 3;
-		case TextureFormat::RGBA8:	
-		case TextureFormat::RGBA8_SRGB:
-		case TextureFormat::RGBA16F:
-		case TextureFormat::RGBA32F:
-			return 4;
-		}
-
-		ATN_CORE_ASSERT(false);
-		return false;
 	}
 }

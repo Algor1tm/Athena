@@ -32,7 +32,7 @@ namespace Athena
 	class WorldTransformComponent;
 
 
-	class ATHENA_API Scene : public RefCounted
+	class ATHENA_API Scene : public Asset
 	{
 	public:
 		friend class ATHENA_API Entity;
@@ -43,6 +43,11 @@ namespace Athena
 		~Scene();
 
 		static Ref<Scene> Copy(Ref<Scene> scene);
+
+		virtual AssetType GetAssetType() const override { return AssetType::Scene; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
 		Entity CreateEntity(const String& name, UUID id);
 		Entity CreateEntity(const String& name, UUID id, Entity parent);
@@ -62,12 +67,12 @@ namespace Athena
 		void OnRuntimeStart();
 		void OnSimulationStart();
 
+		void OnRuntimeStop();
+
 		void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
 		void OnRender(const Ref<SceneRenderer>& renderer);
 
 		void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
-
-		void LoadAllScripts();
 
 		void OnViewportResize(uint32 width, uint32 height);
 		Vector2u GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
@@ -87,6 +92,7 @@ namespace Athena
 	private:
 		void UpdateWorldTransforms();
 		void UpdateWorldTransform(Entity entity, const WorldTransformComponent& parentTransform);
+		void UpdateAnimations(Time frameTime);
 
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);

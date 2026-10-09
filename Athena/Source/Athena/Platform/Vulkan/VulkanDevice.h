@@ -3,12 +3,13 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Renderer.h"
 
+#include <mutex>
 #include <vulkan/vulkan.h>
 
 
 namespace Athena
 {
-	class VulkanDevice : public RefCounted
+	class VulkanDevice: public RefCounted
 	{
 	public:
 		VulkanDevice();
@@ -21,13 +22,19 @@ namespace Athena
 
 		void GetDeviceCapabilities(RenderCapabilities& deviceCaps) const;
 
+		std::mutex& GetQueueMutex() { return m_QueueMutex; }
+		void QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence);
+
 	private:
 		bool CheckEnabledExtensions(const std::vector<const char*>& requiredExtensions);
+		bool CheckSupportedFeatures();
 
 	private:
 		VkPhysicalDevice m_PhysicalDevice;
 		VkDevice m_LogicalDevice;
 		uint32 m_QueueFamily;
+
 		VkQueue m_Queue;
+		std::mutex m_QueueMutex;
 	};
 }

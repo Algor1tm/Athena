@@ -52,6 +52,7 @@ namespace Athena
 
 		virtual void NewFrame() override;
 		virtual void RenderDrawData(uint32 width, uint32 height) override;
+		virtual void RenderViewports() override;
 
 		virtual void OnSwapChainRecreate() override;
 

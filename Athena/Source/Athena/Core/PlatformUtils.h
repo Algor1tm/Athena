@@ -15,6 +15,7 @@ namespace Athena
 		uint64 RAM = 0;	// Kb
 	};
 
+
 	class ATHENA_API Platform
 	{
 	public:
@@ -22,18 +23,36 @@ namespace Athena
 		static const CPUCapabilities& GetCPUCapabilities();
 
 		static void OpenInBrowser(const std::wstring& url);
+		static void OpenInFileExplorer(const FilePath& path);
+		static void OpenFileExternally(const FilePath& path);
+
+		static void RunFile(const FilePath& path, const FilePath& workingDir);
+
+		static void CreateAndSyncConsole(uint32 consoleLines = 1000);
+
 		// In milliseconds
 		static double GetHighPrecisionTime();
 		// In bytes
 		static uint64 GetMemoryUsage();
+
+		static void LogNative(const String& Message);
 	};
 
-	class ATHENA_API FileDialogs
+	class ATHENA_API Library
 	{
 	public:
-		static FilePath OpenFile(std::wstring_view filter);
-		static FilePath SaveFile(std::wstring_view filter);
+		Library() = default;
+		Library(const FilePath& path);
+		~Library();
 
-		static void OpenInFileExplorer(const FilePath& path);
+		Library(const Library& other) = delete;
+		Library& operator=(const Library& other) = delete;
+
+		bool IsLoaded();
+		void* LoadFunction(const String& name);
+
+	private:
+		void* m_Handle = nullptr;
+		FilePath m_Path;
 	};
 }

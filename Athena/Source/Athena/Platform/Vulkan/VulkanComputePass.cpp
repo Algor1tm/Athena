@@ -132,7 +132,7 @@ namespace Athena
 
 	void VulkanComputePass::Bake()
 	{
-		ATN_CORE_ASSERT(!(m_Info.InputRenderPass && m_Info.InputComputePass));
+		ensuref(!(m_Info.InputRenderPass && m_Info.InputComputePass));
 
 		for (const auto& output : m_Outputs)
 		{
@@ -160,7 +160,7 @@ namespace Athena
 							sharedTarget = true;
 					}
 
-					bool colorFormat = Texture::IsColorFormat(outputTarget->GetFormat());
+					bool colorFormat = FormatUtils::IsColorFormat(outputTarget->GetFormat());
 					BarrierInfo barrier;
 					if (sharedTarget)
 					{

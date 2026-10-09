@@ -72,7 +72,7 @@ namespace Athena
 		float Threshold = 1.5f;
 		float Knee = 0.1f;
 		float DirtIntensity = 2.f;
-		Ref<Texture2D> DirtTexture;
+		AssetHandle DirtTexture;
 	};
 
 	struct AmbientOcclusionSettings
@@ -129,7 +129,7 @@ namespace Athena
 		Vector4 ProjInfo;
 	};
 
-	struct RendererData
+	struct SceneRendererData
 	{
 		Vector2 ViewportSize;
 		Vector2 InverseViewportSize;
@@ -229,7 +229,7 @@ namespace Athena
 	using Render2DCallback = std::function<void()>;
 	using OnViewportResizeCallback = std::function<void(uint32, uint32)>;
 
-	class ATHENA_API SceneRenderer : public RefCounted
+	class ATHENA_API SceneRenderer: public RefCounted
 	{
 	public:
 		static Ref<SceneRenderer> Create();
@@ -247,10 +247,10 @@ namespace Athena
 		void BeginScene(const CameraInfo& cameraInfo);
 		void EndScene();
 
-		void Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
+		void SubmitAnimationState(const std::vector<Matrix4>& bonesTransforms);
+		void Submit(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
+		void SubmitSelectionContext(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform);
 		void SubmitLightEnvironment(const LightEnvironment& lightEnv);
-
-		void SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform = Matrix4::Identity());
 
 		void SetOnRender2DCallback(const Render2DCallback& callback);
 		void SetOnViewportResizeCallback(const OnViewportResizeCallback& callback);
@@ -289,13 +289,13 @@ namespace Athena
 
 		void ResetStats();
 
-		void SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform);
-		void SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform);
+		void SubmitStaticDrawCall(DrawListStatic& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform);
+		void SubmitAnimDrawCall(DrawListAnim& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform);
 
 	private:
 		const uint32 m_ShadowMapResolution = 2048;
 
-		const float m_OutlineWidth = 1.3f;
+		const float m_OutlineWidth = 0.8f;
 		const Vector4 m_OutlineColor = { 1.f, 0.5f, 0.f, 1.f };
 
 	private:
@@ -387,7 +387,7 @@ namespace Athena
 
 		// CPU Data
 		CameraData m_CameraData;
-		RendererData m_RendererData;
+		SceneRendererData m_RendererData;
 		LightData m_LightData;
 		ShadowsData m_ShadowsData;
 		HBAOData m_HBAOData;

@@ -12,7 +12,7 @@
 layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(set = 1, binding = 0) uniform sampler2D u_PanoramaTex;
-layout(r11f_g11f_b10f, set = 1, binding = 1) uniform imageCube u_Cubemap;
+layout(set = 1, binding = 1) uniform writeonly imageCube u_Cubemap;
 
 
 vec2 SampleSphericalMap(vec3 dir)

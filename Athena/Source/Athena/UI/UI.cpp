@@ -4,6 +4,30 @@
 
 namespace Athena::UI
 {
+	struct Popup
+	{
+		std::string_view Name;
+		bool IsModal = false;
+		bool IsActive = false;
+	};
+
+	struct EnumUI
+	{
+		std::string_view Name;
+		std::unordered_map<std::string_view, uint32> ElementsMap;
+		std::vector<std::string_view> ElementsList;
+	};
+
+	struct UIData
+	{
+		std::unordered_map<std::string_view, Popup> Popups;
+		Popup CurrentPopup;
+
+		std::unordered_map<std::string_view, EnumUI> Enums;
+	};
+
+	static UIData s_Data;
+
 	namespace Utils
 	{
 		int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
@@ -11,7 +35,7 @@ namespace Athena::UI
 			if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
 			{
 				String* str = (String*)data->UserData;
-				ATN_CORE_ASSERT(&(*str->begin()) == data->Buf);
+				checkf(&(*str->begin()) == data->Buf);
 				str->resize(data->BufSize); 
 				data->Buf = &(*str->begin());
 			}
@@ -74,47 +98,60 @@ namespace Athena::UI
 		return ImColor::HSV(hue, sat, Math::Min(val * scalar, 1.0f));
 	}
 
-	bool TextInput(const String& label, String& destination, ImGuiInputTextFlags flags)
-	{
-		static char buffer[128];
-		memset(buffer, 0, sizeof(buffer));
-		strcpy_s(buffer, label.c_str());
-		if (ImGui::InputText("##TextInput", buffer, sizeof(buffer), flags))
-		{
-			destination = String(buffer);
-			return true;
-		}
-
-		return false;
-	}
-
-	bool TextInputWithHint(const std::string_view hint, String& destination, ImGuiInputTextFlags flags)
+	bool TextInput(const std::string_view id, String& destination, ImGuiInputTextFlags flags)
 	{
 		static char buffer[128];
 		memset(buffer, 0, sizeof(buffer));
 		strcpy_s(buffer, destination.c_str());
-		if (ImGui::InputTextWithHint("##TextInputWithHint", hint.data(), buffer, sizeof(buffer), flags))
+
+		ImGui::PushID(id.data());
+		if (ImGui::InputText("##TextInput", buffer, sizeof(buffer), flags))
 		{
+			ImGui::PopID();
 			destination = String(buffer);
 			return true;
 		}
 
+		ImGui::PopID();
 		return false;
 	}
 
-	bool InputTextMultiline(std::string_view label, String& dst, ImVec2 size, ImGuiInputTextFlags flags)
+	bool TextInputWithHint(const std::string_view id, const std::string_view hint, String& destination, ImGuiInputTextFlags flags)
+	{
+		static char buffer[128];
+		memset(buffer, 0, sizeof(buffer));
+		strcpy_s(buffer, destination.c_str());
+
+		ImGui::PushID(id.data());
+		if (ImGui::InputTextWithHint("##TextInputWithHint", hint.data(), buffer, sizeof(buffer), flags))
+		{
+			ImGui::PopID();
+			destination = String(buffer);
+			return true;
+		}
+
+		ImGui::PopID();
+		return false;
+	}
+
+	bool InputTextMultiline(std::string_view id, String& dst, ImVec2 size, ImGuiInputTextFlags flags)
 	{
 		if (dst.empty())
 			dst.push_back('\0');
 
 		flags |= ImGuiInputTextFlags_CallbackResize;
-		return ImGui::InputTextMultiline("##TextInput", dst.data(), dst.size(), size, flags, Utils::InputTextResizeCallback, (void*)&dst);
+
+		ImGui::PushID(id.data());
+		bool result = ImGui::InputTextMultiline("##TextInput", dst.data(), dst.size(), size, flags, Utils::InputTextResizeCallback, (void*)&dst);
+		ImGui::PopID();
+
+		return result;
 	}
 
 	bool TreeNode(std::string_view label, bool defaultOpen, bool nested)
 	{
 		ImGuiTreeNodeFlags flags =
-			ImGuiTreeNodeFlags_AllowItemOverlap |
+			ImGuiTreeNodeFlags_AllowOverlap |
 			ImGuiTreeNodeFlags_SpanAvailWidth |
 			ImGuiTreeNodeFlags_Framed |
 			ImGuiTreeNodeFlags_FramePadding;
@@ -230,6 +267,19 @@ namespace Athena::UI
 		ImGui::PushID(label.data());
 		bool active = ImGui::SliderFloat("##Property", v, min, max, format, flags);
 		ImGui::PopID();
+
+		return active;
+	}
+
+	bool PropertySlider(std::string_view label, int* v, int min, int max, const char* format, ImGuiSliderFlags flags)
+	{
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = ImGui::SliderInt("##Property", v, min, max, format, flags);
+		ImGui::PopID();
+
 		return active;
 	}
 
@@ -307,11 +357,11 @@ namespace Athena::UI
 		return active;
 	}
 
-	bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, float frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
+	bool PropertyImage(std::string_view label, const Ref<Texture2D>& tex, ImVec2 size, const ImVec4& bg_col, const ImVec4& tint_col)
 	{
 		PropertyRow(label, size.y + 5.f);
 
-		bool pressed = ImGui::ImageButton(UI::GetTextureID(tex), size, { 0, 0 }, { 1, 1 }, frame_padding, bg_col, tint_col);
+		bool pressed = ImGui::ImageButton(label.data(), UI::GetTextureID(tex), size, {0, 0}, {1, 1}, bg_col, tint_col);
 		return pressed;
 	}
 
@@ -439,6 +489,109 @@ namespace Athena::UI
 		ImGui::ItemAdd(bb, id);
 	}
 
+
+	void RegisterPopup(std::string_view name, bool isModal)
+	{
+		s_Data.Popups[name] = { name, isModal, false };
+	}
+
+	void OpenPopup(std::string_view name)
+	{
+		checkf(s_Data.Popups.contains(name));
+		s_Data.Popups.at(name).IsActive = true;
+	}
+
+	void CloseCurrentPopup()
+	{
+		checkf(!s_Data.CurrentPopup.Name.empty());
+
+		Popup& popup = s_Data.Popups.at(s_Data.CurrentPopup.Name);
+
+		if (popup.IsModal)
+			ImGui::CloseCurrentPopup();
+
+		popup.IsActive = false;
+	}
+
+	bool BeginPopupModal(std::string_view name, ImGuiWindowFlags flags)
+	{
+		checkf(s_Data.Popups.contains(name));
+
+		Popup& popup = s_Data.Popups.at(name);
+
+		if (!popup.IsActive)
+			return false;
+
+		bool result;
+		if (popup.IsModal)
+		{
+			ImGui::OpenPopup("Create New Script");
+			result = ImGui::BeginPopupModal("Create New Script", nullptr, flags);
+		}
+		else
+		{
+			result = ImGui::Begin(name.data(), nullptr, flags);
+		}
+
+		s_Data.CurrentPopup = popup;
+		return result;
+	}
+
+	void EndPopup()
+	{
+		if (s_Data.CurrentPopup.IsModal)
+			ImGui::EndPopup();
+		else
+			ImGui::End();
+		
+		s_Data.CurrentPopup = {};
+	}
+
+
+	void RegisterEnum(std::string_view name)
+	{
+		EnumUI enumUI;
+		enumUI.Name = name;
+
+		s_Data.Enums[name] = enumUI;
+	}
+
+	void EnumAdd(std::string_view enumName, uint32 value, std::string_view label)
+	{
+		checkf(s_Data.Enums.contains(enumName));
+
+		EnumUI& enumUI = s_Data.Enums.at(enumName);
+
+		enumUI.ElementsMap[label] = value;
+		enumUI.ElementsList.push_back(label);
+	}
+
+	bool PropertyEnumCombo(std::string_view label, std::string_view enumName, void* value)
+	{
+		checkf(s_Data.Enums.contains(enumName));
+
+		EnumUI& enumUI = s_Data.Enums.at(enumName);
+		std::string_view selectedElem;
+		for (const auto& [name, enumValue] : enumUI.ElementsMap)
+		{
+			if (enumValue == *(uint32*)value)
+				selectedElem = name;
+		}
+
+		float height = ImGui::GetFrameHeight();
+		PropertyRow(label, height);
+
+		ImGui::PushID(label.data());
+		bool active = UI::ComboBox("##Property", enumUI.ElementsList.data(), enumUI.ElementsList.size(), &selectedElem);
+		ImGui::PopID();
+
+		if (active)
+			*(uint32*)value = enumUI.ElementsMap.at(selectedElem);
+
+		return active;
+	}
+
+
 	bool BeginMenubar(const ImRect& barRectangle)
 	{
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -501,8 +654,8 @@ namespace Athena::UI
 				IM_ASSERT(window->DC.NavLayersActiveMaskNext & (1 << layer)); // Sanity check
 				ImGui::FocusWindow(window);
 				ImGui::SetNavID(window->NavLastIds[layer], layer, 0, window->NavRectRel[layer]);
-				g.NavDisableHighlight = true; // Hide highlight for the current frame so we don't see the intermediary selection.
-				g.NavDisableMouseHover = g.NavMousePosDirty = true;
+				g.NavCursorVisible = false; // Hide highlight for the current frame so we don't see the intermediary selection.
+				g.NavHighlightItemUnderNav = g.NavMousePosDirty = true;
 				ImGui::NavMoveRequestForward(g.NavMoveDir, g.NavMoveClipDir, g.NavMoveFlags, g.NavMoveScrollFlags); // Repeat
 			}
 		}
@@ -518,5 +671,10 @@ namespace Athena::UI
 		window->DC.IsSameLine = false;
 		window->DC.NavLayerCurrent = ImGuiNavLayer_Main;
 		window->DC.MenuBarAppending = false;
+	}
+
+	ImGuiWindow* GetCurrentWindow()
+	{
+		return ImGui::GetCurrentWindow();
 	}
 }

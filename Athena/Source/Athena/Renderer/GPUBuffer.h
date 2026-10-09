@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Log.h"
 #include "Athena/Utils/StringUtils.h"
 #include "Athena/Renderer/RenderResource.h"
 
@@ -30,7 +29,7 @@ namespace Athena
 			case ShaderDataType::Mat4:   return 4 * 16;
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		check(false, "Unknown ShaderDataType!");
 		return 0;
 	}
 
@@ -51,7 +50,7 @@ namespace Athena
 		case ShaderDataType::Mat4:   return "mat4";
 		}
 
-		ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+		check(false, "Unknown ShaderDataType!");
 		return "";
 	}
 
@@ -84,7 +83,7 @@ namespace Athena
 				case ShaderDataType::UInt: return 4;
 			}
 
-			ATN_CORE_ASSERT(false, "Unknown ShaderDataType!");
+			check(false, "Unknown ShaderDataType!");
 			return 0;
 		}
 	};
@@ -153,7 +152,7 @@ namespace Athena
 		BufferMemoryFlags Flags = BufferMemoryFlags::GPU_ONLY;
 	};
 
-	class ATHENA_API IndexBuffer : public RefCounted
+	class ATHENA_API IndexBuffer: public RefCounted
 	{
 	public:
 		static Ref<IndexBuffer> Create(const IndexBufferCreateInfo& info);
@@ -176,11 +175,10 @@ namespace Athena
 		String Name;
 		const void* Data = nullptr;
 		uint64 Size = 0;
-		Ref<IndexBuffer> IndexBuffer;
 		BufferMemoryFlags Flags = BufferMemoryFlags::GPU_ONLY;
 	};
 
-	class ATHENA_API VertexBuffer : public RefCounted
+	class ATHENA_API VertexBuffer: public RefCounted
 	{
 	public:
 		static Ref<VertexBuffer> Create(const VertexBufferCreateInfo& info);
@@ -190,7 +188,6 @@ namespace Athena
 		virtual void Resize(uint64 size) = 0;
 
 		uint64 GetSize() const { return m_Info.Size; }
-		Ref<IndexBuffer> GetIndexBuffer() const { return m_Info.IndexBuffer; }
 		const String& GetName() const { return m_Info.Name; }
 		const VertexBufferCreateInfo& GetInfo() const { return m_Info; }
 
@@ -247,6 +244,9 @@ namespace Athena
 
 		void Push(const void* data, uint64 size)
 		{
+			if (size == 0)
+				return;
+
 			uint64 newOffset = m_DataOffset + size;
 
 			if (m_CPUBuffer.size() < newOffset)
@@ -263,12 +263,15 @@ namespace Athena
 
 		void Flush()
 		{
+			if (m_DataOffset == 0)
+				return;
+
 			// Increase size if not enough
 			if (m_GPUBuffer->GetSize() < m_DataOffset)
 			{
 				uint64 newSize = m_DataOffset * 2.f;
 
-				ATN_CORE_WARN_TAG("Renderer", "{} allocating from {} to {}", m_GPUBuffer->GetName(), 
+				ATN_LOG_WARN(Renderer, "{} allocating from {} to {}", m_GPUBuffer->GetName(),
 					Utils::MemoryBytesToString(m_GPUBuffer->GetSize()), Utils::MemoryBytesToString(newSize));
 
 				m_GPUBuffer->Resize(newSize);

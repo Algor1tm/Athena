@@ -1,13 +1,17 @@
 #include "SceneRenderer.h"
 
+#include "Athena/Core/Core.h"
+#include "Athena/Core/Stats.h"
 #include "Athena/Math/Projections.h"
 #include "Athena/Math/Transforms.h"
 #include "Athena/Renderer/Renderer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
 {
+	EXTERN_CYCLE_STAT(STAT_SceneRendererEndScene);
+
 	Ref<SceneRenderer> SceneRenderer::Create()
 	{
 		Ref<SceneRenderer> renderer = Ref<SceneRenderer>::Create();
@@ -31,21 +35,16 @@ namespace Athena
 		m_Profiler = GPUProfiler::Create(profilerInfo);
 
 		m_CameraUBO = UniformBuffer::Create("CameraUBO", sizeof(CameraData));
-		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(RendererData));
+		m_RendererUBO = UniformBuffer::Create("RendererUBO", sizeof(SceneRendererData));
 		m_ShadowsUBO = UniformBuffer::Create("ShadowsUBO", sizeof(ShadowsData));
 		m_HBAO_UBO = UniformBuffer::Create("HBAO-UBO", sizeof(HBAOData));
 		m_SSR_UBO = UniformBuffer::Create("SSR-UBO", sizeof(SSRData));
 
-		m_BonesSBO = StorageBuffer::Create("BonesSBO", 1 * sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
+		m_BonesSBO = StorageBuffer::Create("BonesSBO", sizeof(Matrix4), BufferMemoryFlags::CPU_WRITEABLE);
 		m_LightSBO = StorageBuffer::Create("LightSBO", sizeof(LightData), BufferMemoryFlags::CPU_WRITEABLE);
-		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights) * 1, BufferMemoryFlags::GPU_ONLY);
+		m_VisibleLightsSBO = StorageBuffer::Create("VisibleLightsSBO", sizeof(TileVisibleLights), BufferMemoryFlags::GPU_ONLY);
 
 		m_BonesDataOffset = 0;
-
-		// For now instance rendering does not fully used, because we do not
-		// reuse vertex buffers, (every vertex buffer has only 1 instance).
-		// To fix that, we need some sort of Asset Manager to store 'MeshSource', to which
-		// StaticMeshes would refer to.
 
 		VertexMemoryLayout instanceLayout = {
 				{ ShaderDataType::Float3, "a_TRow0" },
@@ -75,7 +74,7 @@ namespace Athena
 
 			TextureCreateInfo shadowMapInfo;
 			shadowMapInfo.Name = "DirShadowMap";
-			shadowMapInfo.Format = TextureFormat::DEPTH32F;
+			shadowMapInfo.TextureFormat = Format::DEPTH32F;
 			shadowMapInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED);
 			shadowMapInfo.Width = m_ShadowMapResolution;
 			shadowMapInfo.Height = m_ShadowMapResolution;
@@ -104,7 +103,7 @@ namespace Athena
 			pipelineInfo.Name = "DirShadowMapStatic";
 			pipelineInfo.RenderPass = m_DirShadowMapPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Static");
-			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+			pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
@@ -117,7 +116,7 @@ namespace Athena
 
 			pipelineInfo.Name = "DirShadowMapAnim";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("DirShadowMap_Anim");
-			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+			pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 			m_DirShadowMapAnimPipeline = Pipeline::Create(pipelineInfo);
 			m_DirShadowMapAnimPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
@@ -144,19 +143,19 @@ namespace Athena
 
 			m_GBufferPass = RenderPass::Create(passInfo);
 			// RGBA -> RGB - albedo, A - empty
-			m_GBufferPass->SetOutput({ "SceneAlbedo", TextureFormat::RGBA8, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneAlbedo", Format::RGBA8, TextureFilter::NEAREST });
 			// RGBA -> RGB - normal, A - emission
-			m_GBufferPass->SetOutput({ "SceneNormalsEmission", TextureFormat::RGBA16F, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneNormalsEmission", Format::RGBA16F, TextureFilter::NEAREST });
 			// RG -> R - roughness, G - metalness
-			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", TextureFormat::RG8, TextureFilter::NEAREST });
-			m_GBufferPass->SetOutput({ "SceneDepth", TextureFormat::DEPTH32F, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneRoughnessMetalness", Format::RG8, TextureFilter::NEAREST });
+			m_GBufferPass->SetOutput({ "SceneDepth", Format::DEPTH32F, TextureFilter::NEAREST });
 			m_GBufferPass->Bake();
 
 			PipelineCreateInfo pipelineInfo;
 			pipelineInfo.Name = "StaticGeometryPipeline";
 			pipelineInfo.RenderPass = m_GBufferPass;
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Static");
-			pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+			pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 			pipelineInfo.InstanceLayout = instanceLayout;
 			pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 			pipelineInfo.CullMode = CullMode::BACK;
@@ -169,7 +168,7 @@ namespace Athena
 
 			pipelineInfo.Name = "AnimGeometryPipeline";
 			pipelineInfo.Shader = Renderer::GetShaderPack()->Get("GBuffer_Anim");
-			pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+			pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 			m_AnimGeometryPipeline = Pipeline::Create(pipelineInfo);
 			m_AnimGeometryPipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -181,7 +180,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "HiZBuffer";
-			texInfo.Format = TextureFormat::R32F;
+			texInfo.TextureFormat = Format::R32F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -246,7 +245,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "HBAO-DepthLayers";
-				texInfo.Format = TextureFormat::R32F;
+				texInfo.TextureFormat = Format::R32F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 				texInfo.Layers = 16;
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
@@ -275,7 +274,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "HBAO-Output";
-				texInfo.Format = TextureFormat::RG16F;
+				texInfo.TextureFormat = Format::RG16F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 				texInfo.Sampler.Filter = TextureFilter::LINEAR;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -313,7 +312,7 @@ namespace Athena
 				passInfo.Name = "HBAO-BlurX";
 				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
-				RenderTarget blurTarget = { "HBAO-BlurredX", TextureFormat::RG16F, TextureFilter::LINEAR };
+				RenderTarget blurTarget = { "HBAO-BlurredX", Format::RG16F, TextureFilter::LINEAR };
 				blurTarget.ClearColor = Vector4(1.0);
 
 				m_HBAOBlurXPass = RenderPass::Create(passInfo);
@@ -338,7 +337,7 @@ namespace Athena
 				passInfo.InputPass = m_HBAOBlurXPass;
 				passInfo.DebugColor = { 0.3f, 0.6f, 0.6f, 1.f };
 
-				RenderTarget blurTarget = { "SceneAO", TextureFormat::R8, TextureFilter::NEAREST };
+				RenderTarget blurTarget = { "SceneAO", Format::R8, TextureFilter::NEAREST };
 				blurTarget.ClearColor = Vector4(1.0);
 
 				m_HBAOBlurYPass = RenderPass::Create(passInfo);
@@ -361,7 +360,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "SceneHDRColor";
-			texInfo.Format = TextureFormat::RGBA16F;
+			texInfo.TextureFormat = Format::RGBA16F;
 			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -395,10 +394,10 @@ namespace Athena
 			m_DeferredLightingPipeline->SetInput("u_ShadowsData", m_ShadowsUBO);
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMap", m_DirShadowMapPass->GetOutput("DirShadowMap"));
 			m_DeferredLightingPipeline->SetInput("u_DirShadowMapShadow", m_ShadowMapSampler);
-			m_DeferredLightingPipeline->SetInput("u_PCSSNoise", TextureGenerator::GetBlueNoise());
-			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", TextureGenerator::GetBRDF_LUT());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_PCSSNoise", EngineTextures::GetBlueNoise());
+			m_DeferredLightingPipeline->SetInput("u_BRDF_LUT", EngineTextures::GetBRDF_LUT());
+			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
+			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", EngineTextures::GetBlackTextureCube());
 
 			m_DeferredLightingPipeline->SetInput("u_SceneDepth", m_GBufferPass->GetOutput("SceneDepth"));
 			m_DeferredLightingPipeline->SetInput("u_SceneAlbedo", m_GBufferPass->GetOutput("SceneAlbedo"));
@@ -434,7 +433,7 @@ namespace Athena
 			m_SkyboxPipeline = Pipeline::Create(pipelineInfo);
 			m_SkyboxPipeline->SetInput("u_CameraData", m_CameraUBO);
 			m_SkyboxPipeline->SetInput("u_RendererData", m_RendererUBO);
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
+			m_SkyboxPipeline->SetInput("u_EnvironmentMap", EngineTextures::GetBlackTextureCube());
 			m_SkyboxPipeline->Bake();
 		}
 
@@ -442,7 +441,7 @@ namespace Athena
 		{
 			TextureCreateInfo texInfo;
 			texInfo.Name = "HiColorBuffer";
-			texInfo.Format = TextureFormat::R11G11B10F;
+			texInfo.TextureFormat = Format::R11G11B10F;
 			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 			texInfo.GenerateMipMap = true;
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
@@ -506,7 +505,7 @@ namespace Athena
 			{
 				TextureCreateInfo texInfo;
 				texInfo.Name = "SSR-Output";
-				texInfo.Format = TextureFormat::RGBA16F;
+				texInfo.TextureFormat = Format::RGBA16F;
 				texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -575,7 +574,7 @@ namespace Athena
 
 			m_BloomUpsample = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BloomUpsample"));
 			m_BloomUpsample->SetInput("u_BloomTexture", m_HiColorBuffer);
-			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
+			m_BloomUpsample->SetInput("u_DirtTexture", EngineTextures::GetBlackTexture());
 			m_BloomUpsample->Bake();
 		}
 
@@ -588,7 +587,7 @@ namespace Athena
 			passInfo.Height = m_ViewportSize.y;
 			passInfo.DebugColor = { 0.8f, 0.7f, 0.1f, 1.f };
 
-			RenderTarget target = RenderTarget("SceneColor", TextureFormat::RGBA8);
+			RenderTarget target = RenderTarget("SceneColor", Format::RGBA8);
 			target.LoadOp = RenderTargetLoadOp::DONT_CARE;
 
 			m_SceneCompositePass = RenderPass::Create(passInfo);
@@ -619,14 +618,14 @@ namespace Athena
 				passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
 				m_JumpFloodSilhouettePass = RenderPass::Create(passInfo);
-				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", TextureFormat::R8, TextureFilter::NEAREST });
+				m_JumpFloodSilhouettePass->SetOutput({ "JumpFloodSilhouette", Format::R8, TextureFilter::NEAREST });
 				m_JumpFloodSilhouettePass->Bake();
 
 				PipelineCreateInfo pipelineInfo;
 				pipelineInfo.Name = "JFSilhouetteStaticPipeline";
 				pipelineInfo.RenderPass = m_JumpFloodSilhouettePass;
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Static");
-				pipelineInfo.VertexLayout = StaticVertex::GetLayout();
+				pipelineInfo.VertexLayout = MeshVertex::GetLayout();
 				pipelineInfo.InstanceLayout = instanceLayout;
 				pipelineInfo.Topology = Topology::TRIANGLE_LIST;
 				pipelineInfo.CullMode = CullMode::BACK;
@@ -640,7 +639,7 @@ namespace Athena
 
 				pipelineInfo.Name = "JFSilhouetteAnimPipeline";
 				pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Silhouette_Anim");
-				pipelineInfo.VertexLayout = AnimVertex::GetLayout();
+				pipelineInfo.BonesInfluenceLayout = BoneInfluenceVertex::GetLayout();
 
 				m_JFSilhouetteAnimPipeline = Pipeline::Create(pipelineInfo);
 				m_JFSilhouetteAnimPipeline->SetInput("u_CameraData", m_CameraUBO);
@@ -653,8 +652,8 @@ namespace Athena
 			for (uint32 i = 0; i < 2; ++i)
 			{
 				TextureCreateInfo texInfo;
-				texInfo.Name = std::format("JumpFloodPingPong_{}", i);
-				texInfo.Format = TextureFormat::RG16F;
+				texInfo.Name = fmt::format("JumpFloodPingPong_{}", i);
+				texInfo.TextureFormat = Format::RG16F;
 				texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::ATTACHMENT);
 				texInfo.Sampler.Filter = TextureFilter::NEAREST;
 				texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -693,7 +692,7 @@ namespace Athena
 					std::string_view label = even ? "Even" : "Odd";
 
 					RenderPassCreateInfo passInfo;
-					passInfo.Name = std::format("JumpFloodPass{}", label);
+					passInfo.Name = fmt::format("JumpFloodPass{}", label);
 					passInfo.InputPass = even ? m_JumpFloodPasses[1] : m_JumpFloodInitPass;
 					passInfo.DebugColor = { 0.9f, 0.5f, 0.3f, 1.f };
 
@@ -702,7 +701,7 @@ namespace Athena
 					m_JumpFloodPasses[index]->Bake();
 
 					PipelineCreateInfo pipelineInfo = fullscreenPipeline;
-					pipelineInfo.Name = std::format("JumpFloodPipeline", label);
+					pipelineInfo.Name = fmt::format("JumpFloodPipeline", label);
 					pipelineInfo.RenderPass = m_JumpFloodPasses[index];
 					pipelineInfo.Shader = Renderer::GetShaderPack()->Get("JumpFlood-Pass");
 
@@ -735,7 +734,7 @@ namespace Athena
 				pipelineInfo.BlendEnable = true;
 
 				m_JumpFloodCompositePipeline = Pipeline::Create(pipelineInfo);
-				m_JumpFloodCompositePipeline->SetInput("u_Texture", m_JumpFloodPasses[index]->GetOutput(std::format("JumpFloodPingPong_{}", index)));
+				m_JumpFloodCompositePipeline->SetInput("u_Texture", m_JumpFloodPasses[index]->GetOutput(fmt::format("JumpFloodPingPong_{}", index)));
 				m_JumpFloodCompositePipeline->Bake();
 
 				m_JumpFloodCompositeMaterial = Material::Create(pipelineInfo.Shader, "JumpFloodCompositeMaterial");
@@ -763,7 +762,7 @@ namespace Athena
 		// Reusable post-process textures (ping - pong)
 		{
 			TextureCreateInfo texInfo;
-			texInfo.Format = TextureFormat::RGBA8;
+			texInfo.TextureFormat = Format::RGBA8;
 			texInfo.Usage = TextureUsage(TextureUsage::ATTACHMENT | TextureUsage::SAMPLED | TextureUsage::STORAGE);
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
@@ -771,7 +770,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < 2; ++i)
 			{
-				texInfo.Name = std::format("PostProcessTex_{}", i);
+				texInfo.Name = fmt::format("PostProcessTex_{}", i);
 				m_PostProcessTextures[i] = Texture2D::Create(texInfo);
 			}
 		}
@@ -824,8 +823,8 @@ namespace Athena
 
 				m_SMAAWeightsPipeline = Pipeline::Create(pipelineInfo);
 				m_SMAAWeightsPipeline->SetInput("u_Edges", m_SMAAEdgesPass->GetOutput(0));
-				m_SMAAWeightsPipeline->SetInput("u_AreaTex", TextureGenerator::GetSMAA_AreaLUT());
-				m_SMAAWeightsPipeline->SetInput("u_SearchTex", TextureGenerator::GetSMAA_SearchLUT());
+				m_SMAAWeightsPipeline->SetInput("u_AreaTex", EngineTextures::GetSMAA_AreaLUT());
+				m_SMAAWeightsPipeline->SetInput("u_SearchTex", EngineTextures::GetSMAA_SearchLUT());
 				m_SMAAWeightsPipeline->SetInput("u_RendererData", m_RendererUBO);
 				m_SMAAWeightsPipeline->Bake();
 			}
@@ -998,70 +997,69 @@ namespace Athena
 		m_ViewportResizeCallback = callback;
 	}
 
-	void SceneRenderer::Submit(const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::Submit(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
-		if (mesh->HasAnimations())
+		if (isRigged)
 		{
-			SubmitAnimMesh(m_AnimGeometryList, mesh, mesh->GetAnimator(), transform);
+			SubmitAnimDrawCall(m_AnimGeometryList, mesh, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticMesh(m_StaticGeometryList, mesh, transform);
+			SubmitStaticDrawCall(m_StaticGeometryList, mesh, submesh, material, transform);
 		}
 	}
 
-	void SceneRenderer::SubmitSelectionContext(const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::SubmitSelectionContext(const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, bool isRigged, const Matrix4& transform)
 	{
-		if (mesh->HasAnimations())
+		if (isRigged)
 		{
-			SubmitAnimMesh(m_SelectAnimGeometryList, mesh, mesh->GetAnimator(), transform);
+			SubmitAnimDrawCall(m_SelectAnimGeometryList, mesh, submesh, material, transform);
 		}
 		else
 		{
-			SubmitStaticMesh(m_SelectStaticGeometryList, mesh, transform);
+			SubmitStaticDrawCall(m_SelectStaticGeometryList, mesh, submesh, material, transform);
 		}
 	}
 
-	void SceneRenderer::SubmitStaticMesh(DrawListStatic& list, const Ref<StaticMesh>& mesh, const Matrix4& transform)
+	void SceneRenderer::SubmitAnimationState(const std::vector<Matrix4>& bonesTransforms)
 	{
-		const auto& subMeshes = mesh->GetAllSubMeshes();
-		const auto& materialTable = mesh->GetMaterialTable();
-
-		for (uint32 i = 0; i < subMeshes.size(); ++i)
-		{
-			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
-
-			StaticDrawCall drawCall;
-			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-			drawCall.Transform = transform;
-			drawCall.Material = material;
-
-			list.Push(drawCall);
-		}
+		m_BonesSBO.Push(bonesTransforms.data(), bonesTransforms.size() * sizeof(Matrix4));
+		m_BonesDataOffset += bonesTransforms.size();
 	}
 
-	void SceneRenderer::SubmitAnimMesh(DrawListAnim& list, const Ref<StaticMesh>& mesh, const Ref<Animator>& animator, const Matrix4& transform)
+	void SceneRenderer::SubmitStaticDrawCall(DrawListStatic& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
 	{
-		const auto& subMeshes = mesh->GetAllSubMeshes();
-		const auto& materialTable = mesh->GetMaterialTable();
+		StaticDrawCall drawCall;
+		drawCall.MeshVertexBuffer = mesh->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = mesh->GetIndexBuffer();
+		drawCall.BaseIndex = submesh.BaseIndex;
+		drawCall.IndexCount = submesh.IndexCount;
+		drawCall.BaseVertex = submesh.BaseVertex;
+		drawCall.VertexCount = submesh.VertexCount;
 
-		for (uint32 i = 0; i < subMeshes.size(); ++i)
-		{
-			Ref<Material> material = materialTable->Get(subMeshes[i].MaterialName);
+		drawCall.Transform = transform;
+		drawCall.Material = material;
 
-			AnimDrawCall drawCall;
-			drawCall.VertexBuffer = subMeshes[i].VertexBuffer;
-			drawCall.Transform = transform;
-			drawCall.Material = material;
-			drawCall.BonesOffset = m_BonesDataOffset;
+		list.Push(drawCall);
+	}
 
-			const auto& bones = animator->GetBoneTransforms();
-			m_BonesSBO.Push(bones.data(), bones.size() * sizeof(Matrix4));
+	void SceneRenderer::SubmitAnimDrawCall(DrawListAnim& list, const Ref<Mesh>& mesh, const SubMesh& submesh, const Ref<Material>& material, const Matrix4& transform)
+	{
+		AnimDrawCall drawCall;
+		drawCall.MeshVertexBuffer = mesh->GetVertexBuffer();
+		drawCall.MeshIndexBuffer = mesh->GetIndexBuffer();
+		drawCall.BonesInfluenceBuffer = mesh->GetBonesInfluenceBuffer();
 
-			m_BonesDataOffset += bones.size();
+		drawCall.BaseIndex = submesh.BaseIndex;
+		drawCall.IndexCount = submesh.IndexCount;
+		drawCall.BaseVertex = submesh.BaseVertex;
+		drawCall.VertexCount = submesh.VertexCount;
+		drawCall.BonesOffset = m_BonesDataOffset;
 
-			list.Push(drawCall);
-		}
+		drawCall.Transform = transform;
+		drawCall.Material = material;
+
+		list.Push(drawCall);
 	}
 
 	void SceneRenderer::SubmitLightEnvironment(const LightEnvironment& lightEnv)
@@ -1070,21 +1068,21 @@ namespace Athena
 
 		if (m_LightData.DirectionalLightCount > ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} DirectionalLights!", ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} DirectionalLights!", (int)ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT);
 			m_LightData.DirectionalLightCount = ShaderDef::MAX_DIRECTIONAL_LIGHT_COUNT;
 		}
 
 		m_LightData.PointLightCount = lightEnv.PointLights.size();
 		if (m_LightData.PointLightCount > ShaderDef::MAX_POINT_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} PointLights!", ShaderDef::MAX_POINT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} PointLights!", (int)ShaderDef::MAX_POINT_LIGHT_COUNT);
 			m_LightData.PointLightCount = ShaderDef::MAX_POINT_LIGHT_COUNT;
 		}
 
 		m_LightData.SpotLightCount = lightEnv.SpotLights.size();
 		if (m_LightData.SpotLightCount > ShaderDef::MAX_SPOT_LIGHT_COUNT)
 		{
-			ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than {} SpotLights!", ShaderDef::MAX_SPOT_LIGHT_COUNT);
+			ATN_LOG_WARN(Renderer, "Attempt to submit more than {} SpotLights!", (int)ShaderDef::MAX_SPOT_LIGHT_COUNT);
 			m_LightData.SpotLightCount = ShaderDef::MAX_SPOT_LIGHT_COUNT;
 		}
 
@@ -1098,7 +1096,7 @@ namespace Athena
 
 			if (castsShadows && light.CastShadows)
 			{
-				ATN_CORE_WARN_TAG("Renderer", "Attempt to submit more than 1 DirectionalLight, that casts shadows!");
+				ATN_LOG_WARN(Renderer, "Attempt to submit more than 1 DirectionalLight, that casts shadows!");
 				light.CastShadows = false;
 			}
 
@@ -1124,21 +1122,9 @@ namespace Athena
 		m_RendererData.EnvironmentIntensity = lightEnv.EnvironmentMapIntensity;
 		m_RendererData.EnvironmentLOD = lightEnv.EnvironmentMapLOD;
 
-		if (lightEnv.EnvironmentMap)
-		{
-			auto irradianceMap = lightEnv.EnvironmentMap->GetIrradianceTexture();
-			auto environmentMap = lightEnv.EnvironmentMap->GetEnvironmentTexture();
-
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", irradianceMap);
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", environmentMap);
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", environmentMap);
-		}
-		else
-		{
-			m_DeferredLightingPipeline->SetInput("u_IrradianceMap", TextureGenerator::GetBlackTextureCube());
-			m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
-			m_SkyboxPipeline->SetInput("u_EnvironmentMap", TextureGenerator::GetBlackTextureCube());
-		}
+		m_DeferredLightingPipeline->SetInput("u_IrradianceMap", lightEnv.IrradianceTexture ? lightEnv.IrradianceTexture : EngineTextures::GetBlackTextureCube());
+		m_DeferredLightingPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMapTexture ? lightEnv.EnvironmentMapTexture : EngineTextures::GetBlackTextureCube());
+		m_SkyboxPipeline->SetInput("u_EnvironmentMap", lightEnv.EnvironmentMapTexture ? lightEnv.EnvironmentMapTexture : EngineTextures::GetBlackTextureCube());
 	}
 
 	void SceneRenderer::BeginScene(const CameraInfo& cameraInfo)
@@ -1166,10 +1152,15 @@ namespace Athena
 		m_ShadowsData.BiasGradient = m_Settings.ShadowSettings.BiasGradient;
 		m_ShadowsData.SoftShadows = m_Settings.ShadowSettings.SoftShadows;
 
-		if (m_Settings.BloomSettings.DirtTexture)
-			m_BloomUpsample->SetInput("u_DirtTexture", m_Settings.BloomSettings.DirtTexture);
+		Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(m_Settings.BloomSettings.DirtTexture);
+		if (textureAsset && textureAsset->GetRenderTexture())
+		{
+			m_BloomUpsample->SetInput("u_DirtTexture", textureAsset->GetRenderTexture());
+		}
 		else
-			m_BloomUpsample->SetInput("u_DirtTexture", TextureGenerator::GetBlackTexture());
+		{
+			m_BloomUpsample->SetInput("u_DirtTexture", EngineTextures::GetBlackTexture());
+		}
 
 		m_SceneCompositeMaterial->Set("u_Mode", (uint32)m_Settings.PostProcessingSettings.TonemapMode);
 		m_SceneCompositeMaterial->Set("u_Exposure", m_Settings.PostProcessingSettings.Exposure);
@@ -1199,7 +1190,8 @@ namespace Athena
 
 	void SceneRenderer::EndScene()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
+		SCOPE_CYCLE_STAT(STAT_SceneRendererEndScene);
 
 		ResetStats();
 
@@ -1210,7 +1202,7 @@ namespace Athena
 		m_Profiler->BeginPipelineStatsQuery();
 
 		{
-			ATN_PROFILE_SCOPE("SceneRenderer::PreProcessMeshes");
+			TRACY_PROFILE_SCOPE("SceneRenderer::PreProcessMeshes");
 
 			m_StaticGeometryList.Sort();
 			m_AnimGeometryList.Sort();
@@ -1222,14 +1214,14 @@ namespace Athena
 		}
 
 		{
-			ATN_PROFILE_SCOPE("SceneRenderer::UploadData");
+			TRACY_PROFILE_SCOPE("SceneRenderer::UploadData");
 
 			m_BonesSBO.Flush();
 			m_TransformsStorage.Flush();
 			Renderer::BindInstanceRateBuffer(m_RenderCommandBuffer, m_TransformsStorage.Get());
 
 			m_CameraUBO->UploadData(&m_CameraData, sizeof(CameraData));
-			m_RendererUBO->UploadData(&m_RendererData, sizeof(RendererData));
+			m_RendererUBO->UploadData(&m_RendererData, sizeof(SceneRendererData));
 			m_LightSBO->UploadData(&m_LightData, sizeof(LightData));
 			m_ShadowsUBO->UploadData(&m_ShadowsData, sizeof(ShadowsData));
 			m_HBAO_UBO->UploadData(&m_HBAOData, sizeof(HBAOData));
@@ -1516,7 +1508,7 @@ namespace Athena
 			// Recreate (on window resized)
 			if (material == nullptr)
 			{
-				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), std::format("BloomMaterial_{}", mip));
+				material = Material::Create(Renderer::GetShaderPack()->Get("BloomDownsample"), fmt::format("BloomMaterial_{}", mip));
 				material->Set("u_BloomTextureMip", m_HiColorBuffer->GetMipView(mip));
 			}
 

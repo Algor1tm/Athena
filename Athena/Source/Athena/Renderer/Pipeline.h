@@ -37,6 +37,7 @@ namespace Athena
 		Ref<RenderPass> RenderPass;
 		Ref<Shader> Shader;
 		VertexMemoryLayout VertexLayout;
+		VertexMemoryLayout BonesInfluenceLayout;
 		VertexMemoryLayout InstanceLayout;
 		Topology Topology = Topology::TRIANGLE_LIST;
 		CullMode CullMode = CullMode::BACK;
@@ -47,7 +48,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API Pipeline : public RefCounted
+	class ATHENA_API Pipeline: public RefCounted
 	{
 	public:
 		static Ref<Pipeline> Create(const PipelineCreateInfo& info);

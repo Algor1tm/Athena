@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Asset/Asset.h"
 #include "Athena/Renderer/Texture.h"
 
 
@@ -8,26 +9,38 @@ namespace Athena
 {
 	class FontGeometry;
 
-	class ATHENA_API Font: public RefCounted
+	class ATHENA_API Font: public Asset
 	{
+	public:
+		Font();
+		~Font();
+
+		virtual AssetType GetAssetType() const override { return AssetType::Font; }
+
+		virtual bool Serialize(const FilePath& absolutePath) const override;
+		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
+
+		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
+		FontGeometry* GetFontGeometry() { return m_FontGeometry; }
+
+		friend class FontImporter;
+
 	public:
 		static bool Init();
 		static void Shutdown();
 
-		static Ref<Font> Create(const FilePath& path);
-		~Font();
-
 		static Ref<Font> GetDefault();
-
-		Ref<Texture2D> GetAtlasTexture() const { return m_AtlasTexture; }
-		const FilePath& GetFilePath() const { return m_FilePath; }
-		FontGeometry* GetFontGeometry() { return m_FontGeometry; }
+		static void* GetFTPHandle();
 
 	private:
-		Buffer GenerateAtlasOrReadFromCache(uint32 width, uint32 height);
+		struct FontStaticData
+		{
+			void* FTPHandle;
+			Ref<Font> DefaultFont;
+		};
 
-	private:
-		FilePath m_FilePath;
+		static FontStaticData s_Data;
+
 		FontGeometry* m_FontGeometry;
 		Ref<Texture2D> m_AtlasTexture;
 	};

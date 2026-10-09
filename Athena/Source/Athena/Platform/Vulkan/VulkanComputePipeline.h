@@ -21,7 +21,7 @@ namespace Athena
 
 		Vector3u GetWorkGroupSize() const;
 
-		void RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);
+		void SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);
 
 	private:
 		void CleanUp();

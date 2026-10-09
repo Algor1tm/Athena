@@ -1,16 +1,24 @@
 #include "Renderer.h"
 
 #include "Athena/Core/Application.h"
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/Font.h"
 #include "Athena/Renderer/RendererAPI.h"
 #include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/ComputePass.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 
 namespace Athena
 {
+	DEFINE_STATS_GROUP("Renderer Stats", STATGROUP_RendererStats, StatsThread::RenderThread);
+
+	DEFINE_CYCLE_STAT("CPU Wait", STAT_CPUWait, STATGROUP_RendererStats);
+	DEFINE_CYCLE_STAT("SceneRenderer::EndScene", STAT_SceneRendererEndScene, STATGROUP_RendererStats);
+	DEFINE_CYCLE_STAT("DrawCalls", STAT_DrawCalls, STATGROUP_RendererStats);
+
+
 	struct RendererData
 	{
 		RendererConfig Config;
@@ -34,7 +42,7 @@ namespace Athena
 
 	void Renderer::Init(const RendererConfig& config)
 	{
-		ATN_CORE_VERIFY(s_Data.RendererAPI == nullptr, "Renderer already exists!");
+		ensure(s_Data.RendererAPI == nullptr, "Renderer already exists!");
 
 		s_Data.Config = config;
 		s_Data.CurrentFrameIndex = config.MaxFramesInFlight - 1;
@@ -86,24 +94,23 @@ namespace Athena
 		vertexBufInfo.Name = "Renderer_FullscreenVB";
 		vertexBufInfo.Data = fullscreenVertices;
 		vertexBufInfo.Size = sizeof(fullscreenVertices);
-		vertexBufInfo.IndexBuffer = nullptr;
 		vertexBufInfo.Flags = BufferMemoryFlags::GPU_ONLY;
 
 		s_Data.FullscreenVertexBuffer = VertexBuffer::Create(vertexBufInfo);
 
-		TextureGenerator::Init();
+		EngineTextures::Init();
 		Font::Init();
 	}
 
 	void Renderer::Shutdown()
 	{
 		Font::Shutdown();
-		TextureGenerator::Shutdown();
+		EngineTextures::Shutdown();
+		EnvironmentMap::ClearCache();
+		TextureAsset::Clear();
 
 		s_Data.FullscreenVertexBuffer.Release();
-
 		s_Data.ShaderPack.Release();
-
 		s_Data.RendererAPI->WaitDeviceIdle();
 
 		for (auto& queue : s_Data.ResourceFreeQueues)
@@ -116,7 +123,7 @@ namespace Athena
 
 	void Renderer::BeginFrame()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		s_Data.CurrentFrameIndex = (s_Data.CurrentFrameIndex + 1) % s_Data.Config.MaxFramesInFlight;
 		s_Data.CurrentResourceFreeQueueIndex = (s_Data.CurrentResourceFreeQueueIndex + 1) % (s_Data.Config.MaxFramesInFlight + 1);
 
@@ -127,7 +134,7 @@ namespace Athena
 		// then it will be freed on 'i + FramesInFlight + 1' frame, so it guarantees
 		// that currently used resource will not be freed
 		{
-			ATN_PROFILE_SCOPE("ResourceFreeQueue::Flush");
+			TRACY_PROFILE_SCOPE("ResourceFreeQueue::Flush");
 			s_Data.ResourceFreeQueues[s_Data.CurrentResourceFreeQueueIndex].Flush();
 		}
 
@@ -137,19 +144,29 @@ namespace Athena
 
 	void Renderer::EndFrame()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		s_Data.RenderCommandBuffer->End();
 		s_Data.RenderCommandBuffer->Submit();
 	}
 
-	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 instanceCount, uint32 firstInstance)
+	void Renderer::BindGeometryBuffers(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer>& vertexBuffer, const Ref<IndexBuffer>& indexBuffer, const Ref<VertexBuffer>& bonesInfluenceBuffer)
 	{
-		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, vertexBuffer, material, instanceCount, firstInstance);
+		s_Data.RendererAPI->BindGeometryBuffers(cmdBuffer, vertexBuffer, indexBuffer, bonesInfluenceBuffer);
 	}
 
-	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<VertexBuffer>& vertexBuffer, const Ref<Material>& material, uint32 offset, uint32 count)
+	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> instanceBuffer)
 	{
-		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, vertexBuffer, material, offset, count);
+		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, instanceBuffer);
+	}
+
+	void Renderer::RenderGeometryInstanced(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount, uint32 baseInstance, uint32 instanceCount)
+	{
+		s_Data.RendererAPI->RenderGeometryInstanced(cmdBuffer, pipeline, material, baseIndex, indexCount, baseVertex, vertexCount, instanceCount, baseInstance);
+	}
+
+	void Renderer::RenderGeometry(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<Pipeline>& pipeline, const Ref<Material>& material, uint32 baseIndex, uint32 indexCount, uint32 baseVertex, uint32 vertexCount)
+	{
+		s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, material, baseIndex, indexCount, baseVertex, vertexCount);
 	}
 
 	void Renderer::FullscreenPass(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<RenderPass>& pass, const Ref<Pipeline>& pipeline, const Ref<Material>& material)
@@ -157,14 +174,10 @@ namespace Athena
 		pass->Begin(cmdBuffer);
 		{
 			pipeline->Bind(cmdBuffer);
-			s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, s_Data.FullscreenVertexBuffer, material);
+			BindGeometryBuffers(cmdBuffer, s_Data.FullscreenVertexBuffer, nullptr);
+			s_Data.RendererAPI->RenderGeometry(cmdBuffer, pipeline, material, 0, 0, 0, 3);
 		}
 		pass->End(cmdBuffer);
-	}
-
-	void Renderer::BindInstanceRateBuffer(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<VertexBuffer> vertexBuffer)
-	{
-		s_Data.RendererAPI->BindInstanceRateBuffer(cmdBuffer, vertexBuffer);
 	}
 
 	void Renderer::Dispatch(const Ref<RenderCommandBuffer>& cmdBuffer, const Ref<ComputePipeline>& pipeline, Vector3i imageSize, const Ref<Material>& material)

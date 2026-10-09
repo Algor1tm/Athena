@@ -17,15 +17,15 @@ namespace Athena
 	class ATHENA_API SceneSerializer
 	{
 	public:
-		SceneSerializer(const Ref<Scene>& scene);
+		SceneSerializer(WeakRef<Scene> scene);
 
-		void SerializeToFile(const FilePath& path);
+		bool SerializeToFile(const FilePath& path);
 		bool DeserializeFromFile(const FilePath& path);
 
 	private:
 		void SerializeEntity(YAML::Emitter& out, Entity entity);
 
 	private:
-		Ref<Scene> m_Scene;
+		WeakRef<Scene> m_Scene;
 	};
 }

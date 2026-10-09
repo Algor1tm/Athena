@@ -1,5 +1,6 @@
 #include "VulkanSwapChain.h"
 
+#include "Athena/Core/Stats.h"
 #include "Athena/Core/Application.h"
 #include "Athena/ImGui/ImGuiLayer.h"
 
@@ -10,6 +11,8 @@
 
 namespace Athena
 {
+	EXTERN_CYCLE_STAT(STAT_CPUWait);
+
 	VulkanSwapChain::VulkanSwapChain(void* windowHandle, bool vsync)
 	{
 		m_VSync = vsync;
@@ -24,11 +27,11 @@ namespace Athena
 		{
 			m_Surface = VK_NULL_HANDLE;
 			VK_CHECK(glfwCreateWindowSurface(VulkanContext::GetInstance(), (GLFWwindow*)windowHandle, nullptr, &m_Surface));
-			ATN_CORE_INFO_TAG("Vulkan", "Create Window Surface");
+			ATN_LOG_INFO(Vulkan, "Create Window Surface");
 
 			VkBool32 supportWSI;
 			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, m_Surface, &supportWSI);
-			ATN_CORE_VERIFY(supportWSI, "Selected Queue Family does not support WSI!");
+			ensure(supportWSI, "Selected Queue Family does not support WSI!");
 		}
 
 		// Query device properties and create SwapChain
@@ -41,7 +44,7 @@ namespace Athena
 
 			// Surface Capabilites
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, m_Surface, &surfaceCaps);
-			ATN_CORE_VERIFY(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
+			ensuref(surfaceCaps.minImageCount <= Renderer::GetFramesInFlight() && surfaceCaps.maxImageCount >= Renderer::GetFramesInFlight());
 
 			// Format
 			{
@@ -131,7 +134,7 @@ namespace Athena
 
 	bool VulkanSwapChain::Recreate()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		vkDeviceWaitIdle(VulkanContext::GetLogicalDevice());
 
@@ -187,7 +190,7 @@ namespace Athena
 
 		uint32 imagesCount;
 		vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, nullptr);
-		ATN_CORE_VERIFY(imagesCount == framesInFlight);
+		ensuref(imagesCount == framesInFlight);
 
 		m_SwapChainImages.resize(framesInFlight);
 		VK_CHECK(vkGetSwapchainImagesKHR(VulkanContext::GetLogicalDevice(), m_VkSwapChain, &imagesCount, m_SwapChainImages.data()));
@@ -238,9 +241,7 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		ATN_PROFILE_FUNC();
-
-		auto& appStats = Application::Get().GetStats();
+		TRACY_PROFILE_FUNC();
 
 		if (m_Dirty)
 			Recreate();
@@ -249,22 +250,17 @@ namespace Athena
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
 
 		{
-			ATN_PROFILE_SCOPE("vkWaitForFences");
-
-			Timer timer = Timer();
+			TRACY_PROFILE_SCOPE("vkWaitForFences");
+			SCOPE_CYCLE_STAT(STAT_CPUWait);
 
 			vkWaitForFences(logicalDevice, 1, &frameData.RenderCompleteFence, VK_TRUE, UINT64_MAX);
 			vkResetFences(logicalDevice, 1, &frameData.RenderCompleteFence);
-
-			appStats.CPUWait = timer.ElapsedTime();
 		}
 
 		{
-			ATN_PROFILE_SCOPE("vkAcquireNextImageKHR");
-			Timer timer = Timer();
-
+			TRACY_PROFILE_SCOPE("vkAcquireNextImageKHR");
 			VkResult result = vkAcquireNextImageKHR(logicalDevice, m_VkSwapChain, UINT64_MAX, frameData.ImageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
-
+			
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 			{
 				Recreate();
@@ -274,17 +270,14 @@ namespace Athena
 			{
 				VK_CHECK(result);
 			}
-
-			appStats.SwapChain_AcquireImage = timer.ElapsedTime();
 		}
 	}
 
 	void VulkanSwapChain::Present()
 	{
-		ATN_PROFILE_FUNC();
-		Timer timer = Timer();
+		TRACY_PROFILE_FUNC();
 
-		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(m_ImageIndex);
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -294,6 +287,7 @@ namespace Athena
 		presentInfo.pSwapchains = &m_VkSwapChain;
 		presentInfo.pImageIndices = &m_ImageIndex;
 
+		std::lock_guard<std::mutex> lock(VulkanContext::GetDevice()->GetQueueMutex());
 		VkResult result = vkQueuePresentKHR(VulkanContext::GetDevice()->GetQueue(), &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -304,8 +298,6 @@ namespace Athena
 		{
 			VK_CHECK(result);
 		}
-
-		Application::Get().GetStats().SwapChain_Present = timer.ElapsedTime();
 	}
 
 	VkImage VulkanSwapChain::GetCurrentVulkanImage()

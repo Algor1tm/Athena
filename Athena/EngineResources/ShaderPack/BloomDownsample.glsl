@@ -119,13 +119,6 @@ void main()
     else
     {
         result = red + yellow + green + blue + purple;
-
-#if 0
-	    result  = G * 0.125;
-	    result += (A + C + K + M) * 0.03125;
-	    result += (B + F + H + L) * 0.0625;
-	    result += (D + E + I + J) * 0.125;
-#endif
     }
 
     imageStore(u_BloomTextureMip, pixelCoords, vec4(result, 1.0));

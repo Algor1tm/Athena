@@ -1,14 +1,12 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Core/Log.h"
-
 #include "Athena/Scene/Entity.h"
-
+#include "Athena/Scene/Components.h"
+#include "Athena/Renderer/Mesh.h"
 #include "Athena/Renderer/Material.h"
 
 #include "Panels/Panel.h"
-
 #include "Athena/UI/UI.h"
 
 #include <string_view>
@@ -22,7 +20,7 @@ namespace Athena
 	class SceneHierarchyPanel : public Panel
 	{
 	public:
-		SceneHierarchyPanel(std::string_view name, const Ref<EditorContext>& context);
+		SceneHierarchyPanel(const Ref<EditorContext>& context);
 
 		virtual void OnImGuiRender() override;
 
@@ -31,9 +29,6 @@ namespace Athena
 		void DrawEntityNode(Entity entity);
 		void DrawAllComponents(Entity entity);
 
-		void DrawMaterialsEditor();
-		void DrawMaterialProperty(Ref<Material> mat, const String& texName, const String& useTexName, const String& uniformName);
-
 		template <typename Component, typename Func>
 		void DrawComponent(Entity entity, std::string_view name, Func uiFunction);
 
@@ -41,7 +36,6 @@ namespace Athena
 		void DrawAddComponentEntry(Entity entity, std::string_view name);
 
 	private:
-		String m_ActiveMaterial;
 		bool m_EditTagComponent = false;
 	};
 

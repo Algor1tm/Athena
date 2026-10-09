@@ -1,102 +1,132 @@
 #include "Log.h"
+#include "Athena/Core/ConsoleManager.h"
+#include "Athena/Project/Project.h"
+#include "Athena/Core/PlatformUtils.h"
 
-#if defined(_MSC_VER)
-	#pragma warning(push, 0)
-#endif
+#undef check
 
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
-
-
-#ifdef ATN_PLATFORM_WINDOWS
-#include <Windows.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <io.h>
-#include <iostream>
-#include <fstream>
-
-
-static void CreateConsole()
-{
-	int hConHandle;
-	__int64 lStdHandle;
-	CONSOLE_SCREEN_BUFFER_INFO coninfo;
-	FILE* fp;
-
-	const WORD CONSOLE_LINES = 1000;
-
-	// allocate a console for this app
-	AllocConsole();
-
-	// set the screen buffer to be big enough to let us scroll text
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
-
-	coninfo.dwSize.Y = CONSOLE_LINES;
-	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
-
-	// redirect unbuffered STDOUT to the console
-	lStdHandle = reinterpret_cast<__int64>(GetStdHandle(STD_OUTPUT_HANDLE));
-	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-	fp = _fdopen(hConHandle, "w");
-	*stdout = *fp;
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	std::ios::sync_with_stdio();
-}
-
+#if ATN_ENABLE_CHECKS
+	#define check(cond, msg, ...) ATN_INTERNAL_ASSERT_IMPL(cond, msg, __VA_ARGS__)
 #else
-
-static void CreateConsole()
-{
-	ATN_CORE_VERIFY(false, "Not implemented for this platform");
-}
-
+	#define check(cond, msg, ...)
 #endif
+
 
 namespace Athena
 {
-	std::shared_ptr<spdlog::logger> Log::s_CoreLogger;
-	std::shared_ptr<spdlog::logger> Log::s_ClientLogger;
+	static AutoCVar<int32> CVarLogVerbosity(
+		"Log.Verbosity",
+		0,
+		"Set log verbosity, matches LogLevel enum value (0 - trace, 4 - fatal)"
+	);
 
 
-	void Log::Init(bool createConsole)
+	DEFINE_LOG_CATEGORY(LogTemp);
+	DEFINE_LOG_CATEGORY(Debug);
+	DEFINE_LOG_CATEGORY(General);
+	DEFINE_LOG_CATEGORY(Windows);
+	DEFINE_LOG_CATEGORY(Renderer);
+	DEFINE_LOG_CATEGORY(Vulkan);
+	DEFINE_LOG_CATEGORY(AssetManager);
+	DEFINE_LOG_CATEGORY(FileSystem);
+	DEFINE_LOG_CATEGORY(Scene);
+	DEFINE_LOG_CATEGORY(ScriptEngine);
+	DEFINE_LOG_CATEGORY(Editor);
+
+	Logger Logger::s_Instance;
+	static std::shared_ptr<spdlog::logger> s_SPDLogger;
+
+	static std::string_view LogLevelToString(LogLevel level)
 	{
-		if(createConsole)
-			CreateConsole();
+		switch (level)
+		{
+		case LogLevel::Trace: return "Trace";
+		case LogLevel::Info:  return "Info";
+		case LogLevel::Warn:  return "Warn";
+		case LogLevel::Error: return "Error";
+		case LogLevel::Fatal: return "Fatal";
+		}
+
+		return "";
+	}
+
+	static spdlog::level LogLevelToSpdlogLevel(LogLevel level)
+	{
+		switch (level)
+		{
+		case LogLevel::Trace: return spdlog::level::trace;
+		case LogLevel::Info:  return spdlog::level::info;
+		case LogLevel::Warn:  return spdlog::level::warn;
+		case LogLevel::Error: return spdlog::level::err;
+		case LogLevel::Fatal: return spdlog::level::critical;
+		}
+
+		return spdlog::level::trace;
+	}
+
+	void Logger::Init(const LogConfig& config)
+	{
+		if(config.EnableConsole)
+			Platform::CreateAndSyncConsole();
 
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 
 		std::vector<spdlog::sink_ptr> logSinks;
 
-		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("Athena.log", true));
+		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(config.OutputPath.string(), true));
 		logSinks[0]->set_pattern("[%T] [%l] %n: %v");
 
-		if (createConsole)
+		if (config.EnableConsole)
 		{
 			logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
 		}
 
-		spdlog::level::level_enum loglevel;
-#ifdef ATN_LOG_LEVEL_DEBUG
-		loglevel = spdlog::level::trace;
-#else
-		loglevel = spdlog::level::info;
-#endif
+		spdlog::level loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
 
-		s_CoreLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
-		spdlog::register_logger(s_CoreLogger);
-		s_CoreLogger->set_level(loglevel);
-		s_CoreLogger->flush_on(loglevel);
+		s_SPDLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
+		//spdlog::register_logger(s_SPDLogger);
+		s_SPDLogger->set_level(loglevel);
+		s_SPDLogger->flush_on(loglevel);
 
-		s_ClientLogger = std::make_shared<spdlog::logger>("APP", begin(logSinks), end(logSinks));
-		spdlog::register_logger(s_ClientLogger);
-		s_ClientLogger->set_level(loglevel);
-		s_ClientLogger->flush_on(loglevel);
+		CVarLogVerbosity.SetOnChangedCallback([](CVarBase* cVar) 
+		{
+			s_SPDLogger->set_level(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
+			s_SPDLogger->flush_on(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
+		});
+	}
+
+	void Logger::Shutdown()
+	{
+		s_SPDLogger.reset();
+	}
+
+	void Logger::MessageInternal(const String& message, LogLevel level)
+	{
+		switch (level)
+		{
+		case LogLevel::Trace:
+			s_SPDLogger->trace(message);
+			break;
+		case LogLevel::Info:
+			s_SPDLogger->info(message);
+			break;
+		case LogLevel::Warn:
+			s_SPDLogger->warn(message);
+			break;
+		case LogLevel::Error:
+			s_SPDLogger->error(message);
+			break;
+		case LogLevel::Fatal:
+			s_SPDLogger->critical(message);
+			break;
+		}
+
+		String formattedMessage = FormatMessage("[{}] ATHENA: {}\n", LogLevelToString(level), message);
+		Platform::LogNative(formattedMessage);
 	}
 }

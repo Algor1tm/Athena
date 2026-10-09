@@ -77,16 +77,16 @@ namespace Athena::Vulkan
         const char* errorString = GetResultString(error);
 
         if (error > 0)
-            ATN_CORE_ERROR_TAG("Vulkan", "VkResult = {}, Error: {}", (int)error, errorString);
+            ATN_LOG_ERROR(Vulkan, "VkResult = {}, Error: {}", (int)error, errorString);
 
         if (error < 0)
-            ATN_CORE_FATAL_TAG("Vulkan", "VkResult = {}, Fatal Error: {}", (int)error, errorString);
+            ATN_LOG_FATAL(Vulkan, "VkResult = {}, Fatal Error: {}", (int)error, errorString);
 
         return false;
     }
 
-#ifdef ATN_DEBUG
-    #define VK_CHECK(expr) ATN_CORE_ASSERT(::Athena::Vulkan::CheckResult(expr))
+#if ATN_ENABLE_ENSURES
+    #define VK_CHECK(expr) ensuref(::Athena::Vulkan::CheckResult(expr))
 #else
     #define VK_CHECK(expr) expr
 #endif
@@ -94,7 +94,7 @@ namespace Athena::Vulkan
 
     inline void SetObjectDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
     {
-#ifdef VULKAN_ENABLE_DEBUG_INFO
+#if VULKAN_ENABLE_DEBUG_INFO
         static PFN_vkDebugMarkerSetObjectNameEXT PFN_DebugMarkerSetObjectName = nullptr;
 
         if (PFN_DebugMarkerSetObjectName == nullptr)
@@ -122,6 +122,7 @@ namespace Athena::Vulkan
     inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
         uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
     {
+#if 0
         String message = String(pMessage);
 
         std::vector<String> objects;
@@ -170,26 +171,27 @@ namespace Athena::Vulkan
         message += "\n      Objects:";
         uint32 i = 0;
         for (const auto& objectInfo : objects)
-            message += std::format("\n            {}{}", i++, objectInfo);
+            message += fmt::format("\n            {}{}", i++, objectInfo);
         message += "\n\n";
+#endif
 
         switch (flags)
         {
         case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
-            ATN_CORE_INFO_TAG("Vulkan", message); 
+            ATN_LOG_INFO(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", message); 
+            ATN_LOG_WARN(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-            ATN_CORE_WARN_TAG("Vulkan", message); 
+            ATN_LOG_WARN(Vulkan, pMessage);
             break;
 
         case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-            ATN_CORE_ERROR_TAG("Vulkan", message);
-            ATN_CORE_ASSERT(false);
+            ATN_LOG_ERROR(Vulkan, pMessage);
+            ensuref(false);
             break;
         }
 
@@ -206,37 +208,37 @@ namespace Athena::Vulkan
 		case ShaderStage::COMPUTE_STAGE:  return VK_SHADER_STAGE_COMPUTE_BIT;
 		}
 
-		ATN_CORE_ASSERT(false);
+		checkf(false);
 		return (VkShaderStageFlagBits)0;
 	}
 
-    inline VkFormat GetFormat(TextureFormat format)
+    inline VkFormat GetFormat(Format format)
     {
         switch (format)
         {
-        case TextureFormat::R8:              return VK_FORMAT_R8_UNORM;
-        case TextureFormat::R8_SRGB:         return VK_FORMAT_R8_SRGB;
-        case TextureFormat::RG8:             return VK_FORMAT_R8G8_UNORM;
-        case TextureFormat::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
-        case TextureFormat::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
-        case TextureFormat::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
-        case TextureFormat::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
-        case TextureFormat::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
+        case Format::R8:              return VK_FORMAT_R8_UNORM;
+        case Format::R8_SRGB:         return VK_FORMAT_R8_SRGB;
+        case Format::RG8:             return VK_FORMAT_R8G8_UNORM;
+        case Format::RG8_SRGB:        return VK_FORMAT_R8G8_SRGB;
+        case Format::RGB8:            return VK_FORMAT_R8G8B8_UNORM;
+        case Format::RGB8_SRGB:       return VK_FORMAT_R8G8B8_SRGB;
+        case Format::RGBA8:           return VK_FORMAT_R8G8B8A8_UNORM;
+        case Format::RGBA8_SRGB:      return VK_FORMAT_R8G8B8A8_SRGB;
 
-        case TextureFormat::R32F:            return VK_FORMAT_R32_SFLOAT;
-        case TextureFormat::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
-        case TextureFormat::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
-        case TextureFormat::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
-        case TextureFormat::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
-        case TextureFormat::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
-        case TextureFormat::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
+        case Format::R32F:            return VK_FORMAT_R32_SFLOAT;
+        case Format::RG16F:           return VK_FORMAT_R16G16_SFLOAT;
+        case Format::R11G11B10F:      return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case Format::RGB16F:          return VK_FORMAT_R16G16B16_SFLOAT;
+        case Format::RGB32F:          return VK_FORMAT_R32G32B32_SFLOAT;
+        case Format::RGBA16F:         return VK_FORMAT_R16G16B16A16_SFLOAT;
+        case Format::RGBA32F:         return VK_FORMAT_R32G32B32A32_SFLOAT;
 
-        case TextureFormat::DEPTH16:         return VK_FORMAT_D16_UNORM;
-        case TextureFormat::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
-        case TextureFormat::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
+        case Format::DEPTH16:         return VK_FORMAT_D16_UNORM;
+        case Format::DEPTH24STENCIL8: return VK_FORMAT_D24_UNORM_S8_UINT;
+        case Format::DEPTH32F:        return VK_FORMAT_D32_SFLOAT;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFormat)0;
     }
 
@@ -257,14 +259,14 @@ namespace Athena::Vulkan
         case ShaderDataType::UInt:  return VK_FORMAT_R32_UINT;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFormat)0;
     }
 
-    inline VkImageAspectFlagBits GetImageAspectMask(TextureFormat format)
+    inline VkImageAspectFlagBits GetImageAspectMask(Format format)
     {
-        uint32 depthBit = Texture::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
-        uint32 stencilBit = Texture::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 depthBit = FormatUtils::IsDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_NONE;
+        uint32 stencilBit = FormatUtils::IsStencilFormat(format) ? VK_IMAGE_ASPECT_STENCIL_BIT : VK_IMAGE_ASPECT_NONE;
 
         if (!depthBit && !stencilBit)
             return VK_IMAGE_ASPECT_COLOR_BIT;
@@ -281,7 +283,7 @@ namespace Athena::Vulkan
         case TextureType::TEXTURE_CUBE: return VK_IMAGE_TYPE_2D;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkImageType)0;
     }
 
@@ -307,7 +309,7 @@ namespace Athena::Vulkan
                 return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkImageViewType)0;
     }
 
@@ -317,9 +319,10 @@ namespace Athena::Vulkan
         {
         case TextureFilter::NEAREST:return VK_FILTER_NEAREST;
         case TextureFilter::LINEAR: return VK_FILTER_LINEAR;
+        case TextureFilter::TRILINEAR: return VK_FILTER_LINEAR;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkFilter)0;
     }
 
@@ -328,10 +331,11 @@ namespace Athena::Vulkan
         switch (filter)
         {
         case TextureFilter::NEAREST:return VK_SAMPLER_MIPMAP_MODE_NEAREST;
-        case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+        case TextureFilter::TRILINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkSamplerMipmapMode)0;
     }
 
@@ -346,7 +350,7 @@ namespace Athena::Vulkan
         case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkSamplerAddressMode)0;
     }
 
@@ -359,7 +363,7 @@ namespace Athena::Vulkan
         case TextureCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return (VkCompareOp)0;
     }
 
@@ -393,15 +397,38 @@ namespace Athena::Vulkan
             return texture.As<VulkanTextureCube>()->GetImage();
         }
 
-        ATN_CORE_ASSERT(false);
+        checkf(false);
         return nullptr;
     }
 
-    inline VkCommandBuffer BeginSingleTimeCommands()
+    inline Ref<VulkanImage> GetImage(Texture* texture)
     {
+        if (texture->GetType() == TextureType::TEXTURE_2D)
+        {
+            return reinterpret_cast<VulkanTexture2D*>(texture)->GetImage();
+        }
+        else if (texture->GetType() == TextureType::TEXTURE_CUBE)
+        {
+            return reinterpret_cast<VulkanTextureCube*>(texture)->GetImage();
+        }
+
+        checkf(false);
+        return nullptr;
+    }
+
+    inline VkCommandBuffer BeginSingleTimeCommands(VkCommandPool* commandPool)
+    {
+        // This function might be called from another thread so we need to create another command pool
+
+        VkCommandPoolCreateInfo commandPoolCI = {};
+        commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCI.queueFamilyIndex = VulkanContext::GetDevice()->GetQueueFamily();
+        commandPoolCI.flags = 0;
+        VK_CHECK(vkCreateCommandPool(VulkanContext::GetLogicalDevice(), &commandPoolCI, nullptr, commandPool));
+
         VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
         cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        cmdBufAllocInfo.commandPool = VulkanContext::GetCommandPool();
+        cmdBufAllocInfo.commandPool = *commandPool;
         cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cmdBufAllocInfo.commandBufferCount = 1;
 
@@ -417,7 +444,7 @@ namespace Athena::Vulkan
         return vkCommandBuffer;
     }
 
-    inline void EndSingleTimeCommands(VkCommandBuffer vkCommandBuffer)
+    inline void EndSingleTimeCommands(VkCommandBuffer vkCommandBuffer, VkCommandPool commandPool)
     {
         vkEndCommandBuffer(vkCommandBuffer);
 
@@ -432,18 +459,17 @@ namespace Athena::Vulkan
 
         VkFence fence;
         VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
-
-        VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
-
+        VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
         VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 
         vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
-        vkFreeCommandBuffers(VulkanContext::GetLogicalDevice(), VulkanContext::GetCommandPool(), 1, &vkCommandBuffer);
+        vkDestroyCommandPool(VulkanContext::GetLogicalDevice(), commandPool, nullptr);
     }
 
     inline void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
     {
-        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands();
+        VkCommandPool commandPool;
+        VkCommandBuffer vkCommandBuffer = BeginSingleTimeCommands(&commandPool);
         {
             VkBufferCopy copyRegion{};
             copyRegion.srcOffset = 0;
@@ -452,10 +478,10 @@ namespace Athena::Vulkan
 
             vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
         }
-        EndSingleTimeCommands(vkCommandBuffer);
+        EndSingleTimeCommands(vkCommandBuffer, commandPool);
     }
 
-    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, TextureFormat format, uint32 mipLevels)
+    inline void BlitMipMap(VkCommandBuffer commandBuffer, VkImage image, uint32 width, uint32 height, uint32 layers, Format format, uint32 mipLevels)
     {
         int32 mipWidth = width;
         int32 mipHeight = height;

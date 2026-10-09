@@ -6,7 +6,7 @@
 #include "Athena/Renderer/Texture.h"
 
 #include <map>
-
+#include <functional>
 
 namespace Athena
 {
@@ -82,7 +82,7 @@ namespace Athena
 		Vector3u WorkGroupSize;
 	};
 
-	class ATHENA_API Shader : public RefCounted
+	class ATHENA_API Shader: public RefCounted
 	{
 	public:
 		static Ref<Shader> Create(const FilePath& path);
@@ -111,7 +111,7 @@ namespace Athena
 		std::unordered_map<uint64, std::function<void()>> m_OnReloadCallbacks;
 	};
 
-	class ATHENA_API ShaderPack : public RefCounted
+	class ATHENA_API ShaderPack: public RefCounted
 	{
 	public:
 		static Ref<ShaderPack> Create(const FilePath& path);

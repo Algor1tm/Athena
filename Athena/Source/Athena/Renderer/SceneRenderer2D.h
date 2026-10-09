@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Core.h"
-
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Font.h"
 #include "Athena/Renderer/Camera.h"
@@ -37,7 +37,7 @@ namespace Athena
 
 	struct QuadBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 IndexCount;
 		Ref<Material> Material;
 	};
@@ -63,7 +63,7 @@ namespace Athena
 
 	struct LineBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 VertexCount;
 		float LineWidth;
 	};
@@ -79,7 +79,7 @@ namespace Athena
 
 	struct TextBatch
 	{
-		uint32 VertexOffset;
+		uint32 BaseVertex;
 		uint32 IndexCount;
 		Ref<Material> Material; // contains only 1 atlas texture
 	};
@@ -100,7 +100,7 @@ namespace Athena
 	};
 
 
-	class ATHENA_API SceneRenderer2D : public RefCounted
+	class ATHENA_API SceneRenderer2D: public RefCounted
 	{
 	public:
 		static Ref<SceneRenderer2D> Create(const Ref<RenderPass>& renderPass);
@@ -116,19 +116,19 @@ namespace Athena
 
 		void DrawQuad(Vector2 position, Vector2 size, const LinearColor& color = LinearColor::White);
 		void DrawQuad(Vector3 position, Vector2 size, const LinearColor& color = LinearColor::White);
-		void DrawQuad(Vector2 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawQuad(Vector3 position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector2 position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(Vector3 position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
 		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const LinearColor& color = LinearColor::White);
-		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
-		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector2 position, Vector2 size, float rotation, const Ref<TextureAsset>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawRotatedQuad(Vector3 position, Vector2 size, float rotation, const Ref<TextureAsset>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawQuad(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White);
-		void DrawQuad(const Matrix4& transform, const Texture2DInstance& texture, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawQuad(const Matrix4& transform, const Ref<TextureAsset>& texture, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const LinearColor& color = LinearColor::White);
-		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Texture2DInstance& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
+		void DrawBillboardFixedSize(const Vector3& position, Vector2 size, const Ref<TextureAsset>& texture, const LinearColor& tint = LinearColor::White, float tilingFactor = 1.f);
 
 		void DrawCircle(const Matrix4& transform, Renderer2DSpace space = Renderer2DSpace::WorldSpace, const LinearColor& color = LinearColor::White, float thickness = 1.f, float fade = 0.005f);
 

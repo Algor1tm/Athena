@@ -27,7 +27,7 @@ namespace Athena
 				VulkanContext::GetAllocator()->DestroyBuffer(vertexBuffer, name);
 
 			for (uint32 i = 0; i < vertexBufferSet.size(); ++i)
-				VulkanContext::GetAllocator()->DestroyBuffer(vertexBufferSet[i], std::format("{}_{}", name, i));
+				VulkanContext::GetAllocator()->DestroyBuffer(vertexBufferSet[i], fmt::format("{}_{}", name, i));
 		});
 
 		m_VertexBufferSet.clear();
@@ -35,7 +35,7 @@ namespace Athena
 
 	void VulkanVertexBuffer::UploadData(const void* data, uint64 size, uint64 offset)
 	{
-		ATN_CORE_ASSERT(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
+		ensuref(m_Info.Flags == BufferMemoryFlags::CPU_WRITEABLE);
 
 		if (size == 0)
 			return;
@@ -87,7 +87,7 @@ namespace Athena
 
 			for (uint32 i = 0; i < m_VertexBufferSet.size(); ++i)
 			{
-				String bufferName = std::format("{}_{}", m_Info.Name, i);
+				String bufferName = fmt::format("{}_{}", m_Info.Name, i);
 				VkDeviceSize bufferSize = m_Info.Size;
 
 				VkBufferCreateInfo bufferInfo = {};

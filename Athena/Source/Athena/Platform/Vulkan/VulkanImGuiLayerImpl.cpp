@@ -7,7 +7,7 @@
 #include "Athena/Platform/Vulkan/VulkanTextureView.h"
 #include "Athena/Platform/Vulkan/VulkanImage.h"
 #include "Athena/Platform/Vulkan/VulkanRenderCommandBuffer.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_vulkan.h>
@@ -96,22 +96,15 @@ namespace Athena
 		init_info.Queue = VulkanContext::GetDevice()->GetQueue();
 		init_info.PipelineCache = VK_NULL_HANDLE;
 		init_info.DescriptorPool = m_ImGuiDescriptorPool;
-		init_info.Subpass = 0;
 		init_info.MinImageCount = Renderer::GetFramesInFlight();
 		init_info.ImageCount = Renderer::GetFramesInFlight();
-		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info.PipelineInfoMain.Subpass = 0;
+		init_info.PipelineInfoMain.RenderPass = m_ImGuiRenderPass;
+		init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = nullptr;
-		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ATN_CORE_ASSERT(result == VK_SUCCESS) };
+		init_info.CheckVkResultFn = [](VkResult result) { Vulkan::CheckResult(result); ensuref(result == VK_SUCCESS) };
 
-		ImGui_ImplVulkan_Init(&init_info, m_ImGuiRenderPass);
-
-		VkCommandBuffer vkCommandBuffer = Vulkan::BeginSingleTimeCommands();
-		{
-			ImGui_ImplVulkan_CreateFontsTexture(vkCommandBuffer);
-		}
-		Vulkan::EndSingleTimeCommands(vkCommandBuffer);
-
-		ImGui_ImplVulkan_DestroyFontUploadObjects();
+		ImGui_ImplVulkan_Init(&init_info);
 	}
 
 	void VulkanImGuiLayerImpl::Shutdown()
@@ -122,20 +115,20 @@ namespace Athena
 		Renderer::SubmitResourceFree([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass, 
 			framebuffers = m_SwapChainFramebuffers]()
 		{
+			ImGui_ImplVulkan_Shutdown();
+			ImGui_ImplGlfw_Shutdown();
+
 			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), descPool, nullptr);
 			vkDestroyRenderPass(VulkanContext::GetLogicalDevice(), renderPass, nullptr);
 
 			for (auto framebuffer : framebuffers)
 				vkDestroyFramebuffer(VulkanContext::GetLogicalDevice(), framebuffer, nullptr);
-
-			ImGui_ImplVulkan_Shutdown();
-			ImGui_ImplGlfw_Shutdown();
 		});
 	}
 
 	void VulkanImGuiLayerImpl::NewFrame()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		InvalidateDescriptorSets();
 
@@ -145,7 +138,7 @@ namespace Athena
 
 	void VulkanImGuiLayerImpl::RenderDrawData(uint32 width, uint32 height)
 	{
-		ATN_PROFILE_FUNC()
+		TRACY_PROFILE_FUNC()
 
 		Ref<SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain();
 		VkCommandBuffer commandBuffer = Renderer::GetRenderCommandBuffer().As<VulkanRenderCommandBuffer>()->GetActiveCommandBuffer();
@@ -171,9 +164,16 @@ namespace Athena
 		Renderer::EndDebugRegion(Renderer::GetRenderCommandBuffer());
 	}
 
+	void VulkanImGuiLayerImpl::RenderViewports()
+	{
+		std::lock_guard<std::mutex> lock(VulkanContext::GetDevice()->GetQueueMutex());
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
+
 	void VulkanImGuiLayerImpl::OnSwapChainRecreate()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 		RecreateFramebuffers();
 	}
 
@@ -212,7 +212,7 @@ namespace Athena
 	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<TextureView>& view)
 	{
 		if (view == nullptr)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		if (m_TextureViewsMap.contains(view))
 			return m_TextureViewsMap.at(view).Set;
@@ -222,7 +222,7 @@ namespace Athena
 		info.VulkanSampler = view.As<VulkanTextureView>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -233,7 +233,7 @@ namespace Athena
 	void* VulkanImGuiLayerImpl::GetTextureID(const Ref<Texture2D>& texture)
 	{
 		if (texture == nullptr)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		if (m_TexturesMap.contains(texture))
 			return m_TexturesMap.at(texture).Set;
@@ -243,7 +243,7 @@ namespace Athena
 		info.VulkanSampler = texture.As<VulkanTexture2D>()->GetVulkanSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(TextureGenerator::GetWhiteTexture());
+			return GetTextureID(EngineTextures::GetWhiteTexture());
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 

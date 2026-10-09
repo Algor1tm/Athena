@@ -7,8 +7,62 @@
 #version 460 core
 #pragma stage : compute
 
-#include "Include/Lighting.glslh"
 #include "Include/Common.glslh"
+#include "Include/Buffers.glslh"
+
+struct DirectionalLight
+{
+    vec4 Color;
+    vec3 Direction;
+    float Intensity;
+    float LightSize;
+	int CastShadows;
+};
+
+struct PointLight
+{
+    vec4 Color;
+    vec3 Position;
+    float Intensity;
+    float Radius;
+    float FallOff;
+};
+
+struct SpotLight
+{
+	vec4 Color;
+	vec3 Position;
+	float Intensity;
+	vec3 Direction;
+	float SpotAngle;    // Cosine of the half angle
+    float InnerFallOff;
+	float Range;
+	float RangeFallOff;
+};
+
+layout(std430, set = 1, binding = 2) readonly buffer u_LightData
+{
+    DirectionalLight g_DirectionalLights[MAX_DIRECTIONAL_LIGHT_COUNT];
+    int g_DirectionalLightCount;
+
+    PointLight g_PointLights[MAX_POINT_LIGHT_COUNT];
+    int g_PointLightCount;
+
+    SpotLight g_SpotLights[MAX_SPOT_LIGHT_COUNT];
+    int g_SpotLightCount;
+};
+
+struct TileVisibleLights
+{
+	uint LightCount;
+	uint LightIndices[MAX_POINT_LIGHT_COUNT_PER_TILE];
+};
+
+layout(std430, set = 1, binding = 3) buffer u_VisibleLightsData
+{
+    TileVisibleLights u_VisibleLights[];
+};
+
 
 layout(local_size_x = LIGHT_TILE_SIZE, local_size_y = LIGHT_TILE_SIZE, local_size_z = 1) in;
 
@@ -19,7 +73,6 @@ shared uint s_MaxDepthInt;
 shared vec4 s_FrustumPlanes[6];
 shared uint s_VisibleLightCount;
 shared int s_VisibleLightIndices[MAX_POINT_LIGHT_COUNT_PER_TILE];
-
 
 void main() 
 {

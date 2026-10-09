@@ -1,6 +1,4 @@
 #include "PanelManager.h"
-
-#include "Athena/Core/Log.h"
 #include "Athena/Input/Input.h"
 
 #include "Panels/Panel.h"
@@ -18,6 +16,7 @@ namespace Athena
 		case Keyboard::I: return "Ctrl+I";
 		case Keyboard::K: return "Ctrl+K";
 		case Keyboard::J: return "Ctrl+J";
+		case Keyboard::U: return "Ctrl+U";
 		}
 
 		return NULL;
@@ -62,23 +61,35 @@ namespace Athena
 		}
 	}
 
-	void PanelManager::AddPanel(const Ref<Panel>& panel, bool isHideable)
+	void PanelManager::AddPanel(const Ref<Panel>& panel, bool isHideable, bool defaultOpen)
 	{
 		PanelDescription desc;
 		desc.PanelRef = panel;
-		desc.IsOpen = true;
+		desc.IsOpen = defaultOpen;
 		desc.IsHideable = isHideable;
 		m_Panels[panel->GetName()] = desc;
 	}
 
-	void PanelManager::AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey)
+	void PanelManager::AddPanel(const Ref<Panel>& panel, Keyboard::Key hotkey, bool defaultOpen)
 	{
 		PanelDescription desc;
 		desc.PanelRef = panel;
-		desc.IsOpen = true;
+		desc.IsOpen = defaultOpen;
 		desc.IsHideable = true;
 		desc.HotKey = hotkey;
 		m_Panels[panel->GetName()] = desc;
+	}
+
+	void PanelManager::ClosePanel(std::string_view name)
+	{
+		checkf(m_Panels.contains(name));
+		m_Panels.at(name).IsOpen = false;
+	}
+
+	void PanelManager::OpenPanel(std::string_view name)
+	{
+		checkf(m_Panels.contains(name));
+		m_Panels.at(name).IsOpen = true;
 	}
 
 	bool PanelManager::OnKeyPressedEvent(KeyPressedEvent& event)

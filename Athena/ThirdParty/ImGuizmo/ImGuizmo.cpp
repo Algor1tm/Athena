@@ -1151,7 +1151,7 @@ namespace ImGuizmo
             gContext.mRadiusSquareCenter = radiusAxis;
          }
 
-         drawList->AddPolyline(circlePos, halfCircleSegmentCount, colors[3 - axis], false, lineThickness);
+         drawList->AddPolyline(circlePos, halfCircleSegmentCount, colors[3 - axis], lineThickness, ImDrawFlags_None);
       }
       drawList->AddCircle(worldToPos(gContext.mModel.v.position, gContext.mViewProjection), gContext.mRadiusSquareCenter * 1.1f, colors[0], 64, circleLineThickness);
 
@@ -1171,7 +1171,7 @@ namespace ImGuizmo
             circlePos[i] = worldToPos(pos + gContext.mModel.v.position, gContext.mViewProjection);
          }
          drawList->AddConvexPolyFilled(circlePos, halfCircleSegmentCount, 0x801080FF);
-         drawList->AddPolyline(circlePos, halfCircleSegmentCount, 0xFF1080FF, true, 2);
+         drawList->AddPolyline(circlePos, halfCircleSegmentCount, 0xFF1080FF, 2.f, ImDrawFlags_Closed);
 
          ImVec2 destinationPosOnScreen = circlePos[1];
          char tmps[512];
@@ -1317,7 +1317,7 @@ namespace ImGuizmo
                vec_t cornerWorldPos = (dirPlaneX * quadUV[j * 2] + dirPlaneY * quadUV[j * 2 + 1]) * gContext.mScreenFactor;
                screenQuadPts[j] = worldToPos(cornerWorldPos, gContext.mMVP);
             }
-            drawList->AddPolyline(screenQuadPts, 4, directionColor[i], true, 1.0f);
+            drawList->AddPolyline(screenQuadPts, 4, directionColor[i], 1.0f, ImDrawFlags_Closed);
             drawList->AddConvexPolyFilled(screenQuadPts, 4, colors[i + 4]);
          }
       }
@@ -1752,7 +1752,7 @@ namespace ImGuizmo
       // move
       if (gContext.mbUsing && (gContext.mActualID == -1 || gContext.mActualID == gContext.mEditingID))
       {
-         ImGui::CaptureMouseFromApp();
+         ImGui::SetNextFrameWantCaptureMouse(true);
          const float len = fabsf(IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan)); // near plan
          vec_t newPos = gContext.mRayOrigin + gContext.mRayVector * len;
 
@@ -1822,7 +1822,7 @@ namespace ImGuizmo
          type = GetMoveType(&gizmoHitProportion);
          if (type != NONE)
          {
-            ImGui::CaptureMouseFromApp();
+             ImGui::SetNextFrameWantCaptureMouse(true);
          }
          if (CanActivate() && type != NONE)
          {
@@ -1863,7 +1863,7 @@ namespace ImGuizmo
          type = GetScaleType();
          if (type != NONE)
          {
-            ImGui::CaptureMouseFromApp();
+             ImGui::SetNextFrameWantCaptureMouse(true);
          }
          if (CanActivate() && type != NONE)
          {
@@ -1886,7 +1886,7 @@ namespace ImGuizmo
       // scale
       if (gContext.mbUsing && (gContext.mActualID == -1 || gContext.mActualID == gContext.mEditingID))
       {
-         ImGui::CaptureMouseFromApp();
+         ImGui::SetNextFrameWantCaptureMouse(true);
          const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, gContext.mTranslationPlan);
          vec_t newPos = gContext.mRayOrigin + gContext.mRayVector * len;
          vec_t newOrigin = newPos - gContext.mRelativeOrigin * gContext.mScreenFactor;
@@ -1961,7 +1961,7 @@ namespace ImGuizmo
 
          if (type != NONE)
          {
-            ImGui::CaptureMouseFromApp();
+            ImGui::SetNextFrameWantCaptureMouse(true);
          }
 
          if (type == ROTATE_SCREEN)
@@ -1995,7 +1995,7 @@ namespace ImGuizmo
       // rotation
       if (gContext.mbUsing && (gContext.mActualID == -1 || gContext.mActualID == gContext.mEditingID))
       {
-         ImGui::CaptureMouseFromApp();
+         ImGui::SetNextFrameWantCaptureMouse(true);
          gContext.mRotationAngle = ComputeAngleOnPlan();
          if (snap)
          {

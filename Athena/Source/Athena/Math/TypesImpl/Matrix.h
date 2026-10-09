@@ -34,7 +34,7 @@ namespace Athena::Math
 
 		constexpr Matrix(const std::initializer_list<RowType>& values)
 		{
-			ATN_CORE_ASSERT(values.size() == Column, "Invalid initializer list");
+			check(values.size() == Column, "Invalid initializer list");
 			uint32 idx = 0;
 			for (auto& row : values)
 			{
@@ -87,7 +87,7 @@ namespace Athena::Math
 
 		constexpr ColumnType GetColumn(uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < Row, "Matrix subscript out of range");
+			check(idx < Row, "Matrix subscript out of range");
 			ColumnType out;
 			for (uint32 i = 0; i < Column; ++i)
 				out[i] = m_Array[i][idx];
@@ -142,13 +142,13 @@ namespace Athena::Math
 	public:
 		constexpr const RowType& operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
+			check(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 
 		constexpr RowType& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < Column, "Matrix subscript out of range");
+			check(idx < Column, "Matrix subscript out of range");
 			return m_Array[idx];
 		}
 

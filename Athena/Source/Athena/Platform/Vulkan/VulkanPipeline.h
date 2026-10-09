@@ -25,7 +25,7 @@ namespace Athena
 		virtual Ref<RenderResource> GetInput(const String& name) override;;
 		virtual void Bake() override;
 
-		void RT_SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);
+		void SetPushConstants(VkCommandBuffer commandBuffer, const Ref<Material>& material);
 
 	private:
 		void CleanUp();

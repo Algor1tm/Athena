@@ -1,7 +1,6 @@
 #include "LayerStack.h"
 
 #include "Athena/Core/Layer.h"
-#include "Athena/Core/Log.h"
 
 
 namespace Athena
@@ -36,7 +35,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop layer with name = {0}", layer->GetName());
+			ATN_LOG_ERROR(General, "Could not pop layer with name = {0}", layer->GetName());
 		}
 	}
 
@@ -51,7 +50,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("LayerStack", "Could not pop overlay with name = {0}", overlay->GetName());
+			ATN_LOG_ERROR(General, "Could not pop overlay with name = {0}", overlay->GetName());
 		}
 	}
 

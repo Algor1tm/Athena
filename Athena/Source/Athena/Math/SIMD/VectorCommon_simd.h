@@ -3,7 +3,7 @@
 #include "Athena/Math/SIMD/Platform.h"
 
 
-#ifdef ATN_SSE_2
+#if ATN_SSE_2
 
 namespace Athena::Math
 {
@@ -51,7 +51,7 @@ namespace Athena::Math
 
 	inline Vector<float, 4> Round(const Vector<float, 4>& vec)
 	{
-#ifdef ATN_SSE_4_1
+#if ATN_SSE_4_1
 		__m128 out = _mm_round_ps(vec._data, _MM_FROUND_TO_NEAREST_INT);
 #else
 		__m128 sgn0 = _mm_castsi128_ps(_mm_set1_epi32(int(0x80000000)));
@@ -65,7 +65,7 @@ namespace Athena::Math
 
 	inline Vector<float, 4> Floor(const Vector<float, 4>& vec)
 	{
-#ifdef ATN_SSE_4_1
+#if ATN_SSE_4_1
 		__m128 out = _mm_floor_ps(vec._data);
 #else
 		__m128 rnd0 = Round(vec)._data;
@@ -79,7 +79,7 @@ namespace Athena::Math
 
 	inline Vector<float, 4> Ceil(const Vector<float, 4>& vec)
 	{
-#ifdef ATN_SSE_4_1
+#if ATN_SSE_4_1
 		__m128 out = _mm_ceil_ps(vec._data);
 #else
 		__m128 rnd0 = Round(vec)._data;

@@ -3,7 +3,7 @@
 #include "Athena/Math/SIMD/Platform.h"
 
 
-#ifdef ATN_SSE_2
+#if ATN_SSE_2
 
 namespace Athena::Math
 {
@@ -227,13 +227,13 @@ namespace Athena::Math
 	public:
 		constexpr const float& operator[](uint32 idx) const
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
+			check(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 
 		constexpr float& operator[](uint32 idx)
 		{
-			ATN_CORE_ASSERT(idx < Size4, "Vector subscript out of range");
+			check(idx < Size4, "Vector subscript out of range");
 			return *(&x + idx);
 		}
 

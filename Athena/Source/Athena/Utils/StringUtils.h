@@ -12,13 +12,13 @@ namespace Athena::Utils
 	{
 		// MBs
 		if (bytes > 1024 * 1024)
-			return std::format("{:.2f} MBs", (float)bytes / (1024.f * 1024.f));
+			return fmt::format("{:.2f} MBs", (float)bytes / (1024.f * 1024.f));
 
 		// KBs
 		if (bytes > 1024)
-			return std::format("{:.2f} KBs", (float)bytes / 1024.f);
+			return fmt::format("{:.2f} KBs", (float)bytes / 1024.f);
 
-		return std::format("{} bytes", bytes);
+		return fmt::format("{} bytes", bytes);
 	}
 
 	// From imgui.cpp
@@ -83,6 +83,55 @@ namespace Athena::Utils
 
 			i += wanted - 1;
 			result.push_back(u32Char);
+		}
+
+		return result;
+	}
+
+	inline void ReplaceAll(String& src, const String& from, const String& to)
+	{
+		if (from.size() < to.size())
+		{
+			size_t occurences = 0;
+			size_t pos = 0;
+			while ((pos = src.find(from, pos)) != std::string::npos)
+			{
+				occurences++;
+				pos += to.size();
+			}
+
+			src.reserve(src.capacity() + occurences * (to.size() - from.size()));
+		}
+
+		size_t pos = 0;
+		while ((pos = src.find(from, pos)) != std::string::npos)
+		{
+			src.replace(pos, from.size(), to);
+			pos += to.size();
+		}
+	}
+
+	inline String ToLower(const String& str)
+	{
+		String result;
+		result.resize(str.size());
+
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			result[i] = std::tolower(str[i]);
+		}
+
+		return result;
+	}
+
+	inline String ToUpper(const String& str)
+	{
+		String result;
+		result.resize(str.size());
+
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			result[i] = std::toupper(str[i]);
 		}
 
 		return result;

@@ -1,7 +1,7 @@
 #include "ViewportPanel.h"
 
 #include "Athena/UI/UI.h"
-#include "Athena/Renderer/TextureGenerator.h"
+#include "Athena/Renderer/EngineTextures.h"
 #include "ImGuizmoLayer.h"
 
 #include <ImGui/imgui.h>
@@ -83,7 +83,6 @@ namespace Athena
         if (ImGui::BeginDragDropTarget())
         {
             m_DragDropCallback();
-
             ImGui::EndDragDropTarget();
         }
 

@@ -2,10 +2,9 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Shader.h"
-#include "Athena/Renderer/ShaderCompiler.h"
+#include "Athena/Platform/Vulkan/VulkanShaderCompiler.h"
 
 #include <vulkan/vulkan.h>
-
 
 namespace Athena
 {
@@ -26,7 +25,7 @@ namespace Athena
 
 	private:
 		void CompileOrGetFromCache(bool forceCompile);
-		void CreateVulkanShaderModulesAndStages(const ShaderCompiler& compiler);
+		void CreateVulkanShaderModulesAndStages(const VulkanShaderCompiler& compiler);
 
 	private:
 		std::unordered_map<ShaderStage, VkShaderModule> m_VulkanShaderModules;

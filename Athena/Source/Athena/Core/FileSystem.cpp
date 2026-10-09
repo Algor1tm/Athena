@@ -19,7 +19,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to read file {}", path);
 		}
 
 		return result;
@@ -41,7 +41,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to read binary file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to read binary file {}", path);
 		}
 		
 		return result;
@@ -63,7 +63,7 @@ namespace Athena
 		}
 		else
 		{
-			ATN_CORE_ERROR_TAG("[FileSystem]", "Failed to write to file {}", path);
+			ATN_LOG_ERROR(FileSystem, "Failed to write to file {}", path);
 		}
 
 		return false;
@@ -72,6 +72,16 @@ namespace Athena
 	bool FileSystem::Remove(const FilePath& path)
 	{
 		return std::filesystem::remove_all(path);
+	}
+
+	bool FileSystem::Copy(const FilePath& from, const FilePath& to)
+	{
+		std::error_code error;
+		std::filesystem::copy_options options = std::filesystem::copy_options::overwrite_existing;
+
+		std::filesystem::copy(from, to, options, error);
+
+		return error.value() == 0;
 	}
 
 	FilePath FileSystem::GetWorkingDirectory()
@@ -92,5 +102,17 @@ namespace Athena
 	bool FileSystem::Exists(const FilePath& path)
 	{
 		return std::filesystem::exists(path);
+	}
+
+	uint64 FileSystem::GetLastWriteTimestamp(const FilePath& path)
+	{
+		std::filesystem::file_time_type lastWriteTime = std::filesystem::last_write_time(path);
+		uint64_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(lastWriteTime.time_since_epoch()).count();
+		return timestamp;
+	}
+
+	FilePath FileSystem::GenericFormat(const FilePath& path)
+	{
+		return FilePath(path.generic_string());
 	}
 }

@@ -38,7 +38,7 @@ void main()
 
     vec3 T = normalize(viewTransform * vec4(a_Tangent, 0)).xyz;
     vec3 B = normalize(viewTransform * vec4(a_Bitangent, 0)).xyz;
-    vec3 N =  Interpolators.Normal;
+    vec3 N = Interpolators.Normal;
     T = normalize(T - dot(T, N) * N);
     
     Interpolators.TBN = mat3(T, B, N);
@@ -64,14 +64,17 @@ layout(location = 2) out vec2 o_RoughnessMetalness;
 
 layout(push_constant) uniform u_MaterialData
 {
+    uint u_BonesOffset;
+
+    uint u_UseAlbedoMap;
+    uint u_UseNormalMap;
+    uint u_UseRoughnessMap;
+
     vec4 u_Albedo;
     float u_Roughness;
     float u_Metalness;
     float u_Emission;
 
-    uint u_UseAlbedoMap;
-    uint u_UseNormalMap;
-    uint u_UseRoughnessMap;
     uint u_UseMetalnessMap;
 };
 

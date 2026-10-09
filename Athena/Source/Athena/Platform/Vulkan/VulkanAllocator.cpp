@@ -59,8 +59,11 @@ namespace Athena
 		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
 
 		VkDeviceSize size = allocation->GetSize();
+
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
-			ATN_CORE_TRACE_TAG("Renderer", "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			ATN_LOG_TRACE(Renderer, "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		return VulkanBufferAllocation(buffer, allocation);
 	}
@@ -76,8 +79,10 @@ namespace Athena
 
 		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
 
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = allocation->GetSize();
-		ATN_CORE_TRACE_TAG("Renderer", "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+		ATN_LOG_TRACE(Renderer, "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		return VulkanImageAllocation(image, allocation);
 	}
@@ -85,16 +90,21 @@ namespace Athena
 	void VulkanAllocator::DestroyBuffer(VulkanBufferAllocation buffer, const String& name)
 	{
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
+
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if(!name.empty())
-			ATN_CORE_TRACE_TAG("Renderer", "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			ATN_LOG_TRACE(Renderer, "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
 	}
 
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
+#if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_CORE_TRACE_TAG("Renderer", "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+		ATN_LOG_TRACE(Renderer, "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+#endif
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
@@ -110,11 +120,7 @@ namespace Athena
 
 		VkSampler sampler;
 
-		bool enableAnisotropy = Renderer::GetRenderCaps().MaxSamplerAnisotropy != 0.f;
-		enableAnisotropy = enableAnisotropy && info.Filter == TextureFilter::LINEAR;
-
-		// Clamp to 2.f for now
-		float maxAnisotropy = Math::Min(2.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
+		float maxAnisotropy = Math::Min(info.AnisotropyLevel, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
 
 		VkSamplerCreateInfo vksamplerInfo = {};
 		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -124,7 +130,7 @@ namespace Athena
 		vksamplerInfo.addressModeU = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeV = Vulkan::GetWrap(info.Wrap);
 		vksamplerInfo.addressModeW = Vulkan::GetWrap(info.Wrap);
-		vksamplerInfo.anisotropyEnable = enableAnisotropy;
+		vksamplerInfo.anisotropyEnable = maxAnisotropy > 1.f;
 		vksamplerInfo.maxAnisotropy = maxAnisotropy;
 		vksamplerInfo.compareEnable = info.Compare == TextureCompareOperator::NONE ? false : true;
 		vksamplerInfo.compareOp = Vulkan::GetCompareOp(info.Compare);
@@ -142,10 +148,10 @@ namespace Athena
 
 	void VulkanAllocator::DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler)
 	{
-		ATN_CORE_ASSERT(m_SamplersMap.contains(info));
+		checkf(m_SamplersMap.contains(info));
 
 		auto& samplerInfo = m_SamplersMap.at(info);
-		ATN_CORE_ASSERT(samplerInfo.Sampler == sampler);
+		checkf(samplerInfo.Sampler == sampler);
 
 		samplerInfo.RefCount--;
 
@@ -184,18 +190,15 @@ namespace Athena
 
 	DescriptorSetAllocator::~DescriptorSetAllocator()
 	{
-		Renderer::SubmitResourceFree([freePools = m_FreePools, usedPools = m_UsedPools]()
+		for (auto pool : m_FreePools)
 		{
-			for (auto pool : freePools)
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-			}
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+		}
 
-			for (auto pool : usedPools)
-			{
-				vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
-			}
-		});
+		for (auto pool : m_UsedPools)
+		{
+			vkDestroyDescriptorPool(VulkanContext::GetLogicalDevice(), pool, nullptr);
+		}
 	}
 
 	void DescriptorSetAllocator::ResetPools()
@@ -203,7 +206,7 @@ namespace Athena
 		for (auto p : m_UsedPools) 
 		{
 			vkResetDescriptorPool(VulkanContext::GetLogicalDevice(), p, 0);
-			ATN_CORE_WARN_TAG("Vulkan", "Reseting Descriptor Pool");
+			ATN_LOG_WARN(Vulkan, "Reseting Descriptor Pool");
 
 			m_FreePools.push_back(p);
 		}
@@ -234,7 +237,7 @@ namespace Athena
 			needReallocate = true;
 			break;
 		default:
-			ATN_CORE_ASSERT(false);
+			ensure(false, "Failed to allocate descriptor set!");
 			return false;
 		}
 
@@ -251,8 +254,7 @@ namespace Athena
 				return true;
 		}
 		
-		ATN_CORE_ERROR_TAG("Vulkan", "Failed to allocate descriptor set!");
-		ATN_CORE_ASSERT(false);
+		ensure(false, "Failed to allocate descriptor set!");
 
 		return false;
 	}
@@ -278,7 +280,7 @@ namespace Athena
 		VkDescriptorPool descriptorPool;
 		vkCreateDescriptorPool(VulkanContext::GetLogicalDevice(), &poolInfo, nullptr, &descriptorPool);
 
-		ATN_CORE_WARN_TAG("Vulkan", "Allocating Descriptor Pool");
+		ATN_LOG_WARN(Vulkan, "Allocating Descriptor Pool");
 
 		return descriptorPool;
 	}

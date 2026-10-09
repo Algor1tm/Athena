@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/FileSystem.h"
 #include "Athena/Core/PlatformUtils.h"
 #include "Athena/Core/Application.h"
 
@@ -9,6 +10,9 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include <fcntl.h>
+#include <io.h>
+#include <shlobj_core.h>
 #include <commdlg.h>
 #include <intrin.h>
 #include <psapi.h>
@@ -30,10 +34,22 @@ namespace Athena
 				NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
 			String message(messageBuffer, size);
-			ATN_CORE_ERROR_TAG("Platform", "WinAPI Error: {}", message);
+			ATN_LOG_ERROR(Windows, "WinAPI Error: {}", message);
 
 			LocalFree(messageBuffer);
 			return false;
+		}
+
+		static int CALLBACK BrowseDirCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+		{
+			if (uMsg == BFFM_INITIALIZED)
+			{
+				std::string tmp = (const char*)lpData;
+				ATN_LOG_ERROR(Windows, "WinAPI browse directory message: {}", tmp);
+				SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
+			}
+
+			return 0;
 		}
 
 		static DWORD CountSetBits(ULONG_PTR bitMask)
@@ -53,12 +69,12 @@ namespace Athena
 		}
 	}
 
-#ifdef ATN_ENABLE_ASSERTS
-	#define WINAPI_CHECK_LASTERROR() ATN_CORE_ASSERT(WindowsUtils::CheckLastError())
-	#define SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
+#if ATN_ENABLE_CHECKS
+	#define WINAPI_CHECK_LASTERROR() checkf(WindowsUtils::CheckLastError())
+	#define WINAPI_SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
 #else
 	#define WINAPI_CHECK_LASTERROR()
-	#define SUPPRESS_LAST_ERROR()
+	#define WINAPI_SUPPRESS_LAST_ERROR()
 #endif
 
 
@@ -96,7 +112,7 @@ namespace Athena
 			s_Data.CPUCaps.Name = cpuString;
 		}
 
-		SUPPRESS_LAST_ERROR();
+		WINAPI_SUPPRESS_LAST_ERROR();
 
 		// Memory info
 		{
@@ -136,7 +152,7 @@ namespace Athena
 					free(buffer);
 
 					buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(bufferSize);
-					SUPPRESS_LAST_ERROR();
+					WINAPI_SUPPRESS_LAST_ERROR();
 				}
 				else
 				{
@@ -173,7 +189,7 @@ namespace Athena
 			s_Data.ProcessID = processID;
 		}
 
-		ATN_CORE_INFO_TAG("Platform", "Initalize Windows platform");
+		ATN_LOG_INFO(Windows, "Initalize Windows platform");
 	}
 
 	const CPUCapabilities& Platform::GetCPUCapabilities()
@@ -183,7 +199,84 @@ namespace Athena
 
 	void Platform::OpenInBrowser(const std::wstring& url)
 	{
+		WINAPI_SUPPRESS_LAST_ERROR();
 		ShellExecute(NULL, L"open", url.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+		WINAPI_CHECK_LASTERROR();
+	}
+
+	void Platform::OpenInFileExplorer(const FilePath& path)
+	{
+		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+	}
+
+	void Platform::OpenFileExternally(const FilePath& path)
+	{
+		std::wstring command = L"start " + std::filesystem::absolute(path).wstring();
+		std::wstring commandLine = L"cmd.exe /c \"" + command + L"\"";
+
+		STARTUPINFO si = { sizeof(si) };
+		PROCESS_INFORMATION pi;
+
+		BOOL result = CreateProcess(
+			NULL,
+			&commandLine[0],
+			NULL,
+			NULL,
+			FALSE,
+			CREATE_NO_WINDOW,
+			NULL,
+			NULL,
+			&si,
+			&pi
+		);
+
+		if (result)
+		{
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+		}
+		else
+		{
+			WINAPI_CHECK_LASTERROR();
+			MessageBox(NULL, L"Failed to launch VS Code.", L"Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
+	void Platform::RunFile(const FilePath& path, const FilePath& workingDir)
+	{
+		WINAPI_SUPPRESS_LAST_ERROR();
+		ShellExecute(NULL, L"open", path.c_str(), NULL, workingDir.c_str(), SW_SHOWDEFAULT);
+		WINAPI_CHECK_LASTERROR();
+	}
+
+	void Platform::CreateAndSyncConsole(uint32 consoleLines)
+	{
+		int hConHandle;
+		__int64 lStdHandle;
+		CONSOLE_SCREEN_BUFFER_INFO coninfo;
+		FILE* fp;
+
+		AllocConsole();
+		GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
+
+		coninfo.dwSize.Y = consoleLines;
+		SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+
+		lStdHandle = reinterpret_cast<__int64>(GetStdHandle(STD_OUTPUT_HANDLE));
+		hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+		fp = _fdopen(hConHandle, "w");
+		*stdout = *fp;
+		setvbuf(stdout, NULL, _IONBF, 0);
+
+		std::ios::sync_with_stdio();
+
+		String name = Application::Get().GetConfig().Name + " Logger";
+		std::wstring wname = FilePath(name).wstring();
+		SetConsoleTitle(wname.c_str());
+
+		HWND consoleHWND = FindWindow(NULL, wname.c_str());
+		if(consoleHWND)
+			SetParent(consoleHWND, s_Data.WindowHandle);
 	}
 
 	double Platform::GetHighPrecisionTime()
@@ -205,7 +298,7 @@ namespace Athena
 
 	uint64 Platform::GetMemoryUsage()
 	{
-		SUPPRESS_LAST_ERROR();	// Error from somewhere else
+		WINAPI_SUPPRESS_LAST_ERROR();	// Error from somewhere else
 
 		HANDLE hProcess;
 		PROCESS_MEMORY_COUNTERS pmc;
@@ -232,51 +325,35 @@ namespace Athena
 		return memUsage;
 	}
 
-
-	FilePath FileDialogs::OpenFile(std::wstring_view filter)
+	void Platform::LogNative(const String& message)
 	{
-		OPENFILENAME ofn;
-		WCHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAME));
-
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = s_Data.WindowHandle;
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter.data();
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-		if (GetOpenFileName(&ofn) == TRUE)
-			return ofn.lpstrFile;
-
-		WINAPI_CHECK_LASTERROR();
-		return {};
+		OutputDebugStringA(message.c_str());
 	}
 
-	FilePath FileDialogs::SaveFile(std::wstring_view filter)
+
+	Library::Library(const FilePath& path)
+		: m_Path(path)
 	{
-		OPENFILENAME ofn;
-		WCHAR szFile[260] = { 0 };
-		ZeroMemory(&ofn, sizeof(OPENFILENAME));
-
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = s_Data.WindowHandle;
-		ofn.lpstrFile = szFile;
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = filter.data();
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-
-		if (GetSaveFileName(&ofn) == TRUE)
-			return ofn.lpstrFile;
-
+		WINAPI_SUPPRESS_LAST_ERROR();
+		m_Handle = LoadLibrary(m_Path.c_str());
 		WINAPI_CHECK_LASTERROR();
-		return {};
+
+		if (IsLoaded())
+			ATN_LOG_INFO(Windows, "Successfully loaded library from {}", m_Path);
 	}
 
-	void FileDialogs::OpenInFileExplorer(const FilePath& path)
+	Library::~Library()
 	{
-		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOWDEFAULT);
+		FreeLibrary((HMODULE)m_Handle);
+	}
+
+	bool Library::IsLoaded()
+	{
+		return m_Handle != nullptr;
+	}
+
+	void* Library::LoadFunction(const String& name)
+	{
+		return GetProcAddress((HMODULE)m_Handle, name.c_str());
 	}
 }

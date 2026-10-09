@@ -1,7 +1,7 @@
 #include "VulkanRenderCommandBuffer.h"
 
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Core/Application.h"
+#include "Athena/Renderer/Renderer.h"
 #include "Athena/Platform/Vulkan/VulkanUtils.h"
 
 
@@ -28,7 +28,7 @@ namespace Athena
 		VK_CHECK(vkAllocateCommandBuffers(VulkanContext::GetLogicalDevice(), &cmdBufAllocInfo, m_CommandBuffers.data()));
 
 		for (uint32 i = 0; i < count; ++i)
-			Vulkan::SetObjectDebugName(m_CommandBuffers[i], VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, std::format("{}_{}", m_Info.Name, i));
+			Vulkan::SetObjectDebugName(m_CommandBuffers[i], VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT, fmt::format("{}_{}", m_Info.Name, i));
 	}
 
 	VulkanRenderCommandBuffer::~VulkanRenderCommandBuffer()
@@ -58,20 +58,21 @@ namespace Athena
 		VK_CHECK(vkEndCommandBuffer(GetActiveCommandBuffer()));
 	}
 
-	void VulkanRenderCommandBuffer::Submit()
+	void VulkanRenderCommandBuffer::Submit(bool wait)
 	{
 		switch (m_Info.Usage)
 		{
 		case RenderCommandBufferUsage::PRESENT: SubmitForPresent(); break;
-		case RenderCommandBufferUsage::IMMEDIATE: SubmitImmediate(); break;
+		case RenderCommandBufferUsage::IMMEDIATE: SubmitImmediate(wait); break;
 		}
 	}
 
 	void VulkanRenderCommandBuffer::SubmitForPresent()
 	{
-		ATN_PROFILE_FUNC();
+		TRACY_PROFILE_FUNC();
 
 		const FrameSyncData& frameData = VulkanContext::GetFrameSyncData(Renderer::GetCurrentFrameIndex());
+		const FrameSyncData& frameImageData = VulkanContext::GetFrameSyncData(Application::Get().GetWindow().GetSwapChain()->GetCurrentImageIndex());
 		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
 		VkPipelineStageFlags waitStage[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -85,18 +86,15 @@ namespace Athena
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &frameData.RenderCompleteSemaphore;
+		submitInfo.pSignalSemaphores = &frameImageData.RenderCompleteSemaphore;
 
 		{
-			ATN_PROFILE_SCOPE("vkQueueSubmit");
-			Timer timer = Timer();
-
-			VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, frameData.RenderCompleteFence));
-			Application::Get().GetStats().Renderer_QueueSubmit = timer.ElapsedTime();
+			TRACY_PROFILE_SCOPE("vkQueueSubmit");
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, frameData.RenderCompleteFence);
 		}
 	}
 
-	void VulkanRenderCommandBuffer::SubmitImmediate()
+	void VulkanRenderCommandBuffer::SubmitImmediate(bool wait)
 	{
 		VkCommandBuffer commandBuffer = GetActiveCommandBuffer();
 
@@ -105,22 +103,29 @@ namespace Athena
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 
-		VkFenceCreateInfo fenceInfo = {};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.flags = 0;
+		if (wait)
+		{
+			VkFenceCreateInfo fenceInfo = {};
+			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+			fenceInfo.flags = 0;
 
-		VkFence fence;
-		VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
+			VkFence fence;
+			VK_CHECK(vkCreateFence(VulkanContext::GetLogicalDevice(), &fenceInfo, nullptr, &fence));
 
-		VK_CHECK(vkQueueSubmit(VulkanContext::GetDevice()->GetQueue(), 1, &submitInfo, fence));
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, fence);
 
-		VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
-		vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
+			VK_CHECK(vkWaitForFences(VulkanContext::GetLogicalDevice(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+			vkDestroyFence(VulkanContext::GetLogicalDevice(), fence, nullptr);
+		}
+		else
+		{
+			VulkanContext::GetDevice()->QueueSubmit(&submitInfo, VK_NULL_HANDLE);
+		}
 	}
 
 	VkCommandBuffer VulkanRenderCommandBuffer::GetActiveCommandBuffer()
 	{
-		ATN_CORE_ASSERT(!m_CommandBuffers.empty());
+		checkf(!m_CommandBuffers.empty());
 
 		switch (m_Info.Usage)
 		{

@@ -31,7 +31,7 @@ namespace Athena
 		void RemoveFromBlacklist(AssetHandle handle);
 		bool IsAssetBlacklisted(AssetHandle handle);
 
-		void UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath);
+		void UpdateAssetTimestamp(AssetHandle handle);
 
 		Thread& GetThread() { return m_AssetWatcherThread; }
 

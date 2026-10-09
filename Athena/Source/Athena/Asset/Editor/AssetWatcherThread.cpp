@@ -50,12 +50,22 @@ namespace Athena
 		return m_BlacklistedAssets.contains(handle);
 	}
 
-	void AssetWatcherThread::UpdateAssetTimestamp(AssetHandle handle, const FilePath& absolutePath)
+	void AssetWatcherThread::UpdateAssetTimestamp(AssetHandle handle)
 	{
-		FilePath absolutePathCopy = absolutePath;
-		m_AssetsLastWriteTimeMap.modify_if(handle, [absolutePathCopy](std::pair<const AssetHandle, uint64>& element)
+		AssetMetadata meta = AssetManager::GetAssetMetadata(handle);
+		FilePath absolutePath = AssetManager::GetAssetAbsolutePath(meta.FilePath);
+		FilePath importSettingsPath = AssetFileExtensions::GetImportSettingsPath(absolutePath);
+
+		uint64 timestamp = FileSystem::GetLastWriteTimestamp(absolutePath);
+
+		if (FileSystem::Exists(importSettingsPath))
 		{
-			element.second = FileSystem::GetLastWriteTimestamp(absolutePathCopy);
+			timestamp = Math::Max(timestamp, FileSystem::GetLastWriteTimestamp(importSettingsPath));
+		}
+
+		m_AssetsLastWriteTimeMap.modify_if(handle, [timestamp](std::pair<const AssetHandle, uint64>& element)
+		{
+			element.second = timestamp;
 		});
 	}
 
@@ -130,7 +140,7 @@ namespace Athena
 			{
 				Ref<AssetImportSettings> defaultSettings = Project::GetEditorAssetManager()->GetDefaultImportSettings(meta.Type);
 				defaultSettings->Serialize(importSettingsPath);
-				UpdateAssetTimestamp(handle, importSettingsPath);
+				UpdateAssetTimestamp(handle);
 
 				ATN_LOG_TRACE(AssetManager, "(AssetWatcherThread) Created import settings file for asset (path - {}, type - {}, handle - {})",
 					absolutePath, AssetManager::AssetTypeToString(meta.Type), handle);

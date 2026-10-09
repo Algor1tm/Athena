@@ -1,5 +1,5 @@
 TextureImportSettings:
-  sRGB: false
+  sRGB: true
   GenerateMipMaps: true
   WrapMode: REPEAT
   FilterMode: TRILINEAR

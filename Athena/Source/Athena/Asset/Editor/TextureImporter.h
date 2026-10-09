@@ -16,7 +16,7 @@ namespace Athena
 
 		bool IsValidFormat();
 
-		float Resolution = 1024;
+		float Resolution = 128;
 		Format FloatFormat = Format::R11G11B10F;
 	};
 

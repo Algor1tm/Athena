@@ -164,7 +164,7 @@ namespace Athena
 	{
 		if (metadata.IsMemoryOnly)
 		{
-			checkf(false);
+			check(false, "Cannot serialize memory only asset (handle - {}, type - {})", asset->Handle, AssetManager::AssetTypeToString(metadata.Type));
 			return false;
 		}
 
@@ -175,7 +175,7 @@ namespace Athena
 		SerializeAssetImportSettings(asset->Handle);
 		bool result = asset->Serialize(absolutePath);
 
-		m_AssetWatcherThread.UpdateAssetTimestamp(asset->Handle, absolutePath);
+		m_AssetWatcherThread.UpdateAssetTimestamp(asset->Handle);
 		m_AssetWatcherThread.RemoveFromBlacklist(asset->Handle);
 
 		return result;
@@ -185,7 +185,7 @@ namespace Athena
 	{
 		if (metadata.IsMemoryOnly)
 		{
-			check(false, "Hello {} {}", AssetManager::AssetTypeToString(metadata.Type), metadata.FilePath);
+			check(false, "Cannot serialize memory only asset (handle - {}, type - {})", asset->Handle, AssetManager::AssetTypeToString(metadata.Type));
 			return false;
 		}
 
@@ -217,7 +217,9 @@ namespace Athena
 
 		for (const auto& [handle, asset] : assets)
 		{
-			SerializeAsset(asset, GetAssetMetadata(handle));
+			const AssetMetadata& meta = GetAssetMetadata(handle);
+			if(!meta.IsMemoryOnly)
+				SerializeAsset(asset, meta);
 		}
 	}
 
@@ -237,7 +239,9 @@ namespace Athena
 		// for that we need a dependency graph system
 		for (const auto& [handle, asset] : assets)
 		{
-			DeserializeAsset(asset, GetAssetMetadata(handle));
+			const AssetMetadata& meta = GetAssetMetadata(handle);
+			if (!meta.IsMemoryOnly)
+				DeserializeAsset(asset, meta);
 		}
 	}
 

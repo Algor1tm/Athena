@@ -36,8 +36,11 @@ namespace Athena
 
 	bool EnvironmentMap::Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings)
 	{
+		Ref<EnvironmentMapImportSettings> envImportSettings = importSettings.As<EnvironmentMapImportSettings>();
+		m_Resolution = envImportSettings->Resolution;
+
 		// Cannnot execute rendering pipeline in multiple threads(main thread and asset watcher thread)
-		Application::Get().SubmitToMainThread([this, absolutePath, importSettings]() 
+		Application::Get().SubmitToMainThread([this, absolutePath, envImportSettings]()
 		{
 			// Load hdr texture
 			Ref<TextureImportSettings> settings = Ref<TextureImportSettings>::Create();
@@ -48,8 +51,7 @@ namespace Athena
 			TextureImporter importer(settings);
 			Ref<Texture2D> panorama = importer.Import(absolutePath);
 
-			Ref<EnvironmentMapImportSettings> envImportSettings = importSettings.As<EnvironmentMapImportSettings>();
-			CreateTextures(envImportSettings->Resolution, envImportSettings->FloatFormat, m_EnvironmentTexture, m_IrradianceTexture);
+			CreateTextures(m_Resolution, envImportSettings->FloatFormat, m_EnvironmentTexture, m_IrradianceTexture);
 
 			// Create cube map from this texture
 			ComputePassCreateInfo passInfo;
@@ -85,7 +87,7 @@ namespace Athena
 			FilterEnvironmentMap(commandBuffer, m_EnvironmentTexture, m_IrradianceTexture);
 
 			commandBuffer->End();
-			commandBuffer->Submit(false);
+			commandBuffer->Submit(true);
 		});
 
 		return true;

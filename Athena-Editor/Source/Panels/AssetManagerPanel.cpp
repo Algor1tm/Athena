@@ -61,6 +61,7 @@ namespace Athena
 			});
 
 			UI::TreePop();
+			ImGui::Dummy(ImGui::GetContentRegionAvail());
 		}
 
 		ImGui::End();

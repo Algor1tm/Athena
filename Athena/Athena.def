@@ -35,6 +35,7 @@ EXPORTS
 	?DragInt@ImGui@@YA_NPEBDPEAHMHH0H@Z
 	?DragScalar@ImGui@@YA_NPEBDHPEAXMPEBX20H@Z
 	?DragScalarN@ImGui@@YA_NPEBDHPEAXHMPEBX20H@Z
+	?Dummy@ImGui@@YAXAEBUImVec2@@@Z
 	?End@ImGui@@YAXXZ
 	?EndGroup@ImGui@@YAXXZ
 	?EndTabBar@ImGui@@YAXXZ

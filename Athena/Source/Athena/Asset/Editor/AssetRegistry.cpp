@@ -54,13 +54,14 @@ namespace Athena
 			std::filesystem::rename(oldPath, newPath);
 			metadata.FilePath = AssetManager::GetAssetRelativePath(path);
 
-			Project::GetEditorAssetManager()->GetAssetWatcherThread().UpdateAssetTimestamp(handle, newPath);
+			Project::GetEditorAssetManager()->GetAssetWatcherThread().UpdateAssetTimestamp(handle);
 			Project::GetEditorAssetManager()->GetAssetWatcherThread().RemoveFromBlacklist(handle);
 		});
 	}
 
 	AssetMetadata AssetRegistry::GetMetadata(AssetHandle handle) const
 	{
+		// Return reference probably not safe there due to the fact that this container can change size in another thread
 		AssetMetadata result;
 		m_Registry.if_contains(handle, [&result] (const std::pair<AssetHandle, AssetMetadata>& element)
 		{

@@ -32,6 +32,7 @@ The engine is free and open source. Feel free to contact me about any questions 
 ## Engine
 
 - Asset Manager
+- Project System
 - Entity Component System(ECS)
 - Event system
 - Python scripting language

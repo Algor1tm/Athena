@@ -31,6 +31,7 @@ The engine is free and open source. Feel free to contact me about any questions 
 
 ## Engine
 
+- Asset Manager
 - Entity Component System(ECS)
 - Event system
 - Python scripting language
@@ -42,7 +43,7 @@ The engine is free and open source. Feel free to contact me about any questions 
 
 # Plans
 
-- Asset System
+- Task Graph
 - Physics
 - Transparency
 - Render Graph
@@ -50,7 +51,7 @@ The engine is free and open source. Feel free to contact me about any questions 
 
 
 # Getting Started
-Visual Studio 2019 or 2022 is recommended.  
-For compiling the project you need to have Python 3.7+ and Vulkan SDK with VMA and shader toolchain debug symbols (x64).    
+Visual Studio 2022 or 2026 is recommended.  
+For compiling the project you need CMake and Vulkan SDK with VMA and shader toolchain debug symbols (x64).
 To setup projects run one of the scripts in <b>Scripts</b> folder.      
 You will find solution file(.sln) in <b>Build/Projects</b> folder.      

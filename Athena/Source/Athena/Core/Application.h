@@ -7,7 +7,7 @@
 
 #include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Input/WindowEvent.h"
-#include "Athena/Renderer/Renderer.h"
+#include "Athena/Renderer/RenderThread.h"
 #include "Athena/Scripting/ScriptEngine.h"
 
 #include <queue>
@@ -32,19 +32,6 @@ namespace Athena
 		ScriptConfig ScriptConfig;
 		WindowCreateInfo WindowInfo;
 	};
-
-	//struct ApplicationStatistics
-	//{
-	//	Time FrameTime;
-	//	Time CPUWait;
-	//	Time GPUWait;
-	//	Time Application_ProcessEvents;
-	//	Time Application_OnUpdate;
-	//	Time Application_RenderImGui;
-	//	Time SwapChain_Present;
-	//	Time SwapChain_AcquireImage;
-	//	Time Renderer_QueueSubmit;
-	//};
 
 	class ATHENA_API Application
 	{

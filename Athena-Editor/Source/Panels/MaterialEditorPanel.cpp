@@ -41,11 +41,11 @@ namespace Athena
 
 		if (material)
 		{
-			ImGui::Text("Name: "); ImGui::SameLine();
-			ImGui::Text(material->GetMaterial()->GetName().data());
+			//ImGui::Text("Name: "); ImGui::SameLine();
+			//ImGui::Text(material->GetMaterial()->GetName().data());
 
-			ImGui::Text("Shader: "); ImGui::SameLine();
-			ImGui::Text(material->GetMaterial()->GetShader()->GetName().data());
+			//ImGui::Text("Shader: "); ImGui::SameLine();
+			//ImGui::Text(material->GetMaterial()->GetShader()->GetName().data());
 
 			if (UI::TreeNode("Albedo"))
 			{

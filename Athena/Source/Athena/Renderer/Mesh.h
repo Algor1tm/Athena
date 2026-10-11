@@ -3,10 +3,8 @@
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/AABB.h"
-#include "Athena/Renderer/GPUBuffer.h"
 #include "Athena/Renderer/Animation.h"
 #include "Athena/Renderer/MaterialAsset.h"
-#include "Athena/Renderer/Renderer.h"
 
 #include <vector>
 
@@ -25,28 +23,28 @@ namespace Athena
 		Vector3 Tangent;
 		Vector3 Bitangent;
 
-		static VertexMemoryLayout GetLayout()
-		{
-			return {
-				{ ShaderDataType::Float3, "a_Position"  },
-				{ ShaderDataType::Float2, "a_TexCoords" },
-				{ ShaderDataType::Float3, "a_Normal"    },
-				{ ShaderDataType::Float3, "a_Tangent"   },
-				{ ShaderDataType::Float3, "a_Bitangent" } };
-		}
+		//static VertexMemoryLayout GetLayout()
+		//{
+		//	return {
+		//		{ ShaderDataType::Float3, "a_Position"  },
+		//		{ ShaderDataType::Float2, "a_TexCoords" },
+		//		{ ShaderDataType::Float3, "a_Normal"    },
+		//		{ ShaderDataType::Float3, "a_Tangent"   },
+		//		{ ShaderDataType::Float3, "a_Bitangent" } };
+		//}
 	};
 
 	struct BoneInfluenceVertex
 	{
-		int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
-		float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
-
-		static VertexMemoryLayout GetLayout()
-		{
-			return {
-				{ ShaderDataType::Int4,   "a_BoneIDs"   },
-				{ ShaderDataType::Float4, "a_Weights"   } };
-		}
+		//int BoneIDs[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
+		//float Weights[ShaderDef::MAX_NUM_BONES_PER_VERTEX];
+		//
+		//static VertexMemoryLayout GetLayout()
+		//{
+		//	return {
+		//		{ ShaderDataType::Int4,   "a_BoneIDs"   },
+		//		{ ShaderDataType::Float4, "a_Weights"   } };
+		//}
 	};
 
 	struct SubMesh
@@ -93,9 +91,9 @@ namespace Athena
 		virtual bool Serialize(const FilePath& absolutePath) const override;
 		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
-		Ref<VertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
-		Ref<IndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
-		Ref<VertexBuffer> GetBonesInfluenceBuffer() const { return m_BonesInfluenceBuffer; }
+		//Ref<VertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
+		//Ref<IndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
+		//Ref<VertexBuffer> GetBonesInfluenceBuffer() const { return m_BonesInfluenceBuffer; }
 
 		const std::vector<MeshNode>& GetMeshNodes() const { return m_Nodes; }
 		bool HasMeshNode(uint32 index) const { return index < m_Nodes.size(); }
@@ -120,9 +118,9 @@ namespace Athena
 		bool IsCollapsedGraph() const { return m_CollapsedGraph; }
 
 	private:
-		Ref<VertexBuffer> m_VertexBuffer;
-		Ref<IndexBuffer> m_IndexBuffer;
-		Ref<VertexBuffer> m_BonesInfluenceBuffer;
+		//Ref<VertexBuffer> m_VertexBuffer;
+		//Ref<IndexBuffer> m_IndexBuffer;
+		//Ref<VertexBuffer> m_BonesInfluenceBuffer;
 
 		std::vector<MeshNode> m_Nodes;
 		std::vector<SubMesh> m_SubMeshes;

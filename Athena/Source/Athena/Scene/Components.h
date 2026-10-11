@@ -7,7 +7,6 @@
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/EnvironmentMap.h"
 #include "Athena/Renderer/Mesh.h"
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/SceneCamera.h"
@@ -85,6 +84,13 @@ namespace Athena
 	struct ParentComponent
 	{
 		Entity Parent;
+	};
+
+	enum class Renderer2DSpace
+	{
+		WorldSpace = 1,
+		ScreenSpace,
+		Billboard	// TODO
 	};
 
 	struct SpriteComponent
@@ -179,7 +185,7 @@ namespace Athena
 		bool Visible = true;
 
 		void ResetMaterials();
-		Ref<Material> GetMaterial(const Ref<Mesh>& mesh, const String& materialName) const;
+		//Ref<Material> GetMaterial(const Ref<Mesh>& mesh, const String& materialName) const;
 
 		bool IsRootMeshNode() const { return MeshNodeIndex == 0; }
 	};

@@ -2,8 +2,13 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Thread.h"
+#include "Athena/Math/Common.h"
 
 #include <Windows.h>
+
+#ifdef Yield
+	#undef Yield
+#endif
 
 
 namespace Athena
@@ -86,9 +91,14 @@ namespace Athena
 		return id;
 	}
 
-	void Thread::CurrentThreadSleep(Time time)
+	void Thread::SleepFor(Time time)
 	{
-		DWORD millis = std::round(time.AsMilliseconds());
+		DWORD millis = Math::Round(time.AsMilliseconds());
 		Sleep(millis);
+	}
+
+	void Thread::YieldExecution()
+	{
+		SwitchToThread();
 	}
 }

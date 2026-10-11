@@ -24,7 +24,8 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 
 		static uint64 GetCurrentThreadID();
-		static void CurrentThreadSleep(Time time);
+		static void SleepFor(Time time);
+		static void YieldExecution();
 
 	private:
 		static unsigned long ThreadProcedure(void* args);

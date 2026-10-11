@@ -4,7 +4,6 @@
 #include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
-#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena

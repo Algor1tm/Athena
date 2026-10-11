@@ -1,4 +1,4 @@
-#include "Material.h"
+//#include "Material.h"
 
 #include "Athena/Renderer/MaterialAsset.h"
 #include "Athena/Renderer/EngineTextures.h"
@@ -10,7 +10,7 @@ namespace Athena
 {
 	MaterialAsset::MaterialAsset()
 	{
-		m_Material = Material::CreatePBR();
+		//m_Material = Material::CreatePBR();
 
 		SetAlbedo(GetAlbedo());
 		SetEmission(GetEmission());
@@ -116,7 +116,7 @@ namespace Athena
 	void MaterialAsset::SetAlbedo(const LinearColor& albedo)
 	{
 		m_Albedo = Math::Clamp(Vector4(albedo), 0.f, 1.f);
-		m_Material->Set("u_Albedo", Vector4(m_Albedo));
+		//m_Material->Set("u_Albedo", Vector4(m_Albedo));
 	}
 
 	float MaterialAsset::GetEmission() const
@@ -130,7 +130,7 @@ namespace Athena
 		if (m_Emission < 0)
 			m_Emission = 0;
 
-		m_Material->Set("u_Emission", m_Emission);
+		//m_Material->Set("u_Emission", m_Emission);
 	}
 
 	float MaterialAsset::GetRoughness() const
@@ -141,7 +141,7 @@ namespace Athena
 	void MaterialAsset::SetRoughness(float roughness)
 	{
 		m_Roughness = Math::Clamp(roughness, 0.f, 1.f);
-		m_Material->Set("u_Roughness", m_Roughness);
+		//m_Material->Set("u_Roughness", m_Roughness);
 	}
 
 	float MaterialAsset::GetMetalness() const
@@ -152,7 +152,7 @@ namespace Athena
 	void MaterialAsset::SetMetalness(float metalness)
 	{
 		m_Metalness = Math::Clamp(metalness, 0.f, 1.f);
-		m_Material->Set("u_Metalness", m_Metalness);
+		//m_Material->Set("u_Metalness", m_Metalness);
 	}
 
 	AssetHandle MaterialAsset::GetTexture(MaterialTextureType type) const
@@ -165,7 +165,7 @@ namespace Athena
 		m_TexturesMap.at(type) = textureHandle;
 
 		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(textureHandle);
-		m_Material->Set(TextureTypeToShaderString(type), texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
+		//m_Material->Set(TextureTypeToShaderString(type), texture ? texture->GetRenderTexture() : EngineTextures::GetWhiteTexture());
 	}
 
 	void MaterialAsset::RemoveTexture(MaterialTextureType type)
@@ -173,7 +173,7 @@ namespace Athena
 		m_TexturesMap.at(type) = 0;
 		EnableTexture(type, false);
 
-		m_Material->Set(TextureTypeToShaderString(type), EngineTextures::GetWhiteTexture());
+		//m_Material->Set(TextureTypeToShaderString(type), EngineTextures::GetWhiteTexture());
 	}
 
 	bool MaterialAsset::IsEnabledTexture(MaterialTextureType type) const
@@ -184,17 +184,18 @@ namespace Athena
 	void MaterialAsset::EnableTexture(MaterialTextureType type, bool flag)
 	{
 		m_TexturesFlags.at(type) = flag;
-		m_Material->Set(TextureTypeEnableToShaderString(type), (uint32)flag);
+		//m_Material->Set(TextureTypeEnableToShaderString(type), (uint32)flag);
 	}
 
 	bool MaterialAsset::IsFlagSet(MaterialFlag flag) const
 	{
-		return m_Material->IsFlagSet(flag);
+		//return m_Material->IsFlagSet(flag);
+		return false;
 	}
 
 	void MaterialAsset::SetFlag(MaterialFlag flag, bool value)
 	{
-		m_Material->SetFlag(flag, value);
+		//m_Material->SetFlag(flag, value);
 	}
 
 	String MaterialAsset::TextureTypeToShaderString(MaterialTextureType type) const

@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Input/Event.h"
 #include "Athena/Math/Vector.h"
-#include "Athena/Renderer/SwapChain.h"
 
 
 namespace Athena
@@ -47,8 +46,8 @@ namespace Athena
 
 		float GetDPIScaleFactor() const;
 
-		void DestroySwapChain() { m_SwapChain.Release(); }
-		Ref<SwapChain> GetSwapChain() const { return m_SwapChain; }
+		//void DestroySwapChain() { m_SwapChain.Release(); }
+		//Ref<SwapChain> GetSwapChain() const { return m_SwapChain; }
 
 		inline void SetEventCallback(const WindowEventCallback& callback)
 		{
@@ -87,7 +86,7 @@ namespace Athena
 	private:
 		void* m_WindowHandle = nullptr;
 		WindowData m_Data;
-		Ref<SwapChain> m_SwapChain;
+		//Ref<SwapChain> m_SwapChain;
 
 		static inline uint8 m_WindowCount = 0;
 	};

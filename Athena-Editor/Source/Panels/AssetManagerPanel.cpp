@@ -1,10 +1,11 @@
 #include "AssetManagerPanel.h"
-#include "Panels/PanelManager.h"
+#include "Athena/Asset/AssetManager.h"
 #include "Athena/Project/Project.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 #include "Athena/Utils/StringUtils.h"
 
+#include "Panels/PanelManager.h"
 
 namespace Athena
 {

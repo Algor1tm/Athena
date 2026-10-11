@@ -3,7 +3,7 @@
 #include "Athena/Asset/Asset.h"
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/Material.h"
+#include "Athena/Renderer/Color.h"
 
 
 namespace Athena
@@ -16,6 +16,11 @@ namespace Athena
 		Metalness
 	};
 
+	enum class MaterialFlag
+	{
+		None = 0,
+		CastShadows = BIT(1)
+	};
 
 	class ATHENA_API MaterialAsset: public Asset
 	{
@@ -29,7 +34,7 @@ namespace Athena
 		virtual bool Serialize(const FilePath& absolutePath) const override;
 		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> settings) override;
 
-		Ref<Material> GetMaterial() const { return m_Material; }
+		//Ref<Material> GetMaterial() const { return m_Material; }
 
 		const LinearColor& GetAlbedo() const;
 		void SetAlbedo(const LinearColor& albedo);
@@ -57,7 +62,7 @@ namespace Athena
 		String TextureTypeEnableToShaderString(MaterialTextureType type) const;
 
 	private:
-		Ref<Material> m_Material;
+		//Ref<Material> m_Material;
 
 		LinearColor m_Albedo = LinearColor(0.7f, 0.7f, 0.7f, 1.f);
 		float m_Emission = 0.f;

@@ -4,7 +4,6 @@
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Renderer/Mesh.h"
-#include "Athena/Renderer/Material.h"
 
 #include "Panels/Panel.h"
 #include "Athena/UI/UI.h"

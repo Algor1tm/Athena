@@ -3,6 +3,7 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/RenderThread.h"
 
 
 namespace Athena
@@ -31,7 +32,7 @@ namespace Athena
 			FileSystem::Remove(m_Config.EngineResourcesPath / "Cache");
 
 		Logger::Get().Init(appinfo.LogConfig);
-		Renderer::Init(appinfo.RendererConfig);
+		RenderThread::Init(appinfo.RendererConfig);
 		CreateMainWindow(appinfo.WindowInfo);
 		Platform::Init();
 		InitImGui();
@@ -44,9 +45,9 @@ namespace Athena
 		m_LayerStack.Clear();
 		m_ImGuiLayer.Release();
 
-		// Window cant be destroyed before Renderer::Shutdown, because of ImGui and GLFW
-		m_Window->DestroySwapChain();
-		Renderer::Shutdown();
+		// Window cant be destroyed before RenderThread::Shutdown, because of ImGui and GLFW
+		//m_Window->DestroySwapChain();
+		RenderThread::Shutdown();
 		m_Window.Release();
 
 		Logger::Get().Shutdown();
@@ -64,13 +65,16 @@ namespace Athena
 
 			Time start = timer.ElapsedTime();
 
+			// Notify render thread to begin working
+			RenderThread::Get().Kick();
+
 			ProcessEvents();
 			ExecuteMainThreadQueue();
 
 			if (m_Minimized == false)
 			{
 				// Wait for GPU commands to finish and begin new commands
-				Renderer::BeginFrame();
+				//Renderer::BeginFrame();
 
 				// Update
 				{
@@ -84,7 +88,7 @@ namespace Athena
 				RenderImGui();
 
 				// Submit commands to GPU and present
-				Renderer::EndFrame();
+				//Renderer::EndFrame();
 				m_Window->SwapBuffers();
 			}
 			else
@@ -93,8 +97,11 @@ namespace Athena
 				RenderImGui();
 
 				// Immitate VSync when minimized
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				Thread::SleepFor(Time::Milliseconds(10));
 			}
+
+			// Wait for render thread
+			RenderThread::Get().Wait();
 
 			m_FrameTime = timer.ElapsedTime() - start;
 		}
@@ -178,7 +185,7 @@ namespace Athena
 			return false;
 		}
 
-		m_Window->GetSwapChain()->OnWindowResize();
+		//m_Window->GetSwapChain()->OnWindowResize();
 
 		m_Minimized = false;
 		return false;

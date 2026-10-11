@@ -3,10 +3,6 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 
-#include "Athena/Renderer/Renderer.h"
-
-#include "Athena/Platform/Vulkan/VulkanImGuiLayerImpl.h"
-
 #include <ImGui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 
@@ -45,11 +41,11 @@ namespace Athena
 	{
 		auto imguiLayer = Ref<ImGuiLayer>::Create();
 
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = Scope<VulkanImGuiLayerImpl>::Create(); break;
-		case Renderer::API::None: imguiLayer->m_ImGuiImpl = nullptr; break;
-		}
+		//switch (Renderer::GetAPI())
+		//{
+		//case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = Scope<VulkanImGuiLayerImpl>::Create(); break;
+		//case Renderer::API::None: imguiLayer->m_ImGuiImpl = nullptr; break;
+		//}
 
 		return imguiLayer;
 	}
@@ -182,10 +178,10 @@ namespace Athena
 	{
 		m_ImGuiImpl->Shutdown();
 
-		Renderer::SubmitResourceFree([]()
-		{
-			ImGui::DestroyContext();
-		});
+		//Renderer::SubmitResourceFree([]()
+		//{
+		//	ImGui::DestroyContext();
+		//});
 
 		ATN_LOG_INFO(Renderer, "Shutdown ImGui");
 	}

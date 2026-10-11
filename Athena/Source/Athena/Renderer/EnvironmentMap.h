@@ -3,9 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Asset/Asset.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/ComputePass.h"
-#include "Athena/Renderer/ComputePipeline.h"
-#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena
@@ -45,7 +42,7 @@ namespace Athena
 
 	private:
 		static void CreateTextures(float resolution, Format floatFormat, Ref<TextureCube>& outEnvTex, Ref<TextureCube>& outIrradianceTex);
-		static void FilterEnvironmentMap(const Ref<RenderCommandBuffer>& commandBuffer, Ref<TextureCube> envTex, Ref<TextureCube> irradianceTex);
+		//static void FilterEnvironmentMap(const Ref<RenderCommandBuffer>& commandBuffer, Ref<TextureCube> envTex, Ref<TextureCube> irradianceTex);
 
 	private:
 		Ref<TextureCube> m_EnvironmentTexture;

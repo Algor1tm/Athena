@@ -1,11 +1,7 @@
 #include "Texture.h"
 
 #include "Athena/Asset/Editor/TextureImporter.h"
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/EngineTextures.h"
-#include "Athena/Platform/Vulkan/VulkanTexture2D.h"
-#include "Athena/Platform/Vulkan/VulkanTextureCube.h"
-#include "Athena/Platform/Vulkan/VulkanTextureView.h"
 
 
 namespace Athena
@@ -29,11 +25,11 @@ namespace Athena
 
 	Ref<TextureView> TextureView::Create(Texture* texture, const TextureViewCreateInfo& info)
 	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: return Ref<VulkanTextureView>::Create(texture, info);
-		case Renderer::API::None: return nullptr;
-		}
+		//switch (Renderer::GetAPI())
+		//{
+		//case Renderer::API::Vulkan: return Ref<VulkanTextureView>::Create(texture, info);
+		//case Renderer::API::None: return nullptr;
+		//}
 
 		return nullptr;
 	}
@@ -113,22 +109,22 @@ namespace Athena
 
 	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info, Buffer data)
 	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: return Ref<VulkanTexture2D>::Create(info, data);
-		case Renderer::API::None: return nullptr;
-		}
+		//switch (Renderer::GetAPI())
+		//{
+		//case Renderer::API::Vulkan: return Ref<VulkanTexture2D>::Create(info, data);
+		//case Renderer::API::None: return nullptr;
+		//}
 
 		return nullptr;
 	}
 
 	Ref<TextureCube> TextureCube::Create(const TextureCreateInfo& info, Buffer data)
 	{
-		switch (Renderer::GetAPI())
-		{
-		case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info, data);
-		case Renderer::API::None: return nullptr;
-		}
+		//switch (Renderer::GetAPI())
+		//{
+		//case Renderer::API::Vulkan: return Ref<VulkanTextureCube>::Create(info, data);
+		//case Renderer::API::None: return nullptr;
+		//}
 
 		return nullptr;
 	}

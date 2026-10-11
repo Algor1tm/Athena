@@ -7,6 +7,7 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
+#include "Athena/Utils/StringUtils.h"
 
 #include "Panels/PanelManager.h"
 #include "Panels/MaterialEditorPanel.h"
@@ -133,21 +134,21 @@ namespace Athena
 
         if (mesh && UI::TreeNode("MESH INFO"))
         {
-            ImGui::Text("Materials Count: %d", mesh->GetMaterialTable().size());
-            ImGui::Text("Animations Count: %d", mesh->GetAnimations().size());
-            ImGui::Spacing();
-            ImGui::Text("Vertices: %d", mesh->GetVertexBuffer()->GetSize() / sizeof(MeshVertex));
-            ImGui::Text("VertexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetVertexBuffer()->GetSize()).c_str());
-            ImGui::Text("Indices: %d", mesh->GetIndexBuffer()->GetSize());
-            ImGui::Text("IndexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetIndexBuffer()->GetSize() * sizeof(uint32)).c_str());
+            //ImGui::Text("Materials Count: %d", mesh->GetMaterialTable().size());
+            //ImGui::Text("Animations Count: %d", mesh->GetAnimations().size());
+            //ImGui::Spacing();
+            //ImGui::Text("Vertices: %d", mesh->GetVertexBuffer()->GetSize() / sizeof(MeshVertex));
+            //ImGui::Text("VertexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetVertexBuffer()->GetSize()).c_str());
+            //ImGui::Text("Indices: %d", mesh->GetIndexBuffer()->GetSize());
+            //ImGui::Text("IndexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetIndexBuffer()->GetSize() * sizeof(uint32)).c_str());
 
-            uint32 boneInfluenceSize = mesh->IsRigged() ? mesh->GetBonesInfluenceBuffer()->GetSize() : 0;
-            ImGui::Text("BonesInfluenceBuffer Size: %s", Utils::MemoryBytesToString(boneInfluenceSize).c_str());
+            //uint32 boneInfluenceSize = mesh->IsRigged() ? mesh->GetBonesInfluenceBuffer()->GetSize() : 0;
+            //ImGui::Text("BonesInfluenceBuffer Size: %s", Utils::MemoryBytesToString(boneInfluenceSize).c_str());
 
-            ImGui::Spacing();
+            //ImGui::Spacing();
 
-            uint32 totalGPUMemory = boneInfluenceSize + mesh->GetVertexBuffer()->GetSize() + mesh->GetIndexBuffer()->GetSize() * sizeof(uint32);
-            ImGui::Text("Total GPU Memory: %s", Utils::MemoryBytesToString(totalGPUMemory).c_str());
+            //uint32 totalGPUMemory = boneInfluenceSize + mesh->GetVertexBuffer()->GetSize() + mesh->GetIndexBuffer()->GetSize() * sizeof(uint32);
+            //ImGui::Text("Total GPU Memory: %s", Utils::MemoryBytesToString(totalGPUMemory).c_str());
 
             UI::TreePop();
         }
@@ -190,38 +191,38 @@ namespace Athena
 
                 for (auto& [name, materialHandle] : table)
                 {
-                    UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
+                    //UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
 
-                    Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-                    bool isInvalid = material == nullptr;
-                    const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
+                    //Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+                    //bool isInvalid = material == nullptr;
+                    //const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
 
-                    if (isInvalid)
-                        ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+                    //if (isInvalid)
+                    //    ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
 
-                    if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
-                    {
-                        auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
-                        panel->SetActiveMaterial(materialHandle);
-                    }
+                    //if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
+                    //{
+                    //    auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+                    //    panel->SetActiveMaterial(materialHandle);
+                    //}
 
-                    if (isInvalid)
-                        ImGui::PopStyleColor();
+                    //if (isInvalid)
+                    //    ImGui::PopStyleColor();
 
-                    if (ImGui::BeginDragDropTarget())
-                    {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-                        {
-                            CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+                    //if (ImGui::BeginDragDropTarget())
+                    //{
+                    //    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+                    //    {
+                    //        CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-                            if (cbPayload->AssetType == AssetType::Material)
-                            {
-                                table.at(name) = cbPayload->AssetHandle;
-                            }
-                        }
+                    //        if (cbPayload->AssetType == AssetType::Material)
+                    //        {
+                    //            table.at(name) = cbPayload->AssetHandle;
+                    //        }
+                    //    }
 
-                        ImGui::EndDragDropTarget();
-                    }
+                    //    ImGui::EndDragDropTarget();
+                    //}
                 }
 
                 UI::EndPropertyTable();
@@ -265,7 +266,7 @@ namespace Athena
             UI::PropertyCheckbox("Generate MipMaps", &settings->GenerateMipMaps);
             UI::PropertyEnumCombo("Wrap Mode", ATN_STRINGIFY_MACRO(TextureWrap), &settings->WrapMode);
             UI::PropertyEnumCombo("Filter Mode", ATN_STRINGIFY_MACRO(TextureFilter), &settings->FilterMode);
-            UI::PropertySlider("Anisotropy Level", &settings->AnisotropyLevel, 0.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
+            //UI::PropertySlider("Anisotropy Level", &settings->AnisotropyLevel, 0.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
             UI::PropertyCheckbox("Compute Usage", &settings->ComputeUsage);
 
             FilePath assetFilePath = AssetManager::GetAssetFilePath(m_AssetHandle);

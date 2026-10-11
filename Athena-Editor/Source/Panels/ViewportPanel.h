@@ -2,7 +2,6 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Math/Vector.h"
-#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Panels/Panel.h"
 #include "ImGuizmoLayer.h"
@@ -31,10 +30,10 @@ namespace Athena
 
 		virtual void OnImGuiRender() override;
 
-		void SetViewportRenderer(const Ref<SceneRenderer>& renderer) 
-		{
-			m_ViewportRenderer = renderer;
-		}
+		//void SetViewportRenderer(const Ref<SceneRenderer>& renderer) 
+		//{
+		//	m_ViewportRenderer = renderer;
+		//}
 
 		const ViewportDescription& GetDescription() const { return m_Description; }
 
@@ -49,7 +48,6 @@ namespace Athena
 	private:
 		Ref<ImGuizmoLayer> m_ImGuizmoLayer;
 		ViewportDescription m_Description;
-		Ref<SceneRenderer> m_ViewportRenderer;
 
 		std::function<void()> m_DragDropCallback;
 		std::function<void()> m_UIOverlayCallback;

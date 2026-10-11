@@ -3,9 +3,6 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Math/Random.h"
-#include "Athena/Renderer/ComputePass.h"
-#include "Athena/Renderer/ComputePipeline.h"
-#include "Athena/Renderer/Renderer.h"
 
 
 namespace Athena
@@ -117,32 +114,32 @@ namespace Athena
 
 			s_Data.BRDF_LUT = Texture2D::Create(texInfo);
 
-			ComputePassCreateInfo passInfo;
-			passInfo.Name = "BRDF_LUT_Pass";
+			//ComputePassCreateInfo passInfo;
+			//passInfo.Name = "BRDF_LUT_Pass";
 
-			Ref<ComputePass> pass = ComputePass::Create(passInfo);
-			pass->SetOutput(s_Data.BRDF_LUT);
-			pass->Bake();
+			//Ref<ComputePass> pass = ComputePass::Create(passInfo);
+			//pass->SetOutput(s_Data.BRDF_LUT);
+			//pass->Bake();
 
-			Ref<ComputePipeline> pipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BRDF_LUT"));
-			pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
-			pipeline->Bake();
+			//Ref<ComputePipeline> pipeline = ComputePipeline::Create(Renderer::GetShaderPack()->Get("BRDF_LUT"));
+			//pipeline->SetInput("u_BRDF_LUT", s_Data.BRDF_LUT);
+			//pipeline->Bake();
 
-			RenderCommandBufferCreateInfo cmdBufferInfo;
-			cmdBufferInfo.Name = "BRDF_LUT_Generation";
-			cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
+			//RenderCommandBufferCreateInfo cmdBufferInfo;
+			//cmdBufferInfo.Name = "BRDF_LUT_Generation";
+			//cmdBufferInfo.Usage = RenderCommandBufferUsage::IMMEDIATE;
 
-			Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
+			//Ref<RenderCommandBuffer> commandBuffer = RenderCommandBuffer::Create(cmdBufferInfo);
 
-			commandBuffer->Begin();
-			{
-				pass->Begin(commandBuffer);
-				pipeline->Bind(commandBuffer);
-				Renderer::Dispatch(commandBuffer, pipeline, { texInfo.Width, texInfo.Height, 1 });
-				pass->End(commandBuffer);
-			}
-			commandBuffer->End();
-			commandBuffer->Submit(false);
+			//commandBuffer->Begin();
+			//{
+			//	pass->Begin(commandBuffer);
+			//	pipeline->Bind(commandBuffer);
+			//	Renderer::Dispatch(commandBuffer, pipeline, { texInfo.Width, texInfo.Height, 1 });
+			//	pass->End(commandBuffer);
+			//}
+			//commandBuffer->End();
+			//commandBuffer->Submit(false);
 		}
 	}
 

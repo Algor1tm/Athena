@@ -3,9 +3,9 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Time.h"
 #include "Athena/Core/UUID.h"
-
+#include "Athena/Asset/Asset.h"
+#include "Athena/Asset/Editor/AssetImportSettings.h"
 #include "Athena/Renderer/EditorCamera.h"
-#include "Athena/Renderer/SceneRenderer.h"
 
 #include "Athena/Scene/SceneCamera.h"
 
@@ -69,10 +69,10 @@ namespace Athena
 
 		void OnRuntimeStop();
 
-		void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
-		void OnRender(const Ref<SceneRenderer>& renderer);
-
-		void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
+		//void OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera);
+		//void OnRender(const Ref<SceneRenderer>& renderer);
+		//
+		//void OnRender2D(const Ref<SceneRenderer2D>& renderer2D);
 
 		void OnViewportResize(uint32 width, uint32 height);
 		Vector2u GetViewportSize() const { return { m_ViewportWidth, m_ViewportHeight }; }
@@ -97,7 +97,7 @@ namespace Athena
 		void OnPhysics2DStart();
 		void UpdatePhysics(Time frameTime);
 
-		void RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo);
+		//void RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo);
 
 		template <typename T>
 		void OnComponentAdd(Entity entity, T& component);

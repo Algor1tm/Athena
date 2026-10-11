@@ -1,10 +1,6 @@
 #include "Scene.h"
 
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Light.h"
-#include "Athena/Renderer/Material.h"
-#include "Athena/Renderer/SceneRenderer2D.h"
-#include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
@@ -543,231 +539,231 @@ namespace Athena
 		}
 	}
 
-	void Scene::OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera)
-	{
-		RenderScene(renderer, camera.GetCameraInfo());
-	}
+	//void Scene::OnRender(const Ref<SceneRenderer>& renderer, const EditorCamera& camera)
+	//{
+	//	RenderScene(renderer, camera.GetCameraInfo());
+	//}
 
-	void Scene::OnRender(const Ref<SceneRenderer>& renderer)
-	{
-		// Choose camera
-		SceneCamera* mainCamera = nullptr;
-		WorldTransformComponent cameraTransform;
-		{
-			auto cameras = m_Registry.view<CameraComponent, WorldTransformComponent>();
-			for (auto entity : cameras)
-			{
-				auto& camera = cameras.get<CameraComponent>(entity);
+	//void Scene::OnRender(const Ref<SceneRenderer>& renderer)
+	//{
+	//	// Choose camera
+	//	SceneCamera* mainCamera = nullptr;
+	//	WorldTransformComponent cameraTransform;
+	//	{
+	//		auto cameras = m_Registry.view<CameraComponent, WorldTransformComponent>();
+	//		for (auto entity : cameras)
+	//		{
+	//			auto& camera = cameras.get<CameraComponent>(entity);
 
-				if (camera.Primary)
-				{
-					mainCamera = &camera.Camera;
-					cameraTransform = cameras.get<WorldTransformComponent>(entity);
-					break;
-				}
-			}
-		}
+	//			if (camera.Primary)
+	//			{
+	//				mainCamera = &camera.Camera;
+	//				cameraTransform = cameras.get<WorldTransformComponent>(entity);
+	//				break;
+	//			}
+	//		}
+	//	}
 
-		// Render 
-		if (mainCamera)
-		{
-			CameraInfo info = mainCamera->GetCameraInfo();
-			info.ViewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
+	//	// Render 
+	//	if (mainCamera)
+	//	{
+	//		CameraInfo info = mainCamera->GetCameraInfo();
+	//		info.ViewMatrix = Math::AffineInverse(cameraTransform.AsMatrix());
 
-			RenderScene(renderer, info);
-		}
-	}
+	//		RenderScene(renderer, info);
+	//	}
+	//}
 
-	void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
-	{
-		TRACY_PROFILE_FUNC();
+	//void Scene::OnRender2D(const Ref<SceneRenderer2D>& renderer2D)
+	//{
+	//	TRACY_PROFILE_FUNC();
 
-		auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
-		for (auto entity : quads)
-		{
-			const auto& transform = quads.get<WorldTransformComponent>(entity);
-			const auto& sprite = quads.get<SpriteComponent>(entity);
+	//	auto quads = GetAllEntitiesWith<SpriteComponent, WorldTransformComponent>();
+	//	for (auto entity : quads)
+	//	{
+	//		const auto& transform = quads.get<WorldTransformComponent>(entity);
+	//		const auto& sprite = quads.get<SpriteComponent>(entity);
 
-			Ref<TextureAsset> textureAsset = sprite.TextureHandle == AssetHandle(0) ? TextureAsset::GetDefault() :
-				AssetManager::GetAsset<TextureAsset>(sprite.TextureHandle);
+	//		Ref<TextureAsset> textureAsset = sprite.TextureHandle == AssetHandle(0) ? TextureAsset::GetDefault() :
+	//			AssetManager::GetAsset<TextureAsset>(sprite.TextureHandle);
 
-			if (textureAsset)
-			{
-				renderer2D->DrawQuad(transform.AsMatrix(), textureAsset, sprite.Space, sprite.Color, sprite.TilingFactor);
-			}
-		}
+	//		if (textureAsset)
+	//		{
+	//			renderer2D->DrawQuad(transform.AsMatrix(), textureAsset, sprite.Space, sprite.Color, sprite.TilingFactor);
+	//		}
+	//	}
 
-		auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
-		for (auto entity : circles)
-		{
-			const auto& transform = circles.get<WorldTransformComponent>(entity);
-			const auto& circle = circles.get<CircleComponent>(entity);
+	//	auto circles = GetAllEntitiesWith<CircleComponent, WorldTransformComponent>();
+	//	for (auto entity : circles)
+	//	{
+	//		const auto& transform = circles.get<WorldTransformComponent>(entity);
+	//		const auto& circle = circles.get<CircleComponent>(entity);
 
-			renderer2D->DrawCircle(transform.AsMatrix(), circle.Space, circle.Color, circle.Thickness, circle.Fade);
-		}
+	//		renderer2D->DrawCircle(transform.AsMatrix(), circle.Space, circle.Color, circle.Thickness, circle.Fade);
+	//	}
 
-		auto textEntities = GetAllEntitiesWith<TextComponent, WorldTransformComponent>();
-		for (auto entity : textEntities)
-		{
-			const auto& transform = textEntities.get<WorldTransformComponent>(entity);
-			const auto& text = textEntities.get<TextComponent>(entity);
+	//	auto textEntities = GetAllEntitiesWith<TextComponent, WorldTransformComponent>();
+	//	for (auto entity : textEntities)
+	//	{
+	//		const auto& transform = textEntities.get<WorldTransformComponent>(entity);
+	//		const auto& text = textEntities.get<TextComponent>(entity);
 
-			TextParams params;
-			params.Color = text.Color;
-			params.MaxWidth = text.MaxWidth;
-			params.Kerning = text.Kerning;
-			params.LineSpacing = text.LineSpacing;
-			params.Shadowing = text.Shadowing;
-			params.ShadowDistance = text.ShadowDistance;
-			params.ShadowColor = text.ShadowColor;
+	//		TextParams params;
+	//		params.Color = text.Color;
+	//		params.MaxWidth = text.MaxWidth;
+	//		params.Kerning = text.Kerning;
+	//		params.LineSpacing = text.LineSpacing;
+	//		params.Shadowing = text.Shadowing;
+	//		params.ShadowDistance = text.ShadowDistance;
+	//		params.ShadowColor = text.ShadowColor;
 
-			Ref<Font> font = text.FontHandle == AssetHandle(0) ? Font::GetDefault() : AssetManager::GetAsset<Font>(text.FontHandle);
-			if (font)
-			{
-				renderer2D->DrawText(text.Text, font, transform.AsMatrix(), text.Space, params);
-			}
-		}
-	}
+	//		Ref<Font> font = text.FontHandle == AssetHandle(0) ? Font::GetDefault() : AssetManager::GetAsset<Font>(text.FontHandle);
+	//		if (font)
+	//		{
+	//			renderer2D->DrawText(text.Text, font, transform.AsMatrix(), text.Space, params);
+	//		}
+	//	}
+	//}
 
-	void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
-	{
-		TRACY_PROFILE_FUNC();
+	//void Scene::RenderScene(const Ref<SceneRenderer>& renderer, const CameraInfo& cameraInfo)
+	//{
+	//	TRACY_PROFILE_FUNC();
 
-		renderer->BeginScene(cameraInfo);
+	//	renderer->BeginScene(cameraInfo);
 
-		auto meshes = GetAllEntitiesWith<MeshComponent, WorldTransformComponent>();
-		for (auto entity : meshes)
-		{
-			const auto& transformComponent = meshes.get<WorldTransformComponent>(entity);
-			const auto& meshComponent = meshes.get<MeshComponent>(entity);
+	//	auto meshes = GetAllEntitiesWith<MeshComponent, WorldTransformComponent>();
+	//	for (auto entity : meshes)
+	//	{
+	//		const auto& transformComponent = meshes.get<WorldTransformComponent>(entity);
+	//		const auto& meshComponent = meshes.get<MeshComponent>(entity);
 
-			if (!meshComponent.Visible)
-				continue;
+	//		if (!meshComponent.Visible)
+	//			continue;
 
-			Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
+	//		Ref<Mesh> mesh = AssetManager::GetAsset<Mesh>(meshComponent.MeshHandle);
 
-			if (!mesh)
-				continue;
+	//		if (!mesh)
+	//			continue;
 
-			if (mesh->IsCollapsedGraph())
-			{
-				Entity sceneEntity = { entity, this };
-				bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
+	//		if (mesh->IsCollapsedGraph())
+	//		{
+	//			Entity sceneEntity = { entity, this };
+	//			bool hasAnimationController = sceneEntity.HasComponent<AnimationControllerComponent>();
 
-				for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
-				{
-					const SubMesh& subMesh = mesh->GetSubMesh(i);
-					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
-					Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); // TODO: can we bake this transform?
+	//			for (uint32 i = 0; i < mesh->GetSubMeshes().size(); ++i)
+	//			{
+	//				const SubMesh& subMesh = mesh->GetSubMesh(i);
+	//				Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+	//				Matrix4 transform = subMesh.Transform * transformComponent.AsMatrix(); // TODO: can we bake this transform?
 
-					renderer->Submit(mesh, subMesh, material, hasAnimationController, transform);
-				}
+	//				renderer->Submit(mesh, subMesh, material, hasAnimationController, transform);
+	//			}
 
-				if (hasAnimationController)
-				{
-					Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
-					renderer->SubmitAnimationState(controller->GetBoneTransforms());
-				}
-			}
-			else if(mesh->HasMeshNode(meshComponent.MeshNodeIndex))
-			{
-				const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
+	//			if (hasAnimationController)
+	//			{
+	//				Ref<AnimationController> controller = sceneEntity.GetComponent<AnimationControllerComponent>().AnimationController;
+	//				renderer->SubmitAnimationState(controller->GetBoneTransforms());
+	//			}
+	//		}
+	//		else if(mesh->HasMeshNode(meshComponent.MeshNodeIndex))
+	//		{
+	//			const MeshNode& node = mesh->GetMeshNode(meshComponent.MeshNodeIndex);
 
-				for (uint32 submeshIndex: node.SubMeshes)
-				{
-					const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
-					Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
-					Matrix4 transform = transformComponent.AsMatrix();
+	//			for (uint32 submeshIndex: node.SubMeshes)
+	//			{
+	//				const SubMesh& subMesh = mesh->GetSubMesh(submeshIndex);
+	//				Ref<Material> material = meshComponent.GetMaterial(mesh, subMesh.MaterialName);
+	//				Matrix4 transform = transformComponent.AsMatrix();
 
-					renderer->Submit(mesh, subMesh, material, false, transform);
-				}
-			}
-		}
+	//				renderer->Submit(mesh, subMesh, material, false, transform);
+	//			}
+	//		}
+	//	}
 
-		LightEnvironment lightEnv;
+	//	LightEnvironment lightEnv;
 
-		auto dirLights = GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
-		for (auto entity : dirLights)
-		{
-			const auto& transform = dirLights.get<WorldTransformComponent>(entity);
-			const auto& light = dirLights.get<DirectionalLightComponent>(entity);
+	//	auto dirLights = GetAllEntitiesWith<DirectionalLightComponent, WorldTransformComponent>();
+	//	for (auto entity : dirLights)
+	//	{
+	//		const auto& transform = dirLights.get<WorldTransformComponent>(entity);
+	//		const auto& light = dirLights.get<DirectionalLightComponent>(entity);
 
-			DirectionalLight dirLight;
-			dirLight.Color = light.Color;
-			dirLight.Intensity = light.Intensity;
-			dirLight.Direction = transform.Rotation * Vector3::Forward();
-			dirLight.CastShadows = light.CastShadows;
-			dirLight.LightSize = light.LightSize;
+	//		DirectionalLight dirLight;
+	//		dirLight.Color = light.Color;
+	//		dirLight.Intensity = light.Intensity;
+	//		dirLight.Direction = transform.Rotation * Vector3::Forward();
+	//		dirLight.CastShadows = light.CastShadows;
+	//		dirLight.LightSize = light.LightSize;
 
-			lightEnv.DirectionalLights.push_back(dirLight);
-		}
+	//		lightEnv.DirectionalLights.push_back(dirLight);
+	//	}
 
-		auto pointLights = GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
-		for (auto entity : pointLights)
-		{
-			const auto& transform = pointLights.get<WorldTransformComponent>(entity);
-			const auto& light = pointLights.get<PointLightComponent>(entity);
+	//	auto pointLights = GetAllEntitiesWith<PointLightComponent, WorldTransformComponent>();
+	//	for (auto entity : pointLights)
+	//	{
+	//		const auto& transform = pointLights.get<WorldTransformComponent>(entity);
+	//		const auto& light = pointLights.get<PointLightComponent>(entity);
 
-			PointLight pointLight;
-			pointLight.Color = light.Color;
-			pointLight.Position = transform.Translation;
-			pointLight.Intensity = light.Intensity;
-			pointLight.Radius = light.Radius;
-			pointLight.FallOff = light.FallOff;
+	//		PointLight pointLight;
+	//		pointLight.Color = light.Color;
+	//		pointLight.Position = transform.Translation;
+	//		pointLight.Intensity = light.Intensity;
+	//		pointLight.Radius = light.Radius;
+	//		pointLight.FallOff = light.FallOff;
 
-			lightEnv.PointLights.push_back(pointLight);
-		}
+	//		lightEnv.PointLights.push_back(pointLight);
+	//	}
 
-		auto spotLights = GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
-		for (auto entity : spotLights)
-		{
-			const auto& transform = spotLights.get<WorldTransformComponent>(entity);
-			const auto& light = spotLights.get<SpotLightComponent>(entity);
+	//	auto spotLights = GetAllEntitiesWith<SpotLightComponent, WorldTransformComponent>();
+	//	for (auto entity : spotLights)
+	//	{
+	//		const auto& transform = spotLights.get<WorldTransformComponent>(entity);
+	//		const auto& light = spotLights.get<SpotLightComponent>(entity);
 
-			SpotLight spotLight;
-			spotLight.Color = light.Color;
-			spotLight.Position = transform.Translation;
-			spotLight.SpotAngle = light.SpotAngle;
-			spotLight.Intensity = light.Intensity;
-			spotLight.Direction = transform.Rotation * Vector3::Forward();
-			spotLight.Range = light.Range;
-			spotLight.RangeFallOff = light.RangeFallOff;
-			spotLight.InnerFallOff = light.InnerFallOff;
+	//		SpotLight spotLight;
+	//		spotLight.Color = light.Color;
+	//		spotLight.Position = transform.Translation;
+	//		spotLight.SpotAngle = light.SpotAngle;
+	//		spotLight.Intensity = light.Intensity;
+	//		spotLight.Direction = transform.Rotation * Vector3::Forward();
+	//		spotLight.Range = light.Range;
+	//		spotLight.RangeFallOff = light.RangeFallOff;
+	//		spotLight.InnerFallOff = light.InnerFallOff;
 
-			lightEnv.SpotLights.push_back(spotLight);
-		}
+	//		lightEnv.SpotLights.push_back(spotLight);
+	//	}
 
-		auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
-		if (skyLights.size() > 1)
-			ATN_LOG_WARN(Scene, "Attempt to submit more than 1 SkyLight in the scene!");
+	//	auto skyLights = GetAllEntitiesWith<SkyLightComponent>();
+	//	if (skyLights.size() > 1)
+	//		ATN_LOG_WARN(Scene, "Attempt to submit more than 1 SkyLight in the scene!");
 
-		if (!skyLights.empty())
-		{
-			auto entity = skyLights[0];
-			const auto& light = skyLights.get<SkyLightComponent>(entity);
+	//	if (!skyLights.empty())
+	//	{
+	//		auto entity = skyLights[0];
+	//		const auto& light = skyLights.get<SkyLightComponent>(entity);
 
-			if (light.Type == EnvironmentMapType::STATIC)
-			{
-				Ref<EnvironmentMap> map = AssetManager::GetAsset<EnvironmentMap>(light.EnvMapHandle);
+	//		if (light.Type == EnvironmentMapType::STATIC)
+	//		{
+	//			Ref<EnvironmentMap> map = AssetManager::GetAsset<EnvironmentMap>(light.EnvMapHandle);
 
-				if (map)
-				{
-					lightEnv.EnvironmentMapTexture = map->GetEnvironmentTexture();
-					lightEnv.IrradianceTexture = map->GetIrradianceTexture();
-				}
-			}
-			else if (light.Type == EnvironmentMapType::PREETHAM)
-			{
-				EnvironmentMap::CreatePreethamMap(light.Preetham, lightEnv.EnvironmentMapTexture, lightEnv.IrradianceTexture);
-			}
+	//			if (map)
+	//			{
+	//				lightEnv.EnvironmentMapTexture = map->GetEnvironmentTexture();
+	//				lightEnv.IrradianceTexture = map->GetIrradianceTexture();
+	//			}
+	//		}
+	//		else if (light.Type == EnvironmentMapType::PREETHAM)
+	//		{
+	//			EnvironmentMap::CreatePreethamMap(light.Preetham, lightEnv.EnvironmentMapTexture, lightEnv.IrradianceTexture);
+	//		}
 
-			lightEnv.EnvironmentMapLOD = light.LOD;
-			lightEnv.EnvironmentMapIntensity = light.Intensity;
-		}
+	//		lightEnv.EnvironmentMapLOD = light.LOD;
+	//		lightEnv.EnvironmentMapIntensity = light.Intensity;
+	//	}
 
 
-		renderer->SubmitLightEnvironment(lightEnv);
+	//	renderer->SubmitLightEnvironment(lightEnv);
 
-		renderer->EndScene();
-	}
+	//	renderer->EndScene();
+	//}
 }

@@ -29,22 +29,22 @@ namespace Athena
 		}
 	}
 
-	Ref<Material> MeshComponent::GetMaterial(const Ref<Mesh>& mesh, const String& materialName) const
-	{
-		Ref<MaterialAsset> asset;
+	//Ref<Material> MeshComponent::GetMaterial(const Ref<Mesh>& mesh, const String& materialName) const
+	//{
+	//	Ref<MaterialAsset> asset;
 
-		if (OverrideMaterials.contains(materialName))
-		{
-			asset = AssetManager::GetAsset<MaterialAsset>(OverrideMaterials.at(materialName));
-		}
-		else
-		{
-			asset = mesh->GetMaterial(materialName);
-		}
+	//	if (OverrideMaterials.contains(materialName))
+	//	{
+	//		asset = AssetManager::GetAsset<MaterialAsset>(OverrideMaterials.at(materialName));
+	//	}
+	//	else
+	//	{
+	//		asset = mesh->GetMaterial(materialName);
+	//	}
 
-		if (asset && asset->GetMaterial())
-			return asset->GetMaterial();
+	//	if (asset && asset->GetMaterial())
+	//		return asset->GetMaterial();
 
-		return MaterialAsset::GetDefault()->GetMaterial();
-	}
+	//	return MaterialAsset::GetDefault()->GetMaterial();
+	//}
 }

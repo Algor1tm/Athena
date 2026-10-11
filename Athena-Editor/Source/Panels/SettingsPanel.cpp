@@ -5,8 +5,6 @@
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
-#include "Athena/Renderer/SceneRenderer.h"
-#include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
@@ -43,253 +41,253 @@ namespace Athena
 
 	void SettingsPanel::OnImGuiRender()
 	{
-		if (ImGui::Begin("Editor Settings"))
-		{
-			if (UI::BeginPropertyTable())
-			{
-				EditorSettings& settings = m_EditorCtx.EditorSettings;
+		//if (ImGui::Begin("Editor Settings"))
+		//{
+		//	if (UI::BeginPropertyTable())
+		//	{
+		//		EditorSettings& settings = m_EditorCtx.EditorSettings;
 
-				UI::PropertyCheckbox("Gizmos Local", &settings.GizmosLocalTransform);
-				UI::PropertyCheckbox("Show Renderer Icons", &settings.ShowRendererIcons);
-				UI::PropertySlider("Renderer Icons Scale", &settings.RendererIconsScale, 0.4f, 3.f);
-				UI::PropertySlider("Camera Speed", &settings.CameraSpeedLevel, 0.f, 10.f);
-				UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
-				UI::PropertyCheckbox("Show Physics Colliders", &settings.ShowPhysicsColliders);
+		//		UI::PropertyCheckbox("Gizmos Local", &settings.GizmosLocalTransform);
+		//		UI::PropertyCheckbox("Show Renderer Icons", &settings.ShowRendererIcons);
+		//		UI::PropertySlider("Renderer Icons Scale", &settings.RendererIconsScale, 0.4f, 3.f);
+		//		UI::PropertySlider("Camera Speed", &settings.CameraSpeedLevel, 0.f, 10.f);
+		//		UI::PropertyDrag("Camera Near/Far", &settings.NearFarClips);
+		//		UI::PropertyCheckbox("Show Physics Colliders", &settings.ShowPhysicsColliders);
 
-				UI::EndPropertyTable();
-			}
-		}
+		//		UI::EndPropertyTable();
+		//	}
+		//}
 
-		ImGui::End();
+		//ImGui::End();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0.f });
-		ImGui::Begin("SceneRenderer");
-		ImGui::PopStyleVar();
+		//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0.f });
+		//ImGui::Begin("SceneRenderer");
+		//ImGui::PopStyleVar();
 
-		SceneRendererSettings& settings = m_ViewportRenderer->GetSettings();
-		ShaderPack& shaderPack = *Renderer::GetShaderPack();
+		//SceneRendererSettings& settings = m_ViewportRenderer->GetSettings();
+		//ShaderPack& shaderPack = *Renderer::GetShaderPack();
 
-		bool shaderPackOpen = UI::TreeNode("ShaderPack", false);
-		if (!shaderPackOpen)
-		{
-			float frameHeight = ImGui::GetFrameHeight();
-			ImVec2 regionAvail = ImGui::GetContentRegionAvail();
-			ImVec2 textSize = ImGui::CalcTextSize("Reload All");
+		//bool shaderPackOpen = UI::TreeNode("ShaderPack", false);
+		//if (!shaderPackOpen)
+		//{
+		//	float frameHeight = ImGui::GetFrameHeight();
+		//	ImVec2 regionAvail = ImGui::GetContentRegionAvail();
+		//	ImVec2 textSize = ImGui::CalcTextSize("Reload All");
 
-			ImGui::SameLine(regionAvail.x - frameHeight);
-			UI::ShiftCursor(-textSize.x, 0.f);
-			if (ImGui::Button("Reload All"))
-				shaderPack.Reload();
+		//	ImGui::SameLine(regionAvail.x - frameHeight);
+		//	UI::ShiftCursor(-textSize.x, 0.f);
+		//	if (ImGui::Button("Reload All"))
+		//		shaderPack.Reload();
 
-			UI::ShiftCursorY(-3.f);
-		}
+		//	UI::ShiftCursorY(-3.f);
+		//}
 
-		if (shaderPackOpen)
-		{
-			if (UI::BeginPropertyTable())
-			{
-				for (const auto& [name, shader] : shaderPack)
-				{
-					bool isCompiled = shader->IsCompiled();
+		//if (shaderPackOpen)
+		//{
+		//	if (UI::BeginPropertyTable())
+		//	{
+		//		for (const auto& [name, shader] : shaderPack)
+		//		{
+		//			bool isCompiled = shader->IsCompiled();
 
-					if (!isCompiled)
-						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+		//			if (!isCompiled)
+		//				ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
 
-					UI::PropertyRow(name, ImGui::GetFrameHeight());
+		//			UI::PropertyRow(name, ImGui::GetFrameHeight());
 
-					if (!isCompiled)
-						ImGui::PopStyleColor();
+		//			if (!isCompiled)
+		//				ImGui::PopStyleColor();
 
-					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10.f, 3.f});
-					ImGui::PushID(name.c_str());
+		//			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {10.f, 3.f});
+		//			ImGui::PushID(name.c_str());
 
-					if (UI::ButtonCentered("Reload"))
-						shader->Reload();
+		//			if (UI::ButtonCentered("Reload"))
+		//				shader->Reload();
 
-					ImGui::PopID();
-					ImGui::PopStyleVar();
-				}
+		//			ImGui::PopID();
+		//			ImGui::PopStyleVar();
+		//		}
 
-				UI::EndPropertyTable();
-			}
+		//		UI::EndPropertyTable();
+		//	}
 
-			UI::TreePop();
-		}
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Debug", false) && UI::BeginPropertyTable())
-		{
-			UI::PropertyEnumCombo("Debug View", ATN_STRINGIFY_MACRO(DebugView), (void*)&settings.DebugView);
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
+		//if (UI::TreeNode("Debug", false) && UI::BeginPropertyTable())
+		//{
+		//	UI::PropertyEnumCombo("Debug View", ATN_STRINGIFY_MACRO(DebugView), (void*)&settings.DebugView);
+		//	UI::EndPropertyTable();
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
-		{
-			ShadowSettings& shadowSettings = settings.ShadowSettings;
+		//if (UI::TreeNode("Shadows", false) && UI::BeginPropertyTable())
+		//{
+		//	ShadowSettings& shadowSettings = settings.ShadowSettings;
 
-			UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
-			UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
-			UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
-			UI::PropertyDrag("Bias Gradient", &shadowSettings.BiasGradient, 0.01f);
-				
-			UI::EndPropertyTable();
+		//	UI::PropertyCheckbox("Soft Shadows", &shadowSettings.SoftShadows);
+		//	UI::PropertyDrag("Max Distance", &shadowSettings.MaxDistance);
+		//	UI::PropertyDrag("Fade Out", &shadowSettings.FadeOut);
+		//	UI::PropertyDrag("Bias Gradient", &shadowSettings.BiasGradient, 0.01f);
+		//		
+		//	UI::EndPropertyTable();
 
-			if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
-			{
-				UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
-				UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
-				UI::PropertyDrag("Near Plane Offset", &shadowSettings.NearPlaneOffset);
-				UI::PropertyDrag("Far Plane Offset", &shadowSettings.FarPlaneOffset);
+		//	if (UI::TreeNode("Cascade Settings", true, true) && UI::BeginPropertyTable())
+		//	{
+		//		UI::PropertySlider("Blend Distance", &shadowSettings.CascadeBlendDistance, 0.f, 1.f);
+		//		UI::PropertySlider("Split", &shadowSettings.CascadeSplit, 0.f, 1.f);
+		//		UI::PropertyDrag("Near Plane Offset", &shadowSettings.NearPlaneOffset);
+		//		UI::PropertyDrag("Far Plane Offset", &shadowSettings.FarPlaneOffset);
 
-				UI::EndPropertyTable();
-				UI::TreePop();
-			}
+		//		UI::EndPropertyTable();
+		//		UI::TreePop();
+		//	}
 
-			if (UI::TreeNode("Shadow Map", false, true))
-			{
-				static int layer = 0;
-				ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
+		//	if (UI::TreeNode("Shadow Map", false, true))
+		//	{
+		//		static int layer = 0;
+		//		ImGui::SliderInt("Layer", &layer, 0, ShaderDef::SHADOW_CASCADES_COUNT - 1);
 
-				Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
-				TextureViewCreateInfo view;
-				view.BaseLayer = layer;
-				view.GrayScale = true;
+		//		Ref<Texture2D> shadowMap = m_ViewportRenderer->GetShadowMap();
+		//		TextureViewCreateInfo view;
+		//		view.BaseLayer = layer;
+		//		view.GrayScale = true;
 
-				ImGui::Image(UI::GetTextureID(shadowMap->GetView(view)), {256, 256});
+		//		ImGui::Image(UI::GetTextureID(shadowMap->GetView(view)), {256, 256});
 
-				UI::TreePop();
-			}
+		//		UI::TreePop();
+		//	}
 
-			UI::TreePop();
-		}
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Ambient Occlusion", false) && UI::BeginPropertyTable())
-		{
-			AmbientOcclusionSettings& ao = settings.AOSettings;
+		//if (UI::TreeNode("Ambient Occlusion", false) && UI::BeginPropertyTable())
+		//{
+		//	AmbientOcclusionSettings& ao = settings.AOSettings;
 
-			UI::PropertyCheckbox("Enable", &ao.Enable);
-			UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
-			UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
-			UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
-			UI::PropertySlider("Blur Sharpness", &ao.BlurSharpness, 0.f, 100.f);
+		//	UI::PropertyCheckbox("Enable", &ao.Enable);
+		//	UI::PropertySlider("Intensity", &ao.Intensity, 0.1f, 5.f);
+		//	UI::PropertySlider("Radius", &ao.Radius, 0.1f, 3.f);
+		//	UI::PropertySlider("Bias", &ao.Bias, 0.f, 0.5f);
+		//	UI::PropertySlider("Blur Sharpness", &ao.BlurSharpness, 0.f, 100.f);
 
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
+		//	UI::EndPropertyTable();
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("SSR", false) && UI::BeginPropertyTable())
-		{
-			SSRSettings& ssr = settings.SSRSettings;
+		//if (UI::TreeNode("SSR", false) && UI::BeginPropertyTable())
+		//{
+		//	SSRSettings& ssr = settings.SSRSettings;
 
-			UI::PropertyCheckbox("Enable", &ssr.Enable);
-			if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
-				m_ViewportRenderer->ApplySettings();
+		//	UI::PropertyCheckbox("Enable", &ssr.Enable);
+		//	if (UI::PropertyCheckbox("HalfRes", &ssr.HalfRes))
+		//		m_ViewportRenderer->ApplySettings();
 
-			UI::PropertyCheckbox("Cone Trace", &ssr.ConeTrace);
-			UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
-			UI::PropertySlider("Max Roughness", &ssr.MaxRoughness, 0.f, 1.f);
+		//	UI::PropertyCheckbox("Cone Trace", &ssr.ConeTrace);
+		//	UI::PropertySlider("Intensity", &ssr.Intensity, 0.f, 1.f);
+		//	UI::PropertySlider("Max Roughness", &ssr.MaxRoughness, 0.f, 1.f);
 
-			int maxSteps = ssr.MaxSteps;
-			if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 1024))
-				ssr.MaxSteps = maxSteps;
+		//	int maxSteps = ssr.MaxSteps;
+		//	if (UI::PropertyDrag("Max Steps", &maxSteps, 1, 1024))
+		//		ssr.MaxSteps = maxSteps;
 
-			UI::PropertySlider("Screen Edges Fade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
-			UI::PropertyCheckbox("Backward Rays", &ssr.BackwardRays);
+		//	UI::PropertySlider("Screen Edges Fade", &ssr.ScreenEdgesFade, 0.f, 0.4f);
+		//	UI::PropertyCheckbox("Backward Rays", &ssr.BackwardRays);
 
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
+		//	UI::EndPropertyTable();
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
-		{
-			BloomSettings& bloomSettings = settings.BloomSettings;
+		//if (UI::TreeNode("Bloom", false) && UI::BeginPropertyTable())
+		//{
+		//	BloomSettings& bloomSettings = settings.BloomSettings;
 
-			UI::PropertyCheckbox("Enable", &bloomSettings.Enable);
-			UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
-			UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
-			UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
-			UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
+		//	UI::PropertyCheckbox("Enable", &bloomSettings.Enable);
+		//	UI::PropertyDrag("Intensity", &bloomSettings.Intensity, 0.05f, 0, 10);
+		//	UI::PropertyDrag("Threshold", &bloomSettings.Threshold, 0.05f, 0, 10);
+		//	UI::PropertyDrag("Knee", &bloomSettings.Knee, 0.05f, 0, 10);
+		//	UI::PropertyDrag("Dirt Intensity", &bloomSettings.DirtIntensity, 0.1f, 0, 200);
 
-			bool isDefault = bloomSettings.DirtTexture == AssetHandle(0);
-			Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(bloomSettings.DirtTexture);
-			bool isValid = textureAsset != nullptr && !isDefault;
+		//	bool isDefault = bloomSettings.DirtTexture == AssetHandle(0);
+		//	Ref<TextureAsset> textureAsset = AssetManager::GetAsset<TextureAsset>(bloomSettings.DirtTexture);
+		//	bool isValid = textureAsset != nullptr && !isDefault;
 
-			Ref<Texture2D> texture;
-			if (isDefault)
-				texture = EngineTextures::GetWhiteTexture();
-			else if (!isValid)
-				texture = EditorResources::GetIcon("EmptyTexture");
-			else
-				texture = textureAsset->GetRenderTexture();
+		//	Ref<Texture2D> texture;
+		//	if (isDefault)
+		//		texture = EngineTextures::GetWhiteTexture();
+		//	else if (!isValid)
+		//		texture = EditorResources::GetIcon("EmptyTexture");
+		//	else
+		//		texture = textureAsset->GetRenderTexture();
 
-			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
-			if (UI::PropertyImage("Dirt Texture", texture, { imageSize, imageSize }))
-			{
-				std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
-				FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
-				AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
+		//	float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
+		//	if (UI::PropertyImage("Dirt Texture", texture, { imageSize, imageSize }))
+		//	{
+		//		std::vector<String> textureExts = AssetFileExtensions::GetAssetExtensionsList(AssetType::Texture);
+		//		FilePath path = FileDialogs::OpenFile("Select Texture", "Texture files", textureExts, Project::GetAssetDirectory());
+		//		AssetHandle handle = Project::GetEditorAssetManager()->GetAssetHandleFromFilePath(path);
 
-				if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
-				{
-					bloomSettings.DirtTexture = handle;
-				}
-			}
+		//		if (Project::GetEditorAssetManager()->IsAssetHandleValid(handle))
+		//		{
+		//			bloomSettings.DirtTexture = handle;
+		//		}
+		//	}
 
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-				{
-					CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+		//	if (ImGui::BeginDragDropTarget())
+		//	{
+		//		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+		//		{
+		//			CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-					if (cbPayload->AssetType == AssetType::Texture)
-					{
-						bloomSettings.DirtTexture = cbPayload->AssetHandle;
-					}
-				}
-				ImGui::EndDragDropTarget();
-			}
+		//			if (cbPayload->AssetType == AssetType::Texture)
+		//			{
+		//				bloomSettings.DirtTexture = cbPayload->AssetHandle;
+		//			}
+		//		}
+		//		ImGui::EndDragDropTarget();
+		//	}
 
-			UI::EndPropertyTable();
+		//	UI::EndPropertyTable();
 
-			if (UI::TreeNode("Bloom Texture", false, true))
-			{
-				Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
+		//	if (UI::TreeNode("Bloom Texture", false, true))
+		//	{
+		//		Ref<Texture2D> bloomTexture = m_ViewportRenderer->GetBloomTexture();
 
-				static int mip = 0;
-				ImGui::SliderInt("Mip", &mip, 0, bloomTexture->GetMipLevelsCount() - 4);
-				ImGui::Image(UI::GetTextureID(bloomTexture->GetMipView(mip)), {256, 256});
+		//		static int mip = 0;
+		//		ImGui::SliderInt("Mip", &mip, 0, bloomTexture->GetMipLevelsCount() - 4);
+		//		ImGui::Image(UI::GetTextureID(bloomTexture->GetMipView(mip)), {256, 256});
 
-				UI::TreePop();
-			}
+		//		UI::TreePop();
+		//	}
 
-			UI::TreePop();
-		}
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Post Processing", false) && UI::BeginPropertyTable())
-		{
-			PostProcessingSettings& postProcess = settings.PostProcessingSettings;
+		//if (UI::TreeNode("Post Processing", false) && UI::BeginPropertyTable())
+		//{
+		//	PostProcessingSettings& postProcess = settings.PostProcessingSettings;
 
-			UI::PropertyEnumCombo("Tonemap Mode", ATN_STRINGIFY_MACRO(TonemapMode), (void*)&postProcess.TonemapMode);
-			UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
-			UI::PropertyEnumCombo("Antialiasing", ATN_STRINGIFY_MACRO(Antialiasing), (void*)&postProcess.AntialisingMethod);
+		//	UI::PropertyEnumCombo("Tonemap Mode", ATN_STRINGIFY_MACRO(TonemapMode), (void*)&postProcess.TonemapMode);
+		//	UI::PropertySlider("Exposure", &postProcess.Exposure, 0.f, 10.f);
+		//	UI::PropertyEnumCombo("Antialiasing", ATN_STRINGIFY_MACRO(Antialiasing), (void*)&postProcess.AntialisingMethod);
 
-			UI::EndPropertyTable();
-			UI::TreePop();
-		}
+		//	UI::EndPropertyTable();
+		//	UI::TreePop();
+		//}
 
-		if (UI::TreeNode("Quality", false) && UI::BeginPropertyTable())
-		{
-			QualitySettings& quality = settings.Quality;
-			UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 4.f);
+		//if (UI::TreeNode("Quality", false) && UI::BeginPropertyTable())
+		//{
+		//	QualitySettings& quality = settings.Quality;
+		//	UI::PropertySlider("Renderer Scale", &quality.RendererScale, 0.5f, 4.f);
 
-			UI::EndPropertyTable();
+		//	UI::EndPropertyTable();
 
-			if (UI::ButtonCentered("Apply"))
-				m_ViewportRenderer->ApplySettings();
+		//	if (UI::ButtonCentered("Apply"))
+		//		m_ViewportRenderer->ApplySettings();
 
-			UI::TreePop();
-		}
+		//	UI::TreePop();
+		//}
 
-		ImGui::End();
+		//ImGui::End();
 	}
 }

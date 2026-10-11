@@ -9,8 +9,6 @@
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/MouseEvent.h"
 
-#include "Athena/Renderer/Renderer.h"
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -271,16 +269,16 @@ namespace Athena
 			ATN_LOG_WARN(GLFW, "Raw mouse motion not supported on this platform!");
 		}
 
-		if (Renderer::GetAPI() == Renderer::API::Vulkan)
-		{
-			if (!glfwVulkanSupported())
-			{
-				ATN_LOG_FATAL(GLFW, "Vulkan is not supported!");
-				return window;
-			}
-		}
-
-		window->m_SwapChain = SwapChain::Create(glfwWindow, window->m_Data.VSync);
+		//if (Renderer::GetAPI() == Renderer::API::Vulkan)
+		//{
+		//	if (!glfwVulkanSupported())
+		//	{
+		//		ATN_LOG_FATAL(GLFW, "Vulkan is not supported!");
+		//		return window;
+		//	}
+		//}
+		//
+		//window->m_SwapChain = SwapChain::Create(glfwWindow, window->m_Data.VSync);
 
 		return window;
 	}
@@ -307,13 +305,13 @@ namespace Athena
 
 	void Window::SwapBuffers()
 	{
-		m_SwapChain->Present();
+		//m_SwapChain->Present();
 	}
 
 	void Window::SetVSync(bool enabled)
 	{
 		m_Data.VSync = enabled;
-		m_SwapChain->SetVSync(enabled);
+		//m_SwapChain->SetVSync(enabled);
 	}
 
 	float Window::GetDPIScaleFactor() const

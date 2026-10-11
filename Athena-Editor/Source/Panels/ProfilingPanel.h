@@ -4,8 +4,6 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Core/PlatformUtils.h"
 
-#include "Athena/Renderer/SceneRenderer.h"
-
 #include "Panels/Panel.h"
 
 #include <array>
@@ -18,10 +16,10 @@ namespace Athena
 	public:
 		ProfilingPanel(const Ref<EditorContext>& context);
 
-		void SetContext(Ref<SceneRenderer> sceneRenderer) { m_SceneRenderer = sceneRenderer; }
+		//void SetContext(Ref<SceneRenderer> sceneRenderer) { m_SceneRenderer = sceneRenderer; }
 		virtual void OnImGuiRender() override;
 
 	private:
-		Ref<SceneRenderer> m_SceneRenderer;
+		//Ref<SceneRenderer> m_SceneRenderer;
 	};
 }

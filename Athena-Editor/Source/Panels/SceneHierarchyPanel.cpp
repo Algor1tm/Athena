@@ -7,8 +7,6 @@
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/Material.h"
-#include "Athena/Renderer/Renderer.h"
 #include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/ScriptEngine.h"
@@ -796,50 +794,50 @@ namespace Athena
 
 			if (UI::TreeNode("MATERIALS", true, true) && UI::BeginPropertyTable())
 			{
-				MaterialTable& table = meshComponent.OverrideMaterials;
+				//MaterialTable& table = meshComponent.OverrideMaterials;
 
-				for (auto& [name, materialHandle] : table)
-				{
-					UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
+				//for (auto& [name, materialHandle] : table)
+				//{
+				//	UI::PropertyRow(name.data(), ImGui::GetFrameHeight());
 
-					Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-					bool isInvalid = material == nullptr;
-					const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
+				//	Ref<MaterialAsset> material = AssetManager::GetAsset<MaterialAsset>(materialHandle);
+				//	bool isInvalid = material == nullptr;
+				//	const char* label = isInvalid ? "<Invalid>" : material->GetMaterial()->GetName().data();
 
-					if (isInvalid)
-						ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
+				//	if (isInvalid)
+				//		ImGui::PushStyleColor(ImGuiCol_Text, UI::GetTheme().ErrorText);
 
-					if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
-					{
-						auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
-						panel->SetActiveMaterial(materialHandle);
-					}
+				//	if (ImGui::ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_PressedOnDoubleClick) && !isInvalid)
+				//	{
+				//		auto panel = PanelManager::GetPanel<MaterialEditorPanel>(MATERIAL_EDITOR_PANEL_ID);
+				//		panel->SetActiveMaterial(materialHandle);
+				//	}
 
-					if (isInvalid)
-						ImGui::PopStyleColor();
+				//	if (isInvalid)
+				//		ImGui::PopStyleColor();
 
-					if (ImGui::BeginDragDropTarget())
-					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
-						{
-							CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
+				//	if (ImGui::BeginDragDropTarget())
+				//	{
+				//		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))
+				//		{
+				//			CBDragDropPayload* cbPayload = (CBDragDropPayload*)payload->Data;
 
-							if (cbPayload->AssetType == AssetType::Material)
-							{
-								table.at(name) = cbPayload->AssetHandle;
-							}
-						}
+				//			if (cbPayload->AssetType == AssetType::Material)
+				//			{
+				//				table.at(name) = cbPayload->AssetHandle;
+				//			}
+				//		}
 
-						ImGui::EndDragDropTarget();
-					}
-				}
+				//		ImGui::EndDragDropTarget();
+				//	}
+				//}
 
-				UI::EndPropertyTable();
+				//UI::EndPropertyTable();
 
-				if (ImGui::Button("Reset"))
-				{
-					table = mesh->GetMaterialTable();
-				}
+				//if (ImGui::Button("Reset"))
+				//{
+				//	table = mesh->GetMaterialTable();
+				//}
 
 				UI::TreePop();
 			}
@@ -959,7 +957,7 @@ namespace Athena
 
 
 			UI::PropertySlider("Intensity", &lightComponent.Intensity, 0.f, 10.f);
-			UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
+			//UI::PropertySlider("LOD", &lightComponent.LOD, 0, ShaderDef::MAX_SKYBOX_MAP_LOD - 1);
 
 			EnvironmentMapType type = lightComponent.Type;
 

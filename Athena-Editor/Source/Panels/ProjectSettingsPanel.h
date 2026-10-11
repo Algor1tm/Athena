@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/SceneRenderer.h"
 #include "Athena/Project/Project.h"
 #include "Panels/Panel.h"
 

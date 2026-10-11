@@ -74,7 +74,7 @@ namespace Athena
 		while (m_JoinThread.load(std::memory_order_relaxed) == false)
 		{
 			MonitorAssets();
-			Thread::CurrentThreadSleep(Time::Seconds(MONITOR_INTERVAL_SECONDS));
+			Thread::SleepFor(Time::Seconds(MONITOR_INTERVAL_SECONDS));
 		}
 	}
 

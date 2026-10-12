@@ -3,6 +3,7 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/YAMLTypes.h"
 #include "Athena/Math/Common.h"
+#include "Athena/Renderer/RHI/RHI.h"
 
 #include <stb_image/stb_image.h>
 #include <stb_image/stb_image_write.h>
@@ -168,7 +169,7 @@ namespace Athena
 			maxChannels = 4;
 
 		int width, height, channels;
-		Format format = Format::NONE;
+		Format format = Format::Unknown;
 		void* data = nullptr;
 		bool HDR = false;
 
@@ -185,7 +186,7 @@ namespace Athena
 			format = GetFormat(channels, m_Settings->sRGB);
 		}
 
-		if (data == nullptr || format == Format::NONE)
+		if (data == nullptr || format == Format::Unknown)
 		{
 			ATN_LOG_ERROR(AssetManager, "Failed to import texture from{}, (width = {}, height = {}, channels = {})", filepath, width, height, channels);
 			return nullptr;
@@ -203,7 +204,7 @@ namespace Athena
 			format = GetHDRFormat(maxChannels);
 		}
 
-		uint64 size = width * height * FormatUtils::BytesPerPixel(format);
+		uint64 size = width * height * RHI::Get()->GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, size);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
@@ -247,7 +248,7 @@ namespace Athena
 
 		Format format = GetFormat(channels, m_Settings->sRGB);
 
-		if (data == nullptr || format == Format::NONE)
+		if (data == nullptr || format == Format::Unknown)
 		{
 			ATN_LOG_ERROR(AssetManager, "Failed to import texture from memory, (name = {}, width = {}, height = {}, channels = {})", m_Settings->Name, width, height, channels);
 			return nullptr;
@@ -259,7 +260,7 @@ namespace Athena
 			format = GetFormat(maxChannels, m_Settings->sRGB);
 		}
 
-		uint64 dataSize = width * height * FormatUtils::BytesPerPixel(format);
+		uint64 dataSize = width * height * RHI::Get()->GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, dataSize);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
@@ -299,7 +300,7 @@ namespace Athena
 		}
 
 		checkf(false);
-		return Format::NONE;
+		return Format::Unknown;
 	}
 
 	Format TextureImporter::GetHDRFormat(uint32 channels)
@@ -311,7 +312,7 @@ namespace Athena
 		}
 
 		checkf(false);
-		return Format::NONE;
+		return Format::Unknown;
 	}
 
 	void* TextureImporter::ExtractChannels(byte* data, uint32 width, uint32 height, uint32 channels, uint32 desiredChannels)
@@ -374,8 +375,8 @@ namespace Athena
 		uint32 height = texture->GetHeight();
 
 		auto utf8Path = Utils::ConvertPathToUTF8(path);
-		uint32 channels = FormatUtils::ChannelsNum(texture->GetFormat());
-		uint32 bpp = FormatUtils::BytesPerPixel(texture->GetFormat());
+		uint32 channels = RHI::Get()->GetFormatProperties(texture->GetFormat()).NumComponents;
+		uint32 bpp = RHI::Get()->GetFormatProperties(texture->GetFormat()).BytesPerPixel;
 
 		bool result = stbi_write_png(utf8Path.data(), width, height, channels, buffer.Data(), bpp * width);
 

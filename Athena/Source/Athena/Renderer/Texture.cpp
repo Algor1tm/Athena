@@ -95,13 +95,13 @@ namespace Athena
 	{
 		uint32 totalGPUMemory = 0;
 
-		for (uint32 mip = 0; mip < GetMipLevelsCount(); mip++)
-		{
-			Vector2u mipSize = GetMipSize(mip);
-			uint32 sizeOfMip = mipSize.x * mipSize.y * FormatUtils::BytesPerPixel(GetFormat());
-
-			totalGPUMemory += sizeOfMip;
-		}
+		//for (uint32 mip = 0; mip < GetMipLevelsCount(); mip++)
+		//{
+		//	Vector2u mipSize = GetMipSize(mip);
+		//	uint32 sizeOfMip = mipSize.x * mipSize.y * FormatUtils::BytesPerPixel(GetFormat());
+		//
+		//	totalGPUMemory += sizeOfMip;
+		//}
 
 		totalGPUMemory *= GetInfo().Layers;
 		return totalGPUMemory;

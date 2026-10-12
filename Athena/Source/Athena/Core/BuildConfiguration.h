@@ -87,7 +87,7 @@
 #endif
 
 #define ATN_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
-
+#define ATN_ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 namespace Athena
 {

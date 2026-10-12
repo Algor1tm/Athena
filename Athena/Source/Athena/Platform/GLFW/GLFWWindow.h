@@ -19,11 +19,9 @@
 
 namespace Athena
 {
-	DEFINE_LOG_CATEGORY(GLFW);
-
 	static void GLFWErrorCallback(int error, const char* description)
 	{
-		ATN_LOG_ERROR(GLFW, "Error({0}) : {1}", error, description);
+		ATN_LOG_ERROR(Windows, "Error({0}) : {1}", error, description);
 	}
 
 	static Window::WindowData& GetUserPointer(GLFWwindow* window)
@@ -230,7 +228,7 @@ namespace Athena
 		{
 			int success = glfwInit();
 			ensure(success, "Could not intialize GLFW");
-			ATN_LOG_INFO(GLFW, "Init GLFW");
+			ATN_LOG_INFO(Windows, "Init GLFW");
 
 			glfwSetErrorCallback(GLFWErrorCallback);
 		}
@@ -248,7 +246,7 @@ namespace Athena
 
 		m_WindowCount++;
 
-		ATN_LOG_INFO(GLFW, "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
+		ATN_LOG_INFO(Windows, "Create GLFW Window '{0}' ({1}, {2})", window->m_Data.Title, window->m_Data.Width, window->m_Data.Height);
 
 		glfwSetWindowUserPointer(glfwWindow, &window->m_Data);
 		SetEventCallbacks(glfwWindow);
@@ -261,12 +259,12 @@ namespace Athena
 		// Raw mouse motion
 		if (glfwRawMouseMotionSupported())
 		{
-			ATN_LOG_INFO(GLFW, "Raw mouse motion enabled");
+			ATN_LOG_INFO(Windows, "Raw mouse motion enabled");
 			glfwSetInputMode(glfwWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		}
 		else
 		{
-			ATN_LOG_WARN(GLFW, "Raw mouse motion not supported on this platform!");
+			ATN_LOG_WARN(Windows, "Raw mouse motion not supported on this platform!");
 		}
 
 		//if (Renderer::GetAPI() == Renderer::API::Vulkan)
@@ -288,12 +286,12 @@ namespace Athena
 		glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(m_WindowHandle));
 		--m_WindowCount;
 
-		ATN_LOG_INFO(GLFW, "Destroy Window '{0}'", m_Data.Title);
+		ATN_LOG_INFO(Windows, "Destroy Window '{0}'", m_Data.Title);
 
 		if (m_WindowCount <= 0)
 		{
 			glfwTerminate();
-			ATN_LOG_INFO(GLFW, "Shutdown GLFW");
+			ATN_LOG_INFO(Windows, "Shutdown GLFW");
 		}
 	}
 
@@ -334,12 +332,12 @@ namespace Athena
 			}
 			else
 			{
-				ATN_LOG_ERROR(GLFW, "failed to load icon from '{}'!", path);
+				ATN_LOG_ERROR(Windows, "failed to load icon from '{}'!", path);
 			}
 		}
 		else if (!path.empty())
 		{
-			ATN_LOG_ERROR(GLFW, "invalid filepath for icon '{}'!", path);
+			ATN_LOG_ERROR(Windows, "invalid filepath for icon '{}'!", path);
 		}
 	}
 

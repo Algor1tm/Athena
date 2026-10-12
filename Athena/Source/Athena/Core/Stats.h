@@ -114,7 +114,7 @@ namespace Athena
 	{
 		GameThread = 0,
 		RenderThread,
-		Num
+		StatsThreadNum
 	};
 
 	class StatsGroup
@@ -259,7 +259,7 @@ namespace Athena
 
 	private:
 		std::unordered_map<std::string_view, StatsGroup*> m_StatsGroups;
-		uint64 ThreadFrameNumber[StatsThread::Num];
+		uint64 ThreadFrameNumber[StatsThread::StatsThreadNum];
 		const uint64 HeartBeatFrameRate = 10;
 	};
 

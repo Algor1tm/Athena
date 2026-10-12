@@ -22,6 +22,9 @@ namespace Athena
 			m_CommandStreams[i] = std::forward<CommandStream>(CommandStream(CVarRenderThreadCommandStreamSize.GetInt()));
 		}
 
+		m_RenderThreadCommandStreamIndex = 0;
+		m_GameThreadCommandStreamIndex = 1;
+
 		ATN_LOG_INFO(Renderer, "Initialized Render Thread");
 		Start();
 	}
@@ -33,18 +36,21 @@ namespace Athena
 
 	void RenderThread::Init(const RendererConfig& config)
 	{
-		s_Instance = new RenderThread();
-
 		switch(config.API)
 		{
 			case RendererAPI::Vulkan: RHI::s_RHI = new VulkanRHI(); break;
 			//case RendererAPI::D3D12:  RHI::s_RHI = new D3D12RHI(); break;
 		}
 
-		ENQUEUE_RENDER_COMMAND([config]() 
-		{
-			RHI::s_RHI->Init(config);
-		});
+		//ENQUEUE_RENDER_COMMAND([config]() 
+		//{
+		//	  RHI::s_RHI->Init(config);
+		//});
+
+		// Initialize RHI on game thread to safely access gpu properties on game thread
+		RHI::s_RHI->Init(config);
+
+		s_Instance = new RenderThread();
 	}
 
 	void RenderThread::Shutdown()
@@ -66,7 +72,7 @@ namespace Athena
 		while (!m_ShouldExit)
 		{
 			// Wait for game thread, there should be at least 1 frame difference
-			while (m_RenderThreadFrameIndex - 1 > m_GameThreadFrameIndex)
+			while (m_RenderThreadFrameIndex + 1 > m_GameThreadFrameIndex)
 			{
 				Thread::YieldExecution();
 				continue;

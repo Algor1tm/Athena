@@ -74,7 +74,7 @@ namespace Athena
 
 	private:
 		AppConfig m_Config;
-		Scope<Window> m_Window;
+		Ref<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;
 		bool m_Minimized;

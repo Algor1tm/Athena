@@ -9,7 +9,8 @@
 
 namespace Athena
 {
-	#define ENQUEUE_RENDER_COMMAND(func) RenderThread::Get().Enqueue(func)
+	#define ENQUEUE_RENDER_COMMAND(...) RenderThread::Get().Enqueue((__VA_ARGS__))
+	#define ENQUEUE_RENDER_COMMAND_ANY_THREAD(...) RenderThread::Get().EnqueueAnyThread((__VA_ARGS__))
 
 	#define RENDER_THREAD_MAX_FRAME_LATENCY 1
 	#define RENDER_THREAD_COMMAND_STREAMS_NUM (RENDER_THREAD_MAX_FRAME_LATENCY + 1)
@@ -24,7 +25,6 @@ namespace Athena
 	struct RendererConfig
 	{
 		RendererAPI API = RendererAPI::Vulkan;
-		uint32 MaxFramesInFlight = 3;
 	};
 
 	class ATHENA_API RenderThread : public Thread
@@ -42,6 +42,23 @@ namespace Athena
 		void Enqueue(FuncT&& func)
 		{
 			m_CommandStreams[m_GameThreadCommandStreamIndex].Submit(std::forward<FuncT>(func));
+		}
+
+		template <typename FuncT>
+		void EnqueueAnyThread(FuncT&& func)
+		{
+			if (Thread::IsRenderThread())
+			{
+				func();
+			}
+			else if (Thread::IsGameThread())
+			{
+				Enqueue(std::forward<FuncT>(func));
+			}
+			else
+			{
+				// TODO
+			}
 		}
 
 		void Kick();

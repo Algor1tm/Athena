@@ -2,6 +2,8 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/RHI/RHI.h"
+#include "Athena/Renderer/RHI/Vulkan/CommandBufferManager.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanAllocator.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanDebug.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanDevice.h"
@@ -11,8 +13,9 @@
 
 namespace Athena
 {
-	struct OptionalInstanceExtensionsInfo
+	struct InstanceExtensionsInfo
 	{
+		bool GetPhysicalDeviceProperties2EXTSupported;
 #if VULKAN_ENABLE_DEBUG_INFO
 		bool DebugReportEXTSupported;
 		VkDebugReportCallbackEXT DebugReportCallback;
@@ -26,6 +29,20 @@ namespace Athena
 		virtual void Init(const RendererConfig& config) override;
 
 		virtual void Shutdown() override;
+
+		virtual void BeginFrame(const Ref<Window>& window) override;
+
+		virtual void EndFrame(const Ref<Window>& window) override;
+
+		virtual Ref<VertexBuffer> CreateVertexBuffer() override;
+
+		virtual Ref<IndexBuffer> CreateIndexBuffer() override;
+
+		virtual Ref<CommandList> CreateCommandList() override;
+
+		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, bool vsync) override;
+
+		virtual uint64 GetMemoryUsage() override;
 
 		virtual const GPUCapabilities& GetGPUCapabilities() override;
 
@@ -42,10 +59,24 @@ namespace Athena
 
 		VulkanDevice* GetDevice() { return &m_Device; }
 
-		const OptionalInstanceExtensionsInfo& GetOptionalExtensionsInfo() const { return m_OptionalExtensionsInfo; }
+		const InstanceExtensionsInfo& GetExtensionsInfo() const { return m_ExtensionsInfo; }
+
+		Ref<VulkanAllocator> GetAllocator() const { return m_Allocator; }
+
+		CommandBufferManager* GetCmdBufferManager() { return &m_CmdBufferManager; }
 
 		uint32 GetVulkanVersion() const { return m_VulkanVersion; }
 
+		template <typename FuncT>
+		void DeleteFrameResourcesDeferred(FuncT&& func)
+		{
+			m_ResourceFreeQueues[m_FrameResourcesIndex].Submit(std::forward<FuncT>(func));
+		}
+
+		uint32 GetFrameResourcesIndex() const
+		{
+			return m_FrameResourcesIndex;
+		}
 
 	private:
 		void QueryInstanceLayers();
@@ -53,13 +84,16 @@ namespace Athena
 
 	private:
 		VkInstance m_Instance;
-		OptionalInstanceExtensionsInfo m_OptionalExtensionsInfo;
+		InstanceExtensionsInfo m_ExtensionsInfo;
 		VulkanDevice m_Device;
+		Ref<VulkanAllocator> m_Allocator;
+		CommandBufferManager m_CmdBufferManager;
 
 		uint32 m_VulkanVersion;
 		std::vector<const char*> m_InstanceLayers;
 		std::vector<const char*> m_InstanceExtensions;
+
+		uint32 m_FrameResourcesIndex = 0;
+		std::vector<CommandStream> m_ResourceFreeQueues;
 	};
-
-
 }

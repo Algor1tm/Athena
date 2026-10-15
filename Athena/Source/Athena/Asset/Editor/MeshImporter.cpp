@@ -505,53 +505,44 @@ namespace Athena
 					uint32 vertexID = subMesh.BaseVertex + aibone->mWeights[j].mVertexId;
 					float weight = aibone->mWeights[j].mWeight;
 
-					//for (uint32 k = 0; k < ShaderDef::MAX_NUM_BONES_PER_VERTEX; ++k)
-					//{
-					//	if (boneInfluenceVertices[vertexID].Weights[k] == 0.f)
-					//	{
-					//		boneInfluenceVertices[vertexID].BoneIDs[k] = boneID;
-					//		boneInfluenceVertices[vertexID].Weights[k] = weight;
-					//		break;
-					//	}
-					//	else if (k == ShaderDef::MAX_NUM_BONES_PER_VERTEX - 1)
-					//	{
-					//		ATN_LOG_WARN(AssetManager, "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
-					//			boneID, weight);
-					//	}
-					//}
+					for (uint32 k = 0; k < MAX_NUM_BONES_PER_VERTEX; ++k)
+					{
+						if (boneInfluenceVertices[vertexID].Weights[k] == 0.f)
+						{
+							boneInfluenceVertices[vertexID].BoneIDs[k] = boneID;
+							boneInfluenceVertices[vertexID].Weights[k] = weight;
+							break;
+						}
+						else if (k == MAX_NUM_BONES_PER_VERTEX - 1)
+						{
+							ATN_LOG_WARN(AssetManager, "Vertex has more than four bones/weights affecting it, extra data will be dicarded(BoneID = {}, Weight = {})",
+								boneID, weight);
+						}
+					 }
 				}
 			}
 		}
 
-		//VertexBufferCreateInfo vertexBufferInfo;
-		//vertexBufferInfo.Name = fmt::format("{}_VertexBuffer", m_Path.filename());
-		//vertexBufferInfo.Data = vertices.data();
-		//vertexBufferInfo.Size = vertices.size() * sizeof(MeshVertex);
-		//vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+		String name = fmt::format("{}_VertexBuffer", m_Path.filename());
+		Buffer verticesBuffer = Buffer::Copy(vertices.data(), vertices.size() * sizeof(MeshVertex));
 
-		//mesh->m_VertexBuffer = VertexBuffer::Create(vertexBufferInfo);
+		mesh->m_VertexBuffer = VertexBuffer::Create(name, verticesBuffer.Size(), &verticesBuffer);
 
-		//if (!indices.empty())
-		//{
-		//	IndexBufferCreateInfo indexBufferInfo;
-		//	indexBufferInfo.Name = fmt::format("{}_IndexBuffer", m_Path.filename());
-		//	indexBufferInfo.Data = indices.data();
-		//	indexBufferInfo.Count = indices.size();
-		//	indexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+		if (!indices.empty())
+		{
+			name = fmt::format("{}_IndexBuffer", m_Path.filename());
+			Buffer indicesBuffer = Buffer::Copy(indices.data(), indices.size() * sizeof(uint32));
 
-		//	mesh->m_IndexBuffer = IndexBuffer::Create(indexBufferInfo);
-		//}
+			mesh->m_IndexBuffer = IndexBuffer::Create(name, indicesBuffer.Size(), &indicesBuffer, IndexSize::UInt32);
+		}
 
-		//if (mesh->IsRigged())
-		//{
-		//	VertexBufferCreateInfo vertexBufferInfo;
-		//	vertexBufferInfo.Name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
-		//	vertexBufferInfo.Data = boneInfluenceVertices.data();
-		//	vertexBufferInfo.Size = boneInfluenceVertices.size() * sizeof(BoneInfluenceVertex);
-		//	vertexBufferInfo.Flags = BufferMemoryFlags::GPU_ONLY;
+		if (mesh->IsRigged())
+		{
+			name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
+			Buffer bonesBuffer = Buffer::Copy(boneInfluenceVertices.data(), boneInfluenceVertices.size() * sizeof(BoneInfluenceVertex));
 
-		//	mesh->m_BonesInfluenceBuffer = VertexBuffer::Create(vertexBufferInfo);
-		//}
+			mesh->m_BonesInfluenceBuffer = VertexBuffer::Create(name, bonesBuffer.Size(), &bonesBuffer);
+		}
 	}
 
 	AssetHandle MeshImporter::LoadMaterial(const aiMaterial* aimaterial) const

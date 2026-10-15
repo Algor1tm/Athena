@@ -36,7 +36,6 @@ namespace Athena
 		appinfo.LogConfig.OutputPath = "Sandbox.log";
 
 		appinfo.RendererConfig.API = RendererAPI::Vulkan;
-		appinfo.RendererConfig.MaxFramesInFlight = 3;
 
 		appinfo.ScriptConfig.EnableDebug = true;
 

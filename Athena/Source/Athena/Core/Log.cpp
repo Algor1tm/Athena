@@ -54,7 +54,7 @@ namespace Athena
 		return "";
 	}
 
-	static spdlog::level LogLevelToSpdlogLevel(LogLevel level)
+	static spdlog::level TranslateLogLevel(LogLevel level)
 	{
 		switch (level)
 		{
@@ -86,7 +86,7 @@ namespace Athena
 			logSinks[1]->set_pattern("%^[%T] %n: %v%$");
 		}
 
-		spdlog::level loglevel = LogLevelToSpdlogLevel((LogLevel)CVarLogVerbosity.GetInt());
+		spdlog::level loglevel = TranslateLogLevel((LogLevel)CVarLogVerbosity.GetInt());
 
 		s_SPDLogger = std::make_shared<spdlog::logger>("ATHENA", begin(logSinks), end(logSinks));
 		//spdlog::register_logger(s_SPDLogger);
@@ -95,8 +95,8 @@ namespace Athena
 
 		CVarLogVerbosity.SetOnChangedCallback([](CVarBase* cVar) 
 		{
-			s_SPDLogger->set_level(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
-			s_SPDLogger->flush_on(LogLevelToSpdlogLevel((LogLevel)cVar->GetInt()));
+			s_SPDLogger->set_level(TranslateLogLevel((LogLevel)cVar->GetInt()));
+			s_SPDLogger->flush_on(TranslateLogLevel((LogLevel)cVar->GetInt()));
 		});
 	}
 

@@ -42,15 +42,14 @@ namespace Athena
 			//case RendererAPI::D3D12:  RHI::s_RHI = new D3D12RHI(); break;
 		}
 
-		//ENQUEUE_RENDER_COMMAND([config]() 
-		//{
-		//	  RHI::s_RHI->Init(config);
-		//});
-
 		// Initialize RHI on game thread to safely access gpu properties on game thread
 		RHI::s_RHI->Init(config);
 
 		s_Instance = new RenderThread();
+
+		// TODO: move to task manager 
+		Thread::s_GameThreadID = Thread::GetCurrentThreadID();
+		Thread::s_RenderThreadID = s_Instance->GetID();
 	}
 
 	void RenderThread::Shutdown()

@@ -107,7 +107,7 @@ namespace Athena
 		return totalGPUMemory;
 	}
 
-	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info, Buffer data)
+	Ref<Texture2D> Texture2D::Create(const TextureCreateInfo& info, Buffer* data)
 	{
 		//switch (Renderer::GetAPI())
 		//{
@@ -118,7 +118,7 @@ namespace Athena
 		return nullptr;
 	}
 
-	Ref<TextureCube> TextureCube::Create(const TextureCreateInfo& info, Buffer data)
+	Ref<TextureCube> TextureCube::Create(const TextureCreateInfo& info, Buffer* data)
 	{
 		//switch (Renderer::GetAPI())
 		//{

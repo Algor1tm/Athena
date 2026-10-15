@@ -9,10 +9,9 @@
 #include "Athena/Input/KeyEvent.h"
 #include "Athena/Input/MouseEvent.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "Athena/Renderer/RenderThread.h"
 
-#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 #include <stb_image/stb_image.h>
 
@@ -210,9 +209,9 @@ namespace Athena
 	}
 
 
-	Scope<Window> Window::Create(const WindowCreateInfo& info)
+	Ref<Window> Window::Create(const WindowCreateInfo& info)
 	{
-		Scope<Window> window = Scope<Window>::Create();
+		Ref<Window> window = Ref<Window>::Create();
 
 		WindowData windowData;
 		windowData.Width = info.Width;
@@ -267,16 +266,12 @@ namespace Athena
 			ATN_LOG_WARN(Windows, "Raw mouse motion not supported on this platform!");
 		}
 
-		//if (Renderer::GetAPI() == Renderer::API::Vulkan)
-		//{
-		//	if (!glfwVulkanSupported())
-		//	{
-		//		ATN_LOG_FATAL(GLFW, "Vulkan is not supported!");
-		//		return window;
-		//	}
-		//}
-		//
-		//window->m_SwapChain = SwapChain::Create(glfwWindow, window->m_Data.VSync);
+		window->m_SwapChain = SwapChain::Create(window->m_WindowHandle, window->m_Data.VSync);
+
+		ENQUEUE_RENDER_COMMAND([swapChain = window->m_SwapChain]()
+		{
+			swapChain->Init();
+		});
 
 		return window;
 	}
@@ -301,15 +296,33 @@ namespace Athena
 		glfwPollEvents();
 	}
 
-	void Window::SwapBuffers()
+	void Window::DestroySwapChain()
 	{
-		//m_SwapChain->Present();
+		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain]() mutable
+		{
+			swapChain->Destroy();
+		});
+	}
+
+	void Window::OnWindowResized()
+	{
+		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain]()
+		{
+			swapChain->OnWindowResized();
+		});
 	}
 
 	void Window::SetVSync(bool enabled)
 	{
+		if (m_Data.VSync == enabled)
+			return;
+
 		m_Data.VSync = enabled;
-		//m_SwapChain->SetVSync(enabled);
+
+		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain, enabled]()
+		{
+			swapChain->SetVSync(enabled);
+		});
 	}
 
 	float Window::GetDPIScaleFactor() const

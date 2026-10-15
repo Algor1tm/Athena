@@ -24,8 +24,15 @@ namespace Athena
 		const String& GetName() const { return m_Name; }
 
 		static uint64 GetCurrentThreadID();
+		static bool IsGameThread() { return GetCurrentThreadID() == s_GameThreadID; }
+		static bool IsRenderThread() { return GetCurrentThreadID() == s_RenderThreadID; }
+
 		static void SleepFor(Time time);
 		static void YieldExecution();
+
+	protected:
+		static inline uint64 s_RenderThreadID = 0;
+		static inline uint64 s_GameThreadID = 0;
 
 	private:
 		static unsigned long ThreadProcedure(void* args);

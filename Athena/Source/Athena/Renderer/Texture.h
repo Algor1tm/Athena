@@ -184,7 +184,7 @@ namespace Athena
 	class ATHENA_API Texture2D : public Texture
 	{
 	public:
-		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer data = Buffer());
+		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer* data = nullptr);
 
 		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
 
@@ -204,7 +204,7 @@ namespace Athena
 	class ATHENA_API TextureCube: public Texture
 	{
 	public:
-		static Ref<TextureCube> Create(const TextureCreateInfo& info, Buffer data = Buffer());
+		static Ref<TextureCube> Create(const TextureCreateInfo& info, Buffer* data = nullptr);
 
 		virtual TextureType GetType() const override { return TextureType::TEXTURE_CUBE; }
 

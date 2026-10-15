@@ -6,6 +6,10 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanPlatform.h"
 
+#include "Athena/Renderer/RHI/Vulkan/VulkanBuffers.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanCommandList.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
+
 #include <vulkan/vulkan.h>
 
 
@@ -38,14 +42,18 @@ namespace Athena
 
 #endif
 
+#define VK_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
+
 	static const char* s_RequiredVulkanInstanceExtensions[] =
 	{
-		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+		VK_KHR_SURFACE_EXTENSION_NAME,
 		nullptr
 	};
 
 	static const char* s_OptionalVulkanInstanceExtensions[] =
 	{
+		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+
 #if VULKAN_ENABLE_DEBUG_INFO
 		VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
 #endif
@@ -135,7 +143,7 @@ namespace Athena
 		VK_CHECK(vkCreateInstance(&instanceCI, nullptr, &m_Instance));
 		
 #if VULKAN_ENABLE_DEBUG_INFO
-		if (m_OptionalExtensionsInfo.DebugReportEXTSupported)
+		if (m_ExtensionsInfo.DebugReportEXTSupported)
 		{
 			// Setup the debug report callback
 			PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = Vulkan::GetInstanceProc<PFN_vkCreateDebugReportCallbackEXT>("vkCreateDebugReportCallbackEXT");
@@ -164,28 +172,104 @@ namespace Athena
 				break;
 			}
 
-			VK_CHECK(vkCreateDebugReportCallbackEXT(m_Instance, &reportCI, nullptr, &m_OptionalExtensionsInfo.DebugReportCallback));
+			VK_CHECK(vkCreateDebugReportCallbackEXT(m_Instance, &reportCI, nullptr, &m_ExtensionsInfo.DebugReportCallback));
 		}
 #endif
 
 		m_Device.Initialize(m_Instance);
+
+		m_ResourceFreeQueues.resize(Vulkan::GetMaxFramesInFlight());
+		for (uint32 i = 0; i < m_ResourceFreeQueues.size(); ++i)
+		{
+			m_ResourceFreeQueues[i] = CommandStream(1024 * 1024);	// 1 Mb
+		}
+
+		m_FrameResourcesIndex = 0;
+
+		m_Allocator = Ref<VulkanAllocator>::Create();
+		m_CmdBufferManager.Init();
 
 		ATN_LOG_INFO(Vulkan, "Successfully initialized Vulkan RHI");
 	}
 
 	void VulkanRHI::Shutdown()
 	{
+		vkDeviceWaitIdle(Vulkan::GetLogicalDevice());
+
+		for (auto& queue : m_ResourceFreeQueues)
+		{
+			queue.Flush();
+		}
+
+		m_CmdBufferManager.Destroy();
+		m_Allocator.Release();
 		m_Device.Destroy();
 
 #if VULKAN_ENABLE_DEBUG_INFO
-		if (m_OptionalExtensionsInfo.DebugReportEXTSupported)
+		if (m_ExtensionsInfo.DebugReportEXTSupported)
 		{
 			PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = Vulkan::GetInstanceProc<PFN_vkDestroyDebugReportCallbackEXT>("vkDestroyDebugReportCallbackEXT");
-			vkDestroyDebugReportCallbackEXT(m_Instance, m_OptionalExtensionsInfo.DebugReportCallback, nullptr);
+			vkDestroyDebugReportCallbackEXT(m_Instance, m_ExtensionsInfo.DebugReportCallback, nullptr);
 		}
 #endif
 
 		vkDestroyInstance(m_Instance, nullptr);
+	}
+
+	void VulkanRHI::BeginFrame(const Ref<Window>& window)
+	{
+		TRACY_PROFILE_FUNC();
+
+		static uint32 maxFramesInFlight = ConsoleManager::Get().FindCVar("r.MaxFramesInFlight")->GetInt();
+
+		m_FrameResourcesIndex = (m_FrameResourcesIndex + 1) % maxFramesInFlight;
+
+		{
+			TRACY_PROFILE_SCOPE("ResourceFreeQueue::Flush");
+			m_ResourceFreeQueues[m_FrameResourcesIndex].Flush();
+		}
+
+		m_Allocator->OnUpdate();
+
+		window->GetSwapChain().As<VulkanSwapChain>()->AcquireImage();
+	}
+
+	void VulkanRHI::EndFrame(const Ref<Window>& window)
+	{
+		TRACY_PROFILE_FUNC();
+
+		// If there is no ImGui we need to manually render to swapchain images
+		if (!Application::Get().GetConfig().EnableImGui)
+		{
+			// Blit to swapchain final image
+		}
+
+		window->GetSwapChain().As<VulkanSwapChain>()->Present();
+	}
+
+	Ref<VertexBuffer> VulkanRHI::CreateVertexBuffer()
+	{
+		return Ref<VulkanVertexBuffer>::Create();
+	}
+
+	Ref<IndexBuffer> VulkanRHI::CreateIndexBuffer()
+	{
+		return Ref<VulkanIndexBuffer>::Create();
+	}
+
+	Ref<CommandList> VulkanRHI::CreateCommandList()
+	{
+		return Ref<VulkanCommandList>::Create();
+	}
+
+	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, bool vsync)
+	{
+		return Ref<VulkanSwapChain>::Create(windowHandle, vsync);
+	}
+
+	uint64 VulkanRHI::GetMemoryUsage()
+	{
+		return m_Allocator->GetMemoryUsage();
 	}
 
 	const GPUCapabilities& VulkanRHI::GetGPUCapabilities()
@@ -222,7 +306,7 @@ namespace Athena
 		bool enableDebugLayer = CVarVulkanValidationLevel.GetInt() > 0;
 
 		if (enableDebugLayer)
-			layers.push_back("VK_LAYER_KHRONOS_validation");
+			layers.push_back(VK_VALIDATION_LAYER_NAME);
 #endif
 
 		for (uint32 i = 0; i < layers.size(); ++i)
@@ -250,7 +334,7 @@ namespace Athena
 
 		ATN_LOG_INFO(Vulkan, message);
 
-		if (IsExtensionOrLayerPresent(m_InstanceLayers, "VK_LAYER_KHRONOS_validation"))
+		if (IsExtensionOrLayerPresent(m_InstanceLayers, VK_VALIDATION_LAYER_NAME))
 		{
 			ATN_LOG_INFO(Vulkan, "Vulkan debug layer is enabled");
 		}
@@ -351,8 +435,10 @@ namespace Athena
 
 		ATN_LOG_INFO(Vulkan, message);
 
+		m_ExtensionsInfo.GetPhysicalDeviceProperties2EXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 #if VULKAN_ENABLE_DEBUG_INFO
-		m_OptionalExtensionsInfo.DebugReportEXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		m_ExtensionsInfo.DebugReportEXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 	}
 }

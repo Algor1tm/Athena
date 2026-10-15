@@ -6,7 +6,8 @@
 namespace Athena
 {
 	static const char* s_RequiredVulkanDeviceExtensions[] =
-{
+	{
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME // swapchain
 		VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard/clip
 		nullptr
 	};
@@ -211,7 +212,7 @@ namespace Athena
 			QueryDeviceExtensions();
 			QueryDeviceFeatures();
 
-			VkPhysicalDeviceHostQueryResetFeaturesEXT hostQueryResetFeatures = m_OptionalFeaturesInfo.DeviceHostQueryResetFeatures;
+			VkPhysicalDeviceHostQueryResetFeaturesEXT hostQueryResetFeatures = m_FeaturesInfo.DeviceHostQueryResetFeatures;
 
 			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteToHelperInvocationFeatures = {};
 			demoteToHelperInvocationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
@@ -223,8 +224,8 @@ namespace Athena
 			VkPhysicalDeviceFeatures deviceFeatures = {};
 			deviceFeatures.geometryShader = VK_TRUE;
 			deviceFeatures.wideLines = VK_TRUE;
-			deviceFeatures.pipelineStatisticsQuery = m_OptionalFeaturesInfo.PipelineStatisticsQuery;
-			deviceFeatures.samplerAnisotropy = m_OptionalFeaturesInfo.SamplerAnisotropy;
+			deviceFeatures.pipelineStatisticsQuery = m_FeaturesInfo.PipelineStatisticsQuery;
+			deviceFeatures.samplerAnisotropy = m_FeaturesInfo.SamplerAnisotropy;
 			deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
 
 			VkDeviceCreateInfo deviceCI = {};
@@ -238,15 +239,20 @@ namespace Athena
 
 			VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice));
 			vkGetDeviceQueue(m_LogicalDevice, m_QueueFamily, 0, &m_Queue);
-
-			QueryEXTProcAddresses();
-			QueryGPUCapabilities();
 		}
+
+		QueryEXTProcAddresses();
+		QueryGPUCapabilities();
 	}
 
 	void VulkanDevice::Destroy()
 	{
 		vkDestroyDevice(m_LogicalDevice, nullptr);
+	}
+
+	void VulkanDevice::QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence)
+	{
+		vkQueueSubmit(m_Queue, 1, submitInfo, fence);
 	}
 
 	void VulkanDevice::QueryDeviceExtensions()
@@ -344,11 +350,11 @@ namespace Athena
 
 		ATN_LOG_INFO(Vulkan, message);
 
-		m_OptionalExtensionsInfo.MemoryBudgetEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-		m_OptionalExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
+		m_ExtensionsInfo.MemoryBudgetEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+		m_ExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 
 #if VULKAN_ENABLE_DEBUG_INFO
-		m_OptionalExtensionsInfo.DebugMarkerEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+		m_ExtensionsInfo.DebugMarkerEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
 #endif
 	}
 
@@ -374,25 +380,25 @@ namespace Athena
 
 		ensure(requiredFeaturesSupported, "Vulkan physical device missing features!");
 
-		m_OptionalFeaturesInfo.PipelineStatisticsQuery = deviceFeatures2.features.pipelineStatisticsQuery;
-		m_OptionalFeaturesInfo.SamplerAnisotropy = deviceFeatures2.features.samplerAnisotropy;
-		m_OptionalFeaturesInfo.DeviceHostQueryResetFeatures = hostQueryResetFeatures;
+		m_FeaturesInfo.PipelineStatisticsQuery = deviceFeatures2.features.pipelineStatisticsQuery;
+		m_FeaturesInfo.SamplerAnisotropy = deviceFeatures2.features.samplerAnisotropy;
+		m_FeaturesInfo.DeviceHostQueryResetFeatures = hostQueryResetFeatures;
 	}
 
 	void VulkanDevice::QueryEXTProcAddresses()
 	{
-		if (m_OptionalExtensionsInfo.HostQueryEXTSupported)
+		if (m_ExtensionsInfo.HostQueryEXTSupported)
 		{
-			m_OptionalExtensionsInfo.vkResetQueryPoolEXT = Vulkan::GetDeviceProc<PFN_vkResetQueryPoolEXT>("vkResetQueryPoolEXT");
+			m_ExtensionsInfo.vkResetQueryPoolEXT = Vulkan::GetDeviceProc<PFN_vkResetQueryPoolEXT>("vkResetQueryPoolEXT");
 		}
 
 #if VULKAN_ENABLE_DEBUG_INFO
-		if (m_OptionalExtensionsInfo.DebugMarkerEXTSupported)
+		if (m_ExtensionsInfo.DebugMarkerEXTSupported)
 		{
-			m_OptionalExtensionsInfo.vkCmdDebugMarkerBeginEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerBeginEXT>("vkCmdDebugMarkerBeginEXT");
-			m_OptionalExtensionsInfo.vkCmdDebugMarkerEndEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerEndEXT>("vkCmdDebugMarkerEndEXT");
-			m_OptionalExtensionsInfo.vkCmdDebugMarkerInsertEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerInsertEXT>("vkCmdDebugMarkerInsertEXT");
-			m_OptionalExtensionsInfo.vkDebugMarkerSetObjectNameEXT = Vulkan::GetDeviceProc<PFN_vkDebugMarkerSetObjectNameEXT>("vkDebugMarkerSetObjectNameEXT");
+			m_ExtensionsInfo.vkCmdDebugMarkerBeginEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerBeginEXT>("vkCmdDebugMarkerBeginEXT");
+			m_ExtensionsInfo.vkCmdDebugMarkerEndEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerEndEXT>("vkCmdDebugMarkerEndEXT");
+			m_ExtensionsInfo.vkCmdDebugMarkerInsertEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerInsertEXT>("vkCmdDebugMarkerInsertEXT");
+			m_ExtensionsInfo.vkDebugMarkerSetObjectNameEXT = Vulkan::GetDeviceProc<PFN_vkDebugMarkerSetObjectNameEXT>("vkDebugMarkerSetObjectNameEXT");
 		}
 #endif
 	}
@@ -438,11 +444,13 @@ namespace Athena
 																	   								   
 		MapFormat(Format::R32F,				"R32F",				true,  false, false, true,  false, 4,  1);
 		MapFormat(Format::RG16F,			"RG16F",			true,  false, false, true,  false, 4,  2);
+		MapFormat(Format::RG32F,			"RG32F",			true,  false, false, true,  false, 8,  2);
 		MapFormat(Format::RGB16F,			"RGB16F",			true,  false, false, true,  false, 6,  3);
 		MapFormat(Format::R11G11B10F,		"R11G11B10F",		true,  false, false, true,  false, 4,  3);
 		MapFormat(Format::RGB32F,			"RGB32F",			true,  false, false, true,  false, 12, 3);
 		MapFormat(Format::RGBA16F,			"RGBA16F",			true,  false, false, true,  false, 8,  4);
 		MapFormat(Format::RGBA32F,			"RGBA32F",			true,  false, false, true,  false, 16, 4);
+		MapFormat(Format::RGBA32UInt,		"RGBA32UInt",		true,  false, false, false, false, 16, 4);
 
 		MapFormat(Format::DEPTH16,			"DEPTH16",			false, true,  false, false, false, 2,  1);
 		MapFormat(Format::DEPTH24STENCIL8,	"DEPTH24STENCIL8",	false, true,  true,  false, false, 4,  2);
@@ -466,7 +474,7 @@ namespace Athena
 		{
 			properties.IsTextureSupported = false;
 			properties.IsRenderTargetSupported = false;
-			properties.IsBufferSupported = false;
+			properties.IsVertexBufferSupported = false;
 		}
 		else
 		{
@@ -483,7 +491,7 @@ namespace Athena
 			properties.IsRenderTargetSupported = (props.optimalTilingFeatures & renderTargetRequiredFlags) == renderTargetRequiredFlags ||
 				(props.optimalTilingFeatures & depthTargetRequiredFlags) == depthTargetRequiredFlags;
 
-			properties.IsBufferSupported = (props.bufferFeatures & bufferRequiredFlags) == bufferRequiredFlags;
+			properties.IsVertexBufferSupported = (props.bufferFeatures & bufferRequiredFlags) == bufferRequiredFlags;
 		}
 	}
 }

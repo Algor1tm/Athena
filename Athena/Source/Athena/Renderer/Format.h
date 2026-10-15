@@ -20,11 +20,13 @@ namespace Athena
 
 		R32F,
 		RG16F,
+		RG32F,
 		RGB16F,
 		R11G11B10F,
 		RGB32F,
 		RGBA16F,
 		RGBA32F,
+		RGBA32UInt,
 
 		//Depth/Stencil
 		DEPTH16,
@@ -46,6 +48,6 @@ namespace Athena
 		uint32 NumComponents;
 		bool IsTextureSupported;
 		bool IsRenderTargetSupported;
-		bool IsBufferSupported;
+		bool IsVertexBufferSupported;
 	};
 }

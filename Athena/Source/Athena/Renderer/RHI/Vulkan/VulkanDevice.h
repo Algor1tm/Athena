@@ -10,7 +10,7 @@
 
 namespace Athena
 {
-	struct OptionalDeviceExtensionsInfo
+	struct DeviceExtensionsInfo
 	{
 		bool MemoryBudgetEXTSupported;
 
@@ -26,7 +26,7 @@ namespace Athena
 #endif
 	};
 
-	struct OptionalDeviceFeaturesInfo
+	struct DeviceFeaturesInfo
 	{
 		bool PipelineStatisticsQuery;
 		bool SamplerAnisotropy;
@@ -52,9 +52,9 @@ namespace Athena
 
 		const GPUCapabilities& GetGPUCapabilities() const { return m_GPUCapabilities; }
 
-		const OptionalDeviceExtensionsInfo& GetOptionalExtensionsInfo() const { return m_OptionalExtensionsInfo; }
+		const DeviceExtensionsInfo& GetExtensionsInfo() const { return m_ExtensionsInfo; }
 
-		const OptionalDeviceFeaturesInfo& GetOptionalFeaturesInfo() const { return m_OptionalFeaturesInfo; }
+		const DeviceFeaturesInfo& GetFeaturesInfo() const { return m_FeaturesInfo; }
 
 		uint32 GetDeviceVulkanVersion() const { return m_DeviceVulkanVersion; }
 
@@ -75,8 +75,8 @@ namespace Athena
 		VkQueue m_Queue;
 		std::mutex m_QueueMutex;
 
-		OptionalDeviceExtensionsInfo m_OptionalExtensionsInfo;
-		OptionalDeviceFeaturesInfo m_OptionalFeaturesInfo;
+		DeviceExtensionsInfo m_ExtensionsInfo;
+		DeviceFeaturesInfo m_FeaturesInfo;
 		VkPhysicalDeviceLimits m_DeviceLimits;
 		GPUCapabilities m_GPUCapabilities;
 

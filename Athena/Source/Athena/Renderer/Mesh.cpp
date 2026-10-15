@@ -4,6 +4,7 @@
 #include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
+#include "Athena/Renderer/RenderThread.h"
 
 
 namespace Athena
@@ -11,6 +12,21 @@ namespace Athena
 	Mesh::Mesh()
 	{
 
+	}
+
+	Mesh::~Mesh()
+	{
+		ENQUEUE_RENDER_COMMAND_ANY_THREAD([vertexBuffer = m_VertexBuffer, indexBuffer = m_IndexBuffer, bonesInfluenceBuffer = m_BonesInfluenceBuffer]()
+			{
+				if(vertexBuffer)
+					vertexBuffer->Destroy();
+
+				if(indexBuffer)
+					indexBuffer->Destroy();
+
+				if (bonesInfluenceBuffer)
+					bonesInfluenceBuffer->Destroy();
+			});
 	}
 
 	bool Mesh::HasAnimation(const Ref<Animation>& animation) const

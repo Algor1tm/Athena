@@ -28,7 +28,7 @@ namespace Athena
 	Buffer FileSystem::ReadFileBinary(const FilePath& path)
 	{
 		Buffer result;
-
+		 
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in.is_open())
 		{

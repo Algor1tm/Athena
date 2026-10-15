@@ -1,8 +1,12 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/Window.h"
 #include "Athena/Renderer/RenderThread.h"
 #include "Athena/Renderer/Format.h"
+#include "Athena/Renderer/SwapChain.h"
+#include "Athena/Renderer/GPUBuffers.h"
+#include "Athena/Renderer/CommandList.h"
 
 namespace Athena
 {
@@ -32,9 +36,25 @@ namespace Athena
 		virtual ~RHI() = default;
 
 		virtual void Init(const RendererConfig& config) = 0;
+
 		virtual void Shutdown() = 0;
 
+		virtual void BeginFrame(const Ref<Window>& window) = 0;
+
+		virtual void EndFrame(const Ref<Window>& window) = 0;
+
+		virtual Ref<VertexBuffer> CreateVertexBuffer() = 0;
+
+		virtual Ref<IndexBuffer> CreateIndexBuffer() = 0;
+
+		virtual Ref<CommandList> CreateCommandList() = 0;
+
+		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, bool vsync) = 0;
+
+		virtual uint64 GetMemoryUsage() = 0;
+
 		virtual const GPUCapabilities& GetGPUCapabilities() = 0;
+
 		virtual const FormatProperties& GetFormatProperties(Format format) = 0;
 
 		friend class RenderThread;

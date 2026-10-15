@@ -227,10 +227,9 @@ namespace Athena
 		info.GenerateMipMap = m_Settings->GenerateMipMaps;
 		info.Sampler = samplerInfo;
 
-		Ref<Texture2D> result = Texture2D::Create(info, buffer);
+		Ref<Texture2D> result = Texture2D::Create(info, &buffer);
 		result->m_FilePath = filepath;
 
-		buffer.Release();
 		return result;
 	}
 
@@ -283,8 +282,7 @@ namespace Athena
 		info.GenerateMipMap = m_Settings->GenerateMipMaps;
 		info.Sampler = samplerInfo;
 
-		Ref<Texture2D> result = Texture2D::Create(info, buffer);
-		buffer.Release();
+		Ref<Texture2D> result = Texture2D::Create(info, &buffer);
 
 		return result;
 	}

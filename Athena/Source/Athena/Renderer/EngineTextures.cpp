@@ -24,8 +24,10 @@ namespace Athena
 
 	void EngineTextures::Init()
 	{
+		Buffer texData = Buffer(sizeof(uint32));
+
 		uint32 whiteTextureData = 0xffffffff;
-		Buffer texData = Buffer::Move(&whiteTextureData, sizeof(uint32));
+		texData.Write(&whiteTextureData, sizeof(uint32));
 
 		TextureCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
@@ -38,14 +40,14 @@ namespace Athena
 		texInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
-		s_Data.WhiteTexture = Texture2D::Create(texInfo, texData);
+		s_Data.WhiteTexture = Texture2D::Create(texInfo, &texData);
 
 		uint32 blackTextureData = 0xff000000;
 		texData.Write(&blackTextureData, sizeof(uint32));
 
 		texInfo.Name = "Renderer_BlackTexture";
 
-		s_Data.BlackTexture = Texture2D::Create(texInfo, texData);
+		s_Data.BlackTexture = Texture2D::Create(texInfo, &texData);
 
 		TextureCreateInfo texCubeInfo;
 		texCubeInfo.Name = "Renderer_BlackTextureCube";
@@ -57,7 +59,7 @@ namespace Athena
 		texCubeInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texCubeInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
-		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, texData);
+		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, &texData);
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 

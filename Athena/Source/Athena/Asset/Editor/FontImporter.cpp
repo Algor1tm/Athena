@@ -64,8 +64,7 @@ namespace Athena
         atlasInfo.Sampler.Filter = TextureFilter::LINEAR;
         atlasInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-        fontAsset->m_AtlasTexture = Texture2D::Create(atlasInfo, buffer);
-        buffer.Release();
+        fontAsset->m_AtlasTexture = Texture2D::Create(atlasInfo, &buffer);
 
         msdfgen::destroyFont(font);
 

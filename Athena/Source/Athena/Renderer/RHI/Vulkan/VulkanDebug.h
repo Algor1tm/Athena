@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
 
 #include <vulkan/vulkan.h>
 
@@ -110,5 +111,13 @@ namespace Athena::Vulkan
 
         return VK_FALSE;
     }
+#endif
+
+    void SetDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name);
+
+#ifdef VULKAN_ENABLE_DEBUG_INFO
+    #define VULKAN_SET_DEBUG_NAME(object, type, name) Vulkan::SetDebugName(object, type, name);
+#else
+    #define VULKAN_SET_DEBUG_NAME(object, type, name) 
 #endif
 }

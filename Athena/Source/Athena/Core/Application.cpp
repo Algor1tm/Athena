@@ -4,6 +4,7 @@
 #include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/RenderThread.h"
+#include "Athena/Renderer/RHI/RHI.h"
 
 
 namespace Athena
@@ -74,7 +75,10 @@ namespace Athena
 			if (m_Minimized == false)
 			{
 				// Wait for GPU commands to finish and begin new commands
-				//Renderer::BeginFrame();
+				ENQUEUE_RENDER_COMMAND([this]() 
+				{
+					RHI::Get()->BeginFrame(m_Window);
+				});
 
 				// Update
 				{
@@ -88,8 +92,10 @@ namespace Athena
 				RenderImGui();
 
 				// Submit commands to GPU and present
-				//Renderer::EndFrame();
-				m_Window->SwapBuffers();
+				ENQUEUE_RENDER_COMMAND([this]()
+				{
+					RHI::Get()->EndFrame(m_Window);
+				});
 			}
 			else
 			{
@@ -185,9 +191,9 @@ namespace Athena
 			return false;
 		}
 
-		//m_Window->GetSwapChain()->OnWindowResize();
-
+		m_Window->OnWindowResized();
 		m_Minimized = false;
+
 		return false;
 	}
 

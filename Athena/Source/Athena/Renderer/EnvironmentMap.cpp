@@ -2,7 +2,7 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/Application.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 
 
 namespace Athena
@@ -18,12 +18,12 @@ namespace Athena
 
 	Ref<TextureCube> EnvironmentMap::GetEnvironmentTexture()
 	{
-		return m_EnvironmentTexture ? m_EnvironmentTexture : EngineTextures::GetBlackTextureCube();
+		return m_EnvironmentTexture ? m_EnvironmentTexture : EngineRenderAssets::Get().BlackTextureCube;
 	}
 
 	Ref<TextureCube> EnvironmentMap::GetIrradianceTexture()
 	{
-		return m_IrradianceTexture ? m_IrradianceTexture : EngineTextures::GetBlackTextureCube();
+		return m_IrradianceTexture ? m_IrradianceTexture : EngineRenderAssets::Get().BlackTextureCube;
 	}
 
 	bool EnvironmentMap::Serialize(const FilePath& absolutePath) const

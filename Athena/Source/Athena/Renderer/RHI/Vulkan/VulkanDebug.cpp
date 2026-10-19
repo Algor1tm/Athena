@@ -4,12 +4,15 @@
 
 namespace Athena::Vulkan
 {
-    void SetDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name)
+    void SetDebugName(void* objectHandle, VkObjectType type, const String& name)
     {
-        VkDebugMarkerObjectNameInfoEXT nameInfo = {};
-        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+        if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+            return;
+
+        VkDebugUtilsObjectNameInfoEXT nameInfo = {};
+        nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         nameInfo.objectType = type;
-        nameInfo.object = (uint64)object;
+        nameInfo.objectHandle = (uint64)objectHandle;
         nameInfo.pObjectName = name.c_str();
 
         String subName;
@@ -19,7 +22,7 @@ namespace Athena::Vulkan
             nameInfo.pObjectName = subName.c_str();
         }
 
-        PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectNameEXT = VulkanRHI::Get()->GetDevice()->GetExtensionsInfo().vkDebugMarkerSetObjectNameEXT;
-        vkDebugMarkerSetObjectNameEXT(VulkanRHI::Get()->GetDevice()->GetLogicalDevice(), &nameInfo);
+        PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT = VulkanRHI::Get()->GetExtensionsInfo().vkSetDebugUtilsObjectNameEXT;
+        vkSetDebugUtilsObjectNameEXT(VulkanRHI::Get()->GetDevice()->GetLogicalDevice(), &nameInfo);
     }
 }

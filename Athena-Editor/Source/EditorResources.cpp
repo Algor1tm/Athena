@@ -1,7 +1,7 @@
 #include "EditorResources.h"
 
 #include "Athena/Asset/Editor/TextureImporter.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 
 
 namespace Athena
@@ -62,7 +62,7 @@ namespace Athena
 	Ref<Texture2D> EditorResources::GetIcon(std::string_view name)
 	{
 		if (!m_Icons.contains(name) || m_Icons.at(name) == nullptr)
-			return EngineTextures::GetWhiteTexture();
+			return EngineRenderAssets::Get().WhiteTexture;
 
 		return m_Icons.at(name);
 	}

@@ -7,7 +7,7 @@
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Animation.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
@@ -529,11 +529,11 @@ namespace Athena
 
 			Ref<Texture2D> texture;
 			if (isDefault)
-				texture = EngineTextures::GetWhiteTexture();
+				texture = EngineRenderAssets::Get().WhiteTexture;
 			else if (!isValid)
 				texture = EditorResources::GetIcon("EmptyTexture");
 			else
-				texture = textureAsset->GetRenderTexture();
+				texture = textureAsset->GetTexture();
 
 			float imageSize = 45.f * ImGui::GetIO().FontGlobalScale;
 			UI::PropertyImage("Texture", texture, { imageSize, imageSize });

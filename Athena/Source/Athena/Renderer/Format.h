@@ -39,15 +39,22 @@ namespace Athena
 	struct FormatProperties
 	{
 		const char* Name;
-		bool IsColor;
-		bool IsDepth;
-		bool IsStencil;
+		bool HasColor;
+		bool HasDepth;
+		bool HasStencil;
 		bool IsFloat;
 		bool IsSRGB;
 		uint32 BytesPerPixel;
 		uint32 NumComponents;
+	};
+
+	struct FormatSupportProperties
+	{
 		bool IsTextureSupported;
 		bool IsRenderTargetSupported;
 		bool IsVertexBufferSupported;
 	};
+
+	ATHENA_API const FormatProperties& GetFormatProperties(Format format);
+	ATHENA_API const FormatSupportProperties& GetFormatSupportProperties(Format format);
 }

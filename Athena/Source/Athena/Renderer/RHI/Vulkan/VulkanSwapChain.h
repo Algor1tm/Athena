@@ -11,9 +11,9 @@ namespace Athena
 	{
 	public:
 		VulkanSwapChain(void* windowHandle, bool vsync = false);
+		virtual ~VulkanSwapChain();
 
 		virtual void Init() override;
-		virtual void Destroy() override;
 
 		virtual void OnWindowResized() override;
 		virtual void SetVSync(bool enabled) override;
@@ -24,8 +24,9 @@ namespace Athena
 		void Present();
 
 		uint32 GetCurrentImageIndex() const { return m_ImageIndex; }
+		VkImage GetCurrentVulkanImage() const;
 
-		VkImage GetCurrentVulkanImage();
+		VkSemaphore GetImageAcquiredSemaphore() const;
 
 		const std::vector<VkImageView>& GetVulkanImageViews() const { return m_SwapChainImageViews; }
 		VkFormat GetFormat() const { return m_Format.format; }
@@ -39,6 +40,7 @@ namespace Athena
 
 		std::vector<VkImage> m_SwapChainImages;
 		std::vector<VkImageView> m_SwapChainImageViews;
+		std::vector<VkSemaphore> m_ImageAcquiredSemaphores;
 
 		VkPresentModeKHR m_PresentMode;
 		VkSurfaceFormatKHR m_Format;

@@ -31,12 +31,14 @@ namespace Athena
 		void Begin();
 		void End();
 
+		void OnCompletion();
+
 	public:
 		CommandBufferState State;
 		VkCommandBuffer CommandBuffer;
 		CommandStream OnCompletionCallbacks;
 		VkFence SignalFence;
-		Time LastIdleTime;
+		Time LastUsedTime;
 	};
 
 	class CommandBufferManager
@@ -46,21 +48,29 @@ namespace Athena
 		void Destroy();
 
 		VulkanCommandBuffer* GetCommandBuffer();
-		VulkanCommandBuffer* GetUploadCommandBuffer();
+		VulkanCommandBuffer* GetTransferCommandBuffer();
 
-		void Submit(VulkanCommandBuffer* commandBuffer, bool wait = false);
-		void SubmitUpload();
+		VulkanCommandBuffer* GetPresentCommandBuffer();
+		VkSemaphore	GetPresentCmdBufferSemaphore();
 
-		void OnUpdate();
+		void WaitForCmdBuffer(VulkanCommandBuffer* commandBuffer);
+
+		void Submit(VulkanCommandBuffer* commandBuffer);
+		void SubmitTransfer();
+		void SubmitForPresent(VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags);
+
+		void NewFrame();
 
 	private:
-		void OnCompletion(VulkanCommandBuffer* commandBuffer);
 		VulkanCommandBuffer* FindFreeCommandBuffer();
 		VulkanCommandBuffer* AllocateCommandBuffer();
 
 	private:
 		VkCommandPool m_Pool = VK_NULL_HANDLE;
 		std::vector<VulkanCommandBuffer*> m_CommandBuffers;
-		VulkanCommandBuffer* m_UploadCommandBuffer = nullptr;
+		VulkanCommandBuffer* m_TransferCommandBuffer = nullptr;
+
+		std::vector<VulkanCommandBuffer*> m_PresentCommandBuffers;
+		std::vector<VkSemaphore> m_PresentCmdBufferSemaphores;
 	};
 }

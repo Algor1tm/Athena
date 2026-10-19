@@ -1,28 +1,15 @@
-#include "EngineTextures.h"
+#include "EngineRenderAssets.h"
 
 #include "Athena/Core/Application.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
+#include "Athena/Asset/Editor/FontImporter.h"
+#include "Athena/Renderer/RenderThread.h"
 #include "Athena/Math/Random.h"
 
 
 namespace Athena
 {
-	struct TextureGeneratorData
-	{
-		Ref<Texture2D> WhiteTexture;
-		Ref<Texture2D> BlackTexture;
-		Ref<TextureCube> BlackTextureCube;
-
-		Ref<Texture2D> BlueNoise;
-		Ref<Texture2D> SMAA_AreaLUT;
-		Ref<Texture2D> SMAA_SearchLUT;
-		Ref<Texture2D> BRDF_LUT;
-	};
-
-	static TextureGeneratorData s_Data;
-
-
-	void EngineTextures::Init()
+	void EngineRenderAssets::Init()
 	{
 		Buffer texData = Buffer(sizeof(uint32));
 
@@ -40,26 +27,28 @@ namespace Athena
 		texInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
-		s_Data.WhiteTexture = Texture2D::Create(texInfo, &texData);
+		WhiteTexture = Texture::Create(texInfo, &texData);
 
 		uint32 blackTextureData = 0xff000000;
 		texData.Write(&blackTextureData, sizeof(uint32));
 
 		texInfo.Name = "Renderer_BlackTexture";
 
-		s_Data.BlackTexture = Texture2D::Create(texInfo, &texData);
+		BlackTexture = Texture::Create(texInfo, &texData);
 
 		TextureCreateInfo texCubeInfo;
 		texCubeInfo.Name = "Renderer_BlackTextureCube";
+		texCubeInfo.Type = TextureType::TEXTURE_CUBE;
 		texCubeInfo.TextureFormat = Format::RGBA8;
 		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
+		texCubeInfo.Layers = 6;
 		texCubeInfo.GenerateMipMap = false;
 		texCubeInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texCubeInfo.Sampler.Wrap = TextureWrap::REPEAT;
 
-		s_Data.BlackTextureCube = TextureCube::Create(texCubeInfo, &texData);
+		BlackTextureCube = TextureCube::Create(texCubeInfo, &texData);
 
 		const FilePath& resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
 
@@ -79,7 +68,7 @@ namespace Athena
 			importSettings->Name = "Renderer_BlueNoise";
 			importSettings->ExtractChannelsNum = 1;
 
-			s_Data.BlueNoise = importer.Import(path);
+			BlueNoise = importer.Import(path);
 		}
 
 		// SMAA Area texture
@@ -89,7 +78,7 @@ namespace Athena
 			importSettings->Name = "Renderer_SMAA-AreaTex";
 			importSettings->ExtractChannelsNum = 4;
 
-			s_Data.SMAA_AreaLUT = importer.Import(path);
+			SMAA_AreaLUT = importer.Import(path);
 		}
 
 		// SMAA Search texture
@@ -99,7 +88,7 @@ namespace Athena
 			importSettings->Name = "Renderer_SMAA-SearchTex";
 			importSettings->ExtractChannelsNum = 4;
 
-			s_Data.SMAA_SearchLUT = importer.Import(path);
+			SMAA_SearchLUT = importer.Import(path);
 		}
 
 		// BRDF_LUT
@@ -114,7 +103,7 @@ namespace Athena
 			texInfo.Sampler.Filter = TextureFilter::LINEAR;
 			texInfo.Sampler.Wrap = TextureWrap::CLAMP_TO_EDGE;
 
-			s_Data.BRDF_LUT = Texture2D::Create(texInfo);
+			BRDF_LUT = Texture2D::Create(texInfo);
 
 			//ComputePassCreateInfo passInfo;
 			//passInfo.Name = "BRDF_LUT_Pass";
@@ -143,52 +132,31 @@ namespace Athena
 			//commandBuffer->End();
 			//commandBuffer->Submit(false);
 		}
+
+		DefaultTextureAsset = Ref<TextureAsset>::Create(WhiteTexture);
+		DefaultMaterialAsset = Ref<MaterialAsset>::Create();
+		
+		FontImporter fontImporter;
+		DefaultFontAsset = Ref<Font>::Create();
+		fontImporter.Import(DefaultFontAsset, resourcesPath / "Fonts/Open_Sans/OpenSans-Medium.ttf");
 	}
 
-	void EngineTextures::Shutdown()
+	void EngineRenderAssets::Destroy()
 	{
-		s_Data.WhiteTexture.Release();
-		s_Data.BlackTexture.Release();
-		s_Data.BlueNoise.Release();
-		s_Data.SMAA_AreaLUT.Release();
-		s_Data.SMAA_SearchLUT.Release();
-		s_Data.BRDF_LUT.Release();
-		s_Data.BlackTextureCube.Release();
-	}
+		ENQUEUE_RENDER_COMMAND([this]()
+			{
+				WhiteTexture.Release();
+				BlackTexture.Release();
+				BlueNoise.Release();
+				SMAA_AreaLUT.Release();
+				SMAA_SearchLUT.Release();
+				BRDF_LUT.Release();
+				BlackTextureCube.Release();
+			});
 
-	Ref<Texture2D> EngineTextures::GetBRDF_LUT()
-	{
-		return s_Data.BRDF_LUT;
-	}
-
-	Ref<Texture2D> EngineTextures::GetSMAA_AreaLUT()
-	{
-		return s_Data.SMAA_AreaLUT;
-	}
-
-	Ref<Texture2D> EngineTextures::GetSMAA_SearchLUT()
-	{
-		return s_Data.SMAA_SearchLUT;
-	}
-
-	Ref<Texture2D> EngineTextures::GetWhiteTexture()
-	{
-		return s_Data.WhiteTexture;
-	}
-
-	Ref<Texture2D> EngineTextures::GetBlackTexture()
-	{
-		return s_Data.BlackTexture;
-	}
-
-	Ref<TextureCube> EngineTextures::GetBlackTextureCube()
-	{
-		return s_Data.BlackTextureCube;
-	}
-
-	Ref<Texture2D> EngineTextures::GetBlueNoise()
-	{
-		return s_Data.BlueNoise;
+		DefaultTextureAsset.Release();
+		DefaultMaterialAsset.Release();
+		DefaultFontAsset.Release();
 	}
 
 	std::vector<Vector4> Noise::GetHBAOJitters(uint32 numSamples)

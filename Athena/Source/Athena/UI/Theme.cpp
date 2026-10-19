@@ -1,8 +1,7 @@
 #include "Theme.h"
 
 #include "Athena/Core/Application.h"
-#include "Athena/ImGui/ImGuiLayer.h"
-
+#include "Athena/UI/ImGuiLayer.h"
 #include "Athena/UI/UI.h"
 
 

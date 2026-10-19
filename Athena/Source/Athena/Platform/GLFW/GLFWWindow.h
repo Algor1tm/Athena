@@ -268,11 +268,6 @@ namespace Athena
 
 		window->m_SwapChain = SwapChain::Create(window->m_WindowHandle, window->m_Data.VSync);
 
-		ENQUEUE_RENDER_COMMAND([swapChain = window->m_SwapChain]()
-		{
-			swapChain->Init();
-		});
-
 		return window;
 	}
 
@@ -298,9 +293,9 @@ namespace Athena
 
 	void Window::DestroySwapChain()
 	{
-		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain]() mutable
+		ENQUEUE_RENDER_COMMAND([swapChain = std::move(m_SwapChain)]() mutable
 		{
-			swapChain->Destroy();
+			swapChain.Release();
 		});
 	}
 

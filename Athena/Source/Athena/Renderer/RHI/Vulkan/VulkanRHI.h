@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/CommandStream.h"
 #include "Athena/Renderer/RHI/RHI.h"
 #include "Athena/Renderer/RHI/Vulkan/CommandBufferManager.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanAllocator.h"
@@ -16,9 +17,16 @@ namespace Athena
 	struct InstanceExtensionsInfo
 	{
 		bool GetPhysicalDeviceProperties2EXTSupported;
+
 #if VULKAN_ENABLE_DEBUG_INFO
-		bool DebugReportEXTSupported;
-		VkDebugReportCallbackEXT DebugReportCallback;
+		bool DebugUtilsEXTSupported;
+		VkDebugUtilsMessengerEXT DebugUtilsMessenger;
+		PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+		PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT;
+		PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT;
+		PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertDebugUtilsLabelEXT;
+		PFN_vkQueueEndDebugUtilsLabelEXT vkQueueEndDebugUtilsLabelEXT;
+		PFN_vkQueueBeginDebugUtilsLabelEXT vkQueueBeginDebugUtilsLabelEXT;
 #endif
 	};
 
@@ -26,6 +34,15 @@ namespace Athena
 	{
 		// Interface functions
 	public:
+		VulkanRHI() = default;
+
+		// TODO: idk why and where it tries to copy vulkanrhi, but adding these solves the compilation issues
+		// might be microsoft compiler bug
+		VulkanRHI(const VulkanRHI&) = delete;
+		VulkanRHI& operator=(const VulkanRHI&) = delete;
+		VulkanRHI(VulkanRHI&&) noexcept = delete;
+		VulkanRHI& operator=(VulkanRHI&&) noexcept = delete;
+
 		virtual void Init(const RendererConfig& config) override;
 
 		virtual void Shutdown() override;
@@ -34,25 +51,31 @@ namespace Athena
 
 		virtual void EndFrame(const Ref<Window>& window) override;
 
-		virtual Ref<VertexBuffer> CreateVertexBuffer() override;
+		virtual Ref<Texture> CreateTexture(const TextureCreateInfo& info) override;
 
-		virtual Ref<IndexBuffer> CreateIndexBuffer() override;
+		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
+
+		virtual Ref<VertexBuffer> CreateVertexBuffer(const String& name, uint64 size) override;
+
+		virtual Ref<IndexBuffer> CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize) override;
 
 		virtual Ref<CommandList> CreateCommandList() override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, bool vsync) override;
 
+		virtual Ref<ImGuiBackend> CreateImGuiBackend() override;
+
 		virtual uint64 GetMemoryUsage() override;
 
 		virtual const GPUCapabilities& GetGPUCapabilities() override;
 
-		virtual const FormatProperties& GetFormatProperties(Format format) override;
+		virtual const FormatSupportProperties& GetFormatSupportProperties(Format format) override;
 
 		// Vulkan functions
 	public:
 		static VulkanRHI* Get()
 		{
-			return (VulkanRHI*)RHI::Get();
+			return reinterpret_cast<VulkanRHI*>(RHI::Get());
 		}
 
 		VkInstance GetVulkanInstance() const { return m_Instance; }
@@ -79,6 +102,7 @@ namespace Athena
 		}
 
 	private:
+		void PostInstanceInit();
 		void QueryInstanceLayers();
 		void QueryInstanceExtensions();
 
@@ -89,11 +113,11 @@ namespace Athena
 		Ref<VulkanAllocator> m_Allocator;
 		CommandBufferManager m_CmdBufferManager;
 
+		uint32 m_FrameResourcesIndex = 0;
+		std::vector<CommandStream> m_ResourceFreeQueues;
+
 		uint32 m_VulkanVersion;
 		std::vector<const char*> m_InstanceLayers;
 		std::vector<const char*> m_InstanceExtensions;
-
-		uint32 m_FrameResourcesIndex = 0;
-		std::vector<CommandStream> m_ResourceFreeQueues;
 	};
 }

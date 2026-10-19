@@ -20,6 +20,7 @@ namespace Athena
 		virtual void OnImGuiRender() override;
 
 	private:
+		uint64 m_VRAMUsage = 0;
 		//Ref<SceneRenderer> m_SceneRenderer;
 	};
 }

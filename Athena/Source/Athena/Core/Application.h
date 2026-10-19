@@ -5,7 +5,7 @@
 #include "Athena/Core/LayerStack.h"
 #include "Athena/Core/Window.h"
 
-#include "Athena/ImGui/ImGuiLayer.h"
+#include "Athena/UI/ImGuiLayer.h"
 #include "Athena/Input/WindowEvent.h"
 #include "Athena/Renderer/RenderThread.h"
 #include "Athena/Scripting/ScriptEngine.h"

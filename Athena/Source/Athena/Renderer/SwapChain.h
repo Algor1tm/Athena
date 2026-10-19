@@ -9,12 +9,9 @@ namespace Athena
 	{
 	public:
 		static Ref<SwapChain> Create(void* windowHandle, bool vsync = false);
-
-		virtual void Init() = 0;
-		virtual void Destroy() = 0;
-
 		virtual ~SwapChain() = default;
 
+		virtual void Init() = 0;
 		virtual void OnWindowResized() = 0;
 		virtual void SetVSync(bool enabled) = 0;
 	};

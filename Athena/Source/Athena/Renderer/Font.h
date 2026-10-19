@@ -29,17 +29,10 @@ namespace Athena
 		static bool Init();
 		static void Shutdown();
 
-		static Ref<Font> GetDefault();
 		static void* GetFTPHandle();
 
 	private:
-		struct FontStaticData
-		{
-			void* FTPHandle;
-			Ref<Font> DefaultFont;
-		};
-
-		static FontStaticData s_Data;
+		static inline void* s_FTPHandle = nullptr;
 
 		FontGeometry* m_FontGeometry;
 		Ref<Texture2D> m_AtlasTexture;

@@ -7,7 +7,6 @@
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/PlatformUtils.h"
-#include "Athena/ImGui/ImGuiLayer.h"
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 
@@ -16,6 +15,7 @@
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/SceneSerializer.h"
 
+#include "Athena/UI/ImGuiLayer.h"
 #include "Athena/UI/Theme.h"
 
 #include "Panels/PanelManager.h"

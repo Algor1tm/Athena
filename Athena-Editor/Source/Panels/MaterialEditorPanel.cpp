@@ -1,7 +1,7 @@
 #include "MaterialEditorPanel.h"
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Core/FileDialogs.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/UI/UI.h"
 
 #include "Panels/PanelManager.h"
@@ -136,7 +136,7 @@ namespace Athena
 		float imageSize = 64.f * ImGui::GetIO().FontGlobalScale;
 
 		Ref<TextureAsset> texture = AssetManager::GetAsset<TextureAsset>(material->GetTexture(type));
-		Ref<Texture2D> displayTexture = texture ? texture->GetRenderTexture() : EditorResources::GetIcon("EmptyTexture");
+		Ref<Texture2D> displayTexture = texture ? texture->GetTexture() : EditorResources::GetIcon("EmptyTexture");
 
 		if (ImGui::ImageButton(TextureTypeToString(type), UI::GetTextureID(displayTexture), { imageSize, imageSize }))
 		{

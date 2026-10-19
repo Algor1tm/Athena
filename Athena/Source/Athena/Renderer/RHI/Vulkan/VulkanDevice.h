@@ -13,17 +13,8 @@ namespace Athena
 	struct DeviceExtensionsInfo
 	{
 		bool MemoryBudgetEXTSupported;
-
 		bool HostQueryEXTSupported;
 		PFN_vkResetQueryPoolEXT vkResetQueryPoolEXT;
-
-#if VULKAN_ENABLE_DEBUG_INFO
-		bool DebugMarkerEXTSupported;
-		PFN_vkCmdDebugMarkerBeginEXT vkCmdDebugMarkerBeginEXT;
-		PFN_vkCmdDebugMarkerEndEXT vkCmdDebugMarkerEndEXT;
-		PFN_vkCmdDebugMarkerInsertEXT vkCmdDebugMarkerInsertEXT;
-		PFN_vkDebugMarkerSetObjectNameEXT vkDebugMarkerSetObjectNameEXT;
-#endif
 	};
 
 	struct DeviceFeaturesInfo
@@ -58,22 +49,16 @@ namespace Athena
 
 		uint32 GetDeviceVulkanVersion() const { return m_DeviceVulkanVersion; }
 
-		std::mutex& GetQueueMutex() { return m_QueueMutex; }
-
-		void QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence);
-
 	private:
 		void QueryDeviceExtensions();
 		void QueryDeviceFeatures();
-		void QueryEXTProcAddresses();
+		void PostDeviceInit();
 		void QueryGPUCapabilities();
-
-		void MapFormat(Format format, const char* name, bool isColor, bool isDepth, bool isStencil, bool isFloat, bool isSRGB, uint32 bpp, uint32 numComponents);
+		void QueryFormatSupportProperties();
 
 	private:
 		VkDevice m_LogicalDevice;
 		VkQueue m_Queue;
-		std::mutex m_QueueMutex;
 
 		DeviceExtensionsInfo m_ExtensionsInfo;
 		DeviceFeaturesInfo m_FeaturesInfo;

@@ -7,7 +7,6 @@
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/EnvironmentMap.h"
 #include "Athena/Renderer/Mesh.h"
-#include "Athena/Renderer/EngineTextures.h"
 #include "Athena/Scene/Entity.h"
 #include "Athena/Scene/SceneCamera.h"
 #include "Athena/Scripting/ScriptEngine.h"

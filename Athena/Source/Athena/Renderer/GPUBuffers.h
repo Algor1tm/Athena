@@ -62,12 +62,13 @@ namespace Athena
 	{
 	public:
 		static Ref<VertexBuffer> Create(const String& name, uint64 size, Buffer* vertices = nullptr);
+
+		VertexBuffer(const String& name, uint64 size);
 		virtual ~VertexBuffer() = default;
 
 		virtual void Init() = 0;
-		virtual void Destroy() = 0;
 
-		virtual void UploadData(const Buffer& buffer, uint64 offset = 0) = 0;
+		virtual void Upload(const Buffer& buffer, uint64 offset = 0) = 0;
 		virtual void Resize(uint64 size);
 
 		const String& GetName() const { return m_Name; }
@@ -88,12 +89,13 @@ namespace Athena
 	{
 	public:
 		static Ref<IndexBuffer> Create(const String& name, uint64 size, Buffer* indices = nullptr, IndexSize indexSize = IndexSize::UInt32);
+
+		IndexBuffer(const String& name, uint64 size, IndexSize indexSize);
 		virtual ~IndexBuffer() = default;
 
 		virtual void Init() = 0;
-		virtual void Destroy() = 0;
 
-		virtual void UploadData(const Buffer& buffer, uint64 offset = 0) = 0;
+		virtual void Upload(const Buffer& buffer, uint64 offset = 0) = 0;
 		virtual void Resize(uint64 size);
 
 		const String& GetName() const { return m_Name; }

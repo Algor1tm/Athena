@@ -8,7 +8,10 @@
 
 #include "Athena/Renderer/RHI/Vulkan/VulkanBuffers.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanCommandList.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanTextureView.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanImGuiBackend.h"
 
 #include <vulkan/vulkan.h>
 
@@ -55,7 +58,7 @@ namespace Athena
 		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
 
 #if VULKAN_ENABLE_DEBUG_INFO
-		VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+		VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 #endif
 		nullptr
 	};
@@ -142,39 +145,7 @@ namespace Athena
 
 		VK_CHECK(vkCreateInstance(&instanceCI, nullptr, &m_Instance));
 		
-#if VULKAN_ENABLE_DEBUG_INFO
-		if (m_ExtensionsInfo.DebugReportEXTSupported)
-		{
-			// Setup the debug report callback
-			PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = Vulkan::GetInstanceProc<PFN_vkCreateDebugReportCallbackEXT>("vkCreateDebugReportCallbackEXT");
-
-			VkDebugReportCallbackCreateInfoEXT reportCI = {};
-			reportCI.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-			reportCI.flags = 0;
-			reportCI.pfnCallback = Vulkan::DebugCallback;
-			reportCI.pUserData = NULL;
-
-			int32 CVar = CVarVulkanValidationLevel.GetInt();
-			switch (CVar)
-			{
-			default:
-				reportCI.flags |= VK_DEBUG_REPORT_DEBUG_BIT_EXT;
-			case 4:
-				reportCI.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
-			case 3:
-				reportCI.flags |= VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-			case 2:
-				reportCI.flags |= VK_DEBUG_REPORT_WARNING_BIT_EXT;
-			case 1:
-				reportCI.flags |= VK_DEBUG_REPORT_ERROR_BIT_EXT;
-				break;
-			case 0:
-				break;
-			}
-
-			VK_CHECK(vkCreateDebugReportCallbackEXT(m_Instance, &reportCI, nullptr, &m_ExtensionsInfo.DebugReportCallback));
-		}
-#endif
+		PostInstanceInit();
 
 		m_Device.Initialize(m_Instance);
 
@@ -206,10 +177,10 @@ namespace Athena
 		m_Device.Destroy();
 
 #if VULKAN_ENABLE_DEBUG_INFO
-		if (m_ExtensionsInfo.DebugReportEXTSupported)
+		if (m_ExtensionsInfo.DebugUtilsEXTSupported)
 		{
-			PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = Vulkan::GetInstanceProc<PFN_vkDestroyDebugReportCallbackEXT>("vkDestroyDebugReportCallbackEXT");
-			vkDestroyDebugReportCallbackEXT(m_Instance, m_ExtensionsInfo.DebugReportCallback, nullptr);
+			PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = Vulkan::GetInstanceProc<PFN_vkDestroyDebugUtilsMessengerEXT>("vkDestroyDebugUtilsMessengerEXT");
+			vkDestroyDebugUtilsMessengerEXT(m_Instance, m_ExtensionsInfo.DebugUtilsMessenger, nullptr);
 		}
 #endif
 
@@ -221,17 +192,17 @@ namespace Athena
 		TRACY_PROFILE_FUNC();
 
 		static uint32 maxFramesInFlight = ConsoleManager::Get().FindCVar("r.MaxFramesInFlight")->GetInt();
-
 		m_FrameResourcesIndex = (m_FrameResourcesIndex + 1) % maxFramesInFlight;
+
+		window->GetSwapChain().As<VulkanSwapChain>()->AcquireImage();
 
 		{
 			TRACY_PROFILE_SCOPE("ResourceFreeQueue::Flush");
 			m_ResourceFreeQueues[m_FrameResourcesIndex].Flush();
 		}
 
-		m_Allocator->OnUpdate();
-
-		window->GetSwapChain().As<VulkanSwapChain>()->AcquireImage();
+		m_Allocator->NewFrame();
+		m_CmdBufferManager.NewFrame();
 	}
 
 	void VulkanRHI::EndFrame(const Ref<Window>& window)
@@ -247,14 +218,24 @@ namespace Athena
 		window->GetSwapChain().As<VulkanSwapChain>()->Present();
 	}
 
-	Ref<VertexBuffer> VulkanRHI::CreateVertexBuffer()
+	Ref<Texture> VulkanRHI::CreateTexture(const TextureCreateInfo& info)
 	{
-		return Ref<VulkanVertexBuffer>::Create();
+		return Ref<VulkanTexture>::Create(info);
 	}
 
-	Ref<IndexBuffer> VulkanRHI::CreateIndexBuffer()
+	Ref<TextureView> VulkanRHI::CreateTextureView(const TextureViewCreateInfo& info, Texture* texture)
 	{
-		return Ref<VulkanIndexBuffer>::Create();
+		return Ref<VulkanTextureView>::Create(info, texture);
+	}
+
+	Ref<VertexBuffer> VulkanRHI::CreateVertexBuffer(const String& name, uint64 size)
+	{
+		return Ref<VulkanVertexBuffer>::Create(name, size);
+	}
+
+	Ref<IndexBuffer> VulkanRHI::CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize)
+	{
+		return Ref<VulkanIndexBuffer>::Create(name, size, indexSize);
 	}
 
 	Ref<CommandList> VulkanRHI::CreateCommandList()
@@ -267,6 +248,11 @@ namespace Athena
 		return Ref<VulkanSwapChain>::Create(windowHandle, vsync);
 	}
 
+	Ref<ImGuiBackend> VulkanRHI::CreateImGuiBackend()
+	{
+		return Ref<VulkanImGuiBackend>::Create();
+	}
+
 	uint64 VulkanRHI::GetMemoryUsage()
 	{
 		return m_Allocator->GetMemoryUsage();
@@ -277,9 +263,55 @@ namespace Athena
 		return m_Device.GetGPUCapabilities();
 	}
 
-	const FormatProperties& VulkanRHI::GetFormatProperties(Format format)
+	const FormatSupportProperties& VulkanRHI::GetFormatSupportProperties(Format format)
 	{
 		return m_Device.GetGPUCapabilities().Formats[format];
+	}
+
+	void VulkanRHI::PostInstanceInit()
+	{
+#if VULKAN_ENABLE_DEBUG_INFO
+		m_ExtensionsInfo.DebugUtilsEXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+		if (m_ExtensionsInfo.DebugUtilsEXTSupported)
+		{
+			PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugReportCallbackEXT = Vulkan::GetInstanceProc<PFN_vkCreateDebugUtilsMessengerEXT>("vkCreateDebugUtilsMessengerEXT");
+
+			VkDebugUtilsMessengerCreateInfoEXT callbackInfo = {};
+			callbackInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+			callbackInfo.flags = 0;
+			callbackInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+				VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+				VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+			callbackInfo.pfnUserCallback = Vulkan::DebugCallback;
+
+			int32 CVar = CVarVulkanValidationLevel.GetInt();
+			switch (CVar)
+			{
+			default:
+				callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+			case 3:
+				callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+			case 2:
+				callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+			case 1:
+				callbackInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+			case 0:
+				break;
+			}
+
+			VK_CHECK(vkCreateDebugReportCallbackEXT(m_Instance, &callbackInfo, NULL, &m_ExtensionsInfo.DebugUtilsMessenger));
+
+			m_ExtensionsInfo.vkSetDebugUtilsObjectNameEXT = Vulkan::GetInstanceProc<PFN_vkSetDebugUtilsObjectNameEXT>("vkSetDebugUtilsObjectNameEXT");
+			m_ExtensionsInfo.vkCmdBeginDebugUtilsLabelEXT = Vulkan::GetInstanceProc<PFN_vkCmdBeginDebugUtilsLabelEXT>("vkCmdBeginDebugUtilsLabelEXT");
+			m_ExtensionsInfo.vkCmdEndDebugUtilsLabelEXT = Vulkan::GetInstanceProc<PFN_vkCmdEndDebugUtilsLabelEXT>("vkCmdEndDebugUtilsLabelEXT");
+			m_ExtensionsInfo.vkCmdInsertDebugUtilsLabelEXT = Vulkan::GetInstanceProc<PFN_vkCmdInsertDebugUtilsLabelEXT>("vkCmdInsertDebugUtilsLabelEXT");
+			m_ExtensionsInfo.vkQueueBeginDebugUtilsLabelEXT = Vulkan::GetInstanceProc<PFN_vkQueueBeginDebugUtilsLabelEXT>("vkQueueBeginDebugUtilsLabelEXT");
+			m_ExtensionsInfo.vkQueueEndDebugUtilsLabelEXT = Vulkan::GetInstanceProc<PFN_vkQueueEndDebugUtilsLabelEXT>("vkQueueEndDebugUtilsLabelEXT");
+		}
+#endif
+
+		m_ExtensionsInfo.GetPhysicalDeviceProperties2EXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	}
 
 	void VulkanRHI::QueryInstanceLayers()
@@ -434,11 +466,5 @@ namespace Athena
 			message += fmt::format("'{}'\n\t", ext);
 
 		ATN_LOG_INFO(Vulkan, message);
-
-		m_ExtensionsInfo.GetPhysicalDeviceProperties2EXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
-#if VULKAN_ENABLE_DEBUG_INFO
-		m_ExtensionsInfo.DebugReportEXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
 	}
 }

@@ -1,7 +1,7 @@
 //#include "Material.h"
 
 #include "Athena/Renderer/MaterialAsset.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 
 #include "Athena/Core/YAMLTypes.h"
 
@@ -26,18 +26,6 @@ namespace Athena
 		m_TexturesFlags[MaterialTextureType::Normals] = false;
 		m_TexturesFlags[MaterialTextureType::Roughness] = false;
 		m_TexturesFlags[MaterialTextureType::Metalness] = false;
-	}
-
-	Ref<MaterialAsset> MaterialAsset::GetDefault()
-	{
-		static Ref<MaterialAsset> s_DefaultMaterial;
-
-		if (s_DefaultMaterial == nullptr)
-		{
-			s_DefaultMaterial = Ref<MaterialAsset>::Create();
-		}
-
-		return s_DefaultMaterial;
 	}
 
 	bool MaterialAsset::Serialize(const FilePath& absolutePath) const

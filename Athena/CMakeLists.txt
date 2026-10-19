@@ -27,6 +27,9 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	Athena.def
 	"Source/*.h" 
 	"Source/*.cpp" 
+	"ThirdParty/concurrentqueue/concurrentqueue.h"
+	"ThirdParty/concurrentqueue/blockingconcurrentqueue.h"
+	"ThirdParty/concurrentqueue/lightweightsemaphore.h"
 	"ThirdParty/filewatch/FileWatch.h"
 	"ThirdParty/entt/entt.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.h"

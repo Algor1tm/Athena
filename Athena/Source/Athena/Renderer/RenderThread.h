@@ -4,13 +4,14 @@
 #include "Athena/Core/Thread.h"
 #include "Athena/Core/CommandStream.h"
 
+#include "concurrentqueue/concurrentqueue.h"
+
 #include <atomic>
 
 
 namespace Athena
 {
 	#define ENQUEUE_RENDER_COMMAND(...) RenderThread::Get().Enqueue((__VA_ARGS__))
-	#define ENQUEUE_RENDER_COMMAND_ANY_THREAD(...) RenderThread::Get().EnqueueAnyThread((__VA_ARGS__))
 
 	#define RENDER_THREAD_MAX_FRAME_LATENCY 1
 	#define RENDER_THREAD_COMMAND_STREAMS_NUM (RENDER_THREAD_MAX_FRAME_LATENCY + 1)
@@ -38,32 +39,27 @@ namespace Athena
 
 		static RenderThread& Get() { return *s_Instance; }
 
+		bool IsRHIInitialized() { return m_IsRHIInitialized; }
+
 		template <typename FuncT>
 		void Enqueue(FuncT&& func)
 		{
+			if (Bypass() || Thread::IsRenderThread())
+			{
+				func();
+				return;
+			}
+			
+			std::unique_lock<std::mutex> lock(m_EnqueueMutex);
 			m_CommandStreams[m_GameThreadCommandStreamIndex].Submit(std::forward<FuncT>(func));
 		}
 
-		template <typename FuncT>
-		void EnqueueAnyThread(FuncT&& func)
-		{
-			if (Thread::IsRenderThread())
-			{
-				func();
-			}
-			else if (Thread::IsGameThread())
-			{
-				Enqueue(std::forward<FuncT>(func));
-			}
-			else
-			{
-				// TODO
-			}
-		}
 
 		void Kick();
 		void Wait();
 
+		bool Bypass() const;
+ 
 	private:
 		void RenderThreadMain();
 
@@ -74,8 +70,10 @@ namespace Athena
 		uint32 m_RenderThreadCommandStreamIndex = 0;
 		uint32 m_GameThreadCommandStreamIndex = 0;
 
+		std::mutex m_EnqueueMutex;
 		std::atomic<int32> m_RenderThreadFrameIndex = 0;
 		std::atomic<int32> m_GameThreadFrameIndex = 0;
 		std::atomic<bool> m_ShouldExit = false;
+		std::atomic<bool> m_IsRHIInitialized = false;
 	};
 }

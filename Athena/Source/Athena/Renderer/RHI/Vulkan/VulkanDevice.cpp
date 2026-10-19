@@ -7,7 +7,7 @@ namespace Athena
 {
 	static const char* s_RequiredVulkanDeviceExtensions[] =
 	{
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME // swapchain
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME, // swapchain
 		VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard/clip
 		nullptr
 	};
@@ -17,9 +17,6 @@ namespace Athena
 		VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
 		VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
 
-#if VULKAN_ENABLE_DEBUG_INFO
-		VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-#endif
 		nullptr
 	};
 
@@ -241,8 +238,7 @@ namespace Athena
 			vkGetDeviceQueue(m_LogicalDevice, m_QueueFamily, 0, &m_Queue);
 		}
 
-		QueryEXTProcAddresses();
-		QueryGPUCapabilities();
+		PostDeviceInit();
 	}
 
 	void VulkanDevice::Destroy()
@@ -250,9 +246,17 @@ namespace Athena
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 	}
 
-	void VulkanDevice::QueueSubmit(const VkSubmitInfo* submitInfo, VkFence fence)
+	void VulkanDevice::PostDeviceInit()
 	{
-		vkQueueSubmit(m_Queue, 1, submitInfo, fence);
+		m_ExtensionsInfo.MemoryBudgetEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+		m_ExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
+
+		if (m_ExtensionsInfo.HostQueryEXTSupported)
+		{
+			m_ExtensionsInfo.vkResetQueryPoolEXT = Vulkan::GetDeviceProc<PFN_vkResetQueryPoolEXT>("vkResetQueryPoolEXT");
+		}
+
+		QueryGPUCapabilities();
 	}
 
 	void VulkanDevice::QueryDeviceExtensions()
@@ -349,13 +353,6 @@ namespace Athena
 			message += fmt::format("'{}'\n\t", ext);
 
 		ATN_LOG_INFO(Vulkan, message);
-
-		m_ExtensionsInfo.MemoryBudgetEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-		m_ExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
-
-#if VULKAN_ENABLE_DEBUG_INFO
-		m_ExtensionsInfo.DebugMarkerEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-#endif
 	}
 
 	void VulkanDevice::QueryDeviceFeatures()
@@ -383,24 +380,6 @@ namespace Athena
 		m_FeaturesInfo.PipelineStatisticsQuery = deviceFeatures2.features.pipelineStatisticsQuery;
 		m_FeaturesInfo.SamplerAnisotropy = deviceFeatures2.features.samplerAnisotropy;
 		m_FeaturesInfo.DeviceHostQueryResetFeatures = hostQueryResetFeatures;
-	}
-
-	void VulkanDevice::QueryEXTProcAddresses()
-	{
-		if (m_ExtensionsInfo.HostQueryEXTSupported)
-		{
-			m_ExtensionsInfo.vkResetQueryPoolEXT = Vulkan::GetDeviceProc<PFN_vkResetQueryPoolEXT>("vkResetQueryPoolEXT");
-		}
-
-#if VULKAN_ENABLE_DEBUG_INFO
-		if (m_ExtensionsInfo.DebugMarkerEXTSupported)
-		{
-			m_ExtensionsInfo.vkCmdDebugMarkerBeginEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerBeginEXT>("vkCmdDebugMarkerBeginEXT");
-			m_ExtensionsInfo.vkCmdDebugMarkerEndEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerEndEXT>("vkCmdDebugMarkerEndEXT");
-			m_ExtensionsInfo.vkCmdDebugMarkerInsertEXT = Vulkan::GetDeviceProc<PFN_vkCmdDebugMarkerInsertEXT>("vkCmdDebugMarkerInsertEXT");
-			m_ExtensionsInfo.vkDebugMarkerSetObjectNameEXT = Vulkan::GetDeviceProc<PFN_vkDebugMarkerSetObjectNameEXT>("vkDebugMarkerSetObjectNameEXT");
-		}
-#endif
 	}
 
 	void VulkanDevice::QueryGPUCapabilities()
@@ -431,67 +410,39 @@ namespace Athena
 		m_GPUCapabilities.MaxSamplerLodBias = m_DeviceLimits.maxSamplerLodBias;
 		m_GPUCapabilities.MaxSamplerAnisotropy = m_DeviceLimits.maxSamplerAnisotropy;
 
-		//									Name				Color  Depth Stencil Float  Srgb  bpp  NumComponents
-		MapFormat(Format::Unknown,			"Unknown",			false, false, false, false, false, 0,  0);
-		MapFormat(Format::R8,				"R8",				true,  false, false, false, false, 1,  1);
-		MapFormat(Format::R8_SRGB,			"R8_SRGB",			true,  false, false, false, true,  1,  1);
-		MapFormat(Format::RG8,				"RG8",				true,  false, false, false, false, 2,  2);
-		MapFormat(Format::RG8_SRGB,			"RG8_SRGB",			true,  false, false, false, true,  2,  2);
-		MapFormat(Format::RGB8,				"RGB8",				true,  false, false, false, false, 3,  3);
-		MapFormat(Format::RGB8_SRGB,		"RGB8_SRGB",		true,  false, false, false, true,  3,  3);
-		MapFormat(Format::RGBA8,			"RGBA8",			true,  false, false, false, false, 4,  4);
-		MapFormat(Format::RGBA8_SRGB,		"RGBA8_SRGB",		true,  false, false, false, true,  4,  4);
-																	   								   
-		MapFormat(Format::R32F,				"R32F",				true,  false, false, true,  false, 4,  1);
-		MapFormat(Format::RG16F,			"RG16F",			true,  false, false, true,  false, 4,  2);
-		MapFormat(Format::RG32F,			"RG32F",			true,  false, false, true,  false, 8,  2);
-		MapFormat(Format::RGB16F,			"RGB16F",			true,  false, false, true,  false, 6,  3);
-		MapFormat(Format::R11G11B10F,		"R11G11B10F",		true,  false, false, true,  false, 4,  3);
-		MapFormat(Format::RGB32F,			"RGB32F",			true,  false, false, true,  false, 12, 3);
-		MapFormat(Format::RGBA16F,			"RGBA16F",			true,  false, false, true,  false, 8,  4);
-		MapFormat(Format::RGBA32F,			"RGBA32F",			true,  false, false, true,  false, 16, 4);
-		MapFormat(Format::RGBA32UInt,		"RGBA32UInt",		true,  false, false, false, false, 16, 4);
-
-		MapFormat(Format::DEPTH16,			"DEPTH16",			false, true,  false, false, false, 2,  1);
-		MapFormat(Format::DEPTH24STENCIL8,	"DEPTH24STENCIL8",	false, true,  true,  false, false, 4,  2);
-		MapFormat(Format::DEPTH32F,			"DEPTH32F",			false, true,  false, true,  false, 4,  1);
+		QueryFormatSupportProperties();
 	}
 
-	void VulkanDevice::MapFormat(Format format, const char* name, bool isColor, bool isDepth, bool isStencil, bool isFloat, bool isSRGB, uint32 bpp, uint32 numComponents)
+	void VulkanDevice::QueryFormatSupportProperties()
 	{
-		FormatProperties& properties = m_GPUCapabilities.Formats[format];
-
-		properties.Name = name;
-		properties.IsColor = isColor;
-		properties.IsDepth = isDepth;
-		properties.IsStencil = isStencil;
-		properties.IsFloat = isFloat;
-		properties.IsSRGB = isSRGB;
-		properties.BytesPerPixel = bpp;
-		properties.NumComponents = numComponents;
-
-		if (format == Format::Unknown || format == Format::FormatNum)
+		for (uint32 i = 0; i < ATN_ARRAY_SIZE(m_GPUCapabilities.Formats); ++i)
 		{
-			properties.IsTextureSupported = false;
-			properties.IsRenderTargetSupported = false;
-			properties.IsVertexBufferSupported = false;
-		}
-		else
-		{
-			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, Vulkan::TranslateFormat(format), &props);
+			Format format = Format(i);
+			FormatSupportProperties properties = m_GPUCapabilities.Formats[format];
 
-			VkFormatFeatureFlags textureRequiredFlags = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
-			VkFormatFeatureFlags renderTargetRequiredFlags = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
-			VkFormatFeatureFlags depthTargetRequiredFlags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-			VkFormatFeatureFlags bufferRequiredFlags = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
+			if (format == Format::Unknown || format == Format::FormatNum)
+			{
+				properties.IsTextureSupported = false;
+				properties.IsRenderTargetSupported = false;
+				properties.IsVertexBufferSupported = false;
+			}
+			else
+			{
+				VkFormatProperties props;
+				vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, Vulkan::TranslateFormat(format), &props);
 
-			properties.IsTextureSupported = (props.optimalTilingFeatures & textureRequiredFlags) == textureRequiredFlags;
+				VkFormatFeatureFlags textureRequiredFlags = VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
+				VkFormatFeatureFlags renderTargetRequiredFlags = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
+				VkFormatFeatureFlags depthTargetRequiredFlags = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+				VkFormatFeatureFlags bufferRequiredFlags = VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
 
-			properties.IsRenderTargetSupported = (props.optimalTilingFeatures & renderTargetRequiredFlags) == renderTargetRequiredFlags ||
-				(props.optimalTilingFeatures & depthTargetRequiredFlags) == depthTargetRequiredFlags;
+				properties.IsTextureSupported = (props.optimalTilingFeatures & textureRequiredFlags) == textureRequiredFlags;
 
-			properties.IsVertexBufferSupported = (props.bufferFeatures & bufferRequiredFlags) == bufferRequiredFlags;
+				properties.IsRenderTargetSupported = (props.optimalTilingFeatures & renderTargetRequiredFlags) == renderTargetRequiredFlags ||
+					(props.optimalTilingFeatures & depthTargetRequiredFlags) == depthTargetRequiredFlags;
+
+				properties.IsVertexBufferSupported = (props.bufferFeatures & bufferRequiredFlags) == bufferRequiredFlags;
+			}
 		}
 	}
 }

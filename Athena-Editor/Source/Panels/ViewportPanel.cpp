@@ -1,7 +1,7 @@
 #include "ViewportPanel.h"
 
 #include "Athena/UI/UI.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 #include "ImGuizmoLayer.h"
 
 #include <ImGui/imgui.h>

@@ -27,8 +27,6 @@ namespace Athena
 	public:
 		MaterialAsset();
 
-		static Ref<MaterialAsset> GetDefault();
-
 		virtual AssetType GetAssetType() const override { return AssetType::Material; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;

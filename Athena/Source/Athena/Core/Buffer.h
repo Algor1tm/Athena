@@ -14,6 +14,12 @@ namespace Athena
 			Allocate(size);
 		}
 
+		Buffer(const void* data, uint64 size)
+			: Buffer(size)
+		{
+			memcpy(m_Data, data, size);
+		}
+
 		Buffer(const Buffer&) = delete;
 		Buffer& operator=(const Buffer&) = delete;
 

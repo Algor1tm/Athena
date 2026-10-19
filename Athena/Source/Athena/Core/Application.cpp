@@ -3,6 +3,7 @@
 #include "Athena/Core/Time.h"
 #include "Athena/Core/Stats.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Core/Core.h"
 #include "Athena/Renderer/RenderThread.h"
 #include "Athena/Renderer/RHI/RHI.h"
 
@@ -32,6 +33,8 @@ namespace Athena
 		if (m_Config.CleanCacheOnLoad)
 			FileSystem::Remove(m_Config.EngineResourcesPath / "Cache");
 
+		Thread::s_GameThreadID = Thread::GetCurrentThreadID();
+
 		Logger::Get().Init(appinfo.LogConfig);
 		RenderThread::Init(appinfo.RendererConfig);
 		CreateMainWindow(appinfo.WindowInfo);
@@ -47,7 +50,7 @@ namespace Athena
 		m_ImGuiLayer.Release();
 
 		// Window cant be destroyed before RenderThread::Shutdown, because of ImGui and GLFW
-		//m_Window->DestroySwapChain();
+		m_Window->DestroySwapChain();
 		RenderThread::Shutdown();
 		m_Window.Release();
 
@@ -61,8 +64,11 @@ namespace Athena
 		while (m_Running)
 		{
 			TRACY_FRAME_MARK();
+			TRACY_PROFILE_SCOPE("GameThreadFrame");
 			STATS_THREAD_HEARTBEAT(StatsThread::GameThread);
-			STATS_THREAD_HEARTBEAT(StatsThread::RenderThread);
+
+			if(RenderThread::Get().Bypass())
+				STATS_THREAD_HEARTBEAT(StatsThread::RenderThread);
 
 			Time start = timer.ElapsedTime();
 

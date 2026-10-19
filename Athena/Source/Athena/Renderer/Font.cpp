@@ -14,44 +14,28 @@
 
 namespace Athena
 {
-    Font::FontStaticData Font::s_Data;
-
     bool Font::Init()
     {
-        s_Data.FTPHandle = msdfgen::initializeFreetype();
+        s_FTPHandle = msdfgen::initializeFreetype();
 
-        if (!s_Data.FTPHandle)
+        if (!s_FTPHandle)
         {
             ATN_LOG_FATAL(Renderer, "Failed to initialize freetype!");
             return false;
         }
-
-        FilePath resourcesPath = Application::Get().GetConfig().EngineResourcesPath;
-
-        s_Data.DefaultFont = Ref<Font>::Create();
-
-        FontImporter fontImporter;
-        fontImporter.Import(s_Data.DefaultFont, resourcesPath / "Fonts/Open_Sans/OpenSans-Medium.ttf");
 
         return true;
     }
 
     void Font::Shutdown()
     {
-        if(s_Data.FTPHandle)
-            msdfgen::deinitializeFreetype((msdfgen::FreetypeHandle*)s_Data.FTPHandle);
-
-        s_Data.DefaultFont.Release();
-    }
-
-    Ref<Font> Font::GetDefault()
-    {
-        return s_Data.DefaultFont;
+        if(s_FTPHandle)
+            msdfgen::deinitializeFreetype((msdfgen::FreetypeHandle*)s_FTPHandle);
     }
 
     void* Font::GetFTPHandle()
     {
-        return s_Data.FTPHandle;
+        return s_FTPHandle;
     }
 
     Font::Font()

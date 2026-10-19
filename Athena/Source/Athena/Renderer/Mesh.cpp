@@ -2,9 +2,8 @@
 
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/MeshImporter.h"
-#include "Athena/Core/FileSystem.h"
-#include "Athena/Project/Project.h"
 #include "Athena/Renderer/RenderThread.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 
 
 namespace Athena
@@ -16,16 +15,11 @@ namespace Athena
 
 	Mesh::~Mesh()
 	{
-		ENQUEUE_RENDER_COMMAND_ANY_THREAD([vertexBuffer = m_VertexBuffer, indexBuffer = m_IndexBuffer, bonesInfluenceBuffer = m_BonesInfluenceBuffer]()
+		ENQUEUE_RENDER_COMMAND([vertexBuffer = m_VertexBuffer, indexBuffer = m_IndexBuffer, bonesInfluenceBuffer = m_BonesInfluenceBuffer]() mutable
 			{
-				if(vertexBuffer)
-					vertexBuffer->Destroy();
-
-				if(indexBuffer)
-					indexBuffer->Destroy();
-
-				if (bonesInfluenceBuffer)
-					bonesInfluenceBuffer->Destroy();
+				vertexBuffer.Release();
+				indexBuffer.Release();
+				bonesInfluenceBuffer.Release();
 			});
 	}
 
@@ -57,11 +51,11 @@ namespace Athena
 		}
 		else
 		{
-			return MaterialAsset::GetDefault();
+			return EngineRenderAssets::Get().DefaultMaterialAsset;
 		}
 
 		Ref<MaterialAsset> materialAsset = AssetManager::GetAsset<MaterialAsset>(materialHandle);
-		materialAsset = materialAsset ? materialAsset : MaterialAsset::GetDefault();
+		materialAsset = materialAsset ? materialAsset : EngineRenderAssets::Get().DefaultMaterialAsset;
 
 		return materialAsset;
 	}

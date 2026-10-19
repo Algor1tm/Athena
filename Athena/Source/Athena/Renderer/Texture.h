@@ -3,10 +3,10 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Asset/Asset.h"
 #include "Athena/Core/Buffer.h"
+#include "Athena/Core/Hash.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Format.h"
-#include "Athena/Renderer/RenderResource.h"
 
 #include <array>
 
@@ -27,6 +27,26 @@ namespace Athena
 	{
 		TEXTURE_2D,
 		TEXTURE_CUBE
+	};
+
+	enum class ComponentSwizzle
+	{
+		IDENTITY = 0,
+		ZERO,
+		ONE,
+		R,
+		G,
+		B,
+		A,
+	};
+
+	enum class TextureAspect
+	{
+		AUTO = 0,
+		COLOR,
+		DEPTH,
+		STENCIL,
+		DEPTH_STENCIL
 	};
 
 	enum class TextureFilter
@@ -62,20 +82,35 @@ namespace Athena
 		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
 
-	struct TextureViewCreateInfo
+	struct TextureRange
 	{
-		bool operator==(const TextureViewCreateInfo& other) const = default;
-
-		String Name; // Optional (if empty, it will be generated)
+		bool operator==(const TextureRange&) const = default;
 
 		uint32 BaseMipLevel = 0;
 		uint32 MipLevelCount = 1;
 		uint32 BaseLayer = 0;
 		uint32 LayerCount = 1;
+		TextureAspect Aspect = TextureAspect::AUTO;
+	};
 
-		bool EnableAlphaBlending = true;
-		bool GrayScale = false;
+	struct ComponentsMapping
+	{
+		bool operator==(const ComponentsMapping&) const = default;
 
+		ComponentSwizzle R = ComponentSwizzle::IDENTITY;
+		ComponentSwizzle G = ComponentSwizzle::IDENTITY;
+		ComponentSwizzle B = ComponentSwizzle::IDENTITY;
+		ComponentSwizzle A = ComponentSwizzle::IDENTITY;
+	};
+
+	struct TextureViewCreateInfo
+	{
+		bool operator==(const TextureViewCreateInfo&) const = default;
+
+		String Name; // Optional (if empty, it will be generated)
+		TextureType ViewType = TextureType::TEXTURE_2D;
+		TextureRange Range;
+		ComponentsMapping Swizzle;
 		bool OverrideSampler = false;
 		TextureSamplerCreateInfo Sampler;
 	};
@@ -91,8 +126,12 @@ namespace std
 	{
 		size_t operator()(const TextureSamplerCreateInfo& value) const
 		{
-			string str = fmt::format("{}{}{}", (uint32)value.Filter, (uint32)value.Wrap, (uint32)value.Compare);
-			return hash<string>()(str);
+			size_t hash = 0;
+			HashCombine(hash, (uint32)value.Filter);
+			HashCombine(hash, (uint32)value.Wrap);
+			HashCombine(hash, (uint32)value.Compare);
+
+			return hash;
 		}
 	};
 
@@ -101,10 +140,13 @@ namespace std
 	{
 		size_t operator()(const TextureViewCreateInfo& value) const
 		{
-			size_t hash = value.BaseMipLevel ^ value.MipLevelCount + value.BaseLayer ^ value.LayerCount;
-			hash = (hash << 1) + value.EnableAlphaBlending;
-			hash = (hash << 1) + value.GrayScale;
-			hash = (hash << 1) + value.OverrideSampler;
+			size_t hash = 0;
+			HashCombine(hash, value.Range.BaseMipLevel);
+			HashCombine(hash, value.Range.MipLevelCount);
+			HashCombine(hash, value.Range.BaseLayer);
+			HashCombine(hash, value.Range.LayerCount);
+			HashCombine(hash, value.OverrideSampler);
+
 			return hash;
 		}
 	};
@@ -114,60 +156,79 @@ namespace Athena
 {
 	class Texture;
 
-	class ATHENA_API TextureView : public RenderResource
+	class ATHENA_API TextureView: public RefCounted
 	{
 	public:
-		static Ref<TextureView> Create(Texture* texture, const TextureViewCreateInfo& info);
+		static Ref<TextureView> Create(const TextureViewCreateInfo& info, Texture* texture);
+
+		TextureView(const TextureViewCreateInfo& info, Texture* texture);
 		virtual ~TextureView() = default;
 
 		virtual void Invalidate() = 0;
 
-		virtual const String& GetName() const override { return m_Info.Name; }
-
 		Texture* GetTexture() const { return m_Texture; }
 		const TextureViewCreateInfo& GetInfo() const { return m_Info; }
 
-	protected:
+		void SetSampler(const TextureSamplerCreateInfo& samplerInfo);
+
+	private:
 		Texture* m_Texture;
 		TextureViewCreateInfo m_Info;
+	};
+
+	using TextureView2D = TextureView;
+	using TextureViewCube = TextureView;
+
+	struct TextureRegion
+	{
+		Vector2u Offset = { 0, 0 };
+		Vector2u Size = { 0, 0 };
+		uint32 Mip = 0;
+		uint32 Layer = 0;
 	};
 
 	struct TextureCreateInfo
 	{
 		String Name;
+		TextureType Type = TextureType::TEXTURE_2D;
 		Format TextureFormat = Format::RGBA8;
 		TextureUsage Usage = TextureUsage::DEFAULT;
 		uint32 Width = 1;
 		uint32 Height = 1;
 		uint32 Layers = 1;
+		uint32 Samples = 1;
 		bool GenerateMipMap = false;
 		TextureSamplerCreateInfo Sampler;
 	};
 
-	class ATHENA_API Texture : public RenderResource
+	class ATHENA_API Texture: public RefCounted
 	{
 	public:
+		static Ref<Texture> Create(const TextureCreateInfo& info, Buffer* pixels = nullptr);
+
+		Texture(const TextureCreateInfo& info);
 		virtual ~Texture();
 
-		virtual TextureType GetType() const = 0;
+		virtual void Init() = 0;
+		virtual void Resize(uint32 width, uint32 height);
+		virtual void Upload(const Buffer& srcBuffer, const TextureRegion& region) = 0;
+		virtual void UploadAndBlitMipMap(const Buffer& srcBuffer) = 0;
 
-		virtual void Resize(uint32 width, uint32 height) = 0;
-		virtual void SetSampler(const TextureSamplerCreateInfo& samplerInfo) = 0;
-
-		virtual void WriteContentToBuffer(Buffer* dstBuffer) = 0;
-		virtual uint32 GetImageLayerCount() const = 0;
-
-		Vector2u GetMipSize(uint32 mip) const;
-		uint32 GetMipLevelsCount() const;
-
+	public:
+		Ref<TextureView> GetMainView();
 		Ref<TextureView> GetMipView(uint32 mip);
-		Ref<TextureView> GetLayerView(uint32 layer);
+		Ref<TextureView> GetLayersView(uint32 firstLayer, uint32 layerCount);
 		Ref<TextureView> GetView(const TextureViewCreateInfo& info);
 		void InvalidateViews();
 		void ClearViews();
 
+		Vector2u GetMipSize(uint32 mip) const;
+		uint32 GetMipLevelsCount() const;
+
 		uint32 GetTotalGPUMemory();
 
+		const String& GetName() const { return m_Info.Name; }
+		TextureType GetType() const { return m_Info.Type; };
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
@@ -175,44 +236,13 @@ namespace Athena
 
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 
-	protected:
+	private:
 		TextureCreateInfo m_Info;
 		std::unordered_map<TextureViewCreateInfo, Ref<TextureView>> m_TextureViews;
 	};
 
-
-	class ATHENA_API Texture2D : public Texture
-	{
-	public:
-		static Ref<Texture2D> Create(const TextureCreateInfo& info, Buffer* data = nullptr);
-
-		virtual TextureType GetType() const override { return TextureType::TEXTURE_2D; }
-
-		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::Texture2D; }
-		virtual const String& GetName() const override { return m_Info.Name; }
-
-		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers; }
-		const FilePath& GetFilePath() const { return m_FilePath; }
-
-	private:
-		friend class TextureImporter;
-
-	private:
-		FilePath m_FilePath;
-	};
-
-	class ATHENA_API TextureCube: public Texture
-	{
-	public:
-		static Ref<TextureCube> Create(const TextureCreateInfo& info, Buffer* data = nullptr);
-
-		virtual TextureType GetType() const override { return TextureType::TEXTURE_CUBE; }
-
-		virtual RenderResourceType GetResourceType() const override { return RenderResourceType::TextureCube; }
-		virtual const String& GetName() const override { return m_Info.Name; }
-
-		virtual uint32 GetImageLayerCount() const override { return m_Info.Layers * 6; }
-	};
+	using Texture2D = Texture;
+	using TextureCube = Texture;
 
 
 	class ATHENA_API TextureAsset : public Asset
@@ -222,16 +252,14 @@ namespace Athena
 		TextureAsset(const Ref<Texture2D>& texture);
 		TextureAsset(const Ref<Texture2D>& texture, const std::array<Vector2, 4>& texCoords);
 		TextureAsset(const Ref<Texture2D>& texture, const Vector2& min, const Vector2& max);
-
-		static Ref<TextureAsset> GetDefault();
-		static void Clear();
+		~TextureAsset();
 
 		virtual AssetType GetAssetType() const override { return AssetType::Texture; }
 
 		virtual bool Serialize(const FilePath& absolutePath) const override;
 		virtual bool Deserialize(const FilePath& absolutePath, Ref<AssetImportSettings> importSettings) override;
 
-		const Ref<Texture2D>& GetRenderTexture() const { return m_Texture; }
+		const Ref<Texture2D>& GetTexture() const { return m_Texture; }
 		const std::array<Vector2, 4>& GetTexCoords() const { return m_TexCoords; };
 
 		void SetTexCoords(const std::array<Vector2, 4>& texCoords) { m_TexCoords = texCoords; }
@@ -243,6 +271,26 @@ namespace Athena
 
 		static Ref<TextureAsset> s_DefaultTexture;
 	};
+
+	inline TextureAspect GetAspectFromFormat(Format format)
+	{
+		auto& properties = GetFormatProperties(format);
+
+		if (properties.HasColor)
+			return TextureAspect::COLOR;
+
+		if (properties.HasDepth && properties.HasStencil)
+			return TextureAspect::DEPTH_STENCIL;
+
+		if (properties.HasDepth)
+			return TextureAspect::DEPTH;
+
+		if (properties.HasStencil)
+			return TextureAspect::STENCIL;
+
+		checkf(false);
+		return TextureAspect::COLOR;
+	}
 
 	namespace EnumUtils
 	{

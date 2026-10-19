@@ -7,13 +7,11 @@ namespace Athena
 {
 	void VertexMemoryLayout::CalculateOffsetsAndStride()
 	{
-		auto& formatProperties = RHI::Get()->GetGPUCapabilities().Formats;
-
 		uint32 offset = 0;
 		for (auto& elem : m_Elements)
 		{
-			ensure(formatProperties[elem.ElementFormat].IsVertexBufferSupported, "Format is not supported for vertex buffers!");
-			uint32 elemSize = formatProperties[elem.ElementFormat].BytesPerPixel;
+			ensure(GetFormatSupportProperties(elem.ElementFormat).IsVertexBufferSupported, "Format is not supported for vertex buffers!");
+			uint32 elemSize = GetFormatProperties(elem.ElementFormat).BytesPerPixel;
 
 			elem.Offset = offset;
 			offset += elemSize;
@@ -23,31 +21,37 @@ namespace Athena
 
 	Ref<VertexBuffer> VertexBuffer::Create(const String& name, uint64 size, Buffer* vertices)
 	{
-		Ref<VertexBuffer> vertexBuffer = RHI::Get()->CreateVertexBuffer();
+		TRACY_PROFILE_FUNC();
 
-		vertexBuffer->m_Name = name;
-		vertexBuffer->m_Size = size;
+		Ref<VertexBuffer> vertexBuffer = RHI::Get()->CreateVertexBuffer(name, size);
 
 		if (vertices)
 		{
 			Buffer verticesCopy = Buffer::Copy(*vertices);
 			check(vertexBuffer->m_Size >= verticesCopy.Size() && verticesCopy.Data() != nullptr, "Invalid initialization buffer for VertexBuffer!");
 
-			ENQUEUE_RENDER_COMMAND_ANY_THREAD([vertexBuffer, verticesCopyRT = std::move(verticesCopy)]()
+			ENQUEUE_RENDER_COMMAND([vertexBuffer, verticesCopyRT = std::move(verticesCopy)]()
 				{
 					vertexBuffer->Init();
-					vertexBuffer->UploadData(verticesCopyRT);
+					vertexBuffer->Upload(verticesCopyRT);
 				});
 		}
 		else
 		{
-			ENQUEUE_RENDER_COMMAND_ANY_THREAD([vertexBuffer]()
+			ENQUEUE_RENDER_COMMAND([vertexBuffer]()
 				{
 					vertexBuffer->Init();
 				});
 		}
 
 		return vertexBuffer;
+	}
+
+	VertexBuffer::VertexBuffer(const String& name, uint64 size)
+		: m_Name(name), 
+		m_Size(size)
+	{
+
 	}
 
 	void VertexBuffer::Resize(uint64 size)
@@ -57,32 +61,38 @@ namespace Athena
 
 	Ref<IndexBuffer> IndexBuffer::Create(const String& name, uint64 size, Buffer* indices, IndexSize indexSize)
 	{
-		Ref<IndexBuffer> indexBuffer = RHI::Get()->CreateIndexBuffer();
+		TRACY_PROFILE_FUNC();
 
-		indexBuffer->m_Name = name;
-		indexBuffer->m_Size = size;
-		indexBuffer->m_IndexSize = indexSize;
+		Ref<IndexBuffer> indexBuffer = RHI::Get()->CreateIndexBuffer(name, size, indexSize);
 
 		if (indices)
 		{
 			Buffer indicesCopy = Buffer::Copy(*indices);
 			check(indexBuffer->m_Size >= indicesCopy.Size() && indicesCopy.Data() != nullptr, "Invalid initialization buffer for IndexBuffer!");
 
-			ENQUEUE_RENDER_COMMAND_ANY_THREAD([indexBuffer, indicesCopyRT = std::move(indicesCopy)]()
+			ENQUEUE_RENDER_COMMAND([indexBuffer, indicesCopyRT = std::move(indicesCopy)]()
 				{
 					indexBuffer->Init();
-					indexBuffer->UploadData(indicesCopyRT);
+					indexBuffer->Upload(indicesCopyRT);
 				});
 		}
 		else
 		{
-			ENQUEUE_RENDER_COMMAND_ANY_THREAD([indexBuffer]()
+			ENQUEUE_RENDER_COMMAND([indexBuffer]()
 				{
 					indexBuffer->Init();
 				});
 		}
 
 		return indexBuffer;
+	}
+
+	IndexBuffer::IndexBuffer(const String& name, uint64 size, IndexSize indexSize)
+		: m_Name(name),
+		m_Size(size),
+		m_IndexSize(indexSize)
+	{
+
 	}
 
 	uint64 IndexBuffer::GetCount() const

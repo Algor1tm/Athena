@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/Texture.h"
 
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
@@ -70,9 +71,12 @@ namespace Athena
 		void DestroyBuffer(VulkanBufferAllocation buffer, const String& name = "");
 		void DestroyImage(VulkanImageAllocation image, const String& name = "");
 
+		VkSampler CreateSampler(const TextureSamplerCreateInfo& info);
+		void DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler);
+
 		VmaAllocator GetInternalAllocator() { return m_Allocator; }
 
-		void OnUpdate();
+		void NewFrame();
 
 		// return in Kb
 		uint64 GetMemoryUsage();
@@ -80,6 +84,7 @@ namespace Athena
 	private:
 		VmaAllocator m_Allocator;
 		VkPhysicalDeviceMemoryProperties m_MemoryProps;
+		std::unordered_map<TextureSamplerCreateInfo, VulkanSamplerAllocation> m_SamplersMap;
 		bool m_GetMemoryUsageSupported;
 	};
 }

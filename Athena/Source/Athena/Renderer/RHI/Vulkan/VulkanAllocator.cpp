@@ -5,12 +5,71 @@
 #include <vma/vk_mem_alloc.h>
 
 #include "VulkanAllocator.h"
+#include "Athena/Math/Common.h"
 #include "Athena/Utils/StringUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 
 
 namespace Athena
 {
+	namespace Vulkan
+	{
+		inline VkFilter TranslateFilter(TextureFilter filter)
+		{
+			switch (filter)
+			{
+			case TextureFilter::NEAREST:return VK_FILTER_NEAREST;
+			case TextureFilter::LINEAR: return VK_FILTER_LINEAR;
+			case TextureFilter::TRILINEAR: return VK_FILTER_LINEAR;
+			}
+
+			checkf(false);
+			return (VkFilter)0;
+		}
+
+		inline VkSamplerMipmapMode TranslateMipMapMode(TextureFilter filter)
+		{
+			switch (filter)
+			{
+			case TextureFilter::NEAREST:return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			case TextureFilter::LINEAR: return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			case TextureFilter::TRILINEAR: return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			}
+
+			checkf(false);
+			return (VkSamplerMipmapMode)0;
+		}
+
+		inline VkSamplerAddressMode TranslateWrap(TextureWrap wrap)
+		{
+			switch (wrap)
+			{
+			case TextureWrap::REPEAT:                 return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			case TextureWrap::CLAMP_TO_EDGE:          return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			case TextureWrap::CLAMP_TO_BORDER:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			case TextureWrap::MIRRORED_REPEAT:        return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			case TextureWrap::MIRRORED_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+			}
+
+			checkf(false);
+			return (VkSamplerAddressMode)0;
+		}
+
+		inline VkCompareOp TranslateCompareOp(TextureCompareOperator compare)
+		{
+			switch (compare)
+			{
+			case TextureCompareOperator::NONE:             return VK_COMPARE_OP_NEVER;
+			case TextureCompareOperator::LESS_OR_EQUAL:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+			case TextureCompareOperator::GREATER_OR_EQUAL: return VK_COMPARE_OP_GREATER_OR_EQUAL;
+			}
+
+			checkf(false);
+			return (VkCompareOp)0;
+		}
+	}
+
 	void* VulkanBufferAllocation::MapMemory()
 	{
 		void* mappedData;
@@ -125,7 +184,60 @@ namespace Athena
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());
 	}
 
-	void VulkanAllocator::OnUpdate()
+	VkSampler VulkanAllocator::CreateSampler(const TextureSamplerCreateInfo& info)
+	{
+		if (m_SamplersMap.contains(info))
+		{
+			auto& samplerInfo = m_SamplersMap.at(info);
+			samplerInfo.RefCount++;
+			return samplerInfo.Sampler;
+		}
+
+		VkSampler sampler;
+
+		float maxAnisotropy = Math::Min(info.AnisotropyLevel, RHI::Get()->GetGPUCapabilities().MaxSamplerAnisotropy);
+
+		VkSamplerCreateInfo vksamplerInfo = {};
+		vksamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		vksamplerInfo.magFilter = Vulkan::TranslateFilter(info.Filter);
+		vksamplerInfo.minFilter = Vulkan::TranslateFilter(info.Filter);
+		vksamplerInfo.mipmapMode = Vulkan::TranslateMipMapMode(info.Filter);
+		vksamplerInfo.addressModeU = Vulkan::TranslateWrap(info.Wrap);
+		vksamplerInfo.addressModeV = Vulkan::TranslateWrap(info.Wrap);
+		vksamplerInfo.addressModeW = Vulkan::TranslateWrap(info.Wrap);
+		vksamplerInfo.anisotropyEnable = maxAnisotropy > 1.f;
+		vksamplerInfo.maxAnisotropy = maxAnisotropy;
+		vksamplerInfo.compareEnable = info.Compare == TextureCompareOperator::NONE ? false : true;
+		vksamplerInfo.compareOp = Vulkan::TranslateCompareOp(info.Compare);
+		vksamplerInfo.minLod = 0;
+		vksamplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+		vksamplerInfo.mipLodBias = 0.f;
+		vksamplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		vksamplerInfo.unnormalizedCoordinates = false;
+
+		VK_CHECK(vkCreateSampler(Vulkan::GetLogicalDevice(), &vksamplerInfo, nullptr, &sampler));
+
+		m_SamplersMap[info] = { sampler, 1 };
+		return sampler;
+	}
+
+	void VulkanAllocator::DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler)
+	{
+		checkf(m_SamplersMap.contains(info));
+
+		auto& samplerInfo = m_SamplersMap.at(info);
+		checkf(samplerInfo.Sampler == sampler);
+
+		samplerInfo.RefCount--;
+
+		if (samplerInfo.RefCount == 0)
+		{
+			vkDestroySampler(Vulkan::GetLogicalDevice(), samplerInfo.Sampler, nullptr);
+			m_SamplersMap.erase(info);
+		}
+	}
+
+	void VulkanAllocator::NewFrame()
 	{
 		vmaSetCurrentFrameIndex(m_Allocator, VulkanRHI::Get()->GetFrameResourcesIndex());
 	}

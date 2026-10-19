@@ -10,10 +10,11 @@ namespace Athena
 	class ATHENA_API VulkanVertexBuffer : public VertexBuffer
 	{
 	public:
-		virtual void Init() override;
-		virtual void Destroy() override;
+		VulkanVertexBuffer(const String& name, uint64 size);
+		virtual ~VulkanVertexBuffer();
 
-		virtual void UploadData(const Buffer& buffer, uint64 offset) override;
+		virtual void Init() override;
+		virtual void Upload(const Buffer& buffer, uint64 offset) override;
 		virtual void Resize(uint64 size) override;
 
 	private:
@@ -26,10 +27,11 @@ namespace Athena
 	class ATHENA_API VulkanIndexBuffer : public IndexBuffer
 	{
 	public:
-		virtual void Init() override;
-		virtual void Destroy() override;
+		VulkanIndexBuffer(const String& name, uint64 size, IndexSize indexSize);
+		virtual ~VulkanIndexBuffer();
 
-		virtual void UploadData(const Buffer& buffer, uint64 offset) override;
+		virtual void Init() override;
+		virtual void Upload(const Buffer& buffer, uint64 offset) override;
 		virtual void Resize(uint64 size) override;
 
 	private:

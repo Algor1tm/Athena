@@ -11,7 +11,7 @@ namespace Athena
 	VulkanCommandBuffer::VulkanCommandBuffer(VkCommandPool pool)
 		: State(CommandBufferState::Idle),
 		OnCompletionCallbacks(10 * 1024), // 10Kb
-		LastIdleTime(0)
+		LastUsedTime(0)
 	{
 		VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
 		cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -31,6 +31,7 @@ namespace Athena
 	VulkanCommandBuffer::~VulkanCommandBuffer()
 	{
 		vkDestroyFence(Vulkan::GetLogicalDevice(), SignalFence, nullptr);
+		VK_CHECK(vkResetCommandBuffer(CommandBuffer, 0));
 	}
 
 	void VulkanCommandBuffer::Begin()
@@ -51,6 +52,16 @@ namespace Athena
 		VK_CHECK(vkEndCommandBuffer(CommandBuffer));
 	}
 
+	void VulkanCommandBuffer::OnCompletion()
+	{
+		TRACY_PROFILE_FUNC();
+
+		vkResetFences(Vulkan::GetLogicalDevice(), 1, &SignalFence);
+
+		OnCompletionCallbacks.Flush();
+		State = CommandBufferState::Idle;
+		LastUsedTime = Time::GetCurrentTime();
+	}
 
 	void CommandBufferManager::Init()
 	{
@@ -59,99 +70,179 @@ namespace Athena
 		commandPoolCI.queueFamilyIndex = VulkanRHI::Get()->GetDevice()->GetQueueFamily();
 		commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		VK_CHECK(vkCreateCommandPool(Vulkan::GetLogicalDevice(), &commandPoolCI, nullptr, &m_Pool));
+
+		VK_SET_OBJECT_NAME(m_Pool, VK_OBJECT_TYPE_COMMAND_POOL, "MainCommandPool");
+
+		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
+		{
+			VulkanCommandBuffer* buffer = new VulkanCommandBuffer(m_Pool);
+			m_PresentCommandBuffers.push_back(buffer);
+
+			VkSemaphore semaphore;
+
+			VkSemaphoreCreateInfo semaphoreCI = {};
+			semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &semaphoreCI, nullptr, &semaphore));
+			m_PresentCmdBufferSemaphores.push_back(semaphore);
+
+			VK_SET_OBJECT_NAME(buffer->CommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, std::format("CmdBufferForPresent_{}", i));
+			VK_SET_OBJECT_NAME(buffer->SignalFence, VK_OBJECT_TYPE_FENCE, std::format("CmdBufferForPresentFence_{}", i));
+			VK_SET_OBJECT_NAME(semaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("CmdBufferForPresentSemaphore_{}", i));
+		}
 	}
 
 	void CommandBufferManager::Destroy()
 	{
+		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
+		{
+			vkDestroySemaphore(Vulkan::GetLogicalDevice(), m_PresentCmdBufferSemaphores[i], nullptr);
+
+			VulkanCommandBuffer* buffer = m_PresentCommandBuffers[i];
+			WaitForCmdBuffer(buffer);
+			delete buffer;
+		}
+
+		for (uint32 i = 0; i < m_CommandBuffers.size(); ++i)
+		{
+			VulkanCommandBuffer* buffer = m_CommandBuffers[i];
+			WaitForCmdBuffer(buffer);
+			delete buffer;
+		}
+
+		m_CommandBuffers.clear();
 		vkDestroyCommandPool(Vulkan::GetLogicalDevice(), m_Pool, nullptr);
 	}
 
 	VulkanCommandBuffer* CommandBufferManager::GetCommandBuffer()
 	{
 		VulkanCommandBuffer* buffer = FindFreeCommandBuffer();
+		VK_SET_OBJECT_NAME(buffer->CommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "GeneralCommandBuffer");
+		VK_SET_OBJECT_NAME(buffer->SignalFence, VK_OBJECT_TYPE_FENCE, "GeneralCommandBufferFence");
+
 		buffer->Begin();
 
 		return buffer;
 	}
 
-	VulkanCommandBuffer* CommandBufferManager::GetUploadCommandBuffer()
+	VulkanCommandBuffer* CommandBufferManager::GetTransferCommandBuffer()
 	{
-		if (!m_UploadCommandBuffer)
+		if (!m_TransferCommandBuffer)
 		{
-			m_UploadCommandBuffer = FindFreeCommandBuffer();
-			m_UploadCommandBuffer->Begin();
+			m_TransferCommandBuffer = FindFreeCommandBuffer();
+			VK_SET_OBJECT_NAME(m_TransferCommandBuffer->CommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "TransferCommandBuffer");
+			VK_SET_OBJECT_NAME(m_TransferCommandBuffer->SignalFence, VK_OBJECT_TYPE_FENCE, "TransferCommandBufferFence");
+
+			m_TransferCommandBuffer->Begin();
 		}
 
-		return m_UploadCommandBuffer;
+		return m_TransferCommandBuffer;
 	}
 
-	void CommandBufferManager::Submit(VulkanCommandBuffer* commandBuffer, bool wait)
+	VulkanCommandBuffer* CommandBufferManager::GetPresentCommandBuffer()
 	{
-		ensuref(m_UploadCommandBuffer != commandBuffer && commandBuffer != nullptr);
+		VulkanCommandBuffer* commandBuffer = m_PresentCommandBuffers[VulkanRHI::Get()->GetFrameResourcesIndex()];
+
+		if (commandBuffer->State == CommandBufferState::Idle)
+		{
+			commandBuffer->Begin();
+		}
+
+		return commandBuffer;
+	}
+
+	VkSemaphore	CommandBufferManager::GetPresentCmdBufferSemaphore()
+	{
+		return m_PresentCmdBufferSemaphores[VulkanRHI::Get()->GetFrameResourcesIndex()];
+	}
+
+	void CommandBufferManager::WaitForCmdBuffer(VulkanCommandBuffer* commandBuffer)
+	{
+		TRACY_PROFILE_FUNC();
+
+		ensuref(commandBuffer->State != CommandBufferState::RecordingCommands);
+
+		if (commandBuffer->State == CommandBufferState::Submitted)
+		{
+			VK_CHECK(vkWaitForFences(Vulkan::GetLogicalDevice(), 1, &commandBuffer->SignalFence, VK_TRUE, VULKAN_DEFAULT_FENCE_TIMEOUT));
+			commandBuffer->OnCompletion();
+		}
+	}
+
+	void CommandBufferManager::Submit(VulkanCommandBuffer* commandBuffer)
+	{
+		TRACY_PROFILE_FUNC();
+
+		ensuref(m_TransferCommandBuffer != commandBuffer && commandBuffer != nullptr);
 		ensuref(commandBuffer->State == CommandBufferState::RecordingCommands);
 
-		if (m_UploadCommandBuffer)
+		if (m_TransferCommandBuffer)
 		{
-			SubmitUpload();
+			SubmitTransfer();
 		}
 
 		commandBuffer->End();
-
-		VkCommandBuffer buffers[1] = { commandBuffer->CommandBuffer };
 
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 0;
 		submitInfo.pWaitSemaphores = nullptr;
 		submitInfo.pWaitDstStageMask = nullptr;
-		submitInfo.commandBufferCount = ATN_ARRAY_SIZE(buffers);
-		submitInfo.pCommandBuffers = buffers;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer->CommandBuffer;
 		submitInfo.signalSemaphoreCount = 0;
 		submitInfo.pSignalSemaphores = nullptr;
 
-		if (wait)
-		{
-			VulkanRHI::Get()->GetDevice()->QueueSubmit(&submitInfo, commandBuffer->SignalFence);
-			VK_CHECK(vkWaitForFences(Vulkan::GetLogicalDevice(), 1, &commandBuffer->SignalFence, VK_TRUE, VULKAN_DEFAULT_FENCE_TIMEOUT));
-			OnCompletion(commandBuffer);
-		}
-		else
-		{
-			VulkanRHI::Get()->GetDevice()->QueueSubmit(&submitInfo, VK_NULL_HANDLE);
-			commandBuffer->State = CommandBufferState::Submitted;
-		}
-
+		VK_CHECK(vkQueueSubmit(VulkanRHI::Get()->GetDevice()->GetQueue(), 1, &submitInfo, commandBuffer->SignalFence));
+		commandBuffer->State = CommandBufferState::Submitted;
 	}
 
-	void CommandBufferManager::SubmitUpload()
+	void CommandBufferManager::SubmitTransfer()
 	{
-		if (!m_UploadCommandBuffer)
+		TRACY_PROFILE_FUNC();
+
+		if (!m_TransferCommandBuffer)
 			return;
 
-		// Insert memory barrier between upload commands and rendering commands
-		VkMemoryBarrier memoryBarrier = {};
-		memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;  
-		memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
-
-		vkCmdPipelineBarrier(
-			m_UploadCommandBuffer->CommandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, 
-			VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			0,
-			1, &memoryBarrier,
-			0, nullptr,
-			0, nullptr
-		);
-
-		VulkanCommandBuffer* uploadBuffer = m_UploadCommandBuffer;
-		m_UploadCommandBuffer = nullptr;
+		VulkanCommandBuffer* uploadBuffer = m_TransferCommandBuffer;
+		m_TransferCommandBuffer = nullptr;
 
 		Submit(uploadBuffer);
 	}
 
-	void CommandBufferManager::OnUpdate()
+	void CommandBufferManager::SubmitForPresent(VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags)
 	{
+		TRACY_PROFILE_FUNC();
+
+		VulkanCommandBuffer* commandBuffer = m_PresentCommandBuffers[VulkanRHI::Get()->GetFrameResourcesIndex()];
+		VkSemaphore semaphore = m_PresentCmdBufferSemaphores[VulkanRHI::Get()->GetFrameResourcesIndex()];
+
+		ensuref(commandBuffer->State == CommandBufferState::RecordingCommands);
+
+		if (m_TransferCommandBuffer)
+		{
+			SubmitTransfer();
+		}
+
+		commandBuffer->End();
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &imageAcquiredSemaphore;
+		submitInfo.pWaitDstStageMask = &flags;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer->CommandBuffer;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &semaphore;
+
+		VK_CHECK(vkQueueSubmit(VulkanRHI::Get()->GetDevice()->GetQueue(), 1, &submitInfo, commandBuffer->SignalFence));
+		commandBuffer->State = CommandBufferState::Submitted;
+	}
+
+	void CommandBufferManager::NewFrame()
+	{
+		TRACY_PROFILE_FUNC();
+
 		std::vector<uint32> buffersToDelete;
 
 		for (uint32 i = 0; i < m_CommandBuffers.size(); ++i)
@@ -160,7 +251,7 @@ namespace Athena
 
 			if (buffer->State == CommandBufferState::Idle)
 			{
-				if (buffer->LastIdleTime >= Time::Seconds(COMMAND_BUFFER_DELETE_DELAY))
+				if (Time::GetCurrentTime() - buffer->LastUsedTime >= Time::Seconds(COMMAND_BUFFER_DELETE_DELAY))
 				{
 					buffersToDelete.push_back(i);
 				}
@@ -171,29 +262,23 @@ namespace Athena
 
 				if (result == VK_SUCCESS)
 				{
-					OnCompletion(buffer);
+					buffer->OnCompletion();
 				}
 			}
 		}
 
 		for (uint32 index : buffersToDelete)
 		{
-			VulkanCommandBuffer* buffer = *m_CommandBuffers.erase(m_CommandBuffers.begin() + index);
+			VulkanCommandBuffer* buffer = m_CommandBuffers[index];
+			m_CommandBuffers.erase(m_CommandBuffers.begin() + index);
 			delete buffer;
 		}
 	}
 
-	void CommandBufferManager::OnCompletion(VulkanCommandBuffer* commandBuffer)
-	{ 
-		vkResetFences(Vulkan::GetLogicalDevice(), 1, &commandBuffer->SignalFence);
-
-		commandBuffer->OnCompletionCallbacks.Flush();
-		commandBuffer->State = CommandBufferState::Idle;
-		commandBuffer->LastIdleTime = Time::GetCurrentTime();
-	}
-
 	VulkanCommandBuffer* CommandBufferManager::FindFreeCommandBuffer()
 	{
+		TRACY_PROFILE_FUNC();
+
 		for (uint32 i = 0; i < m_CommandBuffers.size(); ++i)
 		{
 			VulkanCommandBuffer* buffer = m_CommandBuffers[i];
@@ -208,6 +293,8 @@ namespace Athena
 
 	VulkanCommandBuffer* CommandBufferManager::AllocateCommandBuffer()
 	{
+		TRACY_PROFILE_FUNC();
+
 		VulkanCommandBuffer* buffer = new VulkanCommandBuffer(m_Pool);
 		m_CommandBuffers.push_back(buffer);
 

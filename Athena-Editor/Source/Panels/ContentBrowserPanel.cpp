@@ -6,7 +6,7 @@
 #include "Athena/Input/Input.h"
 #include "Athena/Project/Project.h"
 #include "Athena/Renderer/Texture.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
 #include "Athena/Utils/StringUtils.h"

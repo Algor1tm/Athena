@@ -8,7 +8,7 @@
 
 namespace Athena
 {
-	class Thread
+	class ATHENA_API Thread
 	{
 	public:
 		Thread(const String& name, std::function<void()>&& func);
@@ -30,7 +30,7 @@ namespace Athena
 		static void SleepFor(Time time);
 		static void YieldExecution();
 
-	protected:
+	public:
 		static inline uint64 s_RenderThreadID = 0;
 		static inline uint64 s_GameThreadID = 0;
 

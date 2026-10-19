@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 
 #include <vulkan/vulkan.h>
 
@@ -63,12 +63,55 @@ namespace Athena::Vulkan
         }
     }
 
+    inline const char* VkObjectTypeToString(VkObjectType objectType)
+    {
+        switch (objectType)
+        {
+        case VK_OBJECT_TYPE_UNKNOWN:               return "VK_OBJECT_TYPE_UNKNOWN";
+        case VK_OBJECT_TYPE_INSTANCE:              return "VK_OBJECT_TYPE_INSTANCE";
+        case VK_OBJECT_TYPE_PHYSICAL_DEVICE:       return "VK_OBJECT_TYPE_PHYSICAL_DEVICE";
+        case VK_OBJECT_TYPE_DEVICE:                return "VK_OBJECT_TYPE_DEVICE";
+        case VK_OBJECT_TYPE_QUEUE:                 return "VK_OBJECT_TYPE_QUEUE";
+        case VK_OBJECT_TYPE_SEMAPHORE:             return "VK_OBJECT_TYPE_SEMAPHORE";
+        case VK_OBJECT_TYPE_COMMAND_BUFFER:        return "VK_OBJECT_TYPE_COMMAND_BUFFER";
+        case VK_OBJECT_TYPE_FENCE:                 return "VK_OBJECT_TYPE_FENCE";
+        case VK_OBJECT_TYPE_DEVICE_MEMORY:         return "VK_OBJECT_TYPE_DEVICE_MEMORY";
+        case VK_OBJECT_TYPE_BUFFER:                return "VK_OBJECT_TYPE_BUFFER";
+        case VK_OBJECT_TYPE_IMAGE:                 return "VK_OBJECT_TYPE_IMAGE";
+        case VK_OBJECT_TYPE_IMAGE_VIEW:            return "VK_OBJECT_TYPE_IMAGE_VIEW";
+        case VK_OBJECT_TYPE_SHADER_MODULE:         return "VK_OBJECT_TYPE_SHADER_MODULE";
+        case VK_OBJECT_TYPE_PIPELINE_LAYOUT:       return "VK_OBJECT_TYPE_PIPELINE_LAYOUT";
+        case VK_OBJECT_TYPE_RENDER_PASS:           return "VK_OBJECT_TYPE_RENDER_PASS";
+        case VK_OBJECT_TYPE_PIPELINE:              return "VK_OBJECT_TYPE_PIPELINE";
+        case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: return "VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT";
+        case VK_OBJECT_TYPE_SAMPLER:               return "VK_OBJECT_TYPE_SAMPLER";
+        case VK_OBJECT_TYPE_DESCRIPTOR_POOL:       return "VK_OBJECT_TYPE_DESCRIPTOR_POOL";
+        case VK_OBJECT_TYPE_DESCRIPTOR_SET:        return "VK_OBJECT_TYPE_DESCRIPTOR_SET";
+        case VK_OBJECT_TYPE_FRAMEBUFFER:           return "VK_OBJECT_TYPE_FRAMEBUFFER";
+        case VK_OBJECT_TYPE_COMMAND_POOL:          return "VK_OBJECT_TYPE_COMMAND_POOL";
+        case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: return "VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION";
+        case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: return "VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE";
+        case VK_OBJECT_TYPE_SURFACE_KHR:           return "VK_OBJECT_TYPE_SURFACE_KHR";
+        case VK_OBJECT_TYPE_SWAPCHAIN_KHR:         return "VK_OBJECT_TYPE_SWAPCHAIN_KHR";
+        case VK_OBJECT_TYPE_DISPLAY_KHR:           return "VK_OBJECT_TYPE_DISPLAY_KHR";
+        case VK_OBJECT_TYPE_DISPLAY_MODE_KHR:      return "VK_OBJECT_TYPE_DISPLAY_MODE_KHR";
+        case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT: return "VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT";
+        case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT: return "VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT";
+        default:                                   return "VK_OBJECT_TYPE_UNKNOWN_OR_EXTENSION";
+        }
+    }
+
     inline bool CheckResult(VkResult error)
     {
         if (error == 0)
             return true;
 
         const char* errorString = GetResultString(error);
+
+        if (error == VK_ERROR_DEVICE_LOST)
+        {
+            ATN_LOG_ERROR(Vulkan, "GPU CRASHED!");
+        }
 
         if (error > 0)
             ATN_LOG_ERROR(Vulkan, "VkResult = {}, Error: {}", (int)error, errorString);
@@ -86,38 +129,72 @@ namespace Athena::Vulkan
     #endif
 
 #if VULKAN_ENABLE_DEBUG_INFO
-    inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
-        uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
+    inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        switch (flags)
+        switch (messageSeverity)
         {
-        case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
-            ATN_LOG_INFO(Vulkan, pMessage);
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            ATN_LOG_INFO(Vulkan, pCallbackData->pMessage);
             break;
 
-        case VK_DEBUG_REPORT_WARNING_BIT_EXT:
-            ATN_LOG_WARN(Vulkan, pMessage);
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            ATN_LOG_WARN(Vulkan, pCallbackData->pMessage);
             break;
 
-        case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-            ATN_LOG_WARN(Vulkan, pMessage);
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            ATN_LOG_WARN(Vulkan, pCallbackData->pMessage);
             break;
 
-        case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-            ATN_LOG_ERROR(Vulkan, pMessage);
-            ensuref(false);
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            ATN_LOG_ERROR(Vulkan, pCallbackData->pMessage);
             break;
         }
+
+        if (pCallbackData->objectCount > 0) 
+        {
+            ATN_LOG_INFO(Vulkan, "  Associated Objects:");
+            for (uint32_t i = 0; i < pCallbackData->objectCount; ++i) 
+            {
+                auto& obj = pCallbackData->pObjects[i];
+                ATN_LOG_INFO(Vulkan, "    [{}] Type: {}, Handle: {}, Name: {}",
+                    i,
+                    VkObjectTypeToString(obj.objectType),
+                    (void*)obj.objectHandle,
+                    obj.pObjectName ? obj.pObjectName : "UNKNOWN"
+                );
+            }
+        }
+
+        if (pCallbackData->cmdBufLabelCount > 0)
+        {
+            ATN_LOG_INFO(Vulkan, "  Active Command Buffer Labels:");
+            for (uint32_t i = 0; i < pCallbackData->cmdBufLabelCount; ++i)
+            {
+                ATN_LOG_INFO(Vulkan, "    [{}] {}", i, pCallbackData->pCmdBufLabels[i].pLabelName);
+            }
+        }
+
+        //if (pCallbackData->queueLabelCount > 0) 
+        //{
+        //    ATN_LOG_INFO(Vulkan, "  Active Queue Labels:\n");
+        //    for (uint32_t i = 0; i < pCallbackData->queueLabelCount; ++i) 
+        //    {
+        //        ATN_LOG_INFO(Vulkan, "    [%u] %s\n", i, pCallbackData->pQueueLabels[i].pLabelName);
+        //    }
+        //}
+
+        ensuref(false);
 
         return VK_FALSE;
     }
 #endif
 
-    void SetDebugName(void* object, VkDebugReportObjectTypeEXT type, const String& name);
+    void SetDebugName(void* objectHandle, VkObjectType type, const String& name);
 
 #ifdef VULKAN_ENABLE_DEBUG_INFO
-    #define VULKAN_SET_DEBUG_NAME(object, type, name) Vulkan::SetDebugName(object, type, name);
+    #define VK_SET_OBJECT_NAME(object, type, name) Vulkan::SetDebugName(object, type, name);
 #else
-    #define VULKAN_SET_DEBUG_NAME(object, type, name) 
+    #define VK_SET_OBJECT_NAME(object, type, name) 
 #endif
 }

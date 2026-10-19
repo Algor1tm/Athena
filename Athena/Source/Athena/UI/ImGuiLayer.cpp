@@ -39,15 +39,7 @@ namespace Athena
 	
 	Ref<ImGuiLayer> ImGuiLayer::Create()
 	{
-		auto imguiLayer = Ref<ImGuiLayer>::Create();
-
-		//switch (Renderer::GetAPI())
-		//{
-		//case Renderer::API::Vulkan: imguiLayer->m_ImGuiImpl = Scope<VulkanImGuiLayerImpl>::Create(); break;
-		//case Renderer::API::None: imguiLayer->m_ImGuiImpl = nullptr; break;
-		//}
-
-		return imguiLayer;
+		return Ref<ImGuiLayer>::Create();
 	}
 
 	void ImGuiLayer::UpdateImGuiTheme()
@@ -121,14 +113,9 @@ namespace Athena
 		colors[ImGuiCol_Border] = ImColor(m_Theme.BackgroundDark);
 	}
 
-	void* ImGuiLayer::GetTextureID(const Ref<Texture2D>& texture)
-	{
-		return m_ImGuiImpl->GetTextureID(texture);
-	}
-
 	void* ImGuiLayer::GetTextureID(const Ref<TextureView>& texture)
 	{
-		return m_ImGuiImpl->GetTextureID(texture);
+		return m_ImGuiBackend->GetTextureID(texture);
 	}
 
 	void ImGuiLayer::OnAttach()
@@ -168,7 +155,7 @@ namespace Athena
 		TryLoadImGuiFont(boldFontPath, 16.f);
 		TryLoadImGuiFont(defaultFontPath, 22.f);
 
-		m_ImGuiImpl->Init(window.GetNativeWindow());
+		m_ImGuiBackend = ImGuiBackend::Create(window.GetNativeWindow());
 
 		ATN_LOG_INFO(Renderer, "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
@@ -176,14 +163,12 @@ namespace Athena
 
 	void ImGuiLayer::OnDetach()
 	{
-		m_ImGuiImpl->Shutdown();
+		ENQUEUE_RENDER_COMMAND([imGuiBackend = m_ImGuiBackend]() mutable
+		{
+			imGuiBackend.Release();
 
-		//Renderer::SubmitResourceFree([]()
-		//{
-		//	ImGui::DestroyContext();
-		//});
-
-		ATN_LOG_INFO(Renderer, "Shutdown ImGui");
+			ATN_LOG_INFO(Renderer, "Destroyed ImGui context!");
+		});
 	}
 
 	void ImGuiLayer::OnEvent(Event& event)
@@ -213,7 +198,7 @@ namespace Athena
 	void ImGuiLayer::Begin()
 	{
 		TRACY_PROFILE_FUNC();
-		m_ImGuiImpl->NewFrame();
+		m_ImGuiBackend->NewFrame();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
 	}
@@ -227,18 +212,18 @@ namespace Athena
 
 		if (!minimized)
 		{
-			m_ImGuiImpl->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
+			m_ImGuiBackend->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
 		}
 		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			m_ImGuiImpl->RenderViewports();
+			m_ImGuiBackend->RenderViewports();
 		}
 	}
 
 	void ImGuiLayer::OnSwapChainRecreate()
 	{
 		TRACY_PROFILE_FUNC();
-		m_ImGuiImpl->OnSwapChainRecreate();
+		m_ImGuiBackend->OnSwapChainRecreate();
 	}
 }

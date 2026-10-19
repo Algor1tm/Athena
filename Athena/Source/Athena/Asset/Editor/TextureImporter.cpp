@@ -204,7 +204,7 @@ namespace Athena
 			format = GetHDRFormat(maxChannels);
 		}
 
-		uint64 size = width * height * RHI::Get()->GetFormatProperties(format).BytesPerPixel;
+		uint64 size = width * height * GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, size);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
@@ -228,7 +228,6 @@ namespace Athena
 		info.Sampler = samplerInfo;
 
 		Ref<Texture2D> result = Texture2D::Create(info, &buffer);
-		result->m_FilePath = filepath;
 
 		return result;
 	}
@@ -259,7 +258,7 @@ namespace Athena
 			format = GetFormat(maxChannels, m_Settings->sRGB);
 		}
 
-		uint64 dataSize = width * height * RHI::Get()->GetFormatProperties(format).BytesPerPixel;
+		uint64 dataSize = width * height * GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, dataSize);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
@@ -359,28 +358,30 @@ namespace Athena
 
 	void TextureExporter::ExportAsPNG(const FilePath& path, const Ref<Texture2D>& texture)
 	{
-		Buffer buffer;
+		ensuref(false);
 
-		texture->WriteContentToBuffer(&buffer);
-
-		if (buffer.Size() == 0)
-		{
-			ensure(false, "Failed to save texture in file '{}' (failed to read texture memory)", path);
-			return;
-		}
-
-		uint32 width = texture->GetWidth();
-		uint32 height = texture->GetHeight();
-
-		auto utf8Path = Utils::ConvertPathToUTF8(path);
-		uint32 channels = RHI::Get()->GetFormatProperties(texture->GetFormat()).NumComponents;
-		uint32 bpp = RHI::Get()->GetFormatProperties(texture->GetFormat()).BytesPerPixel;
-
-		bool result = stbi_write_png(utf8Path.data(), width, height, channels, buffer.Data(), bpp * width);
-
-		buffer.Release();
-
-		if (!result)
-			ATN_LOG_ERROR(AssetManager, "Failed to save texture in file '{}'", path);
+		//Buffer buffer;
+		//
+		//texture->WriteContentToBuffer(&buffer);
+		//
+		//if (buffer.Size() == 0)
+		//{
+		//	ensure(false, "Failed to save texture in file '{}' (failed to read texture memory)", path);
+		//	return;
+		//}
+		//
+		//uint32 width = texture->GetWidth();
+		//uint32 height = texture->GetHeight();
+		//
+		//auto utf8Path = Utils::ConvertPathToUTF8(path);
+		//uint32 channels = GetFormatProperties(texture->GetFormat()).NumComponents;
+		//uint32 bpp = GetFormatProperties(texture->GetFormat()).BytesPerPixel;
+		//
+		//bool result = stbi_write_png(utf8Path.data(), width, height, channels, buffer.Data(), bpp * width);
+		//
+		//buffer.Release();
+		//
+		//if (!result)
+		//	ATN_LOG_ERROR(AssetManager, "Failed to save texture in file '{}'", path);
 	}
 }

@@ -4,6 +4,7 @@
 #include "Athena/Asset/Editor/MeshImporter.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/RHI/RHI.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"
@@ -134,21 +135,21 @@ namespace Athena
 
         if (mesh && UI::TreeNode("MESH INFO"))
         {
-            //ImGui::Text("Materials Count: %d", mesh->GetMaterialTable().size());
-            //ImGui::Text("Animations Count: %d", mesh->GetAnimations().size());
-            //ImGui::Spacing();
-            //ImGui::Text("Vertices: %d", mesh->GetVertexBuffer()->GetSize() / sizeof(MeshVertex));
-            //ImGui::Text("VertexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetVertexBuffer()->GetSize()).c_str());
-            //ImGui::Text("Indices: %d", mesh->GetIndexBuffer()->GetSize());
-            //ImGui::Text("IndexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetIndexBuffer()->GetSize() * sizeof(uint32)).c_str());
+            ImGui::Text("Materials Count: %d", mesh->GetMaterialTable().size());
+            ImGui::Text("Animations Count: %d", mesh->GetAnimations().size());
+            ImGui::Spacing();
+            ImGui::Text("Vertices: %d", mesh->GetVertexBuffer()->GetSize() / sizeof(MeshVertex));
+            ImGui::Text("VertexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetVertexBuffer()->GetSize()).c_str());
+            ImGui::Text("Indices: %d", mesh->GetIndexBuffer()->GetSize());
+            ImGui::Text("IndexBuffer Size: %s", Utils::MemoryBytesToString(mesh->GetIndexBuffer()->GetSize() * sizeof(uint32)).c_str());
 
-            //uint32 boneInfluenceSize = mesh->IsRigged() ? mesh->GetBonesInfluenceBuffer()->GetSize() : 0;
-            //ImGui::Text("BonesInfluenceBuffer Size: %s", Utils::MemoryBytesToString(boneInfluenceSize).c_str());
+            uint32 boneInfluenceSize = mesh->IsRigged() ? mesh->GetBonesInfluenceBuffer()->GetSize() : 0;
+            ImGui::Text("BonesInfluenceBuffer Size: %s", Utils::MemoryBytesToString(boneInfluenceSize).c_str());
 
-            //ImGui::Spacing();
+            ImGui::Spacing();
 
-            //uint32 totalGPUMemory = boneInfluenceSize + mesh->GetVertexBuffer()->GetSize() + mesh->GetIndexBuffer()->GetSize() * sizeof(uint32);
-            //ImGui::Text("Total GPU Memory: %s", Utils::MemoryBytesToString(totalGPUMemory).c_str());
+            uint32 totalGPUMemory = boneInfluenceSize + mesh->GetVertexBuffer()->GetSize() + mesh->GetIndexBuffer()->GetSize() * sizeof(uint32);
+            ImGui::Text("Total GPU Memory: %s", Utils::MemoryBytesToString(totalGPUMemory).c_str());
 
             UI::TreePop();
         }
@@ -246,7 +247,7 @@ namespace Athena
 
         if (textureAsset && UI::TreeNode("TEXTURE INFO"))
         {
-            Ref<Texture2D> texture = textureAsset->GetRenderTexture();
+            Ref<Texture2D> texture = textureAsset->GetTexture();
 
             ImGui::Text("Width: %d", texture->GetWidth());
             ImGui::Text("Height: %d", texture->GetHeight());
@@ -266,7 +267,7 @@ namespace Athena
             UI::PropertyCheckbox("Generate MipMaps", &settings->GenerateMipMaps);
             UI::PropertyEnumCombo("Wrap Mode", ATN_STRINGIFY_MACRO(TextureWrap), &settings->WrapMode);
             UI::PropertyEnumCombo("Filter Mode", ATN_STRINGIFY_MACRO(TextureFilter), &settings->FilterMode);
-            //UI::PropertySlider("Anisotropy Level", &settings->AnisotropyLevel, 0.f, Renderer::GetRenderCaps().MaxSamplerAnisotropy);
+            UI::PropertySlider("Anisotropy Level", &settings->AnisotropyLevel, 0.f, RHI::Get()->GetGPUCapabilities().MaxSamplerAnisotropy);
             UI::PropertyCheckbox("Compute Usage", &settings->ComputeUsage);
 
             FilePath assetFilePath = AssetManager::GetAssetFilePath(m_AssetHandle);
@@ -302,7 +303,7 @@ namespace Athena
             ImGui::SliderInt("Layer", &envMapLayer, 0, 5);
 
             TextureViewCreateInfo view;
-            view.BaseLayer = envMapLayer;
+            view.Range.BaseLayer = envMapLayer;
             ImGui::Image(UI::GetTextureID(environmentTexture->GetView(view)), { 300, 300 });
             ImGui::SameLine();
             ImGui::Image(UI::GetTextureID(irradianceTexture->GetView(view)), { 300, 300 });

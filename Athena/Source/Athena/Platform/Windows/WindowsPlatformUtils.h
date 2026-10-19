@@ -18,6 +18,17 @@
 #include <psapi.h>
 
 
+#define ENABLE_WINAPI_CHECKS 0 //ATN_ENABLE_CHECKS
+
+#if ENABLE_WINAPI_CHECKS
+	#define WINAPI_CHECK_LASTERROR() checkf(WindowsUtils::CheckLastError())
+	#define WINAPI_SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
+#else
+	#define WINAPI_CHECK_LASTERROR()
+	#define WINAPI_SUPPRESS_LAST_ERROR()
+#endif
+
+
 namespace Athena
 {
 	namespace WindowsUtils
@@ -68,15 +79,6 @@ namespace Athena
 			return bitSetCount;
 		}
 	}
-
-#if ATN_ENABLE_CHECKS
-	#define WINAPI_CHECK_LASTERROR() checkf(WindowsUtils::CheckLastError())
-	#define WINAPI_SUPPRESS_LAST_ERROR() SetLastError(ERROR_SUCCESS)
-#else
-	#define WINAPI_CHECK_LASTERROR()
-	#define WINAPI_SUPPRESS_LAST_ERROR()
-#endif
-
 
 	struct WindowsPlatformData
 	{

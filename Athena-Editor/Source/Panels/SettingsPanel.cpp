@@ -5,7 +5,7 @@
 #include "Athena/Core/FileDialogs.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Project/Project.h"
-#include "Athena/Renderer/EngineTextures.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/Scripting/ScriptEngine.h"
 #include "Athena/UI/UI.h"
 #include "Athena/UI/Theme.h"

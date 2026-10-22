@@ -2170,6 +2170,40 @@ struct ImGuiDockContext
 // [SECTION] Viewport support
 //-----------------------------------------------------------------------------
 
+struct ImDrawDataSnapshotEntry
+{
+    ImDrawList* SrcCopy = NULL;     // Drawlist owned by main context
+    ImDrawList* OurCopy = NULL;     // Our copy
+    double          LastUsedTime = 0.0;
+};
+
+struct ImDrawDataSnapshot
+{
+    // Members
+    ImDrawData                      DrawData;
+    ImPool<ImDrawDataSnapshotEntry> Cache;
+    float                           MemoryCompactTimer = 20.0f; // Discard unused data after 20 seconds
+
+    // Functions
+    ~ImDrawDataSnapshot() { Clear(); }
+    void                            Clear();
+    void                            SnapUsingSwap(ImDrawData* src, double current_time); // Efficient snapshot by swapping data, meaning "src" is unusable.
+    //void                          SnapUsingCopy(ImDrawData* src, double current_time); // Deep-copy snapshot. Probably not needed.
+
+    // Internals
+    // FIXME: Could store an ID in ImDrawList to make this easier for user.
+    ImGuiID                         GetDrawListID(ImDrawList* src_list) { return ImHashData(&src_list, sizeof(src_list)); }     // Hash pointer
+    ImDrawDataSnapshotEntry* GetOrAddEntry(ImDrawList* src_list) { return Cache.GetOrAddByKey(GetDrawListID(src_list)); }
+};
+
+
+struct ImViewportSnapshot
+{
+    ImDrawDataSnapshot  DrawDataSnapshot;
+    ImVec2              Size = { 0, 0 };
+    ImGuiViewportFlags  Flags = 0;
+};
+
 // ImGuiViewport Private/Internals fields (cardinal sin: we are using inheritance!)
 // Every instance of ImGuiViewport is in fact a ImGuiViewportP.
 struct ImGuiViewportP : public ImGuiViewport
@@ -2188,11 +2222,18 @@ struct ImGuiViewportP : public ImGuiViewport
     ImDrawList*         BgFgDrawLists[2];       // Convenience background (0) and foreground (1) draw lists. We use them to draw software mouser cursor when io.MouseDrawCursor is set and to draw most debug overlays.
     int                 BgFgDrawListsLastFrameActive[2]; // Last frame the background (0) and foreground (1) draw lists were used.
     float               BgFgDrawListsLastTimeActive[2];  // Timestamps for Gc.
-    ImDrawData          DrawDataP;
     ImDrawDataBuilder   DrawDataBuilder;        // Temporary data while building final ImDrawData
     ImVec2              LastPlatformPos;
     ImVec2              LastPlatformSize;
     ImVec2              LastRendererSize;
+
+    ImDrawData          DrawDataP;
+
+    ImViewportSnapshot  Snapshots[2];       // Used by render thread
+    int                 SnapshotIndex_GT;   // Initialized both to 0 because Athena render thread does nothing first frame
+    int                 SnapshotIndex_RT;
+    int                 DestroyFrameNumber;   // Used to delay platform window deletion and delete render data first
+
 
     // Per-viewport work area
     // - Insets are >= 0.0f values, distance from viewport corners to work area.
@@ -2203,7 +2244,7 @@ struct ImGuiViewportP : public ImGuiViewport
     ImVec2              BuildWorkInsetMin;      // Work Area inset accumulator for current frame, to become next frame's WorkInset
     ImVec2              BuildWorkInsetMax;      // "
 
-    ImGuiViewportP()                    { Window = NULL; Idx = -1; LastFrameActive = LastFocusedStampCount = -1; LastNameHash = 0; Alpha = LastAlpha = 1.0f; LastFocusedHadNavWindow = false; PlatformMonitor = -1; BgFgDrawLists[0] = BgFgDrawLists[1] = NULL; BgFgDrawListsLastFrameActive[0] = BgFgDrawListsLastFrameActive[1] = -1; BgFgDrawListsLastTimeActive[0] = BgFgDrawListsLastTimeActive[1] = -1.0; LastPlatformPos = LastPlatformSize = LastRendererSize = ImVec2(FLT_MAX, FLT_MAX); }
+    ImGuiViewportP() { Window = NULL; Idx = -1; LastFrameActive = LastFocusedStampCount = -1; LastNameHash = 0; Alpha = LastAlpha = 1.0f; LastFocusedHadNavWindow = false; PlatformMonitor = -1; BgFgDrawLists[0] = BgFgDrawLists[1] = NULL; BgFgDrawListsLastFrameActive[0] = BgFgDrawListsLastFrameActive[1] = -1; BgFgDrawListsLastTimeActive[0] = BgFgDrawListsLastTimeActive[1] = -1.0; LastPlatformPos = LastPlatformSize = LastRendererSize = ImVec2(FLT_MAX, FLT_MAX); SnapshotIndex_GT = 0; SnapshotIndex_RT = 0; DestroyFrameNumber = 0; }
     ~ImGuiViewportP()                   { if (BgFgDrawLists[0]) IM_DELETE(BgFgDrawLists[0]); if (BgFgDrawLists[1]) IM_DELETE(BgFgDrawLists[1]); }
     void    ClearRequestFlags()         { PlatformRequestClose = PlatformRequestMove = PlatformRequestResize = false; }
 

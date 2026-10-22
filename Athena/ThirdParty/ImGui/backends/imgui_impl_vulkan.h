@@ -147,6 +147,7 @@ struct ImGui_ImplVulkan_InitInfo
 };
 
 // Follow "Getting Started" link and check examples/ folder to learn about using backends!
+IMGUI_IMPL_API bool             ImGui_ImplVulkan_Init_GT();
 IMGUI_IMPL_API bool             ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info);
 IMGUI_IMPL_API void             ImGui_ImplVulkan_Shutdown();
 IMGUI_IMPL_API void             ImGui_ImplVulkan_NewFrame();

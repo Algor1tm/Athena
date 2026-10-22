@@ -153,11 +153,11 @@ namespace Athena::Vulkan
 
         if (pCallbackData->objectCount > 0) 
         {
-            ATN_LOG_INFO(Vulkan, "  Associated Objects:");
+            ATN_LOG_TRACE(Vulkan, "  Associated Objects:");
             for (uint32_t i = 0; i < pCallbackData->objectCount; ++i) 
             {
                 auto& obj = pCallbackData->pObjects[i];
-                ATN_LOG_INFO(Vulkan, "    [{}] Type: {}, Handle: {}, Name: {}",
+                ATN_LOG_TRACE(Vulkan, "    [{}] Type: {}, Handle: {}, Name: {}",
                     i,
                     VkObjectTypeToString(obj.objectType),
                     (void*)obj.objectHandle,
@@ -168,10 +168,10 @@ namespace Athena::Vulkan
 
         if (pCallbackData->cmdBufLabelCount > 0)
         {
-            ATN_LOG_INFO(Vulkan, "  Active Command Buffer Labels:");
+            ATN_LOG_TRACE(Vulkan, "  Active Command Buffer Labels:");
             for (uint32_t i = 0; i < pCallbackData->cmdBufLabelCount; ++i)
             {
-                ATN_LOG_INFO(Vulkan, "    [{}] {}", i, pCallbackData->pCmdBufLabels[i].pLabelName);
+                ATN_LOG_TRACE(Vulkan, "    [{}] {}", i, pCallbackData->pCmdBufLabels[i].pLabelName);
             }
         }
 

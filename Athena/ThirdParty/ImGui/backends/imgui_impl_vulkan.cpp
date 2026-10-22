@@ -121,6 +121,7 @@
 //  2016-08-27: Vulkan: Fix Vulkan example for use when a depth buffer is active.
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #ifndef IMGUI_DISABLE
 #include "imgui_impl_vulkan.h"
 #include <stdio.h>
@@ -752,12 +753,16 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
                 // Bind DescriptorSets for image view (font or user texture) and samplers
                 VkDescriptorSet image_view = (VkDescriptorSet)pcmd->GetTexID();
-                if (image_view != last_image_view)
-                    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd->PipelineLayout, 0, 1, &image_view, 0, nullptr);
-                last_image_view = image_view;
 
-                // Draw
-                vkCmdDrawIndexed(command_buffer, pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
+                if (image_view)
+                {
+                    if (image_view != last_image_view)
+                        vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bd->PipelineLayout, 0, 1, &image_view, 0, nullptr);
+                    last_image_view = image_view;
+
+                    // Draw
+                    vkCmdDrawIndexed(command_buffer, pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
+                }
             }
         }
         global_idx_offset += draw_list->IdxBuffer.Size;
@@ -1412,6 +1417,30 @@ bool    ImGui_ImplVulkan_LoadFunctions(uint32_t api_version, PFN_vkVoidFunction(
     return true;
 }
 
+bool ImGui_ImplVulkan_Init_GT()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    IMGUI_CHECKVERSION();
+    IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
+
+    // Setup backend capabilities flags
+    ImGui_ImplVulkan_Data* bd = IM_NEW(ImGui_ImplVulkan_Data)();
+    io.BackendRendererUserData = (void*)bd;
+    io.BackendRendererName = "imgui_impl_vulkan";
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;  // We can create multi-viewports on the Renderer side (optional)
+
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    platform_io.DrawCallback_ResetRenderState = ImGui_ImplVulkan_DrawCallback_ResetRenderState;
+    platform_io.DrawCallback_SetSamplerLinear = ImGui_ImplVulkan_DrawCallback_SetSamplerLinear;
+    platform_io.DrawCallback_SetSamplerNearest = ImGui_ImplVulkan_DrawCallback_SetSamplerNearest;
+
+    ImGui_ImplVulkan_InitMultiViewportSupport();
+
+    return true;
+}
+
 bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
 {
     IM_ASSERT(g_FunctionsLoaded && "Need to call ImGui_ImplVulkan_LoadFunctions() if IMGUI_IMPL_VULKAN_NO_PROTOTYPES or VK_NO_PROTOTYPES are set!");
@@ -1432,23 +1461,6 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
 #endif
     }
 
-    ImGuiIO& io = ImGui::GetIO();
-    IMGUI_CHECKVERSION();
-    IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
-
-    // Setup backend capabilities flags
-    ImGui_ImplVulkan_Data* bd = IM_NEW(ImGui_ImplVulkan_Data)();
-    io.BackendRendererUserData = (void*)bd;
-    io.BackendRendererName = "imgui_impl_vulkan";
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;  // We can create multi-viewports on the Renderer side (optional)
-
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-    platform_io.DrawCallback_ResetRenderState = ImGui_ImplVulkan_DrawCallback_ResetRenderState;
-    platform_io.DrawCallback_SetSamplerLinear = ImGui_ImplVulkan_DrawCallback_SetSamplerLinear;
-    platform_io.DrawCallback_SetSamplerNearest = ImGui_ImplVulkan_DrawCallback_SetSamplerNearest;
-
     // Sanity checks
     IM_ASSERT(info->Instance != VK_NULL_HANDLE);
     IM_ASSERT(info->PhysicalDevice != VK_NULL_HANDLE);
@@ -1462,6 +1474,9 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
         IM_ASSERT(info->DescriptorPoolSize > 0);
     if (info->UseDynamicRendering)
         IM_ASSERT(info->PipelineInfoMain.RenderPass == VK_NULL_HANDLE && info->PipelineInfoForViewports.RenderPass == VK_NULL_HANDLE);
+
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui_ImplVulkan_Data* bd = (ImGui_ImplVulkan_Data*)io.BackendRendererUserData;
 
     bd->VulkanInitInfo = *info;
 #ifdef IMGUI_IMPL_VULKAN_USE_LOADER
@@ -1478,8 +1493,6 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info)
     // Our render function expect RendererUserData to be storing the window render buffer we need (for the main viewport we won't use ->Window)
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     main_viewport->RendererUserData = IM_NEW(ImGui_ImplVulkan_ViewportData)();
-
-    ImGui_ImplVulkan_InitMultiViewportSupport();
 
     return true;
 }
@@ -2138,6 +2151,9 @@ static void ImGui_ImplVulkan_CreateWindow(ImGuiViewport* viewport)
     }
     viewport->RendererUserData = vd;
 
+    ImGuiViewportP* viewportP = reinterpret_cast<ImGuiViewportP*>(viewport);
+    ImViewportSnapshot* viewportSnapshot = &viewportP->Snapshots[viewportP->SnapshotIndex_RT];
+
     // Select Surface Format
     ImGui_ImplVulkan_PipelineInfo* pipeline_info = &v->PipelineInfoForViewports;
     ImVector<VkFormat> requestSurfaceImageFormats;
@@ -2160,8 +2176,8 @@ static void ImGui_ImplVulkan_CreateWindow(ImGuiViewport* viewport)
 
     // Create SwapChain, RenderPass, Framebuffer, etc.
     wd->UseDynamicRendering = v->UseDynamicRendering;
-    wd->AttachmentDesc.loadOp = (viewport->Flags & ImGuiViewportFlags_NoRendererClear) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR;
-    ImGui_ImplVulkanH_CreateOrResizeWindow(v->Instance, v->PhysicalDevice, v->Device, wd, v->QueueFamily, v->Allocator, (int)viewport->Size.x, (int)viewport->Size.y, v->MinImageCount, pipeline_info->SwapChainImageUsage);
+    wd->AttachmentDesc.loadOp = (viewportSnapshot->Flags & ImGuiViewportFlags_NoRendererClear) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR;
+    ImGui_ImplVulkanH_CreateOrResizeWindow(v->Instance, v->PhysicalDevice, v->Device, wd, v->QueueFamily, v->Allocator, (int)viewportSnapshot->Size.x, (int)viewportSnapshot->Size.y, v->MinImageCount, pipeline_info->SwapChainImageUsage);
     vd->WindowOwned = true;
 
     // Create pipeline (shared by all secondary viewports)
@@ -2209,9 +2225,13 @@ static void ImGui_ImplVulkan_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
     ImGui_ImplVulkan_ViewportData* vd = (ImGui_ImplVulkan_ViewportData*)viewport->RendererUserData;
     if (vd == nullptr) // This is nullptr for the main viewport (which is left to the user/app to handle)
         return;
+
+    ImGuiViewportP* viewportP = reinterpret_cast<ImGuiViewportP*>(viewport);
+    ImViewportSnapshot* viewportSnapshot = &viewportP->Snapshots[viewportP->SnapshotIndex_RT];
+
     ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
     ImGui_ImplVulkanH_Window* wd = &vd->Window;
-    wd->AttachmentDesc.loadOp = (viewport->Flags & ImGuiViewportFlags_NoRendererClear) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR;
+    wd->AttachmentDesc.loadOp = (viewportSnapshot->Flags & ImGuiViewportFlags_NoRendererClear) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR;
     ImGui_ImplVulkanH_CreateOrResizeWindow(v->Instance, v->PhysicalDevice, v->Device, &vd->Window, v->QueueFamily, v->Allocator, (int)size.x, (int)size.y, v->MinImageCount, v->PipelineInfoForViewports.SwapChainImageUsage);
 }
 
@@ -2225,9 +2245,12 @@ static void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, void*)
     ImGui_ImplVulkan_InitInfo* v = &bd->VulkanInitInfo;
     VkResult err;
 
+    ImGuiViewportP* viewportP = reinterpret_cast<ImGuiViewportP*>(viewport);
+    ImViewportSnapshot* viewportSnapshot = &viewportP->Snapshots[viewportP->SnapshotIndex_RT];
+
     if (vd->SwapChainNeedRebuild || vd->SwapChainSuboptimal)
     {
-        ImGui_ImplVulkanH_CreateOrResizeWindow(v->Instance, v->PhysicalDevice, v->Device, wd, v->QueueFamily, v->Allocator, (int)viewport->Size.x, (int)viewport->Size.y, v->MinImageCount, v->PipelineInfoForViewports.SwapChainImageUsage);
+        ImGui_ImplVulkanH_CreateOrResizeWindow(v->Instance, v->PhysicalDevice, v->Device, wd, v->QueueFamily, v->Allocator, (int)viewportSnapshot->Size.x, (int)viewportSnapshot->Size.y, v->MinImageCount, v->PipelineInfoForViewports.SwapChainImageUsage);
         vd->SwapChainNeedRebuild = vd->SwapChainSuboptimal = false;
     }
 
@@ -2311,13 +2334,14 @@ static void ImGui_ImplVulkan_RenderWindow(ImGuiViewport* viewport, void*)
             info.framebuffer = fd->Framebuffer;
             info.renderArea.extent.width = wd->Width;
             info.renderArea.extent.height = wd->Height;
-            info.clearValueCount = (viewport->Flags & ImGuiViewportFlags_NoRendererClear) ? 0 : 1;
-            info.pClearValues = (viewport->Flags & ImGuiViewportFlags_NoRendererClear) ? nullptr : &wd->ClearValue;
+            info.clearValueCount = (viewportSnapshot->Flags & ImGuiViewportFlags_NoRendererClear) ? 0 : 1;
+            info.pClearValues = (viewportSnapshot->Flags & ImGuiViewportFlags_NoRendererClear) ? nullptr : &wd->ClearValue;
             vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         }
     }
 
-    ImGui_ImplVulkan_RenderDrawData(viewport->DrawData, fd->CommandBuffer, bd->PipelineForViewports);
+    ImDrawData* drawData = &viewportSnapshot->DrawDataSnapshot.DrawData;
+    ImGui_ImplVulkan_RenderDrawData(drawData, fd->CommandBuffer, bd->PipelineForViewports);
 
     {
 #ifdef IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING

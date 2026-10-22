@@ -150,9 +150,9 @@ namespace Athena
 		return commandBuffer;
 	}
 
-	VkSemaphore	CommandBufferManager::GetPresentCmdBufferSemaphore()
+	VkSemaphore	CommandBufferManager::GetPresentCmdBufferSemaphore(uint32 index)
 	{
-		return m_PresentCmdBufferSemaphores[VulkanRHI::Get()->GetFrameResourcesIndex()];
+		return m_PresentCmdBufferSemaphores[index];
 	}
 
 	void CommandBufferManager::WaitForCmdBuffer(VulkanCommandBuffer* commandBuffer)
@@ -209,12 +209,12 @@ namespace Athena
 		Submit(uploadBuffer);
 	}
 
-	void CommandBufferManager::SubmitForPresent(VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags)
+	void CommandBufferManager::SubmitForPresent(uint32 imageIndex, VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags)
 	{
 		TRACY_PROFILE_FUNC();
 
 		VulkanCommandBuffer* commandBuffer = m_PresentCommandBuffers[VulkanRHI::Get()->GetFrameResourcesIndex()];
-		VkSemaphore semaphore = m_PresentCmdBufferSemaphores[VulkanRHI::Get()->GetFrameResourcesIndex()];
+		VkSemaphore semaphore = m_PresentCmdBufferSemaphores[imageIndex];
 
 		ensuref(commandBuffer->State == CommandBufferState::RecordingCommands);
 

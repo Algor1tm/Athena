@@ -164,6 +164,7 @@ namespace Athena
 		TextureView(const TextureViewCreateInfo& info, Texture* texture);
 		virtual ~TextureView() = default;
 
+		virtual void Init() = 0;
 		virtual void Invalidate() = 0;
 
 		Texture* GetTexture() const { return m_Texture; }

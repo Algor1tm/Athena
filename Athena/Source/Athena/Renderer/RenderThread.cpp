@@ -20,15 +20,18 @@ namespace Athena
 
 	static AutoCVar<bool> CVarEnableRenderThread(
 		"r.EnableRenderThread",
-		false,
+		true,
 		"Enables or disables render thread (default - true)."
-);
+	);
 
 	RenderThread::RenderThread()
 		: Thread("RenderThread", [this]() { RenderThreadMain(); })
 	{
 		m_RenderThreadCommandStreamIndex = 0;
 		m_GameThreadCommandStreamIndex = 0;
+
+		m_RenderThreadFrameIndex = 0;
+		m_GameThreadFrameIndex = 0;
 
 		if (!Bypass())
 		{
@@ -68,8 +71,6 @@ namespace Athena
 
 		Font::Init();
 		EngineRenderAssets::Get().Init();
-
-		// TODO: move to task manager 
 	}
 
 	void RenderThread::Shutdown()
@@ -83,6 +84,7 @@ namespace Athena
 		});
 
 		s_Instance->m_ShouldExit = true;
+		s_Instance->Kick();
 		s_Instance->Join();
 
 		delete RHI::s_RHI;
@@ -141,7 +143,7 @@ namespace Athena
 		TRACY_PROFILE_SCOPE("WaitForRenderThread");
 
 		// Wait for render thread here
-		while (m_RenderThreadFrameIndex + RENDER_THREAD_MAX_FRAME_LATENCY < m_GameThreadFrameIndex)
+		while (m_RenderThreadFrameIndex + RENDER_THREAD_MAX_FRAME_LATENCY <= m_GameThreadFrameIndex)
 		{
 			Thread::YieldExecution();
 			continue;

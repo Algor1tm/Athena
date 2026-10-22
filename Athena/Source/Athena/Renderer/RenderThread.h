@@ -4,8 +4,6 @@
 #include "Athena/Core/Thread.h"
 #include "Athena/Core/CommandStream.h"
 
-#include "concurrentqueue/concurrentqueue.h"
-
 #include <atomic>
 
 
@@ -50,10 +48,10 @@ namespace Athena
 				return;
 			}
 			
+			// TODO: mutex is bad here probably, but i need to push commands from multiple threads
 			std::unique_lock<std::mutex> lock(m_EnqueueMutex);
 			m_CommandStreams[m_GameThreadCommandStreamIndex].Submit(std::forward<FuncT>(func));
 		}
-
 
 		void Kick();
 		void Wait();

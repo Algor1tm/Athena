@@ -6,15 +6,9 @@
 
 namespace Athena
 {
-	Ref<ImGuiBackend> ImGuiBackend::Create(void* windowHandle)
+	Ref<ImGuiBackend> ImGuiBackend::Create()
 	{
 		Ref<ImGuiBackend> backend = RHI::Get()->CreateImGuiBackend();
-
-		ENQUEUE_RENDER_COMMAND([backend, windowHandle]() 
-			{
-				backend->Init(windowHandle);
-			});
-
 		return backend;
 	}
 }

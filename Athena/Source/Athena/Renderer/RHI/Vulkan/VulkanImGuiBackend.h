@@ -5,6 +5,8 @@
 #include "Athena/UI/ImGuiLayer.h"
 #include "Athena/Renderer/Texture.h"
 
+#include "imgui_threaded_rendering.h"
+
 #include <vulkan/vulkan.h>
 
 
@@ -23,11 +25,13 @@ namespace Athena
 		VulkanImGuiBackend();
 		virtual ~VulkanImGuiBackend();
 
-		virtual void Init(void* windowHandle) override;
+		virtual void Init_RT() override;
+		virtual void Init_GT(void* windowHandle) override;
 
-		virtual void NewFrame() override;
-		virtual void RenderDrawData(uint32 width, uint32 height) override;
-		virtual void RenderViewports() override;
+		virtual void NewFrame_RT() override;
+		virtual void NewFrame_GT() override;
+		virtual void SwapDrawData() override;
+		virtual void RenderDrawData() override;
 
 		virtual void* GetTextureID(const Ref<TextureView>& texture) override;
 
@@ -38,11 +42,17 @@ namespace Athena
 		void InvalidateDescriptorSets();
 		void RemoveDescriptorSet(VkDescriptorSet set);
 
+		void UpdateTextureID_RT(const Ref<TextureView>& view);
+
 	private:
 		VkDescriptorPool m_ImGuiDescriptorPool;
 		VkRenderPass m_ImGuiRenderPass;
 		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
+		ImTextureQueue m_ImGuiTextureQueue;
+		std::mutex m_TextureQueueMutex;
+
 		std::unordered_map<Ref<TextureView>, TextureInfo> m_TextureViewsMap;
+		std::mutex m_TexturesMapMutex;
 	};
 }

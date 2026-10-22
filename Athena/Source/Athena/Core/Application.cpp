@@ -109,6 +109,7 @@ namespace Athena
 				RenderImGui();
 
 				// Immitate VSync when minimized
+				// TODO Implement fps lock and set it to 60 when minimzed with ImGui
 				Thread::SleepFor(Time::Milliseconds(10));
 			}
 

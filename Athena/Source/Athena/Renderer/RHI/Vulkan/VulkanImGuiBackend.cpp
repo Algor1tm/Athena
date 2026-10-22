@@ -24,8 +24,10 @@ namespace Athena
 		m_TextureViewsMap.clear();
 
 		VulkanRHI::Get()->DeleteFrameResourcesDeferred([descPool = m_ImGuiDescriptorPool, renderPass = m_ImGuiRenderPass,
-			framebuffers = m_SwapChainFramebuffers]()
+			framebuffers = m_SwapChainFramebuffers, textureQueue = m_ImGuiTextureQueue]() mutable
 			{
+				textureQueue.Shutdown();
+
 				ImGui_ImplVulkan_Shutdown();
 				ImGui_ImplGlfw_Shutdown();
 
@@ -39,10 +41,18 @@ namespace Athena
 			});
 	}
 
-	void VulkanImGuiBackend::Init(void* windowHandle)
+	void VulkanImGuiBackend::Init_GT(void* windowHandle)
+	{
+		m_ImGuiTextureQueue.InFlightFrames = Vulkan::GetMaxFramesInFlight();
+		m_ImGuiTextureQueue.UpdateTexFunc = ImGui_ImplVulkan_UpdateTexture;
+
+		ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(windowHandle), true);
+		ImGui_ImplVulkan_Init_GT();
+	}
+
+	void VulkanImGuiBackend::Init_RT()
 	{
 		VkDescriptorPoolSize pool_sizes[] = {
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 512 },
 			{ VK_DESCRIPTOR_TYPE_SAMPLER, 128 },
 			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 512 },
 		};
@@ -102,9 +112,8 @@ namespace Athena
 
 		RecreateFramebuffers();
 
-		ImGui_ImplGlfw_InitForVulkan(reinterpret_cast<GLFWwindow*>(windowHandle), true);
-
 		ImGui_ImplVulkan_InitInfo init_info = {};
+		init_info.ApiVersion = VulkanRHI::Get()->GetVulkanVersion();
 		init_info.Instance = VulkanRHI::Get()->GetVulkanInstance();
 		init_info.PhysicalDevice = VulkanRHI::Get()->GetDevice()->GetPhysicalDevice();
 		init_info.Device = VulkanRHI::Get()->GetDevice()->GetLogicalDevice();
@@ -123,22 +132,62 @@ namespace Athena
 		ImGui_ImplVulkan_Init(&init_info);
 	}
 
-	void VulkanImGuiBackend::NewFrame()
+	void VulkanImGuiBackend::NewFrame_GT()
+	{
+		std::unique_lock lock(m_TextureQueueMutex);
+		m_ImGuiTextureQueue.PreNewFrame();
+	}
+
+	void VulkanImGuiBackend::NewFrame_RT()
 	{
 		TRACY_PROFILE_FUNC();
 
 		InvalidateDescriptorSets();
-
 		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
+
+		ImGuiContext& g = *GImGui;
+		for (ImGuiViewportP* viewport : g.Viewports)
+		{
+			viewport->SnapshotIndex_RT = (viewport->SnapshotIndex_RT + 1) % 2;
+		}
 	}
 
-	void VulkanImGuiBackend::RenderDrawData(uint32 width, uint32 height)
+	void VulkanImGuiBackend::SwapDrawData()
 	{
 		TRACY_PROFILE_FUNC();
 
+		ImGuiContext& g = *GImGui;
+
+		{
+			// Get draw data from main viewport (index 0), typically texture lists are shared between viewports draw data
+			ImGuiViewportP* viewport = g.Viewports[0];
+
+			std::unique_lock lock(m_TextureQueueMutex);
+			m_ImGuiTextureQueue.QueueRequests(&viewport->DrawDataP);
+		}
+
+		// Snapshot draw data for render thread
+		for (ImGuiViewportP* viewport : g.Viewports)
+		{
+			viewport->SnapshotIndex_GT = (viewport->SnapshotIndex_GT + 1) % 2;
+			viewport->Snapshots[viewport->SnapshotIndex_GT].DrawDataSnapshot.SnapUsingSwap(&viewport->DrawDataP, ImGui::GetTime());
+			viewport->Snapshots[viewport->SnapshotIndex_GT].Size = viewport->Size;
+			viewport->Snapshots[viewport->SnapshotIndex_GT].Flags = viewport->Flags;
+		}
+	}
+
+	void VulkanImGuiBackend::RenderDrawData()
+	{
+		TRACY_PROFILE_FUNC();
+
+		if (!Application::Get().GetWindow().GetSwapChain())
+			return;
+
 		Ref<VulkanSwapChain> swapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
 		VulkanCommandBuffer* commandBuffer = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCommandBuffer();
+
+		uint32 width = swapChain->GetWidth();
+		uint32 height = swapChain->GetHeight();
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -169,18 +218,18 @@ namespace Athena
 
 			vkCmdBeginRenderPass(commandBuffer->CommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer->CommandBuffer);
+			ImDrawData* drawData = ImGui::GetDrawData();
+			{
+				std::unique_lock lock(m_TextureQueueMutex);
+				m_ImGuiTextureQueue.ProcessRequests(drawData);
+			}
+
+			ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer->CommandBuffer);
 
 			vkCmdEndRenderPass(commandBuffer->CommandBuffer);
 		}
 
-		VulkanRHI::Get()->GetCmdBufferManager()->SubmitForPresent(swapChain->GetImageAcquiredSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	}
-
-	void VulkanImGuiBackend::RenderViewports()
-	{
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
+		VulkanRHI::Get()->GetCmdBufferManager()->SubmitForPresent(swapChain->GetCurrentImageIndex(), swapChain->GetImageAcquiredSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
 	void VulkanImGuiBackend::OnSwapChainRecreate()
@@ -227,20 +276,44 @@ namespace Athena
 		if (view == nullptr)
 			return GetTextureID(EngineRenderAssets::Get().WhiteTexture->GetMainView());
 
-		if (m_TextureViewsMap.contains(view))
-			return m_TextureViewsMap.at(view).Set;
+		{
+			std::unique_lock lock(m_TexturesMapMutex);
+
+			if (m_TextureViewsMap.contains(view))
+				return m_TextureViewsMap.at(view).Set;
+		}
+
+		ENQUEUE_RENDER_COMMAND([this, viewRT = view]() 
+			{
+				UpdateTextureID_RT(viewRT);
+			});
+
+		return VK_NULL_HANDLE;
+	}
+
+	void VulkanImGuiBackend::UpdateTextureID_RT(const Ref<TextureView>& view)
+	{
+		TRACY_PROFILE_FUNC();
+
+		{
+			std::unique_lock lock(m_TexturesMapMutex);
+			if (m_TextureViewsMap.contains(view))
+				return;
+		}
 
 		TextureInfo info;
 		info.VulkanImageView = view.As<VulkanTextureView>()->GetImageView();
 		info.VulkanSampler = view.As<VulkanTextureView>()->GetSampler();
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
-			return GetTextureID(EngineRenderAssets::Get().WhiteTexture->GetMainView());
+		{
+			info.VulkanImageView = EngineRenderAssets::Get().WhiteTexture->GetMainView().As<VulkanTextureView>()->GetImageView();
+		}
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+		std::unique_lock lock(m_TexturesMapMutex);
 		m_TextureViewsMap[view] = info;
-		return info.Set;
 	}
 
 	void VulkanImGuiBackend::InvalidateDescriptorSets()
@@ -265,12 +338,16 @@ namespace Athena
 			{
 				RemoveDescriptorSet(info.Set);
 
+				VkDescriptorSet set = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+				std::unique_lock lock(m_TexturesMapMutex);
 				info.VulkanImageView = imageView;
 				info.VulkanSampler = sampler;
-				info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				info.Set = set;
 			}
 		}
 
+		std::unique_lock lock(m_TexturesMapMutex);
 		for (const auto& view : viewsToRemove)
 			m_TextureViewsMap.erase(view);
 	}

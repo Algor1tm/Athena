@@ -72,6 +72,7 @@ namespace Athena
 
 	void* VulkanBufferAllocation::MapMemory()
 	{
+		TRACY_PROFILE_FUNC();
 		void* mappedData;
 		VK_CHECK(vmaMapMemory(VulkanRHI::Get()->GetAllocator()->GetInternalAllocator(), m_Allocation, &mappedData));
 		return mappedData;
@@ -79,6 +80,7 @@ namespace Athena
 
 	void VulkanBufferAllocation::UnmapMemory()
 	{
+		TRACY_PROFILE_FUNC();
 		vmaUnmapMemory(VulkanRHI::Get()->GetAllocator()->GetInternalAllocator(), m_Allocation);
 	}
 
@@ -124,6 +126,8 @@ namespace Athena
 
 	VulkanBufferAllocation VulkanAllocator::AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
 	{
+		TRACY_PROFILE_FUNC();
+
 		VkBuffer buffer;
 		VmaAllocation allocation;
 
@@ -145,6 +149,8 @@ namespace Athena
 
 	VulkanImageAllocation VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
 	{
+		TRACY_PROFILE_FUNC();
+
 		VkImage image;
 		VmaAllocation allocation;
 
@@ -164,6 +170,8 @@ namespace Athena
 
 	void VulkanAllocator::DestroyBuffer(VulkanBufferAllocation buffer, const String& name)
 	{
+		TRACY_PROFILE_FUNC();
+
 		VkDeviceSize size = buffer.GetAllocation()->GetSize();
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
@@ -176,6 +184,8 @@ namespace Athena
 
 	void VulkanAllocator::DestroyImage(VulkanImageAllocation image, const String& name)
 	{
+		TRACY_PROFILE_FUNC();
+
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		VkDeviceSize size = image.GetAllocation()->GetSize();
 		ATN_LOG_TRACE(Renderer, "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
@@ -186,6 +196,8 @@ namespace Athena
 
 	VkSampler VulkanAllocator::CreateSampler(const TextureSamplerCreateInfo& info)
 	{
+		TRACY_PROFILE_FUNC();
+
 		if (m_SamplersMap.contains(info))
 		{
 			auto& samplerInfo = m_SamplersMap.at(info);
@@ -223,6 +235,8 @@ namespace Athena
 
 	void VulkanAllocator::DestroySampler(const TextureSamplerCreateInfo& info, VkSampler sampler)
 	{
+		TRACY_PROFILE_FUNC();
+
 		checkf(m_SamplersMap.contains(info));
 
 		auto& samplerInfo = m_SamplersMap.at(info);

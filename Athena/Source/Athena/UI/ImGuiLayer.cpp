@@ -2,8 +2,12 @@
 
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
+#include "Athena/Renderer/EngineRenderAssets.h"
 
 #include <ImGui/imgui.h>
+#include "ImGui/imgui_internal.h"
+
+#include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGuizmo/ImGuizmo.h>
 
 
@@ -25,6 +29,178 @@ namespace Athena
 
 		return font;
 	}
+
+	// Rewrite of ImGui::UpdatePlatformWindows() and ImGui::RenderPlatformWindowsDefault() for render thread
+	static void UpdatePlatformWindows()
+	{
+		ImGuiContext& g = *GImGui;
+		IM_ASSERT(g.FrameCountEnded == g.FrameCount && "Forgot to call Render() or EndFrame() before UpdatePlatformWindows()?");
+		IM_ASSERT(g.FrameCountPlatformEnded < g.FrameCount);
+		g.FrameCountPlatformEnded = g.FrameCount;
+		if (!(g.ConfigFlagsCurrFrame & ImGuiConfigFlags_ViewportsEnable))
+			return;
+
+		// Create/resize/destroy platform windows to match each active viewport.
+		// Skip the main viewport (index 0), which is always fully handled by the application!
+		for (int i = 1; i < g.Viewports.Size; i++)
+		{
+			ImGuiViewportP* viewport = g.Viewports[i];
+
+			// Destroy platform window if the viewport hasn't been submitted or if it is hosting a hidden window
+			// (the implicit/fallback Debug##Default window will be registering its viewport then be disabled, causing a dummy DestroyPlatformWindow to be made each frame)
+			bool destroy_platform_window = false;
+			destroy_platform_window |= (viewport->LastFrameActive < g.FrameCount - 1);
+			destroy_platform_window |= (viewport->Window && !(viewport->Window->Active && !viewport->Window->Hidden));
+			if (destroy_platform_window)
+			{
+				if (viewport->DestroyFrameNumber != 0)
+				{
+					if (viewport->DestroyFrameNumber <= g.FrameCount)
+					{
+						g.PlatformIO.Platform_DestroyWindow(viewport);
+					}
+				}
+				else if (viewport->PlatformWindowCreated)
+				{
+					ENQUEUE_RENDER_COMMAND([viewport]() 
+						{
+							TRACY_PROFILE_SCOPE("ImGui::DestroyViewport");
+							ImGuiContext& g = *GImGui;
+
+							if (g.PlatformIO.Renderer_DestroyWindow)
+								g.PlatformIO.Renderer_DestroyWindow(viewport);
+						});
+
+					viewport->DestroyFrameNumber = g.FrameCount + 2;
+
+					const ImGuiID IMGUI_VIEWPORT_DEFAULT_ID = 0x11111111;
+					// Don't clear PlatformWindowCreated for the main viewport, as we initially set that up to true in Initialize()
+					// The righter way may be to leave it to the backend to set this flag all-together, and made the flag public.
+					if (viewport->ID != IMGUI_VIEWPORT_DEFAULT_ID)
+						viewport->PlatformWindowCreated = false;
+				}
+
+				viewport->ClearRequestFlags();
+				continue;
+			}
+
+			// New windows that appears directly in a new viewport won't always have a size on their first frame
+			if (viewport->LastFrameActive < g.FrameCount || viewport->Size.x <= 0 || viewport->Size.y <= 0)
+				continue;
+
+			// Create window
+			const bool is_new_platform_window = (viewport->PlatformWindowCreated == false);
+			if (is_new_platform_window)
+			{
+				IMGUI_DEBUG_LOG_VIEWPORT("[viewport] Create Platform Window %08X '%s'\n", viewport->ID, viewport->Window ? viewport->Window->Name : "n/a");
+				g.PlatformIO.Platform_CreateWindow(viewport);
+				if (g.PlatformIO.Renderer_CreateWindow != NULL)
+				{
+					ENQUEUE_RENDER_COMMAND([viewport]() 
+						{
+							TRACY_PROFILE_SCOPE("ImGui::CreateViewport");
+							ImGuiContext& g = *GImGui;
+							g.PlatformIO.Renderer_CreateWindow(viewport);
+						});
+				}
+				g.PlatformWindowsCreatedCount++;
+				viewport->LastNameHash = 0;
+				viewport->LastPlatformPos = viewport->LastPlatformSize = ImVec2(FLT_MAX, FLT_MAX); // By clearing those we'll enforce a call to Platform_SetWindowPos/Size below, before Platform_ShowWindow (FIXME: Is that necessary?)
+				viewport->LastRendererSize = viewport->Size;                                       // We don't need to call Renderer_SetWindowSize() as it is expected Renderer_CreateWindow() already did it.
+				viewport->PlatformWindowCreated = true;
+			}
+
+			// Apply Position and Size (from ImGui to Platform/Renderer backends)
+			if ((viewport->LastPlatformPos.x != viewport->Pos.x || viewport->LastPlatformPos.y != viewport->Pos.y) && !viewport->PlatformRequestMove)
+				g.PlatformIO.Platform_SetWindowPos(viewport, viewport->Pos);
+			if ((viewport->LastPlatformSize.x != viewport->Size.x || viewport->LastPlatformSize.y != viewport->Size.y) && !viewport->PlatformRequestResize)
+				g.PlatformIO.Platform_SetWindowSize(viewport, viewport->Size);
+			if ((viewport->LastRendererSize.x != viewport->Size.x || viewport->LastRendererSize.y != viewport->Size.y) && g.PlatformIO.Renderer_SetWindowSize)
+			{
+				ENQUEUE_RENDER_COMMAND([viewport]()
+					{
+						TRACY_PROFILE_SCOPE("ImGui::SetViewportSize");
+						ImGuiContext& g = *GImGui;
+						g.PlatformIO.Renderer_SetWindowSize(viewport, viewport->Size);
+					});
+			}
+			viewport->LastPlatformPos = viewport->Pos;
+			viewport->LastPlatformSize = viewport->LastRendererSize = viewport->Size;
+
+			ImGuiWindow* window_for_title = viewport->Window->DockNodeAsHost ? viewport->Window->DockNodeAsHost->VisibleWindow : viewport->Window;
+			// Update title bar (if it changed)
+			if (window_for_title)
+			{
+				const char* title_begin = window_for_title->Name;
+				char* title_end = (char*)(intptr_t)ImGui::FindRenderedTextEnd(title_begin);
+				const ImGuiID title_hash = ImHashStr(title_begin, title_end - title_begin);
+				if (viewport->LastNameHash != title_hash)
+				{
+					char title_end_backup_c = *title_end;
+					*title_end = 0; // Cut existing buffer short instead of doing an alloc/free, no small gain.
+					g.PlatformIO.Platform_SetWindowTitle(viewport, title_begin);
+					*title_end = title_end_backup_c;
+					viewport->LastNameHash = title_hash;
+				}
+			}
+
+			// Update alpha (if it changed)
+			if (viewport->LastAlpha != viewport->Alpha && g.PlatformIO.Platform_SetWindowAlpha)
+				g.PlatformIO.Platform_SetWindowAlpha(viewport, viewport->Alpha);
+			viewport->LastAlpha = viewport->Alpha;
+
+			// Optional, general purpose call to allow the backend to perform general book-keeping even if things haven't changed.
+			if (g.PlatformIO.Platform_UpdateWindow)
+				g.PlatformIO.Platform_UpdateWindow(viewport);
+
+			if (is_new_platform_window)
+			{
+				// On startup ensure new platform window don't steal focus (give it a few frames, as nested contents may lead to viewport being created a few frames late)
+				if (g.FrameCount < 3)
+					viewport->Flags |= ImGuiViewportFlags_NoFocusOnAppearing;
+
+				// Show window
+				g.PlatformIO.Platform_ShowWindow(viewport);
+			}
+
+			// Clear request flags
+			viewport->ClearRequestFlags();
+		}
+
+
+		// Skip the main viewport (index 0), which is always fully handled by the application!
+		ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+		for (int i = 1; i < platform_io.Viewports.Size; i++)
+		{
+			ImGuiViewport* viewport = platform_io.Viewports[i];
+			if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
+				continue;
+
+			ENQUEUE_RENDER_COMMAND([viewport]() 
+				{
+					TRACY_PROFILE_SCOPE("ImGui::RenderViewport");
+					ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+					if (platform_io.Platform_RenderWindow) platform_io.Platform_RenderWindow(viewport, nullptr);
+					if (platform_io.Renderer_RenderWindow) platform_io.Renderer_RenderWindow(viewport, nullptr);
+				});
+
+		}
+		for (int i = 1; i < platform_io.Viewports.Size; i++)
+		{
+			ImGuiViewport* viewport = platform_io.Viewports[i];
+			if (viewport->Flags & ImGuiViewportFlags_IsMinimized)
+				continue;
+
+			ENQUEUE_RENDER_COMMAND([viewport]() 
+				{
+					TRACY_PROFILE_SCOPE("ImGui::ViewportSwapBuffers");
+					ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+					if (platform_io.Platform_SwapBuffers) platform_io.Platform_SwapBuffers(viewport, nullptr);
+					if (platform_io.Renderer_SwapBuffers) platform_io.Renderer_SwapBuffers(viewport, nullptr);
+				});
+		}
+	}
+
 
 	ImGuiLayer::ImGuiLayer()
 		: Layer("ImGuiLayer")
@@ -155,7 +331,14 @@ namespace Athena
 		TryLoadImGuiFont(boldFontPath, 16.f);
 		TryLoadImGuiFont(defaultFontPath, 22.f);
 
-		m_ImGuiBackend = ImGuiBackend::Create(window.GetNativeWindow());
+		m_ImGuiBackend = ImGuiBackend::Create();
+		m_ImGuiBackend->Init_GT(window.GetNativeWindow());
+
+		ENQUEUE_RENDER_COMMAND([this]()
+			{
+				m_ImGuiBackend->Init_RT();
+			});
+
 
 		ATN_LOG_INFO(Renderer, "Init ImGui(Viewports enable = {0}, Docking enable = {1})",
 			bool(io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable), bool(io.ConfigFlags & ImGuiConfigFlags_DockingEnable));
@@ -198,7 +381,15 @@ namespace Athena
 	void ImGuiLayer::Begin()
 	{
 		TRACY_PROFILE_FUNC();
-		m_ImGuiBackend->NewFrame();
+
+		ENQUEUE_RENDER_COMMAND([imguiBackend = m_ImGuiBackend]()
+			{
+				imguiBackend->NewFrame_RT();
+			});
+
+		ImGui_ImplGlfw_NewFrame();
+
+		m_ImGuiBackend->NewFrame_GT();
 		ImGui::NewFrame();
 		ImGuizmo::BeginFrame();
 	}
@@ -209,15 +400,19 @@ namespace Athena
 		ImGuiIO& io = ImGui::GetIO();
 
 		ImGui::Render();
+		m_ImGuiBackend->SwapDrawData();
 
 		if (!minimized)
 		{
-			m_ImGuiBackend->RenderDrawData(io.DisplaySize.x, io.DisplaySize.y);
+			ENQUEUE_RENDER_COMMAND([imGuiBackend = m_ImGuiBackend]()
+				{
+					imGuiBackend->RenderDrawData();
+				});
 		}
 		
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			m_ImGuiBackend->RenderViewports();
+			UpdatePlatformWindows();
 		}
 	}
 

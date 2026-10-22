@@ -34,7 +34,14 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 
-		return RHI::Get()->CreateTextureView(info, texture);
+		Ref<TextureView> view = RHI::Get()->CreateTextureView(info, texture);
+
+		ENQUEUE_RENDER_COMMAND([view]() 
+			{
+				view->Init();
+			});
+
+		return view;
 	}
 
 	TextureView::TextureView(const TextureViewCreateInfo& info, Texture* texture)

@@ -40,7 +40,7 @@ namespace Athena
 	static AutoCVar<int32> CVarVulkanValidationLevel(
 		"Vulkan.ValidationLevel",
 		2,
-		"Sets debug report level 0 - 5 (0 - disable validation, default - 2)."
+		"Sets debug report level 0 - 4 (0 - disable validation, default - 2)."
 	);
 
 #endif
@@ -194,7 +194,8 @@ namespace Athena
 		static uint32 maxFramesInFlight = ConsoleManager::Get().FindCVar("r.MaxFramesInFlight")->GetInt();
 		m_FrameResourcesIndex = (m_FrameResourcesIndex + 1) % maxFramesInFlight;
 
-		window->GetSwapChain().As<VulkanSwapChain>()->AcquireImage();
+		if(window->GetSwapChain())
+			window->GetSwapChain().As<VulkanSwapChain>()->AcquireImage();
 
 		{
 			TRACY_PROFILE_SCOPE("ResourceFreeQueue::Flush");
@@ -215,7 +216,8 @@ namespace Athena
 			// Blit to swapchain final image
 		}
 
-		window->GetSwapChain().As<VulkanSwapChain>()->Present();
+		if (window->GetSwapChain())
+			window->GetSwapChain().As<VulkanSwapChain>()->Present();
 	}
 
 	Ref<Texture> VulkanRHI::CreateTexture(const TextureCreateInfo& info)

@@ -10,6 +10,7 @@ set(IMGUI_SRC_FILES
     "imgui_draw.cpp"
     "imgui_internal.h"
     "imgui_tables.cpp"
+    "imgui_threaded_rendering.h"
     "imgui_widgets.cpp"
     "imstb_rectpack.h"
     "imstb_textedit.h"

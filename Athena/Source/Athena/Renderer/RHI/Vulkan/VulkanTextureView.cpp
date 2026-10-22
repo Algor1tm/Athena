@@ -28,11 +28,6 @@ namespace Athena
 		{
 			SetSampler(GetTexture()->GetInfo().Sampler);
 		}
-
-		m_Sampler = VulkanRHI::Get()->GetAllocator()->CreateSampler(GetInfo().Sampler);
-		m_DescriptorInfo.sampler = m_Sampler;
-
-		Invalidate();
 	}
 
 	VulkanTextureView::~VulkanTextureView()
@@ -46,6 +41,16 @@ namespace Athena
 					VulkanRHI::Get()->GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 				});
 		}
+	}
+
+	void VulkanTextureView::Init()
+	{
+		TRACY_PROFILE_FUNC();
+
+		m_Sampler = VulkanRHI::Get()->GetAllocator()->CreateSampler(GetInfo().Sampler);
+		m_DescriptorInfo.sampler = m_Sampler;
+
+		Invalidate();
 	}
 
 	void VulkanTextureView::Invalidate()

@@ -18,7 +18,9 @@ namespace Athena
 		: m_WindowHandle(windowHandle), 
 		m_VSync(vsync),
 		m_Dirty(true),
-		m_ImageIndex(0)
+		m_ImageIndex(0),
+		m_Width(0),
+		m_Height(0)
 	{
 
 	}
@@ -176,22 +178,21 @@ namespace Athena
 		VkSurfaceCapabilitiesKHR surfaceCaps;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanRHI::Get()->GetDevice()->GetPhysicalDevice(), m_Surface, &surfaceCaps);
 
-		VkExtent2D extent;
 		if (surfaceCaps.currentExtent.width == (uint32)-1)
 		{
-			extent.width = app.GetWindow().GetWidth();
-			extent.height = app.GetWindow().GetHeight();
+			m_Width = app.GetWindow().GetWidth();
+			m_Height = app.GetWindow().GetHeight();
 
-			extent.width = Math::Clamp(extent.width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
-			extent.height = Math::Clamp(extent.width, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
+			m_Width = Math::Clamp(m_Width, surfaceCaps.minImageExtent.width, surfaceCaps.maxImageExtent.width);
+			m_Height = Math::Clamp(m_Height, surfaceCaps.minImageExtent.height, surfaceCaps.maxImageExtent.height);
 		}
 		else
 		{
-			extent.width = surfaceCaps.currentExtent.width;
-			extent.height = surfaceCaps.currentExtent.height;
+			m_Width = surfaceCaps.currentExtent.width;
+			m_Height = surfaceCaps.currentExtent.height;
 		}
 
-		if (extent.width == 0 || extent.height == 0)
+		if (m_Width == 0 || m_Height == 0)
 			return false;
 
 		VkSwapchainCreateInfoKHR swapchainCI = {};
@@ -200,8 +201,8 @@ namespace Athena
 		swapchainCI.minImageCount = framesInFlight;
 		swapchainCI.imageFormat = m_Format.format;
 		swapchainCI.imageColorSpace = m_Format.colorSpace;
-		swapchainCI.imageExtent.width = extent.width;
-		swapchainCI.imageExtent.height = extent.height;
+		swapchainCI.imageExtent.width = m_Width;
+		swapchainCI.imageExtent.height = m_Height;
 		swapchainCI.imageArrayLayers = 1;
 		swapchainCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		swapchainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;           // Assume that graphics family == present family
@@ -274,8 +275,6 @@ namespace Athena
 
 	void VulkanSwapChain::AcquireImage()
 	{
-		TRACY_PROFILE_FUNC();
-
 		if (m_Dirty)
 			Recreate();
 
@@ -297,10 +296,14 @@ namespace Athena
 			VkSemaphore imageAcquiredSemaphore = GetImageAcquiredSemaphore();
 			VkResult result = vkAcquireNextImageKHR(Vulkan::GetLogicalDevice(), m_VkSwapChain, UINT64_MAX, imageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex);
 		
-			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			if (result == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				Recreate();
 				VK_CHECK(vkAcquireNextImageKHR(Vulkan::GetLogicalDevice(), m_VkSwapChain, UINT64_MAX, imageAcquiredSemaphore, VK_NULL_HANDLE, &m_ImageIndex));
+			}
+			else if (result == VK_SUBOPTIMAL_KHR)
+			{
+				m_Dirty = true;
 			}
 			else
 			{
@@ -313,7 +316,7 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 
-		VkSemaphore waitSemaphore = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCmdBufferSemaphore();
+		VkSemaphore waitSemaphore = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCmdBufferSemaphore(m_ImageIndex);
 		
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

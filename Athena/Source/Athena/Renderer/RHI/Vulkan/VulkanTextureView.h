@@ -15,7 +15,8 @@ namespace Athena
 	public:
 		VulkanTextureView(const TextureViewCreateInfo& info, Texture* texture);
 		virtual ~VulkanTextureView();
-
+		
+		virtual void Init() override;
 		virtual void Invalidate() override;
 
 		VulkanTexture* GetVulkanTexture() const;

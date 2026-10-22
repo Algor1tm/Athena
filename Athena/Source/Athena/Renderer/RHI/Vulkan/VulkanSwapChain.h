@@ -26,6 +26,9 @@ namespace Athena
 		uint32 GetCurrentImageIndex() const { return m_ImageIndex; }
 		VkImage GetCurrentVulkanImage() const;
 
+		uint32 GetWidth() const { return m_Width; }
+		uint32 GetHeight() const { return m_Height; }
+
 		VkSemaphore GetImageAcquiredSemaphore() const;
 
 		const std::vector<VkImageView>& GetVulkanImageViews() const { return m_SwapChainImageViews; }
@@ -44,6 +47,8 @@ namespace Athena
 
 		VkPresentModeKHR m_PresentMode;
 		VkSurfaceFormatKHR m_Format;
+		uint32 m_Width;
+		uint32 m_Height;
 
 		uint32 m_ImageIndex;
 		bool m_VSync;

@@ -51,13 +51,13 @@ namespace Athena
 		VulkanCommandBuffer* GetTransferCommandBuffer();
 
 		VulkanCommandBuffer* GetPresentCommandBuffer();
-		VkSemaphore	GetPresentCmdBufferSemaphore();
+		VkSemaphore	GetPresentCmdBufferSemaphore(uint32 index);
 
 		void WaitForCmdBuffer(VulkanCommandBuffer* commandBuffer);
 
 		void Submit(VulkanCommandBuffer* commandBuffer);
 		void SubmitTransfer();
-		void SubmitForPresent(VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags);
+		void SubmitForPresent(uint32 imageIndex, VkSemaphore imageAcquiredSemaphore, VkPipelineStageFlags flags);
 
 		void NewFrame();
 

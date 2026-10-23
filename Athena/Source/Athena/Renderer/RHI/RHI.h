@@ -56,6 +56,8 @@ namespace Athena
 
 		virtual Ref<CommandList> CreateCommandList() = 0;
 
+		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
+
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, bool vsync) = 0;
 
 		virtual Ref<ImGuiBackend> CreateImGuiBackend() = 0;

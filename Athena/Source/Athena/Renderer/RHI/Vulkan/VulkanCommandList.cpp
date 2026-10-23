@@ -32,4 +32,25 @@ namespace Athena
 
 		m_CommandBuffer = nullptr;
 	}
+
+	void VulkanCommandList::BeginDebugLabel(const String& name, const IntegerColor& color)
+	{
+		VK_BEGIN_DEBUG_LABEL(m_CommandBuffer->CommandBuffer, name, color);
+	}
+
+	void VulkanCommandList::EndDebugLabel()
+	{
+		VK_END_DEBUG_LABEL(m_CommandBuffer->CommandBuffer);
+	}
+
+	void VulkanCommandList::InsertDebugLabel(const String& name, const IntegerColor& color)
+	{
+		VK_INSERT_DEBUG_LABEL(m_CommandBuffer->CommandBuffer, name, color);
+	}
+
+
+	VulkanCommandBuffer* VulkanCommandList::GetCommandBuffer()
+	{
+		return m_CommandBuffer;
+	}
 }

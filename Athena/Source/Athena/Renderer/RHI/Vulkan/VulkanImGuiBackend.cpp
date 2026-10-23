@@ -5,6 +5,7 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanTextureView.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanTracyZone.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
@@ -200,6 +201,9 @@ namespace Athena
 		renderPassInfo.pClearValues = &clearColor;
 
 		{
+			TRACY_VULKAN_ZONE(commandBuffer->CommandBuffer, "ImGui Pass");
+			VK_BEGIN_DEBUG_LABEL(commandBuffer->CommandBuffer, "ImGui Pass", IntegerColor::Magenta);
+
 			// Insert memory barrier rendering commands and UI
 			VkMemoryBarrier memoryBarrier = {};
 			memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
@@ -227,6 +231,7 @@ namespace Athena
 			ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer->CommandBuffer);
 
 			vkCmdEndRenderPass(commandBuffer->CommandBuffer);
+			VK_END_DEBUG_LABEL(commandBuffer->CommandBuffer);
 		}
 
 		VulkanRHI::Get()->GetCmdBufferManager()->SubmitForPresent(swapChain->GetCurrentImageIndex(), swapChain->GetImageAcquiredSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);

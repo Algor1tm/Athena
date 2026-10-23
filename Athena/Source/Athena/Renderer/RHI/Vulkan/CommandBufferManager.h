@@ -5,6 +5,7 @@
 #include "Athena/Core/CommandStream.h"
 
 #include <vulkan/vulkan.h>
+#include <tracy/TracyVulkan.hpp>
 
 
 namespace Athena
@@ -61,6 +62,10 @@ namespace Athena
 
 		void NewFrame();
 
+#if ATN_ENABLE_TRACY_GPU
+		tracy::VkCtx* GetTracyContext() const { return m_TracyContext; }
+#endif
+
 	private:
 		VulkanCommandBuffer* FindFreeCommandBuffer();
 		VulkanCommandBuffer* AllocateCommandBuffer();
@@ -72,5 +77,10 @@ namespace Athena
 
 		std::vector<VulkanCommandBuffer*> m_PresentCommandBuffers;
 		std::vector<VkSemaphore> m_PresentCmdBufferSemaphores;
+
+#if ATN_ENABLE_TRACY_GPU
+		// TODO: Tracy context should per queue but for now simply create 1 global context
+		tracy::VkCtx* m_TracyContext;
+#endif
 	};
 }

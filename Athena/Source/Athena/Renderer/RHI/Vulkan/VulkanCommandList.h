@@ -17,6 +17,10 @@ namespace Athena
 
 		virtual void Submit(bool wait) override;
 
+		virtual void BeginDebugLabel(const String& name, const IntegerColor& color = IntegerColor::Black) override;
+		virtual void EndDebugLabel() override;
+		virtual void InsertDebugLabel(const String& name, const IntegerColor& color = IntegerColor::Black) override;
+
 		VulkanCommandBuffer* GetCommandBuffer();
 
 	private:

@@ -13,7 +13,7 @@
 
 namespace Athena::Math
 {
-	class ATHENA_API Random
+	class Random
 	{
 	public:
 		static float Float()
@@ -80,8 +80,8 @@ namespace Athena::Math
 		using internal_type = uint64;
 
 	private:
-		static std::random_device s_RandomDevice;
-		static std::mt19937_64 s_RandomEngine;
-		static std::uniform_int_distribution<internal_type> s_Distribution;
+		inline static thread_local std::random_device s_RandomDevice;
+		inline static thread_local std::mt19937_64 s_RandomEngine;
+		inline static thread_local std::uniform_int_distribution<internal_type> s_Distribution;
 	};
 }

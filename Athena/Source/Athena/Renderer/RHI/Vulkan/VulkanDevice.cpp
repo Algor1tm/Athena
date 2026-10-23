@@ -16,6 +16,7 @@ namespace Athena
 	{
 		VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
 		VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,
+		VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME,
 
 		nullptr
 	};
@@ -249,11 +250,18 @@ namespace Athena
 	void VulkanDevice::PostDeviceInit()
 	{
 		m_ExtensionsInfo.MemoryBudgetEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-		m_ExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 
+		m_ExtensionsInfo.HostQueryEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
 		if (m_ExtensionsInfo.HostQueryEXTSupported)
 		{
 			m_ExtensionsInfo.vkResetQueryPoolEXT = Vulkan::GetDeviceProc<PFN_vkResetQueryPoolEXT>("vkResetQueryPoolEXT");
+		}
+
+		m_ExtensionsInfo.CalibratedTimestampsEXTSupported = IsExtensionPresent(m_DeviceExtensions, VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
+		if (m_ExtensionsInfo.CalibratedTimestampsEXTSupported)
+		{
+			m_ExtensionsInfo.vkGetPhysicalDeviceCalibrateableTimeDomainsEXT = Vulkan::GetInstanceProc<PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT>("vkGetPhysicalDeviceCalibrateableTimeDomainsEXT");
+			m_ExtensionsInfo.vkGetCalibratedTimestampsEXT = Vulkan::GetDeviceProc<PFN_vkGetCalibratedTimestampsEXT>("vkGetCalibratedTimestampsEXT");
 		}
 
 		QueryGPUCapabilities();

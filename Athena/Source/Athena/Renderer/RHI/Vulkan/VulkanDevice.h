@@ -13,8 +13,13 @@ namespace Athena
 	struct DeviceExtensionsInfo
 	{
 		bool MemoryBudgetEXTSupported;
+
 		bool HostQueryEXTSupported;
 		PFN_vkResetQueryPoolEXT vkResetQueryPoolEXT;
+
+		bool CalibratedTimestampsEXTSupported;
+		PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
+		PFN_vkGetCalibratedTimestampsEXT vkGetCalibratedTimestampsEXT;
 	};
 
 	struct DeviceFeaturesInfo

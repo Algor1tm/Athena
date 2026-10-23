@@ -12,6 +12,7 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanTextureView.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanImGuiBackend.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanTracyZone.h"
 
 #include <vulkan/vulkan.h>
 
@@ -243,6 +244,11 @@ namespace Athena
 	Ref<CommandList> VulkanRHI::CreateCommandList()
 	{
 		return Ref<VulkanCommandList>::Create();
+	}
+
+	Ref<TracyGPUZone> VulkanRHI::CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
+	{
+		return Ref<VulkanTracyZone>::Create(cmdList, line, fileName, functionName, name);
 	}
 
 	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, bool vsync)

@@ -9,8 +9,13 @@
 
 namespace Athena
 {
-	DEFINE_STATS_GROUP("Renderer Stats", STATGROUP_RendererStats, StatsThread::RenderThread);
-	DEFINE_CYCLE_STAT("CPU Wait", STAT_CPUWait, STATGROUP_RendererStats);
+	DEFINE_STATS_GROUP("RenderThread Stats", STATGROUP_RenderThreadStats, StatsThread::RenderThread);
+
+	DEFINE_CYCLE_STAT("Wait for GameThread", STAT_WaitForGameThread, STATGROUP_RenderThreadStats);
+	DEFINE_CYCLE_STAT("Wait for GPU", STAT_WaitForGPU, STATGROUP_RenderThreadStats);
+
+	EXTERN_CYCLE_STAT(STAT_WaitForRenderThread);
+
 
 	static AutoCVar<int32> CVarRenderThreadCommandStreamSize(
 		"r.RenderThreadCommandStreamSize",
@@ -103,6 +108,7 @@ namespace Athena
 
 			{
 				TRACY_PROFILE_SCOPE("WaitForGameThread");
+				SCOPE_CYCLE_STAT(STAT_WaitForGameThread);
 
 				// Wait for game thread, there should be at least 1 frame difference
 				while (m_RenderThreadFrameIndex + 1 > m_GameThreadFrameIndex)
@@ -141,6 +147,7 @@ namespace Athena
 			return;
 
 		TRACY_PROFILE_SCOPE("WaitForRenderThread");
+		SCOPE_CYCLE_STAT(STAT_WaitForRenderThread);
 
 		// Wait for render thread here
 		while (m_RenderThreadFrameIndex + RENDER_THREAD_MAX_FRAME_LATENCY <= m_GameThreadFrameIndex)

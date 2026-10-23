@@ -89,10 +89,45 @@ namespace Athena
 			VK_SET_OBJECT_NAME(buffer->SignalFence, VK_OBJECT_TYPE_FENCE, std::format("CmdBufferForPresentFence_{}", i));
 			VK_SET_OBJECT_NAME(semaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("CmdBufferForPresentSemaphore_{}", i));
 		}
+
+
+#if ATN_ENABLE_TRACY_GPU
+		VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
+		cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufAllocInfo.commandPool = m_Pool;
+		cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdBufAllocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer tracyInitCmdBuffer;
+		VK_CHECK(vkAllocateCommandBuffers(Vulkan::GetLogicalDevice(), &cmdBufAllocInfo, &tracyInitCmdBuffer));
+
+		VulkanDevice* device = VulkanRHI::Get()->GetDevice();
+		const DeviceExtensionsInfo& extensionsInfo = device->GetExtensionsInfo();
+
+		if (extensionsInfo.CalibratedTimestampsEXTSupported)
+		{
+			m_TracyContext = TracyVkContextCalibrated(device->GetPhysicalDevice(), device->GetLogicalDevice(), device->GetQueue(), tracyInitCmdBuffer,
+				extensionsInfo.vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, extensionsInfo.vkGetCalibratedTimestampsEXT);
+
+			ATN_LOG_INFO(Vulkan, "Initialized Tracy Vulkan calibrated context!");
+		}
+		else
+		{
+			m_TracyContext = TracyVkContext(device->GetPhysicalDevice(), device->GetLogicalDevice(), device->GetQueue(), tracyInitCmdBuffer);
+
+			ATN_LOG_INFO(Vulkan, "Initialized Tracy Vulkan default context!");
+		}
+
+		VK_CHECK(vkResetCommandBuffer(tracyInitCmdBuffer, 0));
+#endif
 	}
 
 	void CommandBufferManager::Destroy()
 	{
+#if ATN_ENABLE_TRACY_GPU
+		TracyVkDestroy(m_TracyContext);
+#endif
+
 		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
 		{
 			vkDestroySemaphore(Vulkan::GetLogicalDevice(), m_PresentCmdBufferSemaphores[i], nullptr);
@@ -222,6 +257,11 @@ namespace Athena
 		{
 			SubmitTransfer();
 		}
+
+#if ATN_ENABLE_TRACY_GPU
+		// Collect once per frame before present
+		TracyVkCollect(m_TracyContext, commandBuffer->CommandBuffer);
+#endif
 
 		commandBuffer->End();
 

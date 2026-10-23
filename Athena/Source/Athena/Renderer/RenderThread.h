@@ -4,6 +4,7 @@
 #include "Athena/Core/Thread.h"
 #include "Athena/Core/CommandStream.h"
 
+#include <mutex>
 #include <atomic>
 
 

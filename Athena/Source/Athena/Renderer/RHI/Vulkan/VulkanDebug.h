@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 
 #include <vulkan/vulkan.h>
@@ -190,11 +191,22 @@ namespace Athena::Vulkan
     }
 #endif
 
-    void SetDebugName(void* objectHandle, VkObjectType type, const String& name);
 
-#ifdef VULKAN_ENABLE_DEBUG_INFO
-    #define VK_SET_OBJECT_NAME(object, type, name) Vulkan::SetDebugName(object, type, name);
+#if VULKAN_ENABLE_DEBUG_INFO
+    void SetDebugName(void* objectHandle, VkObjectType type, const String& name);
+    void BeginDebugLabel(VkCommandBuffer cmdBuffer, const String& name, const IntegerColor& color);
+    void EndDebugLabel(VkCommandBuffer cmdBuffer);
+    void InsertDebugLabel(VkCommandBuffer cmdBuffer, const String& name, const IntegerColor& color);
+
+
+    #define VK_SET_OBJECT_NAME(object, type, name) Vulkan::SetDebugName(object, type, name)
+    #define VK_BEGIN_DEBUG_LABEL(cmdBuffer, name, color) Vulkan::BeginDebugLabel(cmdBuffer, name, color)
+    #define VK_END_DEBUG_LABEL(cmdBuffer) Vulkan::EndDebugLabel(cmdBuffer)
+    #define VK_INSERT_DEBUG_LABEL(cmdBuffer, name, color) Vulkan::InsertDebugLabel(cmdBuffer, name, color)
 #else
     #define VK_SET_OBJECT_NAME(object, type, name) 
+    #define VK_BEGIN_DEBUG_LABEL(cmdBuffer, name, color)
+    #define VK_END_DEBUG_LABEL(cmdBuffer)
+    #define VK_INSERT_DEBUG_LABEL(cmdBuffer, name, color)
 #endif
 }

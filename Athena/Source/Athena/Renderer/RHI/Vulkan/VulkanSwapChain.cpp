@@ -12,7 +12,7 @@
 
 namespace Athena
 {
-	EXTERN_CYCLE_STAT(STAT_CPUWait);
+	EXTERN_CYCLE_STAT(STAT_WaitForGPU);
 
 	VulkanSwapChain::VulkanSwapChain(void* windowHandle, bool vsync)
 		: m_WindowHandle(windowHandle), 
@@ -280,7 +280,7 @@ namespace Athena
 
 		{
 			TRACY_PROFILE_SCOPE("WaitForGPU");
-			SCOPE_CYCLE_STAT(STAT_CPUWait);
+			SCOPE_CYCLE_STAT(STAT_WaitForGPU);
 		
 			VulkanCommandBuffer* presentCommandBuffer = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCommandBuffer();
 

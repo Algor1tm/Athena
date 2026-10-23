@@ -12,6 +12,7 @@ namespace Athena
 {
 	DEFINE_STATS_GROUP("Application Stats", STATGROUP_ApplicationStats, StatsThread::GameThread);
 
+	DEFINE_CYCLE_STAT("Wait For RenderThread", STAT_WaitForRenderThread, STATGROUP_ApplicationStats);
 	DEFINE_CYCLE_STAT("Process Events", STAT_ProcessEvents, STATGROUP_ApplicationStats);
 	DEFINE_CYCLE_STAT("On Update", STAT_OnUpdate, STATGROUP_ApplicationStats);
 	DEFINE_CYCLE_STAT("Render ImGui", STAT_RenderImGui, STATGROUP_ApplicationStats);

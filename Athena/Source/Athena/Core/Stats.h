@@ -23,14 +23,14 @@ namespace Athena
 	public:
 		CycleStat(std::string_view name, StatsGroup* statsGroup);
 
-		void Reset()
+		void Reset(Time value = 0.f)
 		{
-			m_Value = 0.f;
+			m_Value = value;
 		}
 
-		void Increase(Time IncreaseValue)
+		void Increase(Time increaseValue)
 		{
-			m_Value += IncreaseValue;
+			m_Value += increaseValue;
 		}
 
 		Snapshot GetSnapshot() const
@@ -292,8 +292,8 @@ namespace Athena
 	#define DEFINE_COUNTER_STAT(Label, StatName, StatsGroupName) ATHENA_API CounterStat StatName(Label, &StatsGroupName)
 	#define EXTERN_COUNTER_STAT(StatName) extern ATHENA_API CounterStat StatName
 
-
 	#define SCOPE_CYCLE_STAT(StatName) ScopedCycleStatProxy StatName##_Proxy(&StatName)
+	#define RESET_CYCLE_STAT(StatName, Value) StatName.Reset(Values)
 
 	#define SET_COUNTER_STAT(StatName, Value) StatName.Set(Value)
 	#define INC_COUNTER_STAT(StatName) StatName.Increment()
@@ -314,6 +314,7 @@ namespace Athena
 
 
 	#define SCOPE_CYCLE_STAT(StatName)
+	#define RESET_CYCLE_STAT(StatName, Value)
 
 	#define SET_COUNTER_STAT(StatName, Value)
 	#define INC_COUNTER_STAT(StatName)

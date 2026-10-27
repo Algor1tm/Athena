@@ -17,7 +17,7 @@ namespace Athena
 	{
 		NONE = BIT(0),
 		SAMPLED = BIT(1),
-		STORAGE = BIT(2),
+		UAV = BIT(2),
 		ATTACHMENT = BIT(3),
 
 		DEFAULT = SAMPLED

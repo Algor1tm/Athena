@@ -35,7 +35,7 @@ namespace Athena
 		appinfo.LogConfig.EnableConsole = true;
 		appinfo.LogConfig.OutputPath = "Sandbox.log";
 
-		appinfo.RendererConfig.API = RendererAPI::Vulkan;
+		appinfo.RendererConfig.API = RendererAPI::D3D12;
 
 		appinfo.ScriptConfig.EnableDebug = true;
 

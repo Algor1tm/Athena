@@ -19,7 +19,7 @@ namespace Athena
 		TextureCreateInfo texInfo;
 		texInfo.Name = "Renderer_WhiteTexture";
 		texInfo.TextureFormat = Format::RGBA8;
-		texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+		texInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::UAV);
 		texInfo.Width = 1;
 		texInfo.Height = 1;
 		texInfo.Layers = 1;
@@ -40,7 +40,7 @@ namespace Athena
 		texCubeInfo.Name = "Renderer_BlackTextureCube";
 		texCubeInfo.Type = TextureType::TEXTURE_CUBE;
 		texCubeInfo.TextureFormat = Format::RGBA8;
-		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::STORAGE);
+		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::UAV);
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
 		texCubeInfo.Layers = 6;
@@ -95,7 +95,7 @@ namespace Athena
 		{
 			texInfo.Name = "Renderer_BRDF_LUT";
 			texInfo.TextureFormat = Format::RG16F;
-			texInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
+			texInfo.Usage = TextureUsage(TextureUsage::UAV | TextureUsage::SAMPLED);
 			texInfo.Width = 512;
 			texInfo.Height = 512;
 			texInfo.Layers = 1;

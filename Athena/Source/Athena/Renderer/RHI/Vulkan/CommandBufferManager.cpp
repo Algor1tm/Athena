@@ -60,7 +60,7 @@ namespace Athena
 
 		OnCompletionCallbacks.Flush();
 		State = CommandBufferState::Idle;
-		LastUsedTime = Time::GetCurrentTime();
+		LastUsedTime = Time::GetSystemCurrentTime();
 	}
 
 	void CommandBufferManager::Init()
@@ -194,8 +194,6 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 
-		ensuref(commandBuffer->State != CommandBufferState::RecordingCommands);
-
 		if (commandBuffer->State == CommandBufferState::Submitted)
 		{
 			VK_CHECK(vkWaitForFences(Vulkan::GetLogicalDevice(), 1, &commandBuffer->SignalFence, VK_TRUE, VULKAN_DEFAULT_FENCE_TIMEOUT));
@@ -291,7 +289,7 @@ namespace Athena
 
 			if (buffer->State == CommandBufferState::Idle)
 			{
-				if (Time::GetCurrentTime() - buffer->LastUsedTime >= Time::Seconds(COMMAND_BUFFER_DELETE_DELAY))
+				if (Time::GetSystemCurrentTime() - buffer->LastUsedTime >= Time::Seconds(COMMAND_BUFFER_DELETE_DELAY))
 				{
 					buffersToDelete.push_back(i);
 				}

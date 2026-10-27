@@ -94,7 +94,7 @@ namespace Athena
 		}
 
 	public:
-		static inline Time GetCurrentTime()
+		static inline Time GetSystemCurrentTime()
 		{
 			return Time::Milliseconds(Platform::GetHighPrecisionTime());
 		}
@@ -143,12 +143,12 @@ namespace Athena
 
 		inline void Reset()
 		{
-			m_Start = Time::GetCurrentTime();
+			m_Start = Time::GetSystemCurrentTime();
 		}
 
 		inline Time ElapsedTime()
 		{
-			Time end = Time::GetCurrentTime();
+			Time end = Time::GetSystemCurrentTime();
 			return end - m_Start;
 		}
 

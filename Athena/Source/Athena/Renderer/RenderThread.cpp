@@ -5,6 +5,7 @@
 #include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/Renderer/RHI/RHI.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
+#include "Athena/Renderer/RHI/D3D12/D3D12RHI.h"
 
 
 namespace Athena
@@ -25,7 +26,7 @@ namespace Athena
 
 	static AutoCVar<bool> CVarEnableRenderThread(
 		"r.EnableRenderThread",
-		true,
+		false,
 		"Enables or disables render thread (default - true)."
 	);
 
@@ -65,7 +66,7 @@ namespace Athena
 		switch(config.API)
 		{
 			case RendererAPI::Vulkan: RHI::s_RHI = new VulkanRHI(); break;
-			//case RendererAPI::D3D12:  RHI::s_RHI = new D3D12RHI(); break;
+			case RendererAPI::D3D12:  RHI::s_RHI = new D3D12RHI(); break;
 		}
 
 		ENQUEUE_RENDER_COMMAND([config]()

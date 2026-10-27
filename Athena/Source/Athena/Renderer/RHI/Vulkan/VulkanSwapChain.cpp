@@ -268,7 +268,7 @@ namespace Athena
 		m_VSync = enabled;
 	}
 
-	void VulkanSwapChain::OnWindowResized()
+	void VulkanSwapChain::OnWindowResized(uint32 width, uint32 height)
 	{
 		m_Dirty = true;
 	}
@@ -283,11 +283,7 @@ namespace Athena
 			SCOPE_CYCLE_STAT(STAT_WaitForGPU);
 		
 			VulkanCommandBuffer* presentCommandBuffer = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCommandBuffer();
-
-			if (presentCommandBuffer->State == CommandBufferState::Submitted)
-			{
-				VulkanRHI::Get()->GetCmdBufferManager()->WaitForCmdBuffer(presentCommandBuffer);
-			}
+			VulkanRHI::Get()->GetCmdBufferManager()->WaitForCmdBuffer(presentCommandBuffer);
 		}
 		
 		{

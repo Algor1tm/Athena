@@ -5,9 +5,9 @@
 
 namespace Athena
 {
-	Ref<SwapChain> SwapChain::Create(void* windowHandle, bool vsync)
+	Ref<SwapChain> SwapChain::Create(void* windowHandle, uint32 width, uint32 height, bool vsync)
 	{
-		Ref<SwapChain> swapChain = RHI::Get()->CreateSwapChain(windowHandle, vsync);
+		Ref<SwapChain> swapChain = RHI::Get()->CreateSwapChain(windowHandle, width, height, vsync);
 
 		ENQUEUE_RENDER_COMMAND([swapChain]() 
 			{

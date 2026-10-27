@@ -123,6 +123,16 @@ namespace Athena
 	{
 		return FilePath(x).string();
 	}
+
+	inline String ToString(const wchar_t* x)
+	{
+		return FilePath(x).string();
+	}
+
+	inline String ToString(wchar_t* x)
+	{
+		return FilePath(x).string();
+	}
 }
 
 #define DECLARE_FMT_FORMATTER(Type) \
@@ -169,6 +179,7 @@ namespace Athena
 	EXPORT_LOG_CATEGORY(Windows);
 	EXPORT_LOG_CATEGORY(Renderer);
 	EXPORT_LOG_CATEGORY(Vulkan);
+	EXPORT_LOG_CATEGORY(D3D12);
 	EXPORT_LOG_CATEGORY(AssetManager);
 	EXPORT_LOG_CATEGORY(FileSystem);
 	EXPORT_LOG_CATEGORY(Scene);

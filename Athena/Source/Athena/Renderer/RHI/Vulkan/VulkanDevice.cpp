@@ -114,7 +114,7 @@ namespace Athena
 			std::vector<VkPhysicalDevice> gpus(gpuCount);
 			VK_CHECK(vkEnumeratePhysicalDevices(instance, &gpuCount, gpus.data()));
 
-			String message = "GPUs: \n\t";
+			String message = "Avaialble GPUs: \n\t";
 			uint32 selectedGPUInex = 0;
 
 			for (uint32 i = 0; i < gpuCount; i++)
@@ -426,7 +426,7 @@ namespace Athena
 		for (uint32 i = 0; i < ATN_ARRAY_SIZE(m_GPUCapabilities.Formats); ++i)
 		{
 			Format format = Format(i);
-			FormatSupportProperties properties = m_GPUCapabilities.Formats[format];
+			FormatSupportProperties& properties = m_GPUCapabilities.Formats[format];
 
 			if (format == Format::Unknown || format == Format::FormatNum)
 			{

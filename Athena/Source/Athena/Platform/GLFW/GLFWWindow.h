@@ -266,7 +266,7 @@ namespace Athena
 			ATN_LOG_WARN(Windows, "Raw mouse motion not supported on this platform!");
 		}
 
-		window->m_SwapChain = SwapChain::Create(window->m_WindowHandle, window->m_Data.VSync);
+		window->m_SwapChain = SwapChain::Create(window->m_WindowHandle, window->m_Data.Width, window->m_Data.Height, window->m_Data.VSync);
 
 		return window;
 	}
@@ -299,11 +299,11 @@ namespace Athena
 		});
 	}
 
-	void Window::OnWindowResized()
+	void Window::OnWindowResized(uint32 width, uint32 height)
 	{
-		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain]()
+		ENQUEUE_RENDER_COMMAND([swapChain = m_SwapChain, width, height]()
 		{
-			swapChain->OnWindowResized();
+			swapChain->OnWindowResized(width, height);
 		});
 	}
 

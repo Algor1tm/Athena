@@ -58,11 +58,11 @@ namespace Athena
 
 		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
 
-		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, bool vsync) = 0;
+		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) = 0;
 
 		virtual Ref<ImGuiBackend> CreateImGuiBackend() = 0;
 
-		virtual uint64 GetMemoryUsage() = 0;
+		virtual uint64 GetMemoryUsage() = 0; // Kbs
 
 		virtual const GPUCapabilities& GetGPUCapabilities() = 0;
 

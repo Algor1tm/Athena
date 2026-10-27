@@ -43,7 +43,6 @@ namespace Athena
 		2,
 		"Sets debug report level 0 - 4 (0 - disable validation, default - 2)."
 	);
-
 #endif
 
 #define VK_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
@@ -251,7 +250,7 @@ namespace Athena
 		return Ref<VulkanTracyZone>::Create(cmdList, line, fileName, functionName, name);
 	}
 
-	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, bool vsync)
+	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)
 	{
 		return Ref<VulkanSwapChain>::Create(windowHandle, vsync);
 	}

@@ -127,7 +127,7 @@ namespace Athena
 
 		// Set default layout if image has not initalized yet
 		if (m_DescriptorInfo.imageLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-			m_DescriptorInfo.imageLayout = GetTexture()->GetInfo().Usage & TextureUsage::STORAGE ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			m_DescriptorInfo.imageLayout = GetTexture()->GetInfo().Usage & TextureUsage::UAV ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		return m_DescriptorInfo;
 	}

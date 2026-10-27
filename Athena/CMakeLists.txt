@@ -30,6 +30,8 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"ThirdParty/concurrentqueue/concurrentqueue.h"
 	"ThirdParty/concurrentqueue/blockingconcurrentqueue.h"
 	"ThirdParty/concurrentqueue/lightweightsemaphore.h"
+	"ThirdParty/D3D12MemoryAllocator/D3D12MemAlloc.h"
+	"ThirdParty/D3D12MemoryAllocator/D3D12MemAlloc.cpp"
 	"ThirdParty/filewatch/FileWatch.h"
 	"ThirdParty/entt/entt.h"
 	"ThirdParty/ImGuizmo/ImGuizmo.h"
@@ -152,6 +154,7 @@ SetBuildDirectory(TracyClient)
 target_link_libraries(Athena PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>:TracyClient>)
 
 
+# VULKAN
 if (Vulkan_FOUND)
 	target_link_libraries(Athena PRIVATE Vulkan::Vulkan Vulkan::shaderc_combined)
 
@@ -167,6 +170,9 @@ if (Vulkan_FOUND)
 		$<$<CONFIG:Dist>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
 
 endif(Vulkan_FOUND)
+
+# DIRECTX
+target_link_libraries(Athena PUBLIC "d3d12.lib" "dxgi.lib")
 
 # Windows specific code
 if(WIN32)

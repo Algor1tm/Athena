@@ -67,11 +67,11 @@ namespace Athena
 		}
 
 		Resolution = TryReadYAMLValue<uint32>(root, "Resolution", 1024);
-		FloatFormat = (Format)TryReadYAMLValue<uint32>(root, "FloatFormat", (uint32)Format::R11G11B10F);
+		FloatFormat = (Format)TryReadYAMLValue<uint32>(root, "FloatFormat", (uint32)Format::R11G11B10UF);
 		
 		if (!IsValidFormat())
 		{
-			FloatFormat = Format::R11G11B10F;
+			FloatFormat = Format::R11G11B10UF;
 			ATN_LOG_ERROR(AssetManager, "Forcing format of environment map to R11G11B10F!");
 		}
 
@@ -80,7 +80,7 @@ namespace Athena
 
 	bool EnvironmentMapImportSettings::IsValidFormat()
 	{
-		return FloatFormat == Format::R11G11B10F ||
+		return FloatFormat == Format::R11G11B10UF ||
 			FloatFormat == Format::RGBA16F ||
 			FloatFormat == Format::RGBA32F;
 	}
@@ -154,6 +154,12 @@ namespace Athena
 		if (ExtractChannelsNum == 3)
 			ExtractChannelsNum = 4;
 
+		if (ExtractChannelsNum < 4 && sRGB == true)
+		{
+			ATN_LOG_WARN(AssetManager, "Forcing sRGB to false because channels count is less than 4");
+			sRGB = false;
+		}
+
 		return true;
 	}
 
@@ -177,13 +183,37 @@ namespace Athena
 		if (stbi_is_hdr(utf8Path.data()))
 		{
 			data = stbi_loadf(utf8Path.data(), &width, &height, &channels, 0);
-			format = GetHDRFormat(channels);
 			HDR = true;
 		}
 		else
 		{
 			data = stbi_load(utf8Path.data(), &width, &height, &channels, 0);
-			format = GetFormat(channels, m_Settings->sRGB);
+		}
+
+		bool extract = channels == 3 || maxChannels < channels;
+		if (extract)
+		{
+			if (HDR)
+			{
+				data = ExtractChannelsHDR((float*)data, width, height, channels, maxChannels);
+				format = GetHDRFormat(maxChannels);
+			}
+			else
+			{
+				data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
+				format = GetFormat(maxChannels, m_Settings->sRGB);
+			}
+		}
+		else
+		{
+			if (HDR)
+			{
+				format = GetHDRFormat(channels);
+			}
+			else
+			{
+				format = GetFormat(channels, m_Settings->sRGB);
+			}
 		}
 
 		if (data == nullptr || format == Format::Unknown)
@@ -192,24 +222,12 @@ namespace Athena
 			return nullptr;
 		}
 
-		bool extract = channels == 3 || maxChannels < channels;
-		if (HDR == false && extract)
-		{
-			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, m_Settings->sRGB);
-		}
-		else if (extract)
-		{
-			data = ExtractChannelsHDR((float*)data, width, height, channels, maxChannels);
-			format = GetHDRFormat(maxChannels);
-		}
-
 		uint64 size = width * height * GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, size);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
 		if (m_Settings->ComputeUsage)
-			usage = TextureUsage(usage | TextureUsage::STORAGE);
+			usage = TextureUsage(usage | TextureUsage::UAV);
 
 		TextureSamplerCreateInfo samplerInfo;
 		samplerInfo.Filter = m_Settings->FilterMode;
@@ -244,7 +262,17 @@ namespace Athena
 		const uint32 size = inputHeight == 0 ? inputWidth : inputWidth * inputHeight;
 		data = stbi_load_from_memory((const stbi_uc*)inputData, size, &width, &height, &channels, 0);
 
-		Format format = GetFormat(channels, m_Settings->sRGB);
+		Format format;
+
+		if (channels == 3 || maxChannels < channels)
+		{
+			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
+			format = GetFormat(maxChannels, m_Settings->sRGB);
+		}
+		else
+		{
+			format = GetFormat(channels, m_Settings->sRGB);
+		}
 
 		if (data == nullptr || format == Format::Unknown)
 		{
@@ -252,18 +280,12 @@ namespace Athena
 			return nullptr;
 		}
 
-		if (channels == 3 || maxChannels < channels)
-		{
-			data = ExtractChannels((byte*)data, width, height, channels, maxChannels);
-			format = GetFormat(maxChannels, m_Settings->sRGB);
-		}
-
 		uint64 dataSize = width * height * GetFormatProperties(format).BytesPerPixel;
 		Buffer buffer = Buffer::Move(data, dataSize);
 
 		TextureUsage usage = TextureUsage::SAMPLED;
 		if (m_Settings->ComputeUsage)
-			usage = TextureUsage(usage | TextureUsage::STORAGE);
+			usage = TextureUsage(usage | TextureUsage::UAV);
 
 		TextureSamplerCreateInfo samplerInfo;
 		samplerInfo.Filter = m_Settings->FilterMode;
@@ -288,11 +310,12 @@ namespace Athena
 
 	Format TextureImporter::GetFormat(uint32 channels, bool sRGB)
 	{
+		checkf(!(channels < 4 && sRGB));
+
 		switch (channels)
 		{
-		case 1: return sRGB ? Format::R8_SRGB    : Format::R8;
-		case 2: return sRGB ? Format::RG8_SRGB   : Format::RG8;
-		case 3: return sRGB ? Format::RGB8_SRGB  : Format::RGB8;
+		case 1: return Format::R8;
+		case 2: return Format::RG8;
 		case 4: return sRGB ? Format::RGBA8_SRGB : Format::RGBA8;
 		}
 

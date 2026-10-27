@@ -99,7 +99,7 @@ namespace Athena
 			return;
 		}
 
-		CreateTextures(params.Resolution, Format::R11G11B10F, outEnvTex, outIrradianceTex);
+		CreateTextures(params.Resolution, Format::R11G11B10UF, outEnvTex, outIrradianceTex);
 
 		// Generate cube map texture
 		//ComputePassCreateInfo passInfo;
@@ -153,7 +153,7 @@ namespace Athena
 		TextureCreateInfo cubemapInfo;
 		cubemapInfo.Name = "EnvironmentMap";
 		cubemapInfo.TextureFormat = floatFormat;
-		cubemapInfo.Usage = TextureUsage(TextureUsage::STORAGE | TextureUsage::SAMPLED);
+		cubemapInfo.Usage = TextureUsage(TextureUsage::UAV | TextureUsage::SAMPLED);
 		cubemapInfo.Width = resolution;
 		cubemapInfo.Height = resolution;
 		cubemapInfo.GenerateMipMap = true;
@@ -163,7 +163,7 @@ namespace Athena
 		outEnvTex = TextureCube::Create(cubemapInfo);
 
 		cubemapInfo.Name = "EnvIrradianceMap";
-		cubemapInfo.TextureFormat = Format::R11G11B10F;
+		cubemapInfo.TextureFormat = Format::R11G11B10UF;
 		cubemapInfo.Width = s_IrradianceMapResolution;
 		cubemapInfo.Height = s_IrradianceMapResolution;
 		cubemapInfo.GenerateMipMap = false;

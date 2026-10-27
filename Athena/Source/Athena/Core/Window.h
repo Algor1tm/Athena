@@ -60,7 +60,7 @@ namespace Athena
 			m_Data.TitlebarHitTest = callback;
 		}
 
-		void OnWindowResized();
+		void OnWindowResized(uint32 width, uint32 height);
 		void SetVSync(bool enabled);
 		bool IsVSync() const { return m_Data.VSync; }
 

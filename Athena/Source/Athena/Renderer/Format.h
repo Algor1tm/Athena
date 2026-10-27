@@ -5,24 +5,21 @@
 
 namespace Athena
 {
+	// If type is not specified it is UNORM
 	enum Format
 	{
 		Unknown = 0,
 		// Color
 		R8,
-		R8_SRGB,
 		RG8,
-		RG8_SRGB,
-		RGB8,
-		RGB8_SRGB,
 		RGBA8,
 		RGBA8_SRGB,
+		R10G10B10A2,
 
 		R32F,
 		RG16F,
 		RG32F,
-		RGB16F,
-		R11G11B10F,
+		R11G11B10UF,
 		RGB32F,
 		RGBA16F,
 		RGBA32F,

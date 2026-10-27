@@ -199,7 +199,7 @@ namespace Athena
 			return false;
 		}
 
-		m_Window->OnWindowResized();
+		m_Window->OnWindowResized(event.GetWidth(), event.GetHeight());
 		m_Minimized = false;
 
 		return false;

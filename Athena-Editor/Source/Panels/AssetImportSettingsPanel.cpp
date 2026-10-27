@@ -35,7 +35,7 @@ namespace Athena
         UI::EnumAdd(ATN_STRINGIFY_MACRO(TextureWrap), (uint32)TextureWrap::MIRRORED_CLAMP_TO_EDGE, "Mirrored clamp to edge");
 
         UI::RegisterEnum("HDR Format");
-        UI::EnumAdd("HDR Format", (uint32)Format::R11G11B10F, "R11G11B10F");
+        UI::EnumAdd("HDR Format", (uint32)Format::R11G11B10UF, "R11G11B10UF");
         UI::EnumAdd("HDR Format", (uint32)Format::RGBA16F, "RGBA16F");
         UI::EnumAdd("HDR Format", (uint32)Format::RGBA32F, "RGBA32F");
     }

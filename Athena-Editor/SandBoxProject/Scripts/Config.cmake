@@ -9,4 +9,4 @@ set(ATHENA_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../../..")  # Default: "${CMAKE_SOURC
 set(ATHENA_BINARY_DIR "${CMAKE_SOURCE_DIR}/../../../Build/Binaries/Athena")  # Default: "${CMAKE_SOURCE_DIR}/../../../Build/Binaries/Athena"
 
 # Option to use MD or MDd 
-set(USE_DEBUG_RUNTIME_LIBS OFF)  # Default: OFF
+set(USE_DEBUG_RUNTIME_LIBS ON)  # Default: OFF

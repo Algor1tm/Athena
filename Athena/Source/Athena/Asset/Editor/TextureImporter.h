@@ -17,7 +17,7 @@ namespace Athena
 		bool IsValidFormat();
 
 		float Resolution = 128;
-		Format FloatFormat = Format::R11G11B10F;
+		Format FloatFormat = Format::R11G11B10UF;
 	};
 
 	class ATHENA_API TextureImportSettings : public AssetImportSettings

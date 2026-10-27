@@ -15,7 +15,7 @@ namespace Athena
 
 		virtual void Init() override;
 
-		virtual void OnWindowResized() override;
+		virtual void OnWindowResized(uint32 width, uint32 height) override;
 		virtual void SetVSync(bool enabled) override;
 
 		void CleanUp(VkSwapchainKHR swapChain, bool cleanupSurface = false);

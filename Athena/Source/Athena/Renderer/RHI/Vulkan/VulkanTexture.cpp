@@ -18,7 +18,7 @@ namespace Athena
 			if (usage & TextureUsage::SAMPLED)
 				flags |= VK_IMAGE_USAGE_SAMPLED_BIT;
 
-			if (usage & TextureUsage::STORAGE)
+			if (usage & TextureUsage::UAV)
 				flags |= VK_IMAGE_USAGE_STORAGE_BIT;
 
 			if (usage & TextureUsage::ATTACHMENT)

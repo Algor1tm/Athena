@@ -108,6 +108,5 @@ namespace Athena
 		uint64 m_Size;
 		IndexSize m_IndexSize;
 	};
-
 }
 

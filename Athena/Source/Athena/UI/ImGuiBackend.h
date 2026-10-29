@@ -11,11 +11,11 @@ namespace Athena
 		static Ref<ImGuiBackend> Create();
 		virtual ~ImGuiBackend() = default;
 
-		virtual void Init_RT() = 0;
 		virtual void Init_GT(void* windowHandle) = 0;
+		virtual void Init_RT() = 0;
 
-		virtual void NewFrame_RT() = 0;
 		virtual void NewFrame_GT() = 0;
+		virtual void NewFrame_RT() = 0;
 		virtual void SwapDrawData() = 0;
 		virtual void RenderDrawData() = 0;
 

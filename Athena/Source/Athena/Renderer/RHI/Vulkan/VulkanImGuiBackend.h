@@ -26,11 +26,11 @@ namespace Athena
 		VulkanImGuiBackend();
 		virtual ~VulkanImGuiBackend();
 
-		virtual void Init_RT() override;
 		virtual void Init_GT(void* windowHandle) override;
+		virtual void Init_RT() override;
 
-		virtual void NewFrame_RT() override;
 		virtual void NewFrame_GT() override;
+		virtual void NewFrame_RT() override;
 		virtual void SwapDrawData() override;
 		virtual void RenderDrawData() override;
 

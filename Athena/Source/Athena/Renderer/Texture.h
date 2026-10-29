@@ -29,7 +29,16 @@ namespace Athena
 		TEXTURE_CUBE
 	};
 
-	enum class ComponentSwizzle
+	enum class TextureViewType
+	{
+		SRV,
+		UAV,
+		RTV,
+		DSV,
+		DSV_READONLY
+	};
+
+	enum class ComponentMapping
 	{
 		IDENTITY = 0,
 		ZERO,
@@ -93,14 +102,14 @@ namespace Athena
 		TextureAspect Aspect = TextureAspect::AUTO;
 	};
 
-	struct ComponentsMapping
+	struct ComponentsSwizzle
 	{
-		bool operator==(const ComponentsMapping&) const = default;
+		bool operator==(const ComponentsSwizzle&) const = default;
 
-		ComponentSwizzle R = ComponentSwizzle::IDENTITY;
-		ComponentSwizzle G = ComponentSwizzle::IDENTITY;
-		ComponentSwizzle B = ComponentSwizzle::IDENTITY;
-		ComponentSwizzle A = ComponentSwizzle::IDENTITY;
+		ComponentMapping R = ComponentMapping::IDENTITY;
+		ComponentMapping G = ComponentMapping::IDENTITY;
+		ComponentMapping B = ComponentMapping::IDENTITY;
+		ComponentMapping A = ComponentMapping::IDENTITY;
 	};
 
 	struct TextureViewCreateInfo
@@ -108,9 +117,10 @@ namespace Athena
 		bool operator==(const TextureViewCreateInfo&) const = default;
 
 		String Name; // Optional (if empty, it will be generated)
-		TextureType ViewType = TextureType::TEXTURE_2D;
+		TextureType TextureType = TextureType::TEXTURE_2D;
+		TextureViewType ViewType = TextureViewType::SRV;
 		TextureRange Range;
-		ComponentsMapping Swizzle;
+		ComponentsSwizzle Swizzle;
 		bool OverrideSampler = false;
 		TextureSamplerCreateInfo Sampler;
 	};
@@ -141,6 +151,7 @@ namespace std
 		size_t operator()(const TextureViewCreateInfo& value) const
 		{
 			size_t hash = 0;
+			HashCombine(hash, (uint32)value.ViewType);
 			HashCombine(hash, value.Range.BaseMipLevel);
 			HashCombine(hash, value.Range.MipLevelCount);
 			HashCombine(hash, value.Range.BaseLayer);
@@ -166,6 +177,10 @@ namespace Athena
 
 		virtual void Init() = 0;
 		virtual void Invalidate() = 0;
+
+		TextureViewType GetViewType() const { return m_Info.ViewType; }
+		TextureType GetTextureType() const { return m_Info.TextureType; }
+		const TextureRange& GetRange() const { return m_Info.Range; }
 
 		Texture* GetTexture() const { return m_Texture; }
 		const TextureViewCreateInfo& GetInfo() const { return m_Info; }
@@ -216,9 +231,9 @@ namespace Athena
 		virtual void UploadAndBlitMipMap(const Buffer& srcBuffer) = 0;
 
 	public:
-		Ref<TextureView> GetMainView();
-		Ref<TextureView> GetMipView(uint32 mip);
-		Ref<TextureView> GetLayersView(uint32 firstLayer, uint32 layerCount);
+		Ref<TextureView> GetView(TextureViewType viewType = TextureViewType::SRV);
+		Ref<TextureView> GetMipView(uint32 mip, TextureViewType viewType = TextureViewType::SRV);
+		Ref<TextureView> GetLayerView(uint32 layer, TextureViewType viewType = TextureViewType::SRV);
 		Ref<TextureView> GetView(const TextureViewCreateInfo& info);
 		void InvalidateViews();
 		void ClearViews();

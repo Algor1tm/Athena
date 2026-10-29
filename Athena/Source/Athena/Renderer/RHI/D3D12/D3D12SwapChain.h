@@ -21,8 +21,17 @@ namespace Athena
 		void NewFrame();
 		void Present();
 
+		DXGI_FORMAT GetFormat() const { return m_Format; }
+
+		uint32 GetWidth() const { return m_Width; }
+		uint32 GetHeight() const { return m_Height; }
+
+		ID3D12Resource* GetBackBuffer(uint32 index) const { return m_BackBuffers[index].Get(); }
+		uint32 GetCurrentBackBufferIndex() const { return m_BackBufferIndex; }
+
 	private:
 		ComPtr<IDXGISwapChain4> m_DXGISwapChain;
+		std::vector<ComPtr<ID3D12Resource>> m_BackBuffers;
 		uint32 m_Width;
 		uint32 m_Height;
 		DXGI_FORMAT m_Format;

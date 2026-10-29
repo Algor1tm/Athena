@@ -100,11 +100,12 @@ namespace Athena
 		m_Info.Height = height;
 	}
 
-	Ref<TextureView> Texture::GetMainView()
+	Ref<TextureView> Texture::GetView(TextureViewType viewType)
 	{
 		TextureViewCreateInfo info;
 		info.Name = GetName();
-		info.ViewType = GetType();
+		info.ViewType = viewType;
+		info.TextureType = GetType();
 		info.Range.BaseLayer = 0;
 		info.Range.LayerCount = GetInfo().Layers;
 		info.Range.BaseMipLevel = 0;
@@ -114,11 +115,12 @@ namespace Athena
 		return GetView(info);
 	}
 
-	Ref<TextureView> Texture::GetMipView(uint32 mip)
+	Ref<TextureView> Texture::GetMipView(uint32 mip, TextureViewType viewType)
 	{
 		TextureViewCreateInfo info;
 		info.Name = GetName();
-		info.ViewType = GetType();
+		info.ViewType = viewType;
+		info.TextureType = GetType();
 		info.Range.BaseLayer = 0;
 		info.Range.LayerCount = GetInfo().Layers;
 		info.Range.BaseMipLevel = mip;
@@ -128,20 +130,16 @@ namespace Athena
 		return GetView(info);
 	}
 
-	Ref<TextureView> Texture::GetLayersView(uint32 firstLayer, uint32 layerCount)
+	Ref<TextureView> Texture::GetLayerView(uint32 layer, TextureViewType viewType)
 	{
-		TextureType viewType = TextureType::TEXTURE_2D;
-
-		if (GetType() == TextureType::TEXTURE_CUBE && firstLayer % 6 == 0 && layerCount % 6 == 0)
-			viewType = TextureType::TEXTURE_CUBE;
-
 		TextureViewCreateInfo info;
 		info.Name = GetName();
 		info.ViewType = viewType;
-		info.Range.BaseLayer = firstLayer;
-		info.Range.LayerCount = layerCount;
+		info.TextureType = GetType();
+		info.Range.BaseLayer = layer;
+		info.Range.LayerCount = 1;
 		info.Range.BaseMipLevel = 0;
-		info.Range.MipLevelCount = 1;
+		info.Range.MipLevelCount = GetMipLevelsCount();
 		info.OverrideSampler = false;
 
 		return GetView(info);

@@ -43,7 +43,7 @@ namespace Athena
 		texCubeInfo.Usage = TextureUsage(TextureUsage::SAMPLED | TextureUsage::UAV);
 		texCubeInfo.Width = 1;
 		texCubeInfo.Height = 1;
-		texCubeInfo.Layers = 6;
+		texCubeInfo.Layers = 1;
 		texCubeInfo.GenerateMipMap = false;
 		texCubeInfo.Sampler.Filter = TextureFilter::NEAREST;
 		texCubeInfo.Sampler.Wrap = TextureWrap::REPEAT;

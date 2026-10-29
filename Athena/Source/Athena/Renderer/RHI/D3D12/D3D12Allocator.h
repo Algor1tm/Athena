@@ -29,7 +29,7 @@ namespace Athena
 		operator bool() const { return !(m_Allocation == nullptr); }
 
 	private:
-		D3D12MA::Allocation* m_Allocation;
+		D3D12MA::Allocation* m_Allocation = nullptr;
 	};
 
 	class D3D12Allocator

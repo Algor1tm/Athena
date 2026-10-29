@@ -68,17 +68,43 @@ namespace Athena
 		));
 
 		D3D12_CHECK(swapChain1.As(&m_DXGISwapChain));
-	}
+
+		m_BackBuffers.resize(swapChainDesc.BufferCount);
+		for (UINT i = 0; i < m_BackBuffers.size(); i++)
+		{
+			m_DXGISwapChain->GetBuffer(i, IID_PPV_ARGS(&m_BackBuffers[i]));
+		}
+
+		auto uiLayer = Application::Get().GetImGuiLayer();
+		if (uiLayer)
+			uiLayer->OnSwapChainRecreate();
+	}	
 
 	void D3D12SwapChain::OnWindowResized(uint32 width, uint32 height)
 	{
+		D3D12RHI::Get()->GetCmdListManager()->WaitDeviceIdle();
+
+		for (UINT i = 0; i < m_BackBuffers.size(); i++)
+		{
+			m_BackBuffers[i] = nullptr;
+		}
+
 		D3D12_CHECK(m_DXGISwapChain->ResizeBuffers(
-			D3D12::GetMaxFramesInFlight(), 
+			m_BackBuffers.size(),
 			width,
 			height,
 			m_Format,
 			m_TearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0
 		));
+
+		for (UINT i = 0; i < m_BackBuffers.size(); i++)
+		{
+			m_DXGISwapChain->GetBuffer(i, IID_PPV_ARGS(&m_BackBuffers[i]));
+		}
+
+		auto uiLayer = Application::Get().GetImGuiLayer();
+		if (uiLayer)
+			uiLayer->OnSwapChainRecreate();
 	}
 
 	void D3D12SwapChain::SetVSync(bool enabled)
@@ -105,5 +131,8 @@ namespace Athena
 		UINT presentFlags = (!m_VSync && m_TearingSupported) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		D3D12_CHECK(m_DXGISwapChain->Present(syncInterval, presentFlags));
+
+		D3D12CommandList* presentCommandList = D3D12RHI::Get()->GetCmdListManager()->GetPresentCommandList();
+		D3D12RHI::Get()->GetCmdListManager()->SignalPresent(presentCommandList);
 	}
 }

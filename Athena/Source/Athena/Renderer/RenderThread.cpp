@@ -26,7 +26,7 @@ namespace Athena
 
 	static AutoCVar<bool> CVarEnableRenderThread(
 		"r.EnableRenderThread",
-		false,
+		true,
 		"Enables or disables render thread (default - true)."
 	);
 

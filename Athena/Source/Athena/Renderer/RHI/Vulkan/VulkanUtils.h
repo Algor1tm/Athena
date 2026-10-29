@@ -93,17 +93,17 @@ namespace Athena::Vulkan
         return (VkImageViewType)0;
     }
 
-    inline VkComponentSwizzle TranslateSwizzle(ComponentSwizzle swizzle)
+    inline VkComponentSwizzle TranslateSwizzle(ComponentMapping swizzle)
     {
         switch (swizzle)
         {
-        case ComponentSwizzle::IDENTITY: return VK_COMPONENT_SWIZZLE_IDENTITY;
-        case ComponentSwizzle::ZERO:     return VK_COMPONENT_SWIZZLE_ZERO;
-        case ComponentSwizzle::ONE:      return VK_COMPONENT_SWIZZLE_ONE;
-        case ComponentSwizzle::R:        return VK_COMPONENT_SWIZZLE_R;
-        case ComponentSwizzle::G:        return VK_COMPONENT_SWIZZLE_G;
-        case ComponentSwizzle::B:        return VK_COMPONENT_SWIZZLE_B;
-        case ComponentSwizzle::A:        return VK_COMPONENT_SWIZZLE_A;
+        case ComponentMapping::IDENTITY: return VK_COMPONENT_SWIZZLE_IDENTITY;
+        case ComponentMapping::ZERO:     return VK_COMPONENT_SWIZZLE_ZERO;
+        case ComponentMapping::ONE:      return VK_COMPONENT_SWIZZLE_ONE;
+        case ComponentMapping::R:        return VK_COMPONENT_SWIZZLE_R;
+        case ComponentMapping::G:        return VK_COMPONENT_SWIZZLE_G;
+        case ComponentMapping::B:        return VK_COMPONENT_SWIZZLE_B;
+        case ComponentMapping::A:        return VK_COMPONENT_SWIZZLE_A;
         }
 
         checkf(false);

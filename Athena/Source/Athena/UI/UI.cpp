@@ -51,7 +51,7 @@ namespace Athena::UI
 
 	void* GetTextureID(const Ref<Texture2D>& texture)
 	{
-		return GetTextureID(texture->GetMainView());
+		return GetTextureID(texture->GetView());
 	}
 
 	void PushFont(Fonts font)

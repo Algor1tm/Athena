@@ -152,13 +152,12 @@ namespace Athena
 
 		commandList->End();
 
-		ID3D12CommandList* commandLists[] = { commandList->CommandList.Get()};
+		ID3D12CommandList* commandLists[] = { commandList->CommandList.Get() };
 
 		D3D12RHI::Get()->GetQueue()->ExecuteCommandLists(1, commandLists);
 
 		commandList->FenceValue++;
-		const uint64 fenceValue = commandList->FenceValue;
-		D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence.Get(), fenceValue);
+		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence.Get(), commandList->FenceValue));
 
 		commandList->State = CommandListState::Submitted;
 	}
@@ -174,6 +173,33 @@ namespace Athena
 		m_TransferCommandList = nullptr;
 
 		Submit(uploadList);
+	}
+
+	void CommandListManager::SubmitForPresent(D3D12CommandList* commandList)
+	{
+		TRACY_PROFILE_FUNC();
+
+		ensuref(m_TransferCommandList != commandList && commandList != nullptr);
+		ensuref(commandList->State == CommandListState::RecordingCommands);
+
+		if (m_TransferCommandList)
+		{
+			SubmitTransfer();
+		}
+
+		commandList->End();
+
+		ID3D12CommandList* commandLists[] = { commandList->CommandList.Get() };
+
+		D3D12RHI::Get()->GetQueue()->ExecuteCommandLists(1, commandLists);
+	}
+
+	void CommandListManager::SignalPresent(D3D12CommandList* commandList)
+	{
+		commandList->FenceValue++;
+		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence.Get(), commandList->FenceValue));
+
+		commandList->State = CommandListState::Submitted;
 	}
 
 	void CommandListManager::NewFrame()
@@ -195,9 +221,7 @@ namespace Athena
 			}
 			else if (list->State == CommandListState::Submitted)
 			{
-				bool completed = list->Fence->GetCompletedValue() >= list->FenceValue;
-
-				if (completed)
+				if (list->Fence->GetCompletedValue() >= list->FenceValue)
 				{
 					list->OnCompletion();
 				}
@@ -209,6 +233,29 @@ namespace Athena
 			D3D12CommandList* list = m_CommandLists[index];
 			m_CommandLists.erase(m_CommandLists.begin() + index);
 			delete list;
+		}
+	}
+
+	void CommandListManager::WaitDeviceIdle()
+	{
+		for (uint32 i = 0; i < m_CommandLists.size(); ++i)
+		{
+			D3D12CommandList* list = m_CommandLists[i];
+
+			if (list->State == CommandListState::Submitted)
+			{
+				WaitForCmdList(list);
+			}
+		}
+
+		for (uint32 i = 0; i < m_PresentCommandLists.size(); ++i)
+		{
+			D3D12CommandList* list = m_PresentCommandLists[i];
+
+			if (list->State == CommandListState::Submitted)
+			{
+				WaitForCmdList(list);
+			}
 		}
 	}
 

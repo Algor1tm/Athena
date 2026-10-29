@@ -57,12 +57,17 @@ namespace Athena
 		D3D12CommandList* GetTransferCommandList();
 		D3D12CommandList* GetPresentCommandList();
 
-		void WaitForCmdList(D3D12CommandList* commandBuffer);
+		void WaitForCmdList(D3D12CommandList* commandList);
 
-		void Submit(D3D12CommandList* commandBuffer);
+		void Submit(D3D12CommandList* commandList);
 		void SubmitTransfer();
 
+		void SubmitForPresent(D3D12CommandList* commandList);
+		void SignalPresent(D3D12CommandList* commandList);
+
 		void NewFrame();
+
+		void WaitDeviceIdle();
 
 	private:
 		D3D12CommandList* FindFreeCommandList();

@@ -95,7 +95,7 @@ namespace Athena
 			message += fmt::format("{}\n\t", ToString(desc.Description));
 		}
 
-		ATN_LOG_INFO(Vulkan, message);
+		ATN_LOG_INFO(D3D12, message);
 		message = fmt::format("Selected GPU description: \n\t");
 
 		DXGI_ADAPTER_DESC1 desc;
@@ -113,7 +113,7 @@ namespace Athena
 		message += fmt::format("SharedSystemMemory: {} \n\t", Utils::MemoryBytesToString(desc.SharedSystemMemory));
 		message += fmt::format("Is Software: {} \n\t", desc.Flags == DXGI_ADAPTER_FLAG_SOFTWARE);
 
-		ATN_LOG_INFO(Vulkan, message);
+		ATN_LOG_INFO(D3D12, message);
 
 		D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
 		if (FAILED(D3D12CreateDevice(m_Adapter.Get(), featureLevel, IID_PPV_ARGS(&m_Device))))
@@ -222,7 +222,7 @@ namespace Athena
 
 	Ref<TextureView> D3D12RHI::CreateTextureView(const TextureViewCreateInfo& info, Texture* texture)
 	{
-		return nullptr;
+		return Ref<D3D12TextureView>::Create(info, texture);
 	}
 
 	Ref<VertexBuffer> D3D12RHI::CreateVertexBuffer(const String& name, uint64 size)
@@ -352,11 +352,6 @@ namespace Athena
 		if (SUCCEEDED(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS18, &options18, sizeof(options18))))
 		{
 			m_FeaturesInfo.RenderPassesValid = options18.RenderPassesValid;
-		}
-
-		if (!m_FeaturesInfo.RenderPassesValid)
-		{
-			ATN_LOG_FATAL(D3D12, "DirectX 12 render passes are not supported on current system (try to update drivers or use Vulkan instead)!");
 		}
 
 

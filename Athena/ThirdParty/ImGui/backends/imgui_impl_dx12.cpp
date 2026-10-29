@@ -63,6 +63,7 @@
 //  2018-02-22: Merged into master with all Win32 code synchronized to other examples.
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #ifndef IMGUI_DISABLE
 #include "imgui_impl_dx12.h"
 
@@ -441,8 +442,11 @@ void ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandL
                 // Bind texture, Draw
                 D3D12_GPU_DESCRIPTOR_HANDLE texture_handle = {};
                 texture_handle.ptr = (UINT64)pcmd->GetTexID();
-                command_list->SetGraphicsRootDescriptorTable(1, texture_handle);
-                command_list->DrawIndexedInstanced(pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
+                if (texture_handle.ptr)
+                {
+                    command_list->SetGraphicsRootDescriptorTable(1, texture_handle);
+                    command_list->DrawIndexedInstanced(pcmd->ElemCount, 1, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset, 0);
+                }
             }
         }
         global_idx_offset += draw_list->IdxBuffer.Size;
@@ -988,14 +992,36 @@ static void ImGui_ImplDX12_InitLegacySingleDescriptorMode(ImGui_ImplDX12_InitInf
 }
 #endif
 
-bool ImGui_ImplDX12_Init(ImGui_ImplDX12_InitInfo* init_info)
+bool ImGui_ImplDX12_Init_GT()
 {
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
     IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
 
-    // Setup backend capabilities flags
     ImGui_ImplDX12_Data* bd = IM_NEW(ImGui_ImplDX12_Data)();
+    io.BackendRendererUserData = (void*)bd;
+    io.BackendRendererName = "imgui_impl_dx12";
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;  // We can create multi-viewports on the Renderer side (optional)
+
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        ImGui_ImplDX12_InitMultiViewportSupport();
+
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    platform_io.DrawCallback_ResetRenderState = ImGui_ImplDX12_DrawCallback_ResetRenderState;
+    platform_io.DrawCallback_SetSamplerLinear = ImGui_ImplDX12_DrawCallback_SetSamplerLinear;
+    platform_io.DrawCallback_SetSamplerNearest = ImGui_ImplDX12_DrawCallback_SetSamplerNearest;
+
+    return true;
+}
+
+bool ImGui_ImplDX12_Init(ImGui_ImplDX12_InitInfo* init_info)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui_ImplDX12_Data* bd = (ImGui_ImplDX12_Data*)io.BackendRendererUserData;
+
+    // Setup backend capabilities flags
     bd->InitInfo = *init_info; // Deep copy
     init_info = &bd->InitInfo;
 
@@ -1008,24 +1034,10 @@ bool ImGui_ImplDX12_Init(ImGui_ImplDX12_InitInfo* init_info)
     bd->pd3dSrvDescHeap = init_info->SrvDescriptorHeap;
     bd->tearingSupport = false;
 
-    io.BackendRendererUserData = (void*)bd;
-    io.BackendRendererName = "imgui_impl_dx12";
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
-    io.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;  // We can create multi-viewports on the Renderer side (optional)
-
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        ImGui_ImplDX12_InitMultiViewportSupport();
-
     // Create a dummy ImGui_ImplDX12_ViewportData holder for the main viewport,
     // Since this is created and managed by the application, we will only use the ->Resources[] fields.
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     main_viewport->RendererUserData = IM_NEW(ImGui_ImplDX12_ViewportData)(bd->numFramesInFlight);
-
-    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-    platform_io.DrawCallback_ResetRenderState = ImGui_ImplDX12_DrawCallback_ResetRenderState;
-    platform_io.DrawCallback_SetSamplerLinear = ImGui_ImplDX12_DrawCallback_SetSamplerLinear;
-    platform_io.DrawCallback_SetSamplerNearest = ImGui_ImplDX12_DrawCallback_SetSamplerNearest;
 
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     if (init_info->SrvDescriptorAllocFn == nullptr)
@@ -1264,6 +1276,9 @@ static void ImGui_ImplDX12_RenderWindow(ImGuiViewport* viewport, void*)
     if (vd->SwapChain == nullptr)
         return;
 
+    ImGuiViewportP* viewportP = reinterpret_cast<ImGuiViewportP*>(viewport);
+    ImViewportSnapshot* viewportSnapshot = &viewportP->Snapshots[viewportP->SnapshotIndex_RT];
+
     ImGui_ImplDX12_FrameContext* frame_context = ImGui_WaitForNextFrameContext(vd);
     UINT back_buffer_idx = vd->SwapChain->GetCurrentBackBufferIndex();
 
@@ -1283,11 +1298,12 @@ static void ImGui_ImplDX12_RenderWindow(ImGuiViewport* viewport, void*)
     cmd_list->Reset(frame_context->CommandAllocator, nullptr);
     cmd_list->ResourceBarrier(1, &barrier);
     cmd_list->OMSetRenderTargets(1, &vd->FrameCtx[back_buffer_idx].RenderTargetCpuDescriptors, FALSE, nullptr);
-    if (!(viewport->Flags & ImGuiViewportFlags_NoRendererClear))
+    if (!(viewportSnapshot->Flags & ImGuiViewportFlags_NoRendererClear))
         cmd_list->ClearRenderTargetView(vd->FrameCtx[back_buffer_idx].RenderTargetCpuDescriptors, (const float*)&clear_color, 0, nullptr);
     cmd_list->SetDescriptorHeaps(1, &bd->pd3dSrvDescHeap);
 
-    ImGui_ImplDX12_RenderDrawData(viewport->DrawData, cmd_list);
+    ImDrawData* drawData = &viewportSnapshot->DrawDataSnapshot.DrawData;
+    ImGui_ImplDX12_RenderDrawData(drawData, cmd_list);
 
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

@@ -55,6 +55,7 @@ struct ImGui_ImplDX12_InitInfo
 };
 
 // Follow "Getting Started" link and check examples/ folder to learn about using backends!
+IMGUI_IMPL_API bool     ImGui_ImplDX12_Init_GT();
 IMGUI_IMPL_API bool     ImGui_ImplDX12_Init(ImGui_ImplDX12_InitInfo* info);
 IMGUI_IMPL_API void     ImGui_ImplDX12_Shutdown();
 IMGUI_IMPL_API void     ImGui_ImplDX12_NewFrame();

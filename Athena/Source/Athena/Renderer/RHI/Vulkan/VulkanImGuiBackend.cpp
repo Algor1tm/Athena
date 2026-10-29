@@ -4,7 +4,7 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanTextureView.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanTracyZone.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
 
@@ -256,7 +256,7 @@ namespace Athena
 		if (!m_ImGuiRenderPass)
 			return;
 
-		Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();;
+		Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
 
 		for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++)
 		{
@@ -279,7 +279,7 @@ namespace Athena
 	void* VulkanImGuiBackend::GetTextureID(const Ref<TextureView>& view)
 	{
 		if (view == nullptr)
-			return GetTextureID(EngineRenderAssets::Get().WhiteTexture->GetMainView());
+			return GetTextureID(EngineRenderAssets::Get().WhiteTexture->GetView());
 
 		{
 			std::unique_lock lock(m_TexturesMapMutex);
@@ -312,7 +312,7 @@ namespace Athena
 
 		if (info.VulkanImageView == VK_NULL_HANDLE)
 		{
-			info.VulkanImageView = EngineRenderAssets::Get().WhiteTexture->GetMainView().As<VulkanTextureView>()->GetImageView();
+			info.VulkanImageView = EngineRenderAssets::Get().WhiteTexture->GetView().As<VulkanTextureView>()->GetImageView();
 		}
 
 		info.Set = ImGui_ImplVulkan_AddTexture(info.VulkanSampler, info.VulkanImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

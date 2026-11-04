@@ -59,16 +59,17 @@ namespace Athena
 
 		if (enableValidation)
 		{
-			ComPtr<ID3D12Debug> debugLayer;
-
+			ID3D12Debug* debugLayer = nullptr;
 			if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer))))
 			{
 				debugLayer->EnableDebugLayer();
+				debugLayer->Release();
 
-				ComPtr<ID3D12Debug1> debugLayer1;
-				if (CVarD3D12EnableGPUValidation.GetBool() && SUCCEEDED(debugLayer.As(&debugLayer1)))
+				ID3D12Debug1* debugLayer1 = nullptr;
+				if (CVarD3D12EnableGPUValidation.GetBool() && SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer1))))
 				{
 					debugLayer1->SetEnableGPUBasedValidation(true);
+					debugLayer1->Release();
 				}
 			}
 
@@ -78,7 +79,7 @@ namespace Athena
 		UINT createFactoryFlags = enableValidation ? DXGI_CREATE_FACTORY_DEBUG : 0;
 		D3D12_CHECK(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&m_DXGIFactory)));
 
-		ComPtr<IDXGIAdapter1> adapter;
+		IDXGIAdapter1* adapter = nullptr;
 
 		String message = "Available GPUs: \n\t";
 		for (UINT adapterIndex = 0; m_DXGIFactory->EnumAdapterByGpuPreference(adapterIndex, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter)) != DXGI_ERROR_NOT_FOUND; ++adapterIndex)
@@ -86,11 +87,12 @@ namespace Athena
 			// Select first one
 			if (adapterIndex == 0)
 			{
-				adapter.As(&m_Adapter);
+				D3D12_CHECK(adapter->QueryInterface(IID_PPV_ARGS(&m_Adapter)));
 			}
 
 			DXGI_ADAPTER_DESC1 desc;
 			adapter->GetDesc1(&desc);
+			adapter->Release();
 
 			message += fmt::format("{}\n\t", ToString(desc.Description));
 		}
@@ -116,10 +118,10 @@ namespace Athena
 		ATN_LOG_INFO(D3D12, message);
 
 		D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
-		if (FAILED(D3D12CreateDevice(m_Adapter.Get(), featureLevel, IID_PPV_ARGS(&m_Device))))
+		if (FAILED(D3D12CreateDevice(m_Adapter, featureLevel, IID_PPV_ARGS(&m_Device))))
 		{
 			featureLevel = D3D_FEATURE_LEVEL_11_0;
-			HRESULT hresult = D3D12CreateDevice(m_Adapter.Get(), featureLevel, IID_PPV_ARGS(&m_Device));
+			HRESULT hresult = D3D12CreateDevice(m_Adapter, featureLevel, IID_PPV_ARGS(&m_Device));
 
 			if (FAILED(hresult))
 			{
@@ -128,7 +130,7 @@ namespace Athena
 		}
 
 #if D3D12_ENABLE_DEBUG_INFO
-		ComPtr<ID3D12InfoQueue1> infoQueue;
+		ID3D12InfoQueue1* infoQueue = nullptr;
 		if (enableValidation && SUCCEEDED(m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue))))
 		{
 			int severityLevel = CVarD3D12ValidationLevel.GetInt();
@@ -151,6 +153,7 @@ namespace Athena
 
 			DWORD callbackCookie;
 			D3D12_CHECK(infoQueue->RegisterMessageCallback(D3D12::DebugCallback, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &callbackCookie));
+			infoQueue->Release();
 
 			ATN_LOG_INFO(D3D12, "D3D12 debug device is enabled!");
 		}
@@ -185,8 +188,15 @@ namespace Athena
 			queue.Flush();
 		}
 
+		m_CommandListManager.WaitDeviceIdle();
+
 		m_CommandListManager.Destroy();
 		m_Allocator.Destroy();
+
+		m_Queue->Release();
+		m_Device->Release();
+		m_Adapter->Release();
+		m_DXGIFactory->Release();
 	}
 
 	void D3D12RHI::BeginFrame(const Ref<Window>& window)
@@ -215,6 +225,16 @@ namespace Athena
 			window->GetSwapChain().As<D3D12SwapChain>()->Present();
 	}
 
+	Ref<CommandContext> D3D12RHI::GetContext(CommandContextType type)
+	{
+		return nullptr;
+	}
+
+	void D3D12RHI::ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>& func)
+	{
+
+	}
+
 	Ref<Texture> D3D12RHI::CreateTexture(const TextureCreateInfo& info)
 	{
 		return Ref<D3D12Texture>::Create(info);
@@ -225,22 +245,12 @@ namespace Athena
 		return Ref<D3D12TextureView>::Create(info, texture);
 	}
 
-	Ref<VertexBuffer> D3D12RHI::CreateVertexBuffer(const String& name, uint64 size)
+	Ref<GPUBuffer> D3D12RHI::CreateGPUBuffer(const GPUBufferCreateInfo& info)
 	{
-		return Ref<D3D12VertexBuffer>::Create(name, size);
+		return Ref<D3D12GPUBuffer>::Create(info);
 	}
 
-	Ref<IndexBuffer> D3D12RHI::CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize)
-	{
-		return Ref<D3D12IndexBuffer>::Create(name, size, indexSize);
-	}
-
-	Ref<CommandList> D3D12RHI::CreateCommandList()
-	{
-		return nullptr;
-	}
-
-	Ref<TracyGPUZone> D3D12RHI::CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
+	Ref<TracyGPUZone> D3D12RHI::CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
 	{
 		return nullptr;
 	}

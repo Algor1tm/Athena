@@ -1,4 +1,6 @@
 #include "VulkanDevice.h"
+
+#include "Athena/Core/ConsoleManager.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanPlatform.h"
@@ -7,8 +9,11 @@ namespace Athena
 {
 	static const char* s_RequiredVulkanDeviceExtensions[] =
 	{
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME, // swapchain
-		VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard/clip
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, // discard pixel
+		VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+		VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME, 
+
 		nullptr
 	};
 
@@ -157,55 +162,119 @@ namespace Athena
 			m_PhysicalDevice = gpus[selectedGPUInex];
 		}
 
+		struct QueueInfo
+		{
+			uint32 QueueFamily = UINT32_MAX;
+			uint32 QueueIndex = 0;
+		};
+
+		struct QueueFamilyInfo
+		{
+			uint32 Count = 0;
+			std::vector<float> Priorities;
+		};
+
+		struct QueuesProperties
+		{
+			QueueInfo Graphics;
+			QueueInfo Compute;
+			QueueInfo Transfer;
+
+			std::vector<QueueFamilyInfo> QueueFamilies;
+		};
+
+		QueuesProperties queues;
+
 		// Select graphics queue family
 		{
 			uint32 count;
 			vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &count, NULL);
 
-			std::vector<VkQueueFamilyProperties> queues(count);
-			vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &count, queues.data());
+			m_QueueFamilyProps.resize(count);
+			vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &count, m_QueueFamilyProps.data());
 
 			String message = "Queue Families: \n\t";
 
-			m_QueueFamily = UINT32_MAX;
-			VkQueueFlagBits requestedQueueFlags = VkQueueFlagBits(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
 			for (uint32 i = 0; i < count; i++)
 			{
-				// Select fisrt queue that support requested flags
-				bool supported = true;
-				supported = supported && queues[i].queueFlags & requestedQueueFlags;
-				supported = supported && queues[i].timestampValidBits > 0;
-				if (supported && (m_QueueFamily == UINT32_MAX))
-					m_QueueFamily = i;
-
 				String flags;
 
-				flags += queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT ? "Graphics, " : "";
-				flags += queues[i].queueFlags & VK_QUEUE_COMPUTE_BIT ? "Compute, " : "";
-				flags += queues[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
-				flags += queues[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
+				flags += m_QueueFamilyProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT ? "Graphics, " : "";
+				flags += m_QueueFamilyProps[i].queueFlags & VK_QUEUE_COMPUTE_BIT ? "Compute, " : "";
+				flags += m_QueueFamilyProps[i].queueFlags & VK_QUEUE_TRANSFER_BIT ? "Transfer, " : "";
+				flags += m_QueueFamilyProps[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ? "SparseBinding, " : "";
 
-				message += fmt::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, queues[i].timestampValidBits > 0, queues[i].queueCount);
+				message += fmt::format("{}: {} timestamps = {}, count = {}\n\t", i, flags, m_QueueFamilyProps[i].timestampValidBits > 0, m_QueueFamilyProps[i].queueCount);
 			}
 
 			ATN_LOG_INFO(Vulkan, message);
-			ensure(m_QueueFamily != UINT32_MAX, "Failed to find queue family that supports VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT operations and timestamps");
-		};
+
+			queues.QueueFamilies.resize(m_QueueFamilyProps.size());
+
+			auto findQueue = [this, &queues](VkQueueFlags flags, float priority) -> QueueInfo
+			{
+				uint32 bestFamily = UINT32_MAX;
+				uint32 bestScore = UINT32_MAX;
+
+				for (uint32 i = 0; i < m_QueueFamilyProps.size(); ++i)
+				{
+					const auto& family = m_QueueFamilyProps[i];
+
+					if (family.queueCount == 0 || queues.QueueFamilies[i].Count >= family.queueCount)
+						continue;
+
+					if ((family.queueFlags & flags) != flags)
+						continue;
+
+					const uint32 extraFlags = uint32(family.queueFlags & ~flags);
+					const uint32 score = std::popcount(extraFlags);
+
+					if (score < bestScore)
+					{
+						bestScore = score;
+						bestFamily = i;
+					}
+				}
+
+				if (bestFamily == UINT32_MAX)
+					return { UINT32_MAX, 0 };
+
+				const uint32 queueIndex = queues.QueueFamilies[bestFamily].Count++;
+				queues.QueueFamilies[bestFamily].Priorities.push_back(priority);
+
+				return { bestFamily, queueIndex };
+			};
+
+			queues.Graphics = findQueue(VK_QUEUE_GRAPHICS_BIT, 1.f);
+
+			bool enableAsyncCompute = ConsoleManager::Get().FindCVar("r.EnableAsyncCompute")->GetBool();
+			if(enableAsyncCompute)
+				queues.Compute = findQueue(VK_QUEUE_COMPUTE_BIT, 1.f);
+
+			bool enableAsyncTransfer = ConsoleManager::Get().FindCVar("r.EnableAsyncTransfer")->GetBool();
+			if(enableAsyncTransfer)
+				queues.Transfer = findQueue(VK_QUEUE_TRANSFER_BIT, 1.f);
+		}
 
 		// Create Logical Device
 		{
-			String message = "Queues created: \n\t";
-
 			const float queuePriority[] = { 1.0f };
 
-			VkDeviceQueueCreateInfo queueCIs[1] = {};
-			queueCIs[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueCIs[0].queueFamilyIndex = m_QueueFamily;
-			queueCIs[0].queueCount = 1;
-			queueCIs[0].pQueuePriorities = queuePriority;
+			std::vector<VkDeviceQueueCreateInfo> queueInfos;
 
-			message += fmt::format("QueueFamily - {}, count - {}\n\t", m_QueueFamily, 1);
-			ATN_LOG_INFO(Vulkan, message);
+			for (uint32 i = 0; i < queues.QueueFamilies.size(); ++i)
+			{
+				if (queues.QueueFamilies[i].Count == 0)
+					continue;
+
+				VkDeviceQueueCreateInfo queueCreateInfo = {};
+				queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueCreateInfo.queueFamilyIndex = i;
+				queueCreateInfo.queueCount = queues.QueueFamilies[i].Count;
+				queueCreateInfo.pQueuePriorities = queues.QueueFamilies[i].Priorities.data();
+
+				queueInfos.push_back(queueCreateInfo);
+			}
 
 			QueryDeviceExtensions();
 			QueryDeviceFeatures();
@@ -214,10 +283,20 @@ namespace Athena
 
 			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteToHelperInvocationFeatures = {};
 			demoteToHelperInvocationFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
-			demoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = true;
+			demoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = VK_TRUE;
 			demoteToHelperInvocationFeatures.pNext = &hostQueryResetFeatures;
 
-			void* deviceFeaturesChain = &demoteToHelperInvocationFeatures;
+			VkPhysicalDeviceSynchronization2Features synchronization2Features{};
+			synchronization2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+			synchronization2Features.synchronization2 = VK_TRUE;
+			synchronization2Features.pNext = &demoteToHelperInvocationFeatures;
+
+			VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures{};
+			timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+			timelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
+			timelineSemaphoreFeatures.pNext = &synchronization2Features;
+
+			void* deviceFeaturesChain = &timelineSemaphoreFeatures;
 
 			VkPhysicalDeviceFeatures deviceFeatures = {};
 			deviceFeatures.geometryShader = VK_TRUE;
@@ -229,21 +308,50 @@ namespace Athena
 			VkDeviceCreateInfo deviceCI = {};
 			deviceCI.pNext = deviceFeaturesChain;
 			deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-			deviceCI.queueCreateInfoCount = std::size(queueCIs);
-			deviceCI.pQueueCreateInfos = queueCIs;
+			deviceCI.queueCreateInfoCount = queueInfos.size();
+			deviceCI.pQueueCreateInfos = queueInfos.data();
 			deviceCI.enabledExtensionCount = m_DeviceExtensions.size();
 			deviceCI.ppEnabledExtensionNames = m_DeviceExtensions.data();
 			deviceCI.pEnabledFeatures = &deviceFeatures;
 
-			VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice));
-			vkGetDeviceQueue(m_LogicalDevice, m_QueueFamily, 0, &m_Queue);
+			VkResult result = vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice);
+			if (result != 0)
+			{
+				ATN_LOG_FATAL(Vulkan, "Failed to create vulkan device, try to update drivers or use DirectX instead!");
+			}
+
+			PostDeviceInit();
 		}
 
-		PostDeviceInit();
+		{
+			m_GraphicsContext = Ref<VulkanCommandContext>::Create(queues.Graphics.QueueFamily, CommandContextType::Graphics);
+
+			if (queues.Compute.QueueFamily != UINT32_MAX)
+			{
+				m_AsyncComputeContext = Ref<VulkanCommandContext>::Create(queues.Compute.QueueFamily, CommandContextType::AsyncCompute);
+			}
+			else
+			{
+				m_AsyncComputeContext = m_GraphicsContext;
+			}
+
+			if (queues.Transfer.QueueFamily != UINT32_MAX)
+			{
+				m_AsyncTransferContext = Ref<VulkanCommandContext>::Create(queues.Transfer.QueueFamily, CommandContextType::AsyncTransfer);
+			}
+			else
+			{
+				m_AsyncTransferContext = m_AsyncComputeContext;
+			}
+		}
 	}
 
 	void VulkanDevice::Destroy()
 	{
+		m_GraphicsContext.Release();
+		m_AsyncComputeContext.Release();
+		m_AsyncTransferContext.Release();
+
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 	}
 

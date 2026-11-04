@@ -50,7 +50,7 @@ add_library(Athena SHARED ${SRC_FILES})
 EnableMPCompilation(Athena)
 set_target_properties(Athena
 	PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	FOLDER Core
 	DEBUG_POSTFIX ""
 )

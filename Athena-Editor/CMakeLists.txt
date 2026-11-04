@@ -17,7 +17,7 @@ add_executable(Athena-Editor WIN32 ${SRC_FILES})
 EnableMPCompilation(Athena-Editor)
 set_target_properties(Athena-Editor
 	PROPERTIES
-	CXX_STANDARD 20
+	CXX_STANDARD 23
 	FOLDER Tools
 	VS_DEBUGGER_WORKING_DIRECTORY  "${CMAKE_SOURCE_DIR}/Athena-Editor"
 )

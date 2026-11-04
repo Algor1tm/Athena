@@ -69,7 +69,15 @@ namespace Athena
 			ENQUEUE_RENDER_COMMAND([texture, pixelsCopyRT = std::move(pixelsCopy)]()
 				{
 					texture->Init();
-					texture->UploadAndBlitMipMap(pixelsCopyRT);
+
+					Ref<CommandContext> cmdContext = RHI::Get()->GetContext(CommandContextType::AsyncTransfer);
+
+					cmdContext->Transition(texture.Raw(), PA_Unknown, PA_CopyDst);
+					cmdContext->UploadTexture(texture.Raw(), pixelsCopyRT);
+
+					// TODO Generate MipMap
+
+					cmdContext->TransitionOwnership(texture.Raw(), PA_CopyDst, CommandContextType::Graphics, PA_SRVMask);
 				});
 		}
 		else
@@ -183,7 +191,17 @@ namespace Athena
 		return totalGPUMemory;
 	}
 
-	Ref<TextureAsset> TextureAsset::s_DefaultTexture;
+	TextureRange Texture::GetFullRange() const
+	{
+		TextureRange defaultRange;
+		defaultRange.Aspect = TextureAspect::AUTO;
+		defaultRange.BaseLayer = 0;
+		defaultRange.LayerCount = m_Info.Layers;
+		defaultRange.BaseMipLevel = 0;
+		defaultRange.MipLevelCount = GetMipLevelsCount();
+
+		return defaultRange;
+	}
 
 	TextureAsset::TextureAsset()
 		: TextureAsset(EngineRenderAssets::Get().WhiteTexture)

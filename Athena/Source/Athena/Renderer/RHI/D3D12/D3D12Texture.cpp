@@ -146,99 +146,94 @@ namespace Athena
         D3D12_SET_DEBUG_NAME(m_TextureResource.GetResource(), fmt::format("Texture_{}", GetName()));
 
         InvalidateViews();
-
-        sizeof(D3D12_UNORDERED_ACCESS_VIEW_DESC);
-        sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC);
-        sizeof(D3D12_RENDER_TARGET_VIEW_DESC);
-        sizeof(D3D12_DEPTH_STENCIL_VIEW_DESC);
 	}
 
-	void D3D12Texture::Upload(const Buffer& srcBuffer, const TextureRegion& region)
-	{
-		ensuref(false);
-	}
+	//void D3D12Texture::Upload(const Buffer& srcBuffer, const TextureRegion& region)
+	//{
+	//	ensuref(false);
+	//}
 
-	void D3D12Texture::UploadAndBlitMipMap(const Buffer& srcBuffer)
-	{
-        uint64 imageSize = GetWidth() * GetHeight() * GetFormatProperties(GetFormat()).BytesPerPixel;
-        ensure(srcBuffer.Size() <= imageSize, "Texture upload buffer is too small!");
+	//void D3D12Texture::UploadAndBlitMipMap(const Buffer& srcBuffer)
+	//{
+ //       uint64 imageSize = GetWidth() * GetHeight() * GetFormatProperties(GetFormat()).BytesPerPixel;
+ //       ensure(srcBuffer.Size() <= imageSize, "Texture upload buffer is too small!");
 
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
-        UINT numRows = 0;
-        UINT64 rowSize = 0;
-        UINT64 uploadSize = 0;
+ //       D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
+ //       UINT numRows = 0;
+ //       UINT64 rowSize = 0;
+ //       UINT64 uploadSize = 0;
 
-        D3D12_RESOURCE_DESC textureDesc = m_TextureResource.GetResource()->GetDesc();
+ //       D3D12_RESOURCE_DESC textureDesc = m_TextureResource.GetResource()->GetDesc();
 
-        D3D12RHI::Get()->GetDevice()->GetCopyableFootprints(
-            &textureDesc,
-            0,
-            1,
-            0,
-            &footprint,
-            &numRows,
-            &rowSize,
-            &uploadSize);
+ //       D3D12RHI::Get()->GetDevice()->GetCopyableFootprints(
+ //           &textureDesc,
+ //           0,
+ //           1,
+ //           0,
+ //           &footprint,
+ //           &numRows,
+ //           &rowSize,
+ //           &uploadSize);
 
-        D3D12_RESOURCE_DESC desc = {};
-        desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        desc.Width = uploadSize;
-        desc.Height = 1;
-        desc.DepthOrArraySize = 1;
-        desc.MipLevels = 1;
-        desc.SampleDesc.Count = 1;
-        desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+ //       D3D12_RESOURCE_DESC desc = {};
+ //       desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+ //       desc.Width = uploadSize;
+ //       desc.Height = 1;
+ //       desc.DepthOrArraySize = 1;
+ //       desc.MipLevels = 1;
+ //       desc.SampleDesc.Count = 1;
+ //       desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+ //       desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-        D3D12Resource stagingBuffer = D3D12RHI::Get()->GetAllocator()->AllocateResource(desc, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD);
-        void* mapped = stagingBuffer.MapMemory();
+ //       D3D12Resource stagingBuffer = D3D12RHI::Get()->GetAllocator()->AllocateResource(desc, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD);
+ //       void* mapped = stagingBuffer.MapMemory();
 
-        const byte* src = srcBuffer.Data();
-        byte* dst = (byte*)mapped + footprint.Offset;
+ //       const byte* src = srcBuffer.Data();
+ //       byte* dst = (byte*)mapped + footprint.Offset;
 
-        const UINT sourceRowPitch = GetWidth() * GetFormatProperties(GetFormat()).BytesPerPixel;
+ //       const UINT sourceRowPitch = GetWidth() * GetFormatProperties(GetFormat()).BytesPerPixel;
 
-        for (UINT y = 0; y < GetHeight(); ++y)
-        {
-            memcpy(dst + y * footprint.Footprint.RowPitch, src + y * sourceRowPitch, sourceRowPitch);
-        }
+ //       for (UINT y = 0; y < GetHeight(); ++y)
+ //       {
+ //           memcpy(dst + y * footprint.Footprint.RowPitch, src + y * sourceRowPitch, sourceRowPitch);
+ //       }
 
-        stagingBuffer.UnmapMemory();
-        D3D12CommandList* list = D3D12RHI::Get()->GetCmdListManager()->GetTransferCommandList();
+ //       stagingBuffer.UnmapMemory();
+ //       D3D12CommandList* list = D3D12RHI::Get()->GetCmdListManager()->GetTransferCommandList();
 
-        D3D12_RESOURCE_BARRIER barrier{};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource = m_TextureResource.GetResource();
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+ //       D3D12_RESOURCE_BARRIER barrier{};
+ //       barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+ //       barrier.Transition.pResource = m_TextureResource.GetResource();
+ //       barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+ //       barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+ //       barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
 
-        list->CommandList->ResourceBarrier(1, &barrier);
+ //       list->CommandList->ResourceBarrier(1, &barrier);
 
-        D3D12_TEXTURE_COPY_LOCATION dstLocation{};
-        dstLocation.pResource = m_TextureResource.GetResource();
-        dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        dstLocation.SubresourceIndex = 0;
+ //       D3D12_TEXTURE_COPY_LOCATION dstLocation{};
+ //       dstLocation.pResource = m_TextureResource.GetResource();
+ //       dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+ //       dstLocation.SubresourceIndex = 0;
 
-        D3D12_TEXTURE_COPY_LOCATION srcLocation{};
-        srcLocation.pResource = stagingBuffer.GetResource();
-        srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        srcLocation.PlacedFootprint = footprint;
+ //       D3D12_TEXTURE_COPY_LOCATION srcLocation{};
+ //       srcLocation.pResource = stagingBuffer.GetResource();
+ //       srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+ //       srcLocation.PlacedFootprint = footprint;
 
-        list->CommandList->CopyTextureRegion(
-            &dstLocation, 0, 0, 0,
-            &srcLocation, nullptr);
+ //       list->CommandList->CopyTextureRegion(
+ //           &dstLocation, 0, 0, 0,
+ //           &srcLocation, nullptr);
 
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+ //       barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+ //       barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-        list->CommandList->ResourceBarrier(1, &barrier);
+ //       list->CommandList->ResourceBarrier(1, &barrier);
 
-        list->AddCallbackOnCompletion([stagingBuffer]() mutable
-            {
-                stagingBuffer.Release();
-            });
-	}
+ //       list->AddCallbackOnCompletion([stagingBuffer]() mutable
+ //           {
+ //               stagingBuffer.Release();
+ //           });
+	//}
 
     D3D12TextureView::D3D12TextureView(const TextureViewCreateInfo& info, Texture* texture)
         : TextureView(info, texture)

@@ -3,7 +3,7 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Window.h"
 #include "Athena/Renderer/RenderThread.h"
-#include "Athena/Renderer/CommandList.h"
+#include "Athena/Renderer/CommandContext.h"
 #include "Athena/Renderer/Format.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
@@ -13,6 +13,13 @@
 
 namespace Athena
 {
+#define MAX_FRAMES_IN_FLIGHT 4 // This should be at least as big as r.MaxFramesInFlight value
+
+	// Use inlined array instead of std::vector
+	template <typename T>
+	using FramesInFlightArray = std::array<T, MAX_FRAMES_IN_FLIGHT>;
+
+
 	struct GPUCapabilities
 	{
 		String Name;
@@ -31,6 +38,7 @@ namespace Athena
 		float  MaxSamplerAnisotropy;
 	};
 
+
 	class ATHENA_API RHI
 	{
 	public:
@@ -46,17 +54,17 @@ namespace Athena
 
 		virtual void EndFrame(const Ref<Window>& window) = 0;
 
+		virtual Ref<CommandContext> GetContext(CommandContextType type) = 0;
+
+		virtual void ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>&) = 0;
+
 		virtual Ref<Texture> CreateTexture(const TextureCreateInfo& info) = 0;
 
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) = 0;
 
-		virtual Ref<VertexBuffer> CreateVertexBuffer(const String& name, uint64 size) = 0;
+		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) = 0;
 
-		virtual Ref<IndexBuffer> CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize) = 0;
-
-		virtual Ref<CommandList> CreateCommandList() = 0;
-
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
+		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) = 0;
 

@@ -27,7 +27,15 @@ namespace Athena
 
 	D3D12SwapChain::~D3D12SwapChain()
 	{
+		D3D12RHI::Get()->DeleteFrameResourcesDeferred([buffers = m_BackBuffers, swapChain = m_DXGISwapChain]()
+			{
+				for (UINT i = 0; i < buffers.size(); i++)
+				{
+					buffers[i]->Release();
+				}
 
+				swapChain->Release();
+			});
 	}
 
 	void D3D12SwapChain::Init()
@@ -57,17 +65,18 @@ namespace Athena
 
 		HWND hwnd = glfwGetWin32Window((GLFWwindow*)m_WindowHandle);
 
-		ComPtr<IDXGISwapChain1> swapChain1;
+		IDXGISwapChain1* swapChain1;
 		D3D12_CHECK(D3D12RHI::Get()->GetDXGIFactory()->CreateSwapChainForHwnd(
-			D3D12RHI::Get()->GetQueue().Get(),
+			D3D12RHI::Get()->GetQueue(),
 			hwnd,
 			&swapChainDesc,
 			nullptr,
 			nullptr,
-			swapChain1.GetAddressOf()
+			&swapChain1
 		));
 
-		D3D12_CHECK(swapChain1.As(&m_DXGISwapChain));
+		D3D12_CHECK(swapChain1->QueryInterface(&m_DXGISwapChain));
+		swapChain1->Release();
 
 		m_BackBuffers.resize(swapChainDesc.BufferCount);
 		for (UINT i = 0; i < m_BackBuffers.size(); i++)
@@ -86,7 +95,7 @@ namespace Athena
 
 		for (UINT i = 0; i < m_BackBuffers.size(); i++)
 		{
-			m_BackBuffers[i] = nullptr;
+			m_BackBuffers[i]->Release();
 		}
 
 		D3D12_CHECK(m_DXGISwapChain->ResizeBuffers(

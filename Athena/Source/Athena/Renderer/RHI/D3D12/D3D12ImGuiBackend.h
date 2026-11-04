@@ -77,7 +77,7 @@ namespace Athena
         static inline ID3D12DescriptorHeap* m_SRVHeap;
         static inline ExampleDescriptorHeapAllocator m_SRVHeapAllocator;
 
-        ComPtr<ID3D12DescriptorHeap> m_RTVHeap;
+        ID3D12DescriptorHeap* m_RTVHeap;
         std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_BackBufferRTVs;
         
 		ImTextureQueue m_ImGuiTextureQueue;

@@ -17,16 +17,23 @@ namespace Athena
 
 		virtual void Init() override;
 		virtual void Resize(uint32 width, uint32 height) override;
-		virtual void Upload(const Buffer& srcBuffer, const TextureRegion& region) override;
-		virtual void UploadAndBlitMipMap(const Buffer& srcBuffer) override;
 
 		VkImage GetImage() const { return m_Image.GetImage(); }
+
+		VkImageLayout GetSubresLayout(uint32 mip, uint32 layer) const;
+		void SetSubresLayout(VkImageLayout layout, const VkImageSubresourceRange& subresourceRange);
+		bool AreSubresourcesSameLayout(const VkImageSubresourceRange& subresourceRange) const;
+		void CollapseSubresLayoutsIfSame();
 
 	private:
 		void CleanUp();
 
 	private:
 		VulkanImageAllocation m_Image;
+
+		VkImageLayout m_MainLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		std::vector<VkImageLayout> m_SubresourcesLayouts;
+		bool m_LayoutsCollapsed = true;
 	};
 
 

@@ -65,8 +65,8 @@ namespace Athena
 		VulkanAllocator();
 		~VulkanAllocator();
 
-		VulkanBufferAllocation AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlags flags = 0, const String& name = "");
-		VulkanImageAllocation AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlags flags = 0, const String& name = "");
+		VkResult AllocateBuffer(VulkanBufferAllocation* allocation, const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlags flags = 0, const String& name = "");
+		VkResult AllocateImage(VulkanImageAllocation* allocation, const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage = VMA_MEMORY_USAGE_AUTO, VmaAllocationCreateFlags flags = 0, const String& name = "");
 
 		void DestroyBuffer(VulkanBufferAllocation buffer, const String& name = "");
 		void DestroyImage(VulkanImageAllocation image, const String& name = "");

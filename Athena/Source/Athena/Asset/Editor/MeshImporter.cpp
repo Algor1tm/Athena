@@ -523,25 +523,41 @@ namespace Athena
 			}
 		}
 
-		String name = fmt::format("{}_VertexBuffer", m_Path.filename());
 		Buffer verticesBuffer = Buffer::Copy(vertices.data(), vertices.size() * sizeof(MeshVertex));
 
-		mesh->m_VertexBuffer = VertexBuffer::Create(name, verticesBuffer.Size(), &verticesBuffer);
+		GPUBufferCreateInfo bufferInfo;
+		bufferInfo.Name = fmt::format("{}_VertexBuffer", m_Path.filename());
+		bufferInfo.Type = GPUBufferType::VertexBuffer;
+		bufferInfo.Flags = GBF_None;
+		bufferInfo.Size = verticesBuffer.Size();
+		bufferInfo.Stride = MeshVertex::GetLayout().GetStride();
+
+		mesh->m_VertexBuffer = VertexBuffer::Create(bufferInfo, &verticesBuffer);
 
 		if (!indices.empty())
 		{
-			name = fmt::format("{}_IndexBuffer", m_Path.filename());
 			Buffer indicesBuffer = Buffer::Copy(indices.data(), indices.size() * sizeof(uint32));
 
-			mesh->m_IndexBuffer = IndexBuffer::Create(name, indicesBuffer.Size(), &indicesBuffer, IndexSize::UInt32);
+			bufferInfo.Name = fmt::format("{}_IndexBuffer", m_Path.filename());
+			bufferInfo.Type = GPUBufferType::IndexBuffer;
+			bufferInfo.Flags = GBF_None;
+			bufferInfo.Size = indicesBuffer.Size();
+			bufferInfo.Stride = sizeof(uint32);
+
+			mesh->m_IndexBuffer = IndexBuffer::Create(bufferInfo, &indicesBuffer);
 		}
 
 		if (mesh->IsRigged())
 		{
-			name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
 			Buffer bonesBuffer = Buffer::Copy(boneInfluenceVertices.data(), boneInfluenceVertices.size() * sizeof(BoneInfluenceVertex));
 
-			mesh->m_BonesInfluenceBuffer = VertexBuffer::Create(name, bonesBuffer.Size(), &bonesBuffer);
+			bufferInfo.Name = fmt::format("{}_BonesVertexBuffer", m_Path.filename());
+			bufferInfo.Type = GPUBufferType::VertexBuffer;
+			bufferInfo.Flags = GBF_None;
+			bufferInfo.Size = bonesBuffer.Size();
+			bufferInfo.Stride = BoneInfluenceVertex::GetLayout().GetStride();
+
+			mesh->m_BonesInfluenceBuffer = VertexBuffer::Create(bufferInfo, &bonesBuffer);
 		}
 	}
 

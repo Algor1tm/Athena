@@ -9,13 +9,10 @@
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <wrl/client.h>
 
 
 namespace Athena
 {
-	using Microsoft::WRL::ComPtr;
-
 	struct D3DDeviceFeaturesInfo
 	{
 		D3D_FEATURE_LEVEL FeatureLevel;
@@ -45,17 +42,17 @@ namespace Athena
 
 		virtual void EndFrame(const Ref<Window>& window) override;
 
+		virtual Ref<CommandContext> GetContext(CommandContextType type) override;
+
+		virtual void ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>& func) override;
+
 		virtual Ref<Texture> CreateTexture(const TextureCreateInfo& info) override;
 
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
 
-		virtual Ref<VertexBuffer> CreateVertexBuffer(const String& name, uint64 size) override;
+		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
 
-		virtual Ref<IndexBuffer> CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize) override;
-
-		virtual Ref<CommandList> CreateCommandList() override;
-
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
+		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 
@@ -74,13 +71,13 @@ namespace Athena
 			return reinterpret_cast<D3D12RHI*>(RHI::Get());
 		}
 
-		ComPtr<ID3D12Device> GetDevice() const { return m_Device; }
+		ID3D12Device* GetDevice() const { return m_Device; }
 
-		ComPtr<IDXGIFactory6> GetDXGIFactory() const { return m_DXGIFactory; }
+		IDXGIFactory6* GetDXGIFactory() const { return m_DXGIFactory; }
 
-		ComPtr<ID3D12CommandQueue> GetQueue() const { return m_Queue; }
+		ID3D12CommandQueue* GetQueue() const { return m_Queue; }
 
-		ComPtr<IDXGIAdapter4> GetAdapter() const { return m_Adapter; }
+		IDXGIAdapter4* GetAdapter() const { return m_Adapter; }
 
 		D3D12Allocator* GetAllocator() { return &m_Allocator; }
 
@@ -89,7 +86,7 @@ namespace Athena
 		template <typename FuncT>
 		void DeleteFrameResourcesDeferred(FuncT&& func)
 		{
-			m_ResourceFreeQueues[m_FrameResourcesIndex].Submit(std::forward<FuncT>(func));
+			m_ResourceFreeQueues[m_FrameResourcesIndex].Enqueue(std::forward<FuncT>(func));
 		}
 
 		uint32 GetFrameResourcesIndex() const
@@ -101,10 +98,10 @@ namespace Athena
 		void QueryDeviceFeatures();
 
 	private:
-		ComPtr<ID3D12Device> m_Device;
-		ComPtr<IDXGIFactory6> m_DXGIFactory;
-		ComPtr<ID3D12CommandQueue> m_Queue;
-		ComPtr<IDXGIAdapter4> m_Adapter;
+		ID3D12Device* m_Device;
+		IDXGIFactory6* m_DXGIFactory;
+		ID3D12CommandQueue* m_Queue;
+		IDXGIAdapter4* m_Adapter;
 
 		D3D12Allocator m_Allocator;
 		CommandListManager m_CommandListManager;

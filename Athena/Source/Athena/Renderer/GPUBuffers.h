@@ -58,55 +58,51 @@ namespace Athena
 		uint32 m_Stride = 0;
 	};
 
-	class ATHENA_API VertexBuffer : public RefCounted
+	enum class GPUBufferType
+	{
+		VertexBuffer,
+		IndexBuffer,
+		StructuredBuffer,
+	};
+
+	enum GPUBufferFlags
+	{
+		GBF_None = BIT(0),
+		GBF_AllowUAV = BIT(1)
+	};
+
+	struct GPUBufferCreateInfo
+	{
+		String Name;
+		GPUBufferType Type = GPUBufferType::VertexBuffer;
+		GPUBufferFlags Flags = GBF_None;
+		uint64 Size = 0;
+		uint32 Stride = 0;
+	};
+
+	class ATHENA_API GPUBuffer: public RefCounted
 	{
 	public:
-		static Ref<VertexBuffer> Create(const String& name, uint64 size, Buffer* vertices = nullptr);
+		static Ref<GPUBuffer> Create(const GPUBufferCreateInfo& info, Buffer* data = nullptr);
 
-		VertexBuffer(const String& name, uint64 size);
-		virtual ~VertexBuffer() = default;
+		GPUBuffer(const GPUBufferCreateInfo& info);
+		virtual ~GPUBuffer() = default;
 
 		virtual void Init() = 0;
 
-		virtual void Upload(const Buffer& buffer, uint64 offset = 0) = 0;
-		virtual void Resize(uint64 size);
-
-		const String& GetName() const { return m_Name; }
-		uint64 GetSize() const { return m_Size; };
-
-	private:
-		String m_Name;
-		uint64 m_Size;
-	};
-
-	enum class IndexSize
-	{
-		UInt32,
-		UInt16
-	};
-
-	class ATHENA_API IndexBuffer : public RefCounted
-	{
-	public:
-		static Ref<IndexBuffer> Create(const String& name, uint64 size, Buffer* indices = nullptr, IndexSize indexSize = IndexSize::UInt32);
-
-		IndexBuffer(const String& name, uint64 size, IndexSize indexSize);
-		virtual ~IndexBuffer() = default;
-
-		virtual void Init() = 0;
-
-		virtual void Upload(const Buffer& buffer, uint64 offset = 0) = 0;
-		virtual void Resize(uint64 size);
-
-		const String& GetName() const { return m_Name; }
-		uint64 GetSize() const { return m_Size; };
-		IndexSize GetIndexSize() const { return m_IndexSize; }
-		uint64 GetCount() const;
+		const GPUBufferCreateInfo& GetInfo() const { return m_Info; }
+		const String& GetName() const { return m_Info.Name; }
+		GPUBufferType GetType() const { return m_Info.Type; }
+		uint64 GetSize() const { return m_Info.Size; };
+		uint32 GetStride() const { return m_Info.Stride; }
+		uint64 GetCount() const { return m_Info.Size / m_Info.Stride; }
+		GPUBufferFlags GetFlags() const { return m_Info.Flags; }
 
 	private:
-		String m_Name;
-		uint64 m_Size;
-		IndexSize m_IndexSize;
+		GPUBufferCreateInfo m_Info;
 	};
+
+	using VertexBuffer = GPUBuffer;
+	using IndexBuffer = GPUBuffer;
+	using StructuredBuffer = GPUBuffer;
 }
-

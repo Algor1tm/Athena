@@ -27,8 +27,8 @@ namespace Athena
 	void D3D12Allocator::Init()
 	{
 		D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
-		allocatorDesc.pDevice = D3D12RHI::Get()->GetDevice().Get();
-		allocatorDesc.pAdapter = D3D12RHI::Get()->GetAdapter().Get();
+		allocatorDesc.pDevice = D3D12RHI::Get()->GetDevice();
+		allocatorDesc.pAdapter = D3D12RHI::Get()->GetAdapter();
 		allocatorDesc.Flags = D3D12MA_RECOMMENDED_ALLOCATOR_FLAGS | D3D12MA::ALLOCATOR_FLAG_SINGLETHREADED;
 
 		D3D12_CHECK(D3D12MA::CreateAllocator(&allocatorDesc, &m_Allocator));

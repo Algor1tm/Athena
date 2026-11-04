@@ -3,6 +3,7 @@
 #include "Athena/Core/Application.h"
 #include "Athena/Core/FileSystem.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
+#include "Athena/Renderer/RHI/RHI.h"
 
 #include <ImGui/imgui.h>
 #include "ImGui/imgui_internal.h"
@@ -406,6 +407,11 @@ namespace Athena
 		{
 			ENQUEUE_RENDER_COMMAND([imGuiBackend = m_ImGuiBackend]()
 				{
+					Ref<CommandContext> graphicsContext = RHI::Get()->GetContext(CommandContextType::Graphics);
+					graphicsContext->Drain(CommandContextType::AsyncTransfer, PipelineAccess::PA_SRVGraphics);
+					graphicsContext->Drain(CommandContextType::AsyncCompute, PipelineAccess::PA_SRVGraphics);
+					graphicsContext->Flush();
+
 					imGuiBackend->RenderDrawData();
 				});
 		}

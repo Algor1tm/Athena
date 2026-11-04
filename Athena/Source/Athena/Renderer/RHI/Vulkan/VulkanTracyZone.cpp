@@ -1,15 +1,15 @@
 #include "VulkanTracyZone.h"
 
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanCommandList.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanCommandContext.h"
 
 
 namespace Athena
 {
-	VulkanTracyZone::VulkanTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
+	VulkanTracyZone::VulkanTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
 #if ATN_ENABLE_TRACY_GPU
 		: m_ScopedZone(
-			VulkanRHI::Get()->GetCmdBufferManager()->GetTracyContext(),
+			cmdContext.As<VulkanCommandContext>()->GetTracyContext(),
 			line,
 			fileName.data(),
 			fileName.size(),
@@ -17,7 +17,7 @@ namespace Athena
 			functionName.size(),
 			name.data(),
 			name.size(),
-			cmdList.As<VulkanCommandList>()->GetCommandBuffer()->CommandBuffer,
+			cmdContext.As<VulkanCommandContext>()->GetCommandBuffer()->CmdBuffer,
 			true
 		)
 #endif

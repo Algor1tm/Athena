@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/CommandStream.h"
 #include "Athena/Renderer/RHI/RHI.h"
-#include "Athena/Renderer/RHI/Vulkan/CommandBufferManager.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanAllocator.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanDebug.h"
@@ -51,17 +50,17 @@ namespace Athena
 
 		virtual void EndFrame(const Ref<Window>& window) override;
 
+		virtual Ref<CommandContext> GetContext(CommandContextType type) override;
+
+		virtual void ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>& func) override;
+
 		virtual Ref<Texture> CreateTexture(const TextureCreateInfo& info) override;
 
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
 
-		virtual Ref<VertexBuffer> CreateVertexBuffer(const String& name, uint64 size) override;
+		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
 
-		virtual Ref<IndexBuffer> CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize) override;
-
-		virtual Ref<CommandList> CreateCommandList() override;
-
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
+		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 
@@ -88,14 +87,12 @@ namespace Athena
 
 		Ref<VulkanAllocator> GetAllocator() const { return m_Allocator; }
 
-		CommandBufferManager* GetCmdBufferManager() { return &m_CmdBufferManager; }
-
 		uint32 GetVulkanVersion() const { return m_VulkanVersion; }
 
 		template <typename FuncT>
 		void DeleteFrameResourcesDeferred(FuncT&& func)
 		{
-			m_ResourceFreeQueues[m_FrameResourcesIndex].Submit(std::forward<FuncT>(func));
+			m_ResourceFreeQueues[m_FrameResourcesIndex].Enqueue(std::forward<FuncT>(func));
 		}
 
 		uint32 GetFrameResourcesIndex() const
@@ -113,10 +110,9 @@ namespace Athena
 		InstanceExtensionsInfo m_ExtensionsInfo;
 		VulkanDevice m_Device;
 		Ref<VulkanAllocator> m_Allocator;
-		CommandBufferManager m_CmdBufferManager;
 
 		uint32 m_FrameResourcesIndex = 0;
-		std::vector<CommandStream> m_ResourceFreeQueues;
+		FramesInFlightArray<CommandStream> m_ResourceFreeQueues;
 
 		uint32 m_VulkanVersion;
 		std::vector<const char*> m_InstanceLayers;

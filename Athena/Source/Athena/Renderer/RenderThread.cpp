@@ -10,7 +10,7 @@
 
 namespace Athena
 {
-	DEFINE_STATS_GROUP("RenderThread Stats", STATGROUP_RenderThreadStats, StatsThread::RenderThread);
+	DEFINE_STATS_GROUP("RenderThread Stats", STATGROUP_RenderThreadStats, ST_RenderThread);
 
 	DEFINE_CYCLE_STAT("Wait for GameThread", STAT_WaitForGameThread, STATGROUP_RenderThreadStats);
 	DEFINE_CYCLE_STAT("Wait for GPU", STAT_WaitForGPU, STATGROUP_RenderThreadStats);
@@ -20,7 +20,7 @@ namespace Athena
 
 	static AutoCVar<int32> CVarRenderThreadCommandStreamSize(
 		"r.RenderThreadCommandStreamSize",
-		1024 * 1024,
+		16,
 		"Set render thread command stream size in bytes (default - 1MB)."
 	);
 
@@ -31,7 +31,8 @@ namespace Athena
 	);
 
 	RenderThread::RenderThread()
-		: Thread("RenderThread", [this]() { RenderThreadMain(); })
+		: Thread("RenderThread", [this]() { RenderThreadMain(); }),
+		  m_ConsumerToken(m_AsyncCommands)
 	{
 		m_RenderThreadCommandStreamIndex = 0;
 		m_GameThreadCommandStreamIndex = 0;
@@ -105,7 +106,7 @@ namespace Athena
 		while (!m_ShouldExit)
 		{
 			TRACY_PROFILE_SCOPE("RenderThreadFrame");
-			STATS_THREAD_HEARTBEAT(StatsThread::RenderThread);
+			STATS_THREAD_HEARTBEAT(ST_RenderThread);
 
 			{
 				TRACY_PROFILE_SCOPE("WaitForGameThread");
@@ -130,13 +131,28 @@ namespace Athena
 
 		Thread::s_RenderThreadID = 0;
 	}
+
+	void RenderThread::ExecuteAsyncCommands()
+	{
+		TRACY_PROFILE_FUNC();
+
+		uint32 size = m_AsyncCommands.size_approx();
+		if (size == 0)
+			return;
+		
+		std::vector<std::move_only_function<void()>> commands(size);
+		uint32 actualSize = m_AsyncCommands.try_dequeue_bulk(m_ConsumerToken, commands.data(), commands.size());
+
+		for (uint32 i = 0; i < actualSize; ++i)
+		{
+			commands[i]();
+		}
+	}
 	
 	void RenderThread::Kick()
 	{
 		if (Bypass())
 			return;
-
-		std::unique_lock<std::mutex> lock(m_EnqueueMutex);
 
 		m_GameThreadCommandStreamIndex = (m_GameThreadCommandStreamIndex + 1) % RENDER_THREAD_COMMAND_STREAMS_NUM;
 		m_GameThreadFrameIndex++;

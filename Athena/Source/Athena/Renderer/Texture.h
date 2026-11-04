@@ -93,6 +93,14 @@ namespace Athena
 
 	struct TextureRange
 	{
+		TextureRange() = default;
+		TextureRange(uint32 mip, uint32 layer)
+			:BaseMipLevel(mip),
+			BaseLayer(layer)
+		{
+
+		}
+
 		bool operator==(const TextureRange&) const = default;
 
 		uint32 BaseMipLevel = 0;
@@ -227,8 +235,6 @@ namespace Athena
 
 		virtual void Init() = 0;
 		virtual void Resize(uint32 width, uint32 height);
-		virtual void Upload(const Buffer& srcBuffer, const TextureRegion& region) = 0;
-		virtual void UploadAndBlitMipMap(const Buffer& srcBuffer) = 0;
 
 	public:
 		Ref<TextureView> GetView(TextureViewType viewType = TextureViewType::SRV);
@@ -248,7 +254,9 @@ namespace Athena
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
+		uint32 GetLayers() const { return m_Info.Layers; }
 		Format GetFormat() const { return m_Info.TextureFormat; }
+		TextureRange GetFullRange() const;
 
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 
@@ -284,8 +292,6 @@ namespace Athena
 	private:
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
-
-		static Ref<TextureAsset> s_DefaultTexture;
 	};
 
 	inline TextureAspect GetAspectFromFormat(Format format)

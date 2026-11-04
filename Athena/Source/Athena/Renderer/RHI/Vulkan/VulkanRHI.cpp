@@ -7,7 +7,7 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanPlatform.h"
 
 #include "Athena/Renderer/RHI/Vulkan/VulkanBuffers.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanCommandList.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanCommandContext.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanImGuiBackend.h"
@@ -148,8 +148,7 @@ namespace Athena
 
 		m_Device.Initialize(m_Instance);
 
-		m_ResourceFreeQueues.resize(Vulkan::GetMaxFramesInFlight());
-		for (uint32 i = 0; i < m_ResourceFreeQueues.size(); ++i)
+		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
 		{
 			m_ResourceFreeQueues[i] = CommandStream(1024 * 1024);	// 1 Mb
 		}
@@ -157,7 +156,6 @@ namespace Athena
 		m_FrameResourcesIndex = 0;
 
 		m_Allocator = Ref<VulkanAllocator>::Create();
-		m_CmdBufferManager.Init();
 
 		ATN_LOG_INFO(Vulkan, "Successfully initialized Vulkan RHI");
 	}
@@ -166,12 +164,11 @@ namespace Athena
 	{
 		vkDeviceWaitIdle(Vulkan::GetLogicalDevice());
 
-		for (auto& queue : m_ResourceFreeQueues)
+		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
 		{
-			queue.Flush();
+			m_ResourceFreeQueues[i].Flush();
 		}
 
-		m_CmdBufferManager.Destroy();
 		m_Allocator.Release();
 		m_Device.Destroy();
 
@@ -202,12 +199,21 @@ namespace Athena
 		}
 
 		m_Allocator->NewFrame();
-		m_CmdBufferManager.NewFrame();
+
+		RHI::Get()->ForEachUniqueContext([this](const Ref<CommandContext>& context)
+			{
+				context.As<VulkanCommandContext>()->BeginFrame();
+			});
 	}
 
 	void VulkanRHI::EndFrame(const Ref<Window>& window)
 	{
 		TRACY_PROFILE_FUNC();
+
+		RHI::Get()->ForEachUniqueContext([this](const Ref<CommandContext>& context) 
+			{
+				context.As<VulkanCommandContext>()->EndFrame();
+			});
 
 		// If there is no ImGui we need to manually render to swapchain images
 		if (!Application::Get().GetConfig().EnableImGui)
@@ -217,6 +223,30 @@ namespace Athena
 
 		if (window->GetSwapChain())
 			window->GetSwapChain().As<VulkanSwapChain>()->Present();
+	}
+
+	Ref<CommandContext> VulkanRHI::GetContext(CommandContextType type)
+	{
+		switch (type)
+		{
+		case CommandContextType::Graphics: return m_Device.GetGraphicsContext();
+		case CommandContextType::AsyncCompute: return m_Device.GetAsyncTransferContext();
+		case CommandContextType::AsyncTransfer: return m_Device.GetAsyncComputeContext();
+		}
+
+		checkf(false);
+		return nullptr;
+	}
+
+	void VulkanRHI::ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>& func)
+	{
+		func(m_Device.GetGraphicsContext());
+
+		if (m_Device.GetAsyncComputeContext() != m_Device.GetGraphicsContext())
+			func(m_Device.GetAsyncComputeContext());
+
+		if (m_Device.GetAsyncComputeContext() != m_Device.GetAsyncTransferContext())
+			func(m_Device.GetAsyncTransferContext());
 	}
 
 	Ref<Texture> VulkanRHI::CreateTexture(const TextureCreateInfo& info)
@@ -229,24 +259,14 @@ namespace Athena
 		return Ref<VulkanTextureView>::Create(info, texture);
 	}
 
-	Ref<VertexBuffer> VulkanRHI::CreateVertexBuffer(const String& name, uint64 size)
+	Ref<GPUBuffer> VulkanRHI::CreateGPUBuffer(const GPUBufferCreateInfo& info)
 	{
-		return Ref<VulkanVertexBuffer>::Create(name, size);
+		return Ref<VulkanGPUBuffer>::Create(info);
 	}
 
-	Ref<IndexBuffer> VulkanRHI::CreateIndexBuffer(const String& name, uint64 size, IndexSize indexSize)
+	Ref<TracyGPUZone> VulkanRHI::CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
 	{
-		return Ref<VulkanIndexBuffer>::Create(name, size, indexSize);
-	}
-
-	Ref<CommandList> VulkanRHI::CreateCommandList()
-	{
-		return Ref<VulkanCommandList>::Create();
-	}
-
-	Ref<TracyGPUZone> VulkanRHI::CreateTracyZone(const Ref<CommandList>& cmdList, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
-	{
-		return Ref<VulkanTracyZone>::Create(cmdList, line, fileName, functionName, name);
+		return Ref<VulkanTracyZone>::Create(cmdContext, line, fileName, functionName, name);
 	}
 
 	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)

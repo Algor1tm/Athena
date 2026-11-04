@@ -9,4 +9,16 @@ namespace Athena
 		3,
 		"Sets max frames in flight for RHI backends that support it, can be overriden by gpu capabilities (default - 3)."
 	);
+
+	static AutoCVar<bool> CVarEnableAsyncCompute(
+		"r.EnableAsyncCompute",
+		true,
+		"Enables async compute context (if supported on device)."
+	);
+
+	static AutoCVar<bool> CVarEnableAsyncTransfer(
+		"r.EnableAsyncTransfer",
+		true,
+		"Enables async transfer context (if supported on device)."
+	);
 }

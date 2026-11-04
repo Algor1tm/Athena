@@ -17,7 +17,7 @@ namespace Athena
 
 	D3D12ImGuiBackend::~D3D12ImGuiBackend()
 	{
-		D3D12RHI::Get()->DeleteFrameResourcesDeferred([textureQueue = m_ImGuiTextureQueue]() mutable
+		D3D12RHI::Get()->DeleteFrameResourcesDeferred([textureQueue = m_ImGuiTextureQueue, rtvHeap = m_RTVHeap]() mutable
 			{
 				textureQueue.Shutdown();
 
@@ -26,6 +26,7 @@ namespace Athena
 
 				m_SRVHeapAllocator.Destroy();
 				m_SRVHeap->Release();
+				rtvHeap->Release();
 
 				ImGui::DestroyContext();
 			});
@@ -48,11 +49,11 @@ namespace Athena
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_SRVHeap)));
-		m_SRVHeapAllocator.Create(D3D12RHI::Get()->GetDevice().Get(), m_SRVHeap);
+		m_SRVHeapAllocator.Create(D3D12RHI::Get()->GetDevice(), m_SRVHeap);
 
 		ImGui_ImplDX12_InitInfo init_info = {};
-		init_info.Device = D3D12RHI::Get()->GetDevice().Get();
-		init_info.CommandQueue = D3D12RHI::Get()->GetQueue().Get();
+		init_info.Device = D3D12RHI::Get()->GetDevice();
+		init_info.CommandQueue = D3D12RHI::Get()->GetQueue();
 		init_info.NumFramesInFlight = D3D12::GetMaxFramesInFlight();
 		init_info.RTVFormat = Application::Get().GetWindow().GetSwapChain().As<D3D12SwapChain>()->GetFormat();
 		init_info.DSVFormat = DXGI_FORMAT_UNKNOWN;
@@ -160,7 +161,7 @@ namespace Athena
 			m_ImGuiTextureQueue.ProcessRequests(drawData);
 		}
 
-		ImGui_ImplDX12_RenderDrawData(drawData, list->CommandList.Get());
+		ImGui_ImplDX12_RenderDrawData(drawData, list->CommandList);
 
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;

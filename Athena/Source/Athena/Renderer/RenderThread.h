@@ -4,6 +4,8 @@
 #include "Athena/Core/Thread.h"
 #include "Athena/Core/CommandStream.h"
 
+#include <concurrentqueue/concurrentqueue.h>
+
 #include <mutex>
 #include <atomic>
 
@@ -48,11 +50,17 @@ namespace Athena
 				func();
 				return;
 			}
-			
-			// TODO: mutex is bad here probably, but i need to push commands from multiple threads
-			std::unique_lock<std::mutex> lock(m_EnqueueMutex);
-			m_CommandStreams[m_GameThreadCommandStreamIndex].Submit(std::forward<FuncT>(func));
+			else if (Thread::IsGameThread())
+			{
+				m_CommandStreams[m_GameThreadCommandStreamIndex].Enqueue(std::forward<FuncT>(func));
+			}
+			else
+			{
+				m_AsyncCommands.enqueue(std::forward<FuncT>(func));
+			}
 		}
+
+		void ExecuteAsyncCommands();
 
 		void Kick();
 		void Wait();
@@ -69,7 +77,9 @@ namespace Athena
 		uint32 m_RenderThreadCommandStreamIndex = 0;
 		uint32 m_GameThreadCommandStreamIndex = 0;
 
-		std::mutex m_EnqueueMutex;
+		moodycamel::ConcurrentQueue<std::move_only_function<void()>> m_AsyncCommands;
+		moodycamel::ConsumerToken m_ConsumerToken;
+
 		std::atomic<int32> m_RenderThreadFrameIndex = 0;
 		std::atomic<int32> m_GameThreadFrameIndex = 0;
 		std::atomic<bool> m_ShouldExit = false;

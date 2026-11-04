@@ -15,7 +15,7 @@ namespace Athena
 		LastUsedTime(0)
 	{
 		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&Allocator)));
-		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator.Get(), nullptr, IID_PPV_ARGS(&CommandList)));
+		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, Allocator, nullptr, IID_PPV_ARGS(&CommandList)));
 		D3D12_CHECK(CommandList->Close());
 
 		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence)));
@@ -25,6 +25,9 @@ namespace Athena
 	D3D12CommandList::~D3D12CommandList()
 	{
 		CloseHandle(FenceEvent);
+		CommandList->Release();
+		Allocator->Release();
+		Fence->Release();
 	}
 
 	void D3D12CommandList::Begin()
@@ -32,7 +35,7 @@ namespace Athena
 		ensuref(State == CommandListState::Idle);
 
 		D3D12_CHECK(Allocator->Reset());
-		D3D12_CHECK(CommandList->Reset(Allocator.Get(), nullptr));
+		D3D12_CHECK(CommandList->Reset(Allocator, nullptr));
 
 		State = CommandListState::RecordingCommands;
 	}
@@ -152,12 +155,12 @@ namespace Athena
 
 		commandList->End();
 
-		ID3D12CommandList* commandLists[] = { commandList->CommandList.Get() };
+		ID3D12CommandList* commandLists[] = { commandList->CommandList };
 
 		D3D12RHI::Get()->GetQueue()->ExecuteCommandLists(1, commandLists);
 
 		commandList->FenceValue++;
-		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence.Get(), commandList->FenceValue));
+		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence, commandList->FenceValue));
 
 		commandList->State = CommandListState::Submitted;
 	}
@@ -189,7 +192,7 @@ namespace Athena
 
 		commandList->End();
 
-		ID3D12CommandList* commandLists[] = { commandList->CommandList.Get() };
+		ID3D12CommandList* commandLists[] = { commandList->CommandList };
 
 		D3D12RHI::Get()->GetQueue()->ExecuteCommandLists(1, commandLists);
 	}
@@ -197,7 +200,7 @@ namespace Athena
 	void CommandListManager::SignalPresent(D3D12CommandList* commandList)
 	{
 		commandList->FenceValue++;
-		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence.Get(), commandList->FenceValue));
+		D3D12_CHECK(D3D12RHI::Get()->GetQueue()->Signal(commandList->Fence, commandList->FenceValue));
 
 		commandList->State = CommandListState::Submitted;
 	}

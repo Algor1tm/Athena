@@ -92,8 +92,8 @@ namespace Athena
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_WRITE_BIT;
 			dependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 			dependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 			dependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
@@ -113,13 +113,15 @@ namespace Athena
 
 		RecreateFramebuffers();
 
+		Ref<VulkanCommandContext> graphicsContext =VulkanRHI::Get()->GetDevice()->GetGraphicsContext();
+
 		ImGui_ImplVulkan_InitInfo init_info = {};
 		init_info.ApiVersion = VulkanRHI::Get()->GetVulkanVersion();
 		init_info.Instance = VulkanRHI::Get()->GetVulkanInstance();
 		init_info.PhysicalDevice = VulkanRHI::Get()->GetDevice()->GetPhysicalDevice();
 		init_info.Device = VulkanRHI::Get()->GetDevice()->GetLogicalDevice();
-		init_info.QueueFamily = VulkanRHI::Get()->GetDevice()->GetQueueFamily();
-		init_info.Queue = VulkanRHI::Get()->GetDevice()->GetQueue();
+		init_info.QueueFamily = graphicsContext->GetQueueFamily();
+		init_info.Queue = graphicsContext->GetQueue();
 		init_info.PipelineCache = VK_NULL_HANDLE;
 		init_info.DescriptorPool = m_ImGuiDescriptorPool;
 		init_info.MinImageCount = Vulkan::GetMaxFramesInFlight();
@@ -185,7 +187,7 @@ namespace Athena
 			return;
 
 		Ref<VulkanSwapChain> swapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
-		VulkanCommandBuffer* commandBuffer = VulkanRHI::Get()->GetCmdBufferManager()->GetPresentCommandBuffer();
+		VulkanCommandBuffer* commandBuffer = swapChain->BeginRendering();
 
 		uint32 width = swapChain->GetWidth();
 		uint32 height = swapChain->GetHeight();
@@ -201,26 +203,10 @@ namespace Athena
 		renderPassInfo.pClearValues = &clearColor;
 
 		{
-			TRACY_VULKAN_ZONE(commandBuffer->CommandBuffer, "ImGui Pass");
-			VK_BEGIN_DEBUG_LABEL(commandBuffer->CommandBuffer, "ImGui Pass", IntegerColor::Magenta);
+			TRACY_VULKAN_ZONE(commandBuffer, "ImGui Pass");
+			VK_BEGIN_DEBUG_LABEL(commandBuffer->CmdBuffer, "ImGui Pass", IntegerColor::Magenta);
 
-			// Insert memory barrier rendering commands and UI
-			VkMemoryBarrier memoryBarrier = {};
-			memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			memoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-			memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-			vkCmdPipelineBarrier(
-				commandBuffer->CommandBuffer,
-				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				0,
-				1, &memoryBarrier,
-				0, nullptr,
-				0, nullptr
-			);
-
-			vkCmdBeginRenderPass(commandBuffer->CommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(commandBuffer->CmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			ImDrawData* drawData = ImGui::GetDrawData();
 			{
@@ -228,13 +214,13 @@ namespace Athena
 				m_ImGuiTextureQueue.ProcessRequests(drawData);
 			}
 
-			ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer->CommandBuffer);
+			ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer->CmdBuffer);
 
-			vkCmdEndRenderPass(commandBuffer->CommandBuffer);
-			VK_END_DEBUG_LABEL(commandBuffer->CommandBuffer);
+			vkCmdEndRenderPass(commandBuffer->CmdBuffer);
+			VK_END_DEBUG_LABEL(commandBuffer->CmdBuffer);
 		}
 
-		VulkanRHI::Get()->GetCmdBufferManager()->SubmitForPresent(swapChain->GetCurrentImageIndex(), swapChain->GetImageAcquiredSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		swapChain->EndRendering(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
 	void VulkanImGuiBackend::OnSwapChainRecreate()
@@ -258,9 +244,9 @@ namespace Athena
 
 		Ref<VulkanSwapChain> vkSwapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
 
-		for (size_t i = 0; i < vkSwapChain->GetVulkanImageViews().size(); i++)
+		for (size_t i = 0; i < Vulkan::GetMaxFramesInFlight(); i++)
 		{
-			VkImageView attachment = vkSwapChain->GetVulkanImageViews()[i];
+			VkImageView attachment = vkSwapChain->GetVulkanImageView(i);
 
 			VkFramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

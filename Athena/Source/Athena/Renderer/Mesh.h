@@ -26,14 +26,16 @@ namespace Athena
 		Vector3 Tangent;
 		Vector3 Bitangent;
 
-		static VertexMemoryLayout GetLayout()
+		static const VertexMemoryLayout& GetLayout()
 		{
-			return {
+			static VertexMemoryLayout s_Layout = {
 				{ Format::RGB32F, "a_Position"  },
 				{ Format::RG32F,  "a_TexCoords" },
 				{ Format::RGB32F, "a_Normal"    },
 				{ Format::RGB32F, "a_Tangent"   },
 				{ Format::RGB32F, "a_Bitangent" } };
+
+			return s_Layout;
 		}
 	};
 
@@ -42,11 +44,13 @@ namespace Athena
 		int BoneIDs[MAX_NUM_BONES_PER_VERTEX];
 		float Weights[MAX_NUM_BONES_PER_VERTEX];
 		
-		static VertexMemoryLayout GetLayout()
+		static const VertexMemoryLayout& GetLayout()
 		{
-			return {
+			static VertexMemoryLayout s_Layout = {
 				{ Format::RGBA32UInt, "a_BoneIDs"   },
 				{ Format::RGBA32F,	  "a_Weights"   } };
+
+			return s_Layout;
 		}
 	};
 

@@ -45,11 +45,11 @@ namespace Athena
 	{
 		switch (level)
 		{
-		case LogLevel::Trace: return "Trace";
-		case LogLevel::Info:  return "Info";
-		case LogLevel::Warn:  return "Warn";
-		case LogLevel::Error: return "Error";
-		case LogLevel::Fatal: return "Fatal";
+		case LogLevel::Trace: return "TRACE";
+		case LogLevel::Info:  return "INFO";
+		case LogLevel::Warn:  return "WARN";
+		case LogLevel::Error: return "ERROR";
+		case LogLevel::Fatal: return "FATAL";
 		}
 
 		return "";
@@ -108,6 +108,9 @@ namespace Athena
 
 	void Logger::MessageInternal(const String& message, LogLevel level)
 	{
+		if (!s_SPDLogger)
+			return;
+
 		switch (level)
 		{
 		case LogLevel::Trace:

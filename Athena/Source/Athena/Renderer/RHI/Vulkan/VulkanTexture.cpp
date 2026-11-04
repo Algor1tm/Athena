@@ -54,14 +54,6 @@ namespace Athena
 			return VK_SAMPLE_COUNT_1_BIT;
 		}
 
-		static uint32 GetLayerMultiplier(TextureType type)
-		{
-			if (type == TextureType::TEXTURE_CUBE)
-				return 6;
-
-			return 1;
-		}
-
 		static const char* ViewTypeToString(TextureViewType type)
 		{
 			switch (type)
@@ -125,130 +117,71 @@ namespace Athena
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageInfo.samples = Vulkan::TranslateSamplesCount(GetInfo().Samples);
 
-		m_Image = VulkanRHI::Get()->GetAllocator()->AllocateImage(imageInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName());
+		VK_CHECK(VulkanRHI::Get()->GetAllocator()->AllocateImage(&m_Image, imageInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName()));
 		VK_SET_OBJECT_NAME(m_Image.GetImage(), VK_OBJECT_TYPE_IMAGE, fmt::format("Image_{}", GetName()));
+
+		m_SubresourcesLayouts.resize(imageInfo.mipLevels * imageInfo.arrayLayers, imageInfo.initialLayout);
+		m_MainLayout = imageInfo.initialLayout;
+		m_LayoutsCollapsed = true;
 
 		InvalidateViews();
 	}
 
-	void VulkanTexture::Upload(const Buffer& srcBuffer, const TextureRegion& region)
+	VkImageLayout VulkanTexture::GetSubresLayout(uint32 mip, uint32 layer) const
 	{
-		ensuref(false);
+		if (m_LayoutsCollapsed)
+			return m_MainLayout;
+
+		return m_SubresourcesLayouts[GetLayers() * mip + layer];
 	}
 
-	void VulkanTexture::UploadAndBlitMipMap(const Buffer& srcBuffer)
+	void VulkanTexture::SetSubresLayout(VkImageLayout layout, const VkImageSubresourceRange& subresourceRange)
 	{
-		TRACY_PROFILE_FUNC();
-
-		VkDeviceSize imageSize = GetWidth() * GetHeight() * GetFormatProperties(GetFormat()).BytesPerPixel;
-
-		ensure(srcBuffer.Size() <= imageSize, "Texture upload buffer is too small!");
-
-		VkBufferCreateInfo bufferInfo = {};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = GetInfo().Layers * Vulkan::GetLayerMultiplier(GetType()) * imageSize;
-		bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-		VulkanBufferAllocation stagingBuffer = VulkanRHI::Get()->GetAllocator()->AllocateBuffer(bufferInfo, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-
-		void* mappedMemory = stagingBuffer.MapMemory();
-
-		for (uint32 offset = 0; offset < GetInfo().Layers * imageSize; offset += imageSize)
-			memcpy((byte*)mappedMemory + offset, srcBuffer.Data(), imageSize);
-
-		stagingBuffer.UnmapMemory();
-
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = m_Image.GetImage();
-		barrier.subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(TextureAspect::AUTO, GetFormat());
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = GetInfo().Layers * Vulkan::GetLayerMultiplier(GetType());
-
-		VkPipelineStageFlags sourceStage;
-		VkPipelineStageFlags destinationStage;
-
-		VulkanCommandBuffer* commandBuffer = VulkanRHI::Get()->GetCmdBufferManager()->GetTransferCommandBuffer();
+		for (uint32 mip = subresourceRange.baseMipLevel; mip < subresourceRange.levelCount; ++mip)
 		{
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			barrier.srcAccessMask = VK_ACCESS_NONE;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-			sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-			vkCmdPipelineBarrier(
-				commandBuffer->CommandBuffer,
-				sourceStage, destinationStage,
-				0,
-				0, nullptr,
-				0, nullptr,
-				1, &barrier
-			);
-
-			VkBufferImageCopy region = {};
-			region.bufferOffset = 0;
-			region.bufferRowLength = 0;
-			region.bufferImageHeight = 0;
-
-			region.imageSubresource.aspectMask = barrier.subresourceRange.aspectMask;
-			region.imageSubresource.mipLevel = 0;
-			region.imageSubresource.baseArrayLayer = 0;
-			region.imageSubresource.layerCount = GetInfo().Layers * Vulkan::GetLayerMultiplier(GetType());
-
-			region.imageOffset = { 0, 0, 0 };
-			region.imageExtent = { GetWidth(), GetHeight(), 1};
-
-			vkCmdCopyBufferToImage(commandBuffer->CommandBuffer, stagingBuffer.GetBuffer(), m_Image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-			if (GetInfo().GenerateMipMap)
+			for (uint32 layer = subresourceRange.baseArrayLayer; layer < subresourceRange.layerCount; ++layer)
 			{
-				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-				vkCmdPipelineBarrier(
-					commandBuffer->CommandBuffer,
-					sourceStage, destinationStage,
-					0,
-					0, nullptr,
-					0, nullptr,
-					0, nullptr
-				);
-
-				Vulkan::BlitMipMap(commandBuffer, m_Image.GetImage(), GetWidth(), GetHeight(), GetInfo().Layers * Vulkan::GetLayerMultiplier(GetType()), GetFormat(), GetMipLevelsCount());
+				m_SubresourcesLayouts[GetLayers() * mip + layer] = layout;
 			}
-			else
-			{
-				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-				destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-				vkCmdPipelineBarrier(
-					commandBuffer->CommandBuffer,
-					sourceStage, destinationStage,
-					0,
-					0, nullptr,
-					0, nullptr,
-					1, &barrier
-				);
-			}
-
 		}
 
-		commandBuffer->AddCallbackOnCompletion([stagingBuffer]() 
-			{
-				VulkanRHI::Get()->GetAllocator()->DestroyBuffer(stagingBuffer);
-			});
+		CollapseSubresLayoutsIfSame();
+	}
 
+	bool VulkanTexture::AreSubresourcesSameLayout(const VkImageSubresourceRange& subresourceRange) const
+	{
+		if (m_LayoutsCollapsed)
+			return true;
+
+		VkImageLayout layout = m_SubresourcesLayouts[GetLayers() * subresourceRange.baseMipLevel + subresourceRange.baseArrayLayer];
+
+		for (uint32 mip = subresourceRange.baseMipLevel; mip < subresourceRange.levelCount; ++mip)
+		{
+			for (uint32 layer = subresourceRange.baseArrayLayer; layer < subresourceRange.layerCount; ++layer)
+			{
+				if (layout != m_SubresourcesLayouts[GetLayers() * mip + layer])
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	void VulkanTexture::CollapseSubresLayoutsIfSame()
+	{
+		VkImageLayout layout = m_SubresourcesLayouts[0];
+
+		for (uint32 i = 0; i < m_SubresourcesLayouts.size(); ++i)
+		{
+			if (layout != m_SubresourcesLayouts[i])
+			{
+				m_LayoutsCollapsed = false;
+				return;
+			}
+		}
+
+		m_MainLayout = layout;
+		m_LayoutsCollapsed = true;
 	}
 
 	void VulkanTexture::CleanUp()

@@ -2,6 +2,7 @@
 
 #include "Athena/Core/Core.h"
 #include "Athena/Renderer/Format.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanCommandContext.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 #include "Athena/Renderer/RHI/RHI.h"
 
@@ -40,9 +41,11 @@ namespace Athena
 
 		VkDevice GetLogicalDevice() const { return m_LogicalDevice; }
 
-		uint32 GetQueueFamily() const { return m_QueueFamily; }
+		Ref<VulkanCommandContext> GetGraphicsContext() { return m_GraphicsContext; }
 
-		VkQueue GetQueue() const { return m_Queue; }
+		Ref<VulkanCommandContext> GetAsyncComputeContext() { return m_AsyncComputeContext; }
+
+		Ref<VulkanCommandContext> GetAsyncTransferContext() { return m_AsyncTransferContext; }
 
 		const VkPhysicalDeviceLimits& GetLimits() const { return m_DeviceLimits; }
 
@@ -54,6 +57,8 @@ namespace Athena
 
 		uint32 GetDeviceVulkanVersion() const { return m_DeviceVulkanVersion; }
 
+		const VkQueueFamilyProperties& GetQueueFamilyProps(uint32 index) const { return m_QueueFamilyProps[index]; }
+
 	private:
 		void QueryDeviceExtensions();
 		void QueryDeviceFeatures();
@@ -63,7 +68,10 @@ namespace Athena
 
 	private:
 		VkDevice m_LogicalDevice;
-		VkQueue m_Queue;
+
+		Ref<VulkanCommandContext> m_GraphicsContext;
+		Ref<VulkanCommandContext> m_AsyncComputeContext;
+		Ref<VulkanCommandContext> m_AsyncTransferContext;
 
 		DeviceExtensionsInfo m_ExtensionsInfo;
 		DeviceFeaturesInfo m_FeaturesInfo;
@@ -72,7 +80,7 @@ namespace Athena
 
 		uint32 m_DeviceVulkanVersion;
 		VkPhysicalDevice m_PhysicalDevice;
-		uint32 m_QueueFamily;
 		std::vector<const char*> m_DeviceExtensions;
+		std::vector<VkQueueFamilyProperties> m_QueueFamilyProps;
 	};
 }

@@ -5,13 +5,10 @@
 #include "Athena/Core/CommandStream.h"
 
 #include <d3d12.h>
-#include <wrl/client.h>
 
 
 namespace Athena
 {
-	using Microsoft::WRL::ComPtr;
-
 	enum class CommandListState
 	{
 		Idle,
@@ -28,7 +25,7 @@ namespace Athena
 		template <typename FuncT>
 		void AddCallbackOnCompletion(FuncT&& func)
 		{
-			OnCompletionCallbacks.Submit(std::forward<FuncT>(func));
+			OnCompletionCallbacks.Enqueue(std::forward<FuncT>(func));
 		}
 
 		void Begin();
@@ -38,11 +35,11 @@ namespace Athena
 
 	public:
 		CommandListState State;
-		ComPtr<ID3D12CommandAllocator> Allocator;
-		ComPtr<ID3D12GraphicsCommandList> CommandList;
+		ID3D12CommandAllocator* Allocator;
+		ID3D12GraphicsCommandList* CommandList;
 		CommandStream OnCompletionCallbacks;
 		uint64 FenceValue;
-		ComPtr<ID3D12Fence> Fence;
+		ID3D12Fence* Fence;
 		HANDLE FenceEvent;
 		Time LastUsedTime;
 	};

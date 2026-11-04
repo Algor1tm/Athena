@@ -124,59 +124,74 @@ namespace Athena
 		vmaDestroyAllocator(m_Allocator);
 	}
 
-	VulkanBufferAllocation VulkanAllocator::AllocateBuffer(const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
+	VkResult VulkanAllocator::AllocateBuffer(VulkanBufferAllocation* allocation, const VkBufferCreateInfo& bufferInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
 	{
 		TRACY_PROFILE_FUNC();
 
 		VkBuffer buffer;
-		VmaAllocation allocation;
+		VmaAllocation vmaAllocation;
 
 		VmaAllocationCreateInfo allocInfo = {};
 		allocInfo.usage = usage;
 		allocInfo.flags = flags;
 
-		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
+		VkResult result = vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &buffer, &vmaAllocation, nullptr);
 
-		VkDeviceSize size = allocation->GetSize();
+		if (result == VK_SUCCESS)
+		{
+			*allocation = VulkanBufferAllocation(buffer, vmaAllocation);
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
-		if (!name.empty())
-			ATN_LOG_TRACE(Renderer, "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			if (!name.empty())
+			{
+				VkDeviceSize size = vmaAllocation->GetSize();
+				ATN_LOG_TRACE(Renderer, "Allocating buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+			}
 #endif
+		}
 
-		return VulkanBufferAllocation(buffer, allocation);
+		return result;
 	}
 
-	VulkanImageAllocation VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
+	VkResult VulkanAllocator::AllocateImage(VulkanImageAllocation* allocation, const VkImageCreateInfo& imageInfo, VmaMemoryUsage usage, VmaAllocationCreateFlags flags, const String& name)
 	{
 		TRACY_PROFILE_FUNC();
 
 		VkImage image;
-		VmaAllocation allocation;
+		VmaAllocation vmaAllocation;
 
 		VmaAllocationCreateInfo allocInfo = {};
 		allocInfo.usage = usage;
 		allocInfo.flags = flags;
 
-		VK_CHECK(vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr));
+		VkResult result = vmaCreateImage(m_Allocator, &imageInfo, &allocInfo, &image, &vmaAllocation, nullptr);
+
+		if (result == VK_SUCCESS)
+		{
+			*allocation = VulkanImageAllocation(image, vmaAllocation);
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
-		VkDeviceSize size = allocation->GetSize();
-		ATN_LOG_TRACE(Renderer, "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+			if (!name.empty())
+			{
+				VkDeviceSize size = allocation->GetSize();
+				ATN_LOG_TRACE(Renderer, "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
+			}
 #endif
+		}
 
-		return VulkanImageAllocation(image, allocation);
+		return result;
 	}
 
 	void VulkanAllocator::DestroyBuffer(VulkanBufferAllocation buffer, const String& name)
 	{
 		TRACY_PROFILE_FUNC();
 
-		VkDeviceSize size = buffer.GetAllocation()->GetSize();
-
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 		if (!name.empty())
+		{
+			VkDeviceSize size = buffer.GetAllocation()->GetSize();
 			ATN_LOG_TRACE(Renderer, "Destroying buffer '{}' {}", name, Utils::MemoryBytesToString(size));
+		}
 #endif
 
 		vmaDestroyBuffer(m_Allocator, buffer.GetBuffer(), buffer.GetAllocation());
@@ -187,8 +202,11 @@ namespace Athena
 		TRACY_PROFILE_FUNC();
 
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
-		VkDeviceSize size = image.GetAllocation()->GetSize();
-		ATN_LOG_TRACE(Renderer, "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+		if (!name.empty())
+		{
+			VkDeviceSize size = image.GetAllocation()->GetSize();
+			ATN_LOG_TRACE(Renderer, "Destroying image '{}' {}", name, Utils::MemoryBytesToString(size));
+		}
 #endif
 
 		vmaDestroyImage(m_Allocator, image.GetImage(), image.GetAllocation());

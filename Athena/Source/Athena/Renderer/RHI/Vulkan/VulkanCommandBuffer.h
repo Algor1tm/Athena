@@ -21,10 +21,11 @@ namespace Athena
 	class VulkanCommandBuffer
 	{
 	public:
-		VulkanCommandBuffer(VulkanCommandContext* context);
+		VulkanCommandBuffer(VkCommandPool pool);
 		~VulkanCommandBuffer();
 
 		void AddDependency(VkSemaphore semaphore, uint64 value, VkPipelineStageFlags2 waitDstStage);
+		void AddSignal(VkSemaphore semaphore, uint64 value, VkPipelineStageFlags2 signalSrcStage);
 
 		template <typename FuncT>
 		void AddCallbackOnCompletion(FuncT&& func)
@@ -38,15 +39,15 @@ namespace Athena
 		void Begin();
 		void End();
 
-		void Submit(VkQueue queue, VkSemaphoreSubmitInfo* semaphoreSignalInfo = nullptr);
+		void Submit(VkQueue queue);
 
 	public:
 		CommandBufferState State = CommandBufferState::Idle;
 		VkCommandBuffer CmdBuffer = VK_NULL_HANDLE;
-		VulkanCommandContext* Context = nullptr;
 		CommandStream OnCompletionCallbacks;
 		VkFence SignalFence = VK_NULL_HANDLE;
 		std::vector<VkSemaphoreSubmitInfo> WaitSemaphores;
+		std::vector<VkSemaphoreSubmitInfo> SignalSemaphores;
 		Time LastUsedTime;
 	};
 }

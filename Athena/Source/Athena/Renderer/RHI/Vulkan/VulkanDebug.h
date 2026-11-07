@@ -129,7 +129,7 @@ namespace Athena::Vulkan
         #define VK_CHECK(expr) expr
     #endif
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
     inline VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
         VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
@@ -192,21 +192,10 @@ namespace Athena::Vulkan
 #endif
 
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
     void SetDebugName(void* objectHandle, VkObjectType type, const String& name);
-    void BeginDebugLabel(VkCommandBuffer cmdBuffer, const String& name, const IntegerColor& color);
-    void EndDebugLabel(VkCommandBuffer cmdBuffer);
-    void InsertDebugLabel(VkCommandBuffer cmdBuffer, const String& name, const IntegerColor& color);
-
-
-    #define VK_SET_OBJECT_NAME(object, type, name) Vulkan::SetDebugName(object, type, name)
-    #define VK_BEGIN_DEBUG_LABEL(cmdBuffer, name, color) Vulkan::BeginDebugLabel(cmdBuffer, name, color)
-    #define VK_END_DEBUG_LABEL(cmdBuffer) Vulkan::EndDebugLabel(cmdBuffer)
-    #define VK_INSERT_DEBUG_LABEL(cmdBuffer, name, color) Vulkan::InsertDebugLabel(cmdBuffer, name, color)
+    #define VK_SET_DEBUG_NAME(object, type, name) Vulkan::SetDebugName(object, type, name)
 #else
-    #define VK_SET_OBJECT_NAME(object, type, name) 
-    #define VK_BEGIN_DEBUG_LABEL(cmdBuffer, name, color)
-    #define VK_END_DEBUG_LABEL(cmdBuffer)
-    #define VK_INSERT_DEBUG_LABEL(cmdBuffer, name, color)
+    #define VK_SET_DEBUG_NAME(object, type, name) 
 #endif
 }

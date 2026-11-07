@@ -74,14 +74,14 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 		void* mappedData;
-		VK_CHECK(vmaMapMemory(VulkanRHI::Get()->GetAllocator()->GetInternalAllocator(), m_Allocation, &mappedData));
+		VK_CHECK(vmaMapMemory(Vulkan::GetAllocator()->GetInternalAllocator(), m_Allocation, &mappedData));
 		return mappedData;
 	}
 
 	void VulkanBufferAllocation::UnmapMemory()
 	{
 		TRACY_PROFILE_FUNC();
-		vmaUnmapMemory(VulkanRHI::Get()->GetAllocator()->GetInternalAllocator(), m_Allocation);
+		vmaUnmapMemory(Vulkan::GetAllocator()->GetInternalAllocator(), m_Allocation);
 	}
 
 	VulkanAllocator::VulkanAllocator()
@@ -173,7 +173,7 @@ namespace Athena
 #if VULKAN_ENABLE_MEMORY_DEBUG_INFO
 			if (!name.empty())
 			{
-				VkDeviceSize size = allocation->GetSize();
+				VkDeviceSize size = vmaAllocation->GetSize();
 				ATN_LOG_TRACE(Renderer, "Allocating image '{}' {}", name, Utils::MemoryBytesToString(size));
 			}
 #endif

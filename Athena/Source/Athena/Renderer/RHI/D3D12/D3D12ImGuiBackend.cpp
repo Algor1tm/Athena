@@ -51,9 +51,11 @@ namespace Athena
 		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_SRVHeap)));
 		m_SRVHeapAllocator.Create(D3D12RHI::Get()->GetDevice(), m_SRVHeap);
 
+		Ref<D3D12CommandContext> graphicsContext = RHI::Get()->GetContext(CommandContextType::Graphics).As<D3D12CommandContext>();
+
 		ImGui_ImplDX12_InitInfo init_info = {};
 		init_info.Device = D3D12RHI::Get()->GetDevice();
-		init_info.CommandQueue = D3D12RHI::Get()->GetQueue();
+		init_info.CommandQueue = graphicsContext->GetQueue();
 		init_info.NumFramesInFlight = D3D12::GetMaxFramesInFlight();
 		init_info.RTVFormat = Application::Get().GetWindow().GetSwapChain().As<D3D12SwapChain>()->GetFormat();
 		init_info.DSVFormat = DXGI_FORMAT_UNKNOWN;
@@ -132,14 +134,15 @@ namespace Athena
 		if (!Application::Get().GetWindow().GetSwapChain())
 			return;
 
+		Ref<D3D12CommandContext> graphicsContext = RHI::Get()->GetContext(CommandContextType::Graphics).As<D3D12CommandContext>();
 		Ref<D3D12SwapChain> swapChain = Application::Get().GetWindow().GetSwapChain().As<D3D12SwapChain>();
-		D3D12CommandList* commandList = D3D12RHI::Get()->GetCmdListManager()->GetPresentCommandList();
+
+		D3D12CommandList* list = graphicsContext->GetCommandList();
 
 		uint32 width = swapChain->GetWidth();
 		uint32 height = swapChain->GetHeight();
 
 		uint32 backBufferIndex = swapChain->GetCurrentBackBufferIndex();
-		D3D12CommandList* list = D3D12RHI::Get()->GetCmdListManager()->GetPresentCommandList();
 
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -148,12 +151,12 @@ namespace Athena
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		list->CommandList->ResourceBarrier(1, &barrier);
+		list->CmdList->ResourceBarrier(1, &barrier);
 
 		const float clear_color[4] = { 0.f, 0.f, 0.f, 1.f };
-		list->CommandList->ClearRenderTargetView(m_BackBufferRTVs[backBufferIndex], clear_color, 0, nullptr);
-		list->CommandList->OMSetRenderTargets(1, &m_BackBufferRTVs[backBufferIndex], FALSE, nullptr);
-		list->CommandList->SetDescriptorHeaps(1, &m_SRVHeap);
+		list->CmdList->ClearRenderTargetView(m_BackBufferRTVs[backBufferIndex], clear_color, 0, nullptr);
+		list->CmdList->OMSetRenderTargets(1, &m_BackBufferRTVs[backBufferIndex], FALSE, nullptr);
+		list->CmdList->SetDescriptorHeaps(1, &m_SRVHeap);
 
 		ImDrawData* drawData = ImGui::GetDrawData();
 		{
@@ -161,13 +164,11 @@ namespace Athena
 			m_ImGuiTextureQueue.ProcessRequests(drawData);
 		}
 
-		ImGui_ImplDX12_RenderDrawData(drawData, list->CommandList);
+		ImGui_ImplDX12_RenderDrawData(drawData, list->CmdList);
 
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		list->CommandList->ResourceBarrier(1, &barrier);
-
-		D3D12RHI::Get()->GetCmdListManager()->SubmitForPresent(list);
+		list->CmdList->ResourceBarrier(1, &barrier);
 	}
 
 	void* D3D12ImGuiBackend::GetTextureID(const Ref<TextureView>& texture)

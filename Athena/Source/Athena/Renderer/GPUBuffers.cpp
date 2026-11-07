@@ -36,9 +36,15 @@ namespace Athena
 
 					Ref<CommandContext> cmdContext = RHI::Get()->GetContext(CommandContextType::AsyncTransfer);
 
-					cmdContext->Transition(buffer.Raw(), PA_Unknown, PA_CopyDst);
+					cmdContext->Transition(buffer.Raw(), ResourceState::CopyDst);
 					cmdContext->UploadBuffer(buffer.Raw(), dataCopyRT, 0);
-					cmdContext->TransitionOwnership(buffer.Raw(), PA_CopyDst, CommandContextType::Graphics, PA_VertexInput);
+
+					ResourceState dstState = ResourceState::VertexInput;
+
+					if (buffer->GetType() == GPUBufferType::StructuredBuffer)
+						dstState = ResourceState::SRVAll;
+
+					cmdContext->TransitionOwnership(buffer.Raw(), CommandContextType::Graphics, ResourceState::VertexInput);
 				});
 		}
 		else
@@ -54,7 +60,18 @@ namespace Athena
 
 	GPUBuffer::GPUBuffer(const GPUBufferCreateInfo& info)
 		: m_Info(info)
+		, m_State(ResourceState::Init)
 	{
 
+	}
+
+	ResourceState GPUBuffer::GetState() const
+	{
+		return m_State;
+	}
+
+	void GPUBuffer::SetState(ResourceState state)
+	{
+		m_State = state;
 	}
 }

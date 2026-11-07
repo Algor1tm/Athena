@@ -32,7 +32,7 @@ namespace Athena
 		{
 			VulkanRHI::Get()->DeleteFrameResourcesDeferred([buffer = m_Buffer, name = GetName()]()
 				{
-					VulkanRHI::Get()->GetAllocator()->DestroyBuffer(buffer, name);
+					Vulkan::GetAllocator()->DestroyBuffer(buffer, name);
 				});
 		}
 	}
@@ -48,7 +48,7 @@ namespace Athena
 
 		bufferInfo.usage |= Vulkan::TranslateBufferUsage(GetType());
 
-		VK_CHECK(VulkanRHI::Get()->GetAllocator()->AllocateBuffer(&m_Buffer, bufferInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName()));
-		VK_SET_OBJECT_NAME(m_Buffer.GetBuffer(), VK_OBJECT_TYPE_BUFFER, GetName());
+		VK_CHECK(Vulkan::GetAllocator()->AllocateBuffer(&m_Buffer, bufferInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName()));
+		VK_SET_DEBUG_NAME(m_Buffer.GetBuffer(), VK_OBJECT_TYPE_BUFFER, GetName());
 	}
 }

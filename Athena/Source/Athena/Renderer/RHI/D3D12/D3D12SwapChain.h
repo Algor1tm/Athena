@@ -36,6 +36,10 @@ namespace Athena
 		uint32 m_Height;
 		DXGI_FORMAT m_Format;
 		
+		Ref<D3D12CommandContext> m_GraphicsContext;
+		D3D12Fence m_Fence;
+		std::vector<uint64> m_FenceFrameValues;
+
 		uint32 m_BackBufferIndex;
 		bool m_VSync;
 		void* m_WindowHandle;

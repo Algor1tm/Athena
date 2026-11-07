@@ -27,7 +27,7 @@ namespace Athena
 
 	D3D12SwapChain::~D3D12SwapChain()
 	{
-		D3D12RHI::Get()->DeleteFrameResourcesDeferred([buffers = m_BackBuffers, swapChain = m_DXGISwapChain]()
+		D3D12RHI::Get()->DeleteFrameResourcesDeferred([buffers = m_BackBuffers, swapChain = m_DXGISwapChain, fence = m_Fence]() mutable
 			{
 				for (UINT i = 0; i < buffers.size(); i++)
 				{
@@ -35,6 +35,7 @@ namespace Athena
 				}
 
 				swapChain->Release();
+				fence.Destroy();
 			});
 	}
 
@@ -46,6 +47,11 @@ namespace Athena
 			m_TearingSupported = allowTearing;
 		}
 
+		m_GraphicsContext = RHI::Get()->GetContext(CommandContextType::Graphics).As<D3D12CommandContext>();
+
+		m_Fence.Init();
+		m_FenceFrameValues.resize(D3D12::GetMaxFramesInFlight(), m_Fence.GetCompletedValue());
+		D3D12_SET_DEBUG_NAME(m_Fence.Fence, "SwapChainFence");
 
 		// Hardcode to this format for now
 		m_Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -67,7 +73,7 @@ namespace Athena
 
 		IDXGISwapChain1* swapChain1;
 		D3D12_CHECK(D3D12RHI::Get()->GetDXGIFactory()->CreateSwapChainForHwnd(
-			D3D12RHI::Get()->GetQueue(),
+			m_GraphicsContext->GetQueue(),
 			hwnd,
 			&swapChainDesc,
 			nullptr,
@@ -91,7 +97,9 @@ namespace Athena
 
 	void D3D12SwapChain::OnWindowResized(uint32 width, uint32 height)
 	{
-		D3D12RHI::Get()->GetCmdListManager()->WaitDeviceIdle();
+		TRACY_PROFILE_FUNC();
+
+		D3D12RHI::Get()->WaitDeviceIdle();
 
 		for (UINT i = 0; i < m_BackBuffers.size(); i++)
 		{
@@ -109,6 +117,7 @@ namespace Athena
 		for (UINT i = 0; i < m_BackBuffers.size(); i++)
 		{
 			m_DXGISwapChain->GetBuffer(i, IID_PPV_ARGS(&m_BackBuffers[i]));
+			D3D12_SET_DEBUG_NAME(m_BackBuffers[i], std::format("BackBuffer_{}", i));
 		}
 
 		auto uiLayer = Application::Get().GetImGuiLayer();
@@ -127,8 +136,9 @@ namespace Athena
 			TRACY_PROFILE_SCOPE("WaitForGPU");
 			SCOPE_CYCLE_STAT(STAT_WaitForGPU);
 
-			D3D12CommandList* presentCommandList = D3D12RHI::Get()->GetCmdListManager()->GetPresentCommandList();
-			D3D12RHI::Get()->GetCmdListManager()->WaitForCmdList(presentCommandList);
+			uint64 fenceValue = m_FenceFrameValues[D3D12RHI::Get()->GetFrameResourcesIndex()];
+			if(fenceValue != 0)
+				m_Fence.WaitValue(fenceValue);
 		}
 
 		m_BackBufferIndex = m_DXGISwapChain->GetCurrentBackBufferIndex();
@@ -136,12 +146,18 @@ namespace Athena
 
 	void D3D12SwapChain::Present()
 	{
+		TRACY_PROFILE_FUNC();
+
+		m_Fence.Signal(m_GraphicsContext->GetQueue());
+		m_FenceFrameValues[D3D12RHI::Get()->GetFrameResourcesIndex()] = m_Fence.GetSignaledValue();
+
 		UINT syncInterval = m_VSync ? 1 : 0;
 		UINT presentFlags = (!m_VSync && m_TearingSupported) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		D3D12_CHECK(m_DXGISwapChain->Present(syncInterval, presentFlags));
 
-		D3D12CommandList* presentCommandList = D3D12RHI::Get()->GetCmdListManager()->GetPresentCommandList();
-		D3D12RHI::Get()->GetCmdListManager()->SignalPresent(presentCommandList);
+#if ATN_ENABLE_TRACY_GPU
+		m_GraphicsContext->TracyCollect();
+#endif
 	}
 }

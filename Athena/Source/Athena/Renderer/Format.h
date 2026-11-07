@@ -39,6 +39,7 @@ namespace Athena
 		bool HasColor;
 		bool HasDepth;
 		bool HasStencil;
+		uint32 NumPlanes;
 		bool IsFloat;
 		bool IsSRGB;
 		uint32 BytesPerPixel;

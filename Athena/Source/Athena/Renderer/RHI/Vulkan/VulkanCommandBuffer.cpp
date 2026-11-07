@@ -5,13 +5,11 @@
 
 namespace Athena
 {
-	VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandContext* context)
-		: Context(context),
-		OnCompletionCallbacks(10 * 1024) // 1Kb
+	VulkanCommandBuffer::VulkanCommandBuffer(VkCommandPool pool)
 	{
 		VkCommandBufferAllocateInfo cmdBufAllocInfo = {};
 		cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		cmdBufAllocInfo.commandPool = Context->GetCommandPool();
+		cmdBufAllocInfo.commandPool = pool;
 		cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		cmdBufAllocInfo.commandBufferCount = 1;
 
@@ -49,6 +47,18 @@ namespace Athena
 		WaitSemaphores.push_back(semaphoreInfo);
 	}
 
+	void VulkanCommandBuffer::AddSignal(VkSemaphore semaphore, uint64 value, VkPipelineStageFlags2 signalSrcStage)
+	{
+		VkSemaphoreSubmitInfo semaphoreInfo = {};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+		semaphoreInfo.semaphore = semaphore;
+		semaphoreInfo.value = value;
+		semaphoreInfo.stageMask = signalSrcStage;
+		semaphoreInfo.deviceIndex = 0;
+
+		SignalSemaphores.push_back(semaphoreInfo);
+	}
+
 	void VulkanCommandBuffer::WaitCompletion()
 	{
 		TRACY_PROFILE_FUNC();
@@ -67,6 +77,7 @@ namespace Athena
 
 		vkResetFences(Vulkan::GetLogicalDevice(), 1, &SignalFence);
 		WaitSemaphores.clear();
+		SignalSemaphores.clear();
 		OnCompletionCallbacks.Flush();
 		State = CommandBufferState::Idle;
 		LastUsedTime = Time::GetSystemCurrentTime();
@@ -93,7 +104,7 @@ namespace Athena
 		VK_CHECK(vkEndCommandBuffer(CmdBuffer));
 	}
 
-	void VulkanCommandBuffer::Submit(VkQueue queue, VkSemaphoreSubmitInfo* semaphoreSignalInfo)
+	void VulkanCommandBuffer::Submit(VkQueue queue)
 	{
 		TRACY_PROFILE_FUNC();
 		ensuref(State == CommandBufferState::RecordingCommands);
@@ -110,8 +121,8 @@ namespace Athena
 		submitInfo.pWaitSemaphoreInfos = WaitSemaphores.data();
 		submitInfo.commandBufferInfoCount = 1;
 		submitInfo.pCommandBufferInfos = &cmdBufferInfo;
-		submitInfo.signalSemaphoreInfoCount = semaphoreSignalInfo ? 1 : 0;
-		submitInfo.pSignalSemaphoreInfos = semaphoreSignalInfo;
+		submitInfo.signalSemaphoreInfoCount = SignalSemaphores.size();
+		submitInfo.pSignalSemaphoreInfos = SignalSemaphores.data();
 
 		VK_CHECK(vkQueueSubmit2(queue, 1, &submitInfo, SignalFence));
 		State = CommandBufferState::Submitted;

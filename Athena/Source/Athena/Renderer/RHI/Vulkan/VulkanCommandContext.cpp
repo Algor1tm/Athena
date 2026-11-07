@@ -1,5 +1,6 @@
 #include "VulkanCommandContext.h"
 
+#include "Athena/Math/Random.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanBuffers.h"
@@ -18,99 +19,108 @@ namespace Athena
 
 	namespace Vulkan
 	{
-		static VkImageLayout GetOptimalImageLayout(PipelineAccess access)
+		static VkImageLayout GetOptimalImageLayout(ResourceState state)
 		{
-			if (access == PA_Unknown)		  return VK_IMAGE_LAYOUT_UNDEFINED;
-			if (access == PA_CopySrc)		  return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-			if (access == PA_SRVVertexShader) return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			if (access == PA_SRVPixelShader)  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			if (access == PA_SRVCompute)	  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			if (access == PA_SRVGraphics)	  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			if (access == PA_SRVMask)		  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			if (access == PA_DSVRead)		  return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-			if (access == PA_CopyDst)		  return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			if (access == PA_UAV)			  return VK_IMAGE_LAYOUT_GENERAL;
-			if (access == PA_RTV)			  return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			if (access == PA_DSVWrite)		  return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			switch (state)
+			{
+			case ResourceState::Init:				return VK_IMAGE_LAYOUT_UNDEFINED;
+			case ResourceState::CopySrc:			return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			case ResourceState::SRVNonPixelShader:	return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case ResourceState::SRVPixelShader:		return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case ResourceState::SRVCompute:			return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case ResourceState::SRVGraphics:		return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case ResourceState::SRVAll:				return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			case ResourceState::DSVRead:			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+			case ResourceState::CopyDst:			return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			case ResourceState::UAV:				return VK_IMAGE_LAYOUT_GENERAL;
+			case ResourceState::RTV:				return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			case ResourceState::DSVReadWrite:		return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			}
 
 			checkf(false);
 			return VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 
-		static VkAccessFlags2 GetImageAccessMask(PipelineAccess access)
+		static VkAccessFlags2 GetImageAccessMask(ResourceState state)
 		{
-			VkAccessFlags2 result = VK_ACCESS_2_NONE;
-
-			if (access & PA_CopySrc)		 result |= VK_ACCESS_2_TRANSFER_READ_BIT;
-			if (access & PA_SRVVertexShader) result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_SRVPixelShader)	 result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_SRVCompute)		 result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_DSVRead)		 result |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-			if (access & PA_CopyDst)		 result |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
-			if (access & PA_UAV)			 result |= VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
-			if (access & PA_RTV)			 result |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-			if (access & PA_DSVWrite)		 result |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-			return result;
-		}
-
-		static VkAccessFlags2 GetBufferAccessMask(PipelineAccess access, GPUBufferType bufferType)
-		{
-			VkAccessFlags2 result = VK_ACCESS_2_NONE;
-
-			if (access & PA_CopySrc)		 result |= VK_ACCESS_2_TRANSFER_READ_BIT;
-			if (access & PA_SRVVertexShader) result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_SRVPixelShader)  result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_SRVCompute)		 result |= VK_ACCESS_2_SHADER_READ_BIT;
-			if (access & PA_CopyDst)		 result |= VK_ACCESS_2_TRANSFER_WRITE_BIT;
-			if (access & PA_UAV)			 result |= VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
-
-			if (access & PA_VertexInput)
+			switch (state)
 			{
-				if(bufferType == GPUBufferType::VertexBuffer)
-					result |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
-				else if (bufferType == GPUBufferType::IndexBuffer)
-					result |= VK_ACCESS_2_INDEX_READ_BIT;
+			case ResourceState::Init:				return VK_ACCESS_2_NONE;
+			case ResourceState::CopySrc:			return VK_ACCESS_2_TRANSFER_READ_BIT;
+			case ResourceState::SRVNonPixelShader:	return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVPixelShader:		return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVCompute:			return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVGraphics:		return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVAll:				return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::DSVRead:			return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+			case ResourceState::CopyDst:			return VK_ACCESS_2_TRANSFER_WRITE_BIT;
+			case ResourceState::UAV:				return VK_ACCESS_2_SHADER_STORAGE_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+			case ResourceState::RTV:				return VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+			case ResourceState::DSVReadWrite:		return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			}
 
-			return result;
+			checkf(false);
+			return VK_ACCESS_2_NONE;
 		}
 
-		static VkPipelineStageFlags2 GetPipelineStage(PipelineAccess access)
+		static VkAccessFlags2 GetBufferAccessMask(ResourceState state, GPUBufferType bufferType)
 		{
-			VkPipelineStageFlags2 result = VK_PIPELINE_STAGE_2_NONE;
+			switch (state)
+			{
+			case ResourceState::Init:				return VK_ACCESS_2_NONE;
+			case ResourceState::CopySrc:			return VK_ACCESS_2_TRANSFER_READ_BIT;
+			case ResourceState::SRVNonPixelShader:	return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVPixelShader:		return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVCompute:			return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVGraphics:		return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::SRVAll:				return VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+			case ResourceState::CopyDst:			return VK_ACCESS_2_TRANSFER_WRITE_BIT;
+			case ResourceState::UAV:				return VK_ACCESS_2_SHADER_STORAGE_READ_BIT | VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT;
+			}
 
-			if (access == PipelineAccess::PA_Unknown)
-				return VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+			if (state == ResourceState::VertexInput)
+			{
+				switch (bufferType)
+				{
+				case GPUBufferType::VertexBuffer: return VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+				case GPUBufferType::IndexBuffer:  return VK_ACCESS_2_INDEX_READ_BIT;
+				}
+			}
 
-			if (access & PA_CopySrc)		 result |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-			if (access & PA_VertexInput)	 result |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
-			if (access & PA_SRVVertexShader) result |= VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-			if (access & PA_SRVPixelShader)	 result |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-			if (access & PA_SRVCompute)		 result |= VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-			if (access & PA_DSVRead)		 result |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-			if (access & PA_CopyDst)		 result |= VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-			if (access & PA_UAV)			 result |= VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-			if (access & PA_RTV)			 result |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-			if (access & PA_DSVWrite)		 result |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-
-			return result;
+			checkf(false);
+			return VK_ACCESS_2_NONE;
 		}
 
-		static VkImageSubresourceRange GetVulkanSubresourceRange(Texture* texture, const TextureRange& range)
+		static VkPipelineStageFlags2 GetPipelineStage(ResourceState state)
 		{
-			VkImageSubresourceRange subresourceRange = {};
-			subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(range.Aspect, texture->GetFormat());
-			subresourceRange.baseMipLevel = range.BaseMipLevel;
-			subresourceRange.levelCount = range.MipLevelCount;
-			subresourceRange.baseArrayLayer = range.BaseLayer;
-			subresourceRange.layerCount = range.LayerCount * Vulkan::GetLayerMultiplier(texture->GetType());
+			switch (state)
+			{
+			case ResourceState::Init:				return VK_PIPELINE_STAGE_2_NONE;
+			case ResourceState::VertexInput:		return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+			case ResourceState::CopySrc:			return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+			case ResourceState::SRVNonPixelShader:	return VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
+			case ResourceState::SRVPixelShader:		return VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+			case ResourceState::SRVCompute:			return VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
 
-			return subresourceRange;
+			case ResourceState::SRVGraphics:		return VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | 
+				VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+
+			case ResourceState::SRVAll:				return VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | 
+				VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+
+			case ResourceState::DSVRead:			return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+			case ResourceState::CopyDst:			return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+			case ResourceState::UAV:				return VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+			case ResourceState::RTV:				return VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+			case ResourceState::DSVReadWrite:		return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+			}
+
+			checkf(false);
+			return VK_PIPELINE_STAGE_2_NONE;
 		}
 
-		static VkImageMemoryBarrier2 GetImageBarrier(Texture* texture, const TextureRange& range,
-			PipelineAccess src, PipelineAccess dst, VulkanBarrierType type = VulkanBarrierType::Access, uint32 srcQueueFamily = VK_QUEUE_FAMILY_IGNORED, uint32 dstQueueFamily = VK_QUEUE_FAMILY_IGNORED)
+		static VkImageMemoryBarrier2 GetImageBarrier(Texture* texture, const TextureSubresourceRange& range,
+			ResourceState src, ResourceState dst, VulkanBarrierType type = VulkanBarrierType::Access, uint32 srcQueueFamily = VK_QUEUE_FAMILY_IGNORED, uint32 dstQueueFamily = VK_QUEUE_FAMILY_IGNORED)
 		{
 			VulkanTexture* vulkanTexture = ((VulkanTexture*)texture);
 
@@ -119,15 +129,13 @@ namespace Athena
 			barrier.srcQueueFamilyIndex = srcQueueFamily;
 			barrier.dstQueueFamilyIndex = dstQueueFamily;
 			barrier.image = ((VulkanTexture*)texture)->GetImage();
-			barrier.subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(range.Aspect, texture->GetFormat());
+			barrier.subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(range.Plane, texture->GetFormat());
 			barrier.subresourceRange.baseMipLevel = range.BaseMipLevel;
 			barrier.subresourceRange.levelCount = range.MipLevelCount;
 			barrier.subresourceRange.baseArrayLayer = range.BaseLayer;
 			barrier.subresourceRange.layerCount = range.LayerCount * Vulkan::GetLayerMultiplier(texture->GetType());
 
-			ensuref(vulkanTexture->AreSubresourcesSameLayout(barrier.subresourceRange));
-
-			barrier.oldLayout = vulkanTexture->GetSubresLayout(range.BaseMipLevel, range.BaseLayer);
+			barrier.oldLayout = Vulkan::GetOptimalImageLayout(src);
 			barrier.newLayout = Vulkan::GetOptimalImageLayout(dst);
 
 			barrier.srcAccessMask = Vulkan::GetImageAccessMask(src);
@@ -150,7 +158,7 @@ namespace Athena
 		}
 
 		static VkBufferMemoryBarrier2 GetBufferBarrier(GPUBuffer* buffer, uint64 size, uint64 offset,
-			PipelineAccess src, PipelineAccess dst, VulkanBarrierType type = VulkanBarrierType::Access, uint32 srcQueueFamily = VK_QUEUE_FAMILY_IGNORED, uint32 dstQueueFamily = VK_QUEUE_FAMILY_IGNORED)
+			ResourceState src, ResourceState dst, VulkanBarrierType type = VulkanBarrierType::Access, uint32 srcQueueFamily = VK_QUEUE_FAMILY_IGNORED, uint32 dstQueueFamily = VK_QUEUE_FAMILY_IGNORED)
 		{
 			VkBufferMemoryBarrier2 barrier{};
 			barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
@@ -194,6 +202,25 @@ namespace Athena
 
 			vkCmdPipelineBarrier2(cmdBuffer->CmdBuffer, &dependencyInfo);
 		}
+
+		static VkDebugUtilsLabelEXT GetDebugUtilsLabel(const String& name)
+		{
+			static uint64 counter = 0;
+			float hue = Math::Fract(counter++ * Math::GoldenRatio<float>());
+
+			HSVColor hsvColor = HSVColor(hue * 360.f, 65, 100.f);
+			LinearColor color = hsvColor;
+
+			VkDebugUtilsLabelEXT labelInfo = {};
+			labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+			labelInfo.pLabelName = name.c_str();
+			labelInfo.color[0] = color.r;
+			labelInfo.color[1] = color.g;
+			labelInfo.color[2] = color.b;
+			labelInfo.color[3] = color.a;
+
+			return labelInfo;
+		}
 	}
 
 
@@ -202,28 +229,30 @@ namespace Athena
 		m_Type(type)
 	{
 		vkGetDeviceQueue(Vulkan::GetLogicalDevice(), m_QueueFamily, 0, &m_Queue);
+		VK_SET_DEBUG_NAME(m_Queue, VK_OBJECT_TYPE_QUEUE, std::format("{}_Queue", EnumUtils::CmdContextTypeToString(GetType())));
 
 		VkCommandPoolCreateInfo commandPoolCI = {};
 		commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		commandPoolCI.queueFamilyIndex = m_QueueFamily;
 		commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		VK_CHECK(vkCreateCommandPool(Vulkan::GetLogicalDevice(), &commandPoolCI, nullptr, &m_Pool));
-		VK_SET_OBJECT_NAME(m_Pool, VK_OBJECT_TYPE_COMMAND_POOL, std::format("{}_CommandPool", EnumUtils::CmdContextTypeToString(GetType())));
+		VK_SET_DEBUG_NAME(m_Pool, VK_OBJECT_TYPE_COMMAND_POOL, std::format("{}_CommandPool", EnumUtils::CmdContextTypeToString(GetType())));
 
 		m_CurrentCommandBuffer = nullptr;
+
+		m_TimelineValue = 0;
 
 		VkSemaphoreTypeCreateInfo typeInfo{};
 		typeInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
 		typeInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
-		typeInfo.initialValue = 0;
-		m_TimelineNextValue = 1;
+		typeInfo.initialValue = m_TimelineValue;
 
 		VkSemaphoreCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		createInfo.pNext = &typeInfo;
 
 		VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &createInfo, nullptr, &m_TimelineSemaphore));
-		VK_SET_OBJECT_NAME(m_TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("{}_TimelineSemaphore", EnumUtils::CmdContextTypeToString(GetType())));
+		VK_SET_DEBUG_NAME(m_TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("{}_TimelineSemaphore", EnumUtils::CmdContextTypeToString(GetType())));
 
 #if ATN_ENABLE_TRACY_GPU
 		InitTracy();
@@ -244,10 +273,8 @@ namespace Athena
 			delete cmdBuffer;
 		}
 
-		uint64 signaledValue = 0;
-		VK_CHECK(vkGetSemaphoreCounterValue(Vulkan::GetLogicalDevice(), m_TimelineSemaphore, &signaledValue));
-		m_StagingManager.Update(signaledValue);
-		m_StagingManager.Clear();
+		m_StagingPool.Update(GetTimelineLastCompletedValue());
+		m_StagingPool.Clear();
 
 		vkDestroySemaphore(Vulkan::GetLogicalDevice(), m_TimelineSemaphore, nullptr);
 		vkDestroyCommandPool(Vulkan::GetLogicalDevice(), m_Pool, nullptr);
@@ -280,7 +307,7 @@ namespace Athena
 #endif
 	}
 
-	void VulkanCommandContext::Drain(CommandContextType srcContextType, PipelineAccess waitDstStage)
+	void VulkanCommandContext::Drain(CommandContextType srcContextType, ResourceState waitDstStage)
 	{
 		TRACY_PROFILE_FUNC();
 
@@ -290,162 +317,211 @@ namespace Athena
 			return;
 		}
 
-		bool hasAnyCommands = srcContext->Flush();
+		srcContext->Flush();
+
+		uint64 lastSignaledValue = srcContext->GetTimelineLastSignaledValue();
+		bool anyPendingCommands = srcContext->GetTimelineLastCompletedValue() == lastSignaledValue;
 
 		// Nothing to wait on
-		if (!hasAnyCommands && !HasPendingAcquireBarriers(srcContextType))
+		if (!anyPendingCommands)
 			return;
 
-		ContextSyncPoint& syncPoint = m_SyncPoints[(uint32)srcContextType];
-		ensure(syncPoint.Pending == false, "Previous drain was not flushed!");
-
-		syncPoint.Pending = true;
+		ContextSyncPoint& syncPoint = m_SyncPoints[srcContextType];
 		syncPoint.WaitSemaphore = srcContext->GetTimelineSemaphore();
-		syncPoint.TimelineWaitValue = srcContext->GetTimelineNextValue() - 1;
-		syncPoint.WaitStage = waitDstStage;
+		syncPoint.TimelineWaitValue = lastSignaledValue;
+		syncPoint.WaitStage = Vulkan::GetPipelineStage(waitDstStage);
 	}
 
-	bool VulkanCommandContext::Flush()
+	void VulkanCommandContext::Flush()
 	{
 		TRACY_PROFILE_FUNC();
 
 		// If we have active command buffer submit him with wait semaphores
 		if (m_CurrentCommandBuffer)
 		{
+			GPU_TRACY_END(this);
+
+#if ATN_ENABLE_TRACY_GPU
+			ensuref(m_TracyZonesStack.empty());
+#endif
+
 			VulkanCommandBuffer* cmdBuffer = m_CurrentCommandBuffer;
 			cmdBuffer->End();
 
-			// Add wait semaphores
-			for (uint32 i = 0; i < m_SyncPoints.size(); ++i)
+			for (const auto& [type, syncPoint] : m_SyncPoints)
 			{
-				if (GetType() == (CommandContextType)i)
-					continue;
-
-				const ContextSyncPoint& syncPoint = m_SyncPoints[i];
-
-				if (!syncPoint.Pending)
-					continue;
-
-				cmdBuffer->AddDependency(syncPoint.WaitSemaphore, syncPoint.TimelineWaitValue, Vulkan::GetPipelineStage(syncPoint.WaitStage));
+				if(syncPoint.WaitSemaphore != VK_NULL_HANDLE)
+					cmdBuffer->AddDependency(syncPoint.WaitSemaphore, syncPoint.TimelineWaitValue, syncPoint.WaitStage);
 			}
 
-			// Submit
-			VkSemaphoreSubmitInfo semaphoreSignalInfo = {};
-			semaphoreSignalInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-			semaphoreSignalInfo.semaphore = m_TimelineSemaphore;
-			semaphoreSignalInfo.value = m_TimelineNextValue;
-			semaphoreSignalInfo.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-			semaphoreSignalInfo.deviceIndex = 0;
-
-			cmdBuffer->Submit(m_Queue, &semaphoreSignalInfo);
-			m_TimelineNextValue++;
+			m_TimelineValue++;
+			cmdBuffer->AddSignal(m_TimelineSemaphore, m_TimelineValue, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT);
+			cmdBuffer->Submit(m_Queue);
 
 			m_CurrentCommandBuffer = nullptr;
-			UpdateCommandBuffers();
+			m_StagingPool.Update(GetTimelineLastCompletedValue());
 		}
 
 		// Add resources acquire barriers
-		for (uint32 i = 0; i < m_SyncPoints.size(); ++i)
+		for (const auto& [type, syncPoint] : m_SyncPoints)
 		{
-			CommandContextType contextType = (CommandContextType)i;
-			ContextSyncPoint& syncPoint = m_SyncPoints[i];
-
-			if (!syncPoint.Pending)
-				continue;
-
-			syncPoint.Pending = false;
-
-			if (GetType() == contextType)
-				continue;
-
-			if (!HasPendingAcquireBarriers(contextType))
+			if (!HasPendingAcquireBarriers(type))
 				continue;
 
 			VulkanCommandBuffer* cmdBuffer = GetCommandBuffer();
 
-			Vulkan::ExecuteBarriers(cmdBuffer, 
+			Vulkan::ExecuteBarriers(cmdBuffer,
 				syncPoint.PendingImageAcquires.data(), syncPoint.PendingImageAcquires.size(),
 				syncPoint.PendingBufferAcquires.data(), syncPoint.PendingBufferAcquires.size());
-
-			syncPoint.PendingImageAcquires.clear();
-			syncPoint.PendingBufferAcquires.clear();
 		}
 
-		uint64 signaledValue = 0;
-		VK_CHECK(vkGetSemaphoreCounterValue(Vulkan::GetLogicalDevice(), m_TimelineSemaphore, &signaledValue));
-		m_StagingManager.Update(signaledValue);
-
-		return true;
+		m_SyncPoints.clear();
 	}
 
-	bool VulkanCommandContext::FlushAndWait()
+	void VulkanCommandContext::FlushAndWait()
 	{
 		TRACY_PROFILE_FUNC();
 
 		if (!m_CurrentCommandBuffer)
-			return false;
+			return;
 
 		VulkanCommandBuffer* cmdBuffer = GetCommandBuffer();
 		Flush();
 		cmdBuffer->WaitCompletion();
-
-		return true;
 	}
 
-	void VulkanCommandContext::Transition(Texture* texture, const TextureRange& range, PipelineAccess src, PipelineAccess dst)
+	void VulkanCommandContext::Transition(Texture* texture, const TextureSubresourceRange& range, ResourceState dst)
 	{
-		VkImageMemoryBarrier2 barrier = Vulkan::GetImageBarrier(texture, range, src, dst);
-		Vulkan::ExecuteBarriers(GetCommandBuffer(), &barrier, 1, nullptr, 0);
+		if (texture->AreSubresourcesSameState(range, dst))
+			return;
 
-		((VulkanTexture*)texture)->SetSubresLayout(barrier.newLayout, barrier.subresourceRange);
+		if (texture->AreSubresourcesSameState(range))
+		{
+			ResourceState src = texture->GetSubresState({ range.BaseMipLevel, range.BaseLayer, TexturePlane(range.GetFirstPlane()) });
+			VkImageMemoryBarrier2 barrier = Vulkan::GetImageBarrier(texture, range, src, dst);
+			Vulkan::ExecuteBarriers(GetCommandBuffer(), &barrier, 1, nullptr, 0);
+		}
+		else
+		{
+			uint32 firstPlane = range.GetFirstPlane();
+			uint32 lastPlane = range.GetLastPlane(texture->GetPlaneCount());
+
+			std::vector<VkImageMemoryBarrier2> barriers;
+			barriers.reserve((lastPlane - firstPlane) * (range.LayerCount - range.BaseLayer) * (range.MipLevelCount - range.BaseMipLevel));
+
+			for (uint32 plane = firstPlane; plane < lastPlane; ++plane)
+			{
+				for (uint32 layer = range.BaseLayer; layer < range.LayerCount; ++layer)
+				{
+					for (uint32 mip = range.BaseMipLevel; mip < range.MipLevelCount; ++mip)
+					{
+						TextureSubresource subresource = TextureSubresource(mip, layer, TexturePlane(plane));
+						ResourceState src = texture->GetSubresState({ mip, layer, TexturePlane(plane) });
+
+						VkImageMemoryBarrier2 barrier = Vulkan::GetImageBarrier(texture, subresource, src, dst);
+						barriers.push_back(barrier);
+					}
+				}
+			}
+
+			Vulkan::ExecuteBarriers(GetCommandBuffer(), barriers.data(), barriers.size(), nullptr, 0);
+		}
+
+		texture->SetSubresState(dst, range);
 	}
 
-	void VulkanCommandContext::Transition(GPUBuffer* buffer, PipelineAccess src, PipelineAccess dst)
+	void VulkanCommandContext::Transition(GPUBuffer* buffer, ResourceState dst)
 	{
+		if (buffer->GetState() == dst)
+			return;
+
+		ResourceState src = buffer->GetState();
+
 		VkBufferMemoryBarrier2 barrier = Vulkan::GetBufferBarrier(buffer, buffer->GetSize(), 0, src, dst);
 		Vulkan::ExecuteBarriers(GetCommandBuffer(), nullptr, 0, &barrier, 1);
+
+		buffer->SetState(dst);
 	}
 
-	void VulkanCommandContext::TransitionOwnership(Texture* texture, const TextureRange& range, PipelineAccess src, CommandContextType dstContextType, PipelineAccess dst)
+	void VulkanCommandContext::TransitionOwnership(Texture* texture, const TextureSubresourceRange& range, CommandContextType dstContextType, ResourceState dst)
 	{
+		if (texture->AreSubresourcesSameState(range, dst))
+			return;
+
 		Ref<VulkanCommandContext> dstContext = RHI::Get()->GetContext(dstContextType).As<VulkanCommandContext>();
-		if (dstContext.Raw() == this)
+
+		if (dstContext.Raw() == this || dstContext->GetQueueFamily() == m_QueueFamily)
 		{
-			Transition(texture, range, src, dst);
-			return;
-		}
-		if (dstContext->GetQueueFamily() == m_QueueFamily)
-		{
-			Transition(texture, range, src, dst);
+			Transition(texture, range, dst);
 			return;
 		}
 
-		VkImageMemoryBarrier2 releaseBarrier = Vulkan::GetImageBarrier(texture, range, src, dst, 
-			VulkanBarrierType::QueueFamilyRelease, m_QueueFamily, dstContext->GetQueueFamily());
+		if (texture->AreSubresourcesSameState(range))
+		{
+			ResourceState src = texture->GetSubresState({ range.BaseMipLevel, range.BaseLayer, TexturePlane(range.GetFirstPlane()) });
 
-		Vulkan::ExecuteBarriers(GetCommandBuffer(), &releaseBarrier, 1, nullptr, 0);
+			VkImageMemoryBarrier2 releaseBarrier = Vulkan::GetImageBarrier(texture, range, src, dst,
+				VulkanBarrierType::QueueFamilyRelease, m_QueueFamily, dstContext->GetQueueFamily());
 
-		VkImageMemoryBarrier2 acquireBarrier = Vulkan::GetImageBarrier(texture, range, src, dst,
-			VulkanBarrierType::QueueFamilyAcquire, m_QueueFamily, dstContext->GetQueueFamily());
+			Vulkan::ExecuteBarriers(GetCommandBuffer(), &releaseBarrier, 1, nullptr, 0);
 
-		dstContext->AddPendingAcquireBarrier(acquireBarrier, GetType());
+			VkImageMemoryBarrier2 acquireBarrier = Vulkan::GetImageBarrier(texture, range, src, dst,
+				VulkanBarrierType::QueueFamilyAcquire, m_QueueFamily, dstContext->GetQueueFamily());
 
-		((VulkanTexture*)texture)->SetSubresLayout(acquireBarrier.newLayout, acquireBarrier.subresourceRange);
+			dstContext->m_SyncPoints[GetType()].PendingImageAcquires.push_back(acquireBarrier);
+		}
+		else
+		{
+			uint32 firstPlane = range.GetFirstPlane();
+			uint32 lastPlane = range.GetLastPlane(texture->GetPlaneCount());
+
+			uint32 barriersCount = (lastPlane - firstPlane) * (range.LayerCount - range.BaseLayer) * (range.MipLevelCount - range.BaseMipLevel);
+
+			std::vector<VkImageMemoryBarrier2> releaseBarriers;
+			releaseBarriers.reserve(barriersCount);
+
+			for (uint32 plane = firstPlane; plane < lastPlane; ++plane)
+			{
+				for (uint32 layer = range.BaseLayer; layer < range.LayerCount; ++layer)
+				{
+					for (uint32 mip = range.BaseMipLevel; mip < range.MipLevelCount; ++mip)
+					{
+						TextureSubresource subresource = TextureSubresource(mip, layer, TexturePlane(plane));
+						ResourceState src = texture->GetSubresState({ mip, layer, TexturePlane(plane) });
+
+						VkImageMemoryBarrier2 releaseBarrier = Vulkan::GetImageBarrier(texture, subresource, src, dst,
+							VulkanBarrierType::QueueFamilyRelease, m_QueueFamily, dstContext->GetQueueFamily());
+
+						releaseBarriers.push_back(releaseBarrier);
+
+						VkImageMemoryBarrier2 acquireBarrier = Vulkan::GetImageBarrier(texture, subresource, src, dst,
+							VulkanBarrierType::QueueFamilyAcquire, m_QueueFamily, dstContext->GetQueueFamily());
+
+						dstContext->m_SyncPoints[GetType()].PendingImageAcquires.push_back(acquireBarrier);
+					}
+				}
+			}
+
+			Vulkan::ExecuteBarriers(GetCommandBuffer(), releaseBarriers.data(), releaseBarriers.size(), nullptr, 0);
+		}
+
+		texture->SetSubresState(dst, range);
 	}
 
-	void VulkanCommandContext::TransitionOwnership(GPUBuffer* buffer, PipelineAccess src, CommandContextType dstContextType, PipelineAccess dst)
+	void VulkanCommandContext::TransitionOwnership(GPUBuffer* buffer, CommandContextType dstContextType, ResourceState dst)
 	{
+		if (buffer->GetState() == dst)
+			return;
+
 		Ref<VulkanCommandContext> dstContext = RHI::Get()->GetContext(dstContextType).As<VulkanCommandContext>();
-		if (dstContext.Raw() == this)
+
+		if (dstContext.Raw() == this || dstContext->GetQueueFamily() == m_QueueFamily)
 		{
-			Transition(buffer, src, dst);
+			Transition(buffer, dst);
 			return;
 		}
-		if (dstContext->GetQueueFamily() == m_QueueFamily)
-		{
-			Transition(buffer, src, dst);
-			return;
-		}
+
+		ResourceState src = buffer->GetState();
 
 		VkBufferMemoryBarrier2 releaseBarrier = Vulkan::GetBufferBarrier(buffer, buffer->GetSize(), 0, src, dst,
 			VulkanBarrierType::QueueFamilyRelease, m_QueueFamily, dstContext->GetQueueFamily());
@@ -455,7 +531,9 @@ namespace Athena
 		VkBufferMemoryBarrier2 acquireBarrier = Vulkan::GetBufferBarrier(buffer, buffer->GetSize(), 0, src, dst,
 			VulkanBarrierType::QueueFamilyAcquire, m_QueueFamily, dstContext->GetQueueFamily());
 
-		dstContext->AddPendingAcquireBarrier(acquireBarrier, GetType());
+		dstContext->m_SyncPoints[GetType()].PendingBufferAcquires.push_back(acquireBarrier);
+
+		buffer->SetState(dst);
 	}
 
 	void VulkanCommandContext::UploadBuffer(GPUBuffer* buffer, const Buffer& data, uint64 offset)
@@ -464,7 +542,7 @@ namespace Athena
 
 		check(buffer->GetSize() >= data.Size() + offset && data.Data() != nullptr, "Invalid initialization buffer for VertexBuffer!");
 
-		VulkanBufferAllocation stagingBuffer = m_StagingManager.GetBuffer(buffer->GetSize());
+		VulkanBufferAllocation stagingBuffer = m_StagingPool.GetBuffer(buffer->GetSize());
 
 		void* mappedData = stagingBuffer.MapMemory();
 		memcpy(mappedData, data.Data(), data.Size());
@@ -479,7 +557,7 @@ namespace Athena
 
 		vkCmdCopyBuffer(cmdBuffer->CmdBuffer, stagingBuffer.GetBuffer(), vulkanBuffer, 1, &copyRegion);
 
-		m_StagingManager.MarkAsUsed(stagingBuffer, m_TimelineNextValue);
+		m_StagingPool.MarkAsUsed(stagingBuffer, m_TimelineValue + 1);
 	}
 
 	void VulkanCommandContext::UploadTexture(Texture* texture, const Buffer& data)
@@ -491,7 +569,7 @@ namespace Athena
 		ensure(data.Size() <= imageSize, "Texture upload buffer is too small!");
 
 		VkDeviceSize bufferSize = texture->GetInfo().Layers * Vulkan::GetLayerMultiplier(texture->GetType()) * imageSize;
-		VulkanBufferAllocation stagingBuffer = m_StagingManager.GetBuffer(bufferSize);
+		VulkanBufferAllocation stagingBuffer = m_StagingPool.GetBuffer(bufferSize);
 
 		void* mappedMemory = stagingBuffer.MapMemory();
 
@@ -507,7 +585,7 @@ namespace Athena
 		region.bufferRowLength = 0;
 		region.bufferImageHeight = 0;
 
-		region.imageSubresource.aspectMask = Vulkan::TranslateTextureAspect(TextureAspect::AUTO, texture->GetFormat());
+		region.imageSubresource.aspectMask = Vulkan::TranslateTextureAspect(TexturePlane::ALL, texture->GetFormat());
 		region.imageSubresource.mipLevel = 0;
 		region.imageSubresource.baseArrayLayer = 0;
 		region.imageSubresource.layerCount = texture->GetInfo().Layers * Vulkan::GetLayerMultiplier(texture->GetType());
@@ -517,27 +595,96 @@ namespace Athena
 
 		vkCmdCopyBufferToImage(cmdBuffer->CmdBuffer, stagingBuffer.GetBuffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		m_StagingManager.MarkAsUsed(stagingBuffer, m_TimelineNextValue);
+		m_StagingPool.MarkAsUsed(stagingBuffer, m_TimelineValue + 1);
 	}
 
-	void VulkanCommandContext::BeginDebugLabel(const String& name, const IntegerColor& color)
+#if ATN_ENABLE_GPU_DEBUG
+	void VulkanCommandContext::BeginMarker(const String& name)
 	{
-		VK_BEGIN_DEBUG_LABEL(GetCommandBuffer()->CmdBuffer, name, color);
+		if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+			return;
+
+		VkDebugUtilsLabelEXT label = Vulkan::GetDebugUtilsLabel(name);
+
+		PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT = VulkanRHI::Get()->GetExtensionsInfo().vkCmdBeginDebugUtilsLabelEXT;
+		vkCmdBeginDebugUtilsLabelEXT(GetCommandBuffer()->CmdBuffer, &label);
 	}
 
-	void VulkanCommandContext::EndDebugLabel()
+	void VulkanCommandContext::EndMarker()
 	{
-		VK_END_DEBUG_LABEL(GetCommandBuffer()->CmdBuffer);
+		if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+			return;
+
+		PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT = VulkanRHI::Get()->GetExtensionsInfo().vkCmdEndDebugUtilsLabelEXT;
+		vkCmdEndDebugUtilsLabelEXT(GetCommandBuffer()->CmdBuffer);
 	}
 
-	void VulkanCommandContext::InsertDebugLabel(const String& name, const IntegerColor& color)
+	void VulkanCommandContext::BeginQueueMarker(const String& name)
 	{
-		VK_INSERT_DEBUG_LABEL(GetCommandBuffer()->CmdBuffer, name, color);
+		if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+			return;
+
+		VkDebugUtilsLabelEXT label = Vulkan::GetDebugUtilsLabel(name);
+
+		PFN_vkQueueBeginDebugUtilsLabelEXT vkQueueBeginDebugUtilsLabelEXT = VulkanRHI::Get()->GetExtensionsInfo().vkQueueBeginDebugUtilsLabelEXT;
+		vkQueueBeginDebugUtilsLabelEXT(m_Queue, &label);
 	}
 
-	bool VulkanCommandContext::HasTracyContext()
+	void VulkanCommandContext::EndQueueMarker()
 	{
-		return m_TracyContext != nullptr;
+		if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+			return;
+
+		PFN_vkQueueEndDebugUtilsLabelEXT vkQueueEndDebugUtilsLabelEXT = VulkanRHI::Get()->GetExtensionsInfo().vkQueueEndDebugUtilsLabelEXT;
+		vkQueueEndDebugUtilsLabelEXT(m_Queue);
+	}
+
+	void VulkanCommandContext::InsertMarker(const String& name)
+	{
+		if (!VulkanRHI::Get()->GetExtensionsInfo().DebugUtilsEXTSupported)
+			return;
+
+		VkDebugUtilsLabelEXT label = Vulkan::GetDebugUtilsLabel(name);
+
+		PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertDebugUtilsLabelEXT = VulkanRHI::Get()->GetExtensionsInfo().vkCmdInsertDebugUtilsLabelEXT;
+		vkCmdInsertDebugUtilsLabelEXT(GetCommandBuffer()->CmdBuffer, &label);
+	}
+#endif
+
+#if ATN_ENABLE_TRACY_GPU
+	void VulkanCommandContext::BeginTracyZone(uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
+	{
+		if (!m_TracyContext)
+			return;
+
+		m_TracyZonesStack.push(new tracy::VkCtxScope(
+			m_TracyContext,
+			line,
+			fileName.data(), fileName.size(),
+			functionName.data(), functionName.size(),
+			name.data(), name.size(),
+			GetCommandBuffer()->CmdBuffer,
+			true));
+	}
+
+	void VulkanCommandContext::EndTracyZone()
+	{
+		if (!m_TracyContext)
+			return;
+
+		tracy::VkCtxScope* zone = m_TracyZonesStack.top();
+		m_TracyZonesStack.pop();
+
+		delete zone;
+	}
+#endif
+
+	uint32 VulkanCommandContext::GetTimelineLastCompletedValue() const
+	{
+		uint64 signaledValue = 0;
+		VK_CHECK(vkGetSemaphoreCounterValue(Vulkan::GetLogicalDevice(), m_TimelineSemaphore, &signaledValue));
+
+		return signaledValue;
 	}
 
 	VulkanCommandBuffer* VulkanCommandContext::GetCommandBuffer()
@@ -553,19 +700,32 @@ namespace Athena
 				m_CurrentCommandBuffer = buffer;
 				break;
 			}
+			else if (buffer->State == CommandBufferState::Submitted)
+			{
+				VkResult result = vkGetFenceStatus(Vulkan::GetLogicalDevice(), buffer->SignalFence);
+
+				if (result == VK_SUCCESS)
+				{
+					buffer->OnCompletion();
+					m_CurrentCommandBuffer = buffer;
+					break;
+				}
+			}
 		}
 
 		if (!m_CurrentCommandBuffer)
 		{
-			m_CurrentCommandBuffer = m_CommandBuffersArray.emplace_back(new VulkanCommandBuffer(this));
+			m_CurrentCommandBuffer = m_CommandBuffersArray.emplace_back(new VulkanCommandBuffer(m_Pool));
 		}
 
 		m_CurrentCommandBuffer->Begin();
-		VK_SET_OBJECT_NAME(m_CurrentCommandBuffer->CmdBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
-			std::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineNextValue - 1));
+		VK_SET_DEBUG_NAME(m_CurrentCommandBuffer->CmdBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
+			std::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
 
-		VK_SET_OBJECT_NAME(m_CurrentCommandBuffer->SignalFence, VK_OBJECT_TYPE_FENCE,
-			std::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineNextValue - 1));
+		VK_SET_DEBUG_NAME(m_CurrentCommandBuffer->SignalFence, VK_OBJECT_TYPE_FENCE,
+			std::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
+
+		GPU_TRACY_BEGIN(this, std::format("{}Commands", EnumUtils::CmdContextTypeToString(GetType())));
 
 		return m_CurrentCommandBuffer;
 	}
@@ -603,38 +763,18 @@ namespace Athena
 		}
 	}
 
-	void VulkanCommandContext::AddPendingAcquireBarrier(const VkImageMemoryBarrier2& barrier, CommandContextType srcContext)
-	{
-		m_SyncPoints[(uint32)srcContext].PendingImageAcquires.push_back(barrier);
-	}
-
-	void VulkanCommandContext::AddPendingAcquireBarrier(const VkBufferMemoryBarrier2& barrier, CommandContextType srcContext)
-	{
-		m_SyncPoints[(uint32)srcContext].PendingBufferAcquires.push_back(barrier);
-	}
-
 	bool VulkanCommandContext::HasPendingAcquireBarriers(CommandContextType srcContext)
 	{
-		const ContextSyncPoint& syncPoint = m_SyncPoints[(uint32)srcContext];
-		return !syncPoint.PendingImageAcquires.empty() || !syncPoint.PendingBufferAcquires.empty();
-	}
-
-	bool VulkanCommandContext::HasPendingSyncPoints()
-	{
-		for (uint32 i = 0; i < m_SyncPoints.size(); ++i)
+		if (m_SyncPoints.contains(srcContext))
 		{
-			if (GetType() == (CommandContextType)i)
-				continue;
-
-			const ContextSyncPoint& syncPoint = m_SyncPoints[i];
-
-			if (syncPoint.Pending)
-				return true;
+			const ContextSyncPoint& syncPoint = m_SyncPoints.at(srcContext);
+			return !syncPoint.PendingImageAcquires.empty() || !syncPoint.PendingBufferAcquires.empty();
 		}
 
 		return false;
 	}
 
+#if ATN_ENABLE_TRACY_GPU
 	void VulkanCommandContext::InitTracy()
 	{
 		m_TracyContext = nullptr;
@@ -646,9 +786,11 @@ namespace Athena
 		const DeviceFeaturesInfo& featuresInfo = device->GetFeaturesInfo();
 		const VkQueueFamilyProperties& queueFamily = device->GetQueueFamilyProps(m_QueueFamily);
 
+		String name = EnumUtils::CmdContextTypeToString(GetType());
+
 		if (queueFamily.timestampValidBits == 0)
 		{
-			ATN_LOG_WARN(Vulkan, "Failed to create tracy context for {}Context (queue family does not support timestamps).", EnumUtils::CmdContextTypeToString(GetType()));
+			ATN_LOG_WARN(Vulkan, "Failed to create tracy context for {}Context (queue family does not support timestamps).", name);
 			return;
 		}
 		
@@ -679,9 +821,10 @@ namespace Athena
 				m_TracyContext = TracyVkContextHostCalibrated(device->GetPhysicalDevice(), device->GetLogicalDevice(), extInfo.vkResetQueryPoolEXT,
 					extInfo.vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, extInfo.vkGetCalibratedTimestampsEXT);
 
+				TracyVkContextName(m_TracyContext, name.c_str(), name.size());
 				m_TracyContextHostCalibrated = true;
 
-				ATN_LOG_INFO(Vulkan, "Initialized Tracy host calibrated context for {}Context.", EnumUtils::CmdContextTypeToString(GetType()));
+				ATN_LOG_INFO(Vulkan, "Initialized Tracy host calibrated context for {}Context.", name);
 				return;
 			}
 		}
@@ -689,8 +832,7 @@ namespace Athena
 		bool isPureTransferContext = !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && !(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT);
 		if (isPureTransferContext)
 		{
-			ATN_LOG_WARN(Vulkan, "Failed to create tracy context for {}Context (transfer context supports only host calibrated tracy context).",
-				EnumUtils::CmdContextTypeToString(GetType()));
+			ATN_LOG_WARN(Vulkan, "Failed to create tracy context for {}Context (transfer context supports only host calibrated tracy context).", name);
 			return;
 		}
 
@@ -708,15 +850,18 @@ namespace Athena
 			m_TracyContext = TracyVkContextCalibrated(device->GetPhysicalDevice(), device->GetLogicalDevice(), m_Queue, tracyInitCmdBuffer,
 				extInfo.vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, extInfo.vkGetCalibratedTimestampsEXT);
 
-			ATN_LOG_INFO(Vulkan, "Initialized Tracy calibrated context for {}Context.", EnumUtils::CmdContextTypeToString(GetType()));
+			ATN_LOG_INFO(Vulkan, "Initialized Tracy calibrated context for {}Context.", name);
 		}
 		else
 		{
 			m_TracyContext = TracyVkContext(device->GetPhysicalDevice(), device->GetLogicalDevice(), m_Queue, tracyInitCmdBuffer);
 
-			ATN_LOG_INFO(Vulkan, "Initialized Tracy context for {}Context.", EnumUtils::CmdContextTypeToString(GetType()));
+			ATN_LOG_INFO(Vulkan, "Initialized Tracy context for {}Context.", name);
 		}
 
 		VK_CHECK(vkResetCommandBuffer(tracyInitCmdBuffer, 0));
+
+		TracyVkContextName(m_TracyContext, name.c_str(), name.size());
 	}
+#endif
 }

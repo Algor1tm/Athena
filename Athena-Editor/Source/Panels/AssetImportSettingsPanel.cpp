@@ -251,7 +251,7 @@ namespace Athena
 
             ImGui::Text("Width: %d", texture->GetWidth());
             ImGui::Text("Height: %d", texture->GetHeight());
-            ImGui::Text("Mip Count: %d", texture->GetMipLevelsCount());
+            ImGui::Text("Mip Count: %d", texture->GetMipCount());
             ImGui::Spacing();
             ImGui::Text("Total GPU Memory: %s", Utils::MemoryBytesToString(texture->GetTotalGPUMemory()).c_str());
             ImGui::Spacing();

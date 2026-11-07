@@ -33,9 +33,6 @@ namespace Athena
 				{
 					vkDestroySemaphore(Vulkan::GetLogicalDevice(), contexts[i].RenderingCompletedSemaphore, nullptr);
 					vkDestroySemaphore(Vulkan::GetLogicalDevice(), contexts[i].ImageAcquiredSemaphore, nullptr);
-
-					contexts[i].CommandBuffer->WaitCompletion();
-					delete contexts[i].CommandBuffer;
 				}
 			});
 
@@ -47,7 +44,7 @@ namespace Athena
 		ensuref(glfwVulkanSupported());
 
 		// Present on graphics context
-		m_PresentContext = VulkanRHI::Get()->GetDevice()->GetGraphicsContext();
+		m_GraphicsContext = VulkanRHI::Get()->GetDevice()->GetGraphicsContext();
 
 		VkPhysicalDevice physicalDevice = VulkanRHI::Get()->GetDevice()->GetPhysicalDevice();
 
@@ -58,7 +55,7 @@ namespace Athena
 			ATN_LOG_INFO(Vulkan, "Create Window Surface");
 
 			VkBool32 supportWSI;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, m_PresentContext->GetQueueFamily(), m_Surface, &supportWSI);
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, m_GraphicsContext->GetQueueFamily(), m_Surface, &supportWSI);
 			ensure(supportWSI, "Selected Queue Family does not support WSI!");
 		}
 
@@ -140,18 +137,18 @@ namespace Athena
 				m_PresentMode = surfacePresentModes[0];
 			}
 
-			for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
+			m_FrameContexts.resize(Vulkan::GetMaxFramesInFlight());
+
+			for (uint32 i = 0; i < m_FrameContexts.size(); ++i)
 			{
 				VkSemaphoreCreateInfo semaphoreCI = {};
 				semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 				VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &semaphoreCI, nullptr, &m_FrameContexts[i].ImageAcquiredSemaphore));
-				VK_SET_OBJECT_NAME(m_FrameContexts[i].ImageAcquiredSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("ImageAcquireSemaphore_{}", i));
+				VK_SET_DEBUG_NAME(m_FrameContexts[i].ImageAcquiredSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("ImageAcquireSemaphore_{}", i));
 
 				VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &semaphoreCI, nullptr, &m_FrameContexts[i].RenderingCompletedSemaphore));
-				VK_SET_OBJECT_NAME(m_FrameContexts[i].RenderingCompletedSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("RenderingCompletedSemaphore_{}", i));
-
-				m_FrameContexts[i].CommandBuffer = new VulkanCommandBuffer(m_PresentContext.Raw());
+				VK_SET_DEBUG_NAME(m_FrameContexts[i].RenderingCompletedSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("RenderingCompletedSemaphore_{}", i));
 			}
 
 			Recreate();
@@ -160,14 +157,14 @@ namespace Athena
 
 	void VulkanSwapChain::CleanUp(VkSwapchainKHR swapChain, bool cleanupSurface)
 	{
-		FramesInFlightArray<VkImageView> imageViews;
+		std::vector<VkImageView> imageViews(Vulkan::GetMaxFramesInFlight());
 
-		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
+		for (uint32 i = 0; i < imageViews.size(); ++i)
 			imageViews[i] = m_FrameContexts[i].SwapChainImageView;
 
 		VulkanRHI::Get()->DeleteFrameResourcesDeferred([swapChain = swapChain, views = imageViews, surface = m_Surface, cleanupSurface = cleanupSurface]()
 		{
-			for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
+			for (uint32 i = 0; i < views.size(); ++i)
 				vkDestroyImageView(Vulkan::GetLogicalDevice(), views[i], nullptr);
 
 			vkDestroySwapchainKHR(Vulkan::GetLogicalDevice(), swapChain, nullptr);
@@ -259,8 +256,8 @@ namespace Athena
 
 			VK_CHECK(vkCreateImageView(Vulkan::GetLogicalDevice(), &imageViewCI, nullptr, &swapChainImageViews[i]));
 
-			VK_SET_OBJECT_NAME(swapChainImages[i], VK_OBJECT_TYPE_IMAGE, std::format("SwapChainImage_{}", i));
-			VK_SET_OBJECT_NAME(swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, std::format("SwapChainImageView_{}", i));
+			VK_SET_DEBUG_NAME(swapChainImages[i], VK_OBJECT_TYPE_IMAGE, std::format("SwapChainImage_{}", i));
+			VK_SET_DEBUG_NAME(swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, std::format("SwapChainImageView_{}", i));
 
 			m_FrameContexts[i].SwapChainImage = swapChainImages[i];
 			m_FrameContexts[i].SwapChainImageView = swapChainImageViews[i];
@@ -300,7 +297,17 @@ namespace Athena
 			TRACY_PROFILE_SCOPE("WaitForGPU");
 			SCOPE_CYCLE_STAT(STAT_WaitForGPU);
 		
-			currentFrameContext.CommandBuffer->WaitCompletion();
+			VkSemaphore semaphore = m_GraphicsContext->GetTimelineSemaphore();
+			uint64 waitValue = currentFrameContext.WaitTimelineValue;
+
+			VkSemaphoreWaitInfo waitInfo = {};
+			waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+			waitInfo.semaphoreCount = 1;
+			waitInfo.pSemaphores = &semaphore;
+			waitInfo.pValues = &waitValue;
+
+			if(waitValue != 0)
+				VK_CHECK(vkWaitSemaphores(Vulkan::GetLogicalDevice(), &waitInfo, VULKAN_DEFAULT_FENCE_TIMEOUT));
 		}
 		
 		{
@@ -339,7 +346,7 @@ namespace Athena
 		presentInfo.pSwapchains = &m_VkSwapChain;
 		presentInfo.pImageIndices = &m_ImageIndex;
 		
-		VkResult result = vkQueuePresentKHR(m_PresentContext->GetQueue(), &presentInfo);
+		VkResult result = vkQueuePresentKHR(m_GraphicsContext->GetQueue(), &presentInfo);
 		
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
@@ -351,30 +358,15 @@ namespace Athena
 		}
 	}
 
-	VulkanCommandBuffer* VulkanSwapChain::BeginRendering()
+	void VulkanSwapChain::PrepareRenderingToBackBuffer(VkPipelineStageFlags2 imageAcquireWaitFlags)
 	{
-		VulkanCommandBuffer* commandBuffer = m_FrameContexts[VulkanRHI::Get()->GetFrameResourcesIndex()].CommandBuffer;
+		uint64 frameIndex = VulkanRHI::Get()->GetFrameResourcesIndex();
 
-		commandBuffer->Begin();
-		return commandBuffer;
-	}
+		VulkanCommandBuffer* cmdBuffer = m_GraphicsContext->GetCommandBuffer();
+		cmdBuffer->AddDependency(m_FrameContexts[frameIndex].ImageAcquiredSemaphore, 0, imageAcquireWaitFlags);
+		cmdBuffer->AddSignal(m_FrameContexts[m_ImageIndex].RenderingCompletedSemaphore, 0, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT);
 
-	void VulkanSwapChain::EndRendering(VkPipelineStageFlags2 imageAcquireWaitFlags)
-	{
-		FrameContext* frameContext = &m_FrameContexts[VulkanRHI::Get()->GetFrameResourcesIndex()];
-
-		VulkanCommandBuffer* commandBuffer = frameContext->CommandBuffer;
-		commandBuffer->AddDependency(frameContext->ImageAcquiredSemaphore, 0, imageAcquireWaitFlags);
-
-		VkSemaphoreSubmitInfo semaphoreSignalInfo = {};
-		semaphoreSignalInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-		semaphoreSignalInfo.semaphore = m_FrameContexts[m_ImageIndex].RenderingCompletedSemaphore;
-		semaphoreSignalInfo.value = 0;
-		semaphoreSignalInfo.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-		semaphoreSignalInfo.deviceIndex = 0;
-
-		commandBuffer->End();
-		commandBuffer->Submit(m_PresentContext->GetQueue(), &semaphoreSignalInfo);
+		m_FrameContexts[frameIndex].WaitTimelineValue = m_GraphicsContext->GetTimelineLastSignaledValue() + 1;
 	}
 
 	VkImage VulkanSwapChain::GetCurrentVulkanImage() const

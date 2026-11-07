@@ -10,26 +10,6 @@
 
 namespace Athena
 {
-	Vector2u Texture::GetMipSize(uint32 mip) const
-	{
-		uint32 width = GetWidth();
-		uint32 height = GetHeight();
-
-		Vector2u mipSize;
-		mipSize.x = Math::Max(float(width) * Math::Pow<float>(0.5f, mip), 1.f);
-		mipSize.y = Math::Max(float(height) * Math::Pow<float>(0.5f, mip), 1.f);
-
-		return mipSize;
-	}
-
-	uint32 Texture::GetMipLevelsCount() const
-	{
-		if (!m_Info.GenerateMipMap)
-			return 1;
-
-		return Math::Floor(Math::Log2(Math::Max<float>(GetWidth(), GetHeight()))) + 1;
-	}
-
 	Ref<TextureView> TextureView::Create(const TextureViewCreateInfo& info, Texture* texture)
 	{
 		TRACY_PROFILE_FUNC();
@@ -72,12 +52,12 @@ namespace Athena
 
 					Ref<CommandContext> cmdContext = RHI::Get()->GetContext(CommandContextType::AsyncTransfer);
 
-					cmdContext->Transition(texture.Raw(), PA_Unknown, PA_CopyDst);
+					cmdContext->Transition(texture.Raw(), ResourceState::CopyDst);
 					cmdContext->UploadTexture(texture.Raw(), pixelsCopyRT);
 
 					// TODO Generate MipMap
 
-					cmdContext->TransitionOwnership(texture.Raw(), PA_CopyDst, CommandContextType::Graphics, PA_SRVMask);
+					cmdContext->TransitionOwnership(texture.Raw(), CommandContextType::Graphics, ResourceState::SRVAll);
 				});
 		}
 		else
@@ -91,10 +71,23 @@ namespace Athena
 		return texture;
 	}
 
+	static uint32 ComputeMipCount(const TextureCreateInfo& info)
+	{
+		if (!info.GenerateMipMap)
+			return 1;
+
+		return 1;
+		//return Math::Floor(Math::Log2(Math::Max<float>(info.Width, info.Height))) + 1;
+	}
+
 	Texture::Texture(const TextureCreateInfo& info)
 		: m_Info(info)
+		, m_MipCount(ComputeMipCount(info))
+		, m_PlaneCount(GetFormatProperties(info.TextureFormat).NumPlanes)
+		, m_MainState(ResourceState::Init)
+		, m_StatesCollapsed(true)
 	{
-
+		m_SubresourcesStates.resize(GetMipCount() * GetLayerCount() * GetPlaneCount(), ResourceState::Init);
 	}
 
 	Texture::~Texture()
@@ -106,6 +99,7 @@ namespace Athena
 	{
 		m_Info.Width = width;
 		m_Info.Height = height;
+		m_MipCount = ComputeMipCount(m_Info);
 	}
 
 	Ref<TextureView> Texture::GetView(TextureViewType viewType)
@@ -117,7 +111,7 @@ namespace Athena
 		info.Range.BaseLayer = 0;
 		info.Range.LayerCount = GetInfo().Layers;
 		info.Range.BaseMipLevel = 0;
-		info.Range.MipLevelCount = GetMipLevelsCount();
+		info.Range.MipLevelCount = GetMipCount();
 		info.OverrideSampler = false;
 
 		return GetView(info);
@@ -147,7 +141,7 @@ namespace Athena
 		info.Range.BaseLayer = layer;
 		info.Range.LayerCount = 1;
 		info.Range.BaseMipLevel = 0;
-		info.Range.MipLevelCount = GetMipLevelsCount();
+		info.Range.MipLevelCount = GetMipCount();
 		info.OverrideSampler = false;
 
 		return GetView(info);
@@ -175,11 +169,92 @@ namespace Athena
 		m_TextureViews.clear();
 	}
 
+	uint32 Texture::GetSubresourceIndex(const TextureSubresource& subres) const
+	{
+		uint32 planeIndex = (uint32)subres.Plane;
+		ensuref(subres.Plane != TexturePlane::ALL);
+
+		return GetMipCount() * GetLayerCount() * planeIndex + GetMipCount() * subres.Layer + subres.MipLevel;
+	}
+
+	ResourceState Texture::GetSubresState(const TextureSubresource& subres) const
+	{
+		if (m_StatesCollapsed)
+			return m_MainState;
+
+		return m_SubresourcesStates[GetSubresourceIndex(subres)];
+	}
+
+	void Texture::SetSubresState(ResourceState state, const TextureSubresourceRange& subres)
+	{
+		uint32 firstPlane = subres.GetFirstPlane();
+		uint32 lastPlane = subres.GetLastPlane(GetPlaneCount());
+
+		for (uint32 plane = firstPlane; plane < lastPlane; ++plane)
+		{
+			for (uint32 layer = subres.BaseLayer; layer < subres.LayerCount; ++layer)
+			{
+				for (uint32 mip = subres.BaseMipLevel; mip < subres.MipLevelCount; ++mip)
+				{
+					m_SubresourcesStates[GetSubresourceIndex(TextureSubresource(mip, layer, TexturePlane(plane)))] = state;
+				}
+			}
+		}
+
+		CollapseSubresStatesIfSame();
+	}
+
+	bool Texture::AreSubresourcesSameState(const TextureSubresourceRange& subres) const
+	{
+		return AreSubresourcesSameState(subres, m_SubresourcesStates[0]);
+	}
+
+	bool Texture::AreSubresourcesSameState(const TextureSubresourceRange& subres, ResourceState state) const
+	{
+		uint32 firstPlane = subres.GetFirstPlane();
+		uint32 lastPlane = subres.GetLastPlane(GetPlaneCount());
+
+		for (uint32 plane = firstPlane; plane < lastPlane; ++plane)
+		{
+			for (uint32 layer = subres.BaseLayer; layer < subres.LayerCount; ++layer)
+			{
+				for (uint32 mip = subres.BaseMipLevel; mip < subres.MipLevelCount; ++mip)
+				{
+					if (m_SubresourcesStates[GetSubresourceIndex(TextureSubresource(mip, layer, TexturePlane(plane)))] != state)
+					{
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	void Texture::CollapseSubresStatesIfSame()
+	{
+		if (AreSubresourcesSameState(GetFullSubresourceRange()))
+		{
+			m_StatesCollapsed = true;
+			m_MainState = m_SubresourcesStates[0];
+		}
+
+		m_StatesCollapsed = false;
+	}
+
+	Vector2u Texture::GetMipSize(uint32 mip) const
+	{
+		if (mip >= GetMipCount())
+			return { 0, 0 };
+
+		return { Math::Max(GetWidth() >> mip, 1u), Math::Max(GetHeight() >> mip, 1u) };
+	}
+
 	uint32 Texture::GetTotalGPUMemory()
 	{
 		uint32 totalGPUMemory = 0;
 
-		for (uint32 mip = 0; mip < GetMipLevelsCount(); mip++)
+		for (uint32 mip = 0; mip < GetMipCount(); mip++)
 		{
 			Vector2u mipSize = GetMipSize(mip);
 			uint32 sizeOfMip = mipSize.x * mipSize.y * GetFormatProperties(GetFormat()).BytesPerPixel;
@@ -191,14 +266,14 @@ namespace Athena
 		return totalGPUMemory;
 	}
 
-	TextureRange Texture::GetFullRange() const
+	TextureSubresourceRange Texture::GetFullSubresourceRange() const
 	{
-		TextureRange defaultRange;
-		defaultRange.Aspect = TextureAspect::AUTO;
+		TextureSubresourceRange defaultRange;
+		defaultRange.Plane = TexturePlane::ALL;
 		defaultRange.BaseLayer = 0;
 		defaultRange.LayerCount = m_Info.Layers;
 		defaultRange.BaseMipLevel = 0;
-		defaultRange.MipLevelCount = GetMipLevelsCount();
+		defaultRange.MipLevelCount = GetMipCount();
 
 		return defaultRange;
 	}

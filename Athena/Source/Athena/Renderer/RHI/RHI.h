@@ -13,13 +13,6 @@
 
 namespace Athena
 {
-#define MAX_FRAMES_IN_FLIGHT 4 // This should be at least as big as r.MaxFramesInFlight value
-
-	// Use inlined array instead of std::vector
-	template <typename T>
-	using FramesInFlightArray = std::array<T, MAX_FRAMES_IN_FLIGHT>;
-
-
 	struct GPUCapabilities
 	{
 		String Name;
@@ -63,8 +56,6 @@ namespace Athena
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) = 0;
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) = 0;
-
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) = 0;
 

@@ -18,8 +18,6 @@ namespace Athena
 		{
 		}
 
-		void Release();
-
 		void* MapMemory(D3D12_RANGE range = { 0 , 0 });
 		void UnmapMemory();
 
@@ -38,8 +36,10 @@ namespace Athena
 		void Init();
 		void Destroy();
 
-		D3D12Resource AllocateResource(const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, D3D12_HEAP_TYPE heapType,
+		HRESULT AllocateResource(D3D12Resource* resource, const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, D3D12_HEAP_TYPE heapType,
 			const D3D12_CLEAR_VALUE* clearValue = nullptr, D3D12MA::ALLOCATION_FLAGS flags = D3D12MA::ALLOCATION_FLAG_NONE);
+
+		void DestroyResource(D3D12Resource resource);
 
 	private:
 		D3D12MA::Allocator* m_Allocator = nullptr;

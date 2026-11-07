@@ -48,7 +48,6 @@ namespace Athena
 			if (Bypass() || Thread::IsRenderThread())
 			{
 				func();
-				return;
 			}
 			else if (Thread::IsGameThread())
 			{

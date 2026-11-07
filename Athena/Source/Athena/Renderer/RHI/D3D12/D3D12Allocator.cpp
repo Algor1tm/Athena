@@ -6,11 +6,6 @@
 
 namespace Athena
 {
-	void D3D12Resource::Release()
-	{
-		m_Allocation->Release();
-	}
-
 	void* D3D12Resource::MapMemory(D3D12_RANGE range)
 	{
 		void* mappedPtr;
@@ -39,7 +34,7 @@ namespace Athena
 		m_Allocator->Release();
 	}
 
-	D3D12Resource D3D12Allocator::AllocateResource(const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, D3D12_HEAP_TYPE heapType, const D3D12_CLEAR_VALUE* clearValue, D3D12MA::ALLOCATION_FLAGS flags)
+	HRESULT D3D12Allocator::AllocateResource(D3D12Resource* resource, const D3D12_RESOURCE_DESC& resourceDesc, D3D12_RESOURCE_STATES initialState, D3D12_HEAP_TYPE heapType, const D3D12_CLEAR_VALUE* clearValue, D3D12MA::ALLOCATION_FLAGS flags)
 	{
 		D3D12MA::ALLOCATION_DESC allocDesc;
 		allocDesc.Flags = flags;
@@ -57,6 +52,20 @@ namespace Athena
 			&allocation,
 			IID_NULL, NULL);
 
-		return D3D12Resource(allocation);
+		if (SUCCEEDED(hr))
+		{
+			*resource = D3D12Resource(allocation);
+		}
+		else
+		{
+			ATN_LOG_WARN(D3D12, "GPU memory allocation failed!");
+		}
+
+		return hr;
+	}
+
+	void D3D12Allocator::DestroyResource(D3D12Resource resource)
+	{
+		resource.GetAllocation()->Release();
 	}
 }

@@ -23,8 +23,7 @@ namespace Athena
 		void AcquireImage();
 		void Present();
 
-		VulkanCommandBuffer* BeginRendering();
-		void EndRendering(VkPipelineStageFlags2 imageAcquireWaitFlags);
+		void PrepareRenderingToBackBuffer(VkPipelineStageFlags2 imageAcquireWaitFlags);
 
 		uint32 GetCurrentImageIndex() const { return m_ImageIndex; }
 		VkImage GetCurrentVulkanImage() const;
@@ -43,15 +42,15 @@ namespace Athena
 			VkImageView SwapChainImageView;
 			VkSemaphore RenderingCompletedSemaphore;
 			VkSemaphore ImageAcquiredSemaphore;
-			VulkanCommandBuffer* CommandBuffer;
+			uint64 WaitTimelineValue = 0;
 		};
 
 	private:
 		VkSurfaceKHR m_Surface;
 		VkSwapchainKHR m_VkSwapChain;
 
-		Ref<VulkanCommandContext> m_PresentContext;
-		FramesInFlightArray<FrameContext> m_FrameContexts;
+		Ref<VulkanCommandContext> m_GraphicsContext;
+		std::vector<FrameContext> m_FrameContexts;
 
 		VkPresentModeKHR m_PresentMode;
 		VkSurfaceFormatKHR m_Format;

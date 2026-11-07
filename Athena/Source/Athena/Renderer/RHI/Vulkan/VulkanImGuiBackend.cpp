@@ -5,7 +5,6 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanTracyZone.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
 
 #include <ImGui/backends/imgui_impl_glfw.h>
@@ -66,7 +65,7 @@ namespace Athena
 		pool_info.pPoolSizes = pool_sizes;
 
 		VK_CHECK(vkCreateDescriptorPool(Vulkan::GetLogicalDevice(), &pool_info, nullptr, &m_ImGuiDescriptorPool));
-		VK_SET_OBJECT_NAME(m_ImGuiDescriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "ImGuiDescriptorPool");
+		VK_SET_DEBUG_NAME(m_ImGuiDescriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "ImGuiDescriptorPool");
 
 		// Create Render Pass
 		{
@@ -108,7 +107,7 @@ namespace Athena
 			renderPassInfo.pDependencies = &dependency;
 
 			VK_CHECK(vkCreateRenderPass(Vulkan::GetLogicalDevice(), &renderPassInfo, nullptr, &m_ImGuiRenderPass));
-			VK_SET_OBJECT_NAME(m_ImGuiRenderPass, VK_OBJECT_TYPE_RENDER_PASS, "ImGuiRenderPass");
+			VK_SET_DEBUG_NAME(m_ImGuiRenderPass, VK_OBJECT_TYPE_RENDER_PASS, "ImGuiRenderPass");
 		}
 
 		RecreateFramebuffers();
@@ -187,7 +186,6 @@ namespace Athena
 			return;
 
 		Ref<VulkanSwapChain> swapChain = Application::Get().GetWindow().GetSwapChain().As<VulkanSwapChain>();
-		VulkanCommandBuffer* commandBuffer = swapChain->BeginRendering();
 
 		uint32 width = swapChain->GetWidth();
 		uint32 height = swapChain->GetHeight();
@@ -202,11 +200,11 @@ namespace Athena
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		{
-			TRACY_VULKAN_ZONE(commandBuffer, "ImGui Pass");
-			VK_BEGIN_DEBUG_LABEL(commandBuffer->CmdBuffer, "ImGui Pass", IntegerColor::Magenta);
+		VulkanCommandBuffer* cmdBuffer = RHI::Get()->GetContext(CommandContextType::Graphics).As<VulkanCommandContext>()->GetCommandBuffer();
+		swapChain->PrepareRenderingToBackBuffer(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-			vkCmdBeginRenderPass(commandBuffer->CmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		{
+			vkCmdBeginRenderPass(cmdBuffer->CmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			ImDrawData* drawData = ImGui::GetDrawData();
 			{
@@ -214,13 +212,10 @@ namespace Athena
 				m_ImGuiTextureQueue.ProcessRequests(drawData);
 			}
 
-			ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer->CmdBuffer);
+			ImGui_ImplVulkan_RenderDrawData(drawData, cmdBuffer->CmdBuffer);
 
-			vkCmdEndRenderPass(commandBuffer->CmdBuffer);
-			VK_END_DEBUG_LABEL(commandBuffer->CmdBuffer);
+			vkCmdEndRenderPass(cmdBuffer->CmdBuffer);
 		}
-
-		swapChain->EndRendering(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 
 	void VulkanImGuiBackend::OnSwapChainRecreate()
@@ -258,7 +253,7 @@ namespace Athena
 			framebufferInfo.layers = 1;
 
 			VK_CHECK(vkCreateFramebuffer(Vulkan::GetLogicalDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
-			VK_SET_OBJECT_NAME(m_SwapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, std::format("ImGuiFrameBuffer_{}", i));
+			VK_SET_DEBUG_NAME(m_SwapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, std::format("ImGuiFrameBuffer_{}", i));
 		}
 	}
 

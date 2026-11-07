@@ -108,7 +108,7 @@ namespace Athena
 		imageInfo.extent.width = GetWidth();
 		imageInfo.extent.height = GetHeight();
 		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = GetMipLevelsCount();
+		imageInfo.mipLevels = GetMipCount();
 		imageInfo.arrayLayers = GetInfo().Layers * Vulkan::GetLayerMultiplier(GetType());
 		imageInfo.format = Vulkan::TranslateFormat(GetInfo().TextureFormat);
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -117,71 +117,10 @@ namespace Athena
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageInfo.samples = Vulkan::TranslateSamplesCount(GetInfo().Samples);
 
-		VK_CHECK(VulkanRHI::Get()->GetAllocator()->AllocateImage(&m_Image, imageInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName()));
-		VK_SET_OBJECT_NAME(m_Image.GetImage(), VK_OBJECT_TYPE_IMAGE, fmt::format("Image_{}", GetName()));
-
-		m_SubresourcesLayouts.resize(imageInfo.mipLevels * imageInfo.arrayLayers, imageInfo.initialLayout);
-		m_MainLayout = imageInfo.initialLayout;
-		m_LayoutsCollapsed = true;
+		VK_CHECK(Vulkan::GetAllocator()->AllocateImage(&m_Image, imageInfo, VMA_MEMORY_USAGE_AUTO, 0, GetName()));
+		VK_SET_DEBUG_NAME(m_Image.GetImage(), VK_OBJECT_TYPE_IMAGE, fmt::format("Image_{}", GetName()));
 
 		InvalidateViews();
-	}
-
-	VkImageLayout VulkanTexture::GetSubresLayout(uint32 mip, uint32 layer) const
-	{
-		if (m_LayoutsCollapsed)
-			return m_MainLayout;
-
-		return m_SubresourcesLayouts[GetLayers() * mip + layer];
-	}
-
-	void VulkanTexture::SetSubresLayout(VkImageLayout layout, const VkImageSubresourceRange& subresourceRange)
-	{
-		for (uint32 mip = subresourceRange.baseMipLevel; mip < subresourceRange.levelCount; ++mip)
-		{
-			for (uint32 layer = subresourceRange.baseArrayLayer; layer < subresourceRange.layerCount; ++layer)
-			{
-				m_SubresourcesLayouts[GetLayers() * mip + layer] = layout;
-			}
-		}
-
-		CollapseSubresLayoutsIfSame();
-	}
-
-	bool VulkanTexture::AreSubresourcesSameLayout(const VkImageSubresourceRange& subresourceRange) const
-	{
-		if (m_LayoutsCollapsed)
-			return true;
-
-		VkImageLayout layout = m_SubresourcesLayouts[GetLayers() * subresourceRange.baseMipLevel + subresourceRange.baseArrayLayer];
-
-		for (uint32 mip = subresourceRange.baseMipLevel; mip < subresourceRange.levelCount; ++mip)
-		{
-			for (uint32 layer = subresourceRange.baseArrayLayer; layer < subresourceRange.layerCount; ++layer)
-			{
-				if (layout != m_SubresourcesLayouts[GetLayers() * mip + layer])
-					return false;
-			}
-		}
-
-		return true;
-	}
-
-	void VulkanTexture::CollapseSubresLayoutsIfSame()
-	{
-		VkImageLayout layout = m_SubresourcesLayouts[0];
-
-		for (uint32 i = 0; i < m_SubresourcesLayouts.size(); ++i)
-		{
-			if (layout != m_SubresourcesLayouts[i])
-			{
-				m_LayoutsCollapsed = false;
-				return;
-			}
-		}
-
-		m_MainLayout = layout;
-		m_LayoutsCollapsed = true;
 	}
 
 	void VulkanTexture::CleanUp()
@@ -190,7 +129,7 @@ namespace Athena
 		{
 			VulkanRHI::Get()->DeleteFrameResourcesDeferred([image = m_Image, name = GetName()]()
 			{
-				VulkanRHI::Get()->GetAllocator()->DestroyImage(image, name);
+				Vulkan::GetAllocator()->DestroyImage(image, name);
 			});
 		}
 	}
@@ -228,7 +167,7 @@ namespace Athena
 		{
 			VulkanRHI::Get()->DeleteFrameResourcesDeferred([this, samplerInfo = GetInfo().Sampler, vkSampler = m_Sampler]()
 				{
-					VulkanRHI::Get()->GetAllocator()->DestroySampler(samplerInfo, vkSampler);
+					Vulkan::GetAllocator()->DestroySampler(samplerInfo, vkSampler);
 				});
 		}
 	}
@@ -237,7 +176,7 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 
-		m_Sampler = VulkanRHI::Get()->GetAllocator()->CreateSampler(GetInfo().Sampler);
+		m_Sampler = Vulkan::GetAllocator()->CreateSampler(GetInfo().Sampler);
 		m_DescriptorInfo.sampler = m_Sampler;
 
 		Invalidate();
@@ -266,9 +205,9 @@ namespace Athena
 		swizzling.b = Vulkan::TranslateSwizzle(GetInfo().Swizzle.B);
 		swizzling.a = Vulkan::TranslateSwizzle(GetInfo().Swizzle.A);
 
-		uint32 texMipLevelsCount = GetTexture()->GetMipLevelsCount();
-		uint32 viewBaseMipLevel = GetRange().BaseMipLevel;
-		uint32 viewMipLevelCount = GetRange().MipLevelCount;
+		uint32 texMipLevelsCount = GetTexture()->GetMipCount();
+		uint32 viewBaseMipLevel = GetSubresourceRange().BaseMipLevel;
+		uint32 viewMipLevelCount = GetSubresourceRange().MipLevelCount;
 
 		if (viewBaseMipLevel >= texMipLevelsCount)
 			viewBaseMipLevel = texMipLevelsCount - 1;
@@ -276,22 +215,22 @@ namespace Athena
 		if (viewBaseMipLevel + viewMipLevelCount > texMipLevelsCount)
 			viewMipLevelCount = texMipLevelsCount - viewBaseMipLevel;
 
-		uint32 layersCount = GetRange().LayerCount * Vulkan::GetLayerMultiplier(GetTextureType());;
+		uint32 layersCount = GetSubresourceRange().LayerCount * Vulkan::GetLayerMultiplier(GetTextureType());;
 
 		VkImageViewCreateInfo viewInfo = {};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = GetVulkanTexture()->GetImage();
 		viewInfo.viewType = Vulkan::TranslateImageViewType(GetTextureType(), layersCount);
 		viewInfo.format = Vulkan::TranslateFormat(format);
-		viewInfo.subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(GetRange().Aspect, format);
+		viewInfo.subresourceRange.aspectMask = Vulkan::TranslateTextureAspect(GetSubresourceRange().Plane, format);
 		viewInfo.subresourceRange.baseMipLevel = viewBaseMipLevel;
 		viewInfo.subresourceRange.levelCount = viewMipLevelCount;
-		viewInfo.subresourceRange.baseArrayLayer = GetRange().BaseLayer * Vulkan::GetLayerMultiplier(GetTextureType());
+		viewInfo.subresourceRange.baseArrayLayer = GetSubresourceRange().BaseLayer * Vulkan::GetLayerMultiplier(GetTextureType());
 		viewInfo.subresourceRange.layerCount = layersCount;
 		viewInfo.components = swizzling;
 
 		VK_CHECK(vkCreateImageView(Vulkan::GetLogicalDevice(), &viewInfo, nullptr, &m_ImageView));
-		VK_SET_OBJECT_NAME(m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW, m_Name);
+		VK_SET_DEBUG_NAME(m_ImageView, VK_OBJECT_TYPE_IMAGE_VIEW, m_Name);
 	}
 
 	void VulkanTextureView::CleanUp()

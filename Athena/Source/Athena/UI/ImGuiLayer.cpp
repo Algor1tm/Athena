@@ -408,10 +408,11 @@ namespace Athena
 			ENQUEUE_RENDER_COMMAND([imGuiBackend = m_ImGuiBackend]()
 				{
 					Ref<CommandContext> graphicsContext = RHI::Get()->GetContext(CommandContextType::Graphics);
-					graphicsContext->Drain(CommandContextType::AsyncTransfer, PipelineAccess::PA_SRVGraphics);
-					graphicsContext->Drain(CommandContextType::AsyncCompute, PipelineAccess::PA_SRVGraphics);
+					graphicsContext->Drain(CommandContextType::AsyncTransfer, ResourceState::SRVGraphics);
+					graphicsContext->Drain(CommandContextType::AsyncCompute, ResourceState::SRVGraphics);
 					graphicsContext->Flush();
 
+					GPU_EVENT(graphicsContext, "ImGui Pass");
 					imGuiBackend->RenderDrawData();
 				});
 		}

@@ -4,6 +4,7 @@
 #include "Athena/Renderer/Format.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanCommandContext.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanAllocator.h"
 #include "Athena/Renderer/RHI/RHI.h"
 
 #include <vulkan/vulkan.h>
@@ -41,11 +42,13 @@ namespace Athena
 
 		VkDevice GetLogicalDevice() const { return m_LogicalDevice; }
 
-		Ref<VulkanCommandContext> GetGraphicsContext() { return m_GraphicsContext; }
+		Ref<VulkanCommandContext> GetGraphicsContext() const { return m_GraphicsContext; }
 
-		Ref<VulkanCommandContext> GetAsyncComputeContext() { return m_AsyncComputeContext; }
+		Ref<VulkanCommandContext> GetAsyncComputeContext() const { return m_AsyncComputeContext; }
 
-		Ref<VulkanCommandContext> GetAsyncTransferContext() { return m_AsyncTransferContext; }
+		Ref<VulkanCommandContext> GetAsyncTransferContext() const { return m_AsyncTransferContext; }
+
+		Ref<VulkanAllocator> GetAllocator() const { return m_Allocator; }
 
 		const VkPhysicalDeviceLimits& GetLimits() const { return m_DeviceLimits; }
 
@@ -72,6 +75,7 @@ namespace Athena
 		Ref<VulkanCommandContext> m_GraphicsContext;
 		Ref<VulkanCommandContext> m_AsyncComputeContext;
 		Ref<VulkanCommandContext> m_AsyncTransferContext;
+		Ref<VulkanAllocator> m_Allocator;
 
 		DeviceExtensionsInfo m_ExtensionsInfo;
 		DeviceFeaturesInfo m_FeaturesInfo;

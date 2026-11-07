@@ -16,6 +16,11 @@ namespace Athena::Vulkan
 		return VulkanRHI::Get()->GetDevice()->GetLogicalDevice();
 	}
 
+    inline Ref<VulkanAllocator> GetAllocator()
+    {
+        return VulkanRHI::Get()->GetDevice()->GetAllocator();
+    }
+
     inline uint32 GetMaxFramesInFlight()
     {
         return ConsoleManager::Get().FindCVar("r.MaxFramesInFlight")->GetInt();
@@ -118,20 +123,30 @@ namespace Athena::Vulkan
         return VK_COMPONENT_SWIZZLE_IDENTITY;
     }
 
-    inline VkImageAspectFlagBits TranslateTextureAspect(TextureAspect aspect, Format format)
+    inline VkImageAspectFlags TranslateTextureAspect(TexturePlane plane, Format format)
     {
-        if (aspect == TextureAspect::AUTO)
-            aspect = GetAspectFromFormat(format);
+        const auto& formatProps = GetFormatProperties(format);
 
-        switch (aspect)
+        VkImageAspectFlags result = 0;
+
+        if (formatProps.HasColor)
         {
-        case TextureAspect::COLOR: return VK_IMAGE_ASPECT_COLOR_BIT;
-        case TextureAspect::DEPTH: return VK_IMAGE_ASPECT_DEPTH_BIT;
-        case TextureAspect::STENCIL: return VK_IMAGE_ASPECT_STENCIL_BIT;
-        case TextureAspect::DEPTH_STENCIL: return VkImageAspectFlagBits(VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+            result |= VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+        else
+        {
+            if (formatProps.HasDepth)
+            {
+                if (plane == TexturePlane::ALL || plane == TexturePlane::PLANE_0)
+                    result |= VK_IMAGE_ASPECT_DEPTH_BIT;
+            }
+            if (formatProps.HasStencil)
+            {
+                if (plane == TexturePlane::ALL || plane == TexturePlane::PLANE_1)
+                    result |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
         }
 
-        checkf(false);
-        return VK_IMAGE_ASPECT_COLOR_BIT;
+        return result;
     }
 }

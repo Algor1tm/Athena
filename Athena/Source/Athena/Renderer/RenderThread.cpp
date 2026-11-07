@@ -17,13 +17,6 @@ namespace Athena
 
 	EXTERN_CYCLE_STAT(STAT_WaitForRenderThread);
 
-
-	static AutoCVar<int32> CVarRenderThreadCommandStreamSize(
-		"r.RenderThreadCommandStreamSize",
-		16,
-		"Set render thread command stream size in bytes (default - 1MB)."
-	);
-
 	static AutoCVar<bool> CVarEnableRenderThread(
 		"r.EnableRenderThread",
 		true,
@@ -42,11 +35,6 @@ namespace Athena
 
 		if (!Bypass())
 		{
-			for (uint32 i = 0; i < RENDER_THREAD_COMMAND_STREAMS_NUM; ++i)
-			{
-				m_CommandStreams[i] = std::forward<CommandStream>(CommandStream(CVarRenderThreadCommandStreamSize.GetInt()));
-			}
-
 			ATN_LOG_INFO(Renderer, "Initialized Render Thread");
 		}
 

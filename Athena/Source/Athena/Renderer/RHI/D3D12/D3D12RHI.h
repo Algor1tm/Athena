@@ -5,7 +5,8 @@
 #include "Athena/Renderer/RHI/D3D12/D3D12Configuration.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12Debug.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12Allocator.h"
-#include "Athena/Renderer/RHI/D3D12/CommandListManager.h"
+#include "Athena/Renderer/RHI/D3D12/D3D12CommandContext.h"
+#include "Athena/Renderer/RHI/D3D12/D3D12StagingPool.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -18,9 +19,11 @@ namespace Athena
 		D3D_FEATURE_LEVEL FeatureLevel;
 		D3D_SHADER_MODEL ShaderModel;
 		D3D_ROOT_SIGNATURE_VERSION RootSignatureVersion;
-		D3D12_RAYTRACING_TIER RayTracingTier;
-		D3D12_RENDER_PASS_TIER RenderPassesTier;
-		bool RenderPassesValid;
+
+		D3D12_FEATURE_DATA_D3D12_OPTIONS3 Options3;
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Options5;
+		D3D12_FEATURE_DATA_D3D12_OPTIONS12 Options12;
+		D3D12_FEATURE_DATA_D3D12_OPTIONS18 Options18;
 	};
 
 	class ATHENA_API D3D12RHI : public RHI
@@ -52,8 +55,6 @@ namespace Athena
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
 
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
-
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 
 		virtual Ref<ImGuiBackend> CreateImGuiBackend() override;
@@ -75,13 +76,17 @@ namespace Athena
 
 		IDXGIFactory6* GetDXGIFactory() const { return m_DXGIFactory; }
 
-		ID3D12CommandQueue* GetQueue() const { return m_Queue; }
-
 		IDXGIAdapter4* GetAdapter() const { return m_Adapter; }
+
+		D3D12Fence* GetFrameFence() { return &m_FrameFence; }
 
 		D3D12Allocator* GetAllocator() { return &m_Allocator; }
 
-		CommandListManager* GetCmdListManager() { return &m_CommandListManager; }
+		D3D12StagingPool* GetStagingPool() { return &m_StagingPool; }
+
+		const D3DDeviceFeaturesInfo& GetFeaturesInfo() const { return m_FeaturesInfo; }
+
+		void WaitDeviceIdle();
 
 		template <typename FuncT>
 		void DeleteFrameResourcesDeferred(FuncT&& func)
@@ -100,11 +105,15 @@ namespace Athena
 	private:
 		ID3D12Device* m_Device;
 		IDXGIFactory6* m_DXGIFactory;
-		ID3D12CommandQueue* m_Queue;
 		IDXGIAdapter4* m_Adapter;
 
+		Ref<D3D12CommandContext> m_GraphicsContext;
+		Ref<D3D12CommandContext> m_AsyncComputeContext;
+		Ref<D3D12CommandContext> m_AsyncTransferContext;
+		D3D12Fence m_FrameFence;
+
 		D3D12Allocator m_Allocator;
-		CommandListManager m_CommandListManager;
+		D3D12StagingPool m_StagingPool;
 
 		uint32 m_FrameResourcesIndex = 0;
 		std::vector<CommandStream> m_ResourceFreeQueues;
@@ -113,3 +122,4 @@ namespace Athena
 		GPUCapabilities m_GPUCapabilities;
 	};
 }
+

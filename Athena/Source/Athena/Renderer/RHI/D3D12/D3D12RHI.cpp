@@ -10,12 +10,11 @@
 #include "Athena/Renderer/RHI/D3D12/D3D12ImGuiBackend.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12SwapChain.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12Texture.h"
-#include "Athena/Renderer/RHI/D3D12/D3D12TracyZone.h"
 
 
 namespace Athena
 {
-#if D3D12_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 	static AutoCVar<int32> CVarD3D12ValidationLevel(
 		"D3D12.ValidationLevel",
 		3,
@@ -53,9 +52,8 @@ namespace Athena
 	{
 		bool enableValidation = false;
 
-#if D3D12_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		enableValidation = CVarD3D12ValidationLevel.GetInt() > 0;
-#endif
 
 		if (enableValidation)
 		{
@@ -75,6 +73,7 @@ namespace Athena
 
 			ATN_LOG_INFO(D3D12, "D3D12 debug layer is enabled!");
 		}
+#endif
 
 		UINT createFactoryFlags = enableValidation ? DXGI_CREATE_FACTORY_DEBUG : 0;
 		D3D12_CHECK(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&m_DXGIFactory)));
@@ -129,7 +128,7 @@ namespace Athena
 			}
 		}
 
-#if D3D12_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		ID3D12InfoQueue1* infoQueue = nullptr;
 		if (enableValidation && SUCCEEDED(m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue))))
 		{
@@ -161,39 +160,53 @@ namespace Athena
 
 		QueryDeviceFeatures();
 
-		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		queueDesc.NodeMask = 0;
+		m_GraphicsContext = Ref<D3D12CommandContext>::Create(CommandContextType::Graphics);
 
-		D3D12_CHECK(m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue)));
-
-		m_ResourceFreeQueues.resize(D3D12::GetMaxFramesInFlight());
-		for (uint32 i = 0; i < m_ResourceFreeQueues.size(); ++i)
+		bool enableAsyncCompute = ConsoleManager::Get().FindCVar("r.EnableAsyncCompute");
+		if (enableAsyncCompute)
 		{
-			m_ResourceFreeQueues[i] = CommandStream(1024 * 1024);	// 1 Mb
+			m_AsyncComputeContext = Ref<D3D12CommandContext>::Create(CommandContextType::AsyncCompute);
+		}
+		else
+		{
+			m_AsyncComputeContext = m_GraphicsContext;
 		}
 
+		bool enableAsyncTransfer = ConsoleManager::Get().FindCVar("r.EnableAsyncTransfer");
+		if (enableAsyncTransfer)
+		{
+			m_AsyncTransferContext = Ref<D3D12CommandContext>::Create(CommandContextType::AsyncTransfer);
+		}
+		else
+		{
+			m_AsyncTransferContext = m_AsyncComputeContext;
+		}
+
+
+		m_ResourceFreeQueues.resize(D3D12::GetMaxFramesInFlight());
 		m_FrameResourcesIndex = 0;
 
 		m_Allocator.Init();
-		m_CommandListManager.Init();
+
+		m_FrameFence.Init();
+		D3D12_SET_DEBUG_NAME(m_FrameFence.Fence, "FrameFence");
 	}
 
 	void D3D12RHI::Shutdown()
 	{
+		WaitDeviceIdle();
+
 		for (auto& queue : m_ResourceFreeQueues)
 		{
 			queue.Flush();
 		}
 
-		m_CommandListManager.WaitDeviceIdle();
+		m_StagingPool.Update(m_FrameFence.GetCompletedValue());
+		m_StagingPool.Clear();
 
-		m_CommandListManager.Destroy();
+		m_FrameFence.Destroy();
 		m_Allocator.Destroy();
 
-		m_Queue->Release();
 		m_Device->Release();
 		m_Adapter->Release();
 		m_DXGIFactory->Release();
@@ -214,25 +227,51 @@ namespace Athena
 			m_ResourceFreeQueues[m_FrameResourcesIndex].Flush();
 		}
 
-		m_CommandListManager.NewFrame();
+		m_StagingPool.Update(m_FrameFence.GetCompletedValue());
+
+		RHI::Get()->ForEachUniqueContext([](const Ref<CommandContext>& context)
+			{
+				context.As<D3D12CommandContext>()->BeginFrame();
+			});
 	}
 
 	void D3D12RHI::EndFrame(const Ref<Window>& window)
 	{
 		TRACY_PROFILE_FUNC();
 
+		RHI::Get()->ForEachUniqueContext([](const Ref<CommandContext>& context)
+			{
+				context.As<D3D12CommandContext>()->EndFrame();
+			});
+
 		if (window->GetSwapChain())
 			window->GetSwapChain().As<D3D12SwapChain>()->Present();
+
+		m_FrameFence.Signal(m_GraphicsContext->GetQueue());
 	}
 
 	Ref<CommandContext> D3D12RHI::GetContext(CommandContextType type)
 	{
+		switch (type)
+		{
+		case CommandContextType::Graphics:      return m_GraphicsContext;
+		case CommandContextType::AsyncCompute:  return m_AsyncComputeContext;
+		case CommandContextType::AsyncTransfer: return m_AsyncTransferContext;
+		}
+
+		checkf(false);
 		return nullptr;
 	}
 
 	void D3D12RHI::ForEachUniqueContext(const std::function<void(const Ref<CommandContext>&)>& func)
 	{
+		func(m_GraphicsContext);
 
+		if (m_AsyncComputeContext != m_GraphicsContext)
+			func(m_AsyncComputeContext);
+
+		if (m_AsyncComputeContext != m_AsyncTransferContext && m_GraphicsContext != m_AsyncTransferContext)
+			func(m_AsyncTransferContext);
 	}
 
 	Ref<Texture> D3D12RHI::CreateTexture(const TextureCreateInfo& info)
@@ -248,11 +287,6 @@ namespace Athena
 	Ref<GPUBuffer> D3D12RHI::CreateGPUBuffer(const GPUBufferCreateInfo& info)
 	{
 		return Ref<D3D12GPUBuffer>::Create(info);
-	}
-
-	Ref<TracyGPUZone> D3D12RHI::CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
-	{
-		return nullptr;
 	}
 
 	Ref<SwapChain> D3D12RHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)
@@ -281,6 +315,16 @@ namespace Athena
 	const FormatSupportProperties& D3D12RHI::D3D12RHI::GetFormatSupportProperties(Format format)
 	{
 		return m_GPUCapabilities.Formats[format];
+	}
+
+	void D3D12RHI::WaitDeviceIdle()
+	{
+		RHI::Get()->ForEachUniqueContext([](const Ref<CommandContext>& context)
+			{
+				context.As<D3D12CommandContext>()->WaitIdle();
+			});
+
+		m_FrameFence.WaitCompletion();
 	}
 
 	void D3D12RHI::QueryDeviceFeatures()
@@ -351,19 +395,17 @@ namespace Athena
 			}
 		}
 
-		D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
-		if (SUCCEEDED(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5))))
-		{
-			m_FeaturesInfo.RayTracingTier = options5.RaytracingTier;
-			m_FeaturesInfo.RenderPassesTier = options5.RenderPassesTier;
-		}
+		m_FeaturesInfo.Options3 = D3D12_FEATURE_DATA_D3D12_OPTIONS3();
+		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &m_FeaturesInfo.Options3, sizeof(m_FeaturesInfo.Options3)));
 
-		D3D12_FEATURE_DATA_D3D12_OPTIONS18 options18 = {};
-		if (SUCCEEDED(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS18, &options18, sizeof(options18))))
-		{
-			m_FeaturesInfo.RenderPassesValid = options18.RenderPassesValid;
-		}
+		m_FeaturesInfo.Options5 = D3D12_FEATURE_DATA_D3D12_OPTIONS5();
+		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &m_FeaturesInfo.Options5, sizeof(m_FeaturesInfo.Options5)));
 
+		m_FeaturesInfo.Options12 = D3D12_FEATURE_DATA_D3D12_OPTIONS12();
+		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &m_FeaturesInfo.Options12, sizeof(m_FeaturesInfo.Options12)));
+
+		m_FeaturesInfo.Options18 = D3D12_FEATURE_DATA_D3D12_OPTIONS18();
+		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS18, &m_FeaturesInfo.Options18, sizeof(m_FeaturesInfo.Options18)));
 
 		for (uint32 i = 0; i < ATN_ARRAY_SIZE(m_GPUCapabilities.Formats); ++i)
 		{

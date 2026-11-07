@@ -16,6 +16,8 @@ namespace Athena
 		virtual void Init() override;
 		virtual void Resize(uint32 width, uint32 height) override;
 
+		ID3D12Resource* GetResource() const { return m_TextureResource.GetResource(); }
+
 	private:
 		void CleanUp();
 

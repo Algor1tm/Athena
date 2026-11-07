@@ -7,6 +7,7 @@
 #include "Athena/Math/Vector.h"
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/Format.h"
+#include "Athena/Renderer/ResourceState.h"
 
 #include <array>
 
@@ -49,13 +50,12 @@ namespace Athena
 		A,
 	};
 
-	enum class TextureAspect
+	enum TexturePlane
 	{
-		AUTO = 0,
-		COLOR,
-		DEPTH,
-		STENCIL,
-		DEPTH_STENCIL
+		PLANE_0 = 0,
+		PLANE_1 = 1,
+		PLANE_2 = 2,
+		ALL = 3,
 	};
 
 	enum class TextureFilter
@@ -91,23 +91,59 @@ namespace Athena
 		TextureCompareOperator Compare = TextureCompareOperator::NONE;
 	};
 
-	struct TextureRange
+	struct TextureSubresource
 	{
-		TextureRange() = default;
-		TextureRange(uint32 mip, uint32 layer)
+		TextureSubresource() = default;
+		TextureSubresource(uint32 mip, uint32 layer, TexturePlane plane = TexturePlane::PLANE_0)
+			:MipLevel(mip)
+			, Layer(layer)
+			, Plane(plane)
+		{
+
+		}
+
+		bool operator==(const TextureSubresource&) const = default;
+
+		uint32 MipLevel = 0;
+		uint32 Layer = 0;
+		TexturePlane Plane = TexturePlane::PLANE_0;
+	};
+
+	struct TextureSubresourceRange
+	{
+		TextureSubresourceRange() = default;
+		TextureSubresourceRange(TextureSubresource subresource)
+			: BaseMipLevel(subresource.MipLevel)
+			, BaseLayer(subresource.Layer)
+			, Plane(subresource.Plane)
+		{
+
+		}
+
+		TextureSubresourceRange(uint32 mip, uint32 layer)
 			:BaseMipLevel(mip),
 			BaseLayer(layer)
 		{
 
 		}
 
-		bool operator==(const TextureRange&) const = default;
+		uint32 GetFirstPlane() const
+		{
+			return Plane == TexturePlane::ALL ? 0 : Plane;
+		}
+
+		uint32 GetLastPlane(uint32 planeCount) const
+		{
+			return Plane == TexturePlane::ALL ? planeCount : (uint32)Plane;
+		}
+ 
+		bool operator==(const TextureSubresourceRange&) const = default;
 
 		uint32 BaseMipLevel = 0;
 		uint32 MipLevelCount = 1;
 		uint32 BaseLayer = 0;
 		uint32 LayerCount = 1;
-		TextureAspect Aspect = TextureAspect::AUTO;
+		TexturePlane Plane = TexturePlane::ALL;
 	};
 
 	struct ComponentsSwizzle
@@ -127,7 +163,7 @@ namespace Athena
 		String Name; // Optional (if empty, it will be generated)
 		TextureType TextureType = TextureType::TEXTURE_2D;
 		TextureViewType ViewType = TextureViewType::SRV;
-		TextureRange Range;
+		TextureSubresourceRange Range;
 		ComponentsSwizzle Swizzle;
 		bool OverrideSampler = false;
 		TextureSamplerCreateInfo Sampler;
@@ -188,7 +224,7 @@ namespace Athena
 
 		TextureViewType GetViewType() const { return m_Info.ViewType; }
 		TextureType GetTextureType() const { return m_Info.TextureType; }
-		const TextureRange& GetRange() const { return m_Info.Range; }
+		const TextureSubresourceRange& GetSubresourceRange() const { return m_Info.Range; }
 
 		Texture* GetTexture() const { return m_Texture; }
 		const TextureViewCreateInfo& GetInfo() const { return m_Info; }
@@ -244,8 +280,14 @@ namespace Athena
 		void InvalidateViews();
 		void ClearViews();
 
+		uint32 GetSubresourceIndex(const TextureSubresource& subresource) const;
+		ResourceState GetSubresState(const TextureSubresource& subresource) const;
+		void SetSubresState(ResourceState state, const TextureSubresourceRange& subresourceRange);
+		bool AreSubresourcesSameState(const TextureSubresourceRange& subresourceRange) const;
+		bool AreSubresourcesSameState(const TextureSubresourceRange& subresourceRange, ResourceState state) const;
+		void CollapseSubresStatesIfSame();
+
 		Vector2u GetMipSize(uint32 mip) const;
-		uint32 GetMipLevelsCount() const;
 
 		uint32 GetTotalGPUMemory();
 
@@ -254,15 +296,24 @@ namespace Athena
 		uint32 GetWidth() const { return m_Info.Width; }
 		uint32 GetHeight() const { return m_Info.Height; }
 		Vector2u GetSize() const { return { m_Info.Width, m_Info.Height }; }
-		uint32 GetLayers() const { return m_Info.Layers; }
+		uint32 GetLayerCount() const { return m_Info.Layers; }
+		uint32 GetMipCount() const { return m_MipCount; }
+		uint32 GetPlaneCount() const { return m_PlaneCount; }
 		Format GetFormat() const { return m_Info.TextureFormat; }
-		TextureRange GetFullRange() const;
+		TextureSubresourceRange GetFullSubresourceRange() const;
 
 		const TextureCreateInfo& GetInfo() const { return m_Info; };
 
 	private:
 		TextureCreateInfo m_Info;
+		uint32 m_MipCount;
+		uint32 m_PlaneCount;
+
 		std::unordered_map<TextureViewCreateInfo, Ref<TextureView>> m_TextureViews;
+
+		ResourceState m_MainState;
+		std::vector<ResourceState> m_SubresourcesStates;
+		bool m_StatesCollapsed ;
 	};
 
 	using Texture2D = Texture;
@@ -293,26 +344,6 @@ namespace Athena
 		Ref<Texture2D> m_Texture;
 		std::array<Vector2, 4> m_TexCoords;
 	};
-
-	inline TextureAspect GetAspectFromFormat(Format format)
-	{
-		auto& properties = GetFormatProperties(format);
-
-		if (properties.HasColor)
-			return TextureAspect::COLOR;
-
-		if (properties.HasDepth && properties.HasStencil)
-			return TextureAspect::DEPTH_STENCIL;
-
-		if (properties.HasDepth)
-			return TextureAspect::DEPTH;
-
-		if (properties.HasStencil)
-			return TextureAspect::STENCIL;
-
-		checkf(false);
-		return TextureAspect::COLOR;
-	}
 
 	namespace EnumUtils
 	{

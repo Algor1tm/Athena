@@ -4,26 +4,13 @@
 
 namespace Athena
 {
-	void CommandContext::Transition(Texture* texture, PipelineAccess src, PipelineAccess dst)
+	void CommandContext::Transition(Texture* texture, ResourceState dst)
 	{
-		Transition(texture, texture->GetFullRange(), src, dst);
+		Transition(texture, texture->GetFullSubresourceRange(), dst);
 	}
 
-	void CommandContext::TransitionOwnership(Texture* texture, PipelineAccess src, CommandContextType dstContext, PipelineAccess dst)
+	void CommandContext::TransitionOwnership(Texture* texture, CommandContextType dstContext, ResourceState dst)
 	{
-		TransitionOwnership(texture, texture->GetFullRange(), src, dstContext, dst);
+		TransitionOwnership(texture, texture->GetFullSubresourceRange(), dstContext, dst);
 	}
-
-#if ATN_ENABLE_TRACY_GPU
-	TracyGPUZoneScoped::TracyGPUZoneScoped(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
-	{
-		if(cmdContext->HasTracyContext())
-			TracyZone = RHI::Get()->CreateTracyZone(cmdContext, line, fileName, functionName, name);
-	}
-
-	TracyGPUZoneScoped::~TracyGPUZoneScoped()
-	{
-		TracyZone.Release();
-	}
-#endif
 }

@@ -11,7 +11,6 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanImGuiBackend.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanTracyZone.h"
 
 #include <vulkan/vulkan.h>
 
@@ -36,7 +35,7 @@ namespace Athena
 		"Sets vulkan patch version, set -1 to use latest available."
 	);
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 	static AutoCVar<int32> CVarVulkanValidationLevel(
 		"Vulkan.ValidationLevel",
 		2,
@@ -56,7 +55,7 @@ namespace Athena
 	{
 		VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 #endif
 		nullptr
@@ -148,14 +147,8 @@ namespace Athena
 
 		m_Device.Initialize(m_Instance);
 
-		for (uint32 i = 0; i < Vulkan::GetMaxFramesInFlight(); ++i)
-		{
-			m_ResourceFreeQueues[i] = CommandStream(1024 * 1024);	// 1 Mb
-		}
-
+		m_ResourceFreeQueues.resize(Vulkan::GetMaxFramesInFlight());
 		m_FrameResourcesIndex = 0;
-
-		m_Allocator = Ref<VulkanAllocator>::Create();
 
 		ATN_LOG_INFO(Vulkan, "Successfully initialized Vulkan RHI");
 	}
@@ -169,10 +162,9 @@ namespace Athena
 			m_ResourceFreeQueues[i].Flush();
 		}
 
-		m_Allocator.Release();
 		m_Device.Destroy();
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		if (m_ExtensionsInfo.DebugUtilsEXTSupported)
 		{
 			PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = Vulkan::GetInstanceProc<PFN_vkDestroyDebugUtilsMessengerEXT>("vkDestroyDebugUtilsMessengerEXT");
@@ -198,9 +190,9 @@ namespace Athena
 			m_ResourceFreeQueues[m_FrameResourcesIndex].Flush();
 		}
 
-		m_Allocator->NewFrame();
+		m_Device.GetAllocator()->NewFrame();
 
-		RHI::Get()->ForEachUniqueContext([this](const Ref<CommandContext>& context)
+		RHI::Get()->ForEachUniqueContext([](const Ref<CommandContext>& context)
 			{
 				context.As<VulkanCommandContext>()->BeginFrame();
 			});
@@ -210,7 +202,7 @@ namespace Athena
 	{
 		TRACY_PROFILE_FUNC();
 
-		RHI::Get()->ForEachUniqueContext([this](const Ref<CommandContext>& context) 
+		RHI::Get()->ForEachUniqueContext([](const Ref<CommandContext>& context) 
 			{
 				context.As<VulkanCommandContext>()->EndFrame();
 			});
@@ -230,8 +222,8 @@ namespace Athena
 		switch (type)
 		{
 		case CommandContextType::Graphics: return m_Device.GetGraphicsContext();
-		case CommandContextType::AsyncCompute: return m_Device.GetAsyncTransferContext();
-		case CommandContextType::AsyncTransfer: return m_Device.GetAsyncComputeContext();
+		case CommandContextType::AsyncCompute: return m_Device.GetAsyncComputeContext();
+		case CommandContextType::AsyncTransfer: return m_Device.GetAsyncTransferContext();
 		}
 
 		checkf(false);
@@ -245,7 +237,7 @@ namespace Athena
 		if (m_Device.GetAsyncComputeContext() != m_Device.GetGraphicsContext())
 			func(m_Device.GetAsyncComputeContext());
 
-		if (m_Device.GetAsyncComputeContext() != m_Device.GetAsyncTransferContext())
+		if (m_Device.GetAsyncComputeContext() != m_Device.GetAsyncTransferContext() && m_Device.GetGraphicsContext() != m_Device.GetAsyncTransferContext())
 			func(m_Device.GetAsyncTransferContext());
 	}
 
@@ -264,11 +256,6 @@ namespace Athena
 		return Ref<VulkanGPUBuffer>::Create(info);
 	}
 
-	Ref<TracyGPUZone> VulkanRHI::CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
-	{
-		return Ref<VulkanTracyZone>::Create(cmdContext, line, fileName, functionName, name);
-	}
-
 	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)
 	{
 		return Ref<VulkanSwapChain>::Create(windowHandle, vsync);
@@ -281,7 +268,7 @@ namespace Athena
 
 	uint64 VulkanRHI::GetMemoryUsage()
 	{
-		return m_Allocator->GetMemoryUsage();
+		return m_Device.GetAllocator()->GetMemoryUsage();
 	}
 
 	const GPUCapabilities& VulkanRHI::GetGPUCapabilities()
@@ -296,7 +283,7 @@ namespace Athena
 
 	void VulkanRHI::PostInstanceInit()
 	{
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		m_ExtensionsInfo.DebugUtilsEXTSupported = IsExtensionOrLayerPresent(m_InstanceExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 		if (m_ExtensionsInfo.DebugUtilsEXTSupported)
@@ -360,7 +347,7 @@ namespace Athena
 			layers.push_back(s_OptionalVulkanInstanceLayers[i]);
 		}
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		bool enableDebugLayer = CVarVulkanValidationLevel.GetInt() > 0;
 
 		if (enableDebugLayer)

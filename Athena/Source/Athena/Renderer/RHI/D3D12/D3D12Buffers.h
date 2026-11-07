@@ -14,6 +14,8 @@ namespace Athena
 
 		virtual void Init() override;
 
+		ID3D12Resource* GetResource() const { return m_Buffer.GetResource(); }
+
 	private:
 		D3D12Resource m_Buffer;
 	};

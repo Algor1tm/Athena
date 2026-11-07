@@ -39,4 +39,9 @@ namespace Athena::D3D12
         ensuref(false);
         return (DXGI_FORMAT)0;
     }
+
+    inline uint32 CalcSubresource(uint32 mipSlice, uint32 arraySlice, uint32 planeSlice, uint32 mipLevels,uint32 arraySize)
+    {
+        return mipSlice + arraySlice * mipLevels + planeSlice * mipLevels * arraySize;
+    }
 }

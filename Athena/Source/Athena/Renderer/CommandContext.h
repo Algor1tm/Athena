@@ -5,6 +5,7 @@
 #include "Athena/Renderer/Color.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/ResourceState.h"
 
 
 namespace Athena
@@ -18,28 +19,6 @@ namespace Athena
 		NumContexts = 3
 	};
 
-	enum PipelineAccess
-	{
-		PA_Unknown = BIT(0),
-
-		// Read states
-		PA_CopySrc			= BIT(1),
-		PA_VertexInput		= BIT(2),
-		PA_SRVVertexShader = BIT(3),
-		PA_SRVPixelShader  = BIT(4),
-		PA_SRVCompute		= BIT(5),
-		PA_DSVRead			= BIT(6),
-
-		PA_SRVGraphics = PA_SRVVertexShader | PA_SRVPixelShader,
-		PA_SRVMask = PA_SRVCompute | PA_SRVGraphics,
-
-		// Read-Write states
-		PA_CopyDst  = BIT(7),
-		PA_UAV		 = BIT(8),
-		PA_RTV		 = BIT(9),
-		PA_DSVWrite = BIT(10),
-	};
-
 	class ATHENA_API CommandContext: public RefCounted
 	{
 	public:
@@ -47,83 +26,128 @@ namespace Athena
 
 		virtual CommandContextType GetType() = 0;
 
-		virtual void Drain(CommandContextType srcContext, PipelineAccess waitDstStage) = 0;
-		virtual bool Flush() = 0;
-		virtual bool FlushAndWait() = 0;
+		virtual void Drain(CommandContextType srcContext, ResourceState waitDstStage) = 0;
+		virtual void Flush() = 0;
+		virtual void FlushAndWait() = 0;
 
-		virtual void Transition(Texture* texture, PipelineAccess src, PipelineAccess dst);
-		virtual void Transition(Texture* texture, const TextureRange& subresource, PipelineAccess src, PipelineAccess dst) = 0;
-		virtual void Transition(GPUBuffer* buffer, PipelineAccess src, PipelineAccess dst) = 0;
-		virtual void TransitionOwnership(Texture* texture, PipelineAccess src, CommandContextType dstContext, PipelineAccess dst);
-		virtual void TransitionOwnership(Texture* texture, const TextureRange& subresource, PipelineAccess src, CommandContextType dstContext, PipelineAccess dst) = 0;
-		virtual void TransitionOwnership(GPUBuffer* buffer, PipelineAccess src, CommandContextType dstContext, PipelineAccess dst) = 0;
+		virtual void Transition(Texture* texture, ResourceState dst);
+		virtual void Transition(Texture* texture, const TextureSubresourceRange& subresourceRange, ResourceState dst) = 0;
+		virtual void Transition(GPUBuffer* buffer, ResourceState dst) = 0;
+		virtual void TransitionOwnership(Texture* texture, CommandContextType dstContext, ResourceState dst);
+		virtual void TransitionOwnership(Texture* texture, const TextureSubresourceRange& subresourceRange, CommandContextType dstContext, ResourceState dst) = 0;
+		virtual void TransitionOwnership(GPUBuffer* buffer, CommandContextType dstContext, ResourceState dst) = 0;
 
 		// Transfer operations
 		virtual void UploadBuffer(GPUBuffer* buffer, const Buffer& data, uint64 offset = 0) = 0;
 		virtual void UploadTexture(Texture* texture, const Buffer& data) = 0;
 
 		// Debug
-		virtual void BeginDebugLabel(const String& name, const IntegerColor& color = IntegerColor::Black) = 0;
-		virtual void EndDebugLabel() = 0;
-		virtual void InsertDebugLabel(const String& name, const IntegerColor& color = IntegerColor::Black) = 0;
-		virtual bool HasTracyContext() = 0;
-	};
+#if ATN_ENABLE_GPU_DEBUG
+		virtual void BeginMarker(const String& name) = 0;
+		virtual void EndMarker() = 0;
+		virtual void BeginQueueMarker(const String& name) = 0;
+		virtual void EndQueueMarker() = 0;
+		virtual void InsertMarker(const String& name) = 0;
+#endif
 
-
-	class ATHENA_API TracyGPUZone: public RefCounted
-	{
-	public:
-		virtual ~TracyGPUZone() = default;
+#if ATN_ENABLE_TRACY_GPU
+		virtual void BeginTracyZone(uint32 line, std::string_view fileName, std::string_view functionName, const String& name) = 0;
+		virtual void EndTracyZone() = 0;
+#endif
 	};
 
 
 #if ATN_ENABLE_TRACY_GPU
-	struct ATHENA_API TracyGPUZoneScoped
+
+	#define GPU_TRACY_BEGIN(ctx, name) ctx->BeginTracyZone(__LINE__, __FILE__, __FUNCTION__, name)
+	#define GPU_TRACY_END(ctx) ctx->EndTracyZone()
+
+	struct ContextTracyZoneScoped
 	{
-		TracyGPUZoneScoped(const Ref<CommandContext>& cmdCtx, uint32 line, std::string_view fileName, std::string_view functionName, const String& name);
-		~TracyGPUZoneScoped();
-
-		Ref<TracyGPUZone> TracyZone;
-	};
-
-	#define TRACY_GPU_SCOPED_IMPL(cmdList, name, counter) TracyGPUZoneScoped _tracyGpuZone_##counter (cmdList, __LINE__, __FILE__, __FUNCTION__, name)
-	#define TRACY_GPU_SCOPED(cmdList, name) TRACY_GPU_SCOPE_IMPL(cmdList, name, __COUNTER__)
-#else
-	#define TRACY_GPU_SCOPE(cmdList, name)
-#endif
-
-
-#if ATN_ENABLE_GPU_DEBUG
-	struct CommandListLabelScoped
-	{
-		CommandListLabelScoped(const Ref<CommandContext>& cmdCtx, const String& label, const IntegerColor& color = IntegerColor::Black)
-			: CmdContext(cmdCtx)
+		ContextTracyZoneScoped(const Ref<CommandContext>& ctx, uint32 line, std::string_view fileName, std::string_view functionName, const String& name)
+			: CmdContext(ctx)
 		{
-			CmdContext->BeginDebugLabel(label, color);
+			CmdContext->BeginTracyZone(line, fileName, functionName, name);
 		}
 
-		~CommandListLabelScoped()
+		~ContextTracyZoneScoped()
 		{
-			CmdContext->EndDebugLabel();
+			CmdContext->EndTracyZone();
 		}
 
 		Ref<CommandContext> CmdContext;
 	};
 
-	#define GPU_LABEL_SCOPED_IMPL(cmdList, label, color, counter) CommandListLabelScoped _cmdListLabel_##counter (cmdList, label, color)
-	#define GPU_LABEL_SCOPED(cmdList, label) GPU_LABEL_SCOPED_IMPL(cmdList, label, IntegerColor::Black, __COUNTER__)
-	#define GPU_LABEL_SCOPED_C(cmdList, label, color) GPU_LABEL_SCOPED_IMPL(cmdList, label, color, __COUNTER__)
+	#define GPU_TRACY_SCOPED_IMPL(ctx, name, counter) ContextTracyZoneScoped _tracyGpuZone_##counter (ctx, __LINE__, __FILE__, __FUNCTION__, name)
+	#define GPU_TRACY_SCOPED(ctx, name) GPU_TRACY_SCOPED_IMPL(ctx, name, __COUNTER__)
+#else
+	#define GPU_TRACY_BEGIN(ctx, name)
+	#define GPU_TRACY_END(ctx)
+	#define GPU_TRACY_SCOPED(ctx, name)
+#endif
 
-	#define GPU_INSERT_LABEL(cmdList, label) cmdList->InsertDebugLabel(label)
-	#define GPU_INSERT_LABEL_C(cmdList, label, color) cmdList->InsertDebugLabel(label, color)
+
+#if ATN_ENABLE_GPU_DEBUG
+
+	#define GPU_INSERT_MARKER(ctx, name) ctx->InsertDebugLabel(label)
+	
+	#define GPU_MARKER_BEGIN(ctx, name) ctx->BeginMarker(name)
+	#define GPU_MARKER_END(ctx) ctx->EndMarker()
+
+	#define GPU_QUEUE_MARKER_BEGIN(ctx, name) ctx->BeginQueueMarker(name)
+	#define GPU_QUEUE_MARKER_END(ctx) ctx->EndQueueMarker()
+
+
+	struct ContextMarkerScoped
+	{
+		ContextMarkerScoped(const Ref<CommandContext>& ctx, const String& name)
+			: CmdContext(ctx)
+		{
+			GPU_MARKER_BEGIN(CmdContext, name);
+		}
+
+		~ContextMarkerScoped()
+		{
+			GPU_MARKER_END(CmdContext);
+		}
+
+		Ref<CommandContext> CmdContext;
+	};
+
+	#define GPU_MARKER_SCOPED_IMPL(cmdList, name, counter) ContextMarkerScoped _ctxMarker_##counter (cmdList, name)
+	#define GPU_MARKER_SCOPED(cmdList, name) GPU_MARKER_SCOPED_IMPL(cmdList, name, __COUNTER__)
+
+	struct ContextQueueMarkerScoped
+	{
+		ContextQueueMarkerScoped(const Ref<CommandContext>& ctx, const String& name)
+			: CmdContext(ctx)
+		{
+			GPU_QUEUE_MARKER_BEGIN(CmdContext, name);
+		}
+
+		~ContextQueueMarkerScoped()
+		{
+			GPU_QUEUE_MARKER_END(CmdContext);
+		}
+
+		Ref<CommandContext> CmdContext;
+	};
+
+	#define GPU_QUEUE_MARKER_SCOPED_IMPL(cmdList, name, counter) ContextQueueMarkerScoped _ctxQueueMarker_##counter (cmdList, name)
+	#define GPU_QUEUE_MARKER_SCOPED(cmdList, name) GPU_MARKER_SCOPED_IMPL(cmdList, name, __COUNTER__)
 
 #else 
-	#define GPU_LABEL_SCOPED(cmdList, label)
-	#define GPU_LABEL_SCOPED_C(cmdList, label, color)
-	
-	#define GPU_INSERT_LABEL(cmdList, label)
-	#define GPU_INSERT_LABEL_C(cmdList, label, color)
+	#define GPU_INSERT_MARKER(ctx, name)
+	#define GPU_MARKER_BEGIN(ctx, name)
+	#define GPU_MARKER_END(ctx)
+	#define GPU_QUEUE_MARKER_BEGIN(ctx, name)
+	#define GPU_QUEUE_MARKER_END(ctx)
+	#define GPU_MARKER_SCOPED(cmdList, name)
+	#define GPU_QUEUE_MARKER_SCOPED(cmdList, name)
 #endif
+
+#define GPU_EVENT(ctx, name) GPU_TRACY_SCOPED(ctx, name); GPU_MARKER_SCOPED(ctx, name); 
+
 
 	namespace EnumUtils
 	{

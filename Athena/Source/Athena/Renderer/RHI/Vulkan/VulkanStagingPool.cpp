@@ -1,20 +1,23 @@
-#include "VulkanStagingManager.h"
+#include "VulkanStagingPool.h"
 #include "Athena/Math/Limits.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 
 
 namespace Athena
 {
-	void VulkanStagingManager::Clear()
+	void VulkanStagingPool::Clear()
 	{
 		for (auto it = m_FreeBuffers.begin(); it != m_FreeBuffers.end();)
 		{
-			VulkanRHI::Get()->GetAllocator()->DestroyBuffer(it->second.Allocation);
+			Vulkan::GetAllocator()->DestroyBuffer(it->second.Allocation);
 			it = m_FreeBuffers.erase(it);
 		}
+
+		ensuref(m_UsedBuffers.empty());
 	}
 
-	VulkanBufferAllocation VulkanStagingManager::GetBuffer(uint64 size)
+	VulkanBufferAllocation VulkanStagingPool::GetBuffer(uint64 size)
 	{
 		VkBuffer buffer = VK_NULL_HANDLE;
 
@@ -34,14 +37,14 @@ namespace Athena
 		bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		VulkanBufferAllocation allocation;
-		VkResult result = VulkanRHI::Get()->GetAllocator()->AllocateBuffer(&allocation, bufferInfo, 
+		VkResult result = Vulkan::GetAllocator()->AllocateBuffer(&allocation, bufferInfo,
 			VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 
 		if (result != VK_SUCCESS)
 		{
 			Clear();
 
-			VK_CHECK(VulkanRHI::Get()->GetAllocator()->AllocateBuffer(&allocation, bufferInfo, 
+			VK_CHECK(Vulkan::GetAllocator()->AllocateBuffer(&allocation, bufferInfo,
 				VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT));
 		}
 
@@ -54,7 +57,7 @@ namespace Athena
 		return allocation;
 	}
 
-	void VulkanStagingManager::MarkAsUsed(VulkanBufferAllocation buffer, uint64 retireSemaphoreValue)
+	void VulkanStagingPool::MarkAsUsed(VulkanBufferAllocation buffer, uint64 retireSemaphoreValue)
 	{
 		ensuref(m_FreeBuffers.contains(buffer.GetBuffer()));
 		ensuref(!m_UsedBuffers.contains(buffer.GetBuffer()));
@@ -66,7 +69,7 @@ namespace Athena
 		m_UsedBuffers[buffer.GetBuffer()] = stagingBuffer;
 	}
 
-	void VulkanStagingManager::Update(uint64 semaphoreValue)
+	void VulkanStagingPool::Update(uint64 semaphoreValue)
 	{
 		for (auto it = m_UsedBuffers.begin(); it != m_UsedBuffers.end();)
 		{
@@ -87,7 +90,7 @@ namespace Athena
 		{
 			if (Time::GetSystemCurrentTime() - it->second.LastTimeUsed >= Time::Seconds(VULKAN_STAGING_FREE_DELAY))
 			{
-				VulkanRHI::Get()->GetAllocator()->DestroyBuffer(it->second.Allocation);
+				Vulkan::GetAllocator()->DestroyBuffer(it->second.Allocation);
 				it = m_FreeBuffers.erase(it);
 			}
 			else

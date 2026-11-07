@@ -93,7 +93,7 @@ namespace Athena::D3D12
         return wstrTo;
     }
 
-#if D3D12_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
     #define D3D12_SET_DEBUG_NAME(d3dObject, name) d3dObject->SetName(D3D12::ToWString(name).c_str())
 #else
     #define D3D12_SET_DEBUG_NAME(d3dObject, name)

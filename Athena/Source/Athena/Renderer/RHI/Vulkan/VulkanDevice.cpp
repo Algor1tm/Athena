@@ -315,13 +315,15 @@ namespace Athena
 			deviceCI.pEnabledFeatures = &deviceFeatures;
 
 			VkResult result = vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice);
-			if (result != 0)
+			if (result != VK_SUCCESS)
 			{
 				ATN_LOG_FATAL(Vulkan, "Failed to create vulkan device, try to update drivers or use DirectX instead!");
 			}
 
 			PostDeviceInit();
 		}
+
+		m_Allocator = Ref<VulkanAllocator>::Create();
 
 		{
 			m_GraphicsContext = Ref<VulkanCommandContext>::Create(queues.Graphics.QueueFamily, CommandContextType::Graphics);
@@ -351,6 +353,7 @@ namespace Athena
 		m_GraphicsContext.Release();
 		m_AsyncComputeContext.Release();
 		m_AsyncTransferContext.Release();
+		m_Allocator.Release();
 
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 	}

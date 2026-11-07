@@ -3,6 +3,8 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/Buffer.h"
 #include "Athena/Renderer/Format.h"
+#include "Athena/Renderer/ResourceState.h"
+
 
 namespace Athena
 {
@@ -90,6 +92,9 @@ namespace Athena
 
 		virtual void Init() = 0;
 
+		ResourceState GetState() const;
+		void SetState(ResourceState state);
+
 		const GPUBufferCreateInfo& GetInfo() const { return m_Info; }
 		const String& GetName() const { return m_Info.Name; }
 		GPUBufferType GetType() const { return m_Info.Type; }
@@ -100,6 +105,7 @@ namespace Athena
 
 	private:
 		GPUBufferCreateInfo m_Info;
+		ResourceState m_State;
 	};
 
 	using VertexBuffer = GPUBuffer;

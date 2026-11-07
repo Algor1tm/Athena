@@ -3,7 +3,6 @@
 #include "Athena/Core/Core.h"
 #include "Athena/Core/CommandStream.h"
 #include "Athena/Renderer/RHI/RHI.h"
-#include "Athena/Renderer/RHI/Vulkan/VulkanAllocator.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanConfiguration.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanDebug.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanDevice.h"
@@ -17,7 +16,7 @@ namespace Athena
 	{
 		bool GetPhysicalDeviceProperties2EXTSupported;
 
-#if VULKAN_ENABLE_DEBUG_INFO
+#if ATN_ENABLE_GPU_DEBUG
 		bool DebugUtilsEXTSupported;
 		VkDebugUtilsMessengerEXT DebugUtilsMessenger;
 		PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
@@ -36,7 +35,6 @@ namespace Athena
 		VulkanRHI() = default;
 
 		// TODO: idk why and where it tries to copy vulkanrhi, but adding these solves the compilation issues
-		// might be microsoft compiler bug
 		VulkanRHI(const VulkanRHI&) = delete;
 		VulkanRHI& operator=(const VulkanRHI&) = delete;
 		VulkanRHI(VulkanRHI&&) noexcept = delete;
@@ -59,8 +57,6 @@ namespace Athena
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
-
-		virtual Ref<TracyGPUZone> CreateTracyZone(const Ref<CommandContext>& cmdContext, uint32 line, std::string_view fileName, std::string_view functionName, const String& name) override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 
@@ -85,8 +81,6 @@ namespace Athena
 
 		const InstanceExtensionsInfo& GetExtensionsInfo() const { return m_ExtensionsInfo; }
 
-		Ref<VulkanAllocator> GetAllocator() const { return m_Allocator; }
-
 		uint32 GetVulkanVersion() const { return m_VulkanVersion; }
 
 		template <typename FuncT>
@@ -109,10 +103,9 @@ namespace Athena
 		VkInstance m_Instance;
 		InstanceExtensionsInfo m_ExtensionsInfo;
 		VulkanDevice m_Device;
-		Ref<VulkanAllocator> m_Allocator;
 
 		uint32 m_FrameResourcesIndex = 0;
-		FramesInFlightArray<CommandStream> m_ResourceFreeQueues;
+		std::vector<CommandStream> m_ResourceFreeQueues;
 
 		uint32 m_VulkanVersion;
 		std::vector<const char*> m_InstanceLayers;

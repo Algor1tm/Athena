@@ -2,4 +2,6 @@
 
 #include "Athena/Core/Core.h"
 
-#define D3D12_ENABLE_DEBUG_INFO ATN_ENABLE_GPU_DEBUG
+#define D3D12_DEFAULT_FENCE_TIMEOUT 200000000 // 200 ms
+
+#define D3D12_STAGING_FREE_DELAY 1 // seconds

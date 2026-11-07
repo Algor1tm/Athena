@@ -16,7 +16,7 @@ namespace Athena
 		{
 			D3D12RHI::Get()->DeleteFrameResourcesDeferred([buffer = m_Buffer]() mutable
 				{
-					buffer.Release();
+					D3D12RHI::Get()->GetAllocator()->DestroyResource(buffer);
 				});
 		}
 	}
@@ -40,7 +40,7 @@ namespace Athena
 			desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
 
-		m_Buffer = D3D12RHI::Get()->GetAllocator()->AllocateResource(desc, D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_TYPE_DEFAULT);
+		D3D12_CHECK(D3D12RHI::Get()->GetAllocator()->AllocateResource(&m_Buffer,desc, D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_TYPE_DEFAULT));
 		D3D12_SET_DEBUG_NAME(m_Buffer.GetResource(), GetName());
 	}
 }

@@ -65,6 +65,35 @@ namespace Athena
             return (D3D12_SHADER_COMPONENT_MAPPING)identity;
         }
 
+        static DXGI_FORMAT GetPlaneFormat(DXGI_FORMAT format, TexturePlane plane)
+        {
+            if (plane == TexturePlane::ALL)
+                return format;
+
+            switch (format)
+            {
+            case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            {
+                switch (plane)
+                {
+                case TexturePlane::PLANE_0: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+                case TexturePlane::PLANE_1: return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+                }
+            }
+            case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+            {
+                switch (plane)
+                {
+                case TexturePlane::PLANE_0: return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+                case TexturePlane::PLANE_1: return DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+                }
+            }
+            }
+
+            checkf(plane == TexturePlane::PLANE_0);
+            return format;
+        }
+
         static uint32 GetLayerMultiplier(TextureType type)
         {
             if (type == TextureType::TEXTURE_CUBE)
@@ -106,7 +135,7 @@ namespace Athena
         {
             D3D12RHI::Get()->DeleteFrameResourcesDeferred([texture = m_TextureResource]() mutable
                 {
-                    texture.Release();
+                    D3D12RHI::Get()->GetAllocator()->DestroyResource(texture);
                 });
         }
     }
@@ -132,7 +161,7 @@ namespace Athena
         textureDesc.Width = width;
         textureDesc.Height = height;
         textureDesc.DepthOrArraySize = GetInfo().Layers * D3D12::GetLayerMultiplier(GetType());
-        textureDesc.MipLevels = GetMipLevelsCount();
+        textureDesc.MipLevels = GetMipCount();
         textureDesc.Format = D3D12::TranslateFormat(GetFormat());
         textureDesc.SampleDesc.Count = GetInfo().Samples; 
         textureDesc.SampleDesc.Quality = 0;
@@ -142,98 +171,11 @@ namespace Athena
         D3D12_CLEAR_VALUE clearValue = D3D12::GetDefaultClearValue(GetFormat());
         D3D12_CLEAR_VALUE* clearValuePTR = (GetInfo().Usage & TextureUsage::ATTACHMENT) ? &clearValue : nullptr;
 
-        m_TextureResource = D3D12RHI::Get()->GetAllocator()->AllocateResource(textureDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_HEAP_TYPE_DEFAULT, clearValuePTR);
+        D3D12_CHECK(D3D12RHI::Get()->GetAllocator()->AllocateResource(&m_TextureResource, textureDesc, D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_TYPE_DEFAULT, clearValuePTR));
         D3D12_SET_DEBUG_NAME(m_TextureResource.GetResource(), fmt::format("Texture_{}", GetName()));
 
         InvalidateViews();
 	}
-
-	//void D3D12Texture::Upload(const Buffer& srcBuffer, const TextureRegion& region)
-	//{
-	//	ensuref(false);
-	//}
-
-	//void D3D12Texture::UploadAndBlitMipMap(const Buffer& srcBuffer)
-	//{
- //       uint64 imageSize = GetWidth() * GetHeight() * GetFormatProperties(GetFormat()).BytesPerPixel;
- //       ensure(srcBuffer.Size() <= imageSize, "Texture upload buffer is too small!");
-
- //       D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
- //       UINT numRows = 0;
- //       UINT64 rowSize = 0;
- //       UINT64 uploadSize = 0;
-
- //       D3D12_RESOURCE_DESC textureDesc = m_TextureResource.GetResource()->GetDesc();
-
- //       D3D12RHI::Get()->GetDevice()->GetCopyableFootprints(
- //           &textureDesc,
- //           0,
- //           1,
- //           0,
- //           &footprint,
- //           &numRows,
- //           &rowSize,
- //           &uploadSize);
-
- //       D3D12_RESOURCE_DESC desc = {};
- //       desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
- //       desc.Width = uploadSize;
- //       desc.Height = 1;
- //       desc.DepthOrArraySize = 1;
- //       desc.MipLevels = 1;
- //       desc.SampleDesc.Count = 1;
- //       desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
- //       desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
- //       D3D12Resource stagingBuffer = D3D12RHI::Get()->GetAllocator()->AllocateResource(desc, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD);
- //       void* mapped = stagingBuffer.MapMemory();
-
- //       const byte* src = srcBuffer.Data();
- //       byte* dst = (byte*)mapped + footprint.Offset;
-
- //       const UINT sourceRowPitch = GetWidth() * GetFormatProperties(GetFormat()).BytesPerPixel;
-
- //       for (UINT y = 0; y < GetHeight(); ++y)
- //       {
- //           memcpy(dst + y * footprint.Footprint.RowPitch, src + y * sourceRowPitch, sourceRowPitch);
- //       }
-
- //       stagingBuffer.UnmapMemory();
- //       D3D12CommandList* list = D3D12RHI::Get()->GetCmdListManager()->GetTransferCommandList();
-
- //       D3D12_RESOURCE_BARRIER barrier{};
- //       barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
- //       barrier.Transition.pResource = m_TextureResource.GetResource();
- //       barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
- //       barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
- //       barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-
- //       list->CommandList->ResourceBarrier(1, &barrier);
-
- //       D3D12_TEXTURE_COPY_LOCATION dstLocation{};
- //       dstLocation.pResource = m_TextureResource.GetResource();
- //       dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
- //       dstLocation.SubresourceIndex = 0;
-
- //       D3D12_TEXTURE_COPY_LOCATION srcLocation{};
- //       srcLocation.pResource = stagingBuffer.GetResource();
- //       srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
- //       srcLocation.PlacedFootprint = footprint;
-
- //       list->CommandList->CopyTextureRegion(
- //           &dstLocation, 0, 0, 0,
- //           &srcLocation, nullptr);
-
- //       barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
- //       barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
- //       list->CommandList->ResourceBarrier(1, &barrier);
-
- //       list->AddCallbackOnCompletion([stagingBuffer]() mutable
- //           {
- //               stagingBuffer.Release();
- //           });
-	//}
 
     D3D12TextureView::D3D12TextureView(const TextureViewCreateInfo& info, Texture* texture)
         : TextureView(info, texture)
@@ -273,14 +215,17 @@ namespace Athena
         DXGI_FORMAT format = D3D12::TranslateFormat(GetTexture()->GetFormat());
 
         TextureType textureType = GetTextureType();
-        uint32 layerCount = GetRange().LayerCount;
-        uint32 baseLayer = GetRange().BaseLayer;
+        const TextureSubresourceRange& subresRange = GetSubresourceRange();
+
+        uint32 layerCount = subresRange.LayerCount;
+        uint32 baseLayer = subresRange.BaseLayer;
 
         // TODO: texture Aspects
         if (GetViewType() == TextureViewType::SRV)
         {
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-            srvDesc.Format = format;
+            srvDesc.Format = D3D12::GetPlaneFormat(format, subresRange.Plane);
+            uint32 planeSlice = subresRange.Plane == TexturePlane::PLANE_1 ? 1 : 0;
 
             D3D12_SHADER_COMPONENT_MAPPING r = D3D12::TranslateMapping(info.Swizzle.R, 0);
             D3D12_SHADER_COMPONENT_MAPPING g = D3D12::TranslateMapping(info.Swizzle.G, 1);
@@ -293,19 +238,19 @@ namespace Athena
                 if (layerCount > 1 || baseLayer > 0)
                 {
                     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                    srvDesc.Texture2DArray.MostDetailedMip = GetRange().BaseMipLevel;
-                    srvDesc.Texture2DArray.MipLevels = GetRange().MipLevelCount;
-                    srvDesc.Texture2DArray.FirstArraySlice = GetRange().BaseLayer;
-                    srvDesc.Texture2DArray.ArraySize = GetRange().LayerCount;
-                    srvDesc.Texture2DArray.PlaneSlice = 0;
+                    srvDesc.Texture2DArray.MostDetailedMip = subresRange.BaseMipLevel;
+                    srvDesc.Texture2DArray.MipLevels = subresRange.MipLevelCount;
+                    srvDesc.Texture2DArray.FirstArraySlice = subresRange.BaseLayer;
+                    srvDesc.Texture2DArray.ArraySize = subresRange.LayerCount;
+                    srvDesc.Texture2DArray.PlaneSlice = planeSlice;
                     srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
                 }
                 else
                 {
                     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                    srvDesc.Texture2D.MostDetailedMip = GetRange().BaseMipLevel;
-                    srvDesc.Texture2D.MipLevels = GetRange().MipLevelCount;
-                    srvDesc.Texture2D.PlaneSlice = 0;
+                    srvDesc.Texture2D.MostDetailedMip = subresRange.BaseMipLevel;
+                    srvDesc.Texture2D.MipLevels = subresRange.MipLevelCount;
+                    srvDesc.Texture2D.PlaneSlice = planeSlice;
                     srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
                 }
             }
@@ -314,50 +259,51 @@ namespace Athena
                 if (layerCount > 6 && layerCount )
                 {
                     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-                    srvDesc.TextureCubeArray.MostDetailedMip = GetRange().BaseMipLevel;
-                    srvDesc.TextureCubeArray.MipLevels = GetRange().MipLevelCount;  
-                    srvDesc.TextureCubeArray.First2DArrayFace = GetRange().BaseLayer * 6;
-                    srvDesc.TextureCubeArray.NumCubes = GetRange().LayerCount;
+                    srvDesc.TextureCubeArray.MostDetailedMip = subresRange.BaseMipLevel;
+                    srvDesc.TextureCubeArray.MipLevels = subresRange.MipLevelCount;
+                    srvDesc.TextureCubeArray.First2DArrayFace = subresRange.BaseLayer * 6;
+                    srvDesc.TextureCubeArray.NumCubes = subresRange.LayerCount;
                     srvDesc.TextureCubeArray.ResourceMinLODClamp = 0.0f;
                 }
                 else
                 {
                     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                    srvDesc.TextureCube.MostDetailedMip = GetRange().BaseMipLevel;
-                    srvDesc.TextureCube.MipLevels = GetRange().MipLevelCount;
+                    srvDesc.TextureCube.MostDetailedMip = subresRange.BaseMipLevel;
+                    srvDesc.TextureCube.MipLevels = subresRange.MipLevelCount;
                     srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
                 }
             }
-
-
         }
         else if (GetViewType() == TextureViewType::UAV)
         {
             ensuref(GetTextureType() != TextureType::TEXTURE_CUBE);
-            ensuref(GetRange().MipLevelCount == 1);
+            ensuref(subresRange.MipLevelCount == 1);
 
             D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.Format = format;
+
+            // TODO need to check for depth/stencil uav support/restrictions
+            uavDesc.Format = D3D12::GetPlaneFormat(format, subresRange.Plane);
+            uint32 planeSlice = subresRange.Plane == TexturePlane::PLANE_1 ? 1 : 0;
 
             if (layerCount > 1 || baseLayer > 0)
             {
                 uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-                uavDesc.Texture2DArray.MipSlice = GetRange().BaseMipLevel;
-                uavDesc.Texture2DArray.FirstArraySlice = GetRange().BaseLayer;
-                uavDesc.Texture2DArray.ArraySize = GetRange().LayerCount;
-                uavDesc.Texture2DArray.PlaneSlice = 0;
+                uavDesc.Texture2DArray.MipSlice = subresRange.BaseMipLevel;
+                uavDesc.Texture2DArray.FirstArraySlice = subresRange.BaseLayer;
+                uavDesc.Texture2DArray.ArraySize = subresRange.LayerCount;
+                uavDesc.Texture2DArray.PlaneSlice = planeSlice;
             }
             else
             {
                 uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-                uavDesc.Texture2D.MipSlice = GetRange().BaseMipLevel;
-                uavDesc.Texture2D.PlaneSlice = 0;
+                uavDesc.Texture2D.MipSlice = subresRange.BaseMipLevel;
+                uavDesc.Texture2D.PlaneSlice = planeSlice;
             }
         }
         else if (GetViewType() == TextureViewType::RTV)
         {
             ensuref(GetTextureType() != TextureType::TEXTURE_CUBE);
-            ensuref(GetRange().MipLevelCount == 1);
+            ensuref(subresRange.MipLevelCount == 1);
 
             D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
             rtvDesc.Format = format;
@@ -365,15 +311,15 @@ namespace Athena
             if (layerCount > 1 || baseLayer > 0)
             {
                 rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                rtvDesc.Texture2DArray.MipSlice = GetRange().BaseMipLevel;
-                rtvDesc.Texture2DArray.FirstArraySlice = GetRange().BaseLayer;
-                rtvDesc.Texture2DArray.ArraySize = GetRange().LayerCount;
+                rtvDesc.Texture2DArray.MipSlice = subresRange.BaseMipLevel;
+                rtvDesc.Texture2DArray.FirstArraySlice = subresRange.BaseLayer;
+                rtvDesc.Texture2DArray.ArraySize = subresRange.LayerCount;
                 rtvDesc.Texture2DArray.PlaneSlice = 0;
             }
             else
             {
                 rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-                rtvDesc.Texture2D.MipSlice = GetRange().BaseMipLevel;
+                rtvDesc.Texture2D.MipSlice = subresRange.BaseMipLevel;
                 rtvDesc.Texture2D.PlaneSlice = 0;
             }
         }
@@ -389,14 +335,14 @@ namespace Athena
             if (layerCount > 1 || baseLayer > 0)
             {
                 dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                dsvDesc.Texture2DArray.MipSlice = GetRange().BaseMipLevel;
-                dsvDesc.Texture2DArray.FirstArraySlice = GetRange().BaseLayer;
-                dsvDesc.Texture2DArray.ArraySize = GetRange().LayerCount;
+                dsvDesc.Texture2DArray.MipSlice = subresRange.BaseMipLevel;
+                dsvDesc.Texture2DArray.FirstArraySlice = subresRange.BaseLayer;
+                dsvDesc.Texture2DArray.ArraySize = subresRange.LayerCount;
             }
             else
             {
                 dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-                dsvDesc.Texture2D.MipSlice = GetRange().BaseMipLevel;
+                dsvDesc.Texture2D.MipSlice = subresRange.BaseMipLevel;
             }
         }
     }

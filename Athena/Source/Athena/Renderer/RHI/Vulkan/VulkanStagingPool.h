@@ -17,7 +17,7 @@ namespace Athena
 		Time LastTimeUsed;
 	};
 
-	class VulkanStagingManager
+	class VulkanStagingPool
 	{
 	public:
 		void Clear();

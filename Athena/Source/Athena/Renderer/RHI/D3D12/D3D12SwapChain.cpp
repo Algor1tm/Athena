@@ -117,7 +117,7 @@ namespace Athena
 		for (UINT i = 0; i < m_BackBuffers.size(); i++)
 		{
 			m_DXGISwapChain->GetBuffer(i, IID_PPV_ARGS(&m_BackBuffers[i]));
-			D3D12_SET_DEBUG_NAME(m_BackBuffers[i], std::format("BackBuffer_{}", i));
+			D3D12_SET_DEBUG_NAME(m_BackBuffers[i], fmt::format("BackBuffer_{}", i));
 		}
 
 		auto uiLayer = Application::Get().GetImGuiLayer();

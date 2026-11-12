@@ -30,12 +30,15 @@ namespace Athena
 		appinfo.AppConfig.EnableImGui = true;
 		appinfo.AppConfig.WorkingDirectory = "";
 		appinfo.AppConfig.EngineResourcesPath = "../Athena/EngineResources";
+		appinfo.AppConfig.EngineCachePath = "../Athena/Cache";
 		appinfo.AppConfig.CleanCacheOnLoad = false;
 
 		appinfo.LogConfig.EnableConsole = true;
 		appinfo.LogConfig.OutputPath = "Sandbox.log";
 
 		appinfo.RendererConfig.API = RendererAPI::Vulkan;
+		appinfo.RendererConfig.ShaderModel = ShaderModel::SM_6_3;
+		appinfo.RendererConfig.ShaderSourcesPath = "../Athena/Shaders";
 
 		appinfo.ScriptConfig.EnableDebug = true;
 

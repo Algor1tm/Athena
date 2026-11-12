@@ -21,6 +21,7 @@ namespace Athena
 		D3D_ROOT_SIGNATURE_VERSION RootSignatureVersion;
 
 		D3D12_FEATURE_DATA_D3D12_OPTIONS3 Options3;
+		D3D12_FEATURE_DATA_D3D12_OPTIONS4 Options4;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS5 Options5;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS12 Options12;
 		D3D12_FEATURE_DATA_D3D12_OPTIONS18 Options18;
@@ -32,10 +33,7 @@ namespace Athena
 	public:
 		D3D12RHI() = default;
 
-		D3D12RHI(const D3D12RHI&) = delete;
-		D3D12RHI& operator=(const D3D12RHI&) = delete;
-		D3D12RHI(D3D12RHI&&) noexcept = delete;
-		D3D12RHI& operator=(D3D12RHI&&) noexcept = delete;
+		NON_COPYABLE_NON_MOVABLE(D3D12RHI);
 
 		virtual void Init(const RendererConfig& config) override;
 
@@ -54,6 +52,10 @@ namespace Athena
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
+
+		virtual Ref<ShaderCompiler> CreateShaderCompiler() override;
+
+		virtual Ref<ShaderInstance> CreateShaderInstance(const Buffer& bytecode, const ShaderReflectionData& reflectionData) override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 

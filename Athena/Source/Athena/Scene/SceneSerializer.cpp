@@ -1,7 +1,7 @@
 #include "Athena/Scene/SceneSerializer.h"
 
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 #include "Athena/Scene/Components.h"
 #include "Athena/Scene/Entity.h"
 

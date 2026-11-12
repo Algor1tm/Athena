@@ -2,7 +2,7 @@
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/AssetFileExtensions.h"
 #include "Athena/Project/Project.h"
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 #include "Athena/Core/FileSystem.h"
 
 #include <yaml-cpp/yaml.h>

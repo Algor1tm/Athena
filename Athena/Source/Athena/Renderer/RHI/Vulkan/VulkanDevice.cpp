@@ -14,6 +14,9 @@ namespace Athena
 		VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
 		VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME, 
 
+		VK_GOOGLE_HLSL_FUNCTIONALITY1_EXTENSION_NAME, // shader reflection
+		VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
+
 		nullptr
 	};
 
@@ -286,12 +289,18 @@ namespace Athena
 			demoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = VK_TRUE;
 			demoteToHelperInvocationFeatures.pNext = &hostQueryResetFeatures;
 
-			VkPhysicalDeviceSynchronization2Features synchronization2Features{};
+			VkPhysicalDeviceShaderFloat16Int8Features float16Int8Features = m_FeaturesInfo.Float16Int8Features;
+			float16Int8Features.pNext = &demoteToHelperInvocationFeatures;
+
+			VkPhysicalDevice16BitStorageFeatures storage16BitFeatures = m_FeaturesInfo.Storage16BitFeatures;
+			storage16BitFeatures.pNext = &float16Int8Features;
+
+			VkPhysicalDeviceSynchronization2Features synchronization2Features = {};
 			synchronization2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
 			synchronization2Features.synchronization2 = VK_TRUE;
-			synchronization2Features.pNext = &demoteToHelperInvocationFeatures;
+			synchronization2Features.pNext = &storage16BitFeatures;
 
-			VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures{};
+			VkPhysicalDeviceTimelineSemaphoreFeatures timelineSemaphoreFeatures = {};
 			timelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
 			timelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
 			timelineSemaphoreFeatures.pNext = &synchronization2Features;
@@ -303,6 +312,7 @@ namespace Athena
 			deviceFeatures.wideLines = VK_TRUE;
 			deviceFeatures.pipelineStatisticsQuery = m_FeaturesInfo.PipelineStatisticsQuery;
 			deviceFeatures.samplerAnisotropy = m_FeaturesInfo.SamplerAnisotropy;
+			deviceFeatures.shaderInt16 = m_FeaturesInfo.ShaderInt16;
 			deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
 
 			VkDeviceCreateInfo deviceCI = {};
@@ -476,16 +486,27 @@ namespace Athena
 
 	void VulkanDevice::QueryDeviceFeatures()
 	{
-		VkPhysicalDeviceHostQueryResetFeatures hostQueryResetFeatures = {};
+		VkPhysicalDeviceHostQueryResetFeatures& hostQueryResetFeatures = m_FeaturesInfo.DeviceHostQueryResetFeatures;
+		hostQueryResetFeatures = {};
 		hostQueryResetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
 
 		VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demoteFeatures = {};
 		demoteFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
 		demoteFeatures.pNext = &hostQueryResetFeatures;
 
+		VkPhysicalDeviceShaderFloat16Int8Features& float16Int8Features = m_FeaturesInfo.Float16Int8Features;
+		float16Int8Features = {};
+		float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+		float16Int8Features.pNext = &demoteFeatures;
+
+		VkPhysicalDevice16BitStorageFeatures& storage16BitFeatures = m_FeaturesInfo.Storage16BitFeatures;
+		storage16BitFeatures = {};
+		storage16BitFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
+		storage16BitFeatures.pNext = &float16Int8Features;
+
 		VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
 		deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		deviceFeatures2.pNext = &demoteFeatures;
+		deviceFeatures2.pNext = &storage16BitFeatures;
 
 		vkGetPhysicalDeviceFeatures2(m_PhysicalDevice, &deviceFeatures2);
 		
@@ -498,7 +519,7 @@ namespace Athena
 
 		m_FeaturesInfo.PipelineStatisticsQuery = deviceFeatures2.features.pipelineStatisticsQuery;
 		m_FeaturesInfo.SamplerAnisotropy = deviceFeatures2.features.samplerAnisotropy;
-		m_FeaturesInfo.DeviceHostQueryResetFeatures = hostQueryResetFeatures;
+		m_FeaturesInfo.ShaderInt16 = deviceFeatures2.features.shaderInt16;
 	}
 
 	void VulkanDevice::QueryGPUCapabilities()

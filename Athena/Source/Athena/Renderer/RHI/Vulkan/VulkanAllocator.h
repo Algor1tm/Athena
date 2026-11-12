@@ -4,7 +4,7 @@
 #include "Athena/Renderer/Texture.h"
 
 #include <vulkan/vulkan.h>
-#include <vma/vk_mem_alloc.h>
+#include <VulkanMemoryAllocator/vk_mem_alloc.h>
 
 
 namespace Athena

@@ -5,6 +5,20 @@
 
 namespace Athena
 {
+
+#define NON_COPYABLE(Class) \
+    Class(const Class&) = delete; \
+    Class& operator=(const Class&) = delete;
+
+#define NON_MOVABLE(Class) \
+    Class(Class&&) = delete; \
+    Class& operator=(Class&&) = delete;
+
+#define NON_COPYABLE_NON_MOVABLE(Class) \
+    NON_COPYABLE(Class) \
+    NON_MOVABLE(Class)
+
+
 	// Base class for reference counting objects
 	class RefCounted
 	{

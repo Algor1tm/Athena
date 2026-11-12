@@ -229,14 +229,14 @@ namespace Athena
 		m_Type(type)
 	{
 		vkGetDeviceQueue(Vulkan::GetLogicalDevice(), m_QueueFamily, 0, &m_Queue);
-		VK_SET_DEBUG_NAME(m_Queue, VK_OBJECT_TYPE_QUEUE, std::format("{}_Queue", EnumUtils::CmdContextTypeToString(GetType())));
+		VK_SET_DEBUG_NAME(m_Queue, VK_OBJECT_TYPE_QUEUE, fmt::format("{}_Queue", EnumUtils::CmdContextTypeToString(GetType())));
 
 		VkCommandPoolCreateInfo commandPoolCI = {};
 		commandPoolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		commandPoolCI.queueFamilyIndex = m_QueueFamily;
 		commandPoolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		VK_CHECK(vkCreateCommandPool(Vulkan::GetLogicalDevice(), &commandPoolCI, nullptr, &m_Pool));
-		VK_SET_DEBUG_NAME(m_Pool, VK_OBJECT_TYPE_COMMAND_POOL, std::format("{}_CommandPool", EnumUtils::CmdContextTypeToString(GetType())));
+		VK_SET_DEBUG_NAME(m_Pool, VK_OBJECT_TYPE_COMMAND_POOL, fmt::format("{}_CommandPool", EnumUtils::CmdContextTypeToString(GetType())));
 
 		m_CurrentCommandBuffer = nullptr;
 
@@ -252,7 +252,7 @@ namespace Athena
 		createInfo.pNext = &typeInfo;
 
 		VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &createInfo, nullptr, &m_TimelineSemaphore));
-		VK_SET_DEBUG_NAME(m_TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("{}_TimelineSemaphore", EnumUtils::CmdContextTypeToString(GetType())));
+		VK_SET_DEBUG_NAME(m_TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE, fmt::format("{}_TimelineSemaphore", EnumUtils::CmdContextTypeToString(GetType())));
 
 #if ATN_ENABLE_TRACY_GPU
 		InitTracy();
@@ -720,12 +720,12 @@ namespace Athena
 
 		m_CurrentCommandBuffer->Begin();
 		VK_SET_DEBUG_NAME(m_CurrentCommandBuffer->CmdBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
-			std::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
+			fmt::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
 
 		VK_SET_DEBUG_NAME(m_CurrentCommandBuffer->SignalFence, VK_OBJECT_TYPE_FENCE,
-			std::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
+			fmt::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_TimelineValue));
 
-		GPU_TRACY_BEGIN(this, std::format("{}Commands", EnumUtils::CmdContextTypeToString(GetType())));
+		GPU_TRACY_BEGIN(this, fmt::format("{}Commands", EnumUtils::CmdContextTypeToString(GetType())));
 
 		return m_CurrentCommandBuffer;
 	}

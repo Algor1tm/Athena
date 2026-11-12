@@ -2,6 +2,7 @@
 
 #include "Athena/Core/ConsoleManager.h"
 #include "Athena/Core/Stats.h"
+#include "Athena/Renderer/Shader.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
 #include "Athena/Renderer/RHI/RHI.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanRHI.h"
@@ -62,6 +63,9 @@ namespace Athena
 		{
 			RHI::s_RHI->Init(config);
 			s_Instance->m_IsRHIInitialized = true;
+
+			ShaderManager::Get().Init();
+			ShaderManager::Get().CompileAll();
 		});
 
 		Font::Init();
@@ -75,6 +79,7 @@ namespace Athena
 
 		ENQUEUE_RENDER_COMMAND([]()
 		{
+			ShaderManager::Get().Destroy();
 			RHI::s_RHI->Shutdown();
 		});
 

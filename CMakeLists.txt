@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.24)
 ######################################
 
 set(BUILD_FOLDER "${CMAKE_SOURCE_DIR}/Build/Binaries")
-set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena/EngineResources/ShaderPack")
+set(SHADERS_FOLDER "${CMAKE_SOURCE_DIR}/Athena/Shaders")
 
 ######################################
 ##### GLOBAL
@@ -81,6 +81,9 @@ macro(CopyDLLToBinaries DLL_PATH TARGET_NAME)
 endmacro()
 
 if(WIN32)  
+    CopyDLLToBinaries("${CMAKE_SOURCE_DIR}/Athena/ThirdParty/DirectXShaderCompiler/bin/x64/dxcompiler.dll" "dxcompiler.dll")
+    CopyDLLToBinaries("${CMAKE_SOURCE_DIR}/Athena/ThirdParty/DirectXShaderCompiler/bin/x64/dxil.dll" "dxil.dll")
+
     CopyDLLToBinaries("${CMAKE_SOURCE_DIR}/Athena/ThirdParty/assimp/libs/Windows/assimp-vc143-mt.dll" "assimp-vc143-mt.dll")
 endif(WIN32)
 

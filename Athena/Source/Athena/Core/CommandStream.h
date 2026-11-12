@@ -34,8 +34,7 @@ namespace Athena
 		CommandStream(CommandStream&& other) noexcept;
 		CommandStream& operator=(CommandStream&& other) noexcept;
 
-		CommandStream(const CommandStream& other) = delete;
-		CommandStream& operator=(const CommandStream& other) = delete;
+		NON_COPYABLE(CommandStream);
 
 		void Flush();
 		void Resize(uint64 newSize);

@@ -8,6 +8,7 @@
 #include "Athena/Renderer/RHI/D3D12/D3D12Buffers.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12CommandList.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12ImGuiBackend.h"
+#include "Athena/Renderer/RHI/D3D12/D3D12Shader.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12SwapChain.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12Texture.h"
 
@@ -23,7 +24,7 @@ namespace Athena
 
 	static AutoCVar<bool> CVarD3D12EnableGPUValidation(
 		"D3D12.GPUValidation",
-		false,
+		true,
 		"Specifices if gpu validation will be enabled or not (D3D12.ValidationLevel should be >0)."
 	);
 #endif
@@ -289,6 +290,16 @@ namespace Athena
 		return Ref<D3D12GPUBuffer>::Create(info);
 	}
 
+	Ref<ShaderCompiler> D3D12RHI::CreateShaderCompiler()
+	{
+		return Ref<D3D12ShaderCompiler>::Create();
+	}
+
+	Ref<ShaderInstance> D3D12RHI::CreateShaderInstance(const Buffer& bytecode, const ShaderReflectionData& reflectionData)
+	{
+		return Ref<D3D12ShaderInstance>::Create(bytecode, reflectionData);
+	}
+
 	Ref<SwapChain> D3D12RHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)
 	{
 		return Ref<D3D12SwapChain>::Create(windowHandle, width, height, vsync);
@@ -397,6 +408,9 @@ namespace Athena
 
 		m_FeaturesInfo.Options3 = D3D12_FEATURE_DATA_D3D12_OPTIONS3();
 		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &m_FeaturesInfo.Options3, sizeof(m_FeaturesInfo.Options3)));
+
+		m_FeaturesInfo.Options4 = D3D12_FEATURE_DATA_D3D12_OPTIONS4();
+		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &m_FeaturesInfo.Options4, sizeof(m_FeaturesInfo.Options4)));
 
 		m_FeaturesInfo.Options5 = D3D12_FEATURE_DATA_D3D12_OPTIONS5();
 		D3D12_CHECK(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &m_FeaturesInfo.Options5, sizeof(m_FeaturesInfo.Options5)));

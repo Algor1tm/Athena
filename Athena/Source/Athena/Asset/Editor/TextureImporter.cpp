@@ -1,7 +1,7 @@
 #include "TextureImporter.h"
 
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 #include "Athena/Math/Common.h"
 #include "Athena/Renderer/RHI/RHI.h"
 

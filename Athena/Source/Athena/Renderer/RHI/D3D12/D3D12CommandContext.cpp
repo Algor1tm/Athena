@@ -172,10 +172,10 @@ namespace Athena
 		queueDesc.NodeMask = 0;
 
 		D3D12_CHECK(D3D12RHI::Get()->GetDevice()->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_Queue)));
-		D3D12_SET_DEBUG_NAME(m_Queue, std::format("{}_Queue", EnumUtils::CmdContextTypeToString(GetType())));
+		D3D12_SET_DEBUG_NAME(m_Queue, fmt::format("{}_Queue", EnumUtils::CmdContextTypeToString(GetType())));
 
 		m_Fence.Init();
-		D3D12_SET_DEBUG_NAME(m_Fence.Fence, std::format("{}_Fence", EnumUtils::CmdContextTypeToString(GetType())));
+		D3D12_SET_DEBUG_NAME(m_Fence.Fence, fmt::format("{}_Fence", EnumUtils::CmdContextTypeToString(GetType())));
 
 #if ATN_ENABLE_TRACY_GPU
 		InitTracy();
@@ -599,12 +599,12 @@ namespace Athena
 		m_CurrentCommandList->Begin();
 
 		D3D12_SET_DEBUG_NAME(m_CurrentCommandList->CmdList,
-			std::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_Fence.GetSignaledValue()));
+			fmt::format("{}_CommandBuffer_{}", EnumUtils::CmdContextTypeToString(GetType()), m_Fence.GetSignaledValue()));
 
 		D3D12_SET_DEBUG_NAME(m_CurrentCommandList->Fence.Fence,
-			std::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_Fence.GetSignaledValue()));
+			fmt::format("{}_Fence_{}", EnumUtils::CmdContextTypeToString(GetType()), m_Fence.GetSignaledValue()));
 
-		GPU_TRACY_BEGIN(this, std::format("{}Commands", EnumUtils::CmdContextTypeToString(GetType())));
+		GPU_TRACY_BEGIN(this, fmt::format("{}Commands", EnumUtils::CmdContextTypeToString(GetType())));
 
 		return m_CurrentCommandList;
 	}

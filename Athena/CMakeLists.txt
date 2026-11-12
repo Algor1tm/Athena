@@ -39,9 +39,14 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
 	"ThirdParty/parallel_hashmap/*.h"
 	"ThirdParty/parallel_hashmap/phmap.natvis"
 	"ThirdParty/portable-file-dialogs/portable-file-dialogs.h"
+	"ThirdParty/SPIRV-Reflect/spirv_reflect.h"
+	"ThirdParty/SPIRV-Reflect/spirv_reflect.cpp"
 	"ThirdParty/stb_image/stb_image.h"
 	"ThirdParty/stb_image/stb_image_write.h"
 	"ThirdParty/stb_image/stb_image.cpp"
+	"ThirdParty/VulkanMemoryAllocator/vk_mem_alloc.h"
+	"ThirdParty/xxhash/xxhash.h"
+	"ThirdParty/xxhash/xxhash.cpp"
 )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC_FILES} )
 
@@ -153,29 +158,19 @@ SetBuildDirectory(TracyClient)
 
 target_link_libraries(Athena PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>:TracyClient>)
 
-
 # VULKAN
 if (Vulkan_FOUND)
-	target_link_libraries(Athena PRIVATE Vulkan::Vulkan Vulkan::shaderc_combined)
-
-	# Vulkan::SPIRV-Tools does not link required libs, so do this instead
-	target_link_libraries(Athena PRIVATE
-		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-cored.lib>
-		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>
-		$<$<CONFIG:Dist>: ${VULKAN_SDK_PATH}/Lib/spirv-cross-core.lib>)
-
-	target_link_libraries(Athena PRIVATE
-		$<$<CONFIG:Debug>: ${VULKAN_SDK_PATH}/Lib/shaderc_utild.lib>
-		$<$<CONFIG:Release>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>
-		$<$<CONFIG:Dist>: ${VULKAN_SDK_PATH}/Lib/shaderc_util.lib>)
-
+	target_link_libraries(Athena PRIVATE Vulkan::Vulkan)
 endif(Vulkan_FOUND)
-
-# DIRECTX
-target_link_libraries(Athena PUBLIC "d3d12.lib" "dxgi.lib")
 
 # Windows specific code
 if(WIN32)
+	target_link_libraries(Athena PUBLIC "d3d12.lib" "dxgi.lib")
+
+	target_link_libraries(Athena PRIVATE "${THIRD_PARTY_DIR}/DirectXShaderCompiler/lib/x64/dxcompiler.lib")
+	target_link_libraries(Athena PRIVATE "${THIRD_PARTY_DIR}/DirectXShaderCompiler/lib/x64/dxil.lib")
+	target_compile_definitions(Athena PRIVATE SPIRV_REFLECT_USE_SYSTEM_SPIRV_H)
+
 	target_link_libraries(Athena PRIVATE "${THIRD_PARTY_DIR}/assimp/libs/Windows/assimp-vc143-mt.lib")
 	target_compile_definitions(Athena PUBLIC ATN_PLATFORM_WINDOWS=1 UNICODE)
 endif(WIN32)

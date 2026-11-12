@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Core/UUID.h"
 #include "Athena/Math/Vector.h"
 #include "Athena/Math/Quaternion.h"
 #include "Athena/Core/FileSystem.h"
@@ -97,6 +98,31 @@ namespace YAML
 			vec3.x = node[0].as<float>();
 			vec3.y = node[1].as<float>();
 			vec3.z = node[2].as<float>();
+			return true;
+		}
+	};
+
+	template <>
+	struct convert<Athena::Vector3u>
+	{
+		static Node encode(const Athena::Vector3u& vec3)
+		{
+			Node node;
+			node.push_back(vec3.x);
+			node.push_back(vec3.y);
+			node.push_back(vec3.z);
+			node.SetStyle(EmitterStyle::Flow);
+			return node;
+		}
+
+		static bool decode(const Node& node, Athena::Vector3u& vec3)
+		{
+			if (!node.IsSequence() || node.size() != 3)
+				return false;
+
+			vec3.x = node[0].as<Athena::uint32>();
+			vec3.y = node[1].as<Athena::uint32>();
+			vec3.z = node[2].as<Athena::uint32>();
 			return true;
 		}
 	};
@@ -203,6 +229,14 @@ namespace YAML
 	}
 
 	inline Emitter& operator<<(Emitter& out, const Athena::Vector3& vec3)
+	{
+		out << Flow;
+		out << BeginSeq << vec3.x << vec3.y << vec3.z << EndSeq;
+
+		return out;
+	}
+
+	inline Emitter& operator<<(Emitter& out, const Athena::Vector3u& vec3)
 	{
 		out << Flow;
 		out << BeginSeq << vec3.x << vec3.y << vec3.z << EndSeq;

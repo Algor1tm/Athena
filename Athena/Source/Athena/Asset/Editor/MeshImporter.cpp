@@ -3,7 +3,7 @@
 #include "Athena/Asset/AssetManager.h"
 #include "Athena/Asset/Editor/TextureImporter.h"
 #include "Athena/Core/FileSystem.h"
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 #include "Athena/Project/Project.h"
 
 #include <assimp/cimport.h>

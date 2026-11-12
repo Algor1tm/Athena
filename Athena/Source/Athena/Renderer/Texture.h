@@ -347,6 +347,29 @@ namespace Athena
 
 	namespace EnumUtils
 	{
+		inline std::string_view TextureTypeToString(TextureType type)
+		{
+			switch (type)
+			{
+			case TextureType::TEXTURE_2D: return "TEXTURE_2D";
+			case TextureType::TEXTURE_CUBE: return "TEXTURE_CUBE";
+			}
+
+			checkf(false);
+			return "";
+		}
+
+		inline TextureType TextureTypeFromString(const String& typeString)
+		{
+			if (typeString == "TEXTURE_2D")
+				return TextureType::TEXTURE_2D;
+			if (typeString == "TEXTURE_CUBE")
+				return TextureType::TEXTURE_CUBE;
+
+			checkf(false);
+			return TextureType::TEXTURE_2D;
+		}
+
 		inline std::string_view TextureFilterToString(TextureFilter filter)
 		{
 			switch (filter)

@@ -1,32 +1,15 @@
 #pragma once
 
 #include "Athena/Core/Core.h"
+#include "Athena/Platform/Windows/WindowsDebug.h"
 #include "Athena/Renderer/RHI/D3D12/D3D12Configuration.h"
 
 #include <d3d12.h>
-#include <comdef.h>
 
 
 namespace Athena::D3D12
 {
-    inline bool HandleHRESULT(HRESULT hr)
-    {
-        if (SUCCEEDED(hr))
-            return true;
-
-        _com_error comError(hr);
-        std::wstring message(comError.ErrorMessage());
-
-        ATN_LOG_ERROR(D3D12, "D3D12 Error: {}", ToString(message));
-
-        return false;
-    }
-
-#if ATN_ENABLE_ENSURES
-    #define D3D12_CHECK(expr) ensuref(::Athena::D3D12::HandleHRESULT(expr))
-#else
-    #define D3D12_CHECK(expr) expr
-#endif
+#define D3D12_CHECK(expr) CHECK_HR(expr)
 
     inline constexpr const char* D3D12MessageCategoryToString(D3D12_MESSAGE_CATEGORY category)
     {
@@ -50,9 +33,9 @@ namespace Athena::D3D12
     inline void DebugCallback(D3D12_MESSAGE_CATEGORY Category, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID ID, LPCSTR pDescription, void* pContext)
     {
         String message = "D3D12 debug message: \n\t";
-        message += std::format("Category: {}\n\t", D3D12MessageCategoryToString(Category));
-        message += std::format("ID: {}\n\t", (int)ID);
-        message += std::format("Message: {}", pDescription);
+        message += fmt::format("Category: {}\n\t", D3D12MessageCategoryToString(Category));
+        message += fmt::format("ID: {}\n\t", (int)ID);
+        message += fmt::format("Message: {}", pDescription);
 
         switch (Severity)
         {

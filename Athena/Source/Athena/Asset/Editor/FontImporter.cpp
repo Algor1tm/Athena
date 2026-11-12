@@ -141,6 +141,6 @@ namespace Athena
 
 	FilePath FontImporter::GetAtlasCacheDirectory()
 	{
-		return Application::Get().GetConfig().EngineResourcesPath / "Cache/FontAtlases";
+		return Application::Get().GetConfig().EngineCachePath / "FontAtlases";
 	}
 }

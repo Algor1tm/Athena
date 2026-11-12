@@ -145,10 +145,10 @@ namespace Athena
 				semaphoreCI.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 				VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &semaphoreCI, nullptr, &m_FrameContexts[i].ImageAcquiredSemaphore));
-				VK_SET_DEBUG_NAME(m_FrameContexts[i].ImageAcquiredSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("ImageAcquireSemaphore_{}", i));
+				VK_SET_DEBUG_NAME(m_FrameContexts[i].ImageAcquiredSemaphore, VK_OBJECT_TYPE_SEMAPHORE, fmt::format("ImageAcquireSemaphore_{}", i));
 
 				VK_CHECK(vkCreateSemaphore(Vulkan::GetLogicalDevice(), &semaphoreCI, nullptr, &m_FrameContexts[i].RenderingCompletedSemaphore));
-				VK_SET_DEBUG_NAME(m_FrameContexts[i].RenderingCompletedSemaphore, VK_OBJECT_TYPE_SEMAPHORE, std::format("RenderingCompletedSemaphore_{}", i));
+				VK_SET_DEBUG_NAME(m_FrameContexts[i].RenderingCompletedSemaphore, VK_OBJECT_TYPE_SEMAPHORE, fmt::format("RenderingCompletedSemaphore_{}", i));
 			}
 
 			Recreate();
@@ -256,8 +256,8 @@ namespace Athena
 
 			VK_CHECK(vkCreateImageView(Vulkan::GetLogicalDevice(), &imageViewCI, nullptr, &swapChainImageViews[i]));
 
-			VK_SET_DEBUG_NAME(swapChainImages[i], VK_OBJECT_TYPE_IMAGE, std::format("SwapChainImage_{}", i));
-			VK_SET_DEBUG_NAME(swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, std::format("SwapChainImageView_{}", i));
+			VK_SET_DEBUG_NAME(swapChainImages[i], VK_OBJECT_TYPE_IMAGE, fmt::format("SwapChainImage_{}", i));
+			VK_SET_DEBUG_NAME(swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW, fmt::format("SwapChainImageView_{}", i));
 
 			m_FrameContexts[i].SwapChainImage = swapChainImages[i];
 			m_FrameContexts[i].SwapChainImageView = swapChainImageViews[i];

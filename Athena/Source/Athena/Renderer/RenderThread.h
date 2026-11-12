@@ -24,9 +24,23 @@ namespace Athena
 		D3D12 = 2
 	};
 
+	enum class ShaderModel
+	{
+		SM_6_0,
+		SM_6_1,
+		SM_6_2,
+		SM_6_3,
+		SM_6_4,
+		SM_6_5,
+		SM_6_6,
+		SM_6_7,
+	};
+
 	struct RendererConfig
 	{
 		RendererAPI API = RendererAPI::Vulkan;
+		ShaderModel ShaderModel = ShaderModel::SM_6_3;
+		FilePath ShaderSourcesPath;
 	};
 
 	class ATHENA_API RenderThread : public Thread
@@ -84,4 +98,39 @@ namespace Athena
 		std::atomic<bool> m_ShouldExit = false;
 		std::atomic<bool> m_IsRHIInitialized = false;
 	};
+
+
+	namespace EnumUtils
+	{
+		inline const char* RendererAPIToString(RendererAPI api)
+		{
+			switch (api)
+			{
+			case RendererAPI::Empty: return "Empty";
+			case RendererAPI::Vulkan: return "Vulkan";
+			case RendererAPI::D3D12: return "D3D12";
+			}
+			
+			checkf(false);
+			return "";
+		}
+
+		inline const char* ShaderModelToString(ShaderModel model)
+		{
+			switch (model)
+			{
+			case ShaderModel::SM_6_0: return "SM_6_0";
+			case ShaderModel::SM_6_1: return "SM_6_1";
+			case ShaderModel::SM_6_2: return "SM_6_2";
+			case ShaderModel::SM_6_3: return "SM_6_3";
+			case ShaderModel::SM_6_4: return "SM_6_4";
+			case ShaderModel::SM_6_5: return "SM_6_5";
+			case ShaderModel::SM_6_6: return "SM_6_6";
+			case ShaderModel::SM_6_7: return "SM_6_7";
+			}
+
+			checkf(false);
+			return "";
+		}
+	}
 }

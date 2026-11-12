@@ -2,7 +2,7 @@
 Build/*
 Athena-Editor/SandBoxProject/Scripts/Build/*
 
-Athena/EngineResources/Cache/
+Athena/Cache/
 Athena-Editor/Screenshots/
 
 # Exclude ScriptsLibrary.dll

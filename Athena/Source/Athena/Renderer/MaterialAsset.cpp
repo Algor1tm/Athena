@@ -3,7 +3,7 @@
 #include "Athena/Renderer/MaterialAsset.h"
 #include "Athena/Renderer/EngineRenderAssets.h"
 
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 
 
 namespace Athena

@@ -5,10 +5,10 @@
 #include "Athena/Renderer/RHI/Vulkan/VulkanDebug.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanUtils.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanPlatform.h"
-
 #include "Athena/Renderer/RHI/Vulkan/VulkanBuffers.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanCommandContext.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanTexture.h"
+#include "Athena/Renderer/RHI/Vulkan/VulkanShader.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanSwapChain.h"
 #include "Athena/Renderer/RHI/Vulkan/VulkanImGuiBackend.h"
 
@@ -254,6 +254,16 @@ namespace Athena
 	Ref<GPUBuffer> VulkanRHI::CreateGPUBuffer(const GPUBufferCreateInfo& info)
 	{
 		return Ref<VulkanGPUBuffer>::Create(info);
+	}
+
+	Ref<ShaderCompiler> VulkanRHI::CreateShaderCompiler()
+	{
+		return Ref<VulkanShaderCompiler>::Create();
+	}
+
+	Ref<ShaderInstance> VulkanRHI::CreateShaderInstance(const Buffer& bytecode, const ShaderReflectionData& reflectionData)
+	{
+		return Ref<VulkanShaderInstance>::Create(bytecode, reflectionData);
 	}
 
 	Ref<SwapChain> VulkanRHI::CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync)

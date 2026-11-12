@@ -7,6 +7,8 @@
 #include "Athena/Renderer/Format.h"
 #include "Athena/Renderer/GPUBuffers.h"
 #include "Athena/Renderer/Texture.h"
+#include "Athena/Renderer/Shader.h"
+#include "Athena/Renderer/ShaderCompiler.h"
 #include "Athena/Renderer/SwapChain.h"
 #include "Athena/UI/ImGuiBackend.h"
 
@@ -56,6 +58,10 @@ namespace Athena
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) = 0;
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) = 0;
+
+		virtual Ref<ShaderCompiler> CreateShaderCompiler() = 0;
+
+		virtual Ref<ShaderInstance> CreateShaderInstance(const Buffer& bytecode, const ShaderReflectionData& reflectionData) = 0;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) = 0;
 

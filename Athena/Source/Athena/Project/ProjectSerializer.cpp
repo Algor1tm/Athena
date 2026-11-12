@@ -1,5 +1,5 @@
 #include "ProjectSerializer.h"
-#include "Athena/Core/YAMLTypes.h"
+#include "Athena/Core/Yaml.h"
 
 #include <yaml-cpp/yaml.h>
 

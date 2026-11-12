@@ -28,7 +28,11 @@ namespace Athena
 	{
 		bool PipelineStatisticsQuery;
 		bool SamplerAnisotropy;
+		bool ShaderInt16;
+
 		VkPhysicalDeviceHostQueryResetFeatures DeviceHostQueryResetFeatures;
+		VkPhysicalDevice16BitStorageFeatures Storage16BitFeatures;
+		VkPhysicalDeviceShaderFloat16Int8Features Float16Int8Features;
 	};
 
 	class VulkanDevice
@@ -61,6 +65,8 @@ namespace Athena
 		uint32 GetDeviceVulkanVersion() const { return m_DeviceVulkanVersion; }
 
 		const VkQueueFamilyProperties& GetQueueFamilyProps(uint32 index) const { return m_QueueFamilyProps[index]; }
+
+		uint32 GetVulkanVersion() const { return m_DeviceVulkanVersion; }
 
 	private:
 		void QueryDeviceExtensions();

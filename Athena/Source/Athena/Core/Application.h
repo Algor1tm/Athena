@@ -21,6 +21,7 @@ namespace Athena
 		bool EnableImGui = true;
 		FilePath WorkingDirectory = FilePath();
 		FilePath EngineResourcesPath = FilePath();
+		FilePath EngineCachePath = FilePath();
 		bool CleanCacheOnLoad = false;
 	};
 
@@ -39,6 +40,8 @@ namespace Athena
 		Application(const ApplicationCreateInfo& appinfo);
 		virtual ~Application();
 
+		NON_COPYABLE_NON_MOVABLE(Application);
+
 		void Run();
 
 		void PushLayer(const Ref<Layer>& layer);
@@ -47,6 +50,7 @@ namespace Athena
 		void SubmitToMainThread(const std::function<void()>& func);
 
 		const AppConfig GetConfig() const { return m_Config; }
+		const RendererConfig GetRendererConfig() const { return m_RendererConfig; }
 
 		const Ref<ImGuiLayer>& GetImGuiLayer() { return m_ImGuiLayer; }
 		Window& GetWindow() { return *m_Window; }
@@ -74,6 +78,7 @@ namespace Athena
 
 	private:
 		AppConfig m_Config;
+		RendererConfig m_RendererConfig;
 		Ref<Window> m_Window;
 		Ref<ImGuiLayer> m_ImGuiLayer;
 		bool m_Running;

@@ -253,7 +253,7 @@ namespace Athena
 			framebufferInfo.layers = 1;
 
 			VK_CHECK(vkCreateFramebuffer(Vulkan::GetLogicalDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]));
-			VK_SET_DEBUG_NAME(m_SwapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, std::format("ImGuiFrameBuffer_{}", i));
+			VK_SET_DEBUG_NAME(m_SwapChainFramebuffers[i], VK_OBJECT_TYPE_FRAMEBUFFER, fmt::format("ImGuiFrameBuffer_{}", i));
 		}
 	}
 

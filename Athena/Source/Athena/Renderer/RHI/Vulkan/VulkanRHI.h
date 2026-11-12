@@ -34,11 +34,7 @@ namespace Athena
 	public:
 		VulkanRHI() = default;
 
-		// TODO: idk why and where it tries to copy vulkanrhi, but adding these solves the compilation issues
-		VulkanRHI(const VulkanRHI&) = delete;
-		VulkanRHI& operator=(const VulkanRHI&) = delete;
-		VulkanRHI(VulkanRHI&&) noexcept = delete;
-		VulkanRHI& operator=(VulkanRHI&&) noexcept = delete;
+		NON_COPYABLE_NON_MOVABLE(VulkanRHI);
 
 		virtual void Init(const RendererConfig& config) override;
 
@@ -57,6 +53,10 @@ namespace Athena
 		virtual Ref<TextureView> CreateTextureView(const TextureViewCreateInfo& info, Texture* texture) override;
 
 		virtual Ref<GPUBuffer> CreateGPUBuffer(const GPUBufferCreateInfo& info) override;
+
+		virtual Ref<ShaderCompiler> CreateShaderCompiler() override;
+
+		virtual Ref<ShaderInstance> CreateShaderInstance(const Buffer& bytecode, const ShaderReflectionData& reflectionData) override;
 
 		virtual Ref<SwapChain> CreateSwapChain(void* windowHandle, uint32 width, uint32 height, bool vsync) override;
 

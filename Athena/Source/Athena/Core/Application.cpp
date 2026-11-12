@@ -27,12 +27,13 @@ namespace Athena
 		s_Instance = this;
 
 		m_Config = appinfo.AppConfig;
+		m_RendererConfig = appinfo.RendererConfig;
 
 		if (m_Config.WorkingDirectory != FilePath())
 			FileSystem::SetWorkingDirectory(m_Config.WorkingDirectory);
 
 		if (m_Config.CleanCacheOnLoad)
-			FileSystem::Remove(m_Config.EngineResourcesPath / "Cache");
+			FileSystem::Remove(m_Config.EngineCachePath);
 
 		Thread::s_GameThreadID = Thread::GetCurrentThreadID();
 

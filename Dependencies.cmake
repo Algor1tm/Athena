@@ -1,6 +1,7 @@
 # Third Party 
 set(ASSIMP_INCLUDE_DIR "${THIRD_PARTY_DIR}/assimp/include")
 set(BOX2D_INCLUDE_DIR "${THIRD_PARTY_DIR}/Box2D/include")
+set(DXC_INCLUDE_DIR "${THIRD_PARTY_DIR}/DirectXShaderCompiler/include")
 set(ENTT_INCLUDE_DIR "${THIRD_PARTY_DIR}/entt")
 set(FILEWATCH_INCLUDE_DIR "${THIRD_PARTY_DIR}/filewatch")
 set(GLFW_INCLUDE_DIR "${THIRD_PARTY_DIR}/GLFW/include")
@@ -17,9 +18,10 @@ set(MSDF_GEN_INCLUDE_DIR "${THIRD_PARTY_DIR}/msdf-atlas-gen/msdfgen")
 
 macro(IncludeDependenciesDirs TARGET_NAME)
 	target_include_directories(${TARGET_NAME} PRIVATE 
-		${ASSIMP_INCLUDE_DIR}
 		${THIRD_PARTY_DIR}
+		${ASSIMP_INCLUDE_DIR}
 		${BOX2D_INCLUDE_DIR}
+		${DXC_INCLUDE_DIR}
 		${GLAD_INCLUDE_DIR}
 		${GLFW_INCLUDE_DIR}
 		${IMGUI_INCLUDE_DIR}
